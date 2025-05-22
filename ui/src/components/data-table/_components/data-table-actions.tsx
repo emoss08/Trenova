@@ -4,22 +4,19 @@ import { usePermissions } from "@/hooks/use-permissions";
 import type { Resource } from "@/types/audit-entry";
 import type { ExtraAction } from "@/types/data-table";
 import { Action } from "@/types/roles-permissions";
-import type { Table } from "@tanstack/react-table";
 import React from "react";
 import {
   DataTableCreateButton,
   DataTableViewOptions,
 } from "./data-table-view-options";
 
-export default function DataTableActions<TData>({
-  table,
+export default function DataTableActions({
   name,
   exportModelName,
   extraActions,
   handleCreateClick,
   resource,
 }: {
-  table: Table<TData>;
   name: string;
   resource: Resource;
   exportModelName: string;
@@ -30,7 +27,7 @@ export default function DataTableActions<TData>({
 
   return (
     <DataTableActionsInner>
-      <DataTableViewOptions table={table} name={name} />
+      <DataTableViewOptions name={name} />
       {can(resource, Action.Create) ? (
         <>
           <Separator className="h-6 w-px bg-border" orientation="vertical" />

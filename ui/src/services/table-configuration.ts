@@ -1,4 +1,5 @@
 import { http } from "@/lib/http-client";
+import type { LimitOffsetResponse } from "@/types/server";
 import type {
   TableConfig,
   TableConfiguration,
@@ -23,6 +24,14 @@ export class TableConfigurationAPI {
     }
   }
 
+  async listUserConfigurations(tableIdentifier: string) {
+    const { data } = await http.get<LimitOffsetResponse<TableConfiguration>>(
+      `/table-configurations/me/${tableIdentifier}`,
+    );
+
+    return data;
+  }
+
   /**
    * Partially update the table configuration JSON blob.
    */
@@ -37,7 +46,7 @@ export class TableConfigurationAPI {
   /**
    * Create a new table configuration.
    */
-  async createConfiguration(payload: {
+  async create(payload: {
     name: string;
     tableIdentifier: string;
     visibility: "Private" | "Public" | "Shared";
@@ -48,5 +57,13 @@ export class TableConfigurationAPI {
       payload,
     );
     return data;
+  }
+
+  /**
+   * Delete a table configuration.
+   * @Note: This returns no content.
+   */
+  async delete(id: string) {
+    await http.delete(`/table-configurations/${id}/`);
   }
 }

@@ -3,15 +3,23 @@ package tableconfiguration
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/user"
+	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
+)
+
+var (
+	_ bun.BeforeAppendModelHook = (*Configuration)(nil)
+	_ domain.Validatable        = (*Configuration)(nil)
+	_ infra.PostgresSearchable  = (*Configuration)(nil)
 )
 
 type Filter struct {
@@ -62,7 +70,7 @@ type Configuration struct {
 	Shares       []*ConfigurationShare      `json:"shares,omitempty" bun:"rel:has-many,join:id=configuration_id"`
 }
 
-func (c *Configuration) validate(ctx context.Context, multiErr *errors.MultiError) {
+func (c *Configuration) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.Name,
 			validation.Required.Error("Name is required"),
@@ -87,9 +95,10 @@ func (c *Configuration) validate(ctx context.Context, multiErr *errors.MultiErro
 	}
 }
 
+// TODO(Wolfred): Move this to a validator
 func (c *Configuration) DBValidate(ctx context.Context, _ bun.IDB) *errors.MultiError {
 	multiErr := errors.NewMultiError()
-	c.validate(ctx, multiErr)
+	c.Validate(ctx, multiErr)
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -107,6 +116,27 @@ func (c *Configuration) GetTableName() string {
 
 func (c *Configuration) GetTableAlias() string {
 	return "tc"
+}
+
+func (c *Configuration) GetPostgresSearchConfig() infra.PostgresSearchConfig {
+	return infra.PostgresSearchConfig{
+		TableAlias: c.GetTableAlias(),
+		Fields: []infra.PostgresSearchableField{
+			{
+				Name:   "name",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "description",
+				Weight: "B",
+				Type:   infra.PostgresSearchTypeText,
+			},
+		},
+		MinLength:       2,
+		MaxTerms:        6,
+		UsePartialMatch: true,
+	}
 }
 
 func (c *Configuration) BeforeAppendModel(_ context.Context, query bun.Query) error {

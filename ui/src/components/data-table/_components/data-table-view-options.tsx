@@ -13,16 +13,15 @@ import { Switch } from "@/components/ui/switch";
 import { queries } from "@/lib/queries";
 import { toSentenceCase, toTitleCase } from "@/lib/utils";
 import { useTableStore } from "@/stores/table-store";
-import {
-  DataTableCreateButtonProps,
-  DataTableViewOptionsProps,
-} from "@/types/data-table";
+import { DataTableCreateButtonProps } from "@/types/data-table";
 import { faPlus, faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { faColumns } from "@fortawesome/pro-solid-svg-icons";
 import { ChevronDownIcon, PlusIcon, UploadIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
 import { isValidElement, memo, useCallback, useMemo, useState } from "react";
+import { useDataTable } from "../data-table-provider";
 import { CreateTableConfigurationModal } from "./_configuration/table-configuration-create-modal";
+import { TableConfigurationList } from "./_configuration/table-configuration-list";
 import { DataTableImportModal } from "./data-table-import-modal";
 
 export const DataTableCreateButton = memo(function DataTableCreateButton({
@@ -32,21 +31,15 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
   exportModelName,
   extraActions,
 }: DataTableCreateButtonProps) {
-  // Control popover state explicitly
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-  // Get import modal state from the store
   const [showImportModal, setShowImportModal] =
     useTableStore.use("showImportModal");
 
-  // Memoized click handlers
   const handleCreateClick = useCallback(() => {
     setIsPopoverOpen(false);
 
     if (onCreateClick) {
-      console.info("onCreateClick debug info", {
-        onCreateClick,
-      });
       onCreateClick();
     }
   }, [onCreateClick]);
@@ -133,13 +126,12 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
   );
 });
 
-export function DataTableViewOptions<TData>({
-  table,
-  name,
-}: DataTableViewOptionsProps<TData>) {
+export function DataTableViewOptions({ name }: { name: string }) {
   const [open, setOpen] = useState(false);
+  const [showConfigurationList, setShowConfigurationList] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const { table } = useDataTable();
 
   // Get all hideable columns
   const columns = useMemo(
@@ -201,17 +193,13 @@ export function DataTableViewOptions<TData>({
             aria-label="Toggle column visibility"
           >
             <Icon icon={faColumns} className="size-4" />
-            <span className="hidden lg:inline">Customize Columns</span>
+            <span className="hidden lg:inline">Configure Columns</span>
             <span className="lg:hidden">Columns</span>
             <span className="sr-only">Toggle column visibility options</span>
             <ChevronDownIcon />
           </Button>
         </PopoverTrigger>
-        <PopoverContent
-          align="end"
-          side="bottom"
-          className="w-(--radix-popover-trigger-width) p-2"
-        >
+        <PopoverContent align="end" side="bottom" className="w-auto p-2">
           <div className="space-y-2">
             <Input
               icon={
@@ -258,14 +246,34 @@ export function DataTableViewOptions<TData>({
                 </p>
               )}
             </div>
-            <div className="mt-4 flex justify-center border-dashed border-t border-border pt-2">
+            <div className="flex border-t border-border border-dashed pt-2 justify-between gap-2">
+              <Popover
+                open={showConfigurationList}
+                onOpenChange={setShowConfigurationList}
+              >
+                <PopoverTrigger asChild>
+                  <Button size="sm" className="w-full" variant="secondary">
+                    View Configuration(s)
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="start"
+                  alignOffset={-10}
+                  side="left"
+                  className="p-1 w-full"
+                >
+                  <TableConfigurationList
+                    name={name}
+                    open={showConfigurationList}
+                  />
+                </PopoverContent>
+              </Popover>
               <Button
-                onClick={() => setShowCreateModal(true)}
+                onClick={() => setShowCreateModal(!showCreateModal)}
                 size="sm"
                 className="w-full"
-                variant="secondary"
               >
-                Save Customization
+                Save Configuration
               </Button>
             </div>
           </div>

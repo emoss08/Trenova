@@ -67,6 +67,7 @@ export enum Resource {
   SystemLog = "system_log",
   ShipmentControl = "shipment_control",
   DataRetention = "data_retention",
+  ResourceEditor = "resource_editor",
   Equipment = "equipment",
   Maintenance = "maintenance",
   User = "user",

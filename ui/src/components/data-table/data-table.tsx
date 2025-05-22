@@ -10,9 +10,8 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   RowSelectionState,
-  Table as TableType,
   useReactTable,
-  VisibilityState,
+  VisibilityState
 } from "@tanstack/react-table";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { useQueryStates } from "nuqs";
@@ -187,7 +186,6 @@ export function DataTable<TData extends Record<string, any>>({
               <DataTableSearch />
               <Suspense fallback={<div>Loading...</div>}>
                 <DataTableActions
-                  table={table as unknown as TableType<unknown>}
                   name={name}
                   resource={resource}
                   exportModelName={exportModelName}

@@ -174,20 +174,37 @@ func (s *Service) Update(ctx context.Context, config *tcdomain.Configuration) er
 }
 
 // Delete deletes a table configuration with permission checks
-func (s *Service) Delete(ctx context.Context, id pulid.ID, opts *repositories.GetUserByIDOptions) error {
+func (s *Service) Delete(ctx context.Context, req repositories.DeleteUserConfigurationRequest) error {
 	log := s.l.With().
 		Str("operation", "Delete").
-		Str("configID", id.String()).
+		Str("configID", req.ConfigID.String()).
 		Logger()
 
-	// Get existing configuration
-	existing, err := s.repo.GetByID(ctx, id,
-		&repositories.TableConfigurationFilters{
-			Base: &ports.FilterQueryOptions{
-				OrgID: opts.OrgID,
-				BuID:  opts.BuID,
-			},
-		})
+	// * The deletion can only be done by the user who created the configuration
+	result, err := s.ps.HasPermission(ctx, &services.PermissionCheck{
+		UserID:         req.UserID,
+		Resource:       permission.ResourceTableConfiguration,
+		Action:         permission.ActionDelete,
+		BusinessUnitID: req.BuID,
+		OrganizationID: req.OrgID,
+		ResourceID:     req.ConfigID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check delete permission")
+		return eris.Wrap(err, "check delete permission")
+	}
+
+	if !result.Allowed {
+		return errors.NewAuthorizationError("You don't have permission to delete this configuration")
+	}
+
+	existing, err := s.repo.GetByID(ctx, req.ConfigID, &repositories.TableConfigurationFilters{
+		Base: &ports.FilterQueryOptions{
+			OrgID:  req.OrgID,
+			BuID:   req.BuID,
+			UserID: req.UserID,
+		},
+	})
 	if err != nil {
 		return eris.Wrap(err, "get existing configuration")
 	}
@@ -195,12 +212,12 @@ func (s *Service) Delete(ctx context.Context, id pulid.ID, opts *repositories.Ge
 	// Check delete permission
 	permResult, err := s.ps.HasPermission(ctx,
 		&services.PermissionCheck{
-			UserID:         opts.UserID,
+			UserID:         req.UserID,
 			Resource:       permission.ResourceTableConfiguration,
 			Action:         permission.ActionDelete,
-			BusinessUnitID: opts.BuID,
-			OrganizationID: opts.OrgID,
-			ResourceID:     id,
+			BusinessUnitID: req.BuID,
+			OrganizationID: req.OrgID,
+			ResourceID:     req.ConfigID,
 			CustomData: map[string]any{
 				"userId": existing.UserID,
 			},
@@ -212,7 +229,7 @@ func (s *Service) Delete(ctx context.Context, id pulid.ID, opts *repositories.Ge
 		return errors.NewAuthorizationError("You don't have permission to delete this configuration")
 	}
 
-	if err = s.repo.Delete(ctx, id); err != nil {
+	if err = s.repo.Delete(ctx, req); err != nil {
 		log.Error().Err(err).Msg("failed to delete configuration")
 		return eris.Wrap(err, "delete configuration")
 	}
@@ -267,6 +284,38 @@ func (s *Service) ShareConfiguration(ctx context.Context, share *tcdomain.Config
 	return nil
 }
 
+func (s *Service) ListUserConfigurations(ctx context.Context, opts *repositories.ListUserConfigurationRequest) (*ports.ListResult[*tcdomain.Configuration], error) {
+	log := s.l.With().
+		Str("operation", "ListUserConfigurations").
+		Str("userID", opts.Filter.TenantOpts.UserID.String()).
+		Logger()
+
+	permResult, err := s.ps.HasPermission(ctx,
+		&services.PermissionCheck{
+			UserID:         opts.Filter.TenantOpts.UserID,
+			Resource:       permission.ResourceTableConfiguration,
+			Action:         permission.ActionRead,
+			BusinessUnitID: opts.Filter.TenantOpts.BuID,
+			OrganizationID: opts.Filter.TenantOpts.OrgID,
+		})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permission")
+		return nil, eris.Wrap(err, "check permission")
+	}
+
+	if !permResult.Allowed {
+		return nil, errors.NewAuthorizationError("You don't have permission to view table configurations")
+	}
+
+	result, err := s.repo.ListUserConfigurations(ctx, opts)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to list user configurations")
+		return nil, eris.Wrap(err, "list user configurations")
+	}
+
+	return result, nil
+}
+
 // GetUserConfigurations retrieves configurations accessible to a user
 func (s *Service) GetUserConfigurations(ctx context.Context, tableID string, opts *repositories.GetUserByIDOptions) ([]*tcdomain.Configuration, error) {
 	log := s.l.With().
@@ -305,7 +354,7 @@ func (s *Service) GetUserConfigurations(ctx context.Context, tableID string, opt
 	return configs, nil
 }
 
-// GetFirst retrieves a configuration for the given table identifier and current user.
+// GetDefaultOrLatestConfiguration retrieves a configuration for the given table identifier and current user.
 // If none exists it will create a new one with a minimal default payload so the
 // client always receives a valid configuration object.
 func (s *Service) GetDefaultOrLatestConfiguration(ctx context.Context, tableIdentifier string, rCtx *ctx.RequestContext) (*tcdomain.Configuration, error) {
@@ -318,7 +367,7 @@ func (s *Service) GetDefaultOrLatestConfiguration(ctx context.Context, tableIden
 		},
 	})
 	if err != nil {
-		return nil, eris.Wrap(err, "get configurations")
+		return nil, err
 	}
 
 	return config, nil

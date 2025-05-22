@@ -13,18 +13,6 @@ type ListTableConfigurationResult struct {
 	Total          int
 }
 
-type TableConfigurationRepository interface {
-	GetByID(ctx context.Context, id pulid.ID, opts *TableConfigurationFilters) (*tableconfiguration.Configuration, error)
-	List(ctx context.Context, filters *TableConfigurationFilters) (*ListTableConfigurationResult, error)
-	Create(ctx context.Context, config *tableconfiguration.Configuration) error
-	Update(ctx context.Context, config *tableconfiguration.Configuration) error
-	Delete(ctx context.Context, id pulid.ID) error
-	GetUserConfigurations(ctx context.Context, tableID string, opts *TableConfigurationFilters) ([]*tableconfiguration.Configuration, error)
-	GetDefaultOrLatestConfiguration(ctx context.Context, tableID string, opts *TableConfigurationFilters) (*tableconfiguration.Configuration, error)
-	ShareConfiguration(ctx context.Context, share *tableconfiguration.ConfigurationShare) error
-	RemoveShare(ctx context.Context, configID pulid.ID, sharedWithID pulid.ID) error
-}
-
 // TableConfigurationFilters defines filters for querying configurations
 type TableConfigurationFilters struct {
 	Base            *ports.FilterQueryOptions
@@ -37,4 +25,30 @@ type TableConfigurationFilters struct {
 	// Include relationships
 	IncludeShares  bool
 	IncludeCreator bool
+}
+
+// ListUserConfigurationRequest defines a request for listing user configurations
+type ListUserConfigurationRequest struct {
+	Filter          *ports.LimitOffsetQueryOptions `query:"filter"`
+	TableIdentifier string
+}
+
+type DeleteUserConfigurationRequest struct {
+	ConfigID pulid.ID `json:"configId"`
+	UserID   pulid.ID `json:"userId"`
+	OrgID    pulid.ID `json:"orgId"`
+	BuID     pulid.ID `json:"buId"`
+}
+
+type TableConfigurationRepository interface {
+	GetByID(ctx context.Context, id pulid.ID, opts *TableConfigurationFilters) (*tableconfiguration.Configuration, error)
+	List(ctx context.Context, filters *TableConfigurationFilters) (*ListTableConfigurationResult, error)
+	Create(ctx context.Context, config *tableconfiguration.Configuration) error
+	Update(ctx context.Context, config *tableconfiguration.Configuration) error
+	Delete(ctx context.Context, req DeleteUserConfigurationRequest) error
+	GetUserConfigurations(ctx context.Context, tableID string, opts *TableConfigurationFilters) ([]*tableconfiguration.Configuration, error)
+	ListUserConfigurations(ctx context.Context, opts *ListUserConfigurationRequest) (*ports.ListResult[*tableconfiguration.Configuration], error)
+	GetDefaultOrLatestConfiguration(ctx context.Context, tableID string, opts *TableConfigurationFilters) (*tableconfiguration.Configuration, error)
+	ShareConfiguration(ctx context.Context, share *tableconfiguration.ConfigurationShare) error
+	RemoveShare(ctx context.Context, configID pulid.ID, sharedWithID pulid.ID) error
 }

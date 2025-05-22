@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/tableconfiguration"
 	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 )
@@ -36,6 +38,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(60), // 60 reads per minute
 	)...)
 
+	api.Get("/me/:tableIdentifier", rl.WithRateLimit(
+		[]fiber.Handler{h.listUserConfigurations},
+		middleware.PerMinute(60),
+	)...)
+
 	api.Post("/", rl.WithRateLimit(
 		[]fiber.Handler{h.create},
 		middleware.PerMinute(60),
@@ -50,6 +57,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	// Partial update of configuration JSON blob
 	api.Patch(":configID", rl.WithRateLimit(
 		[]fiber.Handler{h.patch},
+		middleware.PerMinute(60),
+	)...)
+
+	api.Delete(":configID", rl.WithRateLimit(
+		[]fiber.Handler{h.delete},
 		middleware.PerMinute(60),
 	)...)
 }
@@ -79,6 +91,28 @@ func (h *Handler) list(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(result)
+}
+
+func (h *Handler) listUserConfigurations(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*tableconfigurationdomain.Configuration], error) {
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
+		tableID := fc.Params("tableIdentifier")
+
+		return h.ts.ListUserConfigurations(fc.UserContext(), &repositories.ListUserConfigurationRequest{
+			TableIdentifier: tableID,
+			Filter:          filter,
+		})
+	}
+
+	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
 }
 
 func (h *Handler) create(c *fiber.Ctx) error {
@@ -148,4 +182,28 @@ func (h *Handler) patch(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(updated)
+}
+
+func (h *Handler) delete(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	configID, err := pulid.MustParse(c.Params("configID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	err = h.ts.Delete(c.UserContext(), repositories.DeleteUserConfigurationRequest{
+		ConfigID: configID,
+		UserID:   reqCtx.UserID,
+		OrgID:    reqCtx.OrgID,
+		BuID:     reqCtx.BuID,
+	})
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }

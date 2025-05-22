@@ -6,16 +6,13 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/internal/pkg/postgressearch"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
@@ -28,15 +25,13 @@ import (
 type TableConfigurationRepositoryParams struct {
 	fx.In
 
-	DB           db.Connection
-	Logger       *logger.Logger
-	AuditService services.AuditService
+	DB     db.Connection
+	Logger *logger.Logger
 }
 
 type tableConfigurationRepository struct {
-	db           db.Connection
-	l            *zerolog.Logger
-	auditService services.AuditService
+	db db.Connection
+	l  *zerolog.Logger
 }
 
 func NewTableConfigurationRepository(p TableConfigurationRepositoryParams) repositories.TableConfigurationRepository {
@@ -45,9 +40,8 @@ func NewTableConfigurationRepository(p TableConfigurationRepositoryParams) repos
 		Logger()
 
 	return &tableConfigurationRepository{
-		db:           p.DB,
-		l:            &log,
-		auditService: p.AuditService,
+		db: p.DB,
+		l:  &log,
 	}
 }
 
@@ -55,7 +49,7 @@ func (tcr *tableConfigurationRepository) filterQuery(q *bun.SelectQuery, opts *r
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query: q,
 		// Filter:     opts.Base,
-		TableAlias: "tbl_cfg",
+		TableAlias: "tc",
 	})
 
 	if opts.TableIdentifier != "" {
@@ -119,6 +113,57 @@ func (tcr *tableConfigurationRepository) List(ctx context.Context, filters *repo
 	}, nil
 }
 
+func (tcr *tableConfigurationRepository) filterUserConfigurations(q *bun.SelectQuery, opts *repositories.ListUserConfigurationRequest) *bun.SelectQuery {
+	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.Where("tc.user_id = ?", opts.Filter.TenantOpts.UserID).
+			Where("tc.organization_id = ?", opts.Filter.TenantOpts.OrgID).
+			Where("tc.table_identifier = ?", opts.TableIdentifier).
+			Where("tc.business_unit_id = ?", opts.Filter.TenantOpts.BuID)
+	})
+
+	if opts.Filter.Query != "" {
+		q = postgressearch.BuildSearchQuery(
+			q,
+			opts.Filter.Query,
+			(*tableconfiguration.Configuration)(nil),
+		)
+	}
+
+	// * Order by created at and is default
+	q = q.Order("tc.created_at ASC").Order("tc.is_default ASC")
+
+	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
+}
+
+func (tcr *tableConfigurationRepository) ListUserConfigurations(ctx context.Context, opts *repositories.ListUserConfigurationRequest) (*ports.ListResult[*tableconfiguration.Configuration], error) {
+	dba, err := tcr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := tcr.l.With().
+		Str("operation", "ListUserConfigurations").
+		Str("userID", opts.Filter.TenantOpts.UserID.String()).
+		Logger()
+
+	configs := make([]*tableconfiguration.Configuration, 0)
+
+	q := dba.NewSelect().Model(&configs)
+
+	q = tcr.filterUserConfigurations(q, opts)
+
+	count, err := q.ScanAndCount(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get user configurations")
+		return nil, eris.Wrap(err, "get user configurations")
+	}
+
+	return &ports.ListResult[*tableconfiguration.Configuration]{
+		Items: configs,
+		Total: count,
+	}, nil
+}
+
 func (tcr *tableConfigurationRepository) GetByID(ctx context.Context, id pulid.ID, opts *repositories.TableConfigurationFilters) (*tableconfiguration.Configuration, error) {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
@@ -171,72 +216,52 @@ func (tcr *tableConfigurationRepository) Create(ctx context.Context, config *tab
 		Logger()
 
 	// * if the incoming config is marked as default, then we need to get the existing default and set it to not default
+	//nolint:nestif // This is a nested if statement that is not nested in a larger if statement.
 	if config.IsDefault {
-		dc := new(tableconfiguration.Configuration)
-		_, err = dba.NewUpdate().
-			Model(dc).
-			Set("is_default = ?", false).
-			WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
-				return sq.Where("tc.id = ?", dc.ID).
-					Where("tc.organization_id = ?", config.OrganizationID).
-					Where("tc.business_unit_id = ?", config.BusinessUnitID).
-					Where("tc.is_default = ?", true).
+		existingDefault := new(tableconfiguration.Configuration)
+		err = dba.NewSelect().Model(existingDefault).
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.Where("tc.organization_id = ?", config.OrganizationID).
 					Where("tc.table_identifier = ?", config.TableIdentifier).
-					Where("tc.user_id = ?", config.UserID)
+					Where("tc.business_unit_id = ?", config.BusinessUnitID).
+					Where("tc.user_id = ?", config.UserID).
+					Where("tc.is_default = ?", true)
 			}).
-			Returning("*").
-			Exec(ctx)
-
+			For("UPDATE").
+			Scan(ctx)
 		if err != nil {
 			if eris.Is(err, sql.ErrNoRows) {
-				log.Info().Msg("no existing default configuration found")
+				// ! if there is no default configuration we don't need to do anything.
+				log.Debug().Msg("no existing default configuration found, moving on...")
+			} else {
+				log.Error().Err(err).Msg("failed to get existing default configuration")
+				return err
 			}
+		}
 
+		// * we need to update the existing default configuration to not be the default
+		_, err = dba.NewUpdate().Model(existingDefault).
+			Set("is_default = ?", false).
+			Where("tc.id = ?", existingDefault.ID).
+			Exec(ctx)
+		if err != nil {
 			log.Error().Err(err).Msg("failed to update existing default configuration")
-			return oops.In("table_configuration_repository").
-				Tags("create").
-				With("config", config).
-				With("orgID", config.OrganizationID).
-				With("buID", config.BusinessUnitID).
-				With("userID", config.UserID).
-				Time(time.Now()).
-				Wrapf(err, "update existing default configuration")
+			return err
 		}
 	}
 
+	// * Now we can create the new configuration
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if err := config.DBValidate(c, tx); err != nil {
-			return err
+		if _, iErr := tx.NewInsert().Model(config).Returning("*").Exec(c); iErr != nil {
+			log.Error().Err(iErr).Msg("failed to create configuration")
+			return iErr
 		}
 
-		if _, iErr := tx.NewInsert().Model(config).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("config", config).
-				Msg("failed to insert configuration")
-			return eris.Wrap(iErr, "insert configuration")
-		}
 		return nil
 	})
 	if err != nil {
-		return eris.Wrap(err, "failed to create table configuration")
-	}
-
-	err = tcr.auditService.LogAction(
-		&services.LogActionParams{
-			Resource:       permission.ResourceTableConfiguration,
-			ResourceID:     config.ID.String(),
-			Action:         permission.ActionCreate,
-			UserID:         config.UserID,
-			CurrentState:   jsonutils.MustToJSON(config),
-			OrganizationID: config.OrganizationID,
-			BusinessUnitID: config.BusinessUnitID,
-		},
-		audit.WithComment("Table configuration created"),
-		audit.WithDiff(nil, config),
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to log table configuration creation")
+		log.Error().Err(err).Msg("failed to create configuration")
+		return err
 	}
 
 	return nil
@@ -253,17 +278,6 @@ func (tcr *tableConfigurationRepository) Update(ctx context.Context, config *tab
 		Str("id", config.ID.String()).
 		Int64("version", config.Version).
 		Logger()
-
-	// Get original for audit
-	original, err := tcr.GetByID(ctx, config.ID, &repositories.TableConfigurationFilters{
-		Base: &ports.FilterQueryOptions{
-			OrgID: config.OrganizationID,
-			BuID:  config.BusinessUnitID,
-		},
-	})
-	if err != nil {
-		return eris.Wrap(err, "get configuration")
-	}
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		if err := config.DBValidate(c, tx); err != nil {
@@ -310,29 +324,10 @@ func (tcr *tableConfigurationRepository) Update(ctx context.Context, config *tab
 		return eris.Wrap(err, "update configuration")
 	}
 
-	// Log the update
-	err = tcr.auditService.LogAction(
-		&services.LogActionParams{
-			Resource:       permission.ResourceTableConfiguration,
-			ResourceID:     config.ID.String(),
-			Action:         permission.ActionUpdate,
-			UserID:         config.UserID,
-			CurrentState:   jsonutils.MustToJSON(config),
-			PreviousState:  jsonutils.MustToJSON(original),
-			OrganizationID: config.OrganizationID,
-			BusinessUnitID: config.BusinessUnitID,
-		},
-		audit.WithComment("Table configuration updated"),
-		audit.WithDiff(original, config),
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to log configuration update")
-	}
-
 	return nil
 }
 
-func (tcr *tableConfigurationRepository) Delete(ctx context.Context, id pulid.ID) error {
+func (tcr *tableConfigurationRepository) Delete(ctx context.Context, req repositories.DeleteUserConfigurationRequest) error {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
@@ -340,18 +335,18 @@ func (tcr *tableConfigurationRepository) Delete(ctx context.Context, id pulid.ID
 
 	log := tcr.l.With().
 		Str("operation", "Delete").
-		Str("id", id.String()).
+		Str("configID", req.ConfigID.String()).
+		Str("userID", req.UserID.String()).
 		Logger()
-
-	// Get original for audit
-	original, err := tcr.GetByID(ctx, id, &repositories.TableConfigurationFilters{})
-	if err != nil {
-		return eris.Wrap(err, "get configuration")
-	}
 
 	result, err := dba.NewDelete().
 		Model((*tableconfiguration.Configuration)(nil)).
-		Where("id = ?", id).
+		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+			return dq.Where("tc.id = ?", req.ConfigID).
+				Where("tc.organization_id = ?", req.OrgID).
+				Where("tc.business_unit_id = ?", req.BuID).
+				Where("tc.user_id = ?", req.UserID)
+		}).
 		Exec(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete configuration")
@@ -368,29 +363,10 @@ func (tcr *tableConfigurationRepository) Delete(ctx context.Context, id pulid.ID
 		return errors.NewNotFoundError("Configuration not found")
 	}
 
-	// Log the deletion
-	err = tcr.auditService.LogAction(
-		&services.LogActionParams{
-			Resource:       permission.ResourceTableConfiguration,
-			ResourceID:     id.String(),
-			Action:         permission.ActionDelete,
-			UserID:         original.UserID,
-			PreviousState:  jsonutils.MustToJSON(original),
-			OrganizationID: original.OrganizationID,
-			BusinessUnitID: original.BusinessUnitID,
-		},
-		audit.WithComment("Table configuration deleted"),
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to log configuration deletion")
-	}
-
 	return nil
 }
 
-func (tcr *tableConfigurationRepository) GetUserConfigurations(
-	ctx context.Context, tableID string, opts *repositories.TableConfigurationFilters,
-) ([]*tableconfiguration.Configuration, error) {
+func (tcr *tableConfigurationRepository) GetUserConfigurations(ctx context.Context, tableID string, opts *repositories.TableConfigurationFilters) ([]*tableconfiguration.Configuration, error) {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -409,6 +385,9 @@ func (tcr *tableConfigurationRepository) GetUserConfigurations(
 		Where("tc.table_identifier = ?", tableID).
 		Where("tc.organization_id = ?", opts.Base.OrgID).
 		Where("tc.business_unit_id = ?", opts.Base.BuID)
+
+	// * if the default query returns not found, then query for the latest configuration
+	q = q.Order("tc.created_at DESC")
 
 	if err = q.Scan(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to get user configurations")
@@ -438,24 +417,40 @@ func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(ctx con
 				Where("tc.business_unit_id = ?", opts.Base.BuID)
 		})
 
-	// * Query for the default configuration
-	q = q.Where("tc.is_default = ?", true)
-
-	// * if the default query returns not found, then query for the latest configuration
-	if err = q.Scan(ctx); err != nil {
+	// * scan initially to see if there are any configurations that may not be default
+	err = q.Scan(ctx)
+	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			q.Where("tc.is_default = ?", false)
-			log.Info().Msg("no default configuration found, querying for latest")
+			log.Info().Msg("no default configuration found, getting latest")
 		} else {
-			return nil, eris.Wrap(err, "get default or latest configuration")
+			log.Error().Err(err).Msg("failed to get default or latest configuration")
+			return nil, oops.In("table_configuration_repository").
+				Tags("get_default_or_latest_configuration").
+				With("tableID", tableID).
+				With("orgID", opts.Base.OrgID).
+				With("buID", opts.Base.BuID).
+				Time(time.Now()).
+				Wrapf(err, "get default or latest configuration")
 		}
 	}
 
-	q = q.Order("tc.created_at DESC")
+	if config.IsDefault {
+		return config, nil
+	}
 
-	if err = q.Scan(ctx); err != nil {
-		log.Error().Err(err).Msg("failed to get default or latest configuration")
-		return nil, eris.Wrap(err, "get default or latest configuration")
+	// * Query for the default configuration
+	q = q.Where("tc.is_default = ?", true)
+
+	err = q.Scan(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get default configuration")
+		return nil, oops.In("table_configuration_repository").
+			Tags("get_default_or_latest_configuration").
+			With("tableID", tableID).
+			With("orgID", opts.Base.OrgID).
+			With("buID", opts.Base.BuID).
+			Time(time.Now()).
+			Wrapf(err, "get default configuration")
 	}
 
 	return config, nil

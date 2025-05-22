@@ -164,6 +164,11 @@ export const queries = createQueryKeyStore({
     }),
   },
   tableConfiguration: {
+    listUserConfigurations: (tableIdentifier: string) => ({
+      queryKey: ["table-configuration", tableIdentifier],
+      queryFn: async () =>
+        api.tableConfigurations.listUserConfigurations(tableIdentifier),
+    }),
     get: (tableIdentifier: string) => ({
       queryKey: ["table-configuration", tableIdentifier],
       queryFn: async () => api.tableConfigurations.get(tableIdentifier),

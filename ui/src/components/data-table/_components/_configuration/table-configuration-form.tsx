@@ -8,8 +8,7 @@ import { TableConfigurationSchema } from "@/lib/schemas/table-configuration-sche
 import { useFormContext } from "react-hook-form";
 
 export function TableConfigurationForm() {
-  const { control } = useFormContext<TableConfigurationSchema>();
-  const { register } = useFormContext<TableConfigurationSchema>();
+  const { control, register } = useFormContext<TableConfigurationSchema>();
 
   return (
     <FormGroup cols={2}>

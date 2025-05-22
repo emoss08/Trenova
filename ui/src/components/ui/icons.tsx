@@ -37,6 +37,7 @@ type IconProps = {
   style?: CSSProperties;
   fixedWidth?: boolean;
   spin?: boolean;
+  title?: string;
   size?: IconSize;
   onClick?: (event: React.MouseEvent<SVGSVGElement>) => void;
 };

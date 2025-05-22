@@ -162,6 +162,10 @@ export function AuditEntryResourceBadge({
       variant: "orange",
       text: "Document Quality Config",
     },
+    [Resource.ResourceEditor]: {
+      variant: "orange",
+      text: "Resource Editor",
+    },
     // Operations Resources
     [Resource.Worker]: {
       variant: "indigo",

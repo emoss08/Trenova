@@ -115,6 +115,12 @@ export const adminLinks: SidebarLink[] = [
     group: "Data & Integrations",
   },
   {
+    href: "/organization/resource-editor/",
+    title: "Resource Editor",
+    group: "Data & Integrations",
+    disabled: false,
+  },
+  {
     href: "/organization/table-change-alerts/",
     title: "Table Change Alerts",
     group: "Data & Integrations",
@@ -395,6 +401,12 @@ export const routes: RouteInfo[] = [
         key: Resource.DataRetention,
         label: "Data Retention",
         link: "/organization/data-retention/",
+        supportsModal: false,
+      },
+      {
+        key: Resource.ResourceEditor,
+        label: "Resource Editor",
+        link: "/organization/resource-editor/",
         supportsModal: false,
       },
       {

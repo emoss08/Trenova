@@ -31,10 +31,10 @@ CREATE TABLE IF NOT EXISTS "table_configurations"(
     CONSTRAINT "check_table_config_format" CHECK (jsonb_typeof(table_config) = 'object')
 );
 
---bun:split
--- Indexes for table_configurations
--- Ensure that the name is unique for the given organization, and table identifier
-CREATE UNIQUE INDEX "idx_table_configurations_name" ON "table_configurations"("organization_id", "table_identifier", LOWER("name"));
+-- Disallow multiple default configurations for the same user
+CREATE UNIQUE INDEX "idx_table_configurations_default" ON "table_configurations"("user_id", "is_default")
+WHERE
+    "is_default" = TRUE;
 
 CREATE INDEX "idx_table_configurations_business_unit" ON "table_configurations"("business_unit_id");
 
@@ -46,12 +46,37 @@ CREATE INDEX "idx_table_configurations_table_id" ON "table_configurations"("tabl
 
 CREATE INDEX "idx_table_configurations_visibility" ON "table_configurations"("visibility");
 
-CREATE INDEX "idx_table_configurations_default" ON "table_configurations"("is_default")
-WHERE
-    is_default = TRUE;
-
 CREATE INDEX "idx_table_configurations_created_updated" ON "table_configurations"("created_at", "updated_at");
 
+--bun:split
+ALTER TABLE "table_configurations"
+    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_table_configurations_search ON table_configurations USING GIN(search_vector);
+
+--bun:split
+CREATE OR REPLACE FUNCTION table_configurations_search_vector_update()
+    RETURNS TRIGGER
+    AS $$
+BEGIN
+    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.name, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.description, '')), 'B');
+    NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
+    RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+--bun:split
+DROP TRIGGER IF EXISTS table_configurations_search_vector_trigger ON table_configurations;
+
+--bun:split
+CREATE TRIGGER table_configurations_search_vector_trigger
+    BEFORE INSERT OR UPDATE ON table_configurations
+    FOR EACH ROW
+    EXECUTE FUNCTION table_configurations_search_vector_update();
+
+--bun:split
 COMMENT ON TABLE table_configurations IS 'Stores saved table filter configurations for data tables';
 
 --bun:split
