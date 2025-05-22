@@ -145,7 +145,6 @@ export function NavUser() {
                     />
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      endContent={<Icon icon={faUpRightFromSquare} />}
                       onClick={() => setLicenseDialogOpen(true)}
                       title="License Agreement"
                       className="cursor-pointer"

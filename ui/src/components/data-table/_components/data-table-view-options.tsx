@@ -258,8 +258,9 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
-                  align="start"
+                  align="end"
                   alignOffset={-10}
+                  sideOffset={10}
                   side="left"
                   className="p-1 w-full"
                 >

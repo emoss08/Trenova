@@ -1,14 +1,29 @@
 import { Icon } from "@/components/ui/icons";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queries } from "@/lib/queries";
+import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
 import type { Resource } from "@/types/audit-entry";
 import type { TableConfiguration } from "@/types/table-configuration";
 import { faSearch } from "@fortawesome/pro-regular-svg-icons";
-import { faSpinner, faTrash } from "@fortawesome/pro-solid-svg-icons";
+import {
+  faEllipsis,
+  faPencil,
+  faTableColumns,
+  faTrash,
+} from "@fortawesome/pro-solid-svg-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import React, { memo, useState } from "react";
 import { toast } from "sonner";
@@ -94,7 +109,7 @@ function TableConfigurationContent({
   userConfigurations: TableConfiguration[];
 }) {
   return (
-    <ScrollArea className="h-[150px] w-full pt-2 pr-3">
+    <ScrollArea className="h-[150px] w-full pt-2">
       {isLoadingUserConfigurations ? (
         <div className="flex flex-col gap-1 text-center justify-center items-center p-2">
           {Array.from({ length: 5 }).map((_, index) => (
@@ -128,6 +143,7 @@ function TableConfigurationListItem({
 }) {
   const { table } = useDataTable();
   const queryClient = useQueryClient();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   const applyConfig = () => {
     if (!table) return;
@@ -149,10 +165,7 @@ function TableConfigurationListItem({
   });
 
   return (
-    <div
-      onClick={applyConfig}
-      className="group flex items-center justify-between rounded-md py-0.5 px-2 w-full hover:bg-accent"
-    >
+    <div className="group flex text-left items-center justify-between rounded-md py-0.5 px-2 w-full hover:bg-accent">
       <div className="flex items-center gap-2">
         {config.isDefault && (
           <span
@@ -172,21 +185,50 @@ function TableConfigurationListItem({
         </p>
       </div>
       <div className="flex items-center justify-center gap-2">
-        <button
-          title={`Delete ${config.name} configuration`}
-          aria-label={`Delete configuration`}
-          aria-describedby={`Delete ${config.name} configuration`}
-          type="button"
-          className="opacity-0 cursor-pointer group-hover:opacity-100 transition-opacity"
-          onClick={() => deleteConfig(config.id)}
-          disabled={isDeletingConfig}
-        >
-          {isDeletingConfig ? (
-            <Icon icon={faSpinner} className="size-3 animate-spin" />
-          ) : (
-            <Icon icon={faTrash} className="size-3 text-red-500" />
-          )}
-        </button>
+        <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+          <DropdownMenuTrigger asChild>
+            <button
+              title={`${config.name} configuration options`}
+              aria-label={`${config.name} configuration options`}
+              aria-describedby={`${config.name} configuration options`}
+              type="button"
+              className={cn(
+                "opacity-0 cursor-pointer group-hover:opacity-100 transition-opacity",
+                dropdownOpen && "opacity-100",
+              )}
+            >
+              <Icon
+                icon={faEllipsis}
+                className="size-3 text-muted-foreground"
+              />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent>
+            <DropdownMenuGroup>
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                title="Apply"
+                description="Apply the configuration to the table"
+                onClick={applyConfig}
+                startContent={<Icon icon={faTableColumns} className="size-3" />}
+              />
+              <DropdownMenuItem
+                title="Edit"
+                description="Edit the configuration options"
+                startContent={<Icon icon={faPencil} className="size-3" />}
+              />
+              <DropdownMenuItem
+                title="Delete"
+                color="danger"
+                description="Delete the configuration"
+                onClick={() => deleteConfig(config.id)}
+                disabled={isDeletingConfig}
+                startContent={<Icon icon={faTrash} className="size-3" />}
+              />
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
