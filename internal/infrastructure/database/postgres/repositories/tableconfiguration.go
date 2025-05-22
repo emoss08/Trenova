@@ -126,7 +126,7 @@ func (tcr *tableConfigurationRepository) filterUserConfigurations(q *bun.SelectQ
 	}
 
 	// * Order by created at and is default
-	q = q.Order("tc.created_at ASC").Order("tc.is_default ASC")
+	q = q.Order("tc.created_at DESC").Order("tc.is_default DESC")
 
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
