@@ -17,6 +17,7 @@ import { DataTableCreateButtonProps } from "@/types/data-table";
 import { faPlus, faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { faColumns } from "@fortawesome/pro-solid-svg-icons";
 import { ChevronDownIcon, PlusIcon, UploadIcon } from "@radix-ui/react-icons";
+import type { VisibilityState } from "@tanstack/react-table";
 import { isValidElement, memo, useCallback, useMemo, useState } from "react";
 import { useDataTable } from "../data-table-provider";
 import { CreateTableConfigurationModal } from "./_configuration/table-configuration-create-modal";
@@ -133,7 +134,7 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
   const { table } = useDataTable();
 
   // Get all hideable columns
-  const columns = useMemo(
+  const hideableColumns = useMemo(
     () =>
       table
         .getAllColumns()
@@ -147,12 +148,12 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
   // Filter columns based on search query
   const filteredColumns = useMemo(
     () =>
-      columns.filter((column) =>
+      hideableColumns.filter((column) =>
         toSentenceCase(column.id)
           .toLowerCase()
           .includes(searchQuery.toLowerCase()),
       ),
-    [columns, searchQuery],
+    [hideableColumns, searchQuery],
   );
 
   const handleToggleVisibility = useCallback(
@@ -162,7 +163,18 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
     [table],
   );
 
-  const visibilityState = table.getState().columnVisibility;
+  // Get the raw visibility state from the table, used as a dependency for comprehensive state
+  const currentRawVisibilityState = table.getState().columnVisibility;
+
+  // Create a comprehensive visibility state that includes all hideable columns
+  // and their current actual visibility status.
+  const comprehensiveVisibilityState = useMemo(() => {
+    const state: VisibilityState = {};
+    hideableColumns.forEach((column) => {
+      state[column.id] = column.getIsVisible();
+    });
+    return state;
+  }, [hideableColumns, currentRawVisibilityState]);
 
   return (
     <>
@@ -265,7 +277,7 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
         resource={resource}
-        visiblityState={visibilityState}
+        visiblityState={comprehensiveVisibilityState}
       />
     </>
   );
