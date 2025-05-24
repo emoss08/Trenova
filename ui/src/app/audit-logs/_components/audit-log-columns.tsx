@@ -2,18 +2,16 @@ import { DataTableColumnHeaderWithTooltip } from "@/components/data-table/_compo
 import { UserAvatar } from "@/components/nav-user";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { type AuditEntry } from "@/types/audit-entry";
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 import {
   AuditEntryActionBadge,
   AuditEntryResourceBadge,
 } from "./audit-column-components";
 
 export function getColumns(): ColumnDef<AuditEntry>[] {
-  const columnHelper = createColumnHelper<AuditEntry>();
-
   return [
-    columnHelper.display({
-      id: "resourceId",
+    {
+      accessorKey: "resourceId",
       header: ({ column }) => (
         <DataTableColumnHeaderWithTooltip
           column={column}
@@ -21,29 +19,18 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
           tooltipContent="The ID of the resource that was affected."
         />
       ),
-      cell: ({ row }) => {
-        const { resourceId } = row.original;
-
-        return <p>{resourceId}</p>;
-      },
-    }),
-    columnHelper.display({
-      id: "comment",
-      header: ({ column }) => (
-        <DataTableColumnHeaderWithTooltip
-          column={column}
-          title="Description"
-          tooltipContent="The description of the audit log."
-        />
-      ),
+    },
+    {
+      accessorKey: "comment",
+      header: "Description",
       cell: ({ row }) => {
         const { comment } = row.original;
 
         return <p>{comment}</p>;
       },
-    }),
-    columnHelper.display({
-      id: "resource",
+    },
+    {
+      accessorKey: "resource",
       header: ({ column }) => (
         <DataTableColumnHeaderWithTooltip
           column={column}
@@ -58,9 +45,9 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
           <AuditEntryResourceBadge withDot={false} resource={entry.resource} />
         );
       },
-    }),
-    columnHelper.display({
-      id: "action",
+    },
+    {
+      accessorKey: "action",
       header: ({ column }) => (
         <DataTableColumnHeaderWithTooltip
           column={column}
@@ -73,9 +60,9 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
 
         return <AuditEntryActionBadge withDot={false} action={entry.action} />;
       },
-    }),
-    columnHelper.display({
-      id: "timestamp",
+    },
+    {
+      accessorKey: "timestamp",
       header: ({ column }) => (
         <DataTableColumnHeaderWithTooltip
           column={column}
@@ -90,9 +77,9 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
           <p>{generateDateTimeStringFromUnixTimestamp(entry.timestamp)}</p>
         );
       },
-    }),
-    columnHelper.display({
-      id: "user",
+    },
+    {
+      accessorKey: "user",
       header: ({ column }) => (
         <DataTableColumnHeaderWithTooltip
           column={column}
@@ -105,6 +92,6 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
 
         return <UserAvatar user={user} />;
       },
-    }),
+    },
   ];
 }
