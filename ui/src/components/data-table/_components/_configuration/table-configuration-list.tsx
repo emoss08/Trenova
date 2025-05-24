@@ -180,7 +180,7 @@ function TableConfigurationListItem({
           <p
             title={`${config.name} configuration`}
             aria-describedby={`${config.name} configuration`}
-            className="text-xs w-[180px] truncate"
+            className="text-xs w-[170px] truncate"
           >
             {config.name}
           </p>
