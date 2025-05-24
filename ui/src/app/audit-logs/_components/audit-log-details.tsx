@@ -39,6 +39,10 @@ export function AuditLogDetails({ entry }: { entry: AuditEntry }) {
 
   const items = [
     {
+      title: "Event ID",
+      value: <span>{entry.id}</span>,
+    },
+    {
       title: "Resource ID",
       value: (
         <InternalLink
