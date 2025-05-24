@@ -89,6 +89,16 @@ export function CreateTableConfigurationModal({
       });
 
       queryClient.setQueryData(["table-configurations", resource], data);
+      reset({
+        name: "",
+        description: "",
+        visibility: Visibility.Private,
+        isDefault: false,
+        resource: resource,
+        tableConfig: {
+          columnVisibility: visiblityState,
+        },
+      });
 
       if (isPopout) {
         closePopout();
@@ -105,19 +115,38 @@ export function CreateTableConfigurationModal({
     [mutateAsync],
   );
 
-  // Ensure tableConfig is registered so it is included in submitted data
   useEffect(() => {
-    // RHF requires fields to be registered; register nested object manually
     register("tableConfig");
-  }, [register]);
-
-  // Reset the form when the mutation is successful
-  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
-  useEffect(() => {
-    if (isSubmitSuccessful) {
-      reset();
+    if (visiblityState) {
+      form.setValue("tableConfig.columnVisibility", visiblityState, {
+        shouldValidate: true,
+      });
     }
-  }, [isSubmitSuccessful, reset]);
+  }, [register, visiblityState, form]);
+
+  useEffect(() => {
+    if (visiblityState) {
+      form.setValue("tableConfig.columnVisibility", visiblityState, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [visiblityState, form]);
+
+  useEffect(() => {
+    if (isSubmitSuccessful || !open) {
+      reset({
+        name: "",
+        description: "",
+        visibility: Visibility.Private,
+        isDefault: false,
+        resource: resource,
+        tableConfig: {
+          columnVisibility: visiblityState,
+        },
+      });
+    }
+  }, [isSubmitSuccessful, reset, open, resource, visiblityState]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
