@@ -2,10 +2,7 @@ import { http } from "@/lib/http-client";
 import type { TableConfigurationSchema } from "@/lib/schemas/table-configuration-schema";
 import type { Resource } from "@/types/audit-entry";
 import type { LimitOffsetResponse } from "@/types/server";
-import type {
-  TableConfig,
-  TableConfiguration,
-} from "@/types/table-configuration";
+import type { TableConfiguration } from "@/types/table-configuration";
 
 export class TableConfigurationAPI {
   /**
@@ -31,17 +28,6 @@ export class TableConfigurationAPI {
       `/table-configurations/me/${resource}`,
     );
 
-    return data;
-  }
-
-  /**
-   * Partially update the table configuration JSON blob.
-   */
-  async patch(id: string, tableConfig: TableConfig) {
-    const { data } = await http.patch<TableConfig>(
-      `/table-configurations/${id}/`,
-      { tableConfig },
-    );
     return data;
   }
 
