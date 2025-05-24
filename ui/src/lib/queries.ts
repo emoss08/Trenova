@@ -3,8 +3,8 @@ import type { AnalyticsPage } from "@/types/analytics";
 import { Resource } from "@/types/audit-entry";
 import type { GetCustomerByIDParams } from "@/types/customer";
 import type { IntegrationType } from "@/types/integration";
-import type { TableConfig } from "@/types/table-configuration";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
+import type { TableConfigurationSchema } from "./schemas/table-configuration-schema";
 
 export const queries = createQueryKeyStore({
   organization: {
@@ -173,18 +173,9 @@ export const queries = createQueryKeyStore({
       queryKey: ["table-configurations", resource],
       queryFn: async () => api.tableConfigurations.get(resource),
     }),
-    create: (payload: {
-      name: string;
-      resource: Resource;
-      visibility: "Private" | "Public" | "Shared";
-      tableConfig: TableConfig;
-    }) => ({
+    create: (payload: TableConfigurationSchema) => ({
       queryKey: ["table-configurations", payload],
       queryFn: async () => api.tableConfigurations.create(payload),
-    }),
-    patch: (id: string, tableConfig: Partial<TableConfig>) => ({
-      queryKey: ["table-configurations", id, tableConfig],
-      queryFn: async () => api.tableConfigurations.patch(id, tableConfig),
     }),
   },
 });
