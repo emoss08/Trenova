@@ -2,11 +2,11 @@ import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { RatingMethod } from "@/types/shipment";
 import { useEffect } from "react";
 import {
-    Control,
-    UseFormGetValues,
-    UseFormSetValue,
-    useFormState,
-    useWatch,
+  Control,
+  UseFormGetValues,
+  UseFormSetValue,
+  useFormState,
+  useWatch,
 } from "react-hook-form";
 import { calculateTotalChargeAmount } from "./utils";
 
