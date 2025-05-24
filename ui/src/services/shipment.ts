@@ -1,4 +1,5 @@
 import { http } from "@/lib/http-client";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { LimitOffsetResponse } from "@/types/server";
 import { type Shipment, type ShipmentQueryParams } from "@/types/shipment";
 
@@ -35,6 +36,10 @@ export class ShipmentAPI {
     });
 
     return response.data;
+  }
+
+  async create(shipment: ShipmentSchema) {
+    return await http.post<ShipmentSchema>("/shipments/", shipment);
   }
 
   // Check for duplicate BOLs

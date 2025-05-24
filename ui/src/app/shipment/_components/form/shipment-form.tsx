@@ -72,21 +72,35 @@ export function ShipmentFormBody({
   }
 
   return (
-    <div className="size-full">
+    <ShipmentFormBodyOuter>
       <ShipmentFormHeader selectedShipment={selectedShipment} />
       <ShipmentScrollAreaOuter>
         <ShipmentDetailsHeader selectedShipment={selectedShipment} />
         <ShipmentScrollArea>
-          <div className="flex flex-col gap-4 p-4 pb-16">{children}</div>
-          <div className="pointer-events-none rounded-b-lg absolute bottom-0 z-50 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />
+          <ShipmentScrollAreaInner>{children}</ShipmentScrollAreaInner>
+          <ShipmentScrollAreaShadow />
         </ShipmentScrollArea>
       </ShipmentScrollAreaOuter>
-    </div>
+    </ShipmentFormBodyOuter>
   );
 }
 
 function ShipmentScrollAreaOuter({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-col">{children}</div>;
+}
+
+function ShipmentFormBodyOuter({ children }: { children: React.ReactNode }) {
+  return <div className="size-full">{children}</div>;
+}
+
+function ShipmentScrollAreaShadow() {
+  return (
+    <div className="pointer-events-none rounded-b-lg absolute bottom-0 z-50 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />
+  );
+}
+
+function ShipmentScrollAreaInner({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col gap-4 p-4 pb-16">{children}</div>;
 }
 
 function ShipmentScrollArea({ children }: { children: React.ReactNode }) {
