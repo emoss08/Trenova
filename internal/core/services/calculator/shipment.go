@@ -289,13 +289,22 @@ func (sc *ShipmentCalculator) CalculateTimestamps(shp *shipment.Shipment) error 
 			Str("shipmentID", shp.ID.String()).
 			Err(err).
 			Msg("failed to calculate shipment timestamps")
+		return eris.Wrap(err, "failed to calculate shipment timestamps")
 	}
 
-	sc.l.Debug().
-		Str("shipmentID", shp.ID.String()).
-		Int64("actualShipDate", *shp.ActualShipDate).
-		Int64("actualDeliveryDate", *shp.ActualDeliveryDate).
-		Msg("calculated shipment timestamps")
+	// Only log the timestamps if they are not nil
+	logEvent := sc.l.Debug().
+		Str("shipmentID", shp.ID.String())
+
+	if shp.ActualShipDate != nil {
+		logEvent = logEvent.Int64("actualShipDate", *shp.ActualShipDate)
+	}
+
+	if shp.ActualDeliveryDate != nil {
+		logEvent = logEvent.Int64("actualDeliveryDate", *shp.ActualDeliveryDate)
+	}
+
+	logEvent.Msg("calculated shipment timestamps")
 
 	return nil
 }
