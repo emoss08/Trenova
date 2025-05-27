@@ -52,8 +52,6 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/encryptcookie"
 	"github.com/gofiber/fiber/v2/middleware/favicon"
 	"github.com/gofiber/fiber/v2/middleware/helmet"
-	"github.com/gofiber/fiber/v2/middleware/idempotency"
-	"github.com/gofiber/fiber/v2/middleware/pprof"
 	"github.com/gofiber/fiber/v2/middleware/requestid"
 
 	"go.uber.org/fx"
@@ -121,16 +119,18 @@ type RouterParams struct {
 }
 
 type Router struct {
-	p   RouterParams
-	app fiber.Router
-	cfg *config.Manager
+	p       RouterParams
+	app     fiber.Router
+	cfg     *config.Manager
+	corsCfg *config.CorsConfig
 }
 
 func NewRouter(p RouterParams) *Router {
 	return &Router{
-		p:   p,
-		app: p.Server.Router(),
-		cfg: p.Config,
+		p:       p,
+		app:     p.Server.Router(),
+		cfg:     p.Config,
+		corsCfg: p.Config.Cors(),
 	}
 }
 
@@ -165,14 +165,12 @@ func (r *Router) setupMiddleware() {
 			Key: r.cfg.Server().SecretKey,
 		}),
 		cors.New(cors.Config{
-			AllowOrigins:     r.cfg.Cors().AllowedOrigins,
-			AllowCredentials: r.cfg.Cors().AllowCredentials,
-			AllowHeaders:     r.cfg.Cors().AllowedHeaders,
-			AllowMethods:     r.cfg.Cors().AllowedMethods,
+			AllowOrigins:     r.corsCfg.AllowedOrigins,
+			AllowCredentials: r.corsCfg.AllowCredentials,
+			AllowHeaders:     r.corsCfg.AllowedHeaders,
+			AllowMethods:     r.corsCfg.AllowedMethods,
 		}),
-		pprof.New(),
 		requestid.New(),
-		idempotency.New(),
 	)
 }
 

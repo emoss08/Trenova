@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -11,10 +12,10 @@ import (
 )
 
 type GetAssignmentByIDOptions struct {
-	ID             pulid.ID
-	OrganizationID pulid.ID
-	BusinessUnitID pulid.ID
-	UserID         pulid.ID
+	ID     pulid.ID
+	OrgID  pulid.ID
+	BuID   pulid.ID
+	UserID pulid.ID
 }
 
 type AssignmentRequest struct {
@@ -52,7 +53,12 @@ func (a *AssignmentRequest) Validate(ctx context.Context) *errors.MultiError {
 	return nil
 }
 
+type ListAssignmentsRequest struct {
+	Filter *ports.LimitOffsetQueryOptions
+}
+
 type AssignmentRepository interface {
+	List(ctx context.Context, req ListAssignmentsRequest) (*ports.ListResult[*shipment.Assignment], error)
 	BulkAssign(ctx context.Context, req *AssignmentRequest) ([]*shipment.Assignment, error)
 	SingleAssign(ctx context.Context, a *shipment.Assignment) (*shipment.Assignment, error)
 	Reassign(ctx context.Context, a *shipment.Assignment) (*shipment.Assignment, error)
