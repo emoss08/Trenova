@@ -59,16 +59,6 @@ export const LiveModePresets = {
   }),
 
   /**
-   * Setup for shipment types with default configuration
-   */
-  shipmentTypes: () => ({
-    enabled: true,
-    endpoint: LIVE_MODE_ENDPOINTS.SHIPMENT_TYPES,
-    autoRefresh: true,
-    showToggle: true,
-  }),
-
-  /**
    * Setup for high-frequency updates (faster polling)
    */
   highFrequency: (endpoint: string) =>

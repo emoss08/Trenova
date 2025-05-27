@@ -223,6 +223,7 @@ export function DataTable<TData extends Record<string, any>>({
                   exportModelName={exportModelName}
                   extraActions={extraActions}
                   handleCreateClick={handleCreateClick}
+                  liveModeConfig={liveMode}
                   liveModeEnabled={liveModeEnabled}
                   onLiveModeToggle={setLiveModeEnabled}
                 />

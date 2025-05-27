@@ -5,6 +5,7 @@ import { Separator } from "@/components/ui/separator";
 import { usePermissions } from "@/hooks/use-permissions";
 import type { Resource } from "@/types/audit-entry";
 import type { ExtraAction } from "@/types/data-table";
+import type { LiveModeTableConfig } from "@/types/live-mode";
 import { Action } from "@/types/roles-permissions";
 import { faCirclePlay, faCircleStop } from "@fortawesome/pro-solid-svg-icons";
 import React from "react";
@@ -19,6 +20,7 @@ export default function DataTableActions({
   extraActions,
   handleCreateClick,
   resource,
+  liveModeConfig,
   liveModeEnabled,
   onLiveModeToggle,
 }: {
@@ -26,26 +28,30 @@ export default function DataTableActions({
   resource: Resource;
   exportModelName: string;
   handleCreateClick: () => void;
-  extraActions?: ExtraAction[];
   liveModeEnabled: boolean;
   onLiveModeToggle: (enabled: boolean) => void;
+  extraActions?: ExtraAction[];
+  liveModeConfig?: LiveModeTableConfig;
 }) {
   const { can } = usePermissions();
 
   return (
     <DataTableActionsInner>
       <DataTableViewOptions resource={resource} />
-      <Button
-        variant={liveModeEnabled ? "green" : "outline"}
-        onClick={() => onLiveModeToggle(!liveModeEnabled)}
-      >
-        {liveModeEnabled ? (
-          <Icon icon={faCircleStop} />
-        ) : (
-          <Icon icon={faCirclePlay} />
-        )}
-        Live Mode
-      </Button>
+      {liveModeConfig && (
+        <Button
+          variant={liveModeEnabled ? "green" : "outline"}
+          onClick={() => onLiveModeToggle(!liveModeEnabled)}
+        >
+          {liveModeEnabled ? (
+            <Icon icon={faCircleStop} />
+          ) : (
+            <Icon icon={faCirclePlay} />
+          )}
+          Live Mode
+        </Button>
+      )}
+
       {can(resource, Action.Create) ? (
         <>
           <Separator className="h-6 w-px bg-border" orientation="vertical" />

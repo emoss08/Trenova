@@ -169,7 +169,7 @@ type DataTableProps<TData extends Record<string, any>> = {
   pageSizeOptions?: Readonly<number[]>;
   extraActions?: ExtraAction[];
   getRowClassName?: (row: Row<TData>) => string;
-  liveMode: LiveModeTableConfig;
+  liveMode?: LiveModeTableConfig;
 };
 
 type DataTableBodyProps<TData extends Record<string, any>> = {
