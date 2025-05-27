@@ -7,7 +7,6 @@ import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, normalizePath, type PluginOption } from "vite";
 import { compression } from "vite-plugin-compression2";
-import { VitePWA } from "vite-plugin-pwa";
 import { viteStaticCopy } from "vite-plugin-static-copy";
 
 // Define vendor chunks that should be bundled separately
@@ -114,32 +113,32 @@ export default defineConfig({
     }),
     tailwindcss(),
     nodeResolve() as PluginOption,
-    VitePWA({
-      registerType: "autoUpdate",
-      devOptions: {
-        enabled: false,
-        navigateFallback: "index.html",
-        suppressWarnings: true,
-        type: "module",
-      },
-      workbox: {
-        globPatterns: ["**/*.{js,css,html,svg,png,ico,webp}"],
-        cleanupOutdatedCaches: true,
-        clientsClaim: true,
-        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4MB
-      },
-      pwaAssets: {
-        disabled: false,
-        config: true,
-      },
-      manifest: {
-        name: "Trenova TMS",
-        short_name: "Trenova",
-        description:
-          "An Open Source AI-driven asset based transportation management system",
-        theme_color: "#000000",
-      },
-    }),
+    // VitePWA({
+    //   registerType: "autoUpdate",
+    //   devOptions: {
+    //     enabled: false,
+    //     navigateFallback: "index.html",
+    //     suppressWarnings: true,
+    //     type: "module",
+    //   },
+    //   workbox: {
+    //     globPatterns: ["**/*.{js,css,html,svg,png,ico,webp}"],
+    //     cleanupOutdatedCaches: true,
+    //     clientsClaim: true,
+    //     maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4MB
+    //   },
+    //   pwaAssets: {
+    //     disabled: false,
+    //     config: true,
+    //   },
+    //   manifest: {
+    //     name: "Trenova TMS",
+    //     short_name: "Trenova",
+    //     description:
+    //       "An Open Source AI-driven asset based transportation management system",
+    //     theme_color: "#000000",
+    //   },
+    // }),
     viteStaticCopy({
       targets: [
         { src: cMapsDir, dest: "" },
