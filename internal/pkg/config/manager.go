@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -21,6 +22,38 @@ func NewManager() *Manager {
 	return &Manager{
 		Viper: viper.New(),
 	}
+}
+
+// expandWithDefault parses a string like "${VAR:-default}" and expands VAR,
+// using "default" if VAR is not set or is empty.
+func expandWithDefault(placeholder string) string {
+	// Regex to capture VAR and default_val from "${VAR:-default_val}"
+	// It also handles cases like "${VAR}" (no default)
+	r := regexp.MustCompile(`^\$\{(?P<var>[A-Z0-9_]+)(?::-(?P<def>.*?))?\}$`)
+	matches := r.FindStringSubmatch(placeholder)
+
+	if matches == nil {
+		// Not a recognized placeholder format, or just a regular string that might contain $
+		// Let os.ExpandEnv handle simple $VAR or ${VAR} cases if any
+		return os.ExpandEnv(placeholder)
+	}
+
+	varMap := make(map[string]string)
+	for i, name := range r.SubexpNames() {
+		if i != 0 && name != "" {
+			varMap[name] = matches[i]
+		}
+	}
+
+	varName := varMap["var"]
+	envValue := os.Getenv(varName)
+
+	if envValue != "" {
+		return envValue
+	}
+	// If envValue is empty, use the default value
+	// varMap["def"] will be empty string if ":-default_val" part was not present
+	return varMap["def"]
 }
 
 func (m *Manager) Load() (*Config, error) {
@@ -53,13 +86,32 @@ func (m *Manager) Load() (*Config, error) {
 	}
 
 	// Expand environment variables in specific configuration fields
+	// using our custom expander
 	if config.RabbitMQ.Username != "" {
-		config.RabbitMQ.Username = os.ExpandEnv(config.RabbitMQ.Username)
+		config.RabbitMQ.Username = expandWithDefault(config.RabbitMQ.Username)
 	}
 	if config.RabbitMQ.Password != "" {
-		config.RabbitMQ.Password = os.ExpandEnv(config.RabbitMQ.Password)
+		config.RabbitMQ.Password = expandWithDefault(config.RabbitMQ.Password)
 	}
-	// TODO: Consider a more generic way to expand env vars for other config sections if needed.
+
+	// Expand for DB User and Password as well, as they use the same pattern
+	if config.DB.Username != "" {
+		config.DB.Username = expandWithDefault(config.DB.Username)
+	}
+	if config.DB.Password != "" {
+		config.DB.Password = expandWithDefault(config.DB.Password)
+	}
+
+	// Expand for Minio AccessKey and SecretKey
+	if config.Minio.AccessKey != "" {
+		config.Minio.AccessKey = expandWithDefault(config.Minio.AccessKey)
+	}
+	if config.Minio.SecretKey != "" {
+		config.Minio.SecretKey = expandWithDefault(config.Minio.SecretKey)
+	}
+
+	// TODO: Consider a more generic way to expand env vars for ALL string fields
+	// in the config struct using reflection, if this pattern is widespread.
 
 	m.Cfg = config
 	return config, nil

@@ -234,40 +234,40 @@ const (
 // https://bun.uptrace.dev/guide/drivers.html
 type DatabaseConfig struct {
 	// Driver is the database driver to use.
-	Driver DatabaseDriver `mapstructure:"driver"`
+	Driver DatabaseDriver `mapstructure:"driver" json:"driver"`
 
 	// Host is the database host.
-	Host string `mapstructure:"host"`
+	Host string `mapstructure:"host" json:"host"`
 
 	// Port is the database port.
-	Port int `mapstructure:"port"`
+	Port int `mapstructure:"port" json:"port"`
 
 	// Username is the database username.
-	Username string `mapstructure:"username"`
+	Username string `mapstructure:"username" json:"username"`
 
 	// Password is the database password.
-	Password string `mapstructure:"password"`
+	Password string `mapstructure:"password" json:"password"`
 
 	// Database is the database name.
-	Database string `mapstructure:"database"`
+	Database string `mapstructure:"database" json:"database"`
 
 	// SSLMode is the database SSL mode.
-	SSLMode string `mapstructure:"sslMode"`
+	SSLMode string `mapstructure:"sslMode" json:"sslMode"`
 
 	// MaxConnections is the maximum number of connections in the pool.
-	MaxConnections int `mapstructure:"maxConnections"`
+	MaxConnections int `mapstructure:"maxConnections" json:"maxConnections"`
 
 	// MaxIdleConns is the maximum number of connections in the idle pool.
-	MaxIdleConns int `mapstructure:"maxIdleConns"`
+	MaxIdleConns int `mapstructure:"maxIdleConns" json:"maxIdleConns"`
 
 	// ConnMaxLifetime is the maximum amount of time a connection can be reused.
-	ConnMaxLifetime int `mapstructure:"connMaxLifetime"`
+	ConnMaxLifetime int `mapstructure:"connMaxLifetime" json:"connMaxLifetime"`
 
 	// ConnMaxIdleTime is the maximum amount of time a connection can be idle.
-	ConnMaxIdleTime int `mapstructure:"connMaxIdleTime"`
+	ConnMaxIdleTime int `mapstructure:"connMaxIdleTime" json:"connMaxIdleTime"`
 
 	// Debug is the debug mode.
-	Debug bool `mapstructure:"debug"`
+	Debug bool `mapstructure:"debug" json:"debug"`
 }
 
 // RedisConfig is the configuration for the redis.
