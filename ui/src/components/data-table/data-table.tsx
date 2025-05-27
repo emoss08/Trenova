@@ -1,6 +1,7 @@
 "use no memo";
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
+import { useLiveDataTable } from "@/hooks/use-live-data-table";
 import { usePermissions } from "@/hooks/use-permissions";
 import { queries } from "@/lib/queries";
 import { DataTableProps } from "@/types/data-table";
@@ -30,6 +31,7 @@ import { DataTableHeader } from "./_components/data-table-header";
 import { DataTableOptions } from "./_components/data-table-options";
 import { PaginationInner } from "./_components/data-table-pagination";
 import { DataTableSearch } from "./_components/data-table-search";
+import { LiveModeBanner } from "./_components/live-mode-banner";
 import { DataTableProvider } from "./data-table-provider";
 
 const DataTableActions = lazy(() => import("./_components/data-table-actions"));
@@ -49,6 +51,7 @@ export function DataTable<TData extends Record<string, any>>({
   extraActions,
   resource,
   getRowClassName,
+  liveMode,
 }: DataTableProps<TData>) {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { page, pageSize, entityId, modalType } = searchParams;
@@ -61,6 +64,16 @@ export function DataTable<TData extends Record<string, any>>({
       `${resource.toLowerCase()}-column-visibility`,
       {},
     );
+
+  // Live mode state management
+  const [liveModeEnabled, setLiveModeEnabled] = useLocalStorage(
+    `${resource.toLowerCase()}-live-mode-enabled`,
+    liveMode?.enabled || false,
+  );
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = useLocalStorage(
+    `${resource.toLowerCase()}-auto-refresh-enabled`,
+    liveMode?.autoRefresh || false,
+  );
 
   // Fetch persisted table configuration from the server
   const { data: tableConfig } = useQuery({
@@ -96,6 +109,14 @@ export function DataTable<TData extends Record<string, any>>({
     extraSearchParams,
   );
 
+  // Live mode integration
+  const liveData = useLiveDataTable({
+    queryKey,
+    endpoint: liveMode?.endpoint || "",
+    enabled: liveModeEnabled && !!liveMode?.endpoint,
+    autoRefresh: autoRefreshEnabled,
+  });
+
   const table = useReactTable({
     data: dataQuery.data?.results || [],
     columns: columns,
@@ -117,7 +138,18 @@ export function DataTable<TData extends Record<string, any>>({
     onRowSelectionChange: setRowSelection,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
-    meta: { getRowClassName },
+    meta: {
+      getRowClassName: (row: any) => {
+        let className = getRowClassName?.(row) || "";
+
+        // Add new item highlighting
+        if (liveMode && liveData.isNewItem?.(row.id)) {
+          className += " animate-new-item";
+        }
+
+        return className;
+      },
+    },
   });
 
   const selectedRow = useMemo(() => {
@@ -191,13 +223,39 @@ export function DataTable<TData extends Record<string, any>>({
                   exportModelName={exportModelName}
                   extraActions={extraActions}
                   handleCreateClick={handleCreateClick}
+                  liveModeEnabled={liveModeEnabled}
+                  onLiveModeToggle={setLiveModeEnabled}
                 />
               </Suspense>
             </DataTableOptions>
           )}
+
+          {liveMode && !autoRefreshEnabled && (
+            <LiveModeBanner
+              show={liveData.showNewItemsBanner}
+              newItemsCount={liveData.newItemsCount}
+              connected={liveData.connected}
+              onRefresh={liveData.refreshData}
+              onDismiss={liveData.dismissBanner}
+            />
+          )}
+
           <Table className="rounded-md border-x border-border border-separate border-spacing-0">
             {includeHeader && <DataTableHeader table={table} />}
-            <DataTableBody table={table} columns={columns} />
+            <DataTableBody
+              table={table}
+              columns={columns}
+              liveMode={
+                liveMode && {
+                  enabled: liveModeEnabled,
+                  connected: liveData.connected,
+                  showToggle: liveMode.showToggle,
+                  onToggle: setLiveModeEnabled,
+                  autoRefresh: autoRefreshEnabled,
+                  onAutoRefreshToggle: setAutoRefreshEnabled,
+                }
+              }
+            />
           </Table>
           <PaginationInner table={table} />
           {TableModal && isCreateModalOpen && (

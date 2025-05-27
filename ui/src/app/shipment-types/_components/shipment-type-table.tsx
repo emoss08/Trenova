@@ -5,6 +5,7 @@ import { useMemo } from "react";
 import { getColumns } from "./shipment-type-columns";
 import { CreateShipmentTypeModal } from "./shipment-type-create-modal";
 import { EditShipmentTypeModal } from "./shipment-type-edit-modal";
+import { LiveModePresets } from "@/lib/live-mode-utils";
 
 export default function ShipmentTypesDataTable() {
   const columns = useMemo(() => getColumns(), []);
@@ -19,6 +20,7 @@ export default function ShipmentTypesDataTable() {
       TableModal={CreateShipmentTypeModal}
       TableEditModal={EditShipmentTypeModal}
       columns={columns}
+      liveMode={LiveModePresets.shipmentTypes()}
     />
   );
 }

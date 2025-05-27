@@ -1,10 +1,73 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use no memo";
+import { Icon } from "@/components/ui/icons";
+import { Switch } from "@/components/ui/switch";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { DataTableBodyProps } from "@/types/data-table";
+import { faPlay } from "@fortawesome/pro-solid-svg-icons";
+import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
 import React from "react";
+
+function LiveModeTableRow({
+  columns,
+  liveMode,
+}: {
+  columns: any[];
+  liveMode: {
+    enabled: boolean;
+    connected: boolean;
+    showToggle?: boolean;
+    onToggle?: (enabled: boolean) => void;
+    autoRefresh?: boolean;
+    onAutoRefreshToggle?: (autoRefresh: boolean) => void;
+  };
+}) {
+  return (
+    <TableRow className="bg-blue-500/10 hover:bg-blue-500/20">
+      <TableCell colSpan={columns.length} className="p-3 select-none">
+        <div className="flex justify-between items-center">
+          <div className="flex items-center gap-3 text-blue-600">
+            <div className="flex items-center gap-1">
+              <Icon icon={faPlay} className="size-3" />
+              <span className="text-sm font-medium">Live Mode</span>
+            </div>
+          </div>
+
+          {liveMode.showToggle && (
+            <div className="flex items-center gap-2">
+              {liveMode.onAutoRefreshToggle && (
+                <div className="flex items-center gap-2">
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <span className="text-xs">Auto-refresh</span>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <span>Auto-refresh table content</span>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                  <Switch
+                    checked={liveMode.autoRefresh || false}
+                    onCheckedChange={liveMode.onAutoRefreshToggle}
+                    size="sm"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
 
 function DataTableRow<TData>({
   row,
@@ -94,9 +157,13 @@ const MemoizedRow = React.memo(DataTableRow, (prev, next) => {
 export function DataTableBody<TData extends Record<string, any>>({
   table,
   columns,
+  liveMode,
 }: DataTableBodyProps<TData>) {
   return (
-    <TableBody id="content" tabIndex={-1}>
+    <TableBody id="content" tabIndex={-1} className="p-2">
+      {liveMode?.enabled && (
+        <LiveModeTableRow columns={columns} liveMode={liveMode} />
+      )}
       {table.getRowModel().rows?.length ? (
         table.getRowModel().rows.map((row, index) => {
           const isLastRow = index === table.getRowModel().rows.length - 1;

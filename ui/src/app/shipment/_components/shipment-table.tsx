@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LiveModePresets } from "@/lib/live-mode-utils";
 import { queries } from "@/lib/queries";
 import { getShipmentStatusRowClassName } from "@/lib/table-styles";
 import { cn } from "@/lib/utils";
@@ -35,6 +36,7 @@ export default function ShipmentTable() {
         getRowClassName={(row) => {
           return cn(getShipmentStatusRowClassName(row.original.status));
         }}
+        liveMode={LiveModePresets.shipments()}
         // extraActions={[
         //   {
         //     key: "import-from-rate",

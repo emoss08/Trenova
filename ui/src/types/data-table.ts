@@ -16,6 +16,7 @@ import type {
 } from "@tanstack/react-table";
 import React from "react";
 import type { Resource } from "./audit-entry";
+import type { LiveModeTableConfig } from "./live-mode";
 
 export type Prettify<T> = {
   [K in keyof T]: T[K];
@@ -168,11 +169,20 @@ type DataTableProps<TData extends Record<string, any>> = {
   pageSizeOptions?: Readonly<number[]>;
   extraActions?: ExtraAction[];
   getRowClassName?: (row: Row<TData>) => string;
+  liveMode: LiveModeTableConfig;
 };
 
 type DataTableBodyProps<TData extends Record<string, any>> = {
   table: Table<TData>;
   columns: ColumnDef<TData>[];
+  liveMode?: {
+    enabled: boolean;
+    connected: boolean;
+    showToggle?: boolean;
+    onToggle?: (enabled: boolean) => void;
+    autoRefresh?: boolean;
+    onAutoRefreshToggle?: (autoRefresh: boolean) => void;
+  };
 };
 
 export type {

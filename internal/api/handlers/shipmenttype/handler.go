@@ -1,6 +1,8 @@
 package shipmenttype
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/api/middleware"
 	shipmenttypedomain "github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -8,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmenttype"
 	"github.com/emoss08/trenova/internal/pkg/ctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
+	"github.com/emoss08/trenova/internal/pkg/utils/streamingutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -43,6 +46,8 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		[]fiber.Handler{h.selectOptions},
 		middleware.PerMinute(120), // 120 reads per minute
 	)...)
+
+	api.Get("/live", h.liveStream)
 
 	api.Post("/", rl.WithRateLimit(
 		[]fiber.Handler{h.create},
@@ -178,4 +183,38 @@ func (h *Handler) update(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(updatedEntity)
+}
+
+func (h *Handler) liveStream(c *fiber.Ctx) error {
+	// Use the simplified streaming helper for shipments
+	fetchFunc := func(ctx context.Context, reqCtx *ctx.RequestContext) ([]*shipmenttypedomain.ShipmentType, error) {
+		filter := &ports.LimitOffsetQueryOptions{
+			TenantOpts: &ports.TenantOptions{
+				BuID:   reqCtx.BuID,
+				OrgID:  reqCtx.OrgID,
+				UserID: reqCtx.UserID,
+			},
+			Limit:  10, // Get last 10 shipments
+			Offset: 0,
+		}
+
+		result, err := h.sts.List(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+
+		return result.Items, nil
+	}
+
+	timestampFunc := func(st *shipmenttypedomain.ShipmentType) int64 {
+		// Use CreatedAt to only track new shipments, not existing ones
+		return st.CreatedAt
+	}
+
+	return streamingutils.StreamWithSimplePoller(
+		c,
+		streamingutils.DefaultSSEConfig(),
+		fetchFunc,
+		timestampFunc,
+	)
 }

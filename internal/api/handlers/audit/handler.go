@@ -1,6 +1,8 @@
 package audit
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -8,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/ctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
+	"github.com/emoss08/trenova/internal/pkg/utils/streamingutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
@@ -41,6 +44,8 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		[]fiber.Handler{h.list},
 		middleware.PerSecond(5), // 5 reads per second
 	)...)
+
+	api.Get("/live", h.liveStream)
 
 	api.Get("/:auditEntryID", rl.WithRateLimit(
 		[]fiber.Handler{h.get},
@@ -116,4 +121,37 @@ func (h *Handler) get(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(entry)
+}
+
+func (h *Handler) liveStream(c *fiber.Ctx) error {
+	// Use the simplified streaming helper for audit entries
+	fetchFunc := func(ctx context.Context, reqCtx *ctx.RequestContext) ([]*audit.Entry, error) {
+		filter := &ports.LimitOffsetQueryOptions{
+			TenantOpts: &ports.TenantOptions{
+				BuID:   reqCtx.BuID,
+				OrgID:  reqCtx.OrgID,
+				UserID: reqCtx.UserID,
+			},
+			Limit:  10, // Get last 10 entries
+			Offset: 0,
+		}
+
+		result, err := h.auditService.List(ctx, filter)
+		if err != nil {
+			return nil, err
+		}
+
+		return result.Items, nil
+	}
+
+	timestampFunc := func(entry *audit.Entry) int64 {
+		return entry.Timestamp
+	}
+
+	return streamingutils.StreamWithSimplePoller(
+		c,
+		streamingutils.DefaultSSEConfig(),
+		fetchFunc,
+		timestampFunc,
+	)
 }

@@ -1,6 +1,8 @@
 package shipment
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/api/middleware"
 	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -8,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipment"
 	"github.com/emoss08/trenova/internal/pkg/ctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
+	"github.com/emoss08/trenova/internal/pkg/utils/streamingutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -37,6 +40,8 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		[]fiber.Handler{h.list},
 		middleware.PerSecond(5), // 5 reads per second
 	)...)
+
+	api.Get("/live", h.liveStream)
 
 	api.Post("/", rl.WithRateLimit(
 		[]fiber.Handler{h.create},
@@ -361,4 +366,43 @@ func (h *Handler) calculateTotals(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(resp)
+}
+
+func (h *Handler) liveStream(c *fiber.Ctx) error {
+	// Use the simplified streaming helper for shipments
+	fetchFunc := func(ctx context.Context, reqCtx *ctx.RequestContext) ([]*shipmentdomain.Shipment, error) {
+		filter := &ports.LimitOffsetQueryOptions{
+			TenantOpts: &ports.TenantOptions{
+				BuID:   reqCtx.BuID,
+				OrgID:  reqCtx.OrgID,
+				UserID: reqCtx.UserID,
+			},
+			Limit:  10, // Get last 10 shipments
+			Offset: 0,
+		}
+
+		result, err := h.ss.List(ctx, &repositories.ListShipmentOptions{
+			ShipmentOptions: repositories.ShipmentOptions{
+				ExpandShipmentDetails: false, // Keep it lightweight for streaming
+			},
+			Filter: filter,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return result.Items, nil
+	}
+
+	timestampFunc := func(shipment *shipmentdomain.Shipment) int64 {
+		// Use CreatedAt to only track new shipments, not existing ones
+		return shipment.CreatedAt
+	}
+
+	return streamingutils.StreamWithSimplePoller(
+		c,
+		streamingutils.DefaultSSEConfig(),
+		fetchFunc,
+		timestampFunc,
+	)
 }

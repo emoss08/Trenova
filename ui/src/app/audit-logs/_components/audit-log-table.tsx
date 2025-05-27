@@ -1,4 +1,5 @@
 import { DataTable } from "@/components/data-table/data-table";
+import { LiveModePresets } from "@/lib/live-mode-utils";
 import { AuditEntry, Resource } from "@/types/audit-entry";
 import { useMemo } from "react";
 import { getColumns } from "./audit-log-columns";
@@ -18,6 +19,7 @@ export default function AuditLogTable() {
       TableEditModal={AuditLogDetailsSheet}
       defaultSort={[{ id: "timestamp", desc: true }]}
       columns={columns}
+      liveMode={LiveModePresets.auditLogs()}
     />
   );
 }

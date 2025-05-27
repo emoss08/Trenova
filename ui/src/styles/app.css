@@ -179,3 +179,41 @@
         @apply bg-background text-foreground;
     }
 }
+
+@layer utilities {
+    @keyframes new-item-flash {
+        0% {
+            background-color: rgba(92, 199, 131, 0.4);
+        }
+
+        50% {
+            background-color: rgb(34 197 94 / 0.6);
+        }
+
+        100% {
+            background-color: rgb(34 197 94 / 0.1);
+        }
+    }
+
+    @keyframes new-item-flash-dark {
+        0% {
+            background-color: rgb(34 197 94 / 0.3);
+        }
+
+        50% {
+            background-color: rgb(34 197 94 / 0.5);
+        }
+
+        100% {
+            background-color: rgb(34 197 94 / 0.05);
+        }
+    }
+
+    .animate-new-item {
+        animation: new-item-flash 3s ease-in-out;
+    }
+
+    .dark .animate-new-item {
+        animation: new-item-flash-dark 3s ease-in-out;
+    }
+}
