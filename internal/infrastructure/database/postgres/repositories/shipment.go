@@ -20,6 +20,7 @@ import (
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/samber/oops"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -1038,4 +1039,30 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, current
 	}
 
 	return duplicates, nil
+}
+
+func (sr *shipmentRepository) CalculateShipmentTotals(shp *shipment.Shipment) (*repositories.ShipmentTotalsResponse, error) {
+	// All calculations are in-memory. We let the shared calculator populate the
+	// monetary fields, then fetch the base charge via the new helper to avoid
+	// duplicating the algorithm.
+
+	// Populate OtherChargeAmount and TotalChargeAmount on the shipment struct.
+	sr.calc.CalculateTotals(shp)
+
+	baseCharge := sr.calc.CalculateBaseCharge(shp)
+	otherCharge := decimal.Zero
+	if shp.OtherChargeAmount.Valid {
+		otherCharge = shp.OtherChargeAmount.Decimal
+	}
+
+	total := decimal.Zero
+	if shp.TotalChargeAmount.Valid {
+		total = shp.TotalChargeAmount.Decimal
+	}
+
+	return &repositories.ShipmentTotalsResponse{
+		BaseCharge:        baseCharge,
+		OtherChargeAmount: otherCharge,
+		TotalChargeAmount: total,
+	}, nil
 }

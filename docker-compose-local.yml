@@ -34,6 +34,12 @@ services:
       timeout: 5s
       retries: 5
 
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --interval 30
+
   redis:
     image: redis/redis-stack:latest
     ports:
@@ -66,11 +72,12 @@ services:
     volumes:
       - "rabbitmq_data:/var/lib/rabbitmq"
       - "rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf" # Configuration file mount
+    restart: always
     healthcheck:
       test: [ "CMD", "rabbitmqctl", "status" ]
-      interval: 10s
+      interval: 30s
       timeout: 10s
-      retries: 5
+      retries: 10
     networks:
       - app-network
 
@@ -141,7 +148,7 @@ services:
 
   mailhog:
     image: mailhog/mailhog:latest
-    restart: unless-stopped
+    restart: always
     ports:
       - "1025:1025" # SMTP port
       - "8025:8025" # Web UI port
@@ -158,6 +165,7 @@ volumes:
   minio_data: {}
   rabbitmq_data: {}
   rabbitmq.conf: {}
+  watchtower_data: {}
 
 networks:
   app-network:

@@ -12,7 +12,7 @@ require (
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/gofiber/fiber/v2 v2.52.8
 	github.com/google/go-querystring v1.1.0
-	github.com/imroc/req/v3 v3.52.1
+	github.com/imroc/req/v3 v3.52.2
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jaswdr/faker/v2 v2.5.0
 	github.com/lib/pq v1.10.9
@@ -26,7 +26,7 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/samber/lo v1.50.0
 	github.com/samber/oops v1.18.0
-	github.com/samber/oops/loggers/zerolog v0.0.0-20250521144759-1bdea12a28fb
+	github.com/samber/oops/loggers/zerolog v0.0.0-20250526223731-4218dc5df851
 	github.com/shopspring/decimal v1.4.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/cobra v1.9.1

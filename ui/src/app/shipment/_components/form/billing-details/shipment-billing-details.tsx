@@ -1,14 +1,11 @@
 "use no memo";
 import { LazyComponent } from "@/components/error-boundary";
-import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { CustomerAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { ratingMethodChoices } from "@/lib/choices";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { toNumber } from "@/lib/utils";
-import { RatingMethod } from "@/types/shipment";
-import { useDebouncedEffect } from "@wojtekmaj/react-hooks";
 import React, { lazy } from "react";
 import { useFormContext } from "react-hook-form";
 
@@ -47,25 +44,7 @@ function ShipmentBillingDetailsInner({
 }
 
 function ShipmentBillingDetailsForm() {
-  const { control, watch, setValue } = useFormContext<ShipmentSchema>();
-
-  const ratingMethod = watch("ratingMethod");
-  const freightChargeAmount = watch("freightChargeAmount");
-  const otherChargeAmount = watch("otherChargeAmount");
-
-  // * Debounce the total charge amount calculation to prevent excessive re-renders
-  useDebouncedEffect(
-    () => {
-      if (ratingMethod && ratingMethod === RatingMethod.FlatRate) {
-        setValue(
-          "totalChargeAmount",
-          toNumber(freightChargeAmount) + toNumber(otherChargeAmount),
-        );
-      }
-    },
-    [ratingMethod, freightChargeAmount, otherChargeAmount, setValue],
-    500, // * 500ms delay
-  );
+  const { control } = useFormContext<ShipmentSchema>();
 
   return (
     <FormGroup cols={2} className="gap-4">
@@ -91,7 +70,7 @@ function ShipmentBillingDetailsForm() {
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
           rules={{ required: true }}
           name="ratingUnit"
@@ -101,17 +80,18 @@ function ShipmentBillingDetailsForm() {
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
+          tabIndex={-1}
           readOnly
           control={control}
           name="otherChargeAmount"
           label="Other Charges"
-          placeholder="Auto-calculated Additional Charges"
+          placeholder="Additional Charges"
           description="Sum of all additional charges (tolls, fees, etc.)."
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
           rules={{ required: true }}
           name="freightChargeAmount"
@@ -121,13 +101,14 @@ function ShipmentBillingDetailsForm() {
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
+          tabIndex={-1}
           readOnly
           control={control}
           rules={{ required: true }}
           name="totalChargeAmount"
           label="Total Charge"
-          placeholder="Auto-calculated Total"
+          placeholder="Total Charge"
           description="Automatically calculated total, including base and additional charges."
         />
       </FormControl>

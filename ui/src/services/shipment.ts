@@ -67,4 +67,15 @@ export class ShipmentAPI {
 
     return response.data;
   }
+
+  // Calculate shipment totals (preview)
+  async calculateTotals(values: Partial<ShipmentSchema>) {
+    const response = await http.post<{
+      baseCharge: string | number;
+      otherChargeAmount: string | number;
+      totalChargeAmount: string | number;
+    }>(`/shipments/calculate-totals/`, values);
+
+    return response.data;
+  }
 }

@@ -73,6 +73,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(60), // 60 writes per minute
 	)...)
 
+	api.Post("/calculate-totals/", rl.WithRateLimit(
+		[]fiber.Handler{h.calculateTotals},
+		middleware.PerSecond(30), // allow a few per second for debounced UI calls
+	)...)
+
 	api.Post("/check-for-duplicate-bols/", rl.WithRateLimit(
 		[]fiber.Handler{h.checkForDuplicateBOLs},
 		middleware.PerMinute(60), // 60 writes per minute
@@ -330,4 +335,30 @@ func (h *Handler) checkForDuplicateBOLs(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(BOLCheckResponse{
 		Valid: true,
 	})
+}
+
+// calculateTotals provides a stateless endpoint that receives a (partial)
+// shipment payload and returns the calculated monetary totals. It never
+// persists data – it merely reuses the same calculator that runs during
+// create/update operations.
+func (h *Handler) calculateTotals(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	shp := new(shipmentdomain.Shipment)
+	shp.OrganizationID = reqCtx.OrgID
+	shp.BusinessUnitID = reqCtx.BuID
+
+	if err = c.BodyParser(shp); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	resp, err := h.ss.CalculateShipmentTotals(shp)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(resp)
 }

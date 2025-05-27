@@ -87,14 +87,10 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
 
   const {
     setError,
-    watch,
     reset,
     handleSubmit,
-    formState: { isSubmitting, isSubmitSuccessful, errors },
+    formState: { isSubmitting, isSubmitSuccessful },
   } = form;
-
-  console.info("Shipment Create Sheet Errors", errors);
-  console.info("Shipment Create Sheet Watch", watch());
 
   // Reset the form when the mutation is successful
   // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset

@@ -60,9 +60,10 @@ func NewClient(p ClientParams) (*Client, error) {
 	setDefaults(cfg)
 
 	opts := &redis.Options{
-		Addr:            cfg.Addr,
+		Addr: cfg.Addr,
+		DB:   cfg.DB,
+		// Username:        cfg.Username,
 		Password:        cfg.Password,
-		DB:              cfg.DB,
 		ConnMaxIdleTime: cfg.ConnTimeout,
 		ReadTimeout:     cfg.ReadTimeout,
 		WriteTimeout:    cfg.WriteTimeout,

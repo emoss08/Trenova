@@ -1,12 +1,12 @@
-import { ScrollArea } from "@/components/ui/scroll-area";
+/* eslint-disable react/display-name */
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { lazy, memo, Suspense } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
+import { ShipmentFormContent } from "./shipment-form-body";
 import { ShipmentFormHeader } from "./shipment-form-header";
 
 // Lazy loaded components
-const ShipmentDetailsHeader = lazy(() => import("./shipment-details-header"));
 const ShipmentBillingDetails = lazy(
   () => import("./billing-details/shipment-billing-details"),
 );
@@ -42,7 +42,7 @@ export function ShipmentForm({ isLoading, ...props }: ShipmentDetailsProps) {
 }
 
 // Separate component for the sections to prevent re-renders of the scroll area container
-const ShipmentSectionsComponent = () => {
+const ShipmentSections = memo(() => {
   return (
     <>
       <ShipmentServiceDetails />
@@ -52,10 +52,7 @@ const ShipmentSectionsComponent = () => {
       <ShipmentMovesDetails />
     </>
   );
-};
-
-ShipmentSectionsComponent.displayName = "ShipmentSections";
-const ShipmentSections = memo(ShipmentSectionsComponent);
+});
 
 export function ShipmentFormBody({
   selectedShipment,
@@ -74,39 +71,11 @@ export function ShipmentFormBody({
   return (
     <ShipmentFormBodyOuter>
       <ShipmentFormHeader selectedShipment={selectedShipment} />
-      <ShipmentScrollAreaOuter>
-        <ShipmentDetailsHeader selectedShipment={selectedShipment} />
-        <ShipmentScrollArea>
-          <ShipmentScrollAreaInner>{children}</ShipmentScrollAreaInner>
-          <ShipmentScrollAreaShadow />
-        </ShipmentScrollArea>
-      </ShipmentScrollAreaOuter>
+      <ShipmentFormContent>{children}</ShipmentFormContent>
     </ShipmentFormBodyOuter>
   );
 }
 
-function ShipmentScrollAreaOuter({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-col">{children}</div>;
-}
-
 function ShipmentFormBodyOuter({ children }: { children: React.ReactNode }) {
   return <div className="size-full">{children}</div>;
-}
-
-function ShipmentScrollAreaShadow() {
-  return (
-    <div className="pointer-events-none rounded-b-lg absolute bottom-0 z-50 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />
-  );
-}
-
-function ShipmentScrollAreaInner({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-col gap-4 p-4 pb-16">{children}</div>;
-}
-
-function ShipmentScrollArea({ children }: { children: React.ReactNode }) {
-  return (
-    <ScrollArea className="flex flex-col overflow-y-auto max-h-[calc(100vh-8.5rem)]">
-      {children}
-    </ScrollArea>
-  );
 }

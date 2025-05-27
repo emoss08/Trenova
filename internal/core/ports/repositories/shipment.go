@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
+	"github.com/shopspring/decimal"
 )
 
 type ShipmentOptions struct {
@@ -98,6 +99,12 @@ type DuplicateBOLsResult struct {
 	ProNumber string   `bun:"pro_number"`
 }
 
+type ShipmentTotalsResponse struct {
+	BaseCharge        decimal.Decimal `json:"baseCharge"`
+	OtherChargeAmount decimal.Decimal `json:"otherChargeAmount"`
+	TotalChargeAmount decimal.Decimal `json:"totalChargeAmount"`
+}
+
 type ShipmentRepository interface {
 	List(ctx context.Context, opts *ListShipmentOptions) (*ports.ListResult[*shipment.Shipment], error)
 	GetByID(ctx context.Context, opts GetShipmentByIDOptions) (*shipment.Shipment, error)
@@ -107,4 +114,5 @@ type ShipmentRepository interface {
 	Cancel(ctx context.Context, req *CancelShipmentRequest) (*shipment.Shipment, error)
 	Duplicate(ctx context.Context, req *DuplicateShipmentRequest) (*shipment.Shipment, error)
 	CheckForDuplicateBOLs(ctx context.Context, currentBOL string, orgID pulid.ID, buID pulid.ID, excludeID *pulid.ID) ([]DuplicateBOLsResult, error)
+	CalculateShipmentTotals(shp *shipment.Shipment) (*ShipmentTotalsResponse, error)
 }
