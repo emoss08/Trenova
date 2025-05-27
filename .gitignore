@@ -1,7 +1,8 @@
 /config/**/*.env*
 /config/**/*.yaml
+/config/production/pgbouncer/**
+/config/development/pgbouncer/**
 !/config/**/*.example*
-/config/pgbouncer/userlist.txt
 
 tmp/*
 init-scripts/*
