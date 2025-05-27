@@ -5,18 +5,15 @@ x-build-args: &build-args
 
 services:
   db:
-    image: postgres:17-alpine
+    image: postgres:latest
     ports:
       - "5432:5432"
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_DB: ${DB_NAME:-postgres}
-      # Postgres configs via environment
+      POSTGRES_DB: ${DB_NAME:-trenova_go_db}
       POSTGRES_INITDB_ARGS: "--data-checksums"
-      # Extensions
       POSTGRES_MULTIPLE_EXTENSIONS: "pg_stat_statements,pg_trgm,btree_gin,btree_gist"
-    # Use a custom configuration file instead of command-line args
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
@@ -29,10 +26,38 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-postgres}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}" ]
       interval: 10s
       timeout: 5s
       retries: 5
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest # Using a pre-built image for simplicity
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/trenova_go_db?sslmode=disable
+    volumes:
+      - ./config/development/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./config/development/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    ports:
+      - "6432:6432"
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -h localhost -p 6432 -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   watchtower:
     image: containrrr/watchtower

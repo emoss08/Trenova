@@ -11,11 +11,11 @@ services:
     ports:
       - "5432:5432"
     environment:
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres}
-      - POSTGRES_USER=${DB_USER:-postgres}
-      - POSTGRES_DB=${DB_NAME:-postgres}
-      - POSTGRES_MULTIPLE_EXTENSIONS=pg_stat_statements,pg_buffercache
-      - POSTGRES_INITDB_ARGS=--data-checksums
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_DB: ${DB_NAME:-trenova_go_db}
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+      POSTGRES_MULTIPLE_EXTENSIONS: "pg_stat_statements,pg_trgm,btree_gin,btree_gist"
     command:
       - "postgres"
       - "-c"
@@ -59,7 +59,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-postgres}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -69,13 +69,10 @@ services:
     container_name: tren-pgbouncer
     image: edoburu/pgbouncer:latest # Using a pre-built image for simplicity
     environment:
-      - POSTGRES_USER=${DB_USER:-postgres}
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-postgres} # This is for pgbouncer to connect to postgres
-      - POSTGRES_DB=${DB_NAME:-postgres}
-      - DB_HOST=tren-db # Service name of the PostgreSQL container
+      - DATABASE_URL=postgres://postgres:postgres@tren-db:5432/trenova_go_db?sslmode=disable
     volumes:
-      - ./config/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
-      - ./config/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+      - ./config/production/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./config/production/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
     ports:
       - "6432:6432"
     depends_on:
@@ -91,7 +88,7 @@ services:
         reservations:
           memory: 64M
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -h localhost -p 6432 -U ${DB_USER:-postgres} -d ${DB_NAME:-postgres}" ]
+      test: [ "CMD-SHELL", "pg_isready -h localhost -p 6432 -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -151,8 +148,8 @@ services:
       - "5674:5672" # RabbitMQ
       - "15674:15672" # Management UI
     environment:
-      - RABBITMQ_DEFAULT_USER=${RABBITMQ_DEFAULT_USER:-user}
-      - RABBITMQ_DEFAULT_PASS=${RABBITMQ_DEFAULT_PASS:-password}
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
     volumes:
       - "rabbitmq_data:/var/lib/rabbitmq"
       - "rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf" # Configuration file mount
@@ -164,12 +161,6 @@ services:
       retries: 10
     networks:
       - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-        reservations:
-          memory: 64M
 
   tren-api:
     container_name: tren-api
@@ -251,6 +242,7 @@ services:
       - app-network
     depends_on:
       - tren-api
+      - tren-client
     restart: unless-stopped
     deploy:
       resources:
