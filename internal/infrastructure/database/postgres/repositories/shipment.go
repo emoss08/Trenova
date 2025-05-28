@@ -1026,7 +1026,7 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, current
 	}
 
 	// * Small struct to store the results of the query
-	var duplicates []repositories.DuplicateBOLsResult
+	duplicates := make([]repositories.DuplicateBOLsResult, 0)
 
 	// * Scan the results into the duplicates slice
 	if err = query.Scan(ctx, &duplicates); err != nil {

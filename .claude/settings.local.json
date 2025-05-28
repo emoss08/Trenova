@@ -5,7 +5,9 @@
       "Bash(rg:*)",
       "Bash(go test:*)",
       "Bash(go run:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }
