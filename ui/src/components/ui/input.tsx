@@ -46,7 +46,7 @@ function Input({
             // Invalid state
             isInvalid &&
               "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
-            icon && "pl-8",
+            icon && "pl-7",
             (sideText || rightElement) && "pr-12",
             className,
           )}
@@ -68,4 +68,3 @@ function Input({
 }
 
 export { Input };
-

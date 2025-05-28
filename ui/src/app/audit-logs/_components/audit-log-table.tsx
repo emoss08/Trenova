@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { AuditEntry } from "@/types/audit-entry";
+import { LiveModePresets } from "@/lib/live-mode-utils";
+import { AuditEntry, Resource } from "@/types/audit-entry";
 import { useMemo } from "react";
 import { getColumns } from "./audit-log-columns";
 import { AuditLogDetailsSheet } from "./audit-log-sheet";
@@ -9,7 +10,8 @@ export default function AuditLogTable() {
 
   return (
     <DataTable<AuditEntry>
-      name="Audit Log"
+      resource={Resource.AuditEntry}
+      name="Audit Entry"
       link="/audit-logs/"
       includeOptions={false}
       queryKey="audit-log-list"
@@ -17,6 +19,7 @@ export default function AuditLogTable() {
       TableEditModal={AuditLogDetailsSheet}
       defaultSort={[{ id: "timestamp", desc: true }]}
       columns={columns}
+      liveMode={LiveModePresets.auditLogs()}
     />
   );
 }

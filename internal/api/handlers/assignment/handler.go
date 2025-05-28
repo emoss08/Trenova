@@ -66,10 +66,10 @@ func (h *Handler) get(c *fiber.Ctx) error {
 	}
 
 	entity, err := h.as.Get(c.UserContext(), repositories.GetAssignmentByIDOptions{
-		ID:             assignmentID,
-		OrganizationID: reqCtx.OrgID,
-		BusinessUnitID: reqCtx.BuID,
-		UserID:         reqCtx.UserID,
+		ID:     assignmentID,
+		OrgID:  reqCtx.OrgID,
+		BuID:   reqCtx.BuID,
+		UserID: reqCtx.UserID,
 	})
 	if err != nil {
 		return h.eh.HandleError(c, err)

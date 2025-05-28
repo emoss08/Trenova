@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker restart:*)",
+      "Bash(rg:*)",
+      "Bash(go test:*)",
+      "Bash(go run:*)",
+      "Bash(rm:*)",
+      "Bash(find:*)",
+      "Bash(grep:*)"
+    ],
+    "deny": []
+  }
+}

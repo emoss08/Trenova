@@ -112,11 +112,8 @@ export default function CustomerForm() {
               name="stateId"
               label="State"
               placeholder="State"
-              menuPlacement="top"
               description="The U.S. state where the customer is situated."
               options={usStateOptions}
-              isLoading={usStates.isLoading}
-              isFetchError={usStates.isError}
             />
           </FormControl>
           <FormControl cols="full">

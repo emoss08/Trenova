@@ -150,11 +150,6 @@ function StopDialogAction({
     setIsOpen(false);
   }, []);
 
-  console.info("stop-dialog-action debug information", {
-    moveIdx,
-    isOpen,
-  });
-
   return (
     <>
       <DropdownMenuItem

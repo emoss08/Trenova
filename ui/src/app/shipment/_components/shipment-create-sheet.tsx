@@ -10,86 +10,85 @@ import {
 } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
-import { useFormWithSave } from "@/hooks/use-form-with-save";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
-import { http } from "@/lib/http-client";
 import {
   shipmentSchema,
   type ShipmentSchema,
 } from "@/lib/schemas/shipment-schema";
+import { api } from "@/services/api";
 import { TableSheetProps } from "@/types/data-table";
 import { MoveStatus } from "@/types/move";
 import { RatingMethod, ShipmentStatus } from "@/types/shipment";
 import { StopStatus, StopType } from "@/types/stop";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useRef } from "react";
-import { FormProvider } from "react-hook-form";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { ShipmentForm } from "./form/shipment-form";
 
 export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
+  const queryClient = useQueryClient();
   const { isPopout, closePopout } = usePopoutWindow();
 
-  const form = useFormWithSave({
-    resourceName: "Shipment",
-    formOptions: {
-      resolver: zodResolver(shipmentSchema),
-      defaultValues: {
-        status: ShipmentStatus.New,
-        proNumber: undefined,
-        ratingMethod: RatingMethod.FlatRate,
-        ratingUnit: 1,
-        moves: [
-          {
-            sequence: 0,
-            loaded: true,
-            status: MoveStatus.New,
-            stops: [
-              {
-                sequence: 0,
-                status: StopStatus.New,
-                type: StopType.Pickup,
-              },
-              {
-                sequence: 1,
-                status: StopStatus.New,
-                type: StopType.Delivery,
-              },
-            ],
-          },
-        ],
-      },
-      mode: "onChange",
-    },
-    mutationFn: async (values: ShipmentSchema) => {
-      const response = await http.post(`/shipments/`, values);
-      return response.data;
-    },
-    onSuccess: () => {
-      onOpenChange(false);
-
-      broadcastQueryInvalidation({
-        queryKey: ["shipment", "shipment-list", "stop", "assignment"],
-        options: {
-          correlationId: `create-shipment-${Date.now()}`,
+  const form = useForm({
+    resolver: zodResolver(shipmentSchema),
+    defaultValues: {
+      status: ShipmentStatus.New,
+      proNumber: undefined,
+      ratingMethod: RatingMethod.FlatRate,
+      ratingUnit: 1,
+      actualDeliveryDate: undefined,
+      actualShipDate: undefined,
+      customerId: undefined,
+      bol: undefined,
+      serviceTypeId: undefined,
+      shipmentTypeId: undefined,
+      temperatureMax: undefined,
+      temperatureMin: undefined,
+      tractorTypeId: undefined,
+      trailerTypeId: undefined,
+      weight: undefined,
+      pieces: undefined,
+      freightChargeAmount: 0,
+      otherChargeAmount: 0,
+      totalChargeAmount: 0,
+      customer: undefined,
+      additionalCharges: [],
+      commodities: [],
+      moves: [
+        {
+          sequence: 0,
+          loaded: true,
+          tractorId: undefined,
+          trailerId: undefined,
+          assignment: undefined,
+          distance: 0,
+          status: MoveStatus.New,
+          stops: [
+            {
+              sequence: 0,
+              status: StopStatus.New,
+              type: StopType.Pickup,
+            },
+            {
+              sequence: 1,
+              status: StopStatus.New,
+              type: StopType.Delivery,
+            },
+          ],
         },
-        config: {
-          predicate: true,
-          refetchType: "all",
-        },
-      });
+      ],
     },
-    onSettled: () => {
-      if (isPopout) {
-        closePopout();
-      }
-    },
+    mode: "onChange",
   });
 
   const {
+    setError,
     reset,
     handleSubmit,
-    onSubmit,
     formState: { isSubmitting, isSubmitSuccessful },
   } = form;
 
@@ -98,6 +97,48 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
   useEffect(() => {
     reset();
   }, [isSubmitSuccessful, reset, onOpenChange]);
+
+  const handleClose = useCallback(() => {
+    onOpenChange(false);
+    reset();
+  }, [onOpenChange, reset]);
+
+  const { mutateAsync } = useApiMutation({
+    mutationFn: async (values: ShipmentSchema) => {
+      return await api.shipments.create(values);
+    },
+    onSuccess: (newData) => {
+      toast.success("Shipment Created", {
+        description: `Shipment created successfully`,
+      });
+      handleClose();
+
+      broadcastQueryInvalidation({
+        queryKey: ["shipments"],
+        options: { correlationId: `create-shipment-${Date.now()}` },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
+
+      queryClient.setQueryData(["shipments", newData.data.id], newData.data);
+      reset();
+
+      if (isPopout) {
+        closePopout();
+      }
+    },
+    setFormError: setError,
+    resourceName: "Shipment",
+  });
+
+  const onSubmit = useCallback(
+    async (values: ShipmentSchema) => {
+      await mutateAsync(values);
+    },
+    [mutateAsync],
+  );
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -135,7 +176,7 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
             <SheetBody className="p-0">
               <ShipmentForm />
             </SheetBody>
-            <FormSaveDock />
+            <FormSaveDock position="right" />
           </Form>
         </FormProvider>
       </SheetContent>

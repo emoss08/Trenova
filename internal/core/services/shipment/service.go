@@ -523,3 +523,24 @@ func (s *Service) MarkReadyToBill(ctx context.Context, req *repositories.UpdateS
 
 	return updatedEntity, nil
 }
+
+func (s *Service) CalculateShipmentTotals(shp *shipment.Shipment) (*repositories.ShipmentTotalsResponse, error) {
+	log := s.l.With().Str("operation", "CalculateShipmentTotals").Logger()
+
+	// We do not persist any data here; the calculator only needs an in-memory
+	// copy of the shipment with the user-supplied fields filled in. The heavy
+	// lifting is delegated to the repository which has access to the shared
+	// ShipmentCalculator instance.
+
+	// NOTE: No explicit permission check is required because we are not
+	// accessing or mutating any stored resources. If that ever changes, a
+	// read permission check similar to the one in List/Get can be added.
+
+	resp, err := s.repo.CalculateShipmentTotals(shp)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to calculate shipment totals")
+		return nil, err
+	}
+
+	return resp, nil
+}

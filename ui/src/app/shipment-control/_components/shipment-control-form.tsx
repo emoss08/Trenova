@@ -18,7 +18,7 @@ import {
   ShipmentControlSchema,
   shipmentControlSchema,
 } from "@/lib/schemas/shipmentcontrol-schema";
-import { updateShipmentControl } from "@/services/organization";
+import { api } from "@/services/api";
 import type { APIError } from "@/types/errors";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -51,9 +51,7 @@ export default function ShipmentControlForm() {
 
   const { mutateAsync } = useMutation({
     mutationFn: async (values: ShipmentControlSchema) => {
-      const response = await updateShipmentControl(values);
-
-      return response.data;
+      return await api.shipmentControl.update(values);
     },
     onMutate: async (newValues) => {
       // * Cancel any outgoing refetches so they don't overwrite our optimistic update

@@ -5,7 +5,7 @@ import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<DocumentTypeSchema>[] {
   const columnHelper = createColumnHelper<DocumentTypeSchema>();
-  const commonColumns = createCommonColumns();
+  const commonColumns = createCommonColumns<DocumentTypeSchema>();
 
   return [
     columnHelper.display({

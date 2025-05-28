@@ -4,7 +4,7 @@ import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
 import { Label } from "@/components/ui/label";
 import { loginSchema, LoginSchema } from "@/lib/schemas/auth-schema";
-import { login } from "@/services/auth";
+import { api } from "@/services/api";
 import { useAuthActions } from "@/stores/user-store";
 import { APIError } from "@/types/errors";
 import { faLock } from "@fortawesome/pro-regular-svg-icons";
@@ -27,7 +27,7 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
 
   const { mutateAsync } = useMutation({
     mutationFn: async (values: LoginSchema) => {
-      const response = await login(values);
+      const response = await api.auth.login(values);
       return response.data;
     },
     onSuccess: (data) => {

@@ -5,12 +5,12 @@ import { flexRender, type Table } from "@tanstack/react-table";
 
 export function DataTableHeader<TData>({ table }: { table: Table<TData> }) {
   return (
-    <TableHeader className={cn("sticky top-0 z-20 rounded-t-md bg-background")}>
+    <TableHeader className="sticky top-0 z-20 rounded-t-md bg-background">
       {table.getHeaderGroups().map((headerGroup) => (
         <TableRow
           key={headerGroup.id}
           className={cn(
-            "bg-muted hover:bg-muted/50",
+            "bg-sidebar hover:bg-sidebar/50",
             "[&>*]:border-t [&>:not(:last-child)]:border-r",
           )}
         >
@@ -44,9 +44,7 @@ export function DataTableHeader<TData>({ table }: { table: Table<TData> }) {
                     onDoubleClick={() => header.column.resetSize()}
                     onMouseDown={header.getResizeHandler()}
                     onTouchStart={header.getResizeHandler()}
-                    className={cn(
-                      "user-select-none absolute -right-2 top-0 z-10 flex h-full w-4 cursor-col-resize touch-none justify-center before:absolute before:inset-y-0 before:w-px before:translate-x-px before:bg-border",
-                    )}
+                    className="user-select-none absolute -right-2 top-0 z-10 flex h-full w-4 cursor-col-resize touch-none justify-center before:absolute before:inset-y-0 before:w-px before:translate-x-px before:bg-border"
                   />
                 )}
               </TableHead>

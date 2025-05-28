@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/tableconfiguration"
 	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 )
@@ -33,12 +35,32 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 
 	api.Get("/", rl.WithRateLimit(
 		[]fiber.Handler{h.list},
-		middleware.PerMinute(60), // 60 reads per minute
+		middleware.PerMinute(120), // 120 reads per minute
+	)...)
+
+	api.Get("/me/:resource", rl.WithRateLimit(
+		[]fiber.Handler{h.listUserConfigurations},
+		middleware.PerSecond(5), // 5 reads per second
 	)...)
 
 	api.Post("/", rl.WithRateLimit(
 		[]fiber.Handler{h.create},
-		middleware.PerMinute(60),
+		middleware.PerSecond(3), // 3 writes per second
+	)...)
+
+	api.Get(":resource", rl.WithRateLimit(
+		[]fiber.Handler{h.getDefaultOrLatestConfiguration},
+		middleware.PerSecond(10), // 10 reads per second
+	)...)
+
+	api.Put(":configID", rl.WithRateLimit(
+		[]fiber.Handler{h.update},
+		middleware.PerSecond(3), // 3 writes per second
+	)...)
+
+	api.Delete(":configID", rl.WithRateLimit(
+		[]fiber.Handler{h.delete},
+		middleware.PerSecond(5), // 5 writes per second
 	)...)
 }
 
@@ -69,6 +91,28 @@ func (h *Handler) list(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(result)
 }
 
+func (h *Handler) listUserConfigurations(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*tableconfigurationdomain.Configuration], error) {
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
+		resource := fc.Params("resource")
+
+		return h.ts.ListUserConfigurations(fc.UserContext(), &repositories.ListUserConfigurationRequest{
+			Resource: resource,
+			Filter:   filter,
+		})
+	}
+
+	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
+}
+
 func (h *Handler) create(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
@@ -90,4 +134,76 @@ func (h *Handler) create(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(created)
+}
+
+func (h *Handler) getDefaultOrLatestConfiguration(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	resource := c.Params("resource")
+
+	config, err := h.ts.GetDefaultOrLatestConfiguration(c.UserContext(), resource, reqCtx)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	if config == nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "configuration not found"})
+	}
+	return c.Status(fiber.StatusOK).JSON(config)
+}
+
+func (h *Handler) update(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	configID, err := pulid.MustParse(c.Params("configID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	tr := new(tableconfigurationdomain.Configuration)
+	tr.ID = configID
+	tr.OrganizationID = reqCtx.OrgID
+	tr.BusinessUnitID = reqCtx.BuID
+	tr.UserID = reqCtx.UserID
+
+	if err = c.BodyParser(tr); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	updatedConfig, err := h.ts.Update(c.UserContext(), tr)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(updatedConfig)
+}
+
+func (h *Handler) delete(c *fiber.Ctx) error {
+	reqCtx, err := ctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	configID, err := pulid.MustParse(c.Params("configID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	err = h.ts.Delete(c.UserContext(), repositories.DeleteUserConfigurationRequest{
+		ConfigID: configID,
+		UserID:   reqCtx.UserID,
+		OrgID:    reqCtx.OrgID,
+		BuID:     reqCtx.BuID,
+	})
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }

@@ -1,10 +1,11 @@
 /* eslint-disable react-hooks/rules-of-hooks */
 import {
-  createEntityRefColumn,
   createNestedEntityRefColumn,
+  EntityRefCell,
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { HoverCardTimestamp } from "@/components/data-table/_components/data-table-components";
 import { ShipmentStatusBadge } from "@/components/status-badge";
+import type { CustomerSchema } from "@/lib/schemas/customer-schema";
 import { LocationSchema } from "@/lib/schemas/location-schema";
 import {
   getDestinationStopInfo,
@@ -27,6 +28,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
         return <ShipmentStatusBadge status={status} />;
       },
       size: 100,
+      enableHiding: false,
     }),
     {
       accessorKey: "proNumber",
@@ -35,14 +37,32 @@ export function getColumns(): ColumnDef<Shipment>[] {
         const proNumber = row.original.proNumber;
         return <p>{proNumber}</p>;
       },
-      size: 100,
+      enableHiding: false,
     },
-    createEntityRefColumn<Shipment, "customer">(columnHelper, "customer", {
-      basePath: "/billing/configurations/customers",
-      getId: (customer) => customer.id,
-      getDisplayText: (customer) => customer.name,
-      getHeaderText: "Customer",
-    }),
+    {
+      accessorKey: "customer",
+      header: "Customer",
+      cell: ({ row }) => {
+        const { customer } = row.original;
+
+        if (!customer) {
+          return <p className="text-muted-foreground">-</p>;
+        }
+
+        return (
+          <EntityRefCell<CustomerSchema, Shipment>
+            entity={customer}
+            config={{
+              basePath: "/billing/configurations/customers",
+              getId: (customer) => customer.id,
+              getDisplayText: (customer) => customer.name,
+              getHeaderText: "Customer",
+            }}
+            parent={row.original}
+          />
+        );
+      },
+    },
     createNestedEntityRefColumn(columnHelper, {
       columnId: "originLocation",
       basePath: "/dispatch/configurations/locations",
@@ -66,6 +86,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
     }),
     {
       id: "originPickup",
+      accessorKey: "originPickup",
       header: "Origin Date",
       cell: ({ row }) => {
         const shipment = row.original;
@@ -95,8 +116,9 @@ export function getColumns(): ColumnDef<Shipment>[] {
         }
       },
     }),
-    columnHelper.display({
+    {
       id: "destinationPickup",
+      accessorKey: "destinationPickup",
       header: "Destination Date",
       cell: ({ row }) => {
         const shipment = row.original;
@@ -106,6 +128,6 @@ export function getColumns(): ColumnDef<Shipment>[] {
           <HoverCardTimestamp timestamp={destinationStop?.plannedArrival} />
         );
       },
-    }),
+    },
   ];
 }

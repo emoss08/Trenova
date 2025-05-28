@@ -1,6 +1,6 @@
-trenova.local {
-	tls /etc/caddy/certs/cert.pem /etc/caddy/certs/key.pem
-
+prod.trenova.app {
+	tls internal
+	
 	handle /ws/* {
 		reverse_proxy tren-api:3001 {
 			header_up Host {host}

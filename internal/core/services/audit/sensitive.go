@@ -179,9 +179,8 @@ func (sdm *SensitiveDataManager) applyNameAndPathRules(data map[string]any, fiel
 // findMapAtPath navigates to the map at the specified dot-separated path
 func (sdm *SensitiveDataManager) findMapAtPath(data map[string]any, path string) (bool, map[string]any) {
 	currentMap := data
-	pathSegments := strings.Split(path, ".")
 
-	for _, segment := range pathSegments {
+	for segment := range strings.SplitSeq(path, ".") {
 		nested, ok := currentMap[segment].(map[string]any)
 		if !ok {
 			return false, nil

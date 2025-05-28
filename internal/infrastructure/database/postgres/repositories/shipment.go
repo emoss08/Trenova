@@ -20,6 +20,7 @@ import (
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/samber/oops"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -362,6 +363,8 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 // Returns:
 //   - *shipment.Shipment: The updated shipment.
 //   - error: If the update fails or version conflicts occur.
+//
+//nolint:funlen // This is a long function, but it is a good function.
 func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
@@ -1023,7 +1026,7 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, current
 	}
 
 	// * Small struct to store the results of the query
-	var duplicates []repositories.DuplicateBOLsResult
+	duplicates := make([]repositories.DuplicateBOLsResult, 0)
 
 	// * Scan the results into the duplicates slice
 	if err = query.Scan(ctx, &duplicates); err != nil {
@@ -1036,4 +1039,30 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, current
 	}
 
 	return duplicates, nil
+}
+
+func (sr *shipmentRepository) CalculateShipmentTotals(shp *shipment.Shipment) (*repositories.ShipmentTotalsResponse, error) {
+	// All calculations are in-memory. We let the shared calculator populate the
+	// monetary fields, then fetch the base charge via the new helper to avoid
+	// duplicating the algorithm.
+
+	// Populate OtherChargeAmount and TotalChargeAmount on the shipment struct.
+	sr.calc.CalculateTotals(shp)
+
+	baseCharge := sr.calc.CalculateBaseCharge(shp)
+	otherCharge := decimal.Zero
+	if shp.OtherChargeAmount.Valid {
+		otherCharge = shp.OtherChargeAmount.Decimal
+	}
+
+	total := decimal.Zero
+	if shp.TotalChargeAmount.Valid {
+		total = shp.TotalChargeAmount.Decimal
+	}
+
+	return &repositories.ShipmentTotalsResponse{
+		BaseCharge:        baseCharge,
+		OtherChargeAmount: otherCharge,
+		TotalChargeAmount: total,
+	}, nil
 }

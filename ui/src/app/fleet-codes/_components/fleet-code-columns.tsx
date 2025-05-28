@@ -5,7 +5,7 @@ import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<FleetCode>[] {
   const columnHelper = createColumnHelper<FleetCode>();
-  const commonColumns = createCommonColumns();
+  const commonColumns = createCommonColumns<FleetCode>();
 
   return [
     commonColumns.status,

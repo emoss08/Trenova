@@ -162,6 +162,10 @@ export function AuditEntryResourceBadge({
       variant: "orange",
       text: "Document Quality Config",
     },
+    [Resource.ResourceEditor]: {
+      variant: "orange",
+      text: "Resource Editor",
+    },
     // Operations Resources
     [Resource.Worker]: {
       variant: "indigo",
@@ -256,9 +260,9 @@ export function AuditEntryResourceBadge({
       variant: "pink",
       text: "Report",
     },
-    [Resource.AuditEntries]: {
+    [Resource.AuditEntry]: {
       variant: "pink",
-      text: "Audit Log",
+      text: "Audit Entry",
     },
     [Resource.TableConfiguration]: {
       variant: "pink",
@@ -279,6 +283,10 @@ export function AuditEntryResourceBadge({
     [Resource.Backup]: {
       variant: "warning",
       text: "Backup",
+    },
+    [Resource.PageFavorite]: {
+      variant: "warning",
+      text: "Page Favorite",
     },
     [Resource.Dashboard]: {
       variant: undefined,

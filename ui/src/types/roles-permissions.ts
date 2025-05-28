@@ -19,28 +19,29 @@ export type Resource =
   | "setting"
   | "template";
 
-export type Action =
-  | "create"
-  | "read"
-  | "update"
-  | "delete"
-  | "modify_field"
-  | "view_field"
-  | "approve"
-  | "reject"
-  | "submit"
-  | "cancel"
-  | "assign"
-  | "reassign"
-  | "complete"
-  | "export"
-  | "import"
-  | "archive"
-  | "restore"
-  | "manage"
-  | "audit"
-  | "delegate"
-  | "configure";
+export const enum Action {
+  Create = "create",
+  Read = "read",
+  Update = "update",
+  Delete = "delete",
+  ModifyField = "modify_field",
+  ViewField = "view_field",
+  Approve = "approve",
+  Reject = "reject",
+  Submit = "submit",
+  Cancel = "cancel",
+  Assign = "assign",
+  Reassign = "reassign",
+  Complete = "complete",
+  Export = "export",
+  Import = "import",
+  Archive = "archive",
+  Restore = "restore",
+  Manage = "manage",
+  Audit = "audit",
+  Delegate = "delegate",
+  Configure = "configure",
+}
 
 export type Scope = "global" | "business_unit" | "organization" | "personal";
 

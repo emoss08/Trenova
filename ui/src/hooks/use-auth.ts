@@ -2,7 +2,7 @@ import { useAuthActions, useUser } from "@/stores/user-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-import { getCurrentUser, logout, validateSession } from "@/services/auth";
+import { api } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -18,13 +18,13 @@ export function useAuth() {
   const sessionQuery = useQuery({
     queryKey: ["session"],
     queryFn: async () => {
-      const { data: sessionData } = await validateSession();
+      const { data: sessionData } = await api.auth.validateSession();
 
       if (!sessionData.valid) {
         throw new Error("Session invalid");
       }
 
-      const { data: userData } = await getCurrentUser();
+      const { data: userData } = await api.auth.getCurrentUser();
       return userData;
     },
     retry: false,
@@ -65,7 +65,7 @@ export function useLogout() {
   const navigate = useNavigate();
 
   return async () => {
-    await logout();
+    await api.auth.logout();
     clearAuth();
     queryClient.clear();
     navigate("/auth");

@@ -35,7 +35,9 @@ func NewWorkflowPublisher(p WorkflowParams) *WorkflowPublisher {
 		Str("service", "rabbitmq").Str("exchange", cfg.ExchangeName).
 		Logger()
 
-	conn, err := amqp.Dial(p.ConfigM.RabbitMQ().URL())
+	l.Info().Str("computed_amqp_url", cfg.URL()).Msg("Attempting to connect to RabbitMQ with computed URL")
+
+	conn, err := amqp.Dial(cfg.URL())
 	if err != nil {
 		l.Fatal().Err(err).Msg("failed to connect to rabbitmq")
 		return nil

@@ -295,7 +295,7 @@ export function resourceToPage(resource: Resource) {
       return "/dispatch/management";
     case Resource.Report:
       return "/reports";
-    case Resource.AuditEntries:
+    case Resource.AuditEntry:
       return "/audit-entries";
     case Resource.TableConfiguration:
       return "/dispatch/configurations/table-configurations";

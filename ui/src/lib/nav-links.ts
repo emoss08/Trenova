@@ -115,6 +115,12 @@ export const adminLinks: SidebarLink[] = [
     group: "Data & Integrations",
   },
   {
+    href: "/organization/resource-editor/",
+    title: "Resource Editor",
+    group: "Data & Integrations",
+    disabled: false,
+  },
+  {
     href: "/organization/table-change-alerts/",
     title: "Table Change Alerts",
     group: "Data & Integrations",
@@ -398,7 +404,13 @@ export const routes: RouteInfo[] = [
         supportsModal: false,
       },
       {
-        key: Resource.AuditEntries,
+        key: Resource.ResourceEditor,
+        label: "Resource Editor",
+        link: "/organization/resource-editor/",
+        supportsModal: false,
+      },
+      {
+        key: Resource.AuditEntry,
         label: "Audit Entries",
         link: "/organization/audit-entries/",
         supportsModal: false,

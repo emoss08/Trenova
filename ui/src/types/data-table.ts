@@ -15,6 +15,8 @@ import type {
   VisibilityState,
 } from "@tanstack/react-table";
 import React from "react";
+import type { Resource } from "./audit-entry";
+import type { LiveModeTableConfig } from "./live-mode";
 
 export type Prettify<T> = {
   [K in keyof T]: T[K];
@@ -90,10 +92,6 @@ type DataTableCreateButtonProps = {
   extraActions?: ExtraAction[];
 };
 
-export type DataTableViewOptionsProps<TData> = {
-  table: Table<TData>;
-};
-
 export type TableStoreProps<TData extends Record<string, any>> = {
   pagination: PaginationState;
   exportModalOpen: boolean;
@@ -162,7 +160,7 @@ type DataTableProps<TData extends Record<string, any>> = {
   TableEditModal?: React.ComponentType<EditTableSheetProps<TData>>;
   exportModelName: string;
   extraSearchParams?: Record<string, any>;
-  // permissionName: string;
+  resource: Resource;
   initialPageSize?: number;
   defaultSort?: SortingState;
   includeHeader?: boolean;
@@ -171,11 +169,20 @@ type DataTableProps<TData extends Record<string, any>> = {
   pageSizeOptions?: Readonly<number[]>;
   extraActions?: ExtraAction[];
   getRowClassName?: (row: Row<TData>) => string;
+  liveMode?: LiveModeTableConfig;
 };
 
 type DataTableBodyProps<TData extends Record<string, any>> = {
   table: Table<TData>;
   columns: ColumnDef<TData>[];
+  liveMode?: {
+    enabled: boolean;
+    connected: boolean;
+    showToggle?: boolean;
+    onToggle?: (enabled: boolean) => void;
+    autoRefresh?: boolean;
+    onAutoRefreshToggle?: (autoRefresh: boolean) => void;
+  };
 };
 
 export type {

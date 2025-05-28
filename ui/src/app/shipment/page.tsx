@@ -14,7 +14,7 @@ export function Shipment() {
         <MetaTags title="Shipments" description="Shipments" />
         <Header />
         <QueryLazyComponent queryKey={["shipment-list"]}>
-          <ShipmentAnalytics />
+          {/* <ShipmentAnalytics /> */}
           <ShipmentTable />
         </QueryLazyComponent>
       </div>

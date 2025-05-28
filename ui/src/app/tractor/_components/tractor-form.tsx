@@ -140,10 +140,7 @@ function RegistrationInformationSection() {
             label="License State"
             placeholder="License State"
             description="The U.S. state where the tractor is licensed."
-            isClearable
             options={usStateOptions}
-            isLoading={usStates.isLoading}
-            isFetchError={usStates.isError}
           />
         </FormControl>
         <FormControl>

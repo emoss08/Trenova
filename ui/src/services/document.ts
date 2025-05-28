@@ -47,53 +47,45 @@ export type ResourceSubFolder = {
   resourceId: string;
 };
 
-/**
- * Get document count by resource
- */
-export async function getDocumentCountByResource(): Promise<
-  DocumentCountByResource[]
-> {
-  const response = await http.get<DocumentCountByResource[]>(
-    "/documents/count-by-resource",
-  );
-  return response.data;
-}
+export class DocumentAPI {
+  async getDocumentCountByResource() {
+    const response = await http.get<DocumentCountByResource[]>(
+      "/documents/count-by-resource",
+    );
+    return response.data;
+  }
 
-export async function getResourceSubFolders(
-  resourceType: Resource,
-): Promise<ResourceSubFolder[]> {
-  const response = await http.get<ResourceSubFolder[]>(
-    `/documents/${resourceType}/sub-folders/`,
-  );
-  return response.data;
-}
+  async getResourceSubFolders(resourceType: Resource) {
+    const response = await http.get<ResourceSubFolder[]>(
+      `/documents/${resourceType}/sub-folders/`,
+    );
+    return response.data;
+  }
 
-export async function getDocumentsByResourceID(
-  resourceType: Resource,
-  resourceId: string,
-  limit?: number,
-  offset?: number,
-): Promise<LimitOffsetResponse<Document>> {
-  const response = await http.get<LimitOffsetResponse<Document>>(
-    `/documents/${resourceType}/${resourceId}/`,
-    {
-      params: {
-        limit: limit?.toString(),
-        offset: offset?.toString(),
+  async getByResourceID(
+    resourceType: Resource,
+    resourceId: string,
+    limit?: number,
+    offset?: number,
+  ) {
+    const response = await http.get<LimitOffsetResponse<Document>>(
+      `/documents/${resourceType}/${resourceId}/`,
+      {
+        params: { limit: limit?.toString(), offset: offset?.toString() },
       },
-    },
-  );
-  return response.data;
-}
+    );
+    return response.data;
+  }
 
-export async function getDocumentTypes(): Promise<
-  LimitOffsetResponse<DocumentTypeSchema>
-> {
-  const response =
-    await http.get<LimitOffsetResponse<DocumentTypeSchema>>(`/document-types`);
-  return response.data;
-}
+  async getDocumentTypes() {
+    const response =
+      await http.get<LimitOffsetResponse<DocumentTypeSchema>>(
+        "/document-types",
+      );
+    return response.data;
+  }
 
-export async function deleteDocument(docID: string): Promise<void> {
-  await http.delete(`/documents/${docID}`);
+  async delete(docID: string) {
+    await http.delete(`/documents/${docID}`);
+  }
 }

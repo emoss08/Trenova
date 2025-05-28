@@ -1,30 +1,10 @@
-import { getAnalytics } from "@/services/analytics";
-import {
-  getCustomerById,
-  getCustomerDocumentRequirements,
-} from "@/services/customer";
-import {
-  getDocumentCountByResource,
-  getDocumentsByResourceID,
-  getDocumentTypes,
-  getResourceSubFolders,
-} from "@/services/document";
-import { checkAPIKey, locationAutocomplete } from "@/services/google-maps";
-import { getIntegrationByType, getIntegrations } from "@/services/integration";
-import {
-  getBillingControl,
-  getDatabaseBackups,
-  getOrgById,
-  getShipmentControl,
-  listOrganizations,
-} from "@/services/organization";
-import { getShipmentByID } from "@/services/shipment";
-import { getUsStateOptions, getUsStates } from "@/services/us-state";
+import { api } from "@/services/api";
 import type { AnalyticsPage } from "@/types/analytics";
 import { Resource } from "@/types/audit-entry";
 import type { GetCustomerByIDParams } from "@/types/customer";
 import type { IntegrationType } from "@/types/integration";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
+import type { TableConfigurationSchema } from "./schemas/table-configuration-schema";
 
 export const queries = createQueryKeyStore({
   organization: {
@@ -35,26 +15,23 @@ export const queries = createQueryKeyStore({
     ) => ({
       queryKey: ["organization", orgId, includeState, includeBu],
       queryFn: async () => {
-        const response = await getOrgById({
+        return await api.organization.getById({
           orgId,
           includeState,
           includeBu,
         });
-        return response.data;
       },
     }),
     getUserOrganizations: () => ({
       queryKey: ["organization/user"],
       queryFn: async () => {
-        const response = await listOrganizations();
-        return response.data;
+        return await api.organization.list();
       },
     }),
     getShipmentControl: () => ({
       queryKey: ["shipmentControl"],
       queryFn: async () => {
-        const response = await getShipmentControl();
-        return response.data;
+        return await api.shipmentControl.get();
       },
     }),
     getBillingControl: (
@@ -62,28 +39,26 @@ export const queries = createQueryKeyStore({
     ) => ({
       queryKey: ["billingControl"],
       queryFn: async () => {
-        const response = await getBillingControl();
-        return response.data;
+        return await api.billingControl.get();
       },
       enabled,
     }),
     getDatabaseBackups: () => ({
       queryKey: ["databaseBackups"],
       queryFn: async () => {
-        const response = await getDatabaseBackups();
-        return response.data;
+        return await api.databaseBackups.get();
       },
     }),
   },
   usState: {
     list: () => ({
       queryKey: ["us-states"],
-      queryFn: async () => getUsStates(),
+      queryFn: async () => api.usStates.getUsStates(),
     }),
     options: () => ({
       queryKey: ["us-states/options"],
       queryFn: async () => {
-        return await getUsStateOptions();
+        return await api.usStates.getUsStateOptions();
       },
     }),
   },
@@ -91,19 +66,19 @@ export const queries = createQueryKeyStore({
     getDocumentTypes: () => ({
       queryKey: ["document/types"],
       queryFn: async () => {
-        return await getDocumentTypes();
+        return await api.documents.getDocumentTypes();
       },
     }),
     countByResource: () => ({
       queryKey: ["document/count-by-resource"],
       queryFn: async () => {
-        return await getDocumentCountByResource();
+        return await api.documents.getDocumentCountByResource();
       },
     }),
     resourceSubFolders: (resourceType: Resource) => ({
       queryKey: ["document/resource-sub-folders", resourceType],
       queryFn: async () => {
-        return await getResourceSubFolders(resourceType);
+        return await api.documents.getResourceSubFolders(resourceType);
       },
     }),
     documentsByResourceID: (
@@ -121,7 +96,7 @@ export const queries = createQueryKeyStore({
         offset,
       ],
       queryFn: async () => {
-        return await getDocumentsByResourceID(
+        return await api.documents.getByResourceID(
           resourceType,
           resourceId,
           limit,
@@ -135,7 +110,7 @@ export const queries = createQueryKeyStore({
     getShipment: (shipmentId: string, enabled: boolean = true) => ({
       queryKey: ["shipment", shipmentId],
       queryFn: async () => {
-        return await getShipmentByID(shipmentId, true);
+        return await api.shipments.getShipmentByID(shipmentId, true);
       },
       enabled,
     }),
@@ -143,7 +118,7 @@ export const queries = createQueryKeyStore({
   customer: {
     getDocumentRequirements: (customerId: string) => ({
       queryKey: ["customer/document-requirements", customerId],
-      queryFn: async () => getCustomerDocumentRequirements(customerId),
+      queryFn: async () => api.customers.getDocumentRequirements(customerId),
     }),
     getById: ({
       customerId,
@@ -152,24 +127,24 @@ export const queries = createQueryKeyStore({
     }: GetCustomerByIDParams) => ({
       queryKey: ["customer/by-id", customerId, includeBillingProfile],
       queryFn: async () =>
-        getCustomerById(customerId, { includeBillingProfile }),
+        api.customers.getById(customerId, { includeBillingProfile }),
       enabled,
     }),
   },
   integration: {
     getIntegrations: () => ({
       queryKey: ["integrations"],
-      queryFn: async () => getIntegrations(),
+      queryFn: async () => api.integrations.get(),
     }),
     getIntegrationByType: (type: IntegrationType) => ({
       queryKey: ["integrations/type", type],
-      queryFn: async () => getIntegrationByType(type),
+      queryFn: async () => api.integrations.getByType(type),
     }),
   },
   googleMaps: {
     checkAPIKey: () => ({
       queryKey: ["google-maps/check-api-key"],
-      queryFn: async () => checkAPIKey(),
+      queryFn: async () => api.googleMaps.checkAPIKey(),
     }),
     locationAutocomplete: (input: string) => ({
       queryKey: ["google-maps/location-autocomplete", input],
@@ -177,7 +152,7 @@ export const queries = createQueryKeyStore({
         if (!input || input.length < 3) {
           return { data: { details: [], count: 0 } };
         }
-        return locationAutocomplete(input);
+        return api.googleMaps.locationAutocomplete(input);
       },
       enabled: input.length >= 3,
     }),
@@ -185,7 +160,32 @@ export const queries = createQueryKeyStore({
   analytics: {
     getAnalytics: (page: AnalyticsPage) => ({
       queryKey: ["analytics", page],
-      queryFn: async () => getAnalytics({ page }),
+      queryFn: async () => api.analytics.getAnalytics({ page }),
+    }),
+  },
+  tableConfiguration: {
+    listUserConfigurations: (resource: Resource) => ({
+      queryKey: ["table-configurations", resource],
+      queryFn: async () =>
+        api.tableConfigurations.listUserConfigurations(resource),
+    }),
+    get: (resource: Resource) => ({
+      queryKey: ["table-configurations", resource],
+      queryFn: async () => api.tableConfigurations.get(resource),
+    }),
+    create: (payload: TableConfigurationSchema) => ({
+      queryKey: ["table-configurations", payload],
+      queryFn: async () => api.tableConfigurations.create(payload),
+    }),
+  },
+  favorite: {
+    list: () => ({
+      queryKey: ["favorites"],
+      queryFn: async () => api.favorites.list(),
+    }),
+    check: (pageUrl: string) => ({
+      queryKey: ["favorite", pageUrl],
+      queryFn: async () => api.favorites.checkFavorite(pageUrl),
     }),
   },
 });

@@ -6,10 +6,12 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
@@ -47,6 +49,61 @@ func NewAssignmentRepository(p AssignmentRepositoryParams) repositories.Assignme
 	}
 }
 
+// filterQuery applies filters and pagination to the assignment query.
+// It includes tenant-based filtering and full-text search when provided.
+//
+// Parameters:
+//   - q: The base select query.
+//   - req: ListAssignmentsRequest containing filter and pagination details.
+
+func (ar *assignmentRepository) filterQuery(q *bun.SelectQuery, req repositories.ListAssignmentsRequest) *bun.SelectQuery {
+	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
+		Query:      q,
+		TableAlias: "a",
+		Filter:     req.Filter,
+	})
+
+	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
+}
+
+// List retrieves a list of assignments based on the list assignment request
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - req: The list assignment request.
+//
+// Returns:
+//   - *ports.ListResult[*shipment.Assignment]: A list of assignments.
+//   - error: An error if the operation fails.
+func (ar *assignmentRepository) List(ctx context.Context, req repositories.ListAssignmentsRequest) (*ports.ListResult[*shipment.Assignment], error) {
+	dba, err := ar.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := ar.l.With().
+		Str("operation", "list").
+		Str("buID", req.Filter.TenantOpts.BuID.String()).
+		Str("userID", req.Filter.TenantOpts.UserID.String()).
+		Logger()
+
+	entities := make([]*shipment.Assignment, 0)
+
+	q := dba.NewSelect().Model(&entities)
+	q = ar.filterQuery(q, req)
+
+	total, err := q.ScanAndCount(ctx, &entities)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to scan and count assignments")
+		return nil, err
+	}
+
+	return &ports.ListResult[*shipment.Assignment]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
 // GetByID retrieves an assignment by its unique ID within the specified organization and business unit.
 // It executes a database query to fetch the assignment details, handling possible errors such as missing records.
 //
@@ -71,8 +128,11 @@ func (ar *assignmentRepository) GetByID(ctx context.Context, opts repositories.G
 	entity := new(shipment.Assignment)
 
 	err = dba.NewSelect().Model(entity).
-		Where("a.id = ? AND a.organization_id = ? AND a.business_unit_id = ?",
-			opts.ID, opts.OrganizationID, opts.BusinessUnitID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("a.id = ?", opts.ID).
+				Where("a.organization_id = ?", opts.OrgID).
+				Where("a.business_unit_id = ?", opts.BuID)
+		}).
 		Scan(ctx)
 	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {

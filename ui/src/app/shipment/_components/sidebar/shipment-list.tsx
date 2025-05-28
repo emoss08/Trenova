@@ -98,7 +98,6 @@ export function ShipmentList({
             name="status"
             placeholder="Status"
             className="h-7 w-30"
-            isClearable
             options={statusChoices}
           />
           <Button

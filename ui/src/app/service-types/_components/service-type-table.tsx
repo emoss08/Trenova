@@ -1,5 +1,6 @@
 import { DataTable } from "@/components/data-table/data-table";
-import { type ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
+import type { ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
+import { Resource } from "@/types/audit-entry";
 import { useMemo } from "react";
 import { getColumns } from "./service-type-columns";
 import { CreateServiceTypeModal } from "./service-type-create-modal";
@@ -9,7 +10,8 @@ export default function ServiceTypesDataTable() {
   const columns = useMemo(() => getColumns(), []);
 
   return (
-    <DataTable<ShipmentTypeSchema>
+    <DataTable<ServiceTypeSchema>
+      resource={Resource.ServiceType}
       name="Service Type"
       link="/service-types/"
       queryKey="service-type-list"
