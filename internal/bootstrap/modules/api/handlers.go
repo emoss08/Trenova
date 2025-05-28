@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/documenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttype"
+	"github.com/emoss08/trenova/internal/api/handlers/favorite"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcode"
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrule"
@@ -83,4 +84,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	integration.NewHandler,
 	billingqueue.NewHandler,
 	resourceeditor.NewHandler,
+	favorite.NewHandler,
 ))

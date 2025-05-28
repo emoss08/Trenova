@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/documenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttype"
+	"github.com/emoss08/trenova/internal/api/handlers/favorite"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcode"
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrule"
@@ -116,6 +117,7 @@ type RouterParams struct {
 	AnalyticsHandler             *analytics.Handler
 	BillingQueueHandler          *billingqueue.Handler
 	ResourceEditorHandler        *resourceeditor.Handler
+	FavoriteHandler              *favorite.Handler
 }
 
 type Router struct {
@@ -294,4 +296,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Resource Editor
 	r.p.ResourceEditorHandler.RegisterRoutes(router, rl)
+
+	// Favorites
+	r.p.FavoriteHandler.RegisterRoutes(router, rl)
 }

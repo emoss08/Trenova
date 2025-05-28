@@ -82,6 +82,7 @@ export enum Resource {
   DivisionCode = "division_code",
   GlAccount = "gl_account",
   RevenueCode = "revenue_code",
+  PageFavorite = "page_favorite",
   AccessorialCharge = "accessorial_charge",
   Worker = "worker",
   Tractor = "tractor",

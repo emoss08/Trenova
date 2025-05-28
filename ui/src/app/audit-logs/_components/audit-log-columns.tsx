@@ -39,11 +39,9 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
         />
       ),
       cell: ({ row }) => {
-        const entry = row.original;
+        const { resource } = row.original;
 
-        return (
-          <AuditEntryResourceBadge withDot={false} resource={entry.resource} />
-        );
+        return <AuditEntryResourceBadge withDot={false} resource={resource} />;
       },
     },
     {

@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/documenttype"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttype"
+	"github.com/emoss08/trenova/internal/core/services/favorite"
 	"github.com/emoss08/trenova/internal/core/services/file"
 	"github.com/emoss08/trenova/internal/core/services/fleetcode"
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterial"
@@ -86,6 +87,7 @@ var Module = fx.Module("services", fx.Provide(
 	documenttype.NewService,
 	integration.NewService,
 	billingqueue.NewService,
+	favorite.NewService,
 ),
 )
 

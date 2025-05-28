@@ -441,7 +441,18 @@ func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(ctx con
 
 	err = q.Scan(ctx)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get default configuration")
+		if eris.Is(err, sql.ErrNoRows) {
+			log.Info().Msg("no default configuration found, getting latest")
+		} else {
+			log.Error().Err(err).Msg("failed to get default configuration")
+			return nil, oops.In("table_configuration_repository").
+				Tags("get_default_or_latest_configuration").
+				With("resource", resource).
+				With("orgID", opts.Base.OrgID).
+				With("buID", opts.Base.BuID).
+				Time(time.Now()).
+				Wrapf(err, "get default or latest configuration")
+		}
 	}
 
 	return config, nil

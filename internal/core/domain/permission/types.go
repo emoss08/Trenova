@@ -25,7 +25,7 @@ const (
 	ResourceGoogleMapsConfig      = Resource("google_maps_config")      // Represents resources related to google maps config.
 	ResourceBillingControl        = Resource("billing_control")         // Represents resources related to billing control.
 	ResourceDocument              = Resource("document")                // Represents resources related to documents.
-
+	ResourcePageFavorite          = Resource("page_favorite")           // Represents resources related to page favorites.
 	// Operations resources
 	ResourceWorker                = Resource("worker")                  // Represents resources related to workers.
 	ResourceTractor               = Resource("tractor")                 // Represents resources for managing tractors.
@@ -261,6 +261,12 @@ var (
 			ActionAudit,
 		),
 		ResourceOrganization: append(
+			BaseActions,
+			ActionConfigure,
+			ActionAudit,
+			ActionModifyField,
+		),
+		ResourcePageFavorite: append(
 			BaseActions,
 			ActionConfigure,
 			ActionAudit,

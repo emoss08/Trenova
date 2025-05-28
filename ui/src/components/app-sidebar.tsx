@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { RouteInfo } from "@/types/nav-links";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { Link, useLocation } from "react-router";
+import { FavoritesSidebar } from "./favorites-sidebar";
 import { NavUser } from "./nav-user";
 import { OrganizationSwitcher } from "./organization-switcher";
 import { Icon } from "./ui/icons";
@@ -161,6 +162,7 @@ export const AppSidebar = memo(function AppSidebar({
         <WorkflowPlaceholder />
       </SidebarHeader>
       <SidebarContent>
+        <FavoritesSidebar />
         <SidebarGroup>
           <SidebarGroupLabel className="select-none font-semibold uppercase">
             Navigation

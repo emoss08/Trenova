@@ -9,6 +9,7 @@ import { BillingControlAPI } from "./billing-control";
 import { CustomerAPI } from "./customer";
 import { DatabaseBackupAPI } from "./database-backups";
 import { DocumentAPI } from "./document";
+import { FavoriteAPI } from "./favorite";
 import { GoogleMapsAPI } from "./google-maps";
 import { IntegrationAPI } from "./integration";
 import { OrganizationAPI } from "./organization";
@@ -36,6 +37,7 @@ class API {
   customers: CustomerAPI;
   billing: BillingAPI;
   documents: DocumentAPI;
+  favorites: FavoriteAPI;
   integrations: IntegrationAPI;
   googleMaps: GoogleMapsAPI;
   analytics: AnalyticsAPI;
@@ -54,6 +56,7 @@ class API {
     this.customers = new CustomerAPI();
     this.billing = new BillingAPI();
     this.documents = new DocumentAPI();
+    this.favorites = new FavoriteAPI();
     this.integrations = new IntegrationAPI();
     this.googleMaps = new GoogleMapsAPI();
     this.analytics = new AnalyticsAPI();

@@ -284,6 +284,10 @@ export function AuditEntryResourceBadge({
       variant: "warning",
       text: "Backup",
     },
+    [Resource.PageFavorite]: {
+      variant: "warning",
+      text: "Page Favorite",
+    },
     [Resource.Dashboard]: {
       variant: undefined,
       text: "",

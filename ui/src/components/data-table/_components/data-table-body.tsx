@@ -3,15 +3,9 @@
 import { Icon } from "@/components/ui/icons";
 import { Switch } from "@/components/ui/switch";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import { DataTableBodyProps } from "@/types/data-table";
 import { faPlay } from "@fortawesome/pro-solid-svg-icons";
-import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
 import React from "react";
 
@@ -44,16 +38,7 @@ function LiveModeTableRow({
             <div className="flex items-center gap-2">
               {liveMode.onAutoRefreshToggle && (
                 <div className="flex items-center gap-2">
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <span className="text-xs">Auto-refresh</span>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <span>Auto-refresh table content</span>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                  <span className="text-xs">Auto-refresh</span>
                   <Switch
                     checked={liveMode.autoRefresh || false}
                     onCheckedChange={liveMode.onAutoRefreshToggle}
