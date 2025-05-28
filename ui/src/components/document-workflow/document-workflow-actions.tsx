@@ -8,7 +8,7 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { queries } from "@/lib/queries";
-import { deleteDocument } from "@/services/document";
+import { api } from "@/services/api";
 import { Document } from "@/types/document";
 import { faEllipsis } from "@fortawesome/pro-solid-svg-icons";
 import { useMutation } from "@tanstack/react-query";
@@ -17,7 +17,7 @@ import { toast } from "sonner";
 export function DocumentActions({ document }: { document: Document }) {
   const { mutateAsync: removeDocument, isPending } = useMutation({
     mutationFn: async () => {
-      await deleteDocument(document.id);
+      return await api.documents.delete(document.id);
     },
     onSuccess: () => {
       toast.success("Document deleted successfully");

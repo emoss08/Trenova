@@ -4,15 +4,19 @@ import {
   DialogBody,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icons";
 import { STOP_DIALOG_NOTICE_KEY } from "@/constants/env";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { type TableSheetProps } from "@/types/data-table";
+import { StopStatus, StopType } from "@/types/stop";
 import { faInfoCircle, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { memo, useCallback } from "react";
+import { memo, useCallback, useEffect } from "react";
+import { useFieldArray, useFormContext } from "react-hook-form";
 import { StopDialogForm } from "./stop-dialog-form";
 
 type StopDialogProps = TableSheetProps & {
@@ -27,16 +31,42 @@ export function StopDialog({
   stopIdx,
 }: StopDialogProps) {
   const isEditing = stopIdx !== undefined;
+  const { getValues, setValue, setError, clearErrors } =
+    useFormContext<ShipmentSchema>();
 
-  // * If isEditing is true, fetch the stop data from the server.
-  // * Otherwise, populate form with default stop information.
-
-  console.info("stop-dialog debug information", {
-    open,
-    moveIdx,
-    stopIdx,
-    isEditing,
+  const { update } = useFieldArray({
+    name: `moves.${moveIdx}.stops.${stopIdx}`,
   });
+
+  // Initialize a new stop with empty values when adding a new stop - only runs when dialog opens
+  useEffect(() => {
+    if (open && !isEditing) {
+      const now = Math.floor(Date.now() / 1000);
+      const oneHour = 3600;
+
+      const currentValues = getValues(`moves.${moveIdx}.stops.${stopIdx}`);
+
+      if (!currentValues || !currentValues.status) {
+        setValue(`moves.${moveIdx}.stops.${stopIdx}`, {
+          status: StopStatus.New,
+          actualArrival: undefined,
+          actualDeparture: undefined,
+          pieces: 0,
+          weight: 0,
+          // Provide a default type that users can change
+          type: StopType.Pickup,
+          sequence: stopIdx,
+          locationId: "",
+          addressLine: "",
+          plannedArrival: now,
+          plannedDeparture: now + oneHour,
+          // Copy organization and business unit from the move
+          organizationId: getValues().moves?.[moveIdx]?.organizationId,
+          businessUnitId: getValues().moves?.[moveIdx]?.businessUnitId,
+        });
+      }
+    }
+  }, [open, isEditing, getValues, setValue, moveIdx, stopIdx]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

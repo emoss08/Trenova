@@ -1,6 +1,6 @@
 import { AuditEntryActionBadge } from "@/app/audit-logs/_components/audit-column-components";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
-import { getAuditEntriesByResourceID } from "@/services/audit-entry";
+import { api } from "@/services/api";
 import { AuditEntry } from "@/types/audit-entry";
 import { TableSheetProps } from "@/types/data-table";
 import {
@@ -45,7 +45,8 @@ export function EntryAuditViewer({
 }: EntryAuditViewerProps) {
   const { data, isLoading, isError } = useQuery({
     queryKey: ["audit-entries", resourceId],
-    queryFn: async () => getAuditEntriesByResourceID(resourceId),
+    queryFn: async () =>
+      api.auditEntries.getAuditEntriesByResourceID(resourceId),
     enabled: !!resourceId && open,
   });
 

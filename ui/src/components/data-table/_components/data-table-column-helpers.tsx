@@ -135,7 +135,9 @@ function EntityRefCellBase<TEntity, TParent extends Record<string, any>>(
   );
 }
 
-const EntityRefCell = memo(EntityRefCellBase) as typeof EntityRefCellBase;
+export const EntityRefCell = memo(
+  EntityRefCellBase,
+) as typeof EntityRefCellBase;
 
 // Define the NestedEntityRefCell component type first, then memoize it
 interface NestedEntityRefCellProps<TEntity, TParent> {
@@ -192,7 +194,7 @@ function NestedEntityRefCellBase<TEntity, TParent extends Record<string, any>>(
   );
 }
 
-const NestedEntityRefCell = memo(
+export const NestedEntityRefCell = memo(
   NestedEntityRefCellBase,
 ) as typeof NestedEntityRefCellBase;
 

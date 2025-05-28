@@ -334,7 +334,7 @@ func (br *billingQueueRepository) Update(ctx context.Context, qi *billingqueue.Q
 //
 // Returns:
 //   - error: If any database operation fails.
-func (br *billingQueueRepository) BulkTransfer(ctx context.Context, req *repositories.BulkTransferRequest) error {
+func (br *billingQueueRepository) BulkTransfer(ctx context.Context, _ *repositories.BulkTransferRequest) error {
 	dba, err := br.db.DB(ctx)
 	if err != nil {
 		return oops.

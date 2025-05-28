@@ -46,7 +46,7 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 
 	api.Post("/", rl.WithRateLimit(
 		[]fiber.Handler{h.create},
-		middleware.PerMinute(60), // 60 reads per minute
+		middleware.PerMinute(60), // 60 writes per minute
 	)...)
 
 	api.Get("/:trailerID/", rl.WithRateLimit(

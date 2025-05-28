@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/internal/pkg/validator/assignmentvalidator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )
@@ -50,6 +51,32 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
+func (s *Service) List(ctx context.Context, req repositories.ListAssignmentsRequest) (*ports.ListResult[*shipment.Assignment], error) {
+	log := s.l.With().Str("operation", "List").Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.Filter.TenantOpts.UserID,
+				Resource:       permission.ResourceAssignment,
+				Action:         permission.ActionRead,
+				BusinessUnitID: req.Filter.TenantOpts.BuID,
+				OrganizationID: req.Filter.TenantOpts.OrgID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, eris.Wrap(err, "check permissions")
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to read assignments")
+	}
+
+	return s.repo.List(ctx, req)
+}
+
 func (s *Service) Get(ctx context.Context, opts repositories.GetAssignmentByIDOptions) (*shipment.Assignment, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
@@ -62,8 +89,8 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetAssignmentByIDOp
 				UserID:         opts.UserID,
 				Resource:       permission.ResourceAssignment,
 				Action:         permission.ActionRead,
-				BusinessUnitID: opts.BusinessUnitID,
-				OrganizationID: opts.OrganizationID,
+				BusinessUnitID: opts.BuID,
+				OrganizationID: opts.OrgID,
 			},
 		},
 	)
@@ -111,7 +138,6 @@ func (s *Service) BulkAssign(ctx context.Context, req *repositories.AssignmentRe
 		return nil, errors.NewAuthorizationError("You do not have permission to assign")
 	}
 
-	// * Validate the assignment
 	if err := req.Validate(ctx); err != nil {
 		return nil, err
 	}
@@ -235,9 +261,9 @@ func (s *Service) Reassign(ctx context.Context, a *shipment.Assignment, userID p
 	}
 
 	original, err := s.repo.GetByID(ctx, repositories.GetAssignmentByIDOptions{
-		ID:             a.ID,
-		OrganizationID: a.OrganizationID,
-		BusinessUnitID: a.BusinessUnitID,
+		ID:    a.ID,
+		OrgID: a.OrganizationID,
+		BuID:  a.BusinessUnitID,
 	})
 	if err != nil {
 		return nil, err

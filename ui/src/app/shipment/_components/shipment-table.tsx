@@ -1,9 +1,11 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LiveModePresets } from "@/lib/live-mode-utils";
 import { queries } from "@/lib/queries";
 import { getShipmentStatusRowClassName } from "@/lib/table-styles";
 import { cn } from "@/lib/utils";
 import { AnalyticsPage } from "@/types/analytics";
+import { Resource } from "@/types/audit-entry";
 import { Shipment, ShipmentStatus } from "@/types/shipment";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -27,12 +29,14 @@ export default function ShipmentTable() {
         }}
         queryKey="shipment-list"
         exportModelName="shipment"
+        resource={Resource.Shipment}
         TableModal={ShipmentCreateSheet}
         TableEditModal={ShipmentEditSheet}
         columns={columns}
         getRowClassName={(row) => {
           return cn(getShipmentStatusRowClassName(row.original.status));
         }}
+        liveMode={LiveModePresets.shipments()}
         // extraActions={[
         //   {
         //     key: "import-from-rate",

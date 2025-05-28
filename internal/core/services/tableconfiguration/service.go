@@ -4,12 +4,15 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
+	tcdomain "github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/audit"
+	"github.com/emoss08/trenova/internal/pkg/ctx"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -20,23 +23,28 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Logger      *logger.Logger
-	Repo        repositories.TableConfigurationRepository
-	PermService services.PermissionService
+	Logger       *logger.Logger
+	Repo         repositories.TableConfigurationRepository
+	PermService  services.PermissionService
+	AuditService services.AuditService
 }
 
 type Service struct {
+	l    *zerolog.Logger
 	repo repositories.TableConfigurationRepository
 	ps   services.PermissionService
-	l    *zerolog.Logger
+	as   services.AuditService
 }
 
 func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().Str("service", "tableconfiguration").Logger()
+	log := p.Logger.With().
+		Str("service", "tableconfiguration").
+		Logger()
 
 	return &Service{
 		repo: p.Repo,
 		ps:   p.PermService,
+		as:   p.AuditService,
 		l:    &log,
 	}
 }
@@ -71,7 +79,7 @@ func (s *Service) List(ctx context.Context, opts *repositories.TableConfiguratio
 	return entities, nil
 }
 
-func (s *Service) Create(ctx context.Context, config *tableconfiguration.Configuration) (*tableconfiguration.Configuration, error) {
+func (s *Service) Create(ctx context.Context, config *tcdomain.Configuration) (*tcdomain.Configuration, error) {
 	log := s.l.With().Str("method", "Create").
 		Str("orgID", config.OrganizationID.String()).
 		Str("businessUnitID", config.BusinessUnitID.String()).
@@ -117,15 +125,32 @@ func (s *Service) Create(ctx context.Context, config *tableconfiguration.Configu
 		}
 	}
 
-	if err = s.repo.Create(ctx, config); err != nil {
+	createdEntity, err := s.repo.Create(ctx, config)
+	if err != nil {
 		log.Error().Err(err).Msg("failed to create table configuration")
 		return nil, eris.Wrap(err, "create configuration")
 	}
 
-	return config, nil
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceTableConfiguration,
+			ResourceID:     createdEntity.GetID(),
+			Action:         permission.ActionCreate,
+			UserID:         config.UserID,
+			CurrentState:   jsonutils.MustToJSON(createdEntity),
+			BusinessUnitID: config.BusinessUnitID,
+			OrganizationID: config.OrganizationID,
+		},
+		audit.WithComment("Table configuration created"),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log table configuration creation")
+	}
+
+	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, config *tableconfiguration.Configuration) error {
+func (s *Service) Update(ctx context.Context, config *tcdomain.Configuration) (*tcdomain.Configuration, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("configID", config.ID.String()).
@@ -140,7 +165,7 @@ func (s *Service) Update(ctx context.Context, config *tableconfiguration.Configu
 		})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get existing configuration")
-		return eris.Wrap(err, "get existing configuration")
+		return nil, eris.Wrap(err, "get existing configuration")
 	}
 
 	result, err := s.ps.HasPermission(ctx,
@@ -157,36 +182,53 @@ func (s *Service) Update(ctx context.Context, config *tableconfiguration.Configu
 		})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check update permission")
-		return eris.Wrap(err, "check update permission")
+		return nil, eris.Wrap(err, "check update permission")
 	}
 
 	if !result.Allowed {
-		return errors.NewAuthorizationError("You do not have permission to update this table configuration")
+		return nil, errors.NewAuthorizationError("You do not have permission to update this table configuration")
 	}
 
 	if err = s.repo.Update(ctx, config); err != nil {
 		log.Error().Err(err).Msg("failed to update table configuration")
-		return eris.Wrap(err, "update configuration")
+		return nil, eris.Wrap(err, "update configuration")
 	}
 
-	return nil
+	return config, nil
 }
 
 // Delete deletes a table configuration with permission checks
-func (s *Service) Delete(ctx context.Context, id pulid.ID, opts *repositories.GetUserByIDOptions) error {
+func (s *Service) Delete(ctx context.Context, req repositories.DeleteUserConfigurationRequest) error {
 	log := s.l.With().
 		Str("operation", "Delete").
-		Str("configID", id.String()).
+		Str("configID", req.ConfigID.String()).
 		Logger()
 
-	// Get existing configuration
-	existing, err := s.repo.GetByID(ctx, id,
-		&repositories.TableConfigurationFilters{
-			Base: &ports.FilterQueryOptions{
-				OrgID: opts.OrgID,
-				BuID:  opts.BuID,
-			},
-		})
+	// * The deletion can only be done by the user who created the configuration
+	result, err := s.ps.HasPermission(ctx, &services.PermissionCheck{
+		UserID:         req.UserID,
+		Resource:       permission.ResourceTableConfiguration,
+		Action:         permission.ActionDelete,
+		BusinessUnitID: req.BuID,
+		OrganizationID: req.OrgID,
+		ResourceID:     req.ConfigID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check delete permission")
+		return eris.Wrap(err, "check delete permission")
+	}
+
+	if !result.Allowed {
+		return errors.NewAuthorizationError("You don't have permission to delete this configuration")
+	}
+
+	existing, err := s.repo.GetByID(ctx, req.ConfigID, &repositories.TableConfigurationFilters{
+		Base: &ports.FilterQueryOptions{
+			OrgID:  req.OrgID,
+			BuID:   req.BuID,
+			UserID: req.UserID,
+		},
+	})
 	if err != nil {
 		return eris.Wrap(err, "get existing configuration")
 	}
@@ -194,12 +236,12 @@ func (s *Service) Delete(ctx context.Context, id pulid.ID, opts *repositories.Ge
 	// Check delete permission
 	permResult, err := s.ps.HasPermission(ctx,
 		&services.PermissionCheck{
-			UserID:         opts.UserID,
+			UserID:         req.UserID,
 			Resource:       permission.ResourceTableConfiguration,
 			Action:         permission.ActionDelete,
-			BusinessUnitID: opts.BuID,
-			OrganizationID: opts.OrgID,
-			ResourceID:     id,
+			BusinessUnitID: req.BuID,
+			OrganizationID: req.OrgID,
+			ResourceID:     req.ConfigID,
 			CustomData: map[string]any{
 				"userId": existing.UserID,
 			},
@@ -211,7 +253,7 @@ func (s *Service) Delete(ctx context.Context, id pulid.ID, opts *repositories.Ge
 		return errors.NewAuthorizationError("You don't have permission to delete this configuration")
 	}
 
-	if err = s.repo.Delete(ctx, id); err != nil {
+	if err = s.repo.Delete(ctx, req); err != nil {
 		log.Error().Err(err).Msg("failed to delete configuration")
 		return eris.Wrap(err, "delete configuration")
 	}
@@ -220,7 +262,7 @@ func (s *Service) Delete(ctx context.Context, id pulid.ID, opts *repositories.Ge
 }
 
 // ShareConfiguration shares a configuration with specified users/roles/teams
-func (s *Service) ShareConfiguration(ctx context.Context, share *tableconfiguration.ConfigurationShare, userID pulid.ID) error {
+func (s *Service) ShareConfiguration(ctx context.Context, share *tcdomain.ConfigurationShare, userID pulid.ID) error {
 	log := s.l.With().
 		Str("operation", "ShareConfiguration").
 		Str("configID", share.ConfigurationID.String()).
@@ -266,8 +308,40 @@ func (s *Service) ShareConfiguration(ctx context.Context, share *tableconfigurat
 	return nil
 }
 
+func (s *Service) ListUserConfigurations(ctx context.Context, opts *repositories.ListUserConfigurationRequest) (*ports.ListResult[*tcdomain.Configuration], error) {
+	log := s.l.With().
+		Str("operation", "ListUserConfigurations").
+		Str("userID", opts.Filter.TenantOpts.UserID.String()).
+		Logger()
+
+	permResult, err := s.ps.HasPermission(ctx,
+		&services.PermissionCheck{
+			UserID:         opts.Filter.TenantOpts.UserID,
+			Resource:       permission.ResourceTableConfiguration,
+			Action:         permission.ActionRead,
+			BusinessUnitID: opts.Filter.TenantOpts.BuID,
+			OrganizationID: opts.Filter.TenantOpts.OrgID,
+		})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permission")
+		return nil, eris.Wrap(err, "check permission")
+	}
+
+	if !permResult.Allowed {
+		return nil, errors.NewAuthorizationError("You don't have permission to view table configurations")
+	}
+
+	result, err := s.repo.ListUserConfigurations(ctx, opts)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to list user configurations")
+		return nil, eris.Wrap(err, "list user configurations")
+	}
+
+	return result, nil
+}
+
 // GetUserConfigurations retrieves configurations accessible to a user
-func (s *Service) GetUserConfigurations(ctx context.Context, tableID string, opts *repositories.GetUserByIDOptions) ([]*tableconfiguration.Configuration, error) {
+func (s *Service) GetUserConfigurations(ctx context.Context, tableID string, opts *repositories.GetUserByIDOptions) ([]*tcdomain.Configuration, error) {
 	log := s.l.With().
 		Str("operation", "GetUserConfigurations").
 		Str("userID", opts.UserID.String()).
@@ -302,4 +376,23 @@ func (s *Service) GetUserConfigurations(ctx context.Context, tableID string, opt
 	}
 
 	return configs, nil
+}
+
+// GetDefaultOrLatestConfiguration retrieves a configuration for the given table identifier and current user.
+// If none exists it will create a new one with a minimal default payload so the
+// client always receives a valid configuration object.
+func (s *Service) GetDefaultOrLatestConfiguration(ctx context.Context, resource string, rCtx *ctx.RequestContext) (*tcdomain.Configuration, error) {
+	// First attempt to find an existing configuration for this user/org/bu + table
+	config, err := s.repo.GetDefaultOrLatestConfiguration(ctx, resource, &repositories.TableConfigurationFilters{
+		Base: &ports.FilterQueryOptions{
+			OrgID:  rCtx.OrgID,
+			BuID:   rCtx.BuID,
+			UserID: rCtx.UserID,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return config, nil
 }

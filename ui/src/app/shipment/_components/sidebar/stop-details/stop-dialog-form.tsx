@@ -6,7 +6,10 @@ import { FormControl, FormGroup } from "@/components/ui/form";
 import { NumberField } from "@/components/ui/number-input";
 import { stopStatusChoices, stopTypeChoices } from "@/lib/choices";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { useFormContext } from "react-hook-form";
+import { formatLocation } from "@/lib/utils";
+import { useEffect } from "react";
+import { useFormContext, useWatch } from "react-hook-form";
+import { useLocationData } from "./queries";
 
 export function StopDialogForm({
   moveIdx,
@@ -15,63 +18,63 @@ export function StopDialogForm({
   moveIdx: number;
   stopIdx: number;
 }) {
-  const { control } = useFormContext<ShipmentSchema>();
+  const { control, setValue, getValues } = useFormContext<ShipmentSchema>();
 
   // * StopIdx, is nullable because there are instances where the dialog is going to add a new stop, and there is no stop index yet.
   // * If there is no stop index, we will use the append function to add a new stop.
   // * If there is a stop index, we will use the update function to update the stop because the stop index is already set.
 
-  // const locationId = useWatch({
-  //   control,
-  //   name: `moves.${moveIdx}.stops.${stopIdx}.locationId`,
-  // });
+  const locationId = useWatch({
+    control,
+    name: `moves.${moveIdx}.stops.${stopIdx}.locationId`,
+  });
 
-  // const { data: locationData, isLoading: isLoadingLocation } =
-  //   useLocationData(locationId);
+  const { data: locationData, isLoading: isLoadingLocation } =
+    useLocationData(locationId);
 
-  // // Keep the address prefill functionality when a location is selected
-  // useEffect(() => {
-  //   if (!isLoadingLocation && locationId && locationData) {
-  //     const formattedLocation = formatLocation(locationData);
-  //     setValue(
-  //       `moves.${moveIdx}.stops.${stopIdx}.addressLine`,
-  //       formattedLocation,
-  //       {
-  //         shouldValidate: true,
-  //       },
-  //     );
+  // Keep the address prefill functionality when a location is selected
+  useEffect(() => {
+    if (!isLoadingLocation && locationId && locationData) {
+      const formattedLocation = formatLocation(locationData);
+      setValue(
+        `moves.${moveIdx}.stops.${stopIdx}.addressLine`,
+        formattedLocation,
+        {
+          shouldValidate: true,
+        },
+      );
 
-  //     // Get current move values
-  //     const currentValues = getValues();
-  //     const currentMove = currentValues.moves?.[moveIdx];
+      // Get current move values
+      const currentValues = getValues();
+      const currentMove = currentValues.moves?.[moveIdx];
 
-  //     if (currentMove && currentMove.stops && currentMove.stops[stopIdx]) {
-  //       // Update the stop with location data
-  //       const updatedStop = {
-  //         ...currentMove.stops[stopIdx],
-  //         location: locationData,
-  //       };
+      if (currentMove && currentMove.stops && currentMove.stops[stopIdx]) {
+        // Update the stop with location data
+        const updatedStop = {
+          ...currentMove.stops[stopIdx],
+          location: locationData,
+        };
 
-  //       // Update all the stops
-  //       const updatedStops = [...currentMove.stops];
-  //       updatedStops[stopIdx] = updatedStop;
+        // Update all the stops
+        const updatedStops = [...currentMove.stops];
+        updatedStops[stopIdx] = updatedStop;
 
-  //       // Update the entire move
-  //       setValue(`moves.${moveIdx}`, {
-  //         ...currentMove,
-  //         stops: updatedStops,
-  //       });
-  //     }
-  //   }
-  // }, [
-  //   isLoadingLocation,
-  //   locationId,
-  //   locationData,
-  //   setValue,
-  //   moveIdx,
-  //   stopIdx,
-  //   getValues,
-  // ]);
+        // Update the entire move
+        setValue(`moves.${moveIdx}`, {
+          ...currentMove,
+          stops: updatedStops,
+        });
+      }
+    }
+  }, [
+    isLoadingLocation,
+    locationId,
+    locationData,
+    setValue,
+    moveIdx,
+    stopIdx,
+    getValues,
+  ]);
 
   return (
     <div className="space-y-2">

@@ -113,9 +113,9 @@ export function NavUser() {
                       Light
                     </DropdownMenuCheckboxItem>
                     <DropdownMenuCheckboxItem
-                      className="cursor-pointer"
                       checked={currentTheme === "dark"}
                       onCheckedChange={() => switchTheme("dark")}
+                      className="cursor-pointer"
                     >
                       Dark
                     </DropdownMenuCheckboxItem>
@@ -145,7 +145,6 @@ export function NavUser() {
                     />
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
-                      endContent={<Icon icon={faUpRightFromSquare} />}
                       onClick={() => setLicenseDialogOpen(true)}
                       title="License Agreement"
                       className="cursor-pointer"

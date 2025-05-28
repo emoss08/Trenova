@@ -3,6 +3,11 @@ import { type WorkerSchema } from "@/lib/schemas/worker-schema";
 import { type Tractor } from "./tractor";
 import { type Trailer } from "./trailer";
 
+export type TractorAssignment = {
+  primaryWorkerId: string;
+  secondaryWorkerId?: string;
+};
+
 export enum AssignmentStatus {
   New = "New",
   InProgress = "InProgress",

@@ -61,7 +61,7 @@ export function TransferDialog({ ...props }: TableSheetProps) {
 }
 
 function TransferDialogContent({ open }: { open: boolean }) {
-  const { data, isLoading, isError } = useShipments({
+  const { data } = useShipments({
     status: ShipmentStatus.ReadyToBill,
     pageIndex: 0,
     pageSize: 10,
@@ -89,7 +89,7 @@ function TransferDialogContent({ open }: { open: boolean }) {
 function ShipmentCard({ shipment }: { shipment: ShipmentSchema }) {
   const [detailsOpen, setDetailsOpen] = useState<boolean>(false);
 
-  const { data: documents, isLoading: isLoadingDocuments } = useQuery({
+  const { data: documents } = useQuery({
     ...queries.document.documentsByResourceID(
       Resource.Shipment,
       shipment.id ?? "",

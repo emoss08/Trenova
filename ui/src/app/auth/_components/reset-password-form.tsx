@@ -5,7 +5,7 @@ import {
   resetPasswordSchema,
   ResetPasswordSchema,
 } from "@/lib/schemas/auth-schema";
-import { resetPassword } from "@/services/auth";
+import { api } from "@/services/api";
 import { APIError } from "@/types/errors";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -19,7 +19,7 @@ type ResetPasswordFormProps = {
 export function ResetPasswordForm({ onBack, email }: ResetPasswordFormProps) {
   const mutation = useMutation({
     mutationFn: (values: ResetPasswordSchema) =>
-      resetPassword(values.emailAddress),
+      api.auth.resetPassword(values.emailAddress),
   });
 
   const {

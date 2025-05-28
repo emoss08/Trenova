@@ -85,7 +85,7 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListTrailerOption
 		},
 	)
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to check permissions")
+		log.Error().Err(err).Msg("failed to check permissions")
 		return nil, eris.Wrap(err, "check permissions")
 	}
 
@@ -93,16 +93,7 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListTrailerOption
 		return nil, errors.NewAuthorizationError("You do not have permission to read trailers")
 	}
 
-	entities, err := s.repo.List(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to list trailers")
-		return nil, err
-	}
-
-	return &ports.ListResult[*trailer.Trailer]{
-		Items: entities.Items,
-		Total: entities.Total,
-	}, nil
+	return s.repo.List(ctx, opts)
 }
 
 func (s *Service) Get(ctx context.Context, opts repositories.GetTrailerByIDOptions) (*trailer.Trailer, error) {

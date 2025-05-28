@@ -88,8 +88,6 @@ export default function WorkersPersonalInformationForm() {
               placeholder="State"
               description="The state of the worker"
               options={usStateOptions}
-              isLoading={usStates.isLoading}
-              isFetchError={usStates.isError}
             />
           </FormControl>
           <FormControl cols={4}>

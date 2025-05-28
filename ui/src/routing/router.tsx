@@ -285,6 +285,19 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "resource-editor",
+                async lazy() {
+                  let { ResourceEditor } = await import(
+                    "@/app/resource-editor/page"
+                  );
+                  return { Component: ResourceEditor };
+                },
+                handle: {
+                  crumb: "Resource Editor",
+                  title: "Resource Editor",
+                },
+              },
+              {
                 path: "integrations",
                 async lazy() {
                   let { IntegrationsPage } = await import(

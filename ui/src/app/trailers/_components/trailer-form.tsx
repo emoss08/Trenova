@@ -160,8 +160,6 @@ function RegistrationInformationSecond({
             placeholder="Registration State"
             description="The U.S. state where the trailer is registered."
             options={usStateOptions}
-            isLoading={usStates.isLoading}
-            isFetchError={usStates.isError}
           />
         </FormControl>
         <FormControl>

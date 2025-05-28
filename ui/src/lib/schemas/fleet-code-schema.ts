@@ -27,6 +27,7 @@ export const fleetCodeSchema = z.object({
   }, z.number().optional()),
   color: z.string().optional(),
   managerId: z.string().nullable(),
+  // TODO(wolfred): We need to add the manager field to the schema once we add the user schema
 });
 
 export type FleetCodeSchema = z.infer<typeof fleetCodeSchema>;

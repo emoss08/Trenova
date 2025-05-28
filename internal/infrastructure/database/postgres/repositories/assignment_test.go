@@ -80,9 +80,9 @@ func TestAssignmentRepository(t *testing.T) {
 		require.NotNil(t, created)
 
 		result, err := repo.GetByID(ctx, repoports.GetAssignmentByIDOptions{
-			ID:             created.ID,
-			OrganizationID: org.ID,
-			BusinessUnitID: bu.ID,
+			ID:    created.ID,
+			OrgID: org.ID,
+			BuID:  bu.ID,
 		})
 
 		require.NoError(t, err)
@@ -93,9 +93,9 @@ func TestAssignmentRepository(t *testing.T) {
 
 	t.Run("get assignment by invalid id", func(t *testing.T) {
 		result, err := repo.GetByID(ctx, repoports.GetAssignmentByIDOptions{
-			ID:             "invalid-id",
-			OrganizationID: org.ID,
-			BusinessUnitID: bu.ID,
+			ID:    "invalid-id",
+			OrgID: org.ID,
+			BuID:  bu.ID,
 		})
 
 		require.Error(t, err)

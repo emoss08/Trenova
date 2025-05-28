@@ -1,8 +1,9 @@
+"use no memo";
 import { LazyComponent } from "@/components/error-boundary";
-import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { CustomerAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { ratingMethodChoices } from "@/lib/choices";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import React, { lazy } from "react";
@@ -69,7 +70,7 @@ function ShipmentBillingDetailsForm() {
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
           rules={{ required: true }}
           name="ratingUnit"
@@ -79,17 +80,18 @@ function ShipmentBillingDetailsForm() {
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
+          tabIndex={-1}
           readOnly
           control={control}
           name="otherChargeAmount"
           label="Other Charges"
-          placeholder="Auto-calculated Additional Charges"
+          placeholder="Additional Charges"
           description="Sum of all additional charges (tolls, fees, etc.)."
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
           control={control}
           rules={{ required: true }}
           name="freightChargeAmount"
@@ -99,13 +101,14 @@ function ShipmentBillingDetailsForm() {
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
+          tabIndex={-1}
           readOnly
           control={control}
           rules={{ required: true }}
           name="totalChargeAmount"
           label="Total Charge"
-          placeholder="Auto-calculated Total"
+          placeholder="Total Charge"
           description="Automatically calculated total, including base and additional charges."
         />
       </FormControl>

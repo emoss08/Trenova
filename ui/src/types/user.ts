@@ -1,10 +1,43 @@
 import { Status, type BaseModel } from "./common";
 import { Organization } from "./organization";
-import { Role } from "./roles-permissions";
 
 export enum TimeFormat {
   TimeFormat12Hour = "12-hour",
   TimeFormat24Hour = "24-hour",
+}
+
+export interface FieldPermission {
+  field: string;
+  actions: string[];
+  auditLevel: string;
+}
+
+export interface Permission {
+  id: string;
+  resource: string;
+  action: string;
+  scope: string;
+  description: string;
+  isSystemLevel: boolean;
+  dependencies: string[];
+  createdAt: number;
+  updatedAt: number;
+  fieldPermissions?: FieldPermission[];
+}
+
+export interface Role {
+  id: string;
+  name: string;
+  description: string;
+  roleType: string;
+  isSystem: boolean;
+  priority: number;
+  status: string;
+  createdAt: number;
+  updatedAt: number;
+  businessUnitId: string;
+  organizationId: string;
+  permissions: Permission[];
 }
 
 export interface User extends BaseModel {

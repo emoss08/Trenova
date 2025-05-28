@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
 import { checkEmailSchema, CheckEmailSchema } from "@/lib/schemas/auth-schema";
-import { checkEmail } from "@/services/auth";
+import { api } from "@/services/api";
 import { APIError } from "@/types/errors";
 import { faEnvelope } from "@fortawesome/pro-regular-svg-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -17,7 +17,8 @@ type CheckEmailFormProps = {
 
 export function CheckEmailForm({ onEmailVerified }: CheckEmailFormProps) {
   const mutation = useMutation({
-    mutationFn: (values: CheckEmailSchema) => checkEmail(values.emailAddress),
+    mutationFn: async (values: CheckEmailSchema) =>
+      await api.auth.checkEmail(values.emailAddress),
   });
 
   const {

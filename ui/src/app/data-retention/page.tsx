@@ -3,7 +3,7 @@ import { MetaTags } from "@/components/meta-tags";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { queries } from "@/lib/queries";
-import { createDatabaseBackup } from "@/services/organization";
+import { api } from "@/services/api";
 import {
   faDownload,
   faExclamationTriangle,
@@ -53,7 +53,7 @@ const BackupAlert = memo(() => {
   const createBackup = useMutation({
     mutationFn: async () => {
       // API call to delete the backup
-      await createDatabaseBackup();
+      return await api.databaseBackups.create();
     },
     onSuccess: () => {
       toast.success("Backup created successfully");

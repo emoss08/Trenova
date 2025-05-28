@@ -1,6 +1,7 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { PDFViewerDialog } from "@/components/pdf-viewer/pdf-viewer-dialog";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import { Resource } from "@/types/audit-entry";
 import { Document } from "@/types/document";
 import { API_ENDPOINTS } from "@/types/server";
 import { useCallback, useEffect, useMemo, useState } from "react";
@@ -62,6 +63,7 @@ export default function ShipmentDocumentTable({
         columns={columns}
         // includeHeader={false}
         includeOptions={false}
+        resource={Resource.Document}
       />
       {pdfViewerOpen && selectedDocument && (
         <PDFViewerDialog

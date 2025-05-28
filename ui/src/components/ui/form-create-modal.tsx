@@ -126,33 +126,31 @@ export function FormCreateModal<T extends FieldValues>({
   }, [open, isSubmitting, handleSubmit, onSubmit]);
 
   return (
-    <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
-        <DialogContent className={cn("max-w-[450px]", className)}>
-          <DialogHeader>
-            <DialogTitle>Add New {title}</DialogTitle>
-            <DialogDescription>
-              Please fill out the form below to create a new {title}.
-            </DialogDescription>
-          </DialogHeader>
-          {notice ? notice : null}
-          <FormProvider {...form}>
-            <Form onSubmit={handleSubmit(onSubmit)}>
-              <DialogBody>{formComponent}</DialogBody>
-              <DialogFooter>
-                <Button type="button" variant="outline" onClick={handleClose}>
-                  Cancel
-                </Button>
-                <FormSaveButton
-                  isPopout={isPopout}
-                  isSubmitting={isSubmitting}
-                  title={title}
-                />
-              </DialogFooter>
-            </Form>
-          </FormProvider>
-        </DialogContent>
-      </Dialog>
-    </>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className={cn("max-w-[450px]", className)}>
+        <DialogHeader>
+          <DialogTitle>Add New {title}</DialogTitle>
+          <DialogDescription>
+            Please fill out the form below to create a new {title}.
+          </DialogDescription>
+        </DialogHeader>
+        {notice ? notice : null}
+        <FormProvider {...form}>
+          <Form onSubmit={handleSubmit(onSubmit)}>
+            <DialogBody>{formComponent}</DialogBody>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              <FormSaveButton
+                isPopout={isPopout}
+                isSubmitting={isSubmitting}
+                title={title}
+              />
+            </DialogFooter>
+          </Form>
+        </FormProvider>
+      </DialogContent>
+    </Dialog>
   );
 }

@@ -1,3 +1,4 @@
+"use no memo";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 
@@ -11,14 +12,16 @@ import {
 import { Switch } from "@/components/ui/switch";
 import { toSentenceCase, toTitleCase } from "@/lib/utils";
 import { useTableStore } from "@/stores/table-store";
-import {
-  DataTableCreateButtonProps,
-  DataTableViewOptionsProps,
-} from "@/types/data-table";
+import type { Resource } from "@/types/audit-entry";
+import { DataTableCreateButtonProps } from "@/types/data-table";
 import { faPlus, faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { faColumns } from "@fortawesome/pro-solid-svg-icons";
 import { ChevronDownIcon, PlusIcon, UploadIcon } from "@radix-ui/react-icons";
-import React, { memo, useCallback, useState } from "react";
+import type { VisibilityState } from "@tanstack/react-table";
+import { isValidElement, memo, useCallback, useMemo, useState } from "react";
+import { useDataTable } from "../data-table-provider";
+import { CreateTableConfigurationModal } from "./_configuration/table-configuration-create-modal";
+import { TableConfigurationList } from "./_configuration/table-configuration-list";
 import { DataTableImportModal } from "./data-table-import-modal";
 
 export const DataTableCreateButton = memo(function DataTableCreateButton({
@@ -28,21 +31,15 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
   exportModelName,
   extraActions,
 }: DataTableCreateButtonProps) {
-  // Control popover state explicitly
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
 
-  // Get import modal state from the store
   const [showImportModal, setShowImportModal] =
     useTableStore.use("showImportModal");
 
-  // Memoized click handlers
   const handleCreateClick = useCallback(() => {
     setIsPopoverOpen(false);
 
     if (onCreateClick) {
-      console.info("onCreateClick debug info", {
-        onCreateClick,
-      });
       onCreateClick();
     }
   }, [onCreateClick]);
@@ -105,7 +102,7 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
                     <Icon icon={option.icon} className="size-4" />
                   )}
                   <span>{option.label}</span>
-                  {React.isValidElement(option.endContent) && option.endContent}
+                  {isValidElement(option.endContent) && option.endContent}
                 </div>
                 <div>
                   <p className="text-xs font-normal text-muted-foreground">
@@ -129,14 +126,15 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
   );
 });
 
-export function DataTableViewOptions<TData>({
-  table,
-}: DataTableViewOptionsProps<TData>) {
-  const [open, setOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState("");
+export function DataTableViewOptions({ resource }: { resource: Resource }) {
+  const [open, setOpen] = useState(false);
+  const [showConfigurationList, setShowConfigurationList] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const { table } = useDataTable();
 
   // Get all hideable columns
-  const columns = React.useMemo(
+  const hideableColumns = useMemo(
     () =>
       table
         .getAllColumns()
@@ -148,88 +146,139 @@ export function DataTableViewOptions<TData>({
   );
 
   // Filter columns based on search query
-  const filteredColumns = React.useMemo(
+  const filteredColumns = useMemo(
     () =>
-      columns.filter((column) =>
+      hideableColumns.filter((column) =>
         toSentenceCase(column.id)
           .toLowerCase()
           .includes(searchQuery.toLowerCase()),
       ),
-    [columns, searchQuery],
+    [hideableColumns, searchQuery],
   );
 
-  const handleToggleVisibility = React.useCallback(
+  const handleToggleVisibility = useCallback(
     (columnId: string, isVisible: boolean) => {
       table.getColumn(columnId)?.toggleVisibility(!isVisible);
     },
     [table],
   );
 
+  // Get the raw visibility state from the table, used as a dependency for comprehensive state
+  const currentRawVisibilityState = table.getState().columnVisibility;
+
+  // Create a comprehensive visibility state that includes all hideable columns
+  // and their current actual visibility status.
+  const comprehensiveVisibilityState = useMemo(() => {
+    const state: VisibilityState = {};
+    hideableColumns.forEach((column) => {
+      state[column.id] = column.getIsVisible();
+    });
+    return state;
+  }, [hideableColumns, currentRawVisibilityState]);
+
   return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button
-          variant="outline"
-          className="h-7 border-dashed"
-          aria-label="Toggle column visibility"
-        >
-          <Icon icon={faColumns} className="size-4" />
-          <span className="hidden lg:inline">Customize Columns</span>
-          <span className="lg:hidden">Columns</span>
-          <span className="sr-only">Toggle column visibility options</span>
-          <ChevronDownIcon />
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent
-        align="end"
-        side="bottom"
-        className="w-(--radix-popover-trigger-width) p-2"
-      >
-        <div className="space-y-2">
-          <Input
-            icon={
-              <Icon icon={faSearch} className="size-3 text-muted-foreground" />
-            }
-            placeholder="Search columns..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-7 text-sm bg-background"
-          />
-          <div className="my-3 border-dashed border-t border-border" />
-          <div className="flex flex-col gap-3">
-            {filteredColumns.length > 0 ? (
-              filteredColumns.map((column) => {
-                const isVisible = column.getIsVisible();
-                return (
-                  <div
-                    key={column.id}
-                    className="flex items-center justify-between"
-                  >
-                    <Label htmlFor={column.id} className="flex-grow text-xs">
-                      {toTitleCase(column.id)}
-                    </Label>
-                    <Switch
-                      id={column.id}
-                      checked={isVisible}
-                      size="sm"
-                      onCheckedChange={() =>
-                        handleToggleVisibility(column.id, isVisible)
-                      }
-                      title={`Toggle ${toTitleCase(column.id)} column`}
-                      aria-describedby={`Toggle ${toTitleCase(column.id)} column`}
-                      aria-label={`Toggle ${toTitleCase(column.id)} column`}
-                    />
-                  </div>
-                );
-              })
-            ) : (
-              <p className="p-2 text-sm text-muted-foreground">
-                No columns found
-              </p>
-            )}
+    <>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            className="h-7 border-dashed"
+            aria-label="Toggle column visibility"
+          >
+            <Icon icon={faColumns} className="size-4" />
+            <span className="hidden lg:inline">Configure Columns</span>
+            <span className="lg:hidden">Columns</span>
+            <span className="sr-only">Toggle column visibility options</span>
+            <ChevronDownIcon />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent align="end" side="bottom" className="w-auto p-2">
+          <div className="space-y-2">
+            <Input
+              icon={
+                <Icon
+                  icon={faSearch}
+                  className="size-3 text-muted-foreground"
+                />
+              }
+              placeholder="Search columns..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-7 text-sm bg-background"
+            />
+            <div className="my-3 border-dashed border-t border-border" />
+            <div className="flex flex-col gap-3">
+              {filteredColumns.length > 0 ? (
+                filteredColumns.map((column) => {
+                  const isVisible = column.getIsVisible();
+                  return (
+                    <div
+                      key={column.id}
+                      className="flex items-center justify-between"
+                    >
+                      <Label htmlFor={column.id} className="flex-grow text-xs">
+                        {toTitleCase(column.id)}
+                      </Label>
+                      <Switch
+                        id={column.id}
+                        checked={isVisible}
+                        size="sm"
+                        onCheckedChange={() =>
+                          handleToggleVisibility(column.id, isVisible)
+                        }
+                        title={`Toggle ${toTitleCase(column.id)} column`}
+                        aria-describedby={`Toggle ${toTitleCase(column.id)} column`}
+                        aria-label={`Toggle ${toTitleCase(column.id)} column`}
+                      />
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="p-2 text-sm text-muted-foreground">
+                  No columns found
+                </p>
+              )}
+            </div>
+            <div className="flex border-t border-border border-dashed pt-2 justify-between gap-2">
+              <Popover
+                open={showConfigurationList}
+                onOpenChange={setShowConfigurationList}
+              >
+                <PopoverTrigger asChild>
+                  <Button size="sm" className="w-full" variant="secondary">
+                    View Configuration(s)
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent
+                  align="end"
+                  alignOffset={-10}
+                  sideOffset={10}
+                  side="left"
+                  className="p-1 w-[250px]"
+                >
+                  <TableConfigurationList
+                    resource={resource}
+                    open={showConfigurationList}
+                  />
+                </PopoverContent>
+              </Popover>
+              <Button
+                onClick={() => setShowCreateModal(!showCreateModal)}
+                size="sm"
+                className="w-full"
+              >
+                Save Configuration
+              </Button>
+            </div>
           </div>
-        </div>
-      </PopoverContent>
-    </Popover>
+        </PopoverContent>
+      </Popover>
+      <CreateTableConfigurationModal
+        open={showCreateModal}
+        onOpenChange={setShowCreateModal}
+        resource={resource}
+        visiblityState={comprehensiveVisibilityState}
+      />
+    </>
   );
 }

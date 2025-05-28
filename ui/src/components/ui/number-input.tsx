@@ -6,11 +6,20 @@ import { ChevronDownIcon, ChevronUpIcon } from "@radix-ui/react-icons";
 import { Controller, type FieldValues } from "react-hook-form";
 import { FieldWrapper } from "../fields/field-components";
 
-function NumberInputRoot({ className, ...props }: ArkNumberInput.RootProps) {
+function NumberInputRoot({
+  className,
+  readOnly,
+  ...props
+}: ArkNumberInput.RootProps & { readOnly?: boolean }) {
   return (
     <ArkNumberInput.Root
       data-slot="number-input-root"
-      className={cn("flex flex-col", className)}
+      aria-readonly={readOnly}
+      className={cn(
+        "flex flex-col",
+        readOnly && "cursor-not-allowed opacity-60 pointer-events-none",
+        className,
+      )}
       {...props}
     />
   );

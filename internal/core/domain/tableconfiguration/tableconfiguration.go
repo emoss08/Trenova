@@ -7,12 +7,19 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/user"
+	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
+)
+
+var (
+	_ bun.BeforeAppendModelHook = (*Configuration)(nil)
+	_ domain.Validatable        = (*Configuration)(nil)
+	_ infra.PostgresSearchable  = (*Configuration)(nil)
 )
 
 type Filter struct {
@@ -23,11 +30,15 @@ type Filter struct {
 	RowID    string   `json:"rowId"`    // Additional field
 }
 
-type FilterConfig struct {
-	Filters      []Filter `json:"filters"`      // Updated to handle an array of filter objects
-	JoinOperator string   `json:"joinOperator"` // e.g., "and"
-	Sorting      []any    `json:"sorting"`      // Assuming "sorting" is a list
-	PageSize     int      `json:"pageSize"`
+// TableConfig is a JSONB blob that stores all user-specific table preferences.
+// Over time we can safely extend it with new optional fields without having to
+// run DB migrations.
+type TableConfig struct {
+	Filters          []Filter        `json:"filters"`          // User-defined filters
+	JoinOperator     string          `json:"joinOperator"`     // "and" | "or"
+	Sorting          []any           `json:"sorting"`          // Sorting preference
+	PageSize         int             `json:"pageSize"`         // Default page size
+	ColumnVisibility map[string]bool `json:"columnVisibility"` // NEW – column -> visible?
 }
 
 type Configuration struct {
@@ -40,13 +51,12 @@ type Configuration struct {
 	UserID         pulid.ID `json:"userId" bun:"user_id,type:VARCHAR(100),notnull"`
 
 	// Core fields
-	Status          domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
-	Name            string        `json:"name" bun:"name,type:VARCHAR(255),notnull"`
-	Description     string        `json:"description" bun:"description,type:TEXT"`
-	TableIdentifier string        `json:"tableIdentifier" bun:"table_identifier,type:VARCHAR(100),notnull"`
-	FilterConfig    FilterConfig  `json:"filterConfig" bun:"filter_config,type:JSONB,notnull"`
-	Visibility      Visibility    `json:"visibility" bun:"visibility,type:configuration_visibility_enum,notnull,default:'Private'"`
-	IsDefault       bool          `json:"isDefault" bun:"is_default,type:BOOLEAN,notnull,default:false"`
+	Name        string      `json:"name" bun:"name,type:VARCHAR(255),notnull"`
+	Description string      `json:"description" bun:"description,type:TEXT"`
+	Resource    string      `json:"resource" bun:"resource,type:VARCHAR(100),notnull"`
+	TableConfig TableConfig `json:"tableConfig" bun:"table_config,type:JSONB,notnull"`
+	Visibility  Visibility  `json:"visibility" bun:"visibility,type:configuration_visibility_enum,notnull,default:'Private'"`
+	IsDefault   bool        `json:"isDefault" bun:"is_default,type:BOOLEAN,notnull,default:false"`
 
 	// Metadata
 	Version   int64 `json:"version" bun:"version,type:BIGINT,notnull,default:0"`
@@ -60,25 +70,21 @@ type Configuration struct {
 	Shares       []*ConfigurationShare      `json:"shares,omitempty" bun:"rel:has-many,join:id=configuration_id"`
 }
 
-func (c *Configuration) validate(ctx context.Context, multiErr *errors.MultiError) {
+func (c *Configuration) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, c,
 		validation.Field(&c.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 255).Error("Name must be between 1 and 255 characters"),
 		),
-		validation.Field(&c.TableIdentifier,
-			validation.Required.Error("Table identifier is required"),
+		validation.Field(&c.Resource,
+			validation.Required.Error("Resource is required"),
 		),
-		validation.Field(&c.FilterConfig,
-			validation.Required.Error("Filter configuration is required"),
+		validation.Field(&c.TableConfig,
+			validation.Required.Error("Table configuration is required"),
 		),
 		validation.Field(&c.Visibility,
 			validation.Required.Error("Visibility is required"),
 			validation.In(VisibilityPrivate, VisibilityPublic, VisibilityShared).Error("Visibility must be Private, Public, or Shared"),
-		),
-		validation.Field(&c.Status,
-			validation.Required.Error("Status is required"),
-			validation.In(domain.StatusActive, domain.StatusInactive).Error("Status must be either Active or Inactive"),
 		),
 	)
 	if err != nil {
@@ -89,9 +95,10 @@ func (c *Configuration) validate(ctx context.Context, multiErr *errors.MultiErro
 	}
 }
 
+// TODO(Wolfred): Move this to a validator
 func (c *Configuration) DBValidate(ctx context.Context, _ bun.IDB) *errors.MultiError {
 	multiErr := errors.NewMultiError()
-	c.validate(ctx, multiErr)
+	c.Validate(ctx, multiErr)
 
 	if multiErr.HasErrors() {
 		return multiErr
@@ -109,6 +116,31 @@ func (c *Configuration) GetTableName() string {
 
 func (c *Configuration) GetTableAlias() string {
 	return "tc"
+}
+
+func (c *Configuration) GetID() string {
+	return c.ID.String()
+}
+
+func (c *Configuration) GetPostgresSearchConfig() infra.PostgresSearchConfig {
+	return infra.PostgresSearchConfig{
+		TableAlias: c.GetTableAlias(),
+		Fields: []infra.PostgresSearchableField{
+			{
+				Name:   "name",
+				Weight: "A",
+				Type:   infra.PostgresSearchTypeText,
+			},
+			{
+				Name:   "description",
+				Weight: "B",
+				Type:   infra.PostgresSearchTypeText,
+			},
+		},
+		MinLength:       2,
+		MaxTerms:        6,
+		UsePartialMatch: true,
+	}
 }
 
 func (c *Configuration) BeforeAppendModel(_ context.Context, query bun.Query) error {

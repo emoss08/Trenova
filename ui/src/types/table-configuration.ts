@@ -1,3 +1,4 @@
+import type { Resource } from "./audit-entry";
 import type { BaseModelWithOrganization, Status } from "./common";
 import { User } from "./user";
 
@@ -18,7 +19,7 @@ export interface TableConfiguration extends BaseModelWithOrganization {
   status: Status;
   name: string;
   description?: string;
-  tableIdentifier: string;
+  resource: Resource;
   filterConfig: Record<string, any>;
   visibility: Visibility;
   isDefault: boolean;
@@ -26,11 +27,20 @@ export interface TableConfiguration extends BaseModelWithOrganization {
   // Relationships (optional due to `omitempty`)
   shares?: ConfigurationShare[];
   creator?: User;
+
+  // New fields
+  tableConfig: TableConfig;
 }
 
 export type CreateTableConfigurationRequest = Omit<
   TableConfiguration,
-  "id" | "createdAt" | "updatedAt" | "version" | "shares" | "creator"
+  | "id"
+  | "createdAt"
+  | "updatedAt"
+  | "version"
+  | "shares"
+  | "creator"
+  | "tableConfig"
 >;
 
 // ConfigurationShare interface
@@ -49,4 +59,23 @@ export interface ConfigurationShare {
   // Relationships (optional due to `omitempty`)
   shareWithUser?: User;
   configuration?: TableConfiguration;
+}
+
+export interface ColumnVisibilityState {
+  [columnId: string]: boolean;
+}
+
+export interface TableConfig {
+  /** Column visibility keyed by column id */
+  columnVisibility: ColumnVisibilityState;
+  /** Optional page size preference */
+  pageSize?: number;
+  /** Optional sorting preference */
+  sorting?: unknown;
+  /** Optional filters the user has applied */
+  filters?: unknown;
+  /** Logical operator to join filters */
+  joinOperator?: string;
+  /** Anything else we may store later */
+  [key: string]: unknown;
 }

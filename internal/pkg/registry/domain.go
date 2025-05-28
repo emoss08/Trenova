@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/integration"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
+	"github.com/emoss08/trenova/internal/core/domain/pagefavorite"
 	"github.com/emoss08/trenova/internal/core/domain/pcmilerconfiguration"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/pretrainedmodels"
@@ -84,5 +85,6 @@ func RegisterEntities() []any {
 		&billing.DocumentType{},
 		&accessorialcharge.AccessorialCharge{},
 		&integration.Integration{},
+		&pagefavorite.PageFavorite{},
 	}
 }

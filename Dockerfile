@@ -1,10 +1,22 @@
-FROM golang:1.24 AS builder
+FROM golang:1.24-bookworm AS builder
 
-# Install necessary packages and librdkafka
-RUN apk add --update --no-cache alpine-sdk bash ca-certificates \
-    libressl \
+# Install necessary packages
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    bash \
+    ca-certificates \
+    libssl-dev \
     tar \
-    git openssh openssl yajl-dev zlib-dev gcc cyrus-sasl-dev openssl-dev build-base coreutils pkgconf tzdata
+    git \
+    openssh-client \
+    openssl \
+    libyajl-dev \
+    zlib1g-dev \
+    libsasl2-dev \
+    pkg-config \
+    tzdata \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
 WORKDIR /app
@@ -25,12 +37,16 @@ RUN go mod download
 COPY . .
 
 # Build the binary
-RUN CGO_ENABLED=0 go build -o apiserver cmd/api/main.go
+RUN CGO_ENABLED=1 go build -o apiserver cmd/api/main.go
 
-FROM alpine:latest
+FROM debian:bookworm-slim AS final
 
-# Install CA certificates and PostgreSQL 17 client
-RUN apk --no-cache add ca-certificates postgresql-client~=17
+# Install runtime dependencies
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    postgresql-client \
+    libffi8 \
+    && rm -rf /var/lib/apt/lists/*
 
 # Set the environment variable
 ENV APP_ENV=production

@@ -8,7 +8,7 @@ import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<HazmatSegregationRuleSchema>[] {
   const columnHelper = createColumnHelper<HazmatSegregationRuleSchema>();
-  const commonColumns = createCommonColumns();
+  const commonColumns = createCommonColumns<HazmatSegregationRuleSchema>();
 
   return [
     commonColumns.status,

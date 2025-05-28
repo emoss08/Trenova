@@ -36,38 +36,38 @@ func NewShipmentCalculator(p ShipmentCalculatorParams) *ShipmentCalculator {
 
 // CalculateTotals handles all calculations for a shipment
 func (sc *ShipmentCalculator) CalculateTotals(shp *shipment.Shipment) {
-	// Calculate commodity totals (pieces and weight)
 	sc.CalculateCommodityTotals(shp)
+	sc.calculateShipmentCharge(shp)
+}
 
-	// Calculate billing amounts (base charges + additional charges)
-	sc.CalculateBillingAmounts(shp)
+func (sc *ShipmentCalculator) calculateShipmentCharge(shp *shipment.Shipment) {
+	totals := sc.CalculateBillingAmounts(shp)
+
+	shp.FreightChargeAmount = decimal.NewNullDecimal(totals.BaseCharge)
+	shp.OtherChargeAmount = decimal.NewNullDecimal(totals.OtherChargeAmount)
+	shp.TotalChargeAmount = decimal.NewNullDecimal(totals.TotalChargeAmount)
 }
 
 // CalculateBillingAmounts calculates all billing amounts for a shipment
-func (sc *ShipmentCalculator) CalculateBillingAmounts(shp *shipment.Shipment) {
+func (sc *ShipmentCalculator) CalculateBillingAmounts(shp *shipment.Shipment) ShipmentTotalsResponse {
 	// Step 1: Calculate base charge based on rating method
-	baseCharge := sc.calculateBaseCharge(shp)
+	baseCharge := sc.CalculateBaseCharge(shp)
 
 	// Step 2: Calculate additional charges total
 	additionalChargesTotal := sc.calculateAdditionalCharges(shp, baseCharge)
 
-	// Step 3: Set the other charge amount (sum of all additional charges)
-	shp.OtherChargeAmount = decimal.NewNullDecimal(additionalChargesTotal)
-
 	// Step 4: Calculate the total charge amount (Base + Other Charges)
 	totalCharge := baseCharge.Add(additionalChargesTotal)
-	shp.TotalChargeAmount = decimal.NewNullDecimal(totalCharge)
 
-	sc.l.Debug().
-		Str("shipmentID", shp.ID.String()).
-		Str("baseCharge", baseCharge.String()).
-		Str("additionalChargesTotal", additionalChargesTotal.String()).
-		Str("totalChargeAmount", totalCharge.String()).
-		Msg("calculated shipment billing amounts")
+	return ShipmentTotalsResponse{
+		BaseCharge:        baseCharge,
+		OtherChargeAmount: additionalChargesTotal,
+		TotalChargeAmount: totalCharge,
+	}
 }
 
 // calculateBaseCharge determines the base charge based on the shipment's rating method
-func (sc *ShipmentCalculator) calculateBaseCharge(shp *shipment.Shipment) decimal.Decimal {
+func (sc *ShipmentCalculator) CalculateBaseCharge(shp *shipment.Shipment) decimal.Decimal {
 	// Get default value if FreightChargeAmount is null
 	freightChargeAmount := decimal.Zero
 	if shp.FreightChargeAmount.Valid {
@@ -77,25 +77,20 @@ func (sc *ShipmentCalculator) calculateBaseCharge(shp *shipment.Shipment) decima
 	// Convert rating unit to decimal for calculations
 	ratingUnit := decimal.NewFromInt(shp.RatingUnit)
 
-	// Calculate base charge based on rating method
 	switch shp.RatingMethod {
 	case shipment.RatingMethodFlatRate:
-		// Flat rate is simply the freight charge amount
 		return freightChargeAmount
 
 	case shipment.RatingMethodPerMile:
-		// Calculate per mile rate (rating unit * freight charge amount)
 		if !freightChargeAmount.IsZero() {
 			return ratingUnit.Mul(freightChargeAmount)
 		}
 		return decimal.Zero
 
 	case shipment.RatingMethodPerStop:
-		// Calculate per stop rate
 		return sc.calculatePerStopRate(shp)
 
 	case shipment.RatingMethodPerPound:
-		// Calculate per pound rate (weight * rating unit)
 		if shp.Weight != nil && *shp.Weight > 0 {
 			weight := decimal.NewFromInt(*shp.Weight)
 			return ratingUnit.Mul(weight)
@@ -103,7 +98,6 @@ func (sc *ShipmentCalculator) calculateBaseCharge(shp *shipment.Shipment) decima
 		return decimal.Zero
 
 	case shipment.RatingMethodPerPallet:
-		// Calculate per pallet rate (pieces * rating unit)
 		if shp.Pieces != nil && *shp.Pieces > 0 {
 			pieces := decimal.NewFromInt(*shp.Pieces)
 			return ratingUnit.Mul(pieces)
@@ -111,11 +105,9 @@ func (sc *ShipmentCalculator) calculateBaseCharge(shp *shipment.Shipment) decima
 		return decimal.Zero
 
 	case shipment.RatingMethodPerLinearFoot:
-		// Calculate per linear foot rate
 		return sc.calculatePerLinearFootRate(shp)
 
 	case shipment.RatingMethodOther:
-		// Custom calculation (rating unit * freight charge amount)
 		if !freightChargeAmount.IsZero() {
 			return ratingUnit.Mul(freightChargeAmount)
 		}
@@ -156,7 +148,8 @@ func (sc *ShipmentCalculator) calculatePerLinearFootRate(shp *shipment.Shipment)
 	totalLinearFeet := int64(0)
 	for _, commodity := range shp.Commodities {
 		if commodity.Commodity != nil && commodity.Commodity.LinearFeetPerUnit != nil && commodity.Pieces > 0 {
-			linearFeet := decimal.NewFromInt(commodity.Pieces).Mul(decimal.NewFromFloat(*commodity.Commodity.LinearFeetPerUnit))
+			commodityLinearFeet := decimal.NewFromFloat(*commodity.Commodity.LinearFeetPerUnit)
+			linearFeet := decimal.NewFromInt(commodity.Pieces).Mul(commodityLinearFeet)
 			totalLinearFeet += linearFeet.IntPart()
 		}
 	}
@@ -289,13 +282,22 @@ func (sc *ShipmentCalculator) CalculateTimestamps(shp *shipment.Shipment) error 
 			Str("shipmentID", shp.ID.String()).
 			Err(err).
 			Msg("failed to calculate shipment timestamps")
+		return eris.Wrap(err, "failed to calculate shipment timestamps")
 	}
 
-	sc.l.Debug().
-		Str("shipmentID", shp.ID.String()).
-		Int64("actualShipDate", *shp.ActualShipDate).
-		Int64("actualDeliveryDate", *shp.ActualDeliveryDate).
-		Msg("calculated shipment timestamps")
+	// Only log the timestamps if they are not nil
+	logEvent := sc.l.Debug().
+		Str("shipmentID", shp.ID.String())
+
+	if shp.ActualShipDate != nil {
+		logEvent = logEvent.Int64("actualShipDate", *shp.ActualShipDate)
+	}
+
+	if shp.ActualDeliveryDate != nil {
+		logEvent = logEvent.Int64("actualDeliveryDate", *shp.ActualDeliveryDate)
+	}
+
+	logEvent.Msg("calculated shipment timestamps")
 
 	return nil
 }

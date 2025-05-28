@@ -1,6 +1,11 @@
 import { BaseModel } from "./common";
 import { User } from "./user";
 
+export type AuditEntryResponse = {
+  items: AuditEntry[];
+  total: number;
+};
+
 export interface AuditEntry extends BaseModel {
   id: string;
   resourceId: string;
@@ -62,6 +67,7 @@ export enum Resource {
   SystemLog = "system_log",
   ShipmentControl = "shipment_control",
   DataRetention = "data_retention",
+  ResourceEditor = "resource_editor",
   Equipment = "equipment",
   Maintenance = "maintenance",
   User = "user",
@@ -76,6 +82,7 @@ export enum Resource {
   DivisionCode = "division_code",
   GlAccount = "gl_account",
   RevenueCode = "revenue_code",
+  PageFavorite = "page_favorite",
   AccessorialCharge = "accessorial_charge",
   Worker = "worker",
   Tractor = "tractor",
@@ -97,7 +104,7 @@ export enum Resource {
   Invoice = "invoice",
   Dispatch = "dispatch",
   Report = "report",
-  AuditEntries = "audit_entries",
+  AuditEntry = "audit_entry",
   TableConfiguration = "table_configuration",
   Integration = "integration",
   Setting = "setting",

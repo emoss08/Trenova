@@ -10,7 +10,7 @@ import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<LocationCategorySchema>[] {
   const columnHelper = createColumnHelper<LocationCategorySchema>();
-  const commonColumns = createCommonColumns();
+  const commonColumns = createCommonColumns<LocationCategorySchema>();
 
   return [
     columnHelper.display({

@@ -3,297 +3,503 @@ package config
 import (
 	"fmt"
 	"net"
-	"os"
 	"strconv"
 	"strings"
-
-	"github.com/robfig/cron/v3"
-	"github.com/rotisserie/eris"
-	"github.com/spf13/viper"
+	"time"
 )
 
-type Manager struct {
-	Cfg   *Config
-	Viper *viper.Viper
+// Config is the configuration for the app.
+type Config struct {
+	// App is the app configuration.
+	App AppConfig `mapstructure:"app"`
+
+	// Log is the log configuration.
+	Log LogConfig `mapstructure:"logging"`
+
+	// Server is the server configuration.
+	Server ServerConfig `mapstructure:"server"`
+
+	// DB is the database configuration.
+	DB DatabaseConfig `mapstructure:"db"`
+
+	// Redis is the redis configuration.
+	Redis RedisConfig `mapstructure:"redis"`
+
+	// RabbitMQ is the rabbitmq configuration.
+	RabbitMQ RabbitMQConfig `mapstructure:"rabbitmq"`
+
+	// Auth is the auth configuration.
+	Auth AuthConfig `mapstructure:"auth"`
+
+	// Audit is the audit configuration.
+	Audit AuditConfig `mapstructure:"audit"`
+
+	// Minio is the minio configuration.
+	// TODO(Wolfred): Rename this to FileStorage
+	Minio MinioConfig `mapstructure:"minio"`
+
+	// Cors is the cors configuration.
+	Cors CorsConfig `mapstructure:"cors"`
+
+	// Static is the static configuration.
+	Static StaticConfig `mapstructure:"static"`
+
+	// Backup is the backup configuration.
+	Backup BackupConfig `mapstructure:"backup"`
 }
 
-func NewManager() *Manager {
-	return &Manager{
-		Viper: viper.New(),
-	}
+type LogConfig struct {
+	// LogLevel is the app log level.
+	// trace, debug, info, warn, error, fatal, panic
+	Level string `mapstructure:"level"`
+
+	// SamplingPeriod is the sampling period.
+	// This is the period at which the log is sampled.
+	// Defaults to 10 seconds.
+	SamplingPeriod time.Duration `mapstructure:"samplingPeriod"`
+
+	// SamplingInterval is the sampling interval.
+	// This is the interval at which the log is sampled.
+	// Defaults to 1000.
+	SamplingInterval uint32 `mapstructure:"samplingInterval"`
+
+	// FileConfig is the file configuration.
+	FileConfig FileConfig `mapstructure:"file"`
 }
 
-func (m *Manager) Load() (*Config, error) {
-	env := os.Getenv("APP_ENV")
-	if env == "" {
-		env = "development"
-	}
+type FileConfig struct {
+	// Enabled is the enabled flag.
+	Enabled bool `mapstructure:"enabled"`
 
-	// Set default values
-	m.setDefaults()
+	// Path is the path to the log file.
+	Path string `mapstructure:"path"`
 
-	m.Viper.SetConfigName(fmt.Sprintf("config.%s", env))
-	m.Viper.SetConfigType("yaml")
-	m.Viper.AddConfigPath(fmt.Sprintf("config/%s", env))
-	m.Viper.AddConfigPath("config")
-	m.Viper.AddConfigPath(".")
+	// FileName is the name of the log file.
+	FileName string `mapstructure:"fileName"`
 
-	// Environment variables
-	m.Viper.SetEnvPrefix("TRENOVA")
-	m.Viper.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
-	m.Viper.AutomaticEnv()
+	// MaxSize is the max size of the log file.
+	MaxSize int `mapstructure:"maxSize"`
 
-	if err := m.Viper.ReadInConfig(); err != nil {
-		return nil, eris.Wrap(err, "failed to read config")
-	}
+	// MaxBackups is the max backups.
+	MaxBackups int `mapstructure:"maxBackups"`
 
-	config := &Config{}
-	if err := m.Viper.Unmarshal(config); err != nil {
-		return nil, eris.Wrap(err, "failed to unmarshal config")
-	}
+	// MaxAge is the max age of the log file.
+	MaxAge int `mapstructure:"maxAge"`
 
-	m.Cfg = config
-	return config, nil
+	// Compress is the compress flag.
+	Compress bool `mapstructure:"compress"`
 }
 
-func (m *Manager) setDefaults() {
-	// App defaults
-	m.Viper.SetDefault("app.environment", "development")
-	m.Viper.SetDefault("app.logLevel", "info")
-	m.Viper.SetDefault("app.version", "0.0.1")
+// StaticConfig is the configuration for the static files.
+type StaticConfig struct {
+	// Path is the path to the static files.
+	Path string `mapstructure:"path"`
 
-	// Server defaults
-	m.Viper.SetDefault("server.host", "0.0.0.0")
-	m.Viper.SetDefault("server.port", 8080)
-	m.Viper.SetDefault("server.readTimeout", 15)
-	m.Viper.SetDefault("server.writeTimeout", 15)
-	m.Viper.SetDefault("server.maxHeaderBytes", 1<<20) // 1 MB
+	// Browse is the browse flag.
+	Browse bool `mapstructure:"browse"`
 
-	// Database defaults
-	m.Viper.SetDefault("db.driver", "postgresql")
-	m.Viper.SetDefault("db.sslMode", "disable")
-	m.Viper.SetDefault("db.maxConnections", 100)
-	m.Viper.SetDefault("db.maxIdleConns", 10)
-	m.Viper.SetDefault("db.connMaxLifetime", 3600) // 1 hour
-
-	// Backup defaults
-	m.Viper.SetDefault("backup.enabled", false)
-	m.Viper.SetDefault("backup.backupDir", "./backups")
-	m.Viper.SetDefault("backup.retentionDays", 30)
-	m.Viper.SetDefault("backup.schedule", "0 0 * * *") // Daily at midnight
-	m.Viper.SetDefault("backup.compression", 6)
-	m.Viper.SetDefault("backup.maxConcurrentBackups", 1)
-	m.Viper.SetDefault("backup.backupTimeout", 30*60) // 30 minutes in seconds
-	m.Viper.SetDefault("backup.notifyOnFailure", true)
-	m.Viper.SetDefault("backup.notifyOnSuccess", false)
+	// Root is the root directory.
+	Root string `mapstructure:"root"`
 }
 
-func (m *Manager) Get() *Config {
-	return m.Cfg
+// AuditConfig is the configuration for the audit service.
+type AuditConfig struct {
+	// BufferSize is the buffer size.
+	// This is the size of the buffer.
+	// Defaults to 1000.
+	// You may need to increase this if you're using a high-traffic service.
+	BufferSize int `mapstructure:"bufferSize"`
+
+	// FlushInterval is the flush interval.
+	// This is the interval at which the buffer is flushed.
+	// Defaults to 10 seconds.
+	// You may need to increase this if you're using a high-traffic service.
+	FlushInterval int `mapstructure:"flushInterval"`
+
+	// MaxRetries is the max retries.
+	// This is the maximum number of retries for the audit service.
+	// Defaults to 3.
+	MaxRetries int `mapstructure:"maxRetries"`
+
+	// CompressionEnabled enables compression of large audit entries.
+	// When enabled, large state data will be compressed to reduce storage requirements.
+	// Defaults to false.
+	CompressionEnabled bool `mapstructure:"compressionEnabled"`
+
+	// CompressionLevel sets the compression level (1-9).
+	// 1 is fastest but least compression, 9 is slowest but best compression.
+	// Defaults to 6 (medium compression).
+	CompressionLevel int `mapstructure:"compressionLevel"`
+
+	// CompressionThreshold is the size in KB before compression is applied.
+	// State data smaller than this threshold will not be compressed.
+	// Defaults to 10 KB.
+	CompressionThreshold int `mapstructure:"compressionThreshold"`
 }
 
-func (m *Manager) Validate() error {
-	if m.Cfg == nil {
-		return ErrConfigNotLoaded
-	}
+// AppConfig is the configuration for the app.
+type AppConfig struct {
+	// Name is the app name.
+	Name string `mapstructure:"name"`
 
-	if err := m.validateApp(); err != nil {
-		return eris.Wrap(err, "app config validation failed")
-	}
+	// Environment is the app environment.
+	// development, staging, production, testing
+	Environment string `mapstructure:"environment"`
 
-	if err := m.validateServer(); err != nil {
-		return eris.Wrap(err, "server config validation failed")
-	}
-
-	if err := m.validateDatabase(); err != nil {
-		return eris.Wrap(err, "database config validation failed")
-	}
-
-	if err := m.validateBackup(); err != nil {
-		return eris.Wrap(err, "backup config validation failed")
-	}
-
-	return nil
+	// Version is the app version.
+	Version string `mapstructure:"version"`
 }
 
-func (m *Manager) validateApp() error {
-	if m.Cfg.App.Name == "" {
-		return ErrInvalidAppName
-	}
-	return nil
+// ServerConfig is the configuration for the server.
+// To understand the configuration options, please refer to the Fiber documentation:
+// https://docs.gofiber.io/api/fiber#config
+type ServerConfig struct {
+	// SecretKey is the server secret key.
+	// This is used to sign the session cookie.
+	SecretKey string `mapstructure:"secretKey"`
+
+	// ListenAddress is the server listen address.
+	ListenAddress string `mapstructure:"listenAddress"`
+
+	// Immutable is the immutable mode.
+	// When enabled, all values returned by context methods are immutable.
+	// By default, they are valid until you return from the handler.
+	Immutable bool `mapstructure:"immutable"`
+
+	// ReadBufferSize is the read buffer size.
+	// per-connection buffer size for requests' reading. This also limits
+	// the maximum header size. Increase this buffer if your clients send
+	// multi-KB RequestURIs and/or multi-KB headers
+	// (for example, BIG cookies).
+	ReadBufferSize int `mapstructure:"readBufferSize"`
+
+	// WriteBufferSize is the write buffer size.
+	// Per-connection buffer size for responses' writing.
+	WriteBufferSize int `mapstructure:"writeBufferSize"`
+
+	// PassLocalsToViews enables passing of the locals set on a fiber.Ctx
+	// to the template engine. See our Template Middleware for supported
+	// engines.
+	PassLocalsToViews bool `mapstructure:"passLocalsToViews"`
+
+	// DisableStartupMessage disables the startup message.
+	DisableStartupMessage bool `mapstructure:"disableStartupMessage"`
+
+	// StreamRequestBody enables streaming of the request body.
+	StreamRequestBody bool `mapstructure:"streamRequestBody"`
+
+	// StrictRouting enables strict routing.
+	// If enabled, the router will not allow trailing slashes.
+	StrictRouting bool `mapstructure:"strictRouting"`
+
+	// CaseSensitive enables case-sensitive routing.
+	// If enabled, the router will be case-sensitive.
+	CaseSensitive bool `mapstructure:"caseSensitive"`
+
+	// EnableIPValidation enables IP validation.
+	EnableIPValidation bool `mapstructure:"enableIPValidation"`
+
+	// EnableTrustedProxyCheck enables trusted proxy check.
+	EnableTrustedProxyCheck bool `mapstructure:"enableTrustedProxyCheck"`
+
+	// ProxyHeader is the proxy header.
+	ProxyHeader string `mapstructure:"proxyHeader"`
+
+	// EnablePrefork is the enable prefork.
+	// Enables use of the SO_REUSEPORT socket option. This will spawn
+	// multiple Go processes listening on the same port. Learn more about
+	// socket sharding. NOTE: if enabled, the application will need to be
+	// ran through a shell because prefork mode sets environment variables.
+	// If you're using Docker, make sure the app is ran with CMD ./app or
+	// CMD ["sh", "-c", "/app"]. For more info, see this issue comment.
+	EnablePrefork bool `mapstructure:"enablePrefork"`
+
+	// EnablePrintRoutes enables print all routes with their method,
+	// path, name and handler..
+	EnablePrintRoutes bool `mapstructure:"enablePrintRoutes"`
 }
 
-func (m *Manager) validateServer() error {
-	if m.Cfg.Server.ListenAddress == "" {
-		return ErrInvalidServerAddress
-	}
-	return nil
+type DatabaseDriver string
+
+const (
+	DatabaseDriverPostgres DatabaseDriver = "postgresql"
+	DatabaseDriverMySQL    DatabaseDriver = "mysql"
+	DatabaseDriverSQLite   DatabaseDriver = "sqlite"
+	DatabaseDriverMSSQL    DatabaseDriver = "mssql"
+	DatabaseDriverOracle   DatabaseDriver = "oracle"
+)
+
+// DatabaseConfig is the configuration for the database.
+// To understand the configuration options, please refer to the bun documentation:
+// https://bun.uptrace.dev/guide/drivers.html
+type DatabaseConfig struct {
+	// Driver is the database driver to use.
+	Driver DatabaseDriver `mapstructure:"driver" json:"driver"`
+
+	// Host is the database host.
+	Host string `mapstructure:"host" json:"host"`
+
+	// Port is the database port.
+	Port int `mapstructure:"port" json:"port"`
+
+	// Username is the database username.
+	Username string `mapstructure:"username" json:"username"`
+
+	// Password is the database password.
+	Password string `mapstructure:"password" json:"password"`
+
+	// Database is the database name.
+	Database string `mapstructure:"database" json:"database"`
+
+	// SSLMode is the database SSL mode.
+	SSLMode string `mapstructure:"sslMode" json:"sslMode"`
+
+	// MaxConnections is the maximum number of connections in the pool.
+	MaxConnections int `mapstructure:"maxConnections" json:"maxConnections"`
+
+	// MaxIdleConns is the maximum number of connections in the idle pool.
+	MaxIdleConns int `mapstructure:"maxIdleConns" json:"maxIdleConns"`
+
+	// ConnMaxLifetime is the maximum amount of time a connection can be reused.
+	ConnMaxLifetime int `mapstructure:"connMaxLifetime" json:"connMaxLifetime"`
+
+	// ConnMaxIdleTime is the maximum amount of time a connection can be idle.
+	ConnMaxIdleTime int `mapstructure:"connMaxIdleTime" json:"connMaxIdleTime"`
+
+	// Debug is the debug mode.
+	Debug bool `mapstructure:"debug" json:"debug"`
 }
 
-func (m *Manager) validateDatabase() error {
-	if m.Cfg.DB.Host == "" {
-		return ErrInvalidDBHost
-	}
-	if m.Cfg.DB.Port == 0 {
-		return ErrInvalidDBPort
-	}
-	if m.Cfg.DB.Database == "" {
-		return ErrInvalidDBName
-	}
-	if m.Cfg.DB.Username == "" {
-		return ErrInvalidDBUser
-	}
-	return nil
+// RedisConfig is the configuration for the redis.
+// To understand the configuration options, please refer to the redis documentation:
+// https://pkg.go.dev/github.com/go-redis/redis/v9#Options
+type RedisConfig struct {
+	// Addr is the redis address.
+	Addr string `mapstructure:"addr"`
+
+	// // Username is the redis username.
+	// // This is used to authenticate the redis connection.
+	// // If the username is not set, the redis connection will not be authenticated.
+	// Username string `mapstructure:"username"`
+
+	// Password is the redis password.
+	// This is used to authenticate the redis connection.
+	// If the password is not set, the redis connection will not be authenticated.
+	Password string `mapstructure:"password"`
+
+	// DB is the redis database.
+	// This is the database number to select after connecting to the server.
+	// It is recommended to use a different database for each service.
+	DB int `mapstructure:"db"`
+
+	// ConnTimeout is the redis connection timeout.
+	// This is the timeout for the redis connection.
+	ConnTimeout time.Duration `mapstructure:"connTimeout"`
+
+	// ReadTimeout is the redis read timeout.
+	// This is the timeout for the redis read operation.
+	ReadTimeout time.Duration `mapstructure:"readTimeout"`
+
+	// WriteTimeout is the redis write timeout.
+	// This is the timeout for the redis write operation.
+	WriteTimeout time.Duration `mapstructure:"writeTimeout"`
+
+	// PoolSize is the redis pool size.
+	// This is the size of the redis connection pool.
+	// Defaults to 10. If you're using a high-traffic service, you may want to increase this.
+	PoolSize int `mapstructure:"poolSize"`
+
+	// MinIdleConns is the redis minimum idle connections.
+	// This is the minimum number of idle connections in the redis connection pool.
+	// Defaults to 10. If you're using a high-traffic service, you may want to increase this.
+	MinIdleConns int `mapstructure:"minIdleConns"`
 }
 
-func (m *Manager) validateBackup() error {
-	// Only validate if backup is enabled
-	if !m.Cfg.Backup.Enabled {
-		return nil
-	}
+type RabbitMQConfig struct {
+	// Host is the rabbitmq host.
+	Host string `mapstructure:"host"`
 
-	// Validate compression level
-	if m.Cfg.Backup.Compression < 1 || m.Cfg.Backup.Compression > 9 {
-		return ErrInvalidBackupCompression
-	}
+	// Port is the rabbitmq port.
+	Port int `mapstructure:"port"`
 
-	// Validate cron schedule
-	if m.Cfg.Backup.Schedule != "" {
-		_, err := cron.ParseStandard(m.Cfg.Backup.Schedule)
-		if err != nil {
-			return eris.Wrap(err, "invalid backup schedule")
-		}
-	}
+	// Username is the rabbitmq username.
+	Username string `mapstructure:"username"`
 
-	return nil
+	// Password is the rabbitmq password.
+	Password string `mapstructure:"password"`
+
+	// VHost is the rabbitmq vhost.
+	VHost string `mapstructure:"vhost"`
+
+	// ExchangeName is the rabbitmq exchange name.
+	ExchangeName string `mapstructure:"exchangeName"`
+
+	// QueueName is the rabbitmq queue name.
+	QueueName string `mapstructure:"queueName"`
+
+	// Timeout is the rabbitmq timeout.
+	Timeout time.Duration `mapstructure:"timeout"`
 }
 
-// Helper methods for easier access to config sections
-func (m *Manager) App() *AppConfig {
-	if m.Cfg == nil {
-		return nil
+func (c *RabbitMQConfig) URL() string {
+	vhost := c.VHost
+	// Ensure that if VHost from config is "/", the URL path is "/"
+	// If VHost is "custom", path is "/custom"
+	// If VHost is "/custom", path is "/custom"
+	if vhost == "/" {
+		vhost = "" // Sprintf will add the leading slash, resulting in amqp://...@host:port/
+	} else if strings.HasPrefix(vhost, "/") {
+		vhost = strings.TrimPrefix(vhost, "/")
 	}
-	return &m.Cfg.App
+	return fmt.Sprintf("amqp://%s:%s@%s/%s", c.Username, c.Password, net.JoinHostPort(c.Host, strconv.Itoa(c.Port)), vhost)
 }
 
-func (m *Manager) Server() *ServerConfig {
-	if m.Cfg == nil {
-		return nil
-	}
-	return &m.Cfg.Server
+// AuthConfig is the configuration for the auth.
+type AuthConfig struct {
+	// SessionCookieName is the session cookie name.
+	// This is the name of the session cookie.
+	// Preferrably this should not be changed. It is used to identify the session cookie.
+	SessionCookieName string `mapstructure:"sessionCookieName"`
+
+	// CookiePath is the cookie path.
+	// This is the path of the cookie.
+	// Defaults to "/".
+	// Should be set to "/" for the root path. If you're using a sub-path, set it to the sub-path.
+	CookiePath string `mapstructure:"cookiePath"`
+
+	// CookieDomain is the cookie domain.
+	// This is the domain of the cookie.
+	// Defaults to "".
+	CookieDomain string `mapstructure:"cookieDomain"`
+
+	// CookieSecure is the cookie secure.
+	// This is the secure flag of the cookie.
+	// Defaults to false.
+	// ! In Production, this should always be set to `true`.
+	CookieSecure bool `mapstructure:"cookieSecure"`
+
+	// CookieHTTPOnly is the cookie HTTP only.
+	// This is the HTTP only flag of the cookie.
+	// Defaults to false.
+	// ! In Production, this should always be set to `true`.
+	CookieHTTPOnly bool `mapstructure:"cookieHTTPOnly"`
+
+	// CookieSameSite is the cookie same site.
+	// This is the same site flag of the cookie.
+	// Defaults to "Lax".
+	// ! In Production, this should always be set to `Strict`.
+	CookieSameSite string `mapstructure:"cookieSameSite"`
 }
 
-func (m *Manager) Log() *LogConfig {
-	if m.Cfg == nil {
-		return nil
-	}
-	return &m.Cfg.Log
+// MinioConfig is the configuration for the minio.
+type MinioConfig struct {
+	// Endpoint is the minio endpoint.
+	Endpoint string `mapstructure:"endpoint"`
+
+	// AccessKey is the minio access key.
+	AccessKey string `mapstructure:"accessKey"`
+
+	// SecretKey is the minio secret key.
+	SecretKey string `mapstructure:"secretKey"`
+
+	// Region is the minio region.
+	Region string `mapstructure:"region"`
+
+	// UseSSL is the minio use SSL.
+	UseSSL bool `mapstructure:"useSSL"`
+
+	// ConnectionTimeout is the minio connection timeout.
+	ConnectionTimeout time.Duration `mapstructure:"connectionTimeout"`
+
+	// RequestTimeout is the minio request timeout.
+	RequestTimeout time.Duration `mapstructure:"requestTimeout"`
+
+	// MaxRetries is the max retries.
+	MaxRetries int `mapstructure:"maxRetries"`
+
+	// MaxIdleConns is the max idle connections.
+	MaxIdleConns int `mapstructure:"maxIdleConns"`
+
+	// MaxConnsPerHost is the max connections per host.
+	MaxConnsPerHost int `mapstructure:"maxConnsPerHost"`
+
+	// IdleConnTimeout is the idle connection timeout.
+	IdleConnTimeout time.Duration `mapstructure:"idleConnTimeout"`
 }
 
-func (m *Manager) Database() *DatabaseConfig {
-	if m.Cfg == nil {
-		return nil
-	}
-	return &m.Cfg.DB
+// CorsConfig is the configuration for the cors.
+type CorsConfig struct {
+	// AllowedOrigins is the allowed origins.
+	// This is the allowed origins for the cors.
+	// Defaults to "*".
+	AllowedOrigins string `mapstructure:"allowedOrigins"`
+
+	// AllowedHeaders is the allowed headers.
+	// This is the allowed headers for the cors.
+	// Defaults to "*".
+	AllowedHeaders string `mapstructure:"allowedHeaders"`
+
+	// AllowedMethods is the allowed methods.
+	// This is the allowed methods for the cors.
+	// Defaults to "*".
+	AllowedMethods string `mapstructure:"allowedMethods"`
+
+	// AllowCredentials is the allow credentials.
+	// This is the allow credentials for the cors.
+	// Defaults to false.
+	AllowCredentials bool `mapstructure:"allowCredentials"`
+
+	// MaxAge is the max age.
+	// This is the max age for the cors.
+	// Defaults to 0.
+	MaxAge int `mapstructure:"maxAge"`
 }
 
-func (m *Manager) Redis() *RedisConfig {
-	if m.Cfg == nil {
-		return nil
-	}
-	return &m.Cfg.Redis
-}
+// BackupConfig is the configuration database backups
+type BackupConfig struct {
+	// Enabled determines whether the backup service is active.
+	Enabled bool `mapstructure:"enabled"`
 
-func (m *Manager) RabbitMQ() *RabbitMQConfig {
-	if m.Cfg == nil {
-		return nil
-	}
-	return &m.Cfg.RabbitMQ
-}
+	// BackupDir is the directory where backups will be stored.
+	// Default: "./backups"
+	BackupDir string `mapstructure:"backupDir"`
 
-func (m *Manager) Auth() *AuthConfig {
-	if m.Cfg == nil {
-		return nil
-	}
-	return &m.Cfg.Auth
-}
+	// RetentionDays is the number of days to keep backups.
+	// Backups older than this will be automatically deleted.
+	// Default: 30
+	RetentionDays int `mapstructure:"retentionDays"`
 
-func (m *Manager) Audit() *AuditConfig {
-	if m.Cfg == nil {
-		return nil
-	}
-	return &m.Cfg.Audit
-}
+	// Schedule is the cron schedule for automatic backups.
+	// Examples:
+	// - "0 0 * * *" (daily at midnight)
+	// - "0 0 * * 0" (weekly on Sunday at midnight)
+	// - "0 0 1 * *" (monthly on the 1st at midnight)
+	// Default: "0 0 * * *" (daily at midnight)
+	Schedule string `mapstructure:"schedule"`
 
-func (m *Manager) Minio() *MinioConfig {
-	if m.Cfg == nil {
-		return nil
-	}
-	return &m.Cfg.Minio
-}
+	// Compression determines the compression level (1-9).
+	// Higher values result in better compression but slower speed.
+	// Default: 6
+	Compression int `mapstructure:"compression"`
 
-func (m *Manager) Cors() *CorsConfig {
-	if m.Cfg == nil {
-		return nil
-	}
-	return &m.Cfg.Cors
-}
+	// MaxConcurrentBackups is the maximum number of backup operations
+	// that can run simultaneously.
+	// Default: 1
+	MaxConcurrentBackups int `mapstructure:"maxConcurrentBackups"`
 
-func (m *Manager) Static() *StaticConfig {
-	if m.Cfg == nil {
-		return nil
-	}
-	return &m.Cfg.Static
-}
+	// BackupTimeout is the maximum time allowed for a backup operation.
+	// Default: 30 minutes
+	BackupTimeout time.Duration `mapstructure:"backupTimeout"`
 
-func (m *Manager) Backup() *BackupConfig {
-	if m.Cfg == nil {
-		return nil
-	}
-	return &m.Cfg.Backup
-}
+	// NotifyOnFailure determines whether to send notifications on backup failures.
+	// Default: true
+	NotifyOnFailure bool `mapstructure:"notifyOnFailure"`
 
-// GetDSN returns a formatted database connection string
-func (m *Manager) GetDSN() string {
-	db := m.Database()
-	if db == nil {
-		return ""
-	}
+	// NotifyOnSuccess determines whether to send notifications on backup success.
+	// Default: false
+	NotifyOnSuccess bool `mapstructure:"notifyOnSuccess"`
 
-	// Get the type of database driver
-	driver := db.Driver
-	hostPort := net.JoinHostPort(db.Host, strconv.Itoa(db.Port))
-
-	switch driver {
-	case DatabaseDriverPostgres:
-		return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s",
-			db.Username,
-			db.Password,
-			hostPort,
-			db.Database,
-			db.SSLMode,
-		)
-	case DatabaseDriverMSSQL:
-		return fmt.Sprintf("sqlserver://%s:%s@%s?database=%s",
-			db.Username,
-			db.Password,
-			hostPort,
-			db.Database,
-		)
-	case DatabaseDriverMySQL:
-		return fmt.Sprintf("%s:%s@/%s",
-			db.Username,
-			db.Password,
-			db.Database,
-		)
-	case DatabaseDriverSQLite:
-		return "file::memory:?cache=shared"
-	case DatabaseDriverOracle:
-		return fmt.Sprintf("%s/%s",
-			db.Username,
-			db.Password,
-		)
-	default:
-		return ""
-	}
+	// NotificationEmail is the email address to send notifications to.
+	// If empty, email notifications will be disabled.
+	NotificationEmail string `mapstructure:"notificationEmail"`
 }

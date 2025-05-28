@@ -13,9 +13,9 @@ services:
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
       POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_DB: ${DB_NAME:-postgres}
-      POSTGRES_MULTIPLE_EXTENSIONS: "pg_stat_statements,pg_buffercache"
+      POSTGRES_DB: ${DB_NAME:-trenova_go_db}
       POSTGRES_INITDB_ARGS: "--data-checksums"
+      POSTGRES_MULTIPLE_EXTENSIONS: "pg_stat_statements,pg_trgm,btree_gin,btree_gist"
     command:
       - "postgres"
       - "-c"
@@ -46,7 +46,7 @@ services:
       - "min_wal_size=1GB"
       - "-c"
       - "max_wal_size=4GB"
-    restart: unless-stopped
+    restart: always
     volumes:
       - pg_data:/var/lib/postgresql/data
     deploy:
@@ -59,11 +59,40 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-postgres}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}" ]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 30s # Allow time for initial startup
+
+  tren-pgbouncer:
+    container_name: tren-pgbouncer
+    image: edoburu/pgbouncer:latest # Using a pre-built image for simplicity
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@tren-db:5432/trenova_go_db?sslmode=disable
+    volumes:
+      - ./config/production/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./config/production/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+    ports:
+      - "6432:6432"
+    depends_on:
+      tren-db:
+        condition: service_healthy
+    restart: always
+    networks:
+      - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -h localhost -p 6432 -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
   tren-redis:
     container_name: tren-redis
@@ -71,7 +100,7 @@ services:
     ports:
       - "6379:6379"
     environment:
-      - ALLOW_EMPTY_PASSWORD=yes
+      - ALLOW_EMPTY_PASSWORD=yes # This will be overridden by the command
     restart: always
     volumes:
       - redis_data:/data
@@ -112,6 +141,27 @@ services:
       timeout: 20s
       retries: 3
 
+  tren-rabbitmq:
+    container_name: tren-rabbitmq
+    image: "rabbitmq:3-management"
+    ports:
+      - "5674:5672" # RabbitMQ
+      - "15674:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    volumes:
+      - "rabbitmq_data:/var/lib/rabbitmq"
+      - "rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf" # Configuration file mount
+    restart: always
+    healthcheck:
+      test: [ "CMD", "rabbitmqctl", "status" ]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+    networks:
+      - app-network
+
   tren-api:
     container_name: tren-api
     build:
@@ -124,14 +174,20 @@ services:
     environment:
       - TRENOVA_APP_ENVIRONMENT=production
       - TRENOVA_SERVER_SECRET_KEY=${SERVER_SECRET_KEY:-secretKey}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-yourStrongRedisPassword}
+      - DB_HOST=tren-pgbouncer
+      - DB_PORT=6432
+      - DB_USER=${DB_USER:-postgres}
+      - DB_PASSWORD=${DB_PASSWORD:-postgres}
+      - DB_NAME=${DB_NAME:-postgres}
     depends_on:
-      tren-db:
+      tren-pgbouncer:
         condition: service_healthy
       tren-redis:
         condition: service_healthy
-      tren-search:
-        condition: service_healthy
       tren-minio:
+        condition: service_healthy
+      tren-rabbitmq:
         condition: service_healthy
     networks:
       - app-network
@@ -146,7 +202,7 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
-    restart: unless-stopped
+    restart: always
 
   tren-client:
     container_name: tren-client
@@ -161,7 +217,7 @@ services:
       - tren-api
     environment:
       - VITE_API_URL=https://trenova.local/api/v1
-    restart: unless-stopped
+    restart: always
     deploy:
       resources:
         limits:
@@ -186,6 +242,7 @@ services:
       - app-network
     depends_on:
       - tren-api
+      - tren-client
     restart: unless-stopped
     deploy:
       resources:
@@ -199,6 +256,8 @@ volumes:
   minio_data: {}
   caddy_data: {}
   caddy_config: {}
+  rabbitmq_data: {}
+  rabbitmq.conf: {}
 
 networks:
   app-network:
