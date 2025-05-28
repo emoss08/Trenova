@@ -244,7 +244,8 @@ func (m *Manager) determineMoveEvent(move *shipment.ShipmentMove) TransitionEven
 		// 1. The origin stop is completed (vehicle has departed first pickup)
 		// 2. Any stop is currently in transit
 		return EventMoveStarted
-	case move.Assignment != nil:
+	case move.Assignment != nil && move.Status == shipment.MoveStatusNew:
+		// Only assign if the move is currently in New status and has an assignment
 		return EventMoveAssigned
 	default:
 		return nil // No transition needed
@@ -331,7 +332,8 @@ func (m *Manager) determineShipmentEvent(shp *shipment.Shipment) TransitionEvent
 		return EventShipmentPartialCompleted
 	case movesInTransit > 0:
 		return EventShipmentInTransit
-	case hasDelayedMoves:
+	case hasDelayedMoves && movesInTransit > 0:
+		// Only consider delays if shipment has moves that are actually in transit
 		return EventShipmentDelayed
 	case movesAssigned == totalMoves:
 		return EventShipmentAssigned

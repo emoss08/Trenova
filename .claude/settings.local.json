@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(docker restart:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(go test:*)",
+      "Bash(go run:*)",
+      "Bash(rm:*)"
     ],
     "deny": []
   }
