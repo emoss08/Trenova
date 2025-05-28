@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker restart:*)",
+      "Bash(rg:*)"
+    ],
+    "deny": []
+  }
+}

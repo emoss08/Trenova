@@ -226,7 +226,7 @@ func (h *Handler) toggle(c *fiber.Ctx) error {
 	}
 
 	result, err := h.fs.ToggleFavorite(c.UserContext(), reqCtx.OrgID, reqCtx.BuID, reqCtx.UserID,
-		req.PageURL, req.PageTitle, req.PageSection, req.Icon, req.Description)
+		req.PageURL, req.PageTitle)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}

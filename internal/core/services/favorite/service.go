@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )
@@ -67,11 +68,7 @@ func (s *Service) List(ctx context.Context, orgID, buID, userID pulid.ID) ([]*pa
 		return nil, errors.NewAuthorizationError("You do not have permission to read favorites")
 	}
 
-	favorites, err := s.repo.List(ctx, repositories.ListFavoritesOptions{
-		OrgID:  orgID,
-		BuID:   buID,
-		UserID: userID,
-	})
+	favorites, err := s.repo.List(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list favorites")
 		return nil, err
@@ -372,7 +369,9 @@ func (s *Service) Delete(ctx context.Context, orgID, buID, userID, favoriteID pu
 	return nil
 }
 
-func (s *Service) ToggleFavorite(ctx context.Context, orgID, buID, userID pulid.ID, pageURL, pageTitle, pageSection, icon, description string) (*pagefavorite.PageFavorite, error) {
+var ErrPageAlreadyFavorited = eris.New("page already favorited")
+
+func (s *Service) ToggleFavorite(ctx context.Context, orgID, buID, userID pulid.ID, pageURL, pageTitle string) (*pagefavorite.PageFavorite, error) {
 	log := s.l.With().
 		Str("operation", "ToggleFavorite").
 		Str("pageURL", pageURL).
@@ -392,7 +391,7 @@ func (s *Service) ToggleFavorite(ctx context.Context, orgID, buID, userID pulid.
 			log.Error().Err(deleteErr).Msg("failed to remove favorite")
 			return nil, deleteErr
 		}
-		return nil, nil // Returning nil indicates the favorite was removed
+		return nil, ErrPageAlreadyFavorited
 	}
 
 	// Page is not favorited, add it

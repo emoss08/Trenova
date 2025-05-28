@@ -3,10 +3,10 @@ package streamingutils
 import (
 	"bufio"
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/pkg/ctx"
 	"github.com/gofiber/fiber/v2"
 	"github.com/valyala/fasthttp"
@@ -60,6 +60,8 @@ func NewSSEStreamer[T any](
 }
 
 // Stream starts the SSE stream on the given Fiber context
+//
+//nolint:gocognit // This is a complex function, but it's not too bad
 func (s *SSEStreamer[T]) Stream(c *fiber.Ctx) error {
 	reqCtx, err := ctx.WithRequestContext(c)
 	if err != nil {
@@ -78,7 +80,7 @@ func (s *SSEStreamer[T]) Stream(c *fiber.Ctx) error {
 
 		// Send initial connection event
 		s.sendEvent(w, "connected", map[string]string{"status": "connected"})
-		if err := w.Flush(); err != nil {
+		if err = w.Flush(); err != nil {
 			fmt.Printf("Error while flushing initial connection: %v. Closing connection.\n", err)
 			return
 		}
@@ -97,12 +99,12 @@ func (s *SSEStreamer[T]) Stream(c *fiber.Ctx) error {
 				return
 			case <-ticker.C:
 				// Fetch new data
-				items, latestTimestamp, err := s.dataFetcher(context.Background(), reqCtx, lastTimestamp)
-				if err != nil {
+				items, latestTimestamp, iErr := s.dataFetcher(context.Background(), reqCtx, lastTimestamp)
+				if iErr != nil {
 					// Send error event but continue streaming
 					s.sendEvent(w, "error", map[string]string{"error": "Failed to fetch data"})
-					if err := w.Flush(); err != nil {
-						fmt.Printf("Error while flushing error: %v. Closing connection.\n", err)
+					if iErr = w.Flush(); iErr != nil {
+						fmt.Printf("Error while flushing error: %v. Closing connection.\n", iErr)
 						return
 					}
 					continue
@@ -143,7 +145,7 @@ func (s *SSEStreamer[T]) Stream(c *fiber.Ctx) error {
 				}
 
 				// Flush all data to client
-				if err := w.Flush(); err != nil {
+				if err = w.Flush(); err != nil {
 					fmt.Printf("Error while flushing: %v. Closing connection.\n", err)
 					return
 				}
@@ -156,7 +158,7 @@ func (s *SSEStreamer[T]) Stream(c *fiber.Ctx) error {
 
 // sendEvent sends a Server-Sent Event with the given event type and data
 func (s *SSEStreamer[T]) sendEvent(w *bufio.Writer, eventType string, data any) {
-	dataJSON, err := json.Marshal(data)
+	dataJSON, err := sonic.Marshal(data)
 	if err != nil {
 		return
 	}

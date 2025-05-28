@@ -34,7 +34,7 @@ func NewFavoriteRepository(p FavoriteRepository) repositories.FavoriteRepository
 	}
 }
 
-func (r *favoriteRepository) List(ctx context.Context, opts repositories.ListFavoritesOptions) ([]*pagefavorite.PageFavorite, error) {
+func (r *favoriteRepository) List(ctx context.Context) ([]*pagefavorite.PageFavorite, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")

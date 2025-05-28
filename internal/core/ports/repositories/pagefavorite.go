@@ -35,7 +35,7 @@ type GetFavoriteByURLOptions struct {
 }
 
 type FavoriteRepository interface {
-	List(ctx context.Context, opts ListFavoritesOptions) ([]*pagefavorite.PageFavorite, error)
+	List(ctx context.Context) ([]*pagefavorite.PageFavorite, error)
 	GetByID(ctx context.Context, opts GetFavoriteByIDOptions) (*pagefavorite.PageFavorite, error)
 	GetByURL(ctx context.Context, opts GetFavoriteByURLOptions) (*pagefavorite.PageFavorite, error)
 	Create(ctx context.Context, f *pagefavorite.PageFavorite) (*pagefavorite.PageFavorite, error)
