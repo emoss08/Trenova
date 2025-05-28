@@ -1,24 +1,10 @@
+import { queries } from "@/lib/queries";
+import { getPageTitle } from "@/lib/route-utils";
 import { api } from "@/services/api";
 import type { ToggleFavoriteRequest } from "@/types/favorite";
-import { getPageTitle } from "@/lib/route-utils";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useLocation } from "react-router";
 import { toast } from "sonner";
-
-export function useFavorites() {
-  return useQuery({
-    queryKey: ["favorites"],
-    queryFn: () => api.favorites.list(),
-  });
-}
-
-export function useFavorite(pageUrl?: string) {
-  return useQuery({
-    queryKey: ["favorite", pageUrl],
-    queryFn: () => (pageUrl ? api.favorites.checkFavorite(pageUrl) : null),
-    enabled: !!pageUrl,
-  });
-}
 
 export function useToggleFavorite() {
   const queryClient = useQueryClient();
@@ -28,9 +14,9 @@ export function useToggleFavorite() {
       api.favorites.toggle(request),
     onSuccess: (data) => {
       // Invalidate and refetch favorites
-      queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      queryClient.invalidateQueries({ queryKey: queries.favorite.list._def });
       queryClient.invalidateQueries({
-        queryKey: ["favorite", data.favorite?.pageUrl],
+        queryKey: queries.favorite.check._def,
       });
 
       // Show success toast
@@ -51,7 +37,9 @@ export function useCurrentPageFavorite() {
   const location = useLocation();
   const currentUrl = `${window.location.origin}${location.pathname}${location.search}`;
 
-  return useFavorite(currentUrl);
+  return useQuery({
+    ...queries.favorite.check(currentUrl),
+  });
 }
 
 export function useToggleCurrentPageFavorite(options?: {

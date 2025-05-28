@@ -178,4 +178,14 @@ export const queries = createQueryKeyStore({
       queryFn: async () => api.tableConfigurations.create(payload),
     }),
   },
+  favorite: {
+    list: () => ({
+      queryKey: ["favorites"],
+      queryFn: async () => api.favorites.list(),
+    }),
+    check: (pageUrl: string) => ({
+      queryKey: ["favorite", pageUrl],
+      queryFn: async () => api.favorites.checkFavorite(pageUrl),
+    }),
+  },
 });
