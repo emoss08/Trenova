@@ -27,8 +27,6 @@ const routes: RouteObject[] = [
           // Billing Links
           {
             path: "/billing",
-            HydrateFallback: LoadingSkeleton,
-            loader: protectedLoader,
             handle: {
               crumb: "Billing",
               title: "Billing",
@@ -87,141 +85,218 @@ const routes: RouteObject[] = [
           },
           // Shipment Links
           {
-            path: "/shipments/management",
-            async lazy() {
-              let { Shipment } = await import("@/app/shipment/page");
-              return { Component: Shipment };
-            },
-          },
-          {
-            path: "/shipments/configurations/shipment-types",
-            async lazy() {
-              let { ShipmentTypes } = await import("@/app/shipment-types/page");
-              return { Component: ShipmentTypes };
-            },
-          },
-          {
-            path: "/shipments/configurations/service-types",
-            async lazy() {
-              let { ServiceTypes } = await import("@/app/service-types/page");
-              return { Component: ServiceTypes };
-            },
-          },
-          {
-            path: "/shipments/configurations/hazardous-materials",
-            async lazy() {
-              let { HazardousMaterials } = await import(
-                "@/app/hazardous-materials/page"
-              );
-              return { Component: HazardousMaterials };
-            },
-          },
-          {
-            path: "/shipments/configurations/commodities",
-            async lazy() {
-              let { Commodities } = await import("@/app/commodities/page");
-              return { Component: Commodities };
-            },
-          },
-          // Dispatch Links
-          {
-            path: "/dispatch/configurations/workers",
-            async lazy() {
-              let { Workers } = await import("@/app/workers/page");
-              return { Component: Workers };
-            },
+            path: "shipments",
             handle: {
-              crumb: "Workers",
-              title: "Workers",
+              crumb: "Shipment Management",
+              title: "Shipment Management",
             },
+            children: [
+              {
+                path: "management",
+                async lazy() {
+                  let { Shipment } = await import("@/app/shipment/page");
+                  return { Component: Shipment };
+                },
+                handle: {
+                  crumb: "Shipment Management",
+                  title: "Shipment Management",
+                },
+              },
+              {
+                path: "configurations",
+                handle: {
+                  crumb: "Configurations Files",
+                  title: "Configurations Files",
+                },
+                children: [
+                  {
+                    path: "shipment-types",
+                    async lazy() {
+                      let { ShipmentTypes } = await import(
+                        "@/app/shipment-types/page"
+                      );
+                      return { Component: ShipmentTypes };
+                    },
+                    handle: {
+                      crumb: "Shipment Types",
+                      title: "Shipment Types",
+                    },
+                  },
+                  {
+                    path: "service-types",
+                    async lazy() {
+                      let { ServiceTypes } = await import(
+                        "@/app/service-types/page"
+                      );
+                      return { Component: ServiceTypes };
+                    },
+                    handle: {
+                      crumb: "Service Types",
+                      title: "Service Types",
+                    },
+                  },
+                  {
+                    path: "hazardous-materials",
+                    async lazy() {
+                      let { HazardousMaterials } = await import(
+                        "@/app/hazardous-materials/page"
+                      );
+                      return { Component: HazardousMaterials };
+                    },
+                    handle: {
+                      crumb: "Hazardous Materials",
+                      title: "Hazardous Materials",
+                    },
+                  },
+                  {
+                    path: "commodities",
+                    async lazy() {
+                      let { Commodities } = await import(
+                        "@/app/commodities/page"
+                      );
+                      return { Component: Commodities };
+                    },
+                    handle: {
+                      crumb: "Commodities",
+                      title: "Commodities",
+                    },
+                  },
+                ],
+              },
+            ],
           },
           {
-            path: "/dispatch/configurations/fleet-codes",
-            async lazy() {
-              let { FleetCodes } = await import("@/app/fleet-codes/page");
-              return { Component: FleetCodes };
-            },
+            path: "dispatch",
             handle: {
-              crumb: "Fleet Codes",
-              title: "Fleet Codes",
+              crumb: "Dispatch Management",
+              title: "Dispatch Management",
             },
+            children: [
+              {
+                path: "configurations",
+                handle: {
+                  crumb: "Configurations Files",
+                  title: "Configurations Files",
+                },
+                children: [
+                  {
+                    path: "workers",
+                    async lazy() {
+                      let { Workers } = await import("@/app/workers/page");
+                      return { Component: Workers };
+                    },
+                    handle: {
+                      crumb: "Workers",
+                      title: "Workers",
+                    },
+                  },
+                  {
+                    path: "fleet-codes",
+                    async lazy() {
+                      let { FleetCodes } = await import(
+                        "@/app/fleet-codes/page"
+                      );
+                      return { Component: FleetCodes };
+                    },
+                    handle: {
+                      crumb: "Fleet Codes",
+                      title: "Fleet Codes",
+                    },
+                  },
+                  {
+                    path: "location-categories",
+                    async lazy() {
+                      let { LocationCategories } = await import(
+                        "@/app/location-categories/page"
+                      );
+                      return { Component: LocationCategories };
+                    },
+                    handle: {
+                      crumb: "Location Categories",
+                      title: "Location Categories",
+                    },
+                  },
+                  {
+                    path: "locations",
+                    async lazy() {
+                      let { Locations } = await import("@/app/locations/page");
+                      return { Component: Locations };
+                    },
+                    handle: {
+                      crumb: "Locations",
+                      title: "Locations",
+                    },
+                  },
+                ],
+              },
+            ],
           },
           {
-            path: "/dispatch/configurations/location-categories",
-            async lazy() {
-              let { LocationCategories } = await import(
-                "@/app/location-categories/page"
-              );
-              return { Component: LocationCategories };
-            },
+            path: "equipment",
             handle: {
-              crumb: "Location Categories",
-              title: "Location Categories",
+              crumb: "Equipment Management",
+              title: "Equipment Management",
             },
+            children: [
+              {
+                path: "configurations",
+                handle: {
+                  crumb: "Configurations Files",
+                  title: "Configurations Files",
+                },
+                children: [
+                  {
+                    path: "equipment-types",
+                    async lazy() {
+                      let { EquipmentTypes } = await import(
+                        "@/app/equipment-types/page"
+                      );
+                      return { Component: EquipmentTypes };
+                    },
+                    handle: {
+                      crumb: "Equipment Types",
+                      title: "Equipment Types",
+                    },
+                  },
+                  {
+                    path: "equipment-manufacturers",
+                    async lazy() {
+                      let { EquipmentManufacturers } = await import(
+                        "@/app/equipment-manufacturers/page"
+                      );
+                      return { Component: EquipmentManufacturers };
+                    },
+                    handle: {
+                      crumb: "Equipment Manufacturers",
+                      title: "Equipment Manufacturers",
+                    },
+                  },
+                  {
+                    path: "tractors",
+                    async lazy() {
+                      let { Tractor } = await import("@/app/tractor/page");
+                      return { Component: Tractor };
+                    },
+                    handle: {
+                      crumb: "Tractors",
+                      title: "Tractors",
+                    },
+                  },
+                  {
+                    path: "trailers",
+                    async lazy() {
+                      let { Trailers } = await import("@/app/trailers/page");
+                      return { Component: Trailers };
+                    },
+                    handle: {
+                      crumb: "Trailers",
+                      title: "Trailers",
+                    },
+                  },
+                ],
+              },
+            ],
           },
-          // Location Links
-          {
-            path: "/dispatch/configurations/locations",
-            async lazy() {
-              let { Locations } = await import("@/app/locations/page");
-              return { Component: Locations };
-            },
-            handle: {
-              crumb: "Locations",
-              title: "Locations",
-            },
-          },
-          // Equipment Links
-          {
-            path: "/equipment/configurations/equipment-types",
-            async lazy() {
-              let { EquipmentTypes } = await import(
-                "@/app/equipment-types/page"
-              );
-              return { Component: EquipmentTypes };
-            },
-            handle: {
-              crumb: "Equipment Types",
-              title: "Equipment Types",
-            },
-          },
-          {
-            path: "/equipment/configurations/equipment-manufacturers",
-            async lazy() {
-              let { EquipmentManufacturers } = await import(
-                "@/app/equipment-manufacturers/page"
-              );
-              return { Component: EquipmentManufacturers };
-            },
-            handle: {
-              crumb: "Equipment Manufacturers",
-              title: "Equipment Manufacturers",
-            },
-          },
-          {
-            path: "/equipment/configurations/tractors",
-            async lazy() {
-              let { Tractor } = await import("@/app/tractor/page");
-              return { Component: Tractor };
-            },
-            handle: {
-              crumb: "Tractors",
-              title: "Tractors",
-            },
-          },
-          {
-            path: "/equipment/configurations/trailers",
-            async lazy() {
-              let { Trailers } = await import("@/app/trailers/page");
-              return { Component: Trailers };
-            },
-            handle: {
-              crumb: "Trailers",
-              title: "Trailers",
-            },
-          },
-
-          // Organization Setting Links
           {
             path: "/organization/",
             Component: AdminLayout,
