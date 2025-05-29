@@ -1,10 +1,12 @@
-# Trenova System Requirements
+# Trenova Self-Hosting System Requirements
 
-This document outlines the system resource requirements needed to run the Trenova application in a production environment. These requirements are based on the production Docker Compose configuration and can be scaled according to your user base and usage patterns.
+> **Important**: This document is specifically for organizations planning to **self-host** Trenova on their own infrastructure. If you're interested in our **Managed Hosting Services**, these requirements don't apply to you - we handle all infrastructure, scaling, and maintenance.
+
+This document outlines the system resource requirements needed to self-host the Trenova application in a production environment. These requirements are based on the production Docker Compose configuration and can be scaled according to your user base and usage patterns.
 
 ## Overview
 
-Trenova is a containerized application consisting of multiple services that work together to provide a comprehensive Transportation Management System (TMS). The application is designed to be scalable and can be adjusted based on your organization's needs.
+Trenova is a containerized application consisting of multiple services that work together to provide a comprehensive Transportation Management System (TMS). When self-hosting, you'll be responsible for managing all these components on your own infrastructure. The application is designed to be scalable and can be adjusted based on your organization's needs and available resources.
 
 ## Infrastructure Components
 
@@ -419,4 +421,19 @@ SERVER_GRPC_INSECURE=t
 3. **Application Performance**: Profile Go application and optimize bottlenecks
 4. **Network Performance**: Optimize network configuration and bandwidth
 
-This resource guide should be reviewed and updated regularly as your usage patterns change and the application evolves. Monitor your actual resource usage and adjust allocations accordingly for optimal performance.
+## Alternative: Managed Hosting Services
+
+If managing these infrastructure requirements seems overwhelming, consider our **Managed Hosting Services** where we handle all of these requirements for you:
+
+- ✅ **No Infrastructure Management** - We provision and manage all servers, databases, and services
+- ✅ **Automatic Scaling** - We handle scaling based on your usage patterns  
+- ✅ **Zero-Downtime Updates** - We manage all application updates and maintenance
+- ✅ **24/7 Monitoring** - Professional monitoring and support included
+- ✅ **Enterprise Security** - Advanced security measures and compliance certifications
+- ✅ **Guaranteed SLAs** - Contractual uptime and performance guarantees
+
+Contact us at <sales@trenova.app> to learn more about our managed hosting options.
+
+---
+
+**For Self-Hosting**: This resource guide should be reviewed and updated regularly as your usage patterns change and the application evolves. Monitor your actual resource usage and adjust allocations accordingly for optimal performance.
