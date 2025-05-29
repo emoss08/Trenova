@@ -151,7 +151,9 @@ export function FormEditModal<T extends FieldValues>({
 
   const handleClose = useCallback(() => {
     reset();
-  }, [reset]);
+    table.resetRowSelection();
+    setSearchParams({ modalType: null, entityId: null });
+  }, [reset, table, setSearchParams]);
 
   const { mutateAsync } = useApiMutation<
     T, // The response data type
