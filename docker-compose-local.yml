@@ -31,34 +31,6 @@ services:
       timeout: 5s
       retries: 5
 
-  pgbouncer:
-    image: edoburu/pgbouncer:latest # Using a pre-built image for simplicity
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/trenova_go_db?sslmode=disable
-    volumes:
-      - ./config/development/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
-      - ./config/development/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
-    ports:
-      - "6432:6432"
-    depends_on:
-      db:
-        condition: service_healthy
-    restart: always
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 128M
-        reservations:
-          memory: 64M
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -h localhost -p 6432 -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}" ]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
   watchtower:
     image: containrrr/watchtower
     volumes:
@@ -71,6 +43,7 @@ services:
       - "6379:6379"
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_ARGS=--maxmemory 1536mb --maxmemory-policy allkeys-lru
     restart: always
     volumes:
       - redis_data:/data
@@ -79,7 +52,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 2G # Increased for stress testing with 300 connections
+          cpus: "1" # Dedicated CPU for Redis performance
+        reservations:
+          memory: 1G # Reserve memory for consistent performance
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
@@ -105,6 +81,10 @@ services:
       retries: 10
     networks:
       - app-network
+    deploy:
+      resources:
+        limits:
+          memory: 1G
 
   minio:
     image: quay.io/minio/minio
