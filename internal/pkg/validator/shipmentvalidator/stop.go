@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
@@ -95,6 +96,22 @@ func (v *StopValidator) validateTimes(s *shipment.Stop, multiErr *errors.MultiEr
 			multiErr.Add("actualArrival", errors.ErrInvalid, "Actual arrival must be before actual departure")
 		}
 	}
+
+	// Validate that actual arrival time cannot be in the future
+	if s.ActualArrival != nil {
+		currentTime := timeutils.NowUnix()
+		if *s.ActualArrival > currentTime {
+			multiErr.Add("actualArrival", errors.ErrInvalid, "Actual arrival time cannot be in the future")
+		}
+	}
+
+	// Validate that actual departure time cannot be in the future
+	if s.ActualDeparture != nil {
+		currentTime := timeutils.NowUnix()
+		if *s.ActualDeparture > currentTime {
+			multiErr.Add("actualDeparture", errors.ErrInvalid, "Actual departure time cannot be in the future")
+		}
+	}
 }
 
 // validateAssignment checks if the move has an assignment when actual times are set.
@@ -112,6 +129,11 @@ func (v *StopValidator) validateAssignment(ctx context.Context, s *shipment.Stop
 	}
 
 	if move.Assignment == nil && (s.ActualArrival != nil || s.ActualDeparture != nil) {
-		multiErr.Add("actualArrival", errors.ErrInvalid, "Actual arrival and departure times cannot be set on a move with no assignment")
+		if s.ActualArrival != nil {
+			multiErr.Add("actualArrival", errors.ErrInvalid, "Actual arrival and departure times cannot be set on a move with no assignment")
+		}
+		if s.ActualDeparture != nil {
+			multiErr.Add("actualDeparture", errors.ErrInvalid, "Actual arrival and departure times cannot be set on a move with no assignment")
+		}
 	}
 }

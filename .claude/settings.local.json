@@ -16,7 +16,9 @@
       "Bash(docker exec:*)",
       "Bash(docker-compose:*)",
       "Bash(timeout:*)",
-      "Bash(ss:*)"
+      "Bash(ss:*)",
+      "Bash(go vet:*)",
+      "Bash(gofmt:*)"
     ],
     "deny": []
   },
