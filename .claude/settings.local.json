@@ -7,8 +7,18 @@
       "Bash(go run:*)",
       "Bash(rm:*)",
       "Bash(find:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(swag init:*)",
+      "Bash(ls:*)",
+      "Bash(go build:*)",
+      "Bash(chmod:*)",
+      "Bash(redis-cli:*)",
+      "Bash(docker exec:*)",
+      "Bash(docker-compose:*)",
+      "Bash(timeout:*)",
+      "Bash(ss:*)"
     ],
     "deny": []
-  }
+  },
+  "enableAllProjectMcpServers": false
 }
