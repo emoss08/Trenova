@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/intutils"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	spValidator "github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/test/testutils"
@@ -153,6 +154,7 @@ func TestStopValidator(t *testing.T) {
 			}{
 				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival must be before actual departure"},
 				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
 			},
 		},
 		{
@@ -167,6 +169,56 @@ func TestStopValidator(t *testing.T) {
 				Message string
 			}{
 				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+			},
+		},
+		{
+			name: "actual arrival time cannot be in the future",
+			modifyStop: func(s *shipment.Stop) {
+				futureTime := timeutils.NowUnix() + 3600 // 1 hour in the future
+				s.ActualArrival = &futureTime
+			},
+			expectedErrors: []struct {
+				Field   string
+				Code    errors.ErrorCode
+				Message string
+			}{
+				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival time cannot be in the future"},
+				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+			},
+		},
+		{
+			name: "actual departure time cannot be in the future",
+			modifyStop: func(s *shipment.Stop) {
+				futureTime := timeutils.NowUnix() + 3600 // 1 hour in the future
+				s.ActualDeparture = &futureTime
+			},
+			expectedErrors: []struct {
+				Field   string
+				Code    errors.ErrorCode
+				Message string
+			}{
+				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual departure time cannot be in the future"},
+				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+			},
+		},
+		{
+			name: "both actual arrival and departure times cannot be in the future",
+			modifyStop: func(s *shipment.Stop) {
+				futureArrival := timeutils.NowUnix() + 3600   // 1 hour in the future
+				futureDeparture := timeutils.NowUnix() + 7200 // 2 hours in the future
+				s.ActualArrival = &futureArrival
+				s.ActualDeparture = &futureDeparture
+			},
+			expectedErrors: []struct {
+				Field   string
+				Code    errors.ErrorCode
+				Message string
+			}{
+				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival time cannot be in the future"},
+				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual departure time cannot be in the future"},
+				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
 			},
 		},
 	}
