@@ -62,7 +62,7 @@ func NewClient(p ClientParams) Client {
 //   - err[error]: The error
 func (c *client) getClient(ctx context.Context, orgID, buID pulid.ID) (*maps.Client, error) {
 	// * Get the API key from the database
-	integration, err := c.integrationRepo.GetByType(ctx, repositories.GetIntegrationByTypeRequest{
+	intg, err := c.integrationRepo.GetByType(ctx, repositories.GetIntegrationByTypeRequest{
 		Type:  integration.GoogleMapsIntegrationType,
 		OrgID: orgID,
 		BuID:  buID,
@@ -75,7 +75,7 @@ func (c *client) getClient(ctx context.Context, orgID, buID pulid.ID) (*maps.Cli
 		return nil, err
 	}
 
-	apiKey, ok := integration.Configuration["apiKey"]
+	apiKey, ok := intg.Configuration["apiKey"]
 	if !ok {
 		return nil, ErrAPIKeyBlank
 	}

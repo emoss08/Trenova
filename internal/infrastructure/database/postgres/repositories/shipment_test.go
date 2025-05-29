@@ -39,7 +39,7 @@ func TestShipmentRepository(t *testing.T) {
 	completedShipment := ts.Fixture.MustRow("Shipment.completed_shipment").(*shipment.Shipment)
 	serviceType := ts.Fixture.MustRow("ServiceType.std_service_type").(*servicetype.ServiceType)
 	shipmentType := ts.Fixture.MustRow("ShipmentType.ftl_shipment_type").(*shipmenttype.ShipmentType)
-	customer := ts.Fixture.MustRow("Customer.honeywell_customer").(*customer.Customer)
+	customerFixture := ts.Fixture.MustRow("Customer.honeywell_customer").(*customer.Customer)
 	tractorEquipType := ts.Fixture.MustRow("EquipmentType.tractor_equip_type").(*equipmenttype.EquipmentType)
 	trailerEquipType := ts.Fixture.MustRow("EquipmentType.trailer_equip_type").(*equipmenttype.EquipmentType)
 	location1 := ts.Fixture.MustRow("Location.test_location").(*location.Location)
@@ -258,7 +258,7 @@ func TestShipmentRepository(t *testing.T) {
 				ShipmentTypeID: shipmentType.ID,
 				TrailerTypeID:  &trailerEquipType.ID,
 				TractorTypeID:  &tractorEquipType.ID,
-				CustomerID:     customer.ID,
+				CustomerID:     customerFixture.ID,
 				BusinessUnitID: bu.ID,
 				OrganizationID: org.ID,
 				Status:         shipment.StatusNew,
@@ -309,7 +309,7 @@ func TestShipmentRepository(t *testing.T) {
 			newShipment := &shipment.Shipment{
 				ServiceTypeID:  serviceType.ID,
 				ShipmentTypeID: pulid.MustNew("smt_"),
-				CustomerID:     customer.ID,
+				CustomerID:     customerFixture.ID,
 				BusinessUnitID: bu.ID,
 				OrganizationID: org.ID,
 				Status:         shipment.StatusNew,
@@ -336,7 +336,7 @@ func TestShipmentRepository(t *testing.T) {
 			newShipment := &shipment.Shipment{
 				ServiceTypeID:  serviceType.ID,
 				ShipmentTypeID: shipmentType.ID,
-				CustomerID:     customer.ID,
+				CustomerID:     customerFixture.ID,
 				BusinessUnitID: bu.ID,
 				OrganizationID: org.ID,
 				Status:         shipment.StatusNew,
@@ -452,7 +452,7 @@ func TestShipmentRepository(t *testing.T) {
 			newShipment := &shipment.Shipment{
 				ServiceTypeID:  serviceType.ID,
 				ShipmentTypeID: shipmentType.ID,
-				CustomerID:     customer.ID,
+				CustomerID:     customerFixture.ID,
 				BusinessUnitID: bu.ID,
 				OrganizationID: org.ID,
 				Status:         shipment.StatusNew,
@@ -638,7 +638,7 @@ func TestShipmentRepository(t *testing.T) {
 			newShipment := &shipment.Shipment{
 				ServiceTypeID:  serviceType.ID,
 				ShipmentTypeID: shipmentType.ID,
-				CustomerID:     customer.ID,
+				CustomerID:     customerFixture.ID,
 				BusinessUnitID: bu.ID,
 				OrganizationID: org.ID,
 				Status:         shipment.StatusNew,
