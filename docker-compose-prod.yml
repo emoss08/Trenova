@@ -99,8 +99,26 @@ services:
     image: redis/redis-stack:latest
     ports:
       - "6379:6379"
+    command: >
+      sh -c '
+        redis-server
+        --maxmemory 1536mb
+        --maxmemory-policy allkeys-lru
+        --tcp-keepalive 300
+        --tcp-backlog 511
+        --timeout 0
+        --databases 16
+        --save 900 1 300 10 60 10000
+        --rdbcompression yes
+        --rdbchecksum yes
+        --stop-writes-on-bgsave-error yes
+        --lazyfree-lazy-eviction yes
+        --lazyfree-lazy-expire yes
+        --lazyfree-lazy-server-del yes
+        --replica-lazy-flush yes
+      '
     environment:
-      - ALLOW_EMPTY_PASSWORD=yes # This will be overridden by the command
+      - ALLOW_EMPTY_PASSWORD=yes
     restart: always
     volumes:
       - redis_data:/data
@@ -109,7 +127,10 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 2G          # Increased for production concurrent load
+          cpus: "1"           # Dedicated CPU for Redis performance
+        reservations:
+          memory: 1G          # Reserve memory for consistent performance
     healthcheck:
       test: [ "CMD", "redis-cli", "ping" ]
       interval: 10s
