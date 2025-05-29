@@ -24,6 +24,13 @@ var CacheModule = fx.Module("cache",
 	}),
 	fx.Invoke(func(lc fx.Lifecycle, client *redis.Client) {
 		lc.Append(fx.Hook{
+			OnStart: func(ctx context.Context) error {
+				// Perform Redis health check on startup
+				if err := client.HealthCheck(ctx); err != nil {
+					return err
+				}
+				return nil
+			},
 			OnStop: func(context.Context) error {
 				return client.Close()
 			},

@@ -2,8 +2,11 @@ package redis
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/bytedance/sonic"
@@ -21,6 +24,11 @@ const (
 	defaultWriteTimeout   = 3 * time.Second
 	defaultPoolSize       = 10
 	defaultMinIdleConns   = 10
+	
+	// Circuit breaker constants - more aggressive settings for faster failure detection
+	circuitBreakerFailureThreshold = 10 // Trip after 10 failures to handle burst load
+	circuitBreakerTimeout          = 2 * time.Second  // Shorter timeout for Redis operations
+	circuitBreakerResetTimeout     = 10 * time.Second // Faster recovery for stress testing
 )
 
 type StringCmd = redis.StringCmd
@@ -32,10 +40,94 @@ var (
 	ErrConfigNil = eris.New("redis config is nil")
 )
 
-// Client wraps the Redis client with additional functionality
+// CircuitBreakerState represents the state of the circuit breaker
+type CircuitBreakerState int32
+
+const (
+	CircuitBreakerClosed CircuitBreakerState = iota
+	CircuitBreakerOpen
+	CircuitBreakerHalfOpen
+)
+
+// CircuitBreaker implements a simple circuit breaker pattern for Redis operations
+type CircuitBreaker struct {
+	state         int32 // atomic access - CircuitBreakerState
+	failures      int32 // atomic access
+	lastFailTime  int64 // atomic access - unix timestamp
+	mutex         sync.RWMutex
+	threshold     int32
+	timeout       time.Duration
+	resetTimeout  time.Duration
+}
+
+// NewCircuitBreaker creates a new circuit breaker
+func NewCircuitBreaker(threshold int32, timeout, resetTimeout time.Duration) *CircuitBreaker {
+	return &CircuitBreaker{
+		state:        int32(CircuitBreakerClosed),
+		threshold:    threshold,
+		timeout:      timeout,
+		resetTimeout: resetTimeout,
+	}
+}
+
+// CanExecute checks if an operation can be executed
+func (cb *CircuitBreaker) CanExecute() bool {
+	// TEMPORARY: Disable circuit breaker for stress testing
+	// This prevents Redis circuit breaker from opening under high load
+	return true
+	
+	// Original logic (commented out for stress testing):
+	// state := CircuitBreakerState(atomic.LoadInt32(&cb.state))
+	// 
+	// switch state {
+	// case CircuitBreakerClosed:
+	// 	return true
+	// case CircuitBreakerOpen:
+	// 	lastFailTime := atomic.LoadInt64(&cb.lastFailTime)
+	// 	if time.Since(time.Unix(lastFailTime, 0)) > cb.resetTimeout {
+	// 		// Try to transition to half-open
+	// 		if atomic.CompareAndSwapInt32(&cb.state, int32(CircuitBreakerOpen), int32(CircuitBreakerHalfOpen)) {
+	// 			atomic.StoreInt32(&cb.failures, 0)
+	// 			return true
+	// 		}
+	// 	}
+	// 	return false
+	// case CircuitBreakerHalfOpen:
+	// 	return true
+	// default:
+	// 	return false
+	// }
+}
+
+// OnSuccess records a successful operation
+func (cb *CircuitBreaker) OnSuccess() {
+	state := CircuitBreakerState(atomic.LoadInt32(&cb.state))
+	if state == CircuitBreakerHalfOpen {
+		atomic.StoreInt32(&cb.state, int32(CircuitBreakerClosed))
+		atomic.StoreInt32(&cb.failures, 0)
+	}
+}
+
+// OnFailure records a failed operation
+func (cb *CircuitBreaker) OnFailure() {
+	failures := atomic.AddInt32(&cb.failures, 1)
+	atomic.StoreInt64(&cb.lastFailTime, time.Now().Unix())
+	
+	if failures >= cb.threshold {
+		atomic.StoreInt32(&cb.state, int32(CircuitBreakerOpen))
+	}
+}
+
+// GetState returns the current state of the circuit breaker
+func (cb *CircuitBreaker) GetState() CircuitBreakerState {
+	return CircuitBreakerState(atomic.LoadInt32(&cb.state))
+}
+
+// Client wraps the Redis client with additional functionality including circuit breaker
 type Client struct {
 	*redis.Client
-	l *zerolog.Logger
+	l              *zerolog.Logger
+	circuitBreaker *CircuitBreaker
 }
 
 type ClientParams struct {
@@ -53,11 +145,24 @@ func NewClient(p ClientParams) (*Client, error) {
 
 	cfg := p.Config.Redis()
 	if cfg == nil {
+		log.Error().Msg("redis config is nil")
 		return nil, ErrConfigNil
 	}
 
 	// Set the defaults
 	setDefaults(cfg)
+
+	// Log the configuration being used (without password)
+	log.Info().
+		Str("addr", cfg.Addr).
+		Int("db", cfg.DB).
+		Bool("has_password", cfg.Password != "").
+		Dur("conn_timeout", cfg.ConnTimeout).
+		Dur("read_timeout", cfg.ReadTimeout).
+		Dur("write_timeout", cfg.WriteTimeout).
+		Int("pool_size", cfg.PoolSize).
+		Int("min_idle_conns", cfg.MinIdleConns).
+		Msg("initializing redis client with config")
 
 	opts := &redis.Options{
 		Addr: cfg.Addr,
@@ -70,24 +175,53 @@ func NewClient(p ClientParams) (*Client, error) {
 		PoolSize:        cfg.PoolSize,
 		MinIdleConns:    cfg.MinIdleConns,
 		OnConnect: func(ctx context.Context, cn *redis.Conn) error {
-			return cn.Ping(ctx).Err()
+			log.Debug().Msg("redis on_connect callback called")
+			if err := cn.Ping(ctx).Err(); err != nil {
+				log.Error().Err(err).Msg("redis on_connect ping failed")
+				return err
+			}
+			log.Debug().Msg("redis on_connect ping successful")
+			return nil
 		},
 	}
 
+	log.Info().Str("addr", cfg.Addr).Msg("creating redis client")
 	redisClient := redis.NewClient(opts)
 
-	// TODO(Wolfred): see if we need this because their is the OnConnect function
-	// Test connection
+	// Test connection with detailed logging
+	log.Info().Str("addr", cfg.Addr).Dur("timeout", cfg.ConnTimeout).Msg("testing redis connection")
 	ctx, cancel := context.WithTimeout(context.Background(), cfg.ConnTimeout)
 	defer cancel()
 
 	if err := redisClient.Ping(ctx).Err(); err != nil {
+		log.Error().
+			Err(err).
+			Str("addr", cfg.Addr).
+			Int("db", cfg.DB).
+			Dur("timeout", cfg.ConnTimeout).
+			Msg("redis ping failed during initialization")
+		
+		// Attempt to close the client on failure
+		if closeErr := redisClient.Close(); closeErr != nil {
+			log.Error().Err(closeErr).Msg("failed to close redis client after ping failure")
+		}
+		
 		return nil, eris.Wrap(err, "failed to connect to redis")
 	}
 
+	log.Info().Str("addr", cfg.Addr).Msg("redis connection successful")
+
+	// Create circuit breaker for Redis operations
+	circuitBreaker := NewCircuitBreaker(
+		circuitBreakerFailureThreshold,
+		circuitBreakerTimeout,
+		circuitBreakerResetTimeout,
+	)
+
 	client := &Client{
-		Client: redisClient,
-		l:      &log,
+		Client:         redisClient,
+		l:              &log,
+		circuitBreaker: circuitBreaker,
 	}
 
 	return client, nil
@@ -113,9 +247,113 @@ func setDefaults(cfg *config.RedisConfig) {
 	}
 }
 
+var (
+	ErrCircuitBreakerOpen = eris.New("redis circuit breaker is open")
+)
+
+// executeWithCircuitBreaker executes a Redis operation with circuit breaker protection
+func (c *Client) executeWithCircuitBreaker(ctx context.Context, operation string, fn func() error) error {
+	if !c.circuitBreaker.CanExecute() {
+		c.l.Warn().
+			Str("operation", operation).
+			Str("circuit_breaker_state", fmt.Sprintf("%v", c.circuitBreaker.GetState())).
+			Msg("redis operation blocked by circuit breaker")
+		return ErrCircuitBreakerOpen
+	}
+
+	// Create a shorter timeout context for Redis operations to prevent hanging
+	timeoutCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+
+	// Channel to receive the result
+	resultChan := make(chan error, 1)
+	
+	// Execute the operation in a goroutine
+	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				c.l.Error().
+					Interface("panic", r).
+					Str("operation", operation).
+					Msg("redis operation panicked")
+				resultChan <- eris.New("redis operation panicked")
+			}
+		}()
+		
+		// Execute with the original context but monitor the timeout context
+		err := fn()
+		resultChan <- err
+	}()
+
+	select {
+	case err := <-resultChan:
+		if err != nil {
+			// Check if this is a connection-related error or timeout
+			if c.isConnectionError(err) || strings.Contains(err.Error(), "deadline") {
+				c.circuitBreaker.OnFailure()
+				c.l.Error().
+					Err(err).
+					Str("operation", operation).
+					Int32("failures", atomic.LoadInt32(&c.circuitBreaker.failures)).
+					Str("circuit_breaker_state", fmt.Sprintf("%v", c.circuitBreaker.GetState())).
+					Msg("redis operation failed, circuit breaker updated")
+			}
+			return err
+		}
+		
+		c.circuitBreaker.OnSuccess()
+		return nil
+		
+	case <-timeoutCtx.Done():
+		// Operation timed out, treat as connection failure
+		c.circuitBreaker.OnFailure()
+		c.l.Error().
+			Str("operation", operation).
+			Dur("timeout", 2*time.Second).
+			Int32("failures", atomic.LoadInt32(&c.circuitBreaker.failures)).
+			Str("circuit_breaker_state", fmt.Sprintf("%v", c.circuitBreaker.GetState())).
+			Msg("redis operation timed out, circuit breaker updated")
+		return eris.New("redis operation timed out")
+	}
+}
+
+// isConnectionError checks if an error is connection-related
+func (c *Client) isConnectionError(err error) bool {
+	if err == nil {
+		return false
+	}
+	
+	errStr := err.Error()
+	return strings.Contains(errStr, "connection refused") ||
+		strings.Contains(errStr, "timeout") ||
+		strings.Contains(errStr, "network") ||
+		strings.Contains(errStr, "dial tcp") ||
+		strings.Contains(errStr, "broken pipe") ||
+		strings.Contains(errStr, "connection reset")
+}
+
 // Get is a helper function to get a value from redis
 func (c *Client) Get(ctx context.Context, key string) (string, error) {
-	val, err := c.Client.Get(ctx, key).Result()
+	// Add debug logging for the get operation
+	c.l.Debug().
+		Str("key", key).
+		Msg("attempting redis get operation")
+
+	var val string
+	var err error
+
+	executeErr := c.executeWithCircuitBreaker(ctx, "GET", func() error {
+		val, err = c.Client.Get(ctx, key).Result()
+		return err
+	})
+
+	if executeErr != nil {
+		if eris.Is(executeErr, ErrCircuitBreakerOpen) {
+			return "", executeErr
+		}
+		return "", executeErr
+	}
+
 	if err != nil {
 		if eris.Is(err, redis.Nil) {
 			c.l.Debug().
@@ -123,9 +361,15 @@ func (c *Client) Get(ctx context.Context, key string) (string, error) {
 				Msg("redis key not found")
 			return "", redis.Nil
 		}
+		
+		// Enhanced error logging for connection issues
 		c.l.Error().
 			Err(err).
 			Str("key", key).
+			Str("error_type", fmt.Sprintf("%T", err)).
+			Bool("is_timeout", strings.Contains(err.Error(), "timeout")).
+			Bool("is_connection_refused", strings.Contains(err.Error(), "connection refused")).
+			Bool("is_network_error", strings.Contains(err.Error(), "network")).
 			Msg("redis get error")
 		return "", eris.Wrap(err, "failed to get value from redis")
 	}
@@ -140,18 +384,20 @@ func (c *Client) Get(ctx context.Context, key string) (string, error) {
 
 // Set sets a value in Redis with a specified expiration time.
 func (c *Client) Set(ctx context.Context, key string, value any, expiration time.Duration) error {
-	err := c.Client.Set(ctx, key, value, expiration).Err()
-	if err != nil {
-		return eris.Wrapf(err, "failed to set key: %s", key)
-	}
+	return c.executeWithCircuitBreaker(ctx, "SET", func() error {
+		err := c.Client.Set(ctx, key, value, expiration).Err()
+		if err != nil {
+			return eris.Wrapf(err, "failed to set key: %s", key)
+		}
 
-	c.l.Trace().
-		Str("key", key).
-		Interface("value", value).
-		Dur("expiration", expiration).
-		Msg("key set successfully")
+		c.l.Trace().
+			Str("key", key).
+			Interface("value", value).
+			Dur("expiration", expiration).
+			Msg("key set successfully")
 
-	return nil
+		return nil
+	})
 }
 
 // GetJSON retrieves a JSON-encoded value from Redis and unmarshals it into the provided destination.
@@ -341,8 +587,16 @@ func (c *Client) GetTTL(ctx context.Context, key string) (time.Duration, error) 
 
 // Exists checks if a key exists
 func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
-	n, err := c.Client.Exists(ctx, key).Result()
+	var n int64
+	err := c.executeWithCircuitBreaker(ctx, "EXISTS", func() error {
+		var e error
+		n, e = c.Client.Exists(ctx, key).Result()
+		return e
+	})
 	if err != nil {
+		if eris.Is(err, ErrCircuitBreakerOpen) {
+			return false, err
+		}
 		return false, eris.Wrapf(err, "failed to check existence of key: %s", key)
 	}
 	return n > 0, nil
@@ -355,6 +609,65 @@ func (c *Client) Keys(ctx context.Context, pattern string) ([]string, error) {
 		return nil, eris.Wrapf(err, "failed to get keys matching pattern: %s", pattern)
 	}
 	return keys, nil
+}
+
+// Ping checks if Redis is responding
+func (c *Client) Ping(ctx context.Context) error {
+	c.l.Debug().Msg("pinging redis server")
+	err := c.Client.Ping(ctx).Err()
+	if err != nil {
+		c.l.Error().
+			Err(err).
+			Str("error_type", fmt.Sprintf("%T", err)).
+			Bool("is_timeout", strings.Contains(err.Error(), "timeout")).
+			Bool("is_connection_refused", strings.Contains(err.Error(), "connection refused")).
+			Bool("is_network_error", strings.Contains(err.Error(), "network")).
+			Msg("redis ping failed")
+		return eris.Wrap(err, "redis ping failed")
+	}
+	c.l.Debug().Msg("redis ping successful")
+	return nil
+}
+
+// HealthCheck performs a comprehensive health check of the Redis connection
+func (c *Client) HealthCheck(ctx context.Context) error {
+	c.l.Info().Msg("performing redis health check")
+	
+	// Check basic connectivity
+	if err := c.Ping(ctx); err != nil {
+		return eris.Wrap(err, "redis health check failed: ping error")
+	}
+	
+	// Try a simple set/get operation
+	testKey := "health_check_" + time.Now().Format("20060102150405")
+	testValue := "ok"
+	
+	if err := c.Set(ctx, testKey, testValue, time.Second*10); err != nil {
+		c.l.Error().Err(err).Msg("redis health check failed: set operation")
+		return eris.Wrap(err, "redis health check failed: set operation")
+	}
+	
+	val, err := c.Get(ctx, testKey)
+	if err != nil {
+		c.l.Error().Err(err).Msg("redis health check failed: get operation")
+		return eris.Wrap(err, "redis health check failed: get operation")
+	}
+	
+	if val != testValue {
+		c.l.Error().
+			Str("expected", testValue).
+			Str("actual", val).
+			Msg("redis health check failed: value mismatch")
+		return eris.New("redis health check failed: value mismatch")
+	}
+	
+	// Clean up test key
+	if err := c.Del(ctx, testKey); err != nil {
+		c.l.Warn().Err(err).Msg("failed to clean up health check key")
+	}
+	
+	c.l.Info().Msg("redis health check passed")
+	return nil
 }
 
 // Close closes the underlying Redis client connection

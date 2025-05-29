@@ -3,6 +3,7 @@ package auth
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/session"
@@ -209,7 +210,15 @@ func (s *Service) RefreshSession(ctx context.Context, sessionID pulid.ID, ip, us
 		session.EventTypeAccessed,
 		nil,
 	); err != nil {
-		s.l.Warn().Err(err).Msg("failed to update session activity")
+		// Check if this is a Redis circuit breaker error
+		if strings.Contains(err.Error(), "circuit breaker is open") {
+			s.l.Warn().
+				Err(err).
+				Str("sessionId", sessionID.String()).
+				Msg("session activity update skipped due to Redis circuit breaker")
+		} else {
+			s.l.Warn().Err(err).Msg("failed to update session activity")
+		}
 	}
 
 	return sess, nil

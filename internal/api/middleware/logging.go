@@ -345,9 +345,6 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 	// Create async logger
 	asyncLogger := NewAsyncLogger(l, cfg.BufferSize)
 
-	// Create entropy source for ULID generation
-	entropy := ulid.Monotonic(rand.Reader, 0)
-
 	return func(c *fiber.Ctx) error {
 		// Check if we should skip logging this request
 		if shouldSkipLogging(c, cfg) {
@@ -355,7 +352,7 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 		}
 
 		// Ensure request ID exists
-		requestID := ensureRequestID(c, entropy)
+		requestID := ensureRequestID(c)
 
 		// Capture timing and request info
 		start := time.Now()
@@ -403,10 +400,10 @@ func shouldSkipLogging(c *fiber.Ctx, cfg LogConfig) bool {
 }
 
 // ensureRequestID ensures a request ID exists, generating one if needed
-func ensureRequestID(c *fiber.Ctx, entropy *ulid.MonotonicEntropy) string {
+func ensureRequestID(c *fiber.Ctx) string {
 	requestID := c.Get("X-Request-ID")
 	if requestID == "" {
-		requestID = ulid.MustNew(ulid.Timestamp(time.Now()), entropy).String()
+		requestID = ulid.Make().String()
 		c.Set("X-Request-ID", requestID)
 	}
 	return requestID
