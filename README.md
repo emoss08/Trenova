@@ -11,6 +11,21 @@
 > Trenova is currently in development and is not yet suitable for production use.
 > We are actively working on building the core functionality and will be releasing it in the future.
 
+## Table of Contents
+
+- [Vision](#vision)
+- [Industry Challenges & Our Mission](#industry-challenges--our-mission)
+- [Why Open Source?](#why-open-source)
+- [Architecture & Technology Stack](#architecture--technology-stack)
+- [Quick Start](#quick-start)
+- [Documentation](#documentation)
+- [System Requirements](#system-requirements)
+- [Database Support](#database-support)
+- [Support & Community](#support--community)
+- [Commercial Support](#commercial-support)
+- [Contribution Policy](#contribution-policy)
+- [License](#license)
+
 ## Vision
 
 Trenova emerged from witnessing firsthand the daily struggles of Over-The-Road carriers in the United States. Our vision extends beyond just creating another TMS - we're building an ecosystem that empowers transportation companies to thrive in an increasingly complex industry.
@@ -139,30 +154,108 @@ Trenova's commitment to open source goes beyond just sharing code - it's about c
 - **Plugin Architecture**: Enabling easy extension of core functionality
 - **Community Governance**: Transparent decision-making process for project direction
 
-## Technology Stack
+## Architecture & Technology Stack
 
-Trenova is built on a modern, scalable technology stack:
+Trenova is built on a modern, scalable microservices architecture:
+
+### Core Technologies
 
 - **Backend**: Go (Golang) - chosen for its performance, simplicity, and strong typing
-- **Frontend**: React - providing a responsive and intuitive user interface
+- **Frontend**: React with TypeScript - providing a responsive and intuitive user interface
 - **Database**: PostgreSQL - ensuring data reliability and advanced querying capabilities
-- **Infrastructure**: Docker & Kubernetes - enabling easy deployment and scaling
+- **Cache**: Redis - for session management and high-performance caching
+- **Infrastructure**: Docker & Docker Compose - enabling easy deployment and scaling
+
+### Microservices Architecture
+
+- **Main API**: Core business logic and data management
+- **Email Service**: Dedicated microservice for email operations and template management
+- **Workflow Service**: Powered by Hatchet for complex workflow orchestration
+- **File Storage**: MinIO for object storage and document management
+- **Message Queue**: RabbitMQ for asynchronous communication between services
+
+### Supporting Infrastructure
+
+- **Reverse Proxy**: Caddy for automatic HTTPS and load balancing
+- **Connection Pooling**: PGBouncer for database connection optimization
+- **Monitoring**: Built-in health checks and metrics collection
+
+## Quick Start
+
+### Prerequisites
+
+- Docker 20.10+ with Docker Compose V2
+- 12GB+ RAM and 6+ CPU cores allocated to Docker
+- 30GB+ available disk space
+
+### Local Development
+
+```bash
+# Clone the repository
+git clone https://github.com/emoss08/trenova.git
+cd trenova
+
+# Start the development environment
+docker-compose -f docker-compose-local.yml up -d
+
+# Access the application
+# Frontend: http://localhost:5173
+# API: http://localhost:3001
+```
+
+### Production Deployment
+
+```bash
+# Clone the repository
+git clone https://github.com/emoss08/trenova.git
+cd trenova
+
+# Configure environment variables
+cp config/config.example.yaml config/config.yaml
+# Edit config.yaml with your settings
+
+# Deploy with production configuration
+docker-compose -f docker-compose-prod.yml up -d
+
+# Access the application
+# Application: https://your-domain.com (via Caddy)
+# Workflow Dashboard: http://your-server:8080
+```
+
+For detailed deployment instructions and system requirements, see the [System Requirements](SYSTEM_REQUIREMENTS.md) documentation.
 
 ## Documentation
 
-Comprehensive documentation is available:
+### Deployment & Administration
 
-- [Getting Started Guide](docs/getting-started.md)
-- [User Documentation](docs/user-guide.md)
-- [API Reference](docs/api.md)
+- **[System Requirements](SYSTEM_REQUIREMENTS.md)** - Comprehensive resource requirements, scaling guidelines, and deployment instructions
+- [Getting Started Guide](docs/development/setup.md) - Development environment setup
+- [Production Deployment](docs/deployment/) - Production deployment strategies
+
+### Development Resources
+
+- [Development Guidelines](docs/development/guidelines.md) - Coding standards and best practices
+- [API Reference](docs/api/openapi.yaml) - Complete API documentation
+- [User Documentation](docs/user-guide.md) - End-user application guide
+
+### Architecture Documentation
+
+- [Microservices Architecture](microservices/) - Individual service documentation
+- [Email Service](microservices/email/README.md) - Email handling and templates
+- [Workflow Service](microservices/workflow/) - Hatchet-based workflow engine
 
 ## System Requirements
 
-| Component  | Minimum | Recommended |
-|------------|---------|-------------|
-| CPU        | 4 cores | 8+ cores    |
-| RAM        | 8GB     | 16GB+       |
-| Storage    | 20GB    | 50GB+ SSD   |
+Trenova is a comprehensive microservices-based application with specific resource requirements for optimal performance.
+
+### Quick Overview
+
+- **Minimum**: 6 cores, 12GB RAM, 30GB storage
+- **Production (1-50 users)**: 12+ cores, 24GB+ RAM, 100GB+ SSD
+- **Production (50-200 users)**: 20+ cores, 48GB+ RAM, 200GB+ SSD
+- **Production (200+ users)**: 32+ cores, 96GB+ RAM, 500GB+ SSD
+
+📋 **[View Complete System Requirements](SYSTEM_REQUIREMENTS.md)** - Detailed resource allocation, scaling guidelines, network requirements, and deployment checklists for all components including microservices.
 
 ## Database Support
 
@@ -176,20 +269,58 @@ Comprehensive documentation is available:
 
 We believe in building a strong, supportive community around Trenova:
 
-- [GitHub Issues](https://github.com/emoss08/trenova/issues) - Bug reports and feature requests
-- [GitHub Discussions](https://github.com/emoss08/trenova/discussions) - Community discussions and support
-- [Documentation](https://docs.trenova.io) - Comprehensive guides and references
+### Community Resources
+
+- **[GitHub Issues](https://github.com/emoss08/trenova/issues)** - Bug reports and feature requests
+- **[GitHub Discussions](https://github.com/emoss08/trenova/discussions)** - Community discussions, questions, and support
+- **[Discord Server](https://discord.gg/XDBqyvrryq)** - Real-time community chat and support
+- **[Documentation](https://docs.trenova.io)** - Comprehensive guides and references
+
+### Getting Help
+
+1. **Check Documentation**: Start with our [System Requirements](SYSTEM_REQUIREMENTS.md) and [Documentation](#documentation)
+2. **Search Issues**: Look through existing [GitHub Issues](https://github.com/emoss08/trenova/issues) for similar problems
+3. **Community Discussion**: Ask questions in [GitHub Discussions](https://github.com/emoss08/trenova/discussions)
+4. **Discord Support**: Join our [Discord server](https://discord.gg/XDBqyvrryq) for real-time help
+5. **Report Bugs**: Create a detailed issue on [GitHub Issues](https://github.com/emoss08/trenova/issues)
+
+### Contributing to the Community
+
+While we don't accept code contributions, you can help by:
+
+- **Reporting Issues**: Help us identify bugs and improvement opportunities
+- **Feature Requests**: Share ideas for new functionality
+- **Documentation**: Suggest improvements to guides and documentation
+- **Community Support**: Help other users in discussions and Discord
 
 ## Commercial Support
 
-For organizations requiring additional support, we offer:
+For organizations requiring additional support, we offer enterprise-grade services:
 
-- Priority issue resolution
-- Custom feature development
-- Deployment assistance
-- Training and consultation
+### Support Services
 
-Contact us at <support@trenova.app> for more information.
+- **Priority Issue Resolution** - Fast-track bug fixes and technical support
+- **Custom Feature Development** - Tailored functionality for your business needs
+- **Deployment Assistance** - Expert help with production deployments
+- **Training & Consultation** - Comprehensive staff training and best practices
+- **System Optimization** - Performance tuning and scaling guidance
+- **24/7 Monitoring** - Proactive system monitoring and alerting
+
+### Enterprise Features
+
+- **Dedicated Support Team** - Direct access to Trenova developers
+- **SLA Guarantees** - Contractual uptime and response time commitments
+- **Custom Integrations** - Connect with your existing systems and workflows
+- **White-label Solutions** - Branded deployments for your organization
+- **Compliance Support** - Help meeting industry-specific regulations
+
+### Contact Information
+
+- **Email**: <support@trenova.app>
+- **Business Inquiries**: <sales@trenova.app>
+- **Security Issues**: <security@trenova.app>
+
+*Response times: Community support (best effort), Commercial support (guaranteed SLA)*
 
 ## Contribution Policy
 
