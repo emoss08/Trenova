@@ -73,7 +73,7 @@ func (s *Service) List(ctx context.Context, req *repositories.ListBillingQueueRe
 	return entities, nil
 }
 
-func (s *Service) Get(ctx context.Context, req repositories.GetBillingQueueItemRequest) (*billingqueue.QueueItem, error) {
+func (s *Service) Get(ctx context.Context, req *repositories.GetBillingQueueItemRequest) (*billingqueue.QueueItem, error) {
 	log := s.l.With().
 		Str("operation", "Get").
 		Str("billingQueueItemID", string(req.BillingQueueItemID)).

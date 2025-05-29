@@ -42,6 +42,7 @@ type Service struct {
 	v             *shipmentvalidator.Validator
 }
 
+//nolint:gocritic // The p parameter is passed using fx.In
 func NewService(p ServiceParams) *Service {
 	log := p.Logger.With().
 		Str("service", "shipment").
@@ -106,7 +107,7 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListShipmentOptio
 	return entities, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetShipmentByIDOptions) (*shipment.Shipment, error) {
+func (s *Service) Get(ctx context.Context, opts *repositories.GetShipmentByIDOptions) (*shipment.Shipment, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("shipmentID", opts.ID.String()).
@@ -243,7 +244,7 @@ func (s *Service) Update(ctx context.Context, shp *shipment.Shipment, userID pul
 		return nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetShipmentByIDOptions{
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDOptions{
 		ID:    shp.ID,
 		OrgID: shp.OrganizationID,
 		BuID:  shp.BusinessUnitID,
@@ -317,7 +318,7 @@ func (s *Service) Cancel(ctx context.Context, req *repositories.CancelShipmentRe
 	}
 
 	// get the original shipment
-	original, err := s.repo.GetByID(ctx, repositories.GetShipmentByIDOptions{
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDOptions{
 		ID:    req.ShipmentID,
 		OrgID: req.OrgID,
 		BuID:  req.BuID,

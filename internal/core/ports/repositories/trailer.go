@@ -29,7 +29,7 @@ type GetTrailerByIDOptions struct {
 
 type TrailerRepository interface {
 	List(ctx context.Context, opts *ListTrailerOptions) (*ports.ListResult[*trailer.Trailer], error)
-	GetByID(ctx context.Context, opts GetTrailerByIDOptions) (*trailer.Trailer, error)
+	GetByID(ctx context.Context, opts *GetTrailerByIDOptions) (*trailer.Trailer, error)
 	Create(ctx context.Context, t *trailer.Trailer) (*trailer.Trailer, error)
 	Update(ctx context.Context, t *trailer.Trailer) (*trailer.Trailer, error)
 }

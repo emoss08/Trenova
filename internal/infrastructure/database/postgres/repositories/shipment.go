@@ -59,6 +59,8 @@ type shipmentRepository struct {
 //
 // Returns:
 //   - repositories.ShipmentRepository: A ready-to-use shipment repository instance.
+//
+//nolint:gocritic // The p parameter is passed using fx.In
 func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepository {
 	log := p.Logger.With().
 		Str("repository", "shipment").
@@ -228,7 +230,7 @@ func (sr *shipmentRepository) List(ctx context.Context, opts *repositories.ListS
 // Returns:
 //   - *shipment.Shipment: The retrieved shipment entity.
 //   - error: If the shipment is not found or query fails.
-func (sr *shipmentRepository) GetByID(ctx context.Context, opts repositories.GetShipmentByIDOptions) (*shipment.Shipment, error) {
+func (sr *shipmentRepository) GetByID(ctx context.Context, opts *repositories.GetShipmentByIDOptions) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -709,7 +711,7 @@ func (sr *shipmentRepository) Duplicate(ctx context.Context, req *repositories.D
 		Logger()
 
 	// * Get the original shipment
-	originalShipment, err := sr.GetByID(ctx, repositories.GetShipmentByIDOptions{
+	originalShipment, err := sr.GetByID(ctx, &repositories.GetShipmentByIDOptions{
 		ID:    req.ShipmentID,
 		OrgID: req.OrgID,
 		BuID:  req.BuID,
@@ -773,25 +775,25 @@ func (sr *shipmentRepository) performDuplication(
 	additionalCharges := sr.prepareAdditionalCharges(originalShipment, newShipment)
 
 	// * Insert moves
-	if err = sr.insertEntities(ctx, tx, log, "moves", &moves); err != nil {
+	if err = sr.insertEntities(ctx, tx, &log, "moves", &moves); err != nil {
 		return nil, err
 	}
 
 	// * Insert stops
-	if err = sr.insertEntities(ctx, tx, log, "stops", &stops); err != nil {
+	if err = sr.insertEntities(ctx, tx, &log, "stops", &stops); err != nil {
 		return nil, err
 	}
 
 	// * Insert commodities if requested
 	if req.IncludeCommodities && len(commodities) > 0 {
-		if err = sr.insertEntities(ctx, tx, log, "commodities", &commodities); err != nil {
+		if err = sr.insertEntities(ctx, tx, &log, "commodities", &commodities); err != nil {
 			return nil, err
 		}
 	}
 
 	// * Insert additional charges if requested
 	if req.IncludeAdditionalCharges && len(additionalCharges) > 0 {
-		if err = sr.insertEntities(ctx, tx, log, "additional charges", &additionalCharges); err != nil {
+		if err = sr.insertEntities(ctx, tx, &log, "additional charges", &additionalCharges); err != nil {
 			return nil, err
 		}
 	}
@@ -803,7 +805,7 @@ func (sr *shipmentRepository) performDuplication(
 func (sr *shipmentRepository) insertEntities(
 	ctx context.Context,
 	tx bun.Tx,
-	log zerolog.Logger,
+	log *zerolog.Logger,
 	entityType string,
 	entities any,
 ) error {
@@ -893,7 +895,7 @@ func (sr *shipmentRepository) prepareStops(
 }
 
 // prepareCommodities prepares the commodities for the new shipment
-func (sr *shipmentRepository) prepareCommodities(original *shipment.Shipment, newShipment *shipment.Shipment) []*shipment.ShipmentCommodity {
+func (sr *shipmentRepository) prepareCommodities(original, newShipment *shipment.Shipment) []*shipment.ShipmentCommodity {
 	commodities := make([]*shipment.ShipmentCommodity, 0, len(original.Commodities))
 
 	// * Loop through each commodity and prepare the new commodity
@@ -915,7 +917,7 @@ func (sr *shipmentRepository) prepareCommodities(original *shipment.Shipment, ne
 	return commodities
 }
 
-func (sr *shipmentRepository) prepareAdditionalCharges(original *shipment.Shipment, newShipment *shipment.Shipment) []*shipment.AdditionalCharge {
+func (sr *shipmentRepository) prepareAdditionalCharges(original, newShipment *shipment.Shipment) []*shipment.AdditionalCharge {
 	additionalCharges := make([]*shipment.AdditionalCharge, 0, len(original.AdditionalCharges))
 
 	// * Loop through each additional charge and prepare the new additional charge
@@ -987,7 +989,7 @@ func (sr *shipmentRepository) duplicateShipmentFields(ctx context.Context, origi
 // Returns:
 //   - []duplicateBOLsResult: List of shipments with matching BOL numbers (empty if none found)
 //   - error: If the database query fails
-func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, currentBOL string, orgID pulid.ID, buID pulid.ID, excludeID *pulid.ID) ([]repositories.DuplicateBOLsResult, error) {
+func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, currentBOL string, orgID, buID pulid.ID, excludeID *pulid.ID) ([]repositories.DuplicateBOLsResult, error) {
 	// * Skip empty BOL checks
 	if currentBOL == "" {
 		return []repositories.DuplicateBOLsResult{}, nil

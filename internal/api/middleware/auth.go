@@ -7,8 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/services/auth"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/config"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -83,13 +83,13 @@ func (m *AuthMiddleware) Authenticate() fiber.Handler {
 		sess, err := m.auth.RefreshSession(c.Context(), sessionID, c.IP(), c.Get("User-Agent"))
 		if err != nil {
 			// Check if this is a circuit breaker related error
-			if strings.Contains(err.Error(), "circuit breaker is open") || 
-			   strings.Contains(err.Error(), "redis operation timed out") {
+			if strings.Contains(err.Error(), "circuit breaker is open") ||
+				strings.Contains(err.Error(), "redis operation timed out") {
 				log.Warn().
 					Err(err).
 					Str("sessionId", sessionID.String()).
 					Msg("Redis unavailable during session validation, allowing degraded access")
-				
+
 				// Create a minimal session for degraded operation
 				sess = m.createDegradedSession(sessionID, c.IP(), c.Get("User-Agent"))
 			} else {
@@ -167,10 +167,10 @@ func (m *AuthMiddleware) validateSession(sess *session.Session) error {
 
 // setSessionContext sets session data in the request context
 func (m *AuthMiddleware) setSessionContext(c *fiber.Ctx, sess *session.Session) {
-	c.Locals(ctx.CTXSessionID, sess)
-	c.Locals(ctx.CTXUserID, sess.UserID)
-	c.Locals(ctx.CTXBusinessUnitID, sess.BusinessUnitID)
-	c.Locals(ctx.CTXOrganizationID, sess.OrganizationID)
+	c.Locals(appctx.CTXSessionID, sess)
+	c.Locals(appctx.CTXUserID, sess.UserID)
+	c.Locals(appctx.CTXBusinessUnitID, sess.BusinessUnitID)
+	c.Locals(appctx.CTXOrganizationID, sess.OrganizationID)
 }
 
 // handleAuthError handles authentication errors with consistent response format
@@ -199,7 +199,7 @@ func (m *AuthMiddleware) clearSessionCookie(c *fiber.Ctx) {
 // This allows the application to continue operating in a degraded mode
 func (m *AuthMiddleware) createDegradedSession(sessionID pulid.ID, clientIP, userAgent string) *session.Session {
 	now := timeutils.NowUnix()
-	
+
 	// Create a temporary session that will allow basic operations
 	// Note: This is a security trade-off for availability during Redis outages
 	degradedSession := &session.Session{
@@ -216,12 +216,12 @@ func (m *AuthMiddleware) createDegradedSession(sessionID pulid.ID, clientIP, use
 		UpdatedAt:      now,
 		Events:         []session.Event{},
 	}
-	
+
 	m.l.Warn().
 		Str("sessionId", sessionID.String()).
 		Str("clientIP", clientIP).
 		Int64("expiresAt", degradedSession.ExpiresAt).
 		Msg("created degraded session due to Redis unavailability")
-	
+
 	return degradedSession
 }

@@ -208,12 +208,12 @@ func (v *MoveValidator) validateStopTimes(ctx context.Context, m *shipment.Shipm
 
 func (v *MoveValidator) validateStopSequence(m *shipment.ShipmentMove, multiErr *errors.MultiError) {
 	// * Quick lookup maps for stop types
-	pickupTypes := map[shipment.StopType]bool{ //nolint: exhaustive // We only need to check for pickup and split pickup
+	pickupTypes := map[shipment.StopType]bool{ //nolint:exhaustive // We only need to check for pickup and split pickup
 		shipment.StopTypePickup:      true,
 		shipment.StopTypeSplitPickup: true,
 	}
 
-	deliveryTypes := map[shipment.StopType]bool{ //nolint: exhaustive // We only need to check for delivery and split delivery
+	deliveryTypes := map[shipment.StopType]bool{ //nolint:exhaustive // We only need to check for delivery and split delivery
 		shipment.StopTypeDelivery:      true,
 		shipment.StopTypeSplitDelivery: true,
 	}

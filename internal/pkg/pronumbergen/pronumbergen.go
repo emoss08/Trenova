@@ -114,76 +114,16 @@ func DefaultProNumberFormat() *ProNumberFormat {
 // GetOrganizationProNumberFormat retrieves the pro number format configuration for a specific organization
 // from the database. It looks up the configuration in pro_number_configs table.
 func GetOrganizationProNumberFormat(_ context.Context, _ pulid.ID) (*ProNumberFormat, error) {
-	// Connect to the database using the provided context
-	// This should be replaced with a proper database connection from the context
-	// In a production environment, this might be injected via dependency injection
-
-	// For example:
-	// db, ok := ctx.Value("db").(bun.IDB)
-	// if !ok {
-	//     return DefaultProNumberFormat(), nil // Fallback to default if no DB connection
-	// }
-
-	// Query for the active pro number configuration for this organization
-	// var config pronumberconfig.ProNumberConfig
-	// err := db.NewSelect().
-	//     Model(&config).
-	//     Where("organization_id = ?", orgID).
-	//     Where("is_active = ?", true).
-	//     Limit(1).
-	//     Scan(ctx)
-	//
-	// if err != nil {
-	//     if errors.Is(err, sql.ErrNoRows) {
-	//         // No configuration found, return default
-	//         return DefaultProNumberFormat(), nil
-	//     }
-	//     // Other database error
-	//     return nil, err
-	// }
-
-	// Convert the database config to our format
-	// return config.ToProNumberFormat(), nil
-
-	// TODO: For now, we'll return the default until we have proper database integration
 	return DefaultProNumberFormat(), nil
 }
 
 // GetProNumberFormatForBusinessUnit retrieves the pro number format for a specific business unit
 func GetProNumberFormatForBusinessUnit(ctx context.Context, orgID, _ pulid.ID) (*ProNumberFormat, error) {
-	// Similar to above, but with business unit filtering
-	// In a production implementation we'd do something like:
-
-	// db, ok := ctx.Value("db").(bun.IDB)
-	// if !ok {
-	//     return DefaultProNumberFormat(), nil
-	// }
-
-	// var config pronumberconfig.ProNumberConfig
-	// err := db.NewSelect().
-	//     Model(&config).
-	//     Where("organization_id = ?", orgID).
-	//     Where("business_unit_id = ?", businessUnitID).
-	//     Where("is_active = ?", true).
-	//     Limit(1).
-	//     Scan(ctx)
-	//
-	// if err != nil {
-	//     if errors.Is(err, sql.ErrNoRows) {
-	//         // No business unit specific config, fall back to org config
-	//         return GetOrganizationProNumberFormat(ctx, orgID)
-	//     }
-	//     return nil, err
-	// }
-
-	// return config.ToProNumberFormat(), nil
-
-	// For now, we'll just call the organization format function
 	return GetOrganizationProNumberFormat(ctx, orgID)
 }
 
 // GenerateProNumber generates a pro number based on the given format, sequence, year, and month
-func GenerateProNumber(format *ProNumberFormat, sequence int, year int, month int) string {
+func GenerateProNumber(format *ProNumberFormat, sequence, year, month int) string {
 	if format.AllowCustomFormat && format.CustomFormat != "" {
 		return generateCustomFormat(format, sequence, year, month)
 	}
@@ -277,7 +217,7 @@ func GenerateProNumber(format *ProNumberFormat, sequence int, year int, month in
 }
 
 // generateCustomFormat generates a pro number using the custom format template
-func generateCustomFormat(format *ProNumberFormat, sequence int, year int, month int) string {
+func generateCustomFormat(format *ProNumberFormat, sequence, year, month int) string {
 	result := format.CustomFormat
 
 	// * Replace placeholders with actual values
@@ -536,7 +476,7 @@ func FormatProNumber(proNumber string, format *ProNumberFormat) string {
 	var result strings.Builder
 
 	// * Prefix is separate
-	if len(proNumber) > 0 && format.Prefix != "" {
+	if proNumber != "" && format.Prefix != "" {
 		result.WriteString(proNumber[:1])
 		result.WriteString(format.SeparatorChar)
 		proNumber = proNumber[1:]
@@ -562,7 +502,7 @@ func FormatProNumber(proNumber string, format *ProNumberFormat) string {
 		proNumber = proNumber[format.SequenceDigits:]
 
 		// * If anything remains, add another separator
-		if len(proNumber) > 0 {
+		if proNumber != "" {
 			result.WriteString(format.SeparatorChar)
 		}
 	}

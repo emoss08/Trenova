@@ -71,8 +71,8 @@ type service struct {
 //   - p: ServiceParams containing dependencies.
 //
 // Returns:
-//   - services.DocumentService: A ready-to-use DocumentService instance.
-func NewService(p ServiceParams) services.DocumentService {
+//   - services.DocumentService: A ready-to-use DocumentService instances.
+func NewService(p ServiceParams) services.DocumentService { //nolint:gocritic // The p parameter is passed using fx.In
 	log := p.Logger.With().
 		Str("service", "document").
 		Logger()
@@ -244,11 +244,6 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 	if err := s.checkUploadPermissions(ctx, req); err != nil {
 		return nil, err
 	}
-
-	// // * Validate the request and file size
-	// if err := req.Validate(ctx); err != nil {
-	// 	return nil, err
-	// }
 
 	// Get bucket name
 	bucketName, err := s.orgRepo.GetOrganizationBucketName(ctx, req.OrganizationID)
@@ -566,19 +561,6 @@ func (s *service) generateObjectPath(req *services.UploadDocumentRequest, docTyp
 }
 
 func (s *service) mapDocTypeToClassification(_ pulid.ID) services.FileClassification {
-	// switch docTypeID {
-	// case document.DocumentTypeLicense, document.DocumentTypeRegistration,
-	// 	document.DocumentTypeInsurance, document.DocumentTypeMedicalCert:
-	// 	return services.ClassificationRegulatory
-	// case document.DocumentTypeDriverLog, document.DocumentTypeAccidentReport:
-	// 	return services.ClassificationSensitive
-	// case document.DocumentTypeProofOfDelivery, document.DocumentTypeInvoice,
-	// 	document.DocumentTypeBillOfLading, document.DocumentTypeContract:
-	// 	return services.ClassificationPrivate
-	// default:
-	// 	return services.ClassificationPublic
-	// }
-
 	return services.ClassificationPublic
 }
 

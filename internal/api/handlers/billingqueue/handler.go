@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/billingqueue"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -50,7 +50,7 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 }
 
 func (h *Handler) list(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -74,7 +74,7 @@ func (h *Handler) list(c *fiber.Ctx) error {
 }
 
 func (h *Handler) get(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -84,7 +84,7 @@ func (h *Handler) get(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	qi, err := h.s.Get(c.UserContext(), repositories.GetBillingQueueItemRequest{
+	qi, err := h.s.Get(c.UserContext(), &repositories.GetBillingQueueItemRequest{
 		BillingQueueItemID: billingQueueID,
 		OrgID:              reqCtx.OrgID,
 		BuID:               reqCtx.BuID,
@@ -103,7 +103,7 @@ func (h *Handler) get(c *fiber.Ctx) error {
 }
 
 func (h *Handler) bulkTransfer(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}

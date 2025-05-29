@@ -9,7 +9,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/cache/redis"
-	tCtx "github.com/emoss08/trenova/internal/pkg/ctx"
+	tCtx "github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -146,18 +146,25 @@ func (rl *RateLimiter) createLimitHandler(config *RateLimitConfig) fiber.Handler
 		allowed, remaining, reset, err := rl.checkRateLimit(ctx, key, maxRequests, interval, config)
 		// Handle errors in rate limit check
 		if err != nil {
-			return rl.handleRateLimitError(c, config, log, err)
+			return rl.handleRateLimitError(c, config, err)
 		}
 
 		// Handle reset time edge cases
-		allowed, remaining, reset = rl.handleResetTimeEdgeCases(ctx, c, key, config, allowed, remaining, reset, maxRequests, log)
+		allowed, remaining, reset = rl.handleResetTimeEdgeCases(ctx, c, &handleEdgeCasesParams{
+			Key:         key,
+			Config:      config,
+			Remaining:   remaining,
+			MaxRequests: maxRequests,
+			Reset:       reset,
+			Allowed:     allowed,
+		}, &log)
 
 		// Set rate limit headers
 		rl.setRateLimitHeaders(c, maxRequests, remaining, reset, config.Strategy)
 
 		// Handle the case when rate limit is exceeded
 		if !allowed {
-			return rl.handleRateLimitExceeded(ctx, c, key, config, maxRequests, log)
+			return rl.handleRateLimitExceeded(ctx, c, key, config, maxRequests, &log)
 		}
 
 		// Update metrics if enabled
@@ -203,7 +210,7 @@ func (rl *RateLimiter) generateRateLimitKey(c *fiber.Ctx, config *RateLimitConfi
 }
 
 // checkRateLimit checks if the request is allowed based on the rate limit strategy
-func (rl *RateLimiter) checkRateLimit(ctx context.Context, key string, maxRequests int, interval time.Duration, config *RateLimitConfig) (bool, int, int64, error) {
+func (rl *RateLimiter) checkRateLimit(ctx context.Context, key string, maxRequests int, interval time.Duration, config *RateLimitConfig) (isAllowed bool, remaining int, reset int64, err error) {
 	switch config.Strategy {
 	case "sliding":
 		return rl.checkSlidingWindowLimit(ctx, key, maxRequests, interval)
@@ -215,7 +222,9 @@ func (rl *RateLimiter) checkRateLimit(ctx context.Context, key string, maxReques
 }
 
 // handleRateLimitError handles errors that occur during rate limit checking
-func (rl *RateLimiter) handleRateLimitError(c *fiber.Ctx, config *RateLimitConfig, log zerolog.Logger, err error) error {
+func (rl *RateLimiter) handleRateLimitError(c *fiber.Ctx, config *RateLimitConfig, err error) error {
+	log := rl.createContextLogger(c)
+
 	// Check if this is a circuit breaker error
 	if strings.Contains(err.Error(), "circuit breaker is open") {
 		log.Warn().
@@ -238,9 +247,9 @@ func (rl *RateLimiter) handleRateLimitError(c *fiber.Ctx, config *RateLimitConfi
 		maxRequests, interval := rl.getRoleLimits(c, config)
 		now := time.Now().Unix()
 		reset := now + int64(interval.Seconds())
-		
+
 		rl.setRateLimitHeaders(c, maxRequests, maxRequests/2, reset, "fallback")
-		
+
 		log.Info().
 			Str("path", c.Path()).
 			Str("ip", c.IP()).
@@ -250,37 +259,46 @@ func (rl *RateLimiter) handleRateLimitError(c *fiber.Ctx, config *RateLimitConfi
 	return c.Next() // Allow request on error for high availability
 }
 
+type handleEdgeCasesParams struct {
+	Key         string
+	Config      *RateLimitConfig
+	Remaining   int
+	MaxRequests int
+	Reset       int64
+	Allowed     bool
+}
+
 // handleResetTimeEdgeCases handles the case when reset time is in the past
-func (rl *RateLimiter) handleResetTimeEdgeCases(ctx context.Context, c *fiber.Ctx, key string, config *RateLimitConfig, allowed bool, remaining int, reset int64, maxRequests int, log zerolog.Logger) (bool, int, int64) {
+func (rl *RateLimiter) handleResetTimeEdgeCases(ctx context.Context, c *fiber.Ctx, p *handleEdgeCasesParams, log *zerolog.Logger) (isAllowed bool, remaining int, reset int64) {
 	now := time.Now().Unix()
 	if reset <= now {
 		// If reset time is in the past, set it to a small time in the future
-		reset = now + 1
+		p.Reset = now + 1
 
 		// Also, we should reset the counter if the reset time was in the past
-		if !allowed {
+		if !p.Allowed {
 			log.Warn().
 				Str("ip", c.IP()).
 				Str("path", c.Path()).
 				Msg("reset time was in the past but limit was exceeded; forcing counter reset")
 
 			// Force reset the counter
-			if err := rl.resetCounter(ctx, key, config.Strategy); err != nil {
+			if err := rl.resetCounter(ctx, p.Key, p.Config.Strategy); err != nil {
 				log.Error().Err(err).Msg("failed to reset rate limit counter")
 				// Continue despite error - we'll try to allow the request anyway
 			}
 
 			// Allow this request since we're resetting
-			allowed = true
-			remaining = maxRequests - 1
+			p.Allowed = true
+			p.Remaining = p.MaxRequests - 1
 		}
 	}
 
-	return allowed, remaining, reset
+	return p.Allowed, p.Remaining, p.Reset
 }
 
 // setRateLimitHeaders sets the rate limit headers in the response
-func (rl *RateLimiter) setRateLimitHeaders(c *fiber.Ctx, maxRequests int, remaining int, reset int64, strategy string) {
+func (rl *RateLimiter) setRateLimitHeaders(c *fiber.Ctx, maxRequests, remaining int, reset int64, strategy string) {
 	c.Set("X-RateLimit-Limit", strconv.Itoa(maxRequests))
 	c.Set("X-RateLimit-Remaining", strconv.Itoa(remaining))
 	c.Set("X-RateLimit-Reset", strconv.FormatInt(reset, 10))
@@ -288,7 +306,7 @@ func (rl *RateLimiter) setRateLimitHeaders(c *fiber.Ctx, maxRequests int, remain
 }
 
 // handleRateLimitExceeded handles the case when rate limit is exceeded
-func (rl *RateLimiter) handleRateLimitExceeded(ctx context.Context, c *fiber.Ctx, key string, config *RateLimitConfig, maxRequests int, log zerolog.Logger) error {
+func (rl *RateLimiter) handleRateLimitExceeded(ctx context.Context, c *fiber.Ctx, key string, config *RateLimitConfig, maxRequests int, log *zerolog.Logger) error {
 	log.Warn().
 		Str("ip", c.IP()).
 		Str("path", c.Path()).
@@ -310,7 +328,7 @@ func (rl *RateLimiter) handleRateLimitExceeded(ctx context.Context, c *fiber.Ctx
 }
 
 // resetCounter resets the rate limit counter based on the strategy
-func (rl *RateLimiter) resetCounter(ctx context.Context, key string, strategy string) error {
+func (rl *RateLimiter) resetCounter(ctx context.Context, key, strategy string) error {
 	var err error
 	switch strategy {
 	case "sliding":
@@ -338,7 +356,7 @@ func (rl *RateLimiter) resetCounter(ctx context.Context, key string, strategy st
 }
 
 // verifyCounterConsistency ensures window and counter keys are consistent
-func (rl *RateLimiter) verifyCounterConsistency(ctx context.Context, key string, windowKey string) error {
+func (rl *RateLimiter) verifyCounterConsistency(ctx context.Context, key, windowKey string) error {
 	// Check if window exists but counter doesn't or vice versa
 	exists, err := rl.redis.Exists(ctx, windowKey)
 	if err != nil {
@@ -373,25 +391,28 @@ func (rl *RateLimiter) verifyCounterConsistency(ctx context.Context, key string,
 			Str("windowKey", windowKey).
 			Msg("inconsistent rate limit state detected, resetting")
 
-		if err = rl.redis.Del(ctx, key); err != nil {
-			// If circuit breaker is open, ignore cleanup errors
-			if strings.Contains(err.Error(), "circuit breaker is open") {
-				rl.l.Debug().Msg("skipping key cleanup due to circuit breaker")
-				return nil
-			}
-			return eris.Wrap(err, "failed to delete counter key")
+		if err = rl.deleteRedisKeyHandlingCircuitBreaker(ctx, key, "failed to delete counter key"); err != nil {
+			return err
 		}
 
-		if err = rl.redis.Del(ctx, windowKey); err != nil {
-			// If circuit breaker is open, ignore cleanup errors
-			if strings.Contains(err.Error(), "circuit breaker is open") {
-				rl.l.Debug().Msg("skipping key cleanup due to circuit breaker")
-				return nil
-			}
-			return eris.Wrap(err, "failed to delete window key")
+		if err = rl.deleteRedisKeyHandlingCircuitBreaker(ctx, windowKey, "failed to delete window key"); err != nil {
+			return err
 		}
 	}
 
+	return nil
+}
+
+// deleteRedisKeyHandlingCircuitBreaker attempts to delete a Redis key and handles circuit breaker errors.
+func (rl *RateLimiter) deleteRedisKeyHandlingCircuitBreaker(ctx context.Context, key, errMsgOnFailure string) error {
+	if err := rl.redis.Del(ctx, key); err != nil {
+		// If circuit breaker is open, ignore cleanup errors
+		if strings.Contains(err.Error(), "circuit breaker is open") {
+			rl.l.Debug().Str("key", key).Msg("skipping key cleanup due to circuit breaker")
+			return nil // Treat as success or non-critical failure
+		}
+		return eris.Wrap(err, errMsgOnFailure)
+	}
 	return nil
 }
 
@@ -435,11 +456,11 @@ func (rl *RateLimiter) getRoleLimits(c *fiber.Ctx, config *RateLimitConfig) (int
 }
 
 // checkFixedWindowLimit implements fixed window rate limiting with consistency check
-func (rl *RateLimiter) checkFixedWindowLimit(ctx context.Context, key string, maxRequests int, interval time.Duration) (bool, int, int64, error) {
+func (rl *RateLimiter) checkFixedWindowLimit(ctx context.Context, key string, maxRequests int, interval time.Duration) (isAllowed bool, remaining int, reset int64, err error) {
 	windowKey := key + ":window"
 
 	// First verify counter consistency
-	if err := rl.verifyCounterConsistency(ctx, key, windowKey); err != nil {
+	if err = rl.verifyCounterConsistency(ctx, key, windowKey); err != nil {
 		rl.l.Warn().Err(err).Msg("counter consistency check failed, proceeding with rate limit check")
 	}
 
@@ -469,9 +490,9 @@ func (rl *RateLimiter) checkFixedWindowLimit(ctx context.Context, key string, ma
 		return false, 0, 0, eris.New("invalid reset value from fixed window script")
 	}
 
-	isAllowed := allowed == 1
-	remaining := int(remainingVal)
-	reset := resetVal
+	isAllowed = allowed == 1
+	remaining = int(remainingVal)
+	reset = resetVal
 
 	// Double-check: if reset time is in the past, something is wrong
 	if reset < now {
@@ -497,7 +518,7 @@ func (rl *RateLimiter) checkFixedWindowLimit(ctx context.Context, key string, ma
 }
 
 // checkSlidingWindowLimit implements sliding window rate limiting
-func (rl *RateLimiter) checkSlidingWindowLimit(ctx context.Context, key string, maxRequests int, interval time.Duration) (bool, int, int64, error) {
+func (rl *RateLimiter) checkSlidingWindowLimit(ctx context.Context, key string, maxRequests int, interval time.Duration) (isAllowed bool, remaining int, reset int64, err error) {
 	now := time.Now().Unix()
 
 	result, err := rl.scriptLoader.EvalSHA(ctx, "sliding_window", []string{key}, maxRequests, int(interval.Seconds()), now)
@@ -524,15 +545,15 @@ func (rl *RateLimiter) checkSlidingWindowLimit(ctx context.Context, key string, 
 		return false, 0, 0, eris.New("invalid reset value from sliding window script")
 	}
 
-	isAllowed := allowed == 1
-	remaining := int(remainingVal)
-	reset := resetVal
+	isAllowed = allowed == 1
+	remaining = int(remainingVal)
+	reset = resetVal
 
 	return isAllowed, remaining, reset, nil
 }
 
 // checkTokenBucketLimit implements token bucket rate limiting
-func (rl *RateLimiter) checkTokenBucketLimit(ctx context.Context, key string, config *RateLimitConfig) (bool, int, int64, error) {
+func (rl *RateLimiter) checkTokenBucketLimit(ctx context.Context, key string, config *RateLimitConfig) (isAllowed bool, remaining int, reset int64, err error) {
 	if config.TokenBucketSize == 0 || config.TokenRefillRate == 0 {
 		// Fall back to fixed window if token bucket is not configured
 		return rl.checkFixedWindowLimit(ctx, key, config.MaxRequests, config.Interval)
@@ -572,9 +593,9 @@ func (rl *RateLimiter) checkTokenBucketLimit(ctx context.Context, key string, co
 		return false, 0, 0, eris.New("invalid reset value from token bucket script")
 	}
 
-	isAllowed := allowed == 1
-	remaining := int(remainingVal)
-	reset := resetVal
+	isAllowed = allowed == 1
+	remaining = int(remainingVal)
+	reset = resetVal
 
 	return isAllowed, remaining, reset, nil
 }

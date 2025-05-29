@@ -127,6 +127,7 @@ type Router struct {
 	corsCfg *config.CorsConfig
 }
 
+//nolint:gocritic // The p parameter is passed using fx.In
 func NewRouter(p RouterParams) *Router {
 	return &Router{
 		p:       p,

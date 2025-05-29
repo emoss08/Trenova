@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/gofiber/fiber/v2"
 	"github.com/valyala/fasthttp"
 )
@@ -33,7 +33,7 @@ func DefaultSSEConfig() SSEConfig {
 
 // DataFetcher is a function type that fetches data for streaming
 // It should return new items and the latest timestamp, or an error
-type DataFetcher[T any] func(ctx context.Context, reqCtx *ctx.RequestContext, lastTimestamp int64) ([]T, int64, error)
+type DataFetcher[T any] func(ctx context.Context, reqCtx *appctx.RequestContext, lastTimestamp int64) ([]T, int64, error)
 
 // ItemProcessor is a function type that processes items to determine if they're new
 // It should return true if the item is newer than lastTimestamp
@@ -63,7 +63,7 @@ func NewSSEStreamer[T any](
 //
 //nolint:gocognit // This is a complex function, but it's not too bad
 func (s *SSEStreamer[T]) Stream(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return err
 	}
@@ -170,10 +170,10 @@ func (s *SSEStreamer[T]) sendEvent(w *bufio.Writer, eventType string, data any) 
 func StreamWithSimplePoller[T any](
 	c *fiber.Ctx,
 	config SSEConfig,
-	fetchFunc func(ctx context.Context, reqCtx *ctx.RequestContext) ([]T, error),
+	fetchFunc func(ctx context.Context, reqCtx *appctx.RequestContext) ([]T, error),
 	timestampFunc func(item T) int64,
 ) error {
-	dataFetcher := func(ctx context.Context, reqCtx *ctx.RequestContext, lastTimestamp int64) ([]T, int64, error) {
+	dataFetcher := func(ctx context.Context, reqCtx *appctx.RequestContext, lastTimestamp int64) ([]T, int64, error) {
 		items, err := fetchFunc(ctx, reqCtx)
 		if err != nil {
 			return nil, lastTimestamp, err

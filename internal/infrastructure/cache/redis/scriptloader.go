@@ -73,14 +73,14 @@ func (sl *ScriptLoader) loadScript(ctx context.Context, entry fs.DirEntry) error
 	}
 
 	scriptContent := string(scriptBytes)
-	
+
 	var sha string
 	executeErr := sl.redis.executeWithCircuitBreaker(ctx, "SCRIPT_LOAD_"+scriptName, func() error {
 		var e error
 		sha, e = sl.redis.ScriptLoad(ctx, scriptContent).Result()
 		return e
 	})
-	
+
 	if executeErr != nil {
 		return eris.Wrapf(executeErr, "failed to load script: %s", scriptName)
 	}

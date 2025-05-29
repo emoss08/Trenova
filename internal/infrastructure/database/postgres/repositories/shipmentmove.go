@@ -361,17 +361,17 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 	var newMove *shipment.ShipmentMove
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		// Update sequences for subsequent moves
-		if err = sr.updateMoveSequences(c, tx, log, originalMove); err != nil {
+		if err = sr.updateMoveSequences(c, tx, originalMove); err != nil {
 			return err
 		}
 
 		// Handle original move modifications
-		if err = sr.modifyOriginalMove(c, tx, log, originalMove, req); err != nil {
+		if err = sr.modifyOriginalMove(c, tx, originalMove, req); err != nil {
 			return err
 		}
 
 		// Create new split move
-		newMove, err = sr.createSplitMove(c, tx, log, originalMove, req)
+		newMove, err = sr.createSplitMove(c, tx, originalMove, req)
 		return err
 	})
 	if err != nil {
@@ -386,7 +386,12 @@ func (sr *shipmentMoveRepository) SplitMove(ctx context.Context, req *repositori
 }
 
 // updateMoveSequences updates the sequence numbers of moves after the original move
-func (sr *shipmentMoveRepository) updateMoveSequences(ctx context.Context, tx bun.Tx, log zerolog.Logger, originalMove *shipment.ShipmentMove) error {
+func (sr *shipmentMoveRepository) updateMoveSequences(ctx context.Context, tx bun.Tx, originalMove *shipment.ShipmentMove) error {
+	log := sr.l.With().
+		Str("operation", "updateMoveSequences").
+		Str("moveID", originalMove.GetID()).
+		Logger()
+
 	// Get all moves for this shipment with sequence > originalMove.Sequence
 	var moves []*shipment.ShipmentMove
 	err := tx.NewSelect().
@@ -424,7 +429,12 @@ func (sr *shipmentMoveRepository) updateMoveSequences(ctx context.Context, tx bu
 }
 
 // modifyOriginalMove removes the original delivery stop and adds a split delivery stop
-func (sr *shipmentMoveRepository) modifyOriginalMove(ctx context.Context, tx bun.Tx, log zerolog.Logger, originalMove *shipment.ShipmentMove, req *repositories.SplitMoveRequest) error {
+func (sr *shipmentMoveRepository) modifyOriginalMove(ctx context.Context, tx bun.Tx, originalMove *shipment.ShipmentMove, req *repositories.SplitMoveRequest) error {
+	log := sr.l.With().
+		Str("operation", "modifyOriginalMove").
+		Str("moveID", originalMove.GetID()).
+		Logger()
+
 	// Delete the original delivery stop
 	_, err := tx.NewDelete().Model((*shipment.Stop)(nil)).
 		Where("shipment_move_id = ? AND sequence = ?", originalMove.ID, 1).
@@ -467,7 +477,12 @@ func (sr *shipmentMoveRepository) modifyOriginalMove(ctx context.Context, tx bun
 }
 
 // createSplitMove creates a new move with split pickup and final delivery stops
-func (sr *shipmentMoveRepository) createSplitMove(ctx context.Context, tx bun.Tx, log zerolog.Logger, originalMove *shipment.ShipmentMove, req *repositories.SplitMoveRequest) (*shipment.ShipmentMove, error) {
+func (sr *shipmentMoveRepository) createSplitMove(ctx context.Context, tx bun.Tx, originalMove *shipment.ShipmentMove, req *repositories.SplitMoveRequest) (*shipment.ShipmentMove, error) {
+	log := sr.l.With().
+		Str("operation", "createSplitMove").
+		Str("moveID", originalMove.GetID()).
+		Logger()
+
 	// Create new move with sequence 1
 	newMove := &shipment.ShipmentMove{
 		ID:             pulid.MustNew("smv_"),
@@ -958,7 +973,7 @@ func (sr *shipmentMoveRepository) handleMoveDeletions(ctx context.Context, tx bu
 		shipmentID := req.ExistingMoveMap[moveIDsToDelete[0]].ShipmentID
 
 		// Delete associated data and the moves themselves
-		if err := sr.deleteMovesAndAssociatedData(ctx, tx, log, moveIDsToDelete); err != nil {
+		if err := sr.deleteMovesAndAssociatedData(ctx, tx, moveIDsToDelete); err != nil {
 			return err
 		}
 
@@ -975,23 +990,27 @@ func (sr *shipmentMoveRepository) handleMoveDeletions(ctx context.Context, tx bu
 }
 
 // deleteMovesAndAssociatedData deletes moves and their associated data (stops and assignments)
-func (sr *shipmentMoveRepository) deleteMovesAndAssociatedData(ctx context.Context, tx bun.IDB, log zerolog.Logger, moveIDsToDelete []pulid.ID) error {
+func (sr *shipmentMoveRepository) deleteMovesAndAssociatedData(ctx context.Context, tx bun.IDB, moveIDsToDelete []pulid.ID) error {
 	// Delete associated stops
-	if err := sr.deleteAssociatedStops(ctx, tx, log, moveIDsToDelete); err != nil {
+	if err := sr.deleteAssociatedStops(ctx, tx, moveIDsToDelete); err != nil {
 		return err
 	}
 
 	// Delete associated assignments
-	if err := sr.deleteAssociatedAssignments(ctx, tx, log, moveIDsToDelete); err != nil {
+	if err := sr.deleteAssociatedAssignments(ctx, tx, moveIDsToDelete); err != nil {
 		return err
 	}
 
 	// Delete the moves themselves
-	return sr.deleteMoves(ctx, tx, log, moveIDsToDelete)
+	return sr.deleteMoves(ctx, tx, moveIDsToDelete)
 }
 
 // deleteAssociatedStops deletes all stops associated with the specified moves
-func (sr *shipmentMoveRepository) deleteAssociatedStops(ctx context.Context, tx bun.IDB, log zerolog.Logger, moveIDs []pulid.ID) error {
+func (sr *shipmentMoveRepository) deleteAssociatedStops(ctx context.Context, tx bun.IDB, moveIDs []pulid.ID) error {
+	log := sr.l.With().
+		Str("operation", "deleteAssociatedStops").
+		Logger()
+
 	_, err := tx.NewDelete().
 		Model((*shipment.Stop)(nil)).
 		Where("shipment_move_id IN (?)", bun.In(moveIDs)).
@@ -1013,7 +1032,11 @@ func (sr *shipmentMoveRepository) deleteAssociatedStops(ctx context.Context, tx 
 }
 
 // deleteAssociatedAssignments deletes all assignments associated with the specified moves
-func (sr *shipmentMoveRepository) deleteAssociatedAssignments(ctx context.Context, tx bun.IDB, log zerolog.Logger, moveIDs []pulid.ID) error {
+func (sr *shipmentMoveRepository) deleteAssociatedAssignments(ctx context.Context, tx bun.IDB, moveIDs []pulid.ID) error {
+	log := sr.l.With().
+		Str("operation", "deleteAssociatedAssignments").
+		Logger()
+
 	_, err := tx.NewDelete().
 		Model((*shipment.Assignment)(nil)).
 		Where("shipment_move_id IN (?)", bun.In(moveIDs)).
@@ -1036,7 +1059,11 @@ func (sr *shipmentMoveRepository) deleteAssociatedAssignments(ctx context.Contex
 }
 
 // deleteMoves deletes the specified moves and logs the result
-func (sr *shipmentMoveRepository) deleteMoves(ctx context.Context, tx bun.IDB, log zerolog.Logger, moveIDs []pulid.ID) error {
+func (sr *shipmentMoveRepository) deleteMoves(ctx context.Context, tx bun.IDB, moveIDs []pulid.ID) error {
+	log := sr.l.With().
+		Str("operation", "deleteMoves").
+		Logger()
+
 	result, err := tx.NewDelete().
 		Model((*shipment.ShipmentMove)(nil)).
 		Where("id IN (?)", bun.In(moveIDs)).

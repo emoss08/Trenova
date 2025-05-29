@@ -180,7 +180,9 @@ func (v *Validator) extractHazmatCommodities(shp *shipment.Shipment) ([]*shipmen
 }
 
 // fetchHazmatDataAndRules fetches hazmat data and rules from database
-func (v *Validator) fetchHazmatDataAndRules(ctx context.Context, shp *shipment.Shipment, hazmatIDs []pulid.ID) (map[string]*hazardousmaterial.HazardousMaterial, map[hazmatPair]*hazmatsegregationrule.HazmatSegregationRule, error) {
+func (v *Validator) fetchHazmatDataAndRules(
+	ctx context.Context, shp *shipment.Shipment, hazmatIDs []pulid.ID,
+) (hazmatMap map[string]*hazardousmaterial.HazardousMaterial, ruleMap map[hazmatPair]*hazmatsegregationrule.HazmatSegregationRule, err error) {
 	dba, err := v.db.DB(ctx)
 	if err != nil {
 		return nil, nil, eris.Wrap(err, "get database connection")
@@ -199,7 +201,7 @@ func (v *Validator) fetchHazmatDataAndRules(ctx context.Context, shp *shipment.S
 	}
 
 	// Create a map for quick lookup
-	hazmatMap := make(map[string]*hazardousmaterial.HazardousMaterial)
+	hazmatMap = make(map[string]*hazardousmaterial.HazardousMaterial)
 	for _, hm := range hazmatMaterials {
 		hazmatMap[hm.ID.String()] = hm
 	}
@@ -216,7 +218,7 @@ func (v *Validator) fetchHazmatDataAndRules(ctx context.Context, shp *shipment.S
 	}
 
 	// Build rule map
-	ruleMap := buildRuleMap(rules)
+	ruleMap = buildRuleMap(rules)
 
 	return hazmatMap, ruleMap, nil
 }
@@ -508,9 +510,11 @@ func (v *Validator) ValidateShipmentCommodityAddition(
 //
 // Returns:
 //   - map[string]*errors.MultiError: A map of shipment IDs to validation errors.
-func (v *Validator) BatchValidateShipments(ctx context.Context, shipments []*shipment.Shipment) (map[string]*errors.MultiError, map[string][]*SegregationViolation) {
-	errorResults := make(map[string]*errors.MultiError)
-	violationResults := make(map[string][]*SegregationViolation)
+func (v *Validator) BatchValidateShipments(
+	ctx context.Context, shipments []*shipment.Shipment,
+) (errorResults map[string]*errors.MultiError, violationResults map[string][]*SegregationViolation) {
+	errorResults = make(map[string]*errors.MultiError)
+	violationResults = make(map[string][]*SegregationViolation)
 
 	for _, shp := range shipments {
 		multiErr, violations := v.ValidateShipment(ctx, shp)

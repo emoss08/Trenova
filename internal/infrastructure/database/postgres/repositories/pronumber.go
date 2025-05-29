@@ -48,7 +48,7 @@ func (r *proNumberRepository) GetNextProNumber(ctx context.Context, orgID pulid.
 }
 
 // GetNextProNumberWithBusinessUnit gets the next pro number for an organization and business unit
-func (r *proNumberRepository) GetNextProNumberWithBusinessUnit(ctx context.Context, orgID pulid.ID, buID pulid.ID) (string, error) {
+func (r *proNumberRepository) GetNextProNumberWithBusinessUnit(ctx context.Context, orgID, buID pulid.ID) (string, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return "", eris.Wrap(err, "get database connection")
@@ -92,7 +92,7 @@ func (r *proNumberRepository) GetNextProNumberBatch(ctx context.Context, orgID p
 }
 
 // GetNextProNumberBatchWithBusinessUnit generates a batch of pro numbers for a specific business unit
-func (r *proNumberRepository) GetNextProNumberBatchWithBusinessUnit(ctx context.Context, orgID pulid.ID, buID pulid.ID, count int) ([]string, error) {
+func (r *proNumberRepository) GetNextProNumberBatchWithBusinessUnit(ctx context.Context, orgID, buID pulid.ID, count int) ([]string, error) {
 	if count <= 0 {
 		return []string{}, nil
 	}

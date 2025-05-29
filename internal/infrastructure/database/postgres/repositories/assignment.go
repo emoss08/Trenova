@@ -226,7 +226,7 @@ func (ar *assignmentRepository) processBulkAssignment(
 
 	// * Update the status of the shipment to assigned
 	if _, err := ar.shipmentRepo.UpdateStatus(ctx, &repositories.UpdateShipmentStatusRequest{
-		GetOpts: repositories.GetShipmentByIDOptions{
+		GetOpts: &repositories.GetShipmentByIDOptions{
 			ID:    req.ShipmentID,
 			OrgID: req.OrgID,
 			BuID:  req.BuID,
@@ -362,7 +362,7 @@ func (ar *assignmentRepository) updateLinkedShipmentStatus(ctx context.Context, 
 	}
 
 	_, err = ar.shipmentRepo.UpdateStatus(ctx, &repositories.UpdateShipmentStatusRequest{
-		GetOpts: repositories.GetShipmentByIDOptions{
+		GetOpts: &repositories.GetShipmentByIDOptions{
 			ID:    shipmentID,
 			OrgID: a.OrganizationID,
 			BuID:  a.BusinessUnitID,

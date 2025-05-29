@@ -41,6 +41,8 @@ type Service struct {
 }
 
 // NewService creates a new integration service.
+//
+//nolint:gocritic // The p parameter is passed using fx.In
 func NewService(p ServiceParams) services.IntegrationService {
 	log := p.Logger.With().
 		Str("service", "integration").

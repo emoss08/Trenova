@@ -32,9 +32,8 @@ func BuildSearchQuery[T infra.PostgresSearchable](q *bun.SelectQuery, query stri
 		terms = terms[:config.MaxTerms]
 	}
 
-	// Build the tsquery string using strings.Builder
 	var tsQueryBuilder strings.Builder
-	tsQueryBuilder.Grow(len(query) + len(terms)*3) // Estimate space needed
+	tsQueryBuilder.Grow(len(query) + len(terms)*3)
 
 	for i, term := range terms {
 		if i > 0 {
@@ -45,22 +44,18 @@ func BuildSearchQuery[T infra.PostgresSearchable](q *bun.SelectQuery, query stri
 	tsqueryStr := tsQueryBuilder.String()
 	tsqueryWithWildcard := tsqueryStr + ":*"
 
-	// Cache the table alias for reuse
 	tableAlias := config.TableAlias
 	tableAliasWithDot := tableAlias + "."
 
-	// Select all fields from the main table first
 	q = q.ColumnExpr(tableAliasWithDot + "*")
 
-	// Add ts_rank as an additional column
 	rankExpr := fmt.Sprintf(
 		`ts_rank(%ssearch_vector, to_tsquery('simple', ?)) AS rank`,
 		tableAliasWithDot,
 	)
 	q = q.ColumnExpr(rankExpr, tsqueryWithWildcard)
 
-	// Build search conditions
-	whereParts, whereArgs := buildSearchConditions(config, tableAliasWithDot, query, tsqueryStr)
+	whereParts, whereArgs := buildSearchConditions(&config, tableAliasWithDot, query, tsqueryStr)
 
 	var searchCondBuilder strings.Builder
 	searchCondBuilder.WriteString("(")
@@ -74,10 +69,8 @@ func BuildSearchQuery[T infra.PostgresSearchable](q *bun.SelectQuery, query stri
 
 	q = q.Where(searchCondBuilder.String(), whereArgs...)
 
-	// Build and apply ordering expression
-	orderParts, orderArgs := buildOrderingConditions(config, tableAliasWithDot, query)
+	orderParts, orderArgs := buildOrderingConditions(&config, tableAliasWithDot, query)
 
-	// Apply ordering
 	for i, orderPart := range orderParts {
 		if i < len(orderArgs) {
 			q = q.OrderExpr(orderPart, orderArgs[i])
@@ -89,12 +82,10 @@ func BuildSearchQuery[T infra.PostgresSearchable](q *bun.SelectQuery, query stri
 	return q
 }
 
-func buildSearchConditions(config infra.PostgresSearchConfig, tableAliasWithDot, query, tsqueryStr string) ([]string, []any) {
-	// Pre-allocate with a sensible initial capacity based on the number of fields + full-text condition
-	whereParts := make([]string, 0, len(config.Fields)+1)
-	whereArgs := make([]any, 0, len(config.Fields)*2+1)
+func buildSearchConditions(config *infra.PostgresSearchConfig, tableAliasWithDot, query, tsqueryStr string) (whereParts []string, whereArgs []any) {
+	whereParts = make([]string, 0, len(config.Fields)+1)
+	whereArgs = make([]any, 0, len(config.Fields)*2+1)
 
-	// Add full-text search condition
 	whereParts = append(whereParts,
 		fmt.Sprintf("%ssearch_vector @@ to_tsquery('simple', ?)", tableAliasWithDot))
 	whereArgs = append(whereArgs, tsqueryStr+":*")
@@ -109,12 +100,10 @@ func buildSearchConditions(config infra.PostgresSearchConfig, tableAliasWithDot,
 					fmt.Sprintf("%s%s @> ?", tableAliasWithDot, field.Name))
 				whereArgs = append(whereArgs, queryWithWildcards)
 			case infra.PostgresSearchTypeComposite, infra.PostgresSearchTypeNumber:
-				// Use ILIKE for pattern matching
 				whereParts = append(whereParts,
 					fmt.Sprintf("%s%s ILIKE ?", tableAliasWithDot, field.Name))
 				whereArgs = append(whereArgs, queryWithWildcards)
 			case infra.PostgresSearchTypeText:
-				// Use both ILIKE and similarity for text fields
 				whereParts = append(whereParts,
 					fmt.Sprintf("(%s%s ILIKE ? OR similarity(%s%s, ?) > %g)",
 						tableAliasWithDot, field.Name,
@@ -122,7 +111,6 @@ func buildSearchConditions(config infra.PostgresSearchConfig, tableAliasWithDot,
 				whereArgs = append(whereArgs, queryWithWildcards, query)
 
 			case infra.PostgresSearchTypeEnum:
-				// Exact matching for enums
 				whereParts = append(whereParts,
 					fmt.Sprintf("%s%s::text = ?", tableAliasWithDot, field.Name))
 				whereArgs = append(whereArgs, query)
@@ -133,12 +121,10 @@ func buildSearchConditions(config infra.PostgresSearchConfig, tableAliasWithDot,
 	return whereParts, whereArgs
 }
 
-func buildOrderingConditions(config infra.PostgresSearchConfig, tableAliasWithDot, query string) ([]string, []any) {
-	// Pre-allocate with a sensible initial capacity based on number of fields * 2 (exact + prefix) + rank
-	orderParts := make([]string, 0, len(config.Fields)*2+1)
-	orderArgs := make([]any, 0, len(config.Fields)*2)
+func buildOrderingConditions(config *infra.PostgresSearchConfig, tableAliasWithDot, query string) (orderParts []string, orderArgs []any) {
+	orderParts = make([]string, 0, len(config.Fields)*2+1)
+	orderArgs = make([]any, 0, len(config.Fields)*2)
 
-	// Order by exact matches first
 	for _, field := range config.Fields {
 		if field.Type == infra.PostgresSearchTypeComposite || field.Type == infra.PostgresSearchTypeNumber {
 			orderParts = append(orderParts,
@@ -148,7 +134,6 @@ func buildOrderingConditions(config infra.PostgresSearchConfig, tableAliasWithDo
 		}
 	}
 
-	// Then order by prefix matches
 	queryWithSuffix := query + wildcardPattern
 	for _, field := range config.Fields {
 		if field.Type == infra.PostgresSearchTypeComposite || field.Type == infra.PostgresSearchTypeNumber {
@@ -159,7 +144,6 @@ func buildOrderingConditions(config infra.PostgresSearchConfig, tableAliasWithDo
 		}
 	}
 
-	// Finally order by rank
 	orderParts = append(orderParts, "rank DESC NULLS LAST")
 
 	return orderParts, orderArgs

@@ -167,25 +167,25 @@ func (sr *sessionRepository) GetValidSession(ctx context.Context, sessionID puli
 		if eris.Is(err, redis.ErrNil) {
 			return nil, session.ErrNotFound
 		}
-		
+
 		// Check if this is a circuit breaker error
 		if strings.Contains(err.Error(), "circuit breaker is open") {
 			log.Warn().
 				Err(err).
 				Msg("Redis circuit breaker is open, attempting fallback session validation")
-			
+
 			// For circuit breaker failures, we'll use a basic fallback:
 			// Create a minimal valid session to prevent cascading failures
 			// This is acceptable for short periods when Redis is unavailable
 			fallbackSession := sr.createFallbackSession(sessionID, clientIP)
-			
+
 			log.Info().
 				Str("sessionId", sessionID.String()).
 				Msg("using fallback session validation due to Redis unavailability")
-			
+
 			return fallbackSession, nil
 		}
-		
+
 		log.Error().Err(err).Msg("failed to get session")
 		return nil, eris.Wrap(err, "failed to get session")
 	}
@@ -340,7 +340,7 @@ func (sr *sessionRepository) getSessionEvents(ctx context.Context, sessionID pul
 // This provides graceful degradation during Redis outages
 func (sr *sessionRepository) createFallbackSession(sessionID pulid.ID, clientIP string) *session.Session {
 	now := timeutils.NowUnix()
-	
+
 	// Create a basic session that will be valid for a short period
 	// We use minimal required fields to allow requests to continue
 	fallbackSession := &session.Session{
@@ -357,6 +357,6 @@ func (sr *sessionRepository) createFallbackSession(sessionID pulid.ID, clientIP 
 		UpdatedAt:      now,
 		Events:         []session.Event{}, // Empty events during fallback
 	}
-	
+
 	return fallbackSession
 }

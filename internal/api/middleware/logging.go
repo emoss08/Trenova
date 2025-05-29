@@ -347,7 +347,7 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 
 	return func(c *fiber.Ctx) error {
 		// Check if we should skip logging this request
-		if shouldSkipLogging(c, cfg) {
+		if shouldSkipLogging(c, &cfg) {
 			return c.Next()
 		}
 
@@ -360,7 +360,7 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 		method := c.Method()
 
 		// Extract request body if configured
-		reqBody := extractRequestBody(c, cfg)
+		reqBody := extractRequestBody(c, &cfg)
 
 		// Process request
 		err := c.Next()
@@ -370,7 +370,7 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 		formattedDuration := formatDuration(duration)
 
 		// Create and populate log entry
-		entry := createLogEntry(c, cfg, requestID, method, path, duration, formattedDuration, reqBody)
+		entry := createLogEntry(c, &cfg, requestID, method, path, duration, formattedDuration, reqBody)
 
 		// Send to async logger
 		asyncLogger.Log(entry)
@@ -380,7 +380,7 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 }
 
 // shouldSkipLogging determines if request logging should be skipped
-func shouldSkipLogging(c *fiber.Ctx, cfg LogConfig) bool {
+func shouldSkipLogging(c *fiber.Ctx, cfg *LogConfig) bool {
 	// Skip logging for excluded paths - cheap operation first
 	if shouldSkipPath(c.Path(), cfg.ExcludePaths) {
 		return true
@@ -410,7 +410,7 @@ func ensureRequestID(c *fiber.Ctx) string {
 }
 
 // extractRequestBody extracts and truncates the request body if configured
-func extractRequestBody(c *fiber.Ctx, cfg LogConfig) string {
+func extractRequestBody(c *fiber.Ctx, cfg *LogConfig) string {
 	if !cfg.LogRequestBody || len(c.Body()) == 0 || (cfg.DetectGzip && isGzipped(c)) {
 		return ""
 	}
@@ -420,7 +420,7 @@ func extractRequestBody(c *fiber.Ctx, cfg LogConfig) string {
 }
 
 // createLogEntry creates and populates a log entry with request details
-func createLogEntry(c *fiber.Ctx, cfg LogConfig, requestID, method, path string, duration time.Duration, formattedDuration, reqBody string) map[string]any {
+func createLogEntry(c *fiber.Ctx, cfg *LogConfig, requestID, method, path string, duration time.Duration, formattedDuration, reqBody string) map[string]any {
 	// Get a log entry from the pool
 	entryObj := entryPool.Get()
 	entry, ok := entryObj.(map[string]any)
@@ -452,7 +452,7 @@ func populateBasicInfo(entry map[string]any, requestID, method, path string, sta
 }
 
 // addOptionalInfo adds optional information to the log entry based on configuration
-func addOptionalInfo(c *fiber.Ctx, cfg LogConfig, entry map[string]any, reqBody string, duration time.Duration) {
+func addOptionalInfo(c *fiber.Ctx, cfg *LogConfig, entry map[string]any, reqBody string, duration time.Duration) {
 	// Add query params if they exist
 	if queries := c.Queries(); len(queries) > 0 {
 		entry["queryParams"] = queries
@@ -489,7 +489,7 @@ func addOptionalInfo(c *fiber.Ctx, cfg LogConfig, entry map[string]any, reqBody 
 }
 
 // addResponseBody adds response body to the log entry if configured
-func addResponseBody(c *fiber.Ctx, cfg LogConfig, entry map[string]any) {
+func addResponseBody(c *fiber.Ctx, cfg *LogConfig, entry map[string]any) {
 	if !cfg.LogResponseBody || len(c.Response().Body()) == 0 {
 		return
 	}

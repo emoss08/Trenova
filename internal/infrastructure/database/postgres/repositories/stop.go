@@ -112,8 +112,6 @@ func (sr *stopRepository) Update(ctx context.Context, stop *shipment.Stop, moveI
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// ov := stop.Version
-
 		stop.Version++
 
 		results, rErr := tx.NewUpdate().

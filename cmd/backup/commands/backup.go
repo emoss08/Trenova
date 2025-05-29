@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/pkg/config"
+	"github.com/rotisserie/eris"
 	"github.com/spf13/cobra"
 	"github.com/uptrace/bun/driver/pgdriver"
 )
@@ -299,18 +300,18 @@ func createBackup() (string, error) {
 	}
 
 	if err := os.MkdirAll(backupDir, 0o755); err != nil {
-		return "", fmt.Errorf("failed to create backup directory: %v", err)
+		return "", fmt.Errorf("failed to create backup directory: %w", err)
 	}
 
 	// Verify pg_dump is available
 	if pgDumpPath == "" {
-		return "", fmt.Errorf("pg_dump not found, please install PostgreSQL client tools")
+		return "", eris.New("pg_dump not found, please install PostgreSQL client tools")
 	}
 
 	// Create timestamp for backup file
 	timestamp := time.Now().UTC().Format("20060102-150405")
 	filename := fmt.Sprintf("%s-%s.sql.gz", cfg.DB.Database, timestamp)
-	filepath := filepath.Join(backupDir, filename)
+	fp := filepath.Join(backupDir, filename)
 
 	// Check PostgreSQL version
 	serverVersion, err := getServerVersion()
@@ -318,9 +319,9 @@ func createBackup() (string, error) {
 		fmt.Printf("Warning: Unable to check PostgreSQL server version: %v\n", err)
 		fmt.Println("Make sure your pg_dump version matches or is newer than your PostgreSQL server version!")
 	} else {
-		clientVersion, err := getPgDumpVersion()
-		if err != nil {
-			fmt.Printf("Warning: Unable to determine pg_dump version: %v\n", err)
+		clientVersion, cvErr := getPgDumpVersion()
+		if cvErr != nil {
+			fmt.Printf("Warning: Unable to determine pg_dump version: %v\n", cvErr)
 		} else if clientVersion < serverVersion {
 			return "", fmt.Errorf("pg_dump version (%d) is older than PostgreSQL server version (%d). Please install pg_dump version %d or newer",
 				clientVersion, serverVersion, serverVersion)
@@ -340,7 +341,7 @@ func createBackup() (string, error) {
 		"--compress=6",
 		"--no-owner",
 		"--no-privileges",
-		fmt.Sprintf("--file=%s", filepath),
+		fmt.Sprintf("--file=%s", fp),
 		cfg.DB.Database,
 	}
 
@@ -356,15 +357,15 @@ func createBackup() (string, error) {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return "", fmt.Errorf("failed to execute pg_dump command: %v\n%s", err, string(output))
+		return "", fmt.Errorf("failed to execute pg_dump command: %w\n%s", err, string(output))
 	}
 
 	// Verify the backup file was created
-	if _, err := os.Stat(filepath); os.IsNotExist(err) {
-		return "", fmt.Errorf("backup file was not created: %v", err)
+	if _, err = os.Stat(fp); os.IsNotExist(err) {
+		return "", fmt.Errorf("backup file was not created: %w", err)
 	}
 
-	return filepath, nil
+	return fp, nil
 }
 
 func listBackups() ([]BackupFileInfo, error) {
@@ -376,7 +377,7 @@ func listBackups() ([]BackupFileInfo, error) {
 	// Read directory
 	files, err := os.ReadDir(backupDir)
 	if err != nil {
-		return nil, fmt.Errorf("failed to read backup directory: %v", err)
+		return nil, fmt.Errorf("failed to read backup directory: %w", err)
 	}
 
 	// Collect backup files
@@ -392,8 +393,9 @@ func listBackups() ([]BackupFileInfo, error) {
 		}
 
 		filePath := filepath.Join(backupDir, filename)
-		fileInfo, err := file.Info()
-		if err != nil {
+		fileInfo, fiErr := file.Info()
+		if fiErr != nil {
+			// ! If the file is not found, it will be skipped
 			continue
 		}
 
@@ -429,7 +431,7 @@ func restoreBackup(backupFile string) error {
 
 	// Verify pg_restore is available
 	if pgRestorePath == "" {
-		return fmt.Errorf("pg_restore not found, please install PostgreSQL client tools")
+		return eris.New("pg_restore not found, please install PostgreSQL client tools")
 	}
 
 	// Build the pg_restore command
@@ -458,19 +460,13 @@ func restoreBackup(backupFile string) error {
 
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return fmt.Errorf("failed to execute pg_restore command: %v\n%s", err, string(output))
+		return fmt.Errorf("failed to execute pg_restore command: %w\n%s", err, string(output))
 	}
 
 	return nil
 }
 
 func applyRetentionPolicy(retentionDays int) error {
-	backupDir := cfg.Backup.BackupDir
-	if backupDir == "" {
-		backupDir = "./backups"
-	}
-
-	// Calculate retention date
 	retentionDate := time.Now().AddDate(0, 0, -retentionDays)
 
 	// Get all backups
@@ -488,7 +484,7 @@ func applyRetentionPolicy(retentionDays int) error {
 					backup.Filename, backup.CreatedAt.Format("2006-01-02 15:04:05"))
 			}
 
-			if err := os.Remove(backup.Path); err != nil {
+			if err = os.Remove(backup.Path); err != nil {
 				fmt.Printf("Warning: Failed to delete backup %s: %v\n", backup.Path, err)
 			} else {
 				deleteCount++
@@ -550,7 +546,7 @@ func getServerVersion() (int, error) {
 // getPgDumpVersion gets the pg_dump version
 func getPgDumpVersion() (int, error) {
 	if pgDumpPath == "" {
-		return 0, fmt.Errorf("pg_dump not found")
+		return 0, eris.New("pg_dump not found")
 	}
 
 	cmd := exec.Command(pgDumpPath, "--version")
@@ -565,7 +561,7 @@ func getPgDumpVersion() (int, error) {
 	for _, part := range parts {
 		if strings.Contains(part, ".") {
 			versionParts := strings.Split(part, ".")
-			if major, err := parse(versionParts[0]); err == nil {
+			if major, mErr := parse(versionParts[0]); mErr == nil {
 				return major, nil
 			}
 		}
@@ -582,12 +578,12 @@ func parse(s string) (int, error) {
 }
 
 func GetConfigManager() (*config.Manager, *config.Config) {
-	manager := config.NewManager()
+	cm := config.NewManager()
 
-	cfg, err := manager.Load()
+	cmCfg, err := cm.Load()
 	if err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	return manager, cfg
+	return cm, cmCfg
 }

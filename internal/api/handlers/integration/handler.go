@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/external/maps/googlemaps"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -62,7 +62,7 @@ func (h *Handler) RegisterRoutes(router fiber.Router, rl *middleware.RateLimiter
 }
 
 func (h *Handler) list(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -79,7 +79,7 @@ func (h *Handler) list(c *fiber.Ctx) error {
 }
 
 func (h *Handler) getByType(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -97,7 +97,7 @@ func (h *Handler) getByType(c *fiber.Ctx) error {
 }
 
 func (h *Handler) get(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -121,7 +121,7 @@ func (h *Handler) get(c *fiber.Ctx) error {
 
 // Update updates an integration
 func (h *Handler) update(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -149,7 +149,7 @@ func (h *Handler) update(c *fiber.Ctx) error {
 }
 
 func (h *Handler) googleAutocomplete(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}

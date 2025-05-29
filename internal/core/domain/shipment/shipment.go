@@ -73,7 +73,7 @@ type Shipment struct {
 	CanceledBy        *user.User                   `json:"canceledBy,omitempty" bun:"rel:belongs-to,join:canceled_by_id=id"`
 	Moves             []*ShipmentMove              `json:"moves,omitempty" bun:"rel:has-many,join:id=shipment_id"`
 	Commodities       []*ShipmentCommodity         `json:"commodities,omitempty" bun:"rel:has-many,join:id=shipment_id"`
-	AdditionalCharges []*AdditionalCharge          `json:"additionalCharges,omitempty" bun:"rel:has-many,join:id=shipment_id"`
+	AdditionalCharges []*AdditionalCharge          `json:"additionalCharges,omitzero" bun:"rel:has-many,join:id=shipment_id"`
 }
 
 func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {

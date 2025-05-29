@@ -327,7 +327,7 @@ type RateLimitError struct {
 	Internal error     `json:"-"`
 }
 
-func NewRateLimitError(field string, message string) *RateLimitError {
+func NewRateLimitError(field, message string) *RateLimitError {
 	return &RateLimitError{
 		Field:   field,
 		Code:    ErrTooManyRequests,

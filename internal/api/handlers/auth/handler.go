@@ -5,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/auth"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/config"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
@@ -72,10 +72,10 @@ func (h *Handler) login(c *fiber.Ctx) error {
 	})
 
 	// Set the session cookie in local context
-	c.Locals(ctx.CTXSessionID, sess.SessionID)
-	c.Locals(ctx.CTXUserID, sess.User.ID)
-	c.Locals(ctx.CTXBusinessUnitID, sess.User.BusinessUnitID)
-	c.Locals(ctx.CTXOrganizationID, sess.User.CurrentOrganizationID)
+	c.Locals(appctx.CTXSessionID, sess.SessionID)
+	c.Locals(appctx.CTXUserID, sess.User.ID)
+	c.Locals(appctx.CTXBusinessUnitID, sess.User.BusinessUnitID)
+	c.Locals(appctx.CTXOrganizationID, sess.User.CurrentOrganizationID)
 
 	return c.Status(fiber.StatusOK).JSON(sess)
 }
@@ -95,10 +95,10 @@ func (h *Handler) logout(c *fiber.Ctx) error {
 	c.ClearCookie(h.cfg.SessionCookieName)
 
 	// Reset the context
-	c.Locals(ctx.CTXSessionID, nil)
-	c.Locals(ctx.CTXUserID, nil)
-	c.Locals(ctx.CTXBusinessUnitID, nil)
-	c.Locals(ctx.CTXOrganizationID, nil)
+	c.Locals(appctx.CTXSessionID, nil)
+	c.Locals(appctx.CTXUserID, nil)
+	c.Locals(appctx.CTXBusinessUnitID, nil)
+	c.Locals(appctx.CTXOrganizationID, nil)
 
 	// send a cookie to the client to indicate that the session has been deleted
 	c.Cookie(&fiber.Cookie{
