@@ -236,31 +236,5 @@ func TestAssignmentRepository(t *testing.T) {
 		require.NotNil(t, updated)
 		require.Equal(t, worker2.ID, updated.PrimaryWorkerID)
 		require.Equal(t, worker1.ID, *updated.SecondaryWorkerID)
-		// require.Equal(t, created.Version+1, updated.Version, "version should be incremented by 1")
 	})
-
-	// t.Run("reassign with version mismatch", func(t *testing.T) {
-	// 	// First create an assignment
-	// 	assign := &shipment.Assignment{
-	// 		ShipmentMoveID:    move.ID,
-	// 		OrganizationID:    org.ID,
-	// 		BusinessUnitID:    bu.ID,
-	// 		PrimaryWorkerID:   worker1.ID,
-	// 		SecondaryWorkerID: &worker2.ID,
-	// 		TractorID:         trt.ID,
-	// 		TrailerID:         trl.ID,
-	// 	}
-
-	// 	created, err := repo.SingleAssign(ctx, assign)
-	// 	require.NoError(t, err)
-	// 	require.NotNil(t, created)
-
-	// 	// Set version to 0 to force mismatch
-	// 	created.Version = 0
-	// 	created.PrimaryWorkerID = worker2.ID
-
-	// 	updated, err := repo.Reassign(ctx, created)
-	// 	require.Error(t, err)
-	// 	require.Nil(t, updated)
-	// })
 }

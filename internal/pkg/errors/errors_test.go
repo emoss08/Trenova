@@ -89,9 +89,9 @@ func TestMultiError(t *testing.T) {
 		err = json.Unmarshal(data, &result)
 		require.NoError(t, err)
 
-		errors, ok := result["errors"].([]any)
+		rErrors, ok := result["errors"].([]any)
 		assert.True(t, ok)
-		assert.Len(t, errors, 1)
+		assert.Len(t, rErrors, 1)
 	})
 
 	t.Run("ToJSON", func(t *testing.T) {
