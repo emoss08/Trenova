@@ -72,7 +72,9 @@ type service struct {
 //
 // Returns:
 //   - services.DocumentService: A ready-to-use DocumentService instances.
-func NewService(p ServiceParams) services.DocumentService { //nolint:gocritic // The p parameter is passed using fx.In
+func NewService(
+	p ServiceParams, //nolint:gocritic // The p parameter is passed using fx.In
+) services.DocumentService {
 	log := p.Logger.With().
 		Str("service", "document").
 		Logger()
@@ -93,7 +95,10 @@ func NewService(p ServiceParams) services.DocumentService { //nolint:gocritic //
 }
 
 // GetDocumentCountByResource gets the total number of documents per resource
-func (s *service) GetDocumentCountByResource(ctx context.Context, req ports.TenantOptions) ([]*repositories.GetDocumentCountByResourceResponse, error) {
+func (s *service) GetDocumentCountByResource(
+	ctx context.Context,
+	req ports.TenantOptions,
+) ([]*repositories.GetDocumentCountByResourceResponse, error) {
 	log := s.l.With().
 		Str("operation", "GetDocumentCountByResource").
 		Logger()
@@ -119,7 +124,10 @@ func (s *service) GetDocumentCountByResource(ctx context.Context, req ports.Tena
 	return s.docRepo.GetDocumentCountByResource(ctx, &req)
 }
 
-func (s *service) GetResourceSubFolders(ctx context.Context, req repositories.GetResourceSubFoldersRequest) ([]*repositories.GetResourceSubFoldersResponse, error) {
+func (s *service) GetResourceSubFolders(
+	ctx context.Context,
+	req repositories.GetResourceSubFoldersRequest,
+) ([]*repositories.GetResourceSubFoldersResponse, error) {
 	log := s.l.With().
 		Str("operation", "GetResourceSubFolders").
 		Logger()
@@ -145,7 +153,10 @@ func (s *service) GetResourceSubFolders(ctx context.Context, req repositories.Ge
 	return s.docRepo.GetResourceSubFolders(ctx, req)
 }
 
-func (s *service) GetDocumentsByResourceID(ctx context.Context, req *repositories.GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error) {
+func (s *service) GetDocumentsByResourceID(
+	ctx context.Context,
+	req *repositories.GetDocumentsByResourceIDRequest,
+) (*ports.ListResult[*document.Document], error) {
 	log := s.l.With().
 		Str("operation", "GetDocumentsByResourceID").
 		Logger()
@@ -192,7 +203,12 @@ func (s *service) GetDocumentsByResourceID(ctx context.Context, req *repositorie
 
 		g.Go(func() error {
 			// Generate presigned URL for the document
-			presignedURL, iErr := s.fileService.GetFileURL(ctx, bucketName, doc.StoragePath, time.Hour*24)
+			presignedURL, iErr := s.fileService.GetFileURL(
+				ctx,
+				bucketName,
+				doc.StoragePath,
+				time.Hour*24,
+			)
 			if iErr != nil {
 				return iErr
 			}
@@ -202,12 +218,15 @@ func (s *service) GetDocumentsByResourceID(ctx context.Context, req *repositorie
 
 			// Generate presigned URL for the preview if we have one
 			if doc.PreviewStoragePath != "" {
-				previewURL, pErr := s.previewService.GetPreviewURL(ctx, &services.GetPreviewURLRequest{
-					PreviewPath: doc.PreviewStoragePath,
-					BucketName:  bucketName,
-					OrgID:       req.OrgID,
-					ExpiryTime:  time.Hour * 24,
-				})
+				previewURL, pErr := s.previewService.GetPreviewURL(
+					ctx,
+					&services.GetPreviewURLRequest{
+						PreviewPath: doc.PreviewStoragePath,
+						BucketName:  bucketName,
+						OrgID:       req.OrgID,
+						ExpiryTime:  time.Hour * 24,
+					},
+				)
 				if pErr == nil {
 					doc.PreviewURL = previewURL
 				}
@@ -235,7 +254,10 @@ func (s *service) GetDocumentsByResourceID(ctx context.Context, req *repositorie
 // Returns:
 //   - *services.UploadDocumentResponse: The response containing the uploaded document.
 //   - error: An error if the operation fails.
-func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocumentRequest) (*services.UploadDocumentResponse, error) {
+func (s *service) UploadDocument(
+	ctx context.Context,
+	req *services.UploadDocumentRequest,
+) (*services.UploadDocumentResponse, error) {
 	log := s.l.With().
 		Str("operation", "UploadDocument").
 		Logger()
@@ -264,7 +286,13 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 	}
 
 	// Upload file to storage
-	fileUploadResp, previewPath, err := s.uploadDocumentFile(ctx, req, bucketName, objectKey, docType)
+	fileUploadResp, previewPath, err := s.uploadDocumentFile(
+		ctx,
+		req,
+		bucketName,
+		objectKey,
+		docType,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -290,7 +318,10 @@ func (s *service) UploadDocument(ctx context.Context, req *services.UploadDocume
 }
 
 // checkUploadPermissions checks if the user has permission to upload documents
-func (s *service) checkUploadPermissions(ctx context.Context, req *services.UploadDocumentRequest) error {
+func (s *service) checkUploadPermissions(
+	ctx context.Context,
+	req *services.UploadDocumentRequest,
+) error {
 	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
 		{
 			UserID:         req.UploadedByID,
@@ -313,7 +344,10 @@ func (s *service) checkUploadPermissions(ctx context.Context, req *services.Uplo
 }
 
 // prepareDocumentStorage fetches document type and generates a storage path
-func (s *service) prepareDocumentStorage(ctx context.Context, req *services.UploadDocumentRequest) (*billing.DocumentType, string, error) {
+func (s *service) prepareDocumentStorage(
+	ctx context.Context,
+	req *services.UploadDocumentRequest,
+) (*billing.DocumentType, string, error) {
 	docType, err := s.docTypeRepo.GetByID(ctx, repositories.GetDocumentTypeByIDRequest{
 		ID:    req.DocumentTypeID,
 		OrgID: req.OrganizationID,
@@ -329,7 +363,12 @@ func (s *service) prepareDocumentStorage(ctx context.Context, req *services.Uplo
 }
 
 // uploadDocumentFile handles uploading the file to storage
-func (s *service) uploadDocumentFile(ctx context.Context, req *services.UploadDocumentRequest, bucketName, objectKey string, docType *billing.DocumentType) (*services.SaveFileResponse, string, error) {
+func (s *service) uploadDocumentFile(
+	ctx context.Context,
+	req *services.UploadDocumentRequest,
+	bucketName, objectKey string,
+	docType *billing.DocumentType,
+) (*services.SaveFileResponse, string, error) {
 	log := s.l.With().
 		Str("operation", "uploadDocumentFile").
 		Str("fileName", req.FileName).
@@ -389,7 +428,11 @@ func (s *service) uploadDocumentFile(ctx context.Context, req *services.UploadDo
 }
 
 // createDocumentRecord creates and saves the document record in the database
-func (s *service) createDocumentRecord(ctx context.Context, req *services.UploadDocumentRequest, objectKey, bucketName, previewPath string) (*document.Document, error) {
+func (s *service) createDocumentRecord(
+	ctx context.Context,
+	req *services.UploadDocumentRequest,
+	objectKey, bucketName, previewPath string,
+) (*document.Document, error) {
 	// Determine document status
 	docStatus := req.Status
 	if docStatus == "" {
@@ -432,7 +475,10 @@ func (s *service) createDocumentRecord(ctx context.Context, req *services.Upload
 }
 
 // logDocumentCreation logs the document creation action
-func (s *service) logDocumentCreation(doc *document.Document, req *services.UploadDocumentRequest) error {
+func (s *service) logDocumentCreation(
+	doc *document.Document,
+	req *services.UploadDocumentRequest,
+) error {
 	return s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceDocument,
@@ -547,7 +593,10 @@ func (s *service) DeleteDocument(ctx context.Context, req *services.DeleteDocume
 	return nil
 }
 
-func (s *service) generateObjectPath(req *services.UploadDocumentRequest, docTypeName string) string {
+func (s *service) generateObjectPath(
+	req *services.UploadDocumentRequest,
+	docTypeName string,
+) string {
 	// Format: {resourceType}/{resourceID}/{documentType}/{timestamp}_{filename}
 	now := time.Now()
 	timestamp := now.Format("20060102150405")
@@ -564,7 +613,9 @@ func (s *service) mapDocTypeToClassification(_ pulid.ID) services.FileClassifica
 	return services.ClassificationPublic
 }
 
-func (s *service) mapResourceTypeToCategory(resourceType permission.Resource) services.FileCategory {
+func (s *service) mapResourceTypeToCategory(
+	resourceType permission.Resource,
+) services.FileCategory {
 	//nolint:exhaustive // not all cases are implemented
 	switch resourceType {
 	case permission.ResourceShipment:

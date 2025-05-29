@@ -77,7 +77,10 @@ func (r *usStateRepository) List(ctx context.Context) (*ports.ListResult[*usstat
 	}, nil
 }
 
-func (r *usStateRepository) GetByAbbreviation(ctx context.Context, abbreviation string) (*usstate.UsState, error) {
+func (r *usStateRepository) GetByAbbreviation(
+	ctx context.Context,
+	abbreviation string,
+) (*usstate.UsState, error) {
 	log := r.l.With().
 		Str("operation", "GetByAbbreviation").
 		Str("abbreviation", abbreviation).

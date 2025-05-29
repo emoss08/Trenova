@@ -5,7 +5,9 @@ import (
 	"github.com/rotisserie/eris"
 )
 
-var ErrWorkerProfileRequired = eris.New("worker profile is required for assignment eligibility check")
+var ErrWorkerProfileRequired = eris.New(
+	"worker profile is required for assignment eligibility check",
+)
 
 type ValidationContext struct {
 	IsCreate bool

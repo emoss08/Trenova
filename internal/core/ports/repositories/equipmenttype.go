@@ -21,8 +21,20 @@ type GetEquipmentTypeByIDOptions struct {
 }
 
 type EquipmentTypeRepository interface {
-	List(ctx context.Context, opts *ListEquipmentTypeRequest) (*ports.ListResult[*equipmenttype.EquipmentType], error)
-	GetByID(ctx context.Context, opts GetEquipmentTypeByIDOptions) (*equipmenttype.EquipmentType, error)
-	Create(ctx context.Context, et *equipmenttype.EquipmentType) (*equipmenttype.EquipmentType, error)
-	Update(ctx context.Context, et *equipmenttype.EquipmentType) (*equipmenttype.EquipmentType, error)
+	List(
+		ctx context.Context,
+		opts *ListEquipmentTypeRequest,
+	) (*ports.ListResult[*equipmenttype.EquipmentType], error)
+	GetByID(
+		ctx context.Context,
+		opts GetEquipmentTypeByIDOptions,
+	) (*equipmenttype.EquipmentType, error)
+	Create(
+		ctx context.Context,
+		et *equipmenttype.EquipmentType,
+	) (*equipmenttype.EquipmentType, error)
+	Update(
+		ctx context.Context,
+		et *equipmenttype.EquipmentType,
+	) (*equipmenttype.EquipmentType, error)
 }

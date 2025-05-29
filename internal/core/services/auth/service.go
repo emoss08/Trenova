@@ -56,7 +56,11 @@ func NewService(p ServiceParams) *Service {
 }
 
 // Login logs a user in and returns a session ID.
-func (s *Service) Login(ctx context.Context, ip, userAgent string, req *services.LoginRequest) (*services.LoginResponse, error) {
+func (s *Service) Login(
+	ctx context.Context,
+	ip, userAgent string,
+	req *services.LoginRequest,
+) (*services.LoginResponse, error) {
 	// validate the request
 	if err := req.Validate(); err != nil {
 		return nil, eris.Wrap(err, "invalid login request")
@@ -108,7 +112,11 @@ func (s *Service) Login(ctx context.Context, ip, userAgent string, req *services
 	}, nil
 }
 
-func (s *Service) ValidateSession(ctx context.Context, sessionID pulid.ID, clientIP string) (bool, error) {
+func (s *Service) ValidateSession(
+	ctx context.Context,
+	sessionID pulid.ID,
+	clientIP string,
+) (bool, error) {
 	_, err := s.sessionRepo.GetValidSession(ctx, sessionID, clientIP)
 	if err != nil {
 		s.l.Error().
@@ -142,14 +150,21 @@ func (s *Service) checkLoginRateLimit(ctx context.Context, ip string, userID pul
 	if count > maxLoginAttempts {
 		// * Ensure we include the email address in the error message
 		// * because this will be shown to the user on the frontend
-		return errors.NewRateLimitError("emailAddress", "Too many login attempts, please try again later")
+		return errors.NewRateLimitError(
+			"emailAddress",
+			"Too many login attempts, please try again later",
+		)
 	}
 
 	return nil
 }
 
 // incrementLoginAttempts increments the login attempts for a user.
-func (s *Service) incrementLoginAttempts(ctx context.Context, ip string, userID pulid.ID) (int64, error) {
+func (s *Service) incrementLoginAttempts(
+	ctx context.Context,
+	ip string,
+	userID pulid.ID,
+) (int64, error) {
 	key := fmt.Sprintf("login_attempts:%s:%s", ip, userID.String())
 	count, err := s.cache.IncreaseWithExpiry(ctx, key, loginRateLimitWindow)
 	if err != nil {
@@ -194,7 +209,11 @@ func (s *Service) CheckEmail(ctx context.Context, req *services.CheckEmailReques
 }
 
 // RefreshSession updates the session activity and extends the session expiration time.
-func (s *Service) RefreshSession(ctx context.Context, sessionID pulid.ID, ip, userAgent string) (*session.Session, error) {
+func (s *Service) RefreshSession(
+	ctx context.Context,
+	sessionID pulid.ID,
+	ip, userAgent string,
+) (*session.Session, error) {
 	// First get and validate the session
 	sess, err := s.sessionRepo.GetValidSession(ctx, sessionID, ip)
 	if err != nil {
@@ -256,10 +275,20 @@ type createSessionParams struct {
 }
 
 // createSession creates a session for a user.
-func (s *Service) createSession(ctx context.Context, p createSessionParams) (*session.Session, error) {
+func (s *Service) createSession(
+	ctx context.Context,
+	p createSessionParams,
+) (*session.Session, error) {
 	// Use the constructor instead of manual creation
 	expiresAt := timeutils.NowUnix() + 30*24*60*60 // 30 days
-	sess := session.NewSession(p.User.ID, p.User.BusinessUnitID, p.User.CurrentOrganizationID, p.IP, p.UserAgent, expiresAt)
+	sess := session.NewSession(
+		p.User.ID,
+		p.User.BusinessUnitID,
+		p.User.CurrentOrganizationID,
+		p.IP,
+		p.UserAgent,
+		expiresAt,
+	)
 
 	// The session is already validated in the constructor, but we can double-check
 	if err := sess.Validate(p.IP); err != nil {

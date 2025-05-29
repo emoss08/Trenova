@@ -61,7 +61,10 @@ func NewAuditRepository(p AuditRepositoryParams) repositories.AuditRepository {
 //
 // Returns:
 //   - A filtered query.
-func (ar *auditRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
+func (ar *auditRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *ports.LimitOffsetQueryOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "ae",
@@ -85,7 +88,10 @@ func (ar *auditRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffs
 // Returns:
 //   - An audit entry.
 //   - An error if the operation fails.
-func (ar *auditRepository) GetByID(ctx context.Context, opts repositories.GetAuditEntryByIDOptions) (*audit.Entry, error) {
+func (ar *auditRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetAuditEntryByIDOptions,
+) (*audit.Entry, error) {
 	dba, err := ar.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -130,7 +136,10 @@ func (ar *auditRepository) GetByID(ctx context.Context, opts repositories.GetAud
 // Returns:
 //   - A list of audit entries.
 //   - An error if the operation fails.
-func (ar *auditRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*audit.Entry], error) {
+func (ar *auditRepository) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*audit.Entry], error) {
 	dba, err := ar.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -168,7 +177,10 @@ func (ar *auditRepository) List(ctx context.Context, opts *ports.LimitOffsetQuer
 // Returns:
 //   - A list of audit entries.
 //   - An error if the operation fails.
-func (ar *auditRepository) ListByResourceID(ctx context.Context, opts repositories.ListByResourceIDRequest) (*ports.ListResult[*audit.Entry], error) {
+func (ar *auditRepository) ListByResourceID(
+	ctx context.Context,
+	opts repositories.ListByResourceIDRequest,
+) (*ports.ListResult[*audit.Entry], error) {
 	dba, err := ar.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -190,7 +202,10 @@ func (ar *auditRepository) ListByResourceID(ctx context.Context, opts repositori
 
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
-		log.Error().Str("resourceID", opts.ResourceID.String()).Err(err).Msg("failed to scan audit entries")
+		log.Error().
+			Str("resourceID", opts.ResourceID.String()).
+			Err(err).
+			Msg("failed to scan audit entries")
 		return nil, eris.Wrap(err, "scan audit entries")
 	}
 

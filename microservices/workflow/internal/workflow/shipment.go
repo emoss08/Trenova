@@ -53,7 +53,10 @@ func (r *Registry) registerDelayShipmentsWorkflowV1() {
 		func(ctx worker.HatchetContext, input types.DelayShipmentsInput) (any, error) {
 			var controlsOutput types.QueryShipmentControlsOutput
 			if err := ctx.ParentOutput(getShipmentControlsStep, &controlsOutput); err != nil {
-				return nil, fmt.Errorf("error getting parent output from get-shipment-controls: %w", err)
+				return nil, fmt.Errorf(
+					"error getting parent output from get-shipment-controls: %w",
+					err,
+				)
 			}
 
 			stopsInput := &types.QueryStopsInput{StepOutput: controlsOutput}
@@ -139,7 +142,10 @@ func (r *Registry) registerShipmentUpdatedWorkflowV1() {
 			var prevStepResult model.WorkflowResult
 
 			if err := ctx.ParentOutput(processUpdateStep, &prevStepResult); err != nil {
-				return nil, fmt.Errorf("error getting previous step output from process-shipment-update: %w", err)
+				return nil, fmt.Errorf(
+					"error getting previous step output from process-shipment-update: %w",
+					err,
+				)
 			}
 
 			result := &model.WorkflowResult{

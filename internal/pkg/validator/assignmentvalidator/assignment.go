@@ -57,11 +57,16 @@ func (v *Validator) Validate(ctx context.Context, a *shipment.Assignment) *error
 	engine := v.vef.CreateEngine()
 
 	// * Business rules validation (domain-specific rules)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			v.validateAssignmentCriteria(ctx, a, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageDataIntegrity,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				v.validateAssignmentCriteria(ctx, a, multiErr)
+				return nil
+			},
+		),
+	)
 
 	return engine.Validate(ctx)
 }
@@ -75,7 +80,11 @@ func (v *Validator) Validate(ctx context.Context, a *shipment.Assignment) *error
 //
 // Returns:
 //   - error: An error if the validation fails.
-func (v *Validator) validateAssignmentCriteria(ctx context.Context, a *shipment.Assignment, multiErr *errors.MultiError) {
+func (v *Validator) validateAssignmentCriteria(
+	ctx context.Context,
+	a *shipment.Assignment,
+	multiErr *errors.MultiError,
+) {
 	move, err := v.moveRepo.GetByID(ctx, repositories.GetMoveByIDOptions{
 		MoveID: a.ShipmentMoveID,
 		OrgID:  a.OrganizationID,

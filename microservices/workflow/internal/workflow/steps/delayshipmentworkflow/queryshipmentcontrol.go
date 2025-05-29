@@ -6,7 +6,9 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func QueryShipmentControls(db *bun.DB) func(worker.HatchetContext, *types.QueryShipmentControlsInput) (*types.QueryShipmentControlsOutput, error) {
+func QueryShipmentControls(
+	db *bun.DB,
+) func(worker.HatchetContext, *types.QueryShipmentControlsInput) (*types.QueryShipmentControlsOutput, error) {
 	return func(hc worker.HatchetContext, _ *types.QueryShipmentControlsInput) (*types.QueryShipmentControlsOutput, error) {
 		scResults := make([]types.ShipmentControlResults, 0)
 		err := db.NewSelect().

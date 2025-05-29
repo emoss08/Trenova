@@ -63,7 +63,10 @@ func NewTrailerRepository(p TrailerRepositoryParams) repositories.TrailerReposit
 //
 // Returns:
 //   - *bun.SelectQuery: The updated query with the necessary relations.
-func (tr *trailerRepository) addOptions(q *bun.SelectQuery, opts repositories.TrailerFilterOptions) *bun.SelectQuery {
+func (tr *trailerRepository) addOptions(
+	q *bun.SelectQuery,
+	opts repositories.TrailerFilterOptions,
+) *bun.SelectQuery {
 	// * Include the equipment details if requested
 	if opts.IncludeEquipmentDetails {
 		q = q.Relation("EquipmentType").Relation("EquipmentManufacturer")
@@ -96,7 +99,10 @@ func (tr *trailerRepository) addOptions(q *bun.SelectQuery, opts repositories.Tr
 //
 // Returns:
 //   - *bun.SelectQuery: The filtered and paginated query.
-func (tr *trailerRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListTrailerOptions) *bun.SelectQuery {
+func (tr *trailerRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *repositories.ListTrailerOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "tr",
@@ -125,7 +131,10 @@ func (tr *trailerRepository) filterQuery(q *bun.SelectQuery, opts *repositories.
 // Returns:
 //   - *ports.ListResult[*trailer.Trailer]: A list of trailers.
 //   - error: An error if the operation fails.
-func (tr *trailerRepository) List(ctx context.Context, opts *repositories.ListTrailerOptions) (*ports.ListResult[*trailer.Trailer], error) {
+func (tr *trailerRepository) List(
+	ctx context.Context,
+	opts *repositories.ListTrailerOptions,
+) (*ports.ListResult[*trailer.Trailer], error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -163,7 +172,10 @@ func (tr *trailerRepository) List(ctx context.Context, opts *repositories.ListTr
 // Returns:
 //   - *trailer.Trailer: The trailer entity.
 //   - error: An error if the operation fails.
-func (tr *trailerRepository) GetByID(ctx context.Context, opts *repositories.GetTrailerByIDOptions) (*trailer.Trailer, error) {
+func (tr *trailerRepository) GetByID(
+	ctx context.Context,
+	opts *repositories.GetTrailerByIDOptions,
+) (*trailer.Trailer, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -207,7 +219,10 @@ func (tr *trailerRepository) GetByID(ctx context.Context, opts *repositories.Get
 // Returns:
 //   - *trailer.Trailer: The created trailer entity.
 //   - error: An error if the operation fails.
-func (tr *trailerRepository) Create(ctx context.Context, t *trailer.Trailer) (*trailer.Trailer, error) {
+func (tr *trailerRepository) Create(
+	ctx context.Context,
+	t *trailer.Trailer,
+) (*trailer.Trailer, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -247,7 +262,10 @@ func (tr *trailerRepository) Create(ctx context.Context, t *trailer.Trailer) (*t
 // Returns:
 //   - *trailer.Trailer: The updated trailer entity.
 //   - error: An error if the operation fails.
-func (tr *trailerRepository) Update(ctx context.Context, t *trailer.Trailer) (*trailer.Trailer, error) {
+func (tr *trailerRepository) Update(
+	ctx context.Context,
+	t *trailer.Trailer,
+) (*trailer.Trailer, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -291,7 +309,10 @@ func (tr *trailerRepository) Update(ctx context.Context, t *trailer.Trailer) (*t
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Trailer (%s) has either been updated or deleted since the last request.", t.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Trailer (%s) has either been updated or deleted since the last request.",
+					t.GetID(),
+				),
 			)
 		}
 

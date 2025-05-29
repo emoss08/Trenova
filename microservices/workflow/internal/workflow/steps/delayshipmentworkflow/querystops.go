@@ -9,7 +9,9 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func QueryStops(db *bun.DB) func(worker.HatchetContext, *types.QueryStopsInput) (*types.QueryStopsOutput, error) {
+func QueryStops(
+	db *bun.DB,
+) func(worker.HatchetContext, *types.QueryStopsInput) (*types.QueryStopsOutput, error) {
 	return func(hc worker.HatchetContext, _ *types.QueryStopsInput) (*types.QueryStopsOutput, error) {
 		var querySCResults types.QueryShipmentControlsOutput
 		if err := hc.StepOutput("get-shipment-controls", &querySCResults); err != nil {
@@ -45,7 +47,12 @@ func QueryStops(db *bun.DB) func(worker.HatchetContext, *types.QueryStopsInput) 
 			return nil, err
 		}
 
-		hc.Log(fmt.Sprintf("found %d past due stops across all configured organizations", len(pastDueStops)))
+		hc.Log(
+			fmt.Sprintf(
+				"found %d past due stops across all configured organizations",
+				len(pastDueStops),
+			),
+		)
 
 		return &types.QueryStopsOutput{
 			PastDueStops: pastDueStops,
@@ -53,7 +60,10 @@ func QueryStops(db *bun.DB) func(worker.HatchetContext, *types.QueryStopsInput) 
 	}
 }
 
-func buildOrgThresholdMap(orgs []types.ShipmentControlResults, now int64) ([]string, map[string]int64) {
+func buildOrgThresholdMap(
+	orgs []types.ShipmentControlResults,
+	now int64,
+) ([]string, map[string]int64) {
 	orgIDs := make([]string, 0, len(orgs))
 	orgThresholdMap := make(map[string]int64)
 
@@ -67,7 +77,11 @@ func buildOrgThresholdMap(orgs []types.ShipmentControlResults, now int64) ([]str
 	return orgIDs, orgThresholdMap
 }
 
-func buildThresholdConditions(q *bun.SelectQuery, orgIDs []string, orgThresholdMap map[string]int64) *bun.SelectQuery {
+func buildThresholdConditions(
+	q *bun.SelectQuery,
+	orgIDs []string,
+	orgThresholdMap map[string]int64,
+) *bun.SelectQuery {
 	return q.WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 		sq := q
 		for i, orgID := range orgIDs {

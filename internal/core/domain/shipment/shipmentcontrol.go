@@ -23,33 +23,33 @@ var (
 type ShipmentControl struct {
 	bun.BaseModel `bun:"table:shipment_controls,alias:sc" json:"-"`
 
-	ID                                   pulid.ID                   `json:"id" bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID                       pulid.ID                   `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID                       pulid.ID                   `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel" bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'"`
-	AutoAssignmentStrategy               AutoAssignmentStrategy     `json:"autoAssignmentStrategy" bun:"auto_assignment_strategy,type:auto_assignment_strategy_enum,notnull,default:'Proximity'"`
-	ServiceFailureGracePeriod            *int16                     `json:"serviceFailureGracePeriod" bun:"service_failure_grace_period,type:INTEGER,nullzero"`                // In minutes
-	AutoDelayShipmentsThreshold          *int16                     `json:"autoDelayShipmentsThreshold" bun:"auto_delay_shipments_threshold,type:INTEGER,default:30,nullzero"` // In minutes
-	DetentionThreshold                   *int16                     `json:"detentionThreshold" bun:"detention_threshold,type:INTEGER,default:30,nullzero"`                     // In minutes
-	OnTimeDeliveryTarget                 *float32                   `json:"onTimeDeliveryTarget" bun:"on_time_delivery_target,type:FLOAT,nullzero"`                            // Percentage
-	ServiceFailureTarget                 *float32                   `json:"serviceFailureTarget" bun:"service_failure_target,type:FLOAT,nullzero"`                             // Percentage
-	EnableAutoAssignment                 bool                       `json:"enableAutoAssignment" bun:"enable_auto_assignment,type:BOOLEAN,notnull,default:true"`
-	RecordServiceFailures                bool                       `json:"recordServiceFailures" bun:"record_service_failures,type:BOOLEAN,notnull,default:false"`
-	AutoDelayShipments                   bool                       `json:"autoDelayShipments" bun:"auto_delay_shipments,type:BOOLEAN,notnull,default:true"`
-	EnforceHOSCompliance                 bool                       `json:"enforceHosCompliance" bun:"enforce_hos_compliance,type:BOOLEAN,notnull,default:true"`
+	ID                                   pulid.ID                   `json:"id"                                   bun:"id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID                       pulid.ID                   `json:"businessUnitId"                       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID                       pulid.ID                   `json:"organizationId"                       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'"`
+	AutoAssignmentStrategy               AutoAssignmentStrategy     `json:"autoAssignmentStrategy"               bun:"auto_assignment_strategy,type:auto_assignment_strategy_enum,notnull,default:'Proximity'"`
+	ServiceFailureGracePeriod            *int16                     `json:"serviceFailureGracePeriod"            bun:"service_failure_grace_period,type:INTEGER,nullzero"`              // In minutes
+	AutoDelayShipmentsThreshold          *int16                     `json:"autoDelayShipmentsThreshold"          bun:"auto_delay_shipments_threshold,type:INTEGER,default:30,nullzero"` // In minutes
+	DetentionThreshold                   *int16                     `json:"detentionThreshold"                   bun:"detention_threshold,type:INTEGER,default:30,nullzero"`            // In minutes
+	OnTimeDeliveryTarget                 *float32                   `json:"onTimeDeliveryTarget"                 bun:"on_time_delivery_target,type:FLOAT,nullzero"`                     // Percentage
+	ServiceFailureTarget                 *float32                   `json:"serviceFailureTarget"                 bun:"service_failure_target,type:FLOAT,nullzero"`                      // Percentage
+	EnableAutoAssignment                 bool                       `json:"enableAutoAssignment"                 bun:"enable_auto_assignment,type:BOOLEAN,notnull,default:true"`
+	RecordServiceFailures                bool                       `json:"recordServiceFailures"                bun:"record_service_failures,type:BOOLEAN,notnull,default:false"`
+	AutoDelayShipments                   bool                       `json:"autoDelayShipments"                   bun:"auto_delay_shipments,type:BOOLEAN,notnull,default:true"`
+	EnforceHOSCompliance                 bool                       `json:"enforceHosCompliance"                 bun:"enforce_hos_compliance,type:BOOLEAN,notnull,default:true"`
 	EnforceDriverQualificationCompliance bool                       `json:"enforceDriverQualificationCompliance" bun:"enforce_driver_qualification_compliance,type:BOOLEAN,notnull,default:true"`
-	EnforceMedicalCertCompliance         bool                       `json:"enforceMedicalCertCompliance" bun:"enforce_medical_cert_compliance,type:BOOLEAN,notnull,default:true"`
-	EnforceHazmatCompliance              bool                       `json:"enforceHazmatCompliance" bun:"enforce_hazmat_compliance,type:BOOLEAN,notnull,default:true"`
-	EnforceDrugAndAlcoholCompliance      bool                       `json:"enforceDrugAndAlcoholCompliance" bun:"enforce_drug_and_alcohol_compliance,type:BOOLEAN,notnull,default:true"`
-	TrackDetentionTime                   bool                       `json:"trackDetentionTime" bun:"track_detention_time,type:BOOLEAN,notnull,default:true"`
-	AutoGenerateDetentionCharges         bool                       `json:"autoGenerateDetentionCharges" bun:"auto_generate_detention_charges,type:BOOLEAN,notnull,default:true"`
-	TrackCustomerRejections              bool                       `json:"trackCustomerRejections" bun:"track_customer_rejections,type:BOOLEAN,notnull,default:false"`
-	CheckForDuplicateBOLs                bool                       `json:"checkForDuplicateBols" bun:"check_for_duplicate_bols,type:BOOLEAN,notnull,default:true"`
-	AllowMoveRemovals                    bool                       `json:"allowMoveRemovals" bun:"allow_move_removals,type:BOOLEAN,notnull,default:true"`
-	CheckHazmatSegregation               bool                       `json:"checkHazmatSegregation" bun:"check_hazmat_segregation,type:BOOLEAN,notnull,default:true"`
-	Version                              int64                      `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt                            int64                      `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                            int64                      `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	EnforceMedicalCertCompliance         bool                       `json:"enforceMedicalCertCompliance"         bun:"enforce_medical_cert_compliance,type:BOOLEAN,notnull,default:true"`
+	EnforceHazmatCompliance              bool                       `json:"enforceHazmatCompliance"              bun:"enforce_hazmat_compliance,type:BOOLEAN,notnull,default:true"`
+	EnforceDrugAndAlcoholCompliance      bool                       `json:"enforceDrugAndAlcoholCompliance"      bun:"enforce_drug_and_alcohol_compliance,type:BOOLEAN,notnull,default:true"`
+	TrackDetentionTime                   bool                       `json:"trackDetentionTime"                   bun:"track_detention_time,type:BOOLEAN,notnull,default:true"`
+	AutoGenerateDetentionCharges         bool                       `json:"autoGenerateDetentionCharges"         bun:"auto_generate_detention_charges,type:BOOLEAN,notnull,default:true"`
+	TrackCustomerRejections              bool                       `json:"trackCustomerRejections"              bun:"track_customer_rejections,type:BOOLEAN,notnull,default:false"`
+	CheckForDuplicateBOLs                bool                       `json:"checkForDuplicateBols"                bun:"check_for_duplicate_bols,type:BOOLEAN,notnull,default:true"`
+	AllowMoveRemovals                    bool                       `json:"allowMoveRemovals"                    bun:"allow_move_removals,type:BOOLEAN,notnull,default:true"`
+	CheckHazmatSegregation               bool                       `json:"checkHazmatSegregation"               bun:"check_hazmat_segregation,type:BOOLEAN,notnull,default:true"`
+	Version                              int64                      `json:"version"                              bun:"version,type:BIGINT"`
+	CreatedAt                            int64                      `json:"createdAt"                            bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                            int64                      `json:"updatedAt"                            bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
@@ -76,8 +76,11 @@ func (sc *ShipmentControl) Validate(ctx context.Context, multiErr *errors.MultiE
 
 		// * Ensure TrackDetentionTime is true if AutoGenerateDetentionCharges is true
 		validation.Field(&sc.AutoGenerateDetentionCharges,
-			validation.When(sc.TrackDetentionTime,
-				validation.Required.Error("Track detention time is required when auto generate detention charges is true"),
+			validation.When(
+				sc.TrackDetentionTime,
+				validation.Required.Error(
+					"Track detention time is required when auto generate detention charges is true",
+				),
 			),
 		),
 

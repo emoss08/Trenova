@@ -370,7 +370,16 @@ func NewLogger(l *logger.Logger, config ...LogConfig) fiber.Handler {
 		formattedDuration := formatDuration(duration)
 
 		// Create and populate log entry
-		entry := createLogEntry(c, &cfg, requestID, method, path, duration, formattedDuration, reqBody)
+		entry := createLogEntry(
+			c,
+			&cfg,
+			requestID,
+			method,
+			path,
+			duration,
+			formattedDuration,
+			reqBody,
+		)
 
 		// Send to async logger
 		asyncLogger.Log(entry)
@@ -420,7 +429,13 @@ func extractRequestBody(c *fiber.Ctx, cfg *LogConfig) string {
 }
 
 // createLogEntry creates and populates a log entry with request details
-func createLogEntry(c *fiber.Ctx, cfg *LogConfig, requestID, method, path string, duration time.Duration, formattedDuration, reqBody string) map[string]any {
+func createLogEntry(
+	c *fiber.Ctx,
+	cfg *LogConfig,
+	requestID, method, path string,
+	duration time.Duration,
+	formattedDuration, reqBody string,
+) map[string]any {
 	// Get a log entry from the pool
 	entryObj := entryPool.Get()
 	entry, ok := entryObj.(map[string]any)
@@ -431,7 +446,16 @@ func createLogEntry(c *fiber.Ctx, cfg *LogConfig, requestID, method, path string
 	statusCode := c.Response().StatusCode()
 
 	// Add basic info
-	populateBasicInfo(entry, requestID, method, path, statusCode, c.IP(), formattedDuration, c.Get("User-Agent"))
+	populateBasicInfo(
+		entry,
+		requestID,
+		method,
+		path,
+		statusCode,
+		c.IP(),
+		formattedDuration,
+		c.Get("User-Agent"),
+	)
 
 	// Add optional info
 	addOptionalInfo(c, cfg, entry, reqBody, duration)
@@ -440,7 +464,12 @@ func createLogEntry(c *fiber.Ctx, cfg *LogConfig, requestID, method, path string
 }
 
 // populateBasicInfo adds basic request information to the log entry
-func populateBasicInfo(entry map[string]any, requestID, method, path string, statusCode int, ip, latency, userAgent string) {
+func populateBasicInfo(
+	entry map[string]any,
+	requestID, method, path string,
+	statusCode int,
+	ip, latency, userAgent string,
+) {
 	entry["requestId"] = requestID
 	entry["method"] = method
 	entry["path"] = path
@@ -452,7 +481,13 @@ func populateBasicInfo(entry map[string]any, requestID, method, path string, sta
 }
 
 // addOptionalInfo adds optional information to the log entry based on configuration
-func addOptionalInfo(c *fiber.Ctx, cfg *LogConfig, entry map[string]any, reqBody string, duration time.Duration) {
+func addOptionalInfo(
+	c *fiber.Ctx,
+	cfg *LogConfig,
+	entry map[string]any,
+	reqBody string,
+	duration time.Duration,
+) {
 	// Add query params if they exist
 	if queries := c.Queries(); len(queries) > 0 {
 		entry["queryParams"] = queries
@@ -494,7 +529,8 @@ func addResponseBody(c *fiber.Ctx, cfg *LogConfig, entry map[string]any) {
 		return
 	}
 
-	gzipCondition := cfg.DetectGzip && strings.Contains(strings.ToLower(c.GetRespHeader("Content-Encoding")), "gzip")
+	gzipCondition := cfg.DetectGzip &&
+		strings.Contains(strings.ToLower(c.GetRespHeader("Content-Encoding")), "gzip")
 	if gzipCondition {
 		return
 	}

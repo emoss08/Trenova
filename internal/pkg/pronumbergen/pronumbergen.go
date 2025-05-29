@@ -118,7 +118,10 @@ func GetOrganizationProNumberFormat(_ context.Context, _ pulid.ID) (*ProNumberFo
 }
 
 // GetProNumberFormatForBusinessUnit retrieves the pro number format for a specific business unit
-func GetProNumberFormatForBusinessUnit(ctx context.Context, orgID, _ pulid.ID) (*ProNumberFormat, error) {
+func GetProNumberFormatForBusinessUnit(
+	ctx context.Context,
+	orgID, _ pulid.ID,
+) (*ProNumberFormat, error) {
 	return GetOrganizationProNumberFormat(ctx, orgID)
 }
 
@@ -516,7 +519,7 @@ func FormatProNumber(proNumber string, format *ProNumberFormat) string {
 // GetProNumberComponents extracts components from a pro number based on its format
 // Returns a map of component names to extracted values
 //
-//nolint:gocognit // This is a complex function that needs to be refactored
+//nolint:funlen,gocognit // This is a complex function that needs to be refactored
 func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[string]string, error) {
 	if !ValidateProNumber(proNumber, format) {
 		return nil, ErrInvalidProNumber
@@ -533,7 +536,13 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		// * Extract prefix
 		func() error {
 			if format.Prefix != "" {
-				offset, err = extractComponent(proNumber, offset, len(format.Prefix), "prefix", result)
+				offset, err = extractComponent(
+					proNumber,
+					offset,
+					len(format.Prefix),
+					"prefix",
+					result,
+				)
 				return err
 			}
 			return nil
@@ -541,7 +550,13 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		// * Extract business unit code
 		func() error {
 			if format.IncludeBusinessUnitCode && format.BusinessUnitCode != "" {
-				offset, err = extractComponent(proNumber, offset, len(format.BusinessUnitCode), "businessUnit", result)
+				offset, err = extractComponent(
+					proNumber,
+					offset,
+					len(format.BusinessUnitCode),
+					"businessUnit",
+					result,
+				)
 				return err
 			}
 			return nil
@@ -576,7 +591,13 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		// * Extract location code
 		func() error {
 			if format.IncludeLocationCode {
-				offset, err = extractComponent(proNumber, offset, len(format.LocationCode), "location", result)
+				offset, err = extractComponent(
+					proNumber,
+					offset,
+					len(format.LocationCode),
+					"location",
+					result,
+				)
 				return err
 			}
 			return nil
@@ -584,7 +605,13 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		// * Extract sequence
 		func() error {
 			if format.SequenceDigits > 0 {
-				offset, err = extractComponent(proNumber, offset, format.SequenceDigits, "sequence", result)
+				offset, err = extractComponent(
+					proNumber,
+					offset,
+					format.SequenceDigits,
+					"sequence",
+					result,
+				)
 				return err
 			}
 			return nil
@@ -592,7 +619,13 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		// * Extract random part
 		func() error {
 			if format.IncludeRandomDigits && format.RandomDigitsCount > 0 {
-				offset, err = extractComponent(proNumber, offset, format.RandomDigitsCount, "random", result)
+				offset, err = extractComponent(
+					proNumber,
+					offset,
+					format.RandomDigitsCount,
+					"random",
+					result,
+				)
 				return err
 			}
 			return nil
@@ -619,7 +652,12 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 // extractComponent extracts a component from the proNumber at the given offset
 // with the specified length and adds it to the result map with the given key.
 // Returns the new offset and any error.
-func extractComponent(proNumber string, offset, length int, key string, result map[string]string) (int, error) {
+func extractComponent(
+	proNumber string,
+	offset, length int,
+	key string,
+	result map[string]string,
+) (int, error) {
 	if len(proNumber) < offset+length {
 		return offset, ErrInvalidProNumber
 	}

@@ -15,5 +15,10 @@ type CommodityDeletionRequest struct {
 }
 
 type ShipmentCommodityRepository interface {
-	HandleCommodityOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error
+	HandleCommodityOperations(
+		ctx context.Context,
+		tx bun.IDB,
+		shp *shipment.Shipment,
+		isCreate bool,
+	) error
 }

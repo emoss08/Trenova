@@ -59,7 +59,10 @@ func NewService(p ServiceParams) *Service {
 // Returns:
 //   - *billing.BillingControl: The billing control entity.
 //   - error: If any database operation fails.
-func (s *Service) Get(ctx context.Context, req *repositories.GetBillingControlRequest) (*billing.BillingControl, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	req *repositories.GetBillingControlRequest,
+) (*billing.BillingControl, error) {
 	log := s.l.With().
 		Str("operation", "Get").
 		Str("orgID", req.OrgID.String()).
@@ -85,7 +88,9 @@ func (s *Service) Get(ctx context.Context, req *repositories.GetBillingControlRe
 
 	// * If the user does not have permission to read the billing control, return an error
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read billing control")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read billing control",
+		)
 	}
 
 	// * Get the billing control by organization ID
@@ -108,7 +113,11 @@ func (s *Service) Get(ctx context.Context, req *repositories.GetBillingControlRe
 // Returns:
 //   - *billing.BillingControl: The updated billing control entity.
 //   - error: If any database operation fails.
-func (s *Service) Update(ctx context.Context, bc *billing.BillingControl, userID pulid.ID) (*billing.BillingControl, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	bc *billing.BillingControl,
+	userID pulid.ID,
+) (*billing.BillingControl, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("orgID", bc.OrganizationID.String()).
@@ -134,7 +143,9 @@ func (s *Service) Update(ctx context.Context, bc *billing.BillingControl, userID
 
 	// * If the user does not have permission to update the billing control, return an error
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update billing control")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update billing control",
+		)
 	}
 
 	// * Create a validation context for the billing control

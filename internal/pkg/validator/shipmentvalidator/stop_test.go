@@ -49,10 +49,12 @@ func TestStopValidator(t *testing.T) {
 		DB:     ts.DB,
 	})
 
-	shipmentControlRepo := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
-		Logger: log,
-		DB:     ts.DB,
-	})
+	shipmentControlRepo := repositories.NewShipmentControlRepository(
+		repositories.ShipmentControlRepositoryParams{
+			Logger: log,
+			DB:     ts.DB,
+		},
+	)
 
 	moveRepo := repositories.NewShipmentMoveRepository(repositories.ShipmentMoveRepositoryParams{
 		Logger:                    log,
@@ -121,7 +123,11 @@ func TestStopValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "stops[0].plannedArrival", Code: errors.ErrRequired, Message: "Planned arrival is required"},
+				{
+					Field:   "stops[0].plannedArrival",
+					Code:    errors.ErrRequired,
+					Message: "Planned arrival is required",
+				},
 			},
 		},
 		{
@@ -134,8 +140,16 @@ func TestStopValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "stops[0].plannedDeparture", Code: errors.ErrRequired, Message: "Planned departure is required"},
-				{Field: "stops[0].plannedArrival", Code: errors.ErrInvalid, Message: "Planned arrival must be before planned departure"},
+				{
+					Field:   "stops[0].plannedDeparture",
+					Code:    errors.ErrRequired,
+					Message: "Planned departure is required",
+				},
+				{
+					Field:   "stops[0].plannedArrival",
+					Code:    errors.ErrInvalid,
+					Message: "Planned arrival must be before planned departure",
+				},
 			},
 		},
 		{
@@ -152,9 +166,21 @@ func TestStopValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival must be before actual departure"},
-				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
-				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+				{
+					Field:   "stops[0].actualArrival",
+					Code:    errors.ErrInvalid,
+					Message: "Actual arrival must be before actual departure",
+				},
+				{
+					Field:   "stops[0].actualArrival",
+					Code:    errors.ErrInvalid,
+					Message: "Actual arrival and departure times cannot be set on a move with no assignment",
+				},
+				{
+					Field:   "stops[0].actualDeparture",
+					Code:    errors.ErrInvalid,
+					Message: "Actual arrival and departure times cannot be set on a move with no assignment",
+				},
 			},
 		},
 		{
@@ -168,8 +194,16 @@ func TestStopValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
-				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+				{
+					Field:   "stops[0].actualArrival",
+					Code:    errors.ErrInvalid,
+					Message: "Actual arrival and departure times cannot be set on a move with no assignment",
+				},
+				{
+					Field:   "stops[0].actualDeparture",
+					Code:    errors.ErrInvalid,
+					Message: "Actual arrival and departure times cannot be set on a move with no assignment",
+				},
 			},
 		},
 		{
@@ -183,8 +217,16 @@ func TestStopValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival time cannot be in the future"},
-				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+				{
+					Field:   "stops[0].actualArrival",
+					Code:    errors.ErrInvalid,
+					Message: "Actual arrival time cannot be in the future",
+				},
+				{
+					Field:   "stops[0].actualArrival",
+					Code:    errors.ErrInvalid,
+					Message: "Actual arrival and departure times cannot be set on a move with no assignment",
+				},
 			},
 		},
 		{
@@ -198,8 +240,16 @@ func TestStopValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual departure time cannot be in the future"},
-				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+				{
+					Field:   "stops[0].actualDeparture",
+					Code:    errors.ErrInvalid,
+					Message: "Actual departure time cannot be in the future",
+				},
+				{
+					Field:   "stops[0].actualDeparture",
+					Code:    errors.ErrInvalid,
+					Message: "Actual arrival and departure times cannot be set on a move with no assignment",
+				},
 			},
 		},
 		{
@@ -215,10 +265,26 @@ func TestStopValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival time cannot be in the future"},
-				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual departure time cannot be in the future"},
-				{Field: "stops[0].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
-				{Field: "stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+				{
+					Field:   "stops[0].actualArrival",
+					Code:    errors.ErrInvalid,
+					Message: "Actual arrival time cannot be in the future",
+				},
+				{
+					Field:   "stops[0].actualDeparture",
+					Code:    errors.ErrInvalid,
+					Message: "Actual departure time cannot be in the future",
+				},
+				{
+					Field:   "stops[0].actualArrival",
+					Code:    errors.ErrInvalid,
+					Message: "Actual arrival and departure times cannot be set on a move with no assignment",
+				},
+				{
+					Field:   "stops[0].actualDeparture",
+					Code:    errors.ErrInvalid,
+					Message: "Actual arrival and departure times cannot be set on a move with no assignment",
+				},
 			},
 		},
 	}

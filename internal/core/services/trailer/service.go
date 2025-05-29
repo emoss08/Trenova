@@ -53,7 +53,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListTrailerOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	opts *repositories.ListTrailerOptions,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -70,7 +73,10 @@ func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListTrai
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *repositories.ListTrailerOptions) (*ports.ListResult[*trailer.Trailer], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *repositories.ListTrailerOptions,
+) (*ports.ListResult[*trailer.Trailer], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -96,7 +102,10 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListTrailerOption
 	return s.repo.List(ctx, opts)
 }
 
-func (s *Service) Get(ctx context.Context, opts *repositories.GetTrailerByIDOptions) (*trailer.Trailer, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts *repositories.GetTrailerByIDOptions,
+) (*trailer.Trailer, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("trailerID", opts.ID.String()).
@@ -131,7 +140,11 @@ func (s *Service) Get(ctx context.Context, opts *repositories.GetTrailerByIDOpti
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, tr *trailer.Trailer, userID pulid.ID) (*trailer.Trailer, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	tr *trailer.Trailer,
+	userID pulid.ID,
+) (*trailer.Trailer, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("code", tr.Code).
@@ -190,7 +203,11 @@ func (s *Service) Create(ctx context.Context, tr *trailer.Trailer, userID pulid.
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, t *trailer.Trailer, userID pulid.ID) (*trailer.Trailer, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	t *trailer.Trailer,
+	userID pulid.ID,
+) (*trailer.Trailer, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("code", t.Code).
@@ -213,7 +230,9 @@ func (s *Service) Update(ctx context.Context, t *trailer.Trailer, userID pulid.I
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this trailer")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this trailer",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{

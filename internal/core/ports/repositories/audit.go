@@ -24,7 +24,13 @@ type ListByResourceIDRequest struct {
 
 type AuditRepository interface {
 	InsertAuditEntries(ctx context.Context, entries []*audit.Entry) error
-	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*audit.Entry], error)
-	ListByResourceID(ctx context.Context, opts ListByResourceIDRequest) (*ports.ListResult[*audit.Entry], error)
+	List(
+		ctx context.Context,
+		opts *ports.LimitOffsetQueryOptions,
+	) (*ports.ListResult[*audit.Entry], error)
+	ListByResourceID(
+		ctx context.Context,
+		opts ListByResourceIDRequest,
+	) (*ports.ListResult[*audit.Entry], error)
 	GetByID(ctx context.Context, opts GetAuditEntryByIDOptions) (*audit.Entry, error)
 }

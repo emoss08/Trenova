@@ -185,7 +185,12 @@ func TestShipmentRepository(t *testing.T) {
 			// Ensure totals match and pages are different
 			assert.Equal(t, result1.Total, result2.Total, "Total should be consistent across pages")
 			if len(result1.Items) > 0 && len(result2.Items) > 0 {
-				assert.NotEqual(t, result1.Items[0].ID, result2.Items[0].ID, "Pages should contain different items")
+				assert.NotEqual(
+					t,
+					result1.Items[0].ID,
+					result2.Items[0].ID,
+					"Pages should contain different items",
+				)
 			}
 		})
 	})
@@ -547,7 +552,12 @@ func TestShipmentRepository(t *testing.T) {
 			require.NoError(t, err, "Duplicate should not return error")
 			require.NotNil(t, result, "Result should not be nil")
 			assert.NotEqual(t, completedShipment.ID, result.ID, "New ID should be different")
-			assert.NotEqual(t, completedShipment.ProNumber, result.ProNumber, "New ProNumber should be different")
+			assert.NotEqual(
+				t,
+				completedShipment.ProNumber,
+				result.ProNumber,
+				"New ProNumber should be different",
+			)
 			assert.Equal(t, shipment.StatusNew, result.Status, "Status should be New")
 			assert.Equal(t, "GENERATED-COPY", result.BOL, "BOL should be GENERATED-COPY")
 		})
@@ -649,19 +659,41 @@ func TestShipmentRepository(t *testing.T) {
 			require.NoError(t, err, "Should create shipment with BOL")
 
 			// Check for duplicates excluding the created shipment
-			result, err := repo.CheckForDuplicateBOLs(ctx, "DUPLICATE-BOL-TEST", org.ID, bu.ID, &created.ID)
+			result, err := repo.CheckForDuplicateBOLs(
+				ctx,
+				"DUPLICATE-BOL-TEST",
+				org.ID,
+				bu.ID,
+				&created.ID,
+			)
 			require.NoError(t, err, "CheckForDuplicateBOLs with exclusion should not return error")
 			assert.Empty(t, result, "Should find no duplicates when excluding self")
 
 			// Check for duplicates without exclusion
-			result2, err := repo.CheckForDuplicateBOLs(ctx, "DUPLICATE-BOL-TEST", org.ID, bu.ID, nil)
-			require.NoError(t, err, "CheckForDuplicateBOLs without exclusion should not return error")
+			result2, err := repo.CheckForDuplicateBOLs(
+				ctx,
+				"DUPLICATE-BOL-TEST",
+				org.ID,
+				bu.ID,
+				nil,
+			)
+			require.NoError(
+				t,
+				err,
+				"CheckForDuplicateBOLs without exclusion should not return error",
+			)
 			assert.Len(t, result2, 1, "Should find one duplicate when not excluding")
 			assert.Equal(t, created.ID, result2[0].ID, "Duplicate should match created shipment")
 		})
 
 		t.Run("Wrong Organization", func(t *testing.T) {
-			result, err := repo.CheckForDuplicateBOLs(ctx, testShipment.BOL, pulid.MustNew("org_"), bu.ID, nil)
+			result, err := repo.CheckForDuplicateBOLs(
+				ctx,
+				testShipment.BOL,
+				pulid.MustNew("org_"),
+				bu.ID,
+				nil,
+			)
 			require.NoError(t, err, "CheckForDuplicateBOLs with wrong org should not return error")
 			assert.Empty(t, result, "Should find no duplicates in wrong organization")
 		})
@@ -683,9 +715,21 @@ func TestShipmentRepository(t *testing.T) {
 			result, err := repo.CalculateShipmentTotals(testShipment)
 			require.NoError(t, err, "CalculateShipmentTotals should not return error")
 			require.NotNil(t, result, "Result should not be nil")
-			assert.True(t, result.BaseCharge.GreaterThanOrEqual(decimal.Zero), "BaseCharge should be non-negative")
-			assert.True(t, result.OtherChargeAmount.GreaterThanOrEqual(decimal.Zero), "OtherChargeAmount should be non-negative")
-			assert.True(t, result.TotalChargeAmount.GreaterThanOrEqual(decimal.Zero), "TotalChargeAmount should be non-negative")
+			assert.True(
+				t,
+				result.BaseCharge.GreaterThanOrEqual(decimal.Zero),
+				"BaseCharge should be non-negative",
+			)
+			assert.True(
+				t,
+				result.OtherChargeAmount.GreaterThanOrEqual(decimal.Zero),
+				"OtherChargeAmount should be non-negative",
+			)
+			assert.True(
+				t,
+				result.TotalChargeAmount.GreaterThanOrEqual(decimal.Zero),
+				"TotalChargeAmount should be non-negative",
+			)
 		})
 
 		t.Run("Zero Amounts", func(t *testing.T) {
@@ -695,11 +739,23 @@ func TestShipmentRepository(t *testing.T) {
 			}
 
 			result, err := repo.CalculateShipmentTotals(testShipment)
-			require.NoError(t, err, "CalculateShipmentTotals with zero amounts should not return error")
+			require.NoError(
+				t,
+				err,
+				"CalculateShipmentTotals with zero amounts should not return error",
+			)
 			require.NotNil(t, result, "Result should not be nil")
 			assert.True(t, result.BaseCharge.Equal(decimal.Zero), "BaseCharge should be zero")
-			assert.True(t, result.OtherChargeAmount.Equal(decimal.Zero), "OtherChargeAmount should be zero")
-			assert.True(t, result.TotalChargeAmount.Equal(decimal.Zero), "TotalChargeAmount should be zero")
+			assert.True(
+				t,
+				result.OtherChargeAmount.Equal(decimal.Zero),
+				"OtherChargeAmount should be zero",
+			)
+			assert.True(
+				t,
+				result.TotalChargeAmount.Equal(decimal.Zero),
+				"TotalChargeAmount should be zero",
+			)
 		})
 
 		t.Run("Null Values", func(t *testing.T) {
@@ -708,7 +764,11 @@ func TestShipmentRepository(t *testing.T) {
 			}
 
 			result, err := repo.CalculateShipmentTotals(testShipment)
-			require.NoError(t, err, "CalculateShipmentTotals with null values should not return error")
+			require.NoError(
+				t,
+				err,
+				"CalculateShipmentTotals with null values should not return error",
+			)
 			require.NotNil(t, result, "Result should not be nil")
 		})
 	})
@@ -813,10 +873,12 @@ func setupShipmentRepository(log *logger.Logger) repoports.ShipmentRepository {
 		DB:     ts.DB,
 	})
 
-	shipmentControlRepo := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
-		Logger: log,
-		DB:     ts.DB,
-	})
+	shipmentControlRepo := repositories.NewShipmentControlRepository(
+		repositories.ShipmentControlRepositoryParams{
+			Logger: log,
+			DB:     ts.DB,
+		},
+	)
 
 	moveRepo := repositories.NewShipmentMoveRepository(repositories.ShipmentMoveRepositoryParams{
 		Logger:                    log,
@@ -825,10 +887,12 @@ func setupShipmentRepository(log *logger.Logger) repoports.ShipmentRepository {
 		ShipmentControlRepository: shipmentControlRepo,
 	})
 
-	shipmentCommodityRepo := repositories.NewShipmentCommodityRepository(repositories.ShipmentCommodityRepositoryParams{
-		Logger: log,
-		DB:     ts.DB,
-	})
+	shipmentCommodityRepo := repositories.NewShipmentCommodityRepository(
+		repositories.ShipmentCommodityRepositoryParams{
+			Logger: log,
+			DB:     ts.DB,
+		},
+	)
 
 	manager := statemachine.NewManager(statemachine.ManagerParams{
 		Logger: log,
@@ -839,10 +903,12 @@ func setupShipmentRepository(log *logger.Logger) repoports.ShipmentRepository {
 		StateMachineManager: manager,
 	})
 
-	additionalChargeRepo := repositories.NewAdditionalChargeRepository(repositories.AdditionalChargeRepositoryParams{
-		Logger: log,
-		DB:     ts.DB,
-	})
+	additionalChargeRepo := repositories.NewAdditionalChargeRepository(
+		repositories.AdditionalChargeRepositoryParams{
+			Logger: log,
+			DB:     ts.DB,
+		},
+	)
 
 	return repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
 		Logger:                      log,

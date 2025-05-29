@@ -53,7 +53,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListFleetCodeOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	opts *repositories.ListFleetCodeOptions,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -71,7 +74,10 @@ func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListFlee
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *repositories.ListFleetCodeOptions) (*ports.ListResult[*fleetcode.FleetCode], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *repositories.ListFleetCodeOptions,
+) (*ports.ListResult[*fleetcode.FleetCode], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -106,7 +112,10 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListFleetCodeOpti
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetFleetCodeByIDOptions) (*fleetcode.FleetCode, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts repositories.GetFleetCodeByIDOptions,
+) (*fleetcode.FleetCode, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("fleetCodeID", opts.ID.String()).
@@ -129,7 +138,9 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetFleetCodeByIDOpt
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this fleet code")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read this fleet code",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, opts)
@@ -141,7 +152,11 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetFleetCodeByIDOpt
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, fc *fleetcode.FleetCode, userID pulid.ID) (*fleetcode.FleetCode, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	fc *fleetcode.FleetCode,
+	userID pulid.ID,
+) (*fleetcode.FleetCode, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("name", fc.Name).
@@ -164,7 +179,9 @@ func (s *Service) Create(ctx context.Context, fc *fleetcode.FleetCode, userID pu
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a fleet code")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to create a fleet code",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{
@@ -200,7 +217,11 @@ func (s *Service) Create(ctx context.Context, fc *fleetcode.FleetCode, userID pu
 	return createdFleetCode, nil
 }
 
-func (s *Service) Update(ctx context.Context, fc *fleetcode.FleetCode, userID pulid.ID) (*fleetcode.FleetCode, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	fc *fleetcode.FleetCode,
+	userID pulid.ID,
+) (*fleetcode.FleetCode, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("name", fc.Name).
@@ -223,7 +244,9 @@ func (s *Service) Update(ctx context.Context, fc *fleetcode.FleetCode, userID pu
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this fleet code")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this fleet code",
+		)
 	}
 
 	// Validate the fleet code

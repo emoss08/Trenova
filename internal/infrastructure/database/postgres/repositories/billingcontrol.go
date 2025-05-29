@@ -41,7 +41,9 @@ type billingControlRepository struct {
 //
 // Returns:
 //   - A new instance of billingControlRepository.
-func NewBillingControlRepository(p BillingControlRepositoryParams) repositories.BillingControlRepository {
+func NewBillingControlRepository(
+	p BillingControlRepositoryParams,
+) repositories.BillingControlRepository {
 	log := p.Logger.With().
 		Str("repository", "billingcontrol").
 		Logger()
@@ -61,7 +63,10 @@ func NewBillingControlRepository(p BillingControlRepositoryParams) repositories.
 // Returns:
 //   - *billing.BillingControl: The billing control entity.
 //   - error: If any database operation fails.
-func (r billingControlRepository) GetByOrgID(ctx context.Context, orgID pulid.ID) (*billing.BillingControl, error) {
+func (r billingControlRepository) GetByOrgID(
+	ctx context.Context,
+	orgID pulid.ID,
+) (*billing.BillingControl, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -79,7 +84,9 @@ func (r billingControlRepository) GetByOrgID(ctx context.Context, orgID pulid.ID
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			log.Error().Msg("billing control not found within your organization")
-			return nil, errors.NewNotFoundError("Billing control not found within your organization")
+			return nil, errors.NewNotFoundError(
+				"Billing control not found within your organization",
+			)
 		}
 
 		log.Error().Err(err).Msg("failed to get billing control")
@@ -98,7 +105,10 @@ func (r billingControlRepository) GetByOrgID(ctx context.Context, orgID pulid.ID
 // Returns:
 //   - *billing.BillingControl: The updated billing control entity.
 //   - error: If any database operation fails.
-func (r billingControlRepository) Update(ctx context.Context, bc *billing.BillingControl) (*billing.BillingControl, error) {
+func (r billingControlRepository) Update(
+	ctx context.Context,
+	bc *billing.BillingControl,
+) (*billing.BillingControl, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -136,7 +146,10 @@ func (r billingControlRepository) Update(ctx context.Context, bc *billing.Billin
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Billing Control (%s) has either been updated or deleted since the last request.", bc.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Billing Control (%s) has either been updated or deleted since the last request.",
+					bc.GetID(),
+				),
 			)
 		}
 

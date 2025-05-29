@@ -21,31 +21,31 @@ type WorkerPTO struct {
 	bun.BaseModel `bun:"table:worker_pto,alias:wpto" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID `json:"id" bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),notnull,pk" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),notnull,pk" json:"organizationId"`
-	WorkerID       pulid.ID `bun:"worker_id,type:VARCHAR(100),notnull,pk" json:"workerId"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
+	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
+	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull,pk"`
+	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull,pk"`
 
 	// Relationship identifiers (Non-Primary-Keys)
 	ApproverID *pulid.ID `bun:"approver_id,type:VARCHAR(100),nullzero" json:"approverId"`
 
 	// Core Fields
-	Status    PTOStatus `json:"status" bun:"status,type:worker_pto_status_enum,notnull,default:'Requested'"`
-	Type      PTOType   `json:"type" bun:"type,type:worker_pto_type_enum,notnull,default:'Vacation'"`
+	Status    PTOStatus `json:"status"    bun:"status,type:worker_pto_status_enum,notnull,default:'Requested'"`
+	Type      PTOType   `json:"type"      bun:"type,type:worker_pto_type_enum,notnull,default:'Vacation'"`
 	StartDate int64     `json:"startDate" bun:"start_date,type:BIGINT,notnull"`
-	EndDate   int64     `json:"endDate" bun:"end_date,type:BIGINT,notnull"`
-	Reason    string    `json:"reason" bun:"reason,type:VARCHAR(255),notnull"`
+	EndDate   int64     `json:"endDate"   bun:"end_date,type:BIGINT,notnull"`
+	Reason    string    `json:"reason"    bun:"reason,type:VARCHAR(255),notnull"`
 
 	// Metadata
-	Version   int64 `json:"version" bun:"version,type:BIGINT"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	Worker       *Worker                    `json:"worker,omitempty" bun:"rel:belongs-to,join:worker_id=id"`
-	Approver     *user.User                 `json:"approver,omitempty" bun:"rel:belongs-to,join:approver_id=id"`
+	Worker       *Worker                    `json:"worker,omitempty"       bun:"rel:belongs-to,join:worker_id=id"`
+	Approver     *user.User                 `json:"approver,omitempty"     bun:"rel:belongs-to,join:approver_id=id"`
 }
 
 // Validation
@@ -95,10 +95,18 @@ func (w *WorkerPTO) Validate(ctx context.Context, multiErr *errors.MultiError) {
 
 		// Reason is required when the status is cancelled or rejected and Cannot input reason if the status is not cancelled or rejected
 		validation.Field(&w.Reason,
-			validation.When(w.Status == PTOStatusCancelled || w.Status == PTOStatusRejected,
-				validation.Required.Error("Reason is required when the status is cancelled or rejected")),
-			validation.When(w.Status != PTOStatusCancelled && w.Status != PTOStatusRejected,
-				validation.Empty.Error("Reason cannot be input when the status is not cancelled or rejected")),
+			validation.When(
+				w.Status == PTOStatusCancelled || w.Status == PTOStatusRejected,
+				validation.Required.Error(
+					"Reason is required when the status is cancelled or rejected",
+				),
+			),
+			validation.When(
+				w.Status != PTOStatusCancelled && w.Status != PTOStatusRejected,
+				validation.Empty.Error(
+					"Reason cannot be input when the status is not cancelled or rejected",
+				),
+			),
 		),
 	)
 	if err != nil {

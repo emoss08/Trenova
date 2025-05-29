@@ -53,7 +53,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, req *repositories.ListTractorRequest) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	req *repositories.ListTractorRequest,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, req)
 	if err != nil {
 		return nil, err
@@ -70,7 +73,10 @@ func (s *Service) SelectOptions(ctx context.Context, req *repositories.ListTract
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, req *repositories.ListTractorRequest) (*ports.ListResult[*tractor.Tractor], error) {
+func (s *Service) List(
+	ctx context.Context,
+	req *repositories.ListTractorRequest,
+) (*ports.ListResult[*tractor.Tractor], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -105,7 +111,10 @@ func (s *Service) List(ctx context.Context, req *repositories.ListTractorRequest
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, req *repositories.GetTractorByIDRequest) (*tractor.Tractor, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	req *repositories.GetTractorByIDRequest,
+) (*tractor.Tractor, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("tractorID", req.TractorID.String()).
@@ -140,7 +149,11 @@ func (s *Service) Get(ctx context.Context, req *repositories.GetTractorByIDReque
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, lc *tractor.Tractor, userID pulid.ID) (*tractor.Tractor, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	lc *tractor.Tractor,
+	userID pulid.ID,
+) (*tractor.Tractor, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("code", lc.Code).
@@ -199,7 +212,11 @@ func (s *Service) Create(ctx context.Context, lc *tractor.Tractor, userID pulid.
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, t *tractor.Tractor, userID pulid.ID) (*tractor.Tractor, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	t *tractor.Tractor,
+	userID pulid.ID,
+) (*tractor.Tractor, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("code", t.Code).
@@ -222,7 +239,9 @@ func (s *Service) Update(ctx context.Context, t *tractor.Tractor, userID pulid.I
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this tractor")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this tractor",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{
@@ -277,7 +296,10 @@ func (s *Service) Update(ctx context.Context, t *tractor.Tractor, userID pulid.I
 	return updatedEntity, nil
 }
 
-func (s *Service) Assignment(ctx context.Context, req repositories.TractorAssignmentRequest) (*repositories.AssignmentResponse, error) {
+func (s *Service) Assignment(
+	ctx context.Context,
+	req repositories.TractorAssignmentRequest,
+) (*repositories.AssignmentResponse, error) {
 	log := s.l.With().
 		Str("operation", "Assignment").
 		Str("tractorID", req.TractorID.String()).

@@ -45,29 +45,29 @@ type Configuration struct {
 	bun.BaseModel `bun:"table:table_configurations,alias:tc" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID `json:"id" bun:"id,pk,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	UserID         pulid.ID `json:"userId" bun:"user_id,type:VARCHAR(100),notnull"`
+	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
 
 	// Core fields
-	Name        string      `json:"name" bun:"name,type:VARCHAR(255),notnull"`
+	Name        string      `json:"name"        bun:"name,type:VARCHAR(255),notnull"`
 	Description string      `json:"description" bun:"description,type:TEXT"`
-	Resource    string      `json:"resource" bun:"resource,type:VARCHAR(100),notnull"`
+	Resource    string      `json:"resource"    bun:"resource,type:VARCHAR(100),notnull"`
 	TableConfig TableConfig `json:"tableConfig" bun:"table_config,type:JSONB,notnull"`
-	Visibility  Visibility  `json:"visibility" bun:"visibility,type:configuration_visibility_enum,notnull,default:'Private'"`
-	IsDefault   bool        `json:"isDefault" bun:"is_default,type:BOOLEAN,notnull,default:false"`
+	Visibility  Visibility  `json:"visibility"  bun:"visibility,type:configuration_visibility_enum,notnull,default:'Private'"`
+	IsDefault   bool        `json:"isDefault"   bun:"is_default,type:BOOLEAN,notnull,default:false"`
 
 	// Metadata
-	Version   int64 `json:"version" bun:"version,type:BIGINT,notnull,default:0"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	Creator      *user.User                 `json:"creator,omitempty" bun:"rel:belongs-to,join:user_id=id"`
-	Shares       []*ConfigurationShare      `json:"shares,omitempty" bun:"rel:has-many,join:id=configuration_id"`
+	Creator      *user.User                 `json:"creator,omitempty"      bun:"rel:belongs-to,join:user_id=id"`
+	Shares       []*ConfigurationShare      `json:"shares,omitempty"       bun:"rel:has-many,join:id=configuration_id"`
 }
 
 func (c *Configuration) Validate(ctx context.Context, multiErr *errors.MultiError) {
@@ -82,9 +82,11 @@ func (c *Configuration) Validate(ctx context.Context, multiErr *errors.MultiErro
 		validation.Field(&c.TableConfig,
 			validation.Required.Error("Table configuration is required"),
 		),
-		validation.Field(&c.Visibility,
+		validation.Field(
+			&c.Visibility,
 			validation.Required.Error("Visibility is required"),
-			validation.In(VisibilityPrivate, VisibilityPublic, VisibilityShared).Error("Visibility must be Private, Public, or Shared"),
+			validation.In(VisibilityPrivate, VisibilityPublic, VisibilityShared).
+				Error("Visibility must be Private, Public, or Shared"),
 		),
 	)
 	if err != nil {

@@ -53,7 +53,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQueryOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -71,7 +74,10 @@ func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQuer
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*billing.DocumentType], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*billing.DocumentType], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -91,7 +97,9 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read document types")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read document types",
+		)
 	}
 
 	entities, err := s.repo.List(ctx, opts)
@@ -106,7 +114,10 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetDocumentTypeByIDRequest) (*billing.DocumentType, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts repositories.GetDocumentTypeByIDRequest,
+) (*billing.DocumentType, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("documentTypeID", opts.ID.String()).
@@ -129,7 +140,9 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetDocumentTypeByID
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this document type")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read this document type",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, opts)
@@ -141,7 +154,11 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetDocumentTypeByID
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, dt *billing.DocumentType, userID pulid.ID) (*billing.DocumentType, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	dt *billing.DocumentType,
+	userID pulid.ID,
+) (*billing.DocumentType, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("name", dt.Name).
@@ -164,7 +181,9 @@ func (s *Service) Create(ctx context.Context, dt *billing.DocumentType, userID p
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a document type")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to create a document type",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{
@@ -200,7 +219,11 @@ func (s *Service) Create(ctx context.Context, dt *billing.DocumentType, userID p
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, dt *billing.DocumentType, userID pulid.ID) (*billing.DocumentType, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	dt *billing.DocumentType,
+	userID pulid.ID,
+) (*billing.DocumentType, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("name", dt.Name).
@@ -223,7 +246,9 @@ func (s *Service) Update(ctx context.Context, dt *billing.DocumentType, userID p
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this document type")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this document type",
+		)
 	}
 
 	// Validate the fleet code

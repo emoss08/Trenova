@@ -104,10 +104,13 @@ func (h *Handler) listUserConfigurations(c *fiber.Ctx) error {
 
 		resource := fc.Params("resource")
 
-		return h.ts.ListUserConfigurations(fc.UserContext(), &repositories.ListUserConfigurationRequest{
-			Resource: resource,
-			Filter:   filter,
-		})
+		return h.ts.ListUserConfigurations(
+			fc.UserContext(),
+			&repositories.ListUserConfigurationRequest{
+				Resource: resource,
+				Filter:   filter,
+			},
+		)
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)

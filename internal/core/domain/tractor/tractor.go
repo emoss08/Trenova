@@ -27,39 +27,39 @@ var (
 type Tractor struct {
 	bun.BaseModel `bun:"table:tractors,alias:tr" json:"-"`
 
-	ID                      pulid.ID               `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
-	BusinessUnitID          pulid.ID               `bun:"business_unit_id,type:VARCHAR(100),pk,notnull" json:"businessUnitId"`
-	OrganizationID          pulid.ID               `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
-	EquipmentTypeID         pulid.ID               `bun:"equipment_type_id,type:VARCHAR(100),notnull" json:"equipmentTypeId"`
-	PrimaryWorkerID         pulid.ID               `bun:"primary_worker_id,type:VARCHAR(100),notnull" json:"primaryWorkerId"`
-	EquipmentManufacturerID pulid.ID               `bun:"equipment_manufacturer_id,type:VARCHAR(100),notnull" json:"equipmentManufacturerId"`
-	StateID                 *pulid.ID              `bun:"state_id,type:VARCHAR(100),nullzero" json:"stateId"`
-	FleetCodeID             *pulid.ID              `bun:"fleet_code_id,type:VARCHAR(100),nullzero" json:"fleetCodeId"`
-	SecondaryWorkerID       *pulid.ID              `bun:"secondary_worker_id,type:VARCHAR(100),nullzero" json:"secondaryWorkerId"`
-	Status                  domain.EquipmentStatus `json:"status" bun:"status,type:equipment_status_enum,notnull,default:'Available'"`
-	Code                    string                 `json:"code" bun:"code,type:VARCHAR(50),notnull"`
-	Model                   string                 `json:"model" bun:"model,type:VARCHAR(50)"`
-	Make                    string                 `json:"make" bun:"make,type:VARCHAR(50)"`
-	SearchVector            string                 `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                    string                 `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
-	RegistrationNumber      string                 `json:"registrationNumber" bun:"registration_number,type:VARCHAR(50)"`
-	LicensePlateNumber      string                 `json:"licensePlateNumber" bun:"license_plate_number,type:VARCHAR(50)"`
-	Vin                     string                 `json:"vin" bun:"vin,type:vin_code_optional"`
-	Year                    *int                   `json:"year" bun:"year,type:INTEGER,nullzero"`
-	RegistrationExpiry      *int64                 `json:"registrationExpiry" bun:"registration_expiry,type:INTEGER,nullzero"`
-	Version                 int64                  `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt               int64                  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt               int64                  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                      pulid.ID               `bun:"id,type:VARCHAR(100),pk,notnull"                                                      json:"id"`
+	BusinessUnitID          pulid.ID               `bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        json:"businessUnitId"`
+	OrganizationID          pulid.ID               `bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         json:"organizationId"`
+	EquipmentTypeID         pulid.ID               `bun:"equipment_type_id,type:VARCHAR(100),notnull"                                          json:"equipmentTypeId"`
+	PrimaryWorkerID         pulid.ID               `bun:"primary_worker_id,type:VARCHAR(100),notnull"                                          json:"primaryWorkerId"`
+	EquipmentManufacturerID pulid.ID               `bun:"equipment_manufacturer_id,type:VARCHAR(100),notnull"                                  json:"equipmentManufacturerId"`
+	StateID                 *pulid.ID              `bun:"state_id,type:VARCHAR(100),nullzero"                                                  json:"stateId"`
+	FleetCodeID             *pulid.ID              `bun:"fleet_code_id,type:VARCHAR(100),nullzero"                                             json:"fleetCodeId"`
+	SecondaryWorkerID       *pulid.ID              `bun:"secondary_worker_id,type:VARCHAR(100),nullzero"                                       json:"secondaryWorkerId"`
+	Status                  domain.EquipmentStatus `bun:"status,type:equipment_status_enum,notnull,default:'Available'"                        json:"status"`
+	Code                    string                 `bun:"code,type:VARCHAR(50),notnull"                                                        json:"code"`
+	Model                   string                 `bun:"model,type:VARCHAR(50)"                                                               json:"model"`
+	Make                    string                 `bun:"make,type:VARCHAR(50)"                                                                json:"make"`
+	SearchVector            string                 `bun:"search_vector,type:TSVECTOR,scanonly"                                                 json:"-"`
+	Rank                    string                 `bun:"rank,type:VARCHAR(100),scanonly"                                                      json:"-"`
+	RegistrationNumber      string                 `bun:"registration_number,type:VARCHAR(50)"                                                 json:"registrationNumber"`
+	LicensePlateNumber      string                 `bun:"license_plate_number,type:VARCHAR(50)"                                                json:"licensePlateNumber"`
+	Vin                     string                 `bun:"vin,type:vin_code_optional"                                                           json:"vin"`
+	Year                    *int                   `bun:"year,type:INTEGER,nullzero"                                                           json:"year"`
+	RegistrationExpiry      *int64                 `bun:"registration_expiry,type:INTEGER,nullzero"                                            json:"registrationExpiry"`
+	Version                 int64                  `bun:"version,type:BIGINT"                                                                  json:"version"`
+	CreatedAt               int64                  `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
+	UpdatedAt               int64                  `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
 
 	// Relationships
-	BusinessUnit          *businessunit.BusinessUnit                   `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization          *organization.Organization                   `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	PrimaryWorker         *worker.Worker                               `json:"primaryWorker,omitempty" bun:"rel:belongs-to,join:primary_worker_id=id"`
-	SecondaryWorker       *worker.Worker                               `json:"secondaryWorker,omitempty" bun:"rel:belongs-to,join:secondary_worker_id=id"`
-	EquipmentType         *equipmenttype.EquipmentType                 `json:"equipmentType,omitempty" bun:"rel:belongs-to,join:equipment_type_id=id"`
+	BusinessUnit          *businessunit.BusinessUnit                   `json:"businessUnit,omitempty"          bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization          *organization.Organization                   `json:"organization,omitempty"          bun:"rel:belongs-to,join:organization_id=id"`
+	PrimaryWorker         *worker.Worker                               `json:"primaryWorker,omitempty"         bun:"rel:belongs-to,join:primary_worker_id=id"`
+	SecondaryWorker       *worker.Worker                               `json:"secondaryWorker,omitempty"       bun:"rel:belongs-to,join:secondary_worker_id=id"`
+	EquipmentType         *equipmenttype.EquipmentType                 `json:"equipmentType,omitempty"         bun:"rel:belongs-to,join:equipment_type_id=id"`
 	EquipmentManufacturer *equipmentmanufacturer.EquipmentManufacturer `json:"equipmentManufacturer,omitempty" bun:"rel:belongs-to,join:equipment_manufacturer_id=id"`
-	State                 *usstate.UsState                             `json:"state,omitempty" bun:"rel:belongs-to,join:state_id=id"`
-	FleetCode             *fleetcode.FleetCode                         `json:"fleetCode,omitempty" bun:"rel:belongs-to,join:fleet_code_id=id"`
+	State                 *usstate.UsState                             `json:"state,omitempty"                 bun:"rel:belongs-to,join:state_id=id"`
+	FleetCode             *fleetcode.FleetCode                         `json:"fleetCode,omitempty"             bun:"rel:belongs-to,join:fleet_code_id=id"`
 }
 
 func (t *Tractor) Validate(ctx context.Context, multiErr *errors.MultiError) {

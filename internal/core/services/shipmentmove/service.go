@@ -48,7 +48,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) Get(ctx context.Context, req repositories.GetMoveByIDOptions) (*shipment.ShipmentMove, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	req repositories.GetMoveByIDOptions,
+) (*shipment.ShipmentMove, error) {
 	log := s.l.With().
 		Str("operaiton", "GetByID").
 		Str("moveID", req.MoveID.String()).
@@ -63,7 +66,12 @@ func (s *Service) Get(ctx context.Context, req repositories.GetMoveByIDOptions) 
 
 	return entity, nil
 }
-func (s *Service) Split(ctx context.Context, req *repositories.SplitMoveRequest, userID pulid.ID) (*repositories.SplitMoveResponse, error) {
+
+func (s *Service) Split(
+	ctx context.Context,
+	req *repositories.SplitMoveRequest,
+	userID pulid.ID,
+) (*repositories.SplitMoveResponse, error) {
 	log := s.l.With().
 		Str("operation", "Split").
 		Str("moveID", req.MoveID.String()).

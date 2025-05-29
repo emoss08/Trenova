@@ -30,7 +30,10 @@ type PermissionDefinition struct {
 	FieldSettings []*permission.FieldPermission
 }
 
-func NewPermissionBuilder(resource permission.Resource, action permission.Action) *PermissionBuilder {
+func NewPermissionBuilder(
+	resource permission.Resource,
+	action permission.Action,
+) *PermissionBuilder {
 	return &PermissionBuilder{
 		resource: resource,
 		action:   action,
@@ -48,7 +51,9 @@ func (pb *PermissionBuilder) WithDescription(desc string) *PermissionBuilder {
 	return pb
 }
 
-func (pb *PermissionBuilder) WithFieldSettings(settings ...*permission.FieldPermission) *PermissionBuilder {
+func (pb *PermissionBuilder) WithFieldSettings(
+	settings ...*permission.FieldPermission,
+) *PermissionBuilder {
 	pb.fieldSettings = append(pb.fieldSettings, settings...)
 	return pb
 }

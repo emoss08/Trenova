@@ -16,12 +16,19 @@ import (
 
 var ErrAdminAccountAlreadyExists = eris.New("admin account already exists")
 
-func LoadAdminAccount(ctx context.Context, db *bun.DB, fixture *dbfixture.Fixture) (*user.User, error) {
+func LoadAdminAccount(
+	ctx context.Context,
+	db *bun.DB,
+	fixture *dbfixture.Fixture,
+) (*user.User, error) {
 	org := fixture.MustRow("Organization.trenova").(*organization.Organization)
 	org2 := fixture.MustRow("Organization.trenova_2").(*organization.Organization)
 	bu := fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
 
-	exists, err := db.NewSelect().Model((*user.User)(nil)).Where("email_address = ?", "admin@trenova.com").Exists(ctx)
+	exists, err := db.NewSelect().
+		Model((*user.User)(nil)).
+		Where("email_address = ?", "admin@trenova.com").
+		Exists(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -94,7 +101,9 @@ func LoadFakeAccounts(ctx context.Context, db *bun.DB, fixture *dbfixture.Fixtur
 	for range numAccounts {
 		email := fake.Internet().Email()
 		name := fake.Person().Name()
-		username := fake.RandomStringWithLength(19) // This sometimes will generate the same username for multiple users so re-generate if it already exists
+		username := fake.RandomStringWithLength(
+			19,
+		) // This sometimes will generate the same username for multiple users so re-generate if it already exists
 		timezone := "America/Los_Angeles"
 
 		usr := &user.User{

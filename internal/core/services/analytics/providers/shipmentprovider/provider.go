@@ -48,7 +48,10 @@ func (p *Provider) GetPage() services.AnalyticsPage {
 }
 
 // GetAnalyticsData returns the analytics data for the shipment management page
-func (p *Provider) GetAnalyticsData(ctx context.Context, opts *services.AnalyticsRequestOptions) (services.AnalyticsData, error) {
+func (p *Provider) GetAnalyticsData(
+	ctx context.Context,
+	opts *services.AnalyticsRequestOptions,
+) (services.AnalyticsData, error) {
 	log := p.l.With().
 		Str("operation", "GetAnalyticsData").
 		Str("orgID", opts.OrgID.String()).
@@ -79,7 +82,10 @@ func (p *Provider) GetAnalyticsData(ctx context.Context, opts *services.Analytic
 	return data, nil
 }
 
-func (p *Provider) getShipmentCount(ctx context.Context, orgID, buID pulid.ID) (*ShipmentCountCard, error) {
+func (p *Provider) getShipmentCount(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+) (*ShipmentCountCard, error) {
 	log := p.l.With().
 		Str("query", "getShipmentCount").
 		Logger()
@@ -121,7 +127,9 @@ func (p *Provider) getShipmentCount(ctx context.Context, orgID, buID pulid.ID) (
 	// Calculate trend percentage
 	var trendPercentage int
 	if previousMonthCount > 0 {
-		trendPercentage = int(((float64(currentMonthCount) - float64(previousMonthCount)) / float64(previousMonthCount)) * 100)
+		trendPercentage = int(
+			((float64(currentMonthCount) - float64(previousMonthCount)) / float64(previousMonthCount)) * 100,
+		)
 	}
 
 	return &ShipmentCountCard{
@@ -130,7 +138,10 @@ func (p *Provider) getShipmentCount(ctx context.Context, orgID, buID pulid.ID) (
 	}, nil
 }
 
-func (p *Provider) getCountByShipmentStatus(ctx context.Context, orgID, buID pulid.ID) ([]*CountByShipmentStatus, error) {
+func (p *Provider) getCountByShipmentStatus(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+) ([]*CountByShipmentStatus, error) {
 	log := p.l.With().
 		Str("query", "getCountByShipmentStatus").
 		Logger()

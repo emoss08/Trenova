@@ -24,7 +24,9 @@ type pcmilerConfigurationRepository struct {
 	logger *zerolog.Logger
 }
 
-func NewPCMilerConfigurationRepository(p PCMilerConfigurationRepositoryParams) repositories.PCMilerConfigurationRepository {
+func NewPCMilerConfigurationRepository(
+	p PCMilerConfigurationRepositoryParams,
+) repositories.PCMilerConfigurationRepository {
 	log := p.Logger.With().Str("repository", "pcmiler").Logger()
 
 	return &pcmilerConfigurationRepository{
@@ -33,7 +35,10 @@ func NewPCMilerConfigurationRepository(p PCMilerConfigurationRepositoryParams) r
 	}
 }
 
-func (r *pcmilerConfigurationRepository) GetPCMilerConfiguration(ctx context.Context, opts repositories.GetPCMilerConfigurationOptions) (*pcmilerconfiguration.PCMilerConfiguration, error) {
+func (r *pcmilerConfigurationRepository) GetPCMilerConfiguration(
+	ctx context.Context,
+	opts repositories.GetPCMilerConfigurationOptions,
+) (*pcmilerconfiguration.PCMilerConfiguration, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")

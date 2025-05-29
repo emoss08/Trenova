@@ -131,7 +131,10 @@ func NewRepository(p RepositoryParams) repositories.ResourceEditorRepository {
 //
 // Returns:
 //   - *repositories.SchemaInformation: The schema information for the given schema name.
-func (r *repository) GetTableSchema(ctx context.Context, schemaName string) (*repositories.SchemaInformation, error) {
+func (r *repository) GetTableSchema(
+	ctx context.Context,
+	schemaName string,
+) (*repositories.SchemaInformation, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection")
@@ -222,7 +225,10 @@ func (r *repository) GetTableSchema(ctx context.Context, schemaName string) (*re
 // Returns:
 //   - []repositories.ColumnDetails: The column details for the given table.
 //   - error: An error if the operation fails.
-func (r *repository) fetchColumnsForTable(ctx context.Context, schemaName, tableName string) ([]repositories.ColumnDetails, error) {
+func (r *repository) fetchColumnsForTable(
+	ctx context.Context,
+	schemaName, tableName string,
+) ([]repositories.ColumnDetails, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection")
@@ -253,7 +259,11 @@ func (r *repository) fetchColumnsForTable(ctx context.Context, schemaName, table
 	`
 	rows, err := dba.QueryContext(ctx, query, schemaName, tableName)
 	if err != nil {
-		r.logger.Error().Err(err).Str("schemaName", schemaName).Str("tableName", tableName).Msg("Querying columns failed")
+		r.logger.Error().
+			Err(err).
+			Str("schemaName", schemaName).
+			Str("tableName", tableName).
+			Msg("Querying columns failed")
 		return nil, eris.Wrap(err, "querying columns failed")
 	}
 	defer rows.Close()
@@ -313,7 +323,10 @@ func (r *repository) fetchColumnsForTable(ctx context.Context, schemaName, table
 // Returns:
 //   - []repositories.IndexDetails: The index details for the given table.
 //   - error: An error if the operation fails.
-func (r *repository) fetchIndexesForTable(ctx context.Context, schemaName, tableName string) ([]repositories.IndexDetails, error) {
+func (r *repository) fetchIndexesForTable(
+	ctx context.Context,
+	schemaName, tableName string,
+) ([]repositories.IndexDetails, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection")
@@ -343,7 +356,11 @@ func (r *repository) fetchIndexesForTable(ctx context.Context, schemaName, table
     `
 	rows, err := dba.QueryContext(ctx, query, tableName, schemaName)
 	if err != nil {
-		r.logger.Error().Err(err).Str("schemaName", schemaName).Str("tableName", tableName).Msg("Querying indexes failed")
+		r.logger.Error().
+			Err(err).
+			Str("schemaName", schemaName).
+			Str("tableName", tableName).
+			Msg("Querying indexes failed")
 		return nil, eris.Wrap(err, "querying indexes failed")
 	}
 	defer rows.Close()
@@ -362,7 +379,8 @@ func (r *repository) fetchIndexesForTable(ctx context.Context, schemaName, table
 
 		// * Ensure indexName, indexDef, and columnName are valid
 		if !indexName.Valid || !indexDef.Valid || !columnName.Valid {
-			r.logger.Warn().Msg("Skipping index row due to NULL essential fields (indexName, indexDef, or columnName)")
+			r.logger.Warn().
+				Msg("Skipping index row due to NULL essential fields (indexName, indexDef, or columnName)")
 			continue
 		}
 
@@ -405,7 +423,10 @@ func (r *repository) fetchIndexesForTable(ctx context.Context, schemaName, table
 // Returns:
 //   - []repositories.ConstraintDetails: The constraint details for the given table.
 //   - error: An error if the operation fails.
-func (r *repository) fetchConstraintsForTable(ctx context.Context, schemaName, tableName string) ([]repositories.ConstraintDetails, error) {
+func (r *repository) fetchConstraintsForTable(
+	ctx context.Context,
+	schemaName, tableName string,
+) ([]repositories.ConstraintDetails, error) {
 	constraintsMap := make(map[string]*repositories.ConstraintDetails)
 	var orderedConstraintNames []string
 
@@ -469,7 +490,11 @@ func (r *repository) fetchCheckConstraints(
     `
 	checkRows, err := dba.QueryContext(ctx, checkConstraintsQuery, schemaName, tableName)
 	if err != nil {
-		r.logger.Error().Err(err).Str("schemaName", schemaName).Str("tableName", tableName).Msg("Querying check constraints failed")
+		r.logger.Error().
+			Err(err).
+			Str("schemaName", schemaName).
+			Str("tableName", tableName).
+			Msg("Querying check constraints failed")
 		return eris.Wrap(err, "querying check constraints failed")
 	}
 	defer checkRows.Close()
@@ -488,7 +513,10 @@ func (r *repository) fetchCheckConstraints(
 				Deferrable:        isDeferrableStr == string(resourcesqltype.KeywordYes),
 				InitiallyDeferred: initiallyDeferredStr == string(resourcesqltype.KeywordYes),
 			}
-			*orderedConstraintNames = append(*orderedConstraintNames, consName) // * Add if it's a new constraint
+			*orderedConstraintNames = append(
+				*orderedConstraintNames,
+				consName,
+			) // * Add if it's a new constraint
 		} else {
 			// * This case should ideally not be hit if CHECK constraints are always in table_constraints
 			// * but if it is, update the existing entry.
@@ -550,7 +578,11 @@ func (r *repository) fetchForeignKeyDetails(
     `
 	fkRows, err := dba.QueryContext(ctx, fkDetailsQuery, schemaName, tableName)
 	if err != nil {
-		r.logger.Error().Err(err).Str("schemaName", schemaName).Str("tableName", tableName).Msg("Querying foreign key details failed")
+		r.logger.Error().
+			Err(err).
+			Str("schemaName", schemaName).
+			Str("tableName", tableName).
+			Msg("Querying foreign key details failed")
 		return eris.Wrap(err, "querying foreign key details failed")
 	}
 	defer fkRows.Close()
@@ -583,7 +615,8 @@ func (r *repository) fetchForeignKeyDetails(
 	}
 
 	for consName, fkData := range tempFkStore {
-		if constraint, ok := constraintsMap[consName]; ok && constraint.ConstraintType == "FOREIGN KEY" {
+		if constraint, ok := constraintsMap[consName]; ok &&
+			constraint.ConstraintType == "FOREIGN KEY" {
 			constraint.ForeignTableName = &fkData.FTable
 			constraint.ForeignColumnNames = fkData.FCols
 		}
@@ -624,7 +657,11 @@ func (r *repository) fetchKeyConstraints(
     `
 	keyRows, err := dba.QueryContext(ctx, keyConstraintsQuery, schemaName, tableName)
 	if err != nil {
-		r.logger.Error().Err(err).Str("schemaName", schemaName).Str("tableName", tableName).Msg("Querying key constraints failed")
+		r.logger.Error().
+			Err(err).
+			Str("schemaName", schemaName).
+			Str("tableName", tableName).
+			Msg("Querying key constraints failed")
 		return eris.Wrap(err, "querying key constraints failed")
 	}
 	defer keyRows.Close()
@@ -669,7 +706,13 @@ func (r *repository) fetchKeyConstraints(
 //   - aliasMap: A map of table aliases to their corresponding table information.
 //   - response: The autocomplete response to which suggestions will be added.
 //   - columnHighScore: The score to use for column suggestions.
-func (r *repository) handleDotNotation(ctx context.Context, req repositories.AutocompleteRequest, aliasMap map[string]tableAlias, response *repositories.AutocompleteResponse, columnHighScore int) {
+func (r *repository) handleDotNotation(
+	ctx context.Context,
+	req repositories.AutocompleteRequest,
+	aliasMap map[string]tableAlias,
+	response *repositories.AutocompleteResponse,
+	columnHighScore int,
+) {
 	dotIdx := strings.LastIndex(req.Prefix, ".")
 	if dotIdx == -1 {
 		return
@@ -690,12 +733,16 @@ func (r *repository) handleDotNotation(ctx context.Context, req repositories.Aut
 
 	cols, err := r.fetchColumnsForTable(ctx, schemaName, tbl.Table)
 	if err != nil {
-		r.logger.Warn().Err(err).Str("table", tbl.Table).Msg("Failed to fetch columns for alias completion")
+		r.logger.Warn().
+			Err(err).
+			Str("table", tbl.Table).
+			Msg("Failed to fetch columns for alias completion")
 		return
 	}
 
 	for _, col := range cols {
-		if columnPrefix == "" || strings.HasPrefix(strings.ToLower(col.ColumnName), strings.ToLower(columnPrefix)) {
+		if columnPrefix == "" ||
+			strings.HasPrefix(strings.ToLower(col.ColumnName), strings.ToLower(columnPrefix)) {
 			response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
 				Value:   col.ColumnName,
 				Caption: col.ColumnName + " (" + col.DataType + ")",
@@ -715,7 +762,10 @@ func (r *repository) handleDotNotation(ctx context.Context, req repositories.Aut
 // Returns:
 //   - *repositories.AutocompleteResponse: The autocomplete response containing the suggestions.
 //   - error: An error if the operation fails.
-func (r *repository) GetAutocompleteSuggestions(ctx context.Context, req repositories.AutocompleteRequest) (*repositories.AutocompleteResponse, error) {
+func (r *repository) GetAutocompleteSuggestions(
+	ctx context.Context,
+	req repositories.AutocompleteRequest,
+) (*repositories.AutocompleteResponse, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection for autocomplete")
@@ -763,7 +813,17 @@ func (r *repository) GetAutocompleteSuggestions(ctx context.Context, req reposit
 	// * 5. Table & column suggestions depending on detected context
 	// * ------------------------------------------------------------------------------------------------
 
-	r.addContextualSuggestions(ctx, req, response, dba, aliasMap, lastKeyword, inSelectList, columnHighScore, tableHighScore)
+	r.addContextualSuggestions(
+		ctx,
+		req,
+		response,
+		dba,
+		aliasMap,
+		lastKeyword,
+		inSelectList,
+		columnHighScore,
+		tableHighScore,
+	)
 
 	// * ------------------------------------------------------------------------------------------------
 	// * 6. Final sorting & deduplication
@@ -791,7 +851,9 @@ func (r *repository) GetAutocompleteSuggestions(ctx context.Context, req reposit
 	}
 	response.Suggestions = finalSuggestions
 
-	r.logger.Info().Int("suggestion_count", len(response.Suggestions)).Msg("Autocomplete suggestions provided")
+	r.logger.Info().
+		Int("suggestion_count", len(response.Suggestions)).
+		Msg("Autocomplete suggestions provided")
 	return response, nil
 }
 
@@ -865,7 +927,10 @@ func (r *repository) addTableSuggestions(
 	tableQuery := `SELECT table_name FROM information_schema.tables WHERE table_schema = ? AND (table_name ILIKE ? OR ? = '') ORDER BY table_name;`
 	tableRows, qErr := dba.QueryContext(ctx, tableQuery, req.SchemaName, req.Prefix+"%", req.Prefix)
 	if qErr != nil {
-		r.logger.Error().Err(qErr).Str("schema", req.SchemaName).Msg("Failed to query tables for autocomplete")
+		r.logger.Error().
+			Err(qErr).
+			Str("schema", req.SchemaName).
+			Msg("Failed to query tables for autocomplete")
 		return
 	}
 	defer tableRows.Close()
@@ -908,7 +973,11 @@ func (r *repository) determineTableScore(baseScore int, inSelectList bool, lastK
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (r *repository) addTableSuggestion(response *repositories.AutocompleteResponse, tableName string, score int) {
+func (r *repository) addTableSuggestion(
+	response *repositories.AutocompleteResponse,
+	tableName string,
+	score int,
+) {
 	response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
 		Value:   tableName,
 		Caption: tableName,
@@ -976,7 +1045,14 @@ func (r *repository) addColumnsFromAliases(
 		}
 
 		for _, col := range cols {
-			r.addColumnIfRelevant(req, response, columnAdded, col.ColumnName, col.DataType, columnHighScore)
+			r.addColumnIfRelevant(
+				req,
+				response,
+				columnAdded,
+				col.ColumnName,
+				col.DataType,
+				columnHighScore,
+			)
 		}
 	}
 }
@@ -1009,7 +1085,14 @@ func (r *repository) addColumnsFromTableName(
 	}
 
 	for _, col := range cols {
-		r.addColumnIfRelevant(req, response, columnAdded, col.ColumnName, col.DataType, columnHighScore)
+		r.addColumnIfRelevant(
+			req,
+			response,
+			columnAdded,
+			col.ColumnName,
+			col.DataType,
+			columnHighScore,
+		)
 	}
 }
 
@@ -1036,7 +1119,8 @@ func (r *repository) addColumnIfRelevant(
 		return
 	}
 
-	if req.Prefix != "" && !strings.HasPrefix(strings.ToLower(columnName), strings.ToLower(req.Prefix)) {
+	if req.Prefix != "" &&
+		!strings.HasPrefix(strings.ToLower(columnName), strings.ToLower(req.Prefix)) {
 		return
 	}
 
@@ -1174,9 +1258,13 @@ func (r *repository) extractLastKeyword(queryText string) string {
 // Parameters:
 //   - req: The autocomplete request containing the current query and prefix.
 //   - response: The autocomplete response to which suggestions will be added.
-func (r *repository) addKeywordSuggestions(req repositories.AutocompleteRequest, response *repositories.AutocompleteResponse) {
+func (r *repository) addKeywordSuggestions(
+	req repositories.AutocompleteRequest,
+	response *repositories.AutocompleteResponse,
+) {
 	for _, kw := range resourcesqltype.AvailableKeywords {
-		if strings.HasPrefix(strings.ToUpper(kw.String()), strings.ToUpper(req.Prefix)) || req.Prefix == "" {
+		if strings.HasPrefix(strings.ToUpper(kw.String()), strings.ToUpper(req.Prefix)) ||
+			req.Prefix == "" {
 			response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
 				Value:   kw.String(),
 				Caption: kw.String(),
@@ -1192,8 +1280,12 @@ func (r *repository) addKeywordSuggestions(req repositories.AutocompleteRequest,
 // Parameters:
 //   - req: The autocomplete request containing the current query and prefix.
 //   - response: The autocomplete response to which suggestions will be added.
-func (r *repository) addSchemaSuggestions(req repositories.AutocompleteRequest, response *repositories.AutocompleteResponse) {
-	if req.SchemaName != "" && (strings.HasPrefix(strings.ToLower(req.SchemaName), strings.ToLower(req.Prefix)) || req.Prefix == "") {
+func (r *repository) addSchemaSuggestions(
+	req repositories.AutocompleteRequest,
+	response *repositories.AutocompleteResponse,
+) {
+	if req.SchemaName != "" &&
+		(strings.HasPrefix(strings.ToLower(req.SchemaName), strings.ToLower(req.Prefix)) || req.Prefix == "") {
 		response.Suggestions = append(response.Suggestions, repositories.AutocompleteSuggestion{
 			Value:   req.SchemaName,
 			Caption: req.SchemaName,
@@ -1212,7 +1304,10 @@ func (r *repository) addSchemaSuggestions(req repositories.AutocompleteRequest, 
 // Returns:
 //   - *repositories.ExecuteQueryResponse: The execute query response containing the result.
 //   - error: An error if the operation fails.
-func (r *repository) ExecuteSQLQuery(ctx context.Context, req repositories.ExecuteQueryRequest) (*repositories.ExecuteQueryResponse, error) {
+func (r *repository) ExecuteSQLQuery(
+	ctx context.Context,
+	req repositories.ExecuteQueryRequest,
+) (*repositories.ExecuteQueryResponse, error) {
 	log := r.logger.With().
 		Str("operation", "ExecuteSQLQuery").
 		Str("query", req.Query).
@@ -1240,7 +1335,10 @@ func (r *repository) ExecuteSQLQuery(ctx context.Context, req repositories.Execu
 // Returns:
 //   - repositories.QueryResult: The query result.
 //   - error: An error if the operation fails.
-func (r *repository) executeQueryAndProcessResults(ctx context.Context, query string) (repositories.QueryResult, error) {
+func (r *repository) executeQueryAndProcessResults(
+	ctx context.Context,
+	query string,
+) (repositories.QueryResult, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection")
@@ -1275,7 +1373,13 @@ func (r *repository) executeQueryAndProcessResults(ctx context.Context, query st
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (r *repository) processQueryInTransaction(ctx context.Context, tx bun.Tx, query string, result *repositories.QueryResult, resultsData *[][]any) error {
+func (r *repository) processQueryInTransaction(
+	ctx context.Context,
+	tx bun.Tx,
+	query string,
+	result *repositories.QueryResult,
+	resultsData *[][]any,
+) error {
 	rows, err := tx.QueryContext(ctx, query)
 	if err != nil {
 		return err
@@ -1321,7 +1425,12 @@ func (r *repository) processQueryInTransaction(ctx context.Context, tx bun.Tx, q
 //   - result: The query result.
 //   - resultsData: The data from the query result.
 //   - query: The query to execute.
-func (r *repository) setResultMessage(ctx context.Context, result *repositories.QueryResult, resultsData [][]any, query string) {
+func (r *repository) setResultMessage(
+	ctx context.Context,
+	result *repositories.QueryResult,
+	resultsData [][]any,
+	query string,
+) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection")
@@ -1332,18 +1441,27 @@ func (r *repository) setResultMessage(ctx context.Context, result *repositories.
 	case len(resultsData) == 0 && len(result.Columns) > 0:
 		result.Message = "Query executed successfully, 0 rows returned."
 	case len(resultsData) > 0:
-		result.Message = fmt.Sprintf("Query executed successfully, %d rows returned.", len(resultsData))
+		result.Message = fmt.Sprintf(
+			"Query executed successfully, %d rows returned.",
+			len(resultsData),
+		)
 	default:
-		r.logger.Warn().Msg("Query executed, but returned no columns. Possibly a non-SELECT statement or empty result.")
+		r.logger.Warn().
+			Msg("Query executed, but returned no columns. Possibly a non-SELECT statement or empty result.")
 
 		res, execErr := dba.ExecContext(ctx, query)
 		if execErr != nil {
-			r.logger.Error().Err(execErr).Msg("Error executing SQL query with ExecContext after QueryContext yielded no columns")
+			r.logger.Error().
+				Err(execErr).
+				Msg("Error executing SQL query with ExecContext after QueryContext yielded no columns")
 			result.Error = execErr.Error()
 			return
 		}
 
 		rowsAffected, _ := res.RowsAffected()
-		result.Message = fmt.Sprintf("Command executed successfully. Rows affected: %d", rowsAffected)
+		result.Message = fmt.Sprintf(
+			"Command executed successfully. Rows affected: %d",
+			rowsAffected,
+		)
 	}
 }

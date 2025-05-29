@@ -18,12 +18,18 @@ import (
 )
 
 // SMTPProviderConstructor creates a new SMTP provider with the template service
-func SMTPProviderConstructor(cfg *config.AppConfig, templateService *email.TemplateService) *provider.SMTPProvider {
+func SMTPProviderConstructor(
+	cfg *config.AppConfig,
+	templateService *email.TemplateService,
+) *provider.SMTPProvider {
 	return provider.NewSMTPProvider(cfg, templateService)
 }
 
 // SendGridProviderConstructor creates a new SendGrid provider with the template service
-func SendGridProviderConstructor(cfg *config.AppConfig, templateService *email.TemplateService) *provider.SendGridProvider {
+func SendGridProviderConstructor(
+	cfg *config.AppConfig,
+	templateService *email.TemplateService,
+) *provider.SendGridProvider {
 	return provider.NewSendGridProvider(cfg, templateService)
 }
 
@@ -124,7 +130,9 @@ func setupTemplateServer(
 		OnStart: func(context.Context) error {
 			// Start the template server in a separate goroutine
 			go func() {
-				log.Printf("Starting template management server on http://localhost:3002 (DEV MODE ONLY)")
+				log.Printf(
+					"Starting template management server on http://localhost:3002 (DEV MODE ONLY)",
+				)
 				if err := srv.Start(); err != nil {
 					log.Printf("Template server error: %v", err)
 				}

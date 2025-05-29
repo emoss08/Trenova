@@ -64,7 +64,10 @@ func NewBackupService(p BackupServiceParams) (services.BackupService, error) {
 	// * Verify PostgreSQL tools are available
 	pgDumpPath, err := exec.LookPath("pg_dump")
 	if err != nil {
-		return nil, eris.Wrap(err, "pg_dump binary not found in PATH, PostgreSQL client tools must be installed")
+		return nil, eris.Wrap(
+			err,
+			"pg_dump binary not found in PATH, PostgreSQL client tools must be installed",
+		)
 	}
 
 	pgRestorePath, err := exec.LookPath("pg_restore")

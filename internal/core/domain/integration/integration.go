@@ -25,31 +25,31 @@ type Integration struct {
 	bun.BaseModel `bun:"table:integrations,alias:i" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
+	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull"               json:"id"`
 	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),pk,notnull" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
+	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull"  json:"organizationId"`
 
 	// Relationship identifiers (Non-Primary-Keys)
 	EnabledByID *pulid.ID `bun:"enabled_by_id,type:VARCHAR(100)" json:"enabledById"`
 
 	// Core fields
-	Type          Type           `bun:"type,type:integration_type,notnull" json:"type"`
-	Name          string         `bun:"name,type:VARCHAR(100),notnull" json:"name"`
-	Description   string         `bun:"description,type:TEXT" json:"description"`
-	BuiltBy       string         `bun:"built_by,type:VARCHAR(100)" json:"builtBy"`
-	Enabled       bool           `bun:"enabled,type:BOOLEAN,notnull,default:true" json:"enabled"`
-	Category      Category       `bun:"category,type:integration_category,notnull" json:"category"`
+	Type          Type           `bun:"type,type:integration_type,notnull"           json:"type"`
+	Name          string         `bun:"name,type:VARCHAR(100),notnull"               json:"name"`
+	Description   string         `bun:"description,type:TEXT"                        json:"description"`
+	BuiltBy       string         `bun:"built_by,type:VARCHAR(100)"                   json:"builtBy"`
+	Enabled       bool           `bun:"enabled,type:BOOLEAN,notnull,default:true"    json:"enabled"`
+	Category      Category       `bun:"category,type:integration_category,notnull"   json:"category"`
 	Configuration map[string]any `bun:"configuration,type:JSONB,default:'{}'::jsonb" json:"configuration"`
 
 	// Metadata
-	Version   int64 `json:"version" bun:"version,type:BIGINT"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	EnabledBy    *user.User                 `json:"enabledBy,omitempty" bun:"rel:belongs-to,join:enabled_by_id=id"`
+	EnabledBy    *user.User                 `json:"enabledBy,omitempty"    bun:"rel:belongs-to,join:enabled_by_id=id"`
 }
 
 // Validate validates the Integration entity

@@ -92,7 +92,10 @@ func (sr *sessionRepository) Create(ctx context.Context, sess *session.Session) 
 	return nil
 }
 
-func (sr *sessionRepository) GetUserActiveSessions(ctx context.Context, userID pulid.ID) ([]*session.Session, error) {
+func (sr *sessionRepository) GetUserActiveSessions(
+	ctx context.Context,
+	userID pulid.ID,
+) ([]*session.Session, error) {
 	log := sr.logger.With().
 		Str("operation", "GetUserActiveSessions").
 		Str("userId", userID.String()).
@@ -131,7 +134,11 @@ func (sr *sessionRepository) GetUserActiveSessions(ctx context.Context, userID p
 	return sessions, nil
 }
 
-func (sr *sessionRepository) RevokeUserSessions(ctx context.Context, userID pulid.ID, reason string) error {
+func (sr *sessionRepository) RevokeUserSessions(
+	ctx context.Context,
+	userID pulid.ID,
+	reason string,
+) error {
 	log := sr.logger.With().
 		Str("operation", "RevokeUserSessions").
 		Str("userId", userID.String()).
@@ -155,7 +162,11 @@ func (sr *sessionRepository) RevokeUserSessions(ctx context.Context, userID puli
 	return nil
 }
 
-func (sr *sessionRepository) GetValidSession(ctx context.Context, sessionID pulid.ID, clientIP string) (*session.Session, error) {
+func (sr *sessionRepository) GetValidSession(
+	ctx context.Context,
+	sessionID pulid.ID,
+	clientIP string,
+) (*session.Session, error) {
 	log := sr.logger.With().
 		Str("operation", "GetValidSession").
 		Str("sessionId", sessionID.String()).
@@ -214,7 +225,11 @@ func (sr *sessionRepository) GetValidSession(ctx context.Context, sessionID puli
 }
 
 func (sr *sessionRepository) UpdateSessionActivity(
-	ctx context.Context, sessionID pulid.ID, clientIP, userAgent string, eventType session.EventType, metadata map[string]any,
+	ctx context.Context,
+	sessionID pulid.ID,
+	clientIP, userAgent string,
+	eventType session.EventType,
+	metadata map[string]any,
 ) error {
 	log := sr.logger.With().
 		Str("operation", "UpdateSessionActivity").
@@ -247,7 +262,11 @@ func (sr *sessionRepository) UpdateSessionActivity(
 	return nil
 }
 
-func (sr *sessionRepository) RevokeSession(ctx context.Context, sessionID pulid.ID, ip, userAgent, reason string) error {
+func (sr *sessionRepository) RevokeSession(
+	ctx context.Context,
+	sessionID pulid.ID,
+	ip, userAgent, reason string,
+) error {
 	log := sr.logger.With().
 		Str("operation", "RevokeSession").
 		Str("sessionId", sessionID.String()).
@@ -269,7 +288,12 @@ func (sr *sessionRepository) RevokeSession(ctx context.Context, sessionID pulid.
 	// }
 
 	sess.Revoke()
-	event := sess.AddEvent(session.EventTypeRevoked, ip, userAgent, map[string]any{"reason": reason})
+	event := sess.AddEvent(
+		session.EventTypeRevoked,
+		ip,
+		userAgent,
+		map[string]any{"reason": reason},
+	)
 
 	// Update session data
 	if err = sr.redis.SetJSON(ctx, sr.sessionKey(sessionID), sess, defaultSessionTTL); err != nil {
@@ -309,7 +333,11 @@ func (sr *sessionRepository) sessionEventsKey(sessionID pulid.ID) string {
 	return fmt.Sprintf("%s%s", sessionEventPrefix, sessionID.String())
 }
 
-func (sr *sessionRepository) storeSessionEvent(ctx context.Context, sessionID pulid.ID, event *session.Event) error {
+func (sr *sessionRepository) storeSessionEvent(
+	ctx context.Context,
+	sessionID pulid.ID,
+	event *session.Event,
+) error {
 	eventData, err := sonic.Marshal(event)
 	if err != nil {
 		return eris.Wrap(err, "marshal event")
@@ -318,7 +346,10 @@ func (sr *sessionRepository) storeSessionEvent(ctx context.Context, sessionID pu
 	return sr.redis.SAdd(ctx, sr.sessionEventsKey(sessionID), string(eventData))
 }
 
-func (sr *sessionRepository) getSessionEvents(ctx context.Context, sessionID pulid.ID) ([]session.Event, error) {
+func (sr *sessionRepository) getSessionEvents(
+	ctx context.Context,
+	sessionID pulid.ID,
+) ([]session.Event, error) {
 	eventStrings, err := sr.redis.SMembers(ctx, sr.sessionEventsKey(sessionID))
 	if err != nil {
 		return nil, eris.Wrap(err, "get event members")
@@ -338,16 +369,25 @@ func (sr *sessionRepository) getSessionEvents(ctx context.Context, sessionID pul
 
 // createFallbackSession creates a minimal valid session for use when Redis is unavailable
 // This provides graceful degradation during Redis outages
-func (sr *sessionRepository) createFallbackSession(sessionID pulid.ID, clientIP string) *session.Session {
+func (sr *sessionRepository) createFallbackSession(
+	sessionID pulid.ID,
+	clientIP string,
+) *session.Session {
 	now := timeutils.NowUnix()
 
 	// Create a basic session that will be valid for a short period
 	// We use minimal required fields to allow requests to continue
 	fallbackSession := &session.Session{
-		ID:             sessionID,
-		UserID:         pulid.MustNew("usr_"), // This will be overridden by actual user context if available
-		BusinessUnitID: pulid.MustNew("bu_"),  // This will be overridden by actual business unit context if available
-		OrganizationID: pulid.MustNew("org_"), // This will be overridden by actual organization context if available
+		ID: sessionID,
+		UserID: pulid.MustNew(
+			"usr_",
+		), // This will be overridden by actual user context if available
+		BusinessUnitID: pulid.MustNew(
+			"bu_",
+		), // This will be overridden by actual business unit context if available
+		OrganizationID: pulid.MustNew(
+			"org_",
+		), // This will be overridden by actual organization context if available
 		Status:         session.StatusActive,
 		IP:             clientIP,
 		UserAgent:      "fallback-session",

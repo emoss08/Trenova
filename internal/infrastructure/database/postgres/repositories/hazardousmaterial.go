@@ -30,7 +30,9 @@ type hazardousMaterialRepository struct {
 	l  *zerolog.Logger
 }
 
-func NewHazardousMaterialRepository(p HazardousMaterialRepositoryParams) repositories.HazardousMaterialRepository {
+func NewHazardousMaterialRepository(
+	p HazardousMaterialRepositoryParams,
+) repositories.HazardousMaterialRepository {
 	log := p.Logger.With().
 		Str("repository", "hazardousmaterial").
 		Logger()
@@ -41,7 +43,10 @@ func NewHazardousMaterialRepository(p HazardousMaterialRepositoryParams) reposit
 	}
 }
 
-func (hmr *hazardousMaterialRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
+func (hmr *hazardousMaterialRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *ports.LimitOffsetQueryOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "hm",
@@ -55,7 +60,10 @@ func (hmr *hazardousMaterialRepository) filterQuery(q *bun.SelectQuery, opts *po
 	return q.Limit(opts.Limit).Offset(opts.Offset)
 }
 
-func (hmr *hazardousMaterialRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*hazardousmaterial.HazardousMaterial], error) {
+func (hmr *hazardousMaterialRepository) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*hazardousmaterial.HazardousMaterial], error) {
 	dba, err := hmr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -84,7 +92,10 @@ func (hmr *hazardousMaterialRepository) List(ctx context.Context, opts *ports.Li
 	}, nil
 }
 
-func (hmr *hazardousMaterialRepository) GetByID(ctx context.Context, opts repositories.GetHazardousMaterialByIDOptions) (*hazardousmaterial.HazardousMaterial, error) {
+func (hmr *hazardousMaterialRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetHazardousMaterialByIDOptions,
+) (*hazardousmaterial.HazardousMaterial, error) {
 	dba, err := hmr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -102,7 +113,9 @@ func (hmr *hazardousMaterialRepository) GetByID(ctx context.Context, opts reposi
 
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			return nil, errors.NewNotFoundError("Hazardous Material not found within your organization")
+			return nil, errors.NewNotFoundError(
+				"Hazardous Material not found within your organization",
+			)
 		}
 
 		log.Error().Err(err).Msg("failed to get hazardous material")
@@ -112,7 +125,10 @@ func (hmr *hazardousMaterialRepository) GetByID(ctx context.Context, opts reposi
 	return entity, nil
 }
 
-func (hmr *hazardousMaterialRepository) Create(ctx context.Context, hm *hazardousmaterial.HazardousMaterial) (*hazardousmaterial.HazardousMaterial, error) {
+func (hmr *hazardousMaterialRepository) Create(
+	ctx context.Context,
+	hm *hazardousmaterial.HazardousMaterial,
+) (*hazardousmaterial.HazardousMaterial, error) {
 	dba, err := hmr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -143,7 +159,10 @@ func (hmr *hazardousMaterialRepository) Create(ctx context.Context, hm *hazardou
 	return hm, nil
 }
 
-func (hmr *hazardousMaterialRepository) Update(ctx context.Context, hm *hazardousmaterial.HazardousMaterial) (*hazardousmaterial.HazardousMaterial, error) {
+func (hmr *hazardousMaterialRepository) Update(
+	ctx context.Context,
+	hm *hazardousmaterial.HazardousMaterial,
+) (*hazardousmaterial.HazardousMaterial, error) {
 	dba, err := hmr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -187,7 +206,10 @@ func (hmr *hazardousMaterialRepository) Update(ctx context.Context, hm *hazardou
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Hazardous Material (%s) has either been updated or deleted since the last request.", hm.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Hazardous Material (%s) has either been updated or deleted since the last request.",
+					hm.GetID(),
+				),
 			)
 		}
 

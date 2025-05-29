@@ -84,11 +84,14 @@ func (h *Handler) getByType(c *fiber.Ctx) error {
 		return h.errorHandler.HandleError(c, err)
 	}
 
-	result, err := h.integrationService.GetByType(c.UserContext(), repositories.GetIntegrationByTypeRequest{
-		Type:  integration.Type(c.Params("type")),
-		OrgID: reqCtx.OrgID,
-		BuID:  reqCtx.BuID,
-	})
+	result, err := h.integrationService.GetByType(
+		c.UserContext(),
+		repositories.GetIntegrationByTypeRequest{
+			Type:  integration.Type(c.Params("type")),
+			OrgID: reqCtx.OrgID,
+			BuID:  reqCtx.BuID,
+		},
+	)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -106,12 +109,15 @@ func (h *Handler) get(c *fiber.Ctx) error {
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
-	result, err := h.integrationService.GetByID(c.UserContext(), repositories.GetIntegrationByIDOptions{
-		ID:     integrationID,
-		OrgID:  reqCtx.OrgID,
-		BuID:   reqCtx.BuID,
-		UserID: reqCtx.UserID,
-	})
+	result, err := h.integrationService.GetByID(
+		c.UserContext(),
+		repositories.GetIntegrationByIDOptions{
+			ID:     integrationID,
+			OrgID:  reqCtx.OrgID,
+			BuID:   reqCtx.BuID,
+			UserID: reqCtx.UserID,
+		},
+	)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}

@@ -14,20 +14,20 @@ type PretrainedModel struct {
 	bun.BaseModel `bun:"table:pretrained_models,alias:pm" json:"-"`
 
 	// Primary identifiers
-	ID      pulid.ID  `json:"id" bun:"id,pk,type:VARCHAR(100)"`
-	Name    string    `json:"name" bun:"name,type:VARCHAR(100),notnull"`
+	ID      pulid.ID  `json:"id"      bun:"id,pk,type:VARCHAR(100)"`
+	Name    string    `json:"name"    bun:"name,type:VARCHAR(100),notnull"`
 	Version string    `json:"version" bun:"version,type:VARCHAR(50),notnull"`
-	Type    ModelType `json:"type" bun:"type,type:model_type_enum,notnull"`
+	Type    ModelType `json:"type"    bun:"type,type:model_type_enum,notnull"`
 
 	// Model Details
 	Description string      `json:"description" bun:"description,type:TEXT,notnull"`
-	Status      ModelStatus `json:"status" bun:"status,type:model_status_enum,notnull,default:'Stable'"`
-	Path        string      `json:"path" bun:"path,type:VARCHAR(255),notnull"`
-	IsDefault   bool        `json:"isDefault" bun:"is_default,type:BOOLEAN,notnull,default:false"`
-	IsActive    bool        `json:"isActive" bun:"is_active,type:BOOLEAN,notnull,default:true"`
+	Status      ModelStatus `json:"status"      bun:"status,type:model_status_enum,notnull,default:'Stable'"`
+	Path        string      `json:"path"        bun:"path,type:VARCHAR(255),notnull"`
+	IsDefault   bool        `json:"isDefault"   bun:"is_default,type:BOOLEAN,notnull,default:false"`
+	IsActive    bool        `json:"isActive"    bun:"is_active,type:BOOLEAN,notnull,default:true"`
 
 	// Training Info
-	TrainedAt       int64          `json:"trainedAt" bun:"trained_at,nullzero,notnull"`
+	TrainedAt       int64          `json:"trainedAt"       bun:"trained_at,nullzero,notnull"`
 	TrainingMetrics map[string]any `json:"trainingMetrics" bun:"training_metrics,type:JSONB,default:'{}'"`
 
 	// Metadata

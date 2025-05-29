@@ -51,7 +51,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*accessorialcharge.AccessorialCharge], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*accessorialcharge.AccessorialCharge], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -71,7 +74,9 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read accessorial charges")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read accessorial charges",
+		)
 	}
 
 	entities, err := s.repo.List(ctx, opts)
@@ -86,7 +91,10 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetAccessorialChargeByIDRequest) (*accessorialcharge.AccessorialCharge, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts repositories.GetAccessorialChargeByIDRequest,
+) (*accessorialcharge.AccessorialCharge, error) {
 	log := s.l.With().
 		Str("operation", "Get").
 		Str("accessorialChargeID", opts.ID.String()).
@@ -109,7 +117,9 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetAccessorialCharg
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this accessorial charge")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read this accessorial charge",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, opts)
@@ -121,7 +131,11 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetAccessorialCharg
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, acc *accessorialcharge.AccessorialCharge, userID pulid.ID) (*accessorialcharge.AccessorialCharge, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	acc *accessorialcharge.AccessorialCharge,
+	userID pulid.ID,
+) (*accessorialcharge.AccessorialCharge, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("accessorialChargeID", acc.ID.String()).
@@ -144,7 +158,9 @@ func (s *Service) Create(ctx context.Context, acc *accessorialcharge.Accessorial
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create an accessorial charge")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to create an accessorial charge",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{
@@ -181,7 +197,11 @@ func (s *Service) Create(ctx context.Context, acc *accessorialcharge.Accessorial
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, acc *accessorialcharge.AccessorialCharge, userID pulid.ID) (*accessorialcharge.AccessorialCharge, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	acc *accessorialcharge.AccessorialCharge,
+	userID pulid.ID,
+) (*accessorialcharge.AccessorialCharge, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("accessorialChargeID", acc.ID.String()).
@@ -204,7 +224,9 @@ func (s *Service) Update(ctx context.Context, acc *accessorialcharge.Accessorial
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this accessorial charge")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this accessorial charge",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{

@@ -58,17 +58,27 @@ func (v *Validator) Validate(
 	engine := v.vef.CreateEngine()
 
 	// * Basic validation rules (field presence, format, etc.)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			et.Validate(ctx, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBasic,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				et.Validate(ctx, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// * Data integrity validation (uniqueness, references, etc.)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			return v.ValidateUniqueness(ctx, valCtx, et, multiErr)
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageDataIntegrity,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				return v.ValidateUniqueness(ctx, valCtx, et, multiErr)
+			},
+		),
+	)
 
 	return engine.Validate(ctx)
 }
@@ -84,7 +94,10 @@ func (v *Validator) Validate(
 // Returns:
 //   - error: An error if the validation fails.
 func (v *Validator) ValidateUniqueness(
-	ctx context.Context, valCtx *validator.ValidationContext, et *equipmenttype.EquipmentType, multiErr *errors.MultiError,
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	et *equipmenttype.EquipmentType,
+	multiErr *errors.MultiError,
 ) error {
 	dba, err := v.db.DB(ctx)
 	if err != nil {

@@ -59,7 +59,10 @@ func NewService(p ServiceParams) services.IntegrationService {
 }
 
 // List returns a paginated list of integrations.
-func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*integration.Integration], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*integration.Integration], error) {
 	log := s.l.With().
 		Str("operation", "List").
 		Logger()
@@ -93,7 +96,10 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 }
 
 // GetByID returns an integration by ID.
-func (s *Service) GetByID(ctx context.Context, req repositories.GetIntegrationByIDOptions) (*integration.Integration, error) {
+func (s *Service) GetByID(
+	ctx context.Context,
+	req repositories.GetIntegrationByIDOptions,
+) (*integration.Integration, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Logger()
@@ -116,7 +122,9 @@ func (s *Service) GetByID(ctx context.Context, req repositories.GetIntegrationBy
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this integration")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read this integration",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, req)
@@ -128,7 +136,10 @@ func (s *Service) GetByID(ctx context.Context, req repositories.GetIntegrationBy
 	return entity, nil
 }
 
-func (s *Service) GetByType(ctx context.Context, req repositories.GetIntegrationByTypeRequest) (*integration.Integration, error) {
+func (s *Service) GetByType(
+	ctx context.Context,
+	req repositories.GetIntegrationByTypeRequest,
+) (*integration.Integration, error) {
 	log := s.l.With().
 		Str("operation", "GetByType").
 		Logger()
@@ -145,7 +156,11 @@ func (s *Service) GetByType(ctx context.Context, req repositories.GetIntegration
 }
 
 // Update updates an integration.
-func (s *Service) Update(ctx context.Context, i *integration.Integration, userID pulid.ID) (*integration.Integration, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	i *integration.Integration,
+	userID pulid.ID,
+) (*integration.Integration, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Logger()
@@ -168,7 +183,9 @@ func (s *Service) Update(ctx context.Context, i *integration.Integration, userID
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update integrations")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update integrations",
+		)
 	}
 
 	// Get the existing integration

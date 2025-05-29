@@ -31,11 +31,14 @@ type AutocompleteLocationResult struct {
 
 type AutoCompleteRequest struct {
 	OrgID pulid.ID `json:"orgId" query:"orgId"`
-	BuID  pulid.ID `json:"buId" query:"buId"`
+	BuID  pulid.ID `json:"buId"  query:"buId"`
 	Input string   `json:"input" query:"input"`
 }
 
 type Client interface {
 	CheckAPIKey(ctx context.Context, orgID pulid.ID, buID pulid.ID) (bool, error)
-	AutocompleteWithDetails(ctx context.Context, req *AutoCompleteRequest) (*AutocompleteLocationResult, error)
+	AutocompleteWithDetails(
+		ctx context.Context,
+		req *AutoCompleteRequest,
+	) (*AutocompleteLocationResult, error)
 }

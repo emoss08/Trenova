@@ -53,7 +53,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQueryOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, eris.Wrap(err, "select hazardous materials")
@@ -70,7 +73,10 @@ func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQuer
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*hazardousmaterial.HazardousMaterial], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*hazardousmaterial.HazardousMaterial], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -90,7 +96,9 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read hazardous materials")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read hazardous materials",
+		)
 	}
 
 	entities, err := s.repo.List(ctx, opts)
@@ -105,7 +113,10 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetHazardousMaterialByIDOptions) (*hazardousmaterial.HazardousMaterial, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts repositories.GetHazardousMaterialByIDOptions,
+) (*hazardousmaterial.HazardousMaterial, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("hmID", opts.ID.String()).
@@ -128,7 +139,9 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetHazardousMateria
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this hazardous material")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read this hazardous material",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, opts)
@@ -140,7 +153,11 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetHazardousMateria
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, hm *hazardousmaterial.HazardousMaterial, userID pulid.ID) (*hazardousmaterial.HazardousMaterial, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	hm *hazardousmaterial.HazardousMaterial,
+	userID pulid.ID,
+) (*hazardousmaterial.HazardousMaterial, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("code", hm.Code).
@@ -163,7 +180,9 @@ func (s *Service) Create(ctx context.Context, hm *hazardousmaterial.HazardousMat
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a hazardous material")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to create a hazardous material",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{
@@ -199,7 +218,11 @@ func (s *Service) Create(ctx context.Context, hm *hazardousmaterial.HazardousMat
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, hm *hazardousmaterial.HazardousMaterial, userID pulid.ID) (*hazardousmaterial.HazardousMaterial, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	hm *hazardousmaterial.HazardousMaterial,
+	userID pulid.ID,
+) (*hazardousmaterial.HazardousMaterial, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("code", hm.Code).
@@ -222,7 +245,9 @@ func (s *Service) Update(ctx context.Context, hm *hazardousmaterial.HazardousMat
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this hazardous material")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this hazardous material",
+		)
 	}
 
 	// Validate the hazardous material

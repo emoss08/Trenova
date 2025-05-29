@@ -253,6 +253,8 @@ func LoadPermissions(ctx context.Context, db *bun.DB, fixture *dbfixture.Fixture
 		return eris.Wrap(err, "transaction failed")
 	}
 
-	color.Green("✓ Created Super Administrator role with comprehensive permissions and dependencies")
+	color.Green(
+		"✓ Created Super Administrator role with comprehensive permissions and dependencies",
+	)
 	return nil
 }

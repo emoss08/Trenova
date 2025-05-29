@@ -31,7 +31,11 @@ type Session struct {
 }
 
 // NewSession creates a new session
-func NewSession(userID, businessUnitID, organizationID pulid.ID, ip, userAgent string, expiresAt int64) *Session {
+func NewSession(
+	userID, businessUnitID, organizationID pulid.ID,
+	ip, userAgent string,
+	expiresAt int64,
+) *Session {
 	now := timeutils.NowUnix()
 	return &Session{
 		ID:             pulid.MustNew("ses_"),
@@ -91,7 +95,11 @@ func (s *Session) Revoke() {
 }
 
 // AddEvent adds an event to the session
-func (s *Session) AddEvent(eventType EventType, ip, userAgent string, metadata map[string]any) *Event {
+func (s *Session) AddEvent(
+	eventType EventType,
+	ip, userAgent string,
+	metadata map[string]any,
+) *Event {
 	event := &Event{
 		ID:        pulid.MustNew("sev_"),
 		SessionID: s.ID,

@@ -24,32 +24,32 @@ var (
 type QueueItem struct {
 	bun.BaseModel `json:"-" bun:"table:billing_queue_items,alias:bqi"`
 
-	ID                pulid.ID  `json:"id" bun:",pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID    pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID    pulid.ID  `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ShipmentID        pulid.ID  `json:"shipmentId" bun:"shipment_id,type:VARCHAR(100),notnull"`
-	Status            Status    `json:"status" bun:"status,type:billing_queue_status_enum,notnull,default:ReadyForReview"`
-	BillType          Type      `json:"billType" bun:"bill_type,type:billing_type_enum,notnull,default:Invoice"`
-	ReviewNotes       string    `json:"reviewNotes" bun:"review_notes,type:TEXT"`
-	ExceptionNotes    string    `json:"exceptionNotes" bun:"exception_notes,type:TEXT"`
-	CancelReason      string    `json:"cancelReason" bun:"cancel_reason,type:VARCHAR(100)"`
-	ReviewStartedAt   *int64    `json:"reviewStartedAt" bun:"review_started_at,type:BIGINT"`
+	ID                pulid.ID  `json:"id"                bun:",pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID    pulid.ID  `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID    pulid.ID  `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	ShipmentID        pulid.ID  `json:"shipmentId"        bun:"shipment_id,type:VARCHAR(100),notnull"`
+	Status            Status    `json:"status"            bun:"status,type:billing_queue_status_enum,notnull,default:ReadyForReview"`
+	BillType          Type      `json:"billType"          bun:"bill_type,type:billing_type_enum,notnull,default:Invoice"`
+	ReviewNotes       string    `json:"reviewNotes"       bun:"review_notes,type:TEXT"`
+	ExceptionNotes    string    `json:"exceptionNotes"    bun:"exception_notes,type:TEXT"`
+	CancelReason      string    `json:"cancelReason"      bun:"cancel_reason,type:VARCHAR(100)"`
+	ReviewStartedAt   *int64    `json:"reviewStartedAt"   bun:"review_started_at,type:BIGINT"`
 	ReviewCompletedAt *int64    `json:"reviewCompletedAt" bun:"review_completed_at,type:BIGINT"`
-	CanceledAt        *int64    `json:"canceledAt" bun:"canceled_at,type:BIGINT"`
-	AssignedBillerID  *pulid.ID `json:"assignedBillerId" bun:"assigned_biller_id,type:VARCHAR(100)"`
-	CanceledByID      *pulid.ID `json:"canceledById" bun:"canceled_by_id,type:VARCHAR(100)"`
+	CanceledAt        *int64    `json:"canceledAt"        bun:"canceled_at,type:BIGINT"`
+	AssignedBillerID  *pulid.ID `json:"assignedBillerId"  bun:"assigned_biller_id,type:VARCHAR(100)"`
+	CanceledByID      *pulid.ID `json:"canceledById"      bun:"canceled_by_id,type:VARCHAR(100)"`
 
 	// Metadata
-	Version   int64 `json:"version" bun:"version,type:BIGINT"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit   *businessunit.BusinessUnit `json:"businessUnit" bun:"rel:belongs_to,join:business_unit_id=id"`
-	Organization   *organization.Organization `json:"organization" bun:"rel:belongs_to,join:organization_id=id"`
-	Shipment       *shipment.Shipment         `json:"shipment" bun:"rel:belongs_to,join:shipment_id=id"`
+	BusinessUnit   *businessunit.BusinessUnit `json:"businessUnit"   bun:"rel:belongs_to,join:business_unit_id=id"`
+	Organization   *organization.Organization `json:"organization"   bun:"rel:belongs_to,join:organization_id=id"`
+	Shipment       *shipment.Shipment         `json:"shipment"       bun:"rel:belongs_to,join:shipment_id=id"`
 	AssignedBiller *user.User                 `json:"assignedBiller" bun:"rel:belongs_to,join:assigned_biller_id=id"`
-	CancelledBy    *user.User                 `json:"cancelledBy" bun:"rel:belongs_to,join:canceled_by_id=id"`
+	CancelledBy    *user.User                 `json:"cancelledBy"    bun:"rel:belongs_to,join:canceled_by_id=id"`
 }
 
 // Validate validates the billing queue item

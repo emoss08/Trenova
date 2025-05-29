@@ -28,49 +28,51 @@ type Worker struct {
 	bun.BaseModel `bun:"table:workers,alias:wrk" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID  `json:"id" bun:"id,pk,type:VARCHAR(100)"`
+	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
 	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	StateID        pulid.ID  `json:"stateId" bun:"state_id,type:VARCHAR(100),notnull"`
-	FleetCodeID    *pulid.ID `json:"fleetCodeId" bun:"fleet_code_id,type:VARCHAR(100)"`
+	StateID        pulid.ID  `json:"stateId"        bun:"state_id,type:VARCHAR(100),notnull"`
+	FleetCodeID    *pulid.ID `json:"fleetCodeId"    bun:"fleet_code_id,type:VARCHAR(100)"`
 
 	// Core Fields
-	Status            domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
-	Type              WorkerType    `json:"type" bun:"type,type:worker_type_enum,notnull,default:'Employee'"`
-	ProfilePicURL     string        `json:"profilePicUrl" bun:"profile_pic_url,type:VARCHAR(255)"`
-	FirstName         string        `json:"firstName" bun:"first_name,type:VARCHAR(100),notnull"`
-	LastName          string        `json:"lastName" bun:"last_name,type:VARCHAR(100),notnull"`
-	WholeName         string        `json:"wholeName" bun:"whole_name,type:VARCHAR(201),scanonly"`
-	AddressLine1      string        `json:"addressLine1" bun:"address_line1,type:VARCHAR(150),notnull"`
-	AddressLine2      string        `json:"addressLine2" bun:"address_line2,type:VARCHAR(150)"`
-	City              string        `json:"city" bun:"city,type:VARCHAR(100),notnull"`
-	PostalCode        string        `json:"postalCode" bun:"postal_code,type:us_postal_code,notnull"`
-	Gender            domain.Gender `json:"gender" bun:"gender,type:gender_enum,notnull"`
-	CanBeAssigned     bool          `json:"canBeAssigned" bun:"can_be_assigned,type:BOOLEAN,notnull,default:false"`
+	Status            domain.Status `json:"status"                      bun:"status,type:status_enum,notnull,default:'Active'"`
+	Type              WorkerType    `json:"type"                        bun:"type,type:worker_type_enum,notnull,default:'Employee'"`
+	ProfilePicURL     string        `json:"profilePicUrl"               bun:"profile_pic_url,type:VARCHAR(255)"`
+	FirstName         string        `json:"firstName"                   bun:"first_name,type:VARCHAR(100),notnull"`
+	LastName          string        `json:"lastName"                    bun:"last_name,type:VARCHAR(100),notnull"`
+	WholeName         string        `json:"wholeName"                   bun:"whole_name,type:VARCHAR(201),scanonly"`
+	AddressLine1      string        `json:"addressLine1"                bun:"address_line1,type:VARCHAR(150),notnull"`
+	AddressLine2      string        `json:"addressLine2"                bun:"address_line2,type:VARCHAR(150)"`
+	City              string        `json:"city"                        bun:"city,type:VARCHAR(100),notnull"`
+	PostalCode        string        `json:"postalCode"                  bun:"postal_code,type:us_postal_code,notnull"`
+	Gender            domain.Gender `json:"gender"                      bun:"gender,type:gender_enum,notnull"`
+	CanBeAssigned     bool          `json:"canBeAssigned"               bun:"can_be_assigned,type:BOOLEAN,notnull,default:false"`
 	AssignmentBlocked string        `json:"assignmentBlocked,omitempty" bun:"assignment_blocked,type:VARCHAR(255)"`
 
 	// Metadata
-	Version      int64  `json:"version" bun:"version,type:BIGINT"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	State        *usstate.UsState           `json:"state,omitempty" bun:"rel:belongs-to,join:state_id=id"`
-	Profile      *WorkerProfile             `json:"profile,omitempty" bun:"rel:has-one,join:id=worker_id"`
-	PTO          []*WorkerPTO               `json:"pto,omitempty" bun:"rel:has-many,join:id=worker_id"`
+	State        *usstate.UsState           `json:"state,omitempty"        bun:"rel:belongs-to,join:state_id=id"`
+	Profile      *WorkerProfile             `json:"profile,omitempty"      bun:"rel:has-one,join:id=worker_id"`
+	PTO          []*WorkerPTO               `json:"pto,omitempty"          bun:"rel:has-many,join:id=worker_id"`
 }
 
 // Validation
 func (w *Worker) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, w,
 		// Type is required and must be either Employee or Contractor
-		validation.Field(&w.Type,
+		validation.Field(
+			&w.Type,
 			validation.Required.Error("Type is required"),
-			validation.In(WorkerTypeEmployee, WorkerTypeContractor).Error("Type must be either Employee or Contractor"),
+			validation.In(WorkerTypeEmployee, WorkerTypeContractor).
+				Error("Type must be either Employee or Contractor"),
 		),
 
 		// First Name cannot contain spaces and numbers
@@ -110,9 +112,11 @@ func (w *Worker) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		),
 
 		// Status is required
-		validation.Field(&w.Status,
+		validation.Field(
+			&w.Status,
 			validation.Required.Error("Status is required"),
-			validation.In(domain.StatusActive, domain.StatusInactive).Error("Status must be either Active or Inactive"),
+			validation.In(domain.StatusActive, domain.StatusInactive).
+				Error("Status must be either Active or Inactive"),
 		),
 
 		// Ensure their is a profile for the worker

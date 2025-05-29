@@ -192,17 +192,21 @@ func Execute() error {
 
 func init() {
 	// Global flags
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is config/development/config.development.yaml)")
+	rootCmd.PersistentFlags().
+		StringVar(&cfgFile, "config", "", "config file (default is config/development/config.development.yaml)")
 	rootCmd.PersistentFlags().BoolVar(&verbose, "verbose", false, "enable verbose output")
 
 	// Add flags to create command
-	createCmd.Flags().IntVar(&backupRetentionDays, "retention-days", 0, "Number of days to keep backups (0 uses configured value)")
+	createCmd.Flags().
+		IntVar(&backupRetentionDays, "retention-days", 0, "Number of days to keep backups (0 uses configured value)")
 
 	// Add flags to restore command
-	restoreCmd.Flags().StringVar(&backupRestore, "file", "", "Backup file to restore (if not provided as argument)")
+	restoreCmd.Flags().
+		StringVar(&backupRestore, "file", "", "Backup file to restore (if not provided as argument)")
 
 	// Add flags to cleanup command
-	cleanupCmd.Flags().IntVar(&backupRetentionDays, "days", 0, "Number of days to keep backups (0 uses configured value)")
+	cleanupCmd.Flags().
+		IntVar(&backupRetentionDays, "days", 0, "Number of days to keep backups (0 uses configured value)")
 
 	// Add commands to root
 	rootCmd.AddCommand(createCmd)
@@ -230,9 +234,12 @@ func init() {
 	}
 
 	backupCmd.Flags().BoolVar(&backupList, "list", false, "List available backups")
-	backupCmd.Flags().StringVar(&backupRestore, "restore", "", "Restore from the specified backup file")
-	backupCmd.Flags().BoolVar(&backupCleanup, "cleanup", false, "Clean up old backups according to retention policy")
-	backupCmd.Flags().IntVar(&backupRetentionDays, "retention-days", 0, "Number of days to keep backups (0 uses configured value)")
+	backupCmd.Flags().
+		StringVar(&backupRestore, "restore", "", "Restore from the specified backup file")
+	backupCmd.Flags().
+		BoolVar(&backupCleanup, "cleanup", false, "Clean up old backups according to retention policy")
+	backupCmd.Flags().
+		IntVar(&backupRetentionDays, "retention-days", 0, "Number of days to keep backups (0 uses configured value)")
 
 	rootCmd.AddCommand(backupCmd)
 
@@ -246,7 +253,9 @@ func findPgTools() {
 	// Find pg_dump
 	pgDumpPath, err = exec.LookPath("pg_dump")
 	if err != nil {
-		fmt.Println("WARNING: pg_dump not found in PATH. Make sure PostgreSQL client tools are installed.")
+		fmt.Println(
+			"WARNING: pg_dump not found in PATH. Make sure PostgreSQL client tools are installed.",
+		)
 		// Try common locations
 		locations := []string{
 			"/usr/bin/pg_dump",
@@ -265,7 +274,9 @@ func findPgTools() {
 	// Find pg_restore
 	pgRestorePath, err = exec.LookPath("pg_restore")
 	if err != nil {
-		fmt.Println("WARNING: pg_restore not found in PATH. Make sure PostgreSQL client tools are installed.")
+		fmt.Println(
+			"WARNING: pg_restore not found in PATH. Make sure PostgreSQL client tools are installed.",
+		)
 		// Try common locations
 		locations := []string{
 			"/usr/bin/pg_restore",
@@ -317,7 +328,9 @@ func createBackup() (string, error) {
 	serverVersion, err := getServerVersion()
 	if err != nil {
 		fmt.Printf("Warning: Unable to check PostgreSQL server version: %v\n", err)
-		fmt.Println("Make sure your pg_dump version matches or is newer than your PostgreSQL server version!")
+		fmt.Println(
+			"Make sure your pg_dump version matches or is newer than your PostgreSQL server version!",
+		)
 	} else {
 		clientVersion, cvErr := getPgDumpVersion()
 		if cvErr != nil {

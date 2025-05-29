@@ -22,32 +22,32 @@ var (
 type HazardousMaterial struct {
 	bun.BaseModel `bun:"table:hazardous_materials,alias:hm" json:"-"`
 
-	ID                          pulid.ID       `bun:",pk,type:VARCHAR(100)" json:"id"`
-	BusinessUnitID              pulid.ID       `bun:"business_unit_id,notnull,type:VARCHAR(100),pk" json:"businessUnitId"`
-	OrganizationID              pulid.ID       `bun:"organization_id,notnull,type:VARCHAR(100),pk" json:"organizationId"`
-	Status                      domain.Status  `bun:"status,type:status,default:'Active'" json:"status"`
-	Code                        string         `bun:"code,notnull,type:VARCHAR(100)" json:"code"`
-	Name                        string         `bun:"name,notnull,type:VARCHAR(100)" json:"name"`
-	Description                 string         `bun:"description,type:TEXT,notnull" json:"description"`
-	Class                       HazardousClass `bun:"class,type:hazardous_class_enum,notnull" json:"class"`
-	UNNumber                    string         `bun:"un_number,type:VARCHAR(4)" json:"unNumber"`
-	CASNumber                   string         `bun:"cas_number,type:VARCHAR(10)" json:"casNumber"`
-	PackingGroup                PackingGroup   `bun:"packing_group,type:packing_group_enum,notnull" json:"packingGroup"`
-	ProperShippingName          string         `bun:"proper_shipping_name,type:TEXT" json:"properShippingName"`
-	HandlingInstructions        string         `bun:"handling_instructions,type:TEXT" json:"handlingInstructions"`
-	EmergencyContact            string         `bun:"emergency_contact,type:TEXT" json:"emergencyContact"`
-	EmergencyContactPhoneNumber string         `bun:"emergency_contact_phone_number,type:TEXT" json:"emergencyContactPhoneNumber"`
-	SearchVector                string         `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                        string         `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
-	PlacardRequired             bool           `bun:"placard_required,type:BOOLEAN,default:false" json:"placardRequired"`
-	IsReportableQuantity        bool           `bun:"is_reportable_quantity,type:BOOLEAN,default:false" json:"isReportableQuantity"`
-	Version                     int64          `bun:"version,type:BIGINT" json:"version"`
-	CreatedAt                   int64          `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                   int64          `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                          pulid.ID       `bun:",pk,type:VARCHAR(100)"                                                                json:"id"`
+	BusinessUnitID              pulid.ID       `bun:"business_unit_id,notnull,type:VARCHAR(100),pk"                                        json:"businessUnitId"`
+	OrganizationID              pulid.ID       `bun:"organization_id,notnull,type:VARCHAR(100),pk"                                         json:"organizationId"`
+	Status                      domain.Status  `bun:"status,type:status,default:'Active'"                                                  json:"status"`
+	Code                        string         `bun:"code,notnull,type:VARCHAR(100)"                                                       json:"code"`
+	Name                        string         `bun:"name,notnull,type:VARCHAR(100)"                                                       json:"name"`
+	Description                 string         `bun:"description,type:TEXT,notnull"                                                        json:"description"`
+	Class                       HazardousClass `bun:"class,type:hazardous_class_enum,notnull"                                              json:"class"`
+	UNNumber                    string         `bun:"un_number,type:VARCHAR(4)"                                                            json:"unNumber"`
+	CASNumber                   string         `bun:"cas_number,type:VARCHAR(10)"                                                          json:"casNumber"`
+	PackingGroup                PackingGroup   `bun:"packing_group,type:packing_group_enum,notnull"                                        json:"packingGroup"`
+	ProperShippingName          string         `bun:"proper_shipping_name,type:TEXT"                                                       json:"properShippingName"`
+	HandlingInstructions        string         `bun:"handling_instructions,type:TEXT"                                                      json:"handlingInstructions"`
+	EmergencyContact            string         `bun:"emergency_contact,type:TEXT"                                                          json:"emergencyContact"`
+	EmergencyContactPhoneNumber string         `bun:"emergency_contact_phone_number,type:TEXT"                                             json:"emergencyContactPhoneNumber"`
+	SearchVector                string         `bun:"search_vector,type:TSVECTOR,scanonly"                                                 json:"-"`
+	Rank                        string         `bun:"rank,type:VARCHAR(100),scanonly"                                                      json:"-"`
+	PlacardRequired             bool           `bun:"placard_required,type:BOOLEAN,default:false"                                          json:"placardRequired"`
+	IsReportableQuantity        bool           `bun:"is_reportable_quantity,type:BOOLEAN,default:false"                                    json:"isReportableQuantity"`
+	Version                     int64          `bun:"version,type:BIGINT"                                                                  json:"version"`
+	CreatedAt                   int64          `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
+	UpdatedAt                   int64          `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
 }
 
 func (hm *HazardousMaterial) Validate(ctx context.Context, multiErr *errors.MultiError) {
@@ -76,9 +76,11 @@ func (hm *HazardousMaterial) Validate(ctx context.Context, multiErr *errors.Mult
 		),
 
 		// Packing Group must be a valid packing group
-		validation.Field(&hm.PackingGroup,
+		validation.Field(
+			&hm.PackingGroup,
 			validation.Required.Error("Packing Group is required"),
-			validation.In(PackingGroupI, PackingGroupII, PackingGroupIII).Error("Packing Group must be a valid packing group"),
+			validation.In(PackingGroupI, PackingGroupII, PackingGroupIII).
+				Error("Packing Group must be a valid packing group"),
 		),
 
 		// Class is required

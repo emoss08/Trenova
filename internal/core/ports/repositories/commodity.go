@@ -16,7 +16,10 @@ type GetCommodityByIDOptions struct {
 }
 
 type CommodityRepository interface {
-	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*commodity.Commodity], error)
+	List(
+		ctx context.Context,
+		opts *ports.LimitOffsetQueryOptions,
+	) (*ports.ListResult[*commodity.Commodity], error)
 	GetByID(ctx context.Context, opts GetCommodityByIDOptions) (*commodity.Commodity, error)
 	Create(ctx context.Context, c *commodity.Commodity) (*commodity.Commodity, error)
 	Update(ctx context.Context, c *commodity.Commodity) (*commodity.Commodity, error)

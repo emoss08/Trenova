@@ -39,7 +39,11 @@ func BuildPaginatedQuery(opts *BuildPaginatedQueryOptions) error {
 }
 
 // buildCursorConditions creates the SQL conditions for cursor-based pagination
-func buildCursorConditions(tableAlias string, pk PrimaryKey, cursor *Cursor) (stmt string, params []any) {
+func buildCursorConditions(
+	tableAlias string,
+	pk PrimaryKey,
+	cursor *Cursor,
+) (stmt string, params []any) {
 	var conditions []string
 
 	for _, field := range pk.Fields {

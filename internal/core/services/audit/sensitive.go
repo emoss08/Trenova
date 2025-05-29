@@ -52,7 +52,10 @@ func (sdm *SensitiveDataManager) SetEncryptionKey(key []byte) error {
 }
 
 // RegisterSensitiveFields registers sensitive fields for a resource.
-func (sdm *SensitiveDataManager) RegisterSensitiveFields(resource permission.Resource, fields []services.SensitiveField) error {
+func (sdm *SensitiveDataManager) RegisterSensitiveFields(
+	resource permission.Resource,
+	fields []services.SensitiveField,
+) error {
 	sdm.mu.Lock()
 	defer sdm.mu.Unlock()
 
@@ -82,7 +85,9 @@ func (sdm *SensitiveDataManager) RegisterSensitiveFields(resource permission.Res
 }
 
 // GetSensitiveFields returns the sensitive fields for a resource.
-func (sdm *SensitiveDataManager) GetSensitiveFields(resource permission.Resource) []services.SensitiveField {
+func (sdm *SensitiveDataManager) GetSensitiveFields(
+	resource permission.Resource,
+) []services.SensitiveField {
 	sdm.mu.RLock()
 	defer sdm.mu.RUnlock()
 
@@ -136,7 +141,10 @@ func (sdm *SensitiveDataManager) sanitizeData(entry *audit.Entry) error {
 }
 
 // sanitizeJSONMap sanitizes the data in a JSON map.
-func (sdm *SensitiveDataManager) sanitizeJSONMap(data map[string]any, fields []services.SensitiveField) error {
+func (sdm *SensitiveDataManager) sanitizeJSONMap(
+	data map[string]any,
+	fields []services.SensitiveField,
+) error {
 	// Apply direct and path-based sanitization
 	if err := sdm.applyNameAndPathRules(data, fields); err != nil {
 		return err
@@ -147,7 +155,10 @@ func (sdm *SensitiveDataManager) sanitizeJSONMap(data map[string]any, fields []s
 }
 
 // applyNameAndPathRules handles the direct field matches and path-based rules (Phase 1)
-func (sdm *SensitiveDataManager) applyNameAndPathRules(data map[string]any, fields []services.SensitiveField) error {
+func (sdm *SensitiveDataManager) applyNameAndPathRules(
+	data map[string]any,
+	fields []services.SensitiveField,
+) error {
 	for _, fieldRule := range fields {
 		// Skip purely pattern-based rules
 		if fieldRule.Pattern != "" && fieldRule.Name == "" && fieldRule.Path == "" {
@@ -169,7 +180,12 @@ func (sdm *SensitiveDataManager) applyNameAndPathRules(data map[string]any, fiel
 		// Apply sanitization if field exists
 		if value, exists := targetMap[keyName]; exists {
 			if err := sdm.applySanitizationAction(targetMap, keyName, value, fieldRule.Action); err != nil {
-				return eris.Wrapf(err, "failed to apply sanitization to %s.%s", fieldRule.Path, keyName)
+				return eris.Wrapf(
+					err,
+					"failed to apply sanitization to %s.%s",
+					fieldRule.Path,
+					keyName,
+				)
 			}
 		}
 	}
@@ -177,7 +193,10 @@ func (sdm *SensitiveDataManager) applyNameAndPathRules(data map[string]any, fiel
 }
 
 // findMapAtPath navigates to the map at the specified dot-separated path
-func (sdm *SensitiveDataManager) findMapAtPath(data map[string]any, path string) (found bool, nestedMap map[string]any) {
+func (sdm *SensitiveDataManager) findMapAtPath(
+	data map[string]any,
+	path string,
+) (found bool, nestedMap map[string]any) {
 	currentMap := data
 
 	for segment := range strings.SplitSeq(path, ".") {
@@ -192,7 +211,10 @@ func (sdm *SensitiveDataManager) findMapAtPath(data map[string]any, path string)
 }
 
 // applyPatternsAndRecurse handles pattern matching and recursion (Phase 2)
-func (sdm *SensitiveDataManager) applyPatternsAndRecurse(data map[string]any, fields []services.SensitiveField) error {
+func (sdm *SensitiveDataManager) applyPatternsAndRecurse(
+	data map[string]any,
+	fields []services.SensitiveField,
+) error {
 	for key, val := range data {
 		// Apply pattern-based rules
 		if err := sdm.applyPatternRules(data, key, val, fields); err != nil {
@@ -208,7 +230,12 @@ func (sdm *SensitiveDataManager) applyPatternsAndRecurse(data map[string]any, fi
 }
 
 // applyPatternRules applies pattern-based rules to a specific value
-func (sdm *SensitiveDataManager) applyPatternRules(data map[string]any, key string, val any, fields []services.SensitiveField) error {
+func (sdm *SensitiveDataManager) applyPatternRules(
+	data map[string]any,
+	key string,
+	val any,
+	fields []services.SensitiveField,
+) error {
 	strVal, ok := val.(string)
 	if !ok {
 		return nil // Only strings can match patterns
@@ -233,7 +260,10 @@ func (sdm *SensitiveDataManager) applyPatternRules(data map[string]any, key stri
 }
 
 // recurseIntoNestedStructures recursively processes nested maps and arrays
-func (sdm *SensitiveDataManager) recurseIntoNestedStructures(val any, fields []services.SensitiveField) error {
+func (sdm *SensitiveDataManager) recurseIntoNestedStructures(
+	val any,
+	fields []services.SensitiveField,
+) error {
 	switch v := val.(type) {
 	case map[string]any:
 		if err := sdm.sanitizeJSONMap(v, fields); err != nil {
@@ -248,7 +278,12 @@ func (sdm *SensitiveDataManager) recurseIntoNestedStructures(val any, fields []s
 }
 
 // applySanitizationAction applies the specified sanitization action to a field
-func (sdm *SensitiveDataManager) applySanitizationAction(data map[string]any, key string, value any, action services.SensitiveFieldAction) error {
+func (sdm *SensitiveDataManager) applySanitizationAction(
+	data map[string]any,
+	key string,
+	value any,
+	action services.SensitiveFieldAction,
+) error {
 	switch action {
 	case services.SensitiveFieldOmit:
 		delete(data, key)
@@ -271,7 +306,10 @@ func (sdm *SensitiveDataManager) applySanitizationAction(data map[string]any, ke
 }
 
 // sanitizeJSONArray sanitizes elements in a JSON array
-func (sdm *SensitiveDataManager) sanitizeJSONArray(arr []any, fields []services.SensitiveField) error {
+func (sdm *SensitiveDataManager) sanitizeJSONArray(
+	arr []any,
+	fields []services.SensitiveField,
+) error {
 	for _, item := range arr {
 		if mapItem, ok := item.(map[string]any); ok {
 			if err := sdm.sanitizeJSONMap(mapItem, fields); err != nil {

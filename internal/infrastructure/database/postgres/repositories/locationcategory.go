@@ -30,7 +30,9 @@ type locationCategoryRepository struct {
 	l  *zerolog.Logger
 }
 
-func NewLocationCategoryRepository(p LocationCategoryRepositoryParams) repositories.LocationCategoryRepository {
+func NewLocationCategoryRepository(
+	p LocationCategoryRepositoryParams,
+) repositories.LocationCategoryRepository {
 	log := p.Logger.With().
 		Str("repository", "locationcategory").
 		Logger()
@@ -41,7 +43,10 @@ func NewLocationCategoryRepository(p LocationCategoryRepositoryParams) repositor
 	}
 }
 
-func (lcr *locationCategoryRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
+func (lcr *locationCategoryRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *ports.LimitOffsetQueryOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "lc",
@@ -49,13 +54,20 @@ func (lcr *locationCategoryRepository) filterQuery(q *bun.SelectQuery, opts *por
 	})
 
 	if opts.Query != "" {
-		q = q.Where("lc.name ILIKE ? OR lc.description ILIKE ?", "%"+opts.Query+"%", "%"+opts.Query+"%")
+		q = q.Where(
+			"lc.name ILIKE ? OR lc.description ILIKE ?",
+			"%"+opts.Query+"%",
+			"%"+opts.Query+"%",
+		)
 	}
 
 	return q.Limit(opts.Limit).Offset(opts.Offset)
 }
 
-func (lcr *locationCategoryRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*location.LocationCategory], error) {
+func (lcr *locationCategoryRepository) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*location.LocationCategory], error) {
 	dba, err := lcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -84,7 +96,10 @@ func (lcr *locationCategoryRepository) List(ctx context.Context, opts *ports.Lim
 	}, nil
 }
 
-func (lcr *locationCategoryRepository) GetByID(ctx context.Context, opts repositories.GetLocationCategoryByIDOptions) (*location.LocationCategory, error) {
+func (lcr *locationCategoryRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetLocationCategoryByIDOptions,
+) (*location.LocationCategory, error) {
 	dba, err := lcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -102,7 +117,9 @@ func (lcr *locationCategoryRepository) GetByID(ctx context.Context, opts reposit
 
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			return nil, errors.NewNotFoundError("Location Category not found within your organization")
+			return nil, errors.NewNotFoundError(
+				"Location Category not found within your organization",
+			)
 		}
 
 		log.Error().Err(err).Msg("failed to get location category")
@@ -112,7 +129,10 @@ func (lcr *locationCategoryRepository) GetByID(ctx context.Context, opts reposit
 	return entity, nil
 }
 
-func (lcr *locationCategoryRepository) Create(ctx context.Context, lc *location.LocationCategory) (*location.LocationCategory, error) {
+func (lcr *locationCategoryRepository) Create(
+	ctx context.Context,
+	lc *location.LocationCategory,
+) (*location.LocationCategory, error) {
 	dba, err := lcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -143,7 +163,10 @@ func (lcr *locationCategoryRepository) Create(ctx context.Context, lc *location.
 	return lc, nil
 }
 
-func (lcr *locationCategoryRepository) Update(ctx context.Context, lc *location.LocationCategory) (*location.LocationCategory, error) {
+func (lcr *locationCategoryRepository) Update(
+	ctx context.Context,
+	lc *location.LocationCategory,
+) (*location.LocationCategory, error) {
 	dba, err := lcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -187,7 +210,10 @@ func (lcr *locationCategoryRepository) Update(ctx context.Context, lc *location.
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Location Category (%s) has either been updated or deleted since the last request.", lc.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Location Category (%s) has either been updated or deleted since the last request.",
+					lc.GetID(),
+				),
 			)
 		}
 

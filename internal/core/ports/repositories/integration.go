@@ -23,8 +23,14 @@ type GetIntegrationByTypeRequest struct {
 
 type IntegrationRepository interface {
 	// Standard CRUD operations
-	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*integration.Integration], error)
+	List(
+		ctx context.Context,
+		opts *ports.LimitOffsetQueryOptions,
+	) (*ports.ListResult[*integration.Integration], error)
 	GetByID(ctx context.Context, opts GetIntegrationByIDOptions) (*integration.Integration, error)
-	GetByType(ctx context.Context, req GetIntegrationByTypeRequest) (*integration.Integration, error)
+	GetByType(
+		ctx context.Context,
+		req GetIntegrationByTypeRequest,
+	) (*integration.Integration, error)
 	Update(ctx context.Context, i *integration.Integration) (*integration.Integration, error)
 }

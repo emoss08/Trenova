@@ -93,7 +93,10 @@ func (sr *stateRepository) Invalidate(ctx context.Context) error {
 }
 
 // GetByAbbreviation retrieves a state by its abbreviation from the cache
-func (sr *stateRepository) GetByAbbreviation(ctx context.Context, abbreviation string) (*usstate.UsState, error) {
+func (sr *stateRepository) GetByAbbreviation(
+	ctx context.Context,
+	abbreviation string,
+) (*usstate.UsState, error) {
 	log := sr.l.With().
 		Str("operation", "GetByAbbreviation").
 		Str("abbreviation", abbreviation).

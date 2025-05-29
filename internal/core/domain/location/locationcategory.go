@@ -25,31 +25,31 @@ type LocationCategory struct {
 	bun.BaseModel `bun:"table:location_categories,alias:lc" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID `bun:",pk,type:VARCHAR(100),notnull" json:"id"`
+	ID             pulid.ID `bun:",pk,type:VARCHAR(100),notnull"                 json:"id"`
 	BusinessUnitID pulid.ID `bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,pk,notnull,type:VARCHAR(100)" json:"organizationId"`
+	OrganizationID pulid.ID `bun:"organization_id,pk,notnull,type:VARCHAR(100)"  json:"organizationId"`
 
 	// Core Fields
-	Name                string       `json:"name" bun:"name,type:VARCHAR(100),notnull"`
-	Description         string       `json:"description" bun:"description,type:VARCHAR(255)"`
-	Type                Category     `json:"type" bun:"type,type:location_category_type,notnull"`
-	FacilityType        FacilityType `json:"facilityType" bun:"facility_type,type:facility_type,nullzero"`
-	Color               string       `json:"color" bun:"color,type:VARCHAR(10)"`
-	HasSecureParking    bool         `json:"hasSecureParking" bun:"has_secure_parking,type:BOOLEAN,default:false"`
+	Name                string       `json:"name"                bun:"name,type:VARCHAR(100),notnull"`
+	Description         string       `json:"description"         bun:"description,type:VARCHAR(255)"`
+	Type                Category     `json:"type"                bun:"type,type:location_category_type,notnull"`
+	FacilityType        FacilityType `json:"facilityType"        bun:"facility_type,type:facility_type,nullzero"`
+	Color               string       `json:"color"               bun:"color,type:VARCHAR(10)"`
+	HasSecureParking    bool         `json:"hasSecureParking"    bun:"has_secure_parking,type:BOOLEAN,default:false"`
 	RequiresAppointment bool         `json:"requiresAppointment" bun:"requires_appointment,type:BOOLEAN,default:false"`
-	AllowsOvernight     bool         `json:"allowsOvernight" bun:"allows_overnight,type:BOOLEAN,default:false"`
-	HasRestroom         bool         `json:"hasRestroom" bun:"has_restroom,type:BOOLEAN,default:false"`
+	AllowsOvernight     bool         `json:"allowsOvernight"     bun:"allows_overnight,type:BOOLEAN,default:false"`
+	HasRestroom         bool         `json:"hasRestroom"         bun:"has_restroom,type:BOOLEAN,default:false"`
 
 	// Metadata
-	Version      int64  `bun:"version,type:BIGINT" json:"version"`
+	Version      int64  `bun:"version,type:BIGINT"                                                                  json:"version"`
 	CreatedAt    int64  `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
 	UpdatedAt    int64  `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+	SearchVector string `bun:"search_vector,type:TSVECTOR,scanonly"                                                 json:"-"`
+	Rank         string `bun:"rank,type:VARCHAR(100),scanonly"                                                      json:"-"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
 }
 
 func (lc *LocationCategory) Validate(ctx context.Context, multiErr *errors.MultiError) {

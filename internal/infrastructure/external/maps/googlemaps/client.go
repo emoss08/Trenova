@@ -123,7 +123,11 @@ func (c *client) CheckAPIKey(ctx context.Context, orgID, buID pulid.ID) (bool, e
 // Returns:
 //   - resp[*maps.AutocompleteResponse]: The place autocomplete response
 //   - err[error]: The error
-func (c *client) placeAutocomplete(ctx context.Context, orgID, buID pulid.ID, req *maps.PlaceAutocompleteRequest) (*maps.AutocompleteResponse, error) {
+func (c *client) placeAutocomplete(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	req *maps.PlaceAutocompleteRequest,
+) (*maps.AutocompleteResponse, error) {
 	log := c.l.With().
 		Str("operation", "PlaceAutocomplete").
 		Str("orgID", orgID.String()).
@@ -160,7 +164,11 @@ func (c *client) placeAutocomplete(ctx context.Context, orgID, buID pulid.ID, re
 // Returns:
 //   - details[*LocationDetails]: The location details
 //   - err[error]: The error
-func (c *client) getPlaceDetails(ctx context.Context, orgID, buID pulid.ID, placeID string) (*LocationDetails, error) {
+func (c *client) getPlaceDetails(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	placeID string,
+) (*LocationDetails, error) {
 	log := c.l.With().
 		Str("operation", "GetPlaceDetails").
 		Str("orgID", orgID.String()).
@@ -266,7 +274,10 @@ func (c *client) getPlaceDetails(ctx context.Context, orgID, buID pulid.ID, plac
 // Returns:
 //   - result[*AutocompleteLocationResult]: Combined autocomplete predictions and location details
 //   - err[error]: The error
-func (c *client) AutocompleteWithDetails(ctx context.Context, req *AutoCompleteRequest) (*AutocompleteLocationResult, error) {
+func (c *client) AutocompleteWithDetails(
+	ctx context.Context,
+	req *AutoCompleteRequest,
+) (*AutocompleteLocationResult, error) {
 	log := c.l.With().
 		Str("operation", "AutocompleteWithDetails").
 		Str("orgID", req.OrgID.String()).

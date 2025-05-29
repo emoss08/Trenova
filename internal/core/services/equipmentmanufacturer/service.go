@@ -53,7 +53,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQueryOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, repositories.ListEquipmentManufacturerOptions{
 		Filter: opts,
 	})
@@ -72,7 +75,10 @@ func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQuer
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts repositories.ListEquipmentManufacturerOptions) (*ports.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts repositories.ListEquipmentManufacturerOptions,
+) (*ports.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -92,7 +98,9 @@ func (s *Service) List(ctx context.Context, opts repositories.ListEquipmentManuf
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read equipment manufacturers")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read equipment manufacturers",
+		)
 	}
 
 	entities, err := s.repo.List(ctx, opts)
@@ -107,7 +115,10 @@ func (s *Service) List(ctx context.Context, opts repositories.ListEquipmentManuf
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetEquipmentManufacturerByIDOptions) (*equipmentmanufacturer.EquipmentManufacturer, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts repositories.GetEquipmentManufacturerByIDOptions,
+) (*equipmentmanufacturer.EquipmentManufacturer, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("equipManuID", opts.ID.String()).
@@ -130,7 +141,9 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetEquipmentManufac
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this equipment manufacturer")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read this equipment manufacturer",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, opts)
@@ -142,7 +155,11 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetEquipmentManufac
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, et *equipmentmanufacturer.EquipmentManufacturer, userID pulid.ID) (*equipmentmanufacturer.EquipmentManufacturer, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	et *equipmentmanufacturer.EquipmentManufacturer,
+	userID pulid.ID,
+) (*equipmentmanufacturer.EquipmentManufacturer, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("name", et.Name).
@@ -165,7 +182,9 @@ func (s *Service) Create(ctx context.Context, et *equipmentmanufacturer.Equipmen
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a equipment manufacturer")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to create a equipment manufacturer",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{
@@ -201,7 +220,11 @@ func (s *Service) Create(ctx context.Context, et *equipmentmanufacturer.Equipmen
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, et *equipmentmanufacturer.EquipmentManufacturer, userID pulid.ID) (*equipmentmanufacturer.EquipmentManufacturer, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	et *equipmentmanufacturer.EquipmentManufacturer,
+	userID pulid.ID,
+) (*equipmentmanufacturer.EquipmentManufacturer, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("name", et.Name).
@@ -224,7 +247,9 @@ func (s *Service) Update(ctx context.Context, et *equipmentmanufacturer.Equipmen
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this equipment manufacturer")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this equipment manufacturer",
+		)
 	}
 
 	// Validate the equipment manufacturer

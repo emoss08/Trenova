@@ -21,8 +21,20 @@ type GetHazmatSegregationRuleByIDRequest struct {
 }
 
 type HazmatSegregationRuleRepository interface {
-	List(ctx context.Context, req *ListHazmatSegregationRuleRequest) (*ports.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error)
-	GetByID(ctx context.Context, req *GetHazmatSegregationRuleByIDRequest) (*hazmatsegregationrule.HazmatSegregationRule, error)
-	Create(ctx context.Context, hsr *hazmatsegregationrule.HazmatSegregationRule) (*hazmatsegregationrule.HazmatSegregationRule, error)
-	Update(ctx context.Context, hsr *hazmatsegregationrule.HazmatSegregationRule) (*hazmatsegregationrule.HazmatSegregationRule, error)
+	List(
+		ctx context.Context,
+		req *ListHazmatSegregationRuleRequest,
+	) (*ports.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error)
+	GetByID(
+		ctx context.Context,
+		req *GetHazmatSegregationRuleByIDRequest,
+	) (*hazmatsegregationrule.HazmatSegregationRule, error)
+	Create(
+		ctx context.Context,
+		hsr *hazmatsegregationrule.HazmatSegregationRule,
+	) (*hazmatsegregationrule.HazmatSegregationRule, error)
+	Update(
+		ctx context.Context,
+		hsr *hazmatsegregationrule.HazmatSegregationRule,
+	) (*hazmatsegregationrule.HazmatSegregationRule, error)
 }

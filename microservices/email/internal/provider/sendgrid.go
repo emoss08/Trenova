@@ -18,7 +18,10 @@ type SendGridProvider struct {
 }
 
 // NewSendGridProvider creates a new SendGrid provider
-func NewSendGridProvider(cfg *config.AppConfig, templateService model.TemplateRenderer) *SendGridProvider {
+func NewSendGridProvider(
+	cfg *config.AppConfig,
+	templateService model.TemplateRenderer,
+) *SendGridProvider {
 	return &SendGridProvider{
 		cfg:             &cfg.SendGrid,
 		templateService: templateService,
@@ -84,7 +87,11 @@ func (p *SendGridProvider) Send(ctx context.Context, email *model.Email) error {
 				// Decode base64 content
 				content, err := base64.StdEncoding.DecodeString(attachment.Content)
 				if err != nil {
-					return eris.Wrapf(err, "failed to decode attachment content for %s", attachment.Filename)
+					return eris.Wrapf(
+						err,
+						"failed to decode attachment content for %s",
+						attachment.Filename,
+					)
 				}
 
 				// Create attachment

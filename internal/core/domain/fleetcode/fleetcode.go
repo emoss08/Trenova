@@ -26,7 +26,7 @@ type FleetCode struct {
 	bun.BaseModel `bun:"table:fleet_codes,alias:fc" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID `json:"id" bun:",pk,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:",pk,type:VARCHAR(100)"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 
@@ -34,25 +34,25 @@ type FleetCode struct {
 	ManagerID *pulid.ID `json:"managerId" bun:"manager_id,type:VARCHAR(100),nullzero"`
 
 	// Core fields
-	Status       domain.Status       `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
-	Name         string              `json:"name" bun:"name,type:VARCHAR(100),notnull"`
-	Description  string              `json:"description" bun:"description,type:TEXT"`
-	RevenueGoal  decimal.NullDecimal `json:"revenueGoal" bun:"revenue_goal,type:NUMERIC(10,2),nullzero"`
+	Status       domain.Status       `json:"status"       bun:"status,type:status_enum,notnull,default:'Active'"`
+	Name         string              `json:"name"         bun:"name,type:VARCHAR(100),notnull"`
+	Description  string              `json:"description"  bun:"description,type:TEXT"`
+	RevenueGoal  decimal.NullDecimal `json:"revenueGoal"  bun:"revenue_goal,type:NUMERIC(10,2),nullzero"`
 	DeadheadGoal decimal.NullDecimal `json:"deadheadGoal" bun:"deadhead_goal,type:NUMERIC(10,2),nullzero"`
-	MileageGoal  decimal.NullDecimal `json:"mileageGoal" bun:"mileage_goal,type:NUMERIC(10,2),nullzero"`
-	Color        string              `json:"color" bun:"color,type:VARCHAR(10)"`
+	MileageGoal  decimal.NullDecimal `json:"mileageGoal"  bun:"mileage_goal,type:NUMERIC(10,2),nullzero"`
+	Color        string              `json:"color"        bun:"color,type:VARCHAR(10)"`
 
 	// Metadata
-	Version      int64  `json:"version" bun:"version,type:BIGINT"`
+	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	Manager      *user.User                 `json:"manager,omitempty" bun:"rel:belongs-to,join:manager_id=id"`
+	Manager      *user.User                 `json:"manager,omitempty"      bun:"rel:belongs-to,join:manager_id=id"`
 }
 
 func (fc *FleetCode) Validate(ctx context.Context, multiErr *errors.MultiError) {

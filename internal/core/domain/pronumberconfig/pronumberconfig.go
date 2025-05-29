@@ -18,42 +18,42 @@ type ProNumberConfig struct {
 	bun.BaseModel `bun:"table:pro_number_configs,alias:pnc" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
+	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull"               json:"id"`
 	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),pk,notnull" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
+	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull"  json:"organizationId"`
 
 	// Configuration Settings
-	Prefix              string `json:"prefix" bun:"prefix,type:VARCHAR(5),notnull"`
-	IncludeYear         bool   `json:"includeYear" bun:"include_year,type:BOOLEAN,notnull,default:false"`
-	YearDigits          int    `json:"yearDigits" bun:"year_digits,type:INTEGER,notnull,default:2"`
-	IncludeMonth        bool   `json:"includeMonth" bun:"include_month,type:BOOLEAN,notnull,default:false"`
-	SequenceDigits      int    `json:"sequenceDigits" bun:"sequence_digits,type:INTEGER,notnull,default:4"`
+	Prefix              string `json:"prefix"              bun:"prefix,type:VARCHAR(5),notnull"`
+	IncludeYear         bool   `json:"includeYear"         bun:"include_year,type:BOOLEAN,notnull,default:false"`
+	YearDigits          int    `json:"yearDigits"          bun:"year_digits,type:INTEGER,notnull,default:2"`
+	IncludeMonth        bool   `json:"includeMonth"        bun:"include_month,type:BOOLEAN,notnull,default:false"`
+	SequenceDigits      int    `json:"sequenceDigits"      bun:"sequence_digits,type:INTEGER,notnull,default:4"`
 	IncludeLocationCode bool   `json:"includeLocationCode" bun:"include_location_code,type:BOOLEAN,notnull,default:false"`
-	LocationCode        string `json:"locationCode" bun:"location_code,type:VARCHAR(10),notnull"`
+	LocationCode        string `json:"locationCode"        bun:"location_code,type:VARCHAR(10),notnull"`
 	IncludeRandomDigits bool   `json:"includeRandomDigits" bun:"include_random_digits,type:BOOLEAN,notnull,default:false"`
-	RandomDigitsCount   int    `json:"randomDigitsCount" bun:"random_digits_count,type:INTEGER,notnull,default:4"`
+	RandomDigitsCount   int    `json:"randomDigitsCount"   bun:"random_digits_count,type:INTEGER,notnull,default:4"`
 
 	// New configuration settings matching ProNumberFormat enhancements
-	IncludeCheckDigit       bool   `json:"includeCheckDigit" bun:"include_check_digit,type:BOOLEAN,notnull,default:false"`
+	IncludeCheckDigit       bool   `json:"includeCheckDigit"       bun:"include_check_digit,type:BOOLEAN,notnull,default:false"`
 	IncludeBusinessUnitCode bool   `json:"includeBusinessUnitCode" bun:"include_business_unit_code,type:BOOLEAN,notnull,default:false"`
-	BusinessUnitCode        string `json:"businessUnitCode" bun:"business_unit_code,type:VARCHAR(10),notnull"`
-	UseSeparators           bool   `json:"useSeparators" bun:"use_separators,type:BOOLEAN,notnull,default:false"`
-	SeparatorChar           string `json:"separatorChar" bun:"separator_char,type:VARCHAR(1),notnull"`
-	IncludeWeekNumber       bool   `json:"includeWeekNumber" bun:"include_week_number,type:BOOLEAN,notnull,default:false"`
-	IncludeDay              bool   `json:"includeDay" bun:"include_day,type:BOOLEAN,notnull,default:false"`
-	AllowCustomFormat       bool   `json:"allowCustomFormat" bun:"allow_custom_format,type:BOOLEAN,notnull,default:false"`
-	CustomFormat            string `json:"customFormat" bun:"custom_format,type:VARCHAR(100),notnull"`
+	BusinessUnitCode        string `json:"businessUnitCode"        bun:"business_unit_code,type:VARCHAR(10),notnull"`
+	UseSeparators           bool   `json:"useSeparators"           bun:"use_separators,type:BOOLEAN,notnull,default:false"`
+	SeparatorChar           string `json:"separatorChar"           bun:"separator_char,type:VARCHAR(1),notnull"`
+	IncludeWeekNumber       bool   `json:"includeWeekNumber"       bun:"include_week_number,type:BOOLEAN,notnull,default:false"`
+	IncludeDay              bool   `json:"includeDay"              bun:"include_day,type:BOOLEAN,notnull,default:false"`
+	AllowCustomFormat       bool   `json:"allowCustomFormat"       bun:"allow_custom_format,type:BOOLEAN,notnull,default:false"`
+	CustomFormat            string `json:"customFormat"            bun:"custom_format,type:VARCHAR(100),notnull"`
 
 	IsActive bool `json:"isActive" bun:"is_active,type:BOOLEAN,notnull,default:true"`
 
 	// Metadata
-	Version   int64 `bun:"version,type:BIGINT" json:"version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `bun:"version,type:BIGINT"                                                                  json:"version"`
+	CreatedAt int64 `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
+	UpdatedAt int64 `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
 }
 
 func (pnc *ProNumberConfig) Validate(ctx context.Context, multiErr *errors.MultiError) {
@@ -90,8 +90,11 @@ func (pnc *ProNumberConfig) Validate(ctx context.Context, multiErr *errors.Multi
 
 		// RandomDigitsCount Validation
 		validation.Field(&pnc.RandomDigitsCount,
-			validation.When(pnc.IncludeRandomDigits,
-				validation.Required.Error("Random digits count is required when including random digits"),
+			validation.When(
+				pnc.IncludeRandomDigits,
+				validation.Required.Error(
+					"Random digits count is required when including random digits",
+				),
 				validation.Min(1).Error("Random digits count must be at least 1"),
 				validation.Max(10).Error("Random digits count must be at most 10"),
 			),
@@ -99,9 +102,13 @@ func (pnc *ProNumberConfig) Validate(ctx context.Context, multiErr *errors.Multi
 
 		// BusinessUnitCode Validation
 		validation.Field(&pnc.BusinessUnitCode,
-			validation.When(pnc.IncludeBusinessUnitCode,
-				validation.Required.Error("Business unit code is required when including business unit code"),
-				validation.Length(1, 10).Error("Business unit code must be between 1 and 10 characters"),
+			validation.When(
+				pnc.IncludeBusinessUnitCode,
+				validation.Required.Error(
+					"Business unit code is required when including business unit code",
+				),
+				validation.Length(1, 10).
+					Error("Business unit code must be between 1 and 10 characters"),
 			),
 		),
 
@@ -115,9 +122,11 @@ func (pnc *ProNumberConfig) Validate(ctx context.Context, multiErr *errors.Multi
 
 		// CustomFormat Validation
 		validation.Field(&pnc.CustomFormat,
-			validation.When(pnc.AllowCustomFormat,
+			validation.When(
+				pnc.AllowCustomFormat,
 				validation.Required.Error("Custom format is required when allowing custom format"),
-				validation.Length(1, 100).Error("Custom format must be between 1 and 100 characters"),
+				validation.Length(1, 100).
+					Error("Custom format must be between 1 and 100 characters"),
 			),
 		),
 

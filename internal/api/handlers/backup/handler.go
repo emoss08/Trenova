@@ -125,12 +125,15 @@ func (h *Handler) downloadBackup(c *fiber.Ctx) error {
 		})
 	}
 
-	backupPath, err := h.backupService.DownloadBackup(c.UserContext(), &dbbackup.DownloadBackupRequest{
-		UserID:   reqCtx.UserID,
-		BuID:     reqCtx.BuID,
-		OrgID:    reqCtx.OrgID,
-		Filename: filename,
-	})
+	backupPath, err := h.backupService.DownloadBackup(
+		c.UserContext(),
+		&dbbackup.DownloadBackupRequest{
+			UserID:   reqCtx.UserID,
+			BuID:     reqCtx.BuID,
+			OrgID:    reqCtx.OrgID,
+			Filename: filename,
+		},
+	)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}

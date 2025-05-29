@@ -26,7 +26,9 @@ type hazmatExpirationRepository struct {
 	logger *zerolog.Logger
 }
 
-func NewHazmatExpirationRepository(p HazmatExpirationRepositoryParams) repositories.HazmatExpirationRepository {
+func NewHazmatExpirationRepository(
+	p HazmatExpirationRepositoryParams,
+) repositories.HazmatExpirationRepository {
 	log := p.Logger.With().
 		Str("repository", "hazmat_expiration").
 		Logger()
@@ -37,7 +39,10 @@ func NewHazmatExpirationRepository(p HazmatExpirationRepositoryParams) repositor
 	}
 }
 
-func (r *hazmatExpirationRepository) GetHazmatExpirationByStateID(ctx context.Context, stateID pulid.ID) (*compliance.HazmatExpiration, error) {
+func (r *hazmatExpirationRepository) GetHazmatExpirationByStateID(
+	ctx context.Context,
+	stateID pulid.ID,
+) (*compliance.HazmatExpiration, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")

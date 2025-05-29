@@ -87,7 +87,12 @@ func NewClient(cfg *config.RabbitMQConfig) (*Client, error) {
 }
 
 // SendEmail sends an email message to the email service
-func (c *Client) SendEmail(ctx context.Context, tenantID, entityID, entityType, template, subject string, to []string, data map[string]any) error {
+func (c *Client) SendEmail(
+	ctx context.Context,
+	tenantID, entityID, entityType, template, subject string,
+	to []string,
+	data map[string]any,
+) error {
 	// Validate that we have at least one valid email address
 	if len(to) == 0 {
 		return eris.New("no recipient email addresses provided")
@@ -155,8 +160,12 @@ func (c *Client) SendEmail(ctx context.Context, tenantID, entityID, entityType, 
 		return eris.Wrap(err, "failed to publish message")
 	}
 
-	log.Printf("Successfully published email message to RabbitMQ - ID: %s, Exchange: %s, RoutingKey: %s",
-		message.ID, c.config.ExchangeName, "email.send")
+	log.Printf(
+		"Successfully published email message to RabbitMQ - ID: %s, Exchange: %s, RoutingKey: %s",
+		message.ID,
+		c.config.ExchangeName,
+		"email.send",
+	)
 
 	return nil
 }

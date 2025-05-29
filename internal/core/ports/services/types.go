@@ -14,9 +14,11 @@ type LoginRequest struct {
 func (lr *LoginRequest) Validate() error {
 	return validation.ValidateStruct(lr,
 		validation.
-			Field(&lr.EmailAddress,
+			Field(
+				&lr.EmailAddress,
 				validation.Required.Error("Email address is required. Please try again."),
-				validation.Length(1, 255).Error("Email address must be between 1 and 255 characters. Please try again."),
+				validation.Length(1, 255).
+					Error("Email address must be between 1 and 255 characters. Please try again."),
 			),
 		validation.
 			Field(&lr.Password,

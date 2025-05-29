@@ -53,7 +53,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQueryOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, eris.Wrap(err, "select location categories")
@@ -71,7 +74,10 @@ func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQuer
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*location.LocationCategory], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*location.LocationCategory], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -91,7 +97,9 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read location categories")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read location categories",
+		)
 	}
 
 	entities, err := s.repo.List(ctx, opts)
@@ -106,7 +114,10 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetLocationCategoryByIDOptions) (*location.LocationCategory, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts repositories.GetLocationCategoryByIDOptions,
+) (*location.LocationCategory, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("locationCategoryID", opts.ID.String()).
@@ -129,7 +140,9 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetLocationCategory
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this location category")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read this location category",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, opts)
@@ -141,7 +154,11 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetLocationCategory
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, lc *location.LocationCategory, userID pulid.ID) (*location.LocationCategory, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	lc *location.LocationCategory,
+	userID pulid.ID,
+) (*location.LocationCategory, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("name", lc.Name).
@@ -164,7 +181,9 @@ func (s *Service) Create(ctx context.Context, lc *location.LocationCategory, use
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a location category")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to create a location category",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{
@@ -200,7 +219,11 @@ func (s *Service) Create(ctx context.Context, lc *location.LocationCategory, use
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, lc *location.LocationCategory, userID pulid.ID) (*location.LocationCategory, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	lc *location.LocationCategory,
+	userID pulid.ID,
+) (*location.LocationCategory, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("name", lc.Name).
@@ -223,7 +246,9 @@ func (s *Service) Update(ctx context.Context, lc *location.LocationCategory, use
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this location category")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this location category",
+		)
 	}
 
 	// Validate the location category

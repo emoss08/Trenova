@@ -37,7 +37,9 @@ type accessorialChargeRepository struct {
 
 // NewAccessorialChargeRepository initializes a new AccessorialChargeRepository with the provided dependencies.
 // It creates a new repository instance and returns it.
-func NewAccessorialChargeRepository(p AccessorialChargeRepositoryParams) repositories.AccessorialChargeRepository {
+func NewAccessorialChargeRepository(
+	p AccessorialChargeRepositoryParams,
+) repositories.AccessorialChargeRepository {
 	log := p.Logger.With().
 		Str("repository", "accessorialcharge").
 		Logger()
@@ -57,7 +59,10 @@ func NewAccessorialChargeRepository(p AccessorialChargeRepositoryParams) reposit
 //
 // Returns:
 //   - *bun.SelectQuery: The filtered and paginated query.
-func (ac *accessorialChargeRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
+func (ac *accessorialChargeRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *ports.LimitOffsetQueryOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "acc",
@@ -85,7 +90,10 @@ func (ac *accessorialChargeRepository) filterQuery(q *bun.SelectQuery, opts *por
 // Returns:
 //   - *ports.ListResult[*accessorialcharge.AccessorialCharge]: The list of accessorial charges along with the total count.
 //   - error: An error if the operation fails.
-func (ac *accessorialChargeRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*accessorialcharge.AccessorialCharge], error) {
+func (ac *accessorialChargeRepository) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*accessorialcharge.AccessorialCharge], error) {
 	dba, err := ac.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -124,7 +132,10 @@ func (ac *accessorialChargeRepository) List(ctx context.Context, opts *ports.Lim
 // Returns:
 //   - *accessorialcharge.AccessorialCharge: The accessorial charge if found.
 //   - error: An error if the operation fails.s
-func (ac *accessorialChargeRepository) GetByID(ctx context.Context, opts repositories.GetAccessorialChargeByIDRequest) (*accessorialcharge.AccessorialCharge, error) {
+func (ac *accessorialChargeRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetAccessorialChargeByIDRequest,
+) (*accessorialcharge.AccessorialCharge, error) {
 	dba, err := ac.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -146,7 +157,9 @@ func (ac *accessorialChargeRepository) GetByID(ctx context.Context, opts reposit
 
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			return nil, errors.NewNotFoundError("Accessorial Charge not found within your organization")
+			return nil, errors.NewNotFoundError(
+				"Accessorial Charge not found within your organization",
+			)
 		}
 
 		log.Error().Err(err).Msg("failed to get accessorial charge")
@@ -166,7 +179,10 @@ func (ac *accessorialChargeRepository) GetByID(ctx context.Context, opts reposit
 // Returns:
 //   - *accessorialcharge.AccessorialCharge: The created accessorial charge.
 //   - error: An error if the operation fails.
-func (ac *accessorialChargeRepository) Create(ctx context.Context, acc *accessorialcharge.AccessorialCharge) (*accessorialcharge.AccessorialCharge, error) {
+func (ac *accessorialChargeRepository) Create(
+	ctx context.Context,
+	acc *accessorialcharge.AccessorialCharge,
+) (*accessorialcharge.AccessorialCharge, error) {
 	dba, err := ac.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -204,7 +220,10 @@ func (ac *accessorialChargeRepository) Create(ctx context.Context, acc *accessor
 // Returns:
 //   - *accessorialcharge.AccessorialCharge: The updated accessorial charge.
 //   - error: An error if the operation fails.
-func (ac *accessorialChargeRepository) Update(ctx context.Context, acc *accessorialcharge.AccessorialCharge) (*accessorialcharge.AccessorialCharge, error) {
+func (ac *accessorialChargeRepository) Update(
+	ctx context.Context,
+	acc *accessorialcharge.AccessorialCharge,
+) (*accessorialcharge.AccessorialCharge, error) {
 	dba, err := ac.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -242,7 +261,10 @@ func (ac *accessorialChargeRepository) Update(ctx context.Context, acc *accessor
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Accessorial Charge (%s) has either been updated or deleted since the last request.", acc.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Accessorial Charge (%s) has either been updated or deleted since the last request.",
+					acc.GetID(),
+				),
 			)
 		}
 

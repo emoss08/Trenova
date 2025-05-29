@@ -42,7 +42,14 @@ type DBConfig struct {
 
 func (c *DBConfig) DSN() string {
 	hostPort := net.JoinHostPort(c.Host, strconv.Itoa(c.Port))
-	return fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s", c.Username, c.Password, hostPort, c.Database, c.SSLMode)
+	return fmt.Sprintf(
+		"postgres://%s:%s@%s/%s?sslmode=%s",
+		c.Username,
+		c.Password,
+		hostPort,
+		c.Database,
+		c.SSLMode,
+	)
 }
 
 type AppConfig struct {

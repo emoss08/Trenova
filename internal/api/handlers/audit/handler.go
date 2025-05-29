@@ -86,12 +86,15 @@ func (h *Handler) listByResourceID(c *fiber.Ctx) error {
 		return h.errorHandler.HandleError(c, err)
 	}
 
-	entries, err := h.auditService.ListByResourceID(c.UserContext(), repositories.ListByResourceIDRequest{
-		ResourceID: resourceID,
-		OrgID:      reqCtx.OrgID,
-		BuID:       reqCtx.BuID,
-		UserID:     reqCtx.UserID,
-	})
+	entries, err := h.auditService.ListByResourceID(
+		c.UserContext(),
+		repositories.ListByResourceIDRequest{
+			ResourceID: resourceID,
+			OrgID:      reqCtx.OrgID,
+			BuID:       reqCtx.BuID,
+			UserID:     reqCtx.UserID,
+		},
+	)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}

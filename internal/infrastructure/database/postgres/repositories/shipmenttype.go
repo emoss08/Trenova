@@ -63,7 +63,10 @@ func NewShipmentTypeRepository(p ShipmentTypeRepositoryParams) repositories.Ship
 //
 // Returns:
 //   - *bun.SelectQuery: The filtered and paginated query.
-func (str *shipmentTypeRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
+func (str *shipmentTypeRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *ports.LimitOffsetQueryOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "st",
@@ -90,7 +93,10 @@ func (str *shipmentTypeRepository) filterQuery(q *bun.SelectQuery, opts *ports.L
 // Returns:
 //   - *ports.ListResult[*shipmenttype.ShipmentType]: List of shipment types and total count.
 //   - error: If any database operation fails.
-func (str *shipmentTypeRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*shipmenttype.ShipmentType], error) {
+func (str *shipmentTypeRepository) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*shipmenttype.ShipmentType], error) {
 	dba, err := str.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -131,7 +137,10 @@ func (str *shipmentTypeRepository) List(ctx context.Context, opts *ports.LimitOf
 // Returns:
 //   - *shipmenttype.ShipmentType: The retrieved shipment type entity.
 //   - error: If the shipment type is not found or query fails.
-func (str *shipmentTypeRepository) GetByID(ctx context.Context, opts repositories.GetShipmentTypeByIDOptions) (*shipmenttype.ShipmentType, error) {
+func (str *shipmentTypeRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetShipmentTypeByIDOptions,
+) (*shipmenttype.ShipmentType, error) {
 	dba, err := str.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -173,7 +182,10 @@ func (str *shipmentTypeRepository) GetByID(ctx context.Context, opts repositorie
 // Returns:
 //   - *shipmenttype.ShipmentType: The created shipment type entity.
 //   - error: If the creation fails.
-func (str *shipmentTypeRepository) Create(ctx context.Context, st *shipmenttype.ShipmentType) (*shipmenttype.ShipmentType, error) {
+func (str *shipmentTypeRepository) Create(
+	ctx context.Context,
+	st *shipmenttype.ShipmentType,
+) (*shipmenttype.ShipmentType, error) {
 	dba, err := str.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -213,7 +225,10 @@ func (str *shipmentTypeRepository) Create(ctx context.Context, st *shipmenttype.
 // Returns:
 //   - *shipmenttype.ShipmentType: The updated shipment type entity.
 //   - error: If the update fails.
-func (str *shipmentTypeRepository) Update(ctx context.Context, st *shipmenttype.ShipmentType) (*shipmenttype.ShipmentType, error) {
+func (str *shipmentTypeRepository) Update(
+	ctx context.Context,
+	st *shipmenttype.ShipmentType,
+) (*shipmenttype.ShipmentType, error) {
 	dba, err := str.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -257,7 +272,10 @@ func (str *shipmentTypeRepository) Update(ctx context.Context, st *shipmenttype.
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Shipment Type (%s) has either been updated or deleted since the last request.", st.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Shipment Type (%s) has either been updated or deleted since the last request.",
+					st.GetID(),
+				),
 			)
 		}
 

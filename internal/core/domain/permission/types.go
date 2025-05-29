@@ -17,53 +17,129 @@ type Resource string
 
 const (
 	// Core resources
-	ResourceUser                  = Resource("user")                    // Represents user management resources.
-	ResourceBusinessUnit          = Resource("business_unit")           // Represents resources related to business units.
-	ResourceOrganization          = Resource("organization")            // Represents resources related to organizations.
-	ResourceDocumentQualityConfig = Resource("document_quality_config") // Represents resources related to document quality config.
-	ResourceShipmentControl       = Resource("shipment_control")        // Represents resources related to shipment control.
-	ResourceGoogleMapsConfig      = Resource("google_maps_config")      // Represents resources related to google maps config.
-	ResourceBillingControl        = Resource("billing_control")         // Represents resources related to billing control.
-	ResourceDocument              = Resource("document")                // Represents resources related to documents.
-	ResourcePageFavorite          = Resource("page_favorite")           // Represents resources related to page favorites.
+	ResourceUser = Resource(
+		"user",
+	) // Represents user management resources.
+	ResourceBusinessUnit = Resource(
+		"business_unit",
+	) // Represents resources related to business units.
+	ResourceOrganization = Resource(
+		"organization",
+	) // Represents resources related to organizations.
+	ResourceDocumentQualityConfig = Resource(
+		"document_quality_config",
+	) // Represents resources related to document quality config.
+	ResourceShipmentControl = Resource(
+		"shipment_control",
+	) // Represents resources related to shipment control.
+	ResourceGoogleMapsConfig = Resource(
+		"google_maps_config",
+	) // Represents resources related to google maps config.
+	ResourceBillingControl = Resource(
+		"billing_control",
+	) // Represents resources related to billing control.
+	ResourceDocument = Resource(
+		"document",
+	) // Represents resources related to documents.
+	ResourcePageFavorite = Resource(
+		"page_favorite",
+	) // Represents resources related to page favorites.
 	// Operations resources
-	ResourceWorker                = Resource("worker")                  // Represents resources related to workers.
-	ResourceTractor               = Resource("tractor")                 // Represents resources for managing tractors.
-	ResourceTrailer               = Resource("trailer")                 // Represents resources for managing trailers.
-	ResourceShipment              = Resource("shipment")                // Represents resources for managing shipments.
-	ResourceBillingQueue          = Resource("billing_queue")           // Represents resources for managing billing queue.
-	ResourceAssignment            = Resource("assignment")              // Represents resources for managing assignments.
-	ResourceShipmentMove          = Resource("shipment_move")           // Represents resources for managing movements.
-	ResourceStop                  = Resource("stop")                    // Represents resources for managing stops.
-	ResourceFleetCode             = Resource("fleet_code")              // Represents resources for managing fleet codes.
-	ResourceEquipmentType         = Resource("equipment_type")          // Represents resources for managing equipment types.
-	ResourceEquipmentManufacturer = Resource("equipment_manufacturer")  // Represents resources for managing equipment manfacturers.
-	ResourceShipmentType          = Resource("shipment_type")           // Represents resources for managing shipment type.
-	ResourceServiceType           = Resource("service_type")            // Represents resources for managing service types.
-	ResourceHazardousMaterial     = Resource("hazardous_material")      // Represents resources for managing hazardous materials.
-	ResourceCommodity             = Resource("commodity")               // Represents resources for managing commodities.
-	ResourceLocationCategory      = Resource("location_category")       // Represents resources for managing location categories.
-	ResourceLocation              = Resource("location")                // Represents resources for managing locations.
-	ResourceCustomer              = Resource("customer")                // Represents resources for managing customers.
-	ResourceHazmatSegregationRule = Resource("hazmat_segregation_rule") // Represents resources for managing hazmat segregation rules.
+	ResourceWorker = Resource(
+		"worker",
+	) // Represents resources related to workers.
+	ResourceTractor = Resource(
+		"tractor",
+	) // Represents resources for managing tractors.
+	ResourceTrailer = Resource(
+		"trailer",
+	) // Represents resources for managing trailers.
+	ResourceShipment = Resource(
+		"shipment",
+	) // Represents resources for managing shipments.
+	ResourceBillingQueue = Resource(
+		"billing_queue",
+	) // Represents resources for managing billing queue.
+	ResourceAssignment = Resource(
+		"assignment",
+	) // Represents resources for managing assignments.
+	ResourceShipmentMove = Resource(
+		"shipment_move",
+	) // Represents resources for managing movements.
+	ResourceStop = Resource(
+		"stop",
+	) // Represents resources for managing stops.
+	ResourceFleetCode = Resource(
+		"fleet_code",
+	) // Represents resources for managing fleet codes.
+	ResourceEquipmentType = Resource(
+		"equipment_type",
+	) // Represents resources for managing equipment types.
+	ResourceEquipmentManufacturer = Resource(
+		"equipment_manufacturer",
+	) // Represents resources for managing equipment manfacturers.
+	ResourceShipmentType = Resource(
+		"shipment_type",
+	) // Represents resources for managing shipment type.
+	ResourceServiceType = Resource(
+		"service_type",
+	) // Represents resources for managing service types.
+	ResourceHazardousMaterial = Resource(
+		"hazardous_material",
+	) // Represents resources for managing hazardous materials.
+	ResourceCommodity = Resource(
+		"commodity",
+	) // Represents resources for managing commodities.
+	ResourceLocationCategory = Resource(
+		"location_category",
+	) // Represents resources for managing location categories.
+	ResourceLocation = Resource(
+		"location",
+	) // Represents resources for managing locations.
+	ResourceCustomer = Resource(
+		"customer",
+	) // Represents resources for managing customers.
+	ResourceHazmatSegregationRule = Resource(
+		"hazmat_segregation_rule",
+	) // Represents resources for managing hazmat segregation rules.
 
 	// Financial resources
-	ResourceInvoice           = Resource("invoice")            // Represents resources related to invoices.
-	ResourceAccessorialCharge = Resource("accessorial_charge") // Represents resources related to accessorial charges.
-	ResourceDocumentType      = Resource("document_type")      // Represents resources related to document types.
+	ResourceInvoice = Resource(
+		"invoice",
+	) // Represents resources related to invoices.
+	ResourceAccessorialCharge = Resource(
+		"accessorial_charge",
+	) // Represents resources related to accessorial charges.
+	ResourceDocumentType = Resource(
+		"document_type",
+	) // Represents resources related to document types.
 
 	// Management resources
-	ResourceDispatch   = Resource("dispatch")    // Represents resources for dispatch management.
-	ResourceReport     = Resource("report")      // Represents resources for managing reports.
-	ResourceAuditEntry = Resource("audit_entry") // Represents resources for tracking and auditing logs.
-	ResourceAuditLog   = Resource("audit_log")   // Represents resources for tracking and auditing logs.
+	ResourceDispatch   = Resource("dispatch") // Represents resources for dispatch management.
+	ResourceReport     = Resource("report")   // Represents resources for managing reports.
+	ResourceAuditEntry = Resource(
+		"audit_entry",
+	) // Represents resources for tracking and auditing logs.
+	ResourceAuditLog = Resource(
+		"audit_log",
+	) // Represents resources for tracking and auditing logs.
 
 	// System resources
-	ResourceTableConfiguration = Resource("table_configuration") // Represents resources for managing table configurations.
-	ResourceIntegration        = Resource("integration")         // Represents resources for integrations with external systems.
-	ResourceSetting            = Resource("setting")             // Represents configuration or setting resources.
-	ResourceTemplate           = Resource("template")            // Represents resources for managing templates.
-	ResourceBackup             = Resource("backup")              // Represents resources for managing backups.
+	ResourceTableConfiguration = Resource(
+		"table_configuration",
+	) // Represents resources for managing table configurations.
+	ResourceIntegration = Resource(
+		"integration",
+	) // Represents resources for integrations with external systems.
+	ResourceSetting = Resource(
+		"setting",
+	) // Represents configuration or setting resources.
+	ResourceTemplate = Resource(
+		"template",
+	) // Represents resources for managing templates.
+	ResourceBackup = Resource(
+		"backup",
+	) // Represents resources for managing backups.
 )
 
 func (r Resource) MarshalJSON() ([]byte, error) {
@@ -126,7 +202,9 @@ const (
 	ScopeGlobal   = Scope("global")        // Permissions apply globally across all scopes.
 	ScopeBU       = Scope("business_unit") // Permissions are limited to a specific business unit.
 	ScopeOrg      = Scope("organization")  // Permissions are limited to a specific organization.
-	ScopePersonal = Scope("personal")      // Permissions are limited to the individual user or resource.
+	ScopePersonal = Scope(
+		"personal",
+	) // Permissions are limited to the individual user or resource.
 )
 
 func (s Scope) MarshalJSON() ([]byte, error) {
@@ -137,13 +215,17 @@ func (s Scope) MarshalJSON() ([]byte, error) {
 type Operator string
 
 const (
-	OpEquals      = Operator("eq")           // Checks if a value equals another.
-	OpNotEquals   = Operator("neq")          // Checks if a value does not equal another.
-	OpGreaterThan = Operator("gt")           // Checks if a value is greater than another.
-	OpLessThan    = Operator("lt")           // Checks if a value is less than another.
-	OpIn          = Operator("in")           // Checks if a value exists within a set of values.
-	OpNotIn       = Operator("not_in")       // Checks if a value does not exist within a set of values.
-	OpContains    = Operator("contains")     // Checks if a value contains another value (e.g., substring match).
+	OpEquals      = Operator("eq")  // Checks if a value equals another.
+	OpNotEquals   = Operator("neq") // Checks if a value does not equal another.
+	OpGreaterThan = Operator("gt")  // Checks if a value is greater than another.
+	OpLessThan    = Operator("lt")  // Checks if a value is less than another.
+	OpIn          = Operator("in")  // Checks if a value exists within a set of values.
+	OpNotIn       = Operator(
+		"not_in",
+	) // Checks if a value does not exist within a set of values.
+	OpContains = Operator(
+		"contains",
+	) // Checks if a value contains another value (e.g., substring match).
 	OpNotContains = Operator("not_contains") // Checks if a value does not contain another value.
 )
 
@@ -177,7 +259,9 @@ const (
 	ConditionTypeTime      = ConditionType("time")      // Time-based condition checks.
 	ConditionTypeRole      = ConditionType("role")      // Role-based condition checks.
 	ConditionTypeOwnership = ConditionType("ownership") // Ownership-based condition checks.
-	ConditionTypeCustom    = ConditionType("custom")    // Custom condition checks defined by the user.
+	ConditionTypeCustom    = ConditionType(
+		"custom",
+	) // Custom condition checks defined by the user.
 )
 
 type Condition struct {

@@ -97,7 +97,13 @@ func JSONDiff(before, after any, opts *DiffOptions) (map[string]FieldChange, err
 	return diff, nil
 }
 
-func compareObjects(before, after map[string]any, path string, diff map[string]FieldChange, opts *DiffOptions, depth int) error {
+func compareObjects(
+	before, after map[string]any,
+	path string,
+	diff map[string]FieldChange,
+	opts *DiffOptions,
+	depth int,
+) error {
 	if depth > opts.MaxDepth {
 		return eris.New("max depth exceeded")
 	}
@@ -114,7 +120,13 @@ func compareObjects(before, after map[string]any, path string, diff map[string]F
 }
 
 // compareCreatedAndUpdated handles fields that were created or updated in the after object
-func compareCreatedAndUpdated(before, after map[string]any, path string, diff map[string]FieldChange, opts *DiffOptions, depth int) error {
+func compareCreatedAndUpdated(
+	before, after map[string]any,
+	path string,
+	diff map[string]FieldChange,
+	opts *DiffOptions,
+	depth int,
+) error {
 	for key, afterValue := range after {
 		if shouldIgnoreField(key, opts.IgnoreFields) {
 			continue
@@ -146,7 +158,13 @@ func recordCreatedField(path string, value any, diff map[string]FieldChange) {
 }
 
 // compareExistingField compares a field that exists in both before and after objects
-func compareExistingField(beforeValue, afterValue any, key, path string, diff map[string]FieldChange, opts *DiffOptions, depth int) error {
+func compareExistingField(
+	beforeValue, afterValue any,
+	key, path string,
+	diff map[string]FieldChange,
+	opts *DiffOptions,
+	depth int,
+) error {
 	// Check if there's a custom comparator for this field
 	if comparator, ok := opts.CustomComparors[key]; ok {
 		return handleCustomComparison(comparator, beforeValue, afterValue, key, path, diff)
@@ -175,7 +193,12 @@ func compareExistingField(beforeValue, afterValue any, key, path string, diff ma
 }
 
 // handleCustomComparison applies a custom comparator and records changes if needed
-func handleCustomComparison(comparator Comparator, beforeValue, afterValue any, key, path string, diff map[string]FieldChange) error {
+func handleCustomComparison(
+	comparator Comparator,
+	beforeValue, afterValue any,
+	key, path string,
+	diff map[string]FieldChange,
+) error {
 	equal, err := comparator(beforeValue, afterValue)
 	if err != nil {
 		return eris.Wrapf(err, "custom comparison failed for field %s", key)
@@ -187,7 +210,12 @@ func handleCustomComparison(comparator Comparator, beforeValue, afterValue any, 
 }
 
 // compareDeleted identifies and records fields that were deleted
-func compareDeleted(before, after map[string]any, path string, diff map[string]FieldChange, opts *DiffOptions) {
+func compareDeleted(
+	before, after map[string]any,
+	path string,
+	diff map[string]FieldChange,
+	opts *DiffOptions,
+) {
 	for key, beforeValue := range before {
 		if shouldIgnoreField(key, opts.IgnoreFields) {
 			continue

@@ -41,7 +41,10 @@ func NewIntegrationRepository(p IntegrationRepositoryParams) repositories.Integr
 	}
 }
 
-func (r *integrationRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
+func (r *integrationRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *ports.LimitOffsetQueryOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "i",
@@ -53,7 +56,10 @@ func (r *integrationRepository) filterQuery(q *bun.SelectQuery, opts *ports.Limi
 	return q.Limit(opts.Limit).Offset(opts.Offset)
 }
 
-func (r *integrationRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*integration.Integration], error) {
+func (r *integrationRepository) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*integration.Integration], error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -85,7 +91,10 @@ func (r *integrationRepository) List(ctx context.Context, opts *ports.LimitOffse
 	}, nil
 }
 
-func (r *integrationRepository) GetByID(ctx context.Context, opts repositories.GetIntegrationByIDOptions) (*integration.Integration, error) {
+func (r *integrationRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetIntegrationByIDOptions,
+) (*integration.Integration, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -124,7 +133,10 @@ func (r *integrationRepository) GetByID(ctx context.Context, opts repositories.G
 	return entity, nil
 }
 
-func (r *integrationRepository) GetByType(ctx context.Context, req repositories.GetIntegrationByTypeRequest) (*integration.Integration, error) {
+func (r *integrationRepository) GetByType(
+	ctx context.Context,
+	req repositories.GetIntegrationByTypeRequest,
+) (*integration.Integration, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -158,7 +170,10 @@ func (r *integrationRepository) GetByType(ctx context.Context, req repositories.
 	return entity, nil
 }
 
-func (r *integrationRepository) Update(ctx context.Context, i *integration.Integration) (*integration.Integration, error) {
+func (r *integrationRepository) Update(
+	ctx context.Context,
+	i *integration.Integration,
+) (*integration.Integration, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -207,7 +222,10 @@ func (r *integrationRepository) Update(ctx context.Context, i *integration.Integ
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The integration (%s) has either been updated or deleted since the last request.", i.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The integration (%s) has either been updated or deleted since the last request.",
+					i.GetID(),
+				),
 			)
 		}
 

@@ -40,8 +40,21 @@ func (ft FileExtension) String() string {
 }
 
 var (
-	AllowedDocFileExtensions   = []FileExtension{FileExtensionDOC, FileExtensionPDF, FileExtensionDOCX, FileExtensionXLS, FileExtensionXLSX, FileExtensionCSV}
-	AllowedImageFileExtensions = []FileExtension{FileExtensionJPG, FileExtensionJPEG, FileExtensionPNG, FileExtensionWEBP, FileExtensionAVIF}
+	AllowedDocFileExtensions = []FileExtension{
+		FileExtensionDOC,
+		FileExtensionPDF,
+		FileExtensionDOCX,
+		FileExtensionXLS,
+		FileExtensionXLSX,
+		FileExtensionCSV,
+	}
+	AllowedImageFileExtensions = []FileExtension{
+		FileExtensionJPG,
+		FileExtensionJPEG,
+		FileExtensionPNG,
+		FileExtensionWEBP,
+		FileExtensionAVIF,
+	}
 )
 
 func IsSupportedFileType(fileExtension FileExtension) bool {
@@ -157,9 +170,20 @@ type FileService interface {
 	SaveFileVersion(ctx context.Context, req *SaveFileRequest) (*SaveFileResponse, error)
 	GetFileVersion(ctx context.Context, bucketName, objectName string) ([]VersionInfo, error)
 	GetFileByBucketName(ctx context.Context, bucketName, objectName string) (*minio.Object, error)
-	GetSpecificVersion(ctx context.Context, bucketName, objectName, versionID string) ([]byte, *VersionInfo, error)
-	RestoreVersion(ctx context.Context, req *SaveFileRequest, versionID string) (*SaveFileResponse, error)
+	GetSpecificVersion(
+		ctx context.Context,
+		bucketName, objectName, versionID string,
+	) ([]byte, *VersionInfo, error)
+	RestoreVersion(
+		ctx context.Context,
+		req *SaveFileRequest,
+		versionID string,
+	) (*SaveFileResponse, error)
 	ValidateFile(size int64, fileExtension FileExtension) error
-	GetFileURL(ctx context.Context, bucketName, objectName string, expiry time.Duration) (string, error)
+	GetFileURL(
+		ctx context.Context,
+		bucketName, objectName string,
+		expiry time.Duration,
+	) (string, error)
 	DeleteFile(ctx context.Context, bucketName, objectName string) error
 }

@@ -40,7 +40,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) Get(ctx context.Context, opts *repositories.GetDocumentQualityConfigOptions) (*documentqualityconfig.DocumentQualityConfig, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts *repositories.GetDocumentQualityConfigOptions,
+) (*documentqualityconfig.DocumentQualityConfig, error) {
 	log := s.l.With().Str("operation", "Get").Str("orgID", opts.OrgID.String()).Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
@@ -58,7 +61,9 @@ func (s *Service) Get(ctx context.Context, opts *repositories.GetDocumentQuality
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read document quality config")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read document quality config",
+		)
 	}
 
 	entity, err := s.repo.Get(ctx, opts)

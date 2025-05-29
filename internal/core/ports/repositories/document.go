@@ -64,10 +64,19 @@ type DocumentRepository interface {
 	Delete(ctx context.Context, req DeleteDocumentRequest) error
 
 	// List operations
-	GetDocumentsByResourceID(ctx context.Context, req *GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error)
+	GetDocumentsByResourceID(
+		ctx context.Context,
+		req *GetDocumentsByResourceIDRequest,
+	) (*ports.ListResult[*document.Document], error)
 	GetByID(ctx context.Context, req GetDocumentByIDRequest) (*document.Document, error)
 
 	// Aggregation operations
-	GetDocumentCountByResource(ctx context.Context, req *ports.TenantOptions) ([]*GetDocumentCountByResourceResponse, error)
-	GetResourceSubFolders(ctx context.Context, req GetResourceSubFoldersRequest) ([]*GetResourceSubFoldersResponse, error)
+	GetDocumentCountByResource(
+		ctx context.Context,
+		req *ports.TenantOptions,
+	) ([]*GetDocumentCountByResourceResponse, error)
+	GetResourceSubFolders(
+		ctx context.Context,
+		req GetResourceSubFoldersRequest,
+	) ([]*GetResourceSubFoldersResponse, error)
 }

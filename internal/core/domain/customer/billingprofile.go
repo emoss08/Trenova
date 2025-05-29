@@ -23,33 +23,38 @@ var (
 type BillingProfile struct {
 	bun.BaseModel `bun:"table:customer_billing_profiles,alias:cbr" json:"-"`
 
-	ID                        pulid.ID            `json:"id" bun:",pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID            pulid.ID            `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID            pulid.ID            `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	CustomerID                pulid.ID            `json:"customerId" bun:"customer_id,pk,notnull,type:VARCHAR(100)"`
-	BillingCycleType          BillingCycleType    `json:"billingCycleType" bun:"billing_cycle_type,type:billing_cycle_type_enum,nullzero,default:'Immediate'"`
-	PaymentTerm               billing.PaymentTerm `json:"paymentTerm" bun:"payment_term,type:payment_term_enum,nullzero,default:'Net30'"`
-	DocumentTypeIDs           []string            `json:"documentTypeIds" bun:"document_type_ids,type:VARCHAR(100)[],notnull,default:{}"`
-	HasOverrides              bool                `json:"hasOverrides" bun:"has_overrides,type:BOOLEAN,notnull,default:false"`
+	ID                        pulid.ID            `json:"id"                        bun:",pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID            pulid.ID            `json:"businessUnitId"            bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
+	OrganizationID            pulid.ID            `json:"organizationId"            bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	CustomerID                pulid.ID            `json:"customerId"                bun:"customer_id,pk,notnull,type:VARCHAR(100)"`
+	BillingCycleType          BillingCycleType    `json:"billingCycleType"          bun:"billing_cycle_type,type:billing_cycle_type_enum,nullzero,default:'Immediate'"`
+	PaymentTerm               billing.PaymentTerm `json:"paymentTerm"               bun:"payment_term,type:payment_term_enum,nullzero,default:'Net30'"`
+	DocumentTypeIDs           []string            `json:"documentTypeIds"           bun:"document_type_ids,type:VARCHAR(100)[],notnull,default:{}"`
+	HasOverrides              bool                `json:"hasOverrides"              bun:"has_overrides,type:BOOLEAN,notnull,default:false"`
 	EnforceCustomerBillingReq bool                `json:"enforceCustomerBillingReq" bun:"enforce_customer_billing_req,type:BOOLEAN,notnull,default:true"`
-	ValidateCustomerRates     bool                `json:"validateCustomerRates" bun:"validate_customer_rates,type:BOOLEAN,notnull,default:true"`
-	AutoTransfer              bool                `json:"autoTransfer" bun:"auto_transfer,type:BOOLEAN,nullzero,default:true"`
-	AutoMarkReadyToBill       bool                `json:"autoMarkReadyToBill" bun:"auto_mark_ready_to_bill,type:BOOLEAN,nullzero,default:true"`
-	AutoBill                  bool                `json:"autoBill" bun:"auto_bill,type:BOOLEAN,nullzero,default:true"`
-	Version                   int64               `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt                 int64               `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                 int64               `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ValidateCustomerRates     bool                `json:"validateCustomerRates"     bun:"validate_customer_rates,type:BOOLEAN,notnull,default:true"`
+	AutoTransfer              bool                `json:"autoTransfer"              bun:"auto_transfer,type:BOOLEAN,nullzero,default:true"`
+	AutoMarkReadyToBill       bool                `json:"autoMarkReadyToBill"       bun:"auto_mark_ready_to_bill,type:BOOLEAN,nullzero,default:true"`
+	AutoBill                  bool                `json:"autoBill"                  bun:"auto_bill,type:BOOLEAN,nullzero,default:true"`
+	Version                   int64               `json:"version"                   bun:"version,type:BIGINT"`
+	CreatedAt                 int64               `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                 int64               `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
 }
 
 func (b *BillingProfile) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(ctx, b,
+	err := validation.ValidateStructWithContext(
+		ctx,
+		b,
 		// * Ensure Customer ID is set
 		validation.Field(&b.CustomerID, validation.Required.Error("Customer ID is required")),
-		validation.Field(&b.DocumentTypeIDs, validation.Required.Error("Document Type IDs are required")),
+		validation.Field(
+			&b.DocumentTypeIDs,
+			validation.Required.Error("Document Type IDs are required"),
+		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors

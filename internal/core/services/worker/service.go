@@ -53,7 +53,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, req *repositories.ListWorkerRequest) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	req *repositories.ListWorkerRequest,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, req)
 	if err != nil {
 		return nil, eris.Wrap(err, "failed to list workers")
@@ -70,7 +73,10 @@ func (s *Service) SelectOptions(ctx context.Context, req *repositories.ListWorke
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, req *repositories.ListWorkerRequest) (*ports.ListResult[*worker.Worker], error) {
+func (s *Service) List(
+	ctx context.Context,
+	req *repositories.ListWorkerRequest,
+) (*ports.ListResult[*worker.Worker], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -104,7 +110,10 @@ func (s *Service) List(ctx context.Context, req *repositories.ListWorkerRequest)
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, req *repositories.GetWorkerByIDRequest) (*worker.Worker, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	req *repositories.GetWorkerByIDRequest,
+) (*worker.Worker, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("id", req.WorkerID.String()).
@@ -139,7 +148,11 @@ func (s *Service) Get(ctx context.Context, req *repositories.GetWorkerByIDReques
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, wrk *worker.Worker, userID pulid.ID) (*worker.Worker, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	wrk *worker.Worker,
+	userID pulid.ID,
+) (*worker.Worker, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("id", wrk.ID.String()).
@@ -197,7 +210,11 @@ func (s *Service) Create(ctx context.Context, wrk *worker.Worker, userID pulid.I
 	return createdWorker, nil
 }
 
-func (s *Service) Update(ctx context.Context, wrk *worker.Worker, userID pulid.ID) (*worker.Worker, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	wrk *worker.Worker,
+	userID pulid.ID,
+) (*worker.Worker, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("id", wrk.ID.String()).

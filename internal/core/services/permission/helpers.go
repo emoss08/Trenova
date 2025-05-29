@@ -15,7 +15,11 @@ import (
 	"github.com/samber/lo"
 )
 
-func evaluateFieldPermission(perm *permission.Permission, field string, ctx *services.PermissionContext) services.FieldPermissionCheck {
+func evaluateFieldPermission(
+	perm *permission.Permission,
+	field string,
+	ctx *services.PermissionContext,
+) services.FieldPermissionCheck {
 	if field == "" {
 		return services.FieldPermissionCheck{
 			Allowed: false,
@@ -51,7 +55,11 @@ func evaluateFieldPermission(perm *permission.Permission, field string, ctx *ser
 	}
 }
 
-func evaluateFieldViewPermission(perm *permission.Permission, field string, ctx *services.PermissionContext) services.FieldPermissionCheck {
+func evaluateFieldViewPermission(
+	perm *permission.Permission,
+	field string,
+	ctx *services.PermissionContext,
+) services.FieldPermissionCheck {
 	fp, found := findFieldPermission(perm.FieldPermissions, field)
 	if !found {
 		return services.FieldPermissionCheck{
@@ -93,7 +101,10 @@ func supportsAction(resource permission.Resource, action permission.Action) bool
 	return slices.Contains(actions, action)
 }
 
-func findFieldPermission(permissions []*permission.FieldPermission, field string) (*permission.FieldPermission, bool) {
+func findFieldPermission(
+	permissions []*permission.FieldPermission,
+	field string,
+) (*permission.FieldPermission, bool) {
 	for i := range permissions {
 		if permissions[i].Field == field {
 			return permissions[i], true
@@ -152,7 +163,11 @@ func sortConditionsByPriority(conditions []*permission.Condition) []*permission.
 	return sorted
 }
 
-func canModifyField(field string, ctx *services.PermissionContext, fieldPerms []*permission.FieldPermission) bool {
+func canModifyField(
+	field string,
+	ctx *services.PermissionContext,
+	fieldPerms []*permission.FieldPermission,
+) bool {
 	fp, found := findFieldPermission(fieldPerms, field)
 	if !found {
 		return false
@@ -169,7 +184,10 @@ func hasModifyAction(actions []permission.Action) bool {
 	return hasAction(actions, permission.ActionModifyField)
 }
 
-func evaluateFieldConditions(conditions []*permission.Condition, ctx *services.PermissionContext) bool {
+func evaluateFieldConditions(
+	conditions []*permission.Condition,
+	ctx *services.PermissionContext,
+) bool {
 	if len(conditions) == 0 {
 		return true
 	}
@@ -267,7 +285,10 @@ func evaluateTimeCondition(c *permission.Condition, ctx *services.PermissionCont
 		}
 		return now.After(start) && now.Before(end)
 	// ! Do not support these operators for time
-	case permission.OpNotEquals, permission.OpNotIn, permission.OpContains, permission.OpNotContains:
+	case permission.OpNotEquals,
+		permission.OpNotIn,
+		permission.OpContains,
+		permission.OpNotContains:
 		return false
 	default:
 		return false
@@ -307,7 +328,11 @@ func evaluateRoleCondition(c *permission.Condition, ctx *services.PermissionCont
 		}
 		return true
 	// ! Do not support these operators for roles
-	case permission.OpNotEquals, permission.OpGreaterThan, permission.OpLessThan, permission.OpContains, permission.OpNotContains:
+	case permission.OpNotEquals,
+		permission.OpGreaterThan,
+		permission.OpLessThan,
+		permission.OpContains,
+		permission.OpNotContains:
 		return false
 	default:
 		return false
@@ -342,7 +367,12 @@ func evaluateOwnershipCondition(c *permission.Condition, ctx *services.Permissio
 		default:
 			return false
 		}
-	case permission.OpContains, permission.OpNotEquals, permission.OpNotContains, permission.OpGreaterThan, permission.OpLessThan, permission.OpNotIn:
+	case permission.OpContains,
+		permission.OpNotEquals,
+		permission.OpNotContains,
+		permission.OpGreaterThan,
+		permission.OpLessThan,
+		permission.OpNotIn:
 		return false
 
 	default:

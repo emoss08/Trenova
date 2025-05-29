@@ -58,7 +58,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListShipmentOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	opts *repositories.ListShipmentOptions,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -75,7 +78,10 @@ func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListShip
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *repositories.ListShipmentOptions) (*ports.ListResult[*shipment.Shipment], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *repositories.ListShipmentOptions,
+) (*ports.ListResult[*shipment.Shipment], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -107,7 +113,10 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListShipmentOptio
 	return entities, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts *repositories.GetShipmentByIDOptions) (*shipment.Shipment, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts *repositories.GetShipmentByIDOptions,
+) (*shipment.Shipment, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("shipmentID", opts.ID.String()).
@@ -142,7 +151,11 @@ func (s *Service) Get(ctx context.Context, opts *repositories.GetShipmentByIDOpt
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, shp *shipment.Shipment, userID pulid.ID) (*shipment.Shipment, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	shp *shipment.Shipment,
+	userID pulid.ID,
+) (*shipment.Shipment, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("code", shp.ProNumber).
@@ -209,7 +222,11 @@ func (s *Service) Create(ctx context.Context, shp *shipment.Shipment, userID pul
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, shp *shipment.Shipment, userID pulid.ID) (*shipment.Shipment, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	shp *shipment.Shipment,
+	userID pulid.ID,
+) (*shipment.Shipment, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("code", shp.ProNumber).
@@ -232,7 +249,9 @@ func (s *Service) Update(ctx context.Context, shp *shipment.Shipment, userID pul
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this shipment")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this shipment",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{
@@ -291,7 +310,10 @@ func (s *Service) Update(ctx context.Context, shp *shipment.Shipment, userID pul
 	return updatedEntity, nil
 }
 
-func (s *Service) Cancel(ctx context.Context, req *repositories.CancelShipmentRequest) (*shipment.Shipment, error) {
+func (s *Service) Cancel(
+	ctx context.Context,
+	req *repositories.CancelShipmentRequest,
+) (*shipment.Shipment, error) {
 	log := s.l.With().
 		Str("operation", "Cancel").
 		Str("shipmentID", req.ShipmentID.String()).
@@ -314,7 +336,9 @@ func (s *Service) Cancel(ctx context.Context, req *repositories.CancelShipmentRe
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to cancel this shipment")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to cancel this shipment",
+		)
 	}
 
 	// get the original shipment
@@ -368,7 +392,10 @@ func (s *Service) Cancel(ctx context.Context, req *repositories.CancelShipmentRe
 	return newEntity, nil
 }
 
-func (s *Service) Duplicate(ctx context.Context, req *repositories.DuplicateShipmentRequest) (*shipment.Shipment, error) {
+func (s *Service) Duplicate(
+	ctx context.Context,
+	req *repositories.DuplicateShipmentRequest,
+) (*shipment.Shipment, error) {
 	log := s.l.With().
 		Str("operation", "Duplicate").
 		Str("shipmentID", req.ShipmentID.String()).
@@ -391,7 +418,9 @@ func (s *Service) Duplicate(ctx context.Context, req *repositories.DuplicateShip
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to duplicate this shipment")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to duplicate this shipment",
+		)
 	}
 
 	// * Validate the request
@@ -421,7 +450,10 @@ func (s *Service) Duplicate(ctx context.Context, req *repositories.DuplicateShip
 			"proNumber":  newEntity.ProNumber,
 			"customerID": newEntity.CustomerID.String(),
 		}),
-		audit.WithTags("shipment-duplication", fmt.Sprintf("customer-%s", newEntity.CustomerID.String())),
+		audit.WithTags(
+			"shipment-duplication",
+			fmt.Sprintf("customer-%s", newEntity.CustomerID.String()),
+		),
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log shipment duplication")
@@ -447,7 +479,9 @@ func (s *Service) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shipm
 	var excludeID *pulid.ID
 	if !shp.ID.IsNil() {
 		excludeID = &shp.ID
-		log.Debug().Str("excludeID", shp.ID.String()).Msg("excluding current shipment from duplicate check")
+		log.Debug().
+			Str("excludeID", shp.ID.String()).
+			Msg("excluding current shipment from duplicate check")
 	}
 
 	// Call repository function to check for duplicates
@@ -487,7 +521,10 @@ func (s *Service) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shipm
 	return nil
 }
 
-func (s *Service) MarkReadyToBill(ctx context.Context, req *repositories.UpdateShipmentStatusRequest) (*shipment.Shipment, error) {
+func (s *Service) MarkReadyToBill(
+	ctx context.Context,
+	req *repositories.UpdateShipmentStatusRequest,
+) (*shipment.Shipment, error) {
 	log := s.l.With().
 		Str("operation", "MarkReadyToBill").
 		Str("shipmentID", req.GetOpts.ID.String()).
@@ -508,7 +545,9 @@ func (s *Service) MarkReadyToBill(ctx context.Context, req *repositories.UpdateS
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to mark this shipment as ready to bill")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to mark this shipment as ready to bill",
+		)
 	}
 
 	// TODO(wolfred): Validate the requirements set by that particular customer on the server before allowing the shipment to be marked ready-to-bill
@@ -525,7 +564,9 @@ func (s *Service) MarkReadyToBill(ctx context.Context, req *repositories.UpdateS
 	return updatedEntity, nil
 }
 
-func (s *Service) CalculateShipmentTotals(shp *shipment.Shipment) (*repositories.ShipmentTotalsResponse, error) {
+func (s *Service) CalculateShipmentTotals(
+	shp *shipment.Shipment,
+) (*repositories.ShipmentTotalsResponse, error) {
 	log := s.l.With().Str("operation", "CalculateShipmentTotals").Logger()
 
 	// We do not persist any data here; the calculator only needs an in-memory

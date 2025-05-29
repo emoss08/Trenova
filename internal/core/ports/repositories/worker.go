@@ -37,5 +37,8 @@ type WorkerRepository interface {
 	GetByID(ctx context.Context, req *GetWorkerByIDRequest) (*worker.Worker, error)
 	Create(ctx context.Context, wrk *worker.Worker) (*worker.Worker, error)
 	Update(ctx context.Context, wrk *worker.Worker) (*worker.Worker, error)
-	GetWorkerPTO(ctx context.Context, ptoID, workerID, buID, orgID pulid.ID) (*worker.WorkerPTO, error)
+	GetWorkerPTO(
+		ctx context.Context,
+		ptoID, workerID, buID, orgID pulid.ID,
+	) (*worker.WorkerPTO, error)
 }

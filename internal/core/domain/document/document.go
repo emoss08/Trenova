@@ -28,48 +28,48 @@ type Document struct {
 	bun.BaseModel `bun:"table:documents,alias:doc" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
+	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull"               json:"id"`
 	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),pk,notnull" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
+	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull"  json:"organizationId"`
 
 	// Core Properties
-	FileName           string   `json:"fileName" bun:"file_name,notnull,type:VARCHAR(255)"`
-	OriginalName       string   `json:"originalName" bun:"original_name,notnull,type:VARCHAR(255)"`
-	FileSize           int64    `json:"fileSize" bun:"file_size,notnull,type:BIGINT"`
-	FileType           string   `json:"fileType" bun:"file_type,notnull,type:VARCHAR(100)"`
+	FileName           string   `json:"fileName"                     bun:"file_name,notnull,type:VARCHAR(255)"`
+	OriginalName       string   `json:"originalName"                 bun:"original_name,notnull,type:VARCHAR(255)"`
+	FileSize           int64    `json:"fileSize"                     bun:"file_size,notnull,type:BIGINT"`
+	FileType           string   `json:"fileType"                     bun:"file_type,notnull,type:VARCHAR(100)"`
 	PreviewStoragePath string   `json:"previewStoragePath,omitempty" bun:"preview_storage_path,type:TEXT"`
-	StoragePath        string   `json:"storagePath" bun:"storage_path,notnull,type:TEXT"`
-	DocumentTypeID     pulid.ID `json:"documentTypeId" bun:"document_type_id,notnull,type:VARCHAR(100)"`
-	Status             Status   `json:"status" bun:"status,notnull,type:document_status_enum"`
+	StoragePath        string   `json:"storagePath"                  bun:"storage_path,notnull,type:TEXT"`
+	DocumentTypeID     pulid.ID `json:"documentTypeId"               bun:"document_type_id,notnull,type:VARCHAR(100)"`
+	Status             Status   `json:"status"                       bun:"status,notnull,type:document_status_enum"`
 
 	// Entity Association (polymorphic relationship)
-	ResourceID   pulid.ID            `json:"resourceId" bun:"resource_id,notnull,type:VARCHAR(100)"`
+	ResourceID   pulid.ID            `json:"resourceId"   bun:"resource_id,notnull,type:VARCHAR(100)"`
 	ResourceType permission.Resource `json:"resourceType" bun:"resource_type,notnull,type:VARCHAR(100)"`
 
 	// Additional Metadata
 	ExpirationDate *int64   `json:"expirationDate" bun:"expiration_date,type:BIGINT,nullzero"`
-	Tags           []string `json:"tags" bun:"tags,array,type:VARCHAR(100)"`
+	Tags           []string `json:"tags"           bun:"tags,array,type:VARCHAR(100)"`
 
 	// Audit Fields
 	UploadedByID pulid.ID  `json:"uploadedById" bun:"uploaded_by_id,notnull,type:VARCHAR(100)"`
 	ApprovedByID *pulid.ID `json:"approvedById" bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	ApprovedAt   *int64    `json:"approvedAt" bun:"approved_at,type:BIGINT,nullzero"`
+	ApprovedAt   *int64    `json:"approvedAt"   bun:"approved_at,type:BIGINT,nullzero"`
 
 	// Metadata
-	Version      int64  `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+	Version      int64  `json:"version"                bun:"version,type:BIGINT"`
+	CreatedAt    int64  `json:"createdAt"              bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt    int64  `json:"updatedAt"              bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector string `json:"-"                      bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string `json:"-"                      bun:"rank,type:VARCHAR(100),scanonly"`
 	PresignedURL string `json:"presignedUrl,omitempty" bun:"presigned_url,type:TEXT,nullzero,scanonly"`
-	PreviewURL   string `json:"previewUrl,omitempty" bun:"preview_url,type:TEXT,nullzero,scanonly"`
+	PreviewURL   string `json:"previewUrl,omitempty"   bun:"preview_url,type:TEXT,nullzero,scanonly"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
 	DT           *billing.DocumentType      `bun:"rel:belongs-to,join:document_type_id=id" json:"-"`
-	UploadedBy   *user.User                 `bun:"rel:belongs-to,join:uploaded_by_id=id" json:"uploadedBy,omitempty"`
-	ApprovedBy   *user.User                 `bun:"rel:belongs-to,join:approved_by_id=id" json:"approvedBy,omitempty"`
+	UploadedBy   *user.User                 `bun:"rel:belongs-to,join:uploaded_by_id=id"   json:"uploadedBy,omitempty"`
+	ApprovedBy   *user.User                 `bun:"rel:belongs-to,join:approved_by_id=id"   json:"approvedBy,omitempty"`
 }
 
 // Validate performs validation on the Document struct
@@ -82,9 +82,11 @@ func (d *Document) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		),
 
 		// * Ensure original name is requried and valid length
-		validation.Field(&d.OriginalName,
+		validation.Field(
+			&d.OriginalName,
 			validation.Required.Error("Original file name is required"),
-			validation.Length(1, 255).Error("Original file name must be between 1 and 255 characters"),
+			validation.Length(1, 255).
+				Error("Original file name must be between 1 and 255 characters"),
 		),
 
 		// * Ensure file size is required and greater than 1

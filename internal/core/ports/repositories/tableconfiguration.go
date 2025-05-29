@@ -41,14 +41,35 @@ type DeleteUserConfigurationRequest struct {
 }
 
 type TableConfigurationRepository interface {
-	GetByID(ctx context.Context, id pulid.ID, opts *TableConfigurationFilters) (*tableconfiguration.Configuration, error)
-	List(ctx context.Context, filters *TableConfigurationFilters) (*ListTableConfigurationResult, error)
-	Create(ctx context.Context, config *tableconfiguration.Configuration) (*tableconfiguration.Configuration, error)
+	GetByID(
+		ctx context.Context,
+		id pulid.ID,
+		opts *TableConfigurationFilters,
+	) (*tableconfiguration.Configuration, error)
+	List(
+		ctx context.Context,
+		filters *TableConfigurationFilters,
+	) (*ListTableConfigurationResult, error)
+	Create(
+		ctx context.Context,
+		config *tableconfiguration.Configuration,
+	) (*tableconfiguration.Configuration, error)
 	Update(ctx context.Context, config *tableconfiguration.Configuration) error
 	Delete(ctx context.Context, req DeleteUserConfigurationRequest) error
-	GetUserConfigurations(ctx context.Context, tableID string, opts *TableConfigurationFilters) ([]*tableconfiguration.Configuration, error)
-	ListUserConfigurations(ctx context.Context, opts *ListUserConfigurationRequest) (*ports.ListResult[*tableconfiguration.Configuration], error)
-	GetDefaultOrLatestConfiguration(ctx context.Context, resource string, opts *TableConfigurationFilters) (*tableconfiguration.Configuration, error)
+	GetUserConfigurations(
+		ctx context.Context,
+		tableID string,
+		opts *TableConfigurationFilters,
+	) ([]*tableconfiguration.Configuration, error)
+	ListUserConfigurations(
+		ctx context.Context,
+		opts *ListUserConfigurationRequest,
+	) (*ports.ListResult[*tableconfiguration.Configuration], error)
+	GetDefaultOrLatestConfiguration(
+		ctx context.Context,
+		resource string,
+		opts *TableConfigurationFilters,
+	) (*tableconfiguration.Configuration, error)
 	ShareConfiguration(ctx context.Context, share *tableconfiguration.ConfigurationShare) error
 	RemoveShare(ctx context.Context, configID pulid.ID, sharedWithID pulid.ID) error
 }

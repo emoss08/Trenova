@@ -41,7 +41,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) ListBackups(ctx context.Context, req ListBackupsRequest) ([]BackupFileResponse, error) {
+func (s *Service) ListBackups(
+	ctx context.Context,
+	req ListBackupsRequest,
+) ([]BackupFileResponse, error) {
 	log := s.l.With().Str("operation", "ListBackups").Logger()
 
 	// * Check permissions
@@ -86,7 +89,10 @@ func (s *Service) ListBackups(ctx context.Context, req ListBackupsRequest) ([]Ba
 	return backups, nil
 }
 
-func (s *Service) CreateBackup(ctx context.Context, req CreateBackupRequest) (*BackupCreateResponse, error) {
+func (s *Service) CreateBackup(
+	ctx context.Context,
+	req CreateBackupRequest,
+) (*BackupCreateResponse, error) {
 	log := s.l.With().Str("operation", "CreateBackup").Logger()
 
 	// * Check permissions
@@ -245,7 +251,10 @@ func (s *Service) RestoreBackup(ctx context.Context, req *RestoreRequest) error 
 	return nil
 }
 
-func (s *Service) ApplyRetentionPolicy(ctx context.Context, req *ApplyRetentionPolicyRequest) error {
+func (s *Service) ApplyRetentionPolicy(
+	ctx context.Context,
+	req *ApplyRetentionPolicyRequest,
+) error {
 	log := s.l.With().Str("operation", "ApplyRetentionPolicy").Logger()
 
 	// *s Check permissions

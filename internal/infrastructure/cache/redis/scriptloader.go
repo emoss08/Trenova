@@ -93,7 +93,12 @@ func (sl *ScriptLoader) loadScript(ctx context.Context, entry fs.DirEntry) error
 	return nil
 }
 
-func (sl *ScriptLoader) EvalSHA(ctx context.Context, scriptName string, keys []string, args ...any) (any, error) {
+func (sl *ScriptLoader) EvalSHA(
+	ctx context.Context,
+	scriptName string,
+	keys []string,
+	args ...any,
+) (any, error) {
 	sl.mu.RLock()
 	sha, exists := sl.scripts[scriptName]
 	sl.mu.RUnlock()
@@ -123,10 +128,14 @@ func (sl *ScriptLoader) EvalSHA(ctx context.Context, scriptName string, keys []s
 		}
 
 		// Retry with the reloaded script with circuit breaker protection
-		executeErr = sl.redis.executeWithCircuitBreaker(ctx, "EVALSHA_"+scriptName+"_RETRY", func() error {
-			result, err = sl.redis.EvalSha(ctx, sha, keys, args...).Result()
-			return err
-		})
+		executeErr = sl.redis.executeWithCircuitBreaker(
+			ctx,
+			"EVALSHA_"+scriptName+"_RETRY",
+			func() error {
+				result, err = sl.redis.EvalSha(ctx, sha, keys, args...).Result()
+				return err
+			},
+		)
 
 		if executeErr != nil {
 			return nil, executeErr

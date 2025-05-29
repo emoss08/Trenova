@@ -20,7 +20,11 @@ var DefaultConfig = infra.PostgresSearchConfig{
 	MaxTerms:  6,
 }
 
-func BuildSearchQuery[T infra.PostgresSearchable](q *bun.SelectQuery, query string, entity T) *bun.SelectQuery {
+func BuildSearchQuery[T infra.PostgresSearchable](
+	q *bun.SelectQuery,
+	query string,
+	entity T,
+) *bun.SelectQuery {
 	config := entity.GetPostgresSearchConfig()
 
 	if len(strings.TrimSpace(query)) < config.MinLength {
@@ -82,7 +86,10 @@ func BuildSearchQuery[T infra.PostgresSearchable](q *bun.SelectQuery, query stri
 	return q
 }
 
-func buildSearchConditions(config *infra.PostgresSearchConfig, tableAliasWithDot, query, tsqueryStr string) (whereParts []string, whereArgs []any) {
+func buildSearchConditions(
+	config *infra.PostgresSearchConfig,
+	tableAliasWithDot, query, tsqueryStr string,
+) (whereParts []string, whereArgs []any) {
 	whereParts = make([]string, 0, len(config.Fields)+1)
 	whereArgs = make([]any, 0, len(config.Fields)*2+1)
 
@@ -121,12 +128,16 @@ func buildSearchConditions(config *infra.PostgresSearchConfig, tableAliasWithDot
 	return whereParts, whereArgs
 }
 
-func buildOrderingConditions(config *infra.PostgresSearchConfig, tableAliasWithDot, query string) (orderParts []string, orderArgs []any) {
+func buildOrderingConditions(
+	config *infra.PostgresSearchConfig,
+	tableAliasWithDot, query string,
+) (orderParts []string, orderArgs []any) {
 	orderParts = make([]string, 0, len(config.Fields)*2+1)
 	orderArgs = make([]any, 0, len(config.Fields)*2)
 
 	for _, field := range config.Fields {
-		if field.Type == infra.PostgresSearchTypeComposite || field.Type == infra.PostgresSearchTypeNumber {
+		if field.Type == infra.PostgresSearchTypeComposite ||
+			field.Type == infra.PostgresSearchTypeNumber {
 			orderParts = append(orderParts,
 				fmt.Sprintf("CASE WHEN %s%s = ? THEN 1 ELSE 0 END DESC",
 					tableAliasWithDot, field.Name))
@@ -136,7 +147,8 @@ func buildOrderingConditions(config *infra.PostgresSearchConfig, tableAliasWithD
 
 	queryWithSuffix := query + wildcardPattern
 	for _, field := range config.Fields {
-		if field.Type == infra.PostgresSearchTypeComposite || field.Type == infra.PostgresSearchTypeNumber {
+		if field.Type == infra.PostgresSearchTypeComposite ||
+			field.Type == infra.PostgresSearchTypeNumber {
 			orderParts = append(orderParts,
 				fmt.Sprintf("CASE WHEN %s%s ILIKE ? THEN 1 ELSE 0 END DESC",
 					tableAliasWithDot, field.Name))
@@ -157,7 +169,8 @@ func BuildTSVectorUpdate(fields []infra.PostgresSearchableField) string {
 		dict := field.Dictionary
 		if dict == "" {
 			dict = "english"
-			if field.Type == infra.PostgresSearchTypeComposite || field.Type == infra.PostgresSearchTypeNumber {
+			if field.Type == infra.PostgresSearchTypeComposite ||
+				field.Type == infra.PostgresSearchTypeNumber {
 				dict = "simple"
 			}
 		}

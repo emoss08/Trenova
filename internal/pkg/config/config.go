@@ -351,7 +351,13 @@ func (c *RabbitMQConfig) URL() string {
 	} else if strings.HasPrefix(vhost, "/") {
 		vhost = strings.TrimPrefix(vhost, "/")
 	}
-	return fmt.Sprintf("amqp://%s:%s@%s/%s", c.Username, c.Password, net.JoinHostPort(c.Host, strconv.Itoa(c.Port)), vhost)
+	return fmt.Sprintf(
+		"amqp://%s:%s@%s/%s",
+		c.Username,
+		c.Password,
+		net.JoinHostPort(c.Host, strconv.Itoa(c.Port)),
+		vhost,
+	)
 }
 
 // AuthConfig is the configuration for the auth.

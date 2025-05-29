@@ -93,14 +93,17 @@ func (h *Handler) getResourceSubFolders(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	resp, err := h.ds.GetResourceSubFolders(c.UserContext(), repositories.GetResourceSubFoldersRequest{
-		ResourceType: permission.Resource(c.Params("resourceType")),
-		TenantOptions: ports.TenantOptions{
-			UserID: reqCtx.UserID,
-			BuID:   reqCtx.BuID,
-			OrgID:  reqCtx.OrgID,
+	resp, err := h.ds.GetResourceSubFolders(
+		c.UserContext(),
+		repositories.GetResourceSubFoldersRequest{
+			ResourceType: permission.Resource(c.Params("resourceType")),
+			TenantOptions: ports.TenantOptions{
+				UserID: reqCtx.UserID,
+				BuID:   reqCtx.BuID,
+				OrgID:  reqCtx.OrgID,
+			},
 		},
-	})
+	)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -119,16 +122,19 @@ func (h *Handler) getDocumentsByResourceID(c *fiber.Ctx) error {
 			return nil, h.eh.HandleError(fc, err)
 		}
 
-		return h.ds.GetDocumentsByResourceID(fc.UserContext(), &repositories.GetDocumentsByResourceIDRequest{
-			Filter:       filter,
-			ResourceType: permission.Resource(c.Params("resourceType")),
-			ResourceID:   c.Params("resourceID"),
-			TenantOptions: ports.TenantOptions{
-				UserID: reqCtx.UserID,
-				BuID:   reqCtx.BuID,
-				OrgID:  reqCtx.OrgID,
+		return h.ds.GetDocumentsByResourceID(
+			fc.UserContext(),
+			&repositories.GetDocumentsByResourceIDRequest{
+				Filter:       filter,
+				ResourceType: permission.Resource(c.Params("resourceType")),
+				ResourceID:   c.Params("resourceID"),
+				TenantOptions: ports.TenantOptions{
+					UserID: reqCtx.UserID,
+					BuID:   reqCtx.BuID,
+					OrgID:  reqCtx.OrgID,
+				},
 			},
-		})
+		)
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
@@ -164,7 +170,10 @@ func (h *Handler) upload(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, errors.NewValidationError(
 			"file",
 			errors.ErrInvalid,
-			fmt.Sprintf("File size exceeds the maximum limit of %d MB", file.MaxFileSize/(1024*1024)),
+			fmt.Sprintf(
+				"File size exceeds the maximum limit of %d MB",
+				file.MaxFileSize/(1024*1024),
+			),
 		))
 	}
 

@@ -65,9 +65,9 @@ func (v *Variable) Validate(multiErr *errors.MultiError) {
 
 // Full metadata for the report
 type Metadata struct {
-	Report    *Report     `yaml:"report"`         // Report metadata
-	Variables []*Variable `yaml:"variables"`      // Variables used in the SQL
-	SQL       string      `yaml:"sql" json:"sql"` // SQL query
+	Report    *Report     `yaml:"report"`               // Report metadata
+	Variables []*Variable `yaml:"variables"`            // Variables used in the SQL
+	SQL       string      `yaml:"sql"       json:"sql"` // SQL query
 }
 
 func (m *Metadata) Validate(multiErr *errors.MultiError) {

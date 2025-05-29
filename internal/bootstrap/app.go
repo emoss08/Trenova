@@ -65,7 +65,9 @@ func Bootstrap() error {
 		select {
 		case <-stopCtx.Done():
 			// Context deadline exceeded, but we still want to continue shutdown
-			fmt.Println("WARNING: Shutdown is taking longer than expected, some resources may not be properly cleaned up")
+			fmt.Println(
+				"WARNING: Shutdown is taking longer than expected, some resources may not be properly cleaned up",
+			)
 		case <-time.After(5 * time.Second):
 			// This will only trigger if stopCtx doesn't finish within 5 seconds
 			fmt.Println("Shutdown in progress, waiting for resources to clean up...")

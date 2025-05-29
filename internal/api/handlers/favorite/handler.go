@@ -73,25 +73,25 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 }
 
 type CreateFavoriteRequest struct {
-	PageURL     string `json:"pageUrl" validate:"required,url,max=500"`
-	PageTitle   string `json:"pageTitle" validate:"required,max=255"`
+	PageURL     string `json:"pageUrl"     validate:"required,url,max=500"`
+	PageTitle   string `json:"pageTitle"   validate:"required,max=255"`
 	PageSection string `json:"pageSection" validate:"max=100"`
-	Icon        string `json:"icon" validate:"max=50"`
+	Icon        string `json:"icon"        validate:"max=50"`
 	Description string `json:"description" validate:"max=1000"`
 }
 
 type UpdateFavoriteRequest struct {
-	PageTitle   string `json:"pageTitle" validate:"required,max=255"`
+	PageTitle   string `json:"pageTitle"   validate:"required,max=255"`
 	PageSection string `json:"pageSection" validate:"max=100"`
-	Icon        string `json:"icon" validate:"max=50"`
+	Icon        string `json:"icon"        validate:"max=50"`
 	Description string `json:"description" validate:"max=1000"`
 }
 
 type ToggleFavoriteRequest struct {
-	PageURL     string `json:"pageUrl" validate:"required,url,max=500"`
-	PageTitle   string `json:"pageTitle" validate:"required,max=255"`
+	PageURL     string `json:"pageUrl"     validate:"required,url,max=500"`
+	PageTitle   string `json:"pageTitle"   validate:"required,max=255"`
 	PageSection string `json:"pageSection" validate:"max=100"`
-	Icon        string `json:"icon" validate:"max=50"`
+	Icon        string `json:"icon"        validate:"max=50"`
 	Description string `json:"description" validate:"max=1000"`
 }
 
@@ -187,7 +187,14 @@ func (h *Handler) update(c *fiber.Ctx) error {
 		PageTitle: req.PageTitle,
 	}
 
-	updated, err := h.fs.Update(c.UserContext(), reqCtx.OrgID, reqCtx.BuID, reqCtx.UserID, favoriteID, fav)
+	updated, err := h.fs.Update(
+		c.UserContext(),
+		reqCtx.OrgID,
+		reqCtx.BuID,
+		reqCtx.UserID,
+		favoriteID,
+		fav,
+	)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -254,7 +261,10 @@ func (h *Handler) checkFavorite(c *fiber.Ctx) error {
 
 	pageURL := c.Params("pageURL")
 	if pageURL == "" {
-		return h.eh.HandleError(c, fiber.NewError(fiber.StatusBadRequest, "pageURL parameter is required"))
+		return h.eh.HandleError(
+			c,
+			fiber.NewError(fiber.StatusBadRequest, "pageURL parameter is required"),
+		)
 	}
 
 	fav, err := h.fs.GetByURL(c.UserContext(), reqCtx.OrgID, reqCtx.BuID, reqCtx.UserID, pageURL)
@@ -283,7 +293,13 @@ func (h *Handler) checkFavoriteByPost(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	fav, err := h.fs.GetByURL(c.UserContext(), reqCtx.OrgID, reqCtx.BuID, reqCtx.UserID, req.PageURL)
+	fav, err := h.fs.GetByURL(
+		c.UserContext(),
+		reqCtx.OrgID,
+		reqCtx.BuID,
+		reqCtx.UserID,
+		req.PageURL,
+	)
 	if err != nil {
 		// If not found, return false
 		return c.Status(fiber.StatusOK).JSON(fiber.Map{

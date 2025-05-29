@@ -107,7 +107,10 @@ func provideHatchetClient() (v1.HatchetClient, error) {
 
 // provideHatchetWorker creates and configures a Hatchet v1 worker.
 // It now returns worker.Worker (interface) instead of *worker.Worker.
-func provideHatchetWorker(client v1.HatchetClient, registry *workflow.Registry) (worker.Worker, error) {
+func provideHatchetWorker(
+	client v1.HatchetClient,
+	registry *workflow.Registry,
+) (worker.Worker, error) {
 	workerName := "workflow-worker"
 
 	// Get workflow definitions from registry

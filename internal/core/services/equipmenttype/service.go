@@ -53,7 +53,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQueryOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, &repositories.ListEquipmentTypeRequest{
 		Filter: opts,
 	})
@@ -73,7 +76,10 @@ func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQuer
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *repositories.ListEquipmentTypeRequest) (*ports.ListResult[*equipmenttype.EquipmentType], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *repositories.ListEquipmentTypeRequest,
+) (*ports.ListResult[*equipmenttype.EquipmentType], error) {
 	log := s.l.With().
 		Str("operation", "List").
 		Logger()
@@ -95,7 +101,9 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListEquipmentType
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read equipment types")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read equipment types",
+		)
 	}
 
 	entities, err := s.repo.List(ctx, opts)
@@ -110,7 +118,10 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListEquipmentType
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetEquipmentTypeByIDOptions) (*equipmenttype.EquipmentType, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts repositories.GetEquipmentTypeByIDOptions,
+) (*equipmenttype.EquipmentType, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("equipTypeID", opts.ID.String()).
@@ -133,7 +144,9 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetEquipmentTypeByI
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this equipment type")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read this equipment type",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, opts)
@@ -145,7 +158,11 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetEquipmentTypeByI
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, et *equipmenttype.EquipmentType, userID pulid.ID) (*equipmenttype.EquipmentType, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	et *equipmenttype.EquipmentType,
+	userID pulid.ID,
+) (*equipmenttype.EquipmentType, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("code", et.Code).
@@ -168,7 +185,9 @@ func (s *Service) Create(ctx context.Context, et *equipmenttype.EquipmentType, u
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a equipment type")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to create a equipment type",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{
@@ -204,7 +223,11 @@ func (s *Service) Create(ctx context.Context, et *equipmenttype.EquipmentType, u
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, et *equipmenttype.EquipmentType, userID pulid.ID) (*equipmenttype.EquipmentType, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	et *equipmenttype.EquipmentType,
+	userID pulid.ID,
+) (*equipmenttype.EquipmentType, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("code", et.Code).
@@ -227,7 +250,9 @@ func (s *Service) Update(ctx context.Context, et *equipmenttype.EquipmentType, u
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this equipment type")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this equipment type",
+		)
 	}
 
 	// Validate the equipment type

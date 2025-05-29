@@ -15,5 +15,10 @@ type AdditionalChargeDeletionRequest struct {
 }
 
 type AdditionalChargeRepository interface {
-	HandleAdditionalChargeOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error
+	HandleAdditionalChargeOperations(
+		ctx context.Context,
+		tx bun.IDB,
+		shp *shipment.Shipment,
+		isCreate bool,
+	) error
 }

@@ -43,8 +43,14 @@ type SensitiveField struct {
 
 type AuditService interface {
 	// API functionality
-	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*audit.Entry], error)
-	ListByResourceID(ctx context.Context, opts repositories.ListByResourceIDRequest) (*ports.ListResult[*audit.Entry], error)
+	List(
+		ctx context.Context,
+		opts *ports.LimitOffsetQueryOptions,
+	) (*ports.ListResult[*audit.Entry], error)
+	ListByResourceID(
+		ctx context.Context,
+		opts repositories.ListByResourceIDRequest,
+	) (*ports.ListResult[*audit.Entry], error)
 	GetByID(ctx context.Context, opts repositories.GetAuditEntryByIDOptions) (*audit.Entry, error)
 
 	// Core functionality

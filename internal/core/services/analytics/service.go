@@ -43,7 +43,10 @@ func (s *Service) GetRegistry() services.AnalyticsRegistry {
 }
 
 // GetAnalytics returns analytics data for a specific page
-func (s *Service) GetAnalytics(ctx context.Context, opts *services.AnalyticsRequestOptions) (services.AnalyticsData, error) {
+func (s *Service) GetAnalytics(
+	ctx context.Context,
+	opts *services.AnalyticsRequestOptions,
+) (services.AnalyticsData, error) {
 	log := s.l.With().
 		Str("operation", "GetAnalytics").
 		Str("page", string(opts.Page)).

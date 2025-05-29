@@ -42,7 +42,12 @@ func NewService(p ServiceParams) services.PermissionService {
 
 // CheckFieldModification checks if a user is allowed to modify a specific field of a resource.
 // It evaluates the user's permissions and roles to determine field-level access.
-func (s *Service) CheckFieldModification(ctx context.Context, userID pulid.ID, resource permission.Resource, field string) services.FieldPermissionCheck {
+func (s *Service) CheckFieldModification(
+	ctx context.Context,
+	userID pulid.ID,
+	resource permission.Resource,
+	field string,
+) services.FieldPermissionCheck {
 	permissions, err := s.repo.GetUserPermissions(ctx, userID)
 	if err != nil {
 		return services.FieldPermissionCheck{
@@ -84,7 +89,10 @@ func (s *Service) CheckFieldModification(ctx context.Context, userID pulid.ID, r
 
 // HasPermission checks if a user has permission to perform a specific action on a resource.
 // It verifies the user's roles and permissions and evaluates conditions and scopes.
-func (s *Service) HasPermission(ctx context.Context, check *services.PermissionCheck) (services.PermissionCheckResult, error) {
+func (s *Service) HasPermission(
+	ctx context.Context,
+	check *services.PermissionCheck,
+) (services.PermissionCheckResult, error) {
 	if check.UserID.IsNil() {
 		return services.PermissionCheckResult{
 			Allowed: false,
@@ -124,7 +132,10 @@ func (s *Service) HasPermission(ctx context.Context, check *services.PermissionC
 	}, nil
 }
 
-func (s *Service) checkMultiPermissions(ctx context.Context, checks []*services.PermissionCheck) (map[string]bool, error) {
+func (s *Service) checkMultiPermissions(
+	ctx context.Context,
+	checks []*services.PermissionCheck,
+) (map[string]bool, error) {
 	results := make(map[string]bool)
 
 	for _, check := range checks {
@@ -141,7 +152,10 @@ func (s *Service) checkMultiPermissions(ctx context.Context, checks []*services.
 
 // HasAllPermissions checks if a user has all the specified permissions.
 // This method evaluates specific actions as well as the "manage" action for each resource.
-func (s *Service) HasFieldPermission(ctx context.Context, check *services.PermissionCheck) (services.PermissionCheckResult, error) {
+func (s *Service) HasFieldPermission(
+	ctx context.Context,
+	check *services.PermissionCheck,
+) (services.PermissionCheckResult, error) {
 	if check.Field == "" {
 		return services.PermissionCheckResult{
 			Allowed: false,
@@ -191,7 +205,10 @@ func (s *Service) HasFieldPermission(ctx context.Context, check *services.Permis
 
 // HasAllPermissions checks if a user has all the specified permissions.
 // This method evaluates specific actions as well as the "manage" action for each resource.
-func (s *Service) HasAllPermissions(ctx context.Context, checks []*services.PermissionCheck) (services.PermissionCheckResult, error) {
+func (s *Service) HasAllPermissions(
+	ctx context.Context,
+	checks []*services.PermissionCheck,
+) (services.PermissionCheckResult, error) {
 	allChecks := make([]*services.PermissionCheck, 0, len(checks)*2)
 
 	for _, check := range checks {
@@ -237,7 +254,10 @@ func (s *Service) HasAllPermissions(ctx context.Context, checks []*services.Perm
 
 // HasAnyPermissions checks if a user has at least one of the specified permissions.
 // This method evaluates both specific actions and the "manage" action for each resource.
-func (s *Service) HasAnyPermissions(ctx context.Context, checks []*services.PermissionCheck) (services.PermissionCheckResult, error) {
+func (s *Service) HasAnyPermissions(
+	ctx context.Context,
+	checks []*services.PermissionCheck,
+) (services.PermissionCheckResult, error) {
 	allChecks := make([]*services.PermissionCheck, 0, len(checks)*2)
 
 	for _, check := range checks {
@@ -288,7 +308,11 @@ func (s *Service) HasAnyPermissions(ctx context.Context, checks []*services.Perm
 	}, nil
 }
 
-func (s *Service) HasAnyFieldPermissions(ctx context.Context, fields []string, check *services.PermissionCheck) (services.PermissionCheckResult, error) {
+func (s *Service) HasAnyFieldPermissions(
+	ctx context.Context,
+	fields []string,
+	check *services.PermissionCheck,
+) (services.PermissionCheckResult, error) {
 	for _, field := range fields {
 		fieldCheck := check
 		fieldCheck.Field = field
@@ -314,7 +338,11 @@ func (s *Service) HasAnyFieldPermissions(ctx context.Context, fields []string, c
 	}, nil
 }
 
-func (s *Service) HasAllFieldPermissions(ctx context.Context, fields []string, check *services.PermissionCheck) (services.PermissionCheckResult, error) {
+func (s *Service) HasAllFieldPermissions(
+	ctx context.Context,
+	fields []string,
+	check *services.PermissionCheck,
+) (services.PermissionCheckResult, error) {
 	for _, field := range fields {
 		fieldCheck := check
 		fieldCheck.Field = field
@@ -340,7 +368,11 @@ func (s *Service) HasAllFieldPermissions(ctx context.Context, fields []string, c
 	}, nil
 }
 
-func (s *Service) HasScopedPermission(ctx context.Context, check *services.PermissionCheck, requiredScope permission.Scope) (services.PermissionCheckResult, error) {
+func (s *Service) HasScopedPermission(
+	ctx context.Context,
+	check *services.PermissionCheck,
+	requiredScope permission.Scope,
+) (services.PermissionCheckResult, error) {
 	permissions, err := s.repo.GetUserPermissions(ctx, check.UserID)
 	if err != nil {
 		return services.PermissionCheckResult{
@@ -383,7 +415,10 @@ func (s *Service) HasScopedPermission(ctx context.Context, check *services.Permi
 	}, nil
 }
 
-func (s *Service) HasDependentPermissions(ctx context.Context, check *services.PermissionCheck) (services.PermissionCheckResult, error) {
+func (s *Service) HasDependentPermissions(
+	ctx context.Context,
+	check *services.PermissionCheck,
+) (services.PermissionCheckResult, error) {
 	hasMainPerm, err := s.HasPermission(ctx, check)
 	if err != nil {
 		return services.PermissionCheckResult{
@@ -468,7 +503,10 @@ func (s *Service) HasDependentPermissions(ctx context.Context, check *services.P
 
 // HasTemporalPermission checks if the user has a permission that is time-based
 // This is useful for checking if a user has permission to view a user, but only if they have permission to view the user's organization
-func (s *Service) HasTemporalPermission(ctx context.Context, check *services.PermissionCheck) (services.PermissionCheckResult, error) {
+func (s *Service) HasTemporalPermission(
+	ctx context.Context,
+	check *services.PermissionCheck,
+) (services.PermissionCheckResult, error) {
 	if check.CustomData == nil {
 		check.CustomData = make(map[string]any)
 	}
@@ -478,7 +516,11 @@ func (s *Service) HasTemporalPermission(ctx context.Context, check *services.Per
 	return s.HasPermission(ctx, check)
 }
 
-func (s *Service) GetEffectivePermissions(ctx context.Context, userID pulid.ID, resource permission.Resource) ([]permission.Action, error) {
+func (s *Service) GetEffectivePermissions(
+	ctx context.Context,
+	userID pulid.ID,
+	resource permission.Resource,
+) ([]permission.Action, error) {
 	permissions, err := s.repo.GetUserPermissions(ctx, userID)
 	if err != nil {
 		return nil, eris.Wrap(err, "get user permissions")
@@ -503,7 +545,11 @@ func (s *Service) GetEffectivePermissions(ctx context.Context, userID pulid.ID, 
 	return result, nil
 }
 
-func (s *Service) matchesPermission(perm *permission.Permission, check *services.PermissionCheck, ctx *services.PermissionContext) bool {
+func (s *Service) matchesPermission(
+	perm *permission.Permission,
+	check *services.PermissionCheck,
+	ctx *services.PermissionContext,
+) bool {
 	if !supportsAction(check.Resource, check.Action) {
 		return false
 	}
@@ -525,7 +571,11 @@ func (s *Service) matchesPermission(perm *permission.Permission, check *services
 	return true
 }
 
-func (s *Service) matchesFieldPermission(perm *permission.Permission, check *services.PermissionCheck, ctx *services.PermissionContext) bool {
+func (s *Service) matchesFieldPermission(
+	perm *permission.Permission,
+	check *services.PermissionCheck,
+	ctx *services.PermissionContext,
+) bool {
 	if !s.matchesPermission(perm, check, ctx) {
 		return false
 	}
@@ -533,7 +583,12 @@ func (s *Service) matchesFieldPermission(perm *permission.Permission, check *ser
 	return canModifyField(check.Field, ctx, perm.FieldPermissions)
 }
 
-func (s *Service) CheckFieldAccess(ctx context.Context, userID pulid.ID, resource permission.Resource, field string) services.FieldAccess {
+func (s *Service) CheckFieldAccess(
+	ctx context.Context,
+	userID pulid.ID,
+	resource permission.Resource,
+	field string,
+) services.FieldAccess {
 	access := services.FieldAccess{
 		CanModify: false,
 		CanView:   false,
@@ -555,7 +610,12 @@ func (s *Service) CheckFieldAccess(ctx context.Context, userID pulid.ID, resourc
 	return access
 }
 
-func (s *Service) CheckFieldView(ctx context.Context, userID pulid.ID, resource permission.Resource, field string) services.FieldPermissionCheck {
+func (s *Service) CheckFieldView(
+	ctx context.Context,
+	userID pulid.ID,
+	resource permission.Resource,
+	field string,
+) services.FieldPermissionCheck {
 	permissions, err := s.repo.GetUserPermissions(ctx, userID)
 	if err != nil {
 		return services.FieldPermissionCheck{

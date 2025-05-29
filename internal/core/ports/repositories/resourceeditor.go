@@ -103,6 +103,9 @@ type ExecuteQueryResponse struct {
 
 type ResourceEditorRepository interface {
 	GetTableSchema(ctx context.Context, schemaName string) (*SchemaInformation, error)
-	GetAutocompleteSuggestions(ctx context.Context, req AutocompleteRequest) (*AutocompleteResponse, error)
+	GetAutocompleteSuggestions(
+		ctx context.Context,
+		req AutocompleteRequest,
+	) (*AutocompleteResponse, error)
 	ExecuteSQLQuery(ctx context.Context, req ExecuteQueryRequest) (*ExecuteQueryResponse, error)
 }

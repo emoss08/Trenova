@@ -250,7 +250,11 @@ var (
 )
 
 // executeWithCircuitBreaker executes a Redis operation with circuit breaker protection
-func (c *Client) executeWithCircuitBreaker(ctx context.Context, operation string, fn func() error) error {
+func (c *Client) executeWithCircuitBreaker(
+	ctx context.Context,
+	operation string,
+	fn func() error,
+) error {
 	if !c.circuitBreaker.CanExecute() {
 		c.l.Warn().
 			Str("operation", operation).
@@ -413,7 +417,12 @@ func (c *Client) GetJSON(ctx context.Context, key string, dest any) error {
 }
 
 // SetJSON marshals a value as JSON and stores it in Redis with a specified expiration time.
-func (c *Client) SetJSON(ctx context.Context, key string, value any, expiration time.Duration) error {
+func (c *Client) SetJSON(
+	ctx context.Context,
+	key string,
+	value any,
+	expiration time.Duration,
+) error {
 	data, err := sonic.Marshal(value)
 	if err != nil {
 		return eris.Wrapf(err, "failed to marshal JSON for key: %s", key)
@@ -533,7 +542,11 @@ func (c *Client) Del(ctx context.Context, keys ...string) error {
 }
 
 // IncreaseWithExpiry increments a key's value and sets an expiration time atomically.
-func (c *Client) IncreaseWithExpiry(ctx context.Context, key string, expiry time.Duration) (int64, error) {
+func (c *Client) IncreaseWithExpiry(
+	ctx context.Context,
+	key string,
+	expiry time.Duration,
+) (int64, error) {
 	pipe := c.Pipeline()
 	incr := pipe.Incr(ctx, key)
 	pipe.Expire(ctx, key, expiry)
@@ -548,7 +561,7 @@ func (c *Client) IncreaseWithExpiry(ctx context.Context, key string, expiry time
 
 // Transaction executes a transactional operation on Redis.
 func (c *Client) Transaction(ctx context.Context, fn func(tx *redis.Tx) error) error {
-	return c.Client.Watch(ctx, fn, "")
+	return c.Watch(ctx, fn, "")
 }
 
 // GetInt retrieves an integer value for a key from Redis, returning a default value if the key does not exist.

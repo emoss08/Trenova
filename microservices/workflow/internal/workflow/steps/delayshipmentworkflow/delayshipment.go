@@ -10,7 +10,10 @@ import (
 	"github.com/uptrace/bun"
 )
 
-func DelayShipments(db *bun.DB, emailClient *email.Client) func(worker.HatchetContext, *types.DelayShipmentsInput) (*types.DelayShipmentsOutput, error) {
+func DelayShipments(
+	db *bun.DB,
+	emailClient *email.Client,
+) func(worker.HatchetContext, *types.DelayShipmentsInput) (*types.DelayShipmentsOutput, error) {
 	return func(hc worker.HatchetContext, _ *types.DelayShipmentsInput) (*types.DelayShipmentsOutput, error) {
 		var queryStopsResults types.QueryStopsOutput
 		if err := hc.StepOutput("query-stops", &queryStopsResults); err != nil {
@@ -146,7 +149,12 @@ func DelayShipments(db *bun.DB, emailClient *email.Client) func(worker.HatchetCo
 
 					// Skip if no valid emails were found
 					if len(validEmails) == 0 {
-						hc.Log(fmt.Sprintf("no valid email addresses found for organization %s", orgID))
+						hc.Log(
+							fmt.Sprintf(
+								"no valid email addresses found for organization %s",
+								orgID,
+							),
+						)
 						continue
 					}
 

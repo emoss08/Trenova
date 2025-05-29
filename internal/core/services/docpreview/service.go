@@ -48,7 +48,10 @@ func NewService(p ServiceParams) services.PreviewService {
 }
 
 // GeneratePreview generates a preview image for a document
-func (s *service) GeneratePreview(ctx context.Context, req *services.GeneratePreviewRequest) (*services.GeneratePreviewResponse, error) {
+func (s *service) GeneratePreview(
+	ctx context.Context,
+	req *services.GeneratePreviewRequest,
+) (*services.GeneratePreviewResponse, error) {
 	log := s.l.With().
 		Str("operation", "GeneratePreview").
 		Str("fileName", req.FileName).
@@ -109,7 +112,10 @@ func (s *service) GeneratePreview(ctx context.Context, req *services.GeneratePre
 }
 
 // createTempFiles creates temporary files for document and image processing
-func (s *service) createTempFiles(fileName string, log *zerolog.Logger) (tmpFilePath, tmpImagePath string, err error) {
+func (s *service) createTempFiles(
+	fileName string,
+	log *zerolog.Logger,
+) (tmpFilePath, tmpImagePath string, err error) {
 	// Create a temporary file for the document
 	tmpFile, err := os.CreateTemp("", "doc-*"+filepath.Ext(fileName))
 	if err != nil {
@@ -120,7 +126,10 @@ func (s *service) createTempFiles(fileName string, log *zerolog.Logger) (tmpFile
 	tmpFile.Close()
 
 	// Create a temporary file for the preview image
-	tmpImageFile, err := os.CreateTemp("", fmt.Sprintf("preview-*.%s", services.GetFileTypeFromExtension(filepath.Ext(fileName))))
+	tmpImageFile, err := os.CreateTemp(
+		"",
+		fmt.Sprintf("preview-*.%s", services.GetFileTypeFromExtension(filepath.Ext(fileName))),
+	)
 	if err != nil {
 		os.Remove(tmpFilePath)
 		log.Error().Err(err).Msg("failed to create temporary preview image file")
@@ -142,7 +151,12 @@ func (s *service) writeToTempFile(tmpFilePath string, data []byte, log *zerolog.
 }
 
 // savePreviewImage saves the preview image to storage and returns the path
-func (s *service) savePreviewImage(ctx context.Context, req *services.GeneratePreviewRequest, imgData []byte, log *zerolog.Logger) (string, error) {
+func (s *service) savePreviewImage(
+	ctx context.Context,
+	req *services.GeneratePreviewRequest,
+	imgData []byte,
+	log *zerolog.Logger,
+) (string, error) {
 	// Generate a consistent preview path
 	timestamp := time.Now().Format("20060102150405")
 	safeResourceType := strings.ToLower(string(req.ResourceType))
@@ -186,7 +200,10 @@ func (s *service) savePreviewImage(ctx context.Context, req *services.GeneratePr
 }
 
 // GetPreviewURL retrieves a presigned URL for a preview image
-func (s *service) GetPreviewURL(ctx context.Context, req *services.GetPreviewURLRequest) (string, error) {
+func (s *service) GetPreviewURL(
+	ctx context.Context,
+	req *services.GetPreviewURLRequest,
+) (string, error) {
 	if req.PreviewPath == "" {
 		return "", nil
 	}

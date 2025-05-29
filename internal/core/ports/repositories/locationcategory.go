@@ -16,8 +16,14 @@ type GetLocationCategoryByIDOptions struct {
 }
 
 type LocationCategoryRepository interface {
-	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*location.LocationCategory], error)
-	GetByID(ctx context.Context, opts GetLocationCategoryByIDOptions) (*location.LocationCategory, error)
+	List(
+		ctx context.Context,
+		opts *ports.LimitOffsetQueryOptions,
+	) (*ports.ListResult[*location.LocationCategory], error)
+	GetByID(
+		ctx context.Context,
+		opts GetLocationCategoryByIDOptions,
+	) (*location.LocationCategory, error)
 	Create(ctx context.Context, lc *location.LocationCategory) (*location.LocationCategory, error)
 	Update(ctx context.Context, lc *location.LocationCategory) (*location.LocationCategory, error)
 }

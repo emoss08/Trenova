@@ -41,7 +41,10 @@ func NewLocationRepository(p LocationRepositoryParams) repositories.LocationRepo
 	}
 }
 
-func (lr *locationRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListLocationOptions) *bun.SelectQuery {
+func (lr *locationRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *repositories.ListLocationOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "loc",
@@ -57,13 +60,20 @@ func (lr *locationRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 	}
 
 	if opts.Filter.Query != "" {
-		q = q.Where("loc.name ILIKE ? OR loc.code ILIKE ?", "%"+opts.Filter.Query+"%", "%"+opts.Filter.Query+"%")
+		q = q.Where(
+			"loc.name ILIKE ? OR loc.code ILIKE ?",
+			"%"+opts.Filter.Query+"%",
+			"%"+opts.Filter.Query+"%",
+		)
 	}
 
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
 
-func (lr *locationRepository) List(ctx context.Context, opts *repositories.ListLocationOptions) (*ports.ListResult[*location.Location], error) {
+func (lr *locationRepository) List(
+	ctx context.Context,
+	opts *repositories.ListLocationOptions,
+) (*ports.ListResult[*location.Location], error) {
 	dba, err := lr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -92,7 +102,10 @@ func (lr *locationRepository) List(ctx context.Context, opts *repositories.ListL
 	}, nil
 }
 
-func (lr *locationRepository) GetByID(ctx context.Context, opts repositories.GetLocationByIDOptions) (*location.Location, error) {
+func (lr *locationRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetLocationByIDOptions,
+) (*location.Location, error) {
 	dba, err := lr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -128,7 +141,10 @@ func (lr *locationRepository) GetByID(ctx context.Context, opts repositories.Get
 	return entity, nil
 }
 
-func (lr *locationRepository) Create(ctx context.Context, l *location.Location) (*location.Location, error) {
+func (lr *locationRepository) Create(
+	ctx context.Context,
+	l *location.Location,
+) (*location.Location, error) {
 	dba, err := lr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -159,7 +175,10 @@ func (lr *locationRepository) Create(ctx context.Context, l *location.Location) 
 	return l, nil
 }
 
-func (lr *locationRepository) Update(ctx context.Context, loc *location.Location) (*location.Location, error) {
+func (lr *locationRepository) Update(
+	ctx context.Context,
+	loc *location.Location,
+) (*location.Location, error) {
 	dba, err := lr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -203,7 +222,10 @@ func (lr *locationRepository) Update(ctx context.Context, loc *location.Location
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Location (%s) has either been updated or deleted since the last request.", loc.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Location (%s) has either been updated or deleted since the last request.",
+					loc.GetID(),
+				),
 			)
 		}
 

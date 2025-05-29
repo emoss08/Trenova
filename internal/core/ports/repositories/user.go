@@ -17,7 +17,10 @@ type GetUserByIDOptions struct {
 }
 
 type UserRepository interface {
-	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*user.User], error)
+	List(
+		ctx context.Context,
+		opts *ports.LimitOffsetQueryOptions,
+	) (*ports.ListResult[*user.User], error)
 	FindByEmail(ctx context.Context, email string) (*user.User, error)
 	GetByID(ctx context.Context, opts GetUserByIDOptions) (*user.User, error)
 }

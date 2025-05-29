@@ -60,42 +60,65 @@ func NewValidator(p ValidatorParams) *Validator {
 	}
 }
 
-func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, t *tractor.Tractor,
+func (v *Validator) Validate(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	t *tractor.Tractor,
 ) *errors.MultiError {
 	engine := v.vef.CreateEngine()
 
 	// * Basic validation rules (field presence, format, etc.)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			t.Validate(ctx, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBasic,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				t.Validate(ctx, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// * Data integrity validation (uniqueness, references, etc.)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			return v.ValidateUniqueness(ctx, valCtx, t, multiErr)
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageDataIntegrity,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				return v.ValidateUniqueness(ctx, valCtx, t, multiErr)
+			},
+		),
+	)
 
 	// * Business rules validation (domain-specific rules)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			// Validate equipment class
-			v.validateEquipmentClass(ctx, t, multiErr)
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBusinessRules,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				// Validate equipment class
+				v.validateEquipmentClass(ctx, t, multiErr)
 
-			// Validate secondary worker
-			v.validateSecondaryWorker(t, multiErr)
+				// Validate secondary worker
+				v.validateSecondaryWorker(t, multiErr)
 
-			// Validate worker assignment
-			v.validateWorkerAssignment(ctx, valCtx, t, multiErr)
+				// Validate worker assignment
+				v.validateWorkerAssignment(ctx, valCtx, t, multiErr)
 
-			return nil
-		}))
+				return nil
+			},
+		),
+	)
 
 	return engine.Validate(ctx)
 }
 
-func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.ValidationContext, t *tractor.Tractor, multiErr *errors.MultiError) error {
+func (v *Validator) ValidateUniqueness(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	t *tractor.Tractor,
+	multiErr *errors.MultiError,
+) error {
 	dba, err := v.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
@@ -122,7 +145,11 @@ func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.Va
 	return nil
 }
 
-func (v *Validator) validateEquipmentClass(ctx context.Context, t *tractor.Tractor, multiErr *errors.MultiError) {
+func (v *Validator) validateEquipmentClass(
+	ctx context.Context,
+	t *tractor.Tractor,
+	multiErr *errors.MultiError,
+) {
 	et, err := v.equipTypeRepo.GetByID(ctx, repositories.GetEquipmentTypeByIDOptions{
 		ID:    t.EquipmentTypeID,
 		OrgID: t.OrganizationID,
@@ -135,18 +162,31 @@ func (v *Validator) validateEquipmentClass(ctx context.Context, t *tractor.Tract
 	}
 
 	if et.Class != equipmenttype.ClassTractor {
-		multiErr.Add("equipmentTypeId", errors.ErrInvalid, "Equipment type must have subclass 'Tractor'")
+		multiErr.Add(
+			"equipmentTypeId",
+			errors.ErrInvalid,
+			"Equipment type must have subclass 'Tractor'",
+		)
 	}
 }
 
 func (v *Validator) validateSecondaryWorker(t *tractor.Tractor, multiErr *errors.MultiError) {
 	// Validate the secondary worker is not the same as the primary worker
 	if t.SecondaryWorkerID != nil && pulid.Equals(*t.SecondaryWorkerID, t.PrimaryWorkerID) {
-		multiErr.Add("secondaryWorkerId", errors.ErrInvalid, "Secondary worker cannot be the same as the primary worker")
+		multiErr.Add(
+			"secondaryWorkerId",
+			errors.ErrInvalid,
+			"Secondary worker cannot be the same as the primary worker",
+		)
 	}
 }
 
-func (v *Validator) validateWorkerAssignment(ctx context.Context, valCtx *validator.ValidationContext, t *tractor.Tractor, multiErr *errors.MultiError) {
+func (v *Validator) validateWorkerAssignment(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	t *tractor.Tractor,
+	multiErr *errors.MultiError,
+) {
 	dba, err := v.db.DB(ctx)
 	if err != nil {
 		multiErr.Add("database", errors.ErrSystemError, err.Error())
@@ -190,7 +230,15 @@ func (v *Validator) validateWorkerAssignment(ctx context.Context, valCtx *valida
 			return
 		}
 
-		multiErr.Add(fieldName, errors.ErrInvalid, fmt.Sprintf("Worker is already assigned to tractor '%s' as %s", existingTractor.Code, getWorkerRole(t, workerID)))
+		multiErr.Add(
+			fieldName,
+			errors.ErrInvalid,
+			fmt.Sprintf(
+				"Worker is already assigned to tractor '%s' as %s",
+				existingTractor.Code,
+				getWorkerRole(t, workerID),
+			),
+		)
 	}
 
 	checkWorker(t.PrimaryWorkerID, "primaryWorkerId")

@@ -25,55 +25,62 @@ type User struct {
 	bun.BaseModel `bun:"table:users,alias:usr" json:"-"`
 
 	// Primary identifiers
-	ID                    pulid.ID `json:"id" bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID        pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
+	ID                    pulid.ID `json:"id"                    bun:"id,pk,type:VARCHAR(100)"`
+	BusinessUnitID        pulid.ID `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),notnull"`
 	CurrentOrganizationID pulid.ID `json:"currentOrganizationId" bun:"current_organization_id,type:VARCHAR(100),notnull"`
 
 	// Core fields
-	Status        domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
-	Name          string        `json:"name" bun:"name,type:VARCHAR(255),notnull"`
-	Username      string        `json:"username" bun:"username,type:VARCHAR(20),notnull"`
-	Password      string        `json:"-" bun:"password,type:VARCHAR(255),notnull"`
-	EmailAddress  string        `json:"emailAddress" bun:"email_address,type:VARCHAR(255),notnull"`
+	Status        domain.Status `json:"status"        bun:"status,type:status_enum,notnull,default:'Active'"`
+	Name          string        `json:"name"          bun:"name,type:VARCHAR(255),notnull"`
+	Username      string        `json:"username"      bun:"username,type:VARCHAR(20),notnull"`
+	Password      string        `json:"-"             bun:"password,type:VARCHAR(255),notnull"`
+	EmailAddress  string        `json:"emailAddress"  bun:"email_address,type:VARCHAR(255),notnull"`
 	ProfilePicURL string        `json:"profilePicUrl" bun:"profile_pic_url,type:VARCHAR(255)"`
-	ThumbnailURL  string        `json:"thumbnailUrl" bun:"thumbnail_url,type:VARCHAR(255)"`
-	Timezone      string        `json:"timezone" bun:"timezone,type:VARCHAR(50),notnull"`
-	TimeFormat    TimeFormat    `json:"timeFormat" bun:"time_format,type:time_format_enum,notnull,default:'12-hour'"`
-	IsLocked      bool          `json:"isLocked" bun:"is_locked,type:BOOLEAN,notnull,default:false"`
-	LastLoginAt   int64         `json:"lastLoginAt" bun:"last_login_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ThumbnailURL  string        `json:"thumbnailUrl"  bun:"thumbnail_url,type:VARCHAR(255)"`
+	Timezone      string        `json:"timezone"      bun:"timezone,type:VARCHAR(50),notnull"`
+	TimeFormat    TimeFormat    `json:"timeFormat"    bun:"time_format,type:time_format_enum,notnull,default:'12-hour'"`
+	IsLocked      bool          `json:"isLocked"      bun:"is_locked,type:BOOLEAN,notnull,default:false"`
+	LastLoginAt   int64         `json:"lastLoginAt"   bun:"last_login_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Metadata and versioning
-	Version   int64 `json:"version" bun:"version,type:BIGINT,notnull,default:0"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit        *businessunit.BusinessUnit   `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
+	BusinessUnit        *businessunit.BusinessUnit   `json:"-"                             bun:"rel:belongs-to,join:business_unit_id=id"`
 	CurrentOrganization *organization.Organization   `json:"currentOrganization,omitempty" bun:"rel:belongs-to,join:current_organization_id=id"`
-	Organizations       []*organization.Organization `json:"organizations,omitempty" bun:"m2m:user_organizations,join:User=Organization"`
-	Roles               []*permission.Role           `json:"roles,omitempty" bun:"m2m:user_roles,join:User=Role"`
+	Organizations       []*organization.Organization `json:"organizations,omitempty"       bun:"m2m:user_organizations,join:User=Organization"`
+	Roles               []*permission.Role           `json:"roles,omitempty"               bun:"m2m:user_roles,join:User=Role"`
 }
 
 // Validate validates the user entity
 func (u *User) Validate(multiErr *errors.MultiError) *errors.MultiError {
 	err := validation.ValidateStruct(u,
 		validation.
-			Field(&u.Name,
+			Field(
+				&u.Name,
 				validation.Required.Error("Name is required. Please try again"),
-				validation.Length(1, 255).Error("Name must be between 1 and 255 characters. Please try again"),
-				validation.Match(regexp.MustCompile(`^[a-zA-Z]+(\s[a-zA-Z]+)*$`)).Error("Name can only contain letters and spaces. Please try again"),
+				validation.Length(1, 255).
+					Error("Name must be between 1 and 255 characters. Please try again"),
+				validation.Match(regexp.MustCompile(`^[a-zA-Z]+(\s[a-zA-Z]+)*$`)).
+					Error("Name can only contain letters and spaces. Please try again"),
 			),
 
 		validation.
-			Field(&u.Username,
+			Field(
+				&u.Username,
 				validation.Required.Error("Username is required. Please try again"),
-				validation.Length(1, 20).Error("Username must be between 1 and 20 characters. Please try again"),
+				validation.Length(1, 20).
+					Error("Username must be between 1 and 20 characters. Please try again"),
 				is.Alphanumeric.Error("Username must be alphanumeric. Please try again"),
 			),
 
-		validation.Field(&u.Timezone,
+		validation.Field(
+			&u.Timezone,
 			validation.Required.Error("Timezone is required. Please try again"),
-			validation.Length(1, 50).Error("Timezone must be between 1 and 50 characters. Please try again"),
+			validation.Length(1, 50).
+				Error("Timezone must be between 1 and 50 characters. Please try again"),
 		),
 
 		validation.
@@ -133,11 +140,15 @@ func (u *User) VerifyCredentials(raw string) error {
 // ValidateStatus validates the user's status
 func (u *User) ValidateStatus() error {
 	if !u.IsActive() {
-		return errors.NewAuthorizationError("Your account is not active. Please contact your system administrator.")
+		return errors.NewAuthorizationError(
+			"Your account is not active. Please contact your system administrator.",
+		)
 	}
 
 	if u.IsLocked {
-		return errors.NewAuthorizationError("Your account is locked. Please contact your system administrator.")
+		return errors.NewAuthorizationError(
+			"Your account is locked. Please contact your system administrator.",
+		)
 	}
 
 	return nil
@@ -147,7 +158,11 @@ func (u *User) ValidateStatus() error {
 func (u *User) VerifyPassword(raw string) error {
 	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(raw))
 	if err != nil {
-		return errors.NewValidationError("password", errors.ErrInvalid, "Invalid password. Please try again.")
+		return errors.NewValidationError(
+			"password",
+			errors.ErrInvalid,
+			"Invalid password. Please try again.",
+		)
 	}
 
 	return nil
@@ -174,10 +189,10 @@ func (u *User) BeforeAppendModel(_ context.Context, q bun.Query) error {
 //nolint:revive // valid struct name
 type UserRole struct {
 	bun.BaseModel  `bun:"table:user_roles,alias:ur" json:"-"`
-	BusinessUnitID pulid.ID         `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
-	OrganizationID pulid.ID         `json:"organizationId" bun:"organization_id,pk,type:VARCHAR(100),notnull"`
-	UserID         pulid.ID         `json:"userId" bun:"user_id,pk,type:VARCHAR(100),notnull"`
-	RoleID         pulid.ID         `json:"roleId" bun:"role_id,pk,type:VARCHAR(100),notnull"`
-	User           *User            `json:"-" bun:"rel:belongs-to,join:user_id=id"`
-	Role           *permission.Role `json:"-" bun:"rel:belongs-to,join:role_id=id"`
+	BusinessUnitID pulid.ID         `bun:"business_unit_id,pk,type:VARCHAR(100),notnull" json:"businessUnitId"`
+	OrganizationID pulid.ID         `bun:"organization_id,pk,type:VARCHAR(100),notnull"  json:"organizationId"`
+	UserID         pulid.ID         `bun:"user_id,pk,type:VARCHAR(100),notnull"          json:"userId"`
+	RoleID         pulid.ID         `bun:"role_id,pk,type:VARCHAR(100),notnull"          json:"roleId"`
+	User           *User            `bun:"rel:belongs-to,join:user_id=id"                json:"-"`
+	Role           *permission.Role `bun:"rel:belongs-to,join:role_id=id"                json:"-"`
 }

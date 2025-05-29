@@ -23,17 +23,17 @@ type EquipmentManufacturer struct {
 	bun.BaseModel `bun:"table:equipment_manufacturers,alias:em" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID      `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
-	BusinessUnitID pulid.ID      `bun:"business_unit_id,type:VARCHAR(100),notnull,pk" json:"businessUnitId"`
-	OrganizationID pulid.ID      `bun:"organization_id,type:VARCHAR(100),notnull,pk" json:"organizationId"`
-	Status         domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
-	Name           string        `json:"name" bun:"name,type:VARCHAR(100),notnull"`
-	Description    string        `json:"description" bun:"description,type:VARCHAR(255)"`
-	SearchVector   string        `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank           string        `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
-	Version        int64         `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt      int64         `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64         `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID      `bun:"id,type:VARCHAR(100),pk,notnull"                                                      json:"id"`
+	BusinessUnitID pulid.ID      `bun:"business_unit_id,type:VARCHAR(100),notnull,pk"                                        json:"businessUnitId"`
+	OrganizationID pulid.ID      `bun:"organization_id,type:VARCHAR(100),notnull,pk"                                         json:"organizationId"`
+	Status         domain.Status `bun:"status,type:status_enum,notnull,default:'Active'"                                     json:"status"`
+	Name           string        `bun:"name,type:VARCHAR(100),notnull"                                                       json:"name"`
+	Description    string        `bun:"description,type:VARCHAR(255)"                                                        json:"description"`
+	SearchVector   string        `bun:"search_vector,type:TSVECTOR,scanonly"                                                 json:"-"`
+	Rank           string        `bun:"rank,type:VARCHAR(100),scanonly"                                                      json:"-"`
+	Version        int64         `bun:"version,type:BIGINT"                                                                  json:"version"`
+	CreatedAt      int64         `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
+	UpdatedAt      int64         `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`

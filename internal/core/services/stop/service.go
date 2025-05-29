@@ -47,7 +47,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) Get(ctx context.Context, req repositories.GetStopByIDRequest) (*shipment.Stop, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	req repositories.GetStopByIDRequest,
+) (*shipment.Stop, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("stopID", req.StopID.String()).

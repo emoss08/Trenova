@@ -49,21 +49,35 @@ func NewValidator(p ValidatorParams) *Validator {
 //   - ctx: The context of the request.
 //   - valCtx: The validation context.
 //   - l: The location to validate.
-func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, l *location.Location) *errors.MultiError {
+func (v *Validator) Validate(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	l *location.Location,
+) *errors.MultiError {
 	engine := v.vef.CreateEngine()
 
 	// * Basic validation rules (field presence, format, etc.)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			l.Validate(ctx, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBasic,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				l.Validate(ctx, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// * Data integrity validation (uniqueness, references, etc.)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			return v.ValidateUniqueness(ctx, valCtx, l, multiErr)
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageDataIntegrity,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				return v.ValidateUniqueness(ctx, valCtx, l, multiErr)
+			},
+		),
+	)
 
 	// * Business rules validation (domain-specific rules)
 
@@ -76,7 +90,12 @@ func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationCo
 //   - ctx: The context of the request.
 //   - valCtx: The validation context.
 //   - l: The location to validate.
-func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.ValidationContext, l *location.Location, multiErr *errors.MultiError) error {
+func (v *Validator) ValidateUniqueness(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	l *location.Location,
+	multiErr *errors.MultiError,
+) error {
 	dba, err := v.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")

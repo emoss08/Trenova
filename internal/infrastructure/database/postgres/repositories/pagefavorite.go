@@ -54,7 +54,10 @@ func (r *favoriteRepository) List(ctx context.Context) ([]*pagefavorite.PageFavo
 	return entities, nil
 }
 
-func (r *favoriteRepository) GetByID(ctx context.Context, opts repositories.GetFavoriteByIDOptions) (*pagefavorite.PageFavorite, error) {
+func (r *favoriteRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetFavoriteByIDOptions,
+) (*pagefavorite.PageFavorite, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -84,7 +87,10 @@ func (r *favoriteRepository) GetByID(ctx context.Context, opts repositories.GetF
 	return entity, nil
 }
 
-func (r *favoriteRepository) GetByURL(ctx context.Context, opts repositories.GetFavoriteByURLOptions) (*pagefavorite.PageFavorite, error) {
+func (r *favoriteRepository) GetByURL(
+	ctx context.Context,
+	opts repositories.GetFavoriteByURLOptions,
+) (*pagefavorite.PageFavorite, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -114,7 +120,10 @@ func (r *favoriteRepository) GetByURL(ctx context.Context, opts repositories.Get
 	return entity, nil
 }
 
-func (r *favoriteRepository) Create(ctx context.Context, f *pagefavorite.PageFavorite) (*pagefavorite.PageFavorite, error) {
+func (r *favoriteRepository) Create(
+	ctx context.Context,
+	f *pagefavorite.PageFavorite,
+) (*pagefavorite.PageFavorite, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -134,7 +143,10 @@ func (r *favoriteRepository) Create(ctx context.Context, f *pagefavorite.PageFav
 	return f, nil
 }
 
-func (r *favoriteRepository) Update(ctx context.Context, f *pagefavorite.PageFavorite) (*pagefavorite.PageFavorite, error) {
+func (r *favoriteRepository) Update(
+	ctx context.Context,
+	f *pagefavorite.PageFavorite,
+) (*pagefavorite.PageFavorite, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -155,7 +167,10 @@ func (r *favoriteRepository) Update(ctx context.Context, f *pagefavorite.PageFav
 	return f, nil
 }
 
-func (r *favoriteRepository) Delete(ctx context.Context, opts repositories.DeleteFavoriteOptions) error {
+func (r *favoriteRepository) Delete(
+	ctx context.Context,
+	opts repositories.DeleteFavoriteOptions,
+) error {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")

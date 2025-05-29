@@ -26,7 +26,9 @@ type shipmentCommodityRepository struct {
 	l  *zerolog.Logger
 }
 
-func NewShipmentCommodityRepository(p ShipmentCommodityRepositoryParams) repositories.ShipmentCommodityRepository {
+func NewShipmentCommodityRepository(
+	p ShipmentCommodityRepositoryParams,
+) repositories.ShipmentCommodityRepository {
 	log := p.Logger.With().
 		Str("repository", "shipmentCommodity").
 		Logger()
@@ -37,7 +39,12 @@ func NewShipmentCommodityRepository(p ShipmentCommodityRepositoryParams) reposit
 	}
 }
 
-func (r *shipmentCommodityRepository) HandleCommodityOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error {
+func (r *shipmentCommodityRepository) HandleCommodityOperations(
+	ctx context.Context,
+	tx bun.IDB,
+	shp *shipment.Shipment,
+	isCreate bool,
+) error {
 	// Early return for create operation with no commodities
 	if len(shp.Commodities) == 0 && isCreate {
 		return nil
@@ -52,7 +59,11 @@ func (r *shipmentCommodityRepository) HandleCommodityOperations(ctx context.Cont
 	}
 
 	// Categorize commodities and prepare for database operations
-	newCommodities, updateCommodities, updatedCommodityIDs := r.categorizeCommodities(shp, existingCommodityMap, isCreate)
+	newCommodities, updateCommodities, updatedCommodityIDs := r.categorizeCommodities(
+		shp,
+		existingCommodityMap,
+		isCreate,
+	)
 
 	// Process database operations
 	if err := r.processOperations(ctx, tx, newCommodities, updateCommodities); err != nil {
@@ -169,7 +180,11 @@ func (r *shipmentCommodityRepository) processOperations(
 }
 
 // Get the existing commodities for comparison if this is an update operation
-func (r *shipmentCommodityRepository) getExistingCommodities(ctx context.Context, tx bun.IDB, shp *shipment.Shipment) ([]*shipment.ShipmentCommodity, error) {
+func (r *shipmentCommodityRepository) getExistingCommodities(
+	ctx context.Context,
+	tx bun.IDB,
+	shp *shipment.Shipment,
+) ([]*shipment.ShipmentCommodity, error) {
 	commodities := make([]*shipment.ShipmentCommodity, 0, len(shp.Commodities))
 
 	// * Fetch the existing commodities
@@ -187,7 +202,11 @@ func (r *shipmentCommodityRepository) getExistingCommodities(ctx context.Context
 }
 
 // Handle bulk update of new commodities
-func (r *shipmentCommodityRepository) handleBulkUpdate(ctx context.Context, tx bun.IDB, commodities []*shipment.ShipmentCommodity) error {
+func (r *shipmentCommodityRepository) handleBulkUpdate(
+	ctx context.Context,
+	tx bun.IDB,
+	commodities []*shipment.ShipmentCommodity,
+) error {
 	values := tx.NewValues(&commodities)
 
 	// * Update the commodities
@@ -230,7 +249,11 @@ func (r *shipmentCommodityRepository) handleBulkUpdate(ctx context.Context, tx b
 }
 
 // Handle deletion of commodities that are no longer present
-func (r *shipmentCommodityRepository) handleCommodityDeletions(ctx context.Context, tx bun.IDB, req *repositories.CommodityDeletionRequest) error {
+func (r *shipmentCommodityRepository) handleCommodityDeletions(
+	ctx context.Context,
+	tx bun.IDB,
+	req *repositories.CommodityDeletionRequest,
+) error {
 	// * For each existing commodity, check if it has been updated
 	for id, commodity := range req.ExistingCommodityMap {
 		if _, exists := req.UpdatedCommodityIDs[id]; !exists {

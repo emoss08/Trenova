@@ -8,5 +8,8 @@ import (
 )
 
 type HazmatExpirationRepository interface {
-	GetHazmatExpirationByStateID(ctx context.Context, stateID pulid.ID) (*compliance.HazmatExpiration, error)
+	GetHazmatExpirationByStateID(
+		ctx context.Context,
+		stateID pulid.ID,
+	) (*compliance.HazmatExpiration, error)
 }

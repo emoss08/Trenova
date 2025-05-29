@@ -45,7 +45,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) List(ctx context.Context, orgID, buID, userID pulid.ID) ([]*pagefavorite.PageFavorite, error) {
+func (s *Service) List(
+	ctx context.Context,
+	orgID, buID, userID pulid.ID,
+) ([]*pagefavorite.PageFavorite, error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -77,7 +80,10 @@ func (s *Service) List(ctx context.Context, orgID, buID, userID pulid.ID) ([]*pa
 	return favorites, nil
 }
 
-func (s *Service) Get(ctx context.Context, orgID, buID, userID, favoriteID pulid.ID) (*pagefavorite.PageFavorite, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	orgID, buID, userID, favoriteID pulid.ID,
+) (*pagefavorite.PageFavorite, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("favoriteID", favoriteID.String()).
@@ -117,7 +123,11 @@ func (s *Service) Get(ctx context.Context, orgID, buID, userID, favoriteID pulid
 	return entity, nil
 }
 
-func (s *Service) GetByURL(ctx context.Context, orgID, buID, userID pulid.ID, pageURL string) (*pagefavorite.PageFavorite, error) {
+func (s *Service) GetByURL(
+	ctx context.Context,
+	orgID, buID, userID pulid.ID,
+	pageURL string,
+) (*pagefavorite.PageFavorite, error) {
 	log := s.l.With().
 		Str("operation", "GetByURL").
 		Str("pageURL", pageURL).
@@ -157,7 +167,11 @@ func (s *Service) GetByURL(ctx context.Context, orgID, buID, userID pulid.ID, pa
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, orgID, buID, userID pulid.ID, fav *pagefavorite.PageFavorite) (*pagefavorite.PageFavorite, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	orgID, buID, userID pulid.ID,
+	fav *pagefavorite.PageFavorite,
+) (*pagefavorite.PageFavorite, error) {
 	log := s.l.With().Str("operation", "Create").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -201,7 +215,11 @@ func (s *Service) Create(ctx context.Context, orgID, buID, userID pulid.ID, fav 
 		PageURL: fav.PageURL,
 	})
 	if err == nil && existing != nil {
-		return nil, errors.NewValidationError("pageUrl", errors.ErrDuplicate, "This page is already in your favorites")
+		return nil, errors.NewValidationError(
+			"pageUrl",
+			errors.ErrDuplicate,
+			"This page is already in your favorites",
+		)
 	}
 
 	entity, err := s.repo.Create(ctx, fav)
@@ -227,7 +245,11 @@ func (s *Service) Create(ctx context.Context, orgID, buID, userID pulid.ID, fav 
 	return entity, nil
 }
 
-func (s *Service) Update(ctx context.Context, orgID, buID, userID, favoriteID pulid.ID, fav *pagefavorite.PageFavorite) (*pagefavorite.PageFavorite, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	orgID, buID, userID, favoriteID pulid.ID,
+	fav *pagefavorite.PageFavorite,
+) (*pagefavorite.PageFavorite, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("favoriteID", favoriteID.String()).
@@ -371,7 +393,11 @@ func (s *Service) Delete(ctx context.Context, orgID, buID, userID, favoriteID pu
 
 var ErrPageAlreadyFavorited = eris.New("page already favorited")
 
-func (s *Service) ToggleFavorite(ctx context.Context, orgID, buID, userID pulid.ID, pageURL, pageTitle string) (*pagefavorite.PageFavorite, error) {
+func (s *Service) ToggleFavorite(
+	ctx context.Context,
+	orgID, buID, userID pulid.ID,
+	pageURL, pageTitle string,
+) (*pagefavorite.PageFavorite, error) {
 	log := s.l.With().
 		Str("operation", "ToggleFavorite").
 		Str("pageURL", pageURL).

@@ -16,8 +16,20 @@ type GetAccessorialChargeByIDRequest struct {
 }
 
 type AccessorialChargeRepository interface {
-	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*accessorialcharge.AccessorialCharge], error)
-	GetByID(ctx context.Context, opts GetAccessorialChargeByIDRequest) (*accessorialcharge.AccessorialCharge, error)
-	Create(ctx context.Context, a *accessorialcharge.AccessorialCharge) (*accessorialcharge.AccessorialCharge, error)
-	Update(ctx context.Context, a *accessorialcharge.AccessorialCharge) (*accessorialcharge.AccessorialCharge, error)
+	List(
+		ctx context.Context,
+		opts *ports.LimitOffsetQueryOptions,
+	) (*ports.ListResult[*accessorialcharge.AccessorialCharge], error)
+	GetByID(
+		ctx context.Context,
+		opts GetAccessorialChargeByIDRequest,
+	) (*accessorialcharge.AccessorialCharge, error)
+	Create(
+		ctx context.Context,
+		a *accessorialcharge.AccessorialCharge,
+	) (*accessorialcharge.AccessorialCharge, error)
+	Update(
+		ctx context.Context,
+		a *accessorialcharge.AccessorialCharge,
+	) (*accessorialcharge.AccessorialCharge, error)
 }

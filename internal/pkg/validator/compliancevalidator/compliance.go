@@ -56,17 +56,26 @@ func NewValidator(p ValidatorParams) *Validator {
 //   - ctx: The context of the request.
 //   - wp: The worker profile to validate.
 //   - multiErr: The MultiError to add validation errors to.
-func (v *Validator) Validate(ctx context.Context, wp *worker.WorkerProfile, multiErr *errors.MultiError) {
+func (v *Validator) Validate(
+	ctx context.Context,
+	wp *worker.WorkerProfile,
+	multiErr *errors.MultiError,
+) {
 	engine := v.vef.CreateEngine().
 		ForField("compliance").
 		WithParent(multiErr)
 
 	// * Business rules validation (domain-specific rules)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			v.validateWorkerCompliance(ctx, wp, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBusinessRules,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				v.validateWorkerCompliance(ctx, wp, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// Execute validation rules and add errors to the provided multiErr
 	engine.ValidateInto(ctx, multiErr)
@@ -74,7 +83,11 @@ func (v *Validator) Validate(ctx context.Context, wp *worker.WorkerProfile, mult
 
 // validateWorkerCompliance validates the overall DOT compliance for a worker's profile.
 // This method orchestrates multiple specific validation checks and accumulates any errors in a MultiError.
-func (v *Validator) validateWorkerCompliance(ctx context.Context, wp *worker.WorkerProfile, multiErr *errors.MultiError) {
+func (v *Validator) validateWorkerCompliance(
+	ctx context.Context,
+	wp *worker.WorkerProfile,
+	multiErr *errors.MultiError,
+) {
 	now := timeutils.NowUnix()
 
 	// Load the shipment controls for the organization
@@ -121,7 +134,11 @@ func (v *Validator) validateDOB(wp *worker.WorkerProfile, multiErr *errors.Multi
 
 // validateMVRCompliance validates the worker's Motor Vehicle Record (MVR) compliance.
 // This includes checking the annual MVR check and ensuring the MVR renewal is not overdue.
-func (v *Validator) validateMVRCompliance(wp *worker.WorkerProfile, now int64, multiErr *errors.MultiError) {
+func (v *Validator) validateMVRCompliance(
+	wp *worker.WorkerProfile,
+	now int64,
+	multiErr *errors.MultiError,
+) {
 	// * Annual MVR check is required per 49 CFR 391.25(c)(2)
 	if wp.LastMVRCheck < now-timeutils.YearsToSeconds(1) {
 		multiErr.Add(
@@ -143,7 +160,10 @@ func (v *Validator) validateMVRCompliance(wp *worker.WorkerProfile, now int64, m
 
 // validateMedicalCertificate checks if the worker's medical examination is up-to-date.
 // It validates that the medical examination occurs at least every 24 months.
-func (v *Validator) validateMedicalCertificate(wp *worker.WorkerProfile, multiErr *errors.MultiError) {
+func (v *Validator) validateMedicalCertificate(
+	wp *worker.WorkerProfile,
+	multiErr *errors.MultiError,
+) {
 	if wp.PhysicalDueDate == nil || *wp.PhysicalDueDate == 0 {
 		return
 	}
@@ -160,7 +180,10 @@ func (v *Validator) validateMedicalCertificate(wp *worker.WorkerProfile, multiEr
 
 // validateDrugAndAlcoholCompliance ensures the worker underwent a pre-employment drug test.
 // It verifies that the drug test date is before the worker's hire date.
-func (v *Validator) validateDrugAndAlcoholCompliance(wp *worker.WorkerProfile, multiErr *errors.MultiError) {
+func (v *Validator) validateDrugAndAlcoholCompliance(
+	wp *worker.WorkerProfile,
+	multiErr *errors.MultiError,
+) {
 	// * Ensure the last drug test was before the hire date or on the hire date
 	// * otherwise, it is not compliant
 	if wp.LastDrugTest <= wp.HireDate {
@@ -176,7 +199,11 @@ func (v *Validator) validateDrugAndAlcoholCompliance(wp *worker.WorkerProfile, m
 
 // validateDriverQualification checks if the worker's Commercial Driver's License (CDL) is valid and not expired.
 // If the license is expired, it adds an error to the provided MultiError.
-func (v *Validator) validateDriverQualification(wp *worker.WorkerProfile, now int64, multiErr *errors.MultiError) {
+func (v *Validator) validateDriverQualification(
+	wp *worker.WorkerProfile,
+	now int64,
+	multiErr *errors.MultiError,
+) {
 	if wp.LicenseExpiry < now {
 		multiErr.Add(
 			"profile.licenseExpiry",
@@ -188,9 +215,15 @@ func (v *Validator) validateDriverQualification(wp *worker.WorkerProfile, now in
 
 // validateHazmatCompliance validates compliance with hazmat endorsement requirements.
 // This includes verifying that the hazmat endorsement is not expired and does not exceed the allowed validity period.
-func (v *Validator) validateHazmatCompliance(ctx context.Context, wp *worker.WorkerProfile, now int64, multiErr *errors.MultiError) {
+func (v *Validator) validateHazmatCompliance(
+	ctx context.Context,
+	wp *worker.WorkerProfile,
+	now int64,
+	multiErr *errors.MultiError,
+) {
 	// * Only validate hazmat requirements if the endorsement includes hazmat
-	if wp.Endorsement != worker.EndorsementHazmat && wp.Endorsement != worker.EndorsementTankerHazmat {
+	if wp.Endorsement != worker.EndorsementHazmat &&
+		wp.Endorsement != worker.EndorsementTankerHazmat {
 		return
 	}
 
@@ -228,7 +261,9 @@ func (v *Validator) validateHazmatCompliance(ctx context.Context, wp *worker.Wor
 
 	// * Check if the hazmat expiry exceeds the maximum allowed date
 	if wp.HazmatExpiry > maxAllowedUnix {
-		log.Debug().Int64("hazmatExpiry", wp.HazmatExpiry).Msg("hazmat expiry is greater than max allowed")
+		log.Debug().
+			Int64("hazmatExpiry", wp.HazmatExpiry).
+			Msg("hazmat expiry is greater than max allowed")
 		multiErr.Add(
 			"profile.hazmatExpiry",
 			errors.ErrComplianceViolation,

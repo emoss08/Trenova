@@ -66,7 +66,10 @@ func NewCustomerRepository(p CustomerRepositoryParams) repositories.CustomerRepo
 //
 // Returns:
 //   - *bun.SelectQuery: The filtered and paginated query.
-func (cr *customerRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListCustomerOptions) *bun.SelectQuery {
+func (cr *customerRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *repositories.ListCustomerOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "cus",
@@ -105,7 +108,10 @@ func (cr *customerRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 // Returns:
 //   - *ports.ListResult[*customer.Customer]: A list of customers.
 //   - error: An error if the operation fails.
-func (cr *customerRepository) List(ctx context.Context, opts *repositories.ListCustomerOptions) (*ports.ListResult[*customer.Customer], error) {
+func (cr *customerRepository) List(
+	ctx context.Context,
+	opts *repositories.ListCustomerOptions,
+) (*ports.ListResult[*customer.Customer], error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -143,7 +149,10 @@ func (cr *customerRepository) List(ctx context.Context, opts *repositories.ListC
 // Returns:
 //   - *customer.Customer: The customer entity.
 //   - error: An error if the operation fails.
-func (cr *customerRepository) GetByID(ctx context.Context, opts repositories.GetCustomerByIDOptions) (*customer.Customer, error) {
+func (cr *customerRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetCustomerByIDOptions,
+) (*customer.Customer, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -200,7 +209,10 @@ func (cr *customerRepository) GetByID(ctx context.Context, opts repositories.Get
 // Returns:
 //   - []*repositories.CustomerDocRequirementResponse: A list of document requirements.
 //   - error: An error if the operation fails.
-func (cr *customerRepository) GetDocumentRequirements(ctx context.Context, cusID pulid.ID) ([]*repositories.CustomerDocRequirementResponse, error) {
+func (cr *customerRepository) GetDocumentRequirements(
+	ctx context.Context,
+	cusID pulid.ID,
+) ([]*repositories.CustomerDocRequirementResponse, error) {
 	log := cr.l.With().
 		Str("operation", "GetDocumentRequirements").
 		Str("customerID", cusID.String()).
@@ -247,7 +259,11 @@ func (cr *customerRepository) GetDocumentRequirements(ctx context.Context, cusID
 // Returns:
 //   - *customer.BillingProfile: The billing profile entity.
 //   - error: An error if the operation fails.
-func (cr *customerRepository) getBillingProfile(ctx context.Context, cusID pulid.ID, fields ...string) (*customer.BillingProfile, error) {
+func (cr *customerRepository) getBillingProfile(
+	ctx context.Context,
+	cusID pulid.ID,
+	fields ...string,
+) (*customer.BillingProfile, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -284,7 +300,10 @@ func (cr *customerRepository) getBillingProfile(ctx context.Context, cusID pulid
 // Returns:
 //   - *customer.Customer: The created customer entity.
 //   - error: An error if the operation fails.
-func (cr *customerRepository) Create(ctx context.Context, cus *customer.Customer) (*customer.Customer, error) {
+func (cr *customerRepository) Create(
+	ctx context.Context,
+	cus *customer.Customer,
+) (*customer.Customer, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -336,7 +355,11 @@ func (cr *customerRepository) Create(ctx context.Context, cus *customer.Customer
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (cr *customerRepository) createOrUpdateBillingProfile(ctx context.Context, tx bun.Tx, cus *customer.Customer) error {
+func (cr *customerRepository) createOrUpdateBillingProfile(
+	ctx context.Context,
+	tx bun.Tx,
+	cus *customer.Customer,
+) error {
 	log := cr.l.With().
 		Str("operation", "createOrUpdateBillingProfile").
 		Str("customerID", cus.ID.String()).
@@ -393,7 +416,11 @@ func (cr *customerRepository) createOrUpdateBillingProfile(ctx context.Context, 
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (cr *customerRepository) createOrUpdateEmailProfile(ctx context.Context, tx bun.Tx, cus *customer.Customer) error {
+func (cr *customerRepository) createOrUpdateEmailProfile(
+	ctx context.Context,
+	tx bun.Tx,
+	cus *customer.Customer,
+) error {
 	log := cr.l.With().
 		Str("operation", "createOrUpdateEmailProfile").
 		Str("customerID", cus.ID.String()).
@@ -449,7 +476,10 @@ func (cr *customerRepository) createOrUpdateEmailProfile(ctx context.Context, tx
 // Returns:
 //   - *customer.Customer: The updated customer entity.
 //   - error: An error if the operation fails.
-func (cr *customerRepository) Update(ctx context.Context, cus *customer.Customer) (*customer.Customer, error) {
+func (cr *customerRepository) Update(
+	ctx context.Context,
+	cus *customer.Customer,
+) (*customer.Customer, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -493,7 +523,10 @@ func (cr *customerRepository) Update(ctx context.Context, cus *customer.Customer
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Customer (%s) has either been updated or deleted since the last request.", cus.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Customer (%s) has either been updated or deleted since the last request.",
+					cus.GetID(),
+				),
 			)
 		}
 
@@ -527,7 +560,10 @@ func (cr *customerRepository) Update(ctx context.Context, cus *customer.Customer
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (cr *customerRepository) updateBillingProfile(ctx context.Context, profile *customer.BillingProfile) error {
+func (cr *customerRepository) updateBillingProfile(
+	ctx context.Context,
+	profile *customer.BillingProfile,
+) error {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
@@ -573,7 +609,10 @@ func (cr *customerRepository) updateBillingProfile(ctx context.Context, profile 
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (cr *customerRepository) updateEmailProfile(ctx context.Context, profile *customer.CustomerEmailProfile) error {
+func (cr *customerRepository) updateEmailProfile(
+	ctx context.Context,
+	profile *customer.CustomerEmailProfile,
+) error {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
