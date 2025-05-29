@@ -86,7 +86,10 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 //
 // Returns:
 //   - *bun.SelectQuery: The updated query with the necessary relations.
-func (sr *shipmentRepository) addOptions(q *bun.SelectQuery, opts repositories.ShipmentOptions) *bun.SelectQuery {
+func (sr *shipmentRepository) addOptions(
+	q *bun.SelectQuery,
+	opts repositories.ShipmentOptions,
+) *bun.SelectQuery {
 	if opts.ExpandShipmentDetails {
 		q = q.Relation("Customer")
 
@@ -151,7 +154,10 @@ func (sr *shipmentRepository) addOptions(q *bun.SelectQuery, opts repositories.S
 //
 // Returns:
 //   - *bun.SelectQuery: The filtered and paginated query.
-func (sr *shipmentRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListShipmentOptions) *bun.SelectQuery {
+func (sr *shipmentRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *repositories.ListShipmentOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "sp",
@@ -182,7 +188,10 @@ func (sr *shipmentRepository) filterQuery(q *bun.SelectQuery, opts *repositories
 // Returns:
 //   - *ports.ListResult[*shipment.Shipment]: List of shipments and total count.
 //   - error: If any database operation fails.
-func (sr *shipmentRepository) List(ctx context.Context, opts *repositories.ListShipmentOptions) (*ports.ListResult[*shipment.Shipment], error) {
+func (sr *shipmentRepository) List(
+	ctx context.Context,
+	opts *repositories.ListShipmentOptions,
+) (*ports.ListResult[*shipment.Shipment], error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -230,7 +239,10 @@ func (sr *shipmentRepository) List(ctx context.Context, opts *repositories.ListS
 // Returns:
 //   - *shipment.Shipment: The retrieved shipment entity.
 //   - error: If the shipment is not found or query fails.
-func (sr *shipmentRepository) GetByID(ctx context.Context, opts *repositories.GetShipmentByIDOptions) (*shipment.Shipment, error) {
+func (sr *shipmentRepository) GetByID(
+	ctx context.Context,
+	opts *repositories.GetShipmentByIDOptions,
+) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -279,7 +291,10 @@ func (sr *shipmentRepository) GetByID(ctx context.Context, opts *repositories.Ge
 // Returns:
 //   - *shipment.Shipment: The created shipment.
 //   - error: If insertion or related operations fail.
-func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment) (*shipment.Shipment, error) {
+func (sr *shipmentRepository) Create(
+	ctx context.Context,
+	shp *shipment.Shipment,
+) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -367,7 +382,10 @@ func (sr *shipmentRepository) Create(ctx context.Context, shp *shipment.Shipment
 //   - error: If the update fails or version conflicts occur.
 //
 //nolint:funlen // This is a long function, but it is a good function.
-func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment) (*shipment.Shipment, error) {
+func (sr *shipmentRepository) Update(
+	ctx context.Context,
+	shp *shipment.Shipment,
+) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -443,7 +461,10 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Shipment (%s) has either been updated or deleted since the last request.", shp.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Shipment (%s) has either been updated or deleted since the last request.",
+					shp.GetID(),
+				),
 			)
 		}
 
@@ -485,7 +506,10 @@ func (sr *shipmentRepository) Update(ctx context.Context, shp *shipment.Shipment
 // Returns:
 //   - *shipment.Shipment: The shipment with updated status.
 //   - error: If the status update fails.
-func (sr *shipmentRepository) UpdateStatus(ctx context.Context, opts *repositories.UpdateShipmentStatusRequest) (*shipment.Shipment, error) {
+func (sr *shipmentRepository) UpdateStatus(
+	ctx context.Context,
+	opts *repositories.UpdateShipmentStatusRequest,
+) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -537,7 +561,10 @@ func (sr *shipmentRepository) UpdateStatus(ctx context.Context, opts *repositori
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The shipment (%s) has been updated since your last request.", shp.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The shipment (%s) has been updated since your last request.",
+					shp.GetID(),
+				),
 			)
 		}
 
@@ -562,7 +589,10 @@ func (sr *shipmentRepository) UpdateStatus(ctx context.Context, opts *repositori
 // Returns:
 //   - *shipment.Shipment: The canceled shipment.
 //   - error: If the cancellation process fails.
-func (sr *shipmentRepository) Cancel(ctx context.Context, req *repositories.CancelShipmentRequest) (*shipment.Shipment, error) {
+func (sr *shipmentRepository) Cancel(
+	ctx context.Context,
+	req *repositories.CancelShipmentRequest,
+) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -627,7 +657,11 @@ func (sr *shipmentRepository) Cancel(ctx context.Context, req *repositories.Canc
 }
 
 // cancelShipmentComponents cancels the shipment components
-func (sr *shipmentRepository) cancelShipmentComponents(ctx context.Context, tx bun.Tx, req *repositories.CancelShipmentRequest) error {
+func (sr *shipmentRepository) cancelShipmentComponents(
+	ctx context.Context,
+	tx bun.Tx,
+	req *repositories.CancelShipmentRequest,
+) error {
 	// * Get all moves for the shipment
 	moves := make([]*shipment.ShipmentMove, 0)
 	err := tx.NewSelect().
@@ -696,7 +730,10 @@ func (sr *shipmentRepository) cancelShipmentComponents(ctx context.Context, tx b
 // Returns:
 //   - *shipment.Shipment: The newly duplicated shipment.
 //   - error: If duplication fails.
-func (sr *shipmentRepository) Duplicate(ctx context.Context, req *repositories.DuplicateShipmentRequest) (*shipment.Shipment, error) {
+func (sr *shipmentRepository) Duplicate(
+	ctx context.Context,
+	req *repositories.DuplicateShipmentRequest,
+) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -895,7 +932,9 @@ func (sr *shipmentRepository) prepareStops(
 }
 
 // prepareCommodities prepares the commodities for the new shipment
-func (sr *shipmentRepository) prepareCommodities(original, newShipment *shipment.Shipment) []*shipment.ShipmentCommodity {
+func (sr *shipmentRepository) prepareCommodities(
+	original, newShipment *shipment.Shipment,
+) []*shipment.ShipmentCommodity {
 	commodities := make([]*shipment.ShipmentCommodity, 0, len(original.Commodities))
 
 	// * Loop through each commodity and prepare the new commodity
@@ -917,7 +956,9 @@ func (sr *shipmentRepository) prepareCommodities(original, newShipment *shipment
 	return commodities
 }
 
-func (sr *shipmentRepository) prepareAdditionalCharges(original, newShipment *shipment.Shipment) []*shipment.AdditionalCharge {
+func (sr *shipmentRepository) prepareAdditionalCharges(
+	original, newShipment *shipment.Shipment,
+) []*shipment.AdditionalCharge {
 	additionalCharges := make([]*shipment.AdditionalCharge, 0, len(original.AdditionalCharges))
 
 	// * Loop through each additional charge and prepare the new additional charge
@@ -941,7 +982,10 @@ func (sr *shipmentRepository) prepareAdditionalCharges(original, newShipment *sh
 }
 
 // duplicateShipmentFields duplicates the fields of a shipment
-func (sr *shipmentRepository) duplicateShipmentFields(ctx context.Context, original *shipment.Shipment) (*shipment.Shipment, error) {
+func (sr *shipmentRepository) duplicateShipmentFields(
+	ctx context.Context,
+	original *shipment.Shipment,
+) (*shipment.Shipment, error) {
 	// * Get new pro number
 	proNumber, err := sr.proNumberRepo.GetNextProNumber(ctx, original.OrganizationID)
 	if err != nil {
@@ -989,7 +1033,12 @@ func (sr *shipmentRepository) duplicateShipmentFields(ctx context.Context, origi
 // Returns:
 //   - []duplicateBOLsResult: List of shipments with matching BOL numbers (empty if none found)
 //   - error: If the database query fails
-func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, currentBOL string, orgID, buID pulid.ID, excludeID *pulid.ID) ([]repositories.DuplicateBOLsResult, error) {
+func (sr *shipmentRepository) CheckForDuplicateBOLs(
+	ctx context.Context,
+	currentBOL string,
+	orgID, buID pulid.ID,
+	excludeID *pulid.ID,
+) ([]repositories.DuplicateBOLsResult, error) {
 	// * Skip empty BOL checks
 	if currentBOL == "" {
 		return []repositories.DuplicateBOLsResult{}, nil
@@ -1043,7 +1092,9 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(ctx context.Context, current
 	return duplicates, nil
 }
 
-func (sr *shipmentRepository) CalculateShipmentTotals(shp *shipment.Shipment) (*repositories.ShipmentTotalsResponse, error) {
+func (sr *shipmentRepository) CalculateShipmentTotals(
+	shp *shipment.Shipment,
+) (*repositories.ShipmentTotalsResponse, error) {
 	// All calculations are in-memory. We let the shared calculator populate the
 	// monetary fields, then fetch the base charge via the new helper to avoid
 	// duplicating the algorithm.

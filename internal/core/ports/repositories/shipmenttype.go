@@ -16,8 +16,14 @@ type GetShipmentTypeByIDOptions struct {
 }
 
 type ShipmentTypeRepository interface {
-	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*shipmenttype.ShipmentType], error)
-	GetByID(ctx context.Context, opts GetShipmentTypeByIDOptions) (*shipmenttype.ShipmentType, error)
+	List(
+		ctx context.Context,
+		opts *ports.LimitOffsetQueryOptions,
+	) (*ports.ListResult[*shipmenttype.ShipmentType], error)
+	GetByID(
+		ctx context.Context,
+		opts GetShipmentTypeByIDOptions,
+	) (*shipmenttype.ShipmentType, error)
 	Create(ctx context.Context, st *shipmenttype.ShipmentType) (*shipmenttype.ShipmentType, error)
 	Update(ctx context.Context, st *shipmenttype.ShipmentType) (*shipmenttype.ShipmentType, error)
 }

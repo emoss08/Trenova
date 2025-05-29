@@ -49,7 +49,9 @@ func (sc *ShipmentCalculator) calculateShipmentCharge(shp *shipment.Shipment) {
 }
 
 // CalculateBillingAmounts calculates all billing amounts for a shipment
-func (sc *ShipmentCalculator) CalculateBillingAmounts(shp *shipment.Shipment) ShipmentTotalsResponse {
+func (sc *ShipmentCalculator) CalculateBillingAmounts(
+	shp *shipment.Shipment,
+) ShipmentTotalsResponse {
 	// Step 1: Calculate base charge based on rating method
 	baseCharge := sc.CalculateBaseCharge(shp)
 
@@ -147,7 +149,8 @@ func (sc *ShipmentCalculator) calculatePerLinearFootRate(shp *shipment.Shipment)
 
 	totalLinearFeet := int64(0)
 	for _, commodity := range shp.Commodities {
-		if commodity.Commodity != nil && commodity.Commodity.LinearFeetPerUnit != nil && commodity.Pieces > 0 {
+		if commodity.Commodity != nil && commodity.Commodity.LinearFeetPerUnit != nil &&
+			commodity.Pieces > 0 {
 			commodityLinearFeet := decimal.NewFromFloat(*commodity.Commodity.LinearFeetPerUnit)
 			linearFeet := decimal.NewFromInt(commodity.Pieces).Mul(commodityLinearFeet)
 			totalLinearFeet += linearFeet.IntPart()
@@ -160,7 +163,10 @@ func (sc *ShipmentCalculator) calculatePerLinearFootRate(shp *shipment.Shipment)
 	return linearFeet.Div(ratingUnit)
 }
 
-func (sc *ShipmentCalculator) calculateAdditionalCharges(shp *shipment.Shipment, baseCharge decimal.Decimal) decimal.Decimal {
+func (sc *ShipmentCalculator) calculateAdditionalCharges(
+	shp *shipment.Shipment,
+	baseCharge decimal.Decimal,
+) decimal.Decimal {
 	if !shp.HasAdditionalCharge() {
 		return decimal.Zero
 	}
@@ -184,7 +190,10 @@ func (sc *ShipmentCalculator) calculateAdditionalCharges(shp *shipment.Shipment,
 	return totalAdditionalCharges
 }
 
-func (sc *ShipmentCalculator) calculatSingleAdditionalCharge(charge *shipment.AdditionalCharge, baseCharge decimal.Decimal) decimal.Decimal {
+func (sc *ShipmentCalculator) calculatSingleAdditionalCharge(
+	charge *shipment.AdditionalCharge,
+	baseCharge decimal.Decimal,
+) decimal.Decimal {
 	switch charge.Method {
 	case accessorialcharge.MethodFlat:
 		// * Default to 1 for unit if not specified for `Flat` method

@@ -25,13 +25,13 @@ const (
 
 // Message is the message that is sent to the email service
 type Message struct {
-	ID          string    `json:"id" bun:"id,pk"`
-	Type        Type      `json:"type" bun:"type"`
-	EntityID    string    `json:"entityId" bun:"entity_id"`
-	EntityType  string    `json:"entityType" bun:"entity_type"`
-	TenantID    string    `json:"tenantId" bun:"tenant_id"`
+	ID          string    `json:"id"          bun:"id,pk"`
+	Type        Type      `json:"type"        bun:"type"`
+	EntityID    string    `json:"entityId"    bun:"entity_id"`
+	EntityType  string    `json:"entityType"  bun:"entity_type"`
+	TenantID    string    `json:"tenantId"    bun:"tenant_id"`
 	RequestedAt time.Time `json:"requestedAt" bun:"requested_at"`
-	Payload     any       `json:"payload" bun:"payload,type:jsonb"`
+	Payload     any       `json:"payload"     bun:"payload,type:jsonb"`
 }
 
 // EmailPayload is the payload for sending an email
@@ -68,21 +68,21 @@ const (
 
 // Email is the database model for an email
 type Email struct {
-	ID         string      `json:"id" bun:"id,pk"`
-	TenantID   string      `json:"tenantId" bun:"tenant_id"`
-	Status     EmailStatus `json:"status" bun:"status"`
-	RetryCount int         `json:"retryCount" bun:"retry_count"`
+	ID         string      `json:"id"                 bun:"id,pk"`
+	TenantID   string      `json:"tenantId"           bun:"tenant_id"`
+	Status     EmailStatus `json:"status"             bun:"status"`
+	RetryCount int         `json:"retryCount"         bun:"retry_count"`
 	ErrorMsg   string      `json:"errorMsg,omitempty" bun:"error_msg"`
-	MessageID  string      `json:"messageId" bun:"message_id"`
-	Template   string      `json:"template" bun:"template"`
-	Subject    string      `json:"subject" bun:"subject"`
-	To         []string    `json:"to" bun:"to,array"`
-	Cc         []string    `json:"cc,omitempty" bun:"cc,array"`
-	Bcc        []string    `json:"bcc,omitempty" bun:"bcc,array"`
-	CreatedAt  time.Time   `json:"createdAt" bun:"created_at"`
-	UpdatedAt  time.Time   `json:"updatedAt" bun:"updated_at"`
-	SentAt     *time.Time  `json:"sentAt,omitempty" bun:"sent_at"`
-	Data       any         `json:"data,omitempty" bun:"data,type:jsonb"`
+	MessageID  string      `json:"messageId"          bun:"message_id"`
+	Template   string      `json:"template"           bun:"template"`
+	Subject    string      `json:"subject"            bun:"subject"`
+	To         []string    `json:"to"                 bun:"to,array"`
+	Cc         []string    `json:"cc,omitempty"       bun:"cc,array"`
+	Bcc        []string    `json:"bcc,omitempty"      bun:"bcc,array"`
+	CreatedAt  time.Time   `json:"createdAt"          bun:"created_at"`
+	UpdatedAt  time.Time   `json:"updatedAt"          bun:"updated_at"`
+	SentAt     *time.Time  `json:"sentAt,omitempty"   bun:"sent_at"`
+	Data       any         `json:"data,omitempty"     bun:"data,type:jsonb"`
 }
 
 // GetHTMLBody returns the HTML body of the email
@@ -141,8 +141,11 @@ func (e *Email) GetHTMLBody() string {
 	// Render the template
 	var buffer bytes.Buffer
 	if err = tmpl.Execute(&buffer, templateData); err != nil {
-		return fmt.Sprintf("<html><body><h1>%s</h1><p>Template execution error: %s</p></body></html>",
-			e.Subject, err.Error())
+		return fmt.Sprintf(
+			"<html><body><h1>%s</h1><p>Template execution error: %s</p></body></html>",
+			e.Subject,
+			err.Error(),
+		)
 	}
 
 	return buffer.String()
@@ -212,7 +215,8 @@ func (e *Email) RenderHTMLBody(templateService TemplateRenderer) (string, error)
 		// For custom templates, check if there's an inline template string in the data
 		dataMap, ok := e.Data.(map[string]any)
 		if ok {
-			if inlineTemplate, has := dataMap["template_html"].(string); has && inlineTemplate != "" {
+			if inlineTemplate, has := dataMap["template_html"].(string); has &&
+				inlineTemplate != "" {
 				// Render the inline template with the data
 				return templateService.RenderInlineTemplate(inlineTemplate, dataMap)
 			}

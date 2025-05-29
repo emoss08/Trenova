@@ -34,13 +34,24 @@ type UploadDocumentRequest struct {
 func (r *UploadDocumentRequest) Validate(ctx context.Context) error {
 	me := errors.NewMultiError()
 
-	err := validation.ValidateStructWithContext(ctx, r,
-		validation.Field(&r.OrganizationID, validation.Required.Error("Organization ID is required")),
-		validation.Field(&r.BusinessUnitID, validation.Required.Error("Business Unit ID is required")),
+	err := validation.ValidateStructWithContext(
+		ctx,
+		r,
+		validation.Field(
+			&r.OrganizationID,
+			validation.Required.Error("Organization ID is required"),
+		),
+		validation.Field(
+			&r.BusinessUnitID,
+			validation.Required.Error("Business Unit ID is required"),
+		),
 		validation.Field(&r.UploadedByID, validation.Required.Error("Uploaded By ID is required")),
 		validation.Field(&r.ResourceID, validation.Required.Error("Resource ID is required")),
 		validation.Field(&r.ResourceType, validation.Required.Error("Resource Type is required")),
-		validation.Field(&r.DocumentTypeID, validation.Required.Error("Document Type ID is required")),
+		validation.Field(
+			&r.DocumentTypeID,
+			validation.Required.Error("Document Type ID is required"),
+		),
 		validation.Field(&r.File, validation.Required.Error("File is required")),
 		validation.Field(&r.FileName, validation.Required.Error("File Name is required")),
 		validation.Field(&r.OriginalName, validation.Required.Error("Original Name is required")),
@@ -84,8 +95,17 @@ type FailedUpload struct {
 // DocumentService defines the interface for document management operations
 type DocumentService interface {
 	UploadDocument(ctx context.Context, req *UploadDocumentRequest) (*UploadDocumentResponse, error)
-	GetDocumentCountByResource(ctx context.Context, req ports.TenantOptions) ([]*repositories.GetDocumentCountByResourceResponse, error)
-	GetResourceSubFolders(ctx context.Context, req repositories.GetResourceSubFoldersRequest) ([]*repositories.GetResourceSubFoldersResponse, error)
-	GetDocumentsByResourceID(ctx context.Context, req *repositories.GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error)
+	GetDocumentCountByResource(
+		ctx context.Context,
+		req ports.TenantOptions,
+	) ([]*repositories.GetDocumentCountByResourceResponse, error)
+	GetResourceSubFolders(
+		ctx context.Context,
+		req repositories.GetResourceSubFoldersRequest,
+	) ([]*repositories.GetResourceSubFoldersResponse, error)
+	GetDocumentsByResourceID(
+		ctx context.Context,
+		req *repositories.GetDocumentsByResourceIDRequest,
+	) (*ports.ListResult[*document.Document], error)
 	DeleteDocument(ctx context.Context, req *DeleteDocumentRequest) error
 }

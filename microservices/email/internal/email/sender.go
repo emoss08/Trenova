@@ -43,7 +43,11 @@ func (s *SenderService) SetDefaultProvider(providerType provider.Type) {
 }
 
 // SendEmail sends an email using the configured provider
-func (s *SenderService) SendEmail(ctx context.Context, payload *model.EmailPayload, tenantID string) (string, error) {
+func (s *SenderService) SendEmail(
+	ctx context.Context,
+	payload *model.EmailPayload,
+	tenantID string,
+) (string, error) {
 	// Generate a unique ID for the email
 	emailID := uuid.New().String()
 

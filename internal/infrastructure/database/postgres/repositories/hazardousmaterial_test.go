@@ -21,10 +21,12 @@ func TestHazardousMaterialRepository(t *testing.T) {
 	bu := ts.Fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
 	hm := ts.Fixture.MustRow("HazardousMaterial.test_hazardous_material").(*hazardousmaterial.HazardousMaterial)
 
-	repo := repositories.NewHazardousMaterialRepository(repositories.HazardousMaterialRepositoryParams{
-		Logger: logger.NewLogger(testutils.NewTestConfig()),
-		DB:     ts.DB,
-	})
+	repo := repositories.NewHazardousMaterialRepository(
+		repositories.HazardousMaterialRepositoryParams{
+			Logger: logger.NewLogger(testutils.NewTestConfig()),
+			DB:     ts.DB,
+		},
+	)
 
 	t.Run("list", func(t *testing.T) {
 		opts := &ports.LimitOffsetQueryOptions{

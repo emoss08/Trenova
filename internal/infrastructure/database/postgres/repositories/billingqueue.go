@@ -67,7 +67,10 @@ func NewBillingQueueRepository(p BillingQueueRepositoryParams) repositories.Bill
 //
 // Returns:
 //   - *bun.SelectQuery: The updated query with the necessary relations.
-func (br *billingQueueRepository) addOptions(q *bun.SelectQuery, opts *repositories.BillingQueueFilterOptions) *bun.SelectQuery {
+func (br *billingQueueRepository) addOptions(
+	q *bun.SelectQuery,
+	opts *repositories.BillingQueueFilterOptions,
+) *bun.SelectQuery {
 	if opts.IncludeShipmentDetails {
 		q = q.Relation("Shipment")
 	}
@@ -104,7 +107,10 @@ func (br *billingQueueRepository) addOptions(q *bun.SelectQuery, opts *repositor
 //
 // Returns:
 //   - *bun.SelectQuery: The filtered and paginated query.
-func (br *billingQueueRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListBillingQueueRequest) *bun.SelectQuery {
+func (br *billingQueueRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *repositories.ListBillingQueueRequest,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "bqi",
@@ -126,7 +132,10 @@ func (br *billingQueueRepository) filterQuery(q *bun.SelectQuery, opts *reposito
 // Returns:
 //   - *ports.ListResult[*billingqueue.QueueItem]: List of billing queue items and total count.
 //   - error: If any database operation fails.
-func (br *billingQueueRepository) List(ctx context.Context, req *repositories.ListBillingQueueRequest) (*ports.ListResult[*billingqueue.QueueItem], error) {
+func (br *billingQueueRepository) List(
+	ctx context.Context,
+	req *repositories.ListBillingQueueRequest,
+) (*ports.ListResult[*billingqueue.QueueItem], error) {
 	dba, err := br.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -171,7 +180,10 @@ func (br *billingQueueRepository) List(ctx context.Context, req *repositories.Li
 // Returns:
 //   - *billingqueue.QueueItem: The retrieved billing queue item entity.
 //   - error: If the billing queue item is not found or query fails.
-func (br *billingQueueRepository) GetByID(ctx context.Context, req *repositories.GetBillingQueueItemRequest) (*billingqueue.QueueItem, error) {
+func (br *billingQueueRepository) GetByID(
+	ctx context.Context,
+	req *repositories.GetBillingQueueItemRequest,
+) (*billingqueue.QueueItem, error) {
 	dba, err := br.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -222,7 +234,10 @@ func (br *billingQueueRepository) GetByID(ctx context.Context, req *repositories
 // Returns:
 //   - *billingqueue.QueueItem: The created billing queue item.
 //   - error: If insertion or related operations fail.
-func (br *billingQueueRepository) Create(ctx context.Context, qi *billingqueue.QueueItem) (*billingqueue.QueueItem, error) {
+func (br *billingQueueRepository) Create(
+	ctx context.Context,
+	qi *billingqueue.QueueItem,
+) (*billingqueue.QueueItem, error) {
 	dba, err := br.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -267,7 +282,10 @@ func (br *billingQueueRepository) Create(ctx context.Context, qi *billingqueue.Q
 // Returns:
 //   - *billingqueue.QueueItem: The updated billing queue item.
 //   - error: If the update fails or version conflicts occur.
-func (br *billingQueueRepository) Update(ctx context.Context, qi *billingqueue.QueueItem) (*billingqueue.QueueItem, error) {
+func (br *billingQueueRepository) Update(
+	ctx context.Context,
+	qi *billingqueue.QueueItem,
+) (*billingqueue.QueueItem, error) {
 	dba, err := br.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -308,7 +326,10 @@ func (br *billingQueueRepository) Update(ctx context.Context, qi *billingqueue.Q
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Billing Queue Item (%s) has either been updated or deleted since the last request.", qi.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Billing Queue Item (%s) has either been updated or deleted since the last request.",
+					qi.GetID(),
+				),
 			)
 		}
 
@@ -334,7 +355,10 @@ func (br *billingQueueRepository) Update(ctx context.Context, qi *billingqueue.Q
 //
 // Returns:
 //   - error: If any database operation fails.
-func (br *billingQueueRepository) BulkTransfer(ctx context.Context, _ *repositories.BulkTransferRequest) error {
+func (br *billingQueueRepository) BulkTransfer(
+	ctx context.Context,
+	_ *repositories.BulkTransferRequest,
+) error {
 	dba, err := br.db.DB(ctx)
 	if err != nil {
 		return oops.

@@ -75,7 +75,14 @@ func NewTestDatabase(t testing.TB, migrations *migrate.Migrations) *TestDatabase
 		t.Fatalf("failed to get container host: %v", err)
 	}
 
-	dsn := fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", dbUser, dbPassword, host, mappedPort.Port(), dbName)
+	dsn := fmt.Sprintf(
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable",
+		dbUser,
+		dbPassword,
+		host,
+		mappedPort.Port(),
+		dbName,
+	)
 
 	cfg, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
@@ -90,7 +97,9 @@ func NewTestDatabase(t testing.TB, migrations *migrate.Migrations) *TestDatabase
 	sqldb := stdlib.OpenDBFromPool(pool)
 	bunDB := bun.NewDB(sqldb, pgdialect.New())
 
-	bunDB.AddQueryHook(bundebug.NewQueryHook(bundebug.WithVerbose(false), bundebug.FromEnv("BUNDEBUG")))
+	bunDB.AddQueryHook(
+		bundebug.NewQueryHook(bundebug.WithVerbose(false), bundebug.FromEnv("BUNDEBUG")),
+	)
 
 	// Register entities
 	bunDB.RegisterModel(registry.RegisterEntities()...)

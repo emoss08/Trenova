@@ -19,24 +19,24 @@ var _ bun.BeforeAppendModelHook = (*ShipmentMove)(nil)
 type ShipmentMove struct {
 	bun.BaseModel `bun:"table:shipment_moves,alias:sm" json:"-"`
 
-	ID             pulid.ID   `json:"id" bun:",pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID   `json:"id"             bun:",pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID   `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID pulid.ID   `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	ShipmentID     pulid.ID   `json:"shipmentId" bun:"shipment_id,type:VARCHAR(100),notnull"`
-	Status         MoveStatus `json:"status" bun:"status,type:move_status_enum,notnull,default:'New'"`
-	Loaded         bool       `json:"loaded" bun:"loaded,type:BOOLEAN,notnull,default:true"`
-	Sequence       int        `json:"sequence" bun:"sequence,type:INTEGER,notnull,default:0"`
-	Distance       *float64   `json:"distance" bun:"distance,type:FLOAT,nullzero"`
-	Version        int64      `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt      int64      `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64      `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ShipmentID     pulid.ID   `json:"shipmentId"     bun:"shipment_id,type:VARCHAR(100),notnull"`
+	Status         MoveStatus `json:"status"         bun:"status,type:move_status_enum,notnull,default:'New'"`
+	Loaded         bool       `json:"loaded"         bun:"loaded,type:BOOLEAN,notnull,default:true"`
+	Sequence       int        `json:"sequence"       bun:"sequence,type:INTEGER,notnull,default:0"`
+	Distance       *float64   `json:"distance"       bun:"distance,type:FLOAT,nullzero"`
+	Version        int64      `json:"version"        bun:"version,type:BIGINT"`
+	CreatedAt      int64      `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt      int64      `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
-	Shipment     *Shipment                  `bun:"rel:belongs-to,join:shipment_id=id" json:"shipment,omitempty"`
-	Assignment   *Assignment                `bun:"rel:has-one,join:id=shipment_move_id" json:"assignment,omitempty"`
-	Stops        []*Stop                    `bun:"rel:has-many,join:id=shipment_move_id" json:"stops,omitempty"`
+	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	Shipment     *Shipment                  `bun:"rel:belongs-to,join:shipment_id=id"      json:"shipment,omitempty"`
+	Assignment   *Assignment                `bun:"rel:has-one,join:id=shipment_move_id"    json:"assignment,omitempty"`
+	Stops        []*Stop                    `bun:"rel:has-many,join:id=shipment_move_id"   json:"stops,omitempty"`
 }
 
 func (sm *ShipmentMove) Validate(ctx context.Context, multiErr *errors.MultiError) {

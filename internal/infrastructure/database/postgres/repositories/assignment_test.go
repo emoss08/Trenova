@@ -46,10 +46,12 @@ func TestAssignmentRepository(t *testing.T) {
 		Logger: log,
 	})
 
-	shipmentCommodityRepo := repositories.NewShipmentCommodityRepository(repositories.ShipmentCommodityRepositoryParams{
-		DB:     ts.DB,
-		Logger: log,
-	})
+	shipmentCommodityRepo := repositories.NewShipmentCommodityRepository(
+		repositories.ShipmentCommodityRepositoryParams{
+			DB:     ts.DB,
+			Logger: log,
+		},
+	)
 
 	shipmentRepo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
 		DB:                          ts.DB,

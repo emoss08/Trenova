@@ -253,7 +253,11 @@ func (m *Manager) determineMoveEvent(move *shipment.ShipmentMove) TransitionEven
 }
 
 // processShipmentStatus processes the status transition for a shipment based on its moves
-func (m *Manager) processShipmentStatus(shp *shipment.Shipment, shipmentSM StateMachine, multiErr *errors.MultiError) {
+func (m *Manager) processShipmentStatus(
+	shp *shipment.Shipment,
+	shipmentSM StateMachine,
+	multiErr *errors.MultiError,
+) {
 	shipmentEvent := m.determineShipmentEvent(shp)
 	if shipmentEvent == nil {
 		return // No transition needed

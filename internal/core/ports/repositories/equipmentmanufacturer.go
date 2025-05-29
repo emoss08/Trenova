@@ -25,8 +25,20 @@ type GetEquipmentManufacturerByIDOptions struct {
 }
 
 type EquipmentManufacturerRepository interface {
-	List(ctx context.Context, opts ListEquipmentManufacturerOptions) (*ports.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error)
-	GetByID(ctx context.Context, opts GetEquipmentManufacturerByIDOptions) (*equipmentmanufacturer.EquipmentManufacturer, error)
-	Create(ctx context.Context, em *equipmentmanufacturer.EquipmentManufacturer) (*equipmentmanufacturer.EquipmentManufacturer, error)
-	Update(ctx context.Context, em *equipmentmanufacturer.EquipmentManufacturer) (*equipmentmanufacturer.EquipmentManufacturer, error)
+	List(
+		ctx context.Context,
+		opts ListEquipmentManufacturerOptions,
+	) (*ports.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error)
+	GetByID(
+		ctx context.Context,
+		opts GetEquipmentManufacturerByIDOptions,
+	) (*equipmentmanufacturer.EquipmentManufacturer, error)
+	Create(
+		ctx context.Context,
+		em *equipmentmanufacturer.EquipmentManufacturer,
+	) (*equipmentmanufacturer.EquipmentManufacturer, error)
+	Update(
+		ctx context.Context,
+		em *equipmentmanufacturer.EquipmentManufacturer,
+	) (*equipmentmanufacturer.EquipmentManufacturer, error)
 }

@@ -34,7 +34,9 @@ type tableConfigurationRepository struct {
 	l  *zerolog.Logger
 }
 
-func NewTableConfigurationRepository(p TableConfigurationRepositoryParams) repositories.TableConfigurationRepository {
+func NewTableConfigurationRepository(
+	p TableConfigurationRepositoryParams,
+) repositories.TableConfigurationRepository {
 	log := p.Logger.With().
 		Str("repository", "table_configuration").
 		Logger()
@@ -45,7 +47,10 @@ func NewTableConfigurationRepository(p TableConfigurationRepositoryParams) repos
 	}
 }
 
-func (tcr *tableConfigurationRepository) filterQuery(q *bun.SelectQuery, opts *repositories.TableConfigurationFilters) *bun.SelectQuery {
+func (tcr *tableConfigurationRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *repositories.TableConfigurationFilters,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query: q,
 		// Filter:     opts.Base,
@@ -72,7 +77,10 @@ func (tcr *tableConfigurationRepository) filterQuery(q *bun.SelectQuery, opts *r
 	return q
 }
 
-func (tcr *tableConfigurationRepository) List(ctx context.Context, filters *repositories.TableConfigurationFilters) (*repositories.ListTableConfigurationResult, error) {
+func (tcr *tableConfigurationRepository) List(
+	ctx context.Context,
+	filters *repositories.TableConfigurationFilters,
+) (*repositories.ListTableConfigurationResult, error) {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -109,7 +117,10 @@ func (tcr *tableConfigurationRepository) List(ctx context.Context, filters *repo
 	}, nil
 }
 
-func (tcr *tableConfigurationRepository) filterUserConfigurations(q *bun.SelectQuery, opts *repositories.ListUserConfigurationRequest) *bun.SelectQuery {
+func (tcr *tableConfigurationRepository) filterUserConfigurations(
+	q *bun.SelectQuery,
+	opts *repositories.ListUserConfigurationRequest,
+) *bun.SelectQuery {
 	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.Where("tc.user_id = ?", opts.Filter.TenantOpts.UserID).
 			Where("tc.organization_id = ?", opts.Filter.TenantOpts.OrgID).
@@ -130,7 +141,10 @@ func (tcr *tableConfigurationRepository) filterUserConfigurations(q *bun.SelectQ
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
 
-func (tcr *tableConfigurationRepository) ListUserConfigurations(ctx context.Context, opts *repositories.ListUserConfigurationRequest) (*ports.ListResult[*tableconfiguration.Configuration], error) {
+func (tcr *tableConfigurationRepository) ListUserConfigurations(
+	ctx context.Context,
+	opts *repositories.ListUserConfigurationRequest,
+) (*ports.ListResult[*tableconfiguration.Configuration], error) {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -159,7 +173,11 @@ func (tcr *tableConfigurationRepository) ListUserConfigurations(ctx context.Cont
 	}, nil
 }
 
-func (tcr *tableConfigurationRepository) GetByID(ctx context.Context, id pulid.ID, opts *repositories.TableConfigurationFilters) (*tableconfiguration.Configuration, error) {
+func (tcr *tableConfigurationRepository) GetByID(
+	ctx context.Context,
+	id pulid.ID,
+	opts *repositories.TableConfigurationFilters,
+) (*tableconfiguration.Configuration, error) {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -199,7 +217,10 @@ func (tcr *tableConfigurationRepository) GetByID(ctx context.Context, id pulid.I
 	return config, nil
 }
 
-func (tcr *tableConfigurationRepository) Create(ctx context.Context, config *tableconfiguration.Configuration) (*tableconfiguration.Configuration, error) {
+func (tcr *tableConfigurationRepository) Create(
+	ctx context.Context,
+	config *tableconfiguration.Configuration,
+) (*tableconfiguration.Configuration, error) {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -263,7 +284,10 @@ func (tcr *tableConfigurationRepository) Create(ctx context.Context, config *tab
 	return config, nil
 }
 
-func (tcr *tableConfigurationRepository) Update(ctx context.Context, config *tableconfiguration.Configuration) error {
+func (tcr *tableConfigurationRepository) Update(
+	ctx context.Context,
+	config *tableconfiguration.Configuration,
+) error {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
@@ -310,7 +334,10 @@ func (tcr *tableConfigurationRepository) Update(ctx context.Context, config *tab
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The configuration (%s) has been updated since your last request.", config.ID.String()),
+				fmt.Sprintf(
+					"Version mismatch. The configuration (%s) has been updated since your last request.",
+					config.ID.String(),
+				),
 			)
 		}
 
@@ -323,7 +350,10 @@ func (tcr *tableConfigurationRepository) Update(ctx context.Context, config *tab
 	return nil
 }
 
-func (tcr *tableConfigurationRepository) Delete(ctx context.Context, req repositories.DeleteUserConfigurationRequest) error {
+func (tcr *tableConfigurationRepository) Delete(
+	ctx context.Context,
+	req repositories.DeleteUserConfigurationRequest,
+) error {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
@@ -362,7 +392,11 @@ func (tcr *tableConfigurationRepository) Delete(ctx context.Context, req reposit
 	return nil
 }
 
-func (tcr *tableConfigurationRepository) GetUserConfigurations(ctx context.Context, resource string, opts *repositories.TableConfigurationFilters) ([]*tableconfiguration.Configuration, error) {
+func (tcr *tableConfigurationRepository) GetUserConfigurations(
+	ctx context.Context,
+	resource string,
+	opts *repositories.TableConfigurationFilters,
+) ([]*tableconfiguration.Configuration, error) {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -396,7 +430,11 @@ func (tcr *tableConfigurationRepository) GetUserConfigurations(ctx context.Conte
 }
 
 // GetDefaultOrLatestConfiguration returns the default configuration or the latest if no default exists
-func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(ctx context.Context, resource string, opts *repositories.TableConfigurationFilters) (*tableconfiguration.Configuration, error) {
+func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(
+	ctx context.Context,
+	resource string,
+	opts *repositories.TableConfigurationFilters,
+) (*tableconfiguration.Configuration, error) {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -458,7 +496,10 @@ func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(ctx con
 	return config, nil
 }
 
-func (tcr *tableConfigurationRepository) ShareConfiguration(ctx context.Context, share *tableconfiguration.ConfigurationShare) error {
+func (tcr *tableConfigurationRepository) ShareConfiguration(
+	ctx context.Context,
+	share *tableconfiguration.ConfigurationShare,
+) error {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
@@ -505,7 +546,10 @@ func (tcr *tableConfigurationRepository) ShareConfiguration(ctx context.Context,
 	return nil
 }
 
-func (tcr *tableConfigurationRepository) RemoveShare(ctx context.Context, configID, sharedWithID pulid.ID) error {
+func (tcr *tableConfigurationRepository) RemoveShare(
+	ctx context.Context,
+	configID, sharedWithID pulid.ID,
+) error {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")

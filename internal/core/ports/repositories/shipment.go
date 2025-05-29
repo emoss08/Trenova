@@ -106,13 +106,22 @@ type ShipmentTotalsResponse struct {
 }
 
 type ShipmentRepository interface {
-	List(ctx context.Context, opts *ListShipmentOptions) (*ports.ListResult[*shipment.Shipment], error)
+	List(
+		ctx context.Context,
+		opts *ListShipmentOptions,
+	) (*ports.ListResult[*shipment.Shipment], error)
 	GetByID(ctx context.Context, opts *GetShipmentByIDOptions) (*shipment.Shipment, error)
 	Create(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
 	Update(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
 	UpdateStatus(ctx context.Context, opts *UpdateShipmentStatusRequest) (*shipment.Shipment, error)
 	Cancel(ctx context.Context, req *CancelShipmentRequest) (*shipment.Shipment, error)
 	Duplicate(ctx context.Context, req *DuplicateShipmentRequest) (*shipment.Shipment, error)
-	CheckForDuplicateBOLs(ctx context.Context, currentBOL string, orgID pulid.ID, buID pulid.ID, excludeID *pulid.ID) ([]DuplicateBOLsResult, error)
+	CheckForDuplicateBOLs(
+		ctx context.Context,
+		currentBOL string,
+		orgID pulid.ID,
+		buID pulid.ID,
+		excludeID *pulid.ID,
+	) ([]DuplicateBOLsResult, error)
 	CalculateShipmentTotals(shp *shipment.Shipment) (*ShipmentTotalsResponse, error)
 }

@@ -42,7 +42,10 @@ func NewPermissionRepository(p PermissionRepositoryParams) repositories.Permissi
 	}
 }
 
-func (pr *permissionRepository) GetUserPermissions(ctx context.Context, userID pulid.ID) ([]*permission.Permission, error) {
+func (pr *permissionRepository) GetUserPermissions(
+	ctx context.Context,
+	userID pulid.ID,
+) ([]*permission.Permission, error) {
 	log := pr.l.With().
 		Str("operation", "GetUserPermissions").
 		Str("userId", userID.String()).
@@ -112,7 +115,10 @@ func (pr *permissionRepository) GetUserPermissions(ctx context.Context, userID p
 	return allPermissions, nil
 }
 
-func (pr *permissionRepository) GetUserRoles(ctx context.Context, userID pulid.ID) ([]*string, error) {
+func (pr *permissionRepository) GetUserRoles(
+	ctx context.Context,
+	userID pulid.ID,
+) ([]*string, error) {
 	log := pr.l.With().
 		Str("operation", "GetUserRoles").
 		Str("userId", userID.String()).
@@ -161,7 +167,10 @@ func (pr *permissionRepository) GetUserRoles(ctx context.Context, userID pulid.I
 	return roleNames, nil
 }
 
-func (pr *permissionRepository) InvalidateUserPermissions(ctx context.Context, userID pulid.ID) error {
+func (pr *permissionRepository) InvalidateUserPermissions(
+	ctx context.Context,
+	userID pulid.ID,
+) error {
 	log := pr.l.With().
 		Str("operation", "InvalidateUserPermissions").
 		Str("userId", userID.String()).
@@ -176,7 +185,10 @@ func (pr *permissionRepository) InvalidateUserPermissions(ctx context.Context, u
 	return nil
 }
 
-func (pr *permissionRepository) GetRolesAndPermissions(ctx context.Context, userID pulid.ID) (*permission.RolesAndPermissions, error) {
+func (pr *permissionRepository) GetRolesAndPermissions(
+	ctx context.Context,
+	userID pulid.ID,
+) (*permission.RolesAndPermissions, error) {
 	log := pr.l.With().
 		Str("operation", "GetRolesAndPermissions").
 		Str("userId", userID.String()).

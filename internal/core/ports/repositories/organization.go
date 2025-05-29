@@ -23,20 +23,33 @@ type GetOrgByIDOptions struct {
 }
 
 type OrganizationRepository interface {
-	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*organization.Organization], error)
+	List(
+		ctx context.Context,
+		opts *ports.LimitOffsetQueryOptions,
+	) (*ports.ListResult[*organization.Organization], error)
 	GetByID(ctx context.Context, opts GetOrgByIDOptions) (*organization.Organization, error)
 	Create(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
 	Update(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
 	SetLogo(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
-	ClearLogo(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
-	GetUserOrganizations(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*organization.Organization], error)
+	ClearLogo(
+		ctx context.Context,
+		org *organization.Organization,
+	) (*organization.Organization, error)
+	GetUserOrganizations(
+		ctx context.Context,
+		opts *ports.LimitOffsetQueryOptions,
+	) (*ports.ListResult[*organization.Organization], error)
 	GetOrganizationBucketName(ctx context.Context, orgID pulid.ID) (string, error)
 }
 
 type OrganizationCacheRepository interface {
 	GetByID(ctx context.Context, orgID pulid.ID) (*organization.Organization, error)
 	GetUserOrganizations(ctx context.Context, userID pulid.ID) ([]*organization.Organization, error)
-	SetUserOrganizations(ctx context.Context, userID pulid.ID, orgs []*organization.Organization) error
+	SetUserOrganizations(
+		ctx context.Context,
+		userID pulid.ID,
+		orgs []*organization.Organization,
+	) error
 	Set(ctx context.Context, org *organization.Organization) error
 	Invalidate(ctx context.Context, orgID pulid.ID) error
 	InvalidateUserOrganizations(ctx context.Context, userID pulid.ID) error

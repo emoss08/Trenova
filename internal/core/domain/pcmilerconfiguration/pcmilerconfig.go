@@ -14,7 +14,7 @@ type PCMilerConfiguration struct {
 	bun.BaseModel `bun:"table:pcmiler_configurations,alias:pcm" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID `json:"id" bun:",pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:",pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 
@@ -22,13 +22,13 @@ type PCMilerConfiguration struct {
 	APIKey string `json:"apiKey" bun:"api_key,type:VARCHAR(255)"`
 
 	// Metadata
-	Version   int64 `bun:"version,type:BIGINT" json:"version"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Version   int64 `bun:"version,type:BIGINT"                                                                  json:"version"`
+	CreatedAt int64 `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
+	UpdatedAt int64 `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:has-one,join:organization_id=id" json:"-"`
+	Organization *organization.Organization `bun:"rel:has-one,join:organization_id=id"     json:"-"`
 }
 
 func (p *PCMilerConfiguration) BeforeAppendModel(_ context.Context, query bun.Query) error {

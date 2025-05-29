@@ -21,31 +21,31 @@ type WorkerProfile struct {
 	bun.BaseModel `bun:"table:worker_profiles,alias:wp" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull" json:"id"`
-	WorkerID       pulid.ID `bun:"worker_id,type:VARCHAR(100),notnull" json:"workerId"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),notnull" json:"businessUnitId"`
+	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull"              json:"id"`
+	WorkerID       pulid.ID `bun:"worker_id,type:VARCHAR(100),notnull"          json:"workerId"`
+	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),notnull"   json:"businessUnitId"`
 	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull" json:"organizationId"`
-	LicenseStateID pulid.ID `bun:"license_state_id,type:VARCHAR(100)" json:"licenseStateId"`
+	LicenseStateID pulid.ID `bun:"license_state_id,type:VARCHAR(100)"           json:"licenseStateId"`
 
 	// Core Fields
-	DOB                    int64            `json:"dob" bun:"dob,type:BIGINT,notnull"`
-	LicenseNumber          string           `json:"licenseNumber" bun:"license_number,type:VARCHAR(50),notnull"`
-	Endorsement            EndorsementType  `json:"endorsement" bun:"endorsement,type:endorsement_type_enum,notnull,default:'O'"`
-	HazmatExpiry           int64            `json:"hazmatExpiry" bun:"hazmat_expiry,type:BIGINT"`
-	LicenseExpiry          int64            `json:"licenseExpiry" bun:"license_expiry,type:BIGINT,notnull"`
-	HireDate               int64            `json:"hireDate" bun:"hire_date,type:BIGINT,notnull"`
-	TerminationDate        *int64           `json:"terminationDate" bun:"termination_date,type:BIGINT,nullzero"`
-	PhysicalDueDate        *int64           `json:"physicalDueDate" bun:"physical_due_date,type:BIGINT,nullzero"`
-	MVRDueDate             *int64           `json:"mvrDueDate" bun:"mvr_due_date,type:BIGINT,nullzero"`
-	ComplianceStatus       ComplianceStatus `json:"complianceStatus" bun:"compliance_status,type:compliance_status_enum,notnull,default:'Pending'"`
-	IsQualified            bool             `json:"isQualified" bun:"is_qualified,type:BOOLEAN,notnull,default:true"`
+	DOB                    int64            `json:"dob"                              bun:"dob,type:BIGINT,notnull"`
+	LicenseNumber          string           `json:"licenseNumber"                    bun:"license_number,type:VARCHAR(50),notnull"`
+	Endorsement            EndorsementType  `json:"endorsement"                      bun:"endorsement,type:endorsement_type_enum,notnull,default:'O'"`
+	HazmatExpiry           int64            `json:"hazmatExpiry"                     bun:"hazmat_expiry,type:BIGINT"`
+	LicenseExpiry          int64            `json:"licenseExpiry"                    bun:"license_expiry,type:BIGINT,notnull"`
+	HireDate               int64            `json:"hireDate"                         bun:"hire_date,type:BIGINT,notnull"`
+	TerminationDate        *int64           `json:"terminationDate"                  bun:"termination_date,type:BIGINT,nullzero"`
+	PhysicalDueDate        *int64           `json:"physicalDueDate"                  bun:"physical_due_date,type:BIGINT,nullzero"`
+	MVRDueDate             *int64           `json:"mvrDueDate"                       bun:"mvr_due_date,type:BIGINT,nullzero"`
+	ComplianceStatus       ComplianceStatus `json:"complianceStatus"                 bun:"compliance_status,type:compliance_status_enum,notnull,default:'Pending'"`
+	IsQualified            bool             `json:"isQualified"                      bun:"is_qualified,type:BOOLEAN,notnull,default:true"`
 	DisqualificationReason string           `json:"disqualificationReason,omitempty" bun:"disqualification_reason,type:TEXT"`
-	LastComplianceCheck    int64            `json:"lastComplianceCheck" bun:"last_compliance_check,type:BIGINT,notnull"`
-	LastMVRCheck           int64            `json:"lastMvrCheck" bun:"last_mvr_check,type:BIGINT,notnull"`
-	LastDrugTest           int64            `json:"lastDrugTest" bun:"last_drug_test,type:BIGINT,notnull"`
+	LastComplianceCheck    int64            `json:"lastComplianceCheck"              bun:"last_compliance_check,type:BIGINT,notnull"`
+	LastMVRCheck           int64            `json:"lastMvrCheck"                     bun:"last_mvr_check,type:BIGINT,notnull"`
+	LastDrugTest           int64            `json:"lastDrugTest"                     bun:"last_drug_test,type:BIGINT,notnull"`
 
 	// Metadata
-	Version   int64 `json:"version" bun:"version,type:BIGINT"`
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

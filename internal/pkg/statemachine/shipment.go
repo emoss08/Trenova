@@ -110,5 +110,6 @@ func (sm *ShipmentStateMachine) Transition(event TransitionEvent) error {
 func (sm *ShipmentStateMachine) IsInTerminalState() bool {
 	// A shipment is terminal if it's Billed or Canceled.
 	// Could also check if validShipmentTransitions[sm.shipment.Status] is empty.
-	return sm.shipment.StatusEquals(shipment.StatusBilled) || sm.shipment.StatusEquals(shipment.StatusCanceled)
+	return sm.shipment.StatusEquals(shipment.StatusBilled) ||
+		sm.shipment.StatusEquals(shipment.StatusCanceled)
 }

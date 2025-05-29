@@ -300,8 +300,13 @@ func (c *RabbitMQConsumer) handleQueuePreconditionFailure(alreadyTriedDelete boo
 func (c *RabbitMQConsumer) logTopologySetup() {
 	dlxName := c.config.ExchangeName + ".dlx"
 	dlqName := c.config.QueueName + ".dlq"
-	log.Printf("Setup RabbitMQ topology with exchange %v, queue %v, and dead letter exchange %v with queue %v",
-		c.config.ExchangeName, c.config.QueueName, dlxName, dlqName)
+	log.Printf(
+		"Setup RabbitMQ topology with exchange %v, queue %v, and dead letter exchange %v with queue %v",
+		c.config.ExchangeName,
+		c.config.QueueName,
+		dlxName,
+		dlqName,
+	)
 }
 
 // reconnect closes existing connections and reconnects to RabbitMQ
@@ -347,10 +352,19 @@ func (c *RabbitMQConsumer) registerWorkflowBindings() {
 			nil,
 		)
 		if err != nil {
-			log.Printf("Warning: Failed to bind queue to exchange for workflow type %v: %v", wType, err)
+			log.Printf(
+				"Warning: Failed to bind queue to exchange for workflow type %v: %v",
+				wType,
+				err,
+			)
 			continue
 		}
-		log.Printf("Bound queue %v to exchange %v for workflow type %v", c.config.QueueName, c.config.ExchangeName, wType)
+		log.Printf(
+			"Bound queue %v to exchange %v for workflow type %v",
+			c.config.QueueName,
+			c.config.ExchangeName,
+			wType,
+		)
 	}
 }
 
@@ -514,14 +528,21 @@ func (c *RabbitMQConsumer) getRetryCount(msg amqp.Delivery) int {
 
 // sendToDeadLetterQueue rejects a message to send it to the DLQ
 func (c *RabbitMQConsumer) sendToDeadLetterQueue(msg amqp.Delivery) {
-	log.Printf("Message exceeded maximum retry count (%d). Sending to dead letter queue.", c.maxRetries)
+	log.Printf(
+		"Message exceeded maximum retry count (%d). Sending to dead letter queue.",
+		c.maxRetries,
+	)
 	if err := msg.Nack(false, false); err != nil {
 		log.Printf("Failed to nack message to dead letter queue: %v", err)
 	}
 }
 
 // republishWithRetryCount republishes a message with updated retry count
-func (c *RabbitMQConsumer) republishWithRetryCount(ctx context.Context, msg amqp.Delivery, retryCount int) {
+func (c *RabbitMQConsumer) republishWithRetryCount(
+	ctx context.Context,
+	msg amqp.Delivery,
+	retryCount int,
+) {
 	headers := amqp.Table{}
 	if msg.Headers != nil {
 		headers = msg.Headers

@@ -69,9 +69,12 @@ func TestStateMachineManager_CalculateStatuses(t *testing.T) {
 				}
 				return createTestShipment(stops)
 			},
-			expectedStopStatuses: []shipment.StopStatus{shipment.StopStatusNew, shipment.StopStatusNew},
-			expectedMoveStatus:   shipment.MoveStatusNew,
-			expectedShipStatus:   shipment.StatusNew,
+			expectedStopStatuses: []shipment.StopStatus{
+				shipment.StopStatusNew,
+				shipment.StopStatusNew,
+			},
+			expectedMoveStatus: shipment.MoveStatusNew,
+			expectedShipStatus: shipment.StatusNew,
 		},
 		{
 			name: "First stop arrival updates only that stop status",
@@ -97,9 +100,12 @@ func TestStateMachineManager_CalculateStatuses(t *testing.T) {
 				}
 				return createTestShipment(stops)
 			},
-			expectedStopStatuses: []shipment.StopStatus{shipment.StopStatusInTransit, shipment.StopStatusNew},
-			expectedMoveStatus:   shipment.MoveStatusInTransit,
-			expectedShipStatus:   shipment.StatusInTransit,
+			expectedStopStatuses: []shipment.StopStatus{
+				shipment.StopStatusInTransit,
+				shipment.StopStatusNew,
+			},
+			expectedMoveStatus: shipment.MoveStatusInTransit,
+			expectedShipStatus: shipment.StatusInTransit,
 		},
 		{
 			name: "First stop departure triggers move and shipment status update",
@@ -126,9 +132,12 @@ func TestStateMachineManager_CalculateStatuses(t *testing.T) {
 				}
 				return createTestShipment(stops)
 			},
-			expectedStopStatuses: []shipment.StopStatus{shipment.StopStatusCompleted, shipment.StopStatusNew},
-			expectedMoveStatus:   shipment.MoveStatusInTransit,
-			expectedShipStatus:   shipment.StatusInTransit,
+			expectedStopStatuses: []shipment.StopStatus{
+				shipment.StopStatusCompleted,
+				shipment.StopStatusNew,
+			},
+			expectedMoveStatus: shipment.MoveStatusInTransit,
+			expectedShipStatus: shipment.StatusInTransit,
 		},
 
 		{
@@ -158,9 +167,12 @@ func TestStateMachineManager_CalculateStatuses(t *testing.T) {
 				}
 				return createTestShipment(stops)
 			},
-			expectedStopStatuses: []shipment.StopStatus{shipment.StopStatusCompleted, shipment.StopStatusCompleted},
-			expectedMoveStatus:   shipment.MoveStatusCompleted,
-			expectedShipStatus:   shipment.StatusCompleted,
+			expectedStopStatuses: []shipment.StopStatus{
+				shipment.StopStatusCompleted,
+				shipment.StopStatusCompleted,
+			},
+			expectedMoveStatus: shipment.MoveStatusCompleted,
+			expectedShipStatus: shipment.StatusCompleted,
 		},
 
 		{
@@ -196,9 +208,12 @@ func TestStateMachineManager_CalculateStatuses(t *testing.T) {
 
 				return shp
 			},
-			expectedStopStatuses: []shipment.StopStatus{shipment.StopStatusCanceled, shipment.StopStatusCanceled},
-			expectedMoveStatus:   shipment.MoveStatusCanceled,
-			expectedShipStatus:   shipment.StatusCanceled,
+			expectedStopStatuses: []shipment.StopStatus{
+				shipment.StopStatusCanceled,
+				shipment.StopStatusCanceled,
+			},
+			expectedMoveStatus: shipment.MoveStatusCanceled,
+			expectedShipStatus: shipment.StatusCanceled,
 		},
 
 		{
@@ -282,10 +297,13 @@ func TestStateMachineManager_CalculateStatuses(t *testing.T) {
 			setupShipment: func() *shipment.Shipment {
 				// Move with assignment but no activity yet
 				move := &shipment.ShipmentMove{
-					ID:         pulid.MustNew("smv_"),
-					Status:     shipment.MoveStatusNew,
-					Sequence:   0,
-					Assignment: &shipment.Assignment{ID: pulid.MustNew("a_"), Status: shipment.AssignmentStatusNew},
+					ID:       pulid.MustNew("smv_"),
+					Status:   shipment.MoveStatusNew,
+					Sequence: 0,
+					Assignment: &shipment.Assignment{
+						ID:     pulid.MustNew("a_"),
+						Status: shipment.AssignmentStatusNew,
+					},
 					Stops: []*shipment.Stop{
 						{
 							ID:               pulid.MustNew("stp_"),
@@ -313,9 +331,12 @@ func TestStateMachineManager_CalculateStatuses(t *testing.T) {
 					Moves:     []*shipment.ShipmentMove{move},
 				}
 			},
-			expectedStopStatuses: []shipment.StopStatus{shipment.StopStatusNew, shipment.StopStatusNew},
-			expectedMoveStatus:   shipment.MoveStatusAssigned,
-			expectedShipStatus:   shipment.StatusAssigned,
+			expectedStopStatuses: []shipment.StopStatus{
+				shipment.StopStatusNew,
+				shipment.StopStatusNew,
+			},
+			expectedMoveStatus: shipment.MoveStatusAssigned,
+			expectedShipStatus: shipment.StatusAssigned,
 		},
 	}
 
@@ -338,11 +359,32 @@ func TestStateMachineManager_CalculateStatuses(t *testing.T) {
 			}
 
 			actualStatus := shp.Moves[moveIdx].Stops[stopIdx].Status
-			assert.Equal(t, expectedStatus, actualStatus, "Stop status incorrect. Expected %s, got %s", expectedStatus, actualStatus)
+			assert.Equal(
+				t,
+				expectedStatus,
+				actualStatus,
+				"Stop status incorrect. Expected %s, got %s",
+				expectedStatus,
+				actualStatus,
+			)
 		}
 
-		assert.Equal(t, tc.expectedMoveStatus, shp.Moves[0].Status, "Move Status incorrect. Expected %s, got %s", tc.expectedMoveStatus, shp.Moves[0].Status)
-		assert.Equal(t, tc.expectedShipStatus, shp.Status, "Shipment status incorrect. Expected %s, got %s", tc.expectedShipStatus, shp.Status)
+		assert.Equal(
+			t,
+			tc.expectedMoveStatus,
+			shp.Moves[0].Status,
+			"Move Status incorrect. Expected %s, got %s",
+			tc.expectedMoveStatus,
+			shp.Moves[0].Status,
+		)
+		assert.Equal(
+			t,
+			tc.expectedShipStatus,
+			shp.Status,
+			"Shipment status incorrect. Expected %s, got %s",
+			tc.expectedShipStatus,
+			shp.Status,
+		)
 	}
 }
 

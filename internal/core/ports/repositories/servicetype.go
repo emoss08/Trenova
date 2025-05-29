@@ -16,7 +16,10 @@ type GetServiceTypeByIDOptions struct {
 }
 
 type ServiceTypeRepository interface {
-	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*servicetype.ServiceType], error)
+	List(
+		ctx context.Context,
+		opts *ports.LimitOffsetQueryOptions,
+	) (*ports.ListResult[*servicetype.ServiceType], error)
 	GetByID(ctx context.Context, opts GetServiceTypeByIDOptions) (*servicetype.ServiceType, error)
 	Create(ctx context.Context, st *servicetype.ServiceType) (*servicetype.ServiceType, error)
 	Update(ctx context.Context, st *servicetype.ServiceType) (*servicetype.ServiceType, error)

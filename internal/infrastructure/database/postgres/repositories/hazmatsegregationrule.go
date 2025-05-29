@@ -35,7 +35,9 @@ type hazmatSegregationRuleRepository struct {
 	l  *zerolog.Logger
 }
 
-func NewHazmatSegregationRuleRepository(p HazmatSegregationRuleRepositoryParams) repositories.HazmatSegregationRuleRepository {
+func NewHazmatSegregationRuleRepository(
+	p HazmatSegregationRuleRepositoryParams,
+) repositories.HazmatSegregationRuleRepository {
 	log := p.Logger.With().Str("repository", "hazmatsegregationrule").Logger()
 
 	return &hazmatSegregationRuleRepository{db: p.DB, l: &log}
@@ -50,7 +52,10 @@ func NewHazmatSegregationRuleRepository(p HazmatSegregationRuleRepositoryParams)
 //
 // Returns:
 //   - *bun.SelectQuery: The filtered and paginated query.
-func (r *hazmatSegregationRuleRepository) filterQuery(q *bun.SelectQuery, req *repositories.ListHazmatSegregationRuleRequest) *bun.SelectQuery {
+func (r *hazmatSegregationRuleRepository) filterQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListHazmatSegregationRuleRequest,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "hsr",
@@ -83,7 +88,10 @@ func (r *hazmatSegregationRuleRepository) filterQuery(q *bun.SelectQuery, req *r
 // Returns:
 //   - *ports.ListResult[*hazmatsegregationrule.HazmatSegregationRule]: List of hazmat segregation rules and total count.
 //   - error: If any database operation fails.
-func (r *hazmatSegregationRuleRepository) List(ctx context.Context, req *repositories.ListHazmatSegregationRuleRequest) (*ports.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
+func (r *hazmatSegregationRuleRepository) List(
+	ctx context.Context,
+	req *repositories.ListHazmatSegregationRuleRequest,
+) (*ports.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -121,7 +129,10 @@ func (r *hazmatSegregationRuleRepository) List(ctx context.Context, req *reposit
 // Returns:
 //   - *hazmatsegregationrule.HazmatSegregationRule: The retrieved hazmat segregation rule.
 //   - error: If the hazmat segregation rule is not found or query fails.
-func (r *hazmatSegregationRuleRepository) GetByID(ctx context.Context, req *repositories.GetHazmatSegregationRuleByIDRequest) (*hazmatsegregationrule.HazmatSegregationRule, error) {
+func (r *hazmatSegregationRuleRepository) GetByID(
+	ctx context.Context,
+	req *repositories.GetHazmatSegregationRuleByIDRequest,
+) (*hazmatsegregationrule.HazmatSegregationRule, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -143,7 +154,9 @@ func (r *hazmatSegregationRuleRepository) GetByID(ctx context.Context, req *repo
 
 	if err = q.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			return nil, errors.NewNotFoundError("Hazmat Segregation Rule not found within your organization")
+			return nil, errors.NewNotFoundError(
+				"Hazmat Segregation Rule not found within your organization",
+			)
 		}
 
 		log.Error().Err(err).Msg("failed to get hazmat segregation rule")
@@ -162,7 +175,10 @@ func (r *hazmatSegregationRuleRepository) GetByID(ctx context.Context, req *repo
 // Returns:
 //   - *hazmatsegregationrule.HazmatSegregationRule: The created hazmat segregation rule.
 //   - error: If any database operation fails.
-func (r *hazmatSegregationRuleRepository) Create(ctx context.Context, hsr *hazmatsegregationrule.HazmatSegregationRule) (*hazmatsegregationrule.HazmatSegregationRule, error) {
+func (r *hazmatSegregationRuleRepository) Create(
+	ctx context.Context,
+	hsr *hazmatsegregationrule.HazmatSegregationRule,
+) (*hazmatsegregationrule.HazmatSegregationRule, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -199,7 +215,10 @@ func (r *hazmatSegregationRuleRepository) Create(ctx context.Context, hsr *hazma
 // Returns:
 //   - *hazmatsegregationrule.HazmatSegregationRule: The updated hazmat segregation rule.
 //   - error: If any database operation fails.
-func (r *hazmatSegregationRuleRepository) Update(ctx context.Context, hsr *hazmatsegregationrule.HazmatSegregationRule) (*hazmatsegregationrule.HazmatSegregationRule, error) {
+func (r *hazmatSegregationRuleRepository) Update(
+	ctx context.Context,
+	hsr *hazmatsegregationrule.HazmatSegregationRule,
+) (*hazmatsegregationrule.HazmatSegregationRule, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -236,7 +255,10 @@ func (r *hazmatSegregationRuleRepository) Update(ctx context.Context, hsr *hazma
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Hazmat Segregation Rule (%s) has either been updated or deleted since the last request.", hsr.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Hazmat Segregation Rule (%s) has either been updated or deleted since the last request.",
+					hsr.GetID(),
+				),
 			)
 		}
 

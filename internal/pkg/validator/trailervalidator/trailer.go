@@ -57,31 +57,49 @@ func NewValidator(p ValidatorParams) *Validator {
 //
 // Returns:
 //   - *errors.MultiError: A list of validation errors.
-func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, t *trailer.Trailer,
+func (v *Validator) Validate(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	t *trailer.Trailer,
 ) *errors.MultiError {
 	engine := v.vef.CreateEngine()
 
 	// * Basic validation rules (field presence, format, etc.)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			t.Validate(ctx, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBasic,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				t.Validate(ctx, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// * Data integrity validation (uniqueness, references, etc.)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			return v.ValidateUniqueness(ctx, valCtx, t, multiErr)
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageDataIntegrity,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				return v.ValidateUniqueness(ctx, valCtx, t, multiErr)
+			},
+		),
+	)
 
 	// * Business rules validation (domain-specific rules)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			v.validateID(t, valCtx, multiErr)
-			v.validateEquipmentClass(ctx, t, multiErr)
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBusinessRules,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				v.validateID(t, valCtx, multiErr)
+				v.validateEquipmentClass(ctx, t, multiErr)
 
-			return nil
-		}))
+				return nil
+			},
+		),
+	)
 
 	return engine.Validate(ctx)
 }
@@ -96,7 +114,12 @@ func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationCo
 //
 // Returns:
 //   - error: An error if the validation fails.
-func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.ValidationContext, t *trailer.Trailer, multiErr *errors.MultiError) error {
+func (v *Validator) ValidateUniqueness(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	t *trailer.Trailer,
+	multiErr *errors.MultiError,
+) error {
 	dba, err := v.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
@@ -132,7 +155,11 @@ func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.Va
 //
 // Returns:
 //   - error: An error if the validation fails.
-func (v *Validator) validateID(t *trailer.Trailer, valCtx *validator.ValidationContext, multiErr *errors.MultiError) {
+func (v *Validator) validateID(
+	t *trailer.Trailer,
+	valCtx *validator.ValidationContext,
+	multiErr *errors.MultiError,
+) {
 	if valCtx.IsCreate && t.ID.IsNotNil() {
 		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
 	}
@@ -147,7 +174,11 @@ func (v *Validator) validateID(t *trailer.Trailer, valCtx *validator.ValidationC
 //
 // Returns:
 //   - error: An error if the validation fails.
-func (v *Validator) validateEquipmentClass(ctx context.Context, t *trailer.Trailer, multiErr *errors.MultiError) {
+func (v *Validator) validateEquipmentClass(
+	ctx context.Context,
+	t *trailer.Trailer,
+	multiErr *errors.MultiError,
+) {
 	et, err := v.equipTypeRepo.GetByID(ctx, repositories.GetEquipmentTypeByIDOptions{
 		ID:    t.EquipmentTypeID,
 		OrgID: t.OrganizationID,
@@ -161,6 +192,10 @@ func (v *Validator) validateEquipmentClass(ctx context.Context, t *trailer.Trail
 
 	// Class cannot be Tractor
 	if et.Class == equipmenttype.ClassTractor {
-		multiErr.Add("equipmentTypeId", errors.ErrInvalid, "Equipment type cannot have a subclass of `Tractor`")
+		multiErr.Add(
+			"equipmentTypeId",
+			errors.ErrInvalid,
+			"Equipment type cannot have a subclass of `Tractor`",
+		)
 	}
 }

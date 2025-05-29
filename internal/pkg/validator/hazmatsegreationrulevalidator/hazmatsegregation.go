@@ -58,21 +58,35 @@ func NewValidator(p ValidatorParams) *Validator {
 //
 // Returns:
 //   - *errors.MultiError: A list of validation errors.
-func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, hsr *hazmatsegregationrule.HazmatSegregationRule) *errors.MultiError {
+func (v *Validator) Validate(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	hsr *hazmatsegregationrule.HazmatSegregationRule,
+) *errors.MultiError {
 	engine := v.vef.CreateEngine()
 
 	// * Basic Validation
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			hsr.Validate(ctx, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBasic,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				hsr.Validate(ctx, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// * Validate Uniqueness
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			return v.ValidateUniqueness(ctx, valCtx, hsr, multiErr)
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageDataIntegrity,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				return v.ValidateUniqueness(ctx, valCtx, hsr, multiErr)
+			},
+		),
+	)
 
 	return engine.Validate(ctx)
 }
@@ -87,7 +101,12 @@ func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationCo
 //
 // Returns:
 //   - error: An error if the validation fails.
-func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.ValidationContext, hsr *hazmatsegregationrule.HazmatSegregationRule, multiErr *errors.MultiError) error {
+func (v *Validator) ValidateUniqueness(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	hsr *hazmatsegregationrule.HazmatSegregationRule,
+	multiErr *errors.MultiError,
+) error {
 	dba, err := v.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
@@ -123,7 +142,10 @@ func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.Va
 // Returns:
 //   - *errors.MultiError: A list of validation errors.
 //   - []*SegregationViolation: A list of segregation violations.
-func (v *Validator) ValidateShipment(ctx context.Context, shp *shipment.Shipment) (*errors.MultiError, []*SegregationViolation) {
+func (v *Validator) ValidateShipment(
+	ctx context.Context,
+	shp *shipment.Shipment,
+) (*errors.MultiError, []*SegregationViolation) {
 	multiErr := errors.NewMultiError()
 
 	// Skip validation if shipment has no commodities or only one commodity
@@ -165,7 +187,9 @@ func (v *Validator) ValidateShipment(ctx context.Context, shp *shipment.Shipment
 }
 
 // extractHazmatCommodities extracts commodities with hazmat and their IDs
-func (v *Validator) extractHazmatCommodities(shp *shipment.Shipment) ([]*shipment.ShipmentCommodity, []pulid.ID) {
+func (v *Validator) extractHazmatCommodities(
+	shp *shipment.Shipment,
+) ([]*shipment.ShipmentCommodity, []pulid.ID) {
 	commoditiesWithHazmat := make([]*shipment.ShipmentCommodity, 0)
 	hazmatIDs := make([]pulid.ID, 0)
 
@@ -181,7 +205,9 @@ func (v *Validator) extractHazmatCommodities(shp *shipment.Shipment) ([]*shipmen
 
 // fetchHazmatDataAndRules fetches hazmat data and rules from database
 func (v *Validator) fetchHazmatDataAndRules(
-	ctx context.Context, shp *shipment.Shipment, hazmatIDs []pulid.ID,
+	ctx context.Context,
+	shp *shipment.Shipment,
+	hazmatIDs []pulid.ID,
 ) (hazmatMap map[string]*hazardousmaterial.HazardousMaterial, ruleMap map[hazmatPair]*hazmatsegregationrule.HazmatSegregationRule, err error) {
 	dba, err := v.db.DB(ctx)
 	if err != nil {
@@ -224,7 +250,10 @@ func (v *Validator) fetchHazmatDataAndRules(
 }
 
 // attachHazmatDataToCommodities attaches hazmat data to commodities
-func (v *Validator) attachHazmatDataToCommodities(commodities []*shipment.ShipmentCommodity, hazmatMap map[string]*hazardousmaterial.HazardousMaterial) {
+func (v *Validator) attachHazmatDataToCommodities(
+	commodities []*shipment.ShipmentCommodity,
+	hazmatMap map[string]*hazardousmaterial.HazardousMaterial,
+) {
 	for _, com := range commodities {
 		if com.Commodity != nil && com.Commodity.HazardousMaterialID != nil {
 			hazmatID := com.Commodity.HazardousMaterialID.String()
@@ -236,7 +265,9 @@ func (v *Validator) attachHazmatDataToCommodities(commodities []*shipment.Shipme
 }
 
 // Helper function to build rule lookup map
-func buildRuleMap(rules []*hazmatsegregationrule.HazmatSegregationRule) map[hazmatPair]*hazmatsegregationrule.HazmatSegregationRule {
+func buildRuleMap(
+	rules []*hazmatsegregationrule.HazmatSegregationRule,
+) map[hazmatPair]*hazmatsegregationrule.HazmatSegregationRule {
 	ruleMap := make(map[hazmatPair]*hazmatsegregationrule.HazmatSegregationRule)
 
 	for _, rule := range rules {
@@ -275,7 +306,10 @@ func buildRuleMap(rules []*hazmatsegregationrule.HazmatSegregationRule) map[hazm
 }
 
 // Helper function to check pairs of commodities for violations
-func checkCommodityPairs(commodities []*shipment.ShipmentCommodity, ruleMap map[hazmatPair]*hazmatsegregationrule.HazmatSegregationRule) []*SegregationViolation {
+func checkCommodityPairs(
+	commodities []*shipment.ShipmentCommodity,
+	ruleMap map[hazmatPair]*hazmatsegregationrule.HazmatSegregationRule,
+) []*SegregationViolation {
 	violations := make([]*SegregationViolation, 0)
 
 	for i := range commodities {
@@ -301,7 +335,10 @@ func checkCommodityPairs(commodities []*shipment.ShipmentCommodity, ruleMap map[
 			}
 
 			if rule, exists := ruleMap[specificPair]; exists {
-				violations = append(violations, createViolation(rule, comA.Commodity, comB.Commodity, hazA, hazB))
+				violations = append(
+					violations,
+					createViolation(rule, comA.Commodity, comB.Commodity, hazA, hazB),
+				)
 				continue
 			}
 
@@ -312,7 +349,10 @@ func checkCommodityPairs(commodities []*shipment.ShipmentCommodity, ruleMap map[
 			}
 
 			if rule, exists := ruleMap[classPair]; exists {
-				violations = append(violations, createViolation(rule, comA.Commodity, comB.Commodity, hazA, hazB))
+				violations = append(
+					violations,
+					createViolation(rule, comA.Commodity, comB.Commodity, hazA, hazB),
+				)
 			}
 		}
 	}
@@ -329,7 +369,10 @@ func checkCommodityPairs(commodities []*shipment.ShipmentCommodity, ruleMap map[
 // Returns:
 //   - []*shipment.ShipmentCommodity: A list of shipment commodities with hazmat data.
 //   - error: An error if the loading fails.
-func (v *Validator) loadCommoditiesWithHazmat(ctx context.Context, shp *shipment.Shipment) ([]*shipment.ShipmentCommodity, error) {
+func (v *Validator) loadCommoditiesWithHazmat(
+	ctx context.Context,
+	shp *shipment.Shipment,
+) ([]*shipment.ShipmentCommodity, error) {
 	// * If commodities are already fully loaded with hazmat data, return them
 	if v.areCommoditiesFullyLoaded(shp.Commodities) {
 		return shp.Commodities, nil
@@ -389,28 +432,51 @@ func (v *Validator) areCommoditiesFullyLoaded(commodities []*shipment.ShipmentCo
 // Returns:
 //   - *SegregationViolation: A segregation violation.
 func createViolation(
-	rule *hazmatsegregationrule.HazmatSegregationRule, comA, comB *commodity.Commodity, hazA, hazB *hazardousmaterial.HazardousMaterial,
+	rule *hazmatsegregationrule.HazmatSegregationRule,
+	comA, comB *commodity.Commodity,
+	hazA, hazB *hazardousmaterial.HazardousMaterial,
 ) *SegregationViolation {
 	segregationType := string(rule.SegregationType)
 	var message string
 
 	switch rule.SegregationType {
 	case hazmatsegregationrule.SegregationTypeProhibited:
-		message = fmt.Sprintf("Hazardous materials %s (%s) and %s (%s) cannot be transported together",
-			comA.Name, hazA.Class, comB.Name, hazB.Class)
+		message = fmt.Sprintf(
+			"Hazardous materials %s (%s) and %s (%s) cannot be transported together",
+			comA.Name,
+			hazA.Class,
+			comB.Name,
+			hazB.Class,
+		)
 	case hazmatsegregationrule.SegregationTypeBarrier:
-		message = fmt.Sprintf("Hazardous materials %s (%s) and %s (%s) must be separated by a barrier",
-			comA.Name, hazA.Class, comB.Name, hazB.Class)
+		message = fmt.Sprintf(
+			"Hazardous materials %s (%s) and %s (%s) must be separated by a barrier",
+			comA.Name,
+			hazA.Class,
+			comB.Name,
+			hazB.Class,
+		)
 	case hazmatsegregationrule.SegregationTypeSeparated:
-		message = fmt.Sprintf("Hazardous materials %s (%s) and %s (%s) must be separated from each other",
-			comA.Name, hazA.Class, comB.Name, hazB.Class)
+		message = fmt.Sprintf(
+			"Hazardous materials %s (%s) and %s (%s) must be separated from each other",
+			comA.Name,
+			hazA.Class,
+			comB.Name,
+			hazB.Class,
+		)
 	case hazmatsegregationrule.SegregationTypeDistance:
 		distance := "unknown distance"
 		if rule.MinimumDistance != nil {
 			distance = fmt.Sprintf("%.2f %s", *rule.MinimumDistance, rule.DistanceUnit)
 		}
-		message = fmt.Sprintf("Hazardous materials %s (%s) and %s (%s) must be separated by at least %s",
-			comA.Name, hazA.Class, comB.Name, hazB.Class, distance)
+		message = fmt.Sprintf(
+			"Hazardous materials %s (%s) and %s (%s) must be separated by at least %s",
+			comA.Name,
+			hazA.Class,
+			comB.Name,
+			hazB.Class,
+			distance,
+		)
 	default:
 		message = fmt.Sprintf("Hazardous materials %s (%s) and %s (%s) require %s segregation",
 			comA.Name, hazA.Class, comB.Name, hazB.Class, segregationType)
@@ -448,7 +514,11 @@ func (v *Validator) ValidateShipmentCommodityAddition(
 	// * Load the new commodity with hazmat information
 	dba, err := v.db.DB(ctx)
 	if err != nil {
-		multiErr.Add("hazmatSegregation", errors.ErrSystemError, "Failed to get database connection")
+		multiErr.Add(
+			"hazmatSegregation",
+			errors.ErrSystemError,
+			"Failed to get database connection",
+		)
 		return multiErr, nil
 	}
 
@@ -462,7 +532,11 @@ func (v *Validator) ValidateShipmentCommodityAddition(
 		Relation("HazardousMaterial").
 		Scan(ctx)
 	if err != nil {
-		multiErr.Add("hazmatSegregation", errors.ErrSystemError, fmt.Sprintf("Failed to load commodity: %s", err.Error()))
+		multiErr.Add(
+			"hazmatSegregation",
+			errors.ErrSystemError,
+			fmt.Sprintf("Failed to load commodity: %s", err.Error()),
+		)
 		return multiErr, nil
 	}
 
@@ -511,7 +585,8 @@ func (v *Validator) ValidateShipmentCommodityAddition(
 // Returns:
 //   - map[string]*errors.MultiError: A map of shipment IDs to validation errors.
 func (v *Validator) BatchValidateShipments(
-	ctx context.Context, shipments []*shipment.Shipment,
+	ctx context.Context,
+	shipments []*shipment.Shipment,
 ) (errorResults map[string]*errors.MultiError, violationResults map[string][]*SegregationViolation) {
 	errorResults = make(map[string]*errors.MultiError)
 	violationResults = make(map[string][]*SegregationViolation)

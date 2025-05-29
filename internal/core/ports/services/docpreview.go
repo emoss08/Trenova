@@ -43,7 +43,10 @@ type DeletePreviewRequest struct {
 }
 
 type PreviewService interface {
-	GeneratePreview(ctx context.Context, req *GeneratePreviewRequest) (*GeneratePreviewResponse, error)
+	GeneratePreview(
+		ctx context.Context,
+		req *GeneratePreviewRequest,
+	) (*GeneratePreviewResponse, error)
 	GetPreviewURL(ctx context.Context, req *GetPreviewURLRequest) (string, error)
 	DeletePreview(ctx context.Context, req *DeletePreviewRequest) error
 }

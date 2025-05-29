@@ -94,7 +94,7 @@ func NewClient(p ClientParams) (*Client, error) {
 
 // ping verifies the connection to the Minio server
 func (c *Client) ping(ctx context.Context) error {
-	_, err := c.Client.ListBuckets(ctx)
+	_, err := c.ListBuckets(ctx)
 	if err != nil {
 		c.l.Error().Err(err).Msg("failed to ping minio server")
 		return err
@@ -125,7 +125,11 @@ func (c *Client) WithRetry(ctx context.Context, operation func() error) error {
 }
 
 // WithTimeout wraps an operation with a timeout
-func (c *Client) WithTimeout(ctx context.Context, timeout time.Duration, operation func() error) error {
+func (c *Client) WithTimeout(
+	ctx context.Context,
+	timeout time.Duration,
+	operation func() error,
+) error {
 	ctx, cancel := context.WithTimeout(ctx, timeout)
 	defer cancel()
 

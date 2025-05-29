@@ -53,7 +53,12 @@ func (v *Validator) Validate(
 	return nil
 }
 
-func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.ValidationContext, hm *hazardousmaterial.HazardousMaterial, multiErr *errors.MultiError) error {
+func (v *Validator) ValidateUniqueness(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	hm *hazardousmaterial.HazardousMaterial,
+	multiErr *errors.MultiError,
+) error {
 	dba, err := v.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
@@ -80,7 +85,11 @@ func (v *Validator) ValidateUniqueness(ctx context.Context, valCtx *validator.Va
 	return nil
 }
 
-func (v *Validator) validateID(hm *hazardousmaterial.HazardousMaterial, valCtx *validator.ValidationContext, multiErr *errors.MultiError) {
+func (v *Validator) validateID(
+	hm *hazardousmaterial.HazardousMaterial,
+	valCtx *validator.ValidationContext,
+	multiErr *errors.MultiError,
+) {
 	if valCtx.IsCreate && hm.ID.IsNotNil() {
 		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
 	}

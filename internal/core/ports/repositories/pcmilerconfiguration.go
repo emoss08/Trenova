@@ -13,5 +13,8 @@ type GetPCMilerConfigurationOptions struct {
 }
 
 type PCMilerConfigurationRepository interface {
-	GetPCMilerConfiguration(ctx context.Context, opts GetPCMilerConfigurationOptions) (*pcmilerconfiguration.PCMilerConfiguration, error)
+	GetPCMilerConfiguration(
+		ctx context.Context,
+		opts GetPCMilerConfigurationOptions,
+	) (*pcmilerconfiguration.PCMilerConfiguration, error)
 }

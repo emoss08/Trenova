@@ -41,7 +41,9 @@ type shipmentControlRepository struct {
 //
 // Returns:
 //   - A new instance of shipmentControlRepository.
-func NewShipmentControlRepository(p ShipmentControlRepositoryParams) repositories.ShipmentControlRepository {
+func NewShipmentControlRepository(
+	p ShipmentControlRepositoryParams,
+) repositories.ShipmentControlRepository {
 	log := p.Logger.With().
 		Str("repository", "shipmentcontrol").
 		Logger()
@@ -61,7 +63,10 @@ func NewShipmentControlRepository(p ShipmentControlRepositoryParams) repositorie
 // Returns:
 //   - *shipment.ShipmentControl: The shipment control entity.
 //   - error: If any database operation fails.
-func (r shipmentControlRepository) GetByOrgID(ctx context.Context, orgID pulid.ID) (*shipment.ShipmentControl, error) {
+func (r shipmentControlRepository) GetByOrgID(
+	ctx context.Context,
+	orgID pulid.ID,
+) (*shipment.ShipmentControl, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -80,7 +85,9 @@ func (r shipmentControlRepository) GetByOrgID(ctx context.Context, orgID pulid.I
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			log.Error().Msg("shipment control not found within your organization")
-			return nil, errors.NewNotFoundError("Shipment control not found within your organization")
+			return nil, errors.NewNotFoundError(
+				"Shipment control not found within your organization",
+			)
 		}
 
 		log.Error().Err(err).Msg("failed to get shipment control")
@@ -99,7 +106,10 @@ func (r shipmentControlRepository) GetByOrgID(ctx context.Context, orgID pulid.I
 // Returns:
 //   - *shipment.ShipmentControl: The updated shipment control entity.
 //   - error: If any database operation fails.
-func (r shipmentControlRepository) Update(ctx context.Context, sc *shipment.ShipmentControl) (*shipment.ShipmentControl, error) {
+func (r shipmentControlRepository) Update(
+	ctx context.Context,
+	sc *shipment.ShipmentControl,
+) (*shipment.ShipmentControl, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -126,7 +136,9 @@ func (r shipmentControlRepository) Update(ctx context.Context, sc *shipment.Ship
 			// * If the query is [sql.ErrNoRows], return a not found error
 			if eris.Is(rErr, sql.ErrNoRows) {
 				log.Error().Msg("shipment control not found within your organization")
-				return errors.NewNotFoundError("Shipment control not found within your organization")
+				return errors.NewNotFoundError(
+					"Shipment control not found within your organization",
+				)
 			}
 
 			log.Error().
@@ -150,7 +162,10 @@ func (r shipmentControlRepository) Update(ctx context.Context, sc *shipment.Ship
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Shipment Control (%s) has either been updated or deleted since the last request.", sc.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Shipment Control (%s) has either been updated or deleted since the last request.",
+					sc.GetID(),
+				),
 			)
 		}
 

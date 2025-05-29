@@ -16,8 +16,20 @@ type GetHazardousMaterialByIDOptions struct {
 }
 
 type HazardousMaterialRepository interface {
-	List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*hazardousmaterial.HazardousMaterial], error)
-	GetByID(ctx context.Context, opts GetHazardousMaterialByIDOptions) (*hazardousmaterial.HazardousMaterial, error)
-	Create(ctx context.Context, hm *hazardousmaterial.HazardousMaterial) (*hazardousmaterial.HazardousMaterial, error)
-	Update(ctx context.Context, hm *hazardousmaterial.HazardousMaterial) (*hazardousmaterial.HazardousMaterial, error)
+	List(
+		ctx context.Context,
+		opts *ports.LimitOffsetQueryOptions,
+	) (*ports.ListResult[*hazardousmaterial.HazardousMaterial], error)
+	GetByID(
+		ctx context.Context,
+		opts GetHazardousMaterialByIDOptions,
+	) (*hazardousmaterial.HazardousMaterial, error)
+	Create(
+		ctx context.Context,
+		hm *hazardousmaterial.HazardousMaterial,
+	) (*hazardousmaterial.HazardousMaterial, error)
+	Update(
+		ctx context.Context,
+		hm *hazardousmaterial.HazardousMaterial,
+	) (*hazardousmaterial.HazardousMaterial, error)
 }

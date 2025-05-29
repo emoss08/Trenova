@@ -41,14 +41,20 @@ func NewProNumberRepository(p ProNumberRepositoryParams) repositories.ProNumberR
 }
 
 // GetNextProNumber gets the next pro number for an organization
-func (r *proNumberRepository) GetNextProNumber(ctx context.Context, orgID pulid.ID) (string, error) {
+func (r *proNumberRepository) GetNextProNumber(
+	ctx context.Context,
+	orgID pulid.ID,
+) (string, error) {
 	// Use empty pulid for business unit when not specified
 	var emptyID pulid.ID
 	return r.GetNextProNumberWithBusinessUnit(ctx, orgID, emptyID)
 }
 
 // GetNextProNumberWithBusinessUnit gets the next pro number for an organization and business unit
-func (r *proNumberRepository) GetNextProNumberWithBusinessUnit(ctx context.Context, orgID, buID pulid.ID) (string, error) {
+func (r *proNumberRepository) GetNextProNumberWithBusinessUnit(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+) (string, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return "", eris.Wrap(err, "get database connection")
@@ -85,14 +91,22 @@ func (r *proNumberRepository) GetNextProNumberWithBusinessUnit(ctx context.Conte
 }
 
 // GetNextProNumberBatch generates a batch of pro numbers
-func (r *proNumberRepository) GetNextProNumberBatch(ctx context.Context, orgID pulid.ID, count int) ([]string, error) {
+func (r *proNumberRepository) GetNextProNumberBatch(
+	ctx context.Context,
+	orgID pulid.ID,
+	count int,
+) ([]string, error) {
 	// Use empty pulid for business unit when not specified
 	var emptyID pulid.ID
 	return r.GetNextProNumberBatchWithBusinessUnit(ctx, orgID, emptyID, count)
 }
 
 // GetNextProNumberBatchWithBusinessUnit generates a batch of pro numbers for a specific business unit
-func (r *proNumberRepository) GetNextProNumberBatchWithBusinessUnit(ctx context.Context, orgID, buID pulid.ID, count int) ([]string, error) {
+func (r *proNumberRepository) GetNextProNumberBatchWithBusinessUnit(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+	count int,
+) ([]string, error) {
 	if count <= 0 {
 		return []string{}, nil
 	}
@@ -142,7 +156,10 @@ func (r *proNumberRepository) GetNextProNumberBatchWithBusinessUnit(ctx context.
 }
 
 // getProNumberFormat fetches the organization or business unit specific pro number format
-func (r *proNumberRepository) getProNumberFormat(ctx context.Context, orgID, buID pulid.ID) (*pronumbergen.ProNumberFormat, error) {
+func (r *proNumberRepository) getProNumberFormat(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+) (*pronumbergen.ProNumberFormat, error) {
 	// If business unit ID is provided, try to get business unit specific format first
 	if !buID.IsNil() {
 		format, err := pronumbergen.GetProNumberFormatForBusinessUnit(ctx, orgID, buID)
@@ -171,20 +188,24 @@ func (r *proNumberRepository) getOrCreateAndIncrementSequence(
 		Logger()
 
 	var sequence *pronumber.Sequence
-	err := dba.RunInTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable}, func(c context.Context, tx bun.Tx) error {
-		var getErr error
-		sequence, getErr = r.getSequence(c, tx, orgID, year, month)
-		if getErr != nil {
-			return getErr
-		}
+	err := dba.RunInTx(
+		ctx,
+		&sql.TxOptions{Isolation: sql.LevelSerializable},
+		func(c context.Context, tx bun.Tx) error {
+			var getErr error
+			sequence, getErr = r.getSequence(c, tx, orgID, year, month)
+			if getErr != nil {
+				return getErr
+			}
 
-		if incrementErr := r.incrementSequence(c, tx, sequence); incrementErr != nil {
-			log.Error().Err(incrementErr).Msg("failed to increment sequence")
-			return incrementErr
-		}
+			if incrementErr := r.incrementSequence(c, tx, sequence); incrementErr != nil {
+				log.Error().Err(incrementErr).Msg("failed to increment sequence")
+				return incrementErr
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 
 	return sequence, err
 }
@@ -252,7 +273,10 @@ func (r *proNumberRepository) getSequence(
 }
 
 // createNewSequence creates a new sequence for the given organization, year, and month
-func (r *proNumberRepository) createNewSequence(orgID pulid.ID, year, month int) (*pronumber.Sequence, error) {
+func (r *proNumberRepository) createNewSequence(
+	orgID pulid.ID,
+	year, month int,
+) (*pronumber.Sequence, error) {
 	yearInt16, err := pronumber.SafeInt16(year)
 	if err != nil {
 		return nil, eris.Wrapf(err, "invalid year value %d for sequence", year)
@@ -272,7 +296,11 @@ func (r *proNumberRepository) createNewSequence(orgID pulid.ID, year, month int)
 }
 
 // incrementSequence increments the sequence number with optimistic locking
-func (r *proNumberRepository) incrementSequence(ctx context.Context, tx bun.Tx, sequence *pronumber.Sequence) error {
+func (r *proNumberRepository) incrementSequence(
+	ctx context.Context,
+	tx bun.Tx,
+	sequence *pronumber.Sequence,
+) error {
 	originalVersion := sequence.Version
 	sequence.Version++
 	sequence.CurrentSequence++
@@ -315,49 +343,53 @@ func (r *proNumberRepository) getOrCreateAndIncrementSequenceBatch(
 	var sequence *pronumber.Sequence
 	var sequences []int64
 
-	err := dba.RunInTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable}, func(c context.Context, tx bun.Tx) error {
-		var getErr error
-		sequence, getErr = r.getSequence(c, tx, orgID, year, month)
-		if getErr != nil {
-			return getErr
-		}
+	err := dba.RunInTx(
+		ctx,
+		&sql.TxOptions{Isolation: sql.LevelSerializable},
+		func(c context.Context, tx bun.Tx) error {
+			var getErr error
+			sequence, getErr = r.getSequence(c, tx, orgID, year, month)
+			if getErr != nil {
+				return getErr
+			}
 
-		// Store the starting sequence
-		startSequence := sequence.CurrentSequence
+			// Store the starting sequence
+			startSequence := sequence.CurrentSequence
 
-		// Increment the sequence by count
-		sequence.CurrentSequence += int64(count)
-		sequence.Version++
+			// Increment the sequence by count
+			sequence.CurrentSequence += int64(count)
+			sequence.Version++
 
-		// Update the sequence in the database
-		result, updateErr := tx.NewUpdate().Model(sequence).
-			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-				return uq.Where("pns.id = ?", sequence.ID).
-					Where("pns.version = ?", sequence.Version-1)
-			}).
-			Returning("*").Exec(c)
-		if updateErr != nil {
-			log.Error().Err(updateErr).Msg("failed to update sequence batch")
-			return updateErr
-		}
+			// Update the sequence in the database
+			result, updateErr := tx.NewUpdate().Model(sequence).
+				WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+					return uq.Where("pns.id = ?", sequence.ID).
+						Where("pns.version = ?", sequence.Version-1)
+				}).
+				Returning("*").Exec(c)
+			if updateErr != nil {
+				log.Error().Err(updateErr).Msg("failed to update sequence batch")
+				return updateErr
+			}
 
-		rows, rowErr := result.RowsAffected()
-		if rowErr != nil {
-			return eris.Wrap(rowErr, "failed to get rows affected")
-		}
+			rows, rowErr := result.RowsAffected()
+			if rowErr != nil {
+				return eris.Wrap(rowErr, "failed to get rows affected")
+			}
 
-		if rows == 0 {
-			return pronumber.ErrSequenceUpdateConflict
-		}
+			if rows == 0 {
+				return pronumber.ErrSequenceUpdateConflict
+			}
 
-		// Generate all sequence numbers
-		sequences = make([]int64, count)
-		for i := range count {
-			sequences[i] = startSequence + int64(i) + 1
-		}
+			// Generate all sequence numbers
+			sequences = make([]int64, count)
+			for i := range count {
+				sequences[i] = startSequence + int64(i) + 1
+			}
 
-		return nil
-	})
+			return nil
+		},
+	)
 
 	return sequences, err
 }

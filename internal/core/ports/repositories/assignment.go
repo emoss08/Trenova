@@ -32,10 +32,15 @@ type AssignmentRequest struct {
 func (a *AssignmentRequest) Validate(ctx context.Context) *errors.MultiError {
 	me := errors.NewMultiError()
 
-	err := validation.ValidateStructWithContext(ctx, a,
+	err := validation.ValidateStructWithContext(
+		ctx,
+		a,
 		validation.Field(&a.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(&a.UserID, validation.Required.Error("User ID is required")),
-		validation.Field(&a.PrimaryWorkerID, validation.Required.Error("Primary Worker ID is required")),
+		validation.Field(
+			&a.PrimaryWorkerID,
+			validation.Required.Error("Primary Worker ID is required"),
+		),
 		validation.Field(&a.TractorID, validation.Required.Error("Tractor ID is required")),
 		validation.Field(&a.TrailerID, validation.Required.Error("Trailer ID is required")),
 	)
@@ -58,7 +63,10 @@ type ListAssignmentsRequest struct {
 }
 
 type AssignmentRepository interface {
-	List(ctx context.Context, req ListAssignmentsRequest) (*ports.ListResult[*shipment.Assignment], error)
+	List(
+		ctx context.Context,
+		req ListAssignmentsRequest,
+	) (*ports.ListResult[*shipment.Assignment], error)
 	BulkAssign(ctx context.Context, req *AssignmentRequest) ([]*shipment.Assignment, error)
 	SingleAssign(ctx context.Context, a *shipment.Assignment) (*shipment.Assignment, error)
 	Reassign(ctx context.Context, a *shipment.Assignment) (*shipment.Assignment, error)

@@ -52,22 +52,35 @@ func NewLocationCategoryValidator(p LocationCategoryValidatorParams) *LocationCa
 //
 // Returns:
 //   - *errors.MultiError: A MultiError containing validation errors.
-func (v *LocationCategoryValidator) Validate(ctx context.Context, valCtx *validator.ValidationContext, lc *location.LocationCategory,
+func (v *LocationCategoryValidator) Validate(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	lc *location.LocationCategory,
 ) *errors.MultiError {
 	engine := v.vef.CreateEngine()
 
 	// * Basic validation rules (field presence, format, etc.)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			lc.Validate(ctx, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBasic,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				lc.Validate(ctx, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// * Data integrity validation (uniqueness, references, etc.)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			return v.ValidateUniqueness(ctx, valCtx, lc, multiErr)
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageDataIntegrity,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				return v.ValidateUniqueness(ctx, valCtx, lc, multiErr)
+			},
+		),
+	)
 
 	return engine.Validate(ctx)
 }
@@ -83,7 +96,10 @@ func (v *LocationCategoryValidator) Validate(ctx context.Context, valCtx *valida
 // Returns:
 //   - error: An error if the validation fails.
 func (v *LocationCategoryValidator) ValidateUniqueness(
-	ctx context.Context, valCtx *validator.ValidationContext, lc *location.LocationCategory, multiErr *errors.MultiError,
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	lc *location.LocationCategory,
+	multiErr *errors.MultiError,
 ) error {
 	dba, err := v.db.DB(ctx)
 	if err != nil {

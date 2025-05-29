@@ -48,7 +48,10 @@ func NewPermissionRepository(p PermissionRepositoryParams) repositories.Permissi
 }
 
 // GetUserRoles retrieves the roles for a user
-func (pc *permissionRepository) GetUserRoles(ctx context.Context, userID pulid.ID) ([]*string, error) {
+func (pc *permissionRepository) GetUserRoles(
+	ctx context.Context,
+	userID pulid.ID,
+) ([]*string, error) {
 	log := pc.l.With().
 		Str("operation", "GetUserRoles").
 		Str("userId", userID.String()).
@@ -73,7 +76,11 @@ func (pc *permissionRepository) GetUserRoles(ctx context.Context, userID pulid.I
 }
 
 // SetUserRoles stores the roles for a user
-func (pc *permissionRepository) SetUserRoles(ctx context.Context, userID pulid.ID, roles []*string) error {
+func (pc *permissionRepository) SetUserRoles(
+	ctx context.Context,
+	userID pulid.ID,
+	roles []*string,
+) error {
 	log := pc.l.With().
 		Str("operation", "SetUserRoles").
 		Str("userId", userID.String()).
@@ -92,7 +99,10 @@ func (pc *permissionRepository) SetUserRoles(ctx context.Context, userID pulid.I
 }
 
 // GetUserPermissions retrieves the permissions for a user
-func (pc *permissionRepository) GetUserPermissions(ctx context.Context, userID pulid.ID) ([]*permission.Permission, error) {
+func (pc *permissionRepository) GetUserPermissions(
+	ctx context.Context,
+	userID pulid.ID,
+) ([]*permission.Permission, error) {
 	log := pc.l.With().
 		Str("operation", "GetUserPermissions").
 		Str("userId", userID.String()).
@@ -117,7 +127,11 @@ func (pc *permissionRepository) GetUserPermissions(ctx context.Context, userID p
 }
 
 // SetUserPermissions stores the permissions for a user
-func (pc *permissionRepository) SetUserPermissions(ctx context.Context, userID pulid.ID, permissions []*permission.Permission) error {
+func (pc *permissionRepository) SetUserPermissions(
+	ctx context.Context,
+	userID pulid.ID,
+	permissions []*permission.Permission,
+) error {
 	log := pc.l.With().
 		Str("operation", "SetUserPermissions").
 		Str("userId", userID.String()).
@@ -136,7 +150,10 @@ func (pc *permissionRepository) SetUserPermissions(ctx context.Context, userID p
 }
 
 // InvalidateUserPermissions removes the permissions for a user from cache
-func (pc *permissionRepository) InvalidateUserPermissions(ctx context.Context, userID pulid.ID) error {
+func (pc *permissionRepository) InvalidateUserPermissions(
+	ctx context.Context,
+	userID pulid.ID,
+) error {
 	log := pc.l.With().
 		Str("operation", "InvalidateUserPermissions").
 		Str("userId", userID.String()).

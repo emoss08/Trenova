@@ -43,7 +43,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) List(ctx context.Context, req *repositories.ListBillingQueueRequest) (*ports.ListResult[*billingqueue.QueueItem], error) {
+func (s *Service) List(
+	ctx context.Context,
+	req *repositories.ListBillingQueueRequest,
+) (*ports.ListResult[*billingqueue.QueueItem], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
@@ -61,7 +64,9 @@ func (s *Service) List(ctx context.Context, req *repositories.ListBillingQueueRe
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read billing queue items")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read billing queue items",
+		)
 	}
 
 	entities, err := s.repo.List(ctx, req)
@@ -73,7 +78,10 @@ func (s *Service) List(ctx context.Context, req *repositories.ListBillingQueueRe
 	return entities, nil
 }
 
-func (s *Service) Get(ctx context.Context, req *repositories.GetBillingQueueItemRequest) (*billingqueue.QueueItem, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	req *repositories.GetBillingQueueItemRequest,
+) (*billingqueue.QueueItem, error) {
 	log := s.l.With().
 		Str("operation", "Get").
 		Str("billingQueueItemID", string(req.BillingQueueItemID)).
@@ -94,7 +102,9 @@ func (s *Service) Get(ctx context.Context, req *repositories.GetBillingQueueItem
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read billing queue items")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read billing queue items",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, req)
@@ -124,7 +134,9 @@ func (s *Service) BulkTransfer(ctx context.Context, req *repositories.BulkTransf
 	}
 
 	if !result.Allowed {
-		return errors.NewAuthorizationError("You do not have permission to bulk transfer shipments to the billing queue")
+		return errors.NewAuthorizationError(
+			"You do not have permission to bulk transfer shipments to the billing queue",
+		)
 	}
 
 	err = s.repo.BulkTransfer(ctx, req)

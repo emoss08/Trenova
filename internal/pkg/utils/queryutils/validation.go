@@ -119,7 +119,12 @@ type ErrorTemplate struct {
 //   - Iterates through Fields slice in criteria
 //   - Supports case-sensitive and case-insensitive comparison
 //   - Allows custom error templates per field
-func CheckFieldUniqueness(ctx context.Context, tx bun.IDB, criteria *UniquenessCriteria, multiErr *errors.MultiError) {
+func CheckFieldUniqueness(
+	ctx context.Context,
+	tx bun.IDB,
+	criteria *UniquenessCriteria,
+	multiErr *errors.MultiError,
+) {
 	logger := log.With().
 		Str("operation", "ValidateUniqueness").
 		Str("table", criteria.TableName).
@@ -145,7 +150,13 @@ func CheckFieldUniqueness(ctx context.Context, tx bun.IDB, criteria *UniquenessC
 
 // validateFieldUniqueness performs the actual uniqueness check for a single field.
 // It constructs and executes the uniqueness query, then handles any errors that occur.
-func validateFieldUniqueness(ctx context.Context, tx bun.IDB, criteria *UniquenessCriteria, field UniqueField, multiErr *errors.MultiError) {
+func validateFieldUniqueness(
+	ctx context.Context,
+	tx bun.IDB,
+	criteria *UniquenessCriteria,
+	field UniqueField,
+	multiErr *errors.MultiError,
+) {
 	query := constructUniquenessQuery(tx, criteria, field)
 	exists, err := query.Exists(ctx)
 	if err != nil {
@@ -164,7 +175,11 @@ func validateFieldUniqueness(ctx context.Context, tx bun.IDB, criteria *Uniquene
 //   - Tenant filtering (organization and business unit)
 //   - Primary key exclusion for updates
 //   - Additional custom conditions
-func constructUniquenessQuery(tx bun.IDB, criteria *UniquenessCriteria, field UniqueField) *bun.SelectQuery {
+func constructUniquenessQuery(
+	tx bun.IDB,
+	criteria *UniquenessCriteria,
+	field UniqueField,
+) *bun.SelectQuery {
 	query := tx.NewSelect().TableExpr(criteria.TableName)
 
 	// Build the field comparison
@@ -176,10 +191,16 @@ func constructUniquenessQuery(tx bun.IDB, criteria *UniquenessCriteria, field Un
 
 	// Add tenant conditions
 	if criteria.OrganizationID != "" {
-		query = query.Where(fmt.Sprintf("%s.organization_id = ?", criteria.TableName), criteria.OrganizationID)
+		query = query.Where(
+			fmt.Sprintf("%s.organization_id = ?", criteria.TableName),
+			criteria.OrganizationID,
+		)
 	}
 	if criteria.BusinessUnitID != "" {
-		query = query.Where(fmt.Sprintf("%s.business_unit_id = ?", criteria.TableName), criteria.BusinessUnitID)
+		query = query.Where(
+			fmt.Sprintf("%s.business_unit_id = ?", criteria.TableName),
+			criteria.BusinessUnitID,
+		)
 	}
 
 	// Add primary key exclusion for updates
@@ -188,7 +209,10 @@ func constructUniquenessQuery(tx bun.IDB, criteria *UniquenessCriteria, field Un
 		if pkField == "" {
 			pkField = "id"
 		}
-		query = query.Where(fmt.Sprintf("%s.%s != ?", criteria.TableName, pkField), criteria.PrimaryKeyValue)
+		query = query.Where(
+			fmt.Sprintf("%s.%s != ?", criteria.TableName, pkField),
+			criteria.PrimaryKeyValue,
+		)
 	}
 
 	for _, cond := range criteria.AdditionalConditions {
@@ -241,7 +265,12 @@ func validateCriteriaFields(criteria *UniquenessCriteria) error {
 }
 
 // validateSingleField handles legacy single field validation
-func validateSingleField(ctx context.Context, tx bun.IDB, criteria *UniquenessCriteria, multiErr *errors.MultiError) {
+func validateSingleField(
+	ctx context.Context,
+	tx bun.IDB,
+	criteria *UniquenessCriteria,
+	multiErr *errors.MultiError,
+) {
 	field := UniqueField{
 		Name:           criteria.FieldName,
 		Value:          criteria.FieldValue,
@@ -258,7 +287,13 @@ func validateSingleField(ctx context.Context, tx bun.IDB, criteria *UniquenessCr
 //  2. Field-specific error template
 //  3. Criteria-level error template
 //  4. Default error template
-func handleValidationError(criteria *UniquenessCriteria, field UniqueField, errType UniquenessError, err error, multiErr *errors.MultiError) {
+func handleValidationError(
+	criteria *UniquenessCriteria,
+	field UniqueField,
+	errType UniquenessError,
+	err error,
+	multiErr *errors.MultiError,
+) {
 	logger := log.With().
 		Str("operation", "handleError").
 		Str("field", field.Name).
@@ -393,7 +428,10 @@ func (b *UniquenessValidatorBuilder) WithField(name string, value any) *Uniquene
 //
 // Returns:
 //   - The builder instance for method chaining
-func (b *UniquenessValidatorBuilder) WithCaseSensitiveField(name string, value any) *UniquenessValidatorBuilder {
+func (b *UniquenessValidatorBuilder) WithCaseSensitiveField(
+	name string,
+	value any,
+) *UniquenessValidatorBuilder {
 	b.criteria.Fields = append(b.criteria.Fields, UniqueField{
 		Name:           name,
 		Value:          value,
@@ -413,7 +451,9 @@ func (b *UniquenessValidatorBuilder) WithCaseSensitiveField(name string, value a
 //
 // Returns:
 //   - The builder instance for method chaining
-func (b *UniquenessValidatorBuilder) WithPrimaryKey(field, value string) *UniquenessValidatorBuilder {
+func (b *UniquenessValidatorBuilder) WithPrimaryKey(
+	field, value string,
+) *UniquenessValidatorBuilder {
 	b.criteria.PrimaryKeyField = field
 	b.criteria.PrimaryKeyValue = value
 	return b
@@ -477,7 +517,10 @@ func (b *UniquenessValidatorBuilder) WithModelName(name string) *UniquenessValid
 //
 // Returns:
 //   - The builder instance for method chaining
-func (b *UniquenessValidatorBuilder) WithCondition(query string, args ...any) *UniquenessValidatorBuilder {
+func (b *UniquenessValidatorBuilder) WithCondition(
+	query string,
+	args ...any,
+) *UniquenessValidatorBuilder {
 	b.criteria.AdditionalConditions = append(b.criteria.AdditionalConditions, WhereCondition{
 		Query: query,
 		Args:  args,
@@ -500,7 +543,11 @@ func (b *UniquenessValidatorBuilder) WithCondition(query string, args ...any) *U
 //
 // Returns:
 //   - The builder instance for method chaining
-func (b *UniquenessValidatorBuilder) WithErrorTemplate(errType UniquenessError, template string, vars map[string]string) *UniquenessValidatorBuilder {
+func (b *UniquenessValidatorBuilder) WithErrorTemplate(
+	errType UniquenessError,
+	template string,
+	vars map[string]string,
+) *UniquenessValidatorBuilder {
 	b.criteria.ErrorMessages[errType] = &ErrorTemplate{
 		Template: template,
 		Vars:     vars,
@@ -519,7 +566,12 @@ func (b *UniquenessValidatorBuilder) WithErrorTemplate(errType UniquenessError, 
 //
 // Returns:
 //   - The builder instance for method chaining
-func (b *UniquenessValidatorBuilder) WithFieldAndTemplate(name string, value any, template string, vars map[string]string) *UniquenessValidatorBuilder {
+func (b *UniquenessValidatorBuilder) WithFieldAndTemplate(
+	name string,
+	value any,
+	template string,
+	vars map[string]string,
+) *UniquenessValidatorBuilder {
 	b.criteria.Fields = append(b.criteria.Fields, UniqueField{
 		Name:           name,
 		Value:          value,
@@ -544,7 +596,12 @@ func (b *UniquenessValidatorBuilder) WithFieldAndTemplate(name string, value any
 //
 // Returns:
 //   - The builder instance for method chaining
-func (b *UniquenessValidatorBuilder) WithCaseSensitiveFieldAndTemplate(name string, value any, template string, vars map[string]string) *UniquenessValidatorBuilder {
+func (b *UniquenessValidatorBuilder) WithCaseSensitiveFieldAndTemplate(
+	name string,
+	value any,
+	template string,
+	vars map[string]string,
+) *UniquenessValidatorBuilder {
 	b.criteria.Fields = append(b.criteria.Fields, UniqueField{
 		Name:           name,
 		Value:          value,

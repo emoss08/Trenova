@@ -34,7 +34,10 @@ func NewService(p Params) services.ImageGenerationService {
 }
 
 // ConvertToImage converts various document types to images
-func (s *service) ConvertToImage(ctx context.Context, req *services.ConvertToImageRequest) (*services.ConvertToImageResponse, error) {
+func (s *service) ConvertToImage(
+	ctx context.Context,
+	req *services.ConvertToImageRequest,
+) (*services.ConvertToImageResponse, error) {
 	log := s.l.With().
 		Str("operation", "ConvertToImage").
 		Str("filePath", req.FilePath).
@@ -78,7 +81,10 @@ func (s *service) ConvertToImage(ctx context.Context, req *services.ConvertToIma
 }
 
 // convertPDFToImage converts a PDF document to an image
-func (s *service) convertPDFToImage(pdfPath, outputPath string, options *services.ConversionOptions) error {
+func (s *service) convertPDFToImage(
+	pdfPath, outputPath string,
+	options *services.ConversionOptions,
+) error {
 	// Open the PDF document
 	doc, err := fitz.New(pdfPath)
 	if err != nil {
@@ -138,7 +144,11 @@ func (s *service) convertPDFToImage(pdfPath, outputPath string, options *service
 // convertDocToImage converts a Word document to an image
 //
 //nolint:revive // Not implemented yet
-func (s *service) convertDocToImage(ctx context.Context, docPath, outputPath string, options *services.ConversionOptions) error {
+func (s *service) convertDocToImage(
+	ctx context.Context,
+	docPath, outputPath string,
+	options *services.ConversionOptions,
+) error {
 	// Implementation for Word documents
 	// This would typically involve a library like unidoc, libreoffice headless, etc.
 	return errors.NewBusinessError("Word document conversion not yet implemented")
@@ -147,7 +157,11 @@ func (s *service) convertDocToImage(ctx context.Context, docPath, outputPath str
 // convertSpreadsheetToImage converts a spreadsheet to an image
 //
 //nolint:revive // Not implemented yet
-func (s *service) convertSpreadsheetToImage(ctx context.Context, spreadsheetPath, outputPath string, options *services.ConversionOptions) error {
+func (s *service) convertSpreadsheetToImage(
+	ctx context.Context,
+	spreadsheetPath, outputPath string,
+	options *services.ConversionOptions,
+) error {
 	// Implementation for spreadsheets
 	return errors.NewBusinessError("Spreadsheet conversion not yet implemented")
 }
@@ -155,7 +169,11 @@ func (s *service) convertSpreadsheetToImage(ctx context.Context, spreadsheetPath
 // convertPresentationToImage converts a presentation to an image
 //
 //nolint:revive // Not implemented yet
-func (s *service) convertPresentationToImage(ctx context.Context, presentationPath, outputPath string, options *services.ConversionOptions) error {
+func (s *service) convertPresentationToImage(
+	ctx context.Context,
+	presentationPath, outputPath string,
+	options *services.ConversionOptions,
+) error {
 	// Implementation for presentations
 	return errors.NewBusinessError("Presentation conversion not yet implemented")
 }
@@ -163,7 +181,10 @@ func (s *service) convertPresentationToImage(ctx context.Context, presentationPa
 // ResizeImage resizes an image to specified dimensions
 //
 //nolint:revive // Not implemented yet
-func (s *service) ResizeImage(ctx context.Context, req *services.ResizeImageRequest) (*services.ResizeImageResponse, error) {
+func (s *service) ResizeImage(
+	ctx context.Context,
+	req *services.ResizeImageRequest,
+) (*services.ResizeImageResponse, error) {
 	// Implementation for image resizing
 	// This could use imaging library or similar
 	return nil, errors.NewBusinessError("Image resizing not yet implemented")
@@ -172,7 +193,10 @@ func (s *service) ResizeImage(ctx context.Context, req *services.ResizeImageRequ
 // OptimizeImage compresses an image with specified quality
 //
 //nolint:revive // Not implemented yet
-func (s *service) OptimizeImage(ctx context.Context, req *services.OptimizeImageRequest) (*services.OptimizeImageResponse, error) {
+func (s *service) OptimizeImage(
+	ctx context.Context,
+	req *services.OptimizeImageRequest,
+) (*services.OptimizeImageResponse, error) {
 	// Implementation for image optimization
 	return nil, errors.NewBusinessError("Image optimization not yet implemented")
 }

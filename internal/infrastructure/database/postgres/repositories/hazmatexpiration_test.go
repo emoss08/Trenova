@@ -14,10 +14,12 @@ import (
 func TestHazmatExpirationRepository(t *testing.T) {
 	florida := ts.Fixture.MustRow("UsState.fl").(*usstate.UsState)
 
-	repo := repositories.NewHazmatExpirationRepository(repositories.HazmatExpirationRepositoryParams{
-		Logger: logger.NewLogger(testutils.NewTestConfig()),
-		DB:     ts.DB,
-	})
+	repo := repositories.NewHazmatExpirationRepository(
+		repositories.HazmatExpirationRepositoryParams{
+			Logger: logger.NewLogger(testutils.NewTestConfig()),
+			DB:     ts.DB,
+		},
+	)
 
 	t.Run("get by state id", func(t *testing.T) {
 		expiration, err := repo.GetHazmatExpirationByStateID(ctx, florida.ID)

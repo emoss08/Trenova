@@ -40,7 +40,11 @@ func (v ValidationRuleFunc) Validate(ctx context.Context, multiErr *errors.Multi
 }
 
 // NewValidationRule creates a new ValidationRule with the provided stage, priority, and validate function
-func NewValidationRule(stage ValidationStage, priority ValidationPriority, validateFunc func(ctx context.Context, multiErr *errors.MultiError) error) ValidationRule {
+func NewValidationRule(
+	stage ValidationStage,
+	priority ValidationPriority,
+	validateFunc func(ctx context.Context, multiErr *errors.MultiError) error,
+) ValidationRule {
 	return ValidationRuleFunc{
 		StageFunc: func() ValidationStage {
 			return stage

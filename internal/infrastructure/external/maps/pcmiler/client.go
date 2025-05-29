@@ -43,7 +43,10 @@ func NewClient(p ClientParams) Client {
 	return c
 }
 
-func (c *client) SingleSearch(ctx context.Context, params *SingleSearchParams) (*LocationResponse, error) {
+func (c *client) SingleSearch(
+	ctx context.Context,
+	params *SingleSearchParams,
+) (*LocationResponse, error) {
 	v, err := query.Values(params)
 	if err != nil {
 		c.l.Error().Err(err).Msg("failed to parse single search params")

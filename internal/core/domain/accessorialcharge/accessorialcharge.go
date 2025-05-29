@@ -25,24 +25,24 @@ var (
 type AccessorialCharge struct {
 	bun.BaseModel `bun:"table:accessorial_charges,alias:acc" json:"-"`
 
-	ID             pulid.ID        `json:"id" bun:",pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID        `json:"id"             bun:",pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID        `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID pulid.ID        `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	Status         domain.Status   `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code           string          `json:"code" bun:"code,type:VARCHAR(10),notnull"`
-	Description    string          `json:"description" bun:"description,type:TEXT,notnull"`
-	SearchVector   string          `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank           string          `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
-	Method         Method          `json:"method" bun:"method,type:accessorial_method_enum,notnull"`
-	Amount         decimal.Decimal `json:"amount" bun:"amount,type:NUMERIC(19,4),notnull"`
-	Unit           int16           `json:"unit" bun:"unit,type:INTEGER,notnull"`
-	Version        int64           `json:"version" bun:"version,type:BIGINT"`
-	CreatedAt      int64           `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64           `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	Status         domain.Status   `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'"`
+	Code           string          `json:"code"           bun:"code,type:VARCHAR(10),notnull"`
+	Description    string          `json:"description"    bun:"description,type:TEXT,notnull"`
+	SearchVector   string          `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank           string          `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
+	Method         Method          `json:"method"         bun:"method,type:accessorial_method_enum,notnull"`
+	Amount         decimal.Decimal `json:"amount"         bun:"amount,type:NUMERIC(19,4),notnull"`
+	Unit           int16           `json:"unit"           bun:"unit,type:INTEGER,notnull"`
+	Version        int64           `json:"version"        bun:"version,type:BIGINT"`
+	CreatedAt      int64           `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt      int64           `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
 }
 
 func (a *AccessorialCharge) Validate(ctx context.Context, multiErr *errors.MultiError) {

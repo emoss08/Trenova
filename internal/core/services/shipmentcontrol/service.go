@@ -70,7 +70,10 @@ func NewService(p ServiceParams) *Service {
 // Returns:
 //   - *shipment.ShipmentControl: The shipment control entity.
 //   - error: If any database operation fails.
-func (s *Service) Get(ctx context.Context, req *repositories.GetShipmentControlRequest) (*shipment.ShipmentControl, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	req *repositories.GetShipmentControlRequest,
+) (*shipment.ShipmentControl, error) {
 	log := s.l.With().
 		Str("operation", "Get").
 		Str("orgID", req.OrgID.String()).
@@ -96,7 +99,9 @@ func (s *Service) Get(ctx context.Context, req *repositories.GetShipmentControlR
 
 	// * If the user does not have permission to read the shipment control, return an error
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read shipment control")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read shipment control",
+		)
 	}
 
 	// * Get the shipment control by organization ID
@@ -119,7 +124,11 @@ func (s *Service) Get(ctx context.Context, req *repositories.GetShipmentControlR
 // Returns:
 //   - *shipment.ShipmentControl: The updated shipment control entity.
 //   - error: If any database operation fails.
-func (s *Service) Update(ctx context.Context, sc *shipment.ShipmentControl, userID pulid.ID) (*shipment.ShipmentControl, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	sc *shipment.ShipmentControl,
+	userID pulid.ID,
+) (*shipment.ShipmentControl, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("orgID", sc.OrganizationID.String()).
@@ -145,7 +154,9 @@ func (s *Service) Update(ctx context.Context, sc *shipment.ShipmentControl, user
 
 	// * Check if the user has permission to update the shipment control
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update shipment control")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update shipment control",
+		)
 	}
 
 	// * Create a validation context for the shipment control

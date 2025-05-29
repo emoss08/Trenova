@@ -23,15 +23,15 @@ type PageFavorite struct {
 	bun.BaseModel `bun:"table:page_favorites,alias:pf" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID `json:"id" bun:"id,pk,type:VARCHAR(100)"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull"`
-	UserID         pulid.ID `json:"userId" bun:"user_id,type:VARCHAR(100),notnull"`
+	UserID         pulid.ID `json:"userId"         bun:"user_id,type:VARCHAR(100),notnull"`
 
 	// Core fields
-	PageURL   string `json:"pageUrl" bun:"page_url,type:VARCHAR(500),notnull"`
+	PageURL   string `json:"pageUrl"   bun:"page_url,type:VARCHAR(500),notnull"`
 	PageTitle string `json:"pageTitle" bun:"page_title,type:VARCHAR(255),notnull"`
-	Version   int64  `json:"version" bun:"version,type:BIGINT"`
+	Version   int64  `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 

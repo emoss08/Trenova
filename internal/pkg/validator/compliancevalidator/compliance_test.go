@@ -35,15 +35,19 @@ func TestComplianceValidator(t *testing.T) {
 	workerProfile := ts.Fixture.MustRow("WorkerProfile.wp_1").(*worker.WorkerProfile)
 	mockVef := &mocks.MockValidationEngineFactory{}
 
-	hazmatRepo := repositories.NewHazmatExpirationRepository(repositories.HazmatExpirationRepositoryParams{
-		Logger: logger.NewLogger(testutils.NewTestConfig()),
-		DB:     ts.DB,
-	})
+	hazmatRepo := repositories.NewHazmatExpirationRepository(
+		repositories.HazmatExpirationRepositoryParams{
+			Logger: logger.NewLogger(testutils.NewTestConfig()),
+			DB:     ts.DB,
+		},
+	)
 
-	shipmentControlRepo := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
-		Logger: logger.NewLogger(testutils.NewTestConfig()),
-		DB:     ts.DB,
-	})
+	shipmentControlRepo := repositories.NewShipmentControlRepository(
+		repositories.ShipmentControlRepositoryParams{
+			Logger: logger.NewLogger(testutils.NewTestConfig()),
+			DB:     ts.DB,
+		},
+	)
 
 	validator := compliancevalidator.NewValidator(compliancevalidator.ValidatorParams{
 		HazmatExpRepo:           hazmatRepo,

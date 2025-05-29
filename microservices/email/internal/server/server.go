@@ -136,8 +136,14 @@ func (s *Server) Start() error {
 // registerRoutes registers all routes for the server
 func (s *Server) registerRoutes() {
 	// Serve static assets from the Svelte build
-	s.router.Handle("/assets/*", http.StripPrefix("/assets/", http.FileServer(http.Dir("internal/server/assets"))))
-	s.router.Handle("/ui/assets/*", http.StripPrefix("/ui/assets/", http.FileServer(http.Dir("ui/build/assets"))))
+	s.router.Handle(
+		"/assets/*",
+		http.StripPrefix("/assets/", http.FileServer(http.Dir("internal/server/assets"))),
+	)
+	s.router.Handle(
+		"/ui/assets/*",
+		http.StripPrefix("/ui/assets/", http.FileServer(http.Dir("ui/build/assets"))),
+	)
 
 	// API routes
 	s.router.Route("/api/templates", func(r chi.Router) {
@@ -162,7 +168,8 @@ func (s *Server) registerRoutes() {
 		path := r.URL.Path
 
 		// First check for exact file match (for assets and other static files)
-		if strings.HasSuffix(path, ".js") || strings.HasSuffix(path, ".css") || strings.HasSuffix(path, ".ico") {
+		if strings.HasSuffix(path, ".js") || strings.HasSuffix(path, ".css") ||
+			strings.HasSuffix(path, ".ico") {
 			file := filepath.Join("ui/build", path)
 			if _, err := os.Stat(file); err == nil {
 				http.ServeFile(w, r, file)
@@ -453,7 +460,11 @@ func (s *Server) loadSampleDataMap(name string) (map[string]any, error) {
 
 	data, err := s.loadSampleDataRaw(name)
 	if err != nil {
-		log.Warn().Str("sample", name).Str("path", filePath).Err(err).Msg("Failed to load sample data file")
+		log.Warn().
+			Str("sample", name).
+			Str("path", filePath).
+			Err(err).
+			Msg("Failed to load sample data file")
 		return nil, err
 	}
 

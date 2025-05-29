@@ -62,8 +62,11 @@ func (m *ErrorMatcher) HasExactErrors(expectedErrors []struct {
 			}
 		}
 		if !found {
-			assert.Fail(m.t, fmt.Sprintf("Expected error not found - Field: %s, Code: %s, Message: %s",
-				expected.Field, expected.Code, expected.Message))
+			assert.Fail(
+				m.t,
+				fmt.Sprintf("Expected error not found - Field: %s, Code: %s, Message: %s",
+					expected.Field, expected.Code, expected.Message),
+			)
 			m.Debug() // Print current errors for debugging
 			return false
 		}

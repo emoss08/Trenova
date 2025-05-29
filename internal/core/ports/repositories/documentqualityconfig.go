@@ -15,6 +15,12 @@ type GetDocumentQualityConfigOptions struct {
 }
 
 type DocumentQualityConfigRepository interface {
-	Get(ctx context.Context, opts *GetDocumentQualityConfigOptions) (*documentqualityconfig.DocumentQualityConfig, error)
-	Update(ctx context.Context, dqc *documentqualityconfig.DocumentQualityConfig) (*documentqualityconfig.DocumentQualityConfig, error)
+	Get(
+		ctx context.Context,
+		opts *GetDocumentQualityConfigOptions,
+	) (*documentqualityconfig.DocumentQualityConfig, error)
+	Update(
+		ctx context.Context,
+		dqc *documentqualityconfig.DocumentQualityConfig,
+	) (*documentqualityconfig.DocumentQualityConfig, error)
 }

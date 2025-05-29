@@ -52,35 +52,55 @@ func NewWorkerProfileValidator(p WorkerProfileValidatorParams) *WorkerProfileVal
 //   - valCtx: The validation context.
 //   - wp: The worker profile to validate.
 //   - multiErr: The MultiError to add validation errors to.
-func (v *WorkerProfileValidator) Validate(ctx context.Context, valCtx *validator.ValidationContext, wp *worker.WorkerProfile, multiErr *errors.MultiError) {
+func (v *WorkerProfileValidator) Validate(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	wp *worker.WorkerProfile,
+	multiErr *errors.MultiError,
+) {
 	engine := v.vef.CreateEngine().
 		ForField("profile").
 		WithParent(multiErr)
 
 	// Basic validation rules
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			wp.Validate(ctx, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBasic,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				wp.Validate(ctx, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// Compliance validation
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageCompliance, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			// Use the compliance validator with the current multiErr
-			v.compValidator.Validate(ctx, wp, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageCompliance,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				// Use the compliance validator with the current multiErr
+				v.compValidator.Validate(ctx, wp, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// ID validation for create operations
 	if valCtx.IsCreate {
-		engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
-			func(_ context.Context, multiErr *errors.MultiError) error {
-				if wp.ID.IsNotNil() {
-					multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
-				}
-				return nil
-			}))
+		engine.AddRule(
+			framework.NewValidationRule(
+				framework.ValidationStageBusinessRules,
+				framework.ValidationPriorityHigh,
+				func(_ context.Context, multiErr *errors.MultiError) error {
+					if wp.ID.IsNotNil() {
+						multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
+					}
+					return nil
+				},
+			),
+		)
 	}
 
 	// Execute validation rules and add errors to the provided multiErr

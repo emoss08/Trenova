@@ -27,7 +27,9 @@ type documentQualityConfigRepository struct {
 	l  *zerolog.Logger
 }
 
-func NewDocumentQualityConfigRepository(p DocumentQualityConfigRepositoryParams) repositories.DocumentQualityConfigRepository {
+func NewDocumentQualityConfigRepository(
+	p DocumentQualityConfigRepositoryParams,
+) repositories.DocumentQualityConfigRepository {
 	log := p.Logger.With().
 		Str("repository", "documentqualityconfig").
 		Logger()
@@ -57,7 +59,9 @@ func (r *documentQualityConfigRepository) Get(
 
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			return nil, errors.NewNotFoundError("Document Quality Config not found within your organization")
+			return nil, errors.NewNotFoundError(
+				"Document Quality Config not found within your organization",
+			)
 		}
 
 		log.Error().Err(err).Msg("failed to get document quality config")

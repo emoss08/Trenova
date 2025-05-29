@@ -95,11 +95,16 @@ type SplitMoveRequest struct {
 }
 
 func (smr *SplitMoveRequest) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(ctx, smr,
+	err := validation.ValidateStructWithContext(
+		ctx,
+		smr,
 		validation.Field(&smr.MoveID, validation.Required.Error("Move ID is required")),
 		validation.Field(&smr.OrgID, validation.Required.Error("Organization ID is required")),
 		validation.Field(&smr.BuID, validation.Required.Error("Business Unit ID is required")),
-		validation.Field(&smr.SplitLocationID, validation.Required.Error("Split Location ID is required")),
+		validation.Field(
+			&smr.SplitLocationID,
+			validation.Required.Error("Split Location ID is required"),
+		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
@@ -126,9 +131,23 @@ type SplitMoveResponse struct {
 type ShipmentMoveRepository interface {
 	GetByID(ctx context.Context, opts GetMoveByIDOptions) (*shipment.ShipmentMove, error)
 	UpdateStatus(ctx context.Context, opts *UpdateMoveStatusRequest) (*shipment.ShipmentMove, error)
-	GetMovesByShipmentID(ctx context.Context, opts GetMovesByShipmentIDOptions) ([]*shipment.ShipmentMove, error)
-	BulkUpdateStatus(ctx context.Context, opts BulkUpdateMoveStatusRequest) ([]*shipment.ShipmentMove, error)
-	BulkInsert(ctx context.Context, moves []*shipment.ShipmentMove) ([]*shipment.ShipmentMove, error)
+	GetMovesByShipmentID(
+		ctx context.Context,
+		opts GetMovesByShipmentIDOptions,
+	) ([]*shipment.ShipmentMove, error)
+	BulkUpdateStatus(
+		ctx context.Context,
+		opts BulkUpdateMoveStatusRequest,
+	) ([]*shipment.ShipmentMove, error)
+	BulkInsert(
+		ctx context.Context,
+		moves []*shipment.ShipmentMove,
+	) ([]*shipment.ShipmentMove, error)
 	SplitMove(ctx context.Context, req *SplitMoveRequest) (*SplitMoveResponse, error)
-	HandleMoveOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error
+	HandleMoveOperations(
+		ctx context.Context,
+		tx bun.IDB,
+		shp *shipment.Shipment,
+		isCreate bool,
+	) error
 }

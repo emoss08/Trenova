@@ -42,7 +42,10 @@ type SingleSearchParams struct {
 	ConfigOpts repositories.GetPCMilerConfigurationOptions
 }
 
-func (s *Service) SingleSearch(ctx context.Context, opts SingleSearchParams) (*ports.ListResult[*pcmiler.Location], error) {
+func (s *Service) SingleSearch(
+	ctx context.Context,
+	opts SingleSearchParams,
+) (*ports.ListResult[*pcmiler.Location], error) {
 	config, err := s.repo.GetPCMilerConfiguration(ctx, opts.ConfigOpts)
 	if err != nil {
 		s.l.Error().Err(err).Msg("failed to get PCMiler configuration")

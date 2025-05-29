@@ -52,7 +52,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListLocationOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	opts *repositories.ListLocationOptions,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -69,7 +72,10 @@ func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListLoca
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *repositories.ListLocationOptions) (*ports.ListResult[*location.Location], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *repositories.ListLocationOptions,
+) (*ports.ListResult[*location.Location], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -104,7 +110,10 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListLocationOptio
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetLocationByIDOptions) (*location.Location, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts repositories.GetLocationByIDOptions,
+) (*location.Location, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("locationID", opts.ID.String()).
@@ -139,7 +148,11 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetLocationByIDOpti
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, loc *location.Location, userID pulid.ID) (*location.Location, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	loc *location.Location,
+	userID pulid.ID,
+) (*location.Location, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("name", loc.Name).
@@ -198,7 +211,11 @@ func (s *Service) Create(ctx context.Context, loc *location.Location, userID pul
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, loc *location.Location, userID pulid.ID) (*location.Location, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	loc *location.Location,
+	userID pulid.ID,
+) (*location.Location, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("name", loc.Name).
@@ -221,7 +238,9 @@ func (s *Service) Update(ctx context.Context, loc *location.Location, userID pul
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this location")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this location",
+		)
 	}
 
 	// Validate the location

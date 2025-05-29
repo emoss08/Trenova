@@ -19,18 +19,18 @@ type Sequence struct {
 	bun.BaseModel `bun:"table:pro_number_sequences,alias:pns"`
 
 	// Primary identifiers
-	ID             pulid.ID `bun:",pk,type:VARCHAR(100)" json:"id"`
+	ID             pulid.ID `bun:",pk,type:VARCHAR(100)"                     json:"id"`
 	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),notnull" json:"organizationId"`
 
 	// Sequence tracking fields
-	Year            int16 `bun:"year,notnull" json:"year"`
-	Month           int16 `bun:"month,notnull" json:"month"`
+	Year            int16 `bun:"year,notnull"             json:"year"`
+	Month           int16 `bun:"month,notnull"            json:"month"`
 	CurrentSequence int64 `bun:"current_sequence,notnull" json:"currentSequence"`
 
 	// Metadata
 	Version   int64 `bun:"version,type:BIGINT" json:"version"`
-	CreatedAt int64 `bun:"created_at,notnull" json:"createdAt"`
-	UpdatedAt int64 `bun:"updated_at,notnull" json:"updatedAt"`
+	CreatedAt int64 `bun:"created_at,notnull"  json:"createdAt"`
+	UpdatedAt int64 `bun:"updated_at,notnull"  json:"updatedAt"`
 }
 
 // BeforeAppendModel implements the bun.BeforeAppendModelHook interface

@@ -53,7 +53,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQueryOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, eris.Wrap(err, "select commodities")
@@ -70,7 +73,10 @@ func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQuer
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*commodity.Commodity], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*commodity.Commodity], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -105,7 +111,10 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetCommodityByIDOptions) (*commodity.Commodity, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts repositories.GetCommodityByIDOptions,
+) (*commodity.Commodity, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("hmID", opts.ID.String()).
@@ -128,7 +137,9 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetCommodityByIDOpt
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this commodity")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read this commodity",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, opts)
@@ -140,7 +151,11 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetCommodityByIDOpt
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, com *commodity.Commodity, userID pulid.ID) (*commodity.Commodity, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	com *commodity.Commodity,
+	userID pulid.ID,
+) (*commodity.Commodity, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("name", com.Name).
@@ -199,7 +214,11 @@ func (s *Service) Create(ctx context.Context, com *commodity.Commodity, userID p
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, com *commodity.Commodity, userID pulid.ID) (*commodity.Commodity, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	com *commodity.Commodity,
+	userID pulid.ID,
+) (*commodity.Commodity, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("name", com.Name).
@@ -222,7 +241,9 @@ func (s *Service) Update(ctx context.Context, com *commodity.Commodity, userID p
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this commodity")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this commodity",
+		)
 	}
 
 	// Validate the commodity

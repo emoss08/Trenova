@@ -52,7 +52,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListCustomerOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	opts *repositories.ListCustomerOptions,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, err
@@ -69,7 +72,10 @@ func (s *Service) SelectOptions(ctx context.Context, opts *repositories.ListCust
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *repositories.ListCustomerOptions) (*ports.ListResult[*customer.Customer], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *repositories.ListCustomerOptions,
+) (*ports.ListResult[*customer.Customer], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -104,7 +110,10 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListCustomerOptio
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetCustomerByIDOptions) (*customer.Customer, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts repositories.GetCustomerByIDOptions,
+) (*customer.Customer, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("customerID", opts.ID.String()).
@@ -139,7 +148,10 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetCustomerByIDOpti
 	return entity, nil
 }
 
-func (s *Service) GetDocumentRequirements(ctx context.Context, cusID pulid.ID) ([]*repositories.CustomerDocRequirementResponse, error) {
+func (s *Service) GetDocumentRequirements(
+	ctx context.Context,
+	cusID pulid.ID,
+) ([]*repositories.CustomerDocRequirementResponse, error) {
 	log := s.l.With().
 		Str("operation", "GetDocumentRequirements").
 		Str("customerID", cusID.String()).
@@ -157,7 +169,11 @@ func (s *Service) GetDocumentRequirements(ctx context.Context, cusID pulid.ID) (
 	return requirements, nil
 }
 
-func (s *Service) Create(ctx context.Context, cus *customer.Customer, userID pulid.ID) (*customer.Customer, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	cus *customer.Customer,
+	userID pulid.ID,
+) (*customer.Customer, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("name", cus.Name).
@@ -216,7 +232,11 @@ func (s *Service) Create(ctx context.Context, cus *customer.Customer, userID pul
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, cus *customer.Customer, userID pulid.ID) (*customer.Customer, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	cus *customer.Customer,
+	userID pulid.ID,
+) (*customer.Customer, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("name", cus.Name).
@@ -239,7 +259,9 @@ func (s *Service) Update(ctx context.Context, cus *customer.Customer, userID pul
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this customer")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this customer",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{

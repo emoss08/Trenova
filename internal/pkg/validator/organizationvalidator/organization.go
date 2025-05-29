@@ -53,26 +53,43 @@ func NewValidator(p ValidatorParams) *Validator {
 //
 // Returns:
 //   - *errors.MultiError: A list of validation errors.
-func (v *Validator) Validate(ctx context.Context, org *organization.Organization) *errors.MultiError {
+func (v *Validator) Validate(
+	ctx context.Context,
+	org *organization.Organization,
+) *errors.MultiError {
 	engine := v.vef.CreateEngine()
 
 	// * Basic validation rules (field presence, format, etc.)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			org.Validate(ctx, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBasic,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				org.Validate(ctx, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// * Data integrity validation (uniqueness, references, etc.)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			return v.validateBucketName(ctx, org, multiErr)
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageDataIntegrity,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				return v.validateBucketName(ctx, org, multiErr)
+			},
+		),
+	)
 
 	return engine.Validate(ctx)
 }
 
-func (v *Validator) validateBucketName(ctx context.Context, org *organization.Organization, multiErr *errors.MultiError) error {
+func (v *Validator) validateBucketName(
+	ctx context.Context,
+	org *organization.Organization,
+	multiErr *errors.MultiError,
+) error {
 	if org.BucketName != "" {
 		existingOrg, err := v.repo.GetByID(ctx, repositories.GetOrgByIDOptions{
 			OrgID: org.ID,
@@ -82,7 +99,11 @@ func (v *Validator) validateBucketName(ctx context.Context, org *organization.Or
 		}
 
 		if existingOrg.BucketName != org.BucketName {
-			multiErr.Add("bucketName", errors.ErrInvalidOperation, "You cannot change the bucket name of an organization")
+			multiErr.Add(
+				"bucketName",
+				errors.ErrInvalidOperation,
+				"You cannot change the bucket name of an organization",
+			)
 		}
 	}
 

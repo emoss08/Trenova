@@ -41,7 +41,10 @@ func NewCommodityRepository(p CommodityRepositoryParams) repositories.CommodityR
 	}
 }
 
-func (cr *commodityRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
+func (cr *commodityRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *ports.LimitOffsetQueryOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "com",
@@ -49,13 +52,20 @@ func (cr *commodityRepository) filterQuery(q *bun.SelectQuery, opts *ports.Limit
 	})
 
 	if opts.Query != "" {
-		q = q.Where("com.name ILIKE ? OR com.description ILIKE ?", "%"+opts.Query+"%", "%"+opts.Query+"%")
+		q = q.Where(
+			"com.name ILIKE ? OR com.description ILIKE ?",
+			"%"+opts.Query+"%",
+			"%"+opts.Query+"%",
+		)
 	}
 
 	return q.Limit(opts.Limit).Offset(opts.Offset)
 }
 
-func (cr *commodityRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*commodity.Commodity], error) {
+func (cr *commodityRepository) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*commodity.Commodity], error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -84,7 +94,10 @@ func (cr *commodityRepository) List(ctx context.Context, opts *ports.LimitOffset
 	}, nil
 }
 
-func (cr *commodityRepository) GetByID(ctx context.Context, opts repositories.GetCommodityByIDOptions) (*commodity.Commodity, error) {
+func (cr *commodityRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetCommodityByIDOptions,
+) (*commodity.Commodity, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -112,7 +125,10 @@ func (cr *commodityRepository) GetByID(ctx context.Context, opts repositories.Ge
 	return entity, nil
 }
 
-func (cr *commodityRepository) Create(ctx context.Context, com *commodity.Commodity) (*commodity.Commodity, error) {
+func (cr *commodityRepository) Create(
+	ctx context.Context,
+	com *commodity.Commodity,
+) (*commodity.Commodity, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -143,7 +159,10 @@ func (cr *commodityRepository) Create(ctx context.Context, com *commodity.Commod
 	return com, nil
 }
 
-func (cr *commodityRepository) Update(ctx context.Context, com *commodity.Commodity) (*commodity.Commodity, error) {
+func (cr *commodityRepository) Update(
+	ctx context.Context,
+	com *commodity.Commodity,
+) (*commodity.Commodity, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -187,7 +206,10 @@ func (cr *commodityRepository) Update(ctx context.Context, com *commodity.Commod
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Commodity (%s) has either been updated or deleted since the last request.", com.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Commodity (%s) has either been updated or deleted since the last request.",
+					com.GetID(),
+				),
 			)
 		}
 

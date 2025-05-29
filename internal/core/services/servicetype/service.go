@@ -53,7 +53,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQueryOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, eris.Wrap(err, "select service types")
@@ -71,7 +74,10 @@ func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQuer
 	return options, nil
 }
 
-func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*servicetype.ServiceType], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*servicetype.ServiceType], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -106,7 +112,10 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetServiceTypeByIDOptions) (*servicetype.ServiceType, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts repositories.GetServiceTypeByIDOptions,
+) (*servicetype.ServiceType, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("serviceTypeID", opts.ID.String()).
@@ -129,7 +138,9 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetServiceTypeByIDO
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this service type")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read this service type",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, opts)
@@ -141,7 +152,11 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetServiceTypeByIDO
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, st *servicetype.ServiceType, userID pulid.ID) (*servicetype.ServiceType, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	st *servicetype.ServiceType,
+	userID pulid.ID,
+) (*servicetype.ServiceType, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("code", st.Code).
@@ -164,7 +179,9 @@ func (s *Service) Create(ctx context.Context, st *servicetype.ServiceType, userI
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a service type")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to create a service type",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{
@@ -200,7 +217,11 @@ func (s *Service) Create(ctx context.Context, st *servicetype.ServiceType, userI
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, st *servicetype.ServiceType, userID pulid.ID) (*servicetype.ServiceType, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	st *servicetype.ServiceType,
+	userID pulid.ID,
+) (*servicetype.ServiceType, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("code", st.Code).
@@ -223,7 +244,9 @@ func (s *Service) Update(ctx context.Context, st *servicetype.ServiceType, userI
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this service type")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this service type",
+		)
 	}
 
 	// Validate the service type

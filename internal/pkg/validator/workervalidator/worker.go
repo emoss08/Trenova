@@ -41,38 +41,66 @@ func NewValidator(p ValidatorParams) *Validator {
 }
 
 // Validate validates a worker and returns a MultiError if there are any validation errors
-func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, wrk *worker.Worker) *errors.MultiError {
+func (v *Validator) Validate(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	wrk *worker.Worker,
+) *errors.MultiError {
 	engine := v.vef.CreateEngine()
 
 	// Basic validation rules (field presence, format, etc.)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
-		wrk.Validate(ctx, multiErr)
-		return nil
-	}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBasic,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				wrk.Validate(ctx, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// Worker profile validation
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
-		if wrk.Profile != nil {
-			v.profileValidator.Validate(ctx, valCtx, wrk.Profile, multiErr)
-		}
-		return nil
-	}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBusinessRules,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				if wrk.Profile != nil {
+					v.profileValidator.Validate(ctx, valCtx, wrk.Profile, multiErr)
+				}
+				return nil
+			},
+		),
+	)
 
 	// Validate PTO
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
-		for idx, pto := range wrk.PTO {
-			v.ptoValidator.Validate(ctx, valCtx, wrk, pto, multiErr, idx)
-		}
-		return nil
-	}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBusinessRules,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				for idx, pto := range wrk.PTO {
+					v.ptoValidator.Validate(ctx, valCtx, wrk, pto, multiErr, idx)
+				}
+				return nil
+			},
+		),
+	)
 
 	// Check if the worker is eligible for assignment
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh, func(_ context.Context, multiErr *errors.MultiError) error {
-		if err := v.CheckAssignmentEligibility(wrk); err != nil {
-			multiErr.Add("assignmentEligibility", errors.ErrInvalid, err.Error())
-		}
-		return nil
-	}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBusinessRules,
+			framework.ValidationPriorityHigh,
+			func(_ context.Context, multiErr *errors.MultiError) error {
+				if err := v.CheckAssignmentEligibility(wrk); err != nil {
+					multiErr.Add("assignmentEligibility", errors.ErrInvalid, err.Error())
+				}
+				return nil
+			},
+		),
+	)
 
 	return engine.Validate(ctx)
 }

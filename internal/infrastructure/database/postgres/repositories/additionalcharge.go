@@ -26,7 +26,9 @@ type additionalChargeRepository struct {
 	l  *zerolog.Logger
 }
 
-func NewAdditionalChargeRepository(p AdditionalChargeRepositoryParams) repositories.AdditionalChargeRepository {
+func NewAdditionalChargeRepository(
+	p AdditionalChargeRepositoryParams,
+) repositories.AdditionalChargeRepository {
 	log := p.Logger.With().
 		Str("repository", "additionalCharge").
 		Logger()
@@ -37,7 +39,12 @@ func NewAdditionalChargeRepository(p AdditionalChargeRepositoryParams) repositor
 	}
 }
 
-func (r *additionalChargeRepository) HandleAdditionalChargeOperations(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) error {
+func (r *additionalChargeRepository) HandleAdditionalChargeOperations(
+	ctx context.Context,
+	tx bun.IDB,
+	shp *shipment.Shipment,
+	isCreate bool,
+) error {
 	// Early return for create with no charges
 	if len(shp.AdditionalCharges) == 0 && isCreate {
 		return nil
@@ -88,7 +95,12 @@ type operationData struct {
 	DeleteCharges []*shipment.AdditionalCharge
 }
 
-func (r *additionalChargeRepository) prepareOperationData(ctx context.Context, tx bun.IDB, shp *shipment.Shipment, isCreate bool) (*operationData, error) {
+func (r *additionalChargeRepository) prepareOperationData(
+	ctx context.Context,
+	tx bun.IDB,
+	shp *shipment.Shipment,
+	isCreate bool,
+) (*operationData, error) {
 	data := &operationData{
 		ExistingMap:   make(map[pulid.ID]*shipment.AdditionalCharge),
 		UpdatedIDs:    make(map[pulid.ID]struct{}),
@@ -117,7 +129,11 @@ func (r *additionalChargeRepository) prepareOperationData(ctx context.Context, t
 	return data, nil
 }
 
-func (r *additionalChargeRepository) categorizeCharges(shp *shipment.Shipment, data *operationData, isCreate bool) {
+func (r *additionalChargeRepository) categorizeCharges(
+	shp *shipment.Shipment,
+	data *operationData,
+	isCreate bool,
+) {
 	for _, ac := range shp.AdditionalCharges {
 		// Set required fields
 		ac.ShipmentID = shp.ID
@@ -134,7 +150,11 @@ func (r *additionalChargeRepository) categorizeCharges(shp *shipment.Shipment, d
 	}
 }
 
-func (r *additionalChargeRepository) processInserts(ctx context.Context, tx bun.IDB, newCharges []*shipment.AdditionalCharge) error {
+func (r *additionalChargeRepository) processInserts(
+	ctx context.Context,
+	tx bun.IDB,
+	newCharges []*shipment.AdditionalCharge,
+) error {
 	if len(newCharges) == 0 {
 		return nil
 	}
@@ -147,7 +167,11 @@ func (r *additionalChargeRepository) processInserts(ctx context.Context, tx bun.
 	return nil
 }
 
-func (r *additionalChargeRepository) processUpdates(ctx context.Context, tx bun.IDB, updateCharges []*shipment.AdditionalCharge) error {
+func (r *additionalChargeRepository) processUpdates(
+	ctx context.Context,
+	tx bun.IDB,
+	updateCharges []*shipment.AdditionalCharge,
+) error {
 	if len(updateCharges) == 0 {
 		return nil
 	}
@@ -160,7 +184,11 @@ func (r *additionalChargeRepository) processUpdates(ctx context.Context, tx bun.
 	return nil
 }
 
-func (r *additionalChargeRepository) getExistingAdditionalCharges(ctx context.Context, tx bun.IDB, shp *shipment.Shipment) ([]*shipment.AdditionalCharge, error) {
+func (r *additionalChargeRepository) getExistingAdditionalCharges(
+	ctx context.Context,
+	tx bun.IDB,
+	shp *shipment.Shipment,
+) ([]*shipment.AdditionalCharge, error) {
 	additionalCharges := make([]*shipment.AdditionalCharge, 0, len(shp.AdditionalCharges))
 
 	if err := tx.NewSelect().
@@ -179,7 +207,11 @@ func (r *additionalChargeRepository) getExistingAdditionalCharges(ctx context.Co
 	return additionalCharges, nil
 }
 
-func (r *additionalChargeRepository) handleBulkUpdate(ctx context.Context, tx bun.IDB, additionalCharges []*shipment.AdditionalCharge) error {
+func (r *additionalChargeRepository) handleBulkUpdate(
+	ctx context.Context,
+	tx bun.IDB,
+	additionalCharges []*shipment.AdditionalCharge,
+) error {
 	values := tx.NewValues(&additionalCharges)
 
 	// * Update the additional charges
@@ -222,7 +254,11 @@ func (r *additionalChargeRepository) handleBulkUpdate(ctx context.Context, tx bu
 	return nil
 }
 
-func (r *additionalChargeRepository) handleAdditionalChargeDeletions(ctx context.Context, tx bun.IDB, req *repositories.AdditionalChargeDeletionRequest) error {
+func (r *additionalChargeRepository) handleAdditionalChargeDeletions(
+	ctx context.Context,
+	tx bun.IDB,
+	req *repositories.AdditionalChargeDeletionRequest,
+) error {
 	// * for each existing additional charge, check if it has been updated
 	for id, additionalCharge := range req.ExistingAdditionalChargeMap {
 		if _, exists := req.UpdatedAdditionalChargeIDs[id]; !exists {

@@ -22,7 +22,10 @@ type GetFleetCodeByIDOptions struct {
 }
 
 type FleetCodeRepository interface {
-	List(ctx context.Context, opts *ListFleetCodeOptions) (*ports.ListResult[*fleetcode.FleetCode], error)
+	List(
+		ctx context.Context,
+		opts *ListFleetCodeOptions,
+	) (*ports.ListResult[*fleetcode.FleetCode], error)
 	GetByID(ctx context.Context, opts GetFleetCodeByIDOptions) (*fleetcode.FleetCode, error)
 	Create(ctx context.Context, fc *fleetcode.FleetCode) (*fleetcode.FleetCode, error)
 	Update(ctx context.Context, fc *fleetcode.FleetCode) (*fleetcode.FleetCode, error)

@@ -40,15 +40,27 @@ func (v *Validator) Validate(
 	engine := v.vef.CreateEngine()
 
 	// Basic validation rules
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
-		st.Validate(ctx, multiErr)
-		return nil
-	}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBasic,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				st.Validate(ctx, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// Data integrity validation (uniqueness)
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh, func(ctx context.Context, multiErr *errors.MultiError) error {
-		return v.ValidateUniqueness(ctx, valCtx, st, multiErr)
-	}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageDataIntegrity,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				return v.ValidateUniqueness(ctx, valCtx, st, multiErr)
+			},
+		),
+	)
 
 	return engine.Validate(ctx)
 }

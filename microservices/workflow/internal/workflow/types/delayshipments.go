@@ -3,8 +3,8 @@ package types
 import "github.com/emoss08/trenova/microservices/workflow/internal/model"
 
 type ShipmentControlResults struct {
-	OrganizationID              string `json:"organizationId" bun:"organization_id"`
-	AutoDelayShipments          bool   `json:"autoDelayShipments" bun:"auto_delay_shipments"`
+	OrganizationID              string `json:"organizationId"              bun:"organization_id"`
+	AutoDelayShipments          bool   `json:"autoDelayShipments"          bun:"auto_delay_shipments"`
 	AutoDelayShipmentsThreshold int16  `json:"autoDelayShipmentsThreshold" bun:"auto_delay_shipments_threshold"`
 }
 
@@ -24,7 +24,7 @@ type QueryStopsOutput struct {
 }
 
 type StopResults struct {
-	StopID         string `json:"stopId" bun:"stop_id"`
+	StopID         string `json:"stopId"         bun:"stop_id"`
 	OrganizationID string `json:"organizationId" bun:"organization_id"`
 	ShipmentMoveID string `json:"shipmentMoveId" bun:"shipment_move_id"`
 }

@@ -56,7 +56,10 @@ func NewAssignmentRepository(p AssignmentRepositoryParams) repositories.Assignme
 //   - q: The base select query.
 //   - req: ListAssignmentsRequest containing filter and pagination details.
 
-func (ar *assignmentRepository) filterQuery(q *bun.SelectQuery, req repositories.ListAssignmentsRequest) *bun.SelectQuery {
+func (ar *assignmentRepository) filterQuery(
+	q *bun.SelectQuery,
+	req repositories.ListAssignmentsRequest,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "a",
@@ -75,7 +78,10 @@ func (ar *assignmentRepository) filterQuery(q *bun.SelectQuery, req repositories
 // Returns:
 //   - *ports.ListResult[*shipment.Assignment]: A list of assignments.
 //   - error: An error if the operation fails.
-func (ar *assignmentRepository) List(ctx context.Context, req repositories.ListAssignmentsRequest) (*ports.ListResult[*shipment.Assignment], error) {
+func (ar *assignmentRepository) List(
+	ctx context.Context,
+	req repositories.ListAssignmentsRequest,
+) (*ports.ListResult[*shipment.Assignment], error) {
 	dba, err := ar.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -114,7 +120,10 @@ func (ar *assignmentRepository) List(ctx context.Context, req repositories.ListA
 // Returns:
 //   - *shipment.Assignment: The retrieved assignment entity if found.
 //   - error: An error if the assignment is not found or the query fails.
-func (ar *assignmentRepository) GetByID(ctx context.Context, opts repositories.GetAssignmentByIDOptions) (*shipment.Assignment, error) {
+func (ar *assignmentRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetAssignmentByIDOptions,
+) (*shipment.Assignment, error) {
 	dba, err := ar.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -156,7 +165,10 @@ func (ar *assignmentRepository) GetByID(ctx context.Context, opts repositories.G
 // Returns:
 //   - []*shipment.Assignment: A list of created assignment entities.
 //   - error: An error if the assignments cannot be created or if a database operation fails.
-func (ar *assignmentRepository) BulkAssign(ctx context.Context, req *repositories.AssignmentRequest) ([]*shipment.Assignment, error) {
+func (ar *assignmentRepository) BulkAssign(
+	ctx context.Context,
+	req *repositories.AssignmentRequest,
+) ([]*shipment.Assignment, error) {
 	dba, err := ar.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -167,11 +179,14 @@ func (ar *assignmentRepository) BulkAssign(ctx context.Context, req *repositorie
 		Str("shipmentID", req.ShipmentID.String()).
 		Logger()
 
-	shipmentMoves, err := ar.moveRepo.GetMovesByShipmentID(ctx, repositories.GetMovesByShipmentIDOptions{
-		ShipmentID: req.ShipmentID,
-		OrgID:      req.OrgID,
-		BuID:       req.BuID,
-	})
+	shipmentMoves, err := ar.moveRepo.GetMovesByShipmentID(
+		ctx,
+		repositories.GetMovesByShipmentIDOptions{
+			ShipmentID: req.ShipmentID,
+			OrgID:      req.OrgID,
+			BuID:       req.BuID,
+		},
+	)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -206,7 +221,11 @@ func (ar *assignmentRepository) extractMoveIDs(moves []*shipment.ShipmentMove) [
 }
 
 func (ar *assignmentRepository) processBulkAssignment(
-	ctx context.Context, tx bun.Tx, assignments []*shipment.Assignment, moveIDs []pulid.ID, req *repositories.AssignmentRequest,
+	ctx context.Context,
+	tx bun.Tx,
+	assignments []*shipment.Assignment,
+	moveIDs []pulid.ID,
+	req *repositories.AssignmentRequest,
 ) error {
 	if err := tx.NewInsert().Model(&assignments).Scan(ctx); err != nil {
 		return err
@@ -253,7 +272,10 @@ func (ar *assignmentRepository) processBulkAssignment(
 // Returns:
 //   - *shipment.Assignment: The created assignment entity.
 //   - error: An error if the assignment creation fails or if database updates are unsuccessful.
-func (ar *assignmentRepository) SingleAssign(ctx context.Context, a *shipment.Assignment) (*shipment.Assignment, error) {
+func (ar *assignmentRepository) SingleAssign(
+	ctx context.Context,
+	a *shipment.Assignment,
+) (*shipment.Assignment, error) {
 	dba, err := ar.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -280,7 +302,10 @@ func (ar *assignmentRepository) SingleAssign(ctx context.Context, a *shipment.As
 	return a, nil
 }
 
-func (ar *assignmentRepository) createAssignments(moves []*shipment.ShipmentMove, req *repositories.AssignmentRequest) []*shipment.Assignment {
+func (ar *assignmentRepository) createAssignments(
+	moves []*shipment.ShipmentMove,
+	req *repositories.AssignmentRequest,
+) []*shipment.Assignment {
 	assignments := make([]*shipment.Assignment, len(moves))
 	for i, move := range moves {
 		assignments[i] = &shipment.Assignment{
@@ -297,7 +322,10 @@ func (ar *assignmentRepository) createAssignments(moves []*shipment.ShipmentMove
 	return assignments
 }
 
-func (ar *assignmentRepository) updateAssignmentStatuses(ctx context.Context, a *shipment.Assignment) error {
+func (ar *assignmentRepository) updateAssignmentStatuses(
+	ctx context.Context,
+	a *shipment.Assignment,
+) error {
 	move, err := ar.moveRepo.GetByID(ctx, repositories.GetMoveByIDOptions{
 		MoveID: a.ShipmentMoveID,
 		OrgID:  a.OrganizationID,
@@ -329,7 +357,11 @@ func (ar *assignmentRepository) updateAssignmentStatuses(ctx context.Context, a 
 	return ar.updateLinkedShipmentStatus(ctx, move.ShipmentID, a)
 }
 
-func (ar *assignmentRepository) updateLinkedShipmentStatus(ctx context.Context, shipmentID pulid.ID, a *shipment.Assignment) error {
+func (ar *assignmentRepository) updateLinkedShipmentStatus(
+	ctx context.Context,
+	shipmentID pulid.ID,
+	a *shipment.Assignment,
+) error {
 	// We need to check if the shipment has any other moves that are not assigned
 	moves, err := ar.moveRepo.GetMovesByShipmentID(ctx, repositories.GetMovesByShipmentIDOptions{
 		ShipmentID: shipmentID,
@@ -383,7 +415,10 @@ func (ar *assignmentRepository) updateLinkedShipmentStatus(ctx context.Context, 
 // Returns:
 //   - *shipment.Assignment: The updated assignment entity.
 //   - error: An error if the update fails due to database errors or version mismatch.
-func (ar *assignmentRepository) Reassign(ctx context.Context, a *shipment.Assignment) (*shipment.Assignment, error) {
+func (ar *assignmentRepository) Reassign(
+	ctx context.Context,
+	a *shipment.Assignment,
+) (*shipment.Assignment, error) {
 	dba, err := ar.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -405,7 +440,11 @@ func (ar *assignmentRepository) Reassign(ctx context.Context, a *shipment.Assign
 	return a, nil
 }
 
-func (ar *assignmentRepository) processReassignment(ctx context.Context, tx bun.Tx, a *shipment.Assignment) error {
+func (ar *assignmentRepository) processReassignment(
+	ctx context.Context,
+	tx bun.Tx,
+	a *shipment.Assignment,
+) error {
 	// Get the current version for comparison
 	current := new(shipment.Assignment)
 	err := tx.NewSelect().
@@ -425,7 +464,10 @@ func (ar *assignmentRepository) processReassignment(ctx context.Context, tx bun.
 		return errors.NewValidationError(
 			"version",
 			errors.ErrVersionMismatch,
-			fmt.Sprintf("Version mismatch. The Assignment (%s) has been updated since your last request.", a.ID),
+			fmt.Sprintf(
+				"Version mismatch. The Assignment (%s) has been updated since your last request.",
+				a.ID,
+			),
 		)
 	}
 
@@ -456,7 +498,10 @@ func (ar *assignmentRepository) processReassignment(ctx context.Context, tx bun.
 		return errors.NewValidationError(
 			"version",
 			errors.ErrVersionMismatch,
-			fmt.Sprintf("Version mismatch. The Assignment (%s) has been updated since your last request.", a.ID),
+			fmt.Sprintf(
+				"Version mismatch. The Assignment (%s) has been updated since your last request.",
+				a.ID,
+			),
 		)
 	}
 

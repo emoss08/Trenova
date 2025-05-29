@@ -64,14 +64,21 @@ func NewUserRepository(p UserRepositoryParams) repositories.UserRepository {
 //
 // Returns:
 //   - *bun.SelectQuery: The filtered and paginated query.
-func (ur *userRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
+func (ur *userRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *ports.LimitOffsetQueryOptions,
+) *bun.SelectQuery {
 	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.Where("usr.business_unit_id = ?", opts.TenantOpts.BuID).
 			Where("usr.current_organization_id = ?", opts.TenantOpts.OrgID)
 	})
 
 	if opts.Query != "" {
-		q = q.Where("usr.name ILIKE ? OR usr.username ILIKE ?", "%"+opts.Query+"%", "%"+opts.Query+"%")
+		q = q.Where(
+			"usr.name ILIKE ? OR usr.username ILIKE ?",
+			"%"+opts.Query+"%",
+			"%"+opts.Query+"%",
+		)
 	}
 
 	return q
@@ -87,7 +94,10 @@ func (ur *userRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffse
 // Returns:
 //   - *ports.ListResult[*user.User]: A paginated list of users.
 //   - error: An error if the operation fails.
-func (ur *userRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*user.User], error) {
+func (ur *userRepository) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*user.User], error) {
 	dba, err := ur.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -136,7 +146,11 @@ func (ur *userRepository) FindByEmail(ctx context.Context, email string) (*user.
 
 	if err = q.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			return nil, errors.NewValidationError("emailAddress", errors.ErrNotFound, "User with this email address not found")
+			return nil, errors.NewValidationError(
+				"emailAddress",
+				errors.ErrNotFound,
+				"User with this email address not found",
+			)
 		}
 
 		ur.l.Error().Err(err).Msgf("failed to find user by email %s", email)
@@ -155,7 +169,10 @@ func (ur *userRepository) FindByEmail(ctx context.Context, email string) (*user.
 // Returns:
 //   - *user.User: The user found with the given ID.
 //   - error: An error if the operation fails.
-func (ur *userRepository) GetByID(ctx context.Context, opts repositories.GetUserByIDOptions) (*user.User, error) {
+func (ur *userRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetUserByIDOptions,
+) (*user.User, error) {
 	dba, err := ur.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -193,7 +210,11 @@ func (ur *userRepository) GetByID(ctx context.Context, opts repositories.GetUser
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (ur *userRepository) loadUserRolesAndPermissions(ctx context.Context, u *user.User, userID pulid.ID) error {
+func (ur *userRepository) loadUserRolesAndPermissions(
+	ctx context.Context,
+	u *user.User,
+	userID pulid.ID,
+) error {
 	log := ur.l.With().
 		Str("operation", "loadUserRolesAndPermissions").
 		Str("userId", userID.String()).

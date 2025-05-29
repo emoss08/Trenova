@@ -39,7 +39,10 @@ func NewStopRepository(p StopRepositoryParams) repositories.StopRepository {
 	}
 }
 
-func (sr *stopRepository) GetByID(ctx context.Context, req repositories.GetStopByIDRequest) (*shipment.Stop, error) {
+func (sr *stopRepository) GetByID(
+	ctx context.Context,
+	req repositories.GetStopByIDRequest,
+) (*shipment.Stop, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -71,7 +74,10 @@ func (sr *stopRepository) GetByID(ctx context.Context, req repositories.GetStopB
 	return stop, nil
 }
 
-func (sr *stopRepository) BulkInsert(ctx context.Context, stops []*shipment.Stop) ([]*shipment.Stop, error) {
+func (sr *stopRepository) BulkInsert(
+	ctx context.Context,
+	stops []*shipment.Stop,
+) ([]*shipment.Stop, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -98,7 +104,11 @@ func (sr *stopRepository) BulkInsert(ctx context.Context, stops []*shipment.Stop
 	return stops, nil
 }
 
-func (sr *stopRepository) Update(ctx context.Context, stop *shipment.Stop, moveIdx, stopIdx int) (*shipment.Stop, error) {
+func (sr *stopRepository) Update(
+	ctx context.Context,
+	stop *shipment.Stop,
+	moveIdx, stopIdx int,
+) (*shipment.Stop, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -138,7 +148,10 @@ func (sr *stopRepository) Update(ctx context.Context, stop *shipment.Stop, moveI
 			return errors.NewValidationError(
 				fmt.Sprintf("move[%d].stop[%d].version", moveIdx, stopIdx),
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Stop (%s) has either been updated or deleted since the last request.", stop.ID),
+				fmt.Sprintf(
+					"Version mismatch. The Stop (%s) has either been updated or deleted since the last request.",
+					stop.ID,
+				),
 			)
 		}
 
@@ -206,7 +219,12 @@ func (sr *stopRepository) HandleStopRemovals(
 }
 
 // processStopDeletions handles the actual deletion process after validating requirements
-func (sr *stopRepository) processStopDeletions(ctx context.Context, tx bun.IDB, moveID pulid.ID, stopIDsToDelete []pulid.ID) error {
+func (sr *stopRepository) processStopDeletions(
+	ctx context.Context,
+	tx bun.IDB,
+	moveID pulid.ID,
+	stopIDsToDelete []pulid.ID,
+) error {
 	log := sr.l.With().
 		Str("operation", "processStopDeletions").
 		Str("moveID", moveID.String()).
@@ -243,7 +261,11 @@ func (sr *stopRepository) processStopDeletions(ctx context.Context, tx bun.IDB, 
 }
 
 // getAllStopsForMove fetches all stops for the given move
-func (sr *stopRepository) getAllStopsForMove(ctx context.Context, tx bun.IDB, moveID pulid.ID) ([]*shipment.Stop, error) {
+func (sr *stopRepository) getAllStopsForMove(
+	ctx context.Context,
+	tx bun.IDB,
+	moveID pulid.ID,
+) ([]*shipment.Stop, error) {
 	log := sr.l.With().
 		Str("operation", "getAllStopsForMove").
 		Str("moveID", moveID.String()).
@@ -279,7 +301,10 @@ func (sr *stopRepository) validateMinimumStops(allStops []*shipment.Stop) error 
 }
 
 // validateRemainingStopTypes ensures at least one pickup and delivery stop will remain
-func (sr *stopRepository) validateRemainingStopTypes(allStops []*shipment.Stop, stopIDsToDelete []pulid.ID) error {
+func (sr *stopRepository) validateRemainingStopTypes(
+	allStops []*shipment.Stop,
+	stopIDsToDelete []pulid.ID,
+) error {
 	log := sr.l.With().Str("operation", "validateRemainingStopTypes").Logger()
 
 	// Count how many pickup and delivery stops we have and will remain after deletion
@@ -296,9 +321,10 @@ func (sr *stopRepository) validateRemainingStopTypes(allStops []*shipment.Stop, 
 	for _, stop := range allStops {
 		_, isBeingDeleted := stopsToDelete[stop.ID]
 		if !isBeingDeleted {
-			if stop.Type == shipment.StopTypePickup {
+			switch stop.Type { //nolint:exhaustive // We only need to check for pickup and delivery
+			case shipment.StopTypePickup:
 				remainingPickups++
-			} else if stop.Type == shipment.StopTypeDelivery {
+			case shipment.StopTypeDelivery:
 				remainingDeliveries++
 			}
 		}
@@ -327,7 +353,11 @@ func (sr *stopRepository) validateRemainingStopTypes(allStops []*shipment.Stop, 
 }
 
 // deleteStops performs the actual deletion of stops
-func (sr *stopRepository) deleteStops(ctx context.Context, tx bun.IDB, stopIDsToDelete []pulid.ID) error {
+func (sr *stopRepository) deleteStops(
+	ctx context.Context,
+	tx bun.IDB,
+	stopIDsToDelete []pulid.ID,
+) error {
 	log := sr.l.With().
 		Str("operation", "deleteStops").
 		Interface("stopIDsToDelete", stopIDsToDelete).
@@ -359,7 +389,11 @@ func (sr *stopRepository) deleteStops(ctx context.Context, tx bun.IDB, stopIDsTo
 
 // resequenceRemainingStops reorders the sequence numbers of all stops for a move to ensure
 // they are sequential with no gaps
-func (sr *stopRepository) resequenceRemainingStops(ctx context.Context, tx bun.IDB, moveID pulid.ID) error {
+func (sr *stopRepository) resequenceRemainingStops(
+	ctx context.Context,
+	tx bun.IDB,
+	moveID pulid.ID,
+) error {
 	log := sr.l.With().
 		Str("operation", "resequenceRemainingStops").
 		Str("moveID", moveID.String()).

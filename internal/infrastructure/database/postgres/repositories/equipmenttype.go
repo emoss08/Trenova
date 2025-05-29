@@ -31,7 +31,9 @@ type equipmentTypeRepository struct {
 	l  *zerolog.Logger
 }
 
-func NewEquipmentTypeRepository(p EquipmentTypeRespositoryParams) repositories.EquipmentTypeRepository {
+func NewEquipmentTypeRepository(
+	p EquipmentTypeRespositoryParams,
+) repositories.EquipmentTypeRepository {
 	log := p.Logger.With().
 		Str("repository", "equipmenttype").
 		Logger()
@@ -42,7 +44,10 @@ func NewEquipmentTypeRepository(p EquipmentTypeRespositoryParams) repositories.E
 	}
 }
 
-func (fcr *equipmentTypeRepository) filterQuery(q *bun.SelectQuery, req *repositories.ListEquipmentTypeRequest) *bun.SelectQuery {
+func (fcr *equipmentTypeRepository) filterQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListEquipmentTypeRequest,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "et",
@@ -76,7 +81,10 @@ func (fcr *equipmentTypeRepository) filterQuery(q *bun.SelectQuery, req *reposit
 	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
 }
 
-func (fcr *equipmentTypeRepository) List(ctx context.Context, req *repositories.ListEquipmentTypeRequest) (*ports.ListResult[*equipmenttype.EquipmentType], error) {
+func (fcr *equipmentTypeRepository) List(
+	ctx context.Context,
+	req *repositories.ListEquipmentTypeRequest,
+) (*ports.ListResult[*equipmenttype.EquipmentType], error) {
 	dba, err := fcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -105,7 +113,10 @@ func (fcr *equipmentTypeRepository) List(ctx context.Context, req *repositories.
 	}, nil
 }
 
-func (fcr *equipmentTypeRepository) GetByID(ctx context.Context, opts repositories.GetEquipmentTypeByIDOptions) (*equipmenttype.EquipmentType, error) {
+func (fcr *equipmentTypeRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetEquipmentTypeByIDOptions,
+) (*equipmenttype.EquipmentType, error) {
 	dba, err := fcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -133,7 +144,10 @@ func (fcr *equipmentTypeRepository) GetByID(ctx context.Context, opts repositori
 	return fc, nil
 }
 
-func (fcr *equipmentTypeRepository) Create(ctx context.Context, et *equipmenttype.EquipmentType) (*equipmenttype.EquipmentType, error) {
+func (fcr *equipmentTypeRepository) Create(
+	ctx context.Context,
+	et *equipmenttype.EquipmentType,
+) (*equipmenttype.EquipmentType, error) {
 	dba, err := fcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -211,7 +225,10 @@ func (fcr *equipmentTypeRepository) Update(
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The equipment type (%s) has either been updated or deleted since the last request.", et.ID.String()),
+				fmt.Sprintf(
+					"Version mismatch. The equipment type (%s) has either been updated or deleted since the last request.",
+					et.ID.String(),
+				),
 			)
 		}
 

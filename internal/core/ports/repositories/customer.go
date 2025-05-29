@@ -33,9 +33,15 @@ type CustomerDocRequirementResponse struct {
 }
 
 type CustomerRepository interface {
-	List(ctx context.Context, opts *ListCustomerOptions) (*ports.ListResult[*customer.Customer], error)
+	List(
+		ctx context.Context,
+		opts *ListCustomerOptions,
+	) (*ports.ListResult[*customer.Customer], error)
 	GetByID(ctx context.Context, opts GetCustomerByIDOptions) (*customer.Customer, error)
-	GetDocumentRequirements(ctx context.Context, cusID pulid.ID) ([]*CustomerDocRequirementResponse, error)
+	GetDocumentRequirements(
+		ctx context.Context,
+		cusID pulid.ID,
+	) ([]*CustomerDocRequirementResponse, error)
 	Create(ctx context.Context, c *customer.Customer) (*customer.Customer, error)
 	Update(ctx context.Context, c *customer.Customer) (*customer.Customer, error)
 }

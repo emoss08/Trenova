@@ -59,7 +59,10 @@ func NewDocumentRepository(p DocumentRepositoryParams) repositories.DocumentRepo
 //
 // Returns:
 //   - []*repositories.GetDocumentCountByResourceResponse: The document count for every resource type.
-func (r *documentRepository) GetDocumentCountByResource(ctx context.Context, req *ports.TenantOptions) ([]*repositories.GetDocumentCountByResourceResponse, error) {
+func (r *documentRepository) GetDocumentCountByResource(
+	ctx context.Context,
+	req *ports.TenantOptions,
+) ([]*repositories.GetDocumentCountByResourceResponse, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -89,7 +92,10 @@ func (r *documentRepository) GetDocumentCountByResource(ctx context.Context, req
 	return results, nil
 }
 
-func (r *documentRepository) addJoinToResourceTable(q *bun.SelectQuery, req repositories.GetResourceSubFoldersRequest) *bun.SelectQuery {
+func (r *documentRepository) addJoinToResourceTable(
+	q *bun.SelectQuery,
+	req repositories.GetResourceSubFoldersRequest,
+) *bun.SelectQuery {
 	//nolint:exhaustive // not all cases are implemented
 	switch req.ResourceType {
 	case permission.ResourceShipment:
@@ -114,7 +120,10 @@ func (r *documentRepository) addJoinToResourceTable(q *bun.SelectQuery, req repo
 // Returns:
 //   - []*repositories.GetResourceSubFoldersResponse: The sub-folders for a resource.
 //   - error: An error if the operation fails.
-func (r *documentRepository) GetResourceSubFolders(ctx context.Context, req repositories.GetResourceSubFoldersRequest) ([]*repositories.GetResourceSubFoldersResponse, error) {
+func (r *documentRepository) GetResourceSubFolders(
+	ctx context.Context,
+	req repositories.GetResourceSubFoldersRequest,
+) ([]*repositories.GetResourceSubFoldersResponse, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -156,7 +165,10 @@ func (r *documentRepository) GetResourceSubFolders(ctx context.Context, req repo
 // Returns:
 //   - *document.Document: The document.
 //   - error: An error if the operation fails.
-func (r *documentRepository) GetByID(ctx context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error) {
+func (r *documentRepository) GetByID(
+	ctx context.Context,
+	req repositories.GetDocumentByIDRequest,
+) (*document.Document, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -190,7 +202,10 @@ func (r *documentRepository) GetByID(ctx context.Context, req repositories.GetDo
 	return doc, nil
 }
 
-func (r *documentRepository) filterResourceQuery(q *bun.SelectQuery, req *repositories.GetDocumentsByResourceIDRequest) *bun.SelectQuery {
+func (r *documentRepository) filterResourceQuery(
+	q *bun.SelectQuery,
+	req *repositories.GetDocumentsByResourceIDRequest,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "doc",
@@ -215,7 +230,10 @@ func (r *documentRepository) filterResourceQuery(q *bun.SelectQuery, req *reposi
 // Returns:
 //   - *ports.ListResult[*document.Document]: The documents.
 //   - error: An error if the operation fails.
-func (r *documentRepository) GetDocumentsByResourceID(ctx context.Context, req *repositories.GetDocumentsByResourceIDRequest) (*ports.ListResult[*document.Document], error) {
+func (r *documentRepository) GetDocumentsByResourceID(
+	ctx context.Context,
+	req *repositories.GetDocumentsByResourceIDRequest,
+) (*ports.ListResult[*document.Document], error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -257,7 +275,10 @@ func (r *documentRepository) GetDocumentsByResourceID(ctx context.Context, req *
 // Returns:
 //   - *document.Document: The created document.
 //   - error: If insertion fails.
-func (r *documentRepository) Create(ctx context.Context, doc *document.Document) (*document.Document, error) {
+func (r *documentRepository) Create(
+	ctx context.Context,
+	doc *document.Document,
+) (*document.Document, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -297,7 +318,10 @@ func (r *documentRepository) Create(ctx context.Context, doc *document.Document)
 // Returns:
 //   - *document.Document: The updated document.
 //   - error: An error if the operation fails.
-func (r *documentRepository) Update(ctx context.Context, doc *document.Document) (*document.Document, error) {
+func (r *documentRepository) Update(
+	ctx context.Context,
+	doc *document.Document,
+) (*document.Document, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -342,7 +366,10 @@ func (r *documentRepository) Update(ctx context.Context, doc *document.Document)
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Document (%s) has either been updated or deleted since the last request.", doc.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Document (%s) has either been updated or deleted since the last request.",
+					doc.GetID(),
+				),
 			)
 		}
 
@@ -364,7 +391,10 @@ func (r *documentRepository) Update(ctx context.Context, doc *document.Document)
 //
 // Returns:
 //   - error: An error if the operation fails.
-func (r *documentRepository) Delete(ctx context.Context, req repositories.DeleteDocumentRequest) error {
+func (r *documentRepository) Delete(
+	ctx context.Context,
+	req repositories.DeleteDocumentRequest,
+) error {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")

@@ -99,10 +99,12 @@ func TestShipmentValidator(t *testing.T) {
 		DB:     ts.DB,
 	})
 
-	shipmentControlRepo := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
-		Logger: log,
-		DB:     ts.DB,
-	})
+	shipmentControlRepo := repositories.NewShipmentControlRepository(
+		repositories.ShipmentControlRepositoryParams{
+			Logger: log,
+			DB:     ts.DB,
+		},
+	)
 
 	moveRepo := repositories.NewShipmentMoveRepository(repositories.ShipmentMoveRepositoryParams{
 		Logger:                    log,
@@ -331,10 +333,12 @@ func TestShipmentCancelValidation(t *testing.T) {
 		DB:     ts.DB,
 	})
 
-	shipmentControlRepo := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
-		Logger: log,
-		DB:     ts.DB,
-	})
+	shipmentControlRepo := repositories.NewShipmentControlRepository(
+		repositories.ShipmentControlRepositoryParams{
+			Logger: log,
+			DB:     ts.DB,
+		},
+	)
 
 	moveRepo := repositories.NewShipmentMoveRepository(repositories.ShipmentMoveRepositoryParams{
 		Logger:                    log,

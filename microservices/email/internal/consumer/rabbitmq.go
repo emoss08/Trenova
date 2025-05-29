@@ -184,8 +184,13 @@ func (c *RabbitMQConsumer) setupTopology() error {
 		return eris.Wrap(err, "failed to declare main queue")
 	}
 
-	log.Printf("Setup RabbitMQ topology with exchange %v, queue %v, and dead letter exchange %v with queue %v",
-		c.config.ExchangeName, c.config.QueueName, dlxName, dlqName)
+	log.Printf(
+		"Setup RabbitMQ topology with exchange %v, queue %v, and dead letter exchange %v with queue %v",
+		c.config.ExchangeName,
+		c.config.QueueName,
+		dlxName,
+		dlqName,
+	)
 
 	return nil
 }
@@ -204,10 +209,19 @@ func (c *RabbitMQConsumer) registerMessageBindings() {
 			nil,
 		)
 		if err != nil {
-			log.Printf("Warning: Failed to bind queue to exchange for message type %v: %v", mType, err)
+			log.Printf(
+				"Warning: Failed to bind queue to exchange for message type %v: %v",
+				mType,
+				err,
+			)
 			continue
 		}
-		log.Printf("Bound queue %v to exchange %v for message type %v", c.config.QueueName, c.config.ExchangeName, mType)
+		log.Printf(
+			"Bound queue %v to exchange %v for message type %v",
+			c.config.QueueName,
+			c.config.ExchangeName,
+			mType,
+		)
 	}
 }
 
@@ -308,7 +322,12 @@ func (c *RabbitMQConsumer) processMessage(ctx context.Context, msg amqp.Delivery
 	}
 
 	// Log deserialized message details for debugging
-	log.Printf("Deserialized message: ID=%s, Type=%s, TenantID=%s", message.ID, message.Type, message.TenantID)
+	log.Printf(
+		"Deserialized message: ID=%s, Type=%s, TenantID=%s",
+		message.ID,
+		message.Type,
+		message.TenantID,
+	)
 
 	// Find the appropriate handler
 	c.mu.RLock()
@@ -347,7 +366,10 @@ func (c *RabbitMQConsumer) handleMessageRetry(ctx context.Context, msg amqp.Deli
 
 	// Check if we've exceeded max retries
 	if retryCount >= c.maxRetries {
-		log.Printf("Message exceeded maximum retry count (%d). Sending to dead letter queue.", c.maxRetries)
+		log.Printf(
+			"Message exceeded maximum retry count (%d). Sending to dead letter queue.",
+			c.maxRetries,
+		)
 		if err := msg.Nack(false, false); err != nil {
 			log.Printf("Failed to nack message to dead letter queue: %v", err)
 		}

@@ -45,16 +45,49 @@ type PermissionCheck struct {
 }
 
 type PermissionService interface {
-	CheckFieldModification(ctx context.Context, userID pulid.ID, resource permission.Resource, field string) FieldPermissionCheck
+	CheckFieldModification(
+		ctx context.Context,
+		userID pulid.ID,
+		resource permission.Resource,
+		field string,
+	) FieldPermissionCheck
 	HasPermission(ctx context.Context, check *PermissionCheck) (PermissionCheckResult, error)
 	HasAnyPermissions(ctx context.Context, checks []*PermissionCheck) (PermissionCheckResult, error)
 	HasFieldPermission(ctx context.Context, check *PermissionCheck) (PermissionCheckResult, error)
 	HasAllPermissions(ctx context.Context, checks []*PermissionCheck) (PermissionCheckResult, error)
-	HasAnyFieldPermissions(ctx context.Context, fields []string, check *PermissionCheck) (PermissionCheckResult, error)
-	HasAllFieldPermissions(ctx context.Context, fields []string, check *PermissionCheck) (PermissionCheckResult, error)
-	HasScopedPermission(ctx context.Context, check *PermissionCheck, requiredScope permission.Scope) (PermissionCheckResult, error)
-	HasDependentPermissions(ctx context.Context, check *PermissionCheck) (PermissionCheckResult, error)
-	HasTemporalPermission(ctx context.Context, check *PermissionCheck) (PermissionCheckResult, error)
-	CheckFieldAccess(ctx context.Context, userID pulid.ID, resource permission.Resource, field string) FieldAccess
-	CheckFieldView(ctx context.Context, userID pulid.ID, resource permission.Resource, field string) FieldPermissionCheck
+	HasAnyFieldPermissions(
+		ctx context.Context,
+		fields []string,
+		check *PermissionCheck,
+	) (PermissionCheckResult, error)
+	HasAllFieldPermissions(
+		ctx context.Context,
+		fields []string,
+		check *PermissionCheck,
+	) (PermissionCheckResult, error)
+	HasScopedPermission(
+		ctx context.Context,
+		check *PermissionCheck,
+		requiredScope permission.Scope,
+	) (PermissionCheckResult, error)
+	HasDependentPermissions(
+		ctx context.Context,
+		check *PermissionCheck,
+	) (PermissionCheckResult, error)
+	HasTemporalPermission(
+		ctx context.Context,
+		check *PermissionCheck,
+	) (PermissionCheckResult, error)
+	CheckFieldAccess(
+		ctx context.Context,
+		userID pulid.ID,
+		resource permission.Resource,
+		field string,
+	) FieldAccess
+	CheckFieldView(
+		ctx context.Context,
+		userID pulid.ID,
+		resource permission.Resource,
+		field string,
+	) FieldPermissionCheck
 }

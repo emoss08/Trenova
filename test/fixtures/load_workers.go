@@ -113,7 +113,8 @@ func LoadWorkers(ctx context.Context, db *bun.DB, fixture *dbfixture.Fixture) er
 		}
 
 		// Set HazmatExpiry if endorsement includes Hazmat
-		if endorsementType == worker.EndorsementHazmat || endorsementType == worker.EndorsementTankerHazmat {
+		if endorsementType == worker.EndorsementHazmat ||
+			endorsementType == worker.EndorsementTankerHazmat {
 			hazmatExpiry := generateRandomDate(now, now.AddDate(2, 0, 0))
 			profile.HazmatExpiry = hazmatExpiry
 		}

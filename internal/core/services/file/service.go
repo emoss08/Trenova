@@ -75,27 +75,35 @@ func NewService(p ServiceParams) services.FileService {
 		Logger()
 
 	cfg := &Config{
-		MaxFileSize:           MaxFileSize,
-		AllowedFileExtensions: append(services.AllowedImageFileExtensions, services.AllowedDocFileExtensions...),
-		DefaultRegion:         defaultRegion,
+		MaxFileSize: MaxFileSize,
+		AllowedFileExtensions: append(
+			services.AllowedImageFileExtensions,
+			services.AllowedDocFileExtensions...),
+		DefaultRegion: defaultRegion,
 		ClassificationPolicies: map[services.FileClassification]services.ClassificationPolicy{
 			services.ClassificationPublic: {
 				RetentionPeriod:    30 * 24 * time.Hour, // 30 days
 				RequiresEncryption: false,
-				AllowedCategories:  []services.FileCategory{services.CategoryBranding, services.CategoryProfile, services.CategoryShipment}, // TODO (Wolfred): Remove shipment category
-				MaxFileSize:        MaxFileSize,
-				RequireVersioning:  false,
-				MaxVersions:        1,
-				VersionRetention:   "none",
+				AllowedCategories: []services.FileCategory{
+					services.CategoryBranding,
+					services.CategoryProfile,
+					services.CategoryShipment,
+				}, // TODO (Wolfred): Remove shipment category
+				MaxFileSize:       MaxFileSize,
+				RequireVersioning: false,
+				MaxVersions:       1,
+				VersionRetention:  "none",
 			},
 			services.ClassificationPrivate: {
 				RetentionPeriod:    90 * 24 * time.Hour, // 90 days
 				RequiresEncryption: true,
-				AllowedCategories:  []services.FileCategory{services.CategoryWorker}, // TODO (Wolfred): Add shipment category
-				MaxFileSize:        MaxFileSize,
-				RequireVersioning:  true,
-				MaxVersions:        5,
-				VersionRetention:   "latest-5",
+				AllowedCategories: []services.FileCategory{
+					services.CategoryWorker,
+				}, // TODO (Wolfred): Add shipment category
+				MaxFileSize:       MaxFileSize,
+				RequireVersioning: true,
+				MaxVersions:       5,
+				VersionRetention:  "latest-5",
 			},
 			services.ClassificationSensitive: {
 				RetentionPeriod:    365 * 24 * time.Hour, // 1 year
@@ -127,7 +135,10 @@ func NewService(p ServiceParams) services.FileService {
 	}
 }
 
-func (s *service) SaveFileVersion(ctx context.Context, req *services.SaveFileRequest) (*services.SaveFileResponse, error) {
+func (s *service) SaveFileVersion(
+	ctx context.Context,
+	req *services.SaveFileRequest,
+) (*services.SaveFileResponse, error) {
 	policy := s.cfg.ClassificationPolicies[req.Classification]
 	// Check if versioning is required
 	if policy.RequireVersioning {
@@ -155,7 +166,10 @@ func (s *service) SaveFileVersion(ctx context.Context, req *services.SaveFileReq
 	return resp, nil
 }
 
-func (s *service) GetFileVersion(ctx context.Context, bucketName, objectName string) ([]services.VersionInfo, error) {
+func (s *service) GetFileVersion(
+	ctx context.Context,
+	bucketName, objectName string,
+) ([]services.VersionInfo, error) {
 	opts := minio.ListObjectsOptions{
 		Prefix:       objectName,
 		Recursive:    true,
@@ -196,7 +210,10 @@ func (s *service) GetFileVersion(ctx context.Context, bucketName, objectName str
 	return versions, nil
 }
 
-func (s *service) checkObjectExists(ctx context.Context, bucketName, objectName string) (bool, error) {
+func (s *service) checkObjectExists(
+	ctx context.Context,
+	bucketName, objectName string,
+) (bool, error) {
 	_, err := s.client.StatObject(ctx, bucketName, objectName, minio.StatObjectOptions{})
 	if err != nil {
 		return false, eris.Wrap(err, "check object exists")
@@ -205,7 +222,10 @@ func (s *service) checkObjectExists(ctx context.Context, bucketName, objectName 
 	return true, nil
 }
 
-func (s *service) GetFileByBucketName(ctx context.Context, bucketName, objectName string) (*minio.Object, error) {
+func (s *service) GetFileByBucketName(
+	ctx context.Context,
+	bucketName, objectName string,
+) (*minio.Object, error) {
 	// Check if the object exists
 	exists, err := s.checkObjectExists(ctx, bucketName, objectName)
 	if err != nil {
@@ -227,7 +247,10 @@ func (s *service) GetFileByBucketName(ctx context.Context, bucketName, objectNam
 	return obj, nil
 }
 
-func (s *service) GetSpecificVersion(ctx context.Context, bucketName, objectName, versionID string) ([]byte, *services.VersionInfo, error) {
+func (s *service) GetSpecificVersion(
+	ctx context.Context,
+	bucketName, objectName, versionID string,
+) ([]byte, *services.VersionInfo, error) {
 	obj, err := s.client.GetObject(ctx, bucketName, objectName, minio.GetObjectOptions{
 		VersionID: versionID,
 	})
@@ -260,7 +283,11 @@ func (s *service) GetSpecificVersion(ctx context.Context, bucketName, objectName
 	return data, versionInfo, nil
 }
 
-func (s *service) RestoreVersion(ctx context.Context, req *services.SaveFileRequest, versionID string) (*services.SaveFileResponse, error) {
+func (s *service) RestoreVersion(
+	ctx context.Context,
+	req *services.SaveFileRequest,
+	versionID string,
+) (*services.SaveFileResponse, error) {
 	// Get the specified version
 	data, versionInfo, err := s.GetSpecificVersion(ctx, req.BucketName, req.FileName, versionID)
 	if err != nil {
@@ -293,7 +320,11 @@ func (s *service) ensureVersioningEnabled(ctx context.Context, bucketName string
 	return nil
 }
 
-func (s *service) manageVersions(ctx context.Context, bucketName, objectName string, maxVersions int) error {
+func (s *service) manageVersions(
+	ctx context.Context,
+	bucketName, objectName string,
+	maxVersions int,
+) error {
 	versions, err := s.GetFileVersion(ctx, bucketName, objectName)
 	if err != nil {
 		return err
@@ -326,12 +357,19 @@ func (s *service) manageVersions(ctx context.Context, bucketName, objectName str
 func (s *service) validateClassification(req *services.SaveFileRequest) error {
 	policy, exists := s.cfg.ClassificationPolicies[req.Classification]
 	if !exists {
-		s.l.Error().Str("classification", string(req.Classification)).Msg("classification policy not found")
+		s.l.Error().
+			Str("classification", string(req.Classification)).
+			Msg("classification policy not found")
 		return eris.Errorf("invalid classification: %s", req.Classification)
 	}
 
 	if int64(len(req.File)) > policy.MaxFileSize {
-		return eris.Wrapf(services.ErrFileSizeExceedsMaxSize, "max size for %s classification is %d bytes", req.Classification, policy.MaxFileSize)
+		return eris.Wrapf(
+			services.ErrFileSizeExceedsMaxSize,
+			"max size for %s classification is %d bytes",
+			req.Classification,
+			policy.MaxFileSize,
+		)
 	}
 
 	return nil
@@ -376,7 +414,10 @@ func (s *service) createOrgBucket(ctx context.Context, bucketName string) error 
 	return nil
 }
 
-func (s *service) SaveFile(ctx context.Context, req *services.SaveFileRequest) (*services.SaveFileResponse, error) {
+func (s *service) SaveFile(
+	ctx context.Context,
+	req *services.SaveFileRequest,
+) (*services.SaveFileResponse, error) {
 	// Validate classification and category
 	if err := s.validateClassification(req); err != nil {
 		return nil, err
@@ -463,7 +504,11 @@ func (s *service) SaveFile(ctx context.Context, req *services.SaveFileRequest) (
 	}, nil
 }
 
-func (s *service) GetFileURL(ctx context.Context, bucketName, objectName string, expiry time.Duration) (string, error) {
+func (s *service) GetFileURL(
+	ctx context.Context,
+	bucketName, objectName string,
+	expiry time.Duration,
+) (string, error) {
 	url, err := s.client.PresignedGetObject(ctx, bucketName, objectName, expiry, nil)
 	if err != nil {
 		s.l.Error().Err(err).
@@ -489,7 +534,11 @@ func (s *service) DeleteFile(ctx context.Context, bucketName, objectName string)
 	return nil
 }
 
-func (s *service) ListFiles(ctx context.Context, bucketName, prefix, token string, pageSize int) (objects []minio.ObjectInfo, nextToken string, err error) {
+func (s *service) ListFiles(
+	ctx context.Context,
+	bucketName, prefix, token string,
+	pageSize int,
+) (objects []minio.ObjectInfo, nextToken string, err error) {
 	opts := minio.ListObjectsOptions{
 		Prefix:    prefix,
 		MaxKeys:   pageSize,

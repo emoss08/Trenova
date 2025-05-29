@@ -25,30 +25,30 @@ var (
 type Commodity struct {
 	bun.BaseModel `bun:"table:commodities,alias:com" json:"-"`
 
-	ID                  pulid.ID      `bun:",pk,type:VARCHAR(100),notnull" json:"id"`
-	BusinessUnitID      pulid.ID      `bun:"business_unit_id,notnull,pk,type:VARCHAR(100)" json:"businessUnitId"`
-	OrganizationID      pulid.ID      `bun:"organization_id,notnull,pk,type:VARCHAR(100)" json:"organizationId"`
-	HazardousMaterialID *pulid.ID     `bun:"hazardous_material_id,type:VARCHAR(100),nullzero" json:"hazardousMaterialId"`
-	MinTemperature      *int16        `bun:"min_temperature,type:temperature_fahrenheit,nullzero" json:"minTemperature"`
-	MaxTemperature      *int16        `bun:"max_temperature,type:temperature_fahrenheit,nullzero" json:"maxTemperature"`
-	WeightPerUnit       *float64      `bun:"weight_per_unit,type:FLOAT,nullzero" json:"weightPerUnit"`
-	LinearFeetPerUnit   *float64      `bun:"linear_feet_per_unit,type:FLOAT,nullzero" json:"linearFeetPerUnit"`
-	Status              domain.Status `bun:"status,type:status,default:'Active'" json:"status"`
-	FreightClass        string        `bun:"freight_class,type:VARCHAR(100)" json:"freightClass"`
-	DOTClassification   string        `bun:"dot_classification,type:VARCHAR(100)" json:"dotClassification"`
-	Name                string        `bun:"name,notnull,type:VARCHAR(100)" json:"name"`
-	Description         string        `bun:"description,type:TEXT,notnull" json:"description"`
-	SearchVector        string        `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                string        `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
-	Stackable           bool          `bun:"stackable,type:BOOLEAN,default:false" json:"stackable"`
-	Fragile             bool          `bun:"fragile,type:BOOLEAN,default:false" json:"fragile"`
-	Version             int64         `bun:"version,type:BIGINT" json:"version"`
+	ID                  pulid.ID      `bun:",pk,type:VARCHAR(100),notnull"                                                        json:"id"`
+	BusinessUnitID      pulid.ID      `bun:"business_unit_id,notnull,pk,type:VARCHAR(100)"                                        json:"businessUnitId"`
+	OrganizationID      pulid.ID      `bun:"organization_id,notnull,pk,type:VARCHAR(100)"                                         json:"organizationId"`
+	HazardousMaterialID *pulid.ID     `bun:"hazardous_material_id,type:VARCHAR(100),nullzero"                                     json:"hazardousMaterialId"`
+	MinTemperature      *int16        `bun:"min_temperature,type:temperature_fahrenheit,nullzero"                                 json:"minTemperature"`
+	MaxTemperature      *int16        `bun:"max_temperature,type:temperature_fahrenheit,nullzero"                                 json:"maxTemperature"`
+	WeightPerUnit       *float64      `bun:"weight_per_unit,type:FLOAT,nullzero"                                                  json:"weightPerUnit"`
+	LinearFeetPerUnit   *float64      `bun:"linear_feet_per_unit,type:FLOAT,nullzero"                                             json:"linearFeetPerUnit"`
+	Status              domain.Status `bun:"status,type:status,default:'Active'"                                                  json:"status"`
+	FreightClass        string        `bun:"freight_class,type:VARCHAR(100)"                                                      json:"freightClass"`
+	DOTClassification   string        `bun:"dot_classification,type:VARCHAR(100)"                                                 json:"dotClassification"`
+	Name                string        `bun:"name,notnull,type:VARCHAR(100)"                                                       json:"name"`
+	Description         string        `bun:"description,type:TEXT,notnull"                                                        json:"description"`
+	SearchVector        string        `bun:"search_vector,type:TSVECTOR,scanonly"                                                 json:"-"`
+	Rank                string        `bun:"rank,type:VARCHAR(100),scanonly"                                                      json:"-"`
+	Stackable           bool          `bun:"stackable,type:BOOLEAN,default:false"                                                 json:"stackable"`
+	Fragile             bool          `bun:"fragile,type:BOOLEAN,default:false"                                                   json:"fragile"`
+	Version             int64         `bun:"version,type:BIGINT"                                                                  json:"version"`
 	CreatedAt           int64         `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
 	UpdatedAt           int64         `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
 
 	// Relationships
-	BusinessUnit      *businessunit.BusinessUnit           `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization      *organization.Organization           `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
+	BusinessUnit      *businessunit.BusinessUnit           `bun:"rel:belongs-to,join:business_unit_id=id"      json:"-"`
+	Organization      *organization.Organization           `bun:"rel:belongs-to,join:organization_id=id"       json:"-"`
 	HazardousMaterial *hazardousmaterial.HazardousMaterial `bun:"rel:belongs-to,join:hazardous_material_id=id" json:"-"`
 }
 

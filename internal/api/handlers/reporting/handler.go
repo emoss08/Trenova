@@ -49,11 +49,15 @@ func (h *Handler) getTemplate(c *fiber.Ctx) error {
 	// Sanitize and validate entity name
 	entity := strings.TrimSpace(strings.ToLower(req.Entity))
 	if entity == "" {
-		return h.eh.HandleError(c, fiber.NewError(fiber.StatusBadRequest, "Entity name is required"))
+		return h.eh.HandleError(
+			c,
+			fiber.NewError(fiber.StatusBadRequest, "Entity name is required"),
+		)
 	}
 
 	// Prevent path traversal attempts
-	if strings.Contains(entity, "..") || strings.Contains(entity, "/") || strings.Contains(entity, "\\") {
+	if strings.Contains(entity, "..") || strings.Contains(entity, "/") ||
+		strings.Contains(entity, "\\") {
 		return h.eh.HandleError(c, fiber.NewError(fiber.StatusBadRequest, "Invalid entity name"))
 	}
 
@@ -67,7 +71,10 @@ func (h *Handler) getTemplate(c *fiber.Ctx) error {
 
 	// Set appropriate headers for file download
 	c.Response().Header.Set("Content-Type", "text/csv")
-	c.Response().Header.Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s.csv\"", entity))
+	c.Response().Header.Set(
+		"Content-Disposition",
+		fmt.Sprintf("attachment; filename=\"%s.csv\"", entity),
+	)
 	c.Response().Header.Set("Cache-Control", "no-store, no-cache, must-revalidate")
 
 	return c.SendFile(obj)

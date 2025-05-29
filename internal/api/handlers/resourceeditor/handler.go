@@ -84,7 +84,10 @@ func (h *Handler) GetAutocompleteSuggestionsHandler(c *fiber.Ctx) error {
 	suggestions, err := h.resourceEditorRepository.GetAutocompleteSuggestions(c.UserContext(), req)
 	if err != nil {
 		// The repository method already logs, so just return the error
-		return h.eh.HandleError(c, err) // eris.Wrap(err, "failed to get autocomplete suggestions") is handled by eh
+		return h.eh.HandleError(
+			c,
+			err,
+		) // eris.Wrap(err, "failed to get autocomplete suggestions") is handled by eh
 	}
 
 	return c.Status(fiber.StatusOK).JSON(suggestions)

@@ -121,7 +121,12 @@ func (m *AuthMiddleware) Authenticate() fiber.Handler {
 }
 
 // handleSessionError handles different types of session errors
-func (m *AuthMiddleware) handleSessionError(c *fiber.Ctx, err error, sessionID pulid.ID, log *zerolog.Logger) error {
+func (m *AuthMiddleware) handleSessionError(
+	c *fiber.Ctx,
+	err error,
+	sessionID pulid.ID,
+	log *zerolog.Logger,
+) error {
 	switch {
 	case eris.Is(err, session.ErrExpired), eris.Is(err, session.ErrNotActive):
 		log.Info().Str("sessionId", sessionID.String()).Msg("session expired or inactive")
@@ -197,7 +202,10 @@ func (m *AuthMiddleware) clearSessionCookie(c *fiber.Ctx) {
 
 // createDegradedSession creates a temporary session for use when Redis is unavailable
 // This allows the application to continue operating in a degraded mode
-func (m *AuthMiddleware) createDegradedSession(sessionID pulid.ID, clientIP, userAgent string) *session.Session {
+func (m *AuthMiddleware) createDegradedSession(
+	sessionID pulid.ID,
+	clientIP, userAgent string,
+) *session.Session {
 	now := timeutils.NowUnix()
 
 	// Create a temporary session that will allow basic operations

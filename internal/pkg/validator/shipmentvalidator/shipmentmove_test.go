@@ -72,10 +72,12 @@ func TestMoveValidator(t *testing.T) {
 		DB:     ts.DB,
 	})
 
-	shipmentControlRepo := repositories.NewShipmentControlRepository(repositories.ShipmentControlRepositoryParams{
-		Logger: log,
-		DB:     ts.DB,
-	})
+	shipmentControlRepo := repositories.NewShipmentControlRepository(
+		repositories.ShipmentControlRepositoryParams{
+			Logger: log,
+			DB:     ts.DB,
+		},
+	)
 
 	moveRepo := repositories.NewShipmentMoveRepository(repositories.ShipmentMoveRepositoryParams{
 		Logger:                    log,
@@ -144,8 +146,16 @@ func TestMoveValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "moves[0].stops[0].plannedDeparture", Code: errors.ErrInvalid, Message: "Planned departure must be before next stop's planned arrival"},
-				{Field: "moves[0].stops[0].plannedArrival", Code: errors.ErrInvalid, Message: "Planned arrival must be before planned departure"},
+				{
+					Field:   "moves[0].stops[0].plannedDeparture",
+					Code:    errors.ErrInvalid,
+					Message: "Planned departure must be before next stop's planned arrival",
+				},
+				{
+					Field:   "moves[0].stops[0].plannedArrival",
+					Code:    errors.ErrInvalid,
+					Message: "Planned arrival must be before planned departure",
+				},
 			},
 		},
 		{
@@ -159,9 +169,21 @@ func TestMoveValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "moves[0].stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual departure must be before next stop's actual arrival"},
-				{Field: "moves[0].stops[0].actualDeparture", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
-				{Field: "moves[0].stops[1].actualArrival", Code: errors.ErrInvalid, Message: "Actual arrival and departure times cannot be set on a move with no assignment"},
+				{
+					Field:   "moves[0].stops[0].actualDeparture",
+					Code:    errors.ErrInvalid,
+					Message: "Actual departure must be before next stop's actual arrival",
+				},
+				{
+					Field:   "moves[0].stops[0].actualDeparture",
+					Code:    errors.ErrInvalid,
+					Message: "Actual arrival and departure times cannot be set on a move with no assignment",
+				},
+				{
+					Field:   "moves[0].stops[1].actualArrival",
+					Code:    errors.ErrInvalid,
+					Message: "Actual arrival and departure times cannot be set on a move with no assignment",
+				},
 			},
 		},
 		{
@@ -175,8 +197,16 @@ func TestMoveValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "moves[0].stops[0].plannedDeparture", Code: errors.ErrInvalid, Message: "Planned departure must be before next stop's planned arrival"},
-				{Field: "moves[0].stops[0].plannedArrival", Code: errors.ErrInvalid, Message: "Planned arrival must be before planned departure"},
+				{
+					Field:   "moves[0].stops[0].plannedDeparture",
+					Code:    errors.ErrInvalid,
+					Message: "Planned departure must be before next stop's planned arrival",
+				},
+				{
+					Field:   "moves[0].stops[0].plannedArrival",
+					Code:    errors.ErrInvalid,
+					Message: "Planned arrival must be before planned departure",
+				},
 			},
 		},
 		{
@@ -189,9 +219,21 @@ func TestMoveValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "moves[0].stops[0].type", Code: errors.ErrInvalid, Message: "First stop must be a pickup or split pickup"},
-				{Field: "moves[0].stops[0].type", Code: errors.ErrInvalid, Message: "Delivery stop must be preceded by a pickup or split pickup"},
-				{Field: "moves[0].stops[1].type", Code: errors.ErrInvalid, Message: "Delivery stop must be preceded by a pickup or split pickup"},
+				{
+					Field:   "moves[0].stops[0].type",
+					Code:    errors.ErrInvalid,
+					Message: "First stop must be a pickup or split pickup",
+				},
+				{
+					Field:   "moves[0].stops[0].type",
+					Code:    errors.ErrInvalid,
+					Message: "Delivery stop must be preceded by a pickup or split pickup",
+				},
+				{
+					Field:   "moves[0].stops[1].type",
+					Code:    errors.ErrInvalid,
+					Message: "Delivery stop must be preceded by a pickup or split pickup",
+				},
 			},
 		},
 		{
@@ -206,10 +248,26 @@ func TestMoveValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "moves[0].stops[0].type", Code: errors.ErrInvalid, Message: "First stop must be a pickup or split pickup"},
-				{Field: "moves[0].stops[3].type", Code: errors.ErrInvalid, Message: "Last stop must be a delivery or split delivery"},
-				{Field: "moves[0].stops[0].type", Code: errors.ErrInvalid, Message: "Delivery stop must be preceded by a pickup or split pickup"},
-				{Field: "moves[0].stops[1].type", Code: errors.ErrInvalid, Message: "Delivery stop must be preceded by a pickup or split pickup"},
+				{
+					Field:   "moves[0].stops[0].type",
+					Code:    errors.ErrInvalid,
+					Message: "First stop must be a pickup or split pickup",
+				},
+				{
+					Field:   "moves[0].stops[3].type",
+					Code:    errors.ErrInvalid,
+					Message: "Last stop must be a delivery or split delivery",
+				},
+				{
+					Field:   "moves[0].stops[0].type",
+					Code:    errors.ErrInvalid,
+					Message: "Delivery stop must be preceded by a pickup or split pickup",
+				},
+				{
+					Field:   "moves[0].stops[1].type",
+					Code:    errors.ErrInvalid,
+					Message: "Delivery stop must be preceded by a pickup or split pickup",
+				},
 			},
 		},
 		{
@@ -224,12 +282,36 @@ func TestMoveValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "moves[0].stops[1].type", Code: "INVALID", Message: "Type must be a valid stop type"},
-				{Field: "moves[0].stops[0].type", Code: errors.ErrInvalid, Message: "First stop must be a pickup or split pickup"},
-				{Field: "moves[0].stops[3].type", Code: errors.ErrInvalid, Message: "Last stop must be a delivery or split delivery"},
-				{Field: "moves[0].stops[0].type", Code: errors.ErrInvalid, Message: "Delivery stop must be preceded by a pickup or split pickup"},
-				{Field: "moves[0].stops[1].type", Code: errors.ErrInvalid, Message: "Stop type must be pickup or delivery"},
-				{Field: "moves[0].stops[1].type", Code: "INVALID", Message: "Type must be a valid stop type"},
+				{
+					Field:   "moves[0].stops[1].type",
+					Code:    "INVALID",
+					Message: "Type must be a valid stop type",
+				},
+				{
+					Field:   "moves[0].stops[0].type",
+					Code:    errors.ErrInvalid,
+					Message: "First stop must be a pickup or split pickup",
+				},
+				{
+					Field:   "moves[0].stops[3].type",
+					Code:    errors.ErrInvalid,
+					Message: "Last stop must be a delivery or split delivery",
+				},
+				{
+					Field:   "moves[0].stops[0].type",
+					Code:    errors.ErrInvalid,
+					Message: "Delivery stop must be preceded by a pickup or split pickup",
+				},
+				{
+					Field:   "moves[0].stops[1].type",
+					Code:    errors.ErrInvalid,
+					Message: "Stop type must be pickup or delivery",
+				},
+				{
+					Field:   "moves[0].stops[1].type",
+					Code:    "INVALID",
+					Message: "Type must be a valid stop type",
+				},
 			},
 		},
 		{
@@ -245,8 +327,16 @@ func TestMoveValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "moves[0].stops[0].type", Code: errors.ErrInvalid, Message: "First stop must be a pickup or split pickup"},
-				{Field: "moves[0].stops[0].type", Code: errors.ErrInvalid, Message: "Delivery stop must be preceded by a pickup or split pickup"},
+				{
+					Field:   "moves[0].stops[0].type",
+					Code:    errors.ErrInvalid,
+					Message: "First stop must be a pickup or split pickup",
+				},
+				{
+					Field:   "moves[0].stops[0].type",
+					Code:    errors.ErrInvalid,
+					Message: "Delivery stop must be preceded by a pickup or split pickup",
+				},
 			},
 		},
 		{
@@ -261,8 +351,16 @@ func TestMoveValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "moves[0].stops[0].type", Code: errors.ErrInvalid, Message: "First stop must be a pickup or split pickup"},
-				{Field: "moves[0].stops[0].type", Code: errors.ErrInvalid, Message: "Delivery stop must be preceded by a pickup or split pickup"},
+				{
+					Field:   "moves[0].stops[0].type",
+					Code:    errors.ErrInvalid,
+					Message: "First stop must be a pickup or split pickup",
+				},
+				{
+					Field:   "moves[0].stops[0].type",
+					Code:    errors.ErrInvalid,
+					Message: "Delivery stop must be preceded by a pickup or split pickup",
+				},
 			},
 		},
 		{
@@ -275,8 +373,16 @@ func TestMoveValidator(t *testing.T) {
 				Code    errors.ErrorCode
 				Message string
 			}{
-				{Field: "moves[0].stops", Code: errors.ErrInvalid, Message: "At least two stops is required in a move"},
-				{Field: "moves[0].stops", Code: errors.ErrInvalid, Message: "Movement must have at least one stop"},
+				{
+					Field:   "moves[0].stops",
+					Code:    errors.ErrInvalid,
+					Message: "At least two stops is required in a move",
+				},
+				{
+					Field:   "moves[0].stops",
+					Code:    errors.ErrInvalid,
+					Message: "Movement must have at least one stop",
+				},
 			},
 		},
 	}

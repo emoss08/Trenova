@@ -178,8 +178,6 @@ func (r *Router) setupMiddleware() {
 }
 
 // setupProtectedRoutes configures the protected routes
-//
-//nolint:funlen // This is a protected route and should be long
 func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLimiter) {
 	router.Use(middleware.NewAuthMiddleware(middleware.AuthMiddlewareParams{
 		Logger: r.p.Logger,

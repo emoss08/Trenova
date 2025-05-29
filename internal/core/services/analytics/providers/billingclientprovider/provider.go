@@ -46,7 +46,10 @@ func (p *Provider) GetPage() services.AnalyticsPage {
 	return services.BillingClientAnalyticsPage
 }
 
-func (p *Provider) GetAnalyticsData(ctx context.Context, opts *services.AnalyticsRequestOptions) (services.AnalyticsData, error) {
+func (p *Provider) GetAnalyticsData(
+	ctx context.Context,
+	opts *services.AnalyticsRequestOptions,
+) (services.AnalyticsData, error) {
 	log := p.l.With().
 		Str("operation", "GetAnalyticsData").
 		Str("orgID", opts.OrgID.String()).
@@ -60,7 +63,11 @@ func (p *Provider) GetAnalyticsData(ctx context.Context, opts *services.Analytic
 		return services.AnalyticsData{}, err
 	}
 
-	completedShipmentsWithNoDocuments, err := p.GetCompletedShipmentsWithNoDocuments(ctx, opts.OrgID, opts.BuID)
+	completedShipmentsWithNoDocuments, err := p.GetCompletedShipmentsWithNoDocuments(
+		ctx,
+		opts.OrgID,
+		opts.BuID,
+	)
 	if err != nil {
 		log.Error().Err(err).Msg("get completed shipments with no documents")
 		return services.AnalyticsData{}, err
@@ -72,7 +79,10 @@ func (p *Provider) GetAnalyticsData(ctx context.Context, opts *services.Analytic
 	}, nil
 }
 
-func (p *Provider) GetShipmentsReadyToBill(ctx context.Context, orgID, buID pulid.ID) (*ShipmentReadyToBillCard, error) {
+func (p *Provider) GetShipmentsReadyToBill(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+) (*ShipmentReadyToBillCard, error) {
 	log := p.l.With().
 		Str("query", "getShipmentsReadyToBill").
 		Str("orgID", orgID.String()).
@@ -109,7 +119,10 @@ func (p *Provider) GetShipmentsReadyToBill(ctx context.Context, orgID, buID puli
 	}, nil
 }
 
-func (p *Provider) GetCompletedShipmentsWithNoDocuments(ctx context.Context, orgID, buID pulid.ID) (*CompletedShipmentsWithNoDocumentsCard, error) {
+func (p *Provider) GetCompletedShipmentsWithNoDocuments(
+	ctx context.Context,
+	orgID, buID pulid.ID,
+) (*CompletedShipmentsWithNoDocumentsCard, error) {
 	log := p.l.With().
 		Str("query", "getCompletedShipmentsWithNoDocuments").
 		Str("orgID", orgID.String()).

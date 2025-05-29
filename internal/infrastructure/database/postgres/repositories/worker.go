@@ -44,7 +44,10 @@ func NewWorkerRepository(p WorkerRepositoryParams) repositories.WorkerRepository
 	}
 }
 
-func (wr *workerRepository) addOptions(q *bun.SelectQuery, opts repositories.WorkerFilterOptions) *bun.SelectQuery {
+func (wr *workerRepository) addOptions(
+	q *bun.SelectQuery,
+	opts repositories.WorkerFilterOptions,
+) *bun.SelectQuery {
 	// * Include the profile if requested
 	if opts.IncludeProfile {
 		q = q.Relation("Profile")
@@ -70,7 +73,10 @@ func (wr *workerRepository) addOptions(q *bun.SelectQuery, opts repositories.Wor
 	return q.Order("wrk.created_at DESC", "wrk.first_name ASC", "wrk.last_name ASC")
 }
 
-func (wr *workerRepository) filterQuery(q *bun.SelectQuery, req *repositories.ListWorkerRequest) *bun.SelectQuery {
+func (wr *workerRepository) filterQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListWorkerRequest,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		Filter:     req.Filter,
@@ -91,7 +97,10 @@ func (wr *workerRepository) filterQuery(q *bun.SelectQuery, req *repositories.Li
 }
 
 // List returns a list of workers in the database
-func (wr *workerRepository) List(ctx context.Context, req *repositories.ListWorkerRequest) (*ports.ListResult[*worker.Worker], error) {
+func (wr *workerRepository) List(
+	ctx context.Context,
+	req *repositories.ListWorkerRequest,
+) (*ports.ListResult[*worker.Worker], error) {
 	dba, err := wr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -120,7 +129,10 @@ func (wr *workerRepository) List(ctx context.Context, req *repositories.ListWork
 	}, nil
 }
 
-func (wr *workerRepository) GetByID(ctx context.Context, req *repositories.GetWorkerByIDRequest) (*worker.Worker, error) {
+func (wr *workerRepository) GetByID(
+	ctx context.Context,
+	req *repositories.GetWorkerByIDRequest,
+) (*worker.Worker, error) {
 	dba, err := wr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -154,7 +166,10 @@ func (wr *workerRepository) GetByID(ctx context.Context, req *repositories.GetWo
 	return wkr, nil
 }
 
-func (wr *workerRepository) Create(ctx context.Context, wrk *worker.Worker) (*worker.Worker, error) {
+func (wr *workerRepository) Create(
+	ctx context.Context,
+	wrk *worker.Worker,
+) (*worker.Worker, error) {
 	dba, err := wr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -212,7 +227,10 @@ func (wr *workerRepository) Create(ctx context.Context, wrk *worker.Worker) (*wo
 	return wrk, nil
 }
 
-func (wr *workerRepository) Update(ctx context.Context, wkr *worker.Worker) (*worker.Worker, error) {
+func (wr *workerRepository) Update(
+	ctx context.Context,
+	wkr *worker.Worker,
+) (*worker.Worker, error) {
 	dba, err := wr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -258,7 +276,10 @@ func (wr *workerRepository) Update(ctx context.Context, wkr *worker.Worker) (*wo
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The worker (%s) has either been updated or deleted since the last request.", wkr.ID.String()),
+				fmt.Sprintf(
+					"Version mismatch. The worker (%s) has either been updated or deleted since the last request.",
+					wkr.ID.String(),
+				),
 			)
 		}
 
@@ -285,7 +306,10 @@ func (wr *workerRepository) Update(ctx context.Context, wkr *worker.Worker) (*wo
 	return wkr, nil
 }
 
-func (wr *workerRepository) updateProfile(ctx context.Context, profile *worker.WorkerProfile) error {
+func (wr *workerRepository) updateProfile(
+	ctx context.Context,
+	profile *worker.WorkerProfile,
+) error {
 	dba, err := wr.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
@@ -331,7 +355,10 @@ func (wr *workerRepository) updateProfile(ctx context.Context, profile *worker.W
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The worker profile (%s) has either been updated or deleted since the last request.", profile.ID.String()),
+				fmt.Sprintf(
+					"Version mismatch. The worker profile (%s) has either been updated or deleted since the last request.",
+					profile.ID.String(),
+				),
 			)
 		}
 
@@ -477,7 +504,10 @@ func (wr *workerRepository) handlePTOOperations( //nolint:funlen,gocognit,cyclop
 	return nil
 }
 
-func (wr *workerRepository) GetWorkerPTO(ctx context.Context, ptoID, workerID, buID, orgID pulid.ID) (*worker.WorkerPTO, error) {
+func (wr *workerRepository) GetWorkerPTO(
+	ctx context.Context,
+	ptoID, workerID, buID, orgID pulid.ID,
+) (*worker.WorkerPTO, error) {
 	dba, err := wr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")

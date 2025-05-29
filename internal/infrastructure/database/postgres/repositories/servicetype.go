@@ -42,7 +42,10 @@ func NewServiceTypeRepository(p ServiceTypeRepositoryParams) repositories.Servic
 	}
 }
 
-func (str *serviceTypeRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
+func (str *serviceTypeRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *ports.LimitOffsetQueryOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "st",
@@ -61,7 +64,10 @@ func (str *serviceTypeRepository) filterQuery(q *bun.SelectQuery, opts *ports.Li
 	return q.Limit(opts.Limit).Offset(opts.Offset)
 }
 
-func (str *serviceTypeRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*servicetype.ServiceType], error) {
+func (str *serviceTypeRepository) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*servicetype.ServiceType], error) {
 	dba, err := str.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -90,7 +96,10 @@ func (str *serviceTypeRepository) List(ctx context.Context, opts *ports.LimitOff
 	}, nil
 }
 
-func (str *serviceTypeRepository) GetByID(ctx context.Context, opts repositories.GetServiceTypeByIDOptions) (*servicetype.ServiceType, error) {
+func (str *serviceTypeRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetServiceTypeByIDOptions,
+) (*servicetype.ServiceType, error) {
 	dba, err := str.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -118,7 +127,10 @@ func (str *serviceTypeRepository) GetByID(ctx context.Context, opts repositories
 	return entity, nil
 }
 
-func (str *serviceTypeRepository) Create(ctx context.Context, st *servicetype.ServiceType) (*servicetype.ServiceType, error) {
+func (str *serviceTypeRepository) Create(
+	ctx context.Context,
+	st *servicetype.ServiceType,
+) (*servicetype.ServiceType, error) {
 	dba, err := str.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -149,7 +161,10 @@ func (str *serviceTypeRepository) Create(ctx context.Context, st *servicetype.Se
 	return st, nil
 }
 
-func (str *serviceTypeRepository) Update(ctx context.Context, st *servicetype.ServiceType) (*servicetype.ServiceType, error) {
+func (str *serviceTypeRepository) Update(
+	ctx context.Context,
+	st *servicetype.ServiceType,
+) (*servicetype.ServiceType, error) {
 	dba, err := str.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -193,7 +208,10 @@ func (str *serviceTypeRepository) Update(ctx context.Context, st *servicetype.Se
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Service Type (%s) has either been updated or deleted since the last request.", st.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Service Type (%s) has either been updated or deleted since the last request.",
+					st.GetID(),
+				),
 			)
 		}
 

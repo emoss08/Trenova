@@ -20,10 +20,12 @@ func TestLocationCategoryRepository(t *testing.T) {
 	bu := ts.Fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
 	lcategory := ts.Fixture.MustRow("LocationCategory.location_category_1").(*location.LocationCategory)
 
-	repo := repositories.NewLocationCategoryRepository(repositories.LocationCategoryRepositoryParams{
-		Logger: logger.NewLogger(testutils.NewTestConfig()),
-		DB:     ts.DB,
-	})
+	repo := repositories.NewLocationCategoryRepository(
+		repositories.LocationCategoryRepositoryParams{
+			Logger: logger.NewLogger(testutils.NewTestConfig()),
+			DB:     ts.DB,
+		},
+	)
 
 	t.Run("list", func(t *testing.T) {
 		opts := &ports.LimitOffsetQueryOptions{

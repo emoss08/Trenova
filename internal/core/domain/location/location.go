@@ -26,39 +26,39 @@ type Location struct {
 	bun.BaseModel `bun:"table:locations,alias:loc" json:"-"`
 
 	// Primary identifiers
-	ID             pulid.ID `json:"id" bun:",pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:",pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 
 	// Relationship identifiers (Non-Primary-Keys)
 	LocationCategoryID pulid.ID `json:"locationCategoryId" bun:"location_category_id,notnull,type:VARCHAR(100)"`
-	StateID            pulid.ID `json:"stateId" bun:"state_id,notnull,type:VARCHAR(100)"`
+	StateID            pulid.ID `json:"stateId"            bun:"state_id,notnull,type:VARCHAR(100)"`
 
 	// Core Fields
-	Status       domain.Status `json:"status" bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code         string        `json:"code" bun:"code,type:VARCHAR(10),notnull"`
-	Name         string        `json:"name" bun:"name,type:VARCHAR(255),notnull"`
-	Description  string        `json:"description" bun:"description,type:VARCHAR(255)"`
+	Status       domain.Status `json:"status"       bun:"status,type:status_enum,notnull,default:'Active'"`
+	Code         string        `json:"code"         bun:"code,type:VARCHAR(10),notnull"`
+	Name         string        `json:"name"         bun:"name,type:VARCHAR(255),notnull"`
+	Description  string        `json:"description"  bun:"description,type:VARCHAR(255)"`
 	AddressLine1 string        `json:"addressLine1" bun:"address_line_1,type:VARCHAR(150),notnull"`
 	AddressLine2 string        `json:"addressLine2" bun:"address_line_2,type:VARCHAR(150)"`
-	City         string        `json:"city" bun:"city,type:VARCHAR(100),notnull"`
-	PostalCode   string        `json:"postalCode" bun:"postal_code,type:us_postal_code,notnull"`
-	Longitude    *float64      `json:"longitude" bun:"longitude,type:FLOAT,nullzero"`
-	Latitude     *float64      `json:"latitude" bun:"latitude,type:FLOAT,nullzero"`
-	PlaceID      string        `json:"placeId" bun:"place_id,type:TEXT"`
-	IsGeocoded   bool          `json:"isGeocoded" bun:"is_geocoded,type:BOOLEAN,default:false"`
+	City         string        `json:"city"         bun:"city,type:VARCHAR(100),notnull"`
+	PostalCode   string        `json:"postalCode"   bun:"postal_code,type:us_postal_code,notnull"`
+	Longitude    *float64      `json:"longitude"    bun:"longitude,type:FLOAT,nullzero"`
+	Latitude     *float64      `json:"latitude"     bun:"latitude,type:FLOAT,nullzero"`
+	PlaceID      string        `json:"placeId"      bun:"place_id,type:TEXT"`
+	IsGeocoded   bool          `json:"isGeocoded"   bun:"is_geocoded,type:BOOLEAN,default:false"`
 
 	// Metadata
-	Version      int64  `bun:"version,type:BIGINT" json:"version"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-" bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-" bun:"rank,type:VARCHAR(100),scanonly"`
+	Version      int64  `bun:"version,type:BIGINT"                                                                  json:"version"`
+	CreatedAt    int64  `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
+	UpdatedAt    int64  `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
+	SearchVector string `bun:"search_vector,type:TSVECTOR,scanonly"                                                 json:"-"`
+	Rank         string `bun:"rank,type:VARCHAR(100),scanonly"                                                      json:"-"`
 
 	// Relationships
-	BusinessUnit     *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization     *organization.Organization `bun:"rel:belongs-to,join:organization_id=id" json:"-"`
-	State            *usstate.UsState           `bun:"rel:belongs-to,join:state_id=id" json:"state,omitempty"`
+	BusinessUnit     *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id"     json:"-"`
+	Organization     *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"      json:"-"`
+	State            *usstate.UsState           `bun:"rel:belongs-to,join:state_id=id"             json:"state,omitempty"`
 	LocationCategory *LocationCategory          `bun:"rel:belongs-to,join:location_category_id=id" json:"locationCategory,omitempty"`
 }
 

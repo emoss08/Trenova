@@ -45,14 +45,20 @@ func NewOrganizationRepository(p OrganizationRepositoryParams) repositories.Orga
 }
 
 // filterQuery returns a query that filters organizations by the given options.
-func (or *organizationRepository) filterQuery(q *bun.SelectQuery, f *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
+func (or *organizationRepository) filterQuery(
+	q *bun.SelectQuery,
+	f *ports.LimitOffsetQueryOptions,
+) *bun.SelectQuery {
 	return q.Where("org.business_unit_id = ?", f.TenantOpts.BuID).
 		Limit(f.Limit).
 		Offset(f.Offset)
 }
 
 // List returns a list of organizations for a business unit.
-func (or *organizationRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*organization.Organization], error) {
+func (or *organizationRepository) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*organization.Organization], error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -82,7 +88,10 @@ func (or *organizationRepository) List(ctx context.Context, opts *ports.LimitOff
 }
 
 // GetByID returns an organization by its ID.
-func (or *organizationRepository) GetByID(ctx context.Context, opts repositories.GetOrgByIDOptions) (*organization.Organization, error) {
+func (or *organizationRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetOrgByIDOptions,
+) (*organization.Organization, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -137,7 +146,11 @@ func (or *organizationRepository) GetByID(ctx context.Context, opts repositories
 
 	if err = q.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			return nil, errors.NewValidationError("id", errors.ErrNotFound, "Organization not found within your business unit")
+			return nil, errors.NewValidationError(
+				"id",
+				errors.ErrNotFound,
+				"Organization not found within your business unit",
+			)
 		}
 
 		log.Error().Err(err).Msgf("failed to get organization by ID %s", opts.OrgID)
@@ -154,7 +167,10 @@ func (or *organizationRepository) GetByID(ctx context.Context, opts repositories
 }
 
 // Create creates an organization and audits the creation.
-func (or *organizationRepository) Create(ctx context.Context, org *organization.Organization) (*organization.Organization, error) {
+func (or *organizationRepository) Create(
+	ctx context.Context,
+	org *organization.Organization,
+) (*organization.Organization, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -189,7 +205,10 @@ func (or *organizationRepository) Create(ctx context.Context, org *organization.
 	return org, nil
 }
 
-func (or *organizationRepository) Update(ctx context.Context, org *organization.Organization) (*organization.Organization, error) {
+func (or *organizationRepository) Update(
+	ctx context.Context,
+	org *organization.Organization,
+) (*organization.Organization, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -227,7 +246,10 @@ func (or *organizationRepository) Update(ctx context.Context, org *organization.
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The organization (%s) has either been updated or deleted since the last request.", org.ID),
+				fmt.Sprintf(
+					"Version mismatch. The organization (%s) has either been updated or deleted since the last request.",
+					org.ID,
+				),
 			)
 		}
 		return nil
@@ -246,7 +268,10 @@ func (or *organizationRepository) Update(ctx context.Context, org *organization.
 }
 
 // SetLogo sets the logo for an organization.
-func (or *organizationRepository) SetLogo(ctx context.Context, org *organization.Organization) (*organization.Organization, error) {
+func (or *organizationRepository) SetLogo(
+	ctx context.Context,
+	org *organization.Organization,
+) (*organization.Organization, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -301,7 +326,10 @@ func (or *organizationRepository) SetLogo(ctx context.Context, org *organization
 	return org, nil
 }
 
-func (or *organizationRepository) ClearLogo(ctx context.Context, org *organization.Organization) (*organization.Organization, error) {
+func (or *organizationRepository) ClearLogo(
+	ctx context.Context,
+	org *organization.Organization,
+) (*organization.Organization, error) {
 	log := or.l.With().Str("operation", "ClearLogo").Str("orgID", org.ID.String()).Logger()
 
 	original, err := or.GetByID(ctx, repositories.GetOrgByIDOptions{
@@ -315,7 +343,11 @@ func (or *organizationRepository) ClearLogo(ctx context.Context, org *organizati
 
 	if original.LogoURL == "" {
 		log.Warn().Msg("organization logo already cleared")
-		return nil, errors.NewValidationError("logo_url", errors.ErrAlreadyCleared, "Organization logo already cleared")
+		return nil, errors.NewValidationError(
+			"logo_url",
+			errors.ErrAlreadyCleared,
+			"Organization logo already cleared",
+		)
 	}
 
 	// Clear the logo URL and metadata before calling SetLogo
@@ -336,7 +368,10 @@ func (or *organizationRepository) ClearLogo(ctx context.Context, org *organizati
 	return updatedOrg, nil
 }
 
-func (or *organizationRepository) GetUserOrganizations(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*organization.Organization], error) {
+func (or *organizationRepository) GetUserOrganizations(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*organization.Organization], error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
 		or.l.Error().Err(err).Msg("failed to get database connection")
@@ -377,7 +412,10 @@ func (or *organizationRepository) GetUserOrganizations(ctx context.Context, opts
 
 	// * If cache miss, set the organizations in the cache for later
 	if err = or.cache.SetUserOrganizations(ctx, opts.TenantOpts.UserID, dbOrgs); err != nil {
-		or.l.Error().Err(err).Msgf("failed to set user organizations %s in cache", opts.TenantOpts.UserID)
+		or.l.Error().
+			Err(err).
+			Msgf("failed to set user organizations %s in cache", opts.TenantOpts.UserID)
+
 		// ! Do not return the error because it will not affect the user experience
 	}
 
@@ -387,7 +425,10 @@ func (or *organizationRepository) GetUserOrganizations(ctx context.Context, opts
 	}, nil
 }
 
-func (or *organizationRepository) GetOrganizationBucketName(ctx context.Context, orgID pulid.ID) (string, error) {
+func (or *organizationRepository) GetOrganizationBucketName(
+	ctx context.Context,
+	orgID pulid.ID,
+) (string, error) {
 	dba, err := or.db.DB(ctx)
 	if err != nil {
 		return "", err

@@ -50,34 +50,54 @@ func NewStopValidator(p StopValidatorParams) *StopValidator {
 // Validate validates a stop and returns a MultiError if there are any validation errors.
 // This is only used for direct stop validation, not when validating stops as part of a move.
 // Stop validations as part of a move are done in MoveValidator.validateStopTimes.
-func (v *StopValidator) Validate(ctx context.Context, s *shipment.Stop, idx int, multiErr *errors.MultiError) {
+func (v *StopValidator) Validate(
+	ctx context.Context,
+	s *shipment.Stop,
+	idx int,
+	multiErr *errors.MultiError,
+) {
 	engine := v.vef.CreateEngine().
 		ForField("stops").
 		AtIndex(idx).
 		WithParent(multiErr)
 
 	// Basic stop validation
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			s.Validate(ctx, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBasic,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				s.Validate(ctx, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// Time validation
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityHigh,
-		func(_ context.Context, multiErr *errors.MultiError) error {
-			v.validateTimes(s, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBusinessRules,
+			framework.ValidationPriorityHigh,
+			func(_ context.Context, multiErr *errors.MultiError) error {
+				v.validateTimes(s, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// Assignment validation
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBusinessRules, framework.ValidationPriorityMedium,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			if s.ActualArrival != nil || s.ActualDeparture != nil {
-				v.validateAssignment(ctx, s, multiErr)
-			}
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBusinessRules,
+			framework.ValidationPriorityMedium,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				if s.ActualArrival != nil || s.ActualDeparture != nil {
+					v.validateAssignment(ctx, s, multiErr)
+				}
+				return nil
+			},
+		),
+	)
 
 	// Execute validation - intentionally discard return value as errors are added to parent
 	_ = engine.Validate(ctx)
@@ -87,13 +107,21 @@ func (v *StopValidator) Validate(ctx context.Context, s *shipment.Stop, idx int,
 func (v *StopValidator) validateTimes(s *shipment.Stop, multiErr *errors.MultiError) {
 	// Validate planned arrival/departure times for the stop
 	if s.PlannedArrival > s.PlannedDeparture {
-		multiErr.Add("plannedArrival", errors.ErrInvalid, "Planned arrival must be before planned departure")
+		multiErr.Add(
+			"plannedArrival",
+			errors.ErrInvalid,
+			"Planned arrival must be before planned departure",
+		)
 	}
 
 	// Validate actual arrival/departure times if both are set
 	if s.ActualArrival != nil && s.ActualDeparture != nil {
 		if *s.ActualArrival > *s.ActualDeparture {
-			multiErr.Add("actualArrival", errors.ErrInvalid, "Actual arrival must be before actual departure")
+			multiErr.Add(
+				"actualArrival",
+				errors.ErrInvalid,
+				"Actual arrival must be before actual departure",
+			)
 		}
 	}
 
@@ -101,7 +129,11 @@ func (v *StopValidator) validateTimes(s *shipment.Stop, multiErr *errors.MultiEr
 	if s.ActualArrival != nil {
 		currentTime := timeutils.NowUnix()
 		if *s.ActualArrival > currentTime {
-			multiErr.Add("actualArrival", errors.ErrInvalid, "Actual arrival time cannot be in the future")
+			multiErr.Add(
+				"actualArrival",
+				errors.ErrInvalid,
+				"Actual arrival time cannot be in the future",
+			)
 		}
 	}
 
@@ -109,13 +141,21 @@ func (v *StopValidator) validateTimes(s *shipment.Stop, multiErr *errors.MultiEr
 	if s.ActualDeparture != nil {
 		currentTime := timeutils.NowUnix()
 		if *s.ActualDeparture > currentTime {
-			multiErr.Add("actualDeparture", errors.ErrInvalid, "Actual departure time cannot be in the future")
+			multiErr.Add(
+				"actualDeparture",
+				errors.ErrInvalid,
+				"Actual departure time cannot be in the future",
+			)
 		}
 	}
 }
 
 // validateAssignment checks if the move has an assignment when actual times are set.
-func (v *StopValidator) validateAssignment(ctx context.Context, s *shipment.Stop, multiErr *errors.MultiError) {
+func (v *StopValidator) validateAssignment(
+	ctx context.Context,
+	s *shipment.Stop,
+	multiErr *errors.MultiError,
+) {
 	move, err := v.moveRepo.GetByID(ctx, repositories.GetMoveByIDOptions{
 		MoveID:            s.ShipmentMoveID,
 		OrgID:             s.OrganizationID,
@@ -124,16 +164,28 @@ func (v *StopValidator) validateAssignment(ctx context.Context, s *shipment.Stop
 	})
 	if err != nil {
 		v.l.Error().Err(err).Interface("stop", s).Msgf("failed to get move for stop %s", s.ID)
-		multiErr.Add("shipmentMoveID", errors.ErrInvalid, fmt.Sprintf("Shipment move (%s) not found: %s", s.ShipmentMoveID, err))
+		multiErr.Add(
+			"shipmentMoveID",
+			errors.ErrInvalid,
+			fmt.Sprintf("Shipment move (%s) not found: %s", s.ShipmentMoveID, err),
+		)
 		return
 	}
 
 	if move.Assignment == nil && (s.ActualArrival != nil || s.ActualDeparture != nil) {
 		if s.ActualArrival != nil {
-			multiErr.Add("actualArrival", errors.ErrInvalid, "Actual arrival and departure times cannot be set on a move with no assignment")
+			multiErr.Add(
+				"actualArrival",
+				errors.ErrInvalid,
+				"Actual arrival and departure times cannot be set on a move with no assignment",
+			)
 		}
 		if s.ActualDeparture != nil {
-			multiErr.Add("actualDeparture", errors.ErrInvalid, "Actual arrival and departure times cannot be set on a move with no assignment")
+			multiErr.Add(
+				"actualDeparture",
+				errors.ErrInvalid,
+				"Actual arrival and departure times cannot be set on a move with no assignment",
+			)
 		}
 	}
 }

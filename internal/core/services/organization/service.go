@@ -60,7 +60,10 @@ func NewService(p ServiceParams) *Service {
 }
 
 // SelectOptions returns a list of select options for organizations.
-func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQueryOptions) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, opts)
 	if err != nil {
 		return nil, eris.Wrap(err, "select organizations")
@@ -79,7 +82,10 @@ func (s *Service) SelectOptions(ctx context.Context, opts *ports.LimitOffsetQuer
 }
 
 // List returns a list of organizations.
-func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*organization.Organization], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*organization.Organization], error) {
 	log := s.l.With().
 		Str("operation", "List").
 		Logger()
@@ -116,7 +122,10 @@ func (s *Service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 }
 
 // Get returns an organization by its ID.
-func (s *Service) Get(ctx context.Context, opts repositories.GetOrgByIDOptions) (*organization.Organization, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts repositories.GetOrgByIDOptions,
+) (*organization.Organization, error) {
 	log := s.l.With().
 		Str("operation", "Get").
 		Str("orgID", opts.OrgID.String()).
@@ -132,7 +141,11 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetOrgByIDOptions) 
 }
 
 // Create creates an organization.
-func (s *Service) Create(ctx context.Context, org *organization.Organization, userID pulid.ID) (*organization.Organization, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	org *organization.Organization,
+	userID pulid.ID,
+) (*organization.Organization, error) {
 	log := s.l.With().Str("operation", "Create").
 		Str("orgID", org.ID.String()).
 		Str("userID", userID.String()).
@@ -152,7 +165,9 @@ func (s *Service) Create(ctx context.Context, org *organization.Organization, us
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create an organization")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to create an organization",
+		)
 	}
 
 	if err := s.v.Validate(ctx, org); err != nil {
@@ -186,7 +201,11 @@ func (s *Service) Create(ctx context.Context, org *organization.Organization, us
 }
 
 // Update updates an organization.
-func (s *Service) Update(ctx context.Context, org *organization.Organization, userID pulid.ID) (*organization.Organization, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	org *organization.Organization,
+	userID pulid.ID,
+) (*organization.Organization, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Interface("org", org).
@@ -207,7 +226,9 @@ func (s *Service) Update(ctx context.Context, org *organization.Organization, us
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this organization")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this organization",
+		)
 	}
 
 	if err := s.v.Validate(ctx, org); err != nil {
@@ -254,7 +275,11 @@ func (s *Service) Update(ctx context.Context, org *organization.Organization, us
 	return updatedOrg, nil
 }
 
-func (s *Service) SetLogo(ctx context.Context, orgID, buID, userID pulid.ID, logo *multipart.FileHeader) (*organization.Organization, error) {
+func (s *Service) SetLogo(
+	ctx context.Context,
+	orgID, buID, userID pulid.ID,
+	logo *multipart.FileHeader,
+) (*organization.Organization, error) {
 	result, err := s.ps.HasFieldPermission(ctx, &services.PermissionCheck{
 		UserID:     userID,
 		Resource:   permission.ResourceOrganization,
@@ -267,7 +292,9 @@ func (s *Service) SetLogo(ctx context.Context, orgID, buID, userID pulid.ID, log
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to set the logo for this organization")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to set the logo for this organization",
+		)
 	}
 
 	fileData, err := fileutils.ReadFileData(logo)
@@ -349,7 +376,12 @@ func (s *Service) SetLogo(ctx context.Context, orgID, buID, userID pulid.ID, log
 	return updatedOrg, nil
 }
 
-func (s *Service) uploadLogo(ctx context.Context, org *organization.Organization, userID pulid.ID, params *services.SaveFileRequest) (*organization.Organization, error) {
+func (s *Service) uploadLogo(
+	ctx context.Context,
+	org *organization.Organization,
+	userID pulid.ID,
+	params *services.SaveFileRequest,
+) (*organization.Organization, error) {
 	ui, err := s.fs.SaveFile(ctx, params)
 	if err != nil {
 		return nil, eris.Wrap(err, "save file")
@@ -384,7 +416,10 @@ func (s *Service) uploadLogo(ctx context.Context, org *organization.Organization
 	return updatedOrg, nil
 }
 
-func (s *Service) ClearLogo(ctx context.Context, orgID, buID, userID pulid.ID) (*organization.Organization, error) {
+func (s *Service) ClearLogo(
+	ctx context.Context,
+	orgID, buID, userID pulid.ID,
+) (*organization.Organization, error) {
 	result, err := s.ps.HasFieldPermission(ctx, &services.PermissionCheck{
 		UserID:     userID,
 		Resource:   permission.ResourceOrganization,
@@ -397,7 +432,9 @@ func (s *Service) ClearLogo(ctx context.Context, orgID, buID, userID pulid.ID) (
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to clear the logo for this organization")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to clear the logo for this organization",
+		)
 	}
 
 	original, err := s.repo.GetByID(ctx, repositories.GetOrgByIDOptions{

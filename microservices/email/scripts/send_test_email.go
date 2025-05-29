@@ -45,7 +45,11 @@ type EmailAttachment struct {
 func main() {
 	// Define command-line flags
 	toEmail := flag.String("to", "", "Recipient email address")
-	template := flag.String("template", "welcome", "Email template to use (welcome, password-reset, etc.)")
+	template := flag.String(
+		"template",
+		"welcome",
+		"Email template to use (welcome, password-reset, etc.)",
+	)
 	subject := flag.String("subject", "Test Email from Trenova", "Email subject")
 	rabbitmqHost := flag.String("host", "localhost", "RabbitMQ host")
 	rabbitmqPort := flag.Int("port", 5673, "RabbitMQ port")
@@ -60,7 +64,13 @@ func main() {
 	}
 
 	// Create RabbitMQ connection
-	connURL := fmt.Sprintf("amqp://%s:%s@%s:%d/", *rabbitmqUser, *rabbitmqPass, *rabbitmqHost, *rabbitmqPort)
+	connURL := fmt.Sprintf(
+		"amqp://%s:%s@%s:%d/",
+		*rabbitmqUser,
+		*rabbitmqPass,
+		*rabbitmqHost,
+		*rabbitmqPort,
+	)
 	conn, err := amqp.Dial(connURL)
 	if err != nil {
 		log.Fatalf("Failed to connect to RabbitMQ: %v", err)
@@ -148,7 +158,9 @@ func main() {
 	fmt.Println("Subject:", message.Payload.Subject)
 
 	// If MailHog is being used, remind the user
-	fmt.Println("\nIf you're using MailHog for testing, check http://localhost:8025 to view the email.")
+	fmt.Println(
+		"\nIf you're using MailHog for testing, check http://localhost:8025 to view the email.",
+	)
 
 	os.Exit(0)
 }

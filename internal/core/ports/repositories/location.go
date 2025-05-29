@@ -24,7 +24,10 @@ type GetLocationByIDOptions struct {
 }
 
 type LocationRepository interface {
-	List(ctx context.Context, opts *ListLocationOptions) (*ports.ListResult[*location.Location], error)
+	List(
+		ctx context.Context,
+		opts *ListLocationOptions,
+	) (*ports.ListResult[*location.Location], error)
 	GetByID(ctx context.Context, opts GetLocationByIDOptions) (*location.Location, error)
 	Create(ctx context.Context, l *location.Location) (*location.Location, error)
 	Update(ctx context.Context, l *location.Location) (*location.Location, error)

@@ -62,7 +62,10 @@ func NewDocumentTypeRepository(p DocumentTypeRepositoryParams) repositories.Docu
 //
 // Returns:
 //   - *bun.SelectQuery: The filtered and paginated query.
-func (dt *documentTypeRepository) filterQuery(q *bun.SelectQuery, opts *ports.LimitOffsetQueryOptions) *bun.SelectQuery {
+func (dt *documentTypeRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *ports.LimitOffsetQueryOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "dt",
@@ -89,7 +92,10 @@ func (dt *documentTypeRepository) filterQuery(q *bun.SelectQuery, opts *ports.Li
 // Returns:
 //   - *ports.ListResult[*billing.DocumentType]: A list of document types with pagination information.
 //   - error: An error if the operation fails.
-func (dt *documentTypeRepository) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*billing.DocumentType], error) {
+func (dt *documentTypeRepository) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*billing.DocumentType], error) {
 	dba, err := dt.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -127,7 +133,10 @@ func (dt *documentTypeRepository) List(ctx context.Context, opts *ports.LimitOff
 // Returns:
 //   - *billing.DocumentType: The document type if found.
 //   - error: An error if the operation fails.
-func (dt *documentTypeRepository) GetByID(ctx context.Context, opts repositories.GetDocumentTypeByIDRequest) (*billing.DocumentType, error) {
+func (dt *documentTypeRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetDocumentTypeByIDRequest,
+) (*billing.DocumentType, error) {
 	dba, err := dt.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -169,7 +178,10 @@ func (dt *documentTypeRepository) GetByID(ctx context.Context, opts repositories
 // Returns:
 //   - []*billing.DocumentType: A list of document types.
 //   - error: An error if the operation fails.
-func (dt *documentTypeRepository) GetByIDs(ctx context.Context, docIDs []string) ([]*billing.DocumentType, error) {
+func (dt *documentTypeRepository) GetByIDs(
+	ctx context.Context,
+	docIDs []string,
+) ([]*billing.DocumentType, error) {
 	dba, err := dt.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -202,7 +214,10 @@ func (dt *documentTypeRepository) GetByIDs(ctx context.Context, docIDs []string)
 // Returns:
 //   - *billing.DocumentType: The created document type.
 //   - error: An error if the operation fails.
-func (dt *documentTypeRepository) Create(ctx context.Context, entity *billing.DocumentType) (*billing.DocumentType, error) {
+func (dt *documentTypeRepository) Create(
+	ctx context.Context,
+	entity *billing.DocumentType,
+) (*billing.DocumentType, error) {
 	dba, err := dt.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -241,7 +256,10 @@ func (dt *documentTypeRepository) Create(ctx context.Context, entity *billing.Do
 // Returns:
 //   - *billing.DocumentType: The updated document type.
 //   - error: An error if the operation fails.
-func (dt *documentTypeRepository) Update(ctx context.Context, entity *billing.DocumentType) (*billing.DocumentType, error) {
+func (dt *documentTypeRepository) Update(
+	ctx context.Context,
+	entity *billing.DocumentType,
+) (*billing.DocumentType, error) {
 	dba, err := dt.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -285,7 +303,10 @@ func (dt *documentTypeRepository) Update(ctx context.Context, entity *billing.Do
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Document Type (%s) has either been updated or deleted since the last request.", entity.ID.String()),
+				fmt.Sprintf(
+					"Version mismatch. The Document Type (%s) has either been updated or deleted since the last request.",
+					entity.ID.String(),
+				),
 			)
 		}
 

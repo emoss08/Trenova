@@ -49,7 +49,13 @@ func (h *Handler) revoke(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	err = h.ss.RevokeSession(c.UserContext(), sessionID, c.IP(), c.Get("User-Agent"), "User Requested")
+	err = h.ss.RevokeSession(
+		c.UserContext(),
+		sessionID,
+		c.IP(),
+		c.Get("User-Agent"),
+		"User Requested",
+	)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}

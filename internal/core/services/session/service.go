@@ -44,7 +44,11 @@ func (s *Service) GetSessions(ctx context.Context, userID pulid.ID) ([]*session.
 	return sessions, nil
 }
 
-func (s *Service) RevokeSession(ctx context.Context, sessionID pulid.ID, clientIP, userAgent, reason string) error {
+func (s *Service) RevokeSession(
+	ctx context.Context,
+	sessionID pulid.ID,
+	clientIP, userAgent, reason string,
+) error {
 	log := s.l.With().Str("operation", "RevokeSession").Logger()
 
 	// TODO(Wolfred): We may want to check if the userID to see if the session is being revoked by the user

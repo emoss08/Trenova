@@ -236,7 +236,10 @@ func (s *service) validateConfig(params *config.AuditConfig) error {
 	return nil
 }
 
-func (s *service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions) (*ports.ListResult[*audit.Entry], error) {
+func (s *service) List(
+	ctx context.Context,
+	opts *ports.LimitOffsetQueryOptions,
+) (*ports.ListResult[*audit.Entry], error) {
 	log := s.l.With().
 		Str("operation", "List").
 		Str("buID", opts.TenantOpts.BuID.String()).
@@ -272,7 +275,10 @@ func (s *service) List(ctx context.Context, opts *ports.LimitOffsetQueryOptions)
 	return entities, nil
 }
 
-func (s *service) ListByResourceID(ctx context.Context, opts repositories.ListByResourceIDRequest) (*ports.ListResult[*audit.Entry], error) {
+func (s *service) ListByResourceID(
+	ctx context.Context,
+	opts repositories.ListByResourceIDRequest,
+) (*ports.ListResult[*audit.Entry], error) {
 	log := s.l.With().
 		Str("operation", "ListByResourceID").
 		Str("resourceID", opts.ResourceID.String()).
@@ -287,7 +293,10 @@ func (s *service) ListByResourceID(ctx context.Context, opts repositories.ListBy
 	return entities, nil
 }
 
-func (s *service) GetByID(ctx context.Context, opts repositories.GetAuditEntryByIDOptions) (*audit.Entry, error) {
+func (s *service) GetByID(
+	ctx context.Context,
+	opts repositories.GetAuditEntryByIDOptions,
+) (*audit.Entry, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("auditEntryID", opts.ID.String()).
@@ -542,7 +551,11 @@ func (s *service) startFlusher() {
 }
 
 // handleTick processes a single tick of the flusher timer
-func (s *service) handleTick(baseInterval time.Duration, ticker *time.Ticker, emptyFlushes int) int {
+func (s *service) handleTick(
+	baseInterval time.Duration,
+	ticker *time.Ticker,
+	emptyFlushes int,
+) int {
 	// Skip flushing if buffer is empty to reduce load
 	if s.buffer.Size() == 0 {
 		return s.handleEmptyBuffer(baseInterval, ticker, emptyFlushes)
@@ -560,7 +573,11 @@ func (s *service) handleTick(baseInterval time.Duration, ticker *time.Ticker, em
 }
 
 // handleEmptyBuffer adjusts ticker interval based on inactivity
-func (s *service) handleEmptyBuffer(baseInterval time.Duration, ticker *time.Ticker, emptyFlushes int) int {
+func (s *service) handleEmptyBuffer(
+	baseInterval time.Duration,
+	ticker *time.Ticker,
+	emptyFlushes int,
+) int {
 	emptyFlushes++
 	// After several empty flushes, adjust the interval to reduce system load
 	if emptyFlushes > 3 {
@@ -730,7 +747,9 @@ func (s *service) performFinalFlush(ctx context.Context) error {
 
 	// Process emergency entries in batches if any were collected
 	if len(emergencyEntries) > 0 {
-		s.l.Info().Int("count", len(emergencyEntries)).Msg("processing emergency entries during shutdown")
+		s.l.Info().
+			Int("count", len(emergencyEntries)).
+			Msg("processing emergency entries during shutdown")
 
 		// Process in batches of 10 for better efficiency
 		for i := 0; i < len(emergencyEntries); i += 10 {
@@ -846,7 +865,10 @@ func circuitStateToString(state CircuitState) string {
 }
 
 // RegisterSensitiveFields registers sensitive fields for a resource
-func (s *service) RegisterSensitiveFields(resource permission.Resource, fields []services.SensitiveField) error {
+func (s *service) RegisterSensitiveFields(
+	resource permission.Resource,
+	fields []services.SensitiveField,
+) error {
 	return s.sdm.RegisterSensitiveFields(resource, fields)
 }
 

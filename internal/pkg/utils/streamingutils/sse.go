@@ -74,84 +74,96 @@ func (s *SSEStreamer[T]) Stream(c *fiber.Ctx) error {
 	c.Set("Connection", "keep-alive")
 	c.Set("Transfer-Encoding", "chunked")
 
-	c.Status(fiber.StatusOK).Context().SetBodyStreamWriter(fasthttp.StreamWriter(func(w *bufio.Writer) {
-		// Track last timestamp to only send new entries
-		lastTimestamp := time.Now().Unix()
+	c.Status(fiber.StatusOK).
+		Context().
+		SetBodyStreamWriter(fasthttp.StreamWriter(func(w *bufio.Writer) {
+			// Track last timestamp to only send new entries
+			lastTimestamp := time.Now().Unix()
 
-		// Send initial connection event
-		s.sendEvent(w, "connected", map[string]string{"status": "connected"})
-		if err = w.Flush(); err != nil {
-			fmt.Printf("Error while flushing initial connection: %v. Closing connection.\n", err)
-			return
-		}
-
-		// Create a ticker for polling
-		ticker := time.NewTicker(s.config.PollInterval)
-		defer ticker.Stop()
-
-		// Create a timeout for the entire stream
-		streamTimeout := time.After(s.config.StreamTimeout)
-
-		for {
-			select {
-			case <-streamTimeout:
-				fmt.Println("Stream timeout reached, closing connection")
+			// Send initial connection event
+			s.sendEvent(w, "connected", map[string]string{"status": "connected"})
+			if err = w.Flush(); err != nil {
+				fmt.Printf(
+					"Error while flushing initial connection: %v. Closing connection.\n",
+					err,
+				)
 				return
-			case <-ticker.C:
-				// Fetch new data
-				items, latestTimestamp, iErr := s.dataFetcher(context.Background(), reqCtx, lastTimestamp)
-				if iErr != nil {
-					// Send error event but continue streaming
-					s.sendEvent(w, "error", map[string]string{"error": "Failed to fetch data"})
-					if iErr = w.Flush(); iErr != nil {
-						fmt.Printf("Error while flushing error: %v. Closing connection.\n", iErr)
-						return
+			}
+
+			// Create a ticker for polling
+			ticker := time.NewTicker(s.config.PollInterval)
+			defer ticker.Stop()
+
+			// Create a timeout for the entire stream
+			streamTimeout := time.After(s.config.StreamTimeout)
+
+			for {
+				select {
+				case <-streamTimeout:
+					fmt.Println("Stream timeout reached, closing connection")
+					return
+				case <-ticker.C:
+					// Fetch new data
+					items, latestTimestamp, iErr := s.dataFetcher(
+						context.Background(),
+						reqCtx,
+						lastTimestamp,
+					)
+					if iErr != nil {
+						// Send error event but continue streaming
+						s.sendEvent(w, "error", map[string]string{"error": "Failed to fetch data"})
+						if iErr = w.Flush(); iErr != nil {
+							fmt.Printf(
+								"Error while flushing error: %v. Closing connection.\n",
+								iErr,
+							)
+							return
+						}
+						continue
 					}
-					continue
-				}
 
-				// Process and filter new items
-				newItems := make([]T, 0)
-				newLastTimestamp := lastTimestamp
+					// Process and filter new items
+					newItems := make([]T, 0)
+					newLastTimestamp := lastTimestamp
 
-				for _, item := range items {
-					isNew, itemTimestamp := s.itemProcessor(item, lastTimestamp)
-					if isNew {
-						newItems = append(newItems, item)
-						if itemTimestamp > newLastTimestamp {
-							newLastTimestamp = itemTimestamp
+					for _, item := range items {
+						isNew, itemTimestamp := s.itemProcessor(item, lastTimestamp)
+						if isNew {
+							newItems = append(newItems, item)
+							if itemTimestamp > newLastTimestamp {
+								newLastTimestamp = itemTimestamp
+							}
 						}
 					}
-				}
 
-				// Update last timestamp if we found newer items
-				if newLastTimestamp > lastTimestamp {
-					lastTimestamp = newLastTimestamp
-				} else if latestTimestamp > lastTimestamp {
-					lastTimestamp = latestTimestamp
-				}
+					// Update last timestamp if we found newer items
+					if newLastTimestamp > lastTimestamp {
+						lastTimestamp = newLastTimestamp
+					} else if latestTimestamp > lastTimestamp {
+						lastTimestamp = latestTimestamp
+					}
 
-				// Send new items
-				if len(newItems) > 0 {
-					for _, item := range newItems {
-						s.sendEvent(w, "new-entry", item)
+					// Send new items
+					if len(newItems) > 0 {
+						for _, item := range newItems {
+							s.sendEvent(w, "new-entry", item)
+						}
+					}
+
+					// Send heartbeat to keep connection alive
+					if s.config.SendHeartbeat {
+						heartbeat := map[string]string{"timestamp": time.Now().Format(time.RFC3339)}
+						s.sendEvent(w, "heartbeat", heartbeat)
+					}
+
+					// Flush all data to client
+					if err = w.Flush(); err != nil {
+						fmt.Printf("Error while flushing: %v. Closing connection.\n", err)
+						return
 					}
 				}
-
-				// Send heartbeat to keep connection alive
-				if s.config.SendHeartbeat {
-					heartbeat := map[string]string{"timestamp": time.Now().Format(time.RFC3339)}
-					s.sendEvent(w, "heartbeat", heartbeat)
-				}
-
-				// Flush all data to client
-				if err = w.Flush(); err != nil {
-					fmt.Printf("Error while flushing: %v. Closing connection.\n", err)
-					return
-				}
 			}
-		}
-	}))
+		}))
 
 	return nil
 }

@@ -51,7 +51,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) List(ctx context.Context, opts *repositories.ListHazmatSegregationRuleRequest) (*ports.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
+func (s *Service) List(
+	ctx context.Context,
+	opts *repositories.ListHazmatSegregationRuleRequest,
+) (*ports.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -71,7 +74,9 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListHazmatSegrega
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read hazmat segregation rules")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read hazmat segregation rules",
+		)
 	}
 
 	entities, err := s.repo.List(ctx, opts)
@@ -86,7 +91,10 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListHazmatSegrega
 	}, nil
 }
 
-func (s *Service) Get(ctx context.Context, opts *repositories.GetHazmatSegregationRuleByIDRequest) (*hazmatsegregationrule.HazmatSegregationRule, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts *repositories.GetHazmatSegregationRuleByIDRequest,
+) (*hazmatsegregationrule.HazmatSegregationRule, error) {
 	log := s.l.With().
 		Str("operation", "Get").
 		Str("hazmatSegregationRuleID", opts.ID.String()).
@@ -109,7 +117,9 @@ func (s *Service) Get(ctx context.Context, opts *repositories.GetHazmatSegregati
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this hazmat segregation rule")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read this hazmat segregation rule",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, opts)
@@ -121,7 +131,11 @@ func (s *Service) Get(ctx context.Context, opts *repositories.GetHazmatSegregati
 	return entity, nil
 }
 
-func (s *Service) Create(ctx context.Context, hsr *hazmatsegregationrule.HazmatSegregationRule, userID pulid.ID) (*hazmatsegregationrule.HazmatSegregationRule, error) {
+func (s *Service) Create(
+	ctx context.Context,
+	hsr *hazmatsegregationrule.HazmatSegregationRule,
+	userID pulid.ID,
+) (*hazmatsegregationrule.HazmatSegregationRule, error) {
 	log := s.l.With().
 		Str("operation", "Create").
 		Str("hazmatSegregationRuleID", hsr.ID.String()).
@@ -144,7 +158,9 @@ func (s *Service) Create(ctx context.Context, hsr *hazmatsegregationrule.HazmatS
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a hazmat segregation rule")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to create a hazmat segregation rule",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{
@@ -181,7 +197,11 @@ func (s *Service) Create(ctx context.Context, hsr *hazmatsegregationrule.HazmatS
 	return createdEntity, nil
 }
 
-func (s *Service) Update(ctx context.Context, hsr *hazmatsegregationrule.HazmatSegregationRule, userID pulid.ID) (*hazmatsegregationrule.HazmatSegregationRule, error) {
+func (s *Service) Update(
+	ctx context.Context,
+	hsr *hazmatsegregationrule.HazmatSegregationRule,
+	userID pulid.ID,
+) (*hazmatsegregationrule.HazmatSegregationRule, error) {
 	log := s.l.With().
 		Str("operation", "Update").
 		Str("hazmatSegregationRuleID", hsr.ID.String()).
@@ -204,7 +224,9 @@ func (s *Service) Update(ctx context.Context, hsr *hazmatsegregationrule.HazmatS
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update this hazmat segregation rule")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this hazmat segregation rule",
+		)
 	}
 
 	valCtx := &validator.ValidationContext{

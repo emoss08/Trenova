@@ -62,7 +62,10 @@ func NewTractorRepository(p TractorRepositoryParams) repositories.TractorReposit
 //
 // Returns:
 //   - *bun.SelectQuery: The updated query with the necessary relations.
-func (tr *tractorRepository) addOptions(q *bun.SelectQuery, opts repositories.TractorFilterOptions) *bun.SelectQuery {
+func (tr *tractorRepository) addOptions(
+	q *bun.SelectQuery,
+	opts repositories.TractorFilterOptions,
+) *bun.SelectQuery {
 	// * Include the worker details if requested
 	if opts.IncludeWorkerDetails {
 		q = q.RelationWithOpts("PrimaryWorker", bun.RelationOpts{
@@ -110,7 +113,10 @@ func (tr *tractorRepository) addOptions(q *bun.SelectQuery, opts repositories.Tr
 //
 // Returns:
 //   - *bun.SelectQuery: The filtered and paginated query.
-func (tr *tractorRepository) filterQuery(q *bun.SelectQuery, req *repositories.ListTractorRequest) *bun.SelectQuery {
+func (tr *tractorRepository) filterQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListTractorRequest,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "tr",
@@ -121,10 +127,16 @@ func (tr *tractorRepository) filterQuery(q *bun.SelectQuery, req *repositories.L
 
 	// TODO(Wolfred: Add postgres search support.
 	if req.Filter.Query != "" {
-		q = q.Where("tr.code ILIKE ? OR tr.vin ILIKE ?", "%"+req.Filter.Query+"%", "%"+req.Filter.Query+"%")
+		q = q.Where(
+			"tr.code ILIKE ? OR tr.vin ILIKE ?",
+			"%"+req.Filter.Query+"%",
+			"%"+req.Filter.Query+"%",
+		)
 	}
 
-	return q.Order("tr.code ASC", "tr.created_at ASC").Limit(req.Filter.Limit).Offset(req.Filter.Offset)
+	return q.Order("tr.code ASC", "tr.created_at ASC").
+		Limit(req.Filter.Limit).
+		Offset(req.Filter.Offset)
 }
 
 // List retrieves a list of tractors based on the previous options.
@@ -136,7 +148,10 @@ func (tr *tractorRepository) filterQuery(q *bun.SelectQuery, req *repositories.L
 // Returns:
 //   - *ports.ListResult[*tractor.Tractor]: A list of tractors.
 //   - error: An error if the operation fails.
-func (tr *tractorRepository) List(ctx context.Context, req *repositories.ListTractorRequest) (*ports.ListResult[*tractor.Tractor], error) {
+func (tr *tractorRepository) List(
+	ctx context.Context,
+	req *repositories.ListTractorRequest,
+) (*ports.ListResult[*tractor.Tractor], error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -174,7 +189,10 @@ func (tr *tractorRepository) List(ctx context.Context, req *repositories.ListTra
 // Returns:
 //   - *tractor.Tractor: The tractor entity.
 //   - error: An error if the operation fails.
-func (tr *tractorRepository) GetByID(ctx context.Context, req *repositories.GetTractorByIDRequest) (*tractor.Tractor, error) {
+func (tr *tractorRepository) GetByID(
+	ctx context.Context,
+	req *repositories.GetTractorByIDRequest,
+) (*tractor.Tractor, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -217,7 +235,10 @@ func (tr *tractorRepository) GetByID(ctx context.Context, req *repositories.GetT
 // Returns:
 //   - *tractor.Tractor: The created tractor entity.
 //   - error: An error if the operation fails.
-func (tr *tractorRepository) Create(ctx context.Context, t *tractor.Tractor) (*tractor.Tractor, error) {
+func (tr *tractorRepository) Create(
+	ctx context.Context,
+	t *tractor.Tractor,
+) (*tractor.Tractor, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -257,7 +278,10 @@ func (tr *tractorRepository) Create(ctx context.Context, t *tractor.Tractor) (*t
 // Returns:
 //   - *tractor.Tractor: The updated tractor entity.
 //   - error: An error if the operation fails.
-func (tr *tractorRepository) Update(ctx context.Context, t *tractor.Tractor) (*tractor.Tractor, error) {
+func (tr *tractorRepository) Update(
+	ctx context.Context,
+	t *tractor.Tractor,
+) (*tractor.Tractor, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -301,7 +325,10 @@ func (tr *tractorRepository) Update(ctx context.Context, t *tractor.Tractor) (*t
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Tractor (%s) has either been updated or deleted since the last request.", t.GetID()),
+				fmt.Sprintf(
+					"Version mismatch. The Tractor (%s) has either been updated or deleted since the last request.",
+					t.GetID(),
+				),
 			)
 		}
 
@@ -324,7 +351,10 @@ func (tr *tractorRepository) Update(ctx context.Context, t *tractor.Tractor) (*t
 // Returns:
 //   - *repositories.AssignmentResponse: The assignment response.
 //   - error: An error if the operation fails.
-func (tr *tractorRepository) Assignment(ctx context.Context, opts repositories.TractorAssignmentRequest) (*repositories.AssignmentResponse, error) {
+func (tr *tractorRepository) Assignment(
+	ctx context.Context,
+	opts repositories.TractorAssignmentRequest,
+) (*repositories.AssignmentResponse, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")

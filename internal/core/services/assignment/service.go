@@ -51,7 +51,10 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
-func (s *Service) List(ctx context.Context, req repositories.ListAssignmentsRequest) (*ports.ListResult[*shipment.Assignment], error) {
+func (s *Service) List(
+	ctx context.Context,
+	req repositories.ListAssignmentsRequest,
+) (*ports.ListResult[*shipment.Assignment], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
@@ -77,7 +80,10 @@ func (s *Service) List(ctx context.Context, req repositories.ListAssignmentsRequ
 	return s.repo.List(ctx, req)
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetAssignmentByIDOptions) (*shipment.Assignment, error) {
+func (s *Service) Get(
+	ctx context.Context,
+	opts repositories.GetAssignmentByIDOptions,
+) (*shipment.Assignment, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("hmID", opts.ID.String()).
@@ -100,7 +106,9 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetAssignmentByIDOp
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this assignment")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read this assignment",
+		)
 	}
 
 	entity, err := s.repo.GetByID(ctx, opts)
@@ -112,7 +120,10 @@ func (s *Service) Get(ctx context.Context, opts repositories.GetAssignmentByIDOp
 	return entity, nil
 }
 
-func (s *Service) BulkAssign(ctx context.Context, req *repositories.AssignmentRequest) (*ports.ListResult[*shipment.Assignment], error) {
+func (s *Service) BulkAssign(
+	ctx context.Context,
+	req *repositories.AssignmentRequest,
+) (*ports.ListResult[*shipment.Assignment], error) {
 	log := s.l.With().
 		Str("operation", "BulkAssign").
 		Str("shipmentID", req.ShipmentID.String()).
@@ -170,7 +181,11 @@ func (s *Service) BulkAssign(ctx context.Context, req *repositories.AssignmentRe
 	}, nil
 }
 
-func (s *Service) SingleAssign(ctx context.Context, a *shipment.Assignment, userID pulid.ID) (*shipment.Assignment, error) {
+func (s *Service) SingleAssign(
+	ctx context.Context,
+	a *shipment.Assignment,
+	userID pulid.ID,
+) (*shipment.Assignment, error) {
 	log := s.l.With().
 		Str("operation", "SingleAssign").
 		Str("id", a.ID.String()).
@@ -225,7 +240,11 @@ func (s *Service) SingleAssign(ctx context.Context, a *shipment.Assignment, user
 	return createdEntity, nil
 }
 
-func (s *Service) Reassign(ctx context.Context, a *shipment.Assignment, userID pulid.ID) (*shipment.Assignment, error) {
+func (s *Service) Reassign(
+	ctx context.Context,
+	a *shipment.Assignment,
+	userID pulid.ID,
+) (*shipment.Assignment, error) {
 	log := s.l.With().
 		Str("operation", "Reassign").
 		Str("id", a.ID.String()).

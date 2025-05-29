@@ -89,7 +89,11 @@ func (p *SMTPProvider) Send(ctx context.Context, email *model.Email) error {
 				// Decode base64 content
 				content, err := base64.StdEncoding.DecodeString(attachment.Content)
 				if err != nil {
-					return eris.Wrapf(err, "failed to decode attachment content for %s", attachment.Filename)
+					return eris.Wrapf(
+						err,
+						"failed to decode attachment content for %s",
+						attachment.Filename,
+					)
 				}
 
 				// Add attachment to the email using a reader

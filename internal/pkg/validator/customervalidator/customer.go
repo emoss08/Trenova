@@ -52,20 +52,34 @@ func NewValidator(p ValidatorParams) *Validator {
 //
 // Returns:
 //   - *errors.MultiError: A list of validation errors.
-func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationContext, cus *customer.Customer) *errors.MultiError {
+func (v *Validator) Validate(
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	cus *customer.Customer,
+) *errors.MultiError {
 	engine := v.vef.CreateEngine()
 
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageBasic, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			cus.Validate(ctx, multiErr)
-			return nil
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageBasic,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				cus.Validate(ctx, multiErr)
+				return nil
+			},
+		),
+	)
 
 	// Validate uniqueness
-	engine.AddRule(framework.NewValidationRule(framework.ValidationStageDataIntegrity, framework.ValidationPriorityHigh,
-		func(ctx context.Context, multiErr *errors.MultiError) error {
-			return v.ValidateUniqueness(ctx, valCtx, cus, multiErr)
-		}))
+	engine.AddRule(
+		framework.NewValidationRule(
+			framework.ValidationStageDataIntegrity,
+			framework.ValidationPriorityHigh,
+			func(ctx context.Context, multiErr *errors.MultiError) error {
+				return v.ValidateUniqueness(ctx, valCtx, cus, multiErr)
+			},
+		),
+	)
 
 	return engine.Validate(ctx)
 }
@@ -81,7 +95,10 @@ func (v *Validator) Validate(ctx context.Context, valCtx *validator.ValidationCo
 // Returns:
 //   - error: An error if the validation fails.
 func (v *Validator) ValidateUniqueness(
-	ctx context.Context, valCtx *validator.ValidationContext, cus *customer.Customer, multiErr *errors.MultiError,
+	ctx context.Context,
+	valCtx *validator.ValidationContext,
+	cus *customer.Customer,
+	multiErr *errors.MultiError,
 ) error {
 	dba, err := v.db.DB(ctx)
 	if err != nil {

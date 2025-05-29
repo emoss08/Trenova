@@ -19,10 +19,13 @@ func TestDebugMoveAssignment(t *testing.T) {
 
 	// Create test shipment with assignment - exactly like the failing test
 	move := &shipment.ShipmentMove{
-		ID:         pulid.MustNew("smv_"),
-		Status:     shipment.MoveStatusNew,
-		Sequence:   0,
-		Assignment: &shipment.Assignment{ID: pulid.MustNew("a_"), Status: shipment.AssignmentStatusNew},
+		ID:       pulid.MustNew("smv_"),
+		Status:   shipment.MoveStatusNew,
+		Sequence: 0,
+		Assignment: &shipment.Assignment{
+			ID:     pulid.MustNew("a_"),
+			Status: shipment.AssignmentStatusNew,
+		},
 		Stops: []*shipment.Stop{
 			{
 				ID:               pulid.MustNew("stp_"),
@@ -85,7 +88,13 @@ func TestDebugMoveAssignment(t *testing.T) {
 			movesCompleted++
 		}
 	}
-	t.Logf("Counters: assigned=%d, inTransit=%d, completed=%d, total=%d", movesAssigned, movesInTransit, movesCompleted, len(shp.Moves))
+	t.Logf(
+		"Counters: assigned=%d, inTransit=%d, completed=%d, total=%d",
+		movesAssigned,
+		movesInTransit,
+		movesCompleted,
+		len(shp.Moves),
+	)
 
 	t.Logf("Final state: Shipment=%s, Move=%s", shp.Status, move.Status)
 

@@ -41,7 +41,10 @@ func NewFleetCodeRepository(p FleetCodeRepositoryParams) repositories.FleetCodeR
 	}
 }
 
-func (fcr *fleetCodeRepository) filterQuery(q *bun.SelectQuery, opts *repositories.ListFleetCodeOptions) *bun.SelectQuery {
+func (fcr *fleetCodeRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *repositories.ListFleetCodeOptions,
+) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "fc",
@@ -53,13 +56,20 @@ func (fcr *fleetCodeRepository) filterQuery(q *bun.SelectQuery, opts *repositori
 	}
 
 	if opts.Filter.Query != "" {
-		q = q.Where("fc.name ILIKE ? OR fc.description ILIKE ?", "%"+opts.Filter.Query+"%", "%"+opts.Filter.Query+"%")
+		q = q.Where(
+			"fc.name ILIKE ? OR fc.description ILIKE ?",
+			"%"+opts.Filter.Query+"%",
+			"%"+opts.Filter.Query+"%",
+		)
 	}
 
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
 
-func (fcr *fleetCodeRepository) List(ctx context.Context, opts *repositories.ListFleetCodeOptions) (*ports.ListResult[*fleetcode.FleetCode], error) {
+func (fcr *fleetCodeRepository) List(
+	ctx context.Context,
+	opts *repositories.ListFleetCodeOptions,
+) (*ports.ListResult[*fleetcode.FleetCode], error) {
 	dba, err := fcr.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -88,7 +98,10 @@ func (fcr *fleetCodeRepository) List(ctx context.Context, opts *repositories.Lis
 	}, nil
 }
 
-func (fcr *fleetCodeRepository) GetByID(ctx context.Context, opts repositories.GetFleetCodeByIDOptions) (*fleetcode.FleetCode, error) {
+func (fcr *fleetCodeRepository) GetByID(
+	ctx context.Context,
+	opts repositories.GetFleetCodeByIDOptions,
+) (*fleetcode.FleetCode, error) {
 	dba, err := fcr.db.DB(ctx)
 	if err != nil {
 		return nil, err
@@ -120,7 +133,10 @@ func (fcr *fleetCodeRepository) GetByID(ctx context.Context, opts repositories.G
 	return fc, nil
 }
 
-func (fcr *fleetCodeRepository) Create(ctx context.Context, fc *fleetcode.FleetCode) (*fleetcode.FleetCode, error) {
+func (fcr *fleetCodeRepository) Create(
+	ctx context.Context,
+	fc *fleetcode.FleetCode,
+) (*fleetcode.FleetCode, error) {
 	dba, err := fcr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
@@ -197,7 +213,10 @@ func (fcr *fleetCodeRepository) Update(
 			return errors.NewValidationError(
 				"version",
 				errors.ErrVersionMismatch,
-				fmt.Sprintf("Version mismatch. The Fleet Code (%s) has either been updated or deleted since the last request.", fc.ID.String()),
+				fmt.Sprintf(
+					"Version mismatch. The Fleet Code (%s) has either been updated or deleted since the last request.",
+					fc.ID.String(),
+				),
 			)
 		}
 

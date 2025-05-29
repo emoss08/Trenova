@@ -35,7 +35,9 @@ type organizationRepository struct {
 	l     *zerolog.Logger
 }
 
-func NewOrganizationRepository(p OrganizationRepositoryParams) repositories.OrganizationCacheRepository {
+func NewOrganizationRepository(
+	p OrganizationRepositoryParams,
+) repositories.OrganizationCacheRepository {
 	log := p.Logger.With().
 		Str("repository", "organization").
 		Str("component", "redis").
@@ -56,7 +58,10 @@ func NewOrganizationRepository(p OrganizationRepositoryParams) repositories.Orga
 // Returns:
 //   - org: The organization
 //   - error: An error if the organization is not found in the cache
-func (or *organizationRepository) GetByID(ctx context.Context, orgID pulid.ID) (*organization.Organization, error) {
+func (or *organizationRepository) GetByID(
+	ctx context.Context,
+	orgID pulid.ID,
+) (*organization.Organization, error) {
 	log := or.l.With().
 		Str("operation", "GetByID").
 		Str("orgID", orgID.String()).
@@ -92,7 +97,10 @@ func (or *organizationRepository) GetByID(ctx context.Context, orgID pulid.ID) (
 // Returns:
 //   - orgs: The organizations
 //   - error: An error if the organizations are not found in the cache
-func (or *organizationRepository) GetUserOrganizations(ctx context.Context, userID pulid.ID) ([]*organization.Organization, error) {
+func (or *organizationRepository) GetUserOrganizations(
+	ctx context.Context,
+	userID pulid.ID,
+) ([]*organization.Organization, error) {
 	log := or.l.With().
 		Str("operation", "GetUserOrganizations").
 		Str("userID", userID.String()).
@@ -120,7 +128,11 @@ func (or *organizationRepository) GetUserOrganizations(ctx context.Context, user
 //
 // Returns:
 //   - error: An error if the organizations are not set in the cache
-func (or *organizationRepository) SetUserOrganizations(ctx context.Context, userID pulid.ID, orgs []*organization.Organization) error {
+func (or *organizationRepository) SetUserOrganizations(
+	ctx context.Context,
+	userID pulid.ID,
+	orgs []*organization.Organization,
+) error {
 	log := or.l.With().
 		Str("operation", "SetUserOrganizations").
 		Str("userID", userID.String()).
@@ -192,7 +204,10 @@ func (or *organizationRepository) Invalidate(ctx context.Context, orgID pulid.ID
 //
 // Returns:
 //   - error: An error if the organizations are not invalidated in the cache
-func (or *organizationRepository) InvalidateUserOrganizations(ctx context.Context, userID pulid.ID) error {
+func (or *organizationRepository) InvalidateUserOrganizations(
+	ctx context.Context,
+	userID pulid.ID,
+) error {
 	log := or.l.With().
 		Str("operation", "InvalidateUserOrganizations").
 		Str("userID", userID.String()).
