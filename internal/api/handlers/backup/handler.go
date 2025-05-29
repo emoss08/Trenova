@@ -3,7 +3,7 @@ package backup
 import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/services/dbbackup"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
@@ -73,7 +73,7 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 
 // listBackups lists all available backups
 func (h *Handler) listBackups(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -94,7 +94,7 @@ func (h *Handler) listBackups(c *fiber.Ctx) error {
 
 // createBackup creates a new backup
 func (h *Handler) createBackup(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -113,7 +113,7 @@ func (h *Handler) createBackup(c *fiber.Ctx) error {
 
 // downloadBackup downloads a backup file
 func (h *Handler) downloadBackup(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -145,7 +145,7 @@ func (h *Handler) downloadBackup(c *fiber.Ctx) error {
 
 // deleteBackup deletes a backup file
 func (h *Handler) deleteBackup(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -174,7 +174,7 @@ func (h *Handler) deleteBackup(c *fiber.Ctx) error {
 
 // restoreBackup restores a database from a backup file
 func (h *Handler) restoreBackup(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -206,7 +206,7 @@ func (h *Handler) restoreBackup(c *fiber.Ctx) error {
 
 // cleanupBackups applies the retention policy
 func (h *Handler) cleanupBackups(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}

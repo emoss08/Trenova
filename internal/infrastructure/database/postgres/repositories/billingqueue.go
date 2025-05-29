@@ -171,7 +171,7 @@ func (br *billingQueueRepository) List(ctx context.Context, req *repositories.Li
 // Returns:
 //   - *billingqueue.QueueItem: The retrieved billing queue item entity.
 //   - error: If the billing queue item is not found or query fails.
-func (br *billingQueueRepository) GetByID(ctx context.Context, req repositories.GetBillingQueueItemRequest) (*billingqueue.QueueItem, error) {
+func (br *billingQueueRepository) GetByID(ctx context.Context, req *repositories.GetBillingQueueItemRequest) (*billingqueue.QueueItem, error) {
 	dba, err := br.db.DB(ctx)
 	if err != nil {
 		return nil, oops.

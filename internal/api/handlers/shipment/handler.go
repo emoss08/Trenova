@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/shipment"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/utils/streamingutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
@@ -90,7 +90,7 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 }
 
 func (h *Handler) selectOptions(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -121,7 +121,7 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 }
 
 func (h *Handler) list(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -144,7 +144,7 @@ func (h *Handler) list(c *fiber.Ctx) error {
 }
 
 func (h *Handler) get(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -154,7 +154,7 @@ func (h *Handler) get(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	shp, err := h.ss.Get(c.UserContext(), repositories.GetShipmentByIDOptions{
+	shp, err := h.ss.Get(c.UserContext(), &repositories.GetShipmentByIDOptions{
 		ID:     shipmentID,
 		BuID:   reqCtx.BuID,
 		OrgID:  reqCtx.OrgID,
@@ -171,7 +171,7 @@ func (h *Handler) get(c *fiber.Ctx) error {
 }
 
 func (h *Handler) create(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -193,7 +193,7 @@ func (h *Handler) create(c *fiber.Ctx) error {
 }
 
 func (h *Handler) update(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -221,7 +221,7 @@ func (h *Handler) update(c *fiber.Ctx) error {
 }
 
 func (h *Handler) cancel(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -243,7 +243,7 @@ func (h *Handler) cancel(c *fiber.Ctx) error {
 }
 
 func (h *Handler) duplicate(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -266,7 +266,7 @@ func (h *Handler) duplicate(c *fiber.Ctx) error {
 }
 
 func (h *Handler) markReadyToBill(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -302,7 +302,7 @@ type BOLCheckResponse struct {
 }
 
 func (h *Handler) checkForDuplicateBOLs(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -347,7 +347,7 @@ func (h *Handler) checkForDuplicateBOLs(c *fiber.Ctx) error {
 // persists data – it merely reuses the same calculator that runs during
 // create/update operations.
 func (h *Handler) calculateTotals(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -370,7 +370,7 @@ func (h *Handler) calculateTotals(c *fiber.Ctx) error {
 
 func (h *Handler) liveStream(c *fiber.Ctx) error {
 	// Use the simplified streaming helper for shipments
-	fetchFunc := func(ctx context.Context, reqCtx *ctx.RequestContext) ([]*shipmentdomain.Shipment, error) {
+	fetchFunc := func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*shipmentdomain.Shipment, error) {
 		filter := &ports.LimitOffsetQueryOptions{
 			TenantOpts: &ports.TenantOptions{
 				BuID:   reqCtx.BuID,

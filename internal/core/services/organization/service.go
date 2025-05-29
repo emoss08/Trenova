@@ -43,6 +43,7 @@ type Service struct {
 	v    *organizationvalidator.Validator
 }
 
+//nolint:gocritic // The p parameter is passed using fx.In
 func NewService(p ServiceParams) *Service {
 	log := p.Logger.With().
 		Str("service", "organization").

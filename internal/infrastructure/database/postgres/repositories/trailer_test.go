@@ -106,7 +106,7 @@ func TestTrailerRepository(t *testing.T) {
 	})
 
 	t.Run("get trailer by id", func(t *testing.T) {
-		testutils.TestRepoGetByID(ctx, t, repo, repoports.GetTrailerByIDOptions{
+		testutils.TestRepoGetByID(ctx, t, repo, &repoports.GetTrailerByIDOptions{
 			ID:    trail.ID,
 			OrgID: org.ID,
 			BuID:  bu.ID,
@@ -114,7 +114,7 @@ func TestTrailerRepository(t *testing.T) {
 	})
 
 	t.Run("get trailer with invalid id", func(t *testing.T) {
-		entity, err := repo.GetByID(ctx, repoports.GetTrailerByIDOptions{
+		entity, err := repo.GetByID(ctx, &repoports.GetTrailerByIDOptions{
 			ID:    "invalid-id",
 			OrgID: org.ID,
 			BuID:  bu.ID,
@@ -125,7 +125,7 @@ func TestTrailerRepository(t *testing.T) {
 	})
 
 	t.Run("get trailer by id with equipment details", func(t *testing.T) {
-		entity, err := repo.GetByID(ctx, repoports.GetTrailerByIDOptions{
+		entity, err := repo.GetByID(ctx, &repoports.GetTrailerByIDOptions{
 			ID:    trail.ID,
 			OrgID: org.ID,
 			BuID:  bu.ID,
@@ -141,7 +141,7 @@ func TestTrailerRepository(t *testing.T) {
 	})
 
 	t.Run("get trailer by id with fleet details", func(t *testing.T) {
-		entity, err := repo.GetByID(ctx, repoports.GetTrailerByIDOptions{
+		entity, err := repo.GetByID(ctx, &repoports.GetTrailerByIDOptions{
 			ID:    trail.ID,
 			OrgID: org.ID,
 			BuID:  bu.ID,
@@ -156,7 +156,7 @@ func TestTrailerRepository(t *testing.T) {
 	})
 
 	t.Run("get trailer by id failure", func(t *testing.T) {
-		result, err := repo.GetByID(ctx, repoports.GetTrailerByIDOptions{
+		result, err := repo.GetByID(ctx, &repoports.GetTrailerByIDOptions{
 			ID:    "invalid-id",
 			OrgID: org.ID,
 			BuID:  bu.ID,

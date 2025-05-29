@@ -163,7 +163,7 @@ func (tr *trailerRepository) List(ctx context.Context, opts *repositories.ListTr
 // Returns:
 //   - *trailer.Trailer: The trailer entity.
 //   - error: An error if the operation fails.
-func (tr *trailerRepository) GetByID(ctx context.Context, opts repositories.GetTrailerByIDOptions) (*trailer.Trailer, error) {
+func (tr *trailerRepository) GetByID(ctx context.Context, opts *repositories.GetTrailerByIDOptions) (*trailer.Trailer, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")

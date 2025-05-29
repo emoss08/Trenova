@@ -193,7 +193,7 @@ func TestShipmentRepository(t *testing.T) {
 	// Test GetByID operations
 	t.Run("GetByID", func(t *testing.T) {
 		t.Run("Valid ID", func(t *testing.T) {
-			opts := repoports.GetShipmentByIDOptions{
+			opts := &repoports.GetShipmentByIDOptions{
 				ID:    testShipment.ID,
 				OrgID: org.ID,
 				BuID:  bu.ID,
@@ -208,7 +208,7 @@ func TestShipmentRepository(t *testing.T) {
 		})
 
 		t.Run("Invalid ID", func(t *testing.T) {
-			opts := repoports.GetShipmentByIDOptions{
+			opts := &repoports.GetShipmentByIDOptions{
 				ID:    pulid.MustNew("shp_"),
 				OrgID: org.ID,
 				BuID:  bu.ID,
@@ -220,7 +220,7 @@ func TestShipmentRepository(t *testing.T) {
 		})
 
 		t.Run("Wrong Organization", func(t *testing.T) {
-			opts := repoports.GetShipmentByIDOptions{
+			opts := &repoports.GetShipmentByIDOptions{
 				ID:    testShipment.ID,
 				OrgID: pulid.MustNew("org_"),
 				BuID:  bu.ID,
@@ -232,7 +232,7 @@ func TestShipmentRepository(t *testing.T) {
 		})
 
 		t.Run("With Expanded Details", func(t *testing.T) {
-			opts := repoports.GetShipmentByIDOptions{
+			opts := &repoports.GetShipmentByIDOptions{
 				ID:    testShipment.ID,
 				OrgID: org.ID,
 				BuID:  bu.ID,
@@ -360,7 +360,7 @@ func TestShipmentRepository(t *testing.T) {
 	t.Run("Update", func(t *testing.T) {
 		t.Run("Valid Update", func(t *testing.T) {
 			// Get fresh copy to avoid version conflicts
-			fresh, err := repo.GetByID(ctx, repoports.GetShipmentByIDOptions{
+			fresh, err := repo.GetByID(ctx, &repoports.GetShipmentByIDOptions{
 				ID:    testShipment.ID,
 				OrgID: org.ID,
 				BuID:  bu.ID,
@@ -380,7 +380,7 @@ func TestShipmentRepository(t *testing.T) {
 
 		t.Run("Version Conflict", func(t *testing.T) {
 			// Get fresh copy and modify version to simulate conflict
-			fresh, err := repo.GetByID(ctx, repoports.GetShipmentByIDOptions{
+			fresh, err := repo.GetByID(ctx, &repoports.GetShipmentByIDOptions{
 				ID:    testShipment.ID,
 				OrgID: org.ID,
 				BuID:  bu.ID,
@@ -396,7 +396,7 @@ func TestShipmentRepository(t *testing.T) {
 		})
 
 		t.Run("Invalid ShipmentType Update", func(t *testing.T) {
-			fresh, err := repo.GetByID(ctx, repoports.GetShipmentByIDOptions{
+			fresh, err := repo.GetByID(ctx, &repoports.GetShipmentByIDOptions{
 				ID:    testShipment.ID,
 				OrgID: org.ID,
 				BuID:  bu.ID,
@@ -415,7 +415,7 @@ func TestShipmentRepository(t *testing.T) {
 	t.Run("UpdateStatus", func(t *testing.T) {
 		t.Run("Valid Status Update", func(t *testing.T) {
 			opts := &repoports.UpdateShipmentStatusRequest{
-				GetOpts: repoports.GetShipmentByIDOptions{
+				GetOpts: &repoports.GetShipmentByIDOptions{
 					ID:    inTransitShipment.ID,
 					OrgID: org.ID,
 					BuID:  bu.ID,
@@ -431,7 +431,7 @@ func TestShipmentRepository(t *testing.T) {
 
 		t.Run("Invalid Shipment ID", func(t *testing.T) {
 			opts := &repoports.UpdateShipmentStatusRequest{
-				GetOpts: repoports.GetShipmentByIDOptions{
+				GetOpts: &repoports.GetShipmentByIDOptions{
 					ID:    pulid.MustNew("shp_"),
 					OrgID: org.ID,
 					BuID:  bu.ID,
@@ -779,7 +779,7 @@ func TestShipmentRepository(t *testing.T) {
 
 			// Run multiple concurrent list operations
 			done := make(chan bool)
-			for i := 0; i < 5; i++ {
+			for range 5 {
 				go func() {
 					defer func() { done <- true }()
 					result, err := repo.List(ctx, opts)
@@ -789,7 +789,7 @@ func TestShipmentRepository(t *testing.T) {
 			}
 
 			// Wait for all goroutines to complete
-			for i := 0; i < 5; i++ {
+			for range 5 {
 				select {
 				case <-done:
 					// Success

@@ -222,7 +222,7 @@ func (r *repository) GetTableSchema(ctx context.Context, schemaName string) (*re
 // Returns:
 //   - []repositories.ColumnDetails: The column details for the given table.
 //   - error: An error if the operation fails.
-func (r *repository) fetchColumnsForTable(ctx context.Context, schemaName string, tableName string) ([]repositories.ColumnDetails, error) {
+func (r *repository) fetchColumnsForTable(ctx context.Context, schemaName, tableName string) ([]repositories.ColumnDetails, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection")
@@ -313,7 +313,7 @@ func (r *repository) fetchColumnsForTable(ctx context.Context, schemaName string
 // Returns:
 //   - []repositories.IndexDetails: The index details for the given table.
 //   - error: An error if the operation fails.
-func (r *repository) fetchIndexesForTable(ctx context.Context, schemaName string, tableName string) ([]repositories.IndexDetails, error) {
+func (r *repository) fetchIndexesForTable(ctx context.Context, schemaName, tableName string) ([]repositories.IndexDetails, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Failed to get database connection")
@@ -405,7 +405,7 @@ func (r *repository) fetchIndexesForTable(ctx context.Context, schemaName string
 // Returns:
 //   - []repositories.ConstraintDetails: The constraint details for the given table.
 //   - error: An error if the operation fails.
-func (r *repository) fetchConstraintsForTable(ctx context.Context, schemaName string, tableName string) ([]repositories.ConstraintDetails, error) {
+func (r *repository) fetchConstraintsForTable(ctx context.Context, schemaName, tableName string) ([]repositories.ConstraintDetails, error) {
 	constraintsMap := make(map[string]*repositories.ConstraintDetails)
 	var orderedConstraintNames []string
 
@@ -1163,7 +1163,6 @@ func (r *repository) extractLastKeyword(queryText string) string {
 				lastKeyword = tokUpper
 				break OUTER
 			default:
-				// continue scanning
 			}
 		}
 	}

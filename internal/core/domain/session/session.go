@@ -31,7 +31,7 @@ type Session struct {
 }
 
 // NewSession creates a new session
-func NewSession(userID pulid.ID, businessUnitID, organizationID pulid.ID, ip, userAgent string, expiresAt int64) *Session {
+func NewSession(userID, businessUnitID, organizationID pulid.ID, ip, userAgent string, expiresAt int64) *Session {
 	now := timeutils.NowUnix()
 	return &Session{
 		ID:             pulid.MustNew("ses_"),

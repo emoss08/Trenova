@@ -505,7 +505,7 @@ func (tcr *tableConfigurationRepository) ShareConfiguration(ctx context.Context,
 	return nil
 }
 
-func (tcr *tableConfigurationRepository) RemoveShare(ctx context.Context, configID pulid.ID, sharedWithID pulid.ID) error {
+func (tcr *tableConfigurationRepository) RemoveShare(ctx context.Context, configID, sharedWithID pulid.ID) error {
 	dba, err := tcr.db.DB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")

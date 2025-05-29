@@ -5,7 +5,7 @@ import (
 	"strconv"
 
 	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/gofiber/fiber/v2"
 )
@@ -13,7 +13,7 @@ import (
 func HandlePaginatedRequest[T any](
 	c *fiber.Ctx,
 	eh *validator.ErrorHandler,
-	reqCtx *ctx.RequestContext,
+	reqCtx *appctx.RequestContext,
 	handler ports.PageableHandler[T],
 ) error {
 	pg, err := Params(c)

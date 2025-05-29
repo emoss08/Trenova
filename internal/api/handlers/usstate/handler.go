@@ -3,7 +3,7 @@ package usstate
 import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	usstate "github.com/emoss08/trenova/internal/core/services/usstate"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/gofiber/fiber/v2"
 )
@@ -27,7 +27,7 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 }
 
 func (h *Handler) selectOptions(c *fiber.Ctx) error {
-	_, err := ctx.WithRequestContext(c)
+	_, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}

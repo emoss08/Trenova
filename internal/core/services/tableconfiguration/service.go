@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
@@ -381,7 +381,7 @@ func (s *Service) GetUserConfigurations(ctx context.Context, tableID string, opt
 // GetDefaultOrLatestConfiguration retrieves a configuration for the given table identifier and current user.
 // If none exists it will create a new one with a minimal default payload so the
 // client always receives a valid configuration object.
-func (s *Service) GetDefaultOrLatestConfiguration(ctx context.Context, resource string, rCtx *ctx.RequestContext) (*tcdomain.Configuration, error) {
+func (s *Service) GetDefaultOrLatestConfiguration(ctx context.Context, resource string, rCtx *appctx.RequestContext) (*tcdomain.Configuration, error) {
 	// First attempt to find an existing configuration for this user/org/bu + table
 	config, err := s.repo.GetDefaultOrLatestConfiguration(ctx, resource, &repositories.TableConfigurationFilters{
 		Base: &ports.FilterQueryOptions{

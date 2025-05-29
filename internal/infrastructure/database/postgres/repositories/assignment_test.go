@@ -129,7 +129,7 @@ func TestAssignmentRepository(t *testing.T) {
 		require.Equal(t, shipment.MoveStatusAssigned, updatedMove.Status)
 
 		// Verify shipment status was updated
-		updatedShipment, err := shipmentRepo.GetByID(ctx, repoports.GetShipmentByIDOptions{
+		updatedShipment, err := shipmentRepo.GetByID(ctx, &repoports.GetShipmentByIDOptions{
 			ID:    smt.ID,
 			OrgID: org.ID,
 			BuID:  bu.ID,
@@ -168,7 +168,7 @@ func TestAssignmentRepository(t *testing.T) {
 		require.Equal(t, shipment.MoveStatusAssigned, updatedMove.Status)
 
 		// Verify shipment status was updated
-		updatedShipment, err := shipmentRepo.GetByID(ctx, repoports.GetShipmentByIDOptions{
+		updatedShipment, err := shipmentRepo.GetByID(ctx, &repoports.GetShipmentByIDOptions{
 			ID:    smt2.ID,
 			OrgID: org.ID,
 			BuID:  bu.ID,
@@ -202,7 +202,7 @@ func TestAssignmentRepository(t *testing.T) {
 		}
 
 		// Verify shipment status was updated
-		updatedShipment, err := shipmentRepo.GetByID(ctx, repoports.GetShipmentByIDOptions{
+		updatedShipment, err := shipmentRepo.GetByID(ctx, &repoports.GetShipmentByIDOptions{
 			ID:    smt.ID,
 			OrgID: org.ID,
 			BuID:  bu.ID,

@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/utils/streamingutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
@@ -59,7 +59,7 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 }
 
 func (h *Handler) list(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -76,7 +76,7 @@ func (h *Handler) list(c *fiber.Ctx) error {
 }
 
 func (h *Handler) listByResourceID(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -100,7 +100,7 @@ func (h *Handler) listByResourceID(c *fiber.Ctx) error {
 }
 
 func (h *Handler) get(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}
@@ -125,7 +125,7 @@ func (h *Handler) get(c *fiber.Ctx) error {
 
 func (h *Handler) liveStream(c *fiber.Ctx) error {
 	// Use the simplified streaming helper for audit entries
-	fetchFunc := func(ctx context.Context, reqCtx *ctx.RequestContext) ([]*audit.Entry, error) {
+	fetchFunc := func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*audit.Entry, error) {
 		filter := &ports.LimitOffsetQueryOptions{
 			TenantOpts: &ports.TenantOptions{
 				BuID:   reqCtx.BuID,

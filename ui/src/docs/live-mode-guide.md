@@ -38,7 +38,7 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 }
 
 func (h *Handler) liveStream(c *fiber.Ctx) error {
-    reqCtx, err := ctx.WithRequestContext(c)
+    reqCtx, err := appctx.WithRequestContext(c)
     if err != nil {
         return h.errorHandler.HandleError(c, err)
     }

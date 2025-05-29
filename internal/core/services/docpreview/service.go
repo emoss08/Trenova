@@ -55,7 +55,7 @@ func (s *service) GeneratePreview(ctx context.Context, req *services.GeneratePre
 		Logger()
 
 	// Create temporary files for document and image
-	tmpFilePath, tmpImagePath, err := s.createTempFiles(req.FileName, log)
+	tmpFilePath, tmpImagePath, err := s.createTempFiles(req.FileName, &log)
 	if err != nil {
 		return nil, err
 	}
@@ -63,7 +63,7 @@ func (s *service) GeneratePreview(ctx context.Context, req *services.GeneratePre
 	defer os.Remove(tmpImagePath)
 
 	// Write document data to temp file
-	if err = s.writeToTempFile(tmpFilePath, req.File, log); err != nil {
+	if err = s.writeToTempFile(tmpFilePath, req.File, &log); err != nil {
 		return nil, err
 	}
 
@@ -91,7 +91,7 @@ func (s *service) GeneratePreview(ctx context.Context, req *services.GeneratePre
 	}
 
 	// Save the preview image to storage
-	previewFileName, err := s.savePreviewImage(ctx, req, imgData, log)
+	previewFileName, err := s.savePreviewImage(ctx, req, imgData, &log)
 	if err != nil {
 		return nil, err
 	}
@@ -109,14 +109,14 @@ func (s *service) GeneratePreview(ctx context.Context, req *services.GeneratePre
 }
 
 // createTempFiles creates temporary files for document and image processing
-func (s *service) createTempFiles(fileName string, log zerolog.Logger) (string, string, error) {
+func (s *service) createTempFiles(fileName string, log *zerolog.Logger) (tmpFilePath, tmpImagePath string, err error) {
 	// Create a temporary file for the document
 	tmpFile, err := os.CreateTemp("", "doc-*"+filepath.Ext(fileName))
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create temporary document file")
 		return "", "", err
 	}
-	tmpFilePath := tmpFile.Name()
+	tmpFilePath = tmpFile.Name()
 	tmpFile.Close()
 
 	// Create a temporary file for the preview image
@@ -126,14 +126,14 @@ func (s *service) createTempFiles(fileName string, log zerolog.Logger) (string, 
 		log.Error().Err(err).Msg("failed to create temporary preview image file")
 		return "", "", err
 	}
-	tmpImagePath := tmpImageFile.Name()
+	tmpImagePath = tmpImageFile.Name()
 	tmpImageFile.Close()
 
 	return tmpFilePath, tmpImagePath, nil
 }
 
 // writeToTempFile writes document data to a temporary file
-func (s *service) writeToTempFile(tmpFilePath string, data []byte, log zerolog.Logger) error {
+func (s *service) writeToTempFile(tmpFilePath string, data []byte, log *zerolog.Logger) error {
 	if err := os.WriteFile(tmpFilePath, data, 0o600); err != nil {
 		log.Error().Err(err).Msg("failed to write document data to temp file")
 		return err
@@ -142,7 +142,7 @@ func (s *service) writeToTempFile(tmpFilePath string, data []byte, log zerolog.L
 }
 
 // savePreviewImage saves the preview image to storage and returns the path
-func (s *service) savePreviewImage(ctx context.Context, req *services.GeneratePreviewRequest, imgData []byte, log zerolog.Logger) (string, error) {
+func (s *service) savePreviewImage(ctx context.Context, req *services.GeneratePreviewRequest, imgData []byte, log *zerolog.Logger) (string, error) {
 	// Generate a consistent preview path
 	timestamp := time.Now().Format("20060102150405")
 	safeResourceType := strings.ToLower(string(req.ResourceType))

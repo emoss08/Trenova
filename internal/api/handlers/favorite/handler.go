@@ -5,7 +5,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/pagefavorite"
 	"github.com/emoss08/trenova/internal/core/ports"
 	favoriteservice "github.com/emoss08/trenova/internal/core/services/favorite"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
@@ -100,7 +100,7 @@ type CheckFavoriteRequest struct {
 }
 
 func (h *Handler) list(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -118,7 +118,7 @@ func (h *Handler) list(c *fiber.Ctx) error {
 }
 
 func (h *Handler) get(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -137,7 +137,7 @@ func (h *Handler) get(c *fiber.Ctx) error {
 }
 
 func (h *Handler) create(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -161,7 +161,7 @@ func (h *Handler) create(c *fiber.Ctx) error {
 }
 
 func (h *Handler) update(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -196,7 +196,7 @@ func (h *Handler) update(c *fiber.Ctx) error {
 }
 
 func (h *Handler) delete(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -215,7 +215,7 @@ func (h *Handler) delete(c *fiber.Ctx) error {
 }
 
 func (h *Handler) toggle(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -247,7 +247,7 @@ func (h *Handler) toggle(c *fiber.Ctx) error {
 }
 
 func (h *Handler) checkFavorite(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -273,7 +273,7 @@ func (h *Handler) checkFavorite(c *fiber.Ctx) error {
 }
 
 func (h *Handler) checkFavoriteByPost(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}

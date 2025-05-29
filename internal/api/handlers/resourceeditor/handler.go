@@ -3,7 +3,7 @@ package resourceeditor
 import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
@@ -51,7 +51,7 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 }
 
 func (h *Handler) GetTableSchema(c *fiber.Ctx) error {
-	_, err := ctx.WithRequestContext(c)
+	_, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -66,7 +66,7 @@ func (h *Handler) GetTableSchema(c *fiber.Ctx) error {
 
 // GetAutocompleteSuggestionsHandler handles requests for SQL autocompletion suggestions.
 func (h *Handler) GetAutocompleteSuggestionsHandler(c *fiber.Ctx) error {
-	_, err := ctx.WithRequestContext(c)
+	_, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -92,7 +92,7 @@ func (h *Handler) GetAutocompleteSuggestionsHandler(c *fiber.Ctx) error {
 
 // ExecuteQueryHandler handles requests for executing SQL queries.
 func (h *Handler) ExecuteQueryHandler(c *fiber.Ctx) error {
-	_, err := ctx.WithRequestContext(c)
+	_, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}

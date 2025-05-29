@@ -105,14 +105,24 @@ func (r *shipmentCommodityRepository) loadExistingCommoditiesMap(
 }
 
 // categorizeCommodities categorizes commodities for different operations
+//
+// Parameters:
+//   - shp: The shipment to categorize commodities for
+//   - existingCommodityMap: A map of existing commodities for lookup
+//   - isCreate: Whether the operation is a create or update
+//
+// Returns:
+//   - newCommodities: A list of new commodities
+//   - updateCommodities: A list of commodities to update
+//   - updatedCommodityIDs: A map of updated commodity IDs
 func (r *shipmentCommodityRepository) categorizeCommodities(
 	shp *shipment.Shipment,
 	existingCommodityMap map[pulid.ID]*shipment.ShipmentCommodity,
 	isCreate bool,
-) ([]*shipment.ShipmentCommodity, []*shipment.ShipmentCommodity, map[pulid.ID]struct{}) {
-	newCommodities := make([]*shipment.ShipmentCommodity, 0)
-	updateCommodities := make([]*shipment.ShipmentCommodity, 0)
-	updatedCommodityIDs := make(map[pulid.ID]struct{})
+) (newCommodities, updateCommodities []*shipment.ShipmentCommodity, updatedCommodityIDs map[pulid.ID]struct{}) {
+	newCommodities = make([]*shipment.ShipmentCommodity, 0)
+	updateCommodities = make([]*shipment.ShipmentCommodity, 0)
+	updatedCommodityIDs = make(map[pulid.ID]struct{})
 
 	for _, comm := range shp.Commodities {
 		// Set required fields

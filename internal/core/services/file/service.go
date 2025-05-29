@@ -330,11 +330,6 @@ func (s *service) validateClassification(req *services.SaveFileRequest) error {
 		return eris.Errorf("invalid classification: %s", req.Classification)
 	}
 
-	// if !lo.Contains(policy.AllowedCategories, req.Category) {
-	// 	s.l.Error().Str("category", req.Category.String()).Str("classification", string(req.Classification)).Msg("category not allowed for classification")
-	// 	return eris.Errorf("category %s is not allowed for classification %s", req.Category, req.Classification)
-	// }
-
 	if int64(len(req.File)) > policy.MaxFileSize {
 		return eris.Wrapf(services.ErrFileSizeExceedsMaxSize, "max size for %s classification is %d bytes", req.Classification, policy.MaxFileSize)
 	}
@@ -494,7 +489,7 @@ func (s *service) DeleteFile(ctx context.Context, bucketName, objectName string)
 	return nil
 }
 
-func (s *service) ListFiles(ctx context.Context, bucketName, prefix, token string, pageSize int) ([]minio.ObjectInfo, string, error) {
+func (s *service) ListFiles(ctx context.Context, bucketName, prefix, token string, pageSize int) (objects []minio.ObjectInfo, nextToken string, err error) {
 	opts := minio.ListObjectsOptions{
 		Prefix:    prefix,
 		MaxKeys:   pageSize,
@@ -505,8 +500,6 @@ func (s *service) ListFiles(ctx context.Context, bucketName, prefix, token strin
 		opts.StartAfter = token
 	}
 
-	var objects []minio.ObjectInfo
-
 	for object := range s.client.ListObjects(ctx, bucketName, opts) {
 		if object.Err != nil {
 			return nil, "", eris.Wrap(object.Err, "list objects")
@@ -514,7 +507,6 @@ func (s *service) ListFiles(ctx context.Context, bucketName, prefix, token strin
 		objects = append(objects, object)
 	}
 
-	var nextToken string
 	if len(objects) == pageSize {
 		nextToken = objects[len(objects)-1].Key
 	}

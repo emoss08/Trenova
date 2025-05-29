@@ -96,7 +96,7 @@ func (s *Service) List(ctx context.Context, opts *repositories.ListTrailerOption
 	return s.repo.List(ctx, opts)
 }
 
-func (s *Service) Get(ctx context.Context, opts repositories.GetTrailerByIDOptions) (*trailer.Trailer, error) {
+func (s *Service) Get(ctx context.Context, opts *repositories.GetTrailerByIDOptions) (*trailer.Trailer, error) {
 	log := s.l.With().
 		Str("operation", "GetByID").
 		Str("trailerID", opts.ID.String()).
@@ -225,7 +225,7 @@ func (s *Service) Update(ctx context.Context, t *trailer.Trailer, userID pulid.I
 		return nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetTrailerByIDOptions{
+	original, err := s.repo.GetByID(ctx, &repositories.GetTrailerByIDOptions{
 		ID:    t.ID,
 		OrgID: t.OrganizationID,
 		BuID:  t.BusinessUnitID,

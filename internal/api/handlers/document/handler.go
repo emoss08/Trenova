@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/file"
-	"github.com/emoss08/trenova/internal/pkg/ctx"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/validator"
@@ -70,7 +70,7 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 }
 
 func (h *Handler) getDocumentCountByResource(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -88,7 +88,7 @@ func (h *Handler) getDocumentCountByResource(c *fiber.Ctx) error {
 }
 
 func (h *Handler) getResourceSubFolders(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -109,7 +109,7 @@ func (h *Handler) getResourceSubFolders(c *fiber.Ctx) error {
 }
 
 func (h *Handler) getDocumentsByResourceID(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -135,7 +135,7 @@ func (h *Handler) getDocumentsByResourceID(c *fiber.Ctx) error {
 }
 
 func (h *Handler) upload(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
@@ -234,7 +234,7 @@ func (h *Handler) upload(c *fiber.Ctx) error {
 }
 
 func (h *Handler) delete(c *fiber.Ctx) error {
-	reqCtx, err := ctx.WithRequestContext(c)
+	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
