@@ -7,24 +7,26 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { useFavorites } from "@/hooks/use-favorites";
+import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
 import { faStar, faTrash } from "@fortawesome/pro-regular-svg-icons";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Link, useLocation } from "react-router";
 import { toast } from "sonner";
 import { Icon } from "./ui/icons";
 
 export function FavoritesSidebar() {
   const location = useLocation();
-  const { data: favorites = [], isLoading } = useFavorites();
+  const { data: favorites = [], isLoading } = useQuery({
+    ...queries.favorite.list(),
+  });
   const queryClient = useQueryClient();
 
   const deleteFavorite = useMutation({
     mutationFn: (favoriteId: string) => api.favorites.delete(favoriteId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["favorites"] });
+      queryClient.invalidateQueries({ queryKey: queries.favorite.list._def });
       toast.success("Favorite removed");
     },
     onError: () => {
