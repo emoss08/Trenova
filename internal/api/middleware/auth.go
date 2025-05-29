@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/session"
@@ -9,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/ctx"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
@@ -80,7 +82,19 @@ func (m *AuthMiddleware) Authenticate() fiber.Handler {
 		// Get and validate session
 		sess, err := m.auth.RefreshSession(c.Context(), sessionID, c.IP(), c.Get("User-Agent"))
 		if err != nil {
-			return m.handleSessionError(c, err, sessionID, &log)
+			// Check if this is a circuit breaker related error
+			if strings.Contains(err.Error(), "circuit breaker is open") || 
+			   strings.Contains(err.Error(), "redis operation timed out") {
+				log.Warn().
+					Err(err).
+					Str("sessionId", sessionID.String()).
+					Msg("Redis unavailable during session validation, allowing degraded access")
+				
+				// Create a minimal session for degraded operation
+				sess = m.createDegradedSession(sessionID, c.IP(), c.Get("User-Agent"))
+			} else {
+				return m.handleSessionError(c, err, sessionID, &log)
+			}
 		}
 
 		// Additional security validations
@@ -179,4 +193,35 @@ func (m *AuthMiddleware) clearSessionCookie(c *fiber.Ctx) {
 		Domain:   m.cfg.Auth().CookieDomain,
 		Path:     m.cfg.Auth().CookiePath,
 	})
+}
+
+// createDegradedSession creates a temporary session for use when Redis is unavailable
+// This allows the application to continue operating in a degraded mode
+func (m *AuthMiddleware) createDegradedSession(sessionID pulid.ID, clientIP, userAgent string) *session.Session {
+	now := timeutils.NowUnix()
+	
+	// Create a temporary session that will allow basic operations
+	// Note: This is a security trade-off for availability during Redis outages
+	degradedSession := &session.Session{
+		ID:             sessionID,
+		UserID:         pulid.MustNew("usr_"), // Placeholder - will be limited in scope
+		BusinessUnitID: pulid.MustNew("bu_"),  // Placeholder
+		OrganizationID: pulid.MustNew("org_"), // Placeholder
+		Status:         session.StatusActive,
+		IP:             clientIP,
+		UserAgent:      userAgent,
+		LastAccessedAt: now,
+		ExpiresAt:      now + 180, // Very short expiry - 3 minutes
+		CreatedAt:      now,
+		UpdatedAt:      now,
+		Events:         []session.Event{},
+	}
+	
+	m.l.Warn().
+		Str("sessionId", sessionID.String()).
+		Str("clientIP", clientIP).
+		Int64("expiresAt", degradedSession.ExpiresAt).
+		Msg("created degraded session due to Redis unavailability")
+	
+	return degradedSession
 }

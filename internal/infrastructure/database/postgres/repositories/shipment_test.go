@@ -16,8 +16,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/services/calculator"
 	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/services/calculator"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/statemachine"
@@ -137,7 +137,7 @@ func TestShipmentRepository(t *testing.T) {
 			result, err := repo.List(ctx, opts)
 			require.NoError(t, err, "List with expanded details should not return error")
 			require.NotNil(t, result, "Result should not be nil")
-			
+
 			if len(result.Items) > 0 {
 				shipmentItem := result.Items[0]
 				assert.NotNil(t, shipmentItem.Customer, "Customer should be loaded")
@@ -534,12 +534,12 @@ func TestShipmentRepository(t *testing.T) {
 	t.Run("Duplicate", func(t *testing.T) {
 		t.Run("Basic Duplication", func(t *testing.T) {
 			req := &repoports.DuplicateShipmentRequest{
-				ShipmentID:          completedShipment.ID,
-				OrgID:               org.ID,
-				BuID:                bu.ID,
-				UserID:              testUser.ID,
-				OverrideDates:       false,
-				IncludeCommodities:  false,
+				ShipmentID:               completedShipment.ID,
+				OrgID:                    org.ID,
+				BuID:                     bu.ID,
+				UserID:                   testUser.ID,
+				OverrideDates:            false,
+				IncludeCommodities:       false,
 				IncludeAdditionalCharges: false,
 			}
 
@@ -554,12 +554,12 @@ func TestShipmentRepository(t *testing.T) {
 
 		t.Run("Duplication with Override Dates", func(t *testing.T) {
 			req := &repoports.DuplicateShipmentRequest{
-				ShipmentID:          completedShipment.ID,
-				OrgID:               org.ID,
-				BuID:                bu.ID,
-				UserID:              testUser.ID,
-				OverrideDates:       true,
-				IncludeCommodities:  false,
+				ShipmentID:               completedShipment.ID,
+				OrgID:                    org.ID,
+				BuID:                     bu.ID,
+				UserID:                   testUser.ID,
+				OverrideDates:            true,
+				IncludeCommodities:       false,
 				IncludeAdditionalCharges: false,
 			}
 
@@ -570,12 +570,12 @@ func TestShipmentRepository(t *testing.T) {
 
 		t.Run("Duplication with Commodities", func(t *testing.T) {
 			req := &repoports.DuplicateShipmentRequest{
-				ShipmentID:          completedShipment.ID,
-				OrgID:               org.ID,
-				BuID:                bu.ID,
-				UserID:              testUser.ID,
-				OverrideDates:       false,
-				IncludeCommodities:  true,
+				ShipmentID:               completedShipment.ID,
+				OrgID:                    org.ID,
+				BuID:                     bu.ID,
+				UserID:                   testUser.ID,
+				OverrideDates:            false,
+				IncludeCommodities:       true,
 				IncludeAdditionalCharges: false,
 			}
 
@@ -586,12 +586,12 @@ func TestShipmentRepository(t *testing.T) {
 
 		t.Run("Duplication with Additional Charges", func(t *testing.T) {
 			req := &repoports.DuplicateShipmentRequest{
-				ShipmentID:          completedShipment.ID,
-				OrgID:               org.ID,
-				BuID:                bu.ID,
-				UserID:              testUser.ID,
-				OverrideDates:       false,
-				IncludeCommodities:  false,
+				ShipmentID:               completedShipment.ID,
+				OrgID:                    org.ID,
+				BuID:                     bu.ID,
+				UserID:                   testUser.ID,
+				OverrideDates:            false,
+				IncludeCommodities:       false,
 				IncludeAdditionalCharges: true,
 			}
 
@@ -602,12 +602,12 @@ func TestShipmentRepository(t *testing.T) {
 
 		t.Run("Invalid Shipment ID", func(t *testing.T) {
 			req := &repoports.DuplicateShipmentRequest{
-				ShipmentID:          pulid.MustNew("shp_"),
-				OrgID:               org.ID,
-				BuID:                bu.ID,
-				UserID:              testUser.ID,
-				OverrideDates:       false,
-				IncludeCommodities:  false,
+				ShipmentID:               pulid.MustNew("shp_"),
+				OrgID:                    org.ID,
+				BuID:                     bu.ID,
+				UserID:                   testUser.ID,
+				OverrideDates:            false,
+				IncludeCommodities:       false,
 				IncludeAdditionalCharges: false,
 			}
 

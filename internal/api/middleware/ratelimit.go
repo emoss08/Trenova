@@ -216,12 +216,35 @@ func (rl *RateLimiter) checkRateLimit(ctx context.Context, key string, maxReques
 
 // handleRateLimitError handles errors that occur during rate limit checking
 func (rl *RateLimiter) handleRateLimitError(c *fiber.Ctx, config *RateLimitConfig, log zerolog.Logger, err error) error {
-	log.Error().Err(err).Msg("rate limit check failed")
+	// Check if this is a circuit breaker error
+	if strings.Contains(err.Error(), "circuit breaker is open") {
+		log.Warn().
+			Err(err).
+			Str("fallback_behavior", config.FallbackBehavior).
+			Msg("rate limit check failed due to circuit breaker, applying fallback")
+	} else {
+		log.Error().Err(err).Msg("rate limit check failed")
+	}
 
 	// Determine what to do on failure
 	if config.FallbackBehavior == "deny" {
 		rlErr := errors.NewRateLimitError(c.Path(), "Rate limiting unavailable. Please try again later.")
 		return c.Status(fiber.StatusServiceUnavailable).JSON(rlErr)
+	}
+
+	// For circuit breaker failures, apply more permissive fallback
+	if strings.Contains(err.Error(), "circuit breaker is open") {
+		// Set conservative rate limit headers to indicate degraded service
+		maxRequests, interval := rl.getRoleLimits(c, config)
+		now := time.Now().Unix()
+		reset := now + int64(interval.Seconds())
+		
+		rl.setRateLimitHeaders(c, maxRequests, maxRequests/2, reset, "fallback")
+		
+		log.Info().
+			Str("path", c.Path()).
+			Str("ip", c.IP()).
+			Msg("allowing request with fallback rate limiting due to Redis unavailability")
 	}
 
 	return c.Next() // Allow request on error for high availability
@@ -319,11 +342,27 @@ func (rl *RateLimiter) verifyCounterConsistency(ctx context.Context, key string,
 	// Check if window exists but counter doesn't or vice versa
 	exists, err := rl.redis.Exists(ctx, windowKey)
 	if err != nil {
+		// If circuit breaker is open, skip consistency check
+		if strings.Contains(err.Error(), "circuit breaker is open") {
+			rl.l.Debug().
+				Str("key", key).
+				Str("windowKey", windowKey).
+				Msg("skipping consistency check due to circuit breaker")
+			return nil
+		}
 		return eris.Wrap(err, "failed to check window key existence")
 	}
 
 	counterExists, err := rl.redis.Exists(ctx, key)
 	if err != nil {
+		// If circuit breaker is open, skip consistency check
+		if strings.Contains(err.Error(), "circuit breaker is open") {
+			rl.l.Debug().
+				Str("key", key).
+				Str("windowKey", windowKey).
+				Msg("skipping consistency check due to circuit breaker")
+			return nil
+		}
 		return eris.Wrap(err, "failed to check counter key existence")
 	}
 
@@ -335,10 +374,20 @@ func (rl *RateLimiter) verifyCounterConsistency(ctx context.Context, key string,
 			Msg("inconsistent rate limit state detected, resetting")
 
 		if err = rl.redis.Del(ctx, key); err != nil {
+			// If circuit breaker is open, ignore cleanup errors
+			if strings.Contains(err.Error(), "circuit breaker is open") {
+				rl.l.Debug().Msg("skipping key cleanup due to circuit breaker")
+				return nil
+			}
 			return eris.Wrap(err, "failed to delete counter key")
 		}
 
 		if err = rl.redis.Del(ctx, windowKey); err != nil {
+			// If circuit breaker is open, ignore cleanup errors
+			if strings.Contains(err.Error(), "circuit breaker is open") {
+				rl.l.Debug().Msg("skipping key cleanup due to circuit breaker")
+				return nil
+			}
 			return eris.Wrap(err, "failed to delete window key")
 		}
 	}

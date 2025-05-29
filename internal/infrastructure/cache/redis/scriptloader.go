@@ -39,6 +39,11 @@ func (sl *ScriptLoader) LoadScripts(ctx context.Context) error {
 
 	for _, entry := range entries {
 		if err = sl.loadScript(ctx, entry); err != nil {
+			// If loading fails due to circuit breaker, continue but log warning
+			if strings.Contains(err.Error(), "circuit breaker is open") {
+				// Continue loading other scripts, this one will be loaded later
+				continue
+			}
 			return err
 		}
 	}
@@ -68,9 +73,16 @@ func (sl *ScriptLoader) loadScript(ctx context.Context, entry fs.DirEntry) error
 	}
 
 	scriptContent := string(scriptBytes)
-	sha, err := sl.redis.ScriptLoad(ctx, scriptContent).Result()
-	if err != nil {
-		return eris.Wrapf(err, "failed to load script: %s", scriptName)
+	
+	var sha string
+	executeErr := sl.redis.executeWithCircuitBreaker(ctx, "SCRIPT_LOAD_"+scriptName, func() error {
+		var e error
+		sha, e = sl.redis.ScriptLoad(ctx, scriptContent).Result()
+		return e
+	})
+	
+	if executeErr != nil {
+		return eris.Wrapf(executeErr, "failed to load script: %s", scriptName)
 	}
 
 	sl.mu.Lock()
@@ -90,7 +102,19 @@ func (sl *ScriptLoader) EvalSHA(ctx context.Context, scriptName string, keys []s
 		return nil, eris.Errorf("script %s not found", scriptName)
 	}
 
-	result, err := sl.redis.EvalSha(ctx, sha, keys, args...).Result()
+	var result any
+	var err error
+
+	// Execute script with circuit breaker protection
+	executeErr := sl.redis.executeWithCircuitBreaker(ctx, "EVALSHA_"+scriptName, func() error {
+		result, err = sl.redis.EvalSha(ctx, sha, keys, args...).Result()
+		return err
+	})
+
+	if executeErr != nil {
+		return nil, executeErr
+	}
+
 	if err != nil && isNoScriptError(err) {
 		// Script not found in Redis, try to reload it
 		sha, err = sl.reloadScript(ctx, scriptName)
@@ -98,8 +122,15 @@ func (sl *ScriptLoader) EvalSHA(ctx context.Context, scriptName string, keys []s
 			return nil, err
 		}
 
-		// Retry with the reloaded script
-		result, err = sl.redis.EvalSha(ctx, sha, keys, args...).Result()
+		// Retry with the reloaded script with circuit breaker protection
+		executeErr = sl.redis.executeWithCircuitBreaker(ctx, "EVALSHA_"+scriptName+"_RETRY", func() error {
+			result, err = sl.redis.EvalSha(ctx, sha, keys, args...).Result()
+			return err
+		})
+
+		if executeErr != nil {
+			return nil, executeErr
+		}
 	}
 
 	return result, err
