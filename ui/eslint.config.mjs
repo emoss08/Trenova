@@ -4,8 +4,8 @@ import pluginQuery from "@tanstack/eslint-plugin-query";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import react from "eslint-plugin-react";
 import * as reactHooks from "eslint-plugin-react-hooks";
-
 import reactRefresh from "eslint-plugin-react-refresh";
+import globals from "globals";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
@@ -16,10 +16,17 @@ export default tseslint.config(
   reactRefresh.configs.vite,
   eslintPluginPrettierRecommended,
   reactHooks.configs.recommended,
-
   {
     ...react.configs.flat.recommended,
     settings: { react: { version: "detect" } },
+    languageOptions: {
+      ecmaVersion: 2020,
+      globals: globals.browser,
+      parserOptions: {
+        project: ["./tsconfig.node.json", "./tsconfig.app.json"],
+        tsconfigRootDir: import.meta.dirname,
+      },
+    },
   },
   {
     rules: {
