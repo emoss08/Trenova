@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/location"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
 	organizationHandler "github.com/emoss08/trenova/internal/api/handlers/organization"
+	"github.com/emoss08/trenova/internal/api/handlers/permission"
 	"github.com/emoss08/trenova/internal/api/handlers/reporting"
 	"github.com/emoss08/trenova/internal/api/handlers/resourceeditor"
 	"github.com/emoss08/trenova/internal/api/handlers/routing"
@@ -118,6 +119,7 @@ type RouterParams struct {
 	BillingQueueHandler          *billingqueue.Handler
 	ResourceEditorHandler        *resourceeditor.Handler
 	FavoriteHandler              *favorite.Handler
+	PermissionHandler            *permission.Handler
 }
 
 type Router struct {
@@ -298,4 +300,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Favorites
 	r.p.FavoriteHandler.RegisterRoutes(router, rl)
+
+	// Permissions
+	r.p.PermissionHandler.RegisterRoutes(router, rl)
 }

@@ -5,6 +5,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
@@ -45,6 +47,14 @@ type PermissionCheck struct {
 }
 
 type PermissionService interface {
+	ListRoles(
+		ctx context.Context,
+		req *repositories.ListRolesRequest,
+	) (*ports.ListResult[*permission.Role], error)
+	GetRoleByID(
+		ctx context.Context,
+		req *repositories.GetRoleByIDRequest,
+	) (*permission.Role, error)
 	CheckFieldModification(
 		ctx context.Context,
 		userID pulid.ID,

@@ -6,8 +6,10 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
@@ -38,6 +40,69 @@ func NewService(p ServiceParams) services.PermissionService {
 		l:     &log,
 		clock: &realClock{},
 	}
+}
+
+func (s *Service) ListRoles(
+	ctx context.Context,
+	req *repositories.ListRolesRequest,
+) (*ports.ListResult[*permission.Role], error) {
+	log := s.l.With().
+		Str("operation", "ListRoles").
+		Logger()
+
+	result, err := s.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.Filter.TenantOpts.UserID,
+				Resource:       permission.ResourceRole,
+				Action:         permission.ActionRead,
+				BusinessUnitID: req.Filter.TenantOpts.BuID,
+				OrganizationID: req.Filter.TenantOpts.OrgID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, eris.Wrap(err, "check permissions")
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to read roles")
+	}
+
+	return s.repo.ListRoles(ctx, req)
+}
+
+func (s *Service) GetRoleByID(
+	ctx context.Context,
+	req *repositories.GetRoleByIDRequest,
+) (*permission.Role, error) {
+	log := s.l.With().
+		Str("operation", "GetRoleByID").
+		Str("roleID", req.RoleID.String()).
+		Logger()
+
+	result, err := s.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.UserID,
+				Resource:       permission.ResourceRole,
+				Action:         permission.ActionRead,
+				BusinessUnitID: req.BuID,
+				OrganizationID: req.OrgID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to read this role")
+	}
+
+	return s.repo.GetRoleByID(ctx, req)
 }
 
 // CheckFieldModification checks if a user is allowed to modify a specific field of a resource.
