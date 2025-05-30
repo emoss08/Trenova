@@ -58,10 +58,9 @@ export const adminLinks: SidebarLink[] = [
     group: "Organization",
   },
   {
-    href: "#",
+    href: "/organization/users/",
     title: "Users & Roles",
     group: "Organization",
-    disabled: true,
   },
   {
     href: "#",
@@ -401,6 +400,12 @@ export const routes: RouteInfo[] = [
         key: Resource.DataRetention,
         label: "Data Retention",
         link: "/organization/data-retention/",
+        supportsModal: false,
+      },
+      {
+        key: Resource.User,
+        label: "Users & Roles",
+        link: "/organization/users/",
         supportsModal: false,
       },
       {

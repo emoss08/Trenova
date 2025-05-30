@@ -1,6 +1,6 @@
+import type { UserSchema } from "@/lib/schemas/user-schema";
 import type { Resource } from "./audit-entry";
 import type { BaseModelWithOrganization, Status } from "./common";
-import { User } from "./user";
 
 export enum ShareType {
   User = "User",
@@ -26,7 +26,7 @@ export interface TableConfiguration extends BaseModelWithOrganization {
 
   // Relationships (optional due to `omitempty`)
   shares?: ConfigurationShare[];
-  creator?: User;
+  creator?: UserSchema;
 
   // New fields
   tableConfig: TableConfig;
@@ -57,7 +57,7 @@ export interface ConfigurationShare {
   createdAt: number; // required
 
   // Relationships (optional due to `omitempty`)
-  shareWithUser?: User;
+  shareWithUser?: UserSchema;
   configuration?: TableConfiguration;
 }
 

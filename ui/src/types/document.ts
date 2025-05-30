@@ -1,6 +1,6 @@
+import type { UserSchema } from "@/lib/schemas/user-schema";
 import { Resource } from "./audit-entry";
 import { CustomerDocumentRequirement } from "./customer";
-import { User } from "./user";
 
 export enum DocumentType {
   License = "License",
@@ -84,7 +84,7 @@ export type Document = {
   presignedUrl?: string | null;
   // * generated preview URL by the server. (expires in 24 hours)
   previewUrl?: string | null;
-  uploadedBy?: User | null;
+  uploadedBy?: UserSchema | null;
 };
 
 export type ResourceFolder = {

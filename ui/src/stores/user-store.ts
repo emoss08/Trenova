@@ -1,14 +1,14 @@
-import { type User } from "@/types/user";
+import type { UserSchema } from "@/lib/schemas/user-schema";
 import { create } from "zustand";
 import { useShallow } from "zustand/react/shallow";
 
 interface AuthState {
-  user: User | null;
+  user: UserSchema | null;
   isAuthenticated: boolean;
   isInitialized: boolean;
   // Store permissions as a Set for efficient lookup: "resource:action"
   permissions: Set<string>;
-  setUser: (user: User | null) => void;
+  setUser: (user: UserSchema | null) => void;
   setInitialized: (initialized: boolean) => void;
   clearAuth: () => void;
   // Function to check permission

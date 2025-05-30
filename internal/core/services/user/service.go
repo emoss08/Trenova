@@ -46,7 +46,10 @@ func (s *Service) SelectOptions(
 	ctx context.Context,
 	opts *ports.LimitOffsetQueryOptions,
 ) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, opts)
+	result, err := s.repo.List(ctx, repositories.ListUserRequest{
+		Filter: opts,
+		// IncludeRoles: true,
+	})
 	if err != nil {
 		return nil, eris.Wrap(err, "select users")
 	}
@@ -64,18 +67,18 @@ func (s *Service) SelectOptions(
 
 func (s *Service) List(
 	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
+	opts repositories.ListUserRequest,
 ) (*ports.ListResult[*user.User], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         opts.TenantOpts.UserID,
+				UserID:         opts.Filter.TenantOpts.UserID,
 				Resource:       permission.ResourceUser,
 				Action:         permission.ActionRead,
-				BusinessUnitID: opts.TenantOpts.BuID,
-				OrganizationID: opts.TenantOpts.OrgID,
+				BusinessUnitID: opts.Filter.TenantOpts.BuID,
+				OrganizationID: opts.Filter.TenantOpts.OrgID,
 			},
 		},
 	)

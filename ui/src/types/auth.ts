@@ -1,4 +1,4 @@
-import { type User } from "./user";
+import type { UserSchema } from "@/lib/schemas/user-schema";
 
 export type CheckEmailResponse = {
   valid: boolean;
@@ -16,5 +16,5 @@ export type LoginRequest = {
 export type LoginResponse = {
   sessionID: string;
   expiresAt: string;
-  user: User;
+  user: UserSchema;
 };

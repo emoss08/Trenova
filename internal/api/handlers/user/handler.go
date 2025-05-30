@@ -96,7 +96,10 @@ func (h *Handler) list(c *fiber.Ctx) error {
 			return nil, h.eh.HandleError(fc, err)
 		}
 
-		return h.uh.List(fc.UserContext(), filter)
+		return h.uh.List(fc.UserContext(), repositories.ListUserRequest{
+			Filter:       filter,
+			IncludeRoles: fc.QueryBool("includeRoles", false),
+		})
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)

@@ -7,9 +7,9 @@ import { type ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
 import { type ShipmentCommoditySchema } from "@/lib/schemas/shipment-commodity-schema";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { type ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
+import type { UserSchema } from "@/lib/schemas/user-schema";
 import { BaseModel } from "./common";
 import { type ShipmentMove } from "./move";
-import { type User } from "./user";
 
 export enum ShipmentStatus {
   New = "New",
@@ -93,7 +93,7 @@ export type Shipment = BaseModel &
     canceledAt?: number | null;
     canceledById?: string | null;
     cancelReason?: string | null;
-    canceledBy?: User | null;
+    canceledBy?: UserSchema | null;
   };
 
 export type ShipmentQueryParams = {

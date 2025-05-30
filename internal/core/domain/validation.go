@@ -19,7 +19,7 @@ var (
 
 func ValidateTimezone(value any) error {
 	tz, _ := value.(string)
-	if tz == "" {
+	if tz == "" || tz == "auto" {
 		return nil // Skip empty timezone validation here as Required rule will catch it
 	}
 	_, err := time.LoadLocation(tz)

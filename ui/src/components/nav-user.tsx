@@ -5,8 +5,8 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { useLogout } from "@/hooks/use-auth";
+import type { UserSchema } from "@/lib/schemas/user-schema";
 import { useUser } from "@/stores/user-store";
-import { User } from "@/types/user";
 import { faUpRightFromSquare } from "@fortawesome/pro-regular-svg-icons";
 import { CaretSortIcon } from "@radix-ui/react-icons";
 import { useState } from "react";
@@ -28,7 +28,7 @@ import {
 } from "./ui/dropdown-menu";
 import { Icon } from "./ui/icons";
 
-export function UserAvatar({ user }: { user: User | null }) {
+export function UserAvatar({ user }: { user: UserSchema | null }) {
   if (!user) {
     return null;
   }

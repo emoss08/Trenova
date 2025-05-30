@@ -381,8 +381,19 @@ const routes: RouteObject[] = [
                   return { Component: IntegrationsPage };
                 },
                 handle: {
-                  crumb: "Integrations",
-                  title: "Integrations",
+                  crumb: "Apps & Integrations",
+                  title: "Apps & Integrations",
+                },
+              },
+              {
+                path: "users",
+                async lazy() {
+                  let { Users } = await import("@/app/users/page");
+                  return { Component: Users };
+                },
+                handle: {
+                  crumb: "Users & Roles",
+                  title: "Users & Roles",
                 },
               },
               {
