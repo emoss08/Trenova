@@ -30,9 +30,13 @@ type DateFormatOptions = {
 
 const TIME_FORMAT_24 = "HH:mm";
 const TIME_FORMAT_24_WITH_SECONDS = "HH:mm:ss";
+const TIME_FORMAT_12 = "h:mm a";
+const TIME_FORMAT_12_WITH_SECONDS = "h:mm:ss a";
 const DATE_FORMAT = "MM/dd/yyyy";
 const DATE_TIME_FORMAT_24 = `${DATE_FORMAT} ${TIME_FORMAT_24}`;
 const DATE_TIME_FORMAT_24_WITH_SECONDS = `${DATE_FORMAT} ${TIME_FORMAT_24_WITH_SECONDS}`;
+const DATE_TIME_FORMAT_12 = `${DATE_FORMAT} ${TIME_FORMAT_12}`;
+const DATE_TIME_FORMAT_12_WITH_SECONDS = `${DATE_FORMAT} ${TIME_FORMAT_12_WITH_SECONDS}`;
 
 /**
  * Converts a Date object to a Unix timestamp.
@@ -62,14 +66,18 @@ export function getTodayDate(): number {
 }
 
 /**
- * Formats a Unix timestamp into separated date and time parts using 24-hour format.
+ * Formats a Unix timestamp into separated date and time parts.
  * Date is formatted as "MMM d" (e.g., "Jan 23")
- * Time is formatted as "HH:mm" (e.g., "14:30")
+ * Time is formatted according to the specified time format
  *
  * @param timestamp Unix timestamp in seconds
+ * @param timeFormat The time format to use (12-hour or 24-hour)
  * @returns Object containing formatted date and time strings, or default values if timestamp is invalid
  */
-export function formatSplitDateTime(timestamp: number | undefined): {
+export function formatSplitDateTime(
+  timestamp: number | undefined,
+  timeFormat: TimeFormat = TimeFormat.TimeFormat24Hour,
+): {
   date: string;
   time: string;
 } {
@@ -78,9 +86,14 @@ export function formatSplitDateTime(timestamp: number | undefined): {
   const dateObj = toDate(timestamp);
   if (!dateObj) return { date: "-", time: "" };
 
+  const timeFormatString =
+    timeFormat === TimeFormat.TimeFormat12Hour
+      ? TIME_FORMAT_12
+      : TIME_FORMAT_24;
+
   return {
     date: format(dateObj, "d MMM yyyy"),
-    time: format(dateObj, "HH:mm"),
+    time: format(dateObj, timeFormatString),
   };
 }
 
@@ -175,36 +188,48 @@ export function isValidDateOnlyFormat(dateString: string): boolean {
 }
 
 /**
- * Generates a date and time string from a Date object using 24-hour format.
+ * Generates a date and time string from a Date object.
  *
  * @param date The Date object to format.
- * @param showSeconds Whether to include seconds in the output.
+ * @param options Formatting options including time format and whether to show seconds
  * @returns A formatted date and time string.
  * @throws {Error} If the input date is invalid
  */
 export function generateDateTimeString(
   date: Date,
-  showSeconds = false,
+  options: DateFormatOptions = {},
 ): string {
   if (!(date instanceof Date) || isNaN(date.getTime())) {
     throw new Error("Invalid date provided to generateDateTimeString");
   }
-  return format(
-    date,
-    showSeconds ? DATE_TIME_FORMAT_24_WITH_SECONDS : DATE_TIME_FORMAT_24,
-  );
+
+  const { timeFormat = TimeFormat.TimeFormat24Hour, showSeconds = false } =
+    options;
+
+  let formatString: string;
+  if (timeFormat === TimeFormat.TimeFormat12Hour) {
+    formatString = showSeconds
+      ? DATE_TIME_FORMAT_12_WITH_SECONDS
+      : DATE_TIME_FORMAT_12;
+  } else {
+    formatString = showSeconds
+      ? DATE_TIME_FORMAT_24_WITH_SECONDS
+      : DATE_TIME_FORMAT_24;
+  }
+
+  return format(date, formatString);
 }
 
 export function generateDateTimeStringFromUnixTimestamp(
   timestamp: number,
-  showSeconds = false,
+  options: DateFormatOptions = {},
 ): string {
   const date = toDate(timestamp);
   if (!date) {
     return "-";
   }
 
-  return generateDateTimeString(date, showSeconds);
+  return generateDateTimeString(date, options);
 }
 
 /**
@@ -243,19 +268,29 @@ export function isValidDateTimeFormat(dateString: string): boolean {
  *
  * @param timestamp - Unix timestamp in seconds
  * @param options - Formatting options
+ * @param userTimezone - User's preferred timezone, or "auto" for browser detection
  * @returns Formatted date string
  */
 export function formatToUserTimezone(
   timestamp: number,
   options: DateFormatOptions = {},
+  userTimezone: string = "auto",
 ): string {
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const timezone =
+    userTimezone === "auto"
+      ? Intl.DateTimeFormat().resolvedOptions().timeZone
+      : userTimezone;
 
   if (!timestamp || isNaN(timestamp)) {
     return "N/A";
   }
 
-  const { showSeconds = false, showTimeZone = true, showDate = true } = options;
+  const {
+    timeFormat = TimeFormat.TimeFormat24Hour,
+    showSeconds = false,
+    showTimeZone = true,
+    showDate = true,
+  } = options;
 
   const date = fromUnixTime(timestamp);
 
@@ -267,7 +302,7 @@ export function formatToUserTimezone(
     hour: "2-digit",
     minute: "2-digit",
     timeZone: timezone,
-    hour12: false, // Always use 24-hour format
+    hour12: timeFormat === TimeFormat.TimeFormat12Hour,
   };
 
   if (showSeconds) {
