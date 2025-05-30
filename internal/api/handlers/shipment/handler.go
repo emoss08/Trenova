@@ -133,8 +133,8 @@ func (h *Handler) list(c *fiber.Ctx) error {
 
 		return h.ss.List(fc.UserContext(), &repositories.ListShipmentOptions{
 			ShipmentOptions: repositories.ShipmentOptions{
-				ExpandShipmentDetails: c.QueryBool("expandShipmentDetails"),
-				Status:                c.Query("status"),
+				ExpandShipmentDetails: fc.QueryBool("expandShipmentDetails"),
+				Status:                fc.Query("status"),
 			},
 			Filter: filter,
 		})
