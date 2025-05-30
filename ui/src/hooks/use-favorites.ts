@@ -35,7 +35,7 @@ export function useToggleFavorite() {
 
 export function useCurrentPageFavorite() {
   const location = useLocation();
-  const currentUrl = `${window.location.origin}${location.pathname}${location.search}`;
+  const currentUrl = `${window.location.origin}${location.pathname}`;
 
   return useQuery({
     ...queries.favorite.check(currentUrl),
@@ -52,7 +52,7 @@ export function useToggleCurrentPageFavorite(options?: {
   const toggleFavorite = useToggleFavorite();
 
   const toggleCurrentPage = () => {
-    const currentUrl = `${window.location.origin}${location.pathname}${location.search}`;
+    const currentUrl = `${window.location.origin}${location.pathname}`;
 
     // Generate page title from route configuration or pathname if not provided
     const defaultTitle = options?.pageTitle || getPageTitle(location.pathname);
