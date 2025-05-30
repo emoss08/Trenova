@@ -43,22 +43,25 @@ export function SidebarNav({ links, className, ...props }: SidebarNavProps) {
                   </h3>
                 )}
                 <div>
-                  {groupLinks.map((link) => (
-                    <Link
-                      key={link.title}
-                      to={link.href}
-                      className={cn(
-                        buttonVariants({ variant: "ghost" }),
-                        location.pathname === link.href
-                          ? "bg-muted"
-                          : "hover:bg-muted",
-                        link.disabled && "opacity-50 pointer-events-none",
-                        "group justify-start flex items-center text-sm mb-1",
-                      )}
-                    >
-                      {link.title}
-                    </Link>
-                  ))}
+                  {groupLinks.map((link) => {
+                    const isActive = location.pathname === link.href;
+                    return (
+                      <Link
+                        key={link.title}
+                        to={link.href}
+                        className={cn(
+                          buttonVariants({ variant: "ghost" }),
+                          isActive
+                            ? "bg-muted dark:bg-primary/10"
+                            : "hover:bg-muted dark:hover:bg-primary/10",
+                          link.disabled && "opacity-50 pointer-events-none",
+                          "group justify-start flex items-center text-sm mb-1",
+                        )}
+                      >
+                        {link.title}
+                      </Link>
+                    );
+                  })}
                   {index !== array.length - 1 && <Separator className="my-5" />}
                 </div>
               </div>

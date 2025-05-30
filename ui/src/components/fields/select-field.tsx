@@ -80,6 +80,7 @@ export function SelectField<T extends FieldValues>({
                   <SelectItem
                     key={String(option.value)}
                     value={String(option.value)}
+                    description={option.description}
                     icon={option.icon}
                     color={option.color}
                   >
