@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )
@@ -391,8 +390,6 @@ func (s *Service) Delete(ctx context.Context, orgID, buID, userID, favoriteID pu
 	return nil
 }
 
-var ErrPageAlreadyFavorited = eris.New("page already favorited")
-
 func (s *Service) ToggleFavorite(
 	ctx context.Context,
 	orgID, buID, userID pulid.ID,
@@ -417,7 +414,7 @@ func (s *Service) ToggleFavorite(
 			log.Error().Err(deleteErr).Msg("failed to remove favorite")
 			return nil, deleteErr
 		}
-		return nil, ErrPageAlreadyFavorited
+		return nil, nil //nolint:nilnil // This is a special case where we return nil to indicate the page was unfavorited
 	}
 
 	// Page is not favorited, add it
