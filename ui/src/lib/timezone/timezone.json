@@ -1,5 +1,11 @@
 [
     {
+        "label": "Auto-detect",
+        "value": "auto",
+        "description": "Timezone will be automatically detected based on the server or user's location",
+        "color": "#15803d"
+    },
+    {
         "label": "-10:00 Hawaii Time - Honolulu",
         "value": "Pacific/Honolulu"
     },

@@ -177,6 +177,8 @@ function GeneralForm() {
               options={TIMEZONES.map((timezone) => ({
                 label: timezone.label,
                 value: timezone.value,
+                color: timezone.color,
+                description: timezone.description,
               }))}
               rules={{ required: true }}
               label="Operating Timezone"
