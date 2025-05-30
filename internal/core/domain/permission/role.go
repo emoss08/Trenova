@@ -12,25 +12,25 @@ import (
 type Role struct {
 	bun.BaseModel `bun:"table:roles,alias:r" json:"-"`
 
-	ID          pulid.ID      `json:"id"                  bun:",pk,type:VARCHAR(100)"`
-	Name        string        `json:"name"                bun:"name,type:VARCHAR(100),notnull"`
-	Description string        `json:"description"         bun:"description,type:TEXT"`
-	RoleType    RoleType      `json:"roleType"            bun:"role_type,type:role_type_enum,notnull"`
-	IsSystem    bool          `json:"isSystem"            bun:"is_system,notnull,default:false"`
-	Priority    int           `json:"priority"            bun:"priority,notnull,default:0"`
-	Status      domain.Status `json:"status"              bun:"status,type:status_enum,notnull,default:'Active'"`
-	ExpiresAt   *int64        `json:"expiresAt,omitempty" bun:"expires_at,nullzero"`
-	CreatedAt   int64         `json:"createdAt"           bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt   int64         `json:"updatedAt"           bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID          pulid.ID      `json:"id"                 bun:",pk,type:VARCHAR(100)"`
+	Name        string        `json:"name"               bun:"name,type:VARCHAR(100),notnull"`
+	Description string        `json:"description"        bun:"description,type:TEXT"`
+	RoleType    RoleType      `json:"roleType"           bun:"role_type,type:role_type_enum,notnull"`
+	IsSystem    bool          `json:"isSystem"           bun:"is_system,notnull,default:false"`
+	Priority    int           `json:"priority"           bun:"priority,notnull,default:0"`
+	Status      domain.Status `json:"status"             bun:"status,type:status_enum,notnull,default:'Active'"`
+	ExpiresAt   *int64        `json:"expiresAt,omitzero" bun:"expires_at,nullzero"`
+	CreatedAt   int64         `json:"createdAt"          bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt   int64         `json:"updatedAt"          bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	BusinessUnitID pulid.ID  `json:"businessUnitId"         bun:"business_unit_id,type:VARCHAR(100)"`
 	OrganizationID pulid.ID  `json:"organizationId"         bun:"organization_id,type:VARCHAR(100)"`
 	ParentRoleID   *pulid.ID `json:"parentRoleId,omitempty" bun:"parent_role_id,type:VARCHAR(100),nullzero"`
 
-	Permissions []*Permission  `json:"permissions,omitempty" bun:"m2m:role_permissions,join:Role=Permission"`
-	ParentRole  *Role          `json:"parentRole,omitempty"  bun:"rel:belongs-to,join:parent_role_id=id"`
-	ChildRoles  []*Role        `json:"childRoles,omitempty"  bun:"rel:has-many,join:id=parent_role_id"`
-	Metadata    map[string]any `json:"metadata,omitempty"    bun:"metadata,type:JSONB,default:'{}'::jsonb"`
+	Permissions []*Permission  `json:"permissions,omitzero" bun:"m2m:role_permissions,join:Role=Permission"`
+	ParentRole  *Role          `json:"parentRole,omitempty" bun:"rel:belongs-to,join:parent_role_id=id"`
+	ChildRoles  []*Role        `json:"childRoles,omitempty" bun:"rel:has-many,join:id=parent_role_id"`
+	Metadata    map[string]any `json:"metadata,omitempty"   bun:"metadata,type:JSONB,default:'{}'::jsonb"`
 }
 
 func (r *Role) Validate() error {

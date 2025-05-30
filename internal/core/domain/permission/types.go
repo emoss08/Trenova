@@ -41,6 +41,9 @@ const (
 	ResourceDocument = Resource(
 		"document",
 	) // Represents resources related to documents.
+	ResourceRole = Resource(
+		"role",
+	) // Represents resources related to roles.
 	ResourcePageFavorite = Resource(
 		"page_favorite",
 	) // Represents resources related to page favorites.
@@ -336,6 +339,10 @@ var (
 	ResourceActionMap = map[Resource][]Action{
 		// Core resources
 		ResourceUser: append(
+			BaseActions,
+			ActionDelegate,
+		),
+		ResourceRole: append(
 			BaseActions,
 			ActionDelegate,
 		),
