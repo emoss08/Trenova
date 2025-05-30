@@ -3,6 +3,7 @@ package fixtures
 import (
 	"context"
 	"fmt"
+	"slices"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain"
@@ -37,7 +38,15 @@ type ResourcePermissions struct {
 	Permissions []permissionbuilder.PermissionDefinition
 }
 
-func generateResourcePermissions() []ResourcePermissions {
+// hasAction checks if a resource has a specific action
+func hasAction(resource permission.Resource, action permission.Action) bool {
+	if actions, exists := permission.ResourceActionMap[resource]; exists {
+		return slices.Contains(actions, action)
+	}
+	return false
+}
+
+func GenerateResourcePermissions() []ResourcePermissions {
 	var allResourcesPerms []ResourcePermissions
 
 	for resource, actions := range permission.ResourceActionMap {
@@ -47,46 +56,42 @@ func generateResourcePermissions() []ResourcePermissions {
 		for _, action := range actions {
 			builder := permissionbuilder.NewPermissionBuilder(resource, action)
 
-			// Add standard dependencies for certain actions
-			switch action {
-			case permission.ActionUpdate, permission.ActionDelete:
-				builder.WithDependencies(struct {
+			// Add special dependencies for manage action (automatic dependencies will handle others)
+			if action == permission.ActionManage {
+				var manageDeps []struct {
 					Resource permission.Resource
 					Action   permission.Action
-				}{
-					Resource: resource,
-					Action:   permission.ActionRead,
-				})
-			case permission.ActionManage:
-				builder.WithDependencies(struct {
-					Resource permission.Resource
-					Action   permission.Action
-				}{
-					Resource: resource,
-					Action:   permission.ActionRead,
-				},
-					struct {
+				}
+
+				// Only add dependencies for actions that exist for this resource
+				if hasAction(resource, permission.ActionRead) {
+					manageDeps = append(manageDeps, struct {
 						Resource permission.Resource
 						Action   permission.Action
-					}{
-						Resource: resource,
-						Action:   permission.ActionCreate,
-					},
-					struct {
+					}{Resource: resource, Action: permission.ActionRead})
+				}
+				if hasAction(resource, permission.ActionCreate) {
+					manageDeps = append(manageDeps, struct {
 						Resource permission.Resource
 						Action   permission.Action
-					}{
-						Resource: resource,
-						Action:   permission.ActionUpdate,
-					},
-					struct {
+					}{Resource: resource, Action: permission.ActionCreate})
+				}
+				if hasAction(resource, permission.ActionUpdate) {
+					manageDeps = append(manageDeps, struct {
 						Resource permission.Resource
 						Action   permission.Action
-					}{
-						Resource: resource,
-						Action:   permission.ActionDelete,
-					},
-				)
+					}{Resource: resource, Action: permission.ActionUpdate})
+				}
+				if hasAction(resource, permission.ActionDelete) {
+					manageDeps = append(manageDeps, struct {
+						Resource permission.Resource
+						Action   permission.Action
+					}{Resource: resource, Action: permission.ActionDelete})
+				}
+
+				if len(manageDeps) > 0 {
+					builder.WithDependencies(manageDeps...)
+				}
 			}
 
 			switch resource {
@@ -120,6 +125,76 @@ func generateResourcePermissions() []ResourcePermissions {
 	return allResourcesPerms
 }
 
+// ValidateDependencies ensures all dependencies exist and there are no circular references
+func ValidateDependencies(resourcePermissions []ResourcePermissions) error {
+	permissionExists := make(map[string]bool)
+
+	// First pass: build index of all permissions that will exist
+	for _, rp := range resourcePermissions {
+		for _, pd := range rp.Permissions {
+			key := fmt.Sprintf("%s:%s", pd.Resource, pd.Action)
+			permissionExists[key] = true
+		}
+	}
+
+	// Second pass: validate all dependencies exist
+	for _, rp := range resourcePermissions {
+		for _, pd := range rp.Permissions {
+			for _, dep := range pd.DependsOn {
+				depKey := fmt.Sprintf("%s:%s", dep.Resource, dep.Action)
+				if !permissionExists[depKey] {
+					return eris.Errorf("permission %s:%s depends on %s:%s which doesn't exist",
+						pd.Resource, pd.Action, dep.Resource, dep.Action)
+				}
+			}
+		}
+	}
+
+	// Third pass: check for circular dependencies using DFS
+	visited := make(map[string]bool)
+	recStack := make(map[string]bool)
+
+	var hasCycle func(string) bool
+	hasCycle = func(permKey string) bool {
+		visited[permKey] = true
+		recStack[permKey] = true
+
+		// Find the permission definition for this key
+		for _, rp := range resourcePermissions {
+			for _, pd := range rp.Permissions {
+				if fmt.Sprintf("%s:%s", pd.Resource, pd.Action) == permKey {
+					// Check all dependencies
+					for _, dep := range pd.DependsOn {
+						depKey := fmt.Sprintf("%s:%s", dep.Resource, dep.Action)
+						if !visited[depKey] {
+							if hasCycle(depKey) {
+								return true
+							}
+						} else if recStack[depKey] {
+							return true
+						}
+					}
+					break
+				}
+			}
+		}
+
+		recStack[permKey] = false
+		return false
+	}
+
+	for _, rp := range resourcePermissions {
+		for _, pd := range rp.Permissions {
+			permKey := fmt.Sprintf("%s:%s", pd.Resource, pd.Action)
+			if !visited[permKey] && hasCycle(permKey) {
+				return eris.Errorf("circular dependency detected involving permission %s", permKey)
+			}
+		}
+	}
+
+	return nil
+}
+
 func LoadPermissions(ctx context.Context, db *bun.DB, fixture *dbfixture.Fixture) error {
 	org := fixture.MustRow("Organization.trenova").(*organization.Organization)
 	bu := fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
@@ -144,7 +219,12 @@ func LoadPermissions(ctx context.Context, db *bun.DB, fixture *dbfixture.Fixture
 		return eris.Wrap(err, "failed to get admin user")
 	}
 
-	resourcePermissions := generateResourcePermissions()
+	resourcePermissions := GenerateResourcePermissions()
+
+	// Validate dependencies before proceeding
+	if err := ValidateDependencies(resourcePermissions); err != nil {
+		return eris.Wrap(err, "dependency validation failed")
+	}
 
 	// Create super admin role
 	superAdminRole := &permission.Role{
