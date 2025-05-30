@@ -4,9 +4,8 @@ import {
   DialogBody,
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icons";
 import { STOP_DIALOG_NOTICE_KEY } from "@/constants/env";
