@@ -37,6 +37,7 @@ type User struct {
 	Timezone              string        `json:"timezone"              bun:"timezone,type:VARCHAR(50),notnull"`
 	TimeFormat            TimeFormat    `json:"timeFormat"            bun:"time_format,type:time_format_enum,notnull,default:'12-hour'"`
 	IsLocked              bool          `json:"isLocked"              bun:"is_locked,type:BOOLEAN,notnull,default:false"`
+	MustChangePassword    bool          `json:"mustChangePassword"    bun:"must_change_password,type:BOOLEAN,notnull,default:false"`
 	LastLoginAt           *int64        `json:"lastLoginAt,omitzero"  bun:"last_login_at,nullzero"`
 	Version               int64         `json:"version"               bun:"version,type:BIGINT,notnull,default:0"`
 	CreatedAt             int64         `json:"createdAt"             bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -100,6 +101,10 @@ func (u *User) Validate(multiErr *errors.MultiError) *errors.MultiError {
 // IsActive returns true if the user is active
 func (u *User) IsActive() bool {
 	return u.Status == domain.StatusActive
+}
+
+func (u *User) GetID() string {
+	return u.ID.String()
 }
 
 // GeneratePassword generates a hashed password
