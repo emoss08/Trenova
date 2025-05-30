@@ -156,13 +156,15 @@ func (r *favoriteRepository) Update(
 		Str("operation", "Update").
 		Logger()
 
-	query := dba.NewUpdate().Model(f)
+	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err = tx.NewUpdate().Model(f).Exec(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("update favorite")
+			return eris.Wrap(err, "update favorite")
+		}
 
-	_, err = query.Exec(ctx)
-	if err != nil {
-		log.Error().Err(err).Msg("update favorite")
-		return nil, eris.Wrap(err, "update favorite")
-	}
+		return nil
+	})
 
 	return f, nil
 }
@@ -182,20 +184,24 @@ func (r *favoriteRepository) Delete(
 
 	f := new(pagefavorite.PageFavorite)
 
-	query := dba.NewDelete().Model(f).
-		WhereGroup(" AND ", func(sq *bun.DeleteQuery) *bun.DeleteQuery {
-			return sq.
-				Where("pf.id = ?", opts.FavoriteID).
-				Where("pf.organization_id = ?", opts.OrgID).
-				Where("pf.business_unit_id = ?", opts.BuID).
-				Where("pf.user_id = ?", opts.UserID)
-		})
+	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		query := tx.NewDelete().Model(f).
+			WhereGroup(" AND ", func(sq *bun.DeleteQuery) *bun.DeleteQuery {
+				return sq.
+					Where("pf.id = ?", opts.FavoriteID).
+					Where("pf.organization_id = ?", opts.OrgID).
+					Where("pf.business_unit_id = ?", opts.BuID).
+					Where("pf.user_id = ?", opts.UserID)
+			})
 
-	_, err = query.Exec(ctx)
-	if err != nil {
-		log.Error().Err(err).Msg("delete favorite")
-		return eris.Wrap(err, "delete favorite")
-	}
+		_, err = query.Exec(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("delete favorite")
+			return eris.Wrap(err, "delete favorite")
+		}
 
-	return nil
+		return nil
+	})
+
+	return err
 }
