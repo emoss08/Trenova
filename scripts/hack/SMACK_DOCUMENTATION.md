@@ -1,4 +1,4 @@
-### Trenova Stress Testing Framework (SMACK) Documentation
+# Trenova Stress Testing Framework (SMACK) Documentation
 
 **USAGE:**
 

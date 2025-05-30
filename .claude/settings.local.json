@@ -18,7 +18,11 @@
       "Bash(timeout:*)",
       "Bash(ss:*)",
       "Bash(go vet:*)",
-      "Bash(gofmt:*)"
+      "Bash(gofmt:*)",
+      "Bash(task lint)",
+      "Bash(goimports:*)",
+      "Bash(golangci-lint run:*)",
+      "Bash(npm run lint:*)"
     ],
     "deny": []
   },

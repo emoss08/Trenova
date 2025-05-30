@@ -12,9 +12,8 @@ tasks:
       - task: db-seed
   check:
     cmds:
-      # - task: test-pretty
-      # - task: lint
       - task: format
+      - task: format-lines
       - task: critic
       - task: security
   swag:
@@ -46,6 +45,8 @@ tasks:
     cmd: go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -test ./...
   format:
     cmd: go fmt ./...
+  format-lines:
+    cmd: golines ./.. -w 
   format-sql:
     cmd: |
       if ! command -v pg_format &> /dev/null
