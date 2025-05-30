@@ -2,16 +2,22 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/permission/permissiongrant"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -40,6 +46,115 @@ func NewPermissionRepository(p PermissionRepositoryParams) repositories.Permissi
 		l:     &log,
 		cache: p.Cache,
 	}
+}
+
+func (pr *permissionRepository) addRoleFilter(
+	q *bun.SelectQuery,
+	req repositories.RolesQueryOptions,
+) *bun.SelectQuery {
+	if req.IncludeChildren {
+		q = q.Relation("ChildRoles")
+	}
+
+	if req.IncludeParent {
+		q = q.Relation("ParentRole")
+	}
+
+	if req.IncludePermissions {
+		q = q.Relation("Permissions")
+	}
+
+	return q
+}
+
+func (pr *permissionRepository) filterRolesQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListRolesRequest,
+) *bun.SelectQuery {
+	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
+		Query:      q,
+		TableAlias: "r",
+		Filter:     req.Filter,
+	})
+
+	q = pr.addRoleFilter(q, req.QueryOptions)
+	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
+}
+
+func (pr *permissionRepository) ListRoles(
+	ctx context.Context,
+	req *repositories.ListRolesRequest,
+) (*ports.ListResult[*permission.Role], error) {
+	dba, err := pr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := pr.l.With().
+		Str("operation", "ListRoles").
+		Str("orgID", req.Filter.TenantOpts.OrgID.String()).
+		Str("buID", req.Filter.TenantOpts.BuID.String()).
+		Logger()
+
+	entities := make([]*permission.Role, 0)
+
+	q := dba.NewSelect().Model(&entities)
+	q = pr.filterRolesQuery(q, req)
+
+	total, err := q.ScanAndCount(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to scan roles")
+		return nil, oops.In("permission_repository").
+			Tags("crud", "list").
+			Time(time.Now()).
+			Wrapf(err, "get roles")
+	}
+
+	return &ports.ListResult[*permission.Role]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
+func (pr *permissionRepository) GetRoleByID(
+	ctx context.Context,
+	req *repositories.GetRoleByIDRequest,
+) (*permission.Role, error) {
+	dba, err := pr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := pr.l.With().
+		Str("operation", "GetRoleByID").
+		Str("roleID", req.RoleID.String()).
+		Str("orgID", req.OrgID.String()).
+		Str("buID", req.BuID.String()).
+		Str("userID", req.UserID.String()).
+		Logger()
+
+	entity := new(permission.Role)
+
+	q := dba.NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("r.id = ?", req.RoleID).
+				Where("r.organization_id = ?", req.OrgID).
+				Where("r.business_unit_id = ?", req.BuID)
+		})
+
+	q = pr.addRoleFilter(q, req.QueryOptions)
+
+	if err = q.Scan(ctx); err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			return nil, errors.NewNotFoundError("Role not found within your organization")
+		}
+
+		log.Error().Err(err).Msg("failed to get role by id")
+		return nil, eris.Wrap(err, "failed to get role by id")
+	}
+
+	return entity, nil
 }
 
 func (pr *permissionRepository) GetUserPermissions(
