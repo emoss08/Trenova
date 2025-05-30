@@ -61,7 +61,6 @@ func (s *Service) Login(
 	ip, userAgent string,
 	req *services.LoginRequest,
 ) (*services.LoginResponse, error) {
-	// validate the request
 	if err := req.Validate(); err != nil {
 		return nil, eris.Wrap(err, "invalid login request")
 	}
@@ -71,13 +70,11 @@ func (s *Service) Login(
 		return nil, eris.Wrap(err, "failed to find user by email")
 	}
 
-	// check the rate limit for the user
 	if err = s.checkLoginRateLimit(ctx, ip, usr.ID); err != nil {
 		s.l.Warn().Err(err).Msg("login rate limit exceeded")
 		return nil, err
 	}
 
-	// Verify the user credentials
 	if err = usr.VerifyCredentials(req.Password); err != nil {
 		return nil, err
 	}
@@ -91,7 +88,11 @@ func (s *Service) Login(
 		return nil, eris.Wrap(err, "failed to create session")
 	}
 
-	usr.UpdateLastLogin()
+	if err = s.userRepo.UpdateLastLogin(ctx, usr.ID); err != nil {
+		s.l.Error().
+			Str("userID", usr.ID.String()).
+			Msg("failed to update last login")
+	}
 
 	// Reset the login attempts for the user
 	if err = s.resetLoginAttempts(ctx, ip, usr.ID); err != nil {
