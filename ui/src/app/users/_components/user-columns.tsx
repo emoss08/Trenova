@@ -58,10 +58,10 @@ export function getColumns(): ColumnDef<UserSchema>[] {
       header: "Roles",
       cell: ({ row }) => {
         const { roles } = row.original;
-        if (!roles) return null;
+        if (!roles) return <p>-</p>;
 
         return (
-          <div>
+          <div className="flex flex-wrap gap-1">
             {roles.map((role) => (
               <RandomColoredBadge key={role.id}>{role.name}</RandomColoredBadge>
             ))}
