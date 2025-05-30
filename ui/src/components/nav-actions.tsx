@@ -12,10 +12,6 @@ export function NavActions() {
   const { toggle, isPending } = useToggleCurrentPageFavorite();
 
   const isFavorite = favoriteData?.isFavorite ?? false;
-  console.info("favorite information", {
-    isFavorite,
-    favoriteData,
-  });
 
   return (
     <div className="flex items-center gap-2 text-sm">
