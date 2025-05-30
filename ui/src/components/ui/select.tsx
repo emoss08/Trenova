@@ -50,6 +50,7 @@ function SelectTrigger({
         "group border-muted-foreground/20 bg-muted flex h-7 w-full items-center justify-between whitespace-nowrap rounded-md border",
         "px-1.5 py-2 text-xs ring-offset-background placeholder:text-muted-foreground outline-hidden",
         "data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
+        "focus-visible:border-blue-600 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-blue-600/20",
         "transition-[border-color,box-shadow] duration-200 ease-in-out",
         "disabled:opacity-50 [&>span]:line-clamp-1 cursor-pointer",
         className,
@@ -116,13 +117,14 @@ function SelectItem({
   children,
   icon,
   color,
+  description,
   ...props
 }: Omit<SelectOption, "label">) {
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "focus:bg-muted focus:text-accent-foreground cursor-pointer data-[state=checked]:bg-muted [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-2xs outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "focus:bg-muted text-left focus:text-accent-foreground cursor-pointer hover:bg-muted dark:hover:bg-primary/10 data-[state=checked]:bg-muted data-[state=checked]:dark:bg-primary/10 [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-2xs outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className,
       )}
       {...props}
@@ -143,8 +145,26 @@ function SelectItem({
           <CheckIcon className="size-4" />
         </SelectPrimitive.ItemIndicator>
       </span>
-      <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+      <div className="flex flex-col">
+        <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+        {description && (
+          <SelectItemDescription>{description}</SelectItemDescription>
+        )}
+      </div>
     </SelectPrimitive.Item>
+  );
+}
+
+function SelectItemDescription({
+  className,
+  ...props
+}: React.ComponentProps<"p">) {
+  return (
+    <p
+      data-slot="select-item-description"
+      className={cn("text-muted-foreground text-2xs", className)}
+      {...props}
+    />
   );
 }
 
@@ -202,6 +222,7 @@ export {
   SelectContent,
   SelectGroup,
   SelectItem,
+  SelectItemDescription,
   SelectLabel,
   SelectScrollDownButton,
   SelectScrollUpButton,

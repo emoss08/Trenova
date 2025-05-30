@@ -1,4 +1,4 @@
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import {
   HoverCard,
   HoverCardContent,
@@ -7,11 +7,12 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import {
+  formatToUserTimezone,
   generateDateOnlyString,
-  generateDateTimeStringFromUnixTimestamp,
   toDate,
 } from "@/lib/date";
 import { cn, truncateText } from "@/lib/utils";
+import { useUser } from "@/stores/user-store";
 import { UTCDate } from "@date-fns/utc";
 import { faCheck, faCopy } from "@fortawesome/pro-solid-svg-icons";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
@@ -107,7 +108,16 @@ export function HoverCardTimestamp({
   sideOffset,
   className,
 }: HoverCardTimestampProps) {
-  const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const user = useUser();
+  const userTimezone = user?.timezone || "auto";
+  const userTimeFormat = user?.timeFormat;
+
+  // Get the effective timezone for display
+  const effectiveTimezone =
+    userTimezone === "auto"
+      ? Intl.DateTimeFormat().resolvedOptions().timeZone
+      : userTimezone;
+
   const date = toDate(timestamp);
 
   if (!timestamp || !date) {
@@ -119,11 +129,20 @@ export function HoverCardTimestamp({
       <HoverCardTrigger asChild>
         <div
           className={cn(
-            "font-mono whitespace-nowrap max-w-[120px] truncate",
+            "font-mono whitespace-nowrap max-w-[140px] truncate",
             className,
           )}
         >
-          {generateDateTimeStringFromUnixTimestamp(timestamp)}
+          {formatToUserTimezone(
+            timestamp,
+            {
+              timeFormat: userTimeFormat,
+              showSeconds: false,
+              showTimeZone: false,
+              showDate: true,
+            },
+            userTimezone,
+          )}
         </div>
       </HoverCardTrigger>
       <HoverCardPortal>
@@ -137,7 +156,19 @@ export function HoverCardTimestamp({
               value={format(new UTCDate(date), "LLL dd, y HH:mm:ss")}
               label="UTC"
             />
-            <Row value={format(date, "LLL dd, y HH:mm:ss")} label={timezone} />
+            <Row
+              value={formatToUserTimezone(
+                timestamp,
+                {
+                  timeFormat: userTimeFormat,
+                  showSeconds: true,
+                  showTimeZone: false,
+                  showDate: true,
+                },
+                userTimezone,
+              )}
+              label={userTimezone === "auto" ? "Local" : effectiveTimezone}
+            />
             <Row
               value={formatDistanceToNowStrict(date, { addSuffix: true })}
               label="Relative"
@@ -172,5 +203,32 @@ function Row({ value, label }: { value: string; label: string }) {
         {value}
       </dd>
     </div>
+  );
+}
+
+export function RandomColoredBadge({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const variants: BadgeProps["variant"][] = [
+    "active",
+    "inactive",
+    "info",
+    "purple",
+    "orange",
+    "indigo",
+    "pink",
+    "teal",
+    "warning",
+  ];
+
+  return (
+    <Badge
+      withDot={false}
+      variant={variants[Math.floor(Math.random() * variants.length)]}
+    >
+      {children}
+    </Badge>
   );
 }
