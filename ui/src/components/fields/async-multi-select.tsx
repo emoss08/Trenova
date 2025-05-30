@@ -26,11 +26,8 @@ import {
 } from "@/types/fields";
 import { LimitOffsetResponse } from "@/types/server";
 import { faCheck } from "@fortawesome/pro-regular-svg-icons";
-import {
-  ChevronDownIcon,
-  Cross2Icon,
-  CrossCircledIcon,
-} from "@radix-ui/react-icons";
+import { faXmark } from "@fortawesome/pro-solid-svg-icons";
+import { ChevronDownIcon, Cross2Icon } from "@radix-ui/react-icons";
 import { Controller, FieldValues } from "react-hook-form";
 import { Icon } from "../ui/icons";
 import { PulsatingDots } from "../ui/pulsating-dots";
@@ -95,6 +92,7 @@ export function MultiSelectAutocomplete<T>({
   isInvalid,
   maxCount = 1,
   extraSearchParams,
+  nestedValues = false,
 }: BaseMultiSelectAutocompleteFieldProps<T>) {
   const [open, setOpen] = useState(false);
   const [options, setOptions] = useState<T[]>([]);
@@ -120,8 +118,37 @@ export function MultiSelectAutocomplete<T>({
       if (values && values.length > 0) {
         try {
           setLoading(true);
-          const fetchedOptions = await fetchOptionsByIds<T>(link, values);
-          setSelectedOptions(fetchedOptions);
+
+          if (nestedValues) {
+            // If values are already objects, use them directly
+            const objects = values.filter((v): v is T => typeof v === "object");
+            const strings = values.filter(
+              (v): v is string => typeof v === "string",
+            );
+
+            let fetchedOptions: T[] = [...objects];
+
+            // Fetch any string IDs that need to be converted to objects
+            if (strings.length > 0) {
+              const additionalOptions = await fetchOptionsByIds<T>(
+                link,
+                strings,
+              );
+              fetchedOptions = [...fetchedOptions, ...additionalOptions];
+            }
+
+            setSelectedOptions(fetchedOptions);
+          } else {
+            // Original behavior for string arrays
+            const stringValues = values.map((v) =>
+              typeof v === "string" ? v : getOptionValue(v as T).toString(),
+            );
+            const fetchedOptions = await fetchOptionsByIds<T>(
+              link,
+              stringValues,
+            );
+            setSelectedOptions(fetchedOptions);
+          }
         } catch (err) {
           setError(
             err instanceof Error
@@ -137,7 +164,7 @@ export function MultiSelectAutocomplete<T>({
     };
 
     fetchInitialValues();
-  }, [values, link]);
+  }, [values, link, nestedValues, getOptionValue]);
 
   // Fetch options based on search term
   useEffect(() => {
@@ -238,16 +265,26 @@ export function MultiSelectAutocomplete<T>({
       setSelectedOptions(newSelectedOptions);
 
       // Update values passed to parent
-      const newValues = newSelectedOptions.map((opt) =>
-        getOptionValue(opt).toString(),
-      );
+      const newValues = nestedValues
+        ? (newSelectedOptions as (string | T)[])
+        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (
+            | string
+            | T
+          )[]);
       onChange(newValues);
 
       if (onOptionsChange) {
         onOptionsChange(newSelectedOptions);
       }
     },
-    [options, selectedOptions, onChange, onOptionsChange, getOptionValue],
+    [
+      options,
+      selectedOptions,
+      onChange,
+      onOptionsChange,
+      getOptionValue,
+      nestedValues,
+    ],
   );
 
   const removeOption = useCallback(
@@ -259,16 +296,19 @@ export function MultiSelectAutocomplete<T>({
       setSelectedOptions(newSelectedOptions);
 
       // Update values passed to parent
-      const newValues = newSelectedOptions.map((opt) =>
-        getOptionValue(opt).toString(),
-      );
+      const newValues = nestedValues
+        ? (newSelectedOptions as (string | T)[])
+        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (
+            | string
+            | T
+          )[]);
       onChange(newValues);
 
       if (onOptionsChange) {
         onOptionsChange(newSelectedOptions);
       }
     },
-    [selectedOptions, onChange, onOptionsChange, getOptionValue],
+    [selectedOptions, onChange, onOptionsChange, getOptionValue, nestedValues],
   );
 
   const handleClearAll = useCallback(() => {
@@ -348,9 +388,12 @@ export function MultiSelectAutocomplete<T>({
       setSelectedOptions(newSelectedOptions);
 
       // Update values passed to parent
-      const newValues = newSelectedOptions.map((opt) =>
-        getOptionValue(opt).toString(),
-      );
+      const newValues = nestedValues
+        ? (newSelectedOptions as (string | T)[])
+        : (newSelectedOptions.map((opt) => getOptionValue(opt).toString()) as (
+            | string
+            | T
+          )[]);
       onChange(newValues);
 
       if (onOptionsChange) {
@@ -364,6 +407,7 @@ export function MultiSelectAutocomplete<T>({
     onOptionsChange,
     handleClearAll,
     getOptionValue,
+    nestedValues,
   ]);
 
   return (
@@ -389,28 +433,25 @@ export function MultiSelectAutocomplete<T>({
               <div className="flex flex-wrap gap-1 py-1 w-full items-center justify-between">
                 <div className="flex flex-wrap gap-1">
                   {selectedOptions.slice(0, maxCount).map((option) => (
-                    <Badge
-                      withDot={false}
+                    <span
                       key={getOptionValue(option).toString()}
                       className={cn(
-                        "max-h-5 h-auto",
                         multiSelectVariants({ variant: "default" }),
                       )}
                     >
                       {renderBadge
                         ? renderBadge(option)
                         : getDisplayValue(option)}
-                      <button
-                        type="button"
+                      <span
                         className="size-4 cursor-pointer"
                         onClick={(event) => {
                           event.stopPropagation();
                           removeOption(getOptionValue(option).toString());
                         }}
                       >
-                        <CrossCircledIcon />
-                      </button>
-                    </Badge>
+                        <Icon icon={faXmark} />
+                      </span>
+                    </span>
                   ))}
                   {selectedOptions.length > maxCount && (
                     <Badge
@@ -427,8 +468,7 @@ export function MultiSelectAutocomplete<T>({
                 <div className="flex items-center">
                   {selectedOptions.length > 0 && (
                     <div className="flex items-center gap-0.5">
-                      <button
-                        type="button"
+                      <span
                         title="Clear all"
                         className="size-3 text-muted-foreground duration-200 ease-in-out transition-all mx-1 cursor-pointer"
                         onClick={(event) => {
@@ -437,13 +477,12 @@ export function MultiSelectAutocomplete<T>({
                         }}
                       >
                         <Cross2Icon />
-                      </button>
+                      </span>
                       <Separator
                         orientation="vertical"
                         className="min-h-4 h-full bg-foreground/10"
                       />
-                      <button
-                        type="button"
+                      <span
                         title="Toggle dropdown"
                         className="size-3 text-muted-foreground duration-200 ease-in-out transition-all cursor-pointer items-center justify-center mr-0.5"
                         onClick={(event) => {
@@ -457,7 +496,7 @@ export function MultiSelectAutocomplete<T>({
                             open && "transform -rotate-180",
                           )}
                         />
-                      </button>
+                      </span>
                     </div>
                   )}
                 </div>
@@ -472,8 +511,7 @@ export function MultiSelectAutocomplete<T>({
                 >
                   {placeholder}
                 </p>
-                <button
-                  type="button"
+                <span
                   className="size-3 text-muted-foreground duration-200 ease-in-out transition-all cursor-pointer items-center justify-center mr-0.5"
                   onClick={(event) => {
                     event.stopPropagation();
@@ -486,7 +524,7 @@ export function MultiSelectAutocomplete<T>({
                       open && "transform -rotate-180",
                     )}
                   />
-                </button>
+                </span>
               </>
             )}
             {loading && (

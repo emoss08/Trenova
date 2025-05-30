@@ -1,11 +1,9 @@
-import { MultiSelectAutocompleteField } from "@/components/fields/async-multi-select";
-import { ColorOptionValue } from "@/components/fields/select-components";
 import { SelectField } from "@/components/fields/select-field";
+import { DocumentTypeAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { Separator } from "@/components/ui/separator";
 import { billingCycleTypeChoices } from "@/lib/choices";
 import { type CustomerSchema } from "@/lib/schemas/customer-schema";
-import { DocumentTypeSchema } from "@/lib/schemas/document-type-schema";
 import { useFormContext } from "react-hook-form";
 import { BillingControlOverrides } from "./customer-billing-control-override";
 
@@ -34,28 +32,13 @@ export default function CustomerBillingProfile() {
             />
           </FormControl>
           <FormControl>
-            <MultiSelectAutocompleteField<DocumentTypeSchema, CustomerSchema>
+            <DocumentTypeAutocompleteField<CustomerSchema>
               control={control}
               name="billingProfile.documentTypeIds"
               label="Document Types"
               rules={{ required: true }}
-              link="/document-types/"
               placeholder="Select Document Types"
               description="Select the document types that are required for this customer billing profile."
-              getOptionValue={(option) => option.id || ""}
-              getOptionLabel={(option) => option.name}
-              renderOption={(option) => (
-                <div className="flex flex-col gap-0.5 items-start size-full">
-                  <ColorOptionValue color={option.color} value={option.code} />
-                  {option?.description && (
-                    <span className="text-2xs text-muted-foreground truncate w-full">
-                      {option?.description}
-                    </span>
-                  )}
-                </div>
-              )}
-              getDisplayValue={(option) => option.name}
-              renderBadge={(option) => option.name}
             />
           </FormControl>
         </FormGroup>
