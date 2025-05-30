@@ -24,34 +24,29 @@ var _ bun.BeforeAppendModelHook = (*User)(nil)
 type User struct {
 	bun.BaseModel `bun:"table:users,alias:usr" json:"-"`
 
-	// Primary identifiers
-	ID                    pulid.ID `json:"id"                    bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID        pulid.ID `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	CurrentOrganizationID pulid.ID `json:"currentOrganizationId" bun:"current_organization_id,type:VARCHAR(100),notnull"`
-
-	// Core fields
-	Status        domain.Status `json:"status"        bun:"status,type:status_enum,notnull,default:'Active'"`
-	Name          string        `json:"name"          bun:"name,type:VARCHAR(255),notnull"`
-	Username      string        `json:"username"      bun:"username,type:VARCHAR(20),notnull"`
-	Password      string        `json:"-"             bun:"password,type:VARCHAR(255),notnull"`
-	EmailAddress  string        `json:"emailAddress"  bun:"email_address,type:VARCHAR(255),notnull"`
-	ProfilePicURL string        `json:"profilePicUrl" bun:"profile_pic_url,type:VARCHAR(255)"`
-	ThumbnailURL  string        `json:"thumbnailUrl"  bun:"thumbnail_url,type:VARCHAR(255)"`
-	Timezone      string        `json:"timezone"      bun:"timezone,type:VARCHAR(50),notnull"`
-	TimeFormat    TimeFormat    `json:"timeFormat"    bun:"time_format,type:time_format_enum,notnull,default:'12-hour'"`
-	IsLocked      bool          `json:"isLocked"      bun:"is_locked,type:BOOLEAN,notnull,default:false"`
-	LastLoginAt   int64         `json:"lastLoginAt"   bun:"last_login_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
-
-	// Metadata and versioning
-	Version   int64 `json:"version"   bun:"version,type:BIGINT,notnull,default:0"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                    pulid.ID      `json:"id"                    bun:"id,pk,type:VARCHAR(100)"`
+	BusinessUnitID        pulid.ID      `json:"businessUnitId"        bun:"business_unit_id,type:VARCHAR(100),notnull"`
+	CurrentOrganizationID pulid.ID      `json:"currentOrganizationId" bun:"current_organization_id,type:VARCHAR(100),notnull"`
+	Status                domain.Status `json:"status"                bun:"status,type:status_enum,notnull,default:'Active'"`
+	Name                  string        `json:"name"                  bun:"name,type:VARCHAR(255),notnull"`
+	Username              string        `json:"username"              bun:"username,type:VARCHAR(20),notnull"`
+	Password              string        `json:"-"                     bun:"password,type:VARCHAR(255),notnull"`
+	EmailAddress          string        `json:"emailAddress"          bun:"email_address,type:VARCHAR(255),notnull"`
+	ProfilePicURL         string        `json:"profilePicUrl"         bun:"profile_pic_url,type:VARCHAR(255)"`
+	ThumbnailURL          string        `json:"thumbnailUrl"          bun:"thumbnail_url,type:VARCHAR(255)"`
+	Timezone              string        `json:"timezone"              bun:"timezone,type:VARCHAR(50),notnull"`
+	TimeFormat            TimeFormat    `json:"timeFormat"            bun:"time_format,type:time_format_enum,notnull,default:'12-hour'"`
+	IsLocked              bool          `json:"isLocked"              bun:"is_locked,type:BOOLEAN,notnull,default:false"`
+	LastLoginAt           *int64        `json:"lastLoginAt,omitzero"  bun:"last_login_at,nullzero"`
+	Version               int64         `json:"version"               bun:"version,type:BIGINT,notnull,default:0"`
+	CreatedAt             int64         `json:"createdAt"             bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt             int64         `json:"updatedAt"             bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit        *businessunit.BusinessUnit   `json:"-"                             bun:"rel:belongs-to,join:business_unit_id=id"`
 	CurrentOrganization *organization.Organization   `json:"currentOrganization,omitempty" bun:"rel:belongs-to,join:current_organization_id=id"`
 	Organizations       []*organization.Organization `json:"organizations,omitempty"       bun:"m2m:user_organizations,join:User=Organization"`
-	Roles               []*permission.Role           `json:"roles,omitempty"               bun:"m2m:user_roles,join:User=Role"`
+	Roles               []*permission.Role           `json:"roles,omitzero"                bun:"m2m:user_roles,join:User=Role"`
 }
 
 // Validate validates the user entity
@@ -116,11 +111,6 @@ func (u *User) GeneratePassword(raw string) (string, error) {
 	}
 
 	return string(hashed), nil
-}
-
-// UpdateLastLogin updates the user's last login date
-func (u *User) UpdateLastLogin() {
-	u.LastLoginAt = timeutils.NowUnix()
 }
 
 func (u *User) VerifyCredentials(raw string) error {

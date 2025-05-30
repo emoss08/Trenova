@@ -26,16 +26,21 @@ func TestUserRepository(t *testing.T) {
 	})
 
 	t.Run("list", func(t *testing.T) {
-		opts := &ports.LimitOffsetQueryOptions{
-			Limit:  10,
-			Offset: 0,
-			TenantOpts: &ports.TenantOptions{
-				OrgID: org.ID,
-				BuID:  bu.ID,
+		opts := repoports.ListUserRequest{
+			Filter: &ports.LimitOffsetQueryOptions{
+				Limit:  10,
+				Offset: 0,
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
+				},
 			},
 		}
 
-		testutils.TestRepoList(ctx, t, repo, opts)
+		result, err := repo.List(ctx, opts)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		require.NotEmpty(t, result.Items)
 	})
 
 	t.Run("get by id", func(t *testing.T) {

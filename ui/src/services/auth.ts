@@ -1,19 +1,19 @@
 import { http } from "@/lib/http-client";
+import type { UserSchema } from "@/lib/schemas/user-schema";
 import type {
   CheckEmailResponse,
   LoginRequest,
   LoginResponse,
   ResetPasswordResponse,
 } from "@/types/auth";
-import { User } from "@/types/user";
 
 export class AuthAPI {
-  async checkEmail(email: User["emailAddress"]) {
+  async checkEmail(email: UserSchema["emailAddress"]) {
     return http.post<CheckEmailResponse>("/auth/check-email/", {
       emailAddress: email,
     });
   }
-  async resetPassword(email: User["emailAddress"]) {
+  async resetPassword(email: UserSchema["emailAddress"]) {
     return http.post<ResetPasswordResponse>("/auth/reset-password/", {
       emailAddress: email,
     });
@@ -32,6 +32,6 @@ export class AuthAPI {
   }
 
   async getCurrentUser() {
-    return http.get<User>("/users/me/");
+    return http.get<UserSchema>("/users/me/");
   }
 }

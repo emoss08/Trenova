@@ -1,6 +1,6 @@
 import { type FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
-import { type User } from "./user";
+import type { UserSchema } from "@/lib/schemas/user-schema";
 
 export type FleetCode = FleetCodeSchema & {
-  manager?: User | null;
+  manager?: UserSchema | null;
 };

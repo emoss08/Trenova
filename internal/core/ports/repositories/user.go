@@ -16,11 +16,19 @@ type GetUserByIDOptions struct {
 	IncludeOrgs  bool
 }
 
+type ListUserRequest struct {
+	Filter       *ports.LimitOffsetQueryOptions
+	IncludeRoles bool
+}
+
 type UserRepository interface {
 	List(
 		ctx context.Context,
-		opts *ports.LimitOffsetQueryOptions,
+		req ListUserRequest,
 	) (*ports.ListResult[*user.User], error)
 	FindByEmail(ctx context.Context, email string) (*user.User, error)
 	GetByID(ctx context.Context, opts GetUserByIDOptions) (*user.User, error)
+	UpdateLastLogin(ctx context.Context, userID pulid.ID) error
+	Create(ctx context.Context, u *user.User) (*user.User, error)
+	Update(ctx context.Context, u *user.User) (*user.User, error)
 }

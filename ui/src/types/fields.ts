@@ -248,8 +248,8 @@ export interface BaseMultiSelectAutocompleteFieldProps<TOption> {
   getDisplayValue: (option: TOption) => string;
   label: string;
   placeholder?: string;
-  values?: string[];
-  onChange: (values: string[]) => void;
+  values?: (string | TOption)[];
+  onChange: (values: (string | TOption)[]) => void;
   onOptionsChange?: (options: TOption[]) => void;
   disabled?: boolean;
   className?: string;
@@ -258,6 +258,7 @@ export interface BaseMultiSelectAutocompleteFieldProps<TOption> {
   isInvalid?: boolean;
   maxCount?: number;
   extraSearchParams?: Record<string, string>;
+  nestedValues?: boolean; // New flag to enable nested object support
 }
 
 export interface MultiSelectAutocompleteProps<TOption>
@@ -279,7 +280,7 @@ export interface MultiSelectAutocompleteFieldProps<
   renderOption: (option: TOption) => React.ReactNode;
   renderBadge?: (option: TOption) => React.ReactNode;
   getOptionValue: (option: TOption) => string | number;
-  getOptionLabel: (option: TOption) => string;
+  getOptionLabel?: (option: TOption) => string;
   getDisplayValue: (option: TOption) => string;
   onOptionsChange?: (options: TOption[]) => void;
   placeholder?: string;
@@ -288,4 +289,5 @@ export interface MultiSelectAutocompleteFieldProps<
   maxCount?: number;
   animation?: number;
   extraSearchParams?: Record<string, string>;
+  nestedValues?: boolean; // New flag to enable nested object support
 }

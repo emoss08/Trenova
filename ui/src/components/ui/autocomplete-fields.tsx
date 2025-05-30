@@ -1,6 +1,7 @@
 import type { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
 import type { CommoditySchema } from "@/lib/schemas/commodity-schema";
 import type { CustomerSchema } from "@/lib/schemas/customer-schema";
+import type { DocumentTypeSchema } from "@/lib/schemas/document-type-schema";
 import type { EquipmentManufacturerSchema } from "@/lib/schemas/equipment-manufacturer-schema";
 import type { EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
 import type { FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
@@ -11,15 +12,17 @@ import type { ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
 import type { ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
 import type { TractorSchema } from "@/lib/schemas/tractor-schema";
 import type { TrailerSchema } from "@/lib/schemas/trailer-schema";
+import type { RoleSchema, UserSchema } from "@/lib/schemas/user-schema";
 import type { WorkerSchema } from "@/lib/schemas/worker-schema";
 import { formatLocation, truncateText } from "@/lib/utils";
-import type { User } from "@/types/user";
 import type {
   Control,
+  FieldPath,
   FieldValues,
   Path,
   RegisterOptions,
 } from "react-hook-form";
+import { MultiSelectAutocompleteField } from "../fields/async-multi-select";
 import { AutocompleteField } from "../fields/autocomplete";
 import { ColorOptionValue } from "../fields/select-components";
 import { PackingGroupBadge } from "../status-badge";
@@ -35,6 +38,20 @@ type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
   placeholder?: string;
   extraSearchParams?: Record<string, string | string[]>;
   onOptionChange?: (option: TOption | null) => void;
+};
+
+type BaseMultiSelectAutocompleteFieldProps<
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _TOption,
+  TForm extends FieldValues,
+> = {
+  name: FieldPath<TForm>;
+  control: Control<TForm>;
+  rules?: RegisterOptions<TForm, Path<TForm>>;
+  label: string;
+  description: string;
+  clearable?: boolean;
+  placeholder?: string;
 };
 
 export function HazardousMaterialAutocompleteField<T extends FieldValues>({
@@ -70,9 +87,9 @@ export function HazardousMaterialAutocompleteField<T extends FieldValues>({
 
 export function UserAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<User, T>) {
+}: BaseAutocompleteFieldProps<UserSchema, T>) {
   return (
-    <AutocompleteField<User, T>
+    <AutocompleteField<UserSchema, T>
       link="/users/"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
@@ -376,6 +393,47 @@ export function CustomerAutocompleteField<T extends FieldValues>({
         </div>
       )}
       {...props}
+    />
+  );
+}
+
+export function RoleAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseMultiSelectAutocompleteFieldProps<RoleSchema, T>) {
+  return (
+    <MultiSelectAutocompleteField<RoleSchema, T>
+      link="/roles/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.name}
+      renderOption={(option) => option.name}
+      getOptionLabel={(option) => option.name}
+      nestedValues={true}
+      {...props}
+    />
+  );
+}
+
+export function DocumentTypeAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseMultiSelectAutocompleteFieldProps<DocumentTypeSchema, T>) {
+  return (
+    <MultiSelectAutocompleteField<DocumentTypeSchema, T>
+      {...props}
+      link="/document-types/"
+      getOptionValue={(option) => option.id || ""}
+      getOptionLabel={(option) => option.name}
+      renderOption={(option) => (
+        <div className="flex flex-col gap-0.5 items-start size-full">
+          <ColorOptionValue color={option.color} value={option.code} />
+          {option?.description && (
+            <span className="text-2xs text-muted-foreground truncate w-full">
+              {option?.description}
+            </span>
+          )}
+        </div>
+      )}
+      getDisplayValue={(option) => option.name}
+      renderBadge={(option) => option.name}
     />
   );
 }

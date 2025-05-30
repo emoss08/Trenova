@@ -1,5 +1,5 @@
+import type { UserSchema } from "@/lib/schemas/user-schema";
 import { BaseModel } from "./common";
-import { User } from "./user";
 
 export type AuditEntryResponse = {
   items: AuditEntry[];
@@ -28,7 +28,7 @@ export interface AuditEntry extends BaseModel {
   ipAddress: string;
 
   // * Relations
-  user: User;
+  user: UserSchema;
 }
 
 export enum AuditEntryAction {
