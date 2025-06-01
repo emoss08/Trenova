@@ -45,7 +45,8 @@ export function SelectField<T extends FieldValues>({
 
   // Update selectedOption when field.value changes (e.g., during form reset)
   useEffect(() => {
-    const newSelectedOption = options.find((option) => option.value === field.value) || null;
+    const newSelectedOption =
+      options.find((option) => option.value === field.value) || null;
     setSelectedOption(newSelectedOption);
   }, [field.value, options]);
 
