@@ -33,7 +33,7 @@ function SelectValue({ color, ...props }: SelectValue) {
           }}
         />
       )}
-      <div className="truncate min-w-0 flex-1">
+      <div className="truncate min-w-0 flex-1 text-left">
         <SelectPrimitive.Value data-slot="select-value" {...props} />
       </div>
     </div>
