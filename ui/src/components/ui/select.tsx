@@ -24,16 +24,18 @@ function SelectGroup({
 
 function SelectValue({ color, ...props }: SelectValue) {
   return (
-    <div className="flex h-5 items-center text-xs font-normal text-foreground gap-x-1.5 max-w-[var(--radix-select-content-available-width)] truncate">
+    <div className="flex h-5 items-center text-xs font-normal text-foreground gap-x-1.5 flex-1 min-w-0 overflow-hidden">
       {color && (
         <div
-          className="size-2 rounded-full"
+          className="size-2 rounded-full flex-shrink-0"
           style={{
             backgroundColor: color,
           }}
         />
       )}
-      <SelectPrimitive.Value data-slot="select-value" {...props} />
+      <div className="truncate min-w-0 flex-1">
+        <SelectPrimitive.Value data-slot="select-value" {...props} />
+      </div>
     </div>
   );
 }
@@ -59,7 +61,7 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="group-data-[state=open]:rotate-180 transition-transform duration-200 ease-in-out size-3 opacity-50" />
+        <ChevronDownIcon className="group-data-[state=open]:rotate-180 transition-transform duration-200 ease-in-out size-3 opacity-50 flex-shrink-0 ml-1" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
