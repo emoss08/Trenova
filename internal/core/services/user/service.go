@@ -127,6 +127,57 @@ func (s *Service) Get(
 	return entity, nil
 }
 
+func (s *Service) Create(
+	ctx context.Context,
+	u *user.User,
+	userID pulid.ID,
+) (*user.User, error) {
+	log := s.l.With().
+		Str("operation", "Create").
+		Interface("user", u).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         userID,
+			Resource:       permission.ResourceUser,
+			Action:         permission.ActionCreate,
+			BusinessUnitID: u.BusinessUnitID,
+			OrganizationID: u.CurrentOrganizationID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to create a user")
+	}
+
+	createdEntity, err := s.repo.Create(ctx, u)
+	if err != nil {
+		return nil, err
+	}
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceUser,
+			ResourceID:     createdEntity.GetID(),
+			Action:         permission.ActionCreate,
+			UserID:         userID,
+			CurrentState:   jsonutils.MustToJSON(createdEntity),
+			OrganizationID: createdEntity.CurrentOrganizationID,
+			BusinessUnitID: createdEntity.BusinessUnitID,
+		},
+		audit.WithComment("User created"),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log user creation")
+	}
+
+	return createdEntity, nil
+}
+
 func (s *Service) Update(
 	ctx context.Context,
 	u *user.User,
@@ -195,5 +246,4 @@ func (s *Service) Update(
 	}
 
 	return updatedEntity, nil
-
 }

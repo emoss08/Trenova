@@ -7,6 +7,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/permission/permissiongrant"
+	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -401,4 +402,389 @@ func (pr *permissionRepository) GetRolesAndPermissions(
 		Permissions:   allPermissions,
 		CompleteRoles: dbRoles,
 	}, nil
+}
+
+// CreateRole creates a new role with associated permissions
+func (pr *permissionRepository) CreateRole(
+	ctx context.Context,
+	req *repositories.CreateRoleRequest,
+) (*permission.Role, error) {
+	dba, err := pr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := pr.l.With().
+		Str("operation", "CreateRole").
+		Str("roleName", req.Role.Name).
+		Str("orgID", req.OrganizationID.String()).
+		Str("buID", req.BusinessUnitID.String()).
+		Logger()
+
+	// Set the organization and business unit IDs
+	req.Role.OrganizationID = req.OrganizationID
+	req.Role.BusinessUnitID = req.BusinessUnitID
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		// Insert the role
+		if _, iErr := tx.NewInsert().Model(req.Role).Exec(c); iErr != nil {
+			log.Error().Err(iErr).Msg("failed to insert role")
+			return iErr
+		}
+
+		// Handle role permissions
+		if err := pr.handleRolePermissions(c, tx, req.Role, req.PermissionIDs, true); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create role")
+		return nil, err
+	}
+
+	log.Debug().Msg("role created successfully")
+	return req.Role, nil
+}
+
+// UpdateRole updates an existing role and its permissions
+func (pr *permissionRepository) UpdateRole(
+	ctx context.Context,
+	req *repositories.UpdateRoleRequest,
+) (*permission.Role, error) {
+	dba, err := pr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := pr.l.With().
+		Str("operation", "UpdateRole").
+		Str("roleID", req.Role.ID.String()).
+		Str("roleName", req.Role.Name).
+		Str("orgID", req.OrganizationID.String()).
+		Str("buID", req.BusinessUnitID.String()).
+		Logger()
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		// Update the role
+		result, uErr := tx.NewUpdate().
+			Model(req.Role).
+			Where("r.id = ?", req.Role.ID).
+			Where("r.organization_id = ?", req.OrganizationID).
+			Where("r.business_unit_id = ?", req.BusinessUnitID).
+			Where("r.is_system = false"). // Prevent updating system roles
+			Exec(c)
+		if uErr != nil {
+			log.Error().Err(uErr).Msg("failed to update role")
+			return uErr
+		}
+
+		rowsAffected, raErr := result.RowsAffected()
+		if raErr != nil {
+			return raErr
+		}
+
+		if rowsAffected == 0 {
+			return errors.NewNotFoundError("Role not found or is a system role")
+		}
+
+		// Handle role permissions
+		if err := pr.handleRolePermissions(c, tx, req.Role, req.PermissionIDs, false); err != nil {
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to update role")
+		return nil, err
+	}
+
+	log.Debug().Msg("role updated successfully")
+	return req.Role, nil
+}
+
+// DeleteRole deletes a role and its associated permissions
+func (pr *permissionRepository) DeleteRole(
+	ctx context.Context,
+	req *repositories.DeleteRoleRequest,
+) error {
+	dba, err := pr.db.DB(ctx)
+	if err != nil {
+		return eris.Wrap(err, "get database connection")
+	}
+
+	log := pr.l.With().
+		Str("operation", "DeleteRole").
+		Str("roleID", req.RoleID.String()).
+		Str("orgID", req.OrganizationID.String()).
+		Str("buID", req.BusinessUnitID.String()).
+		Logger()
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		// First delete role permissions
+		_, dpErr := tx.NewDelete().
+			Model((*permission.RolePermission)(nil)).
+			Where("role_id = ?", req.RoleID).
+			Where("organization_id = ?", req.OrganizationID).
+			Where("business_unit_id = ?", req.BusinessUnitID).
+			Exec(c)
+		if dpErr != nil {
+			log.Error().Err(dpErr).Msg("failed to delete role permissions")
+			return dpErr
+		}
+
+		// Then delete user roles
+		_, durErr := tx.NewDelete().
+			Model((*user.UserRole)(nil)).
+			Where("role_id = ?", req.RoleID).
+			Where("organization_id = ?", req.OrganizationID).
+			Where("business_unit_id = ?", req.BusinessUnitID).
+			Exec(c)
+		if durErr != nil {
+			log.Error().Err(durErr).Msg("failed to delete user roles")
+			return durErr
+		}
+
+		// Finally delete the role
+		result, drErr := tx.NewDelete().
+			Model((*permission.Role)(nil)).
+			Where("r.id = ?", req.RoleID).
+			Where("r.organization_id = ?", req.OrganizationID).
+			Where("r.business_unit_id = ?", req.BusinessUnitID).
+			Where("r.is_system = false"). // Prevent deleting system roles
+			Exec(c)
+		if drErr != nil {
+			log.Error().Err(drErr).Msg("failed to delete role")
+			return drErr
+		}
+
+		rowsAffected, raErr := result.RowsAffected()
+		if raErr != nil {
+			return raErr
+		}
+
+		if rowsAffected == 0 {
+			return errors.NewNotFoundError("Role not found or is a system role")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to delete role")
+		return err
+	}
+
+	log.Debug().Msg("role deleted successfully")
+	return nil
+}
+
+// ListPermissions lists all available permissions
+func (pr *permissionRepository) ListPermissions(
+	ctx context.Context,
+	req *repositories.ListPermissionsRequest,
+) (*ports.ListResult[*permission.Permission], error) {
+	dba, err := pr.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := pr.l.With().
+		Str("operation", "ListPermissions").
+		Str("orgID", req.OrganizationID.String()).
+		Str("buID", req.BusinessUnitID.String()).
+		Logger()
+
+	permissions := make([]*permission.Permission, 0)
+
+	q := dba.NewSelect().Model(&permissions).
+		Order("perm.resource ASC", "perm.action ASC")
+
+	// Apply pagination
+	if req.Filter != nil {
+		q = q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
+	}
+
+	total, err := q.ScanAndCount(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to scan permissions")
+		return nil, eris.Wrap(err, "scan permissions")
+	}
+
+	return &ports.ListResult[*permission.Permission]{
+		Items: permissions,
+		Total: total,
+	}, nil
+}
+
+// handleRolePermissions manages the role-permission associations
+func (pr *permissionRepository) handleRolePermissions(
+	ctx context.Context,
+	tx bun.IDB,
+	role *permission.Role,
+	permissionIDs []pulid.ID,
+	isCreate bool,
+) error {
+	// Early return if no permissions to assign
+	if len(permissionIDs) == 0 && isCreate {
+		return nil
+	}
+
+	// Get existing role permissions for update operations
+	existingPermissionMap := make(map[pulid.ID]*permission.RolePermission)
+	if !isCreate {
+		if err := pr.loadExistingRolePermissionsMap(ctx, tx, role, existingPermissionMap); err != nil {
+			return err
+		}
+	}
+
+	// Categorize permissions
+	newRolePermissions, updatedPermissionIDs := pr.categorizeRolePermissions(
+		role, permissionIDs, existingPermissionMap, isCreate)
+
+	// Process database operations
+	if err := pr.processRolePermissionOperations(ctx, tx, newRolePermissions); err != nil {
+		return err
+	}
+
+	// Handle deletions for update operations
+	if !isCreate {
+		rolePermissionsToDelete := make([]*permission.RolePermission, 0)
+		if err := pr.handleRolePermissionDeletions(ctx, tx, existingPermissionMap, updatedPermissionIDs, &rolePermissionsToDelete); err != nil {
+			pr.l.Error().Err(err).Msg("failed to handle role permission deletions")
+			return err
+		}
+
+		pr.l.Debug().Int("newPermissions", len(newRolePermissions)).
+			Int("deletedPermissions", len(rolePermissionsToDelete)).
+			Msg("role permission operations completed")
+	} else {
+		pr.l.Debug().Int("newPermissions", len(newRolePermissions)).
+			Msg("role permission operations completed")
+	}
+
+	return nil
+}
+
+// loadExistingRolePermissionsMap loads existing role permissions into a map
+func (pr *permissionRepository) loadExistingRolePermissionsMap(
+	ctx context.Context,
+	tx bun.IDB,
+	role *permission.Role,
+	permissionMap map[pulid.ID]*permission.RolePermission,
+) error {
+	existingPermissions, err := pr.getExistingRolePermissions(ctx, tx, role)
+	if err != nil {
+		pr.l.Error().Err(err).Msg("failed to get existing role permissions")
+		return err
+	}
+
+	for _, rolePermission := range existingPermissions {
+		permissionMap[rolePermission.PermissionID] = rolePermission
+	}
+
+	return nil
+}
+
+// categorizeRolePermissions categorizes permissions for different operations
+func (pr *permissionRepository) categorizeRolePermissions(
+	role *permission.Role,
+	permissionIDs []pulid.ID,
+	existingPermissionMap map[pulid.ID]*permission.RolePermission,
+	isCreate bool,
+) (newRolePermissions []*permission.RolePermission, updatedPermissionIDs map[pulid.ID]struct{}) {
+	newRolePermissions = make([]*permission.RolePermission, 0)
+	updatedPermissionIDs = make(map[pulid.ID]struct{})
+
+	for _, permissionID := range permissionIDs {
+		// Check if this permission assignment already exists
+		if _, exists := existingPermissionMap[permissionID]; !exists || isCreate {
+			// Create new RolePermission assignment
+			rolePermission := &permission.RolePermission{
+				BusinessUnitID: role.BusinessUnitID,
+				OrganizationID: role.OrganizationID,
+				RoleID:         role.ID,
+				PermissionID:   permissionID,
+			}
+			newRolePermissions = append(newRolePermissions, rolePermission)
+		} else {
+			// Mark as updated (exists and should remain)
+			updatedPermissionIDs[permissionID] = struct{}{}
+		}
+	}
+
+	return newRolePermissions, updatedPermissionIDs
+}
+
+// processRolePermissionOperations handles database insert operations
+func (pr *permissionRepository) processRolePermissionOperations(
+	ctx context.Context,
+	tx bun.IDB,
+	newRolePermissions []*permission.RolePermission,
+) error {
+	// Handle bulk insert of new role permission assignments
+	if len(newRolePermissions) > 0 {
+		if _, err := tx.NewInsert().Model(&newRolePermissions).Exec(ctx); err != nil {
+			pr.l.Error().Err(err).Msg("failed to bulk insert new role permissions")
+			return err
+		}
+	}
+
+	return nil
+}
+
+// getExistingRolePermissions gets the existing role permission assignments
+func (pr *permissionRepository) getExistingRolePermissions(
+	ctx context.Context,
+	tx bun.IDB,
+	role *permission.Role,
+) ([]*permission.RolePermission, error) {
+	rolePermissions := make([]*permission.RolePermission, 0)
+
+	// Fetch the existing role permission assignments
+	if err := tx.NewSelect().
+		Model(&rolePermissions).
+		Where("role_id = ?", role.ID).
+		Where("organization_id = ?", role.OrganizationID).
+		Where("business_unit_id = ?", role.BusinessUnitID).
+		Scan(ctx); err != nil {
+		pr.l.Error().Err(err).Msg("failed to fetch existing role permissions")
+		return nil, err
+	}
+
+	return rolePermissions, nil
+}
+
+// handleRolePermissionDeletions handles deletion of permissions that are no longer assigned
+func (pr *permissionRepository) handleRolePermissionDeletions(
+	ctx context.Context,
+	tx bun.IDB,
+	existingPermissionMap map[pulid.ID]*permission.RolePermission,
+	updatedPermissionIDs map[pulid.ID]struct{},
+	rolePermissionsToDelete *[]*permission.RolePermission,
+) error {
+	// For each existing permission assignment, check if it should remain
+	for permissionID, rolePermission := range existingPermissionMap {
+		if _, exists := updatedPermissionIDs[permissionID]; !exists {
+			*rolePermissionsToDelete = append(*rolePermissionsToDelete, rolePermission)
+		}
+	}
+
+	// If there are any permission assignments to delete, delete them
+	if len(*rolePermissionsToDelete) > 0 {
+		_, err := tx.NewDelete().
+			Model(rolePermissionsToDelete).
+			WherePK().
+			Exec(ctx)
+		if err != nil {
+			pr.l.Error().Err(err).Msg("failed to bulk delete role permissions")
+			return err
+		}
+	}
+
+	return nil
 }

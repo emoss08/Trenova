@@ -143,6 +143,9 @@ const (
 	ResourceBackup = Resource(
 		"backup",
 	) // Represents resources for managing backups.
+	ResourcePermission = Resource(
+		"permission",
+	) // Represents resources for managing permissions.
 )
 
 func (r Resource) MarshalJSON() ([]byte, error) {
@@ -346,6 +349,10 @@ var (
 			BaseActions,
 			ActionDelegate,
 		),
+		ResourcePermission: {
+			ActionRead,
+			ActionManage,
+		},
 		ResourceBusinessUnit: append(
 			BaseActions,
 			ActionConfigure,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -103,6 +104,231 @@ func (s *Service) GetRoleByID(
 	}
 
 	return s.repo.GetRoleByID(ctx, req)
+}
+
+// CreateRole creates a new role with the specified permissions
+func (s *Service) CreateRole(
+	ctx context.Context,
+	req *services.CreateRoleRequest,
+) (*permission.Role, error) {
+	log := s.l.With().
+		Str("operation", "CreateRole").
+		Str("roleName", req.Name).
+		Logger()
+
+	// Check if user has permission to create roles
+	result, err := s.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.UserID,
+				Resource:       permission.ResourceRole,
+				Action:         permission.ActionCreate,
+				BusinessUnitID: req.BusinessUnitID,
+				OrganizationID: req.OrganizationID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, eris.Wrap(err, "check permissions")
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to create roles")
+	}
+
+	// Create the role object
+	role := &permission.Role{
+		Name:           req.Name,
+		Description:    req.Description,
+		RoleType:       req.RoleType,
+		Priority:       req.Priority,
+		ParentRoleID:   req.ParentRoleID,
+		BusinessUnitID: req.BusinessUnitID,
+		OrganizationID: req.OrganizationID,
+		Status:         domain.StatusActive,
+	}
+
+	// Validate the role
+	if err := role.Validate(); err != nil {
+		log.Error().Err(err).Msg("role validation failed")
+		return nil, errors.NewValidationError("role", errors.ErrInvalid, err.Error())
+	}
+
+	// Create repository request
+	repoReq := &repositories.CreateRoleRequest{
+		Role:           role,
+		PermissionIDs:  req.PermissionIDs,
+		BusinessUnitID: req.BusinessUnitID,
+		OrganizationID: req.OrganizationID,
+	}
+
+	createdRole, err := s.repo.CreateRole(ctx, repoReq)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create role")
+		return nil, err
+	}
+
+	log.Debug().Str("roleID", createdRole.ID.String()).Msg("role created successfully")
+	return createdRole, nil
+}
+
+// UpdateRole updates an existing role and its permissions
+func (s *Service) UpdateRole(
+	ctx context.Context,
+	req *services.UpdateRoleRequest,
+) (*permission.Role, error) {
+	log := s.l.With().
+		Str("operation", "UpdateRole").
+		Str("roleID", req.ID.String()).
+		Str("roleName", req.Name).
+		Logger()
+
+	// Check if user has permission to update roles
+	result, err := s.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.UserID,
+				Resource:       permission.ResourceRole,
+				Action:         permission.ActionUpdate,
+				BusinessUnitID: req.BusinessUnitID,
+				OrganizationID: req.OrganizationID,
+				ResourceID:     req.ID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, eris.Wrap(err, "check permissions")
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to update this role")
+	}
+
+	// Create the role object for update
+	role := &permission.Role{
+		ID:             req.ID,
+		Name:           req.Name,
+		Description:    req.Description,
+		RoleType:       req.RoleType,
+		Priority:       req.Priority,
+		ParentRoleID:   req.ParentRoleID,
+		BusinessUnitID: req.BusinessUnitID,
+		OrganizationID: req.OrganizationID,
+	}
+
+	// Validate the role
+	if err := role.Validate(); err != nil {
+		log.Error().Err(err).Msg("role validation failed")
+		return nil, errors.NewValidationError("role", errors.ErrInvalid, err.Error())
+	}
+
+	// Create repository request
+	repoReq := &repositories.UpdateRoleRequest{
+		Role:           role,
+		PermissionIDs:  req.PermissionIDs,
+		BusinessUnitID: req.BusinessUnitID,
+		OrganizationID: req.OrganizationID,
+	}
+
+	updatedRole, err := s.repo.UpdateRole(ctx, repoReq)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to update role")
+		return nil, err
+	}
+
+	log.Debug().Str("roleID", updatedRole.ID.String()).Msg("role updated successfully")
+	return updatedRole, nil
+}
+
+// DeleteRole deletes a role and its associated permissions
+func (s *Service) DeleteRole(
+	ctx context.Context,
+	req *services.DeleteRoleRequest,
+) error {
+	log := s.l.With().
+		Str("operation", "DeleteRole").
+		Str("roleID", req.ID.String()).
+		Logger()
+
+	// Check if user has permission to delete roles
+	result, err := s.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.UserID,
+				Resource:       permission.ResourceRole,
+				Action:         permission.ActionDelete,
+				BusinessUnitID: req.BusinessUnitID,
+				OrganizationID: req.OrganizationID,
+				ResourceID:     req.ID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return eris.Wrap(err, "check permissions")
+	}
+
+	if !result.Allowed {
+		return errors.NewAuthorizationError("You do not have permission to delete this role")
+	}
+
+	// Create repository request
+	repoReq := &repositories.DeleteRoleRequest{
+		RoleID:         req.ID,
+		BusinessUnitID: req.BusinessUnitID,
+		OrganizationID: req.OrganizationID,
+	}
+
+	err = s.repo.DeleteRole(ctx, repoReq)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to delete role")
+		return err
+	}
+
+	log.Debug().Str("roleID", req.ID.String()).Msg("role deleted successfully")
+	return nil
+}
+
+// ListPermissions lists all available permissions that can be assigned to roles
+func (s *Service) ListPermissions(
+	ctx context.Context,
+	req *services.ListPermissionsRequest,
+) (*ports.ListResult[*permission.Permission], error) {
+	log := s.l.With().
+		Str("operation", "ListPermissions").
+		Logger()
+
+	// Check if user has permission to read permissions
+	result, err := s.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.UserID,
+				Resource:       permission.ResourcePermission,
+				Action:         permission.ActionRead,
+				BusinessUnitID: req.BusinessUnitID,
+				OrganizationID: req.OrganizationID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, eris.Wrap(err, "check permissions")
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to read permissions")
+	}
+
+	// Create repository request
+	repoReq := &repositories.ListPermissionsRequest{
+		Filter:         req.Filter,
+		BusinessUnitID: req.BusinessUnitID,
+		OrganizationID: req.OrganizationID,
+	}
+
+	return s.repo.ListPermissions(ctx, repoReq)
 }
 
 // CheckFieldModification checks if a user is allowed to modify a specific field of a resource.

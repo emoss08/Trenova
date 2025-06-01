@@ -46,7 +46,47 @@ type PermissionCheck struct {
 	CustomData     map[string]any // Additional context data
 }
 
+type CreateRoleRequest struct {
+	Name           string
+	Description    string
+	RoleType       permission.RoleType
+	Priority       int
+	ParentRoleID   *pulid.ID
+	PermissionIDs  []pulid.ID
+	BusinessUnitID pulid.ID
+	OrganizationID pulid.ID
+	UserID         pulid.ID // For permission checking
+}
+
+type UpdateRoleRequest struct {
+	ID             pulid.ID
+	Name           string
+	Description    string
+	RoleType       permission.RoleType
+	Priority       int
+	ParentRoleID   *pulid.ID
+	PermissionIDs  []pulid.ID
+	BusinessUnitID pulid.ID
+	OrganizationID pulid.ID
+	UserID         pulid.ID // For permission checking
+}
+
+type DeleteRoleRequest struct {
+	ID             pulid.ID
+	BusinessUnitID pulid.ID
+	OrganizationID pulid.ID
+	UserID         pulid.ID // For permission checking
+}
+
+type ListPermissionsRequest struct {
+	Filter         *ports.LimitOffsetQueryOptions
+	BusinessUnitID pulid.ID
+	OrganizationID pulid.ID
+	UserID         pulid.ID // For permission checking
+}
+
 type PermissionService interface {
+	// Role read operations
 	ListRoles(
 		ctx context.Context,
 		req *repositories.ListRolesRequest,
@@ -55,6 +95,28 @@ type PermissionService interface {
 		ctx context.Context,
 		req *repositories.GetRoleByIDRequest,
 	) (*permission.Role, error)
+
+	// Role management operations
+	CreateRole(
+		ctx context.Context,
+		req *CreateRoleRequest,
+	) (*permission.Role, error)
+	UpdateRole(
+		ctx context.Context,
+		req *UpdateRoleRequest,
+	) (*permission.Role, error)
+	DeleteRole(
+		ctx context.Context,
+		req *DeleteRoleRequest,
+	) error
+
+	// Permission read operations
+	ListPermissions(
+		ctx context.Context,
+		req *ListPermissionsRequest,
+	) (*ports.ListResult[*permission.Permission], error)
+
+	// Permission checking methods
 	CheckFieldModification(
 		ctx context.Context,
 		userID pulid.ID,
