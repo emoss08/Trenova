@@ -407,6 +407,9 @@ export function RoleAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.name}
       renderOption={(option) => option.name}
       getOptionLabel={(option) => option.name}
+      extraSearchParams={{
+        includePermissions: "true",
+      }}
       nestedValues={true}
       {...props}
     />
