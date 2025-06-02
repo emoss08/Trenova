@@ -10,10 +10,12 @@ tasks:
       - task: db-init
       - task: db-migrate
       - task: db-seed
+  format:
+    cmds:
+      - task: fmt
+      - task: fmt-lines
   check:
     cmds:
-      - task: format
-      - task: format-lines
       - task: critic
       - task: security
   swag:
@@ -43,9 +45,9 @@ tasks:
     cmd: golangci-lint run --timeout 5m
   modernize:
     cmd: go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -test ./...
-  format:
+  fmt:
     cmd: go fmt ./...
-  format-lines:
+  fmt-lines:
     cmd: golines ./.. -w 
   format-sql:
     cmd: |
