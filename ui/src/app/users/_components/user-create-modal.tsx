@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { FormCreateModal } from "@/components/ui/form-create-modal";
 import { Icon } from "@/components/ui/icons";
 import { USER_CREATE_NOTICE_KEY } from "@/constants/env";
-import { userSchema } from "@/lib/schemas/user-schema";
+import { bulkCreateUserSchema } from "@/lib/schemas/user-schema";
 import { TIMEZONES } from "@/lib/timezone/timezone";
 import { useUser } from "@/stores/user-store";
 import { Status } from "@/types/common";
@@ -17,27 +17,32 @@ export function CreateUserModal({ open, onOpenChange }: TableSheetProps) {
   const user = useUser();
 
   const form = useForm({
-    resolver: zodResolver(userSchema),
+    resolver: zodResolver(bulkCreateUserSchema),
     defaultValues: {
-      status: Status.Active,
-      currentOrganizationId: user?.currentOrganizationId,
-      emailAddress: "",
-      username: "",
-      name: "",
-      mustChangePassword: true,
-      timezone: TIMEZONES[0].value,
-      isLocked: false,
-      id: undefined,
-      thumbnailUrl: undefined,
-      profilePicUrl: undefined,
-      version: undefined,
-      createdAt: undefined,
-      updatedAt: undefined,
-      timeFormat: undefined,
-      lastLoginAt: undefined,
-      roles: [],
-      organizations: [],
-      currentOrganization: undefined,
+      // * one user by default
+      users: [
+        {
+          status: Status.Active,
+          currentOrganizationId: user?.currentOrganizationId,
+          emailAddress: "",
+          username: "",
+          name: "",
+          mustChangePassword: true,
+          timezone: TIMEZONES[0].value,
+          isLocked: false,
+          id: undefined,
+          thumbnailUrl: undefined,
+          profilePicUrl: undefined,
+          version: undefined,
+          createdAt: undefined,
+          updatedAt: undefined,
+          timeFormat: undefined,
+          lastLoginAt: undefined,
+          roles: [],
+          organizations: [],
+          currentOrganization: undefined,
+        },
+      ],
     },
   });
 

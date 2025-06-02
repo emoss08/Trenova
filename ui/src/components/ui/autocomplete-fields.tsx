@@ -31,9 +31,9 @@ import { LazyImage } from "./image";
 type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
   control: Control<TForm>;
   name: Path<TForm>;
-  label: string;
+  label?: string;
   rules?: RegisterOptions<TForm, Path<TForm>>;
-  description: string;
+  description?: string;
   clearable?: boolean;
   placeholder?: string;
   extraSearchParams?: Record<string, string | string[]>;
@@ -48,8 +48,8 @@ type BaseMultiSelectAutocompleteFieldProps<
   name: FieldPath<TForm>;
   control: Control<TForm>;
   rules?: RegisterOptions<TForm, Path<TForm>>;
-  label: string;
-  description: string;
+  label?: string;
+  description?: string;
   clearable?: boolean;
   placeholder?: string;
 };

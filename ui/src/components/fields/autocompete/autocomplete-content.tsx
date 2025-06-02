@@ -57,7 +57,7 @@ export function AutocompleteCommandContent<TOption>({
   open: boolean;
   link: string;
   preload: boolean;
-  label: string;
+  label?: string;
   clearable: boolean;
   value: string;
   setOpen: (open: boolean) => void;
@@ -280,7 +280,7 @@ export function AutocompleteCommandContent<TOption>({
       <div className="w-full">
         <CommandInput
           className="bg-transparent h-7 truncate"
-          placeholder={`Search ${label.toLowerCase()}...`}
+          placeholder={`Search ${label?.toLowerCase()}...`}
           value={searchTerm}
           onValueChange={setSearchTerm}
         />
@@ -297,7 +297,7 @@ export function AutocompleteCommandContent<TOption>({
         )}
         {!isLoading && options.length === 0 && (
           <CommandEmpty>
-            {noResultsMessage ?? `No ${label.toLowerCase()} found.`}
+            {noResultsMessage ?? `No ${label?.toLowerCase()} found.`}
           </CommandEmpty>
         )}
         <CommandGroup>

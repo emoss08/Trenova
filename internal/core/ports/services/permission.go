@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
@@ -79,39 +78,15 @@ type DeleteRoleRequest struct {
 }
 
 type ListPermissionsRequest struct {
-	Filter         *ports.LimitOffsetQueryOptions
-	BusinessUnitID pulid.ID
-	OrganizationID pulid.ID
-	UserID         pulid.ID // For permission checking
+	Filter *ports.LimitOffsetQueryOptions
+	BuID   pulid.ID
+	OrgID  pulid.ID
+	UserID pulid.ID
 }
 
 type PermissionService interface {
-	// Role read operations
-	ListRoles(
-		ctx context.Context,
-		req *repositories.ListRolesRequest,
-	) (*ports.ListResult[*permission.Role], error)
-	GetRoleByID(
-		ctx context.Context,
-		req *repositories.GetRoleByIDRequest,
-	) (*permission.Role, error)
-
-	// Role management operations
-	CreateRole(
-		ctx context.Context,
-		req *CreateRoleRequest,
-	) (*permission.Role, error)
-	UpdateRole(
-		ctx context.Context,
-		req *UpdateRoleRequest,
-	) (*permission.Role, error)
-	DeleteRole(
-		ctx context.Context,
-		req *DeleteRoleRequest,
-	) error
-
 	// Permission read operations
-	ListPermissions(
+	List(
 		ctx context.Context,
 		req *ListPermissionsRequest,
 	) (*ports.ListResult[*permission.Permission], error)
