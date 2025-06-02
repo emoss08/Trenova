@@ -189,6 +189,7 @@ func (fcr *fleetCodeRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(fc).
 			WherePK().
+			OmitZero().
 			Where("fc.version = ?", ov).
 			Returning("*").
 			Exec(c)

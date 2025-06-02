@@ -243,6 +243,7 @@ func (ac *accessorialChargeRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(acc).
 			WherePK().
+			OmitZero().
 			Where("acc.version = ?", ov).
 			Returning("*").
 			Exec(c)

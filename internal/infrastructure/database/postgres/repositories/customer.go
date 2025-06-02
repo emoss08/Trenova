@@ -499,6 +499,7 @@ func (cr *customerRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(cus).
 			Where("cus.version = ?", ov).
+			OmitZero().
 			WherePK().
 			Returning("*").
 			Exec(c)

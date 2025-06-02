@@ -198,7 +198,10 @@ func (r *favoriteRepository) Update(
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err = tx.NewUpdate().Model(f).Exec(ctx)
+		_, err = tx.NewUpdate().
+			Model(f).
+			OmitZero().
+			Exec(ctx)
 		if err != nil {
 			log.Error().Err(err).Msg("update favorite")
 			return oops.In("page_favorite_repository").

@@ -187,6 +187,7 @@ func (lcr *locationCategoryRepository) Update(
 			Model(lc).
 			WherePK().
 			Where("lc.version = ?", ov).
+			OmitZero().
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

@@ -127,6 +127,7 @@ func (sr *stopRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(stop).
 			Where("stp.id = ?", stop.ID).
+			OmitZero().
 			// Where("stp.version = ?", ov).
 			Where("stp.shipment_move_id = ?", stop.ShipmentMoveID).
 			Returning("*").

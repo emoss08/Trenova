@@ -301,6 +301,7 @@ func (tr *tractorRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(t).
 			WherePK().
+			OmitZero().
 			Where("tr.version = ?", ov).
 			Returning("*").
 			Exec(c)

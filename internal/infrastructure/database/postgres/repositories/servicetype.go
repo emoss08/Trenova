@@ -185,6 +185,7 @@ func (str *serviceTypeRepository) Update(
 			Model(st).
 			WherePK().
 			Where("st.version = ?", ov).
+			OmitZero().
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

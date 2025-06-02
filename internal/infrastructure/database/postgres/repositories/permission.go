@@ -433,7 +433,7 @@ func (pr *permissionRepository) CreateRole(
 		}
 
 		// Handle role permissions
-		if err := pr.handleRolePermissions(c, tx, req.Role, req.PermissionIDs, true); err != nil {
+		if err = pr.handleRolePermissions(c, tx, req.Role, req.PermissionIDs, true); err != nil {
 			return err
 		}
 
@@ -472,6 +472,7 @@ func (pr *permissionRepository) UpdateRole(
 		result, uErr := tx.NewUpdate().
 			Model(req.Role).
 			Where("r.id = ?", req.Role.ID).
+			OmitZero().
 			Where("r.organization_id = ?", req.OrganizationID).
 			Where("r.business_unit_id = ?", req.BusinessUnitID).
 			Where("r.is_system = false"). // Prevent updating system roles
@@ -491,7 +492,7 @@ func (pr *permissionRepository) UpdateRole(
 		}
 
 		// Handle role permissions
-		if err := pr.handleRolePermissions(c, tx, req.Role, req.PermissionIDs, false); err != nil {
+		if err = pr.handleRolePermissions(c, tx, req.Role, req.PermissionIDs, false); err != nil {
 			return err
 		}
 

@@ -271,6 +271,7 @@ func (emr *equipmentManufacturerRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(em).
 			WherePK().
+			OmitZero().
 			Where("em.version = ?", ov).
 			Returning("*").
 			Exec(c)

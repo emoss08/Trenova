@@ -130,6 +130,7 @@ func (r shipmentControlRepository) Update(
 			Model(sc).
 			WherePK().
 			Where("sc.version = ?", ov).
+			OmitZero().
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

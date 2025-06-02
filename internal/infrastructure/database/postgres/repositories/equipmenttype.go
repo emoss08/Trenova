@@ -201,6 +201,7 @@ func (fcr *equipmentTypeRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(et).
 			WherePK().
+			OmitZero().
 			Where("et.version = ?", ov).
 			Returning("*").
 			Exec(c)

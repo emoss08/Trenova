@@ -308,6 +308,7 @@ func (br *billingQueueRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(qi).
 			WherePK().
+			OmitZero().
 			Where("bqi.version = ?", ov).
 			Returning("*").
 			Exec(c)

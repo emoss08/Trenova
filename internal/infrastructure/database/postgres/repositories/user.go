@@ -372,6 +372,7 @@ func (ur *userRepository) Update(ctx context.Context, u *user.User) (*user.User,
 
 		results, rErr := tx.NewUpdate().
 			Model(u).
+			OmitZero().
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return uq.Where("usr.id = ?", u.ID).
 					Where("usr.version = ?", ov).

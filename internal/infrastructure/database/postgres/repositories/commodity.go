@@ -182,6 +182,7 @@ func (cr *commodityRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(com).
 			WherePK().
+			OmitZero().
 			Where("com.version = ?", ov).
 			Returning("*").
 			Exec(c)

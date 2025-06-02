@@ -198,6 +198,7 @@ func (lr *locationRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(loc).
 			Where("loc.version = ?", ov).
+			OmitZero().
 			WherePK().
 			Returning("*").
 			Exec(c)

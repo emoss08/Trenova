@@ -182,6 +182,7 @@ func (hmr *hazardousMaterialRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(hm).
 			WherePK().
+			OmitZero().
 			Where("hm.version = ?", ov).
 			Returning("*").
 			Exec(c)
