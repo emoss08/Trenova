@@ -3,11 +3,13 @@ import {
   RandomColoredBadge,
 } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
+import { Badge } from "@/components/ui/badge";
 import { LazyImage } from "@/components/ui/image";
-import type { UserSchema } from "@/lib/schemas/user-schema";
+import type { RoleSchema, UserSchema } from "@/lib/schemas/user-schema";
+import { RoleType } from "@/types/roles-permissions";
 import { type ColumnDef } from "@tanstack/react-table";
 
-export function getColumns(): ColumnDef<UserSchema>[] {
+export function getUserColumns(): ColumnDef<UserSchema>[] {
   return [
     {
       accessorKey: "status",
@@ -76,6 +78,39 @@ export function getColumns(): ColumnDef<UserSchema>[] {
         const { lastLoginAt } = row.original;
         return <HoverCardTimestamp timestamp={lastLoginAt} />;
       },
+    },
+  ];
+}
+
+export function getRoleColumns(): ColumnDef<RoleSchema>[] {
+  return [
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const { status } = row.original;
+        return <StatusBadge status={status} />;
+      },
+    },
+    {
+      accessorKey: "roleType",
+      header: "Type",
+      cell: ({ row }) => {
+        const { roleType } = row.original;
+        return (
+          <Badge variant={roleType === RoleType.System ? "indigo" : "orange"}>
+            {roleType}
+          </Badge>
+        );
+      },
+    },
+    {
+      accessorKey: "name",
+      header: "Name",
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
     },
   ];
 }

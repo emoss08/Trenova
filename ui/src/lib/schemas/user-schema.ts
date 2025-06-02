@@ -48,7 +48,7 @@ const permissionSchema = z.object({
 
 export type PermissionSchema = z.infer<typeof permissionSchema>;
 
-const roleSchema = z.object({
+export const roleSchema = z.object({
   id: z.string().optional(),
   version: z.number().optional(),
   createdAt: z.number().optional(),
@@ -106,6 +106,7 @@ export const userSchema = z.object({
   timeFormat: z.nativeEnum(TimeFormat),
   isLocked: z.boolean(),
   lastLoginAt: z.number().optional(),
+  mustChangePassword: z.boolean(),
 
   // Relationships
   currentOrganization: organizationSchema.optional(),

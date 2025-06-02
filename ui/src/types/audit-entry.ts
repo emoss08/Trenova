@@ -71,6 +71,7 @@ export enum Resource {
   Equipment = "equipment",
   Maintenance = "maintenance",
   User = "user",
+  Role = "role",
   FormulaTemplate = "formula_template",
   ShipmentManagement = "shipment_management",
   DelayCode = "delay_code",

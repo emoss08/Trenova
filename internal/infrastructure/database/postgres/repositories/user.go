@@ -326,7 +326,7 @@ func (ur *userRepository) Create(ctx context.Context, u *user.User) (*user.User,
 		}
 
 		// Handle role assignments
-		if err := ur.handleRoleOperations(c, tx, u, true); err != nil {
+		if err = ur.handleRoleOperations(c, tx, u, true); err != nil {
 			return err
 		}
 
@@ -449,11 +449,13 @@ func (ur *userRepository) handleRoleOperations(
 			return err
 		}
 
-		ur.l.Debug().Int("newRoles", len(newRoles)).
+		ur.l.Debug().
+			Int("newRoles", len(newRoles)).
 			Int("deletedRoles", len(rolesToDelete)).
 			Msg("role operations completed")
 	} else {
-		ur.l.Debug().Int("newRoles", len(newRoles)).
+		ur.l.Debug().
+			Int("newRoles", len(newRoles)).
 			Msg("role operations completed")
 	}
 
@@ -537,9 +539,12 @@ func (ur *userRepository) getExistingUserRoles(
 	// Fetch the existing user role assignments
 	if err := tx.NewSelect().
 		Model(&userRoles).
-		Where("user_id = ?", u.ID).
-		Where("organization_id = ?", u.CurrentOrganizationID).
-		Where("business_unit_id = ?", u.BusinessUnitID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("ur.user_id = ?", u.ID).
+				Where("ur.organization_id = ?", u.CurrentOrganizationID).
+				Where("ur.business_unit_id = ?", u.BusinessUnitID)
+		}).
 		Scan(ctx); err != nil {
 		ur.l.Error().Err(err).Msg("failed to fetch existing user roles")
 		return nil, err
