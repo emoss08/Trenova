@@ -15,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
-	"github.com/rs/zerolog/log"
 	"go.uber.org/fx"
 )
 
@@ -236,16 +235,24 @@ func (s *Service) Delete(
 
 func (s *Service) checkPermission(
 	ctx context.Context,
-	Action permission.Action,
+	action permission.Action,
 	userID, buID, orgID pulid.ID,
 ) error {
+	log := s.l.With().
+		Str("operation", "checkPermission").
+		Str("action", string(action)).
+		Str("userID", userID.String()).
+		Str("buID", buID.String()).
+		Str("orgID", orgID.String()).
+		Logger()
+
 	// Check if user has permission to delete roles
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
 				UserID:         userID,
 				Resource:       permission.ResourceRole,
-				Action:         Action,
+				Action:         action,
 				BusinessUnitID: buID,
 				OrganizationID: orgID,
 			},
@@ -260,7 +267,7 @@ func (s *Service) checkPermission(
 		return errors.NewAuthorizationError(
 			fmt.Sprintf(
 				"You do not have permission to %s this role",
-				strings.ToLower(string(Action)),
+				strings.ToLower(string(action)),
 			),
 		)
 	}
