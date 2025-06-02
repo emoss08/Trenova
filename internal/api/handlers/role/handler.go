@@ -78,7 +78,7 @@ func (h *Handler) getRole(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	role, err := h.rs.Get(c.UserContext(), &repositories.GetRoleByIDRequest{
+	r, err := h.rs.Get(c.UserContext(), &repositories.GetRoleByIDRequest{
 		RoleID: roleID,
 		OrgID:  reqCtx.OrgID,
 		BuID:   reqCtx.BuID,
@@ -93,5 +93,5 @@ func (h *Handler) getRole(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(role)
+	return c.Status(fiber.StatusOK).JSON(r)
 }
