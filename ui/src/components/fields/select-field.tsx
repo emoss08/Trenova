@@ -35,6 +35,7 @@ export function SelectField<T extends FieldValues>({
   className,
   options,
   placeholder,
+  isReadOnly,
 }: SelectFieldProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const { field } = useController({ name, control });
@@ -66,6 +67,8 @@ export function SelectField<T extends FieldValues>({
           <Select
             open={isOpen}
             onOpenChange={setIsOpen}
+            required={!!rules?.required}
+            disabled={isReadOnly}
             onValueChange={(value) => {
               field.onChange(value);
               // * Update the selected option
