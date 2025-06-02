@@ -684,12 +684,12 @@ func (s *Service) CheckFieldView(
 
 func (s *Service) checkPermission(
 	ctx context.Context,
-	Action permission.Action,
+	action permission.Action,
 	userID, buID, orgID pulid.ID,
 ) error {
 	log := s.l.With().
 		Str("operation", "checkPermission").
-		Str("action", string(Action)).
+		Str("action", string(action)).
 		Str("userID", userID.String()).
 		Str("buID", buID.String()).
 		Str("orgID", orgID.String()).
@@ -701,7 +701,7 @@ func (s *Service) checkPermission(
 			{
 				UserID:         userID,
 				Resource:       permission.ResourceRole,
-				Action:         Action,
+				Action:         action,
 				BusinessUnitID: buID,
 				OrganizationID: orgID,
 			},
@@ -716,7 +716,7 @@ func (s *Service) checkPermission(
 		return errors.NewAuthorizationError(
 			fmt.Sprintf(
 				"You do not have permission to %s this permission",
-				strings.ToLower(string(Action)),
+				strings.ToLower(string(action)),
 			),
 		)
 	}
