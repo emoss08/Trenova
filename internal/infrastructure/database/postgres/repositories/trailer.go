@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
@@ -16,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -36,7 +38,7 @@ type trailerRepository struct {
 	l  *zerolog.Logger
 }
 
-// NewTrailerRepository initalizes a new instance of trailerRepository with its dependencies.
+// NewTrailerRepository initializes a new instance of trailerRepository with its dependencies.
 //
 // Parameters:
 //   - p: TrailerRepositoryParams containing dependencies.
@@ -67,14 +69,20 @@ func (tr *trailerRepository) addOptions(
 	q *bun.SelectQuery,
 	opts repositories.TrailerFilterOptions,
 ) *bun.SelectQuery {
+	relations := []string{}
+
 	// * Include the equipment details if requested
 	if opts.IncludeEquipmentDetails {
-		q = q.Relation("EquipmentType").Relation("EquipmentManufacturer")
+		relations = append(relations, "EquipmentType", "EquipmentManufacturer")
 	}
 
 	// * Include the fleet details if requested
 	if opts.IncludeFleetDetails {
-		q = q.Relation("FleetCode")
+		relations = append(relations, "FleetCode")
+	}
+
+	for _, rel := range relations {
+		q = q.Relation(rel)
 	}
 
 	if opts.Status != "" {
@@ -225,7 +233,10 @@ func (tr *trailerRepository) Create(
 ) (*trailer.Trailer, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("trailer_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := tr.l.With().
@@ -234,19 +245,11 @@ func (tr *trailerRepository) Create(
 		Str("buID", t.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(t).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("trailer", t).
-				Msg("failed to insert trailer")
-			return iErr
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create trailer")
+	if _, err = dba.NewInsert().Model(t).Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("trailer", t).
+			Msg("failed to insert trailer")
 		return nil, err
 	}
 
@@ -293,7 +296,7 @@ func (tr *trailerRepository) Update(
 				Err(rErr).
 				Interface("trailer", t).
 				Msg("failed to update trailer")
-			return err
+			return rErr
 		}
 
 		rows, roErr := results.RowsAffected()
@@ -302,7 +305,7 @@ func (tr *trailerRepository) Update(
 				Err(roErr).
 				Interface("trailer", t).
 				Msg("failed to get rows affected")
-			return err
+			return roErr
 		}
 
 		if rows == 0 {
