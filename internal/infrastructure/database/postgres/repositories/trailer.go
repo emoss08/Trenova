@@ -235,6 +235,7 @@ func (tr *trailerRepository) Create(
 	if err != nil {
 		return nil, oops.
 			In("trailer_repository").
+			With("op", "create").
 			Time(time.Now()).
 			Wrapf(err, "get database connection")
 	}

@@ -188,4 +188,24 @@ export const queries = createQueryKeyStore({
       queryFn: async () => api.favorites.checkFavorite(pageUrl),
     }),
   },
+  permission: {
+    list: (limit: number, offset: number) => ({
+      queryKey: ["permissions", limit, offset],
+      queryFn: async () => api.permissions.list(limit, offset),
+    }),
+    getById: (id: string) => ({
+      queryKey: ["permissions", id],
+      queryFn: async () => api.permissions.getById(id),
+    }),
+  },
+  role: {
+    list: (limit: number, offset: number) => ({
+      queryKey: ["roles", limit, offset],
+      queryFn: async () => api.roles.list(limit, offset),
+    }),
+    getById: (id: string) => ({
+      queryKey: ["roles", id],
+      queryFn: async () => api.roles.getById(id),
+    }),
+  },
 });

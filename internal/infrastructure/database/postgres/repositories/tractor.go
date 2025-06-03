@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -241,7 +243,11 @@ func (tr *tractorRepository) Create(
 ) (*tractor.Tractor, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("tractor_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := tr.l.With().
@@ -250,19 +256,11 @@ func (tr *tractorRepository) Create(
 		Str("buID", t.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(t).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("tractor", t).
-				Msg("failed to insert tractor")
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create tractor")
+	if _, err = dba.NewInsert().Model(t).Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("tractor", t).
+			Msg("failed to insert tractor")
 		return nil, err
 	}
 

@@ -1,13 +1,33 @@
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { EnhancedPermissionsSelector } from "@/components/permissions/enhanced-permissions-selector";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { roleTypeChoices, statusChoices } from "@/lib/choices";
-import { RoleSchema } from "@/lib/schemas/user-schema";
+import { queries } from "@/lib/queries";
+import { PermissionSchema, RoleSchema } from "@/lib/schemas/user-schema";
+import { useQuery } from "@tanstack/react-query";
+import { useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 
 export function RoleForm() {
-  const { control } = useFormContext<RoleSchema>();
+  const { control, watch, setValue } = useFormContext<RoleSchema>();
+
+  const { data: permList, isLoading: permListLoading } = useQuery({
+    // * TODO: We need to configure this better than just passing in 500 and 0
+    // * On the backend, we could probably just do an `all` param to get all permissions at once.
+    ...queries.permission.list(500, 0),
+  });
+
+  const currentPermissions = watch("permissions") || [];
+
+  const availablePermissions = useMemo(() => {
+    return permList?.results || [];
+  }, [permList?.results]);
+
+  const handlePermissionsChange = (permissions: PermissionSchema[]) => {
+    setValue("permissions", permissions, { shouldDirty: true });
+  };
 
   return (
     <FormGroup cols={2}>
@@ -20,6 +40,7 @@ export function RoleForm() {
           placeholder="Status"
           description="Current status of the role"
           options={statusChoices}
+          isReadOnly
         />
       </FormControl>
       <FormControl cols="full">
@@ -52,6 +73,14 @@ export function RoleForm() {
           label="Description"
           placeholder="Description"
           description="Description of the role"
+        />
+      </FormControl>
+      <FormControl cols="full">
+        <EnhancedPermissionsSelector
+          permissions={availablePermissions}
+          selectedPermissions={currentPermissions}
+          onPermissionsChange={handlePermissionsChange}
+          isLoading={permListLoading}
         />
       </FormControl>
     </FormGroup>

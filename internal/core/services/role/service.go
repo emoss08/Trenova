@@ -39,6 +39,7 @@ func NewService(p ServiceParams) *Service {
 
 	return &Service{
 		repo: p.Repo,
+		ps:   p.PermService,
 		l:    &log,
 	}
 }

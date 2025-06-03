@@ -156,20 +156,14 @@ func (lr *locationRepository) Create(
 		Str("buID", l.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(l).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("location", l).
-				Msg("failed to insert location")
-			return eris.Wrap(iErr, "insert location")
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create location")
-		return nil, eris.Wrap(err, "create location")
+	if _, err = dba.NewInsert().Model(l).
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("location", l).
+			Msg("failed to insert location")
+		return nil, err
 	}
 
 	return l, nil

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -131,7 +133,11 @@ func (hmr *hazardousMaterialRepository) Create(
 ) (*hazardousmaterial.HazardousMaterial, error) {
 	dba, err := hmr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("hazardous_material_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := hmr.l.With().
@@ -140,20 +146,14 @@ func (hmr *hazardousMaterialRepository) Create(
 		Str("buID", hm.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(hm).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("hazardousMaterial", hm).
-				Msg("failed to insert hazardous material")
-			return eris.Wrap(iErr, "insert hazardous material")
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create hazardous material")
-		return nil, eris.Wrap(err, "create hazardous material")
+	if _, err = dba.NewInsert().Model(hm).
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("hazardousMaterial", hm).
+			Msg("failed to insert hazardous material")
+		return nil, err
 	}
 
 	return hm, nil

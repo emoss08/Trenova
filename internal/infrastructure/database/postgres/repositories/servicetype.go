@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -133,7 +135,11 @@ func (str *serviceTypeRepository) Create(
 ) (*servicetype.ServiceType, error) {
 	dba, err := str.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("service_type_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := str.l.With().
@@ -142,20 +148,14 @@ func (str *serviceTypeRepository) Create(
 		Str("buID", st.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(st).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("serviceType", st).
-				Msg("failed to insert service type")
-			return eris.Wrap(iErr, "insert service type")
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create service type")
-		return nil, eris.Wrap(err, "create service type")
+	if _, err = dba.NewInsert().Model(st).
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("serviceType", st).
+			Msg("failed to insert service type")
+		return nil, err
 	}
 
 	return st, nil

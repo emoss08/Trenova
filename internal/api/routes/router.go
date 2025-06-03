@@ -27,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/permission"
 	"github.com/emoss08/trenova/internal/api/handlers/reporting"
 	"github.com/emoss08/trenova/internal/api/handlers/resourceeditor"
+	"github.com/emoss08/trenova/internal/api/handlers/role"
 	"github.com/emoss08/trenova/internal/api/handlers/routing"
 	"github.com/emoss08/trenova/internal/api/handlers/servicetype"
 	"github.com/emoss08/trenova/internal/api/handlers/session"
@@ -120,6 +121,7 @@ type RouterParams struct {
 	ResourceEditorHandler        *resourceeditor.Handler
 	FavoriteHandler              *favorite.Handler
 	PermissionHandler            *permission.Handler
+	RoleHandler                  *role.Handler
 }
 
 type Router struct {
@@ -303,4 +305,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Permissions
 	r.p.PermissionHandler.RegisterRoutes(router, rl)
+
+	// Roles
+	r.p.RoleHandler.RegisterRoutes(router, rl)
 }

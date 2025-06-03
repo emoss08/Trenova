@@ -4,7 +4,7 @@ import type { RoleSchema, UserSchema } from "@/lib/schemas/user-schema";
 import { Resource } from "@/types/audit-entry";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { EditRoleModal } from "./role-edit-modal";
+import { EditRoleSheet } from "./role-edit-modal";
 import { getRoleColumns, getUserColumns } from "./user-columns";
 import { CreateUserModal } from "./user-create-modal";
 import { EditUserModal } from "./user-edit-modal";
@@ -93,7 +93,7 @@ function RoleTable() {
       queryKey="role-list"
       exportModelName="role"
       columns={columns}
-      TableEditModal={EditRoleModal}
+      TableEditModal={EditRoleSheet}
       extraSearchParams={{
         includePermissions: true,
         // * TODO(wolfred): We should probably load the users assigned to the role as well
