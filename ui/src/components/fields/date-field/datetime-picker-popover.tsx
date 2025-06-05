@@ -38,11 +38,6 @@ export function DateTimePickerPopover({
 
   const isDesktop = useMediaQuery("(min-width: 640px)");
 
-  useEffect(() => {
-    if (dateTime) {
-      setInputValue(generateDateTimeString(dateTime));
-    }
-  }, [dateTime, setInputValue]);
 
   if (!isDesktop) {
     return (
