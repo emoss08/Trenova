@@ -1,4 +1,10 @@
 import { StopDialog } from "@/app/shipment/_components/sidebar/stop-details/stop-dialog";
+import {
+  ContextMenu,
+  ContextMenuContent,
+  ContextMenuItem,
+  ContextMenuTrigger,
+} from "@/components/ui/context-menu";
 import { Icon } from "@/components/ui/icons";
 import { formatSplitDateTime } from "@/lib/date";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
@@ -7,6 +13,7 @@ import { MoveStatus } from "@/types/move";
 import { Stop, StopStatus, StopType } from "@/types/stop";
 import { useCallback, useState } from "react";
 import { useFormContext } from "react-hook-form";
+import { toast } from "sonner";
 import { useLocationData } from "./queries";
 import {
   getLineStyles,
@@ -113,13 +120,13 @@ export default function StopTimeline({
   stopIdx: number;
   prevStopStatus?: StopStatus;
 }) {
-  // Dialog open/close state
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  // Form context for errors
   const {
+    setValue,
+    getValues,
     formState: { errors },
   } = useFormContext<ShipmentSchema>();
+
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Get stop details
   const lineStyles = getLineStyles(stop.status, prevStopStatus);
@@ -136,7 +143,7 @@ export default function StopTimeline({
   const shouldShowLine = !isLast && hasStopInfo && nextStopHasInfo;
 
   // Handler to open dialog
-  const openDialog = useCallback(() => {
+  const openEditDialog = useCallback(() => {
     setIsDialogOpen(true);
   }, []);
 
@@ -145,87 +152,159 @@ export default function StopTimeline({
     setIsDialogOpen(open);
   }, []);
 
+  const handleRevert = useCallback(() => {
+    // * Check if the stop has actual arrival and departure dates
+    const actualArrival = getValues(
+      `moves.${moveIdx}.stops.${stopIdx}.actualArrival`,
+    );
+    const actualDeparture = getValues(
+      `moves.${moveIdx}.stops.${stopIdx}.actualDeparture`,
+    );
+
+    const hasActualDates = actualArrival || actualDeparture;
+
+    if (!hasActualDates) {
+      toast.error(
+        "Cannot revert stop with no actual arrival or departure dates",
+      );
+      return;
+    }
+
+    setValue(`moves.${moveIdx}.stops.${stopIdx}.actualArrival`, undefined, {
+      shouldDirty: true,
+    });
+    setValue(`moves.${moveIdx}.stops.${stopIdx}.actualDeparture`, undefined, {
+      shouldDirty: true,
+    });
+  }, [getValues, moveIdx, setValue, stopIdx]);
+
   return (
-    <div>
-      <div
-        className={cn(
-          "relative h-[60px] rounded-lg cursor-pointer select-none bg-muted pt-2 border border-border",
-          hasErrors && "border-destructive bg-destructive/10",
-        )}
-        onClick={openDialog}
-      >
-        {hasStopInfo ? (
-          <>
-            {shouldShowLine && (
-              <div
-                className={cn(
-                  "absolute left-[121px] ml-[2px] top-[20px] bottom-0 w-[2px] z-10",
-                  lineStyles,
-                )}
-                style={{ height: "80px" }}
-              />
+    <ContextMenu>
+      <ContextMenuTrigger asChild>
+        <div>
+          <div
+            className={cn(
+              "relative h-[60px] rounded-lg select-none bg-muted pt-2 border border-border",
+              hasErrors && "border-destructive bg-destructive/10",
             )}
-            <div className="flex items-start gap-4 py-1">
-              <div className="w-24 text-right text-sm">
-                <div className="text-primary text-xs">
-                  {plannedArrival.date}
-                </div>
-                <div className="text-muted-foreground text-2xs">
-                  {plannedArrival.time}
-                </div>
-              </div>
-              <div className="relative z-10">
-                <StopCircle
-                  status={stop.status}
-                  isLast={isLast}
-                  moveStatus={moveStatus}
-                  hasErrors={hasErrors}
-                  prevStopStatus={prevStopStatus}
-                />
-              </div>
-              <div className="flex-1">
-                <LocationDisplay
-                  location={stop.location}
-                  type={stop.type}
-                  locationId={stop.locationId}
-                />
-              </div>
-            </div>
-          </>
-        ) : (
-          <div className="flex flex-col items-center justify-center text-center">
-            {hasErrors ? (
-              <div className="flex flex-col items-center justify-center">
-                <span className="mt-1 text-sm text-red-500">
-                  Error in &apos;{getStopTypeLabel(stop.type)}&apos; stop
-                </span>
-                <p className="text-red-500 text-xs">
-                  Please click to edit and fix the errors.
-                </p>
-              </div>
-            ) : (
+          >
+            {hasStopInfo ? (
               <>
-                <div className="text-foreground text-sm">
-                  Enter {getStopTypeLabel(stop.type)} Information
+                {shouldShowLine && (
+                  <div
+                    className={cn(
+                      "absolute left-[121px] ml-[2px] top-[20px] bottom-0 w-[2px] z-10",
+                      lineStyles,
+                    )}
+                    style={{ height: "80px" }}
+                  />
+                )}
+                <div className="flex items-start gap-4 py-1">
+                  <div className="w-24 text-right text-sm">
+                    <div className="text-primary text-xs">
+                      {plannedArrival.date}
+                    </div>
+                    <div className="text-muted-foreground text-2xs">
+                      {plannedArrival.time}
+                    </div>
+                  </div>
+                  <div className="relative z-10">
+                    <StopCircle
+                      status={stop.status}
+                      isLast={isLast}
+                      moveStatus={moveStatus}
+                      hasErrors={hasErrors}
+                      prevStopStatus={prevStopStatus}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <LocationDisplay
+                      location={stop.location}
+                      type={stop.type}
+                      locationId={stop.locationId}
+                    />
+                  </div>
                 </div>
-                <p className="text-muted-foreground text-xs">
-                  {getStopTypeLabel(stop.type)} information is required to
-                  create a shipment.
-                </p>
               </>
+            ) : (
+              <div className="flex flex-col items-center justify-center text-center">
+                {hasErrors ? (
+                  <div className="flex flex-col items-center justify-center">
+                    <span className="mt-1 text-sm text-red-500">
+                      Error in &apos;{getStopTypeLabel(stop.type)}&apos; stop
+                    </span>
+                    <p className="text-red-500 text-xs">
+                      Please click to edit and fix the errors.
+                    </p>
+                  </div>
+                ) : (
+                  <>
+                    <div className="text-foreground text-sm">
+                      Enter {getStopTypeLabel(stop.type)} Information
+                    </div>
+                    <p className="text-muted-foreground text-xs">
+                      {getStopTypeLabel(stop.type)} information is required to
+                      create a shipment.
+                    </p>
+                  </>
+                )}
+              </div>
             )}
           </div>
-        )}
-      </div>
 
-      {isDialogOpen && (
-        <StopDialog
-          open={isDialogOpen}
-          onOpenChange={handleDialogChange}
-          moveIdx={moveIdx}
-          stopIdx={stopIdx}
-        />
-      )}
+          {isDialogOpen && (
+            <StopDialog
+              open={isDialogOpen}
+              onOpenChange={handleDialogChange}
+              moveIdx={moveIdx}
+              stopIdx={stopIdx}
+            />
+          )}
+        </div>
+      </ContextMenuTrigger>
+      <ContextMenuContent>
+        <ContextMenuItem onClick={handleRevert}>
+          <StopContextMenuItem
+            title="Revert"
+            description="Revert and clear the stop arrival date and times"
+          />
+        </ContextMenuItem>
+        <ContextMenuItem>
+          <StopContextMenuItem
+            title="Cancel"
+            description="Cancel the stop and clear the stop arrival date and times"
+          />
+        </ContextMenuItem>
+        <ContextMenuItem onClick={openEditDialog}>
+          <StopContextMenuItem
+            title="Edit"
+            description="Edit the stop information"
+          />
+        </ContextMenuItem>
+        <ContextMenuItem variant="destructive">
+          <StopContextMenuItem
+            title="Remove"
+            description="Remove the stop from the movement"
+          />
+        </ContextMenuItem>
+      </ContextMenuContent>
+    </ContextMenu>
+  );
+}
+
+function StopContextMenuItem({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="flex flex-col">
+      <div className="flex items-center gap-2">
+        <span>{title}</span>
+      </div>
+      <p className="text-xs text-muted-foreground">{description}</p>
     </div>
   );
 }
