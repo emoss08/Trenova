@@ -1,54 +1,54 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { 
-  Search, 
-  Filter, 
-  ChevronDown, 
-  ChevronRight, 
-  Shield, 
-  Users, 
-  Settings, 
-  FileText, 
-  BarChart3, 
-  CreditCard, 
-  Truck,
-  Package,
-  MapPin,
-  Calendar,
-  Database,
-  Eye,
-  Edit,
-  Trash2,
-  Plus,
-  Download,
-  Upload,
-  Check,
-  X,
-  AlertTriangle
-} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
-} from "@/components/ui/select";
-import { 
-  Collapsible, 
-  CollapsibleContent, 
-  CollapsibleTrigger 
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import { cn } from "@/lib/utils";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PermissionSchema } from "@/lib/schemas/user-schema";
+import { cn } from "@/lib/utils";
+import {
+  AlertTriangle,
+  BarChart3,
+  Calendar,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  CreditCard,
+  Database,
+  Download,
+  Edit,
+  Eye,
+  FileText,
+  Filter,
+  MapPin,
+  Package,
+  Plus,
+  Search,
+  Settings,
+  Shield,
+  Trash2,
+  Truck,
+  Upload,
+  Users,
+  X,
+} from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
 
 interface EnhancedPermissionsSelectorProps {
   permissions: PermissionSchema[];
@@ -87,71 +87,90 @@ const getResourceIcon = (resource: string) => {
 
 // Action icons and colors
 const getActionInfo = (action: string) => {
-  const actionMap: Record<string, { icon: any; color: string; label: string }> = {
-    view: { icon: Eye, color: "text-blue-600", label: "View" },
-    create: { icon: Plus, color: "text-green-600", label: "Create" },
-    update: { icon: Edit, color: "text-yellow-600", label: "Edit" },
-    delete: { icon: Trash2, color: "text-red-600", label: "Delete" },
-    manage: { icon: Shield, color: "text-purple-600", label: "Full Access" },
-    export: { icon: Download, color: "text-indigo-600", label: "Export" },
-    import: { icon: Upload, color: "text-indigo-600", label: "Import" },
-  };
+  const actionMap: Record<string, { icon: any; color: string; label: string }> =
+    {
+      view: { icon: Eye, color: "text-blue-600", label: "View" },
+      create: { icon: Plus, color: "text-green-600", label: "Create" },
+      update: { icon: Edit, color: "text-yellow-600", label: "Edit" },
+      delete: { icon: Trash2, color: "text-red-600", label: "Delete" },
+      manage: { icon: Shield, color: "text-purple-600", label: "Full Access" },
+      export: { icon: Download, color: "text-indigo-600", label: "Export" },
+      import: { icon: Upload, color: "text-indigo-600", label: "Import" },
+    };
 
-  return actionMap[action.toLowerCase()] || { 
-    icon: FileText, 
-    color: "text-gray-600", 
-    label: action?.toUpperCase() || "UNKNOWN" 
-  };
+  return (
+    actionMap[action.toLowerCase()] || {
+      icon: FileText,
+      color: "text-gray-600",
+      label: action?.toUpperCase() || "UNKNOWN",
+    }
+  );
 };
 
 export function EnhancedPermissionsSelector({
   permissions,
   selectedPermissions,
   onPermissionsChange,
-  isLoading = false
+  isLoading = false,
 }: EnhancedPermissionsSelectorProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterResource, setFilterResource] = useState<string>("all");
   const [filterAction, setFilterAction] = useState<string>("all");
   const [activeTab, setActiveTab] = useState("browse");
-  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Organize permissions by resource
   const groupedPermissions = useMemo(() => {
     if (!permissions?.length) return {};
 
-    return permissions.reduce((acc, permission) => {
-      const resource = permission.resource || "Other";
-      if (!acc[resource]) {
-        acc[resource] = [];
-      }
-      acc[resource].push(permission);
-      return acc;
-    }, {} as Record<string, PermissionSchema[]>);
+    return permissions.reduce(
+      (acc, permission) => {
+        const resource = permission.resource || "Other";
+        if (!acc[resource]) {
+          acc[resource] = [];
+        }
+        acc[resource].push(permission);
+        return acc;
+      },
+      {} as Record<string, PermissionSchema[]>,
+    );
   }, [permissions]);
 
   // Get unique resources and actions for filtering
-  const uniqueResources = useMemo(() => 
-    Array.from(new Set(permissions.map(p => p.resource || "Other")))
-  , [permissions]);
+  const uniqueResources = useMemo(
+    () => Array.from(new Set(permissions.map((p) => p.resource || "Other"))),
+    [permissions],
+  );
 
-  const uniqueActions = useMemo(() => 
-    Array.from(new Set(permissions.map(p => p.action).filter(Boolean)))
-  , [permissions]);
+  const uniqueActions = useMemo(
+    () => Array.from(new Set(permissions.map((p) => p.action).filter(Boolean))),
+    [permissions],
+  );
 
   // Filter permissions based on search and filters
   const filteredGroupedPermissions = useMemo(() => {
     const filtered: Record<string, PermissionSchema[]> = {};
 
     Object.entries(groupedPermissions).forEach(([resource, perms]) => {
-      const filteredPerms = perms.filter(permission => {
-        const matchesSearch = searchQuery === "" || 
-          permission.action?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          permission.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          permission.resource?.toLowerCase().includes(searchQuery.toLowerCase());
+      const filteredPerms = perms.filter((permission) => {
+        const matchesSearch =
+          searchQuery === "" ||
+          permission.action
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          permission.description
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase()) ||
+          permission.resource
+            ?.toLowerCase()
+            .includes(searchQuery.toLowerCase());
 
-        const matchesResource = filterResource === "all" || permission.resource === filterResource;
-        const matchesAction = filterAction === "all" || permission.action === filterAction;
+        const matchesResource =
+          filterResource === "all" || permission.resource === filterResource;
+        const matchesAction =
+          filterAction === "all" || permission.action === filterAction;
 
         return matchesSearch && matchesResource && matchesAction;
       });
@@ -165,77 +184,119 @@ export function EnhancedPermissionsSelector({
   }, [groupedPermissions, searchQuery, filterResource, filterAction]);
 
   // Helper functions
-  const isPermissionSelected = useCallback((permissionId: string) => {
-    return selectedPermissions.some(p => p.id === permissionId);
-  }, [selectedPermissions]);
+  const isPermissionSelected = useCallback(
+    (permissionId: string) => {
+      return selectedPermissions.some((p) => p.id === permissionId);
+    },
+    [selectedPermissions],
+  );
 
-  const togglePermission = useCallback((permission: PermissionSchema, checked: boolean) => {
-    if (checked) {
-      onPermissionsChange([...selectedPermissions, permission]);
-    } else {
-      onPermissionsChange(selectedPermissions.filter(p => p.id !== permission.id));
-    }
-  }, [selectedPermissions, onPermissionsChange]);
+  const togglePermission = useCallback(
+    (permission: PermissionSchema, checked: boolean) => {
+      if (checked) {
+        onPermissionsChange([...selectedPermissions, permission]);
+      } else {
+        onPermissionsChange(
+          selectedPermissions.filter((p) => p.id !== permission.id),
+        );
+      }
+    },
+    [selectedPermissions, onPermissionsChange],
+  );
 
-  const toggleCategoryPermissions = useCallback((categoryPerms: PermissionSchema[], allSelected: boolean) => {
-    if (allSelected) {
-      // Remove all permissions in this category
-      const categoryIds = categoryPerms.map(p => p.id);
-      onPermissionsChange(selectedPermissions.filter(p => !categoryIds.includes(p.id)));
-    } else {
-      // Add all permissions in this category
-      const newPerms = categoryPerms.filter(p => !isPermissionSelected(p.id!));
-      onPermissionsChange([...selectedPermissions, ...newPerms]);
-    }
-  }, [selectedPermissions, onPermissionsChange, isPermissionSelected]);
+  const toggleCategoryPermissions = useCallback(
+    (categoryPerms: PermissionSchema[], allSelected: boolean) => {
+      if (allSelected) {
+        // Remove all permissions in this category
+        const categoryIds = categoryPerms.map((p) => p.id);
+        onPermissionsChange(
+          selectedPermissions.filter((p) => !categoryIds.includes(p.id)),
+        );
+      } else {
+        // Add all permissions in this category
+        const newPerms = categoryPerms.filter(
+          (p) => !isPermissionSelected(p.id!),
+        );
+        onPermissionsChange([...selectedPermissions, ...newPerms]);
+      }
+    },
+    [selectedPermissions, onPermissionsChange, isPermissionSelected],
+  );
 
-  const toggleManagePermission = useCallback((categoryPerms: PermissionSchema[]) => {
-    const managePermission = categoryPerms.find(p => p.action === "manage");
-    if (!managePermission) return;
+  const toggleManagePermission = useCallback(
+    (categoryPerms: PermissionSchema[]) => {
+      const managePermission = categoryPerms.find((p) => p.action === "manage");
+      if (!managePermission) return;
 
-    const isCurrentlySelected = isPermissionSelected(managePermission.id!);
-    
-    if (isCurrentlySelected) {
-      // Remove manage permission
-      onPermissionsChange(selectedPermissions.filter(p => p.id !== managePermission.id));
-    } else {
-      // Add manage permission and remove other permissions in this category
-      const categoryIds = categoryPerms.map(p => p.id);
-      const filteredSelected = selectedPermissions.filter(p => !categoryIds.includes(p.id));
-      onPermissionsChange([...filteredSelected, managePermission]);
-    }
-  }, [selectedPermissions, onPermissionsChange, isPermissionSelected]);
+      const isCurrentlySelected = isPermissionSelected(managePermission.id!);
 
-  const removePermission = useCallback((permissionId: string) => {
-    onPermissionsChange(selectedPermissions.filter(p => p.id !== permissionId));
-  }, [selectedPermissions, onPermissionsChange]);
+      if (isCurrentlySelected) {
+        // Remove manage permission
+        onPermissionsChange(
+          selectedPermissions.filter((p) => p.id !== managePermission.id),
+        );
+      } else {
+        // Add manage permission and remove other permissions in this category
+        const categoryIds = categoryPerms.map((p) => p.id);
+        const filteredSelected = selectedPermissions.filter(
+          (p) => !categoryIds.includes(p.id),
+        );
+        onPermissionsChange([...filteredSelected, managePermission]);
+      }
+    },
+    [selectedPermissions, onPermissionsChange, isPermissionSelected],
+  );
+
+  const removePermission = useCallback(
+    (permissionId: string) => {
+      onPermissionsChange(
+        selectedPermissions.filter((p) => p.id !== permissionId),
+      );
+    },
+    [selectedPermissions, onPermissionsChange],
+  );
 
   const clearAllPermissions = useCallback(() => {
     onPermissionsChange([]);
   }, [onPermissionsChange]);
 
-  const toggleCategoryExpansion = useCallback((resource: string) => {
-    const newExpanded = new Set(expandedCategories);
-    if (newExpanded.has(resource)) {
-      newExpanded.delete(resource);
-    } else {
-      newExpanded.add(resource);
-    }
-    setExpandedCategories(newExpanded);
-  }, [expandedCategories]);
+  const toggleCategoryExpansion = useCallback(
+    (resource: string) => {
+      const newExpanded = new Set(expandedCategories);
+      if (newExpanded.has(resource)) {
+        newExpanded.delete(resource);
+      } else {
+        newExpanded.add(resource);
+      }
+      setExpandedCategories(newExpanded);
+    },
+    [expandedCategories],
+  );
 
-  const getCategoryStats = useCallback((categoryPerms: PermissionSchema[]) => {
-    const selectedCount = categoryPerms.filter(p => isPermissionSelected(p.id!)).length;
-    const totalCount = categoryPerms.length;
-    const hasManage = categoryPerms.some(p => p.action === "manage" && isPermissionSelected(p.id!));
-    
-    return { selectedCount, totalCount, hasManage, allSelected: selectedCount === totalCount };
-  }, [isPermissionSelected]);
+  const getCategoryStats = useCallback(
+    (categoryPerms: PermissionSchema[]) => {
+      const selectedCount = categoryPerms.filter((p) =>
+        isPermissionSelected(p.id!),
+      ).length;
+      const totalCount = categoryPerms.length;
+      const hasManage = categoryPerms.some(
+        (p) => p.action === "manage" && isPermissionSelected(p.id!),
+      );
+
+      return {
+        selectedCount,
+        totalCount,
+        hasManage,
+        allSelected: selectedCount === totalCount,
+      };
+    },
+    [isPermissionSelected],
+  );
 
   // Group selected permissions by resource for review tab
   const selectedPermissionsByResource = useMemo(() => {
     const grouped: Record<string, PermissionSchema[]> = {};
-    selectedPermissions.forEach(permission => {
+    selectedPermissions.forEach((permission) => {
       const resource = permission.resource || "Other";
       if (!grouped[resource]) {
         grouped[resource] = [];
@@ -315,9 +376,11 @@ export function EnhancedPermissionsSelector({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Resources</SelectItem>
-                  {uniqueResources.map(resource => (
+                  {uniqueResources.map((resource) => (
                     <SelectItem key={resource} value={resource}>
-                      {resource.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
+                      {resource
+                        .replace(/_/g, " ")
+                        .replace(/\b\w/g, (l) => l.toUpperCase())}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -328,9 +391,9 @@ export function EnhancedPermissionsSelector({
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Actions</SelectItem>
-                  {uniqueActions.map(action => (
-                    <SelectItem key={action} value={action}>
-                      {getActionInfo(action).label}
+                  {uniqueActions.map((action) => (
+                    <SelectItem key={action} value={action || "all"}>
+                      {getActionInfo(action || "all").label}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -338,140 +401,185 @@ export function EnhancedPermissionsSelector({
             </div>
 
             {/* Permissions Grid */}
-            <ScrollArea className="h-[500px] rounded-md border">
+            <ScrollArea className="h-[400px] rounded-md border">
               <div className="p-4 space-y-4">
-                {Object.entries(filteredGroupedPermissions).map(([resource, categoryPerms]) => {
-                  const { selectedCount, totalCount, hasManage, allSelected } = getCategoryStats(categoryPerms);
-                  const isExpanded = expandedCategories.has(resource);
-                  const managePermission = categoryPerms.find(p => p.action === "manage");
+                {Object.entries(filteredGroupedPermissions).map(
+                  ([resource, categoryPerms]) => {
+                    const {
+                      selectedCount,
+                      totalCount,
+                      hasManage,
+                      allSelected,
+                    } = getCategoryStats(categoryPerms);
+                    const isExpanded = expandedCategories.has(resource);
+                    const managePermission = categoryPerms.find(
+                      (p) => p.action === "manage",
+                    );
 
-                  return (
-                    <Card key={resource} className="overflow-hidden">
-                      <Collapsible
-                        open={isExpanded}
-                        onOpenChange={() => toggleCategoryExpansion(resource)}
-                      >
-                        <CollapsibleTrigger asChild>
-                          <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors pb-3">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-3">
-                                {getResourceIcon(resource)}
-                                <div>
-                                  <h4 className="font-semibold">
-                                    {resource.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
-                                  </h4>
-                                  <p className="text-sm text-muted-foreground">
-                                    {selectedCount}/{totalCount} permissions selected
-                                  </p>
+                    return (
+                      <div key={resource} className="overflow-hidden">
+                        <Collapsible
+                          open={isExpanded}
+                          onOpenChange={() => toggleCategoryExpansion(resource)}
+                        >
+                          <CollapsibleTrigger asChild>
+                            <div className="cursor-pointer hover:bg-muted/50 transition-colors p-3 rounded-md">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                  {getResourceIcon(resource)}
+                                  <div>
+                                    <h4 className="font-semibold">
+                                      {resource
+                                        .replace(/_/g, " ")
+                                        .replace(/\b\w/g, (l) =>
+                                          l.toUpperCase(),
+                                        )}
+                                    </h4>
+                                    <p className="text-sm text-muted-foreground">
+                                      {selectedCount}/{totalCount} permissions
+                                      selected
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  {hasManage && (
+                                    <Badge
+                                      variant="default"
+                                      className="text-xs"
+                                    >
+                                      Full Access
+                                    </Badge>
+                                  )}
+                                  <Badge
+                                    variant={
+                                      selectedCount > 0
+                                        ? "default"
+                                        : "secondary"
+                                    }
+                                    className="text-xs"
+                                  >
+                                    {selectedCount}/{totalCount}
+                                  </Badge>
+                                  {isExpanded ? (
+                                    <ChevronDown className="h-4 w-4" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4" />
+                                  )}
                                 </div>
                               </div>
-                              <div className="flex items-center gap-2">
-                                {hasManage && (
-                                  <Badge variant="default" className="text-xs">
-                                    Full Access
-                                  </Badge>
-                                )}
-                                <Badge 
-                                  variant={selectedCount > 0 ? "default" : "secondary"} 
-                                  className="text-xs"
-                                >
-                                  {selectedCount}/{totalCount}
-                                </Badge>
-                                {isExpanded ? (
-                                  <ChevronDown className="h-4 w-4" />
-                                ) : (
-                                  <ChevronRight className="h-4 w-4" />
-                                )}
-                              </div>
                             </div>
-                          </CardHeader>
-                        </CollapsibleTrigger>
-                        <CollapsibleContent>
-                          <CardContent className="pt-0">
-                            {/* Category Actions */}
-                            <div className="flex flex-wrap gap-2 mb-4">
-                              {managePermission && (
+                          </CollapsibleTrigger>
+                          <CollapsibleContent>
+                            <div className="p-3">
+                              {/* Category Actions */}
+                              <div className="flex flex-wrap gap-2 mb-4">
+                                {managePermission && (
+                                  <Button
+                                    type="button"
+                                    variant={hasManage ? "default" : "outline"}
+                                    size="sm"
+                                    onClick={() =>
+                                      toggleManagePermission(categoryPerms)
+                                    }
+                                    className="text-xs"
+                                  >
+                                    <Shield className="h-3 w-3 mr-1" />
+                                    Full Access
+                                  </Button>
+                                )}
                                 <Button
                                   type="button"
-                                  variant={hasManage ? "default" : "outline"}
+                                  variant="outline"
                                   size="sm"
-                                  onClick={() => toggleManagePermission(categoryPerms)}
+                                  onClick={() =>
+                                    toggleCategoryPermissions(
+                                      categoryPerms,
+                                      allSelected,
+                                    )
+                                  }
                                   className="text-xs"
                                 >
-                                  <Shield className="h-3 w-3 mr-1" />
-                                  Full Access
+                                  {allSelected ? (
+                                    <>
+                                      <X className="h-3 w-3 mr-1" />
+                                      Deselect All
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Check className="h-3 w-3 mr-1" />
+                                      Select All
+                                    </>
+                                  )}
                                 </Button>
-                              )}
-                              <Button
-                                type="button"
-                                variant="outline"
-                                size="sm"
-                                onClick={() => toggleCategoryPermissions(categoryPerms, allSelected)}
-                                className="text-xs"
-                              >
-                                {allSelected ? (
-                                  <>
-                                    <X className="h-3 w-3 mr-1" />
-                                    Deselect All
-                                  </>
-                                ) : (
-                                  <>
-                                    <Check className="h-3 w-3 mr-1" />
-                                    Select All
-                                  </>
-                                )}
-                              </Button>
-                            </div>
+                              </div>
 
-                            <Separator className="mb-4" />
+                              <Separator className="mb-4" />
 
-                            {/* Individual Permissions */}
-                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                              {categoryPerms
-                                .filter(p => p.action !== "manage")
-                                .map((permission) => {
-                                  const actionInfo = getActionInfo(permission.action || "");
-                                  const Icon = actionInfo.icon;
-                                  const isSelected = isPermissionSelected(permission.id!);
+                              {/* Individual Permissions */}
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+                                {categoryPerms
+                                  .filter((p) => p.action !== "manage")
+                                  .map((permission) => {
+                                    const actionInfo = getActionInfo(
+                                      permission.action || "",
+                                    );
+                                    const Icon = actionInfo.icon;
+                                    const isSelected = isPermissionSelected(
+                                      permission.id!,
+                                    );
 
-                                  return (
-                                    <div
-                                      key={permission.id}
-                                      className={cn(
-                                        "flex items-start gap-3 p-3 rounded-lg border transition-all",
-                                        "hover:bg-accent/50 cursor-pointer",
-                                        isSelected && "ring-2 ring-primary ring-offset-2",
-                                        hasManage && "opacity-50"
-                                      )}
-                                      onClick={() => !hasManage && togglePermission(permission, !isSelected)}
-                                    >
-                                      <Checkbox
-                                        checked={isSelected}
-                                        disabled={hasManage}
-                                        onChange={() => {}}
-                                        className="mt-0.5"
-                                      />
-                                      <div className="flex-1 space-y-1">
-                                        <div className="flex items-center gap-2">
-                                          <Icon className={cn("h-4 w-4", actionInfo.color)} />
-                                          <span className="font-medium text-sm">
-                                            {actionInfo.label}
-                                          </span>
+                                    return (
+                                      <div
+                                        key={permission.id}
+                                        className={cn(
+                                          "flex items-start gap-3 p-3 rounded-lg border transition-all",
+                                          "hover:bg-accent/50 cursor-pointer",
+                                          isSelected &&
+                                            "border-blue-600 outline-hidden ring-4 ring-blue-600/20",
+                                          hasManage && "opacity-50",
+                                        )}
+                                        onClick={() =>
+                                          !hasManage &&
+                                          togglePermission(
+                                            permission,
+                                            !isSelected,
+                                          )
+                                        }
+                                      >
+                                        <Checkbox
+                                          checked={isSelected}
+                                          disabled={hasManage}
+                                          onChange={() => {}}
+                                          className="mt-0.5"
+                                        />
+                                        <div className="flex-1 space-y-1">
+                                          <div className="flex items-center gap-2">
+                                            <Icon
+                                              className={cn(
+                                                "h-4 w-4",
+                                                actionInfo.color,
+                                              )}
+                                            />
+                                            <span className="font-medium text-sm">
+                                              {actionInfo.label}
+                                            </span>
+                                          </div>
+                                          <p className="text-xs text-muted-foreground">
+                                            {permission.description ||
+                                              `${actionInfo.label} access to ${resource.toLowerCase()}`}
+                                          </p>
                                         </div>
-                                        <p className="text-xs text-muted-foreground">
-                                          {permission.description || `${actionInfo.label} access to ${resource.toLowerCase()}`}
-                                        </p>
                                       </div>
-                                    </div>
-                                  );
-                                })}
+                                    );
+                                  })}
+                              </div>
                             </div>
-                          </CardContent>
-                        </CollapsibleContent>
-                      </Collapsible>
-                    </Card>
-                  );
-                })}
+                          </CollapsibleContent>
+                        </Collapsible>
+                      </div>
+                    );
+                  },
+                )}
               </div>
             </ScrollArea>
           </TabsContent>
@@ -480,69 +588,87 @@ export function EnhancedPermissionsSelector({
             {selectedPermissions.length === 0 ? (
               <div className="text-center py-12">
                 <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                <h3 className="text-lg font-semibold mb-2">No permissions selected</h3>
+                <h3 className="text-lg font-semibold mb-2">
+                  No permissions selected
+                </h3>
                 <p className="text-muted-foreground mb-4">
                   Switch to the Browse tab to select permissions for this role.
                 </p>
-                <Button variant="outline" onClick={() => setActiveTab("browse")}>
+                <Button
+                  variant="outline"
+                  onClick={() => setActiveTab("browse")}
+                >
                   Browse Permissions
                 </Button>
               </div>
             ) : (
               <ScrollArea className="h-[500px]">
                 <div className="space-y-6">
-                  {Object.entries(selectedPermissionsByResource).map(([resource, perms]) => (
-                    <Card key={resource}>
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            {getResourceIcon(resource)}
-                            <h4 className="font-semibold">
-                              {resource.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase())}
-                            </h4>
+                  {Object.entries(selectedPermissionsByResource).map(
+                    ([resource, perms]) => (
+                      <Card key={resource}>
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              {getResourceIcon(resource)}
+                              <h4 className="font-semibold">
+                                {resource
+                                  .replace(/_/g, " ")
+                                  .replace(/\b\w/g, (l) => l.toUpperCase())}
+                              </h4>
+                            </div>
+                            <Badge variant="outline">{perms.length}</Badge>
                           </div>
-                          <Badge variant="outline">{perms.length}</Badge>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="pt-0">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                          {perms.map((permission) => {
-                            const actionInfo = getActionInfo(permission.action || "");
-                            const Icon = actionInfo.icon;
+                        </CardHeader>
+                        <CardContent className="pt-0">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            {perms.map((permission) => {
+                              const actionInfo = getActionInfo(
+                                permission.action || "",
+                              );
+                              const Icon = actionInfo.icon;
 
-                            return (
-                              <div
-                                key={permission.id}
-                                className="flex items-center justify-between p-3 rounded-lg border bg-muted/20"
-                              >
-                                <div className="flex items-center gap-2">
-                                  <Icon className={cn("h-4 w-4", actionInfo.color)} />
-                                  <div>
-                                    <span className="font-medium text-sm">
-                                      {actionInfo.label}
-                                    </span>
-                                    {permission.description && (
-                                      <p className="text-xs text-muted-foreground">
-                                        {permission.description}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  onClick={() => removePermission(permission.id!)}
-                                  className="h-8 w-8 p-0"
+                              return (
+                                <div
+                                  key={permission.id}
+                                  className="flex items-center justify-between p-3 rounded-lg border bg-muted/20"
                                 >
-                                  <X className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
+                                  <div className="flex items-center gap-2">
+                                    <Icon
+                                      className={cn(
+                                        "h-4 w-4",
+                                        actionInfo.color,
+                                      )}
+                                    />
+                                    <div>
+                                      <span className="font-medium text-sm">
+                                        {actionInfo.label}
+                                      </span>
+                                      {permission.description && (
+                                        <p className="text-xs text-muted-foreground">
+                                          {permission.description}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() =>
+                                      removePermission(permission.id!)
+                                    }
+                                    className="h-8 w-8 p-0"
+                                  >
+                                    <X className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ),
+                  )}
                 </div>
               </ScrollArea>
             )}

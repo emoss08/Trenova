@@ -33,7 +33,7 @@ export function EditRoleSheet({
   const { table, rowSelection, isLoading } = useDataTable();
   const queryClient = useQueryClient();
   const sheetRef = useRef<HTMLDivElement>(null);
-  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
+  const [, setSearchParams] = useQueryStates(searchParamsParser);
   const { isPopout, closePopout } = usePopoutWindow();
   const initialLoadRef = useRef(false);
 
