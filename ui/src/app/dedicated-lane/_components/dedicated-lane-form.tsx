@@ -28,8 +28,8 @@ export function DedicatedLaneForm() {
             rules={{ required: true }}
             name="status"
             label="Status"
-            placeholder="Status"
-            description="Indicates the current operational status of the dedicated lane."
+            placeholder="Select Status"
+            description="Current operational status of the lane"
           />
         </FormControl>
         <FormControl cols="full">
@@ -37,9 +37,9 @@ export function DedicatedLaneForm() {
             control={control}
             rules={{ required: true }}
             name="name"
-            label="Name"
-            placeholder="Name"
-            description="A name identifying the dedicated lane."
+            label="Lane Name"
+            placeholder="Enter Lane Name"
+            description="Unique identifier for the dedicated lane"
           />
         </FormControl>
         <FormControl cols="full">
@@ -48,28 +48,8 @@ export function DedicatedLaneForm() {
             control={control}
             label="Customer"
             rules={{ required: true }}
-            placeholder="Customer"
-            description="The customer associated with the dedicated lane."
-          />
-        </FormControl>
-        <FormControl>
-          <LocationAutocompleteField<DedicatedLaneSchema>
-            name="originLocationId"
-            control={control}
-            label="Origin Location"
-            placeholder="Origin Location"
-            description="The origin location associated with the dedicated lane."
-            rules={{ required: true }}
-          />
-        </FormControl>
-        <FormControl>
-          <LocationAutocompleteField<DedicatedLaneSchema>
-            name="destinationLocationId"
-            control={control}
-            label="Destination Location"
-            placeholder="Destination Location"
-            description="The destination location associated with the dedicated lane."
-            rules={{ required: true }}
+            placeholder="Select Customer"
+            description="Customer account associated with this lane"
           />
         </FormControl>
       </FormGroup>
@@ -83,19 +63,39 @@ function ShipmentInformationSection() {
 
   return (
     <FormSection
-      title="Shipment Information"
-      description="The shipment information associated with the dedicated lane."
+      title="Route Details"
+      description="Configure origin, destination, and equipment specifications"
       className="border-t pt-4"
     >
       <FormGroup cols={2}>
+        <FormControl>
+          <LocationAutocompleteField<DedicatedLaneSchema>
+            name="originLocationId"
+            control={control}
+            label="Origin"
+            placeholder="Select Origin"
+            description="Starting location for the dedicated lane"
+            rules={{ required: true }}
+          />
+        </FormControl>
+        <FormControl>
+          <LocationAutocompleteField<DedicatedLaneSchema>
+            name="destinationLocationId"
+            control={control}
+            label="Destination"
+            placeholder="Select Destination"
+            description="Final delivery location for the dedicated lane"
+            rules={{ required: true }}
+          />
+        </FormControl>
         <FormControl>
           <ShipmentTypeAutocompleteField<DedicatedLaneSchema>
             name="shipmentTypeId"
             control={control}
             label="Shipment Type"
             rules={{ required: true }}
-            placeholder="Shipment Type"
-            description="The shipment type associated with the dedicated lane."
+            placeholder="Select Type"
+            description="Classification of shipment for this lane"
           />
         </FormControl>
         <FormControl>
@@ -104,8 +104,8 @@ function ShipmentInformationSection() {
             control={control}
             label="Service Type"
             rules={{ required: true }}
-            placeholder="Service Type"
-            description="The service type associated with the dedicated lane."
+            placeholder="Select Service"
+            description="Required service level for this lane"
           />
         </FormControl>
         <FormControl>
@@ -113,8 +113,8 @@ function ShipmentInformationSection() {
             name="tractorTypeId"
             control={control}
             label="Tractor Type"
-            placeholder="Tractor Type"
-            description="The tractor type associated with the dedicated lane."
+            placeholder="Select Tractor"
+            description="Required tractor specification"
             extraSearchParams={{
               classes: [EquipmentClass.Tractor],
             }}
@@ -125,8 +125,8 @@ function ShipmentInformationSection() {
             name="trailerTypeId"
             control={control}
             label="Trailer Type"
-            placeholder="Trailer Type"
-            description="The trailer type associated with the dedicated lane."
+            placeholder="Select Trailer"
+            description="Required trailer or container specification"
             extraSearchParams={{
               classes: [EquipmentClass.Trailer, EquipmentClass.Container],
             }}
@@ -140,7 +140,11 @@ function ShipmentInformationSection() {
 function WorkerAssignmentSection() {
   const { control } = useFormContext<DedicatedLaneSchema>();
   return (
-    <FormSection title="Worker Assignment" className="border-t pt-4">
+    <FormSection
+      title="Worker Assignment"
+      description="Designate primary and secondary workers for this lane"
+      className="border-t pt-4"
+    >
       <FormGroup cols={2}>
         <FormControl>
           <WorkerAutocompleteField<DedicatedLaneSchema>
@@ -149,7 +153,7 @@ function WorkerAssignmentSection() {
             label="Primary Worker"
             rules={{ required: true }}
             placeholder="Select Primary Worker"
-            description="Select the primary worker for the assignment."
+            description="Main worker assigned to this lane"
           />
         </FormControl>
         <FormControl>
@@ -159,15 +163,15 @@ function WorkerAssignmentSection() {
             clearable
             label="Secondary Worker"
             placeholder="Select Secondary Worker"
-            description="Select the secondary worker for the assignment."
+            description="Backup worker for this lane"
           />
         </FormControl>
         <FormControl cols="full">
           <SwitchField
             control={control}
             name="autoAssign"
-            label="Auto Assign Workers"
-            description="Auto assign the workers to the dedicated lane when a shipment is created."
+            label="Automatic Worker Assignment"
+            description="Automatically assign designated workers when creating shipments for this lane"
             outlined
           />
         </FormControl>
