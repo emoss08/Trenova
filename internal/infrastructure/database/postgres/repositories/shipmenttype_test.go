@@ -26,12 +26,14 @@ func TestShipmentTypeRepository(t *testing.T) {
 	})
 
 	t.Run("list", func(t *testing.T) {
-		opts := &ports.LimitOffsetQueryOptions{
-			Limit:  10,
-			Offset: 0,
-			TenantOpts: &ports.TenantOptions{
-				OrgID: org.ID,
-				BuID:  bu.ID,
+		opts := &repoports.ListShipmentTypeRequest{
+			Filter: &ports.LimitOffsetQueryOptions{
+				Limit:  10,
+				Offset: 0,
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
+				},
 			},
 		}
 

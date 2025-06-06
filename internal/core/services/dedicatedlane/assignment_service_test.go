@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -158,15 +159,70 @@ func (m *MockShipmentRepository) CalculateShipmentTotals(
 	return nil, nil
 }
 
+type MockTractorRepository struct {
+	mock.Mock
+}
+
+func (m *MockTractorRepository) List(
+	ctx context.Context,
+	req *repositories.ListTractorRequest,
+) (*ports.ListResult[*tractor.Tractor], error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*ports.ListResult[*tractor.Tractor]), args.Error(1)
+}
+
+func (m *MockTractorRepository) GetByID(
+	ctx context.Context,
+	req *repositories.GetTractorByIDRequest,
+) (*tractor.Tractor, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*tractor.Tractor), args.Error(1)
+}
+
+func (m *MockTractorRepository) GetByPrimaryWorkerID(
+	ctx context.Context,
+	req repositories.GetTractorByPrimaryWorkerIDRequest,
+) (*tractor.Tractor, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*tractor.Tractor), args.Error(1)
+}
+
+func (m *MockTractorRepository) Create(
+	ctx context.Context,
+	t *tractor.Tractor,
+) (*tractor.Tractor, error) {
+	args := m.Called(ctx, t)
+	return args.Get(0).(*tractor.Tractor), args.Error(1)
+}
+
+func (m *MockTractorRepository) Update(
+	ctx context.Context,
+	t *tractor.Tractor,
+) (*tractor.Tractor, error) {
+	args := m.Called(ctx, t)
+	return args.Get(0).(*tractor.Tractor), args.Error(1)
+}
+
+func (m *MockTractorRepository) Assignment(
+	ctx context.Context,
+	req repositories.TractorAssignmentRequest,
+) (*repositories.AssignmentResponse, error) {
+	args := m.Called(ctx, req)
+	return args.Get(0).(*repositories.AssignmentResponse), args.Error(1)
+}
+
 func TestNewAssignmentService(t *testing.T) {
+	log := logger.NewLogger(testutils.NewTestConfig())
+
 	mockAssignRepo := &MockAssignmentRepository{}
 	mockShipRepo := &MockShipmentRepository{}
-	log := logger.NewLogger(testutils.NewTestConfig())
+	mockTractorRepo := &MockTractorRepository{}
 
 	params := AssignmentServiceParams{
 		DB:             ts.DB,
 		AssignmentRepo: mockAssignRepo,
 		ShipmentRepo:   mockShipRepo,
+		TractorRepo:    mockTractorRepo,
 		Logger:         log,
 	}
 
@@ -176,18 +232,21 @@ func TestNewAssignmentService(t *testing.T) {
 	require.Equal(t, ts.DB, service.db)
 	require.Equal(t, mockAssignRepo, service.assignmentRepo)
 	require.Equal(t, mockShipRepo, service.shipmentRepo)
+	require.Equal(t, mockTractorRepo, service.tractorRepo)
 	require.NotNil(t, service.l)
 }
 
 func TestExtractLocations(t *testing.T) {
 	mockAssignRepo := &MockAssignmentRepository{}
 	mockShipRepo := &MockShipmentRepository{}
+	mockTractorRepo := &MockTractorRepository{}
 	log := logger.NewLogger(testutils.NewTestConfig())
 
 	service := &AssignmentService{
 		db:             ts.DB,
 		assignmentRepo: mockAssignRepo,
 		shipmentRepo:   mockShipRepo,
+		tractorRepo:    mockTractorRepo,
 		l:              log.Logger,
 	}
 
@@ -301,12 +360,14 @@ func TestHandleDedicatedLaneOperations(t *testing.T) {
 
 	mockAssignRepo := &MockAssignmentRepository{}
 	mockShipRepo := &MockShipmentRepository{}
+	mockTractorRepo := &MockTractorRepository{}
 	log := logger.NewLogger(testutils.NewTestConfig())
 
 	service := &AssignmentService{
 		db:             ts.DB,
 		assignmentRepo: mockAssignRepo,
 		shipmentRepo:   mockShipRepo,
+		tractorRepo:    mockTractorRepo,
 		l:              log.Logger,
 	}
 
@@ -470,12 +531,27 @@ func TestHandleDedicatedLaneOperations(t *testing.T) {
 			},
 		}
 
-		// Setup mock expectations using the fixture data
+		// Create a mock tractor to return
+		mockTractor := &tractor.Tractor{
+			ID:             pulid.ID("tr_test"),
+			OrganizationID: org.ID,
+			BusinessUnitID: bu.ID,
+		}
+
+		// Setup mock expectations
+		mockTractorRepo.On("GetByPrimaryWorkerID", ctx, repositories.GetTractorByPrimaryWorkerIDRequest{
+			WorkerID: dl.PrimaryWorkerID,
+			OrgID:    shp.OrganizationID,
+			BuID:     shp.BusinessUnitID,
+		}).
+			Return(mockTractor, nil)
+
 		mockAssignRepo.On("BulkAssign", ctx, mock.MatchedBy(func(req *repositories.AssignmentRequest) bool {
 			return req.ShipmentID == shp.ID &&
 				req.PrimaryWorkerID == dl.PrimaryWorkerID &&
 				req.SecondaryWorkerID != nil &&
 				*req.SecondaryWorkerID == *dl.SecondaryWorkerID &&
+				req.TractorID == mockTractor.ID &&
 				req.OrgID == org.ID &&
 				req.BuID == bu.ID
 		})).
@@ -495,6 +571,7 @@ func TestHandleDedicatedLaneOperations(t *testing.T) {
 		// Verify all mock expectations were met
 		mockAssignRepo.AssertExpectations(t)
 		mockShipRepo.AssertExpectations(t)
+		mockTractorRepo.AssertExpectations(t)
 	})
 
 	t.Run("auto assign bulk assign failure", func(t *testing.T) {
@@ -545,15 +622,26 @@ func TestHandleDedicatedLaneOperations(t *testing.T) {
 		// Create new mocks for this test
 		mockAssignRepoFail := &MockAssignmentRepository{}
 		mockShipRepoFail := &MockShipmentRepository{}
+		mockTractorRepoFail := &MockTractorRepository{}
 
 		serviceFail := &AssignmentService{
 			db:             ts.DB,
 			assignmentRepo: mockAssignRepoFail,
 			shipmentRepo:   mockShipRepoFail,
+			tractorRepo:    mockTractorRepoFail,
 			l:              log.Logger,
 		}
 
-		// Setup mock to return error on BulkAssign
+		// Create a mock tractor to return
+		mockTractor := &tractor.Tractor{
+			ID:             pulid.ID("tr_test_fail"),
+			OrganizationID: org.ID,
+			BusinessUnitID: bu.ID,
+		}
+
+		// Setup mock to succeed on GetByPrimaryWorkerID but fail on BulkAssign
+		mockTractorRepoFail.On("GetByPrimaryWorkerID", ctx, mock.Anything).
+			Return(mockTractor, nil)
 		mockAssignRepoFail.On("BulkAssign", ctx, mock.Anything).
 			Return(([]*shipment.Assignment)(nil), sql.ErrConnDone)
 
@@ -562,6 +650,7 @@ func TestHandleDedicatedLaneOperations(t *testing.T) {
 
 		// Verify mock expectations
 		mockAssignRepoFail.AssertExpectations(t)
+		mockTractorRepoFail.AssertExpectations(t)
 	})
 
 	t.Run("auto assign update status failure", func(t *testing.T) {
@@ -612,15 +701,26 @@ func TestHandleDedicatedLaneOperations(t *testing.T) {
 		// Create new mocks for this test
 		mockAssignRepoStatus := &MockAssignmentRepository{}
 		mockShipRepoStatus := &MockShipmentRepository{}
+		mockTractorRepoStatus := &MockTractorRepository{}
 
 		serviceStatus := &AssignmentService{
 			db:             ts.DB,
 			assignmentRepo: mockAssignRepoStatus,
 			shipmentRepo:   mockShipRepoStatus,
+			tractorRepo:    mockTractorRepoStatus,
 			l:              log.Logger,
 		}
 
-		// Setup mocks - BulkAssign succeeds, UpdateStatus fails
+		// Create a mock tractor to return
+		mockTractor := &tractor.Tractor{
+			ID:             pulid.ID("tr_test_status_fail"),
+			OrganizationID: org.ID,
+			BusinessUnitID: bu.ID,
+		}
+
+		// Setup mocks - GetByPrimaryWorkerID and BulkAssign succeed, UpdateStatus fails
+		mockTractorRepoStatus.On("GetByPrimaryWorkerID", ctx, mock.Anything).
+			Return(mockTractor, nil)
 		mockAssignRepoStatus.On("BulkAssign", ctx, mock.Anything).
 			Return([]*shipment.Assignment{}, nil)
 		mockShipRepoStatus.On("UpdateStatus", ctx, mock.Anything).
@@ -632,5 +732,6 @@ func TestHandleDedicatedLaneOperations(t *testing.T) {
 		// Verify mock expectations
 		mockAssignRepoStatus.AssertExpectations(t)
 		mockShipRepoStatus.AssertExpectations(t)
+		mockTractorRepoStatus.AssertExpectations(t)
 	})
 }

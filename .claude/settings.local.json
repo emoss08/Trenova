@@ -26,7 +26,8 @@
       "WebFetch(domain:tanstack.com)",
       "mcp__ide__getDiagnostics",
       "Bash(npm run:*)",
-      "Bash(npx prettier:*)"
+      "Bash(npx prettier:*)",
+      "Bash(task format)"
     ],
     "deny": []
   },
