@@ -277,12 +277,6 @@ export const routes: RouteInfo[] = [
         supportsModal: true,
       },
       {
-        key: Resource.DedicatedLane,
-        label: "Dedicated Lanes",
-        link: "/shipments/dedicated-lanes",
-        supportsModal: true,
-      },
-      {
         key: Resource.ConfigurationFiles,
         label: "Configuration Files",
         icon: faFiles,
@@ -297,6 +291,12 @@ export const routes: RouteInfo[] = [
             key: Resource.FormulaTemplate,
             label: "Formula Templates",
             link: "/shipments/configurations/formula-templates",
+            supportsModal: true,
+          },
+          {
+            key: Resource.DedicatedLane,
+            label: "Dedicated Lanes",
+            link: "/shipments/configurations/dedicated-lanes",
             supportsModal: true,
           },
           {

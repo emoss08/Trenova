@@ -15,6 +15,8 @@ import type { TrailerSchema } from "@/lib/schemas/trailer-schema";
 import type { RoleSchema, UserSchema } from "@/lib/schemas/user-schema";
 import type { WorkerSchema } from "@/lib/schemas/worker-schema";
 import { formatLocation, truncateText } from "@/lib/utils";
+import { Status } from "@/types/common";
+import { EquipmentStatus } from "@/types/tractor";
 import type {
   Control,
   FieldPath,
@@ -233,6 +235,9 @@ export function WorkerAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => `${option.firstName} ${option.lastName}`}
       renderOption={(option) => `${option.firstName} ${option.lastName}`}
+      extraSearchParams={{
+        status: [Status.Active], // * Always filter by active workers
+      }}
       {...props}
     />
   );
@@ -247,6 +252,9 @@ export function TractorAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => `${option.code}`}
       renderOption={(option) => `${option.code}`}
+      extraSearchParams={{
+        status: EquipmentStatus.Available,
+      }}
       {...props}
     />
   );
@@ -261,6 +269,9 @@ export function TrailerAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => `${option.code}`}
       renderOption={(option) => `${option.code}`}
+      extraSearchParams={{
+        status: EquipmentStatus.Available,
+      }}
       {...props}
     />
   );
@@ -286,6 +297,9 @@ export function ShipmentTypeAutocompleteField<T extends FieldValues>({
           )}
         </div>
       )}
+      extraSearchParams={{
+        status: [Status.Active],
+      }}
       {...props}
     />
   );
@@ -311,6 +325,9 @@ export function ServiceTypeAutocompleteField<T extends FieldValues>({
           )}
         </div>
       )}
+      extraSearchParams={{
+        status: [Status.Active],
+      }}
       {...props}
     />
   );
@@ -332,6 +349,9 @@ export function LocationAutocompleteField<T extends FieldValues>({
           </span>
         </div>
       )}
+      extraSearchParams={{
+        status: [Status.Active],
+      }}
       {...props}
     />
   );
@@ -392,6 +412,9 @@ export function CustomerAutocompleteField<T extends FieldValues>({
           )}
         </div>
       )}
+      extraSearchParams={{
+        status: [Status.Active],
+      }}
       {...props}
     />
   );

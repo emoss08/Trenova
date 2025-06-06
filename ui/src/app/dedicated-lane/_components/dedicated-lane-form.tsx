@@ -12,7 +12,6 @@ import {
 import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
 import { statusChoices } from "@/lib/choices";
 import type { DedicatedLaneSchema } from "@/lib/schemas/dedicated-lane-schema";
-import { Status } from "@/types/common";
 import { EquipmentClass } from "@/types/equipment-type";
 import { useFormContext } from "react-hook-form";
 
@@ -50,9 +49,6 @@ export function DedicatedLaneForm() {
             label="Customer"
             rules={{ required: true }}
             placeholder="Customer"
-            extraSearchParams={{
-              status: [Status.Active],
-            }}
             description="The customer associated with the dedicated lane."
           />
         </FormControl>
@@ -64,9 +60,6 @@ export function DedicatedLaneForm() {
             placeholder="Origin Location"
             description="The origin location associated with the dedicated lane."
             rules={{ required: true }}
-            extraSearchParams={{
-              status: [Status.Active],
-            }}
           />
         </FormControl>
         <FormControl>
@@ -77,9 +70,6 @@ export function DedicatedLaneForm() {
             placeholder="Destination Location"
             description="The destination location associated with the dedicated lane."
             rules={{ required: true }}
-            extraSearchParams={{
-              status: [Status.Active],
-            }}
           />
         </FormControl>
       </FormGroup>
@@ -106,9 +96,6 @@ function ShipmentInformationSection() {
             rules={{ required: true }}
             placeholder="Shipment Type"
             description="The shipment type associated with the dedicated lane."
-            extraSearchParams={{
-              status: [Status.Active],
-            }}
           />
         </FormControl>
         <FormControl>
@@ -119,9 +106,6 @@ function ShipmentInformationSection() {
             rules={{ required: true }}
             placeholder="Service Type"
             description="The service type associated with the dedicated lane."
-            extraSearchParams={{
-              status: [Status.Active],
-            }}
           />
         </FormControl>
         <FormControl>

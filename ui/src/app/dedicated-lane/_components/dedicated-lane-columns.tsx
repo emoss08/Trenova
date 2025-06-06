@@ -1,13 +1,15 @@
+import { DataTableColumnHeaderWithTooltip } from "@/components/data-table/_components/data-table-column-header";
 import {
   createCommonColumns,
   EntityRefCell,
 } from "@/components/data-table/_components/data-table-column-helpers";
+import { DataTableDescription } from "@/components/data-table/_components/data-table-components";
 import { BooleanBadge, StatusBadge } from "@/components/status-badge";
 import type { CustomerSchema } from "@/lib/schemas/customer-schema";
 import type { DedicatedLaneSchema } from "@/lib/schemas/dedicated-lane-schema";
 import type { LocationSchema } from "@/lib/schemas/location-schema";
 import type { WorkerSchema } from "@/lib/schemas/worker-schema";
-import { formatLocation, truncateText } from "@/lib/utils";
+import { formatLocation } from "@/lib/utils";
 import { type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<DedicatedLaneSchema>[] {
@@ -27,7 +29,7 @@ export function getColumns(): ColumnDef<DedicatedLaneSchema>[] {
       header: "Name",
       cell: ({ row }) => {
         const { name } = row.original;
-        return <p>{truncateText(name, 20)}</p>;
+        return <DataTableDescription description={name} />;
       },
     },
     {
@@ -117,7 +119,8 @@ export function getColumns(): ColumnDef<DedicatedLaneSchema>[] {
       },
     },
     {
-      accessorKey: "primaryWorker",
+      id: "assignedWorkers",
+      accessorFn: (row) => row.primaryWorker,
       header: "Assigned Worker(s)",
       cell: ({ row }) => {
         const { primaryWorker } = row.original;
@@ -151,7 +154,13 @@ export function getColumns(): ColumnDef<DedicatedLaneSchema>[] {
     },
     {
       accessorKey: "autoAssign",
-      header: "Auto Assign",
+      header: ({ column }) => (
+        <DataTableColumnHeaderWithTooltip
+          column={column}
+          title="Auto Assign"
+          tooltipContent="Whether the dedicated lane is automatically assigned to a tractor when a shipment is created."
+        />
+      ),
       cell: ({ row }) => {
         const { autoAssign } = row.original;
         return <BooleanBadge value={autoAssign} />;

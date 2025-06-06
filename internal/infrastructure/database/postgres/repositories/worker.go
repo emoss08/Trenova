@@ -64,6 +64,7 @@ func (wr *workerRepository) addOptions(
 	if opts.Status != "" {
 		status, err := domain.StatusFromString(opts.Status)
 		if err != nil {
+			wr.l.Error().Err(err).Str("status", opts.Status).Msg("invalid status")
 			return q
 		}
 

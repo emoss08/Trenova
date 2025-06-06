@@ -26,6 +26,7 @@ type AssignmentServiceParams struct {
 	DB             db.Connection
 	AssignmentRepo repositories.AssignmentRepository
 	ShipmentRepo   repositories.ShipmentRepository
+	TractorRepo    repositories.TractorRepository
 	Logger         *logger.Logger
 }
 
@@ -34,6 +35,7 @@ type AssignmentService struct {
 	db             db.Connection
 	assignmentRepo repositories.AssignmentRepository
 	shipmentRepo   repositories.ShipmentRepository
+	tractorRepo    repositories.TractorRepository
 	l              *zerolog.Logger
 }
 
@@ -47,6 +49,7 @@ func NewAssignmentService(p AssignmentServiceParams) *AssignmentService {
 		db:             p.DB,
 		assignmentRepo: p.AssignmentRepo,
 		shipmentRepo:   p.ShipmentRepo,
+		tractorRepo:    p.TractorRepo,
 		l:              &log,
 	}
 }
@@ -179,11 +182,28 @@ func (s *AssignmentService) performAutoAssignment(
 		Str("dedicatedLaneID", dl.ID.String()).
 		Msg("auto-assigning shipment to dedicated lane")
 
+	// * Fetch the tractor by it's primary worker id
+	tractor, err := s.tractorRepo.GetByPrimaryWorkerID(
+		ctx,
+		repositories.GetTractorByPrimaryWorkerIDRequest{
+			WorkerID: dl.PrimaryWorkerID,
+			OrgID:    shp.OrganizationID,
+			BuID:     shp.BusinessUnitID,
+		},
+	)
+	if err != nil {
+		return oops.In("dedicated_lane_assignment_service").
+			With("op", "perform_auto_assignment").
+			Time(time.Now()).
+			Wrapf(err, "get tractor by primary worker id")
+	}
+
 	// Bulk assign shipment moves to dedicated lane
-	_, err := s.assignmentRepo.BulkAssign(ctx, &repositories.AssignmentRequest{
+	_, err = s.assignmentRepo.BulkAssign(ctx, &repositories.AssignmentRequest{
 		ShipmentID:        shp.ID,
 		PrimaryWorkerID:   dl.PrimaryWorkerID,
 		SecondaryWorkerID: dl.SecondaryWorkerID,
+		TractorID:         tractor.ID,
 		OrgID:             shp.OrganizationID,
 		BuID:              shp.BusinessUnitID,
 	})

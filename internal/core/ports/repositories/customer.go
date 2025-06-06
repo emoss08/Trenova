@@ -10,9 +10,10 @@ import (
 
 type ListCustomerOptions struct {
 	Filter                *ports.LimitOffsetQueryOptions
-	IncludeState          bool `query:"includeState"`
-	IncludeBillingProfile bool `query:"includeBillingProfile"`
-	IncludeEmailProfile   bool `query:"includeEmailProfile"`
+	IncludeState          bool   `query:"includeState"`
+	IncludeBillingProfile bool   `query:"includeBillingProfile"`
+	IncludeEmailProfile   bool   `query:"includeEmailProfile"`
+	Status                string `query:"status"`
 }
 
 type GetCustomerByIDOptions struct {

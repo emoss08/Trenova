@@ -113,6 +113,7 @@ func (h *Handler) list(c *fiber.Ctx) error {
 			IncludeState:          c.QueryBool("includeState"),
 			IncludeBillingProfile: c.QueryBool("includeBillingProfile"),
 			IncludeEmailProfile:   c.QueryBool("includeEmailProfile"),
+			Status:                fc.Query("status"),
 		})
 	}
 

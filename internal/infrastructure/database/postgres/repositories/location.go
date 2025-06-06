@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -57,6 +58,16 @@ func (lr *locationRepository) filterQuery(
 
 	if opts.IncludeState {
 		q = q.Relation("State")
+	}
+
+	if opts.Status != "" {
+		status, err := domain.StatusFromString(opts.Status)
+		if err != nil {
+			lr.l.Error().Err(err).Str("status", opts.Status).Msg("invalid status")
+			return q
+		}
+
+		q = q.Where("loc.status = ?", status)
 	}
 
 	if opts.Filter.Query != "" {

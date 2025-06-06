@@ -102,19 +102,7 @@ const routes: RouteObject[] = [
                   title: "Shipment Management",
                 },
               },
-              {
-                path: "dedicated-lanes",
-                async lazy() {
-                  let { DedicatedLane } = await import(
-                    "@/app/dedicated-lane/page"
-                  );
-                  return { Component: DedicatedLane };
-                },
-                handle: {
-                  crumb: "Dedicated Lanes",
-                  title: "Dedicated Lanes",
-                },
-              },
+
               {
                 path: "configurations",
                 handle: {
@@ -122,6 +110,19 @@ const routes: RouteObject[] = [
                   title: "Configurations Files",
                 },
                 children: [
+                  {
+                    path: "dedicated-lanes",
+                    async lazy() {
+                      let { DedicatedLane } = await import(
+                        "@/app/dedicated-lane/page"
+                      );
+                      return { Component: DedicatedLane };
+                    },
+                    handle: {
+                      crumb: "Dedicated Lanes",
+                      title: "Dedicated Lanes",
+                    },
+                  },
                   {
                     path: "shipment-types",
                     async lazy() {
