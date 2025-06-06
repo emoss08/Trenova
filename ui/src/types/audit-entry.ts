@@ -74,6 +74,7 @@ export enum Resource {
   Role = "role",
   FormulaTemplate = "formula_template",
   ShipmentManagement = "shipment_management",
+  DedicatedLane = "dedicated_lane",
   DelayCode = "delay_code",
   BusinessUnit = "business_unit",
   Organization = "organization",

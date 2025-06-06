@@ -136,7 +136,6 @@ func (r *favoriteRepository) GetByURL(
 	err = query.Scan(ctx, entity)
 	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			log.Error().Msg("failed to get favorite by url")
 			return nil, errors.NewNotFoundError("User does not have a favorite with this URL")
 		}
 

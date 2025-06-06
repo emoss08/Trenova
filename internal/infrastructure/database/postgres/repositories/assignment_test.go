@@ -74,7 +74,7 @@ func TestAssignmentRepository(t *testing.T) {
 			PrimaryWorkerID:   worker1.ID,
 			SecondaryWorkerID: &worker2.ID,
 			TractorID:         trt.ID,
-			TrailerID:         trl.ID,
+			TrailerID:         &trl.ID,
 		}
 
 		created, err := repo.SingleAssign(ctx, assign)
@@ -112,7 +112,7 @@ func TestAssignmentRepository(t *testing.T) {
 			PrimaryWorkerID:   worker1.ID,
 			SecondaryWorkerID: &worker2.ID,
 			TractorID:         trt.ID,
-			TrailerID:         trl.ID,
+			TrailerID:         &trl.ID,
 		}
 
 		result, err := repo.SingleAssign(ctx, assign)
@@ -151,7 +151,7 @@ func TestAssignmentRepository(t *testing.T) {
 			PrimaryWorkerID:   worker1.ID,
 			SecondaryWorkerID: &worker2.ID,
 			TractorID:         trt.ID,
-			TrailerID:         trl.ID,
+			TrailerID:         &trl.ID,
 		}
 
 		result, err := repo.SingleAssign(ctx, assign)
@@ -190,7 +190,7 @@ func TestAssignmentRepository(t *testing.T) {
 			PrimaryWorkerID:   worker1.ID,
 			SecondaryWorkerID: &worker2.ID,
 			TractorID:         trt.ID,
-			TrailerID:         trl.ID,
+			TrailerID:         &trl.ID,
 		}
 
 		results, err := repo.BulkAssign(ctx, req)
@@ -222,7 +222,7 @@ func TestAssignmentRepository(t *testing.T) {
 			PrimaryWorkerID:   worker1.ID,
 			SecondaryWorkerID: &worker2.ID,
 			TractorID:         trt.ID,
-			TrailerID:         trl.ID,
+			TrailerID:         &trl.ID,
 		}
 
 		created, err := repo.SingleAssign(ctx, assign)

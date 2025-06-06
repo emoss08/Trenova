@@ -41,6 +41,9 @@ const (
 	ResourceDocument = Resource(
 		"document",
 	) // Represents resources related to documents.
+	ResourceDedicatedLane = Resource(
+		"dedicated_lane",
+	) // Represents resources related to dedicated lanes.
 	ResourceRole = Resource(
 		"role",
 	) // Represents resources related to roles.
@@ -359,6 +362,12 @@ var (
 			ActionAudit,
 		),
 		ResourceOrganization: append(
+			BaseActions,
+			ActionConfigure,
+			ActionAudit,
+			ActionModifyField,
+		),
+		ResourceDedicatedLane: append(
 			BaseActions,
 			ActionConfigure,
 			ActionAudit,

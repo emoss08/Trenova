@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/commodity"
 	"github.com/emoss08/trenova/internal/core/services/customer"
 	"github.com/emoss08/trenova/internal/core/services/dbbackup"
+	"github.com/emoss08/trenova/internal/core/services/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/services/docpreview"
 	"github.com/emoss08/trenova/internal/core/services/document"
 	"github.com/emoss08/trenova/internal/core/services/documentqualityconfig"
@@ -90,6 +91,8 @@ var Module = fx.Module("services", fx.Provide(
 	integration.NewService,
 	billingqueue.NewService,
 	favorite.NewService,
+	dedicatedlane.NewService,
+	dedicatedlane.NewAssignmentService,
 ),
 )
 

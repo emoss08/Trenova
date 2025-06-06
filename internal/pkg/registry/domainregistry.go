@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/compliance"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/domain/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/core/domain/documentqualityfeedback"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
@@ -86,5 +87,6 @@ func RegisterEntities() []any {
 		&accessorialcharge.AccessorialCharge{},
 		&integration.Integration{},
 		&pagefavorite.PageFavorite{},
+		&dedicatedlane.DedicatedLane{},
 	}
 }

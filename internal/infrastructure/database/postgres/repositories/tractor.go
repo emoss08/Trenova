@@ -228,6 +228,54 @@ func (tr *tractorRepository) GetByID(
 	return entity, nil
 }
 
+// GetByPrimaryWorkerID retrieves a tractor by its primary worker ID.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - req: GetByPrimaryWorkerIDRequest containing the worker ID and organization ID.
+//
+// Returns:
+//   - *tractor.Tractor: The tractor entity.
+//   - error: An error if the operation fails.
+func (tr *tractorRepository) GetByPrimaryWorkerID(
+	ctx context.Context,
+	req repositories.GetTractorByPrimaryWorkerIDRequest,
+) (*tractor.Tractor, error) {
+	dba, err := tr.db.DB(ctx)
+	if err != nil {
+		return nil, oops.In("tractor_repository").
+			With("op", "get_by_primary_worker_id").
+			With("req", req).
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := tr.l.With().
+		Str("operation", "GetByPrimaryWorkerID").
+		Str("workerID", req.WorkerID.String()).
+		Logger()
+
+	entity := new(tractor.Tractor)
+
+	query := dba.NewSelect().Model(entity).
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("tr.primary_worker_id = ?", req.WorkerID).
+				Where("tr.organization_id = ?", req.OrgID).
+				Where("tr.business_unit_id = ?", req.BuID)
+		})
+
+	if err = query.Scan(ctx); err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			return nil, errors.NewNotFoundError("Tractor not found within your organization")
+		}
+
+		log.Error().Err(err).Msg("failed to get tractor")
+		return nil, err
+	}
+
+	return entity, nil
+}
+
 // Create creates a new tractor.
 //
 // Parameters:

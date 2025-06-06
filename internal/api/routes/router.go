@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueue"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
+	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlane"
 	"github.com/emoss08/trenova/internal/api/handlers/document"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttype"
@@ -122,6 +123,7 @@ type RouterParams struct {
 	FavoriteHandler              *favorite.Handler
 	PermissionHandler            *permission.Handler
 	RoleHandler                  *role.Handler
+	DedicatedLaneHandler         *dedicatedlane.Handler
 }
 
 type Router struct {
@@ -308,4 +310,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Roles
 	r.p.RoleHandler.RegisterRoutes(router, rl)
+
+	// Dedicated Lanes
+	r.p.DedicatedLaneHandler.RegisterRoutes(router, rl)
 }

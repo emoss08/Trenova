@@ -1,18 +1,21 @@
 import { LazyComponent } from "@/components/error-boundary";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { lazy } from "react";
 
 const ShipmentDetailsHeader = lazy(() => import("./shipment-details-header"));
 
 export function ShipmentFormContent({
   children,
+  selectedShipment,
 }: {
   children: React.ReactNode;
+  selectedShipment?: ShipmentSchema | null;
 }) {
   return (
     <ShipmentScrollAreaOuter>
       <LazyComponent>
-        <ShipmentDetailsHeader />
+        <ShipmentDetailsHeader selectedShipment={selectedShipment} />
       </LazyComponent>
       <ScrollArea className="flex flex-col overflow-y-auto max-h-[calc(100vh-8.5rem)]">
         <ShipmentScrollAreaInner>{children}</ShipmentScrollAreaInner>

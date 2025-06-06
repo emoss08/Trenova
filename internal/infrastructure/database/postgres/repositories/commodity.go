@@ -219,7 +219,10 @@ func (cr *commodityRepository) Update(
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update commodity")
-		return nil, eris.Wrap(err, "update commodity")
+		return nil, oops.In("commodity_repository").
+			With("op", "update").
+			Time(time.Now()).
+			Wrapf(err, "update commodity")
 	}
 
 	return com, nil

@@ -1100,7 +1100,6 @@ func (sr *shipmentRepository) CalculateShipmentTotals(
 	// monetary fields, then fetch the base charge via the new helper to avoid
 	// duplicating the algorithm.
 
-	// Populate OtherChargeAmount and TotalChargeAmount on the shipment struct.
 	sr.calc.CalculateTotals(shp)
 
 	baseCharge := sr.calc.CalculateBaseCharge(shp)

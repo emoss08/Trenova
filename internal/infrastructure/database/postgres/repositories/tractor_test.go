@@ -263,4 +263,30 @@ func TestTractorRepository(t *testing.T) {
 		require.Error(t, err)
 		require.Nil(t, results)
 	})
+
+	t.Run("get tractor by primary worker id", func(t *testing.T) {
+		entity, err := repo.GetByPrimaryWorkerID(ctx, repoports.GetTractorByPrimaryWorkerIDRequest{
+			WorkerID: wrk.ID,
+			OrgID:    org.ID,
+			BuID:     wrk.BusinessUnitID,
+		})
+
+		require.NoError(t, err)
+		require.NotNil(t, entity)
+		require.NotEmpty(t, entity.ID)
+		require.Equal(t, entity.PrimaryWorkerID, wrk.ID)
+		require.Equal(t, entity.BusinessUnitID, wrk.BusinessUnitID)
+		require.Equal(t, entity.OrganizationID, org.ID)
+	})
+
+	t.Run("get tractor by primary worker id failure", func(t *testing.T) {
+		entity, err := repo.GetByPrimaryWorkerID(ctx, repoports.GetTractorByPrimaryWorkerIDRequest{
+			WorkerID: "invalid-id",
+			OrgID:    org.ID,
+			BuID:     wrk.BusinessUnitID,
+		})
+
+		require.Error(t, err)
+		require.Nil(t, entity)
+	})
 }
