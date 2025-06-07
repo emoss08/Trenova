@@ -294,6 +294,12 @@ export const routes: RouteInfo[] = [
             supportsModal: true,
           },
           {
+            key: Resource.DedicatedLane,
+            label: "Dedicated Lanes",
+            link: "/shipments/configurations/dedicated-lanes",
+            supportsModal: true,
+          },
+          {
             key: Resource.ServiceType,
             label: "Service Types",
             link: "/shipments/configurations/service-types",

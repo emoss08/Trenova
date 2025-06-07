@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -185,7 +187,11 @@ func (ac *accessorialChargeRepository) Create(
 ) (*accessorialcharge.AccessorialCharge, error) {
 	dba, err := ac.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("accessorial_charge_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := ac.l.With().
@@ -194,17 +200,12 @@ func (ac *accessorialChargeRepository) Create(
 		Str("buID", acc.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(acc).Returning("*").Exec(c); iErr != nil {
-			log.Error().Err(iErr).Msg("failed to insert accessorial charge")
-			return iErr
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create accessorial charge")
-		return nil, eris.Wrap(err, "create accessorial charge")
+	if _, err = dba.NewInsert().Model(acc).Returning("*").Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("accessorial_charge", acc).
+			Msg("failed to insert accessorial charge")
+		return nil, err
 	}
 
 	return acc, nil
@@ -243,6 +244,7 @@ func (ac *accessorialChargeRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(acc).
 			WherePK().
+			OmitZero().
 			Where("acc.version = ?", ov).
 			Returning("*").
 			Exec(c)

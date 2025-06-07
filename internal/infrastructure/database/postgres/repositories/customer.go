@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -86,6 +87,16 @@ func (cr *customerRepository) filterQuery(
 
 	if opts.IncludeEmailProfile {
 		q = q.Relation("EmailProfile")
+	}
+
+	if opts.Status != "" {
+		status, err := domain.StatusFromString(opts.Status)
+		if err != nil {
+			cr.l.Error().Err(err).Str("status", opts.Status).Msg("invalid status")
+			return q
+		}
+
+		q = q.Where("cus.status = ?", status)
 	}
 
 	if opts.Filter.Query != "" {
@@ -499,6 +510,7 @@ func (cr *customerRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(cus).
 			Where("cus.version = ?", ov).
+			OmitZero().
 			WherePK().
 			Returning("*").
 			Exec(c)

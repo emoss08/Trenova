@@ -2,6 +2,7 @@
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { lazy, memo, Suspense } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
+import { DedicatedLaneBanner } from "./ai-banners/dedicated-lane";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentFormContent } from "./shipment-form-body";
 import { ShipmentFormHeader } from "./shipment-form-header";
@@ -27,14 +28,19 @@ type ShipmentDetailsProps = {
   isError?: boolean;
 };
 
-export function ShipmentForm({ isLoading, ...props }: ShipmentDetailsProps) {
+export function ShipmentForm({
+  isLoading,
+  selectedShipment,
+  ...props
+}: ShipmentDetailsProps) {
   if (isLoading) {
     return <ShipmentDetailsSkeleton />;
   }
 
   return (
     <Suspense fallback={<ShipmentDetailsSkeleton />}>
-      <ShipmentFormBody {...props}>
+      <ShipmentFormBody selectedShipment={selectedShipment} {...props}>
+        <DedicatedLaneBanner />
         <ShipmentSections />
       </ShipmentFormBody>
     </Suspense>
@@ -71,7 +77,9 @@ export function ShipmentFormBody({
   return (
     <ShipmentFormBodyOuter>
       <ShipmentFormHeader selectedShipment={selectedShipment} />
-      <ShipmentFormContent>{children}</ShipmentFormContent>
+      <ShipmentFormContent selectedShipment={selectedShipment}>
+        {children}
+      </ShipmentFormContent>
     </ShipmentFormBodyOuter>
   );
 }

@@ -20,7 +20,7 @@ export function UserForm() {
           name="status"
           label="Status"
           placeholder="Status"
-          description="Current status of the user"
+          description="Account activation status"
           options={statusChoices}
         />
       </FormControl>
@@ -31,7 +31,7 @@ export function UserForm() {
           name="username"
           label="Username"
           placeholder="Username"
-          description="The username of the user"
+          description="Unique login identifier"
         />
       </FormControl>
       <FormControl cols="full">
@@ -41,7 +41,7 @@ export function UserForm() {
           name="emailAddress"
           label="Email Address"
           placeholder="Email Address"
-          description="The email address of the user"
+          description="Primary contact email"
         />
       </FormControl>
       <FormControl cols="full">
@@ -51,7 +51,7 @@ export function UserForm() {
           name="name"
           label="Full Name"
           placeholder="Full Name"
-          description="The full name of the user"
+          description="Legal first and last name"
         />
       </FormControl>
       <FormControl>
@@ -67,7 +67,7 @@ export function UserForm() {
           rules={{ required: true }}
           label="Timezone"
           placeholder="Select timezone"
-          description="The timezone of the user"
+          description="Local time zone for scheduling and notifications"
         />
       </FormControl>
       <FormControl>
@@ -84,10 +84,9 @@ export function UserForm() {
               value: "24-hour",
             },
           ]}
-          rules={{ required: true }}
           label="Time Format"
           placeholder="Select time format"
-          description="The time format of the user"
+          description="Preferred time display format"
         />
       </FormControl>
       <FormControl cols="full">
@@ -97,7 +96,7 @@ export function UserForm() {
           control={control}
           label="Is Locked"
           outlined
-          description="Specifies whether the user is locked."
+          description="Account access restriction status"
         />
       </FormControl>
       <FormControl cols="full">
@@ -105,9 +104,8 @@ export function UserForm() {
           control={control}
           name="roles"
           label="Roles"
-          description="The roles of the user"
+          description="System access permissions and privileges"
           placeholder="Select roles"
-          rules={{ required: true }}
         />
       </FormControl>
     </FormGroup>

@@ -1,4 +1,4 @@
-import { API_URL } from "@/constants/env";
+import { API_URL, APP_ENV } from "@/constants/env";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 export interface LiveModeOptions {
@@ -109,7 +109,9 @@ export function useLiveMode({
       });
 
       eventSource.addEventListener("heartbeat", (event: MessageEvent) => {
-        console.log("💓 Heartbeat received:", event.data);
+        if (APP_ENV === "development") {
+          console.log("💓 Heartbeat received:", event.data);
+        }
         try {
           const data = JSON.parse(event.data);
           setState((prev) => ({

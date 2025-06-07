@@ -1,8 +1,8 @@
 export enum RoleType {
-  System = "system",
-  Organization = "organization",
-  Custom = "custom",
-  Temporary = "temporary",
+  System = "System",
+  Organization = "Organization",
+  Custom = "Custom",
+  Temporary = "Temporary",
 }
 
 export enum Action {

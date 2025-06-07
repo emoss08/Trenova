@@ -51,7 +51,7 @@ export function AutoCompleteDateTimeField<T extends FieldValues>({
               name={name}
               id={inputId}
               aria-label={label}
-              dateTime={dateValue}
+              dateTime={dateValue || undefined}
               placeholder={placeholder}
               setDateTime={handleChange}
               onBlur={field.onBlur}

@@ -1,0 +1,221 @@
+package scheduler
+
+import (
+	"github.com/emoss08/trenova/internal/pkg/jobs"
+	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
+	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/hibiken/asynq"
+	"github.com/rs/zerolog"
+	"go.uber.org/fx"
+)
+
+// CronSchedulerParams defines dependencies for the cron scheduler
+type CronSchedulerParams struct {
+	fx.In
+
+	Logger     *logger.Logger
+	JobService jobs.JobServiceInterface
+	RedisOpt   asynq.RedisClientOpt
+}
+
+// CronScheduler manages scheduled recurring jobs
+type CronScheduler struct {
+	logger     *zerolog.Logger
+	scheduler  *asynq.Scheduler
+	jobService jobs.JobServiceInterface
+}
+
+// CronSchedulerInterface defines methods for managing scheduled jobs
+type CronSchedulerInterface interface {
+	Start() error
+	Stop() error
+	SchedulePatternAnalysisJobs() error
+	ScheduleMaintenanceJobs() error
+}
+
+// NewCronScheduler creates a new cron scheduler
+//
+//nolint:gocritic // this is dependency injection
+func NewCronScheduler(p CronSchedulerParams) CronSchedulerInterface {
+	log := p.Logger.With().
+		Str("service", "cron_scheduler").
+		Logger()
+
+	scheduler := asynq.NewScheduler(p.RedisOpt, &asynq.SchedulerOpts{
+		LogLevel: asynq.WarnLevel, // Reduce noise
+		Logger:   &asynqLogger{logger: &log},
+	})
+
+	cs := &CronScheduler{
+		logger:     &log,
+		scheduler:  scheduler,
+		jobService: p.JobService,
+	}
+
+	return cs
+}
+
+// Start begins the cron scheduler
+func (cs *CronScheduler) Start() error {
+	cs.logger.Info().Msg("starting cron scheduler")
+
+	// Schedule all recurring jobs
+	if err := cs.SchedulePatternAnalysisJobs(); err != nil {
+		cs.logger.Error().Err(err).Msg("failed to schedule pattern analysis jobs")
+		return err
+	}
+
+	if err := cs.ScheduleMaintenanceJobs(); err != nil {
+		cs.logger.Error().Err(err).Msg("failed to schedule maintenance jobs")
+		return err
+	}
+
+	// Start the scheduler
+	if err := cs.scheduler.Start(); err != nil {
+		cs.logger.Error().Err(err).Msg("failed to start scheduler")
+		return err
+	}
+
+	cs.logger.Info().Msg("cron scheduler started successfully")
+	return nil
+}
+
+// Stop shuts down the cron scheduler
+func (cs *CronScheduler) Stop() error {
+	cs.logger.Info().Msg("stopping cron scheduler")
+	cs.scheduler.Shutdown()
+	return nil
+}
+
+// SchedulePatternAnalysisJobs schedules recurring pattern analysis jobs
+func (cs *CronScheduler) SchedulePatternAnalysisJobs() error {
+	cs.logger.Info().Msg("scheduling pattern analysis jobs")
+
+	// Daily pattern analysis at 2 AM
+	dailyPatternTask := asynq.NewTask(
+		string(jobs.JobTypeAnalyzePatterns),
+		cs.createGlobalPatternAnalysisPayload(7), // Analyze last 7 days daily
+	)
+
+	entryID, err := cs.scheduler.Register("0 2 * * *", dailyPatternTask,
+		asynq.Queue(jobs.QueuePattern),
+		asynq.MaxRetry(2),
+	)
+	if err != nil {
+		return err
+	}
+
+	cs.logger.Info().
+		Str("entry_id", entryID).
+		Str("schedule", "0 2 * * * (daily at 2 AM)").
+		Msg("scheduled daily pattern analysis")
+
+	// Weekly comprehensive analysis on Sundays at 1 AM
+	weeklyPatternTask := asynq.NewTask(
+		string(jobs.JobTypeAnalyzePatterns),
+		cs.createGlobalPatternAnalysisPayload(30), // Analyze last 30 days weekly
+	)
+
+	entryID, err = cs.scheduler.Register("0 1 * * 0", weeklyPatternTask,
+		asynq.Queue(jobs.QueuePattern),
+		asynq.MaxRetry(3),
+	)
+	if err != nil {
+		return err
+	}
+
+	cs.logger.Info().
+		Str("entry_id", entryID).
+		Str("schedule", "0 1 * * 0 (weekly on Sunday at 1 AM)").
+		Msg("scheduled weekly comprehensive pattern analysis")
+
+	return nil
+}
+
+// ScheduleMaintenanceJobs schedules recurring maintenance jobs
+func (cs *CronScheduler) ScheduleMaintenanceJobs() error {
+	cs.logger.Info().Msg("scheduling maintenance jobs")
+
+	// Expire old suggestions every 6 hours
+	expireTask := asynq.NewTask(
+		string(jobs.JobTypeExpireOldSuggestions),
+		cs.createExpireSuggestionsPayload(),
+	)
+
+	entryID, err := cs.scheduler.Register("0 */6 * * *", expireTask,
+		asynq.Queue(jobs.QueueSystem),
+		asynq.MaxRetry(2),
+	)
+	if err != nil {
+		return err
+	}
+
+	cs.logger.Info().
+		Str("entry_id", entryID).
+		Str("schedule", "0 */6 * * * (every 6 hours)").
+		Msg("scheduled suggestion expiration job")
+
+	return nil
+}
+
+// createGlobalPatternAnalysisPayload creates a payload for global pattern analysis
+func (cs *CronScheduler) createGlobalPatternAnalysisPayload(daysBack int) []byte {
+	endDate := timeutils.NowUnix()
+	startDate := endDate - (int64(daysBack) * 86400)
+
+	payload := &jobs.PatternAnalysisPayload{
+		BasePayload: jobs.BasePayload{
+			JobID:     pulid.MustNew("job_").String(),
+			Timestamp: timeutils.NowUnix(),
+		},
+		// No specific org/customer - this will need to be handled in the job handler
+		// to iterate through all organizations
+		StartDate:     startDate,
+		EndDate:       endDate,
+		MinFrequency:  3, // Conservative frequency for scheduled analysis
+		TriggerReason: "scheduled",
+	}
+
+	data, _ := jobs.MarshalPayload(payload)
+	return data
+}
+
+// createExpireSuggestionsPayload creates a payload for expiring suggestions
+func (cs *CronScheduler) createExpireSuggestionsPayload() []byte {
+	payload := &jobs.ExpireSuggestionsPayload{
+		BasePayload: jobs.BasePayload{
+			JobID:     pulid.MustNew("job_").String(),
+			Timestamp: timeutils.NowUnix(),
+		},
+		BatchSize: 100,
+	}
+
+	data, _ := jobs.MarshalPayload(payload)
+	return data
+}
+
+// asynqLogger implements asynq.Logger interface for consistent logging
+type asynqLogger struct {
+	logger *zerolog.Logger
+}
+
+func (l *asynqLogger) Debug(args ...interface{}) {
+	l.logger.Debug().Interface("args", args).Msg("asynq debug")
+}
+
+func (l *asynqLogger) Info(args ...interface{}) {
+	l.logger.Info().Interface("args", args).Msg("asynq info")
+}
+
+func (l *asynqLogger) Warn(args ...interface{}) {
+	l.logger.Warn().Interface("args", args).Msg("asynq warning")
+}
+
+func (l *asynqLogger) Error(args ...interface{}) {
+	l.logger.Error().Interface("args", args).Msg("asynq error")
+}
+
+func (l *asynqLogger) Fatal(args ...interface{}) {
+	l.logger.Fatal().Interface("args", args).Msg("asynq fatal")
+}

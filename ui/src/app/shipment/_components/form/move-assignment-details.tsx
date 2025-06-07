@@ -1,7 +1,7 @@
 import { EntityRedirectLink } from "@/components/ui/link";
+import type { MoveSchema } from "@/lib/schemas/move-schema";
 import { WorkerSchema } from "@/lib/schemas/worker-schema";
 import { cn } from "@/lib/utils";
-import { type ShipmentMove } from "@/types/move";
 import { memo } from "react";
 
 interface AssignmentDetailItemProps {
@@ -46,7 +46,7 @@ const getFullName = (worker?: WorkerSchema) => {
 export const AssignmentDetails = memo(function AssignmentDetails({
   move,
 }: {
-  move?: ShipmentMove;
+  move?: MoveSchema;
 }) {
   const assignment = move?.assignment;
   if (!assignment) return null;

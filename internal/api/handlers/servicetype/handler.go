@@ -66,15 +66,17 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	opts := &ports.LimitOffsetQueryOptions{
-		TenantOpts: &ports.TenantOptions{
-			OrgID:  reqCtx.OrgID,
-			BuID:   reqCtx.BuID,
-			UserID: reqCtx.UserID,
+	opts := &repositories.ListServiceTypeRequest{
+		Filter: &ports.LimitOffsetQueryOptions{
+			Query:  c.Query("query"),
+			Limit:  c.QueryInt("limit", 10),
+			Offset: c.QueryInt("offset", 0),
+			TenantOpts: &ports.TenantOptions{
+				OrgID:  reqCtx.OrgID,
+				BuID:   reqCtx.BuID,
+				UserID: reqCtx.UserID,
+			},
 		},
-		Limit:  c.QueryInt("limit", 100),
-		Offset: c.QueryInt("offset", 0),
-		Query:  c.Query("search"),
 	}
 
 	options, err := h.sts.SelectOptions(c.UserContext(), opts)
@@ -100,7 +102,10 @@ func (h *Handler) list(c *fiber.Ctx) error {
 			return nil, h.eh.HandleError(fc, err)
 		}
 
-		return h.sts.List(fc.UserContext(), filter)
+		return h.sts.List(fc.UserContext(), &repositories.ListServiceTypeRequest{
+			Filter: filter,
+			Status: fc.Query("status"),
+		})
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)

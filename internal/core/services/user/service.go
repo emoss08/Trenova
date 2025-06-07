@@ -8,9 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/pkg/types"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
@@ -19,15 +22,17 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Logger      *logger.Logger
-	Repo        repositories.UserRepository
-	PermService services.PermissionService
+	Logger       *logger.Logger
+	Repo         repositories.UserRepository
+	AuditService services.AuditService
+	PermService  services.PermissionService
 }
 
 type Service struct {
 	repo repositories.UserRepository
 	l    *zerolog.Logger
 	ps   services.PermissionService
+	as   services.AuditService
 }
 
 func NewService(p ServiceParams) *Service {
@@ -39,6 +44,7 @@ func NewService(p ServiceParams) *Service {
 		repo: p.Repo,
 		l:    &log,
 		ps:   p.PermService,
+		as:   p.AuditService,
 	}
 }
 
@@ -119,4 +125,125 @@ func (s *Service) Get(
 	}
 
 	return entity, nil
+}
+
+func (s *Service) Create(
+	ctx context.Context,
+	u *user.User,
+	userID pulid.ID,
+) (*user.User, error) {
+	log := s.l.With().
+		Str("operation", "Create").
+		Interface("user", u).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         userID,
+			Resource:       permission.ResourceUser,
+			Action:         permission.ActionCreate,
+			BusinessUnitID: u.BusinessUnitID,
+			OrganizationID: u.CurrentOrganizationID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to create a user")
+	}
+
+	createdEntity, err := s.repo.Create(ctx, u)
+	if err != nil {
+		return nil, err
+	}
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceUser,
+			ResourceID:     createdEntity.GetID(),
+			Action:         permission.ActionCreate,
+			UserID:         userID,
+			CurrentState:   jsonutils.MustToJSON(createdEntity),
+			OrganizationID: createdEntity.CurrentOrganizationID,
+			BusinessUnitID: createdEntity.BusinessUnitID,
+		},
+		audit.WithComment("User created"),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log user creation")
+	}
+
+	return createdEntity, nil
+}
+
+func (s *Service) Update(
+	ctx context.Context,
+	u *user.User,
+	userID pulid.ID,
+) (*user.User, error) {
+	log := s.l.With().
+		Str("operation", "Update").
+		Str("userID", u.ID.String()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         userID,
+			Resource:       permission.ResourceUser,
+			Action:         permission.ActionUpdate,
+			BusinessUnitID: u.BusinessUnitID,
+			OrganizationID: u.CurrentOrganizationID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update this user",
+		)
+	}
+
+	original, err := s.repo.GetByID(ctx, repositories.GetUserByIDOptions{
+		OrgID:        u.CurrentOrganizationID,
+		BuID:         u.BusinessUnitID,
+		UserID:       u.ID,
+		IncludeRoles: true,
+	})
+	if err != nil {
+		log.Error().Err(err).Str("userID", u.ID.String()).Msg("failed to get user")
+		return nil, err
+	}
+
+	updatedEntity, err := s.repo.Update(ctx, u)
+	if err != nil {
+		log.Error().Err(err).Interface("user", u).Msg("failed to update user")
+		return nil, err
+	}
+
+	// Log the update if the insert was successful
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceUser,
+			ResourceID:     updatedEntity.GetID(),
+			Action:         permission.ActionUpdate,
+			UserID:         userID,
+			CurrentState:   jsonutils.MustToJSON(updatedEntity),
+			PreviousState:  jsonutils.MustToJSON(original),
+			OrganizationID: updatedEntity.CurrentOrganizationID,
+			BusinessUnitID: updatedEntity.BusinessUnitID,
+		},
+		audit.WithComment("User updated"),
+		audit.WithCritical(),
+		audit.WithDiff(original, updatedEntity),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log user update")
+	}
+
+	return updatedEntity, nil
 }

@@ -63,6 +63,7 @@ export function DateTimePicker({
 
   const inputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const isClearingRef = useRef(false);
 
   useImperativeHandle(ref, () => inputRef.current!);
 
@@ -74,8 +75,12 @@ export function DateTimePicker({
 
     if (value.length > 0) {
       setIsOpen(true);
+      isClearingRef.current = false;
     } else {
       setIsOpen(false);
+      // Clear the datetime when input is empty
+      isClearingRef.current = true;
+      setDateTime(undefined);
     }
 
     setSelectedIndex(0);
@@ -90,11 +95,20 @@ export function DateTimePicker({
 
   // 🔑 Only react to external changes in `date`:
   useEffect(() => {
+    // Don't update input if we're in the middle of clearing
+    if (isClearingRef.current) {
+      isClearingRef.current = false;
+      return;
+    }
+
     if (dateTime) {
       // If an outside update provides a date, sync the input to it.
       const formatted = generateDateTimeString(dateTime);
       setInputValue(formatted);
+      console.info("dateTime is defined");
+      console.info(formatted);
     } else {
+      console.info("dateTime is undefined");
       // If outside set `date` to undefined, clear the input
       setInputValue("");
     }
@@ -130,6 +144,7 @@ export function DateTimePicker({
   }
 
   function handleClear() {
+    isClearingRef.current = true;
     setInputValue("");
     setDateTime(undefined);
     closeDropdown();

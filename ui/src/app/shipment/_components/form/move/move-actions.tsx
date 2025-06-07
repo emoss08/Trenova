@@ -18,6 +18,9 @@ import { useCallback, useState } from "react";
 import { useFieldArray } from "react-hook-form";
 import { AssignmentDialog } from "../../assignment/assignment-dialog";
 
+// * Statuses where the worker can be assigned.
+const validAssignmentStatuses = [MoveStatus.New, MoveStatus.Assigned];
+
 export function MoveActions({
   move,
   moveIdx,
@@ -35,6 +38,8 @@ export function MoveActions({
   const [assignmentDialogOpen, setAssignmentDialogOpen] =
     useState<boolean>(false);
   const queryClient = useQueryClient();
+
+  const [stopDialogOpen, setStopDialogOpen] = useState<boolean>(false);
 
   // Use field array for the stops
   const { update } = useFieldArray({
@@ -82,6 +87,14 @@ export function MoveActions({
     [move, moveIdx, queryClient, update],
   );
 
+  const handleOpenStopDialog = useCallback(() => {
+    setStopDialogOpen(true);
+  }, []);
+
+  const handleCloseStopDialog = useCallback(() => {
+    setStopDialogOpen(false);
+  }, []);
+
   return (
     <>
       <DropdownMenu>
@@ -100,7 +113,11 @@ export function MoveActions({
             disabled={!assignEnabled}
           />
 
-          <StopDialogAction moveIdx={moveIdx} stopIdx={0} />
+          <DropdownMenuItem
+            title="Add Stop"
+            description="Add a new stop to the move"
+            onClick={handleOpenStopDialog}
+          />
           <DropdownMenuItem
             title="Split Move"
             description="Divide this move into multiple parts"
@@ -127,42 +144,13 @@ export function MoveActions({
           assignmentId={assignment?.id}
         />
       )}
-    </>
-  );
-}
-// * Statuses where the worker can be assigned.
-const validAssignmentStatuses = [MoveStatus.New, MoveStatus.Assigned];
 
-function StopDialogAction({
-  moveIdx,
-  stopIdx,
-}: {
-  moveIdx: number;
-  stopIdx: number;
-}) {
-  const [isOpen, setIsOpen] = useState<boolean>(false);
-
-  const handleOpen = useCallback(() => {
-    setIsOpen(true);
-  }, []);
-
-  const handleClose = useCallback(() => {
-    setIsOpen(false);
-  }, []);
-
-  return (
-    <>
-      <DropdownMenuItem
-        title="Add Stop"
-        description="Add a new stop to the move"
-        onClick={handleOpen}
-      />
-      {isOpen && (
+      {stopDialogOpen && (
         <StopDialog
-          open={isOpen}
-          onOpenChange={handleClose}
+          stopIdx={move.stops?.length || 0}
+          open={stopDialogOpen}
+          onOpenChange={handleCloseStopDialog}
           moveIdx={moveIdx}
-          stopIdx={stopIdx}
         />
       )}
     </>

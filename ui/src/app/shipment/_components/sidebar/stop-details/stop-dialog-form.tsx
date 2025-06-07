@@ -14,9 +14,11 @@ import { useLocationData } from "./queries";
 export function StopDialogForm({
   moveIdx,
   stopIdx,
+  stopFieldName = `moves.${moveIdx}.stops.${stopIdx}`,
 }: {
   moveIdx: number;
   stopIdx: number;
+  stopFieldName?: string;
 }) {
   const { control, setValue, getValues } = useFormContext<ShipmentSchema>();
 
@@ -26,50 +28,50 @@ export function StopDialogForm({
 
   const locationId = useWatch({
     control,
-    name: `moves.${moveIdx}.stops.${stopIdx}.locationId`,
+    name: `${stopFieldName}.locationId` as any,
   });
 
   const { data: locationData, isLoading: isLoadingLocation } =
     useLocationData(locationId);
 
-  // Keep the address prefill functionality when a location is selected
   useEffect(() => {
     if (!isLoadingLocation && locationId && locationData) {
       const formattedLocation = formatLocation(locationData);
-      setValue(
-        `moves.${moveIdx}.stops.${stopIdx}.addressLine`,
-        formattedLocation,
-        {
-          shouldValidate: true,
-        },
-      );
+      setValue(`${stopFieldName}.addressLine` as any, formattedLocation, {
+        shouldValidate: true,
+      });
 
-      // Get current move values
-      const currentValues = getValues();
-      const currentMove = currentValues.moves?.[moveIdx];
-
-      if (currentMove && currentMove.stops && currentMove.stops[stopIdx]) {
-        // Update the stop with location data
-        const updatedStop = {
-          ...currentMove.stops[stopIdx],
+      if (stopFieldName === "stop") {
+        const currentStop = getValues(stopFieldName as any);
+        setValue(stopFieldName as any, {
+          ...currentStop,
           location: locationData,
-        };
-
-        // Update all the stops
-        const updatedStops = [...currentMove.stops];
-        updatedStops[stopIdx] = updatedStop;
-
-        // Update the entire move
-        setValue(`moves.${moveIdx}`, {
-          ...currentMove,
-          stops: updatedStops,
         });
+      } else {
+        const currentValues = getValues();
+        const currentMove = currentValues.moves?.[moveIdx];
+
+        if (currentMove && currentMove.stops && currentMove.stops[stopIdx]) {
+          const updatedStop = {
+            ...currentMove.stops[stopIdx],
+            location: locationData,
+          };
+
+          const updatedStops = [...currentMove.stops];
+          updatedStops[stopIdx] = updatedStop;
+
+          setValue(`moves.${moveIdx}`, {
+            ...currentMove,
+            stops: updatedStops,
+          });
+        }
       }
     }
   }, [
     isLoadingLocation,
     locationId,
     locationData,
+    stopFieldName,
     setValue,
     moveIdx,
     stopIdx,
@@ -91,7 +93,7 @@ export function StopDialogForm({
           <FormControl>
             <SelectField
               control={control}
-              name={`moves.${moveIdx}.stops.${stopIdx}.type`}
+              name={`${stopFieldName}.type` as any}
               label="Stop Type"
               placeholder="Select type"
               description="Defines the designated category or function of this stop."
@@ -102,7 +104,7 @@ export function StopDialogForm({
             <SelectField
               control={control}
               isReadOnly
-              name={`moves.${moveIdx}.stops.${stopIdx}.status`}
+              name={`${stopFieldName}.status` as any}
               label="Current Status"
               placeholder="Select status"
               description="Indicates the current operational status of this stop."
@@ -111,7 +113,7 @@ export function StopDialogForm({
           </FormControl>
           <FormControl>
             <NumberField
-              name={`moves.${moveIdx}.stops.${stopIdx}.pieces`}
+              name={`${stopFieldName}.pieces` as any}
               control={control}
               label="Pieces"
               placeholder="Enter quantity"
@@ -121,7 +123,7 @@ export function StopDialogForm({
           </FormControl>
           <FormControl>
             <NumberField
-              name={`moves.${moveIdx}.stops.${stopIdx}.weight`}
+              name={`${stopFieldName}.weight` as any}
               control={control}
               label="Weight"
               placeholder="Enter weight"
@@ -130,8 +132,8 @@ export function StopDialogForm({
             />
           </FormControl>
           <FormControl cols="full">
-            <LocationAutocompleteField<ShipmentSchema>
-              name={`moves.${moveIdx}.stops.${stopIdx}.locationId`}
+            <LocationAutocompleteField
+              name={`${stopFieldName}.locationId` as any}
               control={control}
               label="Location"
               rules={{ required: true }}
@@ -144,7 +146,7 @@ export function StopDialogForm({
           </FormControl>
           <FormControl cols="full">
             <InputField
-              name={`moves.${moveIdx}.stops.${stopIdx}.addressLine`}
+              name={`${stopFieldName}.addressLine` as any}
               rules={{ required: true }}
               control={control}
               label="Address"
@@ -171,7 +173,7 @@ export function StopDialogForm({
             <FormGroup cols={2} className="gap-4">
               <FormControl>
                 <AutoCompleteDateTimeField
-                  name={`moves.${moveIdx}.stops.${stopIdx}.plannedArrival`}
+                  name={`${stopFieldName}.plannedArrival` as any}
                   control={control}
                   rules={{ required: true }}
                   label="Planned Arrival"
@@ -181,7 +183,7 @@ export function StopDialogForm({
               </FormControl>
               <FormControl>
                 <AutoCompleteDateTimeField
-                  name={`moves.${moveIdx}.stops.${stopIdx}.plannedDeparture`}
+                  name={`${stopFieldName}.plannedDeparture` as any}
                   control={control}
                   rules={{ required: true }}
                   label="Planned Departure"
@@ -198,7 +200,7 @@ export function StopDialogForm({
             <FormGroup cols={2} className="gap-4">
               <FormControl>
                 <AutoCompleteDateTimeField
-                  name={`moves.${moveIdx}.stops.${stopIdx}.actualArrival`}
+                  name={`${stopFieldName}.actualArrival` as any}
                   control={control}
                   label="Actual Arrival"
                   placeholder="Select actual arrival"
@@ -207,7 +209,7 @@ export function StopDialogForm({
               </FormControl>
               <FormControl>
                 <AutoCompleteDateTimeField
-                  name={`moves.${moveIdx}.stops.${stopIdx}.actualDeparture`}
+                  name={`${stopFieldName}.actualDeparture` as any}
                   control={control}
                   label="Actual Departure"
                   placeholder="Select actual departure"

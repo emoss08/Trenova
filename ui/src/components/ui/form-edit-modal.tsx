@@ -1,3 +1,4 @@
+"use no memo";
 /* eslint-disable react-hooks/exhaustive-deps */
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
@@ -74,6 +75,13 @@ export function FormEditModal<T extends FieldValues>({
   const queryClient = useQueryClient();
   const user = useUser();
 
+  const {
+    setError,
+    formState: { isSubmitting },
+    handleSubmit,
+    reset,
+  } = form;
+
   const previousRecordIdRef = useRef<string | number | null>(null);
   const selectedRowKey = Object.keys(rowSelection)[0];
 
@@ -99,11 +107,15 @@ export function FormEditModal<T extends FieldValues>({
   );
 
   const onPrev = React.useCallback(() => {
-    if (prevId) table.setRowSelection({ [prevId]: true });
+    if (prevId) {
+      table.setRowSelection({ [prevId]: true });
+    }
   }, [prevId, isLoading]);
 
   const onNext = React.useCallback(() => {
-    if (nextId) table.setRowSelection({ [nextId]: true });
+    if (nextId) {
+      table.setRowSelection({ [nextId]: true });
+    }
   }, [nextId, isLoading, table]);
 
   React.useEffect(() => {
@@ -130,13 +142,6 @@ export function FormEditModal<T extends FieldValues>({
     return () => document.removeEventListener("keydown", down);
   }, [selectedRowKey, onNext, onPrev]);
 
-  const {
-    setError,
-    formState: { isSubmitting },
-    handleSubmit,
-    reset,
-  } = form;
-
   // Update form values when currentRecord changes and is not loading
   useEffect(() => {
     if (
@@ -144,7 +149,17 @@ export function FormEditModal<T extends FieldValues>({
       currentRecord &&
       currentRecord.id !== previousRecordIdRef.current
     ) {
-      reset(currentRecord);
+      // Ensure all form fields have explicit values, including empty arrays for missing fields
+      const formData = {
+        ...currentRecord,
+        roles: currentRecord.roles || [], // Ensure roles is always an array
+      };
+
+      // Use setTimeout to ensure reset happens after any potential race conditions
+      setTimeout(() => {
+        reset(formData, { keepDefaultValues: false });
+      }, 0);
+
       previousRecordIdRef.current = currentRecord.id;
     }
   }, [currentRecord, isLoading, reset]);

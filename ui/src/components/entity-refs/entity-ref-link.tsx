@@ -10,7 +10,10 @@ export function EntityRefLinkInner({
   ...props
 }: EntityRefLinkInnerProps) {
   return (
-    <Link {...props} className={cn("cursor-pointer text-left", className)}>
+    <Link
+      {...props}
+      className={cn("max-w-px cursor-pointer text-left", className)}
+    >
       {children}
     </Link>
   );

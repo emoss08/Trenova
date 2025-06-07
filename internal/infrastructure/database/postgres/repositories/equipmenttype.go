@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -150,7 +152,11 @@ func (fcr *equipmentTypeRepository) Create(
 ) (*equipmenttype.EquipmentType, error) {
 	dba, err := fcr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("equipment_type_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := fcr.l.With().
@@ -159,20 +165,14 @@ func (fcr *equipmentTypeRepository) Create(
 		Str("buID", et.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(et).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("equipmentType", et).
-				Msg("failed to insert equipment type")
-			return eris.Wrap(iErr, "insert equipment type")
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create equipment type")
-		return nil, eris.Wrap(err, "create equipment type")
+	if _, err = dba.NewInsert().Model(et).
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("equipmentType", et).
+			Msg("failed to insert equipment type")
+		return nil, err
 	}
 
 	return et, nil
@@ -201,6 +201,7 @@ func (fcr *equipmentTypeRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(et).
 			WherePK().
+			OmitZero().
 			Where("et.version = ?", ov).
 			Returning("*").
 			Exec(c)

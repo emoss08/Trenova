@@ -530,7 +530,15 @@ export function PackingGroupBadge({
 export function HazmatBadge({ isHazmat }: { isHazmat: boolean }) {
   return (
     <Badge variant={isHazmat ? "active" : "inactive"} className="max-h-6">
-      {isHazmat ? "Yes" : "No"}
+      {isHazmat ? "Hazmat" : "Non-Hazmat"}
+    </Badge>
+  );
+}
+
+export function BooleanBadge({ value }: { value: boolean }) {
+  return (
+    <Badge variant={value ? "active" : "inactive"} className="max-h-6">
+      {value ? "Yes" : "No"}
     </Badge>
   );
 }

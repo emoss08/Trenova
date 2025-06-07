@@ -32,7 +32,11 @@ export function DataTableDescription({
     return <span>-</span>;
   }
 
-  return <span>{truncateText(description, truncateLength)}</span>;
+  return (
+    <span aria-label={description} title={description}>
+      {truncateText(description, truncateLength)}
+    </span>
+  );
 }
 
 export function DataTableColorColumn({

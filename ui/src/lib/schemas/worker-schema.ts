@@ -71,11 +71,15 @@ export const workerSchema = z
     fleetCodeId: z.string().nullable().optional(),
     gender: z.nativeEnum(Gender),
     postalCode: z.string(),
-    profile: workerProfileSchema,
+    profile: workerProfileSchema.nullable().optional(),
     pto: z.array(workerPTOSchema).optional(),
   })
   .refine(
     (data) => {
+      if (!data.profile) {
+        return true;
+      }
+
       const hasHazmatEndorsement =
         data.profile.endorsement === Endorsement.Hazmat ||
         data.profile.endorsement === Endorsement.TankerHazmat;

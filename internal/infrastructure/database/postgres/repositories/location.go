@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -57,6 +58,16 @@ func (lr *locationRepository) filterQuery(
 
 	if opts.IncludeState {
 		q = q.Relation("State")
+	}
+
+	if opts.Status != "" {
+		status, err := domain.StatusFromString(opts.Status)
+		if err != nil {
+			lr.l.Error().Err(err).Str("status", opts.Status).Msg("invalid status")
+			return q
+		}
+
+		q = q.Where("loc.status = ?", status)
 	}
 
 	if opts.Filter.Query != "" {
@@ -156,20 +167,14 @@ func (lr *locationRepository) Create(
 		Str("buID", l.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(l).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("location", l).
-				Msg("failed to insert location")
-			return eris.Wrap(iErr, "insert location")
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create location")
-		return nil, eris.Wrap(err, "create location")
+	if _, err = dba.NewInsert().Model(l).
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("location", l).
+			Msg("failed to insert location")
+		return nil, err
 	}
 
 	return l, nil
@@ -198,6 +203,7 @@ func (lr *locationRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(loc).
 			Where("loc.version = ?", ov).
+			OmitZero().
 			WherePK().
 			Returning("*").
 			Exec(c)

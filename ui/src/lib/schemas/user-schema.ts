@@ -48,7 +48,7 @@ const permissionSchema = z.object({
 
 export type PermissionSchema = z.infer<typeof permissionSchema>;
 
-const roleSchema = z.object({
+export const roleSchema = z.object({
   id: z.string().optional(),
   version: z.number().optional(),
   createdAt: z.number().optional(),
@@ -103,9 +103,10 @@ export const userSchema = z.object({
   profilePicUrl: z.string().optional(),
   thumbnailUrl: z.string().optional(),
   timezone: z.string().min(1, "Timezone is required"),
-  timeFormat: z.nativeEnum(TimeFormat),
+  timeFormat: z.nativeEnum(TimeFormat).optional(),
   isLocked: z.boolean(),
   lastLoginAt: z.number().optional(),
+  mustChangePassword: z.boolean(),
 
   // Relationships
   currentOrganization: organizationSchema.optional(),
@@ -114,3 +115,9 @@ export const userSchema = z.object({
 });
 
 export type UserSchema = z.infer<typeof userSchema>;
+
+export const bulkCreateUserSchema = z.object({
+  users: z.array(userSchema).min(1, "At least one user is required"),
+});
+
+export type BulkCreateUserSchema = z.infer<typeof bulkCreateUserSchema>;

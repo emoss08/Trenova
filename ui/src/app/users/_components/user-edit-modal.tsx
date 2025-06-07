@@ -13,6 +13,11 @@ export function EditUserModal({
     defaultValues: currentRecord,
   });
 
+  const {
+    formState: { errors },
+  } = form;
+  console.info("errors", errors);
+
   return (
     <FormEditModal
       currentRecord={currentRecord}

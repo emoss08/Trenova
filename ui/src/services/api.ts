@@ -8,11 +8,14 @@ import { BillingAPI } from "./billing";
 import { BillingControlAPI } from "./billing-control";
 import { CustomerAPI } from "./customer";
 import { DatabaseBackupAPI } from "./database-backups";
+import { DedicatedLaneAPI } from "./dedicated-lane";
 import { DocumentAPI } from "./document";
 import { FavoriteAPI } from "./favorite";
 import { GoogleMapsAPI } from "./google-maps";
 import { IntegrationAPI } from "./integration";
 import { OrganizationAPI } from "./organization";
+import { PermissionAPI } from "./permission";
+import { RoleAPI } from "./role";
 import { ShipmentAPI } from "./shipment";
 import { ShipmentControlAPI } from "./shipment-control";
 import { TableConfigurationAPI } from "./table-configuration";
@@ -47,6 +50,9 @@ class API {
   databaseBackups: DatabaseBackupAPI;
   auditEntries: AuditEntryAPI;
   tableConfigurations: TableConfigurationAPI;
+  permissions: PermissionAPI;
+  roles: RoleAPI;
+  dedicatedLane: DedicatedLaneAPI;
 
   constructor() {
     this.assignments = new AssignmentsAPI();
@@ -66,6 +72,9 @@ class API {
     this.databaseBackups = new DatabaseBackupAPI();
     this.auditEntries = new AuditEntryAPI();
     this.tableConfigurations = new TableConfigurationAPI();
+    this.permissions = new PermissionAPI();
+    this.roles = new RoleAPI();
+    this.dedicatedLane = new DedicatedLaneAPI();
   }
 }
 

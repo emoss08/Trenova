@@ -2,13 +2,17 @@ package repositories
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/pagefavorite"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -26,7 +30,9 @@ type favoriteRepository struct {
 }
 
 func NewFavoriteRepository(p FavoriteRepository) repositories.FavoriteRepository {
-	log := p.Logger.With().Str("repository", "favorite").Logger()
+	log := p.Logger.With().
+		Str("repository", "favorite").
+		Logger()
 
 	return &favoriteRepository{
 		db: p.DB,
@@ -37,7 +43,10 @@ func NewFavoriteRepository(p FavoriteRepository) repositories.FavoriteRepository
 func (r *favoriteRepository) List(ctx context.Context) ([]*pagefavorite.PageFavorite, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("page_favorite_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := r.l.With().
@@ -48,7 +57,10 @@ func (r *favoriteRepository) List(ctx context.Context) ([]*pagefavorite.PageFavo
 	err = dba.NewSelect().Model(&entities).Scan(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("scan favorites")
-		return nil, eris.Wrap(err, "scan favorites")
+		return nil, oops.In("page_favorite_repository").
+			Tags("crud", "list").
+			Time(time.Now()).
+			Wrapf(err, "scan favorites")
 	}
 
 	return entities, nil
@@ -60,7 +72,10 @@ func (r *favoriteRepository) GetByID(
 ) (*pagefavorite.PageFavorite, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("page_favorite_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := r.l.With().
@@ -81,7 +96,11 @@ func (r *favoriteRepository) GetByID(
 	err = query.Scan(ctx, entity)
 	if err != nil {
 		log.Error().Err(err).Msg("scan favorite")
-		return nil, eris.Wrap(err, "scan favorite")
+		return nil, oops.In("page_favorite_repository").
+			Tags("crud", "getByID").
+			With("opts", opts).
+			Time(time.Now()).
+			Wrapf(err, "scan favorite")
 	}
 
 	return entity, nil
@@ -93,7 +112,10 @@ func (r *favoriteRepository) GetByURL(
 ) (*pagefavorite.PageFavorite, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("page_favorite_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := r.l.With().
@@ -113,8 +135,16 @@ func (r *favoriteRepository) GetByURL(
 
 	err = query.Scan(ctx, entity)
 	if err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			return nil, errors.NewNotFoundError("User does not have a favorite with this URL")
+		}
+
 		log.Error().Err(err).Msg("scan favorite")
-		return nil, eris.Wrap(err, "scan favorite")
+		return nil, oops.In("page_favorite_repository").
+			Tags("crud", "getByURL").
+			With("opts", opts).
+			Time(time.Now()).
+			Wrapf(err, "scan favorite")
 	}
 
 	return entity, nil
@@ -126,7 +156,10 @@ func (r *favoriteRepository) Create(
 ) (*pagefavorite.PageFavorite, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("page_favorite_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := r.l.With().
@@ -137,7 +170,11 @@ func (r *favoriteRepository) Create(
 	_, err = query.Exec(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("insert favorite")
-		return nil, eris.Wrap(err, "insert favorite")
+		return nil, oops.In("page_favorite_repository").
+			Tags("crud", "create").
+			With("favorite", f).
+			Time(time.Now()).
+			Wrapf(err, "insert favorite")
 	}
 
 	return f, nil
@@ -149,7 +186,10 @@ func (r *favoriteRepository) Update(
 ) (*pagefavorite.PageFavorite, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("page_favorite_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := r.l.With().
@@ -157,10 +197,17 @@ func (r *favoriteRepository) Update(
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err = tx.NewUpdate().Model(f).Exec(ctx)
+		_, err = tx.NewUpdate().
+			Model(f).
+			OmitZero().
+			Exec(ctx)
 		if err != nil {
 			log.Error().Err(err).Msg("update favorite")
-			return eris.Wrap(err, "update favorite")
+			return oops.In("page_favorite_repository").
+				Tags("crud", "update").
+				With("favorite", f).
+				Time(time.Now()).
+				Wrapf(err, "update favorite")
 		}
 
 		return nil
@@ -175,7 +222,10 @@ func (r *favoriteRepository) Delete(
 ) error {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
-		return eris.Wrap(err, "get database connection")
+		return oops.
+			In("page_favorite_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := r.l.With().
@@ -197,7 +247,11 @@ func (r *favoriteRepository) Delete(
 		_, err = query.Exec(ctx)
 		if err != nil {
 			log.Error().Err(err).Msg("delete favorite")
-			return eris.Wrap(err, "delete favorite")
+			return oops.In("page_favorite_repository").
+				Tags("crud", "delete").
+				With("opts", opts).
+				Time(time.Now()).
+				Wrapf(err, "delete favorite")
 		}
 
 		return nil

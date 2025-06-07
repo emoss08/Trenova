@@ -19,6 +19,7 @@ type BaseInputFieldProps = Omit<InputProps, "name"> & {
   label?: string;
   description?: string;
   inputClassProps?: string;
+  hideLabel?: boolean;
 };
 
 export type InputFieldProps<T extends FieldValues> = BaseInputFieldProps &
@@ -33,6 +34,7 @@ type BaseNumberFieldProps = Omit<ArkNumberInput.RootProps, "name"> & {
   inputMode?: "text" | "tel" | "numeric" | "decimal";
   sideText?: string;
   rightElement?: React.ReactNode;
+  hideLabel?: boolean;
 };
 
 export type NumberFieldProps<T extends FieldValues> = BaseNumberFieldProps &
@@ -200,7 +202,7 @@ export interface BaseAutocompleteFieldProps<
   /** Callback when selection changes */
   onChange: (...event: any[]) => void;
   /** Label for the select field */
-  label: string;
+  label?: string;
   /** Placeholder text when no selection */
   placeholder?: string;
   /** Disable the entire select */
@@ -246,7 +248,7 @@ export interface BaseMultiSelectAutocompleteFieldProps<TOption> {
   renderBadge?: (option: TOption) => React.ReactNode;
   getOptionValue: (option: TOption) => string | number;
   getDisplayValue: (option: TOption) => string;
-  label: string;
+  label?: string;
   placeholder?: string;
   values?: (string | TOption)[];
   onChange: (values: (string | TOption)[]) => void;
@@ -272,7 +274,7 @@ export interface MultiSelectAutocompleteFieldProps<
   name: FieldPath<TForm>;
   control: Control<TForm>;
   rules?: RegisterOptions<TForm, Path<TForm>>;
-  label: string;
+  label?: string;
   description?: string;
   className?: string;
   link: string;

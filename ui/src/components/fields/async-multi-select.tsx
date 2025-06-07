@@ -545,7 +545,7 @@ export function MultiSelectAutocomplete<T>({
             <div className="border-b w-full">
               <CommandInput
                 className="bg-transparent h-7 [&_[cmdk-input]]:h-7 truncate"
-                placeholder={`Search ${label.toLowerCase()}...`}
+                placeholder={`Search ${label?.toLowerCase()}...`}
                 value={searchTerm}
                 onValueChange={setSearchTerm}
               />
@@ -561,7 +561,7 @@ export function MultiSelectAutocomplete<T>({
               )}
               {!loading && !error && options.length === 0 && (
                 <CommandEmpty>
-                  {noResultsMessage ?? `No ${label.toLowerCase()} found.`}
+                  {noResultsMessage ?? `No ${label?.toLowerCase()} found.`}
                 </CommandEmpty>
               )}
               <CommandGroup>

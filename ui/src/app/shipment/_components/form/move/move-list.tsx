@@ -1,7 +1,7 @@
 import { LazyComponent } from "@/components/error-boundary";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import type { MoveSchema } from "@/lib/schemas/move-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import type { ShipmentMove } from "@/types/move";
 import { nanoid } from "nanoid";
 import React, { lazy } from "react";
 import type { UseFieldArrayRemove, UseFieldArrayUpdate } from "react-hook-form";
@@ -35,7 +35,7 @@ export function MoveList({
   move,
   moveIdx,
 }: {
-  move: ShipmentMove;
+  move: MoveSchema;
   moveIdx: number;
   update: UseFieldArrayUpdate<ShipmentSchema, "moves">;
   remove: UseFieldArrayRemove;

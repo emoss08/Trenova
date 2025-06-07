@@ -55,9 +55,9 @@ func NewService(p ServiceParams) *Service {
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
+	req *repositories.ListShipmentTypeRequest,
 ) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, opts)
+	result, err := s.repo.List(ctx, req)
 	if err != nil {
 		return nil, eris.Wrap(err, "select shipment types")
 	}
@@ -76,18 +76,18 @@ func (s *Service) SelectOptions(
 
 func (s *Service) List(
 	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
+	req *repositories.ListShipmentTypeRequest,
 ) (*ports.ListResult[*shipmenttype.ShipmentType], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         opts.TenantOpts.UserID,
+				UserID:         req.Filter.TenantOpts.UserID,
 				Resource:       permission.ResourceShipmentType,
 				Action:         permission.ActionRead,
-				BusinessUnitID: opts.TenantOpts.BuID,
-				OrganizationID: opts.TenantOpts.OrgID,
+				BusinessUnitID: req.Filter.TenantOpts.BuID,
+				OrganizationID: req.Filter.TenantOpts.OrgID,
 			},
 		},
 	)
@@ -102,7 +102,7 @@ func (s *Service) List(
 		)
 	}
 
-	entities, err := s.repo.List(ctx, opts)
+	entities, err := s.repo.List(ctx, req)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list shipment types")
 		return nil, eris.Wrap(err, "list shipment types")

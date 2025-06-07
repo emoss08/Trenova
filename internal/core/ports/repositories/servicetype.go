@@ -15,10 +15,15 @@ type GetServiceTypeByIDOptions struct {
 	UserID pulid.ID
 }
 
+type ListServiceTypeRequest struct {
+	Filter *ports.LimitOffsetQueryOptions `query:"filter"`
+	Status string                         `query:"status"`
+}
+
 type ServiceTypeRepository interface {
 	List(
 		ctx context.Context,
-		opts *ports.LimitOffsetQueryOptions,
+		req *ListServiceTypeRequest,
 	) (*ports.ListResult[*servicetype.ServiceType], error)
 	GetByID(ctx context.Context, opts GetServiceTypeByIDOptions) (*servicetype.ServiceType, error)
 	Create(ctx context.Context, st *servicetype.ServiceType) (*servicetype.ServiceType, error)

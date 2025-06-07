@@ -1,4 +1,4 @@
-import { LazyComponent } from "@/components/error-boundary";
+import { QueryLazyComponent } from "@/components/error-boundary";
 import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
 import { lazy, memo } from "react";
@@ -11,9 +11,9 @@ export function Users() {
       <div className="space-y-6 p-6">
         <MetaTags title="Users" description="Users" />
         <Header />
-        <LazyComponent>
+        <QueryLazyComponent queryKey={["user-list", "role-list"]}>
           <UserTable />
-        </LazyComponent>
+        </QueryLazyComponent>
       </div>
     </FormSaveProvider>
   );

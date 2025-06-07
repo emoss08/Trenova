@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/billing"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -220,7 +222,11 @@ func (dt *documentTypeRepository) Create(
 ) (*billing.DocumentType, error) {
 	dba, err := dt.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("document_type_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := dt.l.With().
@@ -229,18 +235,14 @@ func (dt *documentTypeRepository) Create(
 		Str("buID", entity.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(entity).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("documentType", entity).
-				Msg("failed to insert document type")
-			return iErr
-		}
-
-		return nil
-	})
-	if err != nil {
+	if _, err = dba.NewInsert().
+		Model(entity).
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("documentType", entity).
+			Msg("failed to insert document type")
 		return nil, err
 	}
 
@@ -279,6 +281,7 @@ func (dt *documentTypeRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(entity).
 			WherePK().
+			OmitZero().
 			Where("dt.version = ?", ov).
 			Returning("*").
 			Exec(c)

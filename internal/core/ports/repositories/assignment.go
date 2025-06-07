@@ -23,9 +23,9 @@ type AssignmentRequest struct {
 	UserID            pulid.ID  `json:"userId"`
 	PrimaryWorkerID   pulid.ID  `json:"primaryWorkerId"`
 	TractorID         pulid.ID  `json:"tractorId"`
-	TrailerID         pulid.ID  `json:"trailerId"`
 	OrgID             pulid.ID  `json:"orgId"`
 	BuID              pulid.ID  `json:"buId"`
+	TrailerID         *pulid.ID `json:"trailerId"`
 	SecondaryWorkerID *pulid.ID `json:"secondaryWorkerId,omitempty"`
 }
 

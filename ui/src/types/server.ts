@@ -125,6 +125,7 @@ export type BaseEndpoint =
   | "/audit-logs/"
   | "/accounting-control/"
   | "/table-configurations/"
+  | "/dedicated-lanes/"
   | "/document-types/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;

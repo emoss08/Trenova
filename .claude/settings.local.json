@@ -22,7 +22,15 @@
       "Bash(task lint)",
       "Bash(goimports:*)",
       "Bash(golangci-lint run:*)",
-      "Bash(npm run lint:*)"
+      "Bash(npm run lint:*)",
+      "WebFetch(domain:tanstack.com)",
+      "mcp__ide__getDiagnostics",
+      "Bash(npm run:*)",
+      "Bash(npx prettier:*)",
+      "Bash(task format)",
+      "Bash(go mod:*)",
+      "Bash(go list:*)",
+      "Bash(go get:*)"
     ],
     "deny": []
   },

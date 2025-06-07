@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -131,7 +133,11 @@ func (cr *commodityRepository) Create(
 ) (*commodity.Commodity, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("commodity_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := cr.l.With().
@@ -140,20 +146,15 @@ func (cr *commodityRepository) Create(
 		Str("buID", com.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(com).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("commodity", com).
-				Msg("failed to insert commodity")
-			return eris.Wrap(iErr, "insert commodity")
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create commodity")
-		return nil, eris.Wrap(err, "create commodity")
+	if _, err = dba.NewInsert().
+		Model(com).
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("commodity", com).
+			Msg("failed to insert commodity")
+		return nil, err
 	}
 
 	return com, nil
@@ -182,6 +183,7 @@ func (cr *commodityRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(com).
 			WherePK().
+			OmitZero().
 			Where("com.version = ?", ov).
 			Returning("*").
 			Exec(c)
@@ -217,7 +219,10 @@ func (cr *commodityRepository) Update(
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update commodity")
-		return nil, eris.Wrap(err, "update commodity")
+		return nil, oops.In("commodity_repository").
+			With("op", "update").
+			Time(time.Now()).
+			Wrapf(err, "update commodity")
 	}
 
 	return com, nil

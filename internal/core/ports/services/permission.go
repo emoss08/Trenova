@@ -6,7 +6,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
@@ -46,15 +45,53 @@ type PermissionCheck struct {
 	CustomData     map[string]any // Additional context data
 }
 
+type CreateRoleRequest struct {
+	Name           string
+	Description    string
+	RoleType       permission.RoleType
+	Priority       int
+	ParentRoleID   *pulid.ID
+	PermissionIDs  []pulid.ID
+	BusinessUnitID pulid.ID
+	OrganizationID pulid.ID
+	UserID         pulid.ID // For permission checking
+}
+
+type UpdateRoleRequest struct {
+	ID             pulid.ID
+	Name           string
+	Description    string
+	RoleType       permission.RoleType
+	Priority       int
+	ParentRoleID   *pulid.ID
+	PermissionIDs  []pulid.ID
+	BusinessUnitID pulid.ID
+	OrganizationID pulid.ID
+	UserID         pulid.ID // For permission checking
+}
+
+type DeleteRoleRequest struct {
+	ID             pulid.ID
+	BusinessUnitID pulid.ID
+	OrganizationID pulid.ID
+	UserID         pulid.ID // For permission checking
+}
+
+type ListPermissionsRequest struct {
+	Filter *ports.LimitOffsetQueryOptions
+	BuID   pulid.ID
+	OrgID  pulid.ID
+	UserID pulid.ID
+}
+
 type PermissionService interface {
-	ListRoles(
+	// Permission read operations
+	List(
 		ctx context.Context,
-		req *repositories.ListRolesRequest,
-	) (*ports.ListResult[*permission.Role], error)
-	GetRoleByID(
-		ctx context.Context,
-		req *repositories.GetRoleByIDRequest,
-	) (*permission.Role, error)
+		req *ListPermissionsRequest,
+	) (*ports.ListResult[*permission.Permission], error)
+
+	// Permission checking methods
 	CheckFieldModification(
 		ctx context.Context,
 		userID pulid.ID,

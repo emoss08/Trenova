@@ -5,7 +5,7 @@ import {
   type SelectOption,
 } from "@/types/fields";
 import { CheckIcon } from "@radix-ui/react-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, FieldValues, useController } from "react-hook-form";
 import {
   Command,
@@ -35,6 +35,7 @@ export function SelectField<T extends FieldValues>({
   className,
   options,
   placeholder,
+  isReadOnly,
 }: SelectFieldProps<T>) {
   const [isOpen, setIsOpen] = useState(false);
   const { field } = useController({ name, control });
@@ -42,6 +43,13 @@ export function SelectField<T extends FieldValues>({
   const [selectedOption, setSelectedOption] = useState<SelectOption | null>(
     options.find((option) => option.value === field.value) || null,
   );
+
+  // Update selectedOption when field.value changes (e.g., during form reset)
+  useEffect(() => {
+    const newSelectedOption =
+      options.find((option) => option.value === field.value) || null;
+    setSelectedOption(newSelectedOption);
+  }, [field.value, options]);
 
   return (
     <Controller<T>
@@ -59,6 +67,8 @@ export function SelectField<T extends FieldValues>({
           <Select
             open={isOpen}
             onOpenChange={setIsOpen}
+            required={!!rules?.required}
+            disabled={isReadOnly}
             onValueChange={(value) => {
               field.onChange(value);
               // * Update the selected option
@@ -66,7 +76,7 @@ export function SelectField<T extends FieldValues>({
                 options.find((option) => option.value === value) || null,
               );
             }}
-            defaultValue={field.value}
+            value={field.value || ""}
           >
             <SelectTrigger>
               <SelectValue

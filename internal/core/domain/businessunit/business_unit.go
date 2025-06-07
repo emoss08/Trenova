@@ -18,8 +18,8 @@ type BusinessUnit struct {
 	bun.BaseModel `bun:"table:business_units,alias:bu" json:"-"`
 
 	ID                   pulid.ID       `json:"id"                   bun:",pk,type:VARCHAR(100)"`
-	ParentBusinessUnitID *pulid.ID      `json:"parentBusinessUnitId" bun:"parent_business_unit_id,type:VARCHAR(100),nullzero"`
 	StateID              pulid.ID       `json:"stateId"              bun:"state_id,type:VARCHAR(100)"`
+	ParentBusinessUnitID *pulid.ID      `json:"parentBusinessUnitId" bun:"parent_business_unit_id,type:VARCHAR(100),nullzero"`
 	Name                 string         `json:"name"                 bun:"name,type:VARCHAR(100),notnull"`
 	Code                 string         `json:"code"                 bun:"code,type:VARCHAR(10),notnull"`
 	Description          string         `json:"description"          bun:"description,type:TEXT,notnull"`
@@ -45,15 +45,13 @@ type BusinessUnit struct {
 
 func (bu *BusinessUnit) Validate() error {
 	return validation.ValidateStruct(bu,
-		validation.
-			Field(
-				&bu.Name,
-				validation.Required.Error("Name is required. Please try again"),
-				validation.Length(1, 100).
-					Error("Name must be between 1 and 100 characters. Please try again"),
-				validation.Match(regexp.MustCompile(`^[a-zA-Z0-9\s\-&.]+$`)).
-					Error("Name can only contain letters, numbers, spaces, hyphens, ampersands, and periods"),
-			),
+		validation.Field(&bu.Name,
+			validation.Required.Error("Name is required. Please try again"),
+			validation.Length(1, 100).
+				Error("Name must be between 1 and 100 characters. Please try again"),
+			validation.Match(regexp.MustCompile(`^[a-zA-Z0-9\s\-&.]+$`)).
+				Error("Name can only contain letters, numbers, spaces, hyphens, ampersands, and periods"),
+		),
 		// Code validation
 		validation.Field(&bu.Code,
 			validation.Required.Error("Code is required"),

@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
+	dedicatedlaneservice "github.com/emoss08/trenova/internal/core/services/dedicatedlane"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
@@ -25,12 +26,13 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Logger        *logger.Logger
-	Repo          repositories.ShipmentRepository
-	ProNumberRepo repositories.ProNumberRepository
-	PermService   services.PermissionService
-	AuditService  services.AuditService
-	Validator     *shipmentvalidator.Validator
+	Logger                     *logger.Logger
+	Repo                       repositories.ShipmentRepository
+	ProNumberRepo              repositories.ProNumberRepository
+	PermService                services.PermissionService
+	AuditService               services.AuditService
+	Validator                  *shipmentvalidator.Validator
+	DedicatedLaneAssignService *dedicatedlaneservice.AssignmentService
 }
 
 type Service struct {
@@ -40,6 +42,7 @@ type Service struct {
 	ps            services.PermissionService
 	as            services.AuditService
 	v             *shipmentvalidator.Validator
+	dlas          *dedicatedlaneservice.AssignmentService
 }
 
 //nolint:gocritic // The p parameter is passed using fx.In
@@ -55,6 +58,7 @@ func NewService(p ServiceParams) *Service {
 		ps:            p.PermService,
 		as:            p.AuditService,
 		v:             p.Validator,
+		dlas:          p.DedicatedLaneAssignService,
 	}
 }
 
@@ -193,6 +197,12 @@ func (s *Service) Create(
 	createdEntity, err := s.repo.Create(ctx, shp)
 	if err != nil {
 		return nil, err
+	}
+
+	// Check for dedicated lane auto-assignment
+	if err = s.dlas.HandleDedicatedLaneOperations(ctx, createdEntity); err != nil {
+		log.Error().Err(err).Msg("failed to handle dedicated lane operations")
+		// Don't fail the shipment creation if dedicated lane assignment fails
 	}
 
 	err = s.as.LogAction(

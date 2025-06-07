@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/commodity"
 	"github.com/emoss08/trenova/internal/core/services/customer"
 	"github.com/emoss08/trenova/internal/core/services/dbbackup"
+	"github.com/emoss08/trenova/internal/core/services/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/services/docpreview"
 	"github.com/emoss08/trenova/internal/core/services/document"
 	"github.com/emoss08/trenova/internal/core/services/documentqualityconfig"
@@ -29,6 +30,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/organization"
 	"github.com/emoss08/trenova/internal/core/services/permission"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
+	"github.com/emoss08/trenova/internal/core/services/role"
 	"github.com/emoss08/trenova/internal/core/services/routing"
 	"github.com/emoss08/trenova/internal/core/services/servicetype"
 	"github.com/emoss08/trenova/internal/core/services/session"
@@ -48,6 +50,7 @@ import (
 
 var Module = fx.Module("services", fx.Provide(
 	permission.NewService,
+	role.NewService,
 	file.NewService,
 	audit.NewService,
 	auth.NewService,
@@ -88,6 +91,10 @@ var Module = fx.Module("services", fx.Provide(
 	integration.NewService,
 	billingqueue.NewService,
 	favorite.NewService,
+	dedicatedlane.NewService,
+	dedicatedlane.NewAssignmentService,
+	dedicatedlane.NewPatternService,
+	dedicatedlane.NewSuggestionService,
 ),
 )
 

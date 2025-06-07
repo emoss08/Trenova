@@ -1,4 +1,5 @@
 import { api } from "@/services/api";
+import type { GetDedicatedLaneByShipmentRequest } from "@/services/dedicated-lane";
 import type { AnalyticsPage } from "@/types/analytics";
 import { Resource } from "@/types/audit-entry";
 import type { GetCustomerByIDParams } from "@/types/customer";
@@ -186,6 +187,32 @@ export const queries = createQueryKeyStore({
     check: (pageUrl: string) => ({
       queryKey: ["favorite", pageUrl],
       queryFn: async () => api.favorites.checkFavorite(pageUrl),
+    }),
+  },
+  permission: {
+    list: (limit: number, offset: number) => ({
+      queryKey: ["permissions", limit, offset],
+      queryFn: async () => api.permissions.list(limit, offset),
+    }),
+    getById: (id: string) => ({
+      queryKey: ["permissions", id],
+      queryFn: async () => api.permissions.getById(id),
+    }),
+  },
+  role: {
+    list: (limit: number, offset: number) => ({
+      queryKey: ["roles", limit, offset],
+      queryFn: async () => api.roles.list(limit, offset),
+    }),
+    getById: (id: string) => ({
+      queryKey: ["roles", id],
+      queryFn: async () => api.roles.getById(id),
+    }),
+  },
+  dedicatedLane: {
+    getByShipment: (req: GetDedicatedLaneByShipmentRequest) => ({
+      queryKey: ["dedicated-lane/by-shipment", req],
+      queryFn: async () => api.dedicatedLane.getByShipment(req),
     }),
   },
 });

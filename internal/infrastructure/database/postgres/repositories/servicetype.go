@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -15,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -44,29 +47,38 @@ func NewServiceTypeRepository(p ServiceTypeRepositoryParams) repositories.Servic
 
 func (str *serviceTypeRepository) filterQuery(
 	q *bun.SelectQuery,
-	opts *ports.LimitOffsetQueryOptions,
+	req *repositories.ListServiceTypeRequest,
 ) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "st",
-		Filter:     opts,
+		Filter:     req.Filter,
 	})
 
-	// * If there is a query, build the postgres search query
-	if opts.Query != "" {
+	if req.Status != "" {
+		status, err := domain.StatusFromString(req.Status)
+		if err != nil {
+			str.l.Error().Err(err).Str("status", req.Status).Msg("invalid status")
+			return q
+		}
+
+		q = q.Where("st.status = ?", status)
+	}
+
+	if req.Filter.Query != "" {
 		q = postgressearch.BuildSearchQuery(
 			q,
-			opts.Query,
+			req.Filter.Query,
 			(*servicetype.ServiceType)(nil),
 		)
 	}
 
-	return q.Limit(opts.Limit).Offset(opts.Offset)
+	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
 }
 
 func (str *serviceTypeRepository) List(
 	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
+	req *repositories.ListServiceTypeRequest,
 ) (*ports.ListResult[*servicetype.ServiceType], error) {
 	dba, err := str.db.DB(ctx)
 	if err != nil {
@@ -75,14 +87,14 @@ func (str *serviceTypeRepository) List(
 
 	log := str.l.With().
 		Str("operation", "List").
-		Str("buID", opts.TenantOpts.BuID.String()).
-		Str("userID", opts.TenantOpts.UserID.String()).
+		Str("buID", req.Filter.TenantOpts.BuID.String()).
+		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
 	entities := make([]*servicetype.ServiceType, 0)
 
 	q := dba.NewSelect().Model(&entities)
-	q = str.filterQuery(q, opts)
+	q = str.filterQuery(q, req)
 
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
@@ -133,7 +145,11 @@ func (str *serviceTypeRepository) Create(
 ) (*servicetype.ServiceType, error) {
 	dba, err := str.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("service_type_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := str.l.With().
@@ -142,20 +158,14 @@ func (str *serviceTypeRepository) Create(
 		Str("buID", st.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(st).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("serviceType", st).
-				Msg("failed to insert service type")
-			return eris.Wrap(iErr, "insert service type")
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create service type")
-		return nil, eris.Wrap(err, "create service type")
+	if _, err = dba.NewInsert().Model(st).
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("serviceType", st).
+			Msg("failed to insert service type")
+		return nil, err
 	}
 
 	return st, nil
@@ -185,6 +195,7 @@ func (str *serviceTypeRepository) Update(
 			Model(st).
 			WherePK().
 			Where("st.version = ?", ov).
+			OmitZero().
 			Returning("*").
 			Exec(c)
 		if rErr != nil {
