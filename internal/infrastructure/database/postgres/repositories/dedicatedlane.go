@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -194,6 +195,74 @@ func (dlr *dedicatedLaneRepository) Create(
 			With("op", "create").
 			Time(time.Now()).
 			Wrapf(err, "create dedicated lane")
+	}
+
+	return dl, nil
+}
+
+func (dlr *dedicatedLaneRepository) FindByShipment(
+	ctx context.Context,
+	req *repositories.FindDedicatedLaneByShipmentRequest,
+) (*dedicatedlane.DedicatedLane, error) {
+	dba, err := dlr.db.DB(ctx)
+	if err != nil {
+		return nil, oops.In("dedicated_lane_repository").
+			With("op", "find_by_shipment").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := dlr.l.With().
+		Str("op", "find_by_shipment").
+		Interface("req", req).
+		Logger()
+
+	dl := new(dedicatedlane.DedicatedLane)
+
+	query := dba.NewSelect().Model(dl).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			q := sq.
+				Where("dl.status = ?", domain.StatusActive).
+				Where("dl.organization_id = ?", req.OrganizationID).
+				Where("dl.business_unit_id = ?", req.BusinessUnitID).
+				Where("dl.customer_id = ?", req.CustomerID).
+				Where("dl.origin_location_id = ?", req.OriginLocationID).
+				Where("dl.destination_location_id = ?", req.DestinationLocationID)
+
+			// ServiceTypeID and ShipmentTypeID are required fields
+			q = q.Where("dl.service_type_id = ?", req.ServiceTypeID).
+				Where("dl.shipment_type_id = ?", req.ShipmentTypeID)
+
+			// Handle optional trailer type - match if both are specified and equal, or both are null
+			if req.TrailerTypeID != nil {
+				q = q.Where("dl.trailer_type_id = ?", *req.TrailerTypeID)
+			} else {
+				q = q.Where("dl.trailer_type_id IS NULL")
+			}
+
+			// Handle optional tractor type - match if both are specified and equal, or both are null
+			if req.TractorTypeID != nil {
+				q = q.Where("dl.tractor_type_id = ?", *req.TractorTypeID)
+			} else {
+				q = q.Where("dl.tractor_type_id IS NULL")
+			}
+
+			return q
+		}).
+		Order("dl.created_at DESC").
+		Limit(1)
+
+	err = query.Scan(ctx)
+	if err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			log.Warn().Msg("no dedicated lane found for shipment")
+			// !  we don't want to return an error here, we just want to return nil
+		}
+		log.Error().Err(err).Msg("failed to query dedicated lane")
+		return nil, oops.In("dedicated_lane_repository").
+			With("op", "find_by_shipment").
+			Time(time.Now()).
+			Wrapf(err, "query dedicated lane")
 	}
 
 	return dl, nil

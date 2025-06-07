@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -15,7 +14,6 @@ import (
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/samber/oops"
-	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -23,34 +21,39 @@ import (
 type AssignmentServiceParams struct {
 	fx.In
 
-	DB             db.Connection
-	AssignmentRepo repositories.AssignmentRepository
-	ShipmentRepo   repositories.ShipmentRepository
-	TractorRepo    repositories.TractorRepository
-	Logger         *logger.Logger
+	DB                db.Connection
+	AssignmentRepo    repositories.AssignmentRepository
+	ShipmentRepo      repositories.ShipmentRepository
+	TractorRepo       repositories.TractorRepository
+	DedicatedLaneRepo repositories.DedicatedLaneRepository
+	Logger            *logger.Logger
 }
 
 // AssignmentService handles dedicated lane assignment operations
 type AssignmentService struct {
-	db             db.Connection
-	assignmentRepo repositories.AssignmentRepository
-	shipmentRepo   repositories.ShipmentRepository
-	tractorRepo    repositories.TractorRepository
-	l              *zerolog.Logger
+	db                db.Connection
+	assignmentRepo    repositories.AssignmentRepository
+	shipmentRepo      repositories.ShipmentRepository
+	tractorRepo       repositories.TractorRepository
+	dedicatedLaneRepo repositories.DedicatedLaneRepository
+	l                 *zerolog.Logger
 }
 
 // NewAssignmentService creates a new dedicated lane assignment service
+//
+//nolint:gocritic // This is dependency injection
 func NewAssignmentService(p AssignmentServiceParams) *AssignmentService {
 	log := p.Logger.With().
 		Str("service", "dedicated_lane_assignment").
 		Logger()
 
 	return &AssignmentService{
-		db:             p.DB,
-		assignmentRepo: p.AssignmentRepo,
-		shipmentRepo:   p.ShipmentRepo,
-		tractorRepo:    p.TractorRepo,
-		l:              &log,
+		db:                p.DB,
+		assignmentRepo:    p.AssignmentRepo,
+		shipmentRepo:      p.ShipmentRepo,
+		tractorRepo:       p.TractorRepo,
+		dedicatedLaneRepo: p.DedicatedLaneRepo,
+		l:                 &log,
 	}
 }
 
@@ -59,14 +62,6 @@ func (s *AssignmentService) HandleDedicatedLaneOperations(
 	ctx context.Context,
 	shp *shipment.Shipment,
 ) error {
-	dba, err := s.db.DB(ctx)
-	if err != nil {
-		return oops.In("dedicated_lane_assignment_service").
-			With("op", "handle_dedicated_lane_operations").
-			Time(time.Now()).
-			Wrapf(err, "get database connection")
-	}
-
 	log := s.l.With().
 		Str("op", "handle_dedicated_lane_operations").
 		Str("shipmentID", shp.ID.String()).
@@ -79,8 +74,21 @@ func (s *AssignmentService) HandleDedicatedLaneOperations(
 		return nil
 	}
 
-	// Find matching dedicated lane
-	dl, err := s.findMatchingDedicatedLane(ctx, dba, shp, originLocationID, destinationLocationID)
+	// Find matching dedicated lane using repository
+	dl, err := s.dedicatedLaneRepo.FindByShipment(
+		ctx,
+		&repositories.FindDedicatedLaneByShipmentRequest{
+			OrganizationID:        shp.OrganizationID,
+			BusinessUnitID:        shp.BusinessUnitID,
+			CustomerID:            shp.CustomerID,
+			ServiceTypeID:         shp.ServiceTypeID,
+			ShipmentTypeID:        shp.ShipmentTypeID,
+			OriginLocationID:      originLocationID,
+			DestinationLocationID: destinationLocationID,
+			TrailerTypeID:         shp.TrailerTypeID,
+			TractorTypeID:         shp.TractorTypeID,
+		},
+	)
 	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			log.Info().Msg("no dedicated lane found for shipment")
@@ -122,53 +130,6 @@ func (s *AssignmentService) extractLocations(
 	}
 
 	return originLocationID, destinationLocationID
-}
-
-// findMatchingDedicatedLane queries for a dedicated lane matching the shipment criteria
-func (s *AssignmentService) findMatchingDedicatedLane(
-	ctx context.Context,
-	dba *bun.DB,
-	shp *shipment.Shipment,
-	originLocationID, destinationLocationID pulid.ID,
-) (*dedicatedlane.DedicatedLane, error) {
-	dl := new(dedicatedlane.DedicatedLane)
-
-	query := dba.NewSelect().Model(dl).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			q := sq.
-				Where("dl.status = ?", domain.StatusActive).
-				Where("dl.organization_id = ?", shp.OrganizationID).
-				Where("dl.business_unit_id = ?", shp.BusinessUnitID).
-				Where("dl.customer_id = ?", shp.CustomerID).
-				Where("dl.origin_location_id = ?", originLocationID).
-				Where("dl.destination_location_id = ?", destinationLocationID)
-
-			// ServiceTypeID and ShipmentTypeID are required fields
-			q = q.Where("dl.service_type_id = ?", shp.ServiceTypeID).
-				Where("dl.shipment_type_id = ?", shp.ShipmentTypeID)
-
-			// Handle optional trailer type - match if both are specified and equal, or both are null
-			if shp.TrailerTypeID != nil {
-				q = q.Where("dl.trailer_type_id = ?", *shp.TrailerTypeID)
-			} else {
-				q = q.Where("dl.trailer_type_id IS NULL")
-			}
-
-			// Handle optional tractor type - match if both are specified and equal, or both are null
-			if shp.TractorTypeID != nil {
-				q = q.Where("dl.tractor_type_id = ?", *shp.TractorTypeID)
-			} else {
-				q = q.Where("dl.tractor_type_id IS NULL")
-			}
-
-			return q
-		}).
-		Order("dl.created_at DESC").
-		Limit(1)
-
-	err := query.Scan(ctx)
-
-	return dl, err
 }
 
 // performAutoAssignment executes the auto-assignment process

@@ -83,6 +83,14 @@ func (s *Service) Get(
 	return s.repo.GetByID(ctx, opts)
 }
 
+func (s *Service) FindByShipment(
+	ctx context.Context,
+	req *repositories.FindDedicatedLaneByShipmentRequest,
+) (*dedicatedlane.DedicatedLane, error) {
+	// * we don't care about permissions here, we just want to find the dedicated lane
+	return s.repo.FindByShipment(ctx, req)
+}
+
 func (s *Service) Create(
 	ctx context.Context,
 	req *dedicatedlane.DedicatedLane,

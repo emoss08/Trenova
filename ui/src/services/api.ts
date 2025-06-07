@@ -8,6 +8,7 @@ import { BillingAPI } from "./billing";
 import { BillingControlAPI } from "./billing-control";
 import { CustomerAPI } from "./customer";
 import { DatabaseBackupAPI } from "./database-backups";
+import { DedicatedLaneAPI } from "./dedicated-lane";
 import { DocumentAPI } from "./document";
 import { FavoriteAPI } from "./favorite";
 import { GoogleMapsAPI } from "./google-maps";
@@ -51,6 +52,7 @@ class API {
   tableConfigurations: TableConfigurationAPI;
   permissions: PermissionAPI;
   roles: RoleAPI;
+  dedicatedLane: DedicatedLaneAPI;
 
   constructor() {
     this.assignments = new AssignmentsAPI();
@@ -72,6 +74,7 @@ class API {
     this.tableConfigurations = new TableConfigurationAPI();
     this.permissions = new PermissionAPI();
     this.roles = new RoleAPI();
+    this.dedicatedLane = new DedicatedLaneAPI();
   }
 }
 

@@ -25,6 +25,18 @@ type GetDedicatedLaneByIDRequest struct {
 	FilterOptions DedicatedLaneFilterOptions `query:"filterOptions"`
 }
 
+type FindDedicatedLaneByShipmentRequest struct {
+	OrganizationID        pulid.ID
+	BusinessUnitID        pulid.ID
+	CustomerID            pulid.ID
+	ServiceTypeID         pulid.ID
+	ShipmentTypeID        pulid.ID
+	OriginLocationID      pulid.ID
+	DestinationLocationID pulid.ID
+	TrailerTypeID         *pulid.ID
+	TractorTypeID         *pulid.ID
+}
+
 type DedicatedLaneRepository interface {
 	List(
 		ctx context.Context,
@@ -33,6 +45,10 @@ type DedicatedLaneRepository interface {
 	GetByID(
 		ctx context.Context,
 		req *GetDedicatedLaneByIDRequest,
+	) (*dedicatedlane.DedicatedLane, error)
+	FindByShipment(
+		ctx context.Context,
+		req *FindDedicatedLaneByShipmentRequest,
 	) (*dedicatedlane.DedicatedLane, error)
 	Create(
 		ctx context.Context,

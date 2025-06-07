@@ -42,6 +42,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(60), // 60 writes per minute
 	)...)
 
+	dedicatedLaneAPI.Post("/find-by-shipment", rl.WithRateLimit(
+		[]fiber.Handler{h.findByShipment},
+		middleware.PerMinute(60), // 60 writes per minute
+	)...)
+
 	dedicatedLaneAPI.Get("/:dedicatedLaneID", rl.WithRateLimit(
 		[]fiber.Handler{h.get},
 		middleware.PerMinute(120), // 120 reads per minute
@@ -119,6 +124,28 @@ func (h *Handler) create(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(entity)
+}
+
+func (h *Handler) findByShipment(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := new(repositories.FindDedicatedLaneByShipmentRequest)
+	if err = c.BodyParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req.OrganizationID = reqCtx.OrgID
+	req.BusinessUnitID = reqCtx.BuID
+
+	dl, err := h.ds.FindByShipment(c.UserContext(), req)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(dl)
 }
 
 func (h *Handler) update(c *fiber.Ctx) error {
