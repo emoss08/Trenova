@@ -8,6 +8,7 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { formatSplitDateTime } from "@/lib/date";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import type { StopSchema } from "@/lib/schemas/stop-schema";
 import { cn } from "@/lib/utils";
 import { MoveStatus } from "@/types/move";
 import { Stop, StopStatus, StopType } from "@/types/stop";
@@ -112,8 +113,8 @@ export default function StopTimeline({
   stopIdx,
   prevStopStatus,
 }: {
-  stop: Stop;
-  nextStop: Stop | null;
+  stop: StopSchema;
+  nextStop: StopSchema | null;
   isLast: boolean;
   moveStatus: MoveStatus;
   moveIdx: number;
@@ -124,22 +125,31 @@ export default function StopTimeline({
     setValue,
     getValues,
     formState: { errors },
+    watch,
   } = useFormContext<ShipmentSchema>();
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Get stop details
-  const lineStyles = getLineStyles(stop.status, prevStopStatus);
-  const plannedArrival = formatSplitDateTime(stop.plannedArrival);
+  // Watch the entire moves array to ensure we get updates when stops change
+  const watchedMoves = watch("moves");
+
+  // Get the current stop and next stop from the watched moves array
+  const currentMove = watchedMoves?.[moveIdx];
+  const currentStop = currentMove?.stops?.[stopIdx] || stop;
+  const currentNextStop = currentMove?.stops?.[stopIdx + 1] || nextStop;
+  const lineStyles = getLineStyles(currentStop.status, prevStopStatus);
+  const plannedArrival = formatSplitDateTime(currentStop.plannedArrival);
 
   // Check for errors
   const stopErrors = errors.moves?.[moveIdx]?.stops?.[stopIdx];
   const hasErrors = stopErrors && Object.keys(stopErrors).length > 0;
 
   // Check if we have stop info
-  const hasStopInfo = stop.location?.addressLine1 || stop.plannedArrival;
+  const hasStopInfo =
+    currentStop.location?.addressLine1 || currentStop.plannedArrival;
+
   const nextStopHasInfo =
-    nextStop?.location?.addressLine1 || nextStop?.plannedArrival;
+    currentNextStop?.location?.addressLine1 || currentNextStop?.plannedArrival;
   const shouldShowLine = !isLast && hasStopInfo && nextStopHasInfo;
 
   // Handler to open dialog
@@ -210,7 +220,7 @@ export default function StopTimeline({
                   </div>
                   <div className="relative z-10">
                     <StopCircle
-                      status={stop.status}
+                      status={currentStop.status}
                       isLast={isLast}
                       moveStatus={moveStatus}
                       hasErrors={hasErrors}
@@ -219,9 +229,9 @@ export default function StopTimeline({
                   </div>
                   <div className="flex-1">
                     <LocationDisplay
-                      location={stop.location}
-                      type={stop.type}
-                      locationId={stop.locationId}
+                      location={currentStop.location}
+                      type={currentStop.type}
+                      locationId={currentStop.locationId}
                     />
                   </div>
                 </div>
@@ -231,7 +241,8 @@ export default function StopTimeline({
                 {hasErrors ? (
                   <div className="flex flex-col items-center justify-center">
                     <span className="mt-1 text-sm text-red-500">
-                      Error in &apos;{getStopTypeLabel(stop.type)}&apos; stop
+                      Error in &apos;{getStopTypeLabel(currentStop.type)}&apos;
+                      stop
                     </span>
                     <p className="text-red-500 text-xs">
                       Please click to edit and fix the errors.
@@ -240,11 +251,11 @@ export default function StopTimeline({
                 ) : (
                   <>
                     <div className="text-foreground text-sm">
-                      Enter {getStopTypeLabel(stop.type)} Information
+                      Enter {getStopTypeLabel(currentStop.type)} Information
                     </div>
                     <p className="text-muted-foreground text-xs">
-                      {getStopTypeLabel(stop.type)} information is required to
-                      create a shipment.
+                      {getStopTypeLabel(currentStop.type)} information is
+                      required to create a shipment.
                     </p>
                   </>
                 )}

@@ -1,4 +1,5 @@
 import { MoveStatusBadge } from "@/components/status-badge";
+import type { MoveSchema } from "@/lib/schemas/move-schema";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { type ShipmentMove } from "@/types/move";
 import { useQueryClient } from "@tanstack/react-query";
@@ -96,7 +97,7 @@ const MoveRow = memo(function MoveRow({
   onEdit,
   onDelete,
 }: {
-  move: ShipmentMove;
+  move: MoveSchema;
   moveIdx: number;
   update: UseFieldArrayUpdate<ShipmentSchema, "moves">;
   remove: UseFieldArrayRemove;

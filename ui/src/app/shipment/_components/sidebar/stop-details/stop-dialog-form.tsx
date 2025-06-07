@@ -34,7 +34,6 @@ export function StopDialogForm({
   const { data: locationData, isLoading: isLoadingLocation } =
     useLocationData(locationId);
 
-  // Keep the address prefill functionality when a location is selected
   useEffect(() => {
     if (!isLoadingLocation && locationId && locationData) {
       const formattedLocation = formatLocation(locationData);
@@ -42,7 +41,6 @@ export function StopDialogForm({
         shouldValidate: true,
       });
 
-      // For the local form, we just need to set the location data on the stop
       if (stopFieldName === "stop") {
         const currentStop = getValues(stopFieldName as any);
         setValue(stopFieldName as any, {
@@ -50,7 +48,6 @@ export function StopDialogForm({
           location: locationData,
         });
       } else {
-        // For the main form, update the move structure
         const currentValues = getValues();
         const currentMove = currentValues.moves?.[moveIdx];
 

@@ -31,7 +31,6 @@ function ShipmentServiceDetailsInner({
 
 function ShipmentServiceDetailsForm() {
   const { control } = useFormContext<ShipmentSchema>();
-
   return (
     <FormGroup cols={2}>
       <FormControl>
