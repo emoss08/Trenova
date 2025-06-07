@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/analytics"
 	redisRepos "github.com/emoss08/trenova/internal/infrastructure/cache/redis/repositories"
 	postgresRepos "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/jobs"
 	"github.com/emoss08/trenova/internal/pkg/statemachine"
 
 	"go.uber.org/fx"
@@ -37,6 +38,7 @@ func Bootstrap() error {
 		analytics.Module,
 		services.Module,
 		api.Module,
+		jobs.Module,
 		fx.WithLogger(func() fxevent.Logger {
 			return &fxevent.ZapLogger{Logger: zap.NewExample()}
 		}),

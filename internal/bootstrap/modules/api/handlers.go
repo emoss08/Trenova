@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlane"
+	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlanesuggestion"
 	"github.com/emoss08/trenova/internal/api/handlers/document"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttype"
@@ -91,4 +92,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	permission.NewHandler,
 	role.NewHandler,
 	dedicatedlane.NewHandler,
+	dedicatedlanesuggestion.NewHandler,
 ))

@@ -93,6 +93,8 @@ var Module = fx.Module("services", fx.Provide(
 	favorite.NewService,
 	dedicatedlane.NewService,
 	dedicatedlane.NewAssignmentService,
+	dedicatedlane.NewPatternService,
+	dedicatedlane.NewSuggestionService,
 ),
 )
 

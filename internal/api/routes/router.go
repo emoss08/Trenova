@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlane"
+	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlanesuggestion"
 	"github.com/emoss08/trenova/internal/api/handlers/document"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttype"
@@ -81,49 +82,50 @@ type RouterParams struct {
 	AuthService *auth.Service
 
 	// Handlers
-	OrganizationHandler          *organizationHandler.Handler
-	StateHandler                 *usstate.Handler
-	ErrorHandler                 *validator.ErrorHandler
-	AuthHandler                  *authHandler.Handler
-	UserHandler                  *user.Handler
-	SessionHandler               *session.Handler
-	WorkerHandler                *worker.Handler
-	TableConfigurationHandler    *tableconfiguration.Handler
-	FleetCodeHandler             *fleetcode.Handler
-	DocumentQualityConfigHandler *documentqualityconfig.Handler
-	EquipmentTypeHandler         *equipmenttype.Handler
-	EquipmentManufacturerHandler *equipmentmanufacturer.Handler
-	ShipmentTypeHandler          *shipmenttype.Handler
-	ServiceTypeHandler           *servicetype.Handler
-	HazardousMaterialHandler     *hazardousmaterial.Handler
-	CommodityHandler             *commodity.Handler
-	LocationCategoryHandler      *locationcategory.Handler
-	ReportingHandler             *reporting.Handler
-	LocationHandler              *location.Handler
-	TractorHandler               *tractor.Handler
-	TrailerHandler               *trailer.Handler
-	CustomerHandler              *customer.Handler
-	ShipmentHandler              *shipment.Handler
-	RoutingHandler               *routing.Handler
-	AssignmentHandler            *assignment.Handler
-	ShipmentMoveHandler          *shipmentmove.Handler
-	StopHandler                  *stop.Handler
-	ShipmentControlHandler       *shipmentcontrol.Handler
-	BillingControlHandler        *billingcontrol.Handler
-	BackupHandler                *backup.Handler
-	AuditHandler                 *audit.Handler
-	HazmatSegregationRuleHandler *hazmatsegregationrule.Handler
-	DocumentHandler              *document.Handler
-	AccessorialChargeHandler     *accessorialcharge.Handler
-	DocumentTypeHandler          *documenttype.Handler
-	IntegrationHandler           *integration.Handler
-	AnalyticsHandler             *analytics.Handler
-	BillingQueueHandler          *billingqueue.Handler
-	ResourceEditorHandler        *resourceeditor.Handler
-	FavoriteHandler              *favorite.Handler
-	PermissionHandler            *permission.Handler
-	RoleHandler                  *role.Handler
-	DedicatedLaneHandler         *dedicatedlane.Handler
+	OrganizationHandler            *organizationHandler.Handler
+	StateHandler                   *usstate.Handler
+	ErrorHandler                   *validator.ErrorHandler
+	AuthHandler                    *authHandler.Handler
+	UserHandler                    *user.Handler
+	SessionHandler                 *session.Handler
+	WorkerHandler                  *worker.Handler
+	TableConfigurationHandler      *tableconfiguration.Handler
+	FleetCodeHandler               *fleetcode.Handler
+	DocumentQualityConfigHandler   *documentqualityconfig.Handler
+	EquipmentTypeHandler           *equipmenttype.Handler
+	EquipmentManufacturerHandler   *equipmentmanufacturer.Handler
+	ShipmentTypeHandler            *shipmenttype.Handler
+	ServiceTypeHandler             *servicetype.Handler
+	HazardousMaterialHandler       *hazardousmaterial.Handler
+	CommodityHandler               *commodity.Handler
+	LocationCategoryHandler        *locationcategory.Handler
+	ReportingHandler               *reporting.Handler
+	LocationHandler                *location.Handler
+	TractorHandler                 *tractor.Handler
+	TrailerHandler                 *trailer.Handler
+	CustomerHandler                *customer.Handler
+	ShipmentHandler                *shipment.Handler
+	RoutingHandler                 *routing.Handler
+	AssignmentHandler              *assignment.Handler
+	ShipmentMoveHandler            *shipmentmove.Handler
+	StopHandler                    *stop.Handler
+	ShipmentControlHandler         *shipmentcontrol.Handler
+	BillingControlHandler          *billingcontrol.Handler
+	BackupHandler                  *backup.Handler
+	AuditHandler                   *audit.Handler
+	HazmatSegregationRuleHandler   *hazmatsegregationrule.Handler
+	DocumentHandler                *document.Handler
+	AccessorialChargeHandler       *accessorialcharge.Handler
+	DocumentTypeHandler            *documenttype.Handler
+	IntegrationHandler             *integration.Handler
+	AnalyticsHandler               *analytics.Handler
+	BillingQueueHandler            *billingqueue.Handler
+	ResourceEditorHandler          *resourceeditor.Handler
+	FavoriteHandler                *favorite.Handler
+	PermissionHandler              *permission.Handler
+	RoleHandler                    *role.Handler
+	DedicatedLaneHandler           *dedicatedlane.Handler
+	DedicatedLaneSuggestionHandler *dedicatedlanesuggestion.Handler
 }
 
 type Router struct {
@@ -313,4 +315,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Dedicated Lanes
 	r.p.DedicatedLaneHandler.RegisterRoutes(router, rl)
+
+	// Dedicated Lane Suggestions
+	r.p.DedicatedLaneSuggestionHandler.RegisterRoutes(router, rl)
 }
