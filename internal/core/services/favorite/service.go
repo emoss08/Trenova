@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
@@ -236,7 +237,9 @@ func (s *Service) Create(
 		UserID:         userID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-	})
+	},
+		audit.WithComment("Favorite created"),
+	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log audit action")
 	}
@@ -316,7 +319,9 @@ func (s *Service) Update(
 		UserID:         userID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-	})
+	},
+		audit.WithComment("Favorite updated"),
+	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log audit action")
 	}
@@ -382,7 +387,9 @@ func (s *Service) Delete(ctx context.Context, orgID, buID, userID, favoriteID pu
 		UserID:         userID,
 		OrganizationID: orgID,
 		BusinessUnitID: buID,
-	})
+	},
+		audit.WithComment("Favorite deleted"),
+	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log audit action")
 	}

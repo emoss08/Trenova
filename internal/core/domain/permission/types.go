@@ -41,6 +41,9 @@ const (
 	ResourceDocument = Resource(
 		"document",
 	) // Represents resources related to documents.
+	ResourceDedicatedLane = Resource(
+		"dedicated_lane",
+	) // Represents resources related to dedicated lanes.
 	ResourceRole = Resource(
 		"role",
 	) // Represents resources related to roles.
@@ -143,6 +146,9 @@ const (
 	ResourceBackup = Resource(
 		"backup",
 	) // Represents resources for managing backups.
+	ResourcePermission = Resource(
+		"permission",
+	) // Represents resources for managing permissions.
 )
 
 func (r Resource) MarshalJSON() ([]byte, error) {
@@ -346,12 +352,22 @@ var (
 			BaseActions,
 			ActionDelegate,
 		),
+		ResourcePermission: {
+			ActionRead,
+			ActionManage,
+		},
 		ResourceBusinessUnit: append(
 			BaseActions,
 			ActionConfigure,
 			ActionAudit,
 		),
 		ResourceOrganization: append(
+			BaseActions,
+			ActionConfigure,
+			ActionAudit,
+			ActionModifyField,
+		),
+		ResourceDedicatedLane: append(
 			BaseActions,
 			ActionConfigure,
 			ActionAudit,

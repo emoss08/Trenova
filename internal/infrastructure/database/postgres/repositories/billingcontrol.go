@@ -128,6 +128,7 @@ func (r billingControlRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(bc).
 			WherePK().
+			OmitZero().
 			Where("bc.version = ?", ov).
 			Returning("*").
 			Exec(c)

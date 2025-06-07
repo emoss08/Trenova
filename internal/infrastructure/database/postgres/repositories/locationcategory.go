@@ -144,20 +144,14 @@ func (lcr *locationCategoryRepository) Create(
 		Str("buID", lc.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(lc).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("locationCategory", lc).
-				Msg("failed to insert location category")
-			return eris.Wrap(iErr, "insert location category")
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create location category")
-		return nil, eris.Wrap(err, "create location category")
+	if _, err = dba.NewInsert().Model(lc).
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("locationCategory", lc).
+			Msg("failed to insert location category")
+		return nil, err
 	}
 
 	return lc, nil
@@ -187,6 +181,7 @@ func (lcr *locationCategoryRepository) Update(
 			Model(lc).
 			WherePK().
 			Where("lc.version = ?", ov).
+			OmitZero().
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

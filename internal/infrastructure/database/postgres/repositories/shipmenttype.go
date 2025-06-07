@@ -4,7 +4,9 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -15,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -65,23 +68,33 @@ func NewShipmentTypeRepository(p ShipmentTypeRepositoryParams) repositories.Ship
 //   - *bun.SelectQuery: The filtered and paginated query.
 func (str *shipmentTypeRepository) filterQuery(
 	q *bun.SelectQuery,
-	opts *ports.LimitOffsetQueryOptions,
+	req *repositories.ListShipmentTypeRequest,
 ) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
 		TableAlias: "st",
-		Filter:     opts,
+		Filter:     req.Filter,
 	})
 
-	if opts.Query != "" {
+	if req.Status != "" {
+		status, err := domain.StatusFromString(req.Status)
+		if err != nil {
+			str.l.Error().Err(err).Str("status", req.Status).Msg("invalid status")
+			return q
+		}
+
+		q = q.Where("st.status = ?", status)
+	}
+
+	if req.Filter.Query != "" {
 		q = postgressearch.BuildSearchQuery(
 			q,
-			opts.Query,
+			req.Filter.Query,
 			(*shipmenttype.ShipmentType)(nil),
 		)
 	}
 
-	return q.Limit(opts.Limit).Offset(opts.Offset)
+	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
 }
 
 // List retrieves shipment types based on filtering and pagination options.
@@ -95,7 +108,7 @@ func (str *shipmentTypeRepository) filterQuery(
 //   - error: If any database operation fails.
 func (str *shipmentTypeRepository) List(
 	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
+	req *repositories.ListShipmentTypeRequest,
 ) (*ports.ListResult[*shipmenttype.ShipmentType], error) {
 	dba, err := str.db.DB(ctx)
 	if err != nil {
@@ -104,14 +117,14 @@ func (str *shipmentTypeRepository) List(
 
 	log := str.l.With().
 		Str("operation", "List").
-		Str("buID", opts.TenantOpts.BuID.String()).
-		Str("userID", opts.TenantOpts.UserID.String()).
+		Str("buID", req.Filter.TenantOpts.BuID.String()).
+		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
 	entities := make([]*shipmenttype.ShipmentType, 0)
 
 	q := dba.NewSelect().Model(&entities)
-	q = str.filterQuery(q, opts)
+	q = str.filterQuery(q, req)
 
 	// * Order by status and created at
 	q.Order("st.status ASC", "st.code ASC", "st.created_at DESC")
@@ -188,7 +201,10 @@ func (str *shipmentTypeRepository) Create(
 ) (*shipmenttype.ShipmentType, error) {
 	dba, err := str.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.In("shipment_type_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := str.l.With().
@@ -197,20 +213,12 @@ func (str *shipmentTypeRepository) Create(
 		Str("buID", st.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(st).Returning("*").Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("shipmentType", st).
-				Msg("failed to insert shipment type")
-			return eris.Wrap(iErr, "insert shipment type")
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create shipment type")
-		return nil, eris.Wrap(err, "create shipment type")
+	if _, err = dba.NewInsert().Model(st).Returning("*").Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("shipmentType", st).
+			Msg("failed to insert shipment type")
+		return nil, err
 	}
 
 	return st, nil
@@ -249,6 +257,7 @@ func (str *shipmentTypeRepository) Update(
 			Model(st).
 			WherePK().
 			Where("st.version = ?", ov).
+			OmitZero().
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

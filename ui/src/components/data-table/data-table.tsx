@@ -109,7 +109,7 @@ export function DataTable<TData extends Record<string, any>>({
     extraSearchParams,
   );
 
-  // Live mode integration
+  // Live mode integration - memoize to prevent unnecessary re-renders
   const liveData = useLiveDataTable({
     queryKey,
     endpoint: liveMode?.endpoint || "",
@@ -202,6 +202,21 @@ export function DataTable<TData extends Record<string, any>>({
 
   const isCreateModalOpen = Boolean(modalType === "create");
 
+  // Memoize modal props to prevent unnecessary re-renders
+  const editModalProps = useMemo(
+    () => ({
+      isLoading: dataQuery.isFetching || dataQuery.isLoading,
+      currentRecord: selectedRow?.original,
+      error: dataQuery.error,
+    }),
+    [
+      dataQuery.isFetching,
+      dataQuery.isLoading,
+      selectedRow?.original,
+      dataQuery.error,
+    ],
+  );
+
   return (
     <DataTableProvider
       table={table}
@@ -265,13 +280,7 @@ export function DataTable<TData extends Record<string, any>>({
               onOpenChange={handleCreateModalClose}
             />
           )}
-          {TableEditModal && (
-            <TableEditModal
-              isLoading={dataQuery.isFetching || dataQuery.isLoading}
-              currentRecord={selectedRow?.original}
-              error={dataQuery.error}
-            />
-          )}
+          {TableEditModal && <TableEditModal {...editModalProps} />}
         </>
       ) : (
         <DataTablePermissionDeniedSkeleton

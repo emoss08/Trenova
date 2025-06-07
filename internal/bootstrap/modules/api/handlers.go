@@ -11,6 +11,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueue"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
+	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlane"
+	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlanesuggestion"
 	"github.com/emoss08/trenova/internal/api/handlers/document"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttype"
@@ -27,6 +29,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/permission"
 	"github.com/emoss08/trenova/internal/api/handlers/reporting"
 	"github.com/emoss08/trenova/internal/api/handlers/resourceeditor"
+	"github.com/emoss08/trenova/internal/api/handlers/role"
 	"github.com/emoss08/trenova/internal/api/handlers/routing"
 	"github.com/emoss08/trenova/internal/api/handlers/servicetype"
 	"github.com/emoss08/trenova/internal/api/handlers/session"
@@ -87,4 +90,7 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	resourceeditor.NewHandler,
 	favorite.NewHandler,
 	permission.NewHandler,
+	role.NewHandler,
+	dedicatedlane.NewHandler,
+	dedicatedlanesuggestion.NewHandler,
 ))

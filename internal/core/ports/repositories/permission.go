@@ -27,7 +27,34 @@ type GetRoleByIDRequest struct {
 	QueryOptions RolesQueryOptions `query:"queryOptions" json:"queryOptions"`
 }
 
+type CreateRoleRequest struct {
+	Role           *permission.Role
+	PermissionIDs  []pulid.ID
+	BusinessUnitID pulid.ID
+	OrganizationID pulid.ID
+}
+
+type UpdateRoleRequest struct {
+	Role           *permission.Role
+	PermissionIDs  []pulid.ID
+	BusinessUnitID pulid.ID
+	OrganizationID pulid.ID
+}
+
+type DeleteRoleRequest struct {
+	RoleID         pulid.ID
+	BusinessUnitID pulid.ID
+	OrganizationID pulid.ID
+}
+
+type ListPermissionsRequest struct {
+	Filter         *ports.LimitOffsetQueryOptions
+	BusinessUnitID pulid.ID
+	OrganizationID pulid.ID
+}
+
 type PermissionRepository interface {
+	// Role operations
 	ListRoles(
 		ctx context.Context,
 		opts *ListRolesRequest,
@@ -36,6 +63,26 @@ type PermissionRepository interface {
 		ctx context.Context,
 		req *GetRoleByIDRequest,
 	) (*permission.Role, error)
+	CreateRole(
+		ctx context.Context,
+		req *CreateRoleRequest,
+	) (*permission.Role, error)
+	UpdateRole(
+		ctx context.Context,
+		req *UpdateRoleRequest,
+	) (*permission.Role, error)
+	DeleteRole(
+		ctx context.Context,
+		req *DeleteRoleRequest,
+	) error
+
+	// Permission operations
+	ListPermissions(
+		ctx context.Context,
+		req *ListPermissionsRequest,
+	) (*ports.ListResult[*permission.Permission], error)
+
+	// User permission operations
 	GetUserPermissions(ctx context.Context, userID pulid.ID) ([]*permission.Permission, error)
 	GetUserRoles(ctx context.Context, userID pulid.ID) ([]*string, error)
 	GetRolesAndPermissions(

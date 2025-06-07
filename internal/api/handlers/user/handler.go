@@ -40,6 +40,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerSecond(5), // 5 reads per second
 	)...)
 
+	api.Post("/", rl.WithRateLimit(
+		[]fiber.Handler{h.create},
+		middleware.PerMinute(60), // 60 writes per minute
+	)...)
+
 	api.Get("/select-options/", rl.WithRateLimit(
 		[]fiber.Handler{h.selectOptions},
 		middleware.PerMinute(120), // 120 reads per minute
@@ -53,6 +58,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api.Get("/:userID/", rl.WithRateLimit(
 		[]fiber.Handler{h.get},
 		middleware.PerMinute(60), // 60 reads per minute
+	)...)
+
+	api.Put("/:userID/", rl.WithRateLimit(
+		[]fiber.Handler{h.update},
+		middleware.PerMinute(60), // 60 writes per minute
 	)...)
 }
 
@@ -148,4 +158,54 @@ func (h *Handler) me(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(usr)
+}
+
+func (h *Handler) create(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	u := new(userdomain.User)
+	u.CurrentOrganizationID = reqCtx.OrgID
+	u.BusinessUnitID = reqCtx.BuID
+
+	if err = c.BodyParser(u); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	entity, err := h.uh.Create(c.UserContext(), u, reqCtx.UserID)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity)
+}
+
+func (h *Handler) update(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	userID, err := pulid.MustParse(c.Params("userID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	u := new(userdomain.User)
+	u.ID = userID
+	u.CurrentOrganizationID = reqCtx.OrgID
+	u.BusinessUnitID = reqCtx.BuID
+
+	if err = c.BodyParser(u); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	entity, err := h.uh.Update(c.UserContext(), u, reqCtx.UserID)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity)
 }

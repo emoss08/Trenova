@@ -88,7 +88,7 @@ func (ur *userRepository) filterQuery(
 		q = q.Relation("Roles.Permissions")
 	}
 
-	q = q.Order("usr.status ASC", "usr.last_login_at DESC NULLS LAST")
+	q = q.Order("usr.status ASC", "usr.last_login_at DESC NULLS LAST", "usr.updated_at DESC")
 
 	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
 }
@@ -325,6 +325,11 @@ func (ur *userRepository) Create(ctx context.Context, u *user.User) (*user.User,
 			return iErr
 		}
 
+		// Handle role assignments
+		if err = ur.handleRoleOperations(c, tx, u, true); err != nil {
+			return err
+		}
+
 		return nil
 	})
 
@@ -367,6 +372,7 @@ func (ur *userRepository) Update(ctx context.Context, u *user.User) (*user.User,
 
 		results, rErr := tx.NewUpdate().
 			Model(u).
+			OmitZero().
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
 				return uq.Where("usr.id = ?", u.ID).
 					Where("usr.version = ?", ov).
@@ -393,6 +399,11 @@ func (ur *userRepository) Update(ctx context.Context, u *user.User) (*user.User,
 			)
 		}
 
+		// Handle role assignments
+		if err = ur.handleRoleOperations(c, tx, u, false); err != nil {
+			return err
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -401,4 +412,174 @@ func (ur *userRepository) Update(ctx context.Context, u *user.User) (*user.User,
 	}
 
 	return u, nil
+}
+
+// handleRoleOperations handles role assignments for create and update operations
+func (ur *userRepository) handleRoleOperations(
+	ctx context.Context,
+	tx bun.IDB,
+	u *user.User,
+	isCreate bool,
+) error {
+	// Early return for create operation with no roles
+	if len(u.Roles) == 0 && isCreate {
+		return nil
+	}
+
+	// Get existing roles for update operations
+	existingRoleMap := make(map[pulid.ID]*user.UserRole)
+	if !isCreate {
+		if err := ur.loadExistingRolesMap(ctx, tx, u, existingRoleMap); err != nil {
+			return err
+		}
+	}
+
+	// Categorize roles and prepare for database operations
+	newRoles, updatedRoleIDs := ur.categorizeRoles(u, existingRoleMap, isCreate)
+
+	// Process database operations
+	if err := ur.processRoleOperations(ctx, tx, newRoles); err != nil {
+		return err
+	}
+
+	// Handle deletions for update operations
+	if !isCreate {
+		rolesToDelete := make([]*user.UserRole, 0)
+		if err := ur.handleRoleDeletions(ctx, tx, existingRoleMap, updatedRoleIDs, &rolesToDelete); err != nil {
+			ur.l.Error().Err(err).Msg("failed to handle role deletions")
+			return err
+		}
+
+		ur.l.Debug().
+			Int("newRoles", len(newRoles)).
+			Int("deletedRoles", len(rolesToDelete)).
+			Msg("role operations completed")
+	} else {
+		ur.l.Debug().
+			Int("newRoles", len(newRoles)).
+			Msg("role operations completed")
+	}
+
+	return nil
+}
+
+// loadExistingRolesMap loads existing roles into a map for lookup
+func (ur *userRepository) loadExistingRolesMap(
+	ctx context.Context,
+	tx bun.IDB,
+	u *user.User,
+	roleMap map[pulid.ID]*user.UserRole,
+) error {
+	existingRoles, err := ur.getExistingUserRoles(ctx, tx, u)
+	if err != nil {
+		ur.l.Error().Err(err).Msg("failed to get existing user roles")
+		return err
+	}
+
+	for _, userRole := range existingRoles {
+		roleMap[userRole.RoleID] = userRole
+	}
+
+	return nil
+}
+
+// categorizeRoles categorizes roles for different operations
+func (ur *userRepository) categorizeRoles(
+	u *user.User,
+	existingRoleMap map[pulid.ID]*user.UserRole,
+	isCreate bool,
+) (newRoles []*user.UserRole, updatedRoleIDs map[pulid.ID]struct{}) {
+	newRoles = make([]*user.UserRole, 0)
+	updatedRoleIDs = make(map[pulid.ID]struct{})
+
+	for _, role := range u.Roles {
+		// Check if this role assignment already exists
+		if _, exists := existingRoleMap[role.ID]; !exists || isCreate {
+			// Create new UserRole assignment
+			userRole := &user.UserRole{
+				BusinessUnitID: u.BusinessUnitID,
+				OrganizationID: u.CurrentOrganizationID,
+				UserID:         u.ID,
+				RoleID:         role.ID,
+			}
+			newRoles = append(newRoles, userRole)
+		} else {
+			// Mark as updated (exists and should remain)
+			updatedRoleIDs[role.ID] = struct{}{}
+		}
+	}
+
+	return newRoles, updatedRoleIDs
+}
+
+// processRoleOperations handles database insert operations
+func (ur *userRepository) processRoleOperations(
+	ctx context.Context,
+	tx bun.IDB,
+	newRoles []*user.UserRole,
+) error {
+	// Handle bulk insert of new role assignments
+	if len(newRoles) > 0 {
+		if _, err := tx.NewInsert().Model(&newRoles).Exec(ctx); err != nil {
+			ur.l.Error().Err(err).Msg("failed to bulk insert new user roles")
+			return err
+		}
+	}
+
+	return nil
+}
+
+// getExistingUserRoles gets the existing user role assignments
+func (ur *userRepository) getExistingUserRoles(
+	ctx context.Context,
+	tx bun.IDB,
+	u *user.User,
+) ([]*user.UserRole, error) {
+	userRoles := make([]*user.UserRole, 0, len(u.Roles))
+
+	// Fetch the existing user role assignments
+	if err := tx.NewSelect().
+		Model(&userRoles).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("ur.user_id = ?", u.ID).
+				Where("ur.organization_id = ?", u.CurrentOrganizationID).
+				Where("ur.business_unit_id = ?", u.BusinessUnitID)
+		}).
+		Scan(ctx); err != nil {
+		ur.l.Error().Err(err).Msg("failed to fetch existing user roles")
+		return nil, err
+	}
+
+	return userRoles, nil
+}
+
+// handleRoleDeletions handles deletion of roles that are no longer assigned
+func (ur *userRepository) handleRoleDeletions(
+	ctx context.Context,
+	tx bun.IDB,
+	existingRoleMap map[pulid.ID]*user.UserRole,
+	updatedRoleIDs map[pulid.ID]struct{},
+	rolesToDelete *[]*user.UserRole,
+) error {
+	// For each existing role assignment, check if it should remain
+	for roleID, userRole := range existingRoleMap {
+		if _, exists := updatedRoleIDs[roleID]; !exists {
+			*rolesToDelete = append(*rolesToDelete, userRole)
+		}
+	}
+
+	// If there are any role assignments to delete, delete them
+	if len(*rolesToDelete) > 0 {
+		_, err := tx.NewDelete().
+			Model(rolesToDelete).
+			WherePK().
+			Exec(ctx)
+		if err != nil {
+			ur.l.Error().Err(err).Msg("failed to bulk delete user roles")
+			return err
+		}
+	}
+
+	return nil
 }

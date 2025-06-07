@@ -3,6 +3,7 @@ package permission
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
@@ -42,67 +43,28 @@ func NewService(p ServiceParams) services.PermissionService {
 	}
 }
 
-func (s *Service) ListRoles(
+// List lists all available permissions that can be assigned to roles
+func (s *Service) List(
 	ctx context.Context,
-	req *repositories.ListRolesRequest,
-) (*ports.ListResult[*permission.Role], error) {
-	log := s.l.With().
-		Str("operation", "ListRoles").
-		Logger()
-
-	result, err := s.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         req.Filter.TenantOpts.UserID,
-				Resource:       permission.ResourceRole,
-				Action:         permission.ActionRead,
-				BusinessUnitID: req.Filter.TenantOpts.BuID,
-				OrganizationID: req.Filter.TenantOpts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check permissions")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read roles")
-	}
-
-	return s.repo.ListRoles(ctx, req)
-}
-
-func (s *Service) GetRoleByID(
-	ctx context.Context,
-	req *repositories.GetRoleByIDRequest,
-) (*permission.Role, error) {
-	log := s.l.With().
-		Str("operation", "GetRoleByID").
-		Str("roleID", req.RoleID.String()).
-		Logger()
-
-	result, err := s.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         req.UserID,
-				Resource:       permission.ResourceRole,
-				Action:         permission.ActionRead,
-				BusinessUnitID: req.BuID,
-				OrganizationID: req.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
+	req *services.ListPermissionsRequest,
+) (*ports.ListResult[*permission.Permission], error) {
+	if err := s.checkPermission(
+		ctx,
+		permission.ActionRead,
+		req.UserID,
+		req.BuID,
+		req.OrgID,
+	); err != nil {
 		return nil, err
 	}
 
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this role")
+	repoReq := &repositories.ListPermissionsRequest{
+		Filter:         req.Filter,
+		BusinessUnitID: req.BuID,
+		OrganizationID: req.OrgID,
 	}
 
-	return s.repo.GetRoleByID(ctx, req)
+	return s.repo.ListPermissions(ctx, repoReq)
 }
 
 // CheckFieldModification checks if a user is allowed to modify a specific field of a resource.
@@ -718,4 +680,46 @@ func (s *Service) CheckFieldView(
 		Allowed: false,
 		Error:   eris.New("no valid permission found for field view"),
 	}
+}
+
+func (s *Service) checkPermission(
+	ctx context.Context,
+	action permission.Action,
+	userID, buID, orgID pulid.ID,
+) error {
+	log := s.l.With().
+		Str("operation", "checkPermission").
+		Str("action", string(action)).
+		Str("userID", userID.String()).
+		Str("buID", buID.String()).
+		Str("orgID", orgID.String()).
+		Logger()
+
+	// Check if user has permission to delete roles
+	result, err := s.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         userID,
+				Resource:       permission.ResourceRole,
+				Action:         action,
+				BusinessUnitID: buID,
+				OrganizationID: orgID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return eris.Wrap(err, "check permissions")
+	}
+
+	if !result.Allowed {
+		return errors.NewAuthorizationError(
+			fmt.Sprintf(
+				"You do not have permission to %s this permission",
+				strings.ToLower(string(action)),
+			),
+		)
+	}
+
+	return nil
 }

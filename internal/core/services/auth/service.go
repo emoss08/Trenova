@@ -151,6 +151,7 @@ func (s *Service) checkLoginRateLimit(ctx context.Context, ip string, userID pul
 	if count > maxLoginAttempts {
 		// * Ensure we include the email address in the error message
 		// * because this will be shown to the user on the frontend
+		// * TODO(Wolfred): Lock the users account after a certain number of failed attempts
 		return errors.NewRateLimitError(
 			"emailAddress",
 			"Too many login attempts, please try again later",

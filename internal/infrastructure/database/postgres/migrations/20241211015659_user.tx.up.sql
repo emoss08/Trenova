@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS "users"(
     "profile_pic_url" varchar(255),
     "thumbnail_url" varchar(255),
     "is_locked" boolean NOT NULL DEFAULT FALSE,
+    "must_change_password" boolean NOT NULL DEFAULT FALSE,
     "last_login_at" bigint,
     -- Metadata and versioning
     "version" bigint NOT NULL DEFAULT 0,

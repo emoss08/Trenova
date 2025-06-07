@@ -26,12 +26,14 @@ func TestServiceTypeRepository(t *testing.T) {
 	})
 
 	t.Run("list", func(t *testing.T) {
-		opts := &ports.LimitOffsetQueryOptions{
-			Limit:  10,
-			Offset: 0,
-			TenantOpts: &ports.TenantOptions{
-				OrgID: org.ID,
-				BuID:  bu.ID,
+		opts := &repoports.ListServiceTypeRequest{
+			Filter: &ports.LimitOffsetQueryOptions{
+				Limit:  10,
+				Offset: 0,
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
+				},
 			},
 		}
 

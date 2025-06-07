@@ -81,7 +81,7 @@ export interface ExecuteQueryRequest {
 
 export interface QueryResult {
   columns: string[];
-  rows: any[][]; // Each row is an array of any, matching backend's []interface{}
+  rows: any[][]; // Each row is an array of any, matching backend's []any
   message?: string;
   error?: string;
   totalRows?: number;

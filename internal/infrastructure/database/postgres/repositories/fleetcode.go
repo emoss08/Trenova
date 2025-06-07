@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -139,7 +141,11 @@ func (fcr *fleetCodeRepository) Create(
 ) (*fleetcode.FleetCode, error) {
 	dba, err := fcr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("fleet_code_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := fcr.l.With().
@@ -148,18 +154,13 @@ func (fcr *fleetCodeRepository) Create(
 		Str("buID", fc.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(fc).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("fleetCode", fc).
-				Msg("failed to insert fleet code")
-			return iErr
-		}
-
-		return nil
-	})
-	if err != nil {
+	if _, err = dba.NewInsert().Model(fc).
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("fleetCode", fc).
+			Msg("failed to insert fleet code")
 		return nil, err
 	}
 
@@ -189,6 +190,7 @@ func (fcr *fleetCodeRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(fc).
 			WherePK().
+			OmitZero().
 			Where("fc.version = ?", ov).
 			Returning("*").
 			Exec(c)

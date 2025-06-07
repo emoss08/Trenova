@@ -64,6 +64,7 @@ func (wr *workerRepository) addOptions(
 	if opts.Status != "" {
 		status, err := domain.StatusFromString(opts.Status)
 		if err != nil {
+			wr.l.Error().Err(err).Str("status", opts.Status).Msg("invalid status")
 			return q
 		}
 
@@ -249,10 +250,13 @@ func (wr *workerRepository) Update(
 
 		results, rErr := tx.NewUpdate().
 			Model(wkr).
-			Where("wrk.id = ?", wkr.ID).
-			Where("wrk.organization_id = ?", wkr.OrganizationID).
-			Where("wrk.business_unit_id = ?", wkr.BusinessUnitID).
-			Where("wrk.version = ?", ov).
+			OmitZero().
+			WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
+				return q.Where("wrk.id = ?", wkr.ID).
+					Where("wrk.organization_id = ?", wkr.OrganizationID).
+					Where("wrk.business_unit_id = ?", wkr.BusinessUnitID).
+					Where("wrk.version = ?", ov)
+			}).
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

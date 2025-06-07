@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -226,6 +228,54 @@ func (tr *tractorRepository) GetByID(
 	return entity, nil
 }
 
+// GetByPrimaryWorkerID retrieves a tractor by its primary worker ID.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - req: GetByPrimaryWorkerIDRequest containing the worker ID and organization ID.
+//
+// Returns:
+//   - *tractor.Tractor: The tractor entity.
+//   - error: An error if the operation fails.
+func (tr *tractorRepository) GetByPrimaryWorkerID(
+	ctx context.Context,
+	req repositories.GetTractorByPrimaryWorkerIDRequest,
+) (*tractor.Tractor, error) {
+	dba, err := tr.db.DB(ctx)
+	if err != nil {
+		return nil, oops.In("tractor_repository").
+			With("op", "get_by_primary_worker_id").
+			With("req", req).
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := tr.l.With().
+		Str("operation", "GetByPrimaryWorkerID").
+		Str("workerID", req.WorkerID.String()).
+		Logger()
+
+	entity := new(tractor.Tractor)
+
+	query := dba.NewSelect().Model(entity).
+		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			return q.Where("tr.primary_worker_id = ?", req.WorkerID).
+				Where("tr.organization_id = ?", req.OrgID).
+				Where("tr.business_unit_id = ?", req.BuID)
+		})
+
+	if err = query.Scan(ctx); err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			return nil, errors.NewNotFoundError("Tractor not found within your organization")
+		}
+
+		log.Error().Err(err).Msg("failed to get tractor")
+		return nil, err
+	}
+
+	return entity, nil
+}
+
 // Create creates a new tractor.
 //
 // Parameters:
@@ -241,7 +291,11 @@ func (tr *tractorRepository) Create(
 ) (*tractor.Tractor, error) {
 	dba, err := tr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("tractor_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := tr.l.With().
@@ -250,19 +304,11 @@ func (tr *tractorRepository) Create(
 		Str("buID", t.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(t).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("tractor", t).
-				Msg("failed to insert tractor")
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create tractor")
+	if _, err = dba.NewInsert().Model(t).Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("tractor", t).
+			Msg("failed to insert tractor")
 		return nil, err
 	}
 
@@ -301,6 +347,7 @@ func (tr *tractorRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(t).
 			WherePK().
+			OmitZero().
 			Where("tr.version = ?", ov).
 			Returning("*").
 			Exec(c)

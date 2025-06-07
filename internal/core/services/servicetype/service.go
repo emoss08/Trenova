@@ -55,20 +55,20 @@ func NewService(p ServiceParams) *Service {
 
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
+	req *repositories.ListServiceTypeRequest,
 ) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, opts)
+	result, err := s.repo.List(ctx, req)
 	if err != nil {
 		return nil, eris.Wrap(err, "select service types")
 	}
 
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, st := range result.Items {
-		options[i] = &types.SelectOption{
+	options := make([]*types.SelectOption, 0, len(result.Items))
+	for _, st := range result.Items {
+		options = append(options, &types.SelectOption{
 			Value: st.GetID(),
 			Label: st.Code,
 			Color: st.Color,
-		}
+		})
 	}
 
 	return options, nil
@@ -76,18 +76,18 @@ func (s *Service) SelectOptions(
 
 func (s *Service) List(
 	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
+	req *repositories.ListServiceTypeRequest,
 ) (*ports.ListResult[*servicetype.ServiceType], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         opts.TenantOpts.UserID,
+				UserID:         req.Filter.TenantOpts.UserID,
 				Resource:       permission.ResourceServiceType,
 				Action:         permission.ActionRead,
-				BusinessUnitID: opts.TenantOpts.BuID,
-				OrganizationID: opts.TenantOpts.OrgID,
+				BusinessUnitID: req.Filter.TenantOpts.BuID,
+				OrganizationID: req.Filter.TenantOpts.OrgID,
 			},
 		},
 	)
@@ -100,7 +100,7 @@ func (s *Service) List(
 		return nil, errors.NewAuthorizationError("You do not have permission to read service types")
 	}
 
-	entities, err := s.repo.List(ctx, opts)
+	entities, err := s.repo.List(ctx, req)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list service types")
 		return nil, eris.Wrap(err, "list service types")

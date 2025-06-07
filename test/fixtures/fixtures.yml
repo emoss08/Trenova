@@ -1709,3 +1709,22 @@
       unit: 1
       method: "Flat"
       amount: 50
+
+- model: DedicatedLane
+  rows:
+    - _id: test_dedicated_lane_1
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "Active"
+      name: "Test Dedicated Lane 1"
+      customer_id: "{{ $.Customer.honeywell_customer.ID }}"
+      origin_location_id: "{{ $.Location.test_location.ID }}"
+      destination_location_id: "{{ $.Location.test_location_2.ID }}"
+      primary_worker_id: "{{ $.Worker.worker_1.ID }}"
+      secondary_worker_id: "{{ $.Worker.worker_2.ID }}"
+      service_type_id: "{{ $.ServiceType.std_service_type.ID }}"
+      shipment_type_id: "{{ $.ShipmentType.ftl_shipment_type.ID }}"
+      tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
+      trailer_type_id: "{{ $.EquipmentType.container_equip_type.ID }}"
+      auto_assign: false

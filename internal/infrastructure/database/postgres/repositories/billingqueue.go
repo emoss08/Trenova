@@ -252,21 +252,12 @@ func (br *billingQueueRepository) Create(
 		Str("buID", qi.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(qi).Exec(c); iErr != nil {
-			log.Error().Err(iErr).Msg("failed to insert billing queue item")
-			return iErr
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create billing queue item")
-		return nil, oops.
-			In("billing_queue_repository").
-			Tags("crud", "create").
-			Time(time.Now()).
-			Wrapf(err, "create billing queue item")
+	if _, err = dba.NewInsert().Model(qi).Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("billing_queue_item", qi).
+			Msg("failed to insert billing queue item")
+		return nil, err
 	}
 
 	return qi, nil
@@ -308,6 +299,7 @@ func (br *billingQueueRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(qi).
 			WherePK().
+			OmitZero().
 			Where("bqi.version = ?", ov).
 			Returning("*").
 			Exec(c)

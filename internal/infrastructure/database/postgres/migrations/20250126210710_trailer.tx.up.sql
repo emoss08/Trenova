@@ -73,7 +73,8 @@ DROP TRIGGER IF EXISTS trailers_search_vector_trigger ON trailers;
 --bun:split
 CREATE TRIGGER trailers_search_vector_trigger
     BEFORE INSERT OR UPDATE ON trailers
-    FOR EACH ROW EXECUTE FUNCTION trailers_search_vector_update();
+    FOR EACH ROW
+    EXECUTE FUNCTION trailers_search_vector_update();
 
 --bun:split
 ALTER TABLE trailers

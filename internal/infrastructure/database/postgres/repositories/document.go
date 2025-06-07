@@ -342,6 +342,7 @@ func (r *documentRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(doc).
 			WherePK().
+			OmitZero().
 			Where("doc.version = ?", ov).
 			Returning("*").
 			Exec(c)

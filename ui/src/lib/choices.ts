@@ -19,6 +19,7 @@ import {
 } from "@/types/hazmat-segregation-rule";
 import { FacilityType, LocationCategoryType } from "@/types/location-category";
 import { MoveStatus } from "@/types/move";
+import { RoleType } from "@/types/roles-permissions";
 import {
   RatingMethod,
   ShipmentDocumentType,
@@ -603,3 +604,30 @@ export const billingCycleTypeChoices = [
     color: "#0369a1",
   },
 ] satisfies ReadonlyArray<ChoiceProps<BillingCycleType>>;
+
+export const roleTypeChoices = [
+  {
+    value: RoleType.System,
+    label: "System",
+    description: "System role",
+    color: "#15803d",
+  },
+  {
+    value: RoleType.Organization,
+    label: "Organization",
+    description: "Organization role",
+    color: "#7e22ce",
+  },
+  {
+    value: RoleType.Custom,
+    label: "Custom",
+    description: "Custom role",
+    color: "#b91c1c",
+  },
+  {
+    value: RoleType.Temporary,
+    label: "Temporary",
+    description: "Temporary role",
+    color: "#f59e0b",
+  },
+] satisfies ReadonlyArray<ChoiceProps<RoleType>>;

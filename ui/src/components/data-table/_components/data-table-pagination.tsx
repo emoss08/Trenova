@@ -1,3 +1,4 @@
+"use no memo";
 import { Table } from "@tanstack/react-table";
 import React from "react";
 import { PaginationNavigation } from "./_pagination/pagination-navigation";

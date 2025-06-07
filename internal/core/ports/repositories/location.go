@@ -9,9 +9,10 @@ import (
 )
 
 type ListLocationOptions struct {
-	Filter          *ports.LimitOffsetQueryOptions
-	IncludeCategory bool `query:"includeCategory"`
-	IncludeState    bool `query:"includeState"`
+	Filter          *ports.LimitOffsetQueryOptions `query:"filter"`
+	IncludeCategory bool                           `query:"includeCategory"`
+	IncludeState    bool                           `query:"includeState"`
+	Status          string                         `query:"status"`
 }
 
 type GetLocationByIDOptions struct {

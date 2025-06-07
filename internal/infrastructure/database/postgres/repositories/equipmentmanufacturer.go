@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
@@ -15,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -211,7 +213,11 @@ func (emr *equipmentManufacturerRepository) Create(
 ) (*equipmentmanufacturer.EquipmentManufacturer, error) {
 	dba, err := emr.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("equipment_manufacturer_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := emr.l.With().
@@ -220,19 +226,13 @@ func (emr *equipmentManufacturerRepository) Create(
 		Str("buID", em.BusinessUnitID.String()).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(em).Exec(c); iErr != nil {
-			log.Error().
-				Err(iErr).
-				Interface("equipManu", em).
-				Msg("failed to insert equipment manufacturer")
-			return iErr
-		}
-
-		return nil
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to create equipment manufacturer")
+	if _, err = dba.NewInsert().Model(em).
+		Returning("*").
+		Exec(ctx); err != nil {
+		log.Error().
+			Err(err).
+			Interface("equipManu", em).
+			Msg("failed to insert equipment manufacturer")
 		return nil, err
 	}
 
@@ -271,6 +271,7 @@ func (emr *equipmentManufacturerRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(em).
 			WherePK().
+			OmitZero().
 			Where("em.version = ?", ov).
 			Returning("*").
 			Exec(c)

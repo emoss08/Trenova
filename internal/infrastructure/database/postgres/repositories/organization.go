@@ -227,6 +227,7 @@ func (or *organizationRepository) Update(
 		results, rErr := tx.NewUpdate().Model(org).
 			WherePK().
 			Where("version = ?", ov).
+			OmitZero().
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

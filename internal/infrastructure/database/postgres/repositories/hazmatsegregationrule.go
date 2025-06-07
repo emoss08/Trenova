@@ -237,6 +237,7 @@ func (r *hazmatSegregationRuleRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(hsr).
 			WherePK().
+			OmitZero().
 			Where("hsr.version = ?", ov).
 			Returning("*").
 			Exec(c)
