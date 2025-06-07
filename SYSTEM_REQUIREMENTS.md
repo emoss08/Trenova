@@ -6,7 +6,7 @@ This document outlines the system resource requirements needed to self-host the 
 
 ## Overview
 
-Trenova is a containerized application consisting of multiple services that work together to provide a comprehensive Transportation Management System (TMS). When self-hosting, you'll be responsible for managing all these components on your own infrastructure. The application is designed to be scalable and can be adjusted based on your organization's needs and available resources.
+Trenova is a containerized application with integrated background job processing that provides a comprehensive Transportation Management System (TMS). When self-hosting, you'll be responsible for managing all these components on your own infrastructure. The application is designed to be scalable and can be adjusted based on your organization's needs and available resources.
 
 ## Infrastructure Components
 
@@ -18,20 +18,16 @@ Trenova is a containerized application consisting of multiple services that work
 
 ### Application Layer
 
-- **Trenova API**: Go-based backend service
+- **Trenova API**: Go-based backend service with integrated background job processing
 - **Trenova Client**: React-based frontend application
+- **Asynq**: Background job queue and task processing system
 
 ### Supporting Services
 
 - **MinIO**: Object storage for file management
-- **RabbitMQ**: Message queue for async processing
+- **RabbitMQ**: Message queue for job distribution
 - **Caddy**: Reverse proxy and web server
-
-### Microservices Layer
-
-- **Email Service**: Go-based microservice for handling email operations
-- **Workflow Service**: Go-based microservice using Hatchet for workflow orchestration
-- **Hatchet Engine**: Workflow orchestration engine with PostgreSQL and RabbitMQ
+- **Asynq Dashboard**: Web UI for monitoring background jobs
 
 ## Minimum System Requirements
 
@@ -121,12 +117,14 @@ Trenova is a containerized application consisting of multiple services that work
 - **Memory Limit**: 512MB
 - **CPU Limit**: 1 core
 - **Language**: Go (efficient memory usage)
+- **Features**: Integrated background job processing with Asynq
 
 **Scaling Recommendations**:
 
 - For 50+ users: Increase memory to 1GB, consider multiple instances
 - For 200+ users: Deploy multiple API instances behind load balancer
 - Monitor memory usage and adjust based on application behavior
+- Scale background job workers based on queue depth
 
 ### Trenova Client (tren-client)
 
@@ -168,55 +166,44 @@ Trenova is a containerized application consisting of multiple services that work
 - **CPU Limit**: 0.5 cores
 - **Features**: Automatic HTTPS, reverse proxy
 
-## Microservices Resource Allocation
+## Background Job Processing
 
-### Email Service (trenova-email)
+### Asynq Job Queue System
 
-- **Memory Recommendation**: 256MB-512MB
-- **CPU Recommendation**: 0.5-1 cores
-- **Language**: Go (efficient memory usage)
-- **Purpose**: Handles email sending operations via RabbitMQ
-- **Dependencies**: RabbitMQ, SMTP/SendGrid providers
+- **Memory Recommendation**: 256MB-512MB (integrated within API)
+- **CPU Recommendation**: Shared with API (additional workers scale automatically)
+- **Technology**: Asynq with Redis backend
+- **Purpose**: Background job processing, email sending, workflow automation
+- **Dependencies**: Redis, RabbitMQ
 
-**Scaling Recommendations**:
+**Features**:
 
-- For high email volume: Increase memory to 1GB, deploy multiple instances
-- Monitor email queue depth and processing times
-- Consider rate limiting to avoid provider throttling
-
-### Workflow Service (trenova-workflow)
-
-- **Memory Recommendation**: 512MB-1GB
-- **CPU Recommendation**: 1-2 cores
-- **Language**: Go with Hatchet framework
-- **Purpose**: Workflow orchestration and automation
-- **Dependencies**: Hatchet Engine, PostgreSQL, RabbitMQ
+- **Job Processing**: Handles email sending, document processing, and automation tasks
+- **Queue Management**: Multiple priority queues for different job types
+- **Retry Logic**: Automatic retry with exponential backoff for failed jobs
+- **Monitoring**: Built-in dashboard for job monitoring and management
 
 **Scaling Recommendations**:
 
-- For complex workflows: Increase memory to 2GB+
-- Deploy multiple worker instances for high throughput
-- Monitor workflow execution times and queue depths
+- Monitor job queue depth and processing times
+- Increase worker concurrency for high-volume processing
+- Scale Redis memory based on job queue size
+- Deploy multiple API instances for horizontal job processing
 
-### Hatchet Engine (workflow orchestration)
+### Asynq Dashboard
 
-- **Memory Recommendation**: 1GB-2GB
-- **CPU Recommendation**: 1-2 cores
-- **Technology**: Hatchet workflow engine
-- **Purpose**: Workflow execution and state management
-- **Dependencies**: Dedicated PostgreSQL, RabbitMQ
+- **Memory Recommendation**: 128MB
+- **CPU Recommendation**: 0.5 cores
+- **Technology**: Web-based monitoring interface
+- **Purpose**: Monitor job queues, retry failed jobs, view job statistics
+- **Port**: 8080 (job monitoring UI)
 
-**Components**:
+**Features**:
 
-- **Hatchet PostgreSQL**: Dedicated database for workflow state
-  - Memory: 1GB+ (separate from main application database)
-  - Storage: 10GB+ for workflow history and state
-- **Hatchet Dashboard**: Web interface for workflow monitoring
-  - Memory: 256MB
-  - Port: 8080 (workflow management UI)
-- **Hatchet RabbitMQ**: Message queue for workflow tasks
-  - Memory: 512MB+ (separate from main application queue)
-  - Ports: 5673 (AMQP), 15673 (Management UI)
+- Real-time job queue monitoring
+- Job retry and deletion capabilities
+- Performance metrics and statistics
+- Queue management tools
 
 ## Storage Requirements
 
@@ -225,19 +212,16 @@ Trenova is a containerized application consisting of multiple services that work
 - **PostgreSQL Data**: 10GB+ (grows with data)
 - **Redis Data**: 1GB+ (cache data)
 - **MinIO Data**: 5GB+ (file storage, grows significantly)
-- **RabbitMQ Data**: 1GB+ (message persistence)
+- **RabbitMQ Data**: 1GB+ (message persistence and job queues)
 - **Caddy Data**: 100MB (certificates and config)
-- **Hatchet PostgreSQL Data**: 5GB+ (workflow state and history)
-- **Hatchet RabbitMQ Data**: 500MB+ (workflow message persistence)
-- **Hatchet Config**: 100MB (workflow configuration and certificates)
 
 ### Total Storage Needs
 
-- **Base Installation**: 30GB
+- **Base Installation**: 25GB
 - **Growth Planning**:
-  - Small organization (1-50 users): 100GB
-  - Medium organization (50-200 users): 200GB
-  - Large organization (200+ users): 500GB+
+  - Small organization (1-50 users): 75GB
+  - Medium organization (50-200 users): 150GB
+  - Large organization (200+ users): 400GB+
 
 ## Network Requirements
 
@@ -254,14 +238,9 @@ Trenova is a containerized application consisting of multiple services that work
 - **9000/9001**: MinIO API/Console (internal)
 - **5674/15674**: RabbitMQ (internal)
 
-#### Microservices Ports
+#### Background Job Processing Ports
 
-- **8082**: Email Service API (internal)
-- **8083**: Email Service Template Management UI (development only)
-- **5435**: Hatchet PostgreSQL (internal)
-- **5673/15673**: Hatchet RabbitMQ (internal)
-- **7077**: Hatchet Engine gRPC (internal)
-- **8080**: Hatchet Dashboard (workflow management UI)
+- **8080**: Asynq Dashboard (job monitoring UI)
 
 ### Bandwidth Recommendations
 
@@ -274,13 +253,11 @@ Trenova is a containerized application consisting of multiple services that work
 ### Horizontal Scaling Options
 
 1. **Database**: PostgreSQL read replicas, connection pooling
-2. **API**: Multiple API instances with load balancing
+2. **API**: Multiple API instances with load balancing (includes job workers)
 3. **Cache**: Redis clustering or sharding
 4. **Storage**: Distributed MinIO deployment
 5. **Message Queue**: RabbitMQ clustering
-6. **Email Service**: Multiple email service instances for high volume
-7. **Workflow Service**: Multiple workflow worker instances
-8. **Hatchet Engine**: Horizontal scaling via additional worker nodes
+6. **Background Jobs**: Scale job workers within API instances or deploy dedicated worker instances
 
 ### Monitoring Recommendations
 
@@ -289,9 +266,8 @@ Trenova is a containerized application consisting of multiple services that work
 - **Disk I/O**: Monitor database and storage performance
 - **Network**: Track bandwidth utilization and latency
 - **Application Metrics**: Monitor API response times and error rates
-- **Email Service**: Monitor email queue depth, send rates, and delivery status
-- **Workflow Service**: Monitor workflow execution times, queue depths, and failure rates
-- **Hatchet Engine**: Monitor workflow state, active jobs, and resource utilization
+- **Background Jobs**: Monitor job queue depth, processing rates, and failure rates
+- **Asynq Dashboard**: Monitor job statistics, retry rates, and queue health
 
 ### Performance Tuning
 
@@ -333,6 +309,7 @@ Trenova is a containerized application consisting of multiple services that work
 - **Database Backups**: Plan for 3x database size
 - **File Storage Backups**: Plan for 2x MinIO storage size
 - **Configuration Backups**: Minimal space required
+- **Job Queue State**: Included in Redis backup requirements
 
 ### Backup Infrastructure
 
@@ -363,47 +340,41 @@ MINIO_ROOT_PASSWORD=secureMinioPassword
 # Application Environment
 TRENOVA_APP_ENVIRONMENT=production
 
-# Email Service Configuration
-EMAIL_ENV=production
-EMAIL_PORT=8082
-EMAIL_RABBITMQ_HOST=tren-rabbitmq
-EMAIL_RABBITMQ_PORT=5674
-EMAIL_RABBITMQ_USER=user
-EMAIL_RABBITMQ_PASSWORD=password
-EMAIL_SMTP_HOST=your-smtp-server
-EMAIL_SMTP_PORT=587
-EMAIL_SMTP_USER=your-smtp-user
-EMAIL_SMTP_PASSWORD=your-smtp-password
+# Background Job Configuration (Asynq)
+ASYNQ_REDIS_HOST=tren-redis
+ASYNQ_REDIS_PORT=6379
+ASYNQ_REDIS_PASSWORD=yourStrongRedisPassword
+ASYNQ_DASHBOARD_PORT=8080
 
-# Workflow Service Configuration
-HATCHET_DATABASE_URL=postgres://hatchet:hatchet@hatchet-postgres:5432/hatchet
-HATCHET_RABBITMQ_URL=amqp://user:password@hatchet-rabbitmq:5672/
-SERVER_GRPC_BIND_ADDRESS=0.0.0.0
-SERVER_GRPC_INSECURE=t
+# Email Configuration (integrated)
+SMTP_HOST=your-smtp-server
+SMTP_PORT=587
+SMTP_USER=your-smtp-user
+SMTP_PASSWORD=your-smtp-password
 ```
 
 ## Deployment Checklist
 
 ### Pre-Deployment
 
-- [ ] Verify minimum system requirements (including microservices)
+- [ ] Verify minimum system requirements
 - [ ] Install Docker and Docker Compose
 - [ ] Configure environment variables for all services
-- [ ] Set up persistent storage for main app and microservices
+- [ ] Set up persistent storage for application
 - [ ] Configure network access and port routing
-- [ ] Set up email provider (SMTP/SendGrid) for email service
-- [ ] Configure workflow engine prerequisites
+- [ ] Set up email provider (SMTP/SendGrid)
+- [ ] Configure Asynq job processing settings
 
 ### Post-Deployment
 
-- [ ] Verify all services are healthy (main app + microservices)
+- [ ] Verify all services are healthy
 - [ ] Test application functionality
 - [ ] Test email sending functionality
-- [ ] Verify workflow engine operation
+- [ ] Verify background job processing (check Asynq dashboard)
 - [ ] Configure monitoring for all components
-- [ ] Set up backup procedures for all databases
+- [ ] Set up backup procedures for database and Redis
 - [ ] Document configuration changes
-- [ ] Test microservices scaling if needed
+- [ ] Test job processing scaling if needed
 
 ## Troubleshooting Common Issues
 

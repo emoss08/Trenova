@@ -156,7 +156,7 @@ Trenova's commitment to open source goes beyond just sharing code - it's about c
 
 ## Architecture & Technology Stack
 
-Trenova is built on a modern, scalable microservices architecture:
+Trenova is built on a modern, scalable architecture:
 
 ### Core Technologies
 
@@ -166,13 +166,12 @@ Trenova is built on a modern, scalable microservices architecture:
 - **Cache**: Redis - for session management and high-performance caching
 - **Infrastructure**: Docker & Docker Compose - enabling easy deployment and scaling
 
-### Microservices Architecture
+### Application Architecture
 
-- **Main API**: Core business logic and data management
-- **Email Service**: Dedicated microservice for email operations and template management
-- **Workflow Service**: Powered by Hatchet for complex workflow orchestration
+- **Main API**: Core business logic and data management with integrated background job processing
+- **Background Jobs**: Asynq for reliable task queue processing and workflow automation
 - **File Storage**: MinIO for object storage and document management
-- **Message Queue**: RabbitMQ for asynchronous communication between services
+- **Message Queue**: RabbitMQ for asynchronous communication and job distribution
 
 ### Supporting Infrastructure
 
@@ -201,6 +200,7 @@ docker-compose -f docker-compose-local.yml up -d
 # Access the application
 # Frontend: http://localhost:5173
 # API: http://localhost:3001
+# Asynq Dashboard: http://localhost:8080
 ```
 
 ### Production Deployment
@@ -219,7 +219,7 @@ docker-compose -f docker-compose-prod.yml up -d
 
 # Access the application
 # Application: https://your-domain.com (via Caddy)
-# Workflow Dashboard: http://your-server:8080
+# Asynq Dashboard: http://your-server:8080
 ```
 
 For detailed deployment instructions and system requirements, see the [System Requirements](SYSTEM_REQUIREMENTS.md) documentation.
@@ -240,15 +240,13 @@ For detailed deployment instructions and system requirements, see the [System Re
 
 ### Architecture Documentation
 
-- [Microservices Architecture](microservices/) - Individual service documentation
-- [Email Service](microservices/email/README.md) - Email handling and templates
-- [Workflow Service](microservices/workflow/) - Hatchet-based workflow engine
+- [Background Jobs Integration](docs/background-jobs-integration.md) - Asynq-based job processing and workflows
 
 ## System Requirements (Self-Hosting)
 
 > **Note**: These requirements are only applicable if you plan to **self-host** Trenova. For our **[Managed Hosting Services](#managed-hosting-services)**, all infrastructure requirements are handled by us.
 
-Trenova is a comprehensive microservices-based application with specific resource requirements for optimal self-hosted performance.
+Trenova is a comprehensive application with integrated background job processing, requiring specific resource requirements for optimal self-hosted performance.
 
 ### Self-Hosting Resource Overview
 
@@ -285,7 +283,6 @@ We believe in building a strong, supportive community around Trenova:
 3. **Community Discussion**: Ask questions in [GitHub Discussions](https://github.com/emoss08/trenova/discussions)
 4. **Discord Support**: Join our [Discord server](https://discord.gg/XDBqyvrryq) for real-time help
 5. **Report Bugs**: Create a detailed issue on [GitHub Issues](https://github.com/emoss08/trenova/issues)
-
 
 ## Commercial Support
 
@@ -344,6 +341,7 @@ While we don't accept code contributions, you can still contribute to the projec
 ### Community Feedback
 
 We actively welcome and value:
+
 - Feedback on features and usability
 - Bug reports with detailed reproduction steps
 - Suggestions for system improvements
