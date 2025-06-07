@@ -27,7 +27,10 @@
       "mcp__ide__getDiagnostics",
       "Bash(npm run:*)",
       "Bash(npx prettier:*)",
-      "Bash(task format)"
+      "Bash(task format)",
+      "Bash(go mod:*)",
+      "Bash(go list:*)",
+      "Bash(go get:*)"
     ],
     "deny": []
   },
