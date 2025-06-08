@@ -230,6 +230,44 @@ func (sr *shipmentRepository) List(
 	}, nil
 }
 
+// GetAllShipments retrieves all shipments from the database.
+//
+// Parameters:
+//   - ctx: Context for request scope and cancellation.
+//
+// Returns:
+func (sr *shipmentRepository) GetAll(
+	ctx context.Context,
+) (*ports.ListResult[*shipment.Shipment], error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	entities := make([]*shipment.Shipment, 0)
+
+	q := dba.NewSelect().Model(&entities)
+	q = sr.addOptions(q, repositories.ShipmentOptions{
+		ExpandShipmentDetails: true,
+	})
+
+	total, err := q.ScanAndCount(ctx)
+	if err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	return &ports.ListResult[*shipment.Shipment]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
 // GetByID retrieves a shipment by its unique ID, including optional expanded details.
 //
 // Parameters:
