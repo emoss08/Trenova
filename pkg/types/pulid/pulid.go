@@ -25,6 +25,8 @@ func (u ID) IsNotNil() bool { return !u.IsNil() }
 
 var Nil = ID("")
 
+var NilPtr = &Nil
+
 // The default entropy source with a mutex for thread safety
 var (
 	defaultEntropySource *ulid.MonotonicEntropy
@@ -83,6 +85,14 @@ func (u ID) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(u), nil
+}
+
+func ConvertFromPtr(ptr *ID) ID {
+	if ptr == nil {
+		return Nil
+	}
+
+	return *ptr
 }
 
 // String returns the string representation of the PULID.
