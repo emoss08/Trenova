@@ -26,7 +26,6 @@ type SuggestionServiceParams struct {
 	Logger            *logger.Logger
 	SuggestionRepo    repositories.DedicatedLaneSuggestionRepository
 	DedicatedLaneRepo repositories.DedicatedLaneRepository
-	PermService       services.PermissionService
 	AuditService      services.AuditService
 	PatternService    *PatternService
 }
@@ -52,7 +51,6 @@ func NewSuggestionService(p SuggestionServiceParams) *SuggestionService {
 		l:              &log,
 		suggRepo:       p.SuggestionRepo,
 		dlRepo:         p.DedicatedLaneRepo,
-		ps:             p.PermService,
 		as:             p.AuditService,
 		patternService: p.PatternService,
 	}
@@ -275,16 +273,6 @@ func (ss *SuggestionService) AnalyzePatterns(
 	req *dedicatedlane.PatternAnalysisRequest,
 	userID pulid.ID,
 ) (*dedicatedlane.PatternAnalysisResult, error) {
-	if err := ss.checkPermission(
-		ctx,
-		permission.ActionCreate, // Creating suggestions
-		userID,
-		req.BusinessUnitID,
-		req.OrganizationID,
-	); err != nil {
-		return nil, err
-	}
-
 	return ss.patternService.AnalyzePatterns(ctx, req)
 }
 
