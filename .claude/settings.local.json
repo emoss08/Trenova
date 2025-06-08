@@ -30,7 +30,8 @@
       "Bash(task format)",
       "Bash(go mod:*)",
       "Bash(go list:*)",
-      "Bash(go get:*)"
+      "Bash(go get:*)",
+      "Bash(sed:*)"
     ],
     "deny": []
   },
