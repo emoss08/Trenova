@@ -2,8 +2,9 @@ package jobs
 
 import (
 	"context"
-	"encoding/json"
+	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/hibiken/asynq"
 )
@@ -140,11 +141,21 @@ func CriticalJobOptions() *JobOptions {
 	}
 }
 
+// JobServiceStats provides health and performance metrics
+type JobServiceStats struct {
+	IsRunning    bool       `json:"isRunning"`
+	StartTime    time.Time  `json:"startTime"`
+	Uptime       string     `json:"uptime"`
+	PanicCount   int        `json:"panicCount"`
+	LastPanic    *time.Time `json:"lastPanic,omitempty"`
+	HandlerCount int        `json:"handlerCount"`
+}
+
 // Helper functions for payload marshaling
 func MarshalPayload(payload any) ([]byte, error) {
-	return json.Marshal(payload)
+	return sonic.Marshal(payload)
 }
 
 func UnmarshalPayload(data []byte, payload any) error {
-	return json.Unmarshal(data, payload)
+	return sonic.Unmarshal(data, payload)
 }

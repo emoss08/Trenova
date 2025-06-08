@@ -98,7 +98,7 @@ func (cs *CronScheduler) SchedulePatternAnalysisJobs() error {
 		cs.createGlobalPatternAnalysisPayload(7), // Analyze last 7 days daily
 	)
 
-	entryID, err := cs.scheduler.Register("0 2 * * *", dailyPatternTask,
+	entryID, err := cs.scheduler.Register("@every 10m", dailyPatternTask,
 		asynq.Queue(jobs.QueuePattern),
 		asynq.MaxRetry(2),
 	)
@@ -200,22 +200,22 @@ type asynqLogger struct {
 	logger *zerolog.Logger
 }
 
-func (l *asynqLogger) Debug(args ...interface{}) {
+func (l *asynqLogger) Debug(args ...any) {
 	l.logger.Debug().Interface("args", args).Msg("asynq debug")
 }
 
-func (l *asynqLogger) Info(args ...interface{}) {
+func (l *asynqLogger) Info(args ...any) {
 	l.logger.Info().Interface("args", args).Msg("asynq info")
 }
 
-func (l *asynqLogger) Warn(args ...interface{}) {
+func (l *asynqLogger) Warn(args ...any) {
 	l.logger.Warn().Interface("args", args).Msg("asynq warning")
 }
 
-func (l *asynqLogger) Error(args ...interface{}) {
+func (l *asynqLogger) Error(args ...any) {
 	l.logger.Error().Interface("args", args).Msg("asynq error")
 }
 
-func (l *asynqLogger) Fatal(args ...interface{}) {
+func (l *asynqLogger) Fatal(args ...any) {
 	l.logger.Fatal().Interface("args", args).Msg("asynq fatal")
 }

@@ -57,6 +57,8 @@ func (pah *PatternAnalysisHandler) ProcessTask(ctx context.Context, task *asynq.
 
 	log.Info().Msg("starting pattern analysis job")
 
+	log.Info().Interface("payload", task.Payload()).Msg("payload")
+
 	// Unmarshal job payload
 	var payload jobs.PatternAnalysisPayload
 	if err := jobs.UnmarshalPayload(task.Payload(), &payload); err != nil {
@@ -132,7 +134,11 @@ func (pah *PatternAnalysisHandler) ProcessTask(ctx context.Context, task *asynq.
 		Str("trigger_reason", payload.TriggerReason).
 		Float64("pattern_qualification_rate", func() float64 {
 			if result.TotalPatternsDetected > 0 {
-				return float64(result.PatternsAboveThreshold) / float64(result.TotalPatternsDetected) * 100
+				return float64(
+					result.PatternsAboveThreshold,
+				) / float64(
+					result.TotalPatternsDetected,
+				) * 100
 			}
 			return 0
 		}()).
@@ -159,7 +165,7 @@ func (pah *PatternAnalysisHandler) ProcessTask(ctx context.Context, task *asynq.
 
 	if writer := task.ResultWriter(); writer != nil {
 		if data, err := jobs.MarshalPayload(resultData); err == nil {
-			_, _ = writer.Write(data)
+			_, _ = writer.Write(data) //nolint:errcheck // we don't care about the error here
 		}
 	}
 
