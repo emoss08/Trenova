@@ -52,9 +52,9 @@ func NewTestDatabase(t testing.TB, migrations *migrate.Migrations) *TestDatabase
 			"POSTGRES_PASSWORD": dbPassword,
 		},
 		WaitingFor: wait.ForAll(
-			wait.ForLog("database system is ready to accept connections"),
 			wait.ForListeningPort(nat.Port(dbPort)),
-		).WithStartupTimeout(timeout),
+			wait.ForLog("database system is ready to accept connections"),
+		).WithDeadline(timeout),
 	}
 
 	container, err := testcontainers.GenericContainer(ctx, testcontainers.GenericContainerRequest{

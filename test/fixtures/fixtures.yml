@@ -364,6 +364,31 @@
       created_at: "{{ timestamp }}"
       updated_at: "{{ timestamp }}"
 
+- model: PatternConfig
+  rows:
+    - _id: trenova
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      updated_at: "{{ now.Unix }}"
+      min_frequency: 3
+      analysis_window_days: 90
+      min_confidence_score: 0.7
+      suggestion_ttl_days: 30
+      require_exact_match: false
+      weight_recent_shipments: true
+    - _id: trenova_2
+      organization_id: "{{ $.Organization.trenova_2.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      updated_at: "{{ now.Unix }}"
+      min_frequency: 3
+      analysis_window_days: 90
+      min_confidence_score: 0.7
+      suggestion_ttl_days: 30
+      require_exact_match: false
+      weight_recent_shipments: true
+
 - model: BillingControl
   rows:
     - _id: trenova
