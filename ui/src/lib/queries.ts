@@ -215,4 +215,31 @@ export const queries = createQueryKeyStore({
       queryFn: async () => api.dedicatedLane.getByShipment(req),
     }),
   },
+  dedicatedLaneSuggestion: {
+    getSuggestions: (limit: number, offset: number) => ({
+      queryKey: ["dedicated-lane-suggestions", limit, offset],
+      queryFn: async () =>
+        api.dedicatedLaneSuggestions.getSuggestions(limit, offset),
+    }),
+    getSuggestionByID: (id: string) => ({
+      queryKey: ["dedicated-lane-suggestions", id],
+      queryFn: async () => api.dedicatedLaneSuggestions.getSuggestionByID(id),
+    }),
+    acceptSuggestion: (id: string) => ({
+      queryKey: ["dedicated-lane-suggestions", id, "accept"],
+      queryFn: async () => api.dedicatedLaneSuggestions.acceptSuggestion(id),
+    }),
+    rejectSuggestion: (id: string) => ({
+      queryKey: ["dedicated-lane-suggestions", id, "reject"],
+      queryFn: async () => api.dedicatedLaneSuggestions.rejectSuggestion(id),
+    }),
+    analyzePatterns: () => ({
+      queryKey: ["dedicated-lane-suggestions", "analyze-patterns"],
+      queryFn: async () => api.dedicatedLaneSuggestions.analyzePatterns(),
+    }),
+    expireOldSuggestions: () => ({
+      queryKey: ["dedicated-lane-suggestions", "expire-old"],
+      queryFn: async () => api.dedicatedLaneSuggestions.expireOldSuggestions(),
+    }),
+  },
 });
