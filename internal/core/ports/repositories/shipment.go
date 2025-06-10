@@ -110,6 +110,8 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		opts *ListShipmentOptions,
 	) (*ports.ListResult[*shipment.Shipment], error)
+	GetAll(ctx context.Context) (*ports.ListResult[*shipment.Shipment], error)
+	GetByOrgID(ctx context.Context, orgID pulid.ID) (*ports.ListResult[*shipment.Shipment], error)
 	GetByID(ctx context.Context, opts *GetShipmentByIDOptions) (*shipment.Shipment, error)
 	Create(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
 	Update(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)

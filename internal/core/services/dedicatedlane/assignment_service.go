@@ -143,6 +143,11 @@ func (s *AssignmentService) performAutoAssignment(
 		Str("dedicatedLaneID", dl.ID.String()).
 		Msg("auto-assigning shipment to dedicated lane")
 
+	// ! Do nothing if the primary worker is not set
+	if dl.PrimaryWorkerID == nil {
+		return nil
+	}
+
 	// * Fetch the tractor by it's primary worker id
 	tractor, err := s.tractorRepo.GetByPrimaryWorkerID(
 		ctx,
@@ -162,7 +167,7 @@ func (s *AssignmentService) performAutoAssignment(
 	// Bulk assign shipment moves to dedicated lane
 	_, err = s.assignmentRepo.BulkAssign(ctx, &repositories.AssignmentRequest{
 		ShipmentID:        shp.ID,
-		PrimaryWorkerID:   dl.PrimaryWorkerID,
+		PrimaryWorkerID:   pulid.ConvertFromPtr(dl.PrimaryWorkerID),
 		SecondaryWorkerID: dl.SecondaryWorkerID,
 		TractorID:         tractor.ID,
 		OrgID:             shp.OrganizationID,

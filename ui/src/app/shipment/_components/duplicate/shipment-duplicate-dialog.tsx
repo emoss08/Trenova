@@ -37,9 +37,10 @@ export function ShipmentDuplicateDialog({
   const form = useForm({
     resolver: zodResolver(shipmentDuplicateSchema),
     defaultValues: {
-      shipmentID: shipment?.id,
+      shipmentID: shipment?.id ?? "",
       overrideDates: false,
       includeCommodities: false,
+      includeAdditionalCharges: false,
     },
   });
 

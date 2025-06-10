@@ -31,7 +31,8 @@
       "Bash(go mod:*)",
       "Bash(go list:*)",
       "Bash(go get:*)",
-      "Bash(sed:*)"
+      "Bash(sed:*)",
+      "Bash(curl:*)"
     ],
     "deny": []
   },

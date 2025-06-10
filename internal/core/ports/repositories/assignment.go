@@ -21,10 +21,10 @@ type GetAssignmentByIDOptions struct {
 type AssignmentRequest struct {
 	ShipmentID        pulid.ID  `json:"shipmentId"`
 	UserID            pulid.ID  `json:"userId"`
-	PrimaryWorkerID   pulid.ID  `json:"primaryWorkerId"`
 	TractorID         pulid.ID  `json:"tractorId"`
 	OrgID             pulid.ID  `json:"orgId"`
 	BuID              pulid.ID  `json:"buId"`
+	PrimaryWorkerID   pulid.ID  `json:"primaryWorkerId"`
 	TrailerID         *pulid.ID `json:"trailerId"`
 	SecondaryWorkerID *pulid.ID `json:"secondaryWorkerId,omitempty"`
 }

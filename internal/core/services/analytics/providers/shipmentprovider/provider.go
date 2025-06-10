@@ -71,8 +71,8 @@ func (p *Provider) GetAnalyticsData(
 		return nil, eris.Wrap(err, "failed to get count by shipment status")
 	}
 
-	log.Info().Msgf("shipment count: %d", shpCount.Count)
-	log.Info().Msgf("count by shipment status: %v", countByStatus)
+	log.Info().Int("shipment_count", shpCount.Count).Msg("shipment count")
+	log.Info().Interface("count_by_shipment_status", countByStatus).Msg("count by shipment status")
 	// Build the analytics response
 	data := services.AnalyticsData{
 		"shipmentCountCard":     shpCount,

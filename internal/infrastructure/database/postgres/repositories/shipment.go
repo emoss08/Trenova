@@ -319,6 +319,44 @@ func (sr *shipmentRepository) GetByID(
 	return entity, nil
 }
 
+func (sr *shipmentRepository) GetByOrgID(
+	ctx context.Context,
+	orgID pulid.ID,
+) (*ports.ListResult[*shipment.Shipment], error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	entities := make([]*shipment.Shipment, 0)
+
+	q := dba.NewSelect().
+		Model(&entities).
+		Relation("Organization").
+		Where("sp.organization_id = ?", orgID)
+
+	// Add options to expand shipment details for pattern analysis
+	q = sr.addOptions(q, repositories.ShipmentOptions{
+		ExpandShipmentDetails: true,
+	})
+
+	total, err := q.ScanAndCount(ctx)
+	if err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	return &ports.ListResult[*shipment.Shipment]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
 // Create inserts a new shipment into the database, calculates totals, and assigns a pro number.
 // It also handles associated commodity operations.
 //

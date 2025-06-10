@@ -87,8 +87,6 @@ func (pah *PatternAnalysisHandler) ProcessTask(ctx context.Context, task *asynq.
 
 	// Build pattern analysis request
 	analysisReq := &dedicatedlane.PatternAnalysisRequest{
-		OrganizationID:  payload.OrganizationID,
-		BusinessUnitID:  payload.BusinessUnitID,
 		StartDate:       payload.StartDate,
 		EndDate:         payload.EndDate,
 		CustomerID:      payload.CustomerID,
@@ -112,7 +110,7 @@ func (pah *PatternAnalysisHandler) ProcessTask(ctx context.Context, task *asynq.
 	analysisStartTime := time.Now()
 	log.Info().Msg("starting pattern analysis execution")
 
-	result, err := pah.suggestionService.AnalyzePatterns(ctx, analysisReq, payload.UserID)
+	result, err := pah.suggestionService.AnalyzePatterns(ctx, analysisReq)
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -164,8 +162,8 @@ func (pah *PatternAnalysisHandler) ProcessTask(ctx context.Context, task *asynq.
 	}
 
 	if writer := task.ResultWriter(); writer != nil {
-		if data, err := jobs.MarshalPayload(resultData); err == nil {
-			_, _ = writer.Write(data) //nolint:errcheck // we don't care about the error here
+		if data, dErr := jobs.MarshalPayload(resultData); dErr == nil {
+			_, _ = writer.Write(data)
 		}
 	}
 
@@ -261,7 +259,7 @@ func (esh *ExpireSuggestionsHandler) ProcessTask(ctx context.Context, task *asyn
 	}
 
 	if writer := task.ResultWriter(); writer != nil {
-		if data, err := jobs.MarshalPayload(resultData); err == nil {
+		if data, dErr := jobs.MarshalPayload(resultData); dErr == nil {
 			_, _ = writer.Write(data)
 		}
 	}

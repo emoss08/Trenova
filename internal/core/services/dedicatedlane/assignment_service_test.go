@@ -108,6 +108,13 @@ func (m *MockShipmentRepository) List(
 	return nil, nil
 }
 
+func (m *MockShipmentRepository) GetAll(
+	ctx context.Context,
+) (*ports.ListResult[*shipment.Shipment], error) {
+	args := m.Called(ctx)
+	return args.Get(0).(*ports.ListResult[*shipment.Shipment]), args.Error(1)
+}
+
 func (m *MockShipmentRepository) GetByID(
 	ctx context.Context,
 	opts *repositories.GetShipmentByIDOptions,
@@ -133,6 +140,13 @@ func (m *MockShipmentRepository) Cancel(
 	ctx context.Context,
 	req *repositories.CancelShipmentRequest,
 ) (*shipment.Shipment, error) {
+	return nil, nil
+}
+
+func (m *MockShipmentRepository) GetByOrgID(
+	ctx context.Context,
+	orgID pulid.ID,
+) (*ports.ListResult[*shipment.Shipment], error) {
 	return nil, nil
 }
 
@@ -548,7 +562,7 @@ func TestHandleDedicatedLaneOperations(t *testing.T) {
 
 		mockAssignRepo.On("BulkAssign", ctx, mock.MatchedBy(func(req *repositories.AssignmentRequest) bool {
 			return req.ShipmentID == shp.ID &&
-				req.PrimaryWorkerID == dl.PrimaryWorkerID &&
+				req.PrimaryWorkerID == pulid.ConvertFromPtr(dl.PrimaryWorkerID) &&
 				req.SecondaryWorkerID != nil &&
 				*req.SecondaryWorkerID == *dl.SecondaryWorkerID &&
 				req.TractorID == mockTractor.ID &&
@@ -584,7 +598,7 @@ func TestHandleDedicatedLaneOperations(t *testing.T) {
 			CustomerID:            customer.ID,
 			OriginLocationID:      loc1.ID,
 			DestinationLocationID: loc2.ID,
-			PrimaryWorkerID:       worker1.ID,
+			PrimaryWorkerID:       &worker1.ID,
 			SecondaryWorkerID:     &worker2.ID,
 			ServiceTypeID:         serviceType.ID,
 			ShipmentTypeID:        shipmentType.ID,
@@ -663,7 +677,7 @@ func TestHandleDedicatedLaneOperations(t *testing.T) {
 			CustomerID:            customer.ID,
 			OriginLocationID:      loc1.ID,
 			DestinationLocationID: loc2.ID,
-			PrimaryWorkerID:       worker1.ID,
+			PrimaryWorkerID:       &worker1.ID,
 			SecondaryWorkerID:     &worker2.ID,
 			ServiceTypeID:         serviceType.ID,
 			ShipmentTypeID:        shipmentType.ID,

@@ -88,5 +88,7 @@ func RegisterEntities() []any {
 		&integration.Integration{},
 		&pagefavorite.PageFavorite{},
 		&dedicatedlane.DedicatedLane{},
+		&dedicatedlane.PatternConfig{},
+		&dedicatedlane.DedicatedLaneSuggestion{},
 	}
 }

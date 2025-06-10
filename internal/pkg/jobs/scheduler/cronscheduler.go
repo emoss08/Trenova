@@ -98,7 +98,7 @@ func (cs *CronScheduler) SchedulePatternAnalysisJobs() error {
 		cs.createGlobalPatternAnalysisPayload(7), // Analyze last 7 days daily
 	)
 
-	entryID, err := cs.scheduler.Register("@every 10m", dailyPatternTask,
+	entryID, err := cs.scheduler.Register("@every 1m", dailyPatternTask,
 		asynq.Queue(jobs.QueuePattern),
 		asynq.MaxRetry(2),
 	)

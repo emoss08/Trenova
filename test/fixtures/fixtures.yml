@@ -379,6 +379,7 @@
       weight_recent_shipments: true
     - _id: trenova_2
       organization_id: "{{ $.Organization.trenova_2.ID }}"
+      enabled: false
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
       updated_at: "{{ now.Unix }}"
