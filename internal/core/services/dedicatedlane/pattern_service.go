@@ -607,16 +607,16 @@ func (ps *PatternService) calculateConfidenceScore(
 ) decimal.Decimal {
 	score := decimal.NewFromFloat(0.0)
 
-	// Base score from frequency, normalized to a maximum of 0.4.
-	// This gives more weight to patterns that occur more often.
+	// * Base score from frequency, normalized to a maximum of 0.4.
+	// * This gives more weight to patterns that occur more often.
 	frequencyScore := decimal.NewFromInt(pattern.FrequencyCount).Div(decimal.NewFromInt(10))
 	if frequencyScore.GreaterThan(decimal.NewFromFloat(0.4)) {
 		frequencyScore = decimal.NewFromFloat(0.4)
 	}
 	score = score.Add(frequencyScore)
 
-	// Recency bonus, up to 0.3.
-	// This rewards patterns that have been active recently.
+	// * Recency bonus, up to 0.3.
+	// * This rewards patterns that have been active recently.
 	if config.WeightRecentShipments {
 		daysSinceLastShipment := (timeutils.NowUnix() - pattern.LastShipmentDate) / 86400
 		switch {
@@ -629,26 +629,26 @@ func (ps *PatternService) calculateConfidenceScore(
 		}
 	}
 
-	// Consistency bonus, up to 0.2.
-	// This rewards patterns with regular, predictable shipment intervals.
+	// * Consistency bonus, up to 0.2.
+	// * This rewards patterns with regular, predictable shipment intervals.
 	timeSpan := pattern.LastShipmentDate - pattern.FirstShipmentDate
 	if timeSpan > 0 {
 		avgDaysBetween := timeSpan / (86400 * (pattern.FrequencyCount - 1))
-		if avgDaysBetween <= 30 { // Regular monthly pattern
+		if avgDaysBetween <= 30 { // * Regular monthly pattern
 			score = score.Add(decimal.NewFromFloat(0.2))
 		} else if avgDaysBetween <= 60 {
 			score = score.Add(decimal.NewFromFloat(0.1))
 		}
 	}
 
-	// Value bonus, up to 0.1.
-	// This gives a small boost to high-value patterns.
+	// * Value bonus, up to 0.1.
+	// * This gives a small boost to high-value patterns.
 	if pattern.TotalFreightValue.Valid &&
 		pattern.TotalFreightValue.Decimal.GreaterThan(decimal.NewFromFloat(10000)) {
 		score = score.Add(decimal.NewFromFloat(0.1))
 	}
 
-	// Cap at 1.0 to ensure the score is a normalized value between 0 and 1.
+	// * Cap at 1.0 to ensure the score is a normalized value between 0 and 1.
 	if score.GreaterThan(decimal.NewFromFloat(1.0)) {
 		score = decimal.NewFromFloat(1.0)
 	}
