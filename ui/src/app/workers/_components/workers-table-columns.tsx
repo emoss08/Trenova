@@ -31,12 +31,16 @@ export function getColumns(): ColumnDef<WorkerSchema>[] {
       id: "licenseExpiry",
       header: "License Expiry",
       cell: ({ row }) => {
-        const licenseExpiry = row.original.profile.licenseExpiry;
+        const licenseExpiry = row.original.profile?.licenseExpiry;
         const date = toDate(licenseExpiry);
         const today = getTodayDate();
 
         return (
-          <Badge variant={licenseExpiry < today ? "inactive" : "active"}>
+          <Badge
+            variant={
+              licenseExpiry && licenseExpiry < today ? "inactive" : "active"
+            }
+          >
             {date ? generateDateOnlyString(date) : "N/A"}
           </Badge>
         );

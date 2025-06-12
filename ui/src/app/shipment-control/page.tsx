@@ -1,5 +1,4 @@
 import { QueryLazyComponent } from "@/components/error-boundary";
-import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
 import { queries } from "@/lib/queries";
 import { lazy, memo } from "react";
@@ -16,9 +15,7 @@ export function ShipmentControl() {
       <QueryLazyComponent
         queryKey={queries.organization.getShipmentControl._def}
       >
-        <FormSaveProvider>
-          <ShipmentControlForm />
-        </FormSaveProvider>
+        <ShipmentControlForm />
       </QueryLazyComponent>
     </div>
   );

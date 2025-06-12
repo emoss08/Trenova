@@ -1,10 +1,10 @@
-package shipmentcontrol
+package patternconfig
 
 import (
 	"github.com/emoss08/trenova/internal/api/middleware"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	dlDomain "github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/services/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/core/services/dedicatedlane"
 	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/gofiber/fiber/v2"
@@ -14,21 +14,24 @@ import (
 type HandlerParams struct {
 	fx.In
 
-	ShipmentControlService *shipmentcontrol.Service
-	ErrorHandler           *validator.ErrorHandler
+	ErrorHandler         *validator.ErrorHandler
+	PatternConfigService *dedicatedlane.PatternService
 }
 
 type Handler struct {
-	sc *shipmentcontrol.Service
 	eh *validator.ErrorHandler
+	pc *dedicatedlane.PatternService
 }
 
 func NewHandler(p HandlerParams) *Handler {
-	return &Handler{sc: p.ShipmentControlService, eh: p.ErrorHandler}
+	return &Handler{
+		eh: p.ErrorHandler,
+		pc: p.PatternConfigService,
+	}
 }
 
 func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
-	api := r.Group("/shipment-controls")
+	api := r.Group("/pattern-config")
 
 	api.Get("/", rl.WithRateLimit(
 		[]fiber.Handler{h.get},
@@ -47,7 +50,7 @@ func (h *Handler) get(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	sc, err := h.sc.Get(c.UserContext(), &repositories.GetShipmentControlRequest{
+	pc, err := h.pc.GetPatternConfig(c.UserContext(), repositories.GetPatternConfigRequest{
 		OrgID:  reqCtx.OrgID,
 		BuID:   reqCtx.BuID,
 		UserID: reqCtx.UserID,
@@ -56,7 +59,7 @@ func (h *Handler) get(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(sc)
+	return c.Status(fiber.StatusOK).JSON(pc)
 }
 
 func (h *Handler) update(c *fiber.Ctx) error {
@@ -65,18 +68,18 @@ func (h *Handler) update(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	sc := new(shipment.ShipmentControl)
-	if err = c.BodyParser(sc); err != nil {
+	pc := new(dlDomain.PatternConfig)
+	if err = c.BodyParser(pc); err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	sc.OrganizationID = reqCtx.OrgID
-	sc.BusinessUnitID = reqCtx.BuID
+	pc.OrganizationID = reqCtx.OrgID
+	pc.BusinessUnitID = reqCtx.BuID
 
-	entity, err := h.sc.Update(c.UserContext(), sc, reqCtx.UserID)
+	updatedPC, err := h.pc.UpdatePatternConfig(c.UserContext(), pc, reqCtx.UserID)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(entity)
+	return c.Status(fiber.StatusOK).JSON(updatedPC)
 }

@@ -9,7 +9,10 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
+import { usePermissions } from "@/hooks/use-permissions";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import { Resource } from "@/types/audit-entry";
+import { Action } from "@/types/roles-permissions";
 import { ShipmentStatus } from "@/types/shipment";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { parseAsBoolean, useQueryState } from "nuqs";
@@ -40,6 +43,8 @@ export function ShipmentActions({
 }: {
   shipment?: ShipmentSchema | null;
 }) {
+  const { can } = usePermissions();
+
   const [cancellationDialogOpen, setCancellationDialogOpen] =
     useQueryState<boolean>(
       "cancellationDialogOpen",
@@ -83,11 +88,13 @@ export function ShipmentActions({
           <DropdownMenuItem
             title="Assign"
             description="Assign this shipment to a worker(s)."
+            disabled={!can(Resource.Shipment, Action.Assign)}
           />
           <DropdownMenuItem
             title="Duplicate"
             description="Create a copy of this shipment."
             onClick={() => setDuplicateDialogOpen(!duplicateDialogOpen)}
+            disabled={!can(Resource.Shipment, Action.Duplicate)}
           />
           <DropdownMenuItem
             title="Cancel"

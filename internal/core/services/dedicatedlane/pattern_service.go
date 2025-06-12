@@ -7,9 +7,14 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/audit"
+	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rs/zerolog"
@@ -24,6 +29,8 @@ type PatternServiceParams struct {
 	ShipmentRepo      repositories.ShipmentRepository
 	DedicatedLaneRepo repositories.DedicatedLaneRepository
 	PatternConfigRepo repositories.PatternConfigRepository
+	PermService       services.PermissionService
+	AuditService      services.AuditService
 	SuggestionRepo    repositories.DedicatedLaneSuggestionRepository
 	LocationRepo      repositories.LocationRepository
 }
@@ -34,6 +41,8 @@ type PatternService struct {
 	dlRepo       repositories.DedicatedLaneRepository
 	pcRepo       repositories.PatternConfigRepository
 	suggRepo     repositories.DedicatedLaneSuggestionRepository
+	permService  services.PermissionService
+	auditService services.AuditService
 	locationRepo repositories.LocationRepository
 }
 
@@ -59,7 +68,26 @@ func NewPatternService(p PatternServiceParams) *PatternService {
 		pcRepo:       p.PatternConfigRepo,
 		suggRepo:     p.SuggestionRepo,
 		locationRepo: p.LocationRepo,
+		permService:  p.PermService,
+		auditService: p.AuditService,
 	}
+}
+
+func (ps *PatternService) GetPatternConfig(
+	ctx context.Context,
+	req repositories.GetPatternConfigRequest,
+) (*dedicatedlane.PatternConfig, error) {
+	if err := ps.checkPermission(
+		ctx,
+		permission.ActionRead,
+		req.UserID,
+		req.BuID,
+		req.OrgID,
+	); err != nil {
+		return nil, err
+	}
+
+	return ps.pcRepo.GetByOrgID(ctx, req)
 }
 
 // AnalyzePatterns performs pattern analysis on shipments to identify potential dedicated lanes.
@@ -849,6 +877,60 @@ func (ps *PatternService) createSuggestionFromPattern(
 	return suggestion
 }
 
+func (ps *PatternService) UpdatePatternConfig(
+	ctx context.Context,
+	pc *dedicatedlane.PatternConfig,
+	userID pulid.ID,
+) (*dedicatedlane.PatternConfig, error) {
+	log := ps.l.With().
+		Str("operation", "UpdatePatternConfig").
+		Str("orgID", pc.OrganizationID.String()).
+		Str("buID", pc.BusinessUnitID.String()).
+		Logger()
+
+	if err := ps.checkPermission(ctx, permission.ActionUpdate, userID, pc.BusinessUnitID, pc.OrganizationID); err != nil {
+		return nil, err
+	}
+
+	original, err := ps.pcRepo.GetByOrgID(ctx, repositories.GetPatternConfigRequest{
+		OrgID: pc.OrganizationID,
+		BuID:  pc.BusinessUnitID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get original pattern config")
+		return nil, err
+	}
+
+	updatedEntity, err := ps.pcRepo.Update(ctx, pc)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to update pattern config")
+		return nil, err
+	}
+
+	// * Log the action
+	err = ps.auditService.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourcePatternConfig,
+			ResourceID:     updatedEntity.GetID(),
+			Action:         permission.ActionUpdate,
+			UserID:         userID,
+			CurrentState:   jsonutils.MustToJSON(updatedEntity),
+			PreviousState:  jsonutils.MustToJSON(original),
+			OrganizationID: updatedEntity.OrganizationID,
+			BusinessUnitID: updatedEntity.BusinessUnitID,
+		},
+		audit.WithComment("Pattern Config updated"),
+		audit.WithDiff(original, updatedEntity),
+		audit.WithCritical(),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log action")
+		return nil, err
+	}
+
+	return updatedEntity, nil
+}
+
 // generateSuggestedName creates a human-readable name for a dedicated lane suggestion
 // based on the origin and destination location codes.
 //
@@ -892,4 +974,41 @@ func (ps *PatternService) generateSuggestedName(
 
 	// * Generate the name using the location codes.
 	return fmt.Sprintf("Lane-%s-to-%s", originLocation.Code, destLocation.Code)
+}
+
+func (ps *PatternService) checkPermission(
+	ctx context.Context,
+	action permission.Action,
+	userID, buID, orgID pulid.ID,
+) error {
+	log := ps.l.With().
+		Str("operation", "checkPermission").
+		Str("action", string(action)).
+		Str("userID", userID.String()).
+		Str("buID", buID.String()).
+		Str("orgID", orgID.String()).
+		Logger()
+
+	result, err := ps.permService.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:   userID,
+			Resource: permission.ResourcePatternConfig,
+			Action:   action,
+		},
+	})
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return err
+	}
+
+	if !result.Allowed {
+		return errors.NewAuthorizationError(
+			fmt.Sprintf("You do not have permission to %s pattern config",
+				string(action),
+			),
+		)
+	}
+
+	return nil
 }

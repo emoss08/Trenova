@@ -83,3 +83,5 @@ tasks:
     cmd: go run cmd/db/main.go db seed
   redis-flushall:
     cmd: go run cmd/db/main.go redis flushall
+  ent-generate:
+    cmd: go generate ./internal/core/ent/

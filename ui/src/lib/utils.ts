@@ -243,7 +243,8 @@ export function formatLocation(location?: LocationSchema) {
 
   const { state, addressLine1, addressLine2, city, postalCode } = location;
 
-  const addressLine = addressLine1 + (addressLine2 ? `, ${addressLine2}` : "");
+  const addressLine =
+    addressLine1 + ", " + (addressLine2 ? `${addressLine2}, ` : "");
   const cityStateZip = `${city} ${state?.abbreviation}, ${postalCode}`;
 
   return `${addressLine} ${cityStateZip}`;

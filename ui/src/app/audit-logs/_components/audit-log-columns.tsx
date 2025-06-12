@@ -4,7 +4,7 @@ import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { type AuditEntry } from "@/types/audit-entry";
 import { type ColumnDef } from "@tanstack/react-table";
 import {
-  AuditEntryActionBadge,
+  ActionBadge,
   AuditEntryResourceBadge,
 } from "./audit-column-components";
 
@@ -56,7 +56,7 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
       cell: ({ row }) => {
         const entry = row.original;
 
-        return <AuditEntryActionBadge withDot={false} action={entry.action} />;
+        return <ActionBadge withDot={false} action={entry.action} />;
       },
     },
     {

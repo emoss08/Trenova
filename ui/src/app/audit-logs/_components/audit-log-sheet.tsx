@@ -28,7 +28,7 @@ import { EditTableSheetProps } from "@/types/data-table";
 import { faChevronDown, faChevronUp } from "@fortawesome/pro-solid-svg-icons";
 import { memo, useCallback, useEffect, useMemo } from "react";
 import { AuditActions } from "./audit-actions";
-import { AuditEntryActionBadge } from "./audit-column-components";
+import { ActionBadge } from "./audit-column-components";
 import { ChangesTable } from "./audit-log-data-section";
 import { AuditLogDetails } from "./audit-log-details";
 
@@ -275,7 +275,7 @@ function AuditDetailsHeader({ entry }: { entry?: AuditEntry }) {
         <h2 className="font-semibold leading-none tracking-tight flex items-center gap-x-2">
           {comment || "-"}
         </h2>
-        <AuditEntryActionBadge action={action} />
+        <ActionBadge action={action} />
       </div>
       <p className="text-2xs text-muted-foreground font-normal">
         Entry created on{" "}

@@ -1,111 +1,140 @@
 import { BadgeAttrProps } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
-import { AuditEntryAction, Resource } from "@/types/audit-entry";
+import { Resource } from "@/types/audit-entry";
+import { Action } from "@/types/roles-permissions";
 
-export function AuditEntryActionBadge({
+export function ActionBadge({
   action,
   withDot,
   className,
 }: {
-  action?: AuditEntryAction;
+  action?: Action;
   withDot?: boolean;
   className?: string;
 }) {
   if (!action) return null;
 
-  const actionAttributes: Record<AuditEntryAction, BadgeAttrProps> = {
-    [AuditEntryAction.Create]: {
+  const actionAttributes: Record<Action, BadgeAttrProps> = {
+    [Action.Create]: {
       variant: "active",
       text: "Created",
     },
-    [AuditEntryAction.Update]: {
+    [Action.Update]: {
       variant: "purple",
       text: "Updated",
     },
-    [AuditEntryAction.Delete]: {
+    [Action.Delete]: {
       variant: "inactive",
       text: "Deleted",
     },
-    [AuditEntryAction.View]: {
+    [Action.Read]: {
       variant: "pink",
       text: "Viewed",
     },
-    [AuditEntryAction.Approve]: {
+    [Action.Approve]: {
       variant: "active",
       text: "Approved",
     },
-    [AuditEntryAction.Reject]: {
+    [Action.Reject]: {
       variant: "inactive",
       text: "Rejected",
     },
-    [AuditEntryAction.Submit]: {
+    [Action.Submit]: {
       variant: "active",
       text: "Submitted",
     },
-    [AuditEntryAction.Cancel]: {
+    [Action.Cancel]: {
       variant: "inactive",
       text: "Cancelled",
     },
-    [AuditEntryAction.Assign]: {
+    [Action.Assign]: {
       variant: "active",
       text: "Assigned",
     },
-    [AuditEntryAction.Reassign]: {
+    [Action.Reassign]: {
       variant: "warning",
       text: "Reassigned",
     },
-    [AuditEntryAction.Complete]: {
+    [Action.Complete]: {
       variant: "active",
       text: "Completed",
     },
-    [AuditEntryAction.Duplicate]: {
+    [Action.Duplicate]: {
       variant: "orange",
       text: "Duplicated",
     },
-    [AuditEntryAction.ManageDefaults]: {
+    [Action.ManageDefaults]: {
       variant: "active",
       text: "Managed Defaults",
     },
-    [AuditEntryAction.Share]: {
+    [Action.Share]: {
       variant: "warning",
       text: "Shared",
     },
-    [AuditEntryAction.Export]: {
+    [Action.Export]: {
       variant: "orange",
       text: "Exported",
     },
-    [AuditEntryAction.Import]: {
+    [Action.Import]: {
       variant: "orange",
       text: "Imported",
     },
-    [AuditEntryAction.Archive]: {
+    [Action.Archive]: {
       variant: "inactive",
       text: "Archived",
     },
-    [AuditEntryAction.Restore]: {
+    [Action.Restore]: {
       variant: "active",
       text: "Restored",
     },
-    [AuditEntryAction.Manage]: {
+    [Action.Manage]: {
       variant: "active",
       text: "Managed",
     },
-    [AuditEntryAction.Audit]: {
+    [Action.Audit]: {
       variant: "active",
       text: "Audited",
     },
-    [AuditEntryAction.Delegate]: {
+    [Action.Delegate]: {
       variant: "warning",
       text: "Delegated",
     },
-    [AuditEntryAction.Configure]: {
+    [Action.Configure]: {
       variant: "active",
       text: "Configured",
     },
-    [AuditEntryAction.Split]: {
+    [Action.Split]: {
       variant: "orange",
       text: "Split",
+    },
+    [Action.ModifyField]: {
+      variant: "purple",
+      text: "Modified Field",
+    },
+    [Action.ViewField]: {
+      variant: "pink",
+      text: "Viewed Field",
+    },
+    [Action.ReadyToBill]: {
+      variant: "active",
+      text: "Ready to Bill",
+    },
+    [Action.ReleaseToBilling]: {
+      variant: "active",
+      text: "Released to Billing",
+    },
+    [Action.BulkTransfer]: {
+      variant: "orange",
+      text: "Bulk Transfer",
+    },
+    [Action.ReviewInvoice]: {
+      variant: "orange",
+      text: "Reviewed Invoice",
+    },
+    [Action.PostInvoice]: {
+      variant: "orange",
+      text: "Posted Invoice",
     },
   };
 
@@ -137,7 +166,6 @@ export function AuditEntryResourceBadge({
       variant: "orange",
       text: "User",
     },
-
     [Resource.BusinessUnit]: {
       variant: "orange",
       text: "Business Unit",
@@ -290,84 +318,95 @@ export function AuditEntryResourceBadge({
     },
     [Resource.Dashboard]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Dashboard",
     },
     [Resource.BillingManagement]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Billing Management",
     },
     [Resource.BillingClient]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Billing Client",
     },
     [Resource.ConfigurationFiles]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Configuration Files",
     },
     [Resource.RateManagement]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Rate Management",
     },
     [Resource.SystemLog]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "System Log",
     },
-
     [Resource.DataRetention]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Data Retention",
     },
     [Resource.Equipment]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Equipment",
     },
     [Resource.Maintenance]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Maintenance",
     },
     [Resource.FormulaTemplate]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Formula Template",
     },
     [Resource.ShipmentManagement]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Shipment Management",
     },
     [Resource.DelayCode]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Delay Code",
     },
     [Resource.ChargeType]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Charge Type",
     },
     [Resource.DivisionCode]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Division Code",
     },
     [Resource.GlAccount]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "GL Account",
     },
     [Resource.RevenueCode]: {
       variant: undefined,
-      text: "",
-      description: undefined,
+      text: "Revenue Code",
+    },
+    [Resource.PatternConfig]: {
+      variant: "orange",
+      text: "Pattern Config",
+    },
+    [Resource.GoogleMapsConfig]: {
+      variant: "orange",
+      text: "Google Maps Config",
+    },
+    [Resource.DedicatedLane]: {
+      variant: "orange",
+      text: "Dedicated Lane",
+    },
+    [Resource.Role]: {
+      variant: "orange",
+      text: "Role",
+    },
+    [Resource.BillingQueue]: {
+      variant: "indigo",
+      text: "Billing Queue",
+    },
+    [Resource.AuditLog]: {
+      variant: "pink",
+      text: "Audit Log",
+    },
+    [Resource.Permission]: {
+      variant: "warning",
+      text: "Permission",
     },
   };
 

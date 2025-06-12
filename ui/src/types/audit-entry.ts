@@ -1,5 +1,6 @@
 import type { UserSchema } from "@/lib/schemas/user-schema";
 import { BaseModel } from "./common";
+import type { Action } from "./roles-permissions";
 
 export type AuditEntryResponse = {
   items: AuditEntry[];
@@ -19,7 +20,7 @@ export interface AuditEntry extends BaseModel {
   currentState: Record<string, any>;
   metadata: Record<string, any>;
   resource: Resource;
-  action: AuditEntryAction;
+  action: Action;
   userAgent: string;
   comment: string;
   sensitiveData: boolean;
@@ -31,88 +32,77 @@ export interface AuditEntry extends BaseModel {
   user: UserSchema;
 }
 
-export enum AuditEntryAction {
-  Create = "create",
-  Update = "update",
-  Delete = "delete",
-  View = "view",
-  Approve = "approve",
-  Reject = "reject",
-  Submit = "submit",
-  Cancel = "cancel",
-  Assign = "assign",
-  Reassign = "reassign",
-  Complete = "complete",
-  Duplicate = "duplicate",
-  ManageDefaults = "manage_defaults",
-  Share = "share",
-  Export = "export",
-  Import = "import",
-  Archive = "archive",
-  Restore = "restore",
-  Manage = "manage",
-  Audit = "audit",
-  Delegate = "delegate",
-  Configure = "configure",
-  Split = "split",
-}
-
 export enum Resource {
+  // Core resources
+  User = "user", // Represents user management resources.
+  BusinessUnit = "business_unit", // Represents resources related to business units.
+  Organization = "organization", // Represents resources related to organizations.
+  DocumentQualityConfig = "document_quality_config", // Represents resources related to document quality config.
+  ShipmentControl = "shipment_control", // Represents resources related to shipment control.
+  PatternConfig = "pattern_config", // Represents resources related to pattern config.
+  GoogleMapsConfig = "google_maps_config", // Represents resources related to google maps config.
+  BillingControl = "billing_control", // Represents resources related to billing control.
+  Document = "document", // Represents resources related to documents.
+  DedicatedLane = "dedicated_lane", // Represents resources related to dedicated lanes.
+  Role = "role", // Represents resources related to roles.
+  PageFavorite = "page_favorite", // Represents resources related to page favorites.
+
+  // Operations resources
+  Worker = "worker", // Represents resources related to workers.
+  Tractor = "tractor", // Represents resources for managing tractors.
+  Trailer = "trailer", // Represents resources for managing trailers.
+  Shipment = "shipment", // Represents resources for managing shipments.
+  BillingQueue = "billing_queue", // Represents resources for managing billing queue.
+  Assignment = "assignment", // Represents resources for managing assignments.
+  ShipmentMove = "shipment_move", // Represents resources for managing movements.
+  Stop = "stop", // Represents resources for managing stops.
+  FleetCode = "fleet_code", // Represents resources for managing fleet codes.
+  EquipmentType = "equipment_type", // Represents resources for managing equipment types.
+  EquipmentManufacturer = "equipment_manufacturer", // Represents resources for managing equipment manufacturers.
+  ShipmentType = "shipment_type", // Represents resources for managing shipment type.
+  ServiceType = "service_type", // Represents resources for managing service types.
+  HazardousMaterial = "hazardous_material", // Represents resources for managing hazardous materials.
+  Commodity = "commodity", // Represents resources for managing commodities.
+  LocationCategory = "location_category", // Represents resources for managing location categories.
+  Location = "location", // Represents resources for managing locations.
+  Customer = "customer", // Represents resources for managing customers.
+  HazmatSegregationRule = "hazmat_segregation_rule", // Represents resources for managing hazmat segregation rules.
+
+  // Financial resources
+  Invoice = "invoice", // Represents resources related to invoices.
+  AccessorialCharge = "accessorial_charge", // Represents resources related to accessorial charges.
+  DocumentType = "document_type", // Represents resources related to document types.
+
+  // Management resources
+  Dispatch = "dispatch", // Represents resources for dispatch management.
+  Report = "report", // Represents resources for managing reports.
+  AuditEntry = "audit_entry", // Represents resources for tracking and auditing logs.
+  AuditLog = "audit_log", // Represents resources for tracking and auditing logs.
+
+  // System resources
+  TableConfiguration = "table_configuration", // Represents resources for managing table configurations.
+  Integration = "integration", // Represents resources for integrations with external systems.
+  Setting = "setting", // Represents configuration or setting resources.
+  Template = "template", // Represents resources for managing templates.
+  Backup = "backup", // Represents resources for managing backups.
+  Permission = "permission", // Represents resources for managing permissions.
+
+  // Additional resources from existing enum (not in Go constants)
   Dashboard = "dashboard",
   BillingManagement = "billing_management",
   BillingClient = "billing_client",
-  BillingControl = "billing_control",
   ConfigurationFiles = "configuration_files",
   RateManagement = "rate_management",
   SystemLog = "system_log",
-  ShipmentControl = "shipment_control",
   DataRetention = "data_retention",
   ResourceEditor = "resource_editor",
   Equipment = "equipment",
   Maintenance = "maintenance",
-  User = "user",
-  Role = "role",
   FormulaTemplate = "formula_template",
   ShipmentManagement = "shipment_management",
-  DedicatedLane = "dedicated_lane",
   DelayCode = "delay_code",
-  BusinessUnit = "business_unit",
-  Organization = "organization",
-  Document = "document",
-  DocumentQualityConfig = "document_quality_config",
   ChargeType = "charge_type",
   DivisionCode = "division_code",
   GlAccount = "gl_account",
   RevenueCode = "revenue_code",
-  PageFavorite = "page_favorite",
-  AccessorialCharge = "accessorial_charge",
-  Worker = "worker",
-  Tractor = "tractor",
-  Trailer = "trailer",
-  Shipment = "shipment",
-  Assignment = "assignment",
-  ShipmentMove = "shipment_move",
-  Stop = "stop",
-  FleetCode = "fleet_code",
-  EquipmentType = "equipment_type",
-  EquipmentManufacturer = "equipment_manufacturer",
-  ShipmentType = "shipment_type",
-  ServiceType = "service_type",
-  HazardousMaterial = "hazardous_material",
-  Commodity = "commodity",
-  LocationCategory = "location_category",
-  Location = "location",
-  PatternConfig = "pattern_config",
-  Customer = "customer",
-  Invoice = "invoice",
-  Dispatch = "dispatch",
-  Report = "report",
-  AuditEntry = "audit_entry",
-  TableConfiguration = "table_configuration",
-  Integration = "integration",
-  Setting = "setting",
-  Template = "template",
-  Backup = "backup",
-  HazmatSegregationRule = "hazmat_segregation_rule",
-  DocumentType = "document_type",
 }

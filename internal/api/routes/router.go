@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/location"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
 	organizationHandler "github.com/emoss08/trenova/internal/api/handlers/organization"
+	"github.com/emoss08/trenova/internal/api/handlers/patternconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/permission"
 	"github.com/emoss08/trenova/internal/api/handlers/reporting"
 	"github.com/emoss08/trenova/internal/api/handlers/resourceeditor"
@@ -126,6 +127,7 @@ type RouterParams struct {
 	RoleHandler                    *role.Handler
 	DedicatedLaneHandler           *dedicatedlane.Handler
 	DedicatedLaneSuggestionHandler *dedicatedlanesuggestion.Handler
+	PatternConfigHandler           *patternconfig.Handler
 }
 
 type Router struct {
@@ -318,4 +320,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Dedicated Lane Suggestions
 	r.p.DedicatedLaneSuggestionHandler.RegisterRoutes(router, rl)
+
+	// Pattern Config
+	r.p.PatternConfigHandler.RegisterRoutes(router, rl)
 }

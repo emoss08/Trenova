@@ -109,6 +109,11 @@ export const adminLinks: SidebarLink[] = [
     group: "Data & Integrations",
   },
   {
+    href: "/organization/pattern-config/",
+    title: "Pattern Detection",
+    group: "Data & Integrations",
+  },
+  {
     href: "/organization/data-retention/",
     title: "Data Retention",
     group: "Data & Integrations",
@@ -412,6 +417,12 @@ export const routes: RouteInfo[] = [
         key: Resource.User,
         label: "Users & Roles",
         link: "/organization/users/",
+        supportsModal: false,
+      },
+      {
+        key: Resource.PatternConfig,
+        label: "Pattern Detection",
+        link: "/organization/pattern-config/",
         supportsModal: false,
       },
       {

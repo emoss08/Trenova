@@ -73,7 +73,7 @@ export function LocationForm() {
         />
       </FormControl>
       <FormControl cols="full">
-        <AddressField control={control} />
+        <AddressField control={control} rules={{ required: true }} />
       </FormControl>
       <FormControl cols="full">
         <InputField
@@ -112,6 +112,7 @@ export function LocationForm() {
           label="Postal Code"
           placeholder="Postal Code"
           description="The ZIP code for the location."
+          rules={{ required: true }}
         />
       </FormControl>
     </FormGroup>

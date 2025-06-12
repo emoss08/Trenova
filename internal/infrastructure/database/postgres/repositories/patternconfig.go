@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/samber/oops"
@@ -70,7 +69,7 @@ func (pcr *patternConfigRepository) GetAll(
 	}
 
 	log.Info().Int("patternConfigCount", len(entities)).Msg("fetched pattern configs")
-	
+
 	// Log details about each pattern config
 	for i, config := range entities {
 		log.Info().
@@ -94,7 +93,7 @@ func (pcr *patternConfigRepository) GetAll(
 }
 func (pcr *patternConfigRepository) GetByOrgID(
 	ctx context.Context,
-	orgID pulid.ID,
+	req repositories.GetPatternConfigRequest,
 ) (*dedicatedlane.PatternConfig, error) {
 	dba, err := pcr.db.DB(ctx)
 	if err != nil {
@@ -104,14 +103,21 @@ func (pcr *patternConfigRepository) GetByOrgID(
 			Wrapf(err, "get database connection")
 	}
 
-	log := pcr.l.With().Str("operation", "GetByOrgID").Str("orgID", orgID.String()).Logger()
+	log := pcr.l.With().Str("operation", "GetByOrgID").
+		Str("orgID", req.OrgID.String()).
+		Str("buID", req.BuID.String()).
+		Logger()
 
 	entity := new(dedicatedlane.PatternConfig)
 
 	query := dba.NewSelect().
 		Model(entity).
 		Relation("Organization").
-		Where("pc.organization_id = ?", orgID)
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("pc.organization_id = ?", req.OrgID).
+				Where("pc.business_unit_id = ?", req.BuID)
+		})
 
 	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
@@ -152,7 +158,7 @@ func (pcr *patternConfigRepository) Update(
 			Model(pc).
 			WherePK().
 			Where("pc.version = ?", ov).
-			OmitZero().
+			// OmitZero().
 			Returning("*").
 			Exec(c)
 		if rErr != nil {

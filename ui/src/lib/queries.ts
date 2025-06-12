@@ -5,6 +5,7 @@ import { Resource } from "@/types/audit-entry";
 import type { GetCustomerByIDParams } from "@/types/customer";
 import type { IntegrationType } from "@/types/integration";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
+import type { PatternConfigSchema } from "./schemas/pattern-config-schema";
 import type { TableConfigurationSchema } from "./schemas/table-configuration-schema";
 
 export const queries = createQueryKeyStore({
@@ -216,7 +217,7 @@ export const queries = createQueryKeyStore({
     }),
   },
   dedicatedLaneSuggestion: {
-    getSuggestions: (limit: number, offset: number) => ({
+    getSuggestions: (limit: number = 10, offset: number = 0) => ({
       queryKey: ["dedicated-lane-suggestions", limit, offset],
       queryFn: async () =>
         api.dedicatedLaneSuggestions.getSuggestions(limit, offset),
@@ -240,6 +241,16 @@ export const queries = createQueryKeyStore({
     expireOldSuggestions: () => ({
       queryKey: ["dedicated-lane-suggestions", "expire-old"],
       queryFn: async () => api.dedicatedLaneSuggestions.expireOldSuggestions(),
+    }),
+  },
+  patternConfig: {
+    get: () => ({
+      queryKey: ["pattern-config"],
+      queryFn: async () => api.patternConfig.get(),
+    }),
+    update: (payload: PatternConfigSchema) => ({
+      queryKey: ["pattern-config", payload],
+      queryFn: async () => api.patternConfig.update(payload),
     }),
   },
 });

@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/location"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
 	"github.com/emoss08/trenova/internal/api/handlers/organization"
+	"github.com/emoss08/trenova/internal/api/handlers/patternconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/permission"
 	"github.com/emoss08/trenova/internal/api/handlers/reporting"
 	"github.com/emoss08/trenova/internal/api/handlers/resourceeditor"
@@ -93,4 +94,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	role.NewHandler,
 	dedicatedlane.NewHandler,
 	dedicatedlanesuggestion.NewHandler,
+	patternconfig.NewHandler,
 ))

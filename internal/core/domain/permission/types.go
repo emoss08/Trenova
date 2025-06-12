@@ -32,6 +32,9 @@ const (
 	ResourceShipmentControl = Resource(
 		"shipment_control",
 	) // Represents resources related to shipment control.
+	ResourcePatternConfig = Resource(
+		"pattern_config",
+	) // Represents resources related to pattern config.
 	ResourceGoogleMapsConfig = Resource(
 		"google_maps_config",
 	) // Represents resources related to google maps config.
@@ -451,6 +454,10 @@ var (
 		),
 		ResourceEquipmentManufacturer: append(
 			BaseActions,
+			append(DataActions, FieldActions...)...,
+		),
+		ResourcePatternConfig: append(
+			append(BaseActions, ActionConfigure),
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceShipmentType: append(

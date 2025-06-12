@@ -34,11 +34,11 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.37.0
-	github.com/uptrace/bun v1.2.11
-	github.com/uptrace/bun/dbfixture v1.2.11
-	github.com/uptrace/bun/dialect/pgdialect v1.2.11
-	github.com/uptrace/bun/driver/pgdriver v1.2.11
-	github.com/uptrace/bun/extra/bundebug v1.2.11
+	github.com/uptrace/bun v1.2.12
+	github.com/uptrace/bun/dbfixture v1.2.12
+	github.com/uptrace/bun/dialect/pgdialect v1.2.12
+	github.com/uptrace/bun/driver/pgdriver v1.2.12
+	github.com/uptrace/bun/extra/bundebug v1.2.12
 	github.com/valyala/fasthttp v1.62.0
 	go.uber.org/atomic v1.11.0
 	go.uber.org/fx v1.24.0
@@ -108,7 +108,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gohugoio/hugo v0.139.4 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
-	github.com/google/pprof v0.0.0-20250602020802-c6617b811d0e // indirect
+	github.com/google/pprof v0.0.0-20250607225305-033d6d78b36a // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1 // indirect
 	github.com/hashicorp/errwrap v1.1.0 // indirect
@@ -121,7 +121,7 @@ require (
 	github.com/jbenet/go-context v0.0.0-20150711004518-d14ea06fba99 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/joho/godotenv v1.5.1 // indirect
-	github.com/jupiterrider/ffi v0.4.1 // indirect
+	github.com/jupiterrider/ffi v0.5.0 // indirect
 	github.com/kevinburke/ssh_config v1.2.0 // indirect
 	github.com/klauspost/compress v1.18.0 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
