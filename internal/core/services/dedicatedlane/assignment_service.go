@@ -98,6 +98,12 @@ func (s *AssignmentService) HandleDedicatedLaneOperations(
 		return err
 	}
 
+	// Check if dedicated lane was found
+	if dl == nil {
+		log.Info().Msg("no dedicated lane found for shipment")
+		return nil
+	}
+
 	// Auto-assign if configured
 	if dl.AutoAssign {
 		return s.performAutoAssignment(ctx, shp, dl, &log)
