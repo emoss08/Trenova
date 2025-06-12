@@ -102,6 +102,7 @@ export enum Resource {
   Commodity = "commodity",
   LocationCategory = "location_category",
   Location = "location",
+  PatternConfig = "pattern_config",
   Customer = "customer",
   Invoice = "invoice",
   Dispatch = "dispatch",

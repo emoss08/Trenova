@@ -23,15 +23,15 @@ LOG_FILE="${APP_DIR}/logs/backup_${TIMESTAMP}.log"
 # Parse command line arguments
 RETENTION_DAYS=""
 for arg in "$@"; do
-  case $arg in
-    --retention-days=*)
-      RETENTION_DAYS="${arg#*=}"
-      shift
-      ;;
-    *)
-      # Unknown option
-      ;;
-  esac
+	case $arg in
+	--retention-days=*)
+		RETENTION_DAYS="${arg#*=}"
+		shift
+		;;
+	*)
+		# Unknown option
+		;;
+	esac
 done
 
 # Ensure log directory exists
@@ -43,20 +43,20 @@ echo "Starting database backup at $(date)" | tee -a "$LOG_FILE"
 # Build retention days argument if specified
 RETENTION_ARG=""
 if [ -n "$RETENTION_DAYS" ]; then
-  RETENTION_ARG="--retention-days=$RETENTION_DAYS"
+	RETENTION_ARG="--retention-days=$RETENTION_DAYS"
 fi
 
 # Execute the backup
-if $APP_BIN backup $RETENTION_ARG >> "$LOG_FILE" 2>&1; then
-  echo "Backup completed successfully at $(date)" | tee -a "$LOG_FILE"
-  exit 0
+if $APP_BIN backup $RETENTION_ARG >>"$LOG_FILE" 2>&1; then
+	echo "Backup completed successfully at $(date)" | tee -a "$LOG_FILE"
+	exit 0
 else
-  echo "Backup failed at $(date)" | tee -a "$LOG_FILE"
-  
-  # Send notification email if configured
-  if command -v mail &> /dev/null && [ -n "$NOTIFICATION_EMAIL" ]; then
-    echo "Database backup failed. See attached log for details." | mail -s "Database Backup Failed - $(hostname)" -a "$LOG_FILE" "$NOTIFICATION_EMAIL"
-  fi
-  
-  exit 1
+	echo "Backup failed at $(date)" | tee -a "$LOG_FILE"
+
+	# Send notification email if configured
+	if command -v mail &>/dev/null && [ -n "$NOTIFICATION_EMAIL" ]; then
+		echo "Database backup failed. See attached log for details." | mail -s "Database Backup Failed - $(hostname)" -a "$LOG_FILE" "$NOTIFICATION_EMAIL"
+	fi
+
+	exit 1
 fi
