@@ -1,3 +1,4 @@
+import { BetaTag } from "@/components/ui/beta-tag";
 import { Button } from "@/components/ui/button";
 import {
   Carousel,
@@ -7,7 +8,7 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { queries } from "@/lib/queries";
 import { SuggestionStatus } from "@/lib/schemas/dedicated-lane-schema";
-import { cn, formatLocation } from "@/lib/utils";
+import { cn, formatLocation, pluralize } from "@/lib/utils";
 import { Status } from "@/types/common";
 import { faDash } from "@fortawesome/pro-solid-svg-icons";
 import { useSuspenseQuery } from "@tanstack/react-query";
@@ -24,8 +25,24 @@ export function DedicatedLaneSuggestions() {
   return data.results.length > 0 ? (
     <div className="flex flex-col gap-2 bg-background border-border border rounded-md p-2 mb-4 relative">
       <div className="flex justify-between items-center border-b border-border pb-2">
-        <h2 className="text-lg font-semibold">Dedicated Lane Suggestions</h2>
-        <Button size="sm">View All</Button>
+        <div className="flex flex-col items-start leading-tight">
+          <div className="flex items-center gap-1">
+            <h2 className="text-lg font-semibold">
+              Dedicated Lane Suggestions
+            </h2>
+            <BetaTag />
+          </div>
+          <p className="text-sm text-muted-foreground">
+            A dedicated lane is a lane that is assigned to a specific customer
+            for a specific period of time.
+          </p>
+        </div>
+        <div className="flex flex-col items-end">
+          <Button size="sm">View All</Button>
+          <p className="text-2xs text-muted-foreground">
+            {data.results.length} {pluralize("suggestion", data.results.length)}
+          </p>
+        </div>
       </div>
       <Carousel>
         <CarouselContent className="-ml-4">

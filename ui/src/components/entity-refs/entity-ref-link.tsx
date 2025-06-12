@@ -25,7 +25,7 @@ export function EntityRefLinkDisplayText({
   children: React.ReactNode;
 }) {
   return (
-    <span className="text-sm font-normal underline hover:text-foreground/70">
+    <span className="text-sm font-normal text-nowrap underline hover:text-foreground/70">
       {children}
     </span>
   );

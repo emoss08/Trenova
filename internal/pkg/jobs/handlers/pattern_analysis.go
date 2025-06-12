@@ -46,6 +46,8 @@ func (pah *PatternAnalysisHandler) JobType() jobs.JobType {
 }
 
 // ProcessTask processes a pattern analysis job
+//
+//nolint:funlen // this is a long function, but it's okay.
 func (pah *PatternAnalysisHandler) ProcessTask(ctx context.Context, task *asynq.Task) error {
 	jobStartTime := time.Now()
 

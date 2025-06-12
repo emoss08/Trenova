@@ -418,3 +418,7 @@ export function getFileClass(fileType: string): FileClass {
     borderColor: "border-muted-foreground",
   };
 }
+
+export function pluralize(word: string, count: number) {
+  return count === 1 ? word : `${word}s`;
+}
