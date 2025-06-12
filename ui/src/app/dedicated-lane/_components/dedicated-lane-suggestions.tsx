@@ -5,12 +5,18 @@ import {
   CarouselContent,
   CarouselItem,
 } from "@/components/ui/carousel";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
+import { EntityRedirectLink } from "@/components/ui/link";
 import { queries } from "@/lib/queries";
-import { SuggestionStatus } from "@/lib/schemas/dedicated-lane-schema";
-import { cn, formatLocation, pluralize } from "@/lib/utils";
+import { formatLocation, pluralize } from "@/lib/utils";
 import { Status } from "@/types/common";
-import { faDash } from "@fortawesome/pro-solid-svg-icons";
+import { faDash, faEllipsis } from "@fortawesome/pro-solid-svg-icons";
 import { useSuspenseQuery } from "@tanstack/react-query";
 
 export function DedicatedLaneSuggestions() {
@@ -45,20 +51,32 @@ export function DedicatedLaneSuggestions() {
         </div>
       </div>
       <Carousel>
-        <CarouselContent className="-ml-4">
+        <CarouselContent className="-ml-4 pb-2">
           {data.results.map((suggestion) => (
             <CarouselItem className="basis-1/3 pl-4" key={suggestion.id}>
               <div className="flex flex-col gap-2 w-full bg-muted border border-border rounded-md p-2">
                 <div className="flex justify-between items-center gap-2 border-b border-border pb-2">
-                  <h3 className="text-sm font-semibold">
+                  <EntityRedirectLink
+                    baseUrl="/billing/configurations/customers"
+                    entityId={suggestion.customerId}
+                    className="text-sm !font-semibold"
+                    modelOpen
+                  >
                     {suggestion.customer?.name}
-                  </h3>
-                  <LaneSuggestionStatus status={suggestion.status} />
+                  </EntityRedirectLink>
+                  <SuggestionActions />
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="flex flex-col leading-tight">
                     <div className="text-sm font-semibold">
-                      {suggestion.originLocation?.name}
+                      <EntityRedirectLink
+                        baseUrl="/dispatch/configurations/locations"
+                        entityId={suggestion.originLocationId}
+                        className="text-xs !font-semibold max-w-[100px] truncate"
+                        modelOpen
+                      >
+                        {suggestion.originLocation?.name}
+                      </EntityRedirectLink>
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {formatLocation(
@@ -79,7 +97,14 @@ export function DedicatedLaneSuggestions() {
                   <Icon icon={faDash} className="text-primary" />
                   <div className="flex flex-col leading-tight">
                     <div className="text-sm font-semibold">
-                      {suggestion.destinationLocation?.name}
+                      <EntityRedirectLink
+                        baseUrl="/dispatch/configurations/locations"
+                        entityId={suggestion.destinationLocationId}
+                        className="text-xs !font-semibold max-w-[100px] truncate"
+                        modelOpen
+                      >
+                        {suggestion.destinationLocation?.name}
+                      </EntityRedirectLink>
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {formatLocation(
@@ -107,22 +132,18 @@ export function DedicatedLaneSuggestions() {
   ) : null;
 }
 
-function LaneSuggestionStatus({ status }: { status: SuggestionStatus }) {
+function SuggestionActions() {
   return (
-    <p
-      className={cn(
-        "text-sm font-semibold uppercase",
-        status === SuggestionStatus.Pending &&
-          "text-orange-500 dark:text-yellow-500 dark:text-shadow-yellow-500/20 dark:text-shadow-lg",
-        status === SuggestionStatus.Accepted &&
-          "text-green-500 dark:text-green-500 text-shadow-lg text-shadow-green-500/20 dark:text-shadow-lg",
-        status === SuggestionStatus.Rejected &&
-          "text-red-500 text-shadow-lg text-shadow-red-500/20 dark:text-shadow-lg",
-        status === SuggestionStatus.Expired &&
-          "text-red-500 text-shadow-lg text-shadow-red-500/20 dark:text-shadow-lg",
-      )}
-    >
-      {status}
-    </p>
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="xs">
+          <Icon icon={faEllipsis} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent>
+        <DropdownMenuItem title="Accept" description="Accept this suggestion" />
+        <DropdownMenuItem title="Reject" description="Reject this suggestion" />
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }

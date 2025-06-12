@@ -57,7 +57,7 @@ export const dedicatedLaneSuggestionSchema = z.object({
 
   status: z.nativeEnum(SuggestionStatus),
   customerId: z.string().min(1, "Customer is required"),
-  orginLocationid: z.string().min(1, "Origin Location is required"),
+  originLocationId: z.string().min(1, "Origin Location is required"),
   destinationLocationId: z.string().min(1, "Destination Location is required"),
   serviceTypeId: z.string().min(1, "Service Type is required"),
   shipmentTypeId: z.string().min(1, "Shipment Type is required"),
