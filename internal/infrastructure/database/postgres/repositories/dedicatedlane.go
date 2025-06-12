@@ -257,7 +257,7 @@ func (dlr *dedicatedLaneRepository) FindByShipment(
 		if eris.Is(err, sql.ErrNoRows) {
 			log.Warn().Msg("no dedicated lane found for shipment")
 			// !  we don't want to return an error here, we just want to return nil
-			return nil, nil //nolint:nilnil // nil is a valid value for a DedicatedLane
+			return nil, err
 		}
 		log.Error().Err(err).Msg("failed to query dedicated lane")
 		return nil, oops.In("dedicated_lane_repository").
