@@ -10,12 +10,12 @@ import {
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
-import { http } from "@/lib/http-client";
 import {
   shipmentDuplicateSchema,
   type ShipmentDuplicateSchema,
 } from "@/lib/schemas/shipment-duplicate-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import { api } from "@/services/api";
 import { type TableSheetProps } from "@/types/data-table";
 import { type APIError } from "@/types/errors";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -38,6 +38,7 @@ export function ShipmentDuplicateDialog({
     resolver: zodResolver(shipmentDuplicateSchema),
     defaultValues: {
       shipmentID: shipment?.id ?? "",
+      count: 1,
       overrideDates: false,
       includeCommodities: false,
       includeAdditionalCharges: false,
@@ -53,12 +54,12 @@ export function ShipmentDuplicateDialog({
 
   const { mutateAsync: duplicateShipment } = useMutation({
     mutationFn: async (values: ShipmentDuplicateSchema) => {
-      const response = await http.post(`/shipments/duplicate/`, values);
+      const response = await api.shipments.duplicate(values);
 
-      return response.data;
+      return response.message;
     },
     onSuccess: () => {
-      toast.success("Shipment duplicated successfully");
+      toast.success("Shipment duplicate job started");
       onOpenChange(false);
       reset();
 

@@ -1,5 +1,6 @@
 import { SwitchField } from "@/components/fields/switch-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { type ShipmentDuplicateSchema } from "@/lib/schemas/shipment-duplicate-schema";
 import { useFormContext } from "react-hook-form";
 
@@ -9,6 +10,15 @@ export function ShipmentDuplicateForm() {
   return (
     <FormGroup cols={1}>
       <FormControl>
+        <NumberField
+          name="count"
+          control={control}
+          max={20}
+          min={1}
+          label="Count"
+          rules={{ required: true, min: 1, max: 20 }}
+          description="The number of shipments to duplicate."
+        />
         <SwitchField
           name="overrideDates"
           control={control}

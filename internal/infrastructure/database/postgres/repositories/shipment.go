@@ -797,7 +797,7 @@ func (sr *shipmentRepository) cancelShipmentComponents(
 	return nil
 }
 
-// Duplicate creates a copy of an existing shipment, including its moves, stops, and optionally commodities.
+// BulkDuplicate creates a bulk copy of an existing shipment, including its moves, stops, and optionally commodities.
 // It allows overriding shipment dates during duplication.
 //
 // Parameters:
@@ -807,10 +807,10 @@ func (sr *shipmentRepository) cancelShipmentComponents(
 // Returns:
 //   - *shipment.Shipment: The newly duplicated shipment.
 //   - error: If duplication fails.
-func (sr *shipmentRepository) Duplicate(
+func (sr *shipmentRepository) BulkDuplicate(
 	ctx context.Context,
 	req *repositories.DuplicateShipmentRequest,
-) (*shipment.Shipment, error) {
+) ([]*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -820,7 +820,8 @@ func (sr *shipmentRepository) Duplicate(
 	}
 
 	log := sr.l.With().
-		Str("operation", "Duplicate").
+		Str("operation", "BulkDuplicate").
+		Int("count", req.Count).
 		Str("shipmentID", req.ShipmentID.String()).
 		Logger()
 
@@ -838,81 +839,93 @@ func (sr *shipmentRepository) Duplicate(
 		return nil, err
 	}
 
-	// * Create a new shipment
-	newShipment := new(shipment.Shipment)
+	// * Create a slice of new shipments that we will be bulk inserting.
+	newShipments := make([]*shipment.Shipment, 0, req.Count)
 
 	// * Run in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		var dupErr error
-		newShipment, dupErr = sr.performDuplication(c, tx, originalShipment, req)
-		return dupErr
+		// * Prepare all shipments, moves, stops, commodities, and additional charges
+		allMoves := make([]*shipment.ShipmentMove, 0)
+		allStops := make([]*shipment.Stop, 0)
+		allCommodities := make([]*shipment.ShipmentCommodity, 0)
+		allAdditionalCharges := make([]*shipment.AdditionalCharge, 0)
+
+		// * Create multiple shipments
+		for i := 0; i < req.Count; i++ {
+			// * Duplicate the shipment fields
+			newShipment, dupErr := sr.duplicateShipmentFields(c, originalShipment)
+			if dupErr != nil {
+				log.Error().
+					Err(dupErr).
+					Int("iteration", i).
+					Msg("failed to duplicate shipment fields")
+				return dupErr
+			}
+
+			newShipments = append(newShipments, newShipment)
+
+			// * Prepare related entities for this shipment
+			moves, stops := sr.prepareMovesAndStops(
+				originalShipment,
+				newShipment,
+				req.OverrideDates,
+			)
+			allMoves = append(allMoves, moves...)
+			allStops = append(allStops, stops...)
+
+			if req.IncludeCommodities {
+				commodities := sr.prepareCommodities(originalShipment, newShipment)
+				allCommodities = append(allCommodities, commodities...)
+			}
+
+			if req.IncludeAdditionalCharges {
+				additionalCharges := sr.prepareAdditionalCharges(originalShipment, newShipment)
+				allAdditionalCharges = append(allAdditionalCharges, additionalCharges...)
+			}
+		}
+
+		// * Bulk insert all shipments
+		if err = sr.insertEntities(c, tx, &log, "shipments", &newShipments); err != nil {
+			return err
+		}
+
+		// * Bulk insert all moves
+		if len(allMoves) > 0 {
+			if err = sr.insertEntities(c, tx, &log, "moves", &allMoves); err != nil {
+				return err
+			}
+		}
+
+		// * Bulk insert all stops
+		if len(allStops) > 0 {
+			if err = sr.insertEntities(c, tx, &log, "stops", &allStops); err != nil {
+				return err
+			}
+		}
+
+		// * Bulk insert all commodities
+		if len(allCommodities) > 0 {
+			if err = sr.insertEntities(c, tx, &log, "commodities", &allCommodities); err != nil {
+				return err
+			}
+		}
+
+		// * Bulk insert all additional charges
+		if len(allAdditionalCharges) > 0 {
+			if err = sr.insertEntities(c, tx, &log, "additional charges", &allAdditionalCharges); err != nil {
+				return err
+			}
+		}
+
+		return nil
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to duplicate shipment")
+		log.Error().Err(err).Msg("failed to bulk duplicate shipments")
 		return nil, err
 	}
 
-	return newShipment, nil
-}
-
-// performDuplication handles the actual duplication process within a transaction
-func (sr *shipmentRepository) performDuplication(
-	ctx context.Context,
-	tx bun.Tx,
-	originalShipment *shipment.Shipment,
-	req *repositories.DuplicateShipmentRequest,
-) (*shipment.Shipment, error) {
-	log := sr.l.With().
-		Str("operation", "performDuplication").
-		Str("originalShipmentID", originalShipment.GetID()).
-		Logger()
-
-	// * Duplicate the original shipment fields
-	newShipment, err := sr.duplicateShipmentFields(ctx, originalShipment)
-	if err != nil {
-		log.Error().
-			Interface("originalShipment", originalShipment).
-			Err(err).
-			Msgf("failed to duplicate shipment fields for shipment %s", originalShipment.GetID())
-		return nil, err
-	}
-
-	// * Insert the new shipment
-	if _, err = tx.NewInsert().Model(newShipment).Exec(ctx); err != nil {
-		log.Error().Err(err).Msg("failed to insert new shipment")
-		return nil, err
-	}
-
-	// * Prepare related entities
-	moves, stops := sr.prepareMovesAndStops(originalShipment, newShipment, req.OverrideDates)
-	commodities := sr.prepareCommodities(originalShipment, newShipment)
-	additionalCharges := sr.prepareAdditionalCharges(originalShipment, newShipment)
-
-	// * Insert moves
-	if err = sr.insertEntities(ctx, tx, &log, "moves", &moves); err != nil {
-		return nil, err
-	}
-
-	// * Insert stops
-	if err = sr.insertEntities(ctx, tx, &log, "stops", &stops); err != nil {
-		return nil, err
-	}
-
-	// * Insert commodities if requested
-	if req.IncludeCommodities && len(commodities) > 0 {
-		if err = sr.insertEntities(ctx, tx, &log, "commodities", &commodities); err != nil {
-			return nil, err
-		}
-	}
-
-	// * Insert additional charges if requested
-	if req.IncludeAdditionalCharges && len(additionalCharges) > 0 {
-		if err = sr.insertEntities(ctx, tx, &log, "additional charges", &additionalCharges); err != nil {
-			return nil, err
-		}
-	}
-
-	return newShipment, nil
+	log.Info().Int("created", len(newShipments)).Msg("successfully bulk duplicated shipments")
+	return newShipments, nil
 }
 
 // insertEntities is a helper function to insert entities within a transaction

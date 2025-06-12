@@ -556,6 +556,11 @@ func (js *JobService) extractPayloadSummary(payload any) map[string]any {
 		if p.ShipmentID != nil {
 			summary["shipment_id"] = p.ShipmentID.String()
 		}
+	case *DuplicateShipmentPayload:
+		summary["type"] = "duplicate_shipment"
+		summary["organization_id"] = p.OrganizationID.String()
+		summary["business_unit_id"] = p.BusinessUnitID.String()
+		summary["count"] = p.Count
 
 	default:
 		summary["type"] = "unknown"

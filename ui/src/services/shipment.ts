@@ -1,4 +1,5 @@
 import { http } from "@/lib/http-client";
+import type { ShipmentDuplicateSchema } from "@/lib/schemas/shipment-duplicate-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { LimitOffsetResponse } from "@/types/server";
 import { type Shipment, type ShipmentQueryParams } from "@/types/shipment";
@@ -75,6 +76,15 @@ export class ShipmentAPI {
       otherChargeAmount: string | number;
       totalChargeAmount: string | number;
     }>(`/shipments/calculate-totals/`, values);
+
+    return response.data;
+  }
+
+  async duplicate(values: ShipmentDuplicateSchema) {
+    const response = await http.post<{ message: string }>(
+      `/shipments/duplicate/`,
+      values,
+    );
 
     return response.data;
   }

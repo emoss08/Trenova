@@ -249,20 +249,22 @@ func (h *Handler) duplicate(c *fiber.Ctx) error {
 	}
 
 	req := new(repositories.DuplicateShipmentRequest)
-	req.OrgID = reqCtx.OrgID
-	req.BuID = reqCtx.BuID
-	req.UserID = reqCtx.UserID
-
 	if err = c.BodyParser(req); err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	newEntity, err := h.ss.Duplicate(c.UserContext(), req)
+	req.OrgID = reqCtx.OrgID
+	req.BuID = reqCtx.BuID
+	req.UserID = reqCtx.UserID
+	err = h.ss.Duplicate(c.UserContext(), req)
+
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	return c.Status(fiber.StatusOK).JSON(newEntity)
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"message": "Shipment duplicate job started",
+	})
 }
 
 func (h *Handler) markReadyToBill(c *fiber.Ctx) error {

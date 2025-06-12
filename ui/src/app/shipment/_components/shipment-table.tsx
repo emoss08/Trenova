@@ -74,6 +74,11 @@ function ShipmentTabs({
     []) as StatusCount[];
   const totalShipments = analytics?.shipmentCountCard?.count || 0;
 
+  // Sort status counts by count in descending order
+  const sortedStatusCounts = [...statusCounts].sort(
+    (a, b) => b.count - a.count,
+  );
+
   // For each status in the countByShipmentStatus array, create a tab, however, make sure there is a tab for all shipments and if the count is 0, disable the tab
   const handleTabChange = (value: string) => {
     if (value === "all") {
@@ -133,7 +138,7 @@ function ShipmentTabs({
           )}
         </TabsTrigger>
 
-        {statusCounts.map((statusItem) => {
+        {sortedStatusCounts.map((statusItem) => {
           const value = getValueFromStatus(statusItem.status);
           const count = statusItem.count;
           const isDisabled = count === 0;

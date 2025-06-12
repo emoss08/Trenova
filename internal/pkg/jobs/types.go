@@ -19,6 +19,7 @@ const (
 
 	// Shipment Jobs
 	JobTypeShipmentStatusUpdate JobType = "shipment:status_update"
+	JobTypeDuplicateShipment    JobType = "shipment:duplicate"
 	JobTypeShipmentNotification JobType = "shipment:notification"
 
 	// Compliance Jobs
@@ -86,6 +87,15 @@ type ShipmentStatusUpdatePayload struct {
 	ShipmentID pulid.ID `json:"shipmentId"`
 	OldStatus  string   `json:"oldStatus"`
 	NewStatus  string   `json:"newStatus"`
+}
+
+type DuplicateShipmentPayload struct {
+	BasePayload
+	ShipmentID               pulid.ID `json:"shipmentId"`
+	Count                    int      `json:"count"`
+	OverrideDates            bool     `json:"overrideDates"`
+	IncludeCommodities       bool     `json:"includeCommodities"`
+	IncludeAdditionalCharges bool     `json:"includeAdditionalCharges"`
 }
 
 // ComplianceCheckPayload for compliance verification jobs

@@ -60,6 +60,9 @@ type DuplicateShipmentRequest struct {
 	// The ID of the user who is duplicating the shipment
 	UserID pulid.ID `json:"userId"`
 
+	// The number of shipments to duplicate
+	Count int `json:"count"`
+
 	// Optional parameter to override the dates of the new shipment
 	OverrideDates bool `json:"overrideDates" query:"overrideDates"`
 
@@ -73,11 +76,19 @@ type DuplicateShipmentRequest struct {
 func (dr *DuplicateShipmentRequest) Validate(ctx context.Context) *errors.MultiError {
 	me := errors.NewMultiError()
 
-	err := validation.ValidateStructWithContext(ctx, dr,
+	err := validation.ValidateStructWithContext(
+		ctx,
+		dr,
 		validation.Field(&dr.ShipmentID, validation.Required.Error("Shipment ID is required")),
 		validation.Field(&dr.UserID, validation.Required.Error("User ID is required")),
 		validation.Field(&dr.OrgID, validation.Required.Error("Organization ID is required")),
 		validation.Field(&dr.BuID, validation.Required.Error("Business Unit ID is required")),
+		validation.Field(&dr.Count, validation.Required.Error("Count is required")),
+		validation.Field(
+			&dr.Count,
+			validation.Min(1).Error("Count must be at least 1"),
+			validation.Max(20).Error("Count must be at most 20"),
+		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
@@ -117,7 +128,7 @@ type ShipmentRepository interface {
 	Update(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
 	UpdateStatus(ctx context.Context, opts *UpdateShipmentStatusRequest) (*shipment.Shipment, error)
 	Cancel(ctx context.Context, req *CancelShipmentRequest) (*shipment.Shipment, error)
-	Duplicate(ctx context.Context, req *DuplicateShipmentRequest) (*shipment.Shipment, error)
+	BulkDuplicate(ctx context.Context, req *DuplicateShipmentRequest) ([]*shipment.Shipment, error)
 	CheckForDuplicateBOLs(
 		ctx context.Context,
 		currentBOL string,
