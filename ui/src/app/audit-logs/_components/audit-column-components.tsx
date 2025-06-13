@@ -199,6 +199,10 @@ export function AuditEntryResourceBadge({
       variant: "indigo",
       text: "Worker",
     },
+    [Resource.DedicatedLaneSuggestion]: {
+      variant: "orange",
+      text: "Dedicated Lane Suggestion",
+    },
     [Resource.Tractor]: {
       variant: "indigo",
       text: "Tractor",

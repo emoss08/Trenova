@@ -33,6 +33,7 @@ type PatternServiceParams struct {
 	AuditService      services.AuditService
 	SuggestionRepo    repositories.DedicatedLaneSuggestionRepository
 	LocationRepo      repositories.LocationRepository
+	UserRepo          repositories.UserRepository
 }
 
 type PatternService struct {
@@ -44,6 +45,7 @@ type PatternService struct {
 	permService  services.PermissionService
 	auditService services.AuditService
 	locationRepo repositories.LocationRepository
+	userRepo     repositories.UserRepository
 }
 
 // NewPatternService creates a new instance of the PatternService, which is responsible for
@@ -68,6 +70,7 @@ func NewPatternService(p PatternServiceParams) *PatternService {
 		pcRepo:       p.PatternConfigRepo,
 		suggRepo:     p.SuggestionRepo,
 		locationRepo: p.LocationRepo,
+		userRepo:     p.UserRepo,
 		permService:  p.PermService,
 		auditService: p.AuditService,
 	}
@@ -277,18 +280,46 @@ func (ps *PatternService) processOrganization(
 		qualifiedPatterns = ps.excludeExistingLanes(ctx, qualifiedPatterns)
 	}
 
+	// * Get system user account
+	sysUser, err := ps.userRepo.GetSystemUser(ctx)
+	if err != nil {
+		return nil, 0, 0, err
+	}
+
 	// * Create suggestions for this organization
 	for _, pattern := range qualifiedPatterns {
 		suggestion := ps.createSuggestionFromPattern(ctx, pattern, req, config)
 
-		_, err = ps.suggRepo.Create(ctx, suggestion)
-		if err != nil {
-			orgLog.Error().Err(err).Msg("failed to save suggestion")
+		createdSuggestion, csErr := ps.suggRepo.Create(ctx, suggestion)
+		if csErr != nil {
+			orgLog.Error().Err(csErr).Msg("failed to save suggestion")
 			suggestionsSkipped++
 			continue
 		}
 
 		suggestionsCreated++
+
+		err = ps.auditService.LogAction(
+			&services.LogActionParams{
+				Resource:       permission.ResourceDedicatedLaneSuggestion,
+				ResourceID:     createdSuggestion.GetID(),
+				Action:         permission.ActionCreate,
+				UserID:         sysUser.ID,
+				CurrentState:   jsonutils.MustToJSON(createdSuggestion),
+				OrganizationID: createdSuggestion.OrganizationID,
+				BusinessUnitID: createdSuggestion.BusinessUnitID,
+			},
+			audit.WithComment("Dedicated lane suggestion created"),
+			audit.WithTags(
+				"dedicated-lane-suggestion-creation",
+				fmt.Sprintf("customer-%s", pattern.CustomerID.String()),
+			),
+			audit.WithCritical(),
+			audit.WithCategory("operations"),
+		)
+		if err != nil {
+			orgLog.Error().Err(err).Msg("failed to log dedicated lane suggestion creation")
+		}
 	}
 
 	orgLog.Info().

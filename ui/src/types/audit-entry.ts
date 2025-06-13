@@ -44,6 +44,7 @@ export enum Resource {
   BillingControl = "billing_control", // Represents resources related to billing control.
   Document = "document", // Represents resources related to documents.
   DedicatedLane = "dedicated_lane", // Represents resources related to dedicated lanes.
+  DedicatedLaneSuggestion = "dedicated_lane_suggestion", // Represents resources related to dedicated lane suggestions.
   Role = "role", // Represents resources related to roles.
   PageFavorite = "page_favorite", // Represents resources related to page favorites.
 

@@ -47,6 +47,9 @@ const (
 	ResourceDedicatedLane = Resource(
 		"dedicated_lane",
 	) // Represents resources related to dedicated lanes.
+	ResourceDedicatedLaneSuggestion = Resource(
+		"dedicated_lane_suggestion",
+	) // Represents resources related to dedicated lane suggestions.
 	ResourceRole = Resource(
 		"role",
 	) // Represents resources related to roles.
@@ -371,6 +374,12 @@ var (
 			ActionModifyField,
 		),
 		ResourceDedicatedLane: append(
+			BaseActions,
+			ActionConfigure,
+			ActionAudit,
+			ActionModifyField,
+		),
+		ResourceDedicatedLaneSuggestion: append(
 			BaseActions,
 			ActionConfigure,
 			ActionAudit,
