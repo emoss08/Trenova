@@ -77,16 +77,23 @@ func (cr *customerRepository) filterQuery(
 		Filter:     opts.Filter,
 	})
 
+	relations := []string{}
+
 	if opts.IncludeState {
-		q = q.Relation("State")
+		relations = append(relations, "State")
 	}
 
 	if opts.IncludeBillingProfile {
 		q = q.Relation("BillingProfile")
+		q = q.Relation("BillingProfile.DocumentTypes")
 	}
 
 	if opts.IncludeEmailProfile {
-		q = q.Relation("EmailProfile")
+		relations = append(relations, "EmailProfile")
+	}
+
+	for _, rel := range relations {
+		q = q.Relation(rel)
 	}
 
 	if opts.Status != "" {
@@ -191,7 +198,7 @@ func (cr *customerRepository) GetByID(
 
 	// * Include the billing profile if requested
 	if opts.IncludeBillingProfile {
-		query = query.Relation("BillingProfile")
+		query = query.Relation("BillingProfile").Relation("BillingProfile.DocumentTypes")
 	}
 
 	// * Include the email profile if requested
@@ -230,24 +237,17 @@ func (cr *customerRepository) GetDocumentRequirements(
 		Logger()
 
 	// * Get the customer billing profile
-	billingProfile, err := cr.getBillingProfile(ctx, cusID, "document_type_ids")
+	billingProfile, err := cr.getBillingProfile(ctx, cusID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get customer billing profile")
 		return nil, err
 	}
 
-	// * Get the document types
-	docTypes, err := cr.docRepo.GetByIDs(ctx, billingProfile.DocumentTypeIDs)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get document types")
-		return nil, err
-	}
-
 	// * Create the response with the exact capacity needed
-	response := make([]*repositories.CustomerDocRequirementResponse, 0, len(docTypes))
+	response := make([]*repositories.CustomerDocRequirementResponse, 0)
 
 	// * Iterate over the document types and create the response
-	for _, docType := range docTypes {
+	for _, docType := range billingProfile.DocumentTypes {
 		response = append(response, &repositories.CustomerDocRequirementResponse{
 			Name:        docType.Name,
 			DocID:       docType.ID.String(),
@@ -273,7 +273,6 @@ func (cr *customerRepository) GetDocumentRequirements(
 func (cr *customerRepository) getBillingProfile(
 	ctx context.Context,
 	cusID pulid.ID,
-	fields ...string,
 ) (*customer.BillingProfile, error) {
 	dba, err := cr.db.DB(ctx)
 	if err != nil {
@@ -287,12 +286,8 @@ func (cr *customerRepository) getBillingProfile(
 
 	profile := new(customer.BillingProfile)
 	query := dba.NewSelect().Model(profile).
-		Where("cbr.customer_id = ?", cusID)
-
-	// If specific fields are requested, only select those
-	if len(fields) > 0 {
-		query = query.Column(fields...)
-	}
+		Where("cbr.customer_id = ?", cusID).
+		Relation("DocumentTypes")
 
 	if err = query.Scan(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to get billing profile")
@@ -356,6 +351,206 @@ func (cr *customerRepository) Create(
 	return cus, nil
 }
 
+func (cr *customerRepository) handleDocumentTypeOperations(
+	ctx context.Context,
+	tx bun.IDB,
+	bp *customer.BillingProfile,
+	isCreate bool,
+) error {
+	log := cr.l.With().
+		Str("operation", "handleDocumentTypeOperations").
+		Str("billingProfileID", bp.ID.String()).
+		Logger()
+
+	log.Debug().
+		Int("documentTypes", len(bp.DocumentTypes)).
+		Bool("isCreate", isCreate).
+		Msg("document type operations")
+
+	// Early return for create operation with no document types
+	if len(bp.DocumentTypes) == 0 && isCreate {
+		return nil
+	}
+
+	existingDocTypeMap := make(map[pulid.ID]*customer.BillingProfileDocumentType)
+	if !isCreate {
+		log.Debug().
+			Interface("existingDocTypeMap", existingDocTypeMap).
+			Msg("loading existing document types map")
+		if err := cr.loadExistingDocumentTypesMap(ctx, tx, bp, existingDocTypeMap); err != nil {
+			return err
+		}
+	}
+
+	newDocTypes, updatedDocTypeIDs := cr.categorizeDocumentTypes(bp, existingDocTypeMap, isCreate)
+
+	if err := cr.processDocumentTypeOperations(ctx, tx, newDocTypes); err != nil {
+		return err
+	}
+
+	if !isCreate {
+		docTypesToDelete := make([]*customer.BillingProfileDocumentType, 0)
+		if err := cr.handleDocumentTypeDeletions(ctx, tx, existingDocTypeMap, updatedDocTypeIDs, &docTypesToDelete); err != nil {
+			log.Error().Err(err).Msg("failed to handle document type deletions")
+			return err
+		}
+
+		log.Debug().
+			Int("newDocTypes", len(newDocTypes)).
+			Int("deletedDocTypes", len(docTypesToDelete)).
+			Msg("document type operations completed")
+	} else {
+		log.Debug().
+			Int("newDocTypes", len(newDocTypes)).
+			Msg("document type operations completed")
+	}
+
+	return nil
+}
+
+// loadExistingDocumentTypesMap loads the existing document types into a map for lookup
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - tx: The database transaction.
+//   - bp: The billing profile entity.
+//   - docMap: The map to load the document types into.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (cr *customerRepository) loadExistingDocumentTypesMap(
+	ctx context.Context,
+	tx bun.IDB,
+	bp *customer.BillingProfile,
+	docMap map[pulid.ID]*customer.BillingProfileDocumentType,
+) error {
+	existingDocTypes, err := cr.getExistingDocumentTypes(ctx, tx, bp)
+	if err != nil {
+		cr.l.Error().Err(err).Msg("failed to get existing document types")
+		return err
+	}
+
+	for _, docType := range existingDocTypes {
+		docMap[docType.DocumentTypeID] = docType
+	}
+
+	return nil
+}
+
+// categorizeDocumentTypes categorizes the document types into new and updated
+//
+// Parameters:
+//   - bp: The billing profile entity.
+//   - existingDocTypes: The existing document types.
+//   - isCreate: Whether the operation is a create or update.
+//
+// Returns:
+//   - newDocTypes: The new document types.
+//   - updatedDocTypeIDs: The updated document type IDs.
+func (cr *customerRepository) categorizeDocumentTypes(
+	bp *customer.BillingProfile,
+	existingDocTypes map[pulid.ID]*customer.BillingProfileDocumentType,
+	isCreate bool,
+) (newDocTypes []*customer.BillingProfileDocumentType, updatedDocTypeIDs map[pulid.ID]struct{}) {
+	newDocTypes = make([]*customer.BillingProfileDocumentType, 0)
+	updatedDocTypeIDs = make(map[pulid.ID]struct{})
+
+	for _, docType := range bp.DocumentTypes {
+		if _, exists := existingDocTypes[docType.ID]; !exists || isCreate {
+			docType := &customer.BillingProfileDocumentType{
+				OrganizationID:   bp.OrganizationID,
+				BusinessUnitID:   bp.BusinessUnitID,
+				BillingProfileID: bp.ID,
+				DocumentTypeID:   docType.ID,
+			}
+			newDocTypes = append(newDocTypes, docType)
+		} else {
+			// Mark as updated (exists and should remain)
+			updatedDocTypeIDs[docType.ID] = struct{}{}
+		}
+	}
+
+	return newDocTypes, updatedDocTypeIDs
+}
+
+// processDocumentTypeOperations processes the document type operations
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - tx: The database transaction.
+//   - newDocTypes: The new document types to insert.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (cr *customerRepository) processDocumentTypeOperations(
+	ctx context.Context,
+	tx bun.IDB,
+	newDocTypes []*customer.BillingProfileDocumentType,
+) error {
+	if len(newDocTypes) > 0 {
+		if _, err := tx.NewInsert().Model(&newDocTypes).Exec(ctx); err != nil {
+			cr.l.Error().Err(err).Msg("failed to insert document types")
+			return err
+		}
+	}
+
+	return nil
+}
+
+// getExistingDocumentTypes gets the existing document types for a billing profile
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - tx: The database transaction.
+//   - bp: The billing profile entity.
+//
+// Returns:
+//   - []*customer.BillingProfileDocumentType: The existing document types.
+//   - error: An error if the operation fails.
+func (cr *customerRepository) getExistingDocumentTypes(
+	ctx context.Context,
+	tx bun.IDB,
+	bp *customer.BillingProfile,
+) ([]*customer.BillingProfileDocumentType, error) {
+	docTypes := make([]*customer.BillingProfileDocumentType, 0, len(bp.DocumentTypes))
+
+	if err := tx.NewSelect().Model(&docTypes).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+		return q.Where("bpdt.billing_profile_id = ?", bp.ID).
+			Where("bpdt.organization_id = ?", bp.OrganizationID).
+			Where("bpdt.business_unit_id = ?", bp.BusinessUnitID)
+	}).
+		Scan(ctx); err != nil {
+		cr.l.Error().Err(err).Msg("failed to get existing document types")
+		return nil, err
+	}
+
+	return docTypes, nil
+}
+
+func (cr *customerRepository) handleDocumentTypeDeletions(
+	ctx context.Context,
+	tx bun.IDB,
+	existingDocTypes map[pulid.ID]*customer.BillingProfileDocumentType,
+	updatedDocTypeIDs map[pulid.ID]struct{},
+	docTypesToDelete *[]*customer.BillingProfileDocumentType,
+) error {
+	for docTypeID, docType := range existingDocTypes {
+		if _, exists := updatedDocTypeIDs[docTypeID]; !exists {
+			*docTypesToDelete = append(*docTypesToDelete, docType)
+		}
+	}
+
+	if len(*docTypesToDelete) > 0 {
+		_, err := tx.NewDelete().Model(docTypesToDelete).WherePK().Exec(ctx)
+		if err != nil {
+			cr.l.Error().Err(err).Msg("failed to delete document types")
+			return err
+		}
+	}
+
+	return nil
+}
+
 // createOrUpdateBillingProfile ensures a customer has a billing profile
 // If the customer already has a billing profile, it's used; otherwise a default one is created
 //
@@ -394,6 +589,10 @@ func (cr *customerRepository) createOrUpdateBillingProfile(
 			return eris.Wrap(err, "insert billing profile")
 		}
 
+		if err := cr.handleDocumentTypeOperations(ctx, tx, cus.BillingProfile, false); err != nil {
+			return err
+		}
+
 		return nil
 	}
 
@@ -412,6 +611,10 @@ func (cr *customerRepository) createOrUpdateBillingProfile(
 			Interface("billingProfile", billingProfile).
 			Msg("failed to insert billing profile")
 		return eris.Wrap(err, "insert billing profile")
+	}
+
+	if err := cr.handleDocumentTypeOperations(ctx, tx, billingProfile, true); err != nil {
+		return err
 	}
 
 	return nil
@@ -590,9 +793,13 @@ func (cr *customerRepository) updateBillingProfile(
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		_, rErr := tx.NewUpdate().
 			Model(profile).
-			Where("cbr.customer_id = ?", profile.CustomerID).
-			Where("cbr.organization_id = ?", profile.OrganizationID).
-			Where("cbr.business_unit_id = ?", profile.BusinessUnitID).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return uq.
+					Where("cbr.id = ?", profile.GetID()).
+					Where("cbr.organization_id = ?", profile.OrganizationID).
+					Where("cbr.business_unit_id = ?", profile.BusinessUnitID).
+					Where("cbr.customer_id = ?", profile.CustomerID)
+			}).
 			Returning("*").
 			Exec(c)
 		if rErr != nil {
@@ -601,6 +808,11 @@ func (cr *customerRepository) updateBillingProfile(
 				Interface("billingProfile", profile).
 				Msg("failed to update billing profile")
 			return rErr
+		}
+
+		if err = cr.handleDocumentTypeOperations(ctx, tx, profile, false); err != nil {
+			log.Error().Err(err).Msg("failed to handle document type operations")
+			return err
 		}
 
 		return nil

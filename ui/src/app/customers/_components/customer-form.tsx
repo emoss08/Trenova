@@ -58,7 +58,7 @@ function createNavigationItems<T extends FieldValues>() {
       validateSection: (errors: Partial<T>) =>
         checkSectionErrors(errors, [
           "billingProfile.billingCycleType",
-          "billingProfile.documentTypeIds",
+          "billingProfile.documentTypes",
           "billingProfile.hasOverrides",
           "billingProfile.enforceCustomerBillingReq",
           "billingProfile.validateCustomerRates",
@@ -92,6 +92,9 @@ export function CustomerForm() {
   const {
     formState: { errors },
   } = useFormContext<CustomerSchema>();
+
+  console.info("errors", errors);
+
   const [activeSection, setActiveSection] = useState("general");
   const navigationItems = createNavigationItems<CustomerSchema>();
   const activeComponent = navigationItems.find(
