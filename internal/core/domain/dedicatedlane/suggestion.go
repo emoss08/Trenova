@@ -61,8 +61,6 @@ type DedicatedLaneSuggestion struct {
 	LastShipmentDate       int64                `json:"lastShipmentDate"        bun:"last_shipment_date,type:BIGINT,notnull"`
 	FrequencyCount         int64                `json:"frequencyCount"          bun:"frequency_count,type:INTEGER,notnull"`
 	FirstShipmentDate      int64                `json:"firstShipmentDate"       bun:"first_shipment_date,type:BIGINT,notnull"`
-	AnalysisStartDate      int64                `json:"analysisStartDate"       bun:"analysis_start_date,type:BIGINT,notnull"`
-	AnalysisEndDate        int64                `json:"analysisEndDate"         bun:"analysis_end_date,type:BIGINT,notnull"`
 	ExpiresAt              int64                `json:"expiresAt"               bun:"expires_at,type:BIGINT,notnull"`
 	Version                int64                `json:"version"                 bun:"version,type:BIGINT"`
 	CreatedAt              int64                `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

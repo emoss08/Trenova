@@ -116,6 +116,14 @@ type ShipmentTotalsResponse struct {
 	TotalChargeAmount decimal.Decimal `json:"totalChargeAmount"`
 }
 
+// GetShipmentsByDateRangeRequest represents request parameters for fetching shipments by date range
+type GetShipmentsByDateRangeRequest struct {
+	OrgID      pulid.ID  `json:"orgId"`
+	StartDate  int64     `json:"startDate"`  // Unix timestamp
+	EndDate    int64     `json:"endDate"`    // Unix timestamp
+	CustomerID *pulid.ID `json:"customerId"` // Optional customer filter
+}
+
 type ShipmentRepository interface {
 	List(
 		ctx context.Context,
@@ -123,6 +131,10 @@ type ShipmentRepository interface {
 	) (*ports.ListResult[*shipment.Shipment], error)
 	GetAll(ctx context.Context) (*ports.ListResult[*shipment.Shipment], error)
 	GetByOrgID(ctx context.Context, orgID pulid.ID) (*ports.ListResult[*shipment.Shipment], error)
+	GetByDateRange(
+		ctx context.Context,
+		req *GetShipmentsByDateRangeRequest,
+	) (*ports.ListResult[*shipment.Shipment], error)
 	GetByID(ctx context.Context, opts *GetShipmentByIDOptions) (*shipment.Shipment, error)
 	Create(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
 	Update(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)

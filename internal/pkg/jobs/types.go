@@ -68,11 +68,8 @@ type BasePayload struct {
 // PatternAnalysisPayload for dedicated lane pattern analysis jobs
 type PatternAnalysisPayload struct {
 	BasePayload
-	CustomerID    *pulid.ID `json:"customerId,omitempty"`
-	StartDate     int64     `json:"startDate"`
-	EndDate       int64     `json:"endDate"`
-	MinFrequency  int64     `json:"minFrequency"`
-	TriggerReason string    `json:"triggerReason"` // "shipment_created", "scheduled", "manual"
+	MinFrequency  int64  `json:"minFrequency"`
+	TriggerReason string `json:"triggerReason"` // "shipment_created", "scheduled", "manual"
 }
 
 // ExpireSuggestionsPayload for expiring old suggestions

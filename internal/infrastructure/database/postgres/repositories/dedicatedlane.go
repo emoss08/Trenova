@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/lo"
 	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
@@ -67,7 +68,7 @@ func (dlr *dedicatedLaneRepository) filterQuery(
 		Filter:     req.Filter,
 	})
 
-	relations := []string{}
+	relations := make([]string, 0)
 
 	if req.FilterOptions.ExpandDetails {
 		relations = append(
@@ -230,18 +231,22 @@ func (dlr *dedicatedLaneRepository) FindByShipment(
 				Where("dl.destination_location_id = ?", req.DestinationLocationID)
 
 			// ServiceTypeID and ShipmentTypeID are required fields
-			q = q.Where("dl.service_type_id = ?", req.ServiceTypeID).
-				Where("dl.shipment_type_id = ?", req.ShipmentTypeID)
+			if lo.IsNotNil(req.ServiceTypeID) {
+				q = q.Where("dl.service_type_id = ?", *req.ServiceTypeID)
+			}
+			if lo.IsNotNil(req.ShipmentTypeID) {
+				q = q.Where("dl.shipment_type_id = ?", *req.ShipmentTypeID)
+			}
 
 			// Handle optional trailer type - match if both are specified and equal, or both are null
-			if req.TrailerTypeID != nil {
+			if lo.IsNotNil(req.TrailerTypeID) {
 				q = q.Where("dl.trailer_type_id = ?", *req.TrailerTypeID)
 			} else {
 				q = q.Where("dl.trailer_type_id IS NULL")
 			}
 
 			// Handle optional tractor type - match if both are specified and equal, or both are null
-			if req.TractorTypeID != nil {
+			if lo.IsNotNil(req.TractorTypeID) {
 				q = q.Where("dl.tractor_type_id = ?", *req.TractorTypeID)
 			} else {
 				q = q.Where("dl.tractor_type_id IS NULL")
@@ -256,10 +261,9 @@ func (dlr *dedicatedLaneRepository) FindByShipment(
 	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			log.Warn().Msg("no dedicated lane found for shipment")
-			// !  we don't want to return an error here, we just want to return nil
-			return nil, err
+			return nil, errors.NewNotFoundError("no dedicated lane found for shipment")
 		}
-		log.Error().Err(err).Msg("failed to query dedicated lane")
+
 		return nil, oops.In("dedicated_lane_repository").
 			With("op", "find_by_shipment").
 			Time(time.Now()).

@@ -2,6 +2,8 @@ import { http } from "@/lib/http-client";
 import {
   DedicatedLaneSchema,
   DedicatedLaneSuggestionSchema,
+  type SuggestionAcceptRequestSchema,
+  type SuggestionRejectRequestSchema,
 } from "@/lib/schemas/dedicated-lane-schema";
 import type { LimitOffsetResponse } from "@/types/server";
 
@@ -40,7 +42,7 @@ export class DedicatedLaneSuggestionAPI {
     return response.data;
   }
 
-  async getSuggestionByID(id: string) {
+  async getSuggestionByID(id: DedicatedLaneSuggestionSchema["id"]) {
     const response = await http.get<DedicatedLaneSuggestionSchema | null>(
       `/dedicated-lane-suggestions/${id}`,
     );
@@ -48,17 +50,25 @@ export class DedicatedLaneSuggestionAPI {
     return response.data;
   }
 
-  async acceptSuggestion(id: string) {
-    const response = await http.post<DedicatedLaneSuggestionSchema | null>(
+  async acceptSuggestion(
+    id: DedicatedLaneSuggestionSchema["id"],
+    req: SuggestionAcceptRequestSchema,
+  ) {
+    const response = await http.post<DedicatedLaneSchema>(
       `/dedicated-lane-suggestions/${id}/accept`,
+      req,
     );
 
     return response.data;
   }
 
-  async rejectSuggestion(id: string) {
-    const response = await http.post<DedicatedLaneSuggestionSchema | null>(
+  async rejectSuggestion(
+    id: DedicatedLaneSuggestionSchema["id"],
+    req: SuggestionRejectRequestSchema,
+  ) {
+    const response = await http.post<DedicatedLaneSuggestionSchema>(
       `/dedicated-lane-suggestions/${id}/reject`,
+      req,
     );
 
     return response.data;

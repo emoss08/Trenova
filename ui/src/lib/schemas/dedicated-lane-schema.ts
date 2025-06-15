@@ -122,3 +122,24 @@ export const dedicatedLaneSuggestionSchema = z.object({
 export type DedicatedLaneSuggestionSchema = z.infer<
   typeof dedicatedLaneSuggestionSchema
 >;
+
+export const suggestionAcceptRequestSchema = z.object({
+  id: z.string(),
+  dedicatedLaneName: z.string().optional(),
+  primaryWorkerId: z.string().optional(),
+  secondaryWorkerId: z.string().optional(),
+  autoAssign: z.boolean().optional(),
+});
+
+export type SuggestionAcceptRequestSchema = z.infer<
+  typeof suggestionAcceptRequestSchema
+>;
+
+export const suggestionRejectRequestSchema = z.object({
+  id: z.string(),
+  rejectReason: z.string().optional(),
+});
+
+export type SuggestionRejectRequestSchema = z.infer<
+  typeof suggestionRejectRequestSchema
+>;

@@ -357,6 +357,72 @@ func (sr *shipmentRepository) GetByOrgID(
 	}, nil
 }
 
+// GetByDateRange retrieves shipments for pattern analysis within a specific date range
+// This method is optimized for pattern analysis by filtering at the database level
+func (sr *shipmentRepository) GetByDateRange(
+	ctx context.Context,
+	req *repositories.GetShipmentsByDateRangeRequest,
+) (*ports.ListResult[*shipment.Shipment], error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "GetByDateRange").
+		Str("orgID", req.OrgID.String()).
+		Int64("startDate", req.StartDate).
+		Int64("endDate", req.EndDate).
+		Logger()
+
+	entities := make([]*shipment.Shipment, 0)
+
+	q := dba.NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("sp.organization_id = ?", req.OrgID).
+				Where("sp.created_at >= ?", req.StartDate).
+				Where("sp.created_at <= ?", req.EndDate)
+		})
+
+	// * Filter by customer if specified
+	if req.CustomerID != nil {
+		q = q.Where("sp.customer_id = ?", *req.CustomerID)
+		log = log.With().Str("customerID", req.CustomerID.String()).Logger()
+	}
+
+	// * Add options to expand shipment details for pattern analysis
+	q = sr.addOptions(q, repositories.ShipmentOptions{
+		ExpandShipmentDetails: true,
+	})
+
+	// * Order by created_at for consistent results
+	q = q.Order("sp.created_at DESC")
+
+	total, err := q.ScanAndCount(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to fetch shipments by date range")
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "fetch shipments by date range")
+	}
+
+	log.Info().
+		Int("shipmentsFound", len(entities)).
+		Int("totalCount", total).
+		Msg("fetched shipments by date range")
+
+	return &ports.ListResult[*shipment.Shipment]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
 // Create inserts a new shipment into the database, calculates totals, and assigns a pro number.
 // It also handles associated commodity operations.
 //
@@ -842,6 +908,10 @@ func (sr *shipmentRepository) BulkDuplicate(
 	// * Create a slice of new shipments that we will be bulk inserting.
 	newShipments := make([]*shipment.Shipment, 0, req.Count)
 
+	// TODO(wolfred): refactor this to use a single transaction for all the entiries.
+	// Additionally we want to add bulk operations for the moves, stops, commodities, and additional charges.
+	// This will reduce the number of transactions and improve performance.
+
 	// * Run in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		// * Prepare all shipments, moves, stops, commodities, and additional charges
@@ -851,7 +921,7 @@ func (sr *shipmentRepository) BulkDuplicate(
 		allAdditionalCharges := make([]*shipment.AdditionalCharge, 0)
 
 		// * Create multiple shipments
-		for i := 0; i < req.Count; i++ {
+		for i := range req.Count {
 			// * Duplicate the shipment fields
 			newShipment, dupErr := sr.duplicateShipmentFields(c, originalShipment)
 			if dupErr != nil {

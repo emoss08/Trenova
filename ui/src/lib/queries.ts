@@ -226,14 +226,6 @@ export const queries = createQueryKeyStore({
       queryKey: ["dedicated-lane-suggestions", id],
       queryFn: async () => api.dedicatedLaneSuggestions.getSuggestionByID(id),
     }),
-    acceptSuggestion: (id: string) => ({
-      queryKey: ["dedicated-lane-suggestions", id, "accept"],
-      queryFn: async () => api.dedicatedLaneSuggestions.acceptSuggestion(id),
-    }),
-    rejectSuggestion: (id: string) => ({
-      queryKey: ["dedicated-lane-suggestions", id, "reject"],
-      queryFn: async () => api.dedicatedLaneSuggestions.rejectSuggestion(id),
-    }),
     analyzePatterns: () => ({
       queryKey: ["dedicated-lane-suggestions", "analyze-patterns"],
       queryFn: async () => api.dedicatedLaneSuggestions.analyzePatterns(),

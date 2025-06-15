@@ -50,21 +50,14 @@ type PatternMatch struct {
 
 // PatternAnalysisRequest represents a request to analyze patterns
 type PatternAnalysisRequest struct {
-	CustomerID      *pulid.ID               `json:"customerId,omitempty"` // Optional: analyze specific customer
-	StartDate       int64                   `json:"startDate"`            // Unix timestamp
-	EndDate         int64                   `json:"endDate"`              // Unix timestamp
-	Config          *PatternDetectionConfig `json:"config,omitempty"`     // Optional: override default config
-	ExcludeExisting bool                    `json:"excludeExisting"`      // Skip patterns that already have dedicated lanes
+	Config          *PatternDetectionConfig `json:"config,omitempty"` // Optional: override default config
+	ExcludeExisting bool                    `json:"excludeExisting"`  // Skip patterns that already have dedicated lanes
 }
 
 // PatternAnalysisResult represents the result of pattern analysis
 type PatternAnalysisResult struct {
 	TotalPatternsDetected  int64                     `json:"totalPatternsDetected"`
 	PatternsAboveThreshold int64                     `json:"patternsAboveThreshold"`
-	SuggestionsCreated     int64                     `json:"suggestionsCreated"`
-	SuggestionsSkipped     int64                     `json:"suggestionsSkipped"`
-	AnalysisStartDate      int64                     `json:"analysisStartDate"`
-	AnalysisEndDate        int64                     `json:"analysisEndDate"`
 	ConfigsUsed            []*PatternDetectionConfig `json:"configsUsed"`
 	Patterns               []*PatternMatch           `json:"patterns"`
 	ProcessingTimeMs       int64                     `json:"processingTimeMs"`

@@ -25,7 +25,7 @@ require (
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rotisserie/eris v0.5.4
 	github.com/rs/zerolog v1.34.0
-	github.com/samber/lo v1.50.0
+	github.com/samber/lo v1.51.0
 	github.com/samber/oops v1.18.1
 	github.com/samber/oops/loggers/zerolog v0.0.0-20250527213707-75067ba09442
 	github.com/shopspring/decimal v1.4.0

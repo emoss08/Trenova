@@ -228,8 +228,7 @@ func (js *JobService) SchedulePatternAnalysis(
 
 	// Set unique key to prevent duplicate analysis for same org/timeframe
 	if opts.UniqueKey == "" {
-		opts.UniqueKey = fmt.Sprintf("pattern_analysis_%s_%d_%d",
-			payload.OrganizationID.String(), payload.StartDate, payload.EndDate)
+		opts.UniqueKey = fmt.Sprintf("pattern_analysis_%s", payload.OrganizationID.String())
 	}
 
 	payload.JobID = pulid.MustNew("job_").String()
@@ -320,7 +319,7 @@ func (js *JobService) enqueueJob(
 	}
 
 	// Create Asynq task
-	task := asynq.NewTask(string(jobType), data)
+	task := asynq.NewTask(string(jobType), data, asynq.Retention(24*time.Hour))
 
 	// Build task options
 	taskOpts := []asynq.Option{
@@ -525,12 +524,8 @@ func (js *JobService) extractPayloadSummary(payload any) map[string]any {
 		summary["type"] = "pattern_analysis"
 		summary["organization_id"] = p.OrganizationID.String()
 		summary["business_unit_id"] = p.BusinessUnitID.String()
-		if p.CustomerID != nil {
-			summary["customer_id"] = p.CustomerID.String()
-		}
 		summary["trigger_reason"] = p.TriggerReason
 		summary["min_frequency"] = p.MinFrequency
-		summary["date_range_days"] = (p.EndDate - p.StartDate) / 86400
 
 	case *ExpireSuggestionsPayload:
 		summary["type"] = "expire_suggestions"

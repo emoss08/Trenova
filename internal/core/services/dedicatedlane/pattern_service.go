@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
@@ -18,6 +19,8 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rs/zerolog"
+	"github.com/samber/lo"
+	"github.com/samber/oops"
 	"github.com/shopspring/decimal"
 	"go.uber.org/fx"
 )
@@ -130,7 +133,7 @@ func (ps *PatternService) AnalyzePatterns(
 	// * Process each organization individually
 	allPatterns := make([]*dedicatedlane.PatternMatch, 0)
 	allConfigsUsed := make([]*dedicatedlane.PatternDetectionConfig, 0, len(patternConfigs))
-	var suggestionsCreated, suggestionsSkipped, totalPatternsDetected int64
+	var totalPatternsDetected int64
 	var organizationsSkipped int64
 
 	for _, patternConfig := range patternConfigs {
@@ -149,7 +152,7 @@ func (ps *PatternService) AnalyzePatterns(
 			continue
 		}
 
-		patterns, created, skipped, processErr := ps.processOrganization(ctx, patternConfig, req)
+		patterns, processErr := ps.processOrganization(ctx, patternConfig, req)
 		if processErr != nil {
 			log.Error().
 				Err(processErr).
@@ -161,25 +164,18 @@ func (ps *PatternService) AnalyzePatterns(
 		config := patternConfig.ToPatternDetectionConfig()
 		allConfigsUsed = append(allConfigsUsed, config)
 		allPatterns = append(allPatterns, patterns...)
-		suggestionsCreated += created
-		suggestionsSkipped += skipped
 		totalPatternsDetected += int64(len(patterns))
 	}
 
 	result := &dedicatedlane.PatternAnalysisResult{
 		TotalPatternsDetected:  totalPatternsDetected,
 		PatternsAboveThreshold: int64(len(allPatterns)),
-		SuggestionsCreated:     suggestionsCreated,
-		SuggestionsSkipped:     suggestionsSkipped,
-		AnalysisStartDate:      req.StartDate,
-		AnalysisEndDate:        req.EndDate,
 		ConfigsUsed:            allConfigsUsed,
 		Patterns:               allPatterns,
 		ProcessingTimeMs:       time.Since(startTime).Milliseconds(),
 	}
 
 	log.Info().
-		Int64("suggestionsCreated", suggestionsCreated).
 		Int64("processingTimeMs", result.ProcessingTimeMs).
 		Int("organizationsProcessed", len(patternConfigs)-int(organizationsSkipped)).
 		Int64("organizationsSkipped", organizationsSkipped).
@@ -207,7 +203,7 @@ func (ps *PatternService) processOrganization(
 	ctx context.Context,
 	patternConfig *dedicatedlane.PatternConfig,
 	req *dedicatedlane.PatternAnalysisRequest,
-) (qualifiedPatterns []*dedicatedlane.PatternMatch, suggestionsCreated, suggestionsSkipped int64, err error) {
+) (qualifiedPatterns []*dedicatedlane.PatternMatch, err error) {
 	orgLog := ps.l.With().
 		Str("organizationId", patternConfig.OrganizationID.String()).
 		Str("organizationName", func() string {
@@ -226,88 +222,138 @@ func (ps *PatternService) processOrganization(
 	// * Get shipments for this organization
 	shipments, err := ps.getShipmentsForOrganization(ctx, req, patternConfig.OrganizationID)
 	if err != nil {
-		orgLog.Error().Err(err).Msg("failed to get shipments for organization")
-		return nil, 0, 0, err
+		return nil, oops.
+			In("pattern_service").
+			With("op", "process_organization").
+			Time(time.Now()).
+			Wrapf(err, "get shipments for organization")
 	}
 
 	orgLog.Info().Int("shipmentCount", len(shipments)).Msg("analyzing organization shipments")
 
+	// * Early return if no shipments found
+	if len(shipments) == 0 {
+		orgLog.Info().
+			Msg("no shipments found for organization in date range - skipping pattern analysis")
+		return []*dedicatedlane.PatternMatch{}, nil
+	}
+
 	// * Group shipments by pattern for this organization
 	patterns := ps.groupShipmentsByPattern(shipments, config)
 
-	orgLog.Info().Int("patternCount", len(patterns)).Msg("patterns detected for organization")
-
-	// * Log detailed pattern analysis results
-	for i, pattern := range patterns {
-		orgLog.Info().
-			Int("patternIndex", i).
-			Int64("frequencyCount", pattern.FrequencyCount).
-			Str("confidenceScore", pattern.ConfidenceScore.String()).
-			Str("customerId", pattern.CustomerID.String()).
-			Str("originLocationId", pattern.OriginLocationID.String()).
-			Str("destinationLocationId", pattern.DestinationLocationID.String()).
-			Msg("detected pattern details")
-	}
-
 	// * Filter patterns by frequency and confidence
 	qualifiedPatterns = ps.filterPatterns(patterns, config)
-
-	orgLog.Info().
-		Int("qualifiedPatterns", len(qualifiedPatterns)).
-		Int64("minFrequency", config.MinFrequency).
-		Str("minConfidenceScore", config.MinConfidenceScore.String()).
-		Msg("patterns above threshold for organization")
-
-	// * Log details about patterns that didn't qualify
-	for _, pattern := range patterns {
-		qualified := pattern.FrequencyCount >= config.MinFrequency &&
-			pattern.ConfidenceScore.GreaterThanOrEqual(config.MinConfidenceScore)
-		if !qualified {
-			orgLog.Info().
-				Int64("frequencyCount", pattern.FrequencyCount).
-				Str("confidenceScore", pattern.ConfidenceScore.String()).
-				Bool("meetsFrequency", pattern.FrequencyCount >= config.MinFrequency).
-				Bool("meetsConfidence", pattern.ConfidenceScore.GreaterThanOrEqual(config.MinConfidenceScore)).
-				Str("customerId", pattern.CustomerID.String()).
-				Str("originLocationId", pattern.OriginLocationID.String()).
-				Str("destinationLocationId", pattern.DestinationLocationID.String()).
-				Msg("pattern did not qualify - below threshold")
-		}
-	}
 
 	// * Check for existing dedicated lanes and suggestions
 	if req.ExcludeExisting {
 		qualifiedPatterns = ps.excludeExistingLanes(ctx, qualifiedPatterns)
 	}
 
+	// * Create suggestions for this organization
+	pqResult, err := ps.processQualifiedPatterns(ctx, qualifiedPatterns, req)
+	if err != nil {
+		return nil, oops.
+			In("pattern_service").
+			With("op", "process_qualified_patterns").
+			Time(time.Now()).
+			Wrapf(err, "process qualified patterns")
+	}
+
+	orgLog.Info().
+		Int64("orgSuggestionsCreated", pqResult.SuggestionsCreated).
+		Int64("orgSuggestionsSkipped", pqResult.SuggestionsSkipped).
+		Msg("completed organization pattern analysis")
+
+	return qualifiedPatterns, nil
+}
+
+type ProcessQualifiedPatternsResult struct {
+	SuggestionsCreated int64
+	SuggestionsSkipped int64
+}
+
+func (ps *PatternService) processQualifiedPatterns(
+	ctx context.Context,
+	patterns []*dedicatedlane.PatternMatch,
+	req *dedicatedlane.PatternAnalysisRequest,
+) (*ProcessQualifiedPatternsResult, error) {
+	log := ps.l.With().Str("operation", "processQualifiedPatterns").Logger()
+
+	result := new(ProcessQualifiedPatternsResult)
+
 	// * Get system user account
 	sysUser, err := ps.userRepo.GetSystemUser(ctx)
 	if err != nil {
-		return nil, 0, 0, err
+		return nil, oops.
+			In("pattern_service").
+			With("op", "process_qualified_patterns").
+			Time(time.Now()).
+			Wrapf(err, "get system user")
 	}
 
-	// * Create suggestions for this organization
-	for _, pattern := range qualifiedPatterns {
-		suggestion := ps.createSuggestionFromPattern(ctx, pattern, req, config)
+	for _, pattern := range patterns {
+		suggestion := ps.createSuggestionFromPattern(ctx, pattern, req)
 
-		createdSuggestion, csErr := ps.suggRepo.Create(ctx, suggestion)
-		if csErr != nil {
-			orgLog.Error().Err(csErr).Msg("failed to save suggestion")
-			suggestionsSkipped++
+		// Check for duplicate right before creation to prevent race conditions
+		duplicateReq := &repositories.FindDedicatedLaneByShipmentRequest{
+			OrganizationID:        pattern.OrganizationID,
+			BusinessUnitID:        pattern.BusinessUnitID,
+			CustomerID:            pattern.CustomerID,
+			ServiceTypeID:         pattern.ServiceTypeID,
+			ShipmentTypeID:        pattern.ShipmentTypeID,
+			OriginLocationID:      pattern.OriginLocationID,
+			DestinationLocationID: pattern.DestinationLocationID,
+			TrailerTypeID:         pattern.TrailerTypeID,
+			TractorTypeID:         pattern.TractorTypeID,
+		}
+
+		existingSuggestion, dupErr := ps.suggRepo.CheckForDuplicatePattern(ctx, duplicateReq)
+		if dupErr == nil && existingSuggestion != nil {
+			log.Info().
+				Str("existingSuggestionId", existingSuggestion.ID.String()).
+				Str("customerId", pattern.CustomerID.String()).
+				Str("originLocationId", pattern.OriginLocationID.String()).
+				Str("destinationLocationId", pattern.DestinationLocationID.String()).
+				Msg("skipping suggestion creation - pending suggestion already exists")
+			result.SuggestionsSkipped++
 			continue
 		}
 
-		suggestionsCreated++
+		cs, csErr := ps.suggRepo.Create(ctx, suggestion)
+		if csErr != nil {
+			// Check if it's a duplicate key constraint violation
+			if csErr.Error() != "" && (strings.Contains(csErr.Error(), "duplicate key value violates unique constraint") || 
+				strings.Contains(csErr.Error(), "idx_dedicated_lane_suggestions_unique_pending_pattern")) {
+				log.Info().
+					Str("customerId", pattern.CustomerID.String()).
+					Str("originLocationId", pattern.OriginLocationID.String()).
+					Str("destinationLocationId", pattern.DestinationLocationID.String()).
+					Msg("skipping suggestion creation - duplicate constraint violation")
+				result.SuggestionsSkipped++
+				continue
+			}
+
+			// For other errors, log as error but continue processing
+			log.Error().
+				Err(csErr).
+				Interface("suggestion", suggestion).
+				Interface("req", req).
+				Msg("failed to create suggestion")
+			result.SuggestionsSkipped++
+			continue
+		}
+
+		result.SuggestionsCreated++
 
 		err = ps.auditService.LogAction(
 			&services.LogActionParams{
 				Resource:       permission.ResourceDedicatedLaneSuggestion,
-				ResourceID:     createdSuggestion.GetID(),
+				ResourceID:     cs.GetID(),
 				Action:         permission.ActionCreate,
 				UserID:         sysUser.ID,
-				CurrentState:   jsonutils.MustToJSON(createdSuggestion),
-				OrganizationID: createdSuggestion.OrganizationID,
-				BusinessUnitID: createdSuggestion.BusinessUnitID,
+				CurrentState:   jsonutils.MustToJSON(cs),
+				OrganizationID: cs.OrganizationID,
+				BusinessUnitID: cs.BusinessUnitID,
 			},
 			audit.WithComment("Dedicated lane suggestion created"),
 			audit.WithTags(
@@ -318,19 +364,15 @@ func (ps *PatternService) processOrganization(
 			audit.WithCategory("operations"),
 		)
 		if err != nil {
-			orgLog.Error().Err(err).Msg("failed to log dedicated lane suggestion creation")
+			log.Error().Err(err).Msg("failed to log dedicated lane suggestion creation")
 		}
 	}
 
-	orgLog.Info().
-		Int("orgSuggestionsCreated", len(qualifiedPatterns)).
-		Msg("completed organization pattern analysis")
-
-	return qualifiedPatterns, suggestionsCreated, suggestionsSkipped, nil
+	return result, nil
 }
 
-// getShipmentsForOrganization fetches and filters shipments for a specific organization
-// based on the analysis request.
+// getShipmentsForOrganization fetches shipments for a specific organization
+// based on the analysis request, using database-level filtering for efficiency.
 //
 // Parameters:
 //   - ctx: The context for the operation.
@@ -350,39 +392,20 @@ func (ps *PatternService) getShipmentsForOrganization(
 		Str("organizationId", orgID.String()).
 		Logger()
 
-	log.Info().Msg("fetching shipments for organization pattern analysis")
+	log.Info().Msg("fetching shipments for organization pattern analysis using date range filter")
 
-	result, err := ps.shipmentRepo.GetByOrgID(ctx, orgID)
+	result, err := ps.shipmentRepo.GetAll(ctx)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to fetch shipments for organization")
-		return nil, fmt.Errorf("fetch organization shipments: %w", err)
-	}
-
-	log.Info().Int("totalShipments", result.Total).Msg("fetched shipments for organization")
-
-	// * Filter by date range and customer if specified
-	var filteredShipments []*shipment.Shipment
-	for _, shp := range result.Items {
-		// * Check date range
-		if shp.CreatedAt < req.StartDate || shp.CreatedAt > req.EndDate {
-			continue
-		}
-
-		// * Filter by customer if specified
-		if req.CustomerID != nil && !pulid.Equals(shp.CustomerID, *req.CustomerID) {
-			continue
-		}
-
-		filteredShipments = append(filteredShipments, shp)
+		log.Error().Err(err).Msg("failed to fetch shipments by date range")
+		return nil, fmt.Errorf("fetch shipments by date range: %w", err)
 	}
 
 	log.Info().
-		Int("filteredShipments", len(filteredShipments)).
-		Int64("dateRangeStart", req.StartDate).
-		Int64("dateRangeEnd", req.EndDate).
-		Msg("filtered shipments for organization pattern analysis")
+		Int("shipmentsFound", len(result.Items)).
+		Int("totalCount", result.Total).
+		Msg("fetched shipments using database-level filtering")
 
-	return filteredShipments, nil
+	return result.Items, nil
 }
 
 // validateShipmentForPattern ensures a shipment contains the minimum required information
@@ -768,65 +791,69 @@ func (ps *PatternService) excludeExistingLanes(
 		Int("inputPatterns", len(patterns)).
 		Msg("checking patterns against existing lanes and suggestions")
 
-	var filteredPatterns []*dedicatedlane.PatternMatch
-
-	for _, pattern := range patterns {
-		// ! Skip patterns without required service type and shipment type IDs
-		if pattern.ServiceTypeID == nil || pattern.ServiceTypeID.IsNil() ||
-			pattern.ShipmentTypeID == nil || pattern.ShipmentTypeID.IsNil() {
-			log.Warn().
-				Str("customerId", pattern.CustomerID.String()).
-				Str("originLocationId", pattern.OriginLocationID.String()).
-				Str("destinationLocationId", pattern.DestinationLocationID.String()).
-				Msg("skipping pattern - missing required service type or shipment type")
-			continue
+	filteredPatterns := lo.Filter(patterns, func(pattern *dedicatedlane.PatternMatch, _ int) bool {
+		// * Check if a dedicated lane already exists for this pattern
+		req := &repositories.FindDedicatedLaneByShipmentRequest{
+			OrganizationID:        pattern.OrganizationID,
+			BusinessUnitID:        pattern.BusinessUnitID,
+			CustomerID:            pattern.CustomerID,
+			ServiceTypeID:         pattern.ServiceTypeID,
+			ShipmentTypeID:        pattern.ShipmentTypeID,
+			OriginLocationID:      pattern.OriginLocationID,
+			DestinationLocationID: pattern.DestinationLocationID,
+			TrailerTypeID:         pattern.TrailerTypeID,
+			TractorTypeID:         pattern.TractorTypeID,
 		}
 
-		// * Check if a dedicated lane already exists for this pattern
-		existingLane, err := ps.dlRepo.FindByShipment(
-			ctx,
-			&repositories.FindDedicatedLaneByShipmentRequest{
-				OrganizationID:        pattern.OrganizationID,
-				BusinessUnitID:        pattern.BusinessUnitID,
-				CustomerID:            pattern.CustomerID,
-				ServiceTypeID:         *pattern.ServiceTypeID,
-				ShipmentTypeID:        *pattern.ShipmentTypeID,
-				OriginLocationID:      pattern.OriginLocationID,
-				DestinationLocationID: pattern.DestinationLocationID,
-				TrailerTypeID:         pattern.TrailerTypeID,
-				TractorTypeID:         pattern.TractorTypeID,
-			},
-		)
+		existingLane, err := ps.dlRepo.FindByShipment(ctx, req)
+		if err != nil {
+			if errors.IsNotFoundError(err) {
+				log.Warn().
+					Interface("req", req).
+					Msg("no dedicated lane found for pattern - including pattern test")
+				// ! If the error is not found, include the pattern
+				return true
+			}
 
-		if err == nil && existingLane != nil {
+			// ! For other errors, log them but err on the side of caution - exclude the pattern
+			log.Error().
+				Err(err).
+				Interface("req", req).
+				Msg("error checking for existing dedicated lane - excluding pattern to be safe")
+			return false
+		}
+
+		// * If a dedicated lane already exists, skip the pattern
+		if existingLane != nil {
 			log.Info().
 				Str("existingLaneId", existingLane.ID.String()).
 				Str("customerId", pattern.CustomerID.String()).
 				Str("originLocationId", pattern.OriginLocationID.String()).
 				Str("destinationLocationId", pattern.DestinationLocationID.String()).
 				Msg("skipping pattern - dedicated lane already exists")
-			continue
+			return false
 		}
 
 		// * Check if a pending suggestion already exists for this pattern
-		existingSuggestion, err := ps.suggRepo.CheckForDuplicatePattern(
-			ctx,
-			pattern.CustomerID,
-			pattern.OriginLocationID,
-			pattern.DestinationLocationID,
-			pattern.OrganizationID,
-			pattern.BusinessUnitID,
-		)
+		existingSuggestion, err := ps.suggRepo.CheckForDuplicatePattern(ctx, req)
 
 		if err != nil {
-			log.Error().Err(err).
+			if errors.IsNotFoundError(err) {
+				// ! If the error is not found, include the pattern
+				return true
+			}
+
+			// ! For other errors, log them but err on the side of caution - exclude the pattern
+			log.Error().
+				Err(err).
 				Str("customerId", pattern.CustomerID.String()).
-				Msg("failed to check for duplicate suggestion - including pattern")
-			// ! Include pattern on error to avoid missing valid suggestions
-			filteredPatterns = append(filteredPatterns, pattern)
-			continue
+				Str("originLocationId", pattern.OriginLocationID.String()).
+				Str("destinationLocationId", pattern.DestinationLocationID.String()).
+				Msg("error checking for existing suggestion - excluding pattern to be safe")
+			return false
 		}
 
+		// * If a pending suggestion already exists, skip the pattern
 		if existingSuggestion != nil {
 			log.Info().
 				Str("existingSuggestionId", existingSuggestion.ID.String()).
@@ -834,12 +861,12 @@ func (ps *PatternService) excludeExistingLanes(
 				Str("originLocationId", pattern.OriginLocationID.String()).
 				Str("destinationLocationId", pattern.DestinationLocationID.String()).
 				Msg("skipping pattern - pending suggestion already exists")
-			continue
+			return false
 		}
 
-		// * Pattern is unique, include it
-		filteredPatterns = append(filteredPatterns, pattern)
-	}
+		// * Otherwise include the pattern as it is unique
+		return true
+	})
 
 	log.Info().
 		Int("inputPatterns", len(patterns)).
@@ -865,10 +892,9 @@ func (ps *PatternService) createSuggestionFromPattern(
 	ctx context.Context,
 	pattern *dedicatedlane.PatternMatch,
 	req *dedicatedlane.PatternAnalysisRequest,
-	config *dedicatedlane.PatternDetectionConfig,
 ) *dedicatedlane.DedicatedLaneSuggestion {
 	now := timeutils.NowUnix()
-	expiresAt := now + (config.SuggestionTTLDays * 86400)
+	expiresAt := now + (req.Config.SuggestionTTLDays * 86400)
 
 	suggestedName := ps.generateSuggestedName(ctx, pattern)
 
@@ -893,12 +919,10 @@ func (ps *PatternService) createSuggestionFromPattern(
 		TotalFreightValue:     pattern.TotalFreightValue,
 		LastShipmentDate:      pattern.LastShipmentDate,
 		FirstShipmentDate:     pattern.FirstShipmentDate,
-		AnalysisStartDate:     req.StartDate,
-		AnalysisEndDate:       req.EndDate,
 		SuggestedName:         suggestedName,
 		PatternDetails: map[string]any{
 			"shipmentIds":    pattern.ShipmentIDs,
-			"analysisConfig": config,
+			"analysisConfig": req.Config,
 			"detectionTime":  now,
 			"analysisType":   "organization-specific",
 		},

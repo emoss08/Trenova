@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"go.uber.org/fx"
 )
 
@@ -46,8 +47,6 @@ func (pah *PatternAnalysisHandler) JobType() jobs.JobType {
 }
 
 // ProcessTask processes a pattern analysis job
-//
-//nolint:funlen // this is a long function, but it's okay.
 func (pah *PatternAnalysisHandler) ProcessTask(ctx context.Context, task *asynq.Task) error {
 	jobStartTime := time.Now()
 
@@ -59,43 +58,27 @@ func (pah *PatternAnalysisHandler) ProcessTask(ctx context.Context, task *asynq.
 
 	log.Info().Msg("starting pattern analysis job")
 
-	log.Info().Interface("payload", task.Payload()).Msg("payload")
-
-	// Unmarshal job payload
+	// * Unmarshal job payload
 	var payload jobs.PatternAnalysisPayload
 	if err := jobs.UnmarshalPayload(task.Payload(), &payload); err != nil {
 		log.Error().
 			Err(err).
 			Dur("job_duration", time.Since(jobStartTime)).
 			Msg("failed to unmarshal pattern analysis payload")
-		return fmt.Errorf("unmarshal payload: %w", err)
+		return oops.In("pattern_analysis_handler").
+			With("op", "process_task").
+			With("job_id", task.ResultWriter().TaskID()).
+			With("job_type", task.Type()).
+			With("job_started_at", jobStartTime).
+			Time(time.Now()).
+			Wrapf(err, "unmarshal pattern analysis payload")
 	}
 
-	// Enhanced logging with more context
-	logEntry := log.Info().
-		Str("org_id", payload.OrganizationID.String()).
-		Str("business_unit_id", payload.BusinessUnitID.String()).
-		Int64("start_date", payload.StartDate).
-		Int64("end_date", payload.EndDate).
-		Int64("date_range_days", (payload.EndDate-payload.StartDate)/86400).
-		Int64("min_frequency", payload.MinFrequency).
-		Str("trigger_reason", payload.TriggerReason)
-
-	if payload.CustomerID != nil {
-		logEntry = logEntry.Str("customer_id", payload.CustomerID.String())
-	}
-
-	logEntry.Msg("processing pattern analysis with parameters")
-
-	// Build pattern analysis request
+	// * Build pattern analysis request
 	analysisReq := &dedicatedlane.PatternAnalysisRequest{
-		StartDate:       payload.StartDate,
-		EndDate:         payload.EndDate,
-		CustomerID:      payload.CustomerID,
-		ExcludeExisting: true, // Don't suggest lanes that already exist
+		ExcludeExisting: true, // * Don't suggest lanes that already exist
 		Config: &dedicatedlane.PatternDetectionConfig{
 			MinFrequency:          payload.MinFrequency,
-			AnalysisWindowDays:    (payload.EndDate - payload.StartDate) / 86400, // Convert to days
 			MinConfidenceScore:    dedicatedlane.DefaultPatternDetectionConfig().MinConfidenceScore,
 			SuggestionTTLDays:     dedicatedlane.DefaultPatternDetectionConfig().SuggestionTTLDays,
 			RequireExactMatch:     false, // More lenient for automatic analysis
@@ -103,12 +86,12 @@ func (pah *PatternAnalysisHandler) ProcessTask(ctx context.Context, task *asynq.
 		},
 	}
 
-	// Override with custom frequency if provided, otherwise use default
+	// * Override with custom frequency if provided, otherwise use default
 	if payload.MinFrequency <= 0 {
 		analysisReq.Config.MinFrequency = dedicatedlane.DefaultPatternDetectionConfig().MinFrequency
 	}
 
-	// Perform pattern analysis with detailed logging
+	// * Perform pattern analysis with detailed logging
 	analysisStartTime := time.Now()
 	log.Info().Msg("starting pattern analysis execution")
 
@@ -119,48 +102,21 @@ func (pah *PatternAnalysisHandler) ProcessTask(ctx context.Context, task *asynq.
 			Dur("analysis_duration", time.Since(analysisStartTime)).
 			Dur("total_job_duration", time.Since(jobStartTime)).
 			Msg("pattern analysis failed")
-		return fmt.Errorf("analyze patterns: %w", err)
+		return oops.In("pattern_analysis_handler").
+			With("op", "process_task").
+			With("job_id", task.ResultWriter().TaskID()).
+			With("job_type", task.Type()).
+			With("job_started_at", jobStartTime).
+			Time(time.Now()).
+			Wrapf(err, "analyze patterns")
 	}
 
-	// Comprehensive result logging with performance metrics
-	log.Info().
-		Int64("total_patterns_detected", result.TotalPatternsDetected).
-		Int64("patterns_above_threshold", result.PatternsAboveThreshold).
-		Int64("suggestions_created", result.SuggestionsCreated).
-		Int64("suggestions_skipped", result.SuggestionsSkipped).
-		Int64("analysis_processing_time_ms", result.ProcessingTimeMs).
-		Dur("analysis_duration", time.Since(analysisStartTime)).
-		Dur("total_job_duration", time.Since(jobStartTime)).
-		Str("trigger_reason", payload.TriggerReason).
-		Float64("pattern_qualification_rate", func() float64 {
-			if result.TotalPatternsDetected > 0 {
-				return float64(
-					result.PatternsAboveThreshold,
-				) / float64(
-					result.TotalPatternsDetected,
-				) * 100
-			}
-			return 0
-		}()).
-		Float64("suggestion_success_rate", func() float64 {
-			total := result.SuggestionsCreated + result.SuggestionsSkipped
-			if total > 0 {
-				return float64(result.SuggestionsCreated) / float64(total) * 100
-			}
-			return 0
-		}()).
-		Msg("pattern analysis completed successfully")
-
-	// Store result metadata in task result (optional, for monitoring)
+	// * Store result metadata in task result (optional, for monitoring)
 	resultData := map[string]any{
-		"total_patterns":      result.TotalPatternsDetected,
-		"qualified_patterns":  result.PatternsAboveThreshold,
-		"suggestions_created": result.SuggestionsCreated,
-		"suggestions_skipped": result.SuggestionsSkipped,
-		"processing_time_ms":  result.ProcessingTimeMs,
-		"analysis_start_date": result.AnalysisStartDate,
-		"analysis_end_date":   result.AnalysisEndDate,
-		"trigger_reason":      payload.TriggerReason,
+		"total_patterns":     result.TotalPatternsDetected,
+		"qualified_patterns": result.PatternsAboveThreshold,
+		"processing_time_ms": result.ProcessingTimeMs,
+		"trigger_reason":     payload.TriggerReason,
 	}
 
 	if writer := task.ResultWriter(); writer != nil {

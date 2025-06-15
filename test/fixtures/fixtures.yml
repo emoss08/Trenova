@@ -731,6 +731,51 @@
       location_category_id: "{{ $.LocationCategory.location_category_1.ID }}"
       place_id: "ChIJBRfH_4WfToYRFFH_9IqgCPY"
       is_geocoded: true
+    - _id: test_location_4
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      name: "Target"
+      address_line_1: "1234 Main St"
+      code: "TAR001"
+      city: "Minneapolis" 
+      postal_code: "55401"
+      state_id: "{{ $.UsState.mn.ID }}"
+      longitude: -93.263611
+      latitude: 44.977753
+      location_category_id: "{{ $.LocationCategory.location_category_1.ID }}"
+      place_id: "ChIJN1t_Hh4kF4RUsoyG83frY4"
+      is_geocoded: true
+    - _id: test_location_5
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      name: "Walmart"
+      address_line_1: "1234 Main St"
+      code: "WAL002"
+      city: "Bentonville"
+      postal_code: "72712"
+      state_id: "{{ $.UsState.ar.ID }}"
+      longitude: -94.209864
+      latitude: 36.376359
+      location_category_id: "{{ $.LocationCategory.location_category_1.ID }}"
+      place_id: "ChIJN1t_Hh4kF4RUsoyG83frY4"
+      is_geocoded: true
+    - _id: test_location_6  
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      name: "Harris Teeter"
+      address_line_1: "1234 Main St"
+      code: "HTE001"
+      city: "Charlotte"
+      postal_code: "28202"
+      state_id: "{{ $.UsState.nc.ID }}"
+      longitude: -80.843124
+      latitude: 35.227086
+      location_category_id: "{{ $.LocationCategory.location_category_1.ID }}"
+      place_id: "ChIJqQCYky0fU4gRGsIU6EhmoPA"
+      is_geocoded: true
 
 - model: ServiceType
   rows:
@@ -1006,6 +1051,36 @@
       city: "Los Angeles"
       postal_code: "90001"
       state_id: "{{ $.UsState.ca.ID }}"
+    - _id: harris_teeter_customer
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      code: "TEETER"
+      created_at: "{{ now.Unix }}"
+      name: "Harris Teeter"
+      address_line_1: "1234 Main St"
+      city: "Charlotte"
+      postal_code: "28202"
+      state_id: "{{ $.UsState.nc.ID }}"
+    - _id: target_customer
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      code: "TARGET"
+      created_at: "{{ now.Unix }}"
+      name: "Target"
+      address_line_1: "1234 Main St"
+      city: "Minneapolis"
+      postal_code: "55401"
+      state_id: "{{ $.UsState.mn.ID }}"
+    - _id: walmart_customer
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      code: "WALMART"
+      created_at: "{{ now.Unix }}"
+      name: "Walmart"
+      address_line_1: "1234 Main St"
+      city: "Bentonville"
+      postal_code: "72712"
+      state_id: "{{ $.UsState.ar.ID }}"
 
 - model: BillingProfile
   rows:
@@ -1014,6 +1089,21 @@
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       customer_id: "{{ $.Customer.honeywell_customer.ID }}"
       created_at: "{{ now.Unix }}"
+    - _id: harris_teeter_billing_profile
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      customer_id: "{{ $.Customer.harris_teeter_customer.ID }}"
+      created_at: "{{ now.Unix }}"
+    - _id: target_billing_profile
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      customer_id: "{{ $.Customer.target_customer.ID }}"
+      created_at: "{{ now.Unix }}"
+    - _id: walmart_billing_profile
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}" 
+      customer_id: "{{ $.Customer.walmart_customer.ID }}"
+      created_at: "{{ now.Unix }}"
 
 - model: CustomerEmailProfile
   rows:
@@ -1021,6 +1111,21 @@
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       customer_id: "{{ $.Customer.honeywell_customer.ID }}"
+      created_at: "{{ now.Unix }}"
+    - _id: harris_teeter_email_profile
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      customer_id: "{{ $.Customer.harris_teeter_customer.ID }}"
+      created_at: "{{ now.Unix }}"
+    - _id: target_email_profile
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      customer_id: "{{ $.Customer.target_customer.ID }}"
+      created_at: "{{ now.Unix }}"
+    - _id: walmart_email_profile
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      customer_id: "{{ $.Customer.walmart_customer.ID }}"
       created_at: "{{ now.Unix }}"
 
 - model: Shipment

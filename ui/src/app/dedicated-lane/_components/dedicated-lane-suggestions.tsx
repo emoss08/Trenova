@@ -9,26 +9,37 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { EntityRedirectLink } from "@/components/ui/link";
-import { queries } from "@/lib/queries";
+import { type DedicatedLaneSuggestionSchema } from "@/lib/schemas/dedicated-lane-schema";
 import { formatLocation, pluralize } from "@/lib/utils";
 import { Status } from "@/types/common";
 import { faDash, faEllipsis } from "@fortawesome/pro-solid-svg-icons";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { parseAsBoolean, useQueryState } from "nuqs";
+import { AcceptSuggestionDialog } from "./modals/suggestion-accept-modal";
+import { RejectSuggestionDialog } from "./modals/suggestion-rejection-modal";
 
-export function DedicatedLaneSuggestions() {
-  const { data, isLoading } = useSuspenseQuery({
-    ...queries.dedicatedLaneSuggestion.getSuggestions(),
-  });
+const dialogs = {
+  acceptSuggestionDialogOpen: parseAsBoolean.withDefault(false),
+  rejectSuggestionDialogOpen: parseAsBoolean.withDefault(false),
+};
 
+export function DedicatedLaneSuggestions({
+  suggestions,
+  isLoading,
+}: {
+  suggestions: DedicatedLaneSuggestionSchema[];
+  isLoading: boolean;
+}) {
   if (isLoading) {
     return <div>Loading...</div>;
   }
 
-  return data.results.length > 0 ? (
+  return suggestions.length > 0 ? (
     <div className="flex flex-col gap-2 bg-background border-border border rounded-md p-2 mb-4 relative">
       <div className="flex justify-between items-center border-b border-border pb-2">
         <div className="flex flex-col items-start leading-tight">
@@ -46,13 +57,13 @@ export function DedicatedLaneSuggestions() {
         <div className="flex flex-col items-end">
           <Button size="sm">View All</Button>
           <p className="text-2xs text-muted-foreground">
-            {data.results.length} {pluralize("suggestion", data.results.length)}
+            {suggestions.length} {pluralize("suggestion", suggestions.length)}
           </p>
         </div>
       </div>
       <Carousel>
         <CarouselContent className="-ml-4 pb-2">
-          {data.results.map((suggestion) => (
+          {suggestions.map((suggestion) => (
             <CarouselItem className="basis-1/3 pl-4" key={suggestion.id}>
               <div className="flex flex-col gap-2 w-full bg-muted border border-border rounded-md p-2">
                 <div className="flex justify-between items-center gap-2 border-b border-border pb-2">
@@ -64,7 +75,7 @@ export function DedicatedLaneSuggestions() {
                   >
                     {suggestion.customer?.name}
                   </EntityRedirectLink>
-                  <SuggestionActions />
+                  <SuggestionActions suggestion={suggestion} />
                 </div>
                 <div className="flex justify-between items-center">
                   <div className="flex flex-col leading-tight">
@@ -132,18 +143,63 @@ export function DedicatedLaneSuggestions() {
   ) : null;
 }
 
-function SuggestionActions() {
+function SuggestionActions({
+  suggestion,
+}: {
+  suggestion: DedicatedLaneSuggestionSchema;
+}) {
+  const [acceptSuggestionDialogOpen, setAcceptSuggestionDialogOpen] =
+    useQueryState<boolean>(
+      "acceptSuggestionDialogOpen",
+      dialogs.acceptSuggestionDialogOpen.withOptions({}),
+    );
+
+  const [rejectSuggestionDialogOpen, setRejectSuggestionDialogOpen] =
+    useQueryState<boolean>(
+      "rejectSuggestionDialogOpen",
+      dialogs.rejectSuggestionDialogOpen.withOptions({}),
+    );
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="ghost" size="xs">
-          <Icon icon={faEllipsis} />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent>
-        <DropdownMenuItem title="Accept" description="Accept this suggestion" />
-        <DropdownMenuItem title="Reject" description="Reject this suggestion" />
-      </DropdownMenuContent>
-    </DropdownMenu>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="xs">
+            <Icon icon={faEllipsis} />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem title="View" description="View this suggestion" />
+          <DropdownMenuItem
+            color="success"
+            title="Accept"
+            description="Accept this suggestion"
+            onClick={() => setAcceptSuggestionDialogOpen(true)}
+          />
+          <DropdownMenuItem
+            color="danger"
+            title="Reject"
+            description="Reject this suggestion"
+            onClick={() => setRejectSuggestionDialogOpen(true)}
+          />
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {acceptSuggestionDialogOpen && (
+        <AcceptSuggestionDialog
+          open={acceptSuggestionDialogOpen}
+          onOpenChange={setAcceptSuggestionDialogOpen}
+          suggestion={suggestion}
+        />
+      )}
+      {rejectSuggestionDialogOpen && (
+        <RejectSuggestionDialog
+          open={rejectSuggestionDialogOpen}
+          onOpenChange={setRejectSuggestionDialogOpen}
+          suggestion={suggestion}
+        />
+      )}
+    </>
   );
 }

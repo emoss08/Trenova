@@ -471,11 +471,7 @@ func (dlsr *dedicatedLaneSuggestionRepository) ExpireOldSuggestions(
 
 func (dlsr *dedicatedLaneSuggestionRepository) CheckForDuplicatePattern(
 	ctx context.Context,
-	customerID pulid.ID,
-	originLocationID pulid.ID,
-	destinationLocationID pulid.ID,
-	orgID pulid.ID,
-	buID pulid.ID,
+	req *repositories.FindDedicatedLaneByShipmentRequest,
 ) (*dedicatedlane.DedicatedLaneSuggestion, error) {
 	dba, err := dlsr.db.DB(ctx)
 	if err != nil {
@@ -485,43 +481,57 @@ func (dlsr *dedicatedLaneSuggestionRepository) CheckForDuplicatePattern(
 			Wrapf(err, "get database connection")
 	}
 
-	log := dlsr.l.With().
-		Str("op", "check_duplicate_pattern").
-		Str("customerId", customerID.String()).
-		Str("originLocationId", originLocationID.String()).
-		Str("destinationLocationId", destinationLocationID.String()).
-		Logger()
+	suggestion := new(dedicatedlane.DedicatedLaneSuggestion)
 
-	suggestion := &dedicatedlane.DedicatedLaneSuggestion{}
+	query := dba.NewSelect().Model(suggestion).
+		Distinct(). // Distinct is used to ensure that we only get one suggestion back
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			sq = sq.
+				Where("dls.organization_id = ?", req.OrganizationID).
+				Where("dls.business_unit_id = ?", req.BusinessUnitID).
+				Where("dls.customer_id = ?", req.CustomerID).
+				Where("dls.origin_location_id = ?", req.OriginLocationID).
+				Where("dls.destination_location_id = ?", req.DestinationLocationID).
+				Where("dls.status = ?", dedicatedlane.SuggestionStatusPending)
 
-	err = dba.NewSelect().Model(suggestion).
-		Where("dls.organization_id = ?", orgID).
-		Where("dls.business_unit_id = ?", buID).
-		Where("dls.customer_id = ?", customerID).
-		Where("dls.origin_location_id = ?", originLocationID).
-		Where("dls.destination_location_id = ?", destinationLocationID).
-		Where("dls.status = ?", dedicatedlane.SuggestionStatusPending).
-		Order("dls.created_at DESC").
-		Limit(1).
-		Scan(ctx)
+			// Check equipment type IDs to match the unique constraint
+			if req.ServiceTypeID != nil && !req.ServiceTypeID.IsNil() {
+				sq = sq.Where("dls.service_type_id = ?", *req.ServiceTypeID)
+			} else {
+				sq = sq.Where("dls.service_type_id IS NULL")
+			}
 
-	if err != nil {
+			if req.ShipmentTypeID != nil && !req.ShipmentTypeID.IsNil() {
+				sq = sq.Where("dls.shipment_type_id = ?", *req.ShipmentTypeID)
+			} else {
+				sq = sq.Where("dls.shipment_type_id IS NULL")
+			}
+
+			if req.TrailerTypeID != nil && !req.TrailerTypeID.IsNil() {
+				sq = sq.Where("dls.trailer_type_id = ?", *req.TrailerTypeID)
+			} else {
+				sq = sq.Where("dls.trailer_type_id IS NULL")
+			}
+
+			if req.TractorTypeID != nil && !req.TractorTypeID.IsNil() {
+				sq = sq.Where("dls.tractor_type_id = ?", *req.TractorTypeID)
+			} else {
+				sq = sq.Where("dls.tractor_type_id IS NULL")
+			}
+
+			return sq
+		})
+
+	if err = query.Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			// No duplicate found - this is the expected case
-			log.Info().Msg("no duplicate found")
-			return nil, nil //nolint:nilnil // nil is expected when no duplicate is found
+			return nil, errors.NewNotFoundError("no duplicate found for this organization")
 		}
 
-		log.Error().Err(err).Msg("failed to check for duplicate pattern")
 		return nil, oops.In("dedicated_lane_suggestion_repository").
 			With("op", "check_duplicate_pattern").
 			Time(time.Now()).
 			Wrapf(err, "check duplicate pattern")
 	}
-
-	log.Info().
-		Str("existingSuggestionId", suggestion.ID.String()).
-		Msg("found existing suggestion for pattern")
 
 	return suggestion, nil
 }
