@@ -61,7 +61,7 @@ type DuplicateShipmentRequest struct {
 	UserID pulid.ID `json:"userId"`
 
 	// The number of shipments to duplicate
-	Count int `json:"count"`
+	Count int `json:"count" default:"1"`
 
 	// Optional parameter to override the dates of the new shipment
 	OverrideDates bool `json:"overrideDates" query:"overrideDates"`

@@ -322,8 +322,9 @@ func (ps *PatternService) processQualifiedPatterns(
 		cs, csErr := ps.suggRepo.Create(ctx, suggestion)
 		if csErr != nil {
 			// Check if it's a duplicate key constraint violation
-			if csErr.Error() != "" && (strings.Contains(csErr.Error(), "duplicate key value violates unique constraint") || 
-				strings.Contains(csErr.Error(), "idx_dedicated_lane_suggestions_unique_pending_pattern")) {
+			if csErr.Error() != "" &&
+				(strings.Contains(csErr.Error(), "duplicate key value violates unique constraint") ||
+					strings.Contains(csErr.Error(), "idx_dedicated_lane_suggestions_unique_pending_pattern")) {
 				log.Info().
 					Str("customerId", pattern.CustomerID.String()).
 					Str("originLocationId", pattern.OriginLocationID.String()).

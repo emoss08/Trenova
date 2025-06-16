@@ -20,15 +20,17 @@ import (
 type DuplicateShipmentHandlerParams struct {
 	fx.In
 
-	Logger             *logger.Logger
-	AuditService       services.AuditService
-	ShipmentRepository repositories.ShipmentRepository
+	Logger              *logger.Logger
+	AuditService        services.AuditService
+	ShipmentRepository  repositories.ShipmentRepository
+	NotificationService services.NotificationService
 }
 
 type DuplicateShipmentHandler struct {
-	l            *zerolog.Logger
-	shipmentRepo repositories.ShipmentRepository
-	as           services.AuditService
+	l                   *zerolog.Logger
+	shipmentRepo        repositories.ShipmentRepository
+	as                  services.AuditService
+	notificationService services.NotificationService
 }
 
 func NewDuplicateShipmentHandler(p DuplicateShipmentHandlerParams) jobs.JobHandler {
@@ -37,9 +39,10 @@ func NewDuplicateShipmentHandler(p DuplicateShipmentHandlerParams) jobs.JobHandl
 		Logger()
 
 	return &DuplicateShipmentHandler{
-		l:            &log,
-		shipmentRepo: p.ShipmentRepository,
-		as:           p.AuditService,
+		l:                   &log,
+		shipmentRepo:        p.ShipmentRepository,
+		as:                  p.AuditService,
+		notificationService: p.NotificationService,
 	}
 }
 
@@ -87,6 +90,26 @@ func (dsh *DuplicateShipmentHandler) ProcessTask(ctx context.Context, task *asyn
 	shipments, err := dsh.shipmentRepo.BulkDuplicate(ctx, duplicateReq)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to duplicate shipment")
+
+		// Send failure notification
+		notificationReq := &services.JobCompletionNotificationRequest{
+			JobID:          task.ResultWriter().TaskID(),
+			JobType:        "duplicate_shipment",
+			UserID:         payload.UserID,
+			OrganizationID: payload.OrganizationID,
+			BusinessUnitID: payload.BusinessUnitID,
+			Success:        false,
+			Result:         "Failed to duplicate shipments",
+			Data: map[string]any{
+				"error":            err.Error(),
+				"originalShipment": payload.ShipmentID.String(),
+			},
+		}
+
+		if notifErr := dsh.notificationService.SendJobCompletionNotification(ctx, notificationReq); notifErr != nil {
+			log.Error().Err(notifErr).Msg("failed to send job failure notification")
+		}
+
 		return oops.
 			In("duplicate_shipment_handler").
 			With("req", duplicateReq).
@@ -134,6 +157,26 @@ func (dsh *DuplicateShipmentHandler) ProcessTask(ctx context.Context, task *asyn
 	}
 
 	log.Info().Int("count", len(shipments)).Msg("shipments duplicated successfully")
+
+	// Send completion notification to user
+	notificationReq := &services.JobCompletionNotificationRequest{
+		JobID:          task.ResultWriter().TaskID(),
+		JobType:        "duplicate_shipment",
+		UserID:         payload.UserID,
+		OrganizationID: payload.OrganizationID,
+		BusinessUnitID: payload.BusinessUnitID,
+		Success:        true,
+		Result:         fmt.Sprintf("Successfully duplicated %d shipments", len(shipments)),
+		Data: map[string]any{
+			"shipmentCount":    len(shipments),
+			"originalShipment": payload.ShipmentID.String(),
+		},
+	}
+
+	if err = dsh.notificationService.SendJobCompletionNotification(ctx, notificationReq); err != nil {
+		log.Error().Err(err).Msg("failed to send job completion notification")
+		return err
+	}
 
 	return nil
 }

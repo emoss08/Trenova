@@ -1,0 +1,59 @@
+package repositories
+
+import (
+	"context"
+
+	"github.com/emoss08/trenova/internal/core/domain/notification"
+	"github.com/emoss08/trenova/pkg/types/pulid"
+)
+
+type GetUserNotificationsRequest struct {
+	UserID         pulid.ID `json:"userId"`
+	OrganizationID pulid.ID `json:"organizationId"`
+	Limit          int      `json:"limit"`
+	Offset         int      `json:"offset"`
+	UnreadOnly     bool     `json:"unreadOnly"`
+}
+
+type NotificationRepository interface {
+	// Create creates a new notification
+	Create(ctx context.Context, notif *notification.Notification) error
+
+	// Update updates an existing notification
+	Update(ctx context.Context, notif *notification.Notification) error
+
+	// GetByID retrieves a notification by ID
+	GetByID(ctx context.Context, id pulid.ID) (*notification.Notification, error)
+
+	// GetUserNotifications retrieves notifications for a user with pagination
+	GetUserNotifications(
+		ctx context.Context,
+		req *GetUserNotificationsRequest,
+	) ([]*notification.Notification, error)
+
+	// GetUnreadCount gets the count of unread notifications for a user
+	GetUnreadCount(ctx context.Context, userID pulid.ID, organizationID pulid.ID) (int, error)
+
+	// MarkAsRead marks a notification as read
+	MarkAsRead(ctx context.Context, notificationID pulid.ID, userID pulid.ID, readAt int64) error
+
+	// MarkAsDismissed marks a notification as dismissed
+	MarkAsDismissed(
+		ctx context.Context,
+		notificationID pulid.ID,
+		userID pulid.ID,
+		dismissedAt int64,
+	) error
+
+	// MarkAsDelivered marks a notification as delivered
+	MarkAsDelivered(ctx context.Context, notificationID pulid.ID, deliveredAt int64) error
+
+	// GetPendingRetries gets notifications that failed delivery and can be retried
+	GetPendingRetries(ctx context.Context, limit int) ([]*notification.Notification, error)
+
+	// GetExpiredNotifications gets notifications that have expired
+	GetExpiredNotifications(ctx context.Context, limit int) ([]*notification.Notification, error)
+
+	// DeleteOldNotifications deletes notifications older than the specified timestamp
+	DeleteOldNotifications(ctx context.Context, olderThan int64) error
+}

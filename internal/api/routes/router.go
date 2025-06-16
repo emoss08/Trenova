@@ -44,6 +44,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/trailer"
 	"github.com/emoss08/trenova/internal/api/handlers/user"
 	"github.com/emoss08/trenova/internal/api/handlers/usstate"
+	"github.com/emoss08/trenova/internal/api/handlers/websocket"
 	"github.com/emoss08/trenova/internal/api/handlers/worker"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/server"
@@ -128,6 +129,7 @@ type RouterParams struct {
 	DedicatedLaneHandler           *dedicatedlane.Handler
 	DedicatedLaneSuggestionHandler *dedicatedlanesuggestion.Handler
 	PatternConfigHandler           *patternconfig.Handler
+	WebSocketHandler               *websocket.Handler
 }
 
 type Router struct {
@@ -150,7 +152,6 @@ func NewRouter(p RouterParams) *Router {
 func (r *Router) Setup() {
 	// API Versioning
 	v1 := r.app.Group("api/v1")
-
 	// define the rate limit middleware
 	rl := middleware.NewRateLimit(middleware.RateLimitParams{
 		Logger:       r.p.Logger,
@@ -161,10 +162,9 @@ func (r *Router) Setup() {
 	// setup the global middlewares
 	r.setupMiddleware()
 
-	// TODO(Wolfred) Register check and metrics endpoints here
-
 	r.p.AuthHandler.RegisterRoutes(v1)
 	r.setupProtectedRoutes(v1, rl)
+	r.p.WebSocketHandler.RegisterRoutes(v1)
 }
 
 // setupMiddleware configures the global middleware stack
@@ -194,6 +194,10 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 		Config: r.cfg,
 		Auth:   r.p.AuthService,
 	}).Authenticate())
+
+	// WebSocket routes (must be after auth middleware)
+	// router.Use("/ws", r.p.WebSocketHandler.WebSocketUpgrade)
+	// router.Get("/ws/notifications", websocket.New(r.p.WebSocketHandler.HandleWebSocket))
 
 	// Organization
 	r.p.OrganizationHandler.RegisterRoutes(router, rl)
