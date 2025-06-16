@@ -167,6 +167,20 @@ func (m *MockShipmentRepository) CheckForDuplicateBOLs(
 	return nil, nil
 }
 
+func (m *MockShipmentRepository) BulkDuplicate(
+	ctx context.Context,
+	req *repositories.DuplicateShipmentRequest,
+) ([]*shipment.Shipment, error) {
+	return nil, nil
+}
+
+func (m *MockShipmentRepository) GetByDateRange(
+	ctx context.Context,
+	req *repositories.GetShipmentsByDateRangeRequest,
+) (*ports.ListResult[*shipment.Shipment], error) {
+	return nil, nil
+}
+
 func (m *MockShipmentRepository) CalculateShipmentTotals(
 	shp *shipment.Shipment,
 ) (*repositories.ShipmentTotalsResponse, error) {

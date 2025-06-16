@@ -546,20 +546,21 @@ func TestShipmentRepository(t *testing.T) {
 				OverrideDates:            false,
 				IncludeCommodities:       false,
 				IncludeAdditionalCharges: false,
+				Count:                    1,
 			}
 
-			result, err := repo.Duplicate(ctx, req)
+			result, err := repo.BulkDuplicate(ctx, req)
 			require.NoError(t, err, "Duplicate should not return error")
 			require.NotNil(t, result, "Result should not be nil")
-			assert.NotEqual(t, completedShipment.ID, result.ID, "New ID should be different")
+			assert.NotEqual(t, completedShipment.ID, result[0].ID, "New ID should be different")
 			assert.NotEqual(
 				t,
 				completedShipment.ProNumber,
-				result.ProNumber,
+				result[0].ProNumber,
 				"New ProNumber should be different",
 			)
-			assert.Equal(t, shipment.StatusNew, result.Status, "Status should be New")
-			assert.Equal(t, "GENERATED-COPY", result.BOL, "BOL should be GENERATED-COPY")
+			assert.Equal(t, shipment.StatusNew, result[0].Status, "Status should be New")
+			assert.Equal(t, "GENERATED-COPY", result[0].BOL, "BOL should be GENERATED-COPY")
 		})
 
 		t.Run("Duplication with Override Dates", func(t *testing.T) {
@@ -573,7 +574,7 @@ func TestShipmentRepository(t *testing.T) {
 				IncludeAdditionalCharges: false,
 			}
 
-			result, err := repo.Duplicate(ctx, req)
+			result, err := repo.BulkDuplicate(ctx, req)
 			require.NoError(t, err, "Duplicate with override dates should not return error")
 			require.NotNil(t, result, "Result should not be nil")
 		})
@@ -589,7 +590,7 @@ func TestShipmentRepository(t *testing.T) {
 				IncludeAdditionalCharges: false,
 			}
 
-			result, err := repo.Duplicate(ctx, req)
+			result, err := repo.BulkDuplicate(ctx, req)
 			require.NoError(t, err, "Duplicate with commodities should not return error")
 			require.NotNil(t, result, "Result should not be nil")
 		})
@@ -605,7 +606,7 @@ func TestShipmentRepository(t *testing.T) {
 				IncludeAdditionalCharges: true,
 			}
 
-			result, err := repo.Duplicate(ctx, req)
+			result, err := repo.BulkDuplicate(ctx, req)
 			require.NoError(t, err, "Duplicate with additional charges should not return error")
 			require.NotNil(t, result, "Result should not be nil")
 		})
@@ -621,7 +622,7 @@ func TestShipmentRepository(t *testing.T) {
 				IncludeAdditionalCharges: false,
 			}
 
-			result, err := repo.Duplicate(ctx, req)
+			result, err := repo.BulkDuplicate(ctx, req)
 			require.Error(t, err, "Duplicate with invalid ID should return error")
 			require.Nil(t, result, "Result should be nil")
 		})
