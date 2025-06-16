@@ -8,7 +8,7 @@ CREATE TABLE IF NOT EXISTS "notification_preferences"(
     "business_unit_id" VARCHAR(100) NOT NULL,
     
     -- Configuration
-    "entity_type" VARCHAR(50) NOT NULL,
+    "resource" VARCHAR(50) NOT NULL,
     "update_types" TEXT[] NOT NULL DEFAULT '{}',
     "notify_on_all_updates" BOOLEAN NOT NULL DEFAULT FALSE,
     "notify_only_owned_records" BOOLEAN NOT NULL DEFAULT TRUE,
@@ -48,21 +48,21 @@ CREATE TABLE IF NOT EXISTS "notification_preferences"(
 -- Create indexes for better query performance
 CREATE INDEX IF NOT EXISTS "idx_notification_preferences_user" ON "notification_preferences"("user_id");
 CREATE INDEX IF NOT EXISTS "idx_notification_preferences_org" ON "notification_preferences"("organization_id");
-CREATE INDEX IF NOT EXISTS "idx_notification_preferences_entity_type" ON "notification_preferences"("entity_type");
+CREATE INDEX IF NOT EXISTS "idx_notification_preferences_resource" ON "notification_preferences"("resource");
 CREATE INDEX IF NOT EXISTS "idx_notification_preferences_active" ON "notification_preferences"("is_active") WHERE "is_active" = TRUE;
 
 --bun:split
 
 -- Create composite index for common queries
-CREATE INDEX IF NOT EXISTS "idx_notification_preferences_user_entity_active" 
-ON "notification_preferences"("user_id", "entity_type", "is_active") 
+CREATE INDEX IF NOT EXISTS "idx_notification_preferences_user_resource_active" 
+ON "notification_preferences"("user_id", "resource", "is_active") 
 WHERE "is_active" = TRUE;
 
 --bun:split
 
 -- Add comments
 COMMENT ON TABLE "notification_preferences" IS 'Stores user preferences for notifications on owned record updates';
-COMMENT ON COLUMN "notification_preferences"."entity_type" IS 'Type of entity (shipment, worker, customer, etc.)';
+COMMENT ON COLUMN "notification_preferences"."resource" IS 'Type of resource (shipment, worker, customer, etc.)';
 COMMENT ON COLUMN "notification_preferences"."update_types" IS 'Types of updates to notify about (status_change, assignment, etc.)';
 COMMENT ON COLUMN "notification_preferences"."notify_on_all_updates" IS 'Whether to notify on all update types';
 COMMENT ON COLUMN "notification_preferences"."notify_only_owned_records" IS 'Whether to only notify for records owned/created by the user';

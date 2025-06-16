@@ -101,6 +101,8 @@ var Module = fx.Module("services", fx.Provide(
 	dedicatedlane.NewSuggestionService,
 	websocket.NewService,
 	notification.NewService,
+	notification.NewPreferenceService,
+	notification.NewAuditListenerService,
 ),
 	fx.Invoke(func(s services.WebSocketService) {
 		log.Info().Msg("websocket service initialized")

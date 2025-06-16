@@ -89,41 +89,8 @@ func (s *PreferenceService) List(
 func (s *PreferenceService) GetByID(
 	ctx context.Context,
 	id pulid.ID,
-	userID pulid.ID,
 ) (*notification.NotificationPreference, error) {
-	log := s.l.With().
-		Str("operation", "GetByID").
-		Str("preferenceID", id.String()).
-		Logger()
-
-	pref, err := s.repo.GetByID(ctx, id)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get notification preference")
-		return nil, err
-	}
-
-	// Users can only view their own preferences unless they have admin permissions
-	if pref.UserID != userID {
-		result, permErr := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceUser,
-				Action:         permission.ActionManage,
-				BusinessUnitID: pref.BusinessUnitID,
-				OrganizationID: pref.OrganizationID,
-			},
-		})
-		if permErr != nil {
-			log.Error().Err(permErr).Msg("failed to check permissions")
-			return nil, permErr
-		}
-
-		if !result.Allowed {
-			return nil, errors.NewAuthorizationError("You do not have permission to view this notification preference")
-		}
-	}
-
-	return pref, nil
+	return s.repo.GetByID(ctx, id)
 }
 
 func (s *PreferenceService) Create(
@@ -133,7 +100,7 @@ func (s *PreferenceService) Create(
 ) (*notification.NotificationPreference, error) {
 	log := s.l.With().
 		Str("operation", "Create").
-		Str("entityType", string(pref.EntityType)).
+		Str("resource", string(pref.Resource)).
 		Logger()
 
 	// Users can create their own preferences

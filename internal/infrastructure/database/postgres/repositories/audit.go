@@ -100,6 +100,8 @@ func (ar *auditRepository) GetByID(
 	log := ar.l.With().
 		Str("operation", "GetByID").
 		Str("auditEntryID", opts.ID.String()).
+		Str("organizationID", opts.OrgID.String()).
+		Str("businessUnitID", opts.BuID.String()).
 		Logger()
 
 	entity := new(audit.Entry)
@@ -147,7 +149,7 @@ func (ar *auditRepository) List(
 
 	log := ar.l.With().
 		Str("operation", "List").
-		Str("buID", opts.TenantOpts.BuID.String()).
+		Str("businessUnitID", opts.TenantOpts.BuID.String()).
 		Str("userID", opts.TenantOpts.UserID.String()).
 		Logger()
 
@@ -290,6 +292,50 @@ func (ar *auditRepository) GetByResourceAndAction(
 	if err = q.Scan(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to get audit entries by resource and action")
 		return nil, eris.Wrap(err, "get audit entries by resource and action")
+	}
+
+	return entries, nil
+}
+
+// GetRecentEntries retrieves audit entries after a specific timestamp
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - req: The request parameters.
+//
+// Returns:
+//   - []*audit.Entry: The list of audit entries.
+//   - error: An error if the operation fails.
+func (ar *auditRepository) GetRecentEntries(
+	ctx context.Context,
+	req *repositories.GetRecentEntriesRequest,
+) ([]*audit.Entry, error) {
+	dba, err := ar.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := ar.l.With().
+		Str("operation", "GetRecentEntries").
+		Int64("sinceTimestamp", req.SinceTimestamp).
+		Str("action", string(req.Action)).
+		Logger()
+
+	entries := make([]*audit.Entry, 0)
+
+	q := dba.NewSelect().Model(&entries).
+		Where("ae.timestamp > ?", req.SinceTimestamp).
+		Where("ae.action = ?", req.Action).
+		Order("ae.timestamp ASC").
+		Relation("User")
+
+	if req.Limit > 0 {
+		q = q.Limit(req.Limit)
+	}
+
+	if err = q.Scan(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to get recent audit entries")
+		return nil, eris.Wrap(err, "get recent audit entries")
 	}
 
 	return entries, nil

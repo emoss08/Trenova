@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -15,18 +16,6 @@ import (
 var (
 	_ bun.BeforeAppendModelHook = (*NotificationPreference)(nil)
 	_ domain.Validatable        = (*NotificationPreference)(nil)
-)
-
-// EntityType represents the type of entity that can trigger notifications
-type EntityType string
-
-const (
-	EntityTypeShipment = EntityType("shipment")
-	EntityTypeWorker   = EntityType("worker")
-	EntityTypeCustomer = EntityType("customer")
-	EntityTypeTractor  = EntityType("tractor")
-	EntityTypeTrailer  = EntityType("trailer")
-	EntityTypeLocation = EntityType("location")
 )
 
 // UpdateType represents the type of update that can trigger notifications
@@ -41,6 +30,7 @@ const (
 	UpdateTypeDocumentUpload   = UpdateType("document_upload")
 	UpdateTypePriceChange      = UpdateType("price_change")
 	UpdateTypeComplianceChange = UpdateType("compliance_change")
+	UpdateTypeFieldChange      = UpdateType("field_change")
 )
 
 // NotificationPreference represents a user's notification preferences for owned records
@@ -54,10 +44,10 @@ type NotificationPreference struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
 
 	// Configuration
-	EntityType             EntityType   `json:"entityType"      bun:"entity_type,type:VARCHAR(50),notnull"`
-	UpdateTypes            []UpdateType `json:"updateTypes"     bun:"update_types,type:TEXT[],notnull"`
-	NotifyOnAllUpdates     bool         `json:"notifyOnAllUpdates" bun:"notify_on_all_updates,type:BOOLEAN,notnull,default:false"`
-	NotifyOnlyOwnedRecords bool         `json:"notifyOnlyOwnedRecords" bun:"notify_only_owned_records,type:BOOLEAN,notnull,default:true"`
+	Resource               permission.Resource `json:"resource"        bun:"resource,type:VARCHAR(50),notnull"`
+	UpdateTypes            []UpdateType        `json:"updateTypes"     bun:"update_types,type:TEXT[],notnull"`
+	NotifyOnAllUpdates     bool                `json:"notifyOnAllUpdates" bun:"notify_on_all_updates,type:BOOLEAN,notnull,default:false"`
+	NotifyOnlyOwnedRecords bool                `json:"notifyOnlyOwnedRecords" bun:"notify_only_owned_records,type:BOOLEAN,notnull,default:true"`
 
 	// Filtering
 	ExcludedUserIDs []pulid.ID `json:"excludedUserIds,omitempty" bun:"excluded_user_ids,type:VARCHAR(100)[]"`
@@ -119,17 +109,22 @@ func (np *NotificationPreference) Validate(ctx context.Context, multiErr *errors
 			validation.Required.Error("Business Unit ID is required"),
 		),
 
-		// EntityType is required and must be valid
-		validation.Field(&np.EntityType,
-			validation.Required.Error("Entity type is required"),
+		// Resource is required and must be valid
+		validation.Field(&np.Resource,
+			validation.Required.Error("Resource is required"),
+			// Validate against resources that support notifications
 			validation.In(
-				EntityTypeShipment,
-				EntityTypeWorker,
-				EntityTypeCustomer,
-				EntityTypeTractor,
-				EntityTypeTrailer,
-				EntityTypeLocation,
-			).Error("Entity type must be valid"),
+				permission.ResourceShipment,
+				permission.ResourceWorker,
+				permission.ResourceCustomer,
+				permission.ResourceTractor,
+				permission.ResourceTrailer,
+				permission.ResourceLocation,
+				permission.ResourceCommodity,
+				permission.ResourceFleetCode,
+				permission.ResourceEquipmentType,
+				permission.ResourceEquipmentManufacturer,
+			).Error("Resource must be a valid resource type that supports notifications"),
 		),
 
 		// UpdateTypes must have at least one type if not notifying on all updates

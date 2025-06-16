@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
@@ -11,7 +12,7 @@ import (
 type GetUserPreferencesRequest struct {
 	UserID         pulid.ID
 	OrganizationID pulid.ID
-	EntityType     notification.EntityType
+	Resource       permission.Resource
 	IsActive       bool
 }
 

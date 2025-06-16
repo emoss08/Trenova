@@ -31,6 +31,12 @@ type GetAuditByResourceRequest struct {
 	Limit          int
 }
 
+type GetRecentEntriesRequest struct {
+	SinceTimestamp int64
+	Action         permission.Action
+	Limit          int
+}
+
 type AuditRepository interface {
 	InsertAuditEntries(ctx context.Context, entries []*audit.Entry) error
 	List(
@@ -43,4 +49,5 @@ type AuditRepository interface {
 	) (*ports.ListResult[*audit.Entry], error)
 	GetByID(ctx context.Context, opts GetAuditEntryByIDOptions) (*audit.Entry, error)
 	GetByResourceAndAction(ctx context.Context, req *GetAuditByResourceRequest) ([]*audit.Entry, error)
+	GetRecentEntries(ctx context.Context, req *GetRecentEntriesRequest) ([]*audit.Entry, error)
 }

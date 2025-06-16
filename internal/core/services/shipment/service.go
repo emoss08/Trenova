@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -13,7 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	dedicatedlaneservice "github.com/emoss08/trenova/internal/core/services/dedicatedlane"
-	notificationservice "github.com/emoss08/trenova/internal/core/services/notification"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
@@ -37,7 +35,6 @@ type ServiceParams struct {
 	Validator                  *shipmentvalidator.Validator
 	DedicatedLaneAssignService *dedicatedlaneservice.AssignmentService
 	JobService                 jobs.JobServiceInterface
-	EntityUpdateNotifService   *notificationservice.EntityUpdateService `optional:"true"`
 }
 
 type Service struct {
@@ -49,7 +46,6 @@ type Service struct {
 	v             *shipmentvalidator.Validator
 	dlas          *dedicatedlaneservice.AssignmentService
 	js            jobs.JobServiceInterface
-	euns          *notificationservice.EntityUpdateService
 }
 
 //nolint:gocritic // The p parameter is passed using fx.In
@@ -67,7 +63,6 @@ func NewService(p ServiceParams) *Service {
 		v:             p.Validator,
 		dlas:          p.DedicatedLaneAssignService,
 		js:            p.JobService,
-		euns:          p.EntityUpdateNotifService,
 	}
 }
 
@@ -324,40 +319,6 @@ func (s *Service) Update(
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log shipment update")
-	}
-
-	// Send notification to the owner if entity update notification service is available
-	if s.euns != nil {
-		// Determine the type of update
-		updateType := notification.UpdateTypeAny
-		if original.Status != updatedEntity.Status {
-			updateType = notification.UpdateTypeStatusChange
-		} else if original.ActualShipDate != updatedEntity.ActualShipDate ||
-			original.ActualDeliveryDate != updatedEntity.ActualDeliveryDate {
-			updateType = notification.UpdateTypeDateChange
-		}
-
-		// Send notification
-		err = s.euns.HandleEntityUpdate(ctx, &notificationservice.EntityUpdateRequest{
-			EntityType:      notification.EntityTypeShipment,
-			EntityID:        updatedEntity.ID.String(),
-			EntityCode:      updatedEntity.ProNumber,
-			EntityName:      fmt.Sprintf("Shipment %s", updatedEntity.ProNumber),
-			EntityURL:       fmt.Sprintf("/shipments/%s", updatedEntity.ID.String()),
-			UpdateType:      updateType,
-			UpdatedByUserID: userID,
-			OrganizationID:  updatedEntity.OrganizationID,
-			BusinessUnitID:  updatedEntity.BusinessUnitID,
-			Details: map[string]any{
-				"status":     updatedEntity.Status,
-				"proNumber":  updatedEntity.ProNumber,
-				"customerID": updatedEntity.CustomerID.String(),
-			},
-		})
-		if err != nil {
-			// Log the error but don't fail the update
-			log.Error().Err(err).Msg("failed to send entity update notification")
-		}
 	}
 
 	return updatedEntity, nil

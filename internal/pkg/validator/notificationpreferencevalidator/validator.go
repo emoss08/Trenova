@@ -72,11 +72,11 @@ func (v *Validator) validateCreate(
 	pref *notification.NotificationPreference,
 	multiErr *errors.MultiError,
 ) error {
-	// Check for duplicate preferences (same user, entity type, and organization)
+	// Check for duplicate preferences (same user, resource, and organization)
 	existing, err := v.repo.GetUserPreferences(ctx, &repositories.GetUserPreferencesRequest{
 		UserID:         pref.UserID,
 		OrganizationID: pref.OrganizationID,
-		EntityType:     pref.EntityType,
+		Resource:       pref.Resource,
 		IsActive:       true,
 	})
 	if err != nil {
@@ -84,8 +84,8 @@ func (v *Validator) validateCreate(
 	}
 
 	if len(existing) > 0 {
-		multiErr.Add("entityType", errors.ErrDuplicate,
-			"An active notification preference already exists for this entity type")
+		multiErr.Add("resource", errors.ErrDuplicate,
+			"An active notification preference already exists for this resource")
 	}
 
 	return nil
@@ -111,12 +111,12 @@ func (v *Validator) validateUpdate(
 		multiErr.Add("organizationId", errors.ErrInvalid, "Organization ID cannot be changed")
 	}
 
-	// Check for duplicate if entity type is being changed
-	if original.EntityType != pref.EntityType {
+	// Check for duplicate if resource is being changed
+	if original.Resource != pref.Resource {
 		existing, err := v.repo.GetUserPreferences(ctx, &repositories.GetUserPreferencesRequest{
 			UserID:         pref.UserID,
 			OrganizationID: pref.OrganizationID,
-			EntityType:     pref.EntityType,
+			Resource:       pref.Resource,
 			IsActive:       true,
 		})
 		if err != nil {
@@ -125,8 +125,8 @@ func (v *Validator) validateUpdate(
 
 		for _, e := range existing {
 			if e.ID != pref.ID {
-				multiErr.Add("entityType", errors.ErrDuplicate,
-					"An active notification preference already exists for this entity type")
+				multiErr.Add("resource", errors.ErrDuplicate,
+					"An active notification preference already exists for this resource")
 				break
 			}
 		}
