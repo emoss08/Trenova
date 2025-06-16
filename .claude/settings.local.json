@@ -32,7 +32,8 @@
       "Bash(go list:*)",
       "Bash(go get:*)",
       "Bash(sed:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(task reset)"
     ],
     "deny": []
   },

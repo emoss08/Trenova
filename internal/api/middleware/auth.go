@@ -59,15 +59,15 @@ func (m *AuthMiddleware) Authenticate() fiber.Handler {
 			Str("userAgent", c.Get("User-Agent")).
 			Logger()
 
-		// Get session ID from cookie
+		// * Get session ID from cookie
 		cookie := c.Cookies(m.cfg.Auth().SessionCookieName)
 		if cookie == "" {
 			log.Debug().Msg("no session cookie found")
 			return m.handleAuthError(c, fiber.StatusUnauthorized, "unauthorized")
 		}
 
-		// Basic security checks
-		if len(cookie) > 128 { // Prevent long cookie attacks
+		// * Basic security checks
+		if len(cookie) > 128 { // * Prevent long cookie attacks
 			log.Warn().Str("cookieLength", strconv.Itoa(len(cookie))).Msg("cookie too long")
 			return m.handleAuthError(c, fiber.StatusBadRequest, "invalid session")
 		}
@@ -79,10 +79,10 @@ func (m *AuthMiddleware) Authenticate() fiber.Handler {
 			return m.handleAuthError(c, fiber.StatusUnauthorized, "invalid session")
 		}
 
-		// Get and validate session
+		// * Get and validate session
 		sess, err := m.auth.RefreshSession(c.Context(), sessionID, c.IP(), c.Get("User-Agent"))
 		if err != nil {
-			// Check if this is a circuit breaker related error
+			// * Check if this is a circuit breaker related error
 			if strings.Contains(err.Error(), "circuit breaker is open") ||
 				strings.Contains(err.Error(), "redis operation timed out") {
 				log.Warn().
@@ -90,14 +90,14 @@ func (m *AuthMiddleware) Authenticate() fiber.Handler {
 					Str("sessionId", sessionID.String()).
 					Msg("Redis unavailable during session validation, allowing degraded access")
 
-				// Create a minimal session for degraded operation
+				// * Create a minimal session for degraded operation
 				sess = m.createDegradedSession(sessionID, c.IP(), c.Get("User-Agent"))
 			} else {
 				return m.handleSessionError(c, err, sessionID, &log)
 			}
 		}
 
-		// Additional security validations
+		// * Additional security validations
 		if err = m.validateSession(sess); err != nil {
 			log.Warn().
 				Err(err).
@@ -106,7 +106,7 @@ func (m *AuthMiddleware) Authenticate() fiber.Handler {
 			return m.handleAuthError(c, fiber.StatusUnauthorized, "invalid session")
 		}
 
-		// Set session in context
+		// * Set session in context
 		m.setSessionContext(c, sess)
 
 		log.Debug().
