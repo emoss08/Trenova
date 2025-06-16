@@ -6,6 +6,7 @@ import {
 import { faStar } from "@fortawesome/pro-regular-svg-icons";
 import { faStar as faStarSolid } from "@fortawesome/pro-solid-svg-icons";
 import { Icon } from "./ui/icons";
+import { NotificationCenter } from "./notification-center";
 
 export function NavActions() {
   const { data: favoriteData, isLoading } = useCurrentPageFavorite();
@@ -15,6 +16,7 @@ export function NavActions() {
 
   return (
     <div className="flex items-center gap-2 text-sm">
+      <NotificationCenter />
       <Button
         title={isFavorite ? "Remove from favorites" : "Add to favorites"}
         variant="ghost"

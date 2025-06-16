@@ -449,6 +449,48 @@ const routes: RouteObject[] = [
               },
             ],
           },
+          // Settings
+          {
+            path: "/settings",
+            handle: {
+              crumb: "Settings",
+              title: "Settings",
+            },
+            children: [
+              {
+                path: "notifications",
+                async lazy() {
+                  let NotificationSettingsPage = (await import("@/app/settings/notifications/page")).default;
+                  return { Component: NotificationSettingsPage };
+                },
+                handle: {
+                  crumb: "Notification Preferences",
+                  title: "Notification Preferences",
+                },
+              },
+            ],
+          },
+          // Notifications
+          {
+            path: "/notifications",
+            handle: {
+              crumb: "Notifications",
+              title: "Notifications",
+            },
+            children: [
+              {
+                path: "history",
+                async lazy() {
+                  let NotificationHistoryPage = (await import("@/app/notifications/history/page")).default;
+                  return { Component: NotificationHistoryPage };
+                },
+                handle: {
+                  crumb: "History",
+                  title: "Notification History",
+                },
+              },
+            ],
+          },
         ],
       },
       // Auth routes with AuthLayout
