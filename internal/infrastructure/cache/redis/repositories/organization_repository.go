@@ -74,7 +74,7 @@ func (or *organizationRepository) GetByID(
 	key := or.formatKey(orgID)
 
 	// * get the organization from the cache
-	if err := or.cache.GetJSON(ctx, key, org); err != nil {
+	if err := or.cache.GetJSON(ctx, ".", key, org); err != nil {
 		// * If the organization is not found in the cache, we need to fetch it from the database
 		if eris.Is(err, redis.ErrNil) {
 			log.Debug().Str("key", key).Msg("no organization found in cache")
@@ -109,7 +109,7 @@ func (or *organizationRepository) GetUserOrganizations(
 	orgs := make([]*organization.Organization, 0)
 	key := or.formatUserOrgKey(userID)
 
-	if err := or.cache.GetJSON(ctx, key, &orgs); err != nil {
+	if err := or.cache.GetJSON(ctx, ".", key, &orgs); err != nil {
 		if eris.Is(err, redis.ErrNil) {
 			log.Debug().Str("key", key).Msg("no organizations found in cache")
 		}
@@ -139,7 +139,7 @@ func (or *organizationRepository) SetUserOrganizations(
 		Logger()
 
 	key := or.formatUserOrgKey(userID)
-	if err := or.cache.SetJSON(ctx, key, orgs, defaultUserOrgTTL); err != nil {
+	if err := or.cache.SetJSON(ctx, ".", key, orgs, defaultUserOrgTTL); err != nil {
 		return eris.Wrapf(err, "failed to set user organizations %s in cache", userID)
 	}
 
@@ -165,7 +165,7 @@ func (or *organizationRepository) Set(ctx context.Context, org *organization.Org
 	key := or.formatKey(org.ID)
 
 	// * Set the organization in the cache
-	if err := or.cache.SetJSON(ctx, key, org, defaultOrganizationTTL); err != nil {
+	if err := or.cache.SetJSON(ctx, ".", key, org, defaultOrganizationTTL); err != nil {
 		return eris.Wrapf(err, "failed to set organization %s in cache", org.ID)
 	}
 

@@ -14,6 +14,7 @@ import (
 	"github.com/redis/go-redis/v9"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"go.uber.org/fx"
 )
 
@@ -32,100 +33,12 @@ const (
 
 type StringCmd = redis.StringCmd
 
-var (
-	// Nil reply returned by Redis when key does not exist.
-	ErrNil = redis.Nil
-	// Error returned when the redis config is nil
-	ErrConfigNil = eris.New("redis config is nil")
-)
-
-// CircuitBreakerState represents the state of the circuit breaker
-type CircuitBreakerState int32
-
-const (
-	CircuitBreakerClosed CircuitBreakerState = iota
-	CircuitBreakerOpen
-	CircuitBreakerHalfOpen
-)
-
-// CircuitBreaker implements a simple circuit breaker pattern for Redis operations
-type CircuitBreaker struct {
-	state        int32 // atomic access - CircuitBreakerState
-	failures     int32 // atomic access
-	lastFailTime int64 // atomic access - unix timestamp
-	threshold    int32
-	timeout      time.Duration
-	resetTimeout time.Duration
-}
-
-// NewCircuitBreaker creates a new circuit breaker
-func NewCircuitBreaker(threshold int32, timeout, resetTimeout time.Duration) *CircuitBreaker {
-	return &CircuitBreaker{
-		state:        int32(CircuitBreakerClosed),
-		threshold:    threshold,
-		timeout:      timeout,
-		resetTimeout: resetTimeout,
-	}
-}
-
-// CanExecute checks if an operation can be executed
-func (cb *CircuitBreaker) CanExecute() bool {
-	// TEMPORARY: Disable circuit breaker for stress testing
-	// This prevents Redis circuit breaker from opening under high load
-	return true
-
-	// Original logic (commented out for stress testing):
-	// state := CircuitBreakerState(atomic.LoadInt32(&cb.state))
-	//
-	// switch state {
-	// case CircuitBreakerClosed:
-	// 	return true
-	// case CircuitBreakerOpen:
-	// 	lastFailTime := atomic.LoadInt64(&cb.lastFailTime)
-	// 	if time.Since(time.Unix(lastFailTime, 0)) > cb.resetTimeout {
-	// 		// Try to transition to half-open
-	// 		if atomic.CompareAndSwapInt32(&cb.state, int32(CircuitBreakerOpen), int32(CircuitBreakerHalfOpen)) {
-	// 			atomic.StoreInt32(&cb.failures, 0)
-	// 			return true
-	// 		}
-	// 	}
-	// 	return false
-	// case CircuitBreakerHalfOpen:
-	// 	return true
-	// default:
-	// 	return false
-	// }
-}
-
-// OnSuccess records a successful operation
-func (cb *CircuitBreaker) OnSuccess() {
-	state := CircuitBreakerState(atomic.LoadInt32(&cb.state))
-	if state == CircuitBreakerHalfOpen {
-		atomic.StoreInt32(&cb.state, int32(CircuitBreakerClosed))
-		atomic.StoreInt32(&cb.failures, 0)
-	}
-}
-
-// OnFailure records a failed operation
-func (cb *CircuitBreaker) OnFailure() {
-	failures := atomic.AddInt32(&cb.failures, 1)
-	atomic.StoreInt64(&cb.lastFailTime, time.Now().Unix())
-
-	if failures >= cb.threshold {
-		atomic.StoreInt32(&cb.state, int32(CircuitBreakerOpen))
-	}
-}
-
-// GetState returns the current state of the circuit breaker
-func (cb *CircuitBreaker) GetState() CircuitBreakerState {
-	return CircuitBreakerState(atomic.LoadInt32(&cb.state))
-}
-
 // Client wraps the Redis client with additional functionality including circuit breaker
 type Client struct {
 	*redis.Client
 	l              *zerolog.Logger
 	circuitBreaker *CircuitBreaker
+	errBuilder     oops.OopsErrorBuilder
 }
 
 type ClientParams struct {
@@ -204,7 +117,13 @@ func NewClient(p ClientParams) (*Client, error) {
 			log.Error().Err(closeErr).Msg("failed to close redis client after ping failure")
 		}
 
-		return nil, eris.Wrap(err, "failed to connect to redis")
+		return nil, oops.In("redis_client").
+			With("addr", cfg.Addr).
+			With("db", cfg.DB).
+			With("timeout", cfg.ConnTimeout).
+			With("error", err).
+			Tags("redis_client").
+			Wrap(err)
 	}
 
 	log.Info().Str("addr", cfg.Addr).Msg("redis connection successful")
@@ -219,6 +138,7 @@ func NewClient(p ClientParams) (*Client, error) {
 	client := &Client{
 		Client:         redisClient,
 		l:              &log,
+		errBuilder:     oops.With("redis_client").Tags("redis_client"),
 		circuitBreaker: circuitBreaker,
 	}
 
@@ -244,10 +164,6 @@ func setDefaults(cfg *config.RedisConfig) {
 		cfg.MinIdleConns = defaultMinIdleConns
 	}
 }
-
-var (
-	ErrCircuitBreakerOpen = eris.New("redis circuit breaker is open")
-)
 
 // executeWithCircuitBreaker executes a Redis operation with circuit breaker protection
 func (c *Client) executeWithCircuitBreaker(
@@ -300,7 +216,7 @@ func (c *Client) executeWithCircuitBreaker(
 					Str("circuit_breaker_state", fmt.Sprintf("%v", c.circuitBreaker.GetState())).
 					Msg("redis operation failed, circuit breaker updated")
 			}
-			return err
+			return c.errBuilder.With("operation", operation).With("error", err).Wrap(err)
 		}
 
 		c.circuitBreaker.OnSuccess()
@@ -351,9 +267,9 @@ func (c *Client) Get(ctx context.Context, key string) (string, error) {
 
 	if executeErr != nil {
 		if eris.Is(executeErr, ErrCircuitBreakerOpen) {
-			return "", executeErr
+			return "", c.errBuilder.With("operation", "GET").With("key", key).Wrap(executeErr)
 		}
-		return "", executeErr
+		return "", c.errBuilder.With("operation", "GET").With("key", key).Wrap(executeErr)
 	}
 
 	if err != nil {
@@ -373,7 +289,7 @@ func (c *Client) Get(ctx context.Context, key string) (string, error) {
 			Bool("is_connection_refused", strings.Contains(err.Error(), "connection refused")).
 			Bool("is_network_error", strings.Contains(err.Error(), "network")).
 			Msg("redis get error")
-		return "", eris.Wrap(err, "failed to get value from redis")
+		return "", c.errBuilder.With("operation", "GET").With("key", key).Wrap(err)
 	}
 
 	c.l.Trace().
@@ -389,7 +305,7 @@ func (c *Client) Set(ctx context.Context, key string, value any, expiration time
 	return c.executeWithCircuitBreaker(ctx, "SET", func() error {
 		err := c.Client.Set(ctx, key, value, expiration).Err()
 		if err != nil {
-			return eris.Wrapf(err, "failed to set key: %s", key)
+			return c.errBuilder.With("operation", "SET").With("key", key).Wrap(err)
 		}
 
 		c.l.Trace().
@@ -403,39 +319,70 @@ func (c *Client) Set(ctx context.Context, key string, value any, expiration time
 }
 
 // GetJSON retrieves a JSON-encoded value from Redis and unmarshals it into the provided destination.
-func (c *Client) GetJSON(ctx context.Context, key string, dest any) error {
-	val, err := c.Get(ctx, key)
-	if err != nil {
-		return eris.Wrap(err, "failed to get value from redis")
-	}
+func (c *Client) GetJSON(ctx context.Context, path, key string, dest any) error {
+	return c.executeWithCircuitBreaker(ctx, "JSON.GET", func() error {
+		val, err := c.Client.JSONGet(ctx, key, path).Result()
+		if err != nil {
+			if eris.Is(err, redis.Nil) {
+				c.l.Debug().
+					Str("key", key).
+					Msg("redis JSON key not found")
+				return redis.Nil
+			}
+			return c.errBuilder.With("operation", "JSON.GET").With("key", key).Wrap(err)
+		}
 
-	if err = sonic.Unmarshal([]byte(val), dest); err != nil {
-		return eris.Wrapf(err, "failed to unmarshal JSON for key: %s", key)
-	}
+		if err = sonic.Unmarshal([]byte(val), dest); err != nil {
+			return c.errBuilder.With("operation", "JSON.GET").With("key", key).Wrap(err)
+		}
 
-	return nil
+		return nil
+	})
 }
 
 // SetJSON marshals a value as JSON and stores it in Redis with a specified expiration time.
 func (c *Client) SetJSON(
 	ctx context.Context,
+	path string,
 	key string,
 	value any,
 	expiration time.Duration,
 ) error {
-	data, err := sonic.Marshal(value)
-	if err != nil {
-		return eris.Wrapf(err, "failed to marshal JSON for key: %s", key)
-	}
+	return c.executeWithCircuitBreaker(ctx, "JSON.SET", func() error {
+		data, err := sonic.Marshal(value)
+		if err != nil {
+			return c.errBuilder.With("operation", "JSON.SET").With("key", key).Wrap(err)
+		}
 
-	return c.Set(ctx, key, data, expiration)
+		// Use Redis JSON.SET command to store as proper JSON
+		err = c.Client.JSONSet(ctx, key, path, string(data)).Err()
+		if err != nil {
+			return c.errBuilder.With("operation", "JSON.SET").With("key", key).Wrap(err)
+		}
+
+		// Set expiration if specified
+		if expiration > 0 {
+			err = c.Client.Expire(ctx, key, expiration).Err()
+			if err != nil {
+				return c.errBuilder.With("operation", "JSON.SET").With("key", key).Wrap(err)
+			}
+		}
+
+		c.l.Trace().
+			Str("key", key).
+			Interface("value", value).
+			Dur("expiration", expiration).
+			Msg("JSON key set successfully")
+
+		return nil
+	})
 }
 
 // Incr increments the integer value of a key in Redis by 1.
 func (c *Client) Incr(ctx context.Context, key string) (int64, error) {
 	val, err := c.Client.Incr(ctx, key).Result()
 	if err != nil {
-		return 0, eris.Wrapf(err, "failed to increment key: %s", key)
+		return 0, c.errBuilder.With("operation", "INCR").With("key", key).Wrap(err)
 	}
 
 	return val, nil
@@ -445,7 +392,7 @@ func (c *Client) Incr(ctx context.Context, key string) (int64, error) {
 func (c *Client) IncrBy(ctx context.Context, key string, value int64) (int64, error) {
 	val, err := c.Client.IncrBy(ctx, key, value).Result()
 	if err != nil {
-		return 0, eris.Wrapf(err, "failed to increment key by value: %s", key)
+		return 0, c.errBuilder.With("operation", "INCR_BY").With("key", key).Wrap(err)
 	}
 
 	return val, nil
@@ -455,10 +402,13 @@ func (c *Client) IncrBy(ctx context.Context, key string, value int64) (int64, er
 func (c *Client) HSet(ctx context.Context, key, field string, value any) error {
 	err := c.Client.HSet(ctx, key, field, value).Err()
 	if err != nil {
-		return eris.Wrapf(err, "failed to set hash field: %s.%s", key, field)
+		return c.errBuilder.With("operation", "HSET").
+			With("key", key).
+			With("field", field).
+			Wrap(err)
 	}
 
-	c.l.Debug().
+	c.l.Trace().
 		Str("key", key).
 		Str("field", field).
 		Interface("value", value).
@@ -474,7 +424,10 @@ func (c *Client) HGet(ctx context.Context, key, field string) (string, error) {
 		if eris.Is(err, redis.Nil) {
 			return "", redis.Nil
 		}
-		return "", eris.Wrapf(err, "failed to get hash field: %s.%s", key, field)
+		return "", c.errBuilder.With("operation", "HGET").
+			With("key", key).
+			With("field", field).
+			Wrap(err)
 	}
 
 	return val, nil
@@ -484,7 +437,7 @@ func (c *Client) HGet(ctx context.Context, key, field string) (string, error) {
 func (c *Client) SAdd(ctx context.Context, key string, members ...any) error {
 	err := c.Client.SAdd(ctx, key, members...).Err()
 	if err != nil {
-		return eris.Wrapf(err, "failed to add members to set: %s", key)
+		return c.errBuilder.With("operation", "SADD").With("key", key).Wrap(err)
 	}
 
 	c.l.Trace().
@@ -499,7 +452,7 @@ func (c *Client) SAdd(ctx context.Context, key string, members ...any) error {
 func (c *Client) SRem(ctx context.Context, key string, members ...any) error {
 	err := c.Client.SRem(ctx, key, members...).Err()
 	if err != nil {
-		return eris.Wrapf(err, "failed to remove members from set: %s", key)
+		return c.errBuilder.With("operation", "SREM").With("key", key).Wrap(err)
 	}
 
 	return nil
@@ -509,7 +462,7 @@ func (c *Client) SRem(ctx context.Context, key string, members ...any) error {
 func (c *Client) SMembers(ctx context.Context, key string) ([]string, error) {
 	members, err := c.Client.SMembers(ctx, key).Result()
 	if err != nil {
-		return nil, eris.Wrapf(err, "failed to get set members: %s", key)
+		return nil, c.errBuilder.With("operation", "SMEMBERS").With("key", key).Wrap(err)
 	}
 
 	return members, nil
@@ -519,10 +472,12 @@ func (c *Client) SMembers(ctx context.Context, key string) ([]string, error) {
 func (c *Client) Expire(ctx context.Context, key string, expiration time.Duration) error {
 	ok, err := c.Client.Expire(ctx, key, expiration).Result()
 	if err != nil {
-		return eris.Wrapf(err, "failed to set expiration for key: %s", key)
+		return c.errBuilder.With("operation", "EXPIRE").With("key", key).Wrap(err)
 	}
 	if !ok {
-		return eris.Errorf("key does not exist: %s", key)
+		return c.errBuilder.With("operation", "EXPIRE").
+			With("key", key).
+			Wrap(eris.Errorf("key does not exist: %s", key))
 	}
 
 	return nil
@@ -531,7 +486,7 @@ func (c *Client) Expire(ctx context.Context, key string, expiration time.Duratio
 // Del is a helper function to delete a key from redis
 func (c *Client) Del(ctx context.Context, keys ...string) error {
 	if err := c.Client.Del(ctx, keys...).Err(); err != nil {
-		return eris.Wrap(err, "failed to delete key from redis")
+		return c.errBuilder.With("operation", "DEL").With("keys", keys).Wrap(err)
 	}
 
 	c.l.Debug().
@@ -553,7 +508,7 @@ func (c *Client) IncreaseWithExpiry(
 
 	_, err := pipe.Exec(ctx)
 	if err != nil {
-		return 0, eris.Wrapf(err, "failed to increment and set expiry for key: %s", key)
+		return 0, c.errBuilder.With("operation", "INCR_BY").With("key", key).Wrap(err)
 	}
 
 	return incr.Val(), nil
@@ -571,12 +526,12 @@ func (c *Client) GetInt(ctx context.Context, key string, defaultVal int) (int, e
 		if eris.Is(err, redis.Nil) {
 			return defaultVal, nil
 		}
-		return defaultVal, err
+		return defaultVal, c.errBuilder.With("operation", "GET").With("key", key).Wrap(err)
 	}
 
 	intVal, err := strconv.Atoi(val)
 	if err != nil {
-		return defaultVal, eris.Wrapf(err, "failed to convert value to int for key: %s", key)
+		return defaultVal, c.errBuilder.With("operation", "GET").With("key", key).Wrap(err)
 	}
 
 	return intVal, nil
@@ -591,7 +546,7 @@ func (c *Client) Pipeline() redis.Pipeliner {
 func (c *Client) GetTTL(ctx context.Context, key string) (time.Duration, error) {
 	ttl, err := c.Client.TTL(ctx, key).Result()
 	if err != nil {
-		return 0, eris.Wrapf(err, "failed to get TTL for key: %s", key)
+		return 0, c.errBuilder.With("operation", "TTL").With("key", key).Wrap(err)
 	}
 	return ttl, nil
 }
@@ -608,7 +563,7 @@ func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
 		if eris.Is(err, ErrCircuitBreakerOpen) {
 			return false, err
 		}
-		return false, eris.Wrapf(err, "failed to check existence of key: %s", key)
+		return false, c.errBuilder.With("operation", "EXISTS").With("key", key).Wrap(err)
 	}
 	return n > 0, nil
 }
@@ -617,7 +572,7 @@ func (c *Client) Exists(ctx context.Context, key string) (bool, error) {
 func (c *Client) Keys(ctx context.Context, pattern string) ([]string, error) {
 	keys, err := c.Client.Keys(ctx, pattern).Result()
 	if err != nil {
-		return nil, eris.Wrapf(err, "failed to get keys matching pattern: %s", pattern)
+		return nil, c.errBuilder.With("operation", "KEYS").With("pattern", pattern).Wrap(err)
 	}
 	return keys, nil
 }
@@ -634,7 +589,7 @@ func (c *Client) Ping(ctx context.Context) error {
 			Bool("is_connection_refused", strings.Contains(err.Error(), "connection refused")).
 			Bool("is_network_error", strings.Contains(err.Error(), "network")).
 			Msg("redis ping failed")
-		return eris.Wrap(err, "redis ping failed")
+		return c.errBuilder.With("operation", "PING").Wrap(err)
 	}
 	c.l.Debug().Msg("redis ping successful")
 	return nil
@@ -646,7 +601,7 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 
 	// Check basic connectivity
 	if err := c.Ping(ctx); err != nil {
-		return eris.Wrap(err, "redis health check failed: ping error")
+		return c.errBuilder.With("operation", "PING").Wrap(err)
 	}
 
 	// Try a simple set/get operation
@@ -655,13 +610,13 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 
 	if err := c.Set(ctx, testKey, testValue, time.Second*10); err != nil {
 		c.l.Error().Err(err).Msg("redis health check failed: set operation")
-		return eris.Wrap(err, "redis health check failed: set operation")
+		return c.errBuilder.With("operation", "SET").Wrap(err)
 	}
 
 	val, err := c.Get(ctx, testKey)
 	if err != nil {
 		c.l.Error().Err(err).Msg("redis health check failed: get operation")
-		return eris.Wrap(err, "redis health check failed: get operation")
+		return c.errBuilder.With("operation", "GET").Wrap(err)
 	}
 
 	if val != testValue {
@@ -669,7 +624,7 @@ func (c *Client) HealthCheck(ctx context.Context) error {
 			Str("expected", testValue).
 			Str("actual", val).
 			Msg("redis health check failed: value mismatch")
-		return eris.New("redis health check failed: value mismatch")
+		return c.errBuilder.With("operation", "GET").With("key", testKey).Wrap(err)
 	}
 
 	// Clean up test key
