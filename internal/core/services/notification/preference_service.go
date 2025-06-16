@@ -315,3 +315,24 @@ func (s *PreferenceService) GetUserPreferences(
 
 	return prefs, nil
 }
+
+// HasManagePermission checks if a user has manage permissions
+func (s *PreferenceService) HasManagePermission(
+	ctx context.Context,
+	userID pulid.ID,
+	orgID pulid.ID,
+) (bool, error) {
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         userID,
+			Resource:       permission.ResourceUser,
+			Action:         permission.ActionManage,
+			OrganizationID: orgID,
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return result.Allowed, nil
+}

@@ -3,15 +3,18 @@ package notification
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
@@ -26,6 +29,7 @@ type AuditListenerServiceParams struct {
 	AuditRepository      repositories.AuditRepository
 	NotificationPrefRepo repositories.NotificationPreferenceRepository
 	UserRepository       repositories.UserRepository
+	BatchProcessor       *BatchProcessor
 }
 
 type AuditListenerService struct {
@@ -34,6 +38,7 @@ type AuditListenerService struct {
 	auditRepo            repositories.AuditRepository
 	notificationPrefRepo repositories.NotificationPreferenceRepository
 	userRepo             repositories.UserRepository
+	batchProcessor       *BatchProcessor
 
 	// Control mechanisms
 	ctx       context.Context
@@ -58,6 +63,7 @@ func NewAuditListenerService(p AuditListenerServiceParams) *AuditListenerService
 		auditRepo:            p.AuditRepository,
 		notificationPrefRepo: p.NotificationPrefRepo,
 		userRepo:             p.UserRepository,
+		batchProcessor:       p.BatchProcessor,
 		ctx:                  ctx,
 		cancel:               cancel,
 		lastCheck:            time.Now(),
@@ -286,10 +292,99 @@ func (s *AuditListenerService) shouldSendNotification(
 		return false
 	}
 
-	// TODO: Add quiet hours check if needed
-	// TODO: Check specific update types based on audit entry changes
+	// Check quiet hours if enabled
+	if pref.QuietHoursEnabled && s.isInQuietHours(pref) {
+		s.l.Debug().
+			Str("user_id", pref.UserID.String()).
+			Msg("notification skipped due to quiet hours")
+		return false
+	}
+
+	// Check specific update types if not notifying on all updates
+	if !pref.NotifyOnAllUpdates {
+		updateType := s.detectUpdateType(entry)
+		if !pref.IsUpdateTypeEnabled(updateType) {
+			return false
+		}
+	}
 
 	return true
+}
+
+// isInQuietHours checks if current time is within user's quiet hours
+func (s *AuditListenerService) isInQuietHours(pref *notification.NotificationPreference) bool {
+	if !pref.QuietHoursEnabled || pref.QuietHoursStart == "" || pref.QuietHoursEnd == "" {
+		return false
+	}
+
+	// Load user's timezone
+	loc, err := time.LoadLocation(pref.Timezone)
+	if err != nil {
+		s.l.Error().Err(err).Str("timezone", pref.Timezone).Msg("invalid timezone")
+		loc = time.UTC
+	}
+
+	now := time.Now().In(loc)
+
+	// Parse quiet hours times
+	startTime, err := time.ParseInLocation("15:04", pref.QuietHoursStart, loc)
+	if err != nil {
+		s.l.Error().Err(err).Msg("invalid quiet hours start time")
+		return false
+	}
+
+	endTime, err := time.ParseInLocation("15:04", pref.QuietHoursEnd, loc)
+	if err != nil {
+		s.l.Error().Err(err).Msg("invalid quiet hours end time")
+		return false
+	}
+
+	// Set to today's date
+	startTime = time.Date(now.Year(), now.Month(), now.Day(), startTime.Hour(), startTime.Minute(), 0, 0, loc)
+	endTime = time.Date(now.Year(), now.Month(), now.Day(), endTime.Hour(), endTime.Minute(), 0, 0, loc)
+
+	// Handle overnight quiet hours (e.g., 22:00 to 08:00)
+	if endTime.Before(startTime) {
+		// If we're after start time or before end time, we're in quiet hours
+		return now.After(startTime) || now.Before(endTime)
+	}
+
+	// Normal quiet hours (e.g., 08:00 to 17:00)
+	return now.After(startTime) && now.Before(endTime)
+}
+
+// detectUpdateType analyzes the audit entry to determine the type of update
+func (s *AuditListenerService) detectUpdateType(entry *audit.Entry) notification.UpdateType {
+	if len(entry.Changes) == 0 {
+		return notification.UpdateTypeAny
+	}
+
+	// Check for specific field changes
+	for field := range entry.Changes {
+		switch field {
+		case "status":
+			return notification.UpdateTypeStatusChange
+		case "assigned_to", "assigned_user_id", "worker_id":
+			return notification.UpdateTypeAssignment
+		case "arrival_time", "departure_time", "planned_arrival", "planned_departure",
+			"actual_ship_date", "actual_delivery_date":
+			return notification.UpdateTypeDateChange
+		case "location", "location_id", "origin_location_id", "destination_location_id":
+			return notification.UpdateTypeLocationChange
+		case "price", "rate", "total_charge", "accessorial_charges":
+			return notification.UpdateTypePriceChange
+		case "hazmat_status", "compliance_status":
+			return notification.UpdateTypeComplianceChange
+		}
+	}
+
+	// Check if it's a document-related change
+	if entry.Resource == permission.ResourceDocument {
+		return notification.UpdateTypeDocumentUpload
+	}
+
+	// Default to field change for any other updates
+	return notification.UpdateTypeFieldChange
 }
 
 // sendUpdateNotification sends the actual notification to the user
@@ -336,7 +431,27 @@ func (s *AuditListenerService) sendUpdateNotification(
 		},
 	}
 
-	// Send the notification
+	// Check if user prefers batched notifications
+	if pref.BatchNotifications && s.batchProcessor != nil {
+		s.batchProcessor.AddToBatch(
+			ownerID,
+			entry.OrganizationID,
+			entry.BusinessUnitID,
+			eventType,
+			title,
+			message,
+			entry.Changes,
+			relatedEntities,
+		)
+
+		s.l.Debug().
+			Str("user_id", ownerID.String()).
+			Msg("notification added to batch")
+
+		return nil
+	}
+
+	// Send immediate notification
 	notifReq := &services.SendNotificationRequest{
 		EventType: eventType,
 		Priority:  notification.PriorityMedium,
@@ -431,26 +546,316 @@ func (s *AuditListenerService) getResourceURL(resource permission.Resource, reso
 }
 
 func (s *AuditListenerService) extractChangeDetails(entry *audit.Entry) string {
-	// Extract meaningful change details from the audit entry
-	// This is a simplified version - you might want to make this more sophisticated
-
 	if len(entry.Changes) == 0 {
 		return ""
 	}
 
-	// Look for specific fields that are commonly updated
-	importantFields := []string{"status", "assigned_to", "location", "arrival_time", "departure_time"}
+	// Map of field names to user-friendly names
+	fieldNames := map[string]string{
+		"status":               "Status",
+		"assigned_to":          "Assigned To",
+		"arrival_time":         "Arrival Time",
+		"departure_time":       "Departure Time",
+		"location":             "Location",
+		"price":                "Price",
+		"total_charge":         "Total Charge",
+		"actual_ship_date":     "Ship Date",
+		"actual_delivery_date": "Delivery Date",
+		"pro_number":           "PRO Number",
+		"bol":                  "BOL",
+		"notes":                "Notes",
+		"description":          "Description",
+	}
 
 	var changes []string
-	for _, field := range importantFields {
-		if val, ok := entry.Changes[field]; ok {
-			changes = append(changes, fmt.Sprintf("%s changed to %v", field, val))
+	for field, value := range entry.Changes {
+		displayName := field
+		if friendly, ok := fieldNames[field]; ok {
+			displayName = friendly
+		}
+
+		// Format the value based on type
+		valueStr := s.formatFieldValue(field, value)
+		changes = append(changes, fmt.Sprintf("%s changed to %s", displayName, valueStr))
+
+		// Only show first 3 changes to keep message concise
+		if len(changes) >= 3 {
+			remainingCount := len(entry.Changes) - 3
+			if remainingCount > 0 {
+				changes = append(changes, fmt.Sprintf("and %d more changes", remainingCount))
+			}
+			break
 		}
 	}
 
 	if len(changes) > 0 {
-		return changes[0] // Return first change for brevity
+		return strings.Join(changes, ", ")
 	}
 
 	return fmt.Sprintf("%d fields updated", len(entry.Changes))
+}
+
+// formatFieldValue formats a field value for display
+func (s *AuditListenerService) formatFieldValue(field string, value interface{}) string {
+	if value == nil {
+		return "empty"
+	}
+
+	// Handle time fields
+	if strings.Contains(field, "time") || strings.Contains(field, "date") {
+		if numVal, ok := value.(float64); ok {
+			t := time.Unix(int64(numVal), 0)
+			return t.Format("Jan 2, 2006 3:04 PM")
+		}
+	}
+
+	// Handle boolean fields
+	if boolVal, ok := value.(bool); ok {
+		if boolVal {
+			return "Yes"
+		}
+		return "No"
+	}
+
+	// Default string representation
+	return fmt.Sprintf("%v", value)
+}
+
+// sendNotification sends a notification to the owner of the updated entity
+func (s *AuditListenerService) sendNotification(
+	ctx context.Context,
+	owner *user.User,
+	entity string,
+	entityID string,
+	updatedBy *user.User,
+	changeType notification.UpdateType,
+	auditEntry *audit.Entry,
+) error {
+	log := s.l.With().
+		Str("owner_id", owner.ID.String()).
+		Str("entity", entity).
+		Str("entity_id", entityID).
+		Logger()
+
+	// Determine priority based on update type
+	priority := s.determinePriority(changeType)
+
+	// Create the notification
+	n := &notification.Notification{
+		ID:             pulid.MustNew("notif_"),
+		Title:          s.buildNotificationTitle(entity, changeType),
+		Message:        s.buildNotificationMessage(entity, entityID, updatedBy, changeType),
+		Priority:       priority,
+		EventType:      s.getEventTypeForEntity(entity),
+		Channel:        notification.ChannelUser,
+		OrganizationID: owner.CurrentOrganizationID,
+		BusinessUnitID: &owner.BusinessUnitID,
+		TargetUserID:   &owner.ID,
+		Data: map[string]any{
+			"entityType":    entity,
+			"entityId":      entityID,
+			"updatedBy":     updatedBy.Name,
+			"updatedById":   updatedBy.ID.String(),
+			"updateType":    string(changeType),
+			"updateDetails": s.extractUpdateDetails(auditEntry),
+		},
+		Source:         "audit_listener",
+		DeliveryStatus: notification.DeliveryStatusPending,
+	}
+
+	// Send via notification service - we need to send directly via WebSocket
+	// since the notificationService interface doesn't have a Create method
+	roomName := n.GenerateRoomName()
+
+	// Create a minimal payload for WebSocket delivery
+	payload := map[string]any{
+		"id":        n.ID.String(),
+		"eventType": n.EventType,
+		"priority":  n.Priority,
+		"title":     n.Title,
+		"message":   n.Message,
+		"data":      n.Data,
+		"createdAt": timeutils.NowUnix(),
+	}
+
+	// Send via WebSocket using the notification service's underlying WebSocket manager
+	// This is a workaround since we don't have direct access to Create method
+	log.Info().
+		Str("room_name", roomName).
+		Str("notification_id", n.ID.String()).
+		Msg("sending notification via websocket")
+
+	// TODO: We should enhance the NotificationService interface to include a Create method
+	// For now, we're logging the notification that would be sent
+
+	log.Debug().
+		Str("priority", string(priority)).
+		Str("change_type", string(changeType)).
+		Interface("payload", payload).
+		Msg("notification prepared for sending")
+
+	return nil
+}
+
+// determinePriority determines the notification priority based on update type
+func (s *AuditListenerService) determinePriority(updateType notification.UpdateType) notification.Priority {
+	switch updateType {
+	case notification.UpdateTypeStatusChange:
+		return notification.PriorityHigh
+	case notification.UpdateTypeComplianceChange:
+		return notification.PriorityCritical
+	case notification.UpdateTypeAssignment:
+		return notification.PriorityMedium
+	case notification.UpdateTypePriceChange:
+		return notification.PriorityMedium
+	case notification.UpdateTypeLocationChange:
+		return notification.PriorityMedium
+	case notification.UpdateTypeDocumentUpload:
+		return notification.PriorityLow
+	default:
+		return notification.PriorityLow
+	}
+}
+
+// buildNotificationTitle builds the notification title based on entity and change type
+func (s *AuditListenerService) buildNotificationTitle(entity string, changeType notification.UpdateType) string {
+	entityName := s.formatEntityName(entity)
+
+	switch changeType {
+	case notification.UpdateTypeStatusChange:
+		return fmt.Sprintf("%s Status Changed", entityName)
+	case notification.UpdateTypeAssignment:
+		return fmt.Sprintf("%s Assigned", entityName)
+	case notification.UpdateTypeLocationChange:
+		return fmt.Sprintf("%s Location Updated", entityName)
+	case notification.UpdateTypeDocumentUpload:
+		return fmt.Sprintf("New Document for %s", entityName)
+	case notification.UpdateTypePriceChange:
+		return fmt.Sprintf("%s Pricing Updated", entityName)
+	case notification.UpdateTypeComplianceChange:
+		return fmt.Sprintf("%s Compliance Alert", entityName)
+	default:
+		return fmt.Sprintf("%s Updated", entityName)
+	}
+}
+
+// buildNotificationMessage builds the notification message
+func (s *AuditListenerService) buildNotificationMessage(entity, entityID string, updatedBy *user.User, changeType notification.UpdateType) string {
+	entityName := s.formatEntityName(entity)
+
+	switch changeType {
+	case notification.UpdateTypeStatusChange:
+		return fmt.Sprintf("%s has updated the status of your %s #%s", updatedBy.Name, strings.ToLower(entityName), entityID)
+	case notification.UpdateTypeAssignment:
+		return fmt.Sprintf("%s has assigned your %s #%s", updatedBy.Name, strings.ToLower(entityName), entityID)
+	case notification.UpdateTypeLocationChange:
+		return fmt.Sprintf("%s has updated the location of your %s #%s", updatedBy.Name, strings.ToLower(entityName), entityID)
+	case notification.UpdateTypeDocumentUpload:
+		return fmt.Sprintf("%s has uploaded a document to your %s #%s", updatedBy.Name, strings.ToLower(entityName), entityID)
+	case notification.UpdateTypePriceChange:
+		return fmt.Sprintf("%s has updated the pricing for your %s #%s", updatedBy.Name, strings.ToLower(entityName), entityID)
+	case notification.UpdateTypeComplianceChange:
+		return fmt.Sprintf("%s has made compliance changes to your %s #%s", updatedBy.Name, strings.ToLower(entityName), entityID)
+	default:
+		return fmt.Sprintf("%s has updated your %s #%s", updatedBy.Name, strings.ToLower(entityName), entityID)
+	}
+}
+
+// formatEntityName formats the entity name for display
+func (s *AuditListenerService) formatEntityName(entity string) string {
+	// Remove trailing 's' for singular form and capitalize
+	name := strings.TrimSuffix(entity, "s")
+	return strings.Title(name)
+}
+
+// getIconForEntity returns an appropriate icon for the entity type
+func (s *AuditListenerService) getIconForEntity(entity string) string {
+	switch entity {
+	case "shipments":
+		return "truck"
+	case "workers":
+		return "user"
+	case "customers":
+		return "users"
+	case "tractors":
+		return "truck-front"
+	case "trailers":
+		return "truck-trailer"
+	case "locations":
+		return "map-pin"
+	case "commodities":
+		return "package"
+	default:
+		return "file"
+	}
+}
+
+// getEventTypeForEntity returns the event type for the entity
+func (s *AuditListenerService) getEventTypeForEntity(entity string) notification.EventType {
+	switch entity {
+	case "shipments":
+		return notification.EventShipmentUpdated
+	case "workers":
+		return notification.EventWorkerUpdated
+	case "customers":
+		return notification.EventCustomerUpdated
+	case "tractors":
+		return notification.EventTractorUpdated
+	case "trailers":
+		return notification.EventTrailerUpdated
+	case "locations":
+		return notification.EventLocationUpdated
+	default:
+		return notification.EventEntityUpdated
+	}
+}
+
+// extractUpdateDetails extracts meaningful update details from the audit entry
+func (s *AuditListenerService) extractUpdateDetails(entry *audit.Entry) map[string]any {
+	if entry == nil {
+		return nil
+	}
+
+	// The Changes field contains what was changed
+	if entry.Changes != nil && len(entry.Changes) > 0 {
+		return entry.Changes
+	}
+
+	// If no Changes field, try to compute from states
+	if entry.CurrentState == nil {
+		return nil
+	}
+
+	// Extract only the changed fields
+	changedFields := make(map[string]any)
+
+	// If we have previous state, compare to find what changed
+	if entry.PreviousState != nil {
+		for key, newValue := range entry.CurrentState {
+			if oldValue, exists := entry.PreviousState[key]; exists {
+				if !s.valuesEqual(oldValue, newValue) {
+					changedFields[key] = map[string]any{
+						"old": oldValue,
+						"new": newValue,
+					}
+				}
+			} else {
+				// Field was added
+				changedFields[key] = map[string]any{
+					"new": newValue,
+				}
+			}
+		}
+	} else {
+		// No previous state, so all current state values are changes
+		changedFields = entry.CurrentState
+	}
+
+	return changedFields
+}
+
+// valuesEqual compares two values for equality
+func (s *AuditListenerService) valuesEqual(a, b any) bool {
+	// Simple comparison - could be enhanced for more complex types
+	return fmt.Sprintf("%v", a) == fmt.Sprintf("%v", b)
 }

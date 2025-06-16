@@ -102,6 +102,7 @@ var Module = fx.Module("services", fx.Provide(
 	websocket.NewService,
 	notification.NewService,
 	notification.NewPreferenceService,
+	notification.NewBatchProcessor,
 	notification.NewAuditListenerService,
 ),
 	fx.Invoke(func(s services.WebSocketService) {

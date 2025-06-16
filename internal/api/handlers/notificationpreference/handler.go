@@ -110,8 +110,15 @@ func (h *Handler) userPreferences(c *fiber.Ctx) error {
 
 		// Check if user is trying to access someone else's preferences
 		if userID != reqCtx.UserID {
-			// TODO: Check if user has admin/manage permissions
-			return h.eh.HandleError(c, errors.NewAuthorizationError("You can only view your own notification preferences"))
+			// Check if user has manage permission
+			hasManage, err := h.ps.HasManagePermission(c.UserContext(), reqCtx.UserID, reqCtx.OrgID)
+			if err != nil {
+				return h.eh.HandleError(c, err)
+			}
+
+			if !hasManage {
+				return h.eh.HandleError(c, errors.NewAuthorizationError("You can only view your own notification preferences"))
+			}
 		}
 	}
 

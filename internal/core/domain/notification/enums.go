@@ -56,6 +56,9 @@ const (
 
 	// EventLocationUpdated is fired when a location is updated
 	EventLocationUpdated = EventType("entity.location.updated")
+
+	// EventBatchSummary is fired for batched notifications
+	EventBatchSummary = EventType("batch.summary")
 )
 
 type Priority string
@@ -73,6 +76,37 @@ const (
 	// PriorityLow is for info updates and suggestions
 	PriorityLow = Priority("low")
 )
+
+// ShouldBypassQuietHours returns true if the priority level should bypass quiet hours
+func (p Priority) ShouldBypassQuietHours() bool {
+	return p == PriorityCritical || p == PriorityHigh
+}
+
+// ShouldBypassBatching returns true if the priority level should bypass batching
+func (p Priority) ShouldBypassBatching() bool {
+	return p == PriorityCritical || p == PriorityHigh
+}
+
+// CanBeBatched returns true if the priority level allows batching
+func (p Priority) CanBeBatched() bool {
+	return p == PriorityMedium || p == PriorityLow
+}
+
+// GetLevel returns the numeric level of the priority (higher is more important)
+func (p Priority) GetLevel() int {
+	switch p {
+	case PriorityCritical:
+		return 4
+	case PriorityHigh:
+		return 3
+	case PriorityMedium:
+		return 2
+	case PriorityLow:
+		return 1
+	default:
+		return 0
+	}
+}
 
 type Channel string
 

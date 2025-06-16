@@ -159,8 +159,16 @@ func (np *NotificationPreference) Validate(ctx context.Context, multiErr *errors
 
 		// Batch interval must be positive
 		validation.Field(&np.BatchIntervalMinutes,
-			validation.Min(1).Error("Batch interval must be at least 1 minute"),
-			validation.Max(1440).Error("Batch interval cannot exceed 24 hours"),
+			validation.By(func(value interface{}) error {
+				v := value.(int)
+				if v < 1 {
+					return validation.NewError("validation_min", "Batch interval must be at least 1 minute")
+				}
+				if v > 1440 {
+					return validation.NewError("validation_max", "Batch interval cannot exceed 24 hours")
+				}
+				return nil
+			}),
 		),
 	)
 
