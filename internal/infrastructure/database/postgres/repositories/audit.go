@@ -247,3 +247,50 @@ func (ar *auditRepository) InsertAuditEntries(ctx context.Context, entries []*au
 
 	return nil
 }
+
+// GetByResourceAndAction retrieves audit entries by resource, resource ID, and action
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - req: The request parameters.
+//
+// Returns:
+//   - []*audit.Entry: The list of audit entries.
+//   - error: An error if the operation fails.
+func (ar *auditRepository) GetByResourceAndAction(
+	ctx context.Context,
+	req *repositories.GetAuditByResourceRequest,
+) ([]*audit.Entry, error) {
+	dba, err := ar.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := ar.l.With().
+		Str("operation", "GetByResourceAndAction").
+		Str("resource", string(req.Resource)).
+		Str("resourceID", req.ResourceID).
+		Str("action", string(req.Action)).
+		Logger()
+
+	entries := make([]*audit.Entry, 0)
+
+	q := dba.NewSelect().Model(&entries).
+		Where("ae.resource = ?", req.Resource).
+		Where("ae.resource_id = ?", req.ResourceID).
+		Where("ae.action = ?", req.Action).
+		Where("ae.organization_id = ?", req.OrganizationID).
+		Order("ae.timestamp ASC").
+		Relation("User")
+
+	if req.Limit > 0 {
+		q = q.Limit(req.Limit)
+	}
+
+	if err = q.Scan(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to get audit entries by resource and action")
+		return nil, eris.Wrap(err, "get audit entries by resource and action")
+	}
+
+	return entries, nil
+}

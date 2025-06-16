@@ -33,6 +33,29 @@ const (
 
 	// EventCustomerDocumentReview is fired when a customer document needs review
 	EventCustomerDocumentReview = EventType("business.customer.document_review")
+
+	// Entity Update Events
+
+	// EventEntityUpdated is fired when an entity owned by a user is updated by someone else
+	EventEntityUpdated = EventType("entity.updated")
+
+	// EventShipmentUpdated is fired when a shipment is updated
+	EventShipmentUpdated = EventType("entity.shipment.updated")
+
+	// EventWorkerUpdated is fired when a worker is updated
+	EventWorkerUpdated = EventType("entity.worker.updated")
+
+	// EventCustomerUpdated is fired when a customer is updated
+	EventCustomerUpdated = EventType("entity.customer.updated")
+
+	// EventTractorUpdated is fired when a tractor is updated
+	EventTractorUpdated = EventType("entity.tractor.updated")
+
+	// EventTrailerUpdated is fired when a trailer is updated
+	EventTrailerUpdated = EventType("entity.trailer.updated")
+
+	// EventLocationUpdated is fired when a location is updated
+	EventLocationUpdated = EventType("entity.location.updated")
 )
 
 type Priority string
