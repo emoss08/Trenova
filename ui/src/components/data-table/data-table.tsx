@@ -174,14 +174,29 @@ export function DataTable<TData extends Record<string, any>>({
   useEffect(() => {
     if (dataQuery.isLoading || dataQuery.isFetching) return;
     if (modalType === "create") return; // * Don't override "create" modalType
-    if (Object.keys(rowSelection)?.length && !selectedRow) {
-      setSearchParams({ entityId: null, modalType: null });
-      setRowSelection({});
-    } else {
+
+    // If we have an entityId from URL, ensure row selection matches
+    if (
+      entityId &&
+      (!Object.keys(rowSelection).length || !rowSelection[entityId])
+    ) {
+      setRowSelection({ [entityId]: true });
+      return;
+    }
+
+    // Only sync from row selection to URL when user manually selects a row in the table
+    if (selectedRow && selectedRow.id !== entityId) {
+      console.log("setting row selection to", selectedRow?.id);
       setSearchParams({
         entityId: selectedRow?.id || null,
         modalType: selectedRow ? "edit" : null,
       });
+    }
+
+    // Clear when no entityId in URL and no row selected
+    if (!entityId && Object.keys(rowSelection).length && !selectedRow) {
+      console.log("setting row selection to empty");
+      setRowSelection({});
     }
   }, [
     rowSelection,
@@ -190,6 +205,7 @@ export function DataTable<TData extends Record<string, any>>({
     dataQuery.isLoading,
     dataQuery.isFetching,
     modalType,
+    entityId,
   ]);
 
   const handleCreateClick = useCallback(() => {

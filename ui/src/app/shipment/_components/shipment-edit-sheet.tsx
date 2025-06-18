@@ -20,7 +20,6 @@ import {
   shipmentSchema,
   type ShipmentSchema,
 } from "@/lib/schemas/shipment-schema";
-import { EditTableSheetProps } from "@/types/data-table";
 import { type Shipment } from "@/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
@@ -31,9 +30,7 @@ import { toast } from "sonner";
 import { useShipmentDetails } from "../queries/shipment";
 import { ShipmentForm } from "./form/shipment-form";
 
-export function ShipmentEditSheet({
-  currentRecord,
-}: EditTableSheetProps<ShipmentSchema>) {
+export function ShipmentEditSheet() {
   const { table, rowSelection, isLoading } = useDataTable();
   const queryClient = useQueryClient();
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -102,8 +99,8 @@ export function ShipmentEditSheet({
     isLoading: isDetailsLoading,
     isError: isDetailsError,
   } = useShipmentDetails({
-    shipmentId: currentRecord?.id ?? "",
-    enabled: !!currentRecord?.id && searchParams.modalType === "edit", // * Only fetch data if the sheet is open
+    shipmentId: searchParams.entityId ?? "",
+    enabled: !!searchParams.entityId && searchParams.modalType === "edit", // * Only fetch data if the sheet is open
   });
 
   const form = useForm({
@@ -122,24 +119,24 @@ export function ShipmentEditSheet({
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: ShipmentSchema) => {
       const response = await http.put<Shipment>(
-        `/shipments/${currentRecord?.id}`,
+        `/shipments/${searchParams.entityId}`,
         values,
       );
       return response.data;
     },
     onMutate: async (newValues) => {
       await queryClient.cancelQueries({
-        queryKey: ["shipment", currentRecord?.id],
+        queryKey: ["shipment", searchParams.entityId],
       });
 
       // * snapshot of the previous value
       const previousShipment = queryClient.getQueryData([
         "shipment",
-        currentRecord?.id,
+        searchParams.entityId,
       ]);
 
       // * optimistically update to the new value
-      queryClient.setQueryData(["shipment", currentRecord?.id], newValues);
+      queryClient.setQueryData(["shipment", searchParams.entityId], newValues);
 
       return { previousShipment, newValues };
     },
@@ -183,17 +180,19 @@ export function ShipmentEditSheet({
     [mutateAsync],
   );
 
-  // Update form values when currentRecord changes and is not loading
+  // Update form values when entityId changes and is not loading
   useEffect(() => {
     if (
       !isLoading &&
-      currentRecord &&
-      currentRecord.id !== previousRecordIdRef.current
+      searchParams.entityId &&
+      searchParams.entityId !== previousRecordIdRef.current
     ) {
-      reset(currentRecord);
-      previousRecordIdRef.current = currentRecord.id ?? null;
+      if (shipmentDetails) {
+        reset(shipmentDetails);
+      }
+      previousRecordIdRef.current = searchParams.entityId;
     }
-  }, [currentRecord, isLoading, reset]);
+  }, [searchParams.entityId, isLoading, reset, shipmentDetails]);
 
   useEffect(() => {
     if (shipmentDetails && !isDetailsLoading && !initialLoadRef.current) {
@@ -224,13 +223,14 @@ export function ShipmentEditSheet({
   return (
     <>
       <Sheet
-        open={!!selectedRowKey}
+        open={searchParams.modalType === "edit" && !!searchParams.entityId}
         onOpenChange={(open) => {
           if (!open) {
             const el = selectedRowKey
               ? document.getElementById(selectedRowKey)
               : null;
             table.resetRowSelection();
+            setSearchParams({ modalType: null, entityId: null });
 
             setTimeout(() => el?.focus(), 0);
           }
