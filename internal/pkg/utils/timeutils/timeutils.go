@@ -13,6 +13,15 @@ func NowUnix() int64 {
 	return time.Now().Unix()
 }
 
+func TimeZoneAwareNow(location string) int64 {
+	loc, err := time.LoadLocation(location)
+	if err != nil {
+		return NowUnix()
+	}
+	now := time.Now().In(loc)
+	return now.Unix()
+}
+
 // YearsToSeconds converts a number of years into the equivalent number of seconds.
 // It assumes a year has 365 days and does not account for leap years.
 func YearsToSeconds(years int) int64 {
@@ -107,4 +116,14 @@ func YearsFromNowUnixPointer(years int) *int64 {
 func YearsAgoUnixPointer(years int) *int64 {
 	now := time.Now().AddDate(-years, 0, 0).Unix()
 	return &now
+}
+
+// CurrentDateInTimezone returns the current date in the specified timezone as a formatted string (YYYY-MM-DD).
+// If the timezone cannot be loaded, it falls back to UTC.
+func CurrentDateInTimezone(location string) string {
+	loc, err := time.LoadLocation(location)
+	if err != nil {
+		return time.Now().UTC().Format("2006-01-02")
+	}
+	return time.Now().In(loc).Format("2006-01-02")
 }

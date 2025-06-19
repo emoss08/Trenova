@@ -396,9 +396,9 @@ func (h *Handler) liveStream(c *fiber.Ctx) error {
 		return result.Items, nil
 	}
 
-	timestampFunc := func(shipment *shipmentdomain.Shipment) int64 {
+	timestampFunc := func(s *shipmentdomain.Shipment) int64 {
 		// Use CreatedAt to only track new shipments, not existing ones
-		return shipment.CreatedAt
+		return s.CreatedAt
 	}
 
 	return streamingutils.StreamWithSimplePoller(

@@ -154,7 +154,7 @@ func (s *Service) registerClient(c *Client) {
 	} else {
 		remoteAddr = fmt.Sprintf("unknown_%s", pulid.MustNew("conn_").String())
 	}
-	
+
 	if err := s.redis.SAdd(
 		context.Background(),
 		fmt.Sprintf("user:%s:connections", c.userID.String()),
@@ -188,7 +188,7 @@ func (s *Service) unregisterClient(c *Client) {
 	}
 
 	delete(s.clients, c)
-	
+
 	// Only close the channel if it's not already closed
 	select {
 	case <-c.send:
@@ -375,7 +375,7 @@ func (s *Service) BroadcastToUser(userID string, content any) {
 			"data":      content,
 			"timestamp": timeutils.NowUnix(),
 		}
-		
+
 		clientData, _ := sonic.Marshal(wrappedForClient)
 		s.sendToUser(userID, clientData)
 	}
@@ -415,7 +415,7 @@ func (s *Service) BroadcastToRoom(roomID string, content any) {
 			"data":      content,
 			"timestamp": timeutils.NowUnix(),
 		}
-		
+
 		clientData, _ := sonic.Marshal(wrappedForClient)
 		s.sendToRoom(roomID, clientData)
 	}
@@ -455,7 +455,7 @@ func (s *Service) BroadcastToOrg(orgID string, content any) {
 			"data":      content,
 			"timestamp": timeutils.NowUnix(),
 		}
-		
+
 		clientData, _ := sonic.Marshal(wrappedForClient)
 		s.sendToOrg(orgID, clientData)
 	}

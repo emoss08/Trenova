@@ -43,7 +43,7 @@ func NewHandler(p HandlerParams) *Handler {
 func (h *Handler) RegisterRoutes(r fiber.Router) {
 	r.Use("/ws", h.webSocketService.HandleWebSocket)
 	r.Get("/ws/notifications", websocket.New(h.webSocketService.HandleConnection))
-	
+
 	// Test endpoints for development
 	r.Post("/test/notification", h.TestNotification)
 	r.Post("/test/org-notification", h.TestOrgNotification)

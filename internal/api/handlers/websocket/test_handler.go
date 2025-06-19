@@ -40,10 +40,10 @@ func (h *Handler) TestNotification(c *fiber.Ctx) error {
 	h.webSocketService.BroadcastToUser(reqCtx.UserID.String(), testNotif)
 
 	return c.JSON(fiber.Map{
-		"status":  "success",
-		"message": "Test notification sent successfully",
+		"status":          "success",
+		"message":         "Test notification sent successfully",
 		"notification_id": testNotif["id"],
-		"target_user_id": reqCtx.UserID.String(),
+		"target_user_id":  reqCtx.UserID.String(),
 	})
 }
 
@@ -58,11 +58,11 @@ func (h *Handler) TestOrgNotification(c *fiber.Ctx) error {
 
 	// Broadcast to organization
 	h.webSocketService.BroadcastToOrg(reqCtx.OrgID.String(), map[string]any{
-		"id":       pulid.MustNew("notif_").String(),
-		"type":     "org_broadcast",
-		"title":    "Organization Broadcast",
-		"message":  "This is a test broadcast to all users in the organization.",
-		"priority": "low",
+		"id":        pulid.MustNew("notif_").String(),
+		"type":      "org_broadcast",
+		"title":     "Organization Broadcast",
+		"message":   "This is a test broadcast to all users in the organization.",
+		"priority":  "low",
 		"timestamp": timeutils.NowUnix(),
 	})
 

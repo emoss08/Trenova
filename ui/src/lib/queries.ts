@@ -4,6 +4,7 @@ import type { AnalyticsPage } from "@/types/analytics";
 import { Resource } from "@/types/audit-entry";
 import type { GetCustomerByIDParams } from "@/types/customer";
 import type { IntegrationType } from "@/types/integration";
+import type { NotificationQueryParams } from "@/types/notification";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 import type { PatternConfigSchema } from "./schemas/pattern-config-schema";
 import type { TableConfigurationSchema } from "./schemas/table-configuration-schema";
@@ -243,6 +244,12 @@ export const queries = createQueryKeyStore({
     update: (payload: PatternConfigSchema) => ({
       queryKey: ["pattern-config", payload],
       queryFn: async () => api.patternConfig.update(payload),
+    }),
+  },
+  notification: {
+    list: (params?: NotificationQueryParams) => ({
+      queryKey: ["notifications", params],
+      queryFn: async () => api.notifications.list(params),
     }),
   },
 });

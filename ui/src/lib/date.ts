@@ -26,6 +26,12 @@ type DateFormatOptions = {
    * @default true
    */
   showDate?: boolean;
+
+  /**
+   * Whether to show the time
+   * @default true
+   */
+  showTime?: boolean;
 };
 
 const TIME_FORMAT_24 = "HH:mm";
@@ -290,6 +296,7 @@ export function formatToUserTimezone(
     showSeconds = false,
     showTimeZone = true,
     showDate = true,
+    showTime = true,
   } = options;
 
   const date = fromUnixTime(timestamp);
@@ -299,18 +306,21 @@ export function formatToUserTimezone(
   }
 
   const formatOptions: Intl.DateTimeFormatOptions = {
-    hour: "2-digit",
-    minute: "2-digit",
     timeZone: timezone,
-    hour12: timeFormat === TimeFormat.TimeFormat12Hour,
   };
 
-  if (showSeconds) {
-    formatOptions.second = "2-digit";
-  }
+  if (showTime) {
+    formatOptions.hour = "2-digit";
+    formatOptions.minute = "2-digit";
+    formatOptions.hour12 = timeFormat === TimeFormat.TimeFormat12Hour;
 
-  if (showTimeZone) {
-    formatOptions.timeZoneName = "short";
+    if (showSeconds) {
+      formatOptions.second = "2-digit";
+    }
+
+    if (showTimeZone) {
+      formatOptions.timeZoneName = "short";
+    }
   }
 
   if (showDate) {
