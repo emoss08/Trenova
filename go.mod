@@ -7,19 +7,19 @@ require (
 	github.com/bytedance/sonic v1.13.3
 	github.com/docker/go-connections v0.5.0
 	github.com/fatih/color v1.18.0
-	github.com/gen2brain/go-fitz v1.24.14
+	github.com/gen2brain/go-fitz v1.24.15
 	github.com/go-co-op/gocron v1.37.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
 	github.com/gofiber/contrib/websocket v1.3.4
 	github.com/gofiber/fiber/v2 v2.52.8
 	github.com/google/go-querystring v1.1.0
 	github.com/hibiken/asynq v0.25.1
-	github.com/imroc/req/v3 v3.52.2
+	github.com/imroc/req/v3 v3.53.0
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jaswdr/faker/v2 v2.5.0
 	github.com/lib/pq v1.10.9
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/minio/minio-go/v7 v7.0.92
+	github.com/minio/minio-go/v7 v7.0.94
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.10.0
@@ -28,18 +28,18 @@ require (
 	github.com/rs/zerolog v1.34.0
 	github.com/samber/lo v1.51.0
 	github.com/samber/oops v1.18.1
-	github.com/samber/oops/loggers/zerolog v0.0.0-20250527213707-75067ba09442
+	github.com/samber/oops/loggers/zerolog v0.0.0-20250617094048-2f6414b971ec
 	github.com/shopspring/decimal v1.4.0
 	github.com/sourcegraph/conc v0.3.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.10.0
 	github.com/testcontainers/testcontainers-go v0.37.0
-	github.com/uptrace/bun v1.2.12
-	github.com/uptrace/bun/dbfixture v1.2.12
-	github.com/uptrace/bun/dialect/pgdialect v1.2.12
-	github.com/uptrace/bun/driver/pgdriver v1.2.12
-	github.com/uptrace/bun/extra/bundebug v1.2.12
+	github.com/uptrace/bun v1.2.14
+	github.com/uptrace/bun/dbfixture v1.2.14
+	github.com/uptrace/bun/dialect/pgdialect v1.2.14
+	github.com/uptrace/bun/driver/pgdriver v1.2.14
+	github.com/uptrace/bun/extra/bundebug v1.2.14
 	github.com/valyala/fasthttp v1.62.0
 	go.uber.org/atomic v1.11.0
 	go.uber.org/fx v1.24.0
@@ -90,7 +90,7 @@ require (
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/elliotchance/orderedmap/v2 v2.7.0 // indirect
 	github.com/emirpasic/gods v1.18.1 // indirect
-	github.com/fasthttp/websocket v1.5.8 // indirect
+	github.com/fasthttp/websocket v1.5.12 // indirect
 	github.com/felixge/httpsnoop v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.9.0 // indirect
 	github.com/getkin/kin-openapi v0.131.0 // indirect
@@ -105,7 +105,7 @@ require (
 	github.com/go-task/slim-sprig/v3 v3.0.0 // indirect
 	github.com/go-task/task/v3 v3.41.0 // indirect
 	github.com/go-task/template v0.1.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
@@ -166,7 +166,7 @@ require (
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/sagikazarmark/locafero v0.9.0 // indirect
 	github.com/sajari/fuzzy v1.0.0 // indirect
-	github.com/savsgio/gotils v0.0.0-20240303185622-093b76447511 // indirect
+	github.com/savsgio/gotils v0.0.0-20250408102913-196191ec6287 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/shirou/gopsutil/v4 v4.25.5 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect

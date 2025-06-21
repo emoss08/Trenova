@@ -1,4 +1,5 @@
 import { nodeResolve } from "@rollup/plugin-node-resolve";
+import { VitePWA } from "vite-plugin-pwa";
 // @ts-expect-error // Module does not give types
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
@@ -8,80 +9,6 @@ import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, normalizePath, type PluginOption } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { viteStaticCopy } from "vite-plugin-static-copy";
-
-// Define vendor chunks that should be bundled separately
-// const vendorChunks = {
-//   // UI Framework and Core
-//   "core-react": [
-//     "react",
-//     "react-dom",
-//     "react-router-dom",
-//     "react-helmet-async",
-//   ],
-
-//   // State Management and Data Fetching
-//   "data-management": ["@tanstack/react-query", "zustand"],
-
-//   // UI Components and Styling
-//   "ui-components": [
-//     "@radix-ui/react-alert-dialog",
-//     "@radix-ui/react-avatar",
-//     "@radix-ui/react-checkbox",
-//     "@radix-ui/react-collapsible",
-//     "@radix-ui/react-dialog",
-//     "@radix-ui/react-dropdown-menu",
-//     "@radix-ui/react-label",
-//     "@radix-ui/react-popover",
-//     "@radix-ui/react-radio-group",
-//     "@radix-ui/react-scroll-area",
-//     "@radix-ui/react-select",
-//     "@radix-ui/react-slot",
-//     "@radix-ui/react-tooltip",
-//     "@radix-ui/react-tabs",
-//     "@radix-ui/react-visually-hidden",
-//     "@radix-ui/react-switch",
-//     "react-lazy-load-image-component",
-//     "nuqs",
-//     "sonner",
-//     "react-day-picker",
-//     "react-markdown",
-//     "@ark-ui/react",
-//   ],
-
-//   "pdf-js": ["react-pdf"],
-
-//   // Table and Query functionality
-//   "data-tables": ["@tanstack/react-table"],
-
-//   // Form Management
-//   "form-handling": ["react-hook-form", "@hookform/resolvers", "zod"],
-
-//   // Drag and Drop
-//   "dnd-kit": [
-//     "@dnd-kit/core",
-//     "@dnd-kit/modifiers",
-//     "@dnd-kit/sortable",
-//     "@dnd-kit/utilities",
-//   ],
-
-//   "sql-editor": ["ace-builds", "react-ace", "sql-formatter"],
-
-//   // Icons and Assets
-//   icons: [
-//     "@radix-ui/react-icons",
-//     "@fortawesome/pro-regular-svg-icons",
-//     "@fortawesome/pro-solid-svg-icons",
-//   ],
-
-//   // Date handling
-//   "date-utils": ["date-fns", "chrono-node"],
-
-//   // Animation
-//   animation: ["motion"],
-
-//   // Utilities
-//   utils: ["clsx", "tailwind-merge", "class-variance-authority"],
-// };
 
 const require = createRequire(import.meta.url);
 const cMapsDir = normalizePath(
@@ -113,32 +40,32 @@ export default defineConfig({
     }),
     tailwindcss(),
     nodeResolve() as PluginOption,
-    // VitePWA({
-    //   registerType: "autoUpdate",
-    //   devOptions: {
-    //     enabled: false,
-    //     navigateFallback: "index.html",
-    //     suppressWarnings: true,
-    //     type: "module",
-    //   },
-    //   workbox: {
-    //     globPatterns: ["**/*.{js,css,html,svg,png,ico,webp}"],
-    //     cleanupOutdatedCaches: true,
-    //     clientsClaim: true,
-    //     maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4MB
-    //   },
-    //   pwaAssets: {
-    //     disabled: false,
-    //     config: true,
-    //   },
-    //   manifest: {
-    //     name: "Trenova TMS",
-    //     short_name: "Trenova",
-    //     description:
-    //       "An Open Source AI-driven asset based transportation management system",
-    //     theme_color: "#000000",
-    //   },
-    // }),
+    VitePWA({
+      registerType: "autoUpdate",
+      devOptions: {
+        enabled: false,
+        navigateFallback: "index.html",
+        suppressWarnings: true,
+        type: "module",
+      },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,svg,png,ico,webp}"],
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        maximumFileSizeToCacheInBytes: 4 * 1024 * 1024, // 4MB
+      },
+      pwaAssets: {
+        disabled: false,
+        config: true,
+      },
+      manifest: {
+        name: "Trenova TMS",
+        short_name: "Trenova",
+        description:
+          "An Open Source AI-driven asset based transportation management system",
+        theme_color: "#000000",
+      },
+    }),
     viteStaticCopy({
       targets: [
         { src: cMapsDir, dest: "" },
@@ -147,12 +74,9 @@ export default defineConfig({
       ],
     }),
     compression({
-      algorithm: "brotliCompress",
+      algorithms: ["brotliCompress", "gzip"],
       threshold: 512,
       deleteOriginalAssets: false,
-    }),
-    compression({
-      algorithm: "gzip",
     }),
     visualizer({
       open: true,
