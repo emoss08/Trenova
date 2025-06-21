@@ -120,7 +120,6 @@ export function StopDialog({
         // Map server errors to local form
         Object.entries(stopErrors).forEach(([fieldName, error]) => {
           if (error && typeof error === "object" && "message" in error) {
-            console.info("error.message", error.message);
             const localFieldPath = `stop.${fieldName}` as any;
             localForm.setError(localFieldPath, {
               type: "server",

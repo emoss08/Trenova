@@ -1,4 +1,4 @@
-import { DataTable } from "@/components/data-table/data-table";
+import { DataTableV2 } from "@/components/data-table/data-table-v2";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LiveModePresets } from "@/lib/live-mode-utils";
 import { queries } from "@/lib/queries";
@@ -20,7 +20,7 @@ export default function ShipmentTable() {
   return (
     <>
       <ShipmentTabs status={status} setStatus={setStatus} />
-      <DataTable<Shipment>
+      <DataTableV2<Shipment>
         name="Shipment"
         link="/shipments/"
         extraSearchParams={{

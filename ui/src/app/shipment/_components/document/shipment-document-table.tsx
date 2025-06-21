@@ -4,7 +4,8 @@ import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { Resource } from "@/types/audit-entry";
 import { Document } from "@/types/document";
 import { API_ENDPOINTS } from "@/types/server";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { toast } from "sonner";
 import { getColumns } from "./shipment-document-columns";
 
 export default function ShipmentDocumentTable({
@@ -17,27 +18,13 @@ export default function ShipmentDocumentTable({
   );
   const [pdfViewerOpen, setPdfViewerOpen] = useState(false);
 
-  // Add debugging for the presignedURL
-  useEffect(() => {
-    if (selectedDocument) {
-      console.log("Selected document:", selectedDocument);
-      console.log("Presigned URL:", selectedDocument.presignedUrl);
-
-      // Check if the URL is valid
-      if (!selectedDocument.presignedUrl) {
-        console.error("No presigned URL available for this document");
-      }
-    }
-  }, [selectedDocument]);
-
   const handleDocumentClick = useCallback(
     (doc: Document) => {
       if (doc.fileType === ".pdf") {
-        console.log("Opening PDF document:", doc.fileName);
         setSelectedDocument(doc);
         setPdfViewerOpen(true);
       } else {
-        console.log("Document not a pdf", doc);
+        toast.info("Cannot open document as it is not a PDF");
       }
     },
     [setSelectedDocument, setPdfViewerOpen],

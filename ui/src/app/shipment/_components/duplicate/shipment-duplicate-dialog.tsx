@@ -59,7 +59,10 @@ export function ShipmentDuplicateDialog({
       return response.message;
     },
     onSuccess: () => {
-      toast.success("Shipment duplicate job started");
+      toast.success("Shipment duplicate job started", {
+        description:
+          "You will receive a notification when the duplicate is complete.",
+      });
       onOpenChange(false);
       reset();
 

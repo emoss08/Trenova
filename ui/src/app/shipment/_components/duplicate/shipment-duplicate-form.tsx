@@ -13,10 +13,8 @@ export function ShipmentDuplicateForm() {
         <NumberField
           name="count"
           control={control}
-          max={20}
-          min={1}
           label="Number of Copies"
-          rules={{ required: true, min: 1, max: 20 }}
+          rules={{ required: true }}
           description="The number of shipments to duplicate."
         />
       </FormControl>

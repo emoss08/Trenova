@@ -92,7 +92,12 @@ export function getColumns(): ColumnDef<Shipment>[] {
         const shipment = row.original;
         const originStop = getOriginStopInfo(shipment);
 
-        return <HoverCardTimestamp timestamp={originStop?.plannedArrival} />;
+        return (
+          <HoverCardTimestamp
+            className="font-table tracking-tight"
+            timestamp={originStop?.plannedArrival}
+          />
+        );
       },
     },
     createNestedEntityRefColumn(columnHelper, {
@@ -125,7 +130,10 @@ export function getColumns(): ColumnDef<Shipment>[] {
         const destinationStop = getDestinationStopInfo(shipment);
 
         return (
-          <HoverCardTimestamp timestamp={destinationStop?.plannedArrival} />
+          <HoverCardTimestamp
+            className="font-table tracking-tight"
+            timestamp={destinationStop?.plannedArrival}
+          />
         );
       },
     },

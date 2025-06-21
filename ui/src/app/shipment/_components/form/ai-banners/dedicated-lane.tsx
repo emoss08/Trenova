@@ -1,4 +1,3 @@
-import { APP_ENV } from "@/constants/env";
 import { queries } from "@/lib/queries";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { ShipmentLocations } from "@/lib/shipment/utils";
@@ -50,13 +49,6 @@ export const DedicatedLaneBanner = memo(() => {
     }),
     enabled: hasRequiredFields,
   });
-
-  if (APP_ENV === "development") {
-    console.info("dedicatedLane", dedicatedLane);
-    if (!dedicatedLane) {
-      console.info("no dedicated lane found");
-    }
-  }
 
   if (!dedicatedLane) {
     return null;
