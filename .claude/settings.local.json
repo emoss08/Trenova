@@ -33,7 +33,10 @@
       "Bash(go get:*)",
       "Bash(sed:*)",
       "Bash(curl:*)",
-      "Bash(task reset)"
+      "Bash(task reset)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(npx tsc:*)"
     ],
     "deny": []
   },
