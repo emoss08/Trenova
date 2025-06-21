@@ -5,12 +5,12 @@ import { flexRender, type Table } from "@tanstack/react-table";
 
 export function DataTableHeader<TData>({ table }: { table: Table<TData> }) {
   return (
-    <TableHeader className="sticky top-0 z-20 rounded-t-md bg-background">
+    <TableHeader className="sticky top-0 z-20 rounded-t-md bg-card">
       {table.getHeaderGroups().map((headerGroup) => (
         <TableRow
           key={headerGroup.id}
           className={cn(
-            "bg-sidebar hover:bg-sidebar/50",
+            "bg-card hover:bg-card/50",
             "[&>*]:border-t [&>:not(:last-child)]:border-r",
           )}
         >

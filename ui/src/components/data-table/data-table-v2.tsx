@@ -1,25 +1,22 @@
-/**
- * ACKNOWLEDGMENTS
- *
- * This Table component incorporates design patterns and architectural concepts
- * inspired by the following open-source projects:
- *
- * - SHADCN Table: https://github.com/sadmann7/shadcn-table
- * - OpenStatus Data Table: https://github.com/openstatusHQ/data-table-filters
- *
- * While the implementation is original, we acknowledge the foundational work
- * and innovative approaches demonstrated by these projects in the React table
- * ecosystem.
- */
-
 "use no memo";
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
 import { useLiveDataTable } from "@/hooks/use-live-data-table";
 import { usePermissions } from "@/hooks/use-permissions";
+import {
+  convertFilterStateToAPIParams,
+  getDataTableEndpoint,
+} from "@/lib/enhanced-data-table-api";
+import { filterUtils } from "@/lib/enhanced-data-table-utils";
 import { queries } from "@/lib/queries";
 import { DataTableProps } from "@/types/data-table";
+import type {
+  EnhancedColumnDef,
+  EnhancedDataTableConfig,
+  FilterState,
+} from "@/types/enhanced-data-table";
 import { Action } from "@/types/roles-permissions";
+import type { API_ENDPOINTS } from "@/types/server";
 import { useQuery } from "@tanstack/react-query";
 import {
   getCoreRowModel,
@@ -44,13 +41,37 @@ import { DataTableBody } from "./_components/data-table-body";
 import { DataTableHeader } from "./_components/data-table-header";
 import { DataTableOptions } from "./_components/data-table-options";
 import { PaginationInner } from "./_components/data-table-pagination";
-import { DataTableSearch } from "./_components/data-table-search";
+import { EnhancedDataTableFilters } from "./_components/enhanced-data-table-filters";
+import { EnhancedDataTableSearch } from "./_components/enhanced-data-table-search";
+import { EnhancedDataTableSort } from "./_components/enhanced-data-table-sort";
 import { LiveModeBanner } from "./_components/live-mode-banner";
 import { DataTableProvider } from "./data-table-provider";
 
 const DataTableActions = lazy(() => import("./_components/data-table-actions"));
 
-export function DataTable<TData extends Record<string, any>>({
+export interface EnhancedDataTableProps<TData extends Record<string, any>>
+  extends Omit<DataTableProps<TData>, "columns"> {
+  columns: EnhancedColumnDef<TData>[];
+  config?: EnhancedDataTableConfig;
+  defaultFilters?: FilterState["filters"];
+  defaultSort?: FilterState["sort"];
+  onFilterChange?: (state: FilterState) => void;
+  useEnhancedBackend?: boolean;
+}
+
+const defaultConfig: EnhancedDataTableConfig = {
+  enableFiltering: true,
+  enableSorting: true,
+  enableMultiSort: true,
+  maxFilters: 10,
+  maxSorts: 3,
+  searchDebounce: 300,
+  showFilterUI: true,
+  showSortUI: true,
+  enableFilterPresets: false,
+};
+
+export function DataTableV2<TData extends Record<string, any>>({
   columns,
   link,
   queryKey,
@@ -66,7 +87,12 @@ export function DataTable<TData extends Record<string, any>>({
   resource,
   getRowClassName,
   liveMode,
-}: DataTableProps<TData>) {
+  config = defaultConfig,
+  defaultFilters = [],
+  defaultSort = [],
+  onFilterChange,
+  useEnhancedBackend = false,
+}: EnhancedDataTableProps<TData>) {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { page, pageSize, entityId, modalType } = searchParams;
   const [rowSelection, setRowSelection] = useState<RowSelectionState>(
@@ -79,6 +105,63 @@ export function DataTable<TData extends Record<string, any>>({
       {},
     );
 
+  // Derive filter state from URL parameters
+  const filterState = useMemo<FilterState>(() => {
+    const deserialized = filterUtils.deserializeFromURL({
+      query: searchParams.query || "",
+      filters: searchParams.filters || "",
+      sort: searchParams.sort || "",
+    });
+
+    // Check if this is the very first load (no URL params at all)
+    // vs. user has interacted and explicitly set empty state
+    const isFirstLoad =
+      !searchParams.query && !searchParams.filters && !searchParams.sort;
+
+    const result = {
+      globalSearch: deserialized.globalSearch || "",
+      filters:
+        deserialized.filters.length > 0
+          ? deserialized.filters
+          : isFirstLoad
+            ? defaultFilters
+            : [],
+      sort:
+        deserialized.sort.length > 0
+          ? deserialized.sort
+          : isFirstLoad
+            ? defaultSort
+            : [],
+    };
+
+    return result;
+  }, [
+    searchParams.query,
+    searchParams.filters,
+    searchParams.sort,
+    defaultFilters,
+    defaultSort,
+  ]);
+
+  // Convert filter state to API parameters
+  const enhancedSearchParams = useMemo(() => {
+    const apiParams = convertFilterStateToAPIParams(filterState, {
+      useLegacyMode: !useEnhancedBackend,
+      additionalParams: extraSearchParams || {},
+    });
+
+    // Don't add timestamp - it causes infinite loops!
+    return apiParams;
+  }, [filterState, extraSearchParams, useEnhancedBackend]);
+
+  // Get the appropriate endpoint
+  const apiEndpoint = useMemo((): API_ENDPOINTS => {
+    if (useEnhancedBackend) {
+      return getDataTableEndpoint(resource, true);
+    }
+    return link;
+  }, [resource, link, useEnhancedBackend]);
+
   // Live mode state management
   const [liveModeEnabled, setLiveModeEnabled] = useLocalStorage(
     `${resource.toLowerCase()}-live-mode-enabled`,
@@ -89,16 +172,14 @@ export function DataTable<TData extends Record<string, any>>({
     liveMode?.autoRefresh || false,
   );
 
-  // * Fetch persisted table configuration from the server
+  // Fetch persisted table configuration from the server
   const { data: tableConfig } = useQuery({
     ...queries.tableConfiguration.get(resource),
   });
 
-  // * On first successful fetch, hydrate the local column visibility if there is
-  // * nothing stored locally yet.
+  // On first successful fetch, hydrate the local column visibility
   useEffect(() => {
     if (!tableConfig) return;
-    // Only overwrite if the current local storage value is empty
     if (Object.keys(columnVisibility || {}).length === 0) {
       setColumnVisibility(
         tableConfig.tableConfig.columnVisibility as VisibilityState,
@@ -107,7 +188,7 @@ export function DataTable<TData extends Record<string, any>>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableConfig]);
 
-  // * Derive pagination state from URL
+  // Derive pagination state from URL
   const pagination = useMemo(
     () => ({
       pageIndex: (page ?? 1) - 1,
@@ -116,14 +197,15 @@ export function DataTable<TData extends Record<string, any>>({
     [page, pageSize, initialPageSize],
   );
 
+  // Use the data table query with enhanced parameters
   const dataQuery = useDataTableQuery<TData>(
     queryKey,
-    link,
+    apiEndpoint as API_ENDPOINTS,
     pagination,
-    extraSearchParams,
+    enhancedSearchParams,
   );
 
-  // * Live mode integration
+  // Live mode integration
   const liveData = useLiveDataTable({
     queryKey,
     endpoint: liveMode?.endpoint || "",
@@ -185,25 +267,21 @@ export function DataTable<TData extends Record<string, any>>({
     dataQuery.data?.results,
   ]);
 
-  // * Sync row selection with URL entityId (for visual feedback)
   useEffect(() => {
     if (entityId && !rowSelection[entityId]) {
-      // * If entityId is in URL but not selected, sync row selection
-      // * This handles direct URL navigation or bookmarked links
       setRowSelection({ [entityId]: true });
     }
   }, [entityId]); // Remove rowSelection from deps to prevent infinite loop
 
-  // * Handle row selection changes (when user clicks on table rows)
+  // Handle row selection changes (when user clicks on table rows)
   useEffect(() => {
     if (dataQuery.isLoading || dataQuery.isFetching) return;
-    if (modalType === "create") return; // Don't override "create" modalType
+    if (modalType === "create") return;
 
     const selectedKeys = Object.keys(rowSelection);
 
     if (selectedKeys.length > 0) {
       const selectedId = selectedKeys[0];
-      // * Only update URL if different from current entityId
       if (selectedId !== entityId) {
         setSearchParams({
           entityId: selectedId,
@@ -211,8 +289,6 @@ export function DataTable<TData extends Record<string, any>>({
         });
       }
     } else if (entityId && modalType === "edit") {
-      // * Clear selection if no row selected but entityId exists
-      // * Only clear if the entity is not in current table data (filtered out)
       const entityInCurrentData = table
         .getCoreRowModel()
         .flatRows.some((row) => row.id === entityId);
@@ -230,6 +306,24 @@ export function DataTable<TData extends Record<string, any>>({
     table,
   ]);
 
+  const handleFilterChange = useCallback(
+    (newFilterState: FilterState) => {
+      const urlParams = filterUtils.serializeToURL(newFilterState);
+
+      setSearchParams({
+        ...searchParams,
+        query: typeof urlParams.query === "string" ? urlParams.query : null,
+        filters:
+          typeof urlParams.filters === "string" ? urlParams.filters : null,
+        sort: typeof urlParams.sort === "string" ? urlParams.sort : null,
+        page: 1,
+      });
+
+      onFilterChange?.(newFilterState);
+    },
+    [searchParams, setSearchParams, onFilterChange],
+  );
+
   const handleCreateClick = useCallback(() => {
     setSearchParams({ modalType: "create", entityId: null });
   }, [setSearchParams]);
@@ -239,6 +333,22 @@ export function DataTable<TData extends Record<string, any>>({
   }, [setSearchParams]);
 
   const isCreateModalOpen = Boolean(modalType === "create");
+
+  // const handleRetry = useCallback(() => {
+  //   dataQuery.refetch();
+  // }, [dataQuery]);
+
+  // const handleClearFilters = useCallback(() => {
+  //   handleFilterChange({
+  //     globalSearch: "",
+  //     filters: [],
+  //     sort: defaultSort,
+  //   });
+  // }, [handleFilterChange, defaultSort]);
+
+  // const hasActiveFilters =
+  //   filterState.filters.length > 0 || filterState.globalSearch !== "";
+  // const hasData = (dataQuery.data?.results?.length ?? 0) > 0;
 
   return (
     <DataTableProvider
@@ -253,22 +363,62 @@ export function DataTable<TData extends Record<string, any>>({
         <>
           {includeOptions && (
             <DataTableOptions>
-              <DataTableSearch />
-              <Suspense fallback={<div>Loading...</div>}>
-                <DataTableActions
-                  name={name}
-                  resource={resource}
-                  exportModelName={exportModelName}
-                  extraActions={extraActions}
-                  handleCreateClick={handleCreateClick}
-                  liveModeConfig={liveMode}
-                  liveModeEnabled={liveModeEnabled}
-                  onLiveModeToggle={setLiveModeEnabled}
-                />
-              </Suspense>
+              <div className="flex flex-col gap-4 w-full">
+                <div className="flex items-center gap-2">
+                  <EnhancedDataTableSearch
+                    filterState={filterState}
+                    onFilterChange={handleFilterChange}
+                    placeholder={`Search ${name.toLowerCase()}...`}
+                    className="max-w-md"
+                  />
+                </div>
+                <div className="flex justify-between items-center gap-2">
+                  {(config.showFilterUI || config.showSortUI) && (
+                    <div className="flex flex-col lg:flex-row gap-4">
+                      {config.showFilterUI && (
+                        <div className="flex-1">
+                          <EnhancedDataTableFilters
+                            columns={columns}
+                            filterState={filterState}
+                            onFilterChange={handleFilterChange}
+                            config={config}
+                          />
+                        </div>
+                      )}
+                      {config.showSortUI && (
+                        <div className="w-full lg:w-auto">
+                          <EnhancedDataTableSort
+                            columns={columns}
+                            sortState={filterState.sort}
+                            onSortChange={(newSort) => {
+                              const newFilterState = {
+                                ...filterState,
+                                sort: newSort,
+                              };
+                              handleFilterChange(newFilterState);
+                            }}
+                            config={config}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  <Suspense fallback={<div>Loading...</div>}>
+                    <DataTableActions
+                      name={name}
+                      resource={resource}
+                      exportModelName={exportModelName}
+                      extraActions={extraActions}
+                      handleCreateClick={handleCreateClick}
+                      liveModeConfig={liveMode}
+                      liveModeEnabled={liveModeEnabled}
+                      onLiveModeToggle={setLiveModeEnabled}
+                    />
+                  </Suspense>
+                </div>
+              </div>
             </DataTableOptions>
           )}
-
           {liveMode && !autoRefreshEnabled && (
             <LiveModeBanner
               show={liveData.showNewItemsBanner}
@@ -278,7 +428,6 @@ export function DataTable<TData extends Record<string, any>>({
               onDismiss={liveData.dismissBanner}
             />
           )}
-
           <Table className="rounded-md border-x border-border border-separate border-spacing-0">
             {includeHeader && <DataTableHeader table={table} />}
             <DataTableBody
@@ -296,6 +445,7 @@ export function DataTable<TData extends Record<string, any>>({
               }
             />
           </Table>
+
           <PaginationInner table={table} />
           {TableModal && isCreateModalOpen && (
             <TableModal
@@ -308,7 +458,7 @@ export function DataTable<TData extends Record<string, any>>({
               isLoading={dataQuery.isFetching || dataQuery.isLoading}
               currentRecord={selectedRow?.original}
               error={dataQuery.error}
-              apiEndpoint={link}
+              apiEndpoint={apiEndpoint as API_ENDPOINTS}
               queryKey={queryKey}
             />
           )}

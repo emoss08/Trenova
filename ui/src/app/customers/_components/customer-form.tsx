@@ -93,8 +93,6 @@ export function CustomerForm() {
     formState: { errors },
   } = useFormContext<CustomerSchema>();
 
-  console.info("errors", errors);
-
   const [activeSection, setActiveSection] = useState("general");
   const navigationItems = createNavigationItems<CustomerSchema>();
   const activeComponent = navigationItems.find(

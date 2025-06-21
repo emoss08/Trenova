@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -13,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/postgressearch"
-	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
+	"github.com/emoss08/trenova/internal/pkg/utils/querybuilder"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -71,12 +70,6 @@ func (cr *customerRepository) filterQuery(
 	q *bun.SelectQuery,
 	opts *repositories.ListCustomerOptions,
 ) *bun.SelectQuery {
-	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
-		Query:      q,
-		TableAlias: "cus",
-		Filter:     opts.Filter,
-	})
-
 	relations := []string{}
 
 	if opts.IncludeState {
@@ -96,25 +89,38 @@ func (cr *customerRepository) filterQuery(
 		q = q.Relation(rel)
 	}
 
-	if opts.Status != "" {
-		status, err := domain.StatusFromString(opts.Status)
-		if err != nil {
-			cr.l.Error().Err(err).Str("status", opts.Status).Msg("invalid status")
-			return q
+	// Check if we should use enhanced filtering
+	if opts.Filter != nil {
+		cr.l.Debug().
+			Interface("filters", opts.Filter.Filters).
+			Interface("sort", opts.Filter.Sort).
+			Bool("hasFilters", len(opts.Filter.Filters) > 0).
+			Msg("enhanced filter check")
+
+		qb := querybuilder.New(q, "cus", repositories.CustomerFieldConfig)
+		qb.ApplyFilters(opts.Filter.Filters)
+
+		// Apply sorting if provided
+		if len(opts.Filter.Sort) > 0 {
+			qb.ApplySort(opts.Filter.Sort)
 		}
 
-		q = q.Where("cus.status = ?", status)
+		q = qb.GetQuery()
+
+		// Apply text search if provided
+		if opts.Filter.Query != "" {
+			q = postgressearch.BuildSearchQuery(
+				q,
+				opts.Filter.Query,
+				(*customer.Customer)(nil),
+			)
+		}
+
+		// Apply pagination from enhanced filter
+		return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 	}
 
-	if opts.Filter.Query != "" {
-		q = postgressearch.BuildSearchQuery(
-			q,
-			opts.Filter.Query,
-			(*customer.Customer)(nil),
-		)
-	}
-
-	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
+	return q
 }
 
 // List retrieves a list of customers based on the provided options.
@@ -457,15 +463,15 @@ func (cr *customerRepository) categorizeDocumentTypes(
 
 	for _, docType := range bp.DocumentTypes {
 		if _, exists := existingDocTypes[docType.ID]; !exists || isCreate {
-			docType := &customer.BillingProfileDocumentType{
+			dt := &customer.BillingProfileDocumentType{
 				OrganizationID:   bp.OrganizationID,
 				BusinessUnitID:   bp.BusinessUnitID,
 				BillingProfileID: bp.ID,
 				DocumentTypeID:   docType.ID,
 			}
-			newDocTypes = append(newDocTypes, docType)
+			newDocTypes = append(newDocTypes, dt)
 		} else {
-			// Mark as updated (exists and should remain)
+			// * Mark as updated (exists and should remain)
 			updatedDocTypeIDs[docType.ID] = struct{}{}
 		}
 	}

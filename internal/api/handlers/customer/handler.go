@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/customer"
 	"github.com/emoss08/trenova/internal/pkg/appctx"
+	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types"
@@ -72,15 +73,17 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 	}
 
 	opts := &repositories.ListCustomerOptions{
-		Filter: &ports.LimitOffsetQueryOptions{
-			TenantOpts: &ports.TenantOptions{
-				OrgID:  reqCtx.OrgID,
-				BuID:   reqCtx.BuID,
-				UserID: reqCtx.UserID,
+		Filter: &ports.QueryOptions{
+			LimitOffsetQueryOptions: ports.LimitOffsetQueryOptions{
+				TenantOpts: &ports.TenantOptions{
+					OrgID:  reqCtx.OrgID,
+					BuID:   reqCtx.BuID,
+					UserID: reqCtx.UserID,
+				},
+				Limit:  c.QueryInt("limit", 100),
+				Offset: c.QueryInt("offset", 0),
+				Query:  c.Query("search"),
 			},
-			Limit:  c.QueryInt("limit", 100),
-			Offset: c.QueryInt("offset", 0),
-			Query:  c.Query("search"),
 		},
 	}
 
@@ -103,18 +106,27 @@ func (h *Handler) list(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
+	// Parse enhanced query parameters using the helper
+	enhancedOpts, err := paginationutils.ParseEnhancedQueryFromJSON(c, reqCtx)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	// Parse additional customer-specific options
+	qo := new(repositories.ListCustomerOptions)
+	if err = paginationutils.ParseAdditionalQueryParams(c, qo); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	// Build list options using the helper
+	listOpts := repositories.BuildCustomerListOptions(enhancedOpts, qo)
+
 	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*customerdomain.Customer], error) {
 		if err = fc.QueryParser(filter); err != nil {
 			return nil, h.eh.HandleError(fc, err)
 		}
 
-		return h.cs.List(fc.UserContext(), &repositories.ListCustomerOptions{
-			Filter:                filter,
-			IncludeState:          c.QueryBool("includeState"),
-			IncludeBillingProfile: c.QueryBool("includeBillingProfile"),
-			IncludeEmailProfile:   c.QueryBool("includeEmailProfile"),
-			Status:                fc.Query("status"),
-		})
+		return h.cs.List(c.UserContext(), listOpts)
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)

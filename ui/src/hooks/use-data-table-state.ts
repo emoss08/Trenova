@@ -25,6 +25,16 @@ export const searchParamsParser = {
       shallow: false,
     })
     .withDefault(10),
+  // * Enhanced filtering and sorting
+  query: parseAsString.withOptions({
+    shallow: false,
+  }),
+  filters: parseAsString.withOptions({
+    shallow: false,
+  }),
+  sort: parseAsString.withOptions({
+    shallow: false,
+  }),
 };
 
 export const searchParamsSerializer = createSerializer(searchParamsParser);
