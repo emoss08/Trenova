@@ -25,6 +25,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/integration"
 	"github.com/emoss08/trenova/internal/api/handlers/location"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
+	"github.com/emoss08/trenova/internal/api/handlers/notification"
+	"github.com/emoss08/trenova/internal/api/handlers/notificationpreference"
 	"github.com/emoss08/trenova/internal/api/handlers/organization"
 	"github.com/emoss08/trenova/internal/api/handlers/patternconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/permission"
@@ -97,4 +99,6 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	dedicatedlanesuggestion.NewHandler,
 	patternconfig.NewHandler,
 	websocket.NewHandler,
+	notificationpreference.NewHandler,
+	notification.NewHandler,
 ))

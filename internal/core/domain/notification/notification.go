@@ -3,6 +3,12 @@ package notification
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain"
+
+	"github.com/emoss08/trenova/internal/pkg/errors"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/rotisserie/eris"
+
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/uptrace/bun"
@@ -37,48 +43,58 @@ type RelatedEntity struct {
 type Notification struct {
 	bun.BaseModel `bun:"table:notifications,alias:notif" json:"-"`
 
-	// Core identification
-	ID        pulid.ID  `json:"id"        bun:"id,pk,type:VARCHAR(100)"`
-	EventType EventType `json:"eventType" bun:"event_type,type:VARCHAR(100),notnull"`
-	Priority  Priority  `json:"priority"  bun:"priority,type:VARCHAR(20),notnull"`
-
-	// Multi-tenant targeting
-	Channel        Channel   `json:"channel"                  bun:"channel,type:VARCHAR(20),notnull"`
-	OrganizationID pulid.ID  `json:"organizationId"           bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID *pulid.ID `json:"businessUnitId,omitempty" bun:"business_unit_id,type:VARCHAR(100)"`
-	TargetUserID   *pulid.ID `json:"targetUserId,omitempty"   bun:"target_user_id,type:VARCHAR(100)"`
-	TargetRoleID   *pulid.ID `json:"targetRoleId,omitempty"   bun:"target_role_id,type:VARCHAR(100)"`
-
-	// Content
-	Title   string         `json:"title"          bun:"title,type:VARCHAR(255),notnull"`
-	Message string         `json:"message"        bun:"message,type:TEXT,notnull"`
-	Data    map[string]any `json:"data,omitempty" bun:"data,type:JSONB"`
-
-	// Relationships
+	ID              pulid.ID        `json:"id"                        bun:"id,pk,type:VARCHAR(100)"`
+	OrganizationID  pulid.ID        `json:"organizationId"            bun:"organization_id,type:VARCHAR(100),notnull"`
+	EventType       EventType       `json:"eventType"                 bun:"event_type,type:VARCHAR(100),notnull"`
+	Priority        Priority        `json:"priority"                  bun:"priority,type:VARCHAR(20),notnull"`
+	Channel         Channel         `json:"channel"                   bun:"channel,type:VARCHAR(20),notnull"`
+	DeliveryStatus  DeliveryStatus  `json:"deliveryStatus"            bun:"delivery_status,type:VARCHAR(20),notnull,default:'pending'"`
+	Title           string          `json:"title"                     bun:"title,type:VARCHAR(255),notnull"`
+	Message         string          `json:"message"                   bun:"message,type:TEXT,notnull"`
+	Source          string          `json:"source"                    bun:"source,type:VARCHAR(100),notnull"`
+	Data            map[string]any  `json:"data,omitempty"            bun:"data,type:JSONB"`
+	Tags            []string        `json:"tags,omitempty"            bun:"tags,type:TEXT[]"`
 	RelatedEntities []RelatedEntity `json:"relatedEntities,omitempty" bun:"related_entities,type:JSONB"`
 	Actions         []Action        `json:"actions,omitempty"         bun:"actions,type:JSONB"`
+	CreatedAt       int64           `json:"createdAt"                 bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt       int64           `json:"updatedAt"                 bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	RetryCount      int             `json:"retryCount"                bun:"retry_count,type:INT,notnull,default:0"`
+	MaxRetries      int             `json:"maxRetries"                bun:"max_retries,type:INT,notnull,default:3"`
+	Version         int64           `json:"version"                   bun:"version,type:BIGINT,notnull,default:0"`
+	ExpiresAt       *int64          `json:"expiresAt,omitempty"       bun:"expires_at"`
+	DeliveredAt     *int64          `json:"deliveredAt,omitempty"     bun:"delivered_at"`
+	ReadAt          *int64          `json:"readAt,omitempty"          bun:"read_at"`
+	DismissedAt     *int64          `json:"dismissedAt,omitempty"     bun:"dismissed_at"`
+	JobID           *string         `json:"jobId,omitempty"           bun:"job_id,type:VARCHAR(255)"`
+	CorrelationID   *string         `json:"correlationId,omitempty"   bun:"correlation_id,type:VARCHAR(255)"`
+	BusinessUnitID  *pulid.ID       `json:"businessUnitId,omitempty"  bun:"business_unit_id,type:VARCHAR(100)"`
+	TargetUserID    *pulid.ID       `json:"targetUserId,omitempty"    bun:"target_user_id,type:VARCHAR(100)"`
+	TargetRoleID    *pulid.ID       `json:"targetRoleId,omitempty"    bun:"target_role_id,type:VARCHAR(100)"`
+}
 
-	// Delivery & Lifecycle
-	ExpiresAt   *int64 `json:"expiresAt,omitempty"   bun:"expires_at"`
-	DeliveredAt *int64 `json:"deliveredAt,omitempty" bun:"delivered_at"`
-	ReadAt      *int64 `json:"readAt,omitempty"      bun:"read_at"`
-	DismissedAt *int64 `json:"dismissedAt,omitempty" bun:"dismissed_at"`
-	CreatedAt   int64  `json:"createdAt"             bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt   int64  `json:"updatedAt"             bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-
-	// Retry & Tracking
-	DeliveryStatus DeliveryStatus `json:"deliveryStatus" bun:"delivery_status,type:VARCHAR(20),notnull,default:'pending'"`
-	RetryCount     int            `json:"retryCount"     bun:"retry_count,type:INT,notnull,default:0"`
-	MaxRetries     int            `json:"maxRetries"     bun:"max_retries,type:INT,notnull,default:3"`
-
-	// Metadata
-	Source        string   `json:"source"                  bun:"source,type:VARCHAR(100),notnull"`
-	JobID         *string  `json:"jobId,omitempty"         bun:"job_id,type:VARCHAR(255)"`
-	CorrelationID *string  `json:"correlationId,omitempty" bun:"correlation_id,type:VARCHAR(255)"`
-	Tags          []string `json:"tags,omitempty"          bun:"tags,type:TEXT[]"`
-
-	// Version for optimistic locking
-	Version int64 `json:"version" bun:"version,type:BIGINT,notnull,default:0"`
+func (n *Notification) Validate(ctx context.Context, multiErr *errors.MultiError) {
+	err := validation.ValidateStructWithContext(
+		ctx,
+		n,
+		validation.Field(&n.ID, validation.Required.Error("ID is required")),
+		validation.Field(
+			&n.OrganizationID,
+			validation.Required.Error("OrganizationID is required"),
+		),
+		validation.Field(&n.EventType, validation.Required.Error("EventType is required")),
+		validation.Field(&n.Priority, validation.Required.Error("Priority is required")),
+		validation.Field(&n.Channel, validation.Required.Error("Channel is required")),
+		validation.Field(&n.Title, validation.Required.Error("Title is required")),
+		validation.Field(&n.Message, validation.Required.Error("Message is required")),
+		validation.Field(&n.Source, validation.Required.Error("Source is required")),
+		validation.Field(&n.Tags, validation.By(domain.ValidateStringSlice)),
+	)
+	if err != nil {
+		var validationErrs validation.Errors
+		if eris.As(err, &validationErrs) {
+			errors.FromOzzoErrors(validationErrs, multiErr)
+		}
+	}
 }
 
 // BeforeAppendModel implements the bun.BeforeAppendModelHook interface.

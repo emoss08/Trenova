@@ -83,11 +83,30 @@ export function useWebSocket({
       switch (message.type) {
         case "notification":
           addNotification(message.data);
+          break;
+        case "entity_update_notification": {
+          // Handle entity update notifications
+          addNotification(message.data);
+
+          // Show toast with action based on entity type
+          const entityLink =
+            message.data?.data?.entityId && message.data?.data?.entityType
+              ? `/${message.data.data.entityType}/${message.data.data.entityId}`
+              : null;
+
           toast.success(message.data.title, {
             description: message.data.message,
+            action: entityLink
+              ? {
+                  label: "View",
+                  onClick: () => {
+                    window.location.href = entityLink;
+                  },
+                }
+              : undefined,
           });
-          console.log("message", message.data);
           break;
+        }
         case "connection_confirmed":
           console.log("✅ WebSocket connection confirmed");
           setConnectionState("connected");

@@ -4,15 +4,19 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -82,13 +86,13 @@ func (nr *notificationRepository) Update(
 	}
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		originalVersion := notif.Version
+		ov := notif.Version
 		notif.Version++
 
 		results, rErr := tx.NewUpdate().
 			Model(notif).
 			WherePK().
-			Where("notif.version = ?", originalVersion).
+			Where("notif.version = ?", ov).
 			OmitZero().
 			Returning("*").
 			Exec(c)
@@ -117,7 +121,6 @@ func (nr *notificationRepository) Update(
 
 		return nil
 	})
-
 	if err != nil {
 		return err
 	}
@@ -165,11 +168,11 @@ func (nr *notificationRepository) buildUserNotificationsQuery(
 	req *repositories.GetUserNotificationsRequest,
 ) bun.QueryBuilder {
 	q.WhereGroup(" AND", func(sq bun.QueryBuilder) bun.QueryBuilder {
-		return sq.Where("notif.organization_id = ?", req.OrganizationID).
+		return sq.Where("notif.organization_id = ?", req.Filter.TenantOpts.OrgID).
 			WhereOr("notif.channel = ?", notification.ChannelGlobal).
 			WhereOr("notif.channel = ?", notification.ChannelUser).
 			WhereOr("notif.channel = ?", notification.ChannelRole).
-			Where("notif.target_user_id = ?", req.UserID)
+			Where("notif.target_user_id = ?", req.Filter.TenantOpts.UserID)
 	})
 
 	if req.UnreadOnly {
@@ -186,13 +189,13 @@ func (nr *notificationRepository) buildUserNotificationsQuery(
 func (nr *notificationRepository) GetUserNotifications(
 	ctx context.Context,
 	req *repositories.GetUserNotificationsRequest,
-) ([]*notification.Notification, error) {
+) (*ports.ListResult[*notification.Notification], error) {
 	log := nr.l.With().
 		Str("operation", "GetUserNotifications").
-		Str("user_id", req.UserID.String()).
-		Str("organization_id", req.OrganizationID.String()).
-		Int("limit", req.Limit).
-		Int("offset", req.Offset).
+		Str("user_id", req.Filter.TenantOpts.UserID.String()).
+		Str("organization_id", req.Filter.TenantOpts.OrgID.String()).
+		Int("limit", req.Filter.Limit).
+		Int("offset", req.Filter.Offset).
 		Bool("unread_only", req.UnreadOnly).
 		Logger()
 
@@ -213,17 +216,19 @@ func (nr *notificationRepository) GetUserNotifications(
 
 	// * Order by creation date, newest first and apply pagination.
 	q = q.Order("notif.created_at DESC").
-		Limit(req.Limit).
-		Offset(req.Offset)
+		Limit(req.Filter.Limit).
+		Offset(req.Filter.Offset)
 
-	err = q.Scan(ctx)
+	total, err := q.ScanAndCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to scan notifications")
 		return nil, eris.Wrap(err, "scan notifications")
 	}
 
-	log.Info().Int("count", len(notifications)).Msg("notifications retrieved successfully")
-	return notifications, nil
+	return &ports.ListResult[*notification.Notification]{
+		Items: notifications,
+		Total: total,
+	}, nil
 }
 
 func (nr *notificationRepository) GetUnreadCount(
@@ -265,16 +270,76 @@ func (nr *notificationRepository) GetUnreadCount(
 	return count, nil
 }
 
+func (nr *notificationRepository) ReadAllNotifications(
+	ctx context.Context,
+	req repositories.ReadAllNotificationsRequest,
+) error {
+	log := nr.l.With().
+		Str("operation", "ReadAllNotifications").
+		Str("user_id", req.UserID.String()).
+		Str("organization_id", req.OrgID.String()).
+		Str("business_unit_id", req.BuID.String()).
+		Logger()
+
+	dba, err := nr.db.DB(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get database connection")
+		return oops.In("notification_repository").
+			With("op", "ReadAllNotifications").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	now := timeutils.NowUnix()
+
+	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		results, rErr := tx.NewUpdate().Model((*notification.Notification)(nil)).
+			Set("read_at = ?", now).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return uq.Where("notif.organization_id = ?", req.OrgID).
+					Where("notif.business_unit_id = ?", req.BuID).
+					Where("notif.target_user_id = ?", req.UserID)
+			}).
+			OmitZero().
+			Exec(ctx)
+
+		if rErr != nil {
+			log.Error().Err(rErr).Msg("failed to read all notifications")
+			return rErr
+		}
+
+		rows, roErr := results.RowsAffected()
+		if roErr != nil {
+			log.Error().Err(roErr).Msg("failed to get rows affected")
+			return roErr
+		}
+
+		if rows == 0 {
+			log.Warn().Msg("no notifications found to read")
+			return nil
+		}
+
+		return nil
+	})
+	if err != nil {
+		return oops.In("notification_repository").
+			With("op", "ReadAllNotifications").
+			Time(time.Now()).
+			Wrapf(err, "read all notifications")
+	}
+
+	log.Info().Msg("all notifications read successfully")
+	return nil
+}
+
 func (nr *notificationRepository) MarkAsRead(
 	ctx context.Context,
-	notificationID pulid.ID,
-	userID pulid.ID,
-	readAt int64,
+	req repositories.MarkAsReadRequest,
 ) error {
 	log := nr.l.With().
 		Str("operation", "MarkAsRead").
-		Str("notification_id", notificationID.String()).
-		Str("user_id", userID.String()).
+		Str("notification_id", req.NotificationID.String()).
+		Str("user_id", req.UserID.String()).
 		Logger()
 
 	dba, err := nr.db.DB(ctx)
@@ -283,27 +348,37 @@ func (nr *notificationRepository) MarkAsRead(
 		return eris.Wrap(err, "get database connection")
 	}
 
+	now := timeutils.NowUnix()
+
 	result, err := dba.NewUpdate().
 		Model((*notification.Notification)(nil)).
-		Set("read_at = ?", readAt).
-		Where("id = ?", notificationID).
-		Where("(channel = ? OR "+
-			"(channel = ? AND target_user_id = ?) OR "+
-			"(channel = ? AND target_user_id = ?))",
-			notification.ChannelGlobal,
-			notification.ChannelUser, userID,
-			notification.ChannelRole, userID).
+		Set("read_at = ?", now).
+		WhereGroup(" AND", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return uq.Where("notif.id = ?", req.NotificationID).
+				Where("notif.organization_id = ?", req.OrgID).
+				Where("notif.business_unit_id = ?", req.BuID).
+				Where("(channel = ? OR "+
+					"(channel = ? AND target_user_id = ?) OR "+
+					"(channel = ? AND target_user_id = ?))",
+					notification.ChannelGlobal,
+					notification.ChannelUser, req.UserID,
+					notification.ChannelRole, req.UserID)
+		}).
+		OmitZero().
 		Exec(ctx)
 
 	if err != nil {
 		log.Error().Err(err).Msg("failed to mark notification as read")
-		return eris.Wrap(err, "mark notification as read")
+		return oops.In("notification_repository").
+			With("op", "MarkAsRead").
+			Time(time.Now()).
+			Wrapf(err, "mark notification as read")
 	}
 
 	affected, err := result.RowsAffected()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get rows affected")
-		return eris.Wrap(err, "get rows affected")
+		return err
 	}
 
 	if affected == 0 {
@@ -317,14 +392,12 @@ func (nr *notificationRepository) MarkAsRead(
 
 func (nr *notificationRepository) MarkAsDismissed(
 	ctx context.Context,
-	notificationID pulid.ID,
-	userID pulid.ID,
-	dismissedAt int64,
+	req repositories.MarkAsDismissedRequest,
 ) error {
 	log := nr.l.With().
 		Str("operation", "MarkAsDismissed").
-		Str("notification_id", notificationID.String()).
-		Str("user_id", userID.String()).
+		Str("notification_id", req.NotificationID.String()).
+		Str("user_id", req.UserID.String()).
 		Logger()
 
 	dba, err := nr.db.DB(ctx)
@@ -333,35 +406,47 @@ func (nr *notificationRepository) MarkAsDismissed(
 		return eris.Wrap(err, "get database connection")
 	}
 
-	result, err := dba.NewUpdate().
-		Model((*notification.Notification)(nil)).
-		Set("dismissed_at = ?", dismissedAt).
-		Where("id = ?", notificationID).
-		Where("(channel = ? OR "+
-			"(channel = ? AND target_user_id = ?) OR "+
-			"(channel = ? AND target_user_id = ?))",
-			notification.ChannelGlobal,
-			notification.ChannelUser, userID,
-			notification.ChannelRole, userID).
-		Exec(ctx)
+	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		results, rErr := tx.NewUpdate().
+			Model((*notification.Notification)(nil)).
+			Set("dismissed_at = ?", timeutils.NowUnix()).
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return uq.
+					Where("notif.id = ?", req.NotificationID).
+					Where("notif.organization_id = ?", req.OrgID).
+					Where("notif.business_unit_id = ?", req.BuID).
+					Where("(notif.channel = ? OR "+
+						"(notif.channel = ? AND notif.target_user_id = ?) OR "+
+						"(notif.channel = ? AND notif.target_user_id = ?))",
+						notification.ChannelGlobal,
+						notification.ChannelUser, req.UserID,
+						notification.ChannelRole, req.UserID)
+			}).
+			OmitZero().
+			Exec(ctx)
 
+		if rErr != nil {
+			log.Error().Err(rErr).Msg("failed to mark notification as dismissed")
+			return eris.Wrap(rErr, "mark notification as dismissed")
+		}
+
+		rows, roErr := results.RowsAffected()
+		if roErr != nil {
+			log.Error().Err(roErr).Msg("failed to get rows affected")
+			return err
+		}
+
+		if rows == 0 {
+			return errors.NewNotFoundError("Notification not found or not accessible")
+		}
+
+		return nil
+	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to mark notification as dismissed")
-		return eris.Wrap(err, "mark notification as dismissed")
+		return err
 	}
 
-	affected, err := result.RowsAffected()
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get rows affected")
-		return eris.Wrap(err, "get rows affected")
-	}
-
-	if affected == 0 {
-		log.Warn().Msg("no notification found to mark as dismissed")
-		return errors.NewNotFoundError("Notification not found or not accessible")
-	}
-
-	log.Info().Msg("notification marked as dismissed successfully")
 	return nil
 }
 
@@ -378,14 +463,17 @@ func (nr *notificationRepository) MarkAsDelivered(
 	dba, err := nr.db.DB(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection")
-		return eris.Wrap(err, "get database connection")
+		return oops.In("notification_repository").
+			With("op", "MarkAsDismissed").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	result, err := dba.NewUpdate().
 		Model((*notification.Notification)(nil)).
-		Set("delivered_at = ?", deliveredAt).
-		Set("delivery_status = ?", notification.DeliveryStatusDelivered).
-		Where("id = ?", notificationID).
+		Set("notif.delivered_at = ?", deliveredAt).
+		Set("notif.delivery_status = ?", notification.DeliveryStatusDelivered).
+		Where("notif.id = ?", notificationID).
 		Exec(ctx)
 
 	if err != nil {
@@ -396,7 +484,7 @@ func (nr *notificationRepository) MarkAsDelivered(
 	affected, err := result.RowsAffected()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get rows affected")
-		return eris.Wrap(err, "get rows affected")
+		return err
 	}
 
 	if affected == 0 {
@@ -420,22 +508,30 @@ func (nr *notificationRepository) GetPendingRetries(
 	dba, err := nr.db.DB(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection")
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.In("notification_repository").
+			With("op", "GetPendingRetries").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	notifications := make([]*notification.Notification, 0)
 	err = dba.NewSelect().
 		Model(&notifications).
-		Where("notif.delivery_status = ?", notification.DeliveryStatusFailed).
-		Where("notif.retry_count < notif.max_retries").
-		Where("(notif.expires_at IS NULL OR notif.expires_at > extract(epoch from current_timestamp)::bigint)").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("notif.delivery_status = ?", notification.DeliveryStatusFailed).
+				Where("notif.retry_count < notif.max_retries").
+				Where("(notif.expires_at IS NULL OR notif.expires_at > extract(epoch from current_timestamp)::bigint)")
+		}).
 		Order("notif.created_at ASC").
 		Limit(limit).
 		Scan(ctx)
 
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get pending retries")
-		return nil, eris.Wrap(err, "get pending retries")
+		return nil, oops.In("notification_repository").
+			With("op", "GetPendingRetries").
+			Time(time.Now()).
+			Wrapf(err, "get pending retries")
 	}
 
 	log.Info().Int("count", len(notifications)).Msg("pending retries retrieved successfully")
@@ -460,9 +556,11 @@ func (nr *notificationRepository) GetExpiredNotifications(
 	notifications := make([]*notification.Notification, 0)
 	err = dba.NewSelect().
 		Model(&notifications).
-		Where("notif.expires_at IS NOT NULL").
-		Where("notif.expires_at <= extract(epoch from current_timestamp)::bigint").
-		Where("notif.delivery_status != ?", notification.DeliveryStatusExpired).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("notif.expires_at IS NOT NULL").
+				Where("notif.expires_at <= extract(epoch from current_timestamp)::bigint").
+				Where("notif.delivery_status != ?", notification.DeliveryStatusExpired)
+		}).
 		Order("notif.expires_at ASC").
 		Limit(limit).
 		Scan(ctx)
@@ -488,25 +586,29 @@ func (nr *notificationRepository) DeleteOldNotifications(
 	dba, err := nr.db.DB(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection")
-		return eris.Wrap(err, "get database connection")
+		return oops.In("notification_repository").
+			With("op", "DeleteOldNotifications").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	result, err := dba.NewDelete().
 		Model((*notification.Notification)(nil)).
 		Where("notif.created_at < ?", olderThan).
 		Where("(notif.read_at IS NOT NULL OR notif.dismissed_at IS NOT NULL)").
-		// Only delete read or dismissed notifications
 		Exec(ctx)
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete old notifications")
-		return eris.Wrap(err, "delete old notifications")
+		return oops.In("notification_repository").
+			With("op", "DeleteOldNotifications").
+			Time(time.Now()).
+			Wrapf(err, "delete old notifications")
 	}
 
 	affected, err := result.RowsAffected()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get rows affected")
-		return eris.Wrap(err, "get rows affected")
+		return err
 	}
 
 	log.Info().Int64("deleted_count", affected).Msg("old notifications deleted successfully")

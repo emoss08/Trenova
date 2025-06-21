@@ -5,14 +5,13 @@ import type {
   WebSocketMessage,
   WebSocketSubscription,
 } from "@/types/websocket";
+import ReconnectingWebSocket from "reconnecting-websocket";
 
 export class WebSocketService {
-  private socket: WebSocket | null = null;
+  private socket: ReconnectingWebSocket | null = null;
   private config: WebSocketConfig;
   private subscription: WebSocketSubscription | null = null;
   private heartbeatInterval: number | null = null;
-  private reconnectTimeout: number | null = null;
-  private isReconnecting = false;
   private onMessage?: (message: WebSocketMessage) => void;
   private onConnectionChange?: (connected: boolean) => void;
   private onError?: (error: string) => void;
@@ -58,42 +57,44 @@ export class WebSocketService {
         }
 
         this.subscription = subscription;
-        this.socket = new WebSocket(this.config.url);
 
-        this.socket.onopen = () => {
+        // Create ReconnectingWebSocket with custom options
+        this.socket = new ReconnectingWebSocket(this.config.url, [], {
+          minReconnectionDelay: this.config.reconnectInterval,
+          maxReconnectionDelay: this.config.reconnectInterval * 4,
+          maxRetries: this.config.maxReconnectAttempts,
+          connectionTimeout: 4000,
+          debug: import.meta.env.DEV,
+        });
+
+        this.socket.addEventListener("open", () => {
           console.log("WebSocket connected");
           this.onConnectionChange?.(true);
           this.startHeartbeat();
-          this.isReconnecting = false;
           resolve();
-        };
+        });
 
-        this.socket.onmessage = (event) => {
+        this.socket.addEventListener("message", (event) => {
           try {
             const message: WebSocketMessage = JSON.parse(event.data);
             this.handleMessage(message);
           } catch (error) {
             console.error("Failed to parse WebSocket message:", error);
           }
-        };
+        });
 
-        this.socket.onclose = (event) => {
+        this.socket.addEventListener("close", (event) => {
           console.log("WebSocket disconnected:", event.code, event.reason);
           this.cleanup();
           this.onConnectionChange?.(false);
+        });
 
-          // Attempt reconnection if not intentionally closed
-          if (event.code !== 1000 && event.code !== 1001) {
-            this.scheduleReconnect();
-          }
-        };
-
-        this.socket.onerror = (event) => {
+        this.socket.addEventListener("error", (event) => {
           console.error("WebSocket error:", event);
           const errorMessage = "WebSocket connection error occurred";
           this.onError?.(errorMessage);
           reject(new Error(errorMessage));
-        };
+        });
       } catch (error) {
         const errorMessage = `Failed to create WebSocket connection: ${error}`;
         console.error(errorMessage);
@@ -104,13 +105,6 @@ export class WebSocketService {
   }
 
   disconnect(): void {
-    this.isReconnecting = false;
-
-    if (this.reconnectTimeout) {
-      clearTimeout(this.reconnectTimeout);
-      this.reconnectTimeout = null;
-    }
-
     if (this.socket) {
       this.socket.close(1000, "Client disconnecting");
       this.socket = null;
@@ -177,22 +171,6 @@ export class WebSocketService {
     }, this.config.heartbeatInterval);
   }
 
-  private scheduleReconnect(): void {
-    if (this.isReconnecting || !this.subscription) return;
-
-    this.isReconnecting = true;
-
-    this.reconnectTimeout = setTimeout(() => {
-      if (this.subscription) {
-        console.log("Attempting to reconnect WebSocket...");
-        this.connect(this.subscription).catch((error) => {
-          console.error("Reconnection failed:", error);
-          this.scheduleReconnect();
-        });
-      }
-    }, this.config.reconnectInterval);
-  }
-
   sendMessage(message: WebSocketMessage): void {
     if (this.socket?.readyState === WebSocket.OPEN) {
       this.socket.send(JSON.stringify(message));
@@ -219,11 +197,13 @@ export class WebSocketService {
     isConnected: boolean;
     readyState?: number;
     subscription: WebSocketSubscription | null;
+    retryCount?: number;
   } {
     return {
       isConnected: this.socket?.readyState === WebSocket.OPEN,
       readyState: this.socket?.readyState,
       subscription: this.subscription,
+      retryCount: this.socket?.retryCount,
     };
   }
 }

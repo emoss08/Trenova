@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/logger"
@@ -139,15 +140,13 @@ func (s *Service) SendJobCompletionNotification(
 	return s.SendNotification(ctx, notifReq)
 }
 
-func (s *Service) MarkAsRead(ctx context.Context, notificationID, userID pulid.ID) error {
+func (s *Service) MarkAsRead(ctx context.Context, req repositories.MarkAsReadRequest) error {
 	s.l.Info().
-		Str("notification_id", notificationID.String()).
-		Str("user_id", userID.String()).
+		Str("notification_id", req.NotificationID.String()).
+		Str("user_id", req.UserID.String()).
 		Msg("marking notification as read")
 
-	now := timeutils.NowUnix()
-
-	if err := s.notificationRepository.MarkAsRead(ctx, notificationID, userID, now); err != nil {
+	if err := s.notificationRepository.MarkAsRead(ctx, req); err != nil {
 		s.l.Error().Err(err).Msg("failed to mark notification as read")
 		return fmt.Errorf("failed to mark notification as read: %w", err)
 	}
@@ -157,17 +156,14 @@ func (s *Service) MarkAsRead(ctx context.Context, notificationID, userID pulid.I
 
 func (s *Service) MarkAsDismissed(
 	ctx context.Context,
-	notificationID pulid.ID,
-	userID pulid.ID,
+	req repositories.MarkAsDismissedRequest,
 ) error {
 	s.l.Info().
-		Str("notification_id", notificationID.String()).
-		Str("user_id", userID.String()).
+		Str("notification_id", req.NotificationID.String()).
+		Str("user_id", req.UserID.String()).
 		Msg("marking notification as dismissed")
 
-	now := timeutils.NowUnix()
-
-	if err := s.notificationRepository.MarkAsDismissed(ctx, notificationID, userID, now); err != nil {
+	if err := s.notificationRepository.MarkAsDismissed(ctx, req); err != nil {
 		s.l.Error().Err(err).Msg("failed to mark notification as dismissed")
 		return fmt.Errorf("failed to mark notification as dismissed: %w", err)
 	}
@@ -177,25 +173,9 @@ func (s *Service) MarkAsDismissed(
 
 func (s *Service) GetUserNotifications(
 	ctx context.Context,
-	req *services.GetUserNotificationsRequest,
-) ([]*notification.Notification, error) {
-	// Convert service request to repository request
-	repoReq := &repositories.GetUserNotificationsRequest{
-		UserID:         req.UserID,
-		OrganizationID: req.OrganizationID,
-		Limit:          req.Limit,
-		Offset:         req.Offset,
-		UnreadOnly:     req.UnreadOnly,
-	}
-	s.l.Info().
-		Str("user_id", req.UserID.String()).
-		Str("organization_id", req.OrganizationID.String()).
-		Int("limit", req.Limit).
-		Int("offset", req.Offset).
-		Bool("unread_only", req.UnreadOnly).
-		Msg("getting user notifications")
-
-	notifications, err := s.notificationRepository.GetUserNotifications(ctx, repoReq)
+	req *repositories.GetUserNotificationsRequest,
+) (*ports.ListResult[*notification.Notification], error) {
+	notifications, err := s.notificationRepository.GetUserNotifications(ctx, req)
 	if err != nil {
 		s.l.Error().Err(err).Msg("failed to get user notifications")
 		return nil, fmt.Errorf("failed to get user notifications: %w", err)
@@ -221,4 +201,22 @@ func (s *Service) GetUnreadCount(
 	}
 
 	return count, nil
+}
+
+func (s *Service) ReadAllNotifications(
+	ctx context.Context,
+	req repositories.ReadAllNotificationsRequest,
+) error {
+	s.l.Info().
+		Str("user_id", req.UserID.String()).
+		Str("organization_id", req.OrgID.String()).
+		Str("business_unit_id", req.BuID.String()).
+		Msg("reading all notifications")
+
+	if err := s.notificationRepository.ReadAllNotifications(ctx, req); err != nil {
+		s.l.Error().Err(err).Msg("failed to read all notifications")
+		return fmt.Errorf("failed to read all notifications: %w", err)
+	}
+
+	return nil
 }

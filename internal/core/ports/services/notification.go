@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
+	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
@@ -15,16 +17,19 @@ type NotificationService interface {
 	SendJobCompletionNotification(ctx context.Context, req *JobCompletionNotificationRequest) error
 
 	// MarkAsRead marks a notification as read
-	MarkAsRead(ctx context.Context, notificationID pulid.ID, userID pulid.ID) error
+	MarkAsRead(ctx context.Context, req repositories.MarkAsReadRequest) error
 
 	// MarkAsDismissed marks a notification as dismissed
-	MarkAsDismissed(ctx context.Context, notificationID pulid.ID, userID pulid.ID) error
+	MarkAsDismissed(ctx context.Context, req repositories.MarkAsDismissedRequest) error
+
+	// ReadAllNotifications reads all notifications for a user
+	ReadAllNotifications(ctx context.Context, req repositories.ReadAllNotificationsRequest) error
 
 	// GetUserNotifications retrieves notifications for a user
 	GetUserNotifications(
 		ctx context.Context,
-		req *GetUserNotificationsRequest,
-	) ([]*notification.Notification, error)
+		req *repositories.GetUserNotificationsRequest,
+	) (*ports.ListResult[*notification.Notification], error)
 
 	// GetUnreadCount gets the count of unread notifications for a user
 	GetUnreadCount(ctx context.Context, userID pulid.ID, organizationID pulid.ID) (int, error)
@@ -57,12 +62,4 @@ type JobCompletionNotificationRequest struct {
 	Data            map[string]any               `json:"data,omitempty"`
 	RelatedEntities []notification.RelatedEntity `json:"relatedEntities,omitempty"`
 	Actions         []notification.Action        `json:"actions,omitempty"`
-}
-
-type GetUserNotificationsRequest struct {
-	UserID         pulid.ID `json:"userId"`
-	OrganizationID pulid.ID `json:"organizationId"`
-	Limit          int      `json:"limit"`
-	Offset         int      `json:"offset"`
-	UnreadOnly     bool     `json:"unreadOnly"`
 }

@@ -13,6 +13,7 @@ import { DocumentAPI } from "./document";
 import { FavoriteAPI } from "./favorite";
 import { GoogleMapsAPI } from "./google-maps";
 import { IntegrationAPI } from "./integration";
+import { NotificationAPI } from "./notification";
 import { OrganizationAPI } from "./organization";
 import { PatternConfigAPI } from "./pattern-config";
 import { PermissionAPI } from "./permission";
@@ -56,6 +57,7 @@ class API {
   dedicatedLane: DedicatedLaneAPI;
   dedicatedLaneSuggestions: DedicatedLaneSuggestionAPI;
   patternConfig: PatternConfigAPI;
+  notifications: NotificationAPI;
 
   constructor() {
     this.assignments = new AssignmentsAPI();
@@ -80,6 +82,7 @@ class API {
     this.dedicatedLane = new DedicatedLaneAPI();
     this.dedicatedLaneSuggestions = new DedicatedLaneSuggestionAPI();
     this.patternConfig = new PatternConfigAPI();
+    this.notifications = new NotificationAPI();
   }
 }
 

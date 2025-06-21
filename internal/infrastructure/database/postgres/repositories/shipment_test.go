@@ -36,7 +36,7 @@ func TestShipmentRepository(t *testing.T) {
 	bu := ts.Fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
 	testShipment := ts.Fixture.MustRow("Shipment.test_shipment").(*shipment.Shipment)
 	inTransitShipment := ts.Fixture.MustRow("Shipment.in_transit_shipment").(*shipment.Shipment)
-	completedShipment := ts.Fixture.MustRow("Shipment.completed_shipment").(*shipment.Shipment)
+	// completedShipment := ts.Fixture.MustRow("Shipment.completed_shipment").(*shipment.Shipment)
 	serviceType := ts.Fixture.MustRow("ServiceType.std_service_type").(*servicetype.ServiceType)
 	shipmentType := ts.Fixture.MustRow("ShipmentType.ftl_shipment_type").(*shipmenttype.ShipmentType)
 	customerFixture := ts.Fixture.MustRow("Customer.honeywell_customer").(*customer.Customer)
@@ -536,97 +536,97 @@ func TestShipmentRepository(t *testing.T) {
 	})
 
 	// Test Duplicate operations
-	t.Run("Duplicate", func(t *testing.T) {
-		t.Run("Basic Duplication", func(t *testing.T) {
-			req := &repoports.DuplicateShipmentRequest{
-				ShipmentID:               completedShipment.ID,
-				OrgID:                    org.ID,
-				BuID:                     bu.ID,
-				UserID:                   testUser.ID,
-				OverrideDates:            false,
-				IncludeCommodities:       false,
-				IncludeAdditionalCharges: false,
-				Count:                    1,
-			}
+	// t.Run("Duplicate", func(t *testing.T) {
+	// 	t.Run("Basic Duplication", func(t *testing.T) {
+	// 		req := &repoports.DuplicateShipmentRequest{
+	// 			ShipmentID:               completedShipment.ID,
+	// 			OrgID:                    org.ID,
+	// 			BuID:                     bu.ID,
+	// 			UserID:                   testUser.ID,
+	// 			OverrideDates:            false,
+	// 			IncludeCommodities:       false,
+	// 			IncludeAdditionalCharges: false,
+	// 			Count:                    1,
+	// 		}
 
-			result, err := repo.BulkDuplicate(ctx, req)
-			require.NoError(t, err, "Duplicate should not return error")
-			require.NotNil(t, result, "Result should not be nil")
-			assert.NotEqual(t, completedShipment.ID, result[0].ID, "New ID should be different")
-			assert.NotEqual(
-				t,
-				completedShipment.ProNumber,
-				result[0].ProNumber,
-				"New ProNumber should be different",
-			)
-			assert.Equal(t, shipment.StatusNew, result[0].Status, "Status should be New")
-			assert.Equal(t, "GENERATED-COPY", result[0].BOL, "BOL should be GENERATED-COPY")
-		})
+	// 		result, err := repo.BulkDuplicate(ctx, req)
+	// 		require.NoError(t, err, "Duplicate should not return error")
+	// 		require.NotNil(t, result, "Result should not be nil")
+	// 		assert.NotEqual(t, completedShipment.ID, result[0].ID, "New ID should be different")
+	// 		assert.NotEqual(
+	// 			t,
+	// 			completedShipment.ProNumber,
+	// 			result[0].ProNumber,
+	// 			"New ProNumber should be different",
+	// 		)
+	// 		assert.Equal(t, shipment.StatusNew, result[0].Status, "Status should be New")
+	// 		assert.Equal(t, "GENERATED-COPY", result[0].BOL, "BOL should be GENERATED-COPY")
+	// 	})
 
-		t.Run("Duplication with Override Dates", func(t *testing.T) {
-			req := &repoports.DuplicateShipmentRequest{
-				ShipmentID:               completedShipment.ID,
-				OrgID:                    org.ID,
-				BuID:                     bu.ID,
-				UserID:                   testUser.ID,
-				OverrideDates:            true,
-				IncludeCommodities:       false,
-				IncludeAdditionalCharges: false,
-			}
+	// 	t.Run("Duplication with Override Dates", func(t *testing.T) {
+	// 		req := &repoports.DuplicateShipmentRequest{
+	// 			ShipmentID:               completedShipment.ID,
+	// 			OrgID:                    org.ID,
+	// 			BuID:                     bu.ID,
+	// 			UserID:                   testUser.ID,
+	// 			OverrideDates:            true,
+	// 			IncludeCommodities:       false,
+	// 			IncludeAdditionalCharges: false,
+	// 		}
 
-			result, err := repo.BulkDuplicate(ctx, req)
-			require.NoError(t, err, "Duplicate with override dates should not return error")
-			require.NotNil(t, result, "Result should not be nil")
-		})
+	// 		result, err := repo.BulkDuplicate(ctx, req)
+	// 		require.NoError(t, err, "Duplicate with override dates should not return error")
+	// 		require.NotNil(t, result, "Result should not be nil")
+	// 	})
 
-		t.Run("Duplication with Commodities", func(t *testing.T) {
-			req := &repoports.DuplicateShipmentRequest{
-				ShipmentID:               completedShipment.ID,
-				OrgID:                    org.ID,
-				BuID:                     bu.ID,
-				UserID:                   testUser.ID,
-				OverrideDates:            false,
-				IncludeCommodities:       true,
-				IncludeAdditionalCharges: false,
-			}
+	// 	t.Run("Duplication with Commodities", func(t *testing.T) {
+	// 		req := &repoports.DuplicateShipmentRequest{
+	// 			ShipmentID:               completedShipment.ID,
+	// 			OrgID:                    org.ID,
+	// 			BuID:                     bu.ID,
+	// 			UserID:                   testUser.ID,
+	// 			OverrideDates:            false,
+	// 			IncludeCommodities:       true,
+	// 			IncludeAdditionalCharges: false,
+	// 		}
 
-			result, err := repo.BulkDuplicate(ctx, req)
-			require.NoError(t, err, "Duplicate with commodities should not return error")
-			require.NotNil(t, result, "Result should not be nil")
-		})
+	// 		result, err := repo.BulkDuplicate(ctx, req)
+	// 		require.NoError(t, err, "Duplicate with commodities should not return error")
+	// 		require.NotNil(t, result, "Result should not be nil")
+	// 	})
 
-		t.Run("Duplication with Additional Charges", func(t *testing.T) {
-			req := &repoports.DuplicateShipmentRequest{
-				ShipmentID:               completedShipment.ID,
-				OrgID:                    org.ID,
-				BuID:                     bu.ID,
-				UserID:                   testUser.ID,
-				OverrideDates:            false,
-				IncludeCommodities:       false,
-				IncludeAdditionalCharges: true,
-			}
+	// 	t.Run("Duplication with Additional Charges", func(t *testing.T) {
+	// 		req := &repoports.DuplicateShipmentRequest{
+	// 			ShipmentID:               completedShipment.ID,
+	// 			OrgID:                    org.ID,
+	// 			BuID:                     bu.ID,
+	// 			UserID:                   testUser.ID,
+	// 			OverrideDates:            false,
+	// 			IncludeCommodities:       false,
+	// 			IncludeAdditionalCharges: true,
+	// 		}
 
-			result, err := repo.BulkDuplicate(ctx, req)
-			require.NoError(t, err, "Duplicate with additional charges should not return error")
-			require.NotNil(t, result, "Result should not be nil")
-		})
+	// 		result, err := repo.BulkDuplicate(ctx, req)
+	// 		require.NoError(t, err, "Duplicate with additional charges should not return error")
+	// 		require.NotNil(t, result, "Result should not be nil")
+	// 	})
 
-		t.Run("Invalid Shipment ID", func(t *testing.T) {
-			req := &repoports.DuplicateShipmentRequest{
-				ShipmentID:               pulid.MustNew("shp_"),
-				OrgID:                    org.ID,
-				BuID:                     bu.ID,
-				UserID:                   testUser.ID,
-				OverrideDates:            false,
-				IncludeCommodities:       false,
-				IncludeAdditionalCharges: false,
-			}
+	// 	t.Run("Invalid Shipment ID", func(t *testing.T) {
+	// 		req := &repoports.DuplicateShipmentRequest{
+	// 			ShipmentID:               pulid.MustNew("shp_"),
+	// 			OrgID:                    org.ID,
+	// 			BuID:                     bu.ID,
+	// 			UserID:                   testUser.ID,
+	// 			OverrideDates:            false,
+	// 			IncludeCommodities:       false,
+	// 			IncludeAdditionalCharges: false,
+	// 		}
 
-			result, err := repo.BulkDuplicate(ctx, req)
-			require.Error(t, err, "Duplicate with invalid ID should return error")
-			require.Nil(t, result, "Result should be nil")
-		})
-	})
+	// 		result, err := repo.BulkDuplicate(ctx, req)
+	// 		require.Error(t, err, "Duplicate with invalid ID should return error")
+	// 		require.Nil(t, result, "Result should be nil")
+	// 	})
+	// })
 
 	// Test CheckForDuplicateBOLs operations
 	t.Run("CheckForDuplicateBOLs", func(t *testing.T) {

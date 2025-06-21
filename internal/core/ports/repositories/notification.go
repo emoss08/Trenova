@@ -4,15 +4,33 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
 type GetUserNotificationsRequest struct {
+	Filter     *ports.LimitOffsetQueryOptions
+	UnreadOnly bool `query:"unreadOnly"`
+}
+
+type MarkAsReadRequest struct {
+	NotificationID pulid.ID `json:"notificationId"`
 	UserID         pulid.ID `json:"userId"`
-	OrganizationID pulid.ID `json:"organizationId"`
-	Limit          int      `json:"limit"`
-	Offset         int      `json:"offset"`
-	UnreadOnly     bool     `json:"unreadOnly"`
+	OrgID          pulid.ID `json:"orgId"`
+	BuID           pulid.ID `json:"buId"`
+}
+
+type MarkAsDismissedRequest struct {
+	NotificationID pulid.ID `json:"notificationId"`
+	UserID         pulid.ID `json:"userId"`
+	OrgID          pulid.ID `json:"orgId"`
+	BuID           pulid.ID `json:"buId"`
+}
+
+type ReadAllNotificationsRequest struct {
+	UserID pulid.ID `json:"userId"`
+	OrgID  pulid.ID `json:"orgId"`
+	BuID   pulid.ID `json:"buId"`
 }
 
 type NotificationRepository interface {
@@ -29,20 +47,21 @@ type NotificationRepository interface {
 	GetUserNotifications(
 		ctx context.Context,
 		req *GetUserNotificationsRequest,
-	) ([]*notification.Notification, error)
+	) (*ports.ListResult[*notification.Notification], error)
 
 	// GetUnreadCount gets the count of unread notifications for a user
 	GetUnreadCount(ctx context.Context, userID pulid.ID, organizationID pulid.ID) (int, error)
 
+	// ReadAllNotifications reads all notifications for a user
+	ReadAllNotifications(ctx context.Context, req ReadAllNotificationsRequest) error
+
 	// MarkAsRead marks a notification as read
-	MarkAsRead(ctx context.Context, notificationID pulid.ID, userID pulid.ID, readAt int64) error
+	MarkAsRead(ctx context.Context, req MarkAsReadRequest) error
 
 	// MarkAsDismissed marks a notification as dismissed
 	MarkAsDismissed(
 		ctx context.Context,
-		notificationID pulid.ID,
-		userID pulid.ID,
-		dismissedAt int64,
+		req MarkAsDismissedRequest,
 	) error
 
 	// MarkAsDelivered marks a notification as delivered

@@ -25,6 +25,8 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/integration"
 	"github.com/emoss08/trenova/internal/api/handlers/location"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
+	"github.com/emoss08/trenova/internal/api/handlers/notification"
+	"github.com/emoss08/trenova/internal/api/handlers/notificationpreference"
 	organizationHandler "github.com/emoss08/trenova/internal/api/handlers/organization"
 	"github.com/emoss08/trenova/internal/api/handlers/patternconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/permission"
@@ -130,6 +132,8 @@ type RouterParams struct {
 	DedicatedLaneSuggestionHandler *dedicatedlanesuggestion.Handler
 	PatternConfigHandler           *patternconfig.Handler
 	WebSocketHandler               *websocket.Handler
+	NotificationPreferenceHandler  *notificationpreference.Handler
+	NotificationHandler            *notification.Handler
 }
 
 type Router struct {
@@ -327,4 +331,10 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Pattern Config
 	r.p.PatternConfigHandler.RegisterRoutes(router, rl)
+
+	// Notification Preferences
+	r.p.NotificationPreferenceHandler.RegisterRoutes(router, rl)
+
+	// Notifications
+	r.p.NotificationHandler.RegisterRoutes(router, rl)
 }
