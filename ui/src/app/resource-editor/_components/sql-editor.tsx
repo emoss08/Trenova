@@ -262,7 +262,6 @@ export default function SQLEditor({
                 bindKey: { win: "Ctrl-Shift-Enter", mac: "Cmd-Shift-Enter" },
                 exec: (editor: any) => {
                   const currentQuery = editor.getValue();
-                  console.info("executing query", currentQuery);
                   return handleExecuteQuery(currentQuery);
                 },
               },
