@@ -1,8 +1,9 @@
 import "@tanstack/react-table";
+import type { SelectOption } from "./types/fields";
 
 declare module "@tanstack/react-table" {
   // https://github.com/TanStack/table/issues/44#issuecomment-1377024296
-  interface TableMeta<TData extends unknown> {
+  interface TableMeta<TData extends Record<string, any>> {
     getRowClassName?: (row: Row<TData>) => string;
   }
 
@@ -10,6 +11,15 @@ declare module "@tanstack/react-table" {
     headerClassName?: string;
     cellClassName?: string;
     label?: string;
+    apiField?: string;
+    filterable?: boolean;
+    sortable?: boolean;
+    filterType?: "text" | "select" | "date" | "number" | "boolean";
+    filterOptions?: SelectOption[];
+    defaultFilterOperator?: FilterOperator;
+
+    // Allow for other existing metadata
+    [key: string]: any;
   }
 
   interface FilterFns {
