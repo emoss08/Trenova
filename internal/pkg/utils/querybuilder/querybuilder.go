@@ -6,14 +6,24 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/uptrace/bun"
+)
+
+// Constants for search configuration
+const (
+	defaultSimilarityThreshold = 0.3
+	wildcardPattern            = "%"
 )
 
 // QueryBuilder provides utilities for building queries with filtering and sorting
 type QueryBuilder struct {
-	query       *bun.SelectQuery
-	tableAlias  string
-	fieldConfig *ports.FieldConfiguration
+	query             *bun.SelectQuery
+	tableAlias        string
+	fieldConfig       *ports.FieldConfiguration
+	searchConfig      *infra.PostgresSearchConfig
+	usePostgresSearch bool
+	appliedSorts      []ports.SortField // Track user-specified sorts
 }
 
 // New creates a new QueryBuilder
@@ -23,9 +33,29 @@ func New(
 	fieldConfig *ports.FieldConfiguration,
 ) *QueryBuilder {
 	return &QueryBuilder{
-		query:       query,
-		tableAlias:  tableAlias,
-		fieldConfig: fieldConfig,
+		query:             query,
+		tableAlias:        tableAlias,
+		fieldConfig:       fieldConfig,
+		usePostgresSearch: false,
+		appliedSorts:      make([]ports.SortField, 0),
+	}
+}
+
+// NewWithPostgresSearch creates a new QueryBuilder with postgres search configuration
+func NewWithPostgresSearch[T infra.PostgresSearchable](
+	query *bun.SelectQuery,
+	tableAlias string,
+	fieldConfig *ports.FieldConfiguration,
+	entity T,
+) *QueryBuilder {
+	config := entity.GetPostgresSearchConfig()
+	return &QueryBuilder{
+		query:             query,
+		tableAlias:        tableAlias,
+		fieldConfig:       fieldConfig,
+		searchConfig:      &config,
+		usePostgresSearch: true,
+		appliedSorts:      make([]ports.SortField, 0),
 	}
 }
 
@@ -50,6 +80,13 @@ func (qb *QueryBuilder) ApplySort(sorts []ports.SortField) *QueryBuilder {
 			continue // Skip unauthorized fields
 		}
 
+		// If postgres search is enabled, store sorts for later integration
+		if qb.usePostgresSearch {
+			qb.appliedSorts = append(qb.appliedSorts, sort)
+			continue
+		}
+
+		// Otherwise apply sorts immediately (traditional behavior)
 		dbField := qb.getDBField(sort.Field)
 		direction := strings.ToUpper(string(sort.Direction))
 
@@ -64,7 +101,28 @@ func (qb *QueryBuilder) ApplySort(sorts []ports.SortField) *QueryBuilder {
 
 // GetQuery returns the modified query
 func (qb *QueryBuilder) GetQuery() *bun.SelectQuery {
+	// If postgres search is enabled but no search was performed,
+	// we still need to apply any pending sorts
+	if qb.usePostgresSearch && len(qb.appliedSorts) > 0 {
+		qb.applyPendingSorts()
+	}
 	return qb.query
+}
+
+// applyPendingSorts applies any stored sorts (used when postgres search is enabled but no search query was provided)
+func (qb *QueryBuilder) applyPendingSorts() {
+	for _, sort := range qb.appliedSorts {
+		dbField := qb.getDBField(sort.Field)
+		direction := strings.ToUpper(string(sort.Direction))
+
+		if qb.tableAlias != "" {
+			qb.query = qb.query.Order(fmt.Sprintf("%s.%s %s", qb.tableAlias, dbField, direction))
+		} else {
+			qb.query = qb.query.Order(fmt.Sprintf("%s %s", dbField, direction))
+		}
+	}
+	// Clear applied sorts to avoid double application
+	qb.appliedSorts = make([]ports.SortField, 0)
 }
 
 // getDBField gets the database field name from the API field name
@@ -149,7 +207,12 @@ func (qb *QueryBuilder) applyStatement(operator ports.FilterOperator, fieldRef s
 // isStringOperation checks if the operator requires string operations
 func (qb *QueryBuilder) isStringOperation(operator ports.FilterOperator) bool {
 	switch operator { //nolint:exhaustive // We only support the operators we need
-	case ports.OpContains, ports.OpStartsWith, ports.OpEndsWith, ports.OpLike, ports.OpILike:
+	case ports.OpContains,
+		ports.OpEqual,
+		ports.OpStartsWith,
+		ports.OpEndsWith,
+		ports.OpLike,
+		ports.OpILike:
 		return true
 	default:
 		return false
@@ -191,10 +254,8 @@ func (qb *QueryBuilder) getFieldReference(dbField string) string {
 	return dbField
 }
 
-// ApplyDefaultFilters applies common filters like tenant filtering
-func (qb *QueryBuilder) ApplyDefaultFilters(
-	tenantOpts ports.TenantOptions,
-) *QueryBuilder {
+// ApplyTenantFilters applies common filters like tenant filtering
+func (qb *QueryBuilder) ApplyTenantFilters(tenantOpts *ports.TenantOptions) *QueryBuilder {
 	qb.query = qb.query.Where(
 		fmt.Sprintf("%s.organization_id = ?", qb.tableAlias),
 		tenantOpts.OrgID,
@@ -206,23 +267,200 @@ func (qb *QueryBuilder) ApplyDefaultFilters(
 	return qb
 }
 
-// ApplyPagination applies limit and offset to the query
-func (qb *QueryBuilder) ApplyPagination(limit, offset int) *QueryBuilder {
-	if limit > 0 {
-		qb.query = qb.query.Limit(limit)
-	}
-	if offset > 0 {
-		qb.query = qb.query.Offset(offset)
-	}
-	return qb
-}
-
-// ApplyTextSearch applies full-text search if query is provided
+// ApplyTextSearch applies full-text search using postgres search capabilities or fallback to ILIKE
 func (qb *QueryBuilder) ApplyTextSearch(
 	searchQuery string,
 	searchableFields []string,
 ) *QueryBuilder {
-	if searchQuery == "" || len(searchableFields) == 0 {
+	if searchQuery == "" {
+		return qb
+	}
+
+	// Use postgres search if configured, otherwise fallback to ILIKE
+	if qb.usePostgresSearch && qb.searchConfig != nil {
+		return qb.applyPostgresSearch(searchQuery)
+	}
+
+	return qb.applyFallbackSearch(searchQuery, searchableFields)
+}
+
+// applyPostgresSearch applies the sophisticated postgres search functionality
+func (qb *QueryBuilder) applyPostgresSearch(query string) *QueryBuilder {
+	config := qb.searchConfig
+
+	// Check minimum query length
+	if len(strings.TrimSpace(query)) < config.MinLength {
+		return qb
+	}
+
+	// Limit number of terms
+	terms := strings.Fields(query)
+	if len(terms) > config.MaxTerms {
+		terms = terms[:config.MaxTerms]
+	}
+
+	// Build tsquery exactly like postgressearch.go
+	var tsQueryBuilder strings.Builder
+	tsQueryBuilder.Grow(len(query) + len(terms)*3)
+
+	for i, term := range terms {
+		if i > 0 {
+			tsQueryBuilder.WriteString(" | ")
+		}
+		tsQueryBuilder.WriteString(term)
+	}
+	tsqueryStr := tsQueryBuilder.String()
+	tsqueryWithWildcard := tsqueryStr + ":*"
+
+	tableAliasWithDot := qb.getTableAliasWithDot()
+
+	// Follow the exact same pattern as postgressearch.go:
+	// 1. First explicitly select table columns
+	qb.query = qb.query.ColumnExpr(tableAliasWithDot + "*")
+
+	// 2. Then add rank column
+	rankExpr := fmt.Sprintf(
+		`ts_rank(%ssearch_vector, to_tsquery('simple', ?)) AS rank`,
+		tableAliasWithDot,
+	)
+	qb.query = qb.query.ColumnExpr(rankExpr, tsqueryWithWildcard)
+
+	// 3. Build and apply search conditions
+	whereParts, whereArgs := qb.buildSearchConditions(config, tableAliasWithDot, query, tsqueryStr)
+
+	// Apply search conditions exactly like postgressearch.go
+	if len(whereParts) > 0 {
+		var searchCondBuilder strings.Builder
+		searchCondBuilder.WriteString("(")
+		for i, part := range whereParts {
+			if i > 0 {
+				searchCondBuilder.WriteString(" OR ")
+			}
+			searchCondBuilder.WriteString(part)
+		}
+		searchCondBuilder.WriteString(")")
+		qb.query = qb.query.Where(searchCondBuilder.String(), whereArgs...)
+	}
+
+	// 4. Apply ordering exactly like postgressearch.go
+	orderParts, orderArgs := qb.buildOrderingConditions(config, tableAliasWithDot, query)
+
+	for i, orderPart := range orderParts {
+		if i < len(orderArgs) {
+			qb.query = qb.query.OrderExpr(orderPart, orderArgs[i])
+		} else {
+			qb.query = qb.query.OrderExpr(orderPart)
+		}
+	}
+
+	// Clear applied sorts since they've been integrated into search ordering
+	qb.appliedSorts = make([]ports.SortField, 0)
+
+	return qb
+}
+
+// buildSearchConditions builds the WHERE conditions for postgres search
+func (qb *QueryBuilder) buildSearchConditions(
+	config *infra.PostgresSearchConfig,
+	tableAliasWithDot, query, tsqueryStr string,
+) (whereParts []string, whereArgs []any) {
+	whereParts = make([]string, 0, len(config.Fields)+1)
+	whereArgs = make([]any, 0, len(config.Fields)*2+1)
+
+	// Primary text search vector condition
+	whereParts = append(whereParts,
+		fmt.Sprintf("%ssearch_vector @@ to_tsquery('simple', ?)", tableAliasWithDot))
+	whereArgs = append(whereArgs, tsqueryStr+":*")
+
+	// Additional field-specific conditions for partial matching
+	if config.UsePartialMatch {
+		queryWithWildcards := wildcardPattern + query + wildcardPattern
+
+		for _, field := range config.Fields {
+			switch field.Type {
+			case infra.PostgresSearchTypeArray:
+				whereParts = append(whereParts,
+					fmt.Sprintf("%s%s @> ?", tableAliasWithDot, field.Name))
+				whereArgs = append(whereArgs, queryWithWildcards)
+			case infra.PostgresSearchTypeComposite, infra.PostgresSearchTypeNumber:
+				whereParts = append(whereParts,
+					fmt.Sprintf("%s%s ILIKE ?", tableAliasWithDot, field.Name))
+				whereArgs = append(whereArgs, queryWithWildcards)
+			case infra.PostgresSearchTypeText:
+				whereParts = append(whereParts,
+					fmt.Sprintf("(%s%s ILIKE ? OR similarity(%s%s, ?) > %g)",
+						tableAliasWithDot, field.Name,
+						tableAliasWithDot, field.Name, defaultSimilarityThreshold))
+				whereArgs = append(whereArgs, queryWithWildcards, query)
+			case infra.PostgresSearchTypeEnum:
+				whereParts = append(whereParts,
+					fmt.Sprintf("%s%s::text = ?", tableAliasWithDot, field.Name))
+				whereArgs = append(whereArgs, query)
+			}
+		}
+	}
+
+	return whereParts, whereArgs
+}
+
+// buildOrderingConditions builds the ORDER BY conditions for postgres search
+func (qb *QueryBuilder) buildOrderingConditions(
+	config *infra.PostgresSearchConfig,
+	tableAliasWithDot, query string,
+) (orderParts []string, orderArgs []any) {
+	// Calculate total capacity: search ordering + user sorts
+	searchOrderCount := len(config.Fields)*2 + 1 // exact + prefix + rank
+	userSortCount := len(qb.appliedSorts)
+	totalCapacity := searchOrderCount + userSortCount
+
+	orderParts = make([]string, 0, totalCapacity)
+	orderArgs = make([]any, 0, len(config.Fields)*2) // Only search ordering needs args
+
+	// 1. Search-specific ordering (highest priority)
+	// Exact match priority
+	for _, field := range config.Fields {
+		if field.Type == infra.PostgresSearchTypeComposite ||
+			field.Type == infra.PostgresSearchTypeNumber {
+			orderParts = append(orderParts,
+				fmt.Sprintf("CASE WHEN %s%s = ? THEN 1 ELSE 0 END DESC",
+					tableAliasWithDot, field.Name))
+			orderArgs = append(orderArgs, query)
+		}
+	}
+
+	// Prefix match priority
+	queryWithSuffix := query + wildcardPattern
+	for _, field := range config.Fields {
+		if field.Type == infra.PostgresSearchTypeComposite ||
+			field.Type == infra.PostgresSearchTypeNumber {
+			orderParts = append(orderParts,
+				fmt.Sprintf("CASE WHEN %s%s ILIKE ? THEN 1 ELSE 0 END DESC",
+					tableAliasWithDot, field.Name))
+			orderArgs = append(orderArgs, queryWithSuffix)
+		}
+	}
+
+	// Relevance ranking
+	orderParts = append(orderParts, "rank DESC NULLS LAST")
+
+	// 2. User-specified sorts (secondary priority for tie-breaking)
+	for _, sort := range qb.appliedSorts {
+		dbField := qb.getDBField(sort.Field)
+		direction := strings.ToUpper(string(sort.Direction))
+
+		fieldRef := qb.getFieldReference(dbField)
+		orderParts = append(orderParts, fmt.Sprintf("%s %s", fieldRef, direction))
+	}
+
+	return orderParts, orderArgs
+}
+
+// applyFallbackSearch applies the original ILIKE-based search as fallback
+func (qb *QueryBuilder) applyFallbackSearch(
+	searchQuery string,
+	searchableFields []string,
+) *QueryBuilder {
+	if len(searchableFields) == 0 {
 		return qb
 	}
 
@@ -249,4 +487,12 @@ func (qb *QueryBuilder) ApplyTextSearch(
 	}
 
 	return qb
+}
+
+// getTableAliasWithDot returns the table alias with dot suffix
+func (qb *QueryBuilder) getTableAliasWithDot() string {
+	if qb.tableAlias != "" {
+		return qb.tableAlias + "."
+	}
+	return ""
 }
