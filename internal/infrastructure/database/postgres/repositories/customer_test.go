@@ -32,13 +32,11 @@ func TestCustomerRepository(t *testing.T) {
 	t.Run("list customers", func(t *testing.T) {
 		opts := &repoports.ListCustomerOptions{
 			Filter: &ports.QueryOptions{
-				LimitOffsetQueryOptions: ports.LimitOffsetQueryOptions{
-					Limit:  10,
-					Offset: 0,
-					TenantOpts: &ports.TenantOptions{
-						OrgID: org.ID,
-						BuID:  bu.ID,
-					},
+				Limit:  10,
+				Offset: 0,
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
 				},
 			},
 		}
@@ -49,15 +47,13 @@ func TestCustomerRepository(t *testing.T) {
 	t.Run("list customers with query", func(t *testing.T) {
 		opts := &repoports.ListCustomerOptions{
 			Filter: &ports.QueryOptions{
-				LimitOffsetQueryOptions: ports.LimitOffsetQueryOptions{
-					Limit:  10,
-					Offset: 0,
-					TenantOpts: &ports.TenantOptions{
-						OrgID: org.ID,
-						BuID:  bu.ID,
-					},
-					Query: "Honeywell",
+				Limit:  10,
+				Offset: 0,
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
 				},
+				Query: "Honeywell",
 			},
 		}
 
@@ -68,13 +64,11 @@ func TestCustomerRepository(t *testing.T) {
 		opts := &repoports.ListCustomerOptions{
 			IncludeState: true,
 			Filter: &ports.QueryOptions{
-				LimitOffsetQueryOptions: ports.LimitOffsetQueryOptions{
-					Limit:  10,
-					Offset: 0,
-					TenantOpts: &ports.TenantOptions{
-						OrgID: org.ID,
-						BuID:  bu.ID,
-					},
+				Limit:  10,
+				Offset: 0,
+				TenantOpts: &ports.TenantOptions{
+					OrgID: org.ID,
+					BuID:  bu.ID,
 				},
 			},
 		}

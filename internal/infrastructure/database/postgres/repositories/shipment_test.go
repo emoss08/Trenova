@@ -61,7 +61,7 @@ func TestShipmentRepository(t *testing.T) {
 	t.Run("List", func(t *testing.T) {
 		t.Run("Basic List", func(t *testing.T) {
 			opts := &repoports.ListShipmentOptions{
-				Filter: &ports.LimitOffsetQueryOptions{
+				Filter: &ports.QueryOptions{
 					Limit:  10,
 					Offset: 0,
 					TenantOpts: &ports.TenantOptions{
@@ -80,7 +80,7 @@ func TestShipmentRepository(t *testing.T) {
 
 		t.Run("List with Query Filter", func(t *testing.T) {
 			opts := &repoports.ListShipmentOptions{
-				Filter: &ports.LimitOffsetQueryOptions{
+				Filter: &ports.QueryOptions{
 					Limit:  10,
 					Offset: 0,
 					Query:  testShipment.ProNumber[:3], // Search by partial pro number
@@ -101,7 +101,7 @@ func TestShipmentRepository(t *testing.T) {
 				ShipmentOptions: repoports.ShipmentOptions{
 					Status: string(shipment.StatusNew),
 				},
-				Filter: &ports.LimitOffsetQueryOptions{
+				Filter: &ports.QueryOptions{
 					Limit:  10,
 					Offset: 0,
 					TenantOpts: &ports.TenantOptions{
@@ -124,7 +124,7 @@ func TestShipmentRepository(t *testing.T) {
 				ShipmentOptions: repoports.ShipmentOptions{
 					ExpandShipmentDetails: true,
 				},
-				Filter: &ports.LimitOffsetQueryOptions{
+				Filter: &ports.QueryOptions{
 					Limit:  5,
 					Offset: 0,
 					TenantOpts: &ports.TenantOptions{
@@ -152,7 +152,7 @@ func TestShipmentRepository(t *testing.T) {
 		t.Run("List with Pagination", func(t *testing.T) {
 			// Test first page
 			opts1 := &repoports.ListShipmentOptions{
-				Filter: &ports.LimitOffsetQueryOptions{
+				Filter: &ports.QueryOptions{
 					Limit:  2,
 					Offset: 0,
 					TenantOpts: &ports.TenantOptions{
@@ -168,7 +168,7 @@ func TestShipmentRepository(t *testing.T) {
 
 			// Test second page
 			opts2 := &repoports.ListShipmentOptions{
-				Filter: &ports.LimitOffsetQueryOptions{
+				Filter: &ports.QueryOptions{
 					Limit:  2,
 					Offset: 2,
 					TenantOpts: &ports.TenantOptions{
@@ -784,7 +784,7 @@ func TestShipmentRepository(t *testing.T) {
 
 		t.Run("Large Pagination", func(t *testing.T) {
 			opts := &repoports.ListShipmentOptions{
-				Filter: &ports.LimitOffsetQueryOptions{
+				Filter: &ports.QueryOptions{
 					Limit:  1000,
 					Offset: 0,
 					TenantOpts: &ports.TenantOptions{
@@ -807,7 +807,7 @@ func TestShipmentRepository(t *testing.T) {
 			}
 
 			opts := &repoports.ListShipmentOptions{
-				Filter: &ports.LimitOffsetQueryOptions{
+				Filter: &ports.QueryOptions{
 					Limit:  10,
 					Offset: 0,
 					Query:  longQuery,
@@ -828,7 +828,7 @@ func TestShipmentRepository(t *testing.T) {
 	t.Run("Concurrent Operations", func(t *testing.T) {
 		t.Run("Concurrent List Operations", func(t *testing.T) {
 			opts := &repoports.ListShipmentOptions{
-				Filter: &ports.LimitOffsetQueryOptions{
+				Filter: &ports.QueryOptions{
 					Limit:  5,
 					Offset: 0,
 					TenantOpts: &ports.TenantOptions{

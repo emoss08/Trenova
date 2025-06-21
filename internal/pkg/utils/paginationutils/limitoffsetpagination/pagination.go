@@ -126,15 +126,13 @@ func ParseEnhancedParams(
 	}
 
 	opts := &ports.QueryOptions{
-		LimitOffsetQueryOptions: ports.LimitOffsetQueryOptions{
-			Limit:  pg.Limit,
-			Offset: pg.Offset,
-			Query:  c.Query("query", ""),
-			TenantOpts: &ports.TenantOptions{
-				OrgID:  reqCtx.OrgID,
-				BuID:   reqCtx.BuID,
-				UserID: reqCtx.UserID,
-			},
+		Limit:  pg.Limit,
+		Offset: pg.Offset,
+		Query:  c.Query("query", ""),
+		TenantOpts: &ports.TenantOptions{
+			OrgID:  reqCtx.OrgID,
+			BuID:   reqCtx.BuID,
+			UserID: reqCtx.UserID,
 		},
 	}
 
@@ -195,7 +193,7 @@ func parseFilters(c *fiber.Ctx, opts *ports.QueryOptions) {
 						Operator: ports.FilterOperator(operator),
 						Value:    parseFilterValue(value, operator),
 					}
-					opts.Filters = append(opts.Filters, filter)
+					opts.FieldFilters = append(opts.FieldFilters, filter)
 				}
 			}
 		}

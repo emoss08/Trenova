@@ -13,8 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/calculator"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/postgressearch"
-	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
+	"github.com/emoss08/trenova/internal/pkg/utils/querybuilder"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
@@ -133,15 +132,6 @@ func (sr *shipmentRepository) addOptions(
 		q = q.Relation("CanceledBy")
 	}
 
-	if opts.Status != "" {
-		status, err := shipment.StatusFromString(opts.Status)
-		if err != nil {
-			return q
-		}
-
-		q = q.Where("sp.status = ?", status)
-	}
-
 	return q
 }
 
@@ -158,21 +148,27 @@ func (sr *shipmentRepository) filterQuery(
 	q *bun.SelectQuery,
 	opts *repositories.ListShipmentOptions,
 ) *bun.SelectQuery {
-	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
-		Query:      q,
-		TableAlias: "sp",
-		Filter:     opts.Filter,
-	})
+	qb := querybuilder.NewWithPostgresSearch(
+		q,
+		"sp",
+		repositories.ShipmentFieldConfig,
+		(*shipment.Shipment)(nil),
+	)
+	qb.ApplyTenantFilters(opts.Filter.TenantOpts)
 
-	// * If there is a query, build the postgres search query
-	if opts.Filter.Query != "" {
-		q = postgressearch.BuildSearchQuery(
-			q,
-			opts.Filter.Query,
-			(*shipment.Shipment)(nil),
-		)
+	if opts.Filter != nil {
+		qb.ApplyFilters(opts.Filter.FieldFilters)
+
+		if len(opts.Filter.Sort) > 0 {
+			qb.ApplySort(opts.Filter.Sort)
+		}
+
+		if opts.Filter.Query != "" {
+			qb.ApplyTextSearch(opts.Filter.Query, []string{"pro_number", "bol"})
+		}
+
+		q = qb.GetQuery()
 	}
-
 	q = sr.addOptions(q, opts.ShipmentOptions)
 
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)

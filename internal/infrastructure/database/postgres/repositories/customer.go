@@ -90,15 +90,10 @@ func (cr *customerRepository) filterQuery(
 	}
 
 	// Check if we should use enhanced filtering
+	qb := querybuilder.New(q, "cus", repositories.CustomerFieldConfig)
+	qb.ApplyTenantFilters(opts.Filter.TenantOpts)
 	if opts.Filter != nil {
-		cr.l.Debug().
-			Interface("filters", opts.Filter.Filters).
-			Interface("sort", opts.Filter.Sort).
-			Bool("hasFilters", len(opts.Filter.Filters) > 0).
-			Msg("enhanced filter check")
-
-		qb := querybuilder.New(q, "cus", repositories.CustomerFieldConfig)
-		qb.ApplyFilters(opts.Filter.Filters)
+		qb.ApplyFilters(opts.Filter.FieldFilters)
 
 		// Apply sorting if provided
 		if len(opts.Filter.Sort) > 0 {

@@ -15,18 +15,17 @@ func ParseEnhancedQueryFromJSON(
 	reqCtx *appctx.RequestContext,
 ) (*ports.QueryOptions, error) {
 	enhancedOpts := &ports.QueryOptions{
-		LimitOffsetQueryOptions: ports.LimitOffsetQueryOptions{
-			Limit:  c.QueryInt("limit", 10),
-			Offset: c.QueryInt("offset", 0),
-			Query:  c.Query("query"),
-			TenantOpts: &ports.TenantOptions{
-				OrgID:  reqCtx.OrgID,
-				BuID:   reqCtx.BuID,
-				UserID: reqCtx.UserID,
-			},
+		Limit:  c.QueryInt("limit", 10),
+		Offset: c.QueryInt("offset", 0),
+		Query:  c.Query("query"),
+		TenantOpts: &ports.TenantOptions{
+			OrgID:  reqCtx.OrgID,
+			BuID:   reqCtx.BuID,
+			UserID: reqCtx.UserID,
 		},
-		Filters: []ports.FieldFilter{},
-		Sort:    []ports.SortField{},
+
+		FieldFilters: []ports.FieldFilter{},
+		Sort:         []ports.SortField{},
 	}
 
 	// Parse filters from JSON string
@@ -38,7 +37,7 @@ func ParseEnhancedQueryFromJSON(
 				"Invalid filters format: "+err.Error(),
 			)
 		}
-		enhancedOpts.Filters = filters
+		enhancedOpts.FieldFilters = filters
 	}
 
 	// Parse sort from JSON string
