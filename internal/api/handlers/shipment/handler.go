@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/shipment"
 	"github.com/emoss08/trenova/internal/pkg/appctx"
+	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/utils/streamingutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
@@ -96,7 +97,7 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 	}
 
 	opts := &repositories.ListShipmentOptions{
-		Filter: &ports.LimitOffsetQueryOptions{
+		Filter: &ports.QueryOptions{
 			TenantOpts: &ports.TenantOptions{
 				OrgID:  reqCtx.OrgID,
 				BuID:   reqCtx.BuID,
@@ -126,18 +127,24 @@ func (h *Handler) list(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
+	eo, err := paginationutils.ParseEnhancedQueryFromJSON(c, reqCtx)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	qo := new(repositories.ListShipmentOptions)
+	if err = paginationutils.ParseAdditionalQueryParams(c, qo); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	listOpts := repositories.BuildShipmentListOptions(eo, qo)
+
 	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*shipmentdomain.Shipment], error) {
 		if err = fc.QueryParser(filter); err != nil {
 			return nil, h.eh.HandleError(fc, err)
 		}
 
-		return h.ss.List(fc.UserContext(), &repositories.ListShipmentOptions{
-			ShipmentOptions: repositories.ShipmentOptions{
-				ExpandShipmentDetails: fc.QueryBool("expandShipmentDetails"),
-				Status:                fc.Query("status"),
-			},
-			Filter: filter,
-		})
+		return h.ss.List(fc.UserContext(), listOpts)
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
@@ -373,21 +380,17 @@ func (h *Handler) calculateTotals(c *fiber.Ctx) error {
 func (h *Handler) liveStream(c *fiber.Ctx) error {
 	// Use the simplified streaming helper for shipments
 	fetchFunc := func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*shipmentdomain.Shipment, error) {
-		filter := &ports.LimitOffsetQueryOptions{
-			TenantOpts: &ports.TenantOptions{
-				BuID:   reqCtx.BuID,
-				OrgID:  reqCtx.OrgID,
-				UserID: reqCtx.UserID,
-			},
-			Limit:  10, // Get last 10 shipments
-			Offset: 0,
-		}
-
 		result, err := h.ss.List(ctx, &repositories.ListShipmentOptions{
 			ShipmentOptions: repositories.ShipmentOptions{
 				ExpandShipmentDetails: false, // Keep it lightweight for streaming
 			},
-			Filter: filter,
+			Filter: &ports.QueryOptions{
+				TenantOpts: &ports.TenantOptions{
+					BuID:   reqCtx.BuID,
+					OrgID:  reqCtx.OrgID,
+					UserID: reqCtx.UserID,
+				},
+			},
 		})
 		if err != nil {
 			return nil, err

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -52,26 +53,18 @@ type SortField struct {
 
 // QueryOptions extends LimitOffsetQueryOptions with filtering and sorting
 type QueryOptions struct {
-	LimitOffsetQueryOptions `              json:"limitOffsetQueryOptions"`
-	Filters                 []FieldFilter `json:"filters"                 query:"filters"`
-	Sort                    []SortField   `json:"sort"                    query:"sort"`
-}
-
-// ToLimitOffsetQueryOptions converts QueryOptions to LimitOffsetQueryOptions
-// for backward compatibility
-func (q *QueryOptions) ToLimitOffsetQueryOptions() *LimitOffsetQueryOptions {
-	return &LimitOffsetQueryOptions{
-		TenantOpts: q.TenantOpts,
-		Limit:      q.Limit,
-		Offset:     q.Offset,
-		Query:      q.Query,
-		ID:         q.ID,
-	}
+	ID           *pulid.ID      `json:"id"         query:"id"` // * Only used for single item requests (I.E. Select Options)
+	TenantOpts   *TenantOptions `json:"tenantOpts"`
+	Query        string         `json:"query"      query:"query"`
+	FieldFilters []FieldFilter  `json:"filters"    query:"filters"`
+	Sort         []SortField    `json:"sort"       query:"sort"`
+	Limit        int            `json:"limit"      query:"limit"   default:"100"`
+	Offset       int            `json:"offset"     query:"offset"  default:"0"`
 }
 
 // ValidateFilters validates the filter conditions
 func (q *QueryOptions) ValidateFilters(allowedFields map[string]bool) error {
-	for _, filter := range q.Filters {
+	for _, filter := range q.FieldFilters {
 		if !allowedFields[filter.Field] {
 			return fmt.Errorf("filtering on field '%s' is not allowed", filter.Field)
 		}
@@ -99,7 +92,7 @@ func (q *QueryOptions) ValidateSort(allowedFields map[string]bool) error {
 
 // HasFilters returns true if there are any filters
 func (q *QueryOptions) HasFilters() bool {
-	return len(q.Filters) > 0
+	return len(q.FieldFilters) > 0
 }
 
 // HasSort returns true if there are any sort conditions
@@ -157,37 +150,4 @@ type FieldConfiguration struct {
 	FieldMap map[string]string
 	// * Field mapping from API names to enum values
 	EnumMap map[string]bool
-}
-
-// NewFieldConfiguration creates a new field configuration
-func NewFieldConfiguration() *FieldConfiguration {
-	return &FieldConfiguration{
-		FilterableFields: make(map[string]bool),
-		SortableFields:   make(map[string]bool),
-		FieldMap:         make(map[string]string),
-		EnumMap:          make(map[string]bool),
-	}
-}
-
-// AddFilterableField adds a field as filterable
-func (fc *FieldConfiguration) AddFilterableField(apiField, dbField string) *FieldConfiguration {
-	fc.FilterableFields[apiField] = true
-	if dbField != "" {
-		fc.FieldMap[apiField] = dbField
-	}
-	return fc
-}
-
-// AddSortableField adds a field as sortable
-func (fc *FieldConfiguration) AddSortableField(apiField, dbField string) *FieldConfiguration {
-	fc.SortableFields[apiField] = true
-	if dbField != "" {
-		fc.FieldMap[apiField] = dbField
-	}
-	return fc
-}
-
-// AddField adds a field as both filterable and sortable
-func (fc *FieldConfiguration) AddField(apiField, dbField string) *FieldConfiguration {
-	return fc.AddFilterableField(apiField, dbField).AddSortableField(apiField, dbField)
 }

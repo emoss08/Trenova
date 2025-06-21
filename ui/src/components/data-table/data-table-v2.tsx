@@ -364,17 +364,14 @@ export function DataTableV2<TData extends Record<string, any>>({
           {includeOptions && (
             <DataTableOptions>
               <div className="flex flex-col gap-4 w-full">
-                <div className="flex items-center gap-2">
-                  <EnhancedDataTableSearch
-                    filterState={filterState}
-                    onFilterChange={handleFilterChange}
-                    placeholder={`Search ${name.toLowerCase()}...`}
-                    className="max-w-md"
-                  />
-                </div>
                 <div className="flex justify-between items-center gap-2">
                   {(config.showFilterUI || config.showSortUI) && (
                     <div className="flex flex-col lg:flex-row gap-4">
+                      <EnhancedDataTableSearch
+                        filterState={filterState}
+                        onFilterChange={handleFilterChange}
+                        placeholder={`Search ${name.toLowerCase()}...`}
+                      />
                       {config.showFilterUI && (
                         <div className="flex-1">
                           <EnhancedDataTableFilters

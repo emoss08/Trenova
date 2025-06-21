@@ -74,15 +74,13 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 
 	opts := &repositories.ListCustomerOptions{
 		Filter: &ports.QueryOptions{
-			LimitOffsetQueryOptions: ports.LimitOffsetQueryOptions{
-				TenantOpts: &ports.TenantOptions{
-					OrgID:  reqCtx.OrgID,
-					BuID:   reqCtx.BuID,
-					UserID: reqCtx.UserID,
-				},
-				Limit:  c.QueryInt("limit", 100),
-				Offset: c.QueryInt("offset", 0),
-				Query:  c.Query("search"),
+			Limit:  c.QueryInt("limit", 100),
+			Offset: c.QueryInt("offset", 0),
+			Query:  c.Query("search"),
+			TenantOpts: &ports.TenantOptions{
+				OrgID:  reqCtx.OrgID,
+				BuID:   reqCtx.BuID,
+				UserID: reqCtx.UserID,
 			},
 		},
 	}

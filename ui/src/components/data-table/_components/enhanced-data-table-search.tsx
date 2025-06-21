@@ -1,8 +1,10 @@
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { createDebouncedSearch } from "@/lib/enhanced-data-table-utils";
 import type { FilterState } from "@/types/enhanced-data-table";
-import { Search, X } from "lucide-react";
+import { faSearch } from "@fortawesome/pro-regular-svg-icons";
+import { X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 interface EnhancedDataTableSearchProps {
@@ -59,14 +61,14 @@ export function EnhancedDataTableSearch({
   }, [filterState.globalSearch]);
 
   return (
-    <div className={`relative ${className}`}>
-      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+    <div className="flex items-center max-w-[200px]">
       <Input
         type="text"
         placeholder={placeholder}
         value={searchValue}
         onChange={(e) => handleSearchChange(e.target.value)}
         className="pr-10"
+        icon={<Icon icon={faSearch} className="size-3 text-muted-foreground" />}
       />
       {searchValue && (
         <Button
@@ -76,7 +78,7 @@ export function EnhancedDataTableSearch({
           onClick={handleClearSearch}
           className="absolute right-1 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-muted"
         >
-          <X className="h-3 w-3" />
+          <X className="size-3" />
           <span className="sr-only">Clear search</span>
         </Button>
       )}

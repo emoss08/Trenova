@@ -5,6 +5,7 @@ import {
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { HoverCardTimestamp } from "@/components/data-table/_components/data-table-components";
 import { ShipmentStatusBadge } from "@/components/status-badge";
+import { shipmentStatusChoices } from "@/lib/choices";
 import type { CustomerSchema } from "@/lib/schemas/customer-schema";
 import { LocationSchema } from "@/lib/schemas/location-schema";
 import {
@@ -20,16 +21,22 @@ export function getColumns(): ColumnDef<Shipment>[] {
   const columnHelper = createColumnHelper<Shipment>();
 
   return [
-    columnHelper.display({
-      id: "status",
+    {
+      accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
-        const status = row.original.status;
+        const { status } = row.original;
         return <ShipmentStatusBadge status={status} />;
       },
-      size: 100,
-      enableHiding: false,
-    }),
+      meta: {
+        apiField: "status",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: shipmentStatusChoices,
+        defaultFilterOperator: "eq",
+      },
+    },
     {
       accessorKey: "proNumber",
       header: "Pro Number",

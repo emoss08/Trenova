@@ -12,65 +12,93 @@ import (
 	"github.com/shopspring/decimal"
 )
 
+var ShipmentFieldConfig = &ports.FieldConfiguration{
+	FilterableFields: map[string]bool{
+		"proNumber": true,
+		"status":    true,
+	},
+	SortableFields: map[string]bool{
+		"proNumber": true,
+		"status":    true,
+	},
+	FieldMap: map[string]string{
+		"proNumber": "pro_number",
+		"status":    "status",
+	},
+	EnumMap: map[string]bool{
+		"status": true,
+	},
+}
+
 type ShipmentOptions struct {
 	ExpandShipmentDetails bool   `query:"expandShipmentDetails"`
 	Status                string `query:"status"`
 }
 
+func BuildShipmentListOptions(
+	filter *ports.QueryOptions,
+	additionalOpts *ListShipmentOptions,
+) *ListShipmentOptions {
+	return &ListShipmentOptions{
+		Filter:          filter,
+		ShipmentOptions: additionalOpts.ShipmentOptions,
+	}
+}
+
 type ListShipmentOptions struct {
-	Filter          *ports.LimitOffsetQueryOptions
-	ShipmentOptions ShipmentOptions
+	Filter          *ports.QueryOptions `json:"filter"          query:"filter"`
+	ShipmentOptions `json:"shipmentOptions" query:"shipmentOptions"`
 }
 
 type GetShipmentByIDOptions struct {
-	ID              pulid.ID
-	OrgID           pulid.ID
-	BuID            pulid.ID
-	UserID          pulid.ID
-	ShipmentOptions ShipmentOptions `query:"shipmentOptions"`
+	ID              pulid.ID        `json:"id"              query:"id"`
+	OrgID           pulid.ID        `json:"orgId"           query:"orgId"`
+	BuID            pulid.ID        `json:"buId"            query:"buId"`
+	UserID          pulid.ID        `json:"userId"          query:"userId"`
+	ShipmentOptions ShipmentOptions `json:"shipmentOptions" query:"shipmentOptions"`
 }
 
 type UpdateShipmentStatusRequest struct {
 	// Fetch the shipment
-	GetOpts *GetShipmentByIDOptions
+	GetOpts *GetShipmentByIDOptions `json:"getOpts" query:"getOpts"`
 
 	// The status of the shipment
-	Status shipment.Status
+	Status shipment.Status `json:"status" query:"status"`
 }
 
 type CancelShipmentRequest struct {
-	ShipmentID   pulid.ID `json:"shipmentId"`
-	OrgID        pulid.ID `json:"orgId"`
-	BuID         pulid.ID `json:"buId"`
-	CanceledByID pulid.ID `json:"canceledById"`
-	CanceledAt   int64    `json:"canceledAt"`
-	CancelReason string   `json:"cancelReason"`
+	ShipmentID   pulid.ID `json:"shipmentId"   query:"shipmentId"`
+	OrgID        pulid.ID `json:"orgId"        query:"orgId"`
+	BuID         pulid.ID `json:"buId"         query:"buId"`
+	CanceledByID pulid.ID `json:"canceledById" query:"canceledById"`
+	CanceledAt   int64    `json:"canceledAt"   query:"canceledAt"`
+	CancelReason string   `json:"cancelReason" query:"cancelReason"`
 }
 
 type DuplicateShipmentRequest struct {
 	// The ID of the shipment to duplicate
-	ShipmentID pulid.ID `json:"shipmentId"`
+	ShipmentID pulid.ID `json:"shipmentId" query:"shipmentId"`
 
 	// The ID of the organization
-	OrgID pulid.ID `json:"orgId"`
+	OrgID pulid.ID `json:"orgId" query:"orgId"`
 
 	// The ID of the business unit
-	BuID pulid.ID `json:"buId"`
+	BuID pulid.ID `json:"buId" query:"buId"`
 
 	// The ID of the user who is duplicating the shipment
-	UserID pulid.ID `json:"userId"`
+	UserID pulid.ID `json:"userId" query:"userId"`
 
 	// The number of shipments to duplicate
-	Count int `json:"count" default:"1"`
+	Count int `json:"count" default:"1" query:"count"`
 
 	// Optional parameter to override the dates of the new shipment
-	OverrideDates bool `json:"overrideDates" query:"overrideDates"`
+	OverrideDates bool `json:"overrideDates" query:"overrideDates" default:"false"`
 
 	// Optional parameter to include commodities in the new shipment
-	IncludeCommodities bool `json:"includeCommodities" query:"includeCommodities"`
+	IncludeCommodities bool `json:"includeCommodities" query:"includeCommodities" default:"false"`
 
 	// Optional parameter to include additional charges in the new shipment
-	IncludeAdditionalCharges bool `json:"includeAdditionalCharges" query:"includeAdditionalCharges"`
+	IncludeAdditionalCharges bool `json:"includeAdditionalCharges" query:"includeAdditionalCharges" default:"false"`
 }
 
 func (dr *DuplicateShipmentRequest) Validate(ctx context.Context) *errors.MultiError {
