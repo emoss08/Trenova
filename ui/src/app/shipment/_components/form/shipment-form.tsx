@@ -71,7 +71,9 @@ export function ShipmentFormBody({
   return (
     <ShipmentFormBodyOuter>
       <ShipmentFormHeader selectedShipment={selectedShipment} />
-      <ShipmentFormContent>{children}</ShipmentFormContent>
+      <ShipmentFormContent selectedShipment={selectedShipment}>
+        {children}
+      </ShipmentFormContent>
     </ShipmentFormBodyOuter>
   );
 }
