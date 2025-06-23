@@ -178,6 +178,7 @@ func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 }
 
 // Pagination Configuration
+
 func (st *Shipment) GetID() string {
 	return st.ID.String()
 }

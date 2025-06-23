@@ -31,8 +31,6 @@ CREATE TABLE IF NOT EXISTS "dedicated_lane_suggestions"(
     -- Temporal Pattern Information
     "last_shipment_date" bigint NOT NULL,
     "first_shipment_date" bigint NOT NULL,
-    "analysis_start_date" bigint NOT NULL,
-    "analysis_end_date" bigint NOT NULL,
     -- Suggestion Management
     "suggested_name" varchar(200) NOT NULL,
     "pattern_details" jsonb NOT NULL DEFAULT '{}' ::jsonb,
@@ -64,7 +62,6 @@ CREATE TABLE IF NOT EXISTS "dedicated_lane_suggestions"(
     CONSTRAINT "chk_dedicated_lane_suggestions_confidence_score" CHECK (confidence_score >= 0.0 AND confidence_score <= 1.0),
     CONSTRAINT "chk_dedicated_lane_suggestions_frequency_count" CHECK (frequency_count >= 1),
     CONSTRAINT "chk_dedicated_lane_suggestions_pattern_details_format" CHECK (jsonb_typeof(pattern_details) = 'object'),
-    CONSTRAINT "chk_dedicated_lane_suggestions_date_logic" CHECK (first_shipment_date <= last_shipment_date AND analysis_start_date <= analysis_end_date AND expires_at > created_at),
     -- Processing Logic Constraints
     CONSTRAINT "chk_dedicated_lane_suggestions_processed_logic" CHECK ((status = 'Pending' AND processed_by_id IS NULL AND processed_at IS NULL) OR (status IN ('Accepted', 'Rejected') AND processed_by_id IS NOT NULL AND processed_at IS NOT NULL) OR (status = 'Expired')),
     CONSTRAINT "chk_dedicated_lane_suggestions_acceptance_logic" CHECK ((status = 'Accepted' AND created_dedicated_lane_id IS NOT NULL) OR (status != 'Accepted' AND created_dedicated_lane_id IS NULL))
@@ -109,10 +106,6 @@ WHERE
 CREATE INDEX IF NOT EXISTS "idx_dedicated_lane_suggestions_pattern_details" ON "dedicated_lane_suggestions" USING gin("pattern_details");
 
 --bun:split
--- Temporal Analysis Index (Time-based Queries)
-CREATE INDEX IF NOT EXISTS "idx_dedicated_lane_suggestions_temporal" ON "dedicated_lane_suggestions"("analysis_start_date", "analysis_end_date", "frequency_count");
-
---bun:split
 -- Confidence Score Performance Index (High-Value Suggestions)
 CREATE INDEX IF NOT EXISTS "idx_dedicated_lane_suggestions_confidence" ON "dedicated_lane_suggestions"("confidence_score" DESC, "frequency_count" DESC)
 WHERE
@@ -151,10 +144,6 @@ COMMENT ON COLUMN dedicated_lane_suggestions.total_freight_value IS 'Total freig
 COMMENT ON COLUMN dedicated_lane_suggestions.last_shipment_date IS 'Most recent shipment date in the detected pattern (Unix timestamp)';
 
 COMMENT ON COLUMN dedicated_lane_suggestions.first_shipment_date IS 'Earliest shipment date in the detected pattern (Unix timestamp)';
-
-COMMENT ON COLUMN dedicated_lane_suggestions.analysis_start_date IS 'Start date of the analysis period that generated this suggestion';
-
-COMMENT ON COLUMN dedicated_lane_suggestions.analysis_end_date IS 'End date of the analysis period that generated this suggestion';
 
 COMMENT ON COLUMN dedicated_lane_suggestions.suggested_name IS 'Algorithm-generated suggested name for the dedicated lane';
 

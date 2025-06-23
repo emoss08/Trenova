@@ -26,7 +26,7 @@ type SuggestionServiceParams struct {
 	Logger            *logger.Logger
 	SuggestionRepo    repositories.DedicatedLaneSuggestionRepository
 	DedicatedLaneRepo repositories.DedicatedLaneRepository
-	PermService       services.PermissionService
+	PermissionService services.PermissionService
 	AuditService      services.AuditService
 	PatternService    *PatternService
 }
@@ -40,9 +40,16 @@ type SuggestionService struct {
 	patternService *PatternService
 }
 
-// NewSuggestionService creates a new SuggestionService
+// NewSuggestionService creates a new instance of the SuggestionService, which is responsible for
+// managing dedicated lane suggestions and their lifecycle.
 //
-//nolint:gocritic // we want to use the field names in the struct
+// Parameters:
+//   - p: SuggestionServiceParams containing all the dependencies for the service.
+//
+// Returns:
+//   - *SuggestionService: A new SuggestionService instance.
+//
+//nolint:gocritic // This is a constructor
 func NewSuggestionService(p SuggestionServiceParams) *SuggestionService {
 	log := p.Logger.With().
 		Str("service", "dedicated_lane_suggestion").
@@ -52,12 +59,21 @@ func NewSuggestionService(p SuggestionServiceParams) *SuggestionService {
 		l:              &log,
 		suggRepo:       p.SuggestionRepo,
 		dlRepo:         p.DedicatedLaneRepo,
-		ps:             p.PermService,
+		ps:             p.PermissionService,
 		as:             p.AuditService,
 		patternService: p.PatternService,
 	}
 }
 
+// List returns a list of dedicated lane suggestions based on the provided request.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - req: The request containing the filter options for the list.
+//
+// Returns:
+//   - *ports.ListResult[*dedicatedlane.DedicatedLaneSuggestion]: A list of dedicated lane suggestions.
+//   - error: An error if the request fails.
 func (ss *SuggestionService) List(
 	ctx context.Context,
 	req *repositories.ListDedicatedLaneSuggestionRequest,
@@ -92,7 +108,15 @@ func (ss *SuggestionService) Get(
 	return ss.suggRepo.GetByID(ctx, req)
 }
 
-// AcceptSuggestion accepts a suggestion and creates a dedicated lane
+// AcceptSuggestion accepts a suggestion and creates a dedicated lane.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - req: The request containing the suggestion ID and the user ID who is accepting the suggestion.
+//
+// Returns:
+//   - *dedicatedlane.DedicatedLane: The created dedicated lane.
+//   - error: An error if the request fails.
 //
 //nolint:funlen // this is a long function, but it's not complex
 func (ss *SuggestionService) AcceptSuggestion(
@@ -106,7 +130,7 @@ func (ss *SuggestionService) AcceptSuggestion(
 
 	if err := ss.checkPermission(
 		ctx,
-		permission.ActionCreate, // Creating a dedicated lane
+		permission.ActionCreate,
 		req.ProcessedByID,
 		req.BusinessUnitID,
 		req.OrganizationID,
@@ -114,7 +138,6 @@ func (ss *SuggestionService) AcceptSuggestion(
 		return nil, err
 	}
 
-	// Get the suggestion
 	suggestion, err := ss.suggRepo.GetByID(ctx, &repositories.GetDedicatedLaneSuggestionByIDRequest{
 		ID:     req.SuggestionID,
 		OrgID:  req.OrganizationID,
@@ -126,7 +149,6 @@ func (ss *SuggestionService) AcceptSuggestion(
 		return nil, err
 	}
 
-	// Validate suggestion can be accepted
 	if suggestion.IsExpired() {
 		return nil, errors.NewValidationError("suggestion", "expired", "Suggestion has expired")
 	}
@@ -161,14 +183,12 @@ func (ss *SuggestionService) AcceptSuggestion(
 		AutoAssign:            req.AutoAssign,
 	}
 
-	// Create the dedicated lane
 	createdLane, err := ss.dlRepo.Create(ctx, dedicatedLane)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create dedicated lane")
 		return nil, eris.Wrap(err, "create dedicated lane")
 	}
 
-	// Update suggestion status
 	now := timeutils.NowUnix()
 	suggestion.Status = dedicatedlane.SuggestionStatusAccepted
 	suggestion.ProcessedByID = &req.ProcessedByID
@@ -178,10 +198,9 @@ func (ss *SuggestionService) AcceptSuggestion(
 	_, err = ss.suggRepo.Update(ctx, suggestion)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update suggestion status")
-		// Don't fail the operation, but log the error
+		// ! Don't fail the operation, but log the error
 	}
 
-	// Log audit trail
 	err = ss.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceDedicatedLane,
@@ -207,6 +226,14 @@ func (ss *SuggestionService) AcceptSuggestion(
 	return createdLane, nil
 }
 
+// RejectSuggestion rejects a suggestion and updates the suggestion status.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - req: The request containing the suggestion ID and the user ID who is rejecting the suggestion.
+//
+// Returns:
+//   - *dedicatedlane.DedicatedLaneSuggestion: The updated suggestion.
 func (ss *SuggestionService) RejectSuggestion(
 	ctx context.Context,
 	req *dedicatedlane.SuggestionRejectRequest,
@@ -226,7 +253,6 @@ func (ss *SuggestionService) RejectSuggestion(
 		return nil, err
 	}
 
-	// Get the suggestion
 	suggestion, err := ss.suggRepo.GetByID(ctx, &repositories.GetDedicatedLaneSuggestionByIDRequest{
 		ID:     req.SuggestionID,
 		OrgID:  req.OrganizationID,
@@ -238,7 +264,6 @@ func (ss *SuggestionService) RejectSuggestion(
 		return nil, err
 	}
 
-	// Validate suggestion can be rejected
 	if suggestion.IsProcessed() {
 		return nil, errors.NewValidationError(
 			"suggestion",
@@ -247,13 +272,11 @@ func (ss *SuggestionService) RejectSuggestion(
 		)
 	}
 
-	// Update suggestion status
 	now := timeutils.NowUnix()
 	suggestion.Status = dedicatedlane.SuggestionStatusRejected
 	suggestion.ProcessedByID = &req.ProcessedByID
 	suggestion.ProcessedAt = &now
 
-	// Add reject reason to pattern details
 	if req.RejectReason != "" {
 		suggestion.PatternDetails["rejectReason"] = req.RejectReason
 		suggestion.PatternDetails["rejectedAt"] = now
@@ -270,24 +293,32 @@ func (ss *SuggestionService) RejectSuggestion(
 	return updatedSuggestion, nil
 }
 
+// AnalyzePatterns analyzes patterns for a given request.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - req: The request containing the pattern analysis request.
+//
+// Returns:
+//   - *dedicatedlane.PatternAnalysisResult: The result of the pattern analysis.
+//   - error: An error if the request fails.
 func (ss *SuggestionService) AnalyzePatterns(
 	ctx context.Context,
 	req *dedicatedlane.PatternAnalysisRequest,
-	userID pulid.ID,
 ) (*dedicatedlane.PatternAnalysisResult, error) {
-	if err := ss.checkPermission(
-		ctx,
-		permission.ActionCreate, // Creating suggestions
-		userID,
-		req.BusinessUnitID,
-		req.OrganizationID,
-	); err != nil {
-		return nil, err
-	}
-
 	return ss.patternService.AnalyzePatterns(ctx, req)
 }
 
+// ExpireOldSuggestions expires old suggestions for a given organization and business unit.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - orgID: The organization ID.
+//   - buID: The business unit ID
+//
+// Returns:
+//   - int64: The number of suggestions expired.
+//   - error: An error if the request fails.
 func (ss *SuggestionService) ExpireOldSuggestions(
 	ctx context.Context,
 	orgID, buID pulid.ID,
@@ -308,6 +339,17 @@ func (ss *SuggestionService) ExpireOldSuggestions(
 	return expired, nil
 }
 
+// checkPermission checks if the user has the required permission to perform the action.
+//
+// Parameters:
+//   - ctx: The context for the request.
+//   - action: The action to check permission for.
+//   - userID: The user ID.
+//   - buID: The business unit ID.
+//   - orgID: The organization ID.
+//
+// Returns:
+//   - error: An error if the user does not have the required permission.
 func (ss *SuggestionService) checkPermission(
 	ctx context.Context,
 	action permission.Action,
@@ -321,12 +363,11 @@ func (ss *SuggestionService) checkPermission(
 		Str("orgID", orgID.String()).
 		Logger()
 
-	// Check if user has permission
 	result, err := ss.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
 				UserID:         userID,
-				Resource:       permission.ResourceDedicatedLane, // Using same resource as dedicated lanes
+				Resource:       permission.ResourceDedicatedLane,
 				Action:         action,
 				BusinessUnitID: buID,
 				OrganizationID: orgID,

@@ -583,3 +583,29 @@ func (ur *userRepository) handleRoleDeletions(
 
 	return nil
 }
+
+func (ur *userRepository) GetSystemUser(ctx context.Context) (*user.User, error) {
+	dba, err := ur.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	u := new(user.User)
+
+	q := dba.NewSelect().Model(u).Where("usr.email_address = ?", "system@trenova.app")
+
+	if err = q.Scan(ctx); err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			return nil, errors.NewValidationError(
+				"emailAddress",
+				errors.ErrNotFound,
+				"System user not found",
+			)
+		}
+
+		ur.l.Error().Err(err).Msg("failed to get system user")
+		return nil, eris.Wrap(err, "get system user")
+	}
+
+	return u, nil
+}

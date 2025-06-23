@@ -12,6 +12,10 @@ func LoadFixtures(ctx context.Context, fixture *dbfixture.Fixture, db *bun.DB) e
 		return err
 	}
 
+	if _, err := LoadSystemAccount(ctx, db, fixture); err != nil {
+		return err
+	}
+
 	// Load permissions and roles
 	if err := LoadPermissions(ctx, db, fixture); err != nil {
 		return err

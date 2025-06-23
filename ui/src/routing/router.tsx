@@ -387,6 +387,19 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "pattern-config",
+                async lazy() {
+                  let { PatternConfig } = await import(
+                    "@/app/pattern-config/page"
+                  );
+                  return { Component: PatternConfig };
+                },
+                handle: {
+                  crumb: "Pattern Detection",
+                  title: "Pattern Detection",
+                },
+              },
+              {
                 path: "integrations",
                 async lazy() {
                   let { IntegrationsPage } = await import(

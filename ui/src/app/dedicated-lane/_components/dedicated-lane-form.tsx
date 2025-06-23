@@ -139,6 +139,7 @@ function ShipmentInformationSection() {
 
 function WorkerAssignmentSection() {
   const { control } = useFormContext<DedicatedLaneSchema>();
+
   return (
     <FormSection
       title="Worker Assignment"

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -15,7 +15,6 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { useMediaQuery } from "@/hooks/use-media-query";
-import { generateDateTimeString } from "@/lib/date";
 import { TimePicker } from "../time-picker/time-picker";
 
 interface DateTimePickerPopoverProps {
@@ -31,13 +30,11 @@ export function DateTimePickerPopover({
   onOpen,
   dateTime,
   setDateTime,
-  setInputValue,
 }: DateTimePickerPopoverProps) {
   const [isPopoverOpen, setIsPopoverOpen] = useState(false);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
 
   const isDesktop = useMediaQuery("(min-width: 640px)");
-
 
   if (!isDesktop) {
     return (

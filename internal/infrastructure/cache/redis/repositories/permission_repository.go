@@ -60,7 +60,7 @@ func (pc *permissionRepository) GetUserRoles(
 	roles := make([]*string, 0)
 	key := pc.formatRolesKey(userID)
 
-	if err := pc.cache.GetJSON(ctx, key, &roles); err != nil {
+	if err := pc.cache.GetJSON(ctx, ".", key, &roles); err != nil {
 		if eris.Is(err, redis.ErrNil) {
 			log.Debug().Msg("no roles found in cache")
 			return nil, eris.New("no roles found in cache")
@@ -87,7 +87,7 @@ func (pc *permissionRepository) SetUserRoles(
 		Logger()
 
 	key := pc.formatRolesKey(userID)
-	if err := pc.cache.SetJSON(ctx, key, roles, pc.cacheTTL); err != nil {
+	if err := pc.cache.SetJSON(ctx, ".", key, roles, pc.cacheTTL); err != nil {
 		return eris.Wrapf(err, "failed to set roles for user %s", userID)
 	}
 
@@ -111,7 +111,7 @@ func (pc *permissionRepository) GetUserPermissions(
 	var permissions []*permission.Permission
 	key := pc.formatKey(userID)
 
-	if err := pc.cache.GetJSON(ctx, key, &permissions); err != nil {
+	if err := pc.cache.GetJSON(ctx, ".", key, &permissions); err != nil {
 		if eris.Is(err, redis.ErrNil) {
 			log.Debug().Msg("no permissions found in cache")
 			return nil, nil
@@ -138,7 +138,7 @@ func (pc *permissionRepository) SetUserPermissions(
 		Logger()
 
 	key := pc.formatKey(userID)
-	if err := pc.cache.SetJSON(ctx, key, permissions, pc.cacheTTL); err != nil {
+	if err := pc.cache.SetJSON(ctx, ".", key, permissions, pc.cacheTTL); err != nil {
 		return eris.Wrapf(err, "failed to set permissions for user %s", userID)
 	}
 

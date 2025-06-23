@@ -21,17 +21,17 @@ export function useLiveDataTable({
   const [newItemsCount, setNewItemsCount] = useState(0);
   const [showNewItemsBanner, setShowNewItemsBanner] = useState(false);
   const [newItemIds, setNewItemIds] = useState<Set<string>>(new Set());
-  const timeoutRefs = useRef<Map<string, ReturnType<typeof setTimeout>>>(new Map());
+  const timeoutRefs = useRef<Map<string, ReturnType<typeof setTimeout>>>(
+    new Map(),
+  );
 
   const handleNewData = useCallback(
     (data: any) => {
       // Add the new item ID to the set for highlighting
       if (data.id) {
-        console.log("🆕 Adding new item to highlight set:", data.id);
         setNewItemIds((prev) => {
           const newSet = new Set(prev);
           newSet.add(data.id);
-          console.log("📝 Current highlight set:", Array.from(newSet));
           return newSet;
         });
 
@@ -43,26 +43,24 @@ export function useLiveDataTable({
 
         // Remove the ID after 3 seconds to clear the highlight
         const timeout = setTimeout(() => {
-          console.log("⏰ Removing highlight for:", data.id);
           setNewItemIds((prev) => {
             const newSet = new Set(prev);
             newSet.delete(data.id);
-            console.log("📝 Updated highlight set:", Array.from(newSet));
             return newSet;
           });
           timeoutRefs.current.delete(data.id);
         }, 3000);
-        
+
         timeoutRefs.current.set(data.id, timeout);
       }
 
       if (autoRefresh) {
         // Auto-refresh: immediately invalidate and refetch the query
         // Use more specific invalidation to reduce impact on other components
-        queryClient.invalidateQueries({ 
+        queryClient.invalidateQueries({
           queryKey: [queryKey],
-          type: 'active',
-          exact: false
+          type: "active",
+          exact: false,
         });
       } else {
         // Banner mode: increment the count of new items
@@ -89,10 +87,10 @@ export function useLiveDataTable({
 
   const refreshData = useCallback(() => {
     // Invalidate and refetch the query with more specific targeting
-    queryClient.invalidateQueries({ 
+    queryClient.invalidateQueries({
       queryKey: [queryKey],
-      type: 'active',
-      exact: false
+      type: "active",
+      exact: false,
     });
     setNewItemsCount(0);
     setShowNewItemsBanner(false);

@@ -33,6 +33,8 @@ CREATE INDEX "idx_customers_business_unit_organization" ON "customers"("business
 
 CREATE INDEX "idx_customers_created_updated" ON "customers"("created_at", "updated_at");
 
+CREATE INDEX "idx_customers_status" ON "customers"("status");
+
 COMMENT ON TABLE "customers" IS 'Stores information about customers';
 
 --bun:split

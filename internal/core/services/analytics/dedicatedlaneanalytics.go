@@ -162,11 +162,6 @@ func (dlap *DedicatedLaneAnalyticsProvider) getProcessedSuggestionsCount(
 		IncludeProcessed: true,
 	}
 
-	// Apply date range if provided
-	if opts.DateRange != nil {
-		// TODO: Add date range filtering to repository
-	}
-
 	result, err := dlap.suggRepo.List(ctx, req)
 	if err != nil {
 		return 0, err

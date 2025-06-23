@@ -4,7 +4,9 @@ import type { AnalyticsPage } from "@/types/analytics";
 import { Resource } from "@/types/audit-entry";
 import type { GetCustomerByIDParams } from "@/types/customer";
 import type { IntegrationType } from "@/types/integration";
+import type { NotificationQueryParams } from "@/types/notification";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
+import type { PatternConfigSchema } from "./schemas/pattern-config-schema";
 import type { TableConfigurationSchema } from "./schemas/table-configuration-schema";
 
 export const queries = createQueryKeyStore({
@@ -213,6 +215,41 @@ export const queries = createQueryKeyStore({
     getByShipment: (req: GetDedicatedLaneByShipmentRequest) => ({
       queryKey: ["dedicated-lane/by-shipment", req],
       queryFn: async () => api.dedicatedLane.getByShipment(req),
+    }),
+  },
+  dedicatedLaneSuggestion: {
+    getSuggestions: (limit: number = 10, offset: number = 0) => ({
+      queryKey: ["dedicated-lane-suggestions", limit, offset],
+      queryFn: async () =>
+        api.dedicatedLaneSuggestions.getSuggestions(limit, offset),
+    }),
+    getSuggestionByID: (id: string) => ({
+      queryKey: ["dedicated-lane-suggestions", id],
+      queryFn: async () => api.dedicatedLaneSuggestions.getSuggestionByID(id),
+    }),
+    analyzePatterns: () => ({
+      queryKey: ["dedicated-lane-suggestions", "analyze-patterns"],
+      queryFn: async () => api.dedicatedLaneSuggestions.analyzePatterns(),
+    }),
+    expireOldSuggestions: () => ({
+      queryKey: ["dedicated-lane-suggestions", "expire-old"],
+      queryFn: async () => api.dedicatedLaneSuggestions.expireOldSuggestions(),
+    }),
+  },
+  patternConfig: {
+    get: () => ({
+      queryKey: ["pattern-config"],
+      queryFn: async () => api.patternConfig.get(),
+    }),
+    update: (payload: PatternConfigSchema) => ({
+      queryKey: ["pattern-config", payload],
+      queryFn: async () => api.patternConfig.update(payload),
+    }),
+  },
+  notification: {
+    list: (params?: NotificationQueryParams) => ({
+      queryKey: ["notifications", params],
+      queryFn: async () => api.notifications.list(params),
     }),
   },
 });

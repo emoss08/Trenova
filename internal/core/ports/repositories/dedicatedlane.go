@@ -29,12 +29,12 @@ type FindDedicatedLaneByShipmentRequest struct {
 	OrganizationID        pulid.ID
 	BusinessUnitID        pulid.ID
 	CustomerID            pulid.ID
-	ServiceTypeID         pulid.ID
-	ShipmentTypeID        pulid.ID
 	OriginLocationID      pulid.ID
 	DestinationLocationID pulid.ID
 	TrailerTypeID         *pulid.ID
 	TractorTypeID         *pulid.ID
+	ServiceTypeID         *pulid.ID
+	ShipmentTypeID        *pulid.ID
 }
 
 type DedicatedLaneRepository interface {

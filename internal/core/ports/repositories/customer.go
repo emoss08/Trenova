@@ -8,12 +8,60 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
+var CustomerFieldConfig = &ports.FieldConfiguration{
+	FilterableFields: map[string]bool{
+		"name":         true,
+		"code":         true,
+		"status":       true,
+		"customerType": true,
+		"email":        true,
+		"city":         true,
+		"postalCode":   true,
+		"createdAt":    true,
+		"updatedAt":    true,
+	},
+	SortableFields: map[string]bool{
+		"name":         true,
+		"code":         true,
+		"status":       true,
+		"customerType": true,
+		"createdAt":    true,
+		"updatedAt":    true,
+	},
+	FieldMap: map[string]string{
+		"name":         "name",
+		"code":         "code",
+		"status":       "status",
+		"customerType": "customer_type",
+		"email":        "email",
+		"createdAt":    "created_at",
+		"updatedAt":    "updated_at",
+		"city":         "city",
+		"postalCode":   "postal_code",
+	},
+	EnumMap: map[string]bool{
+		"status": true,
+	},
+}
+
 type ListCustomerOptions struct {
-	Filter                *ports.LimitOffsetQueryOptions
-	IncludeState          bool   `query:"includeState"`
-	IncludeBillingProfile bool   `query:"includeBillingProfile"`
-	IncludeEmailProfile   bool   `query:"includeEmailProfile"`
-	Status                string `query:"status"`
+	IncludeState          bool `query:"includeState"`
+	IncludeBillingProfile bool `query:"includeBillingProfile"`
+	IncludeEmailProfile   bool `query:"includeEmailProfile"`
+	Filter                *ports.QueryOptions
+}
+
+// BuildCustomerListOptions is a specific helper for customer list options
+func BuildCustomerListOptions(
+	filter *ports.QueryOptions,
+	additionalOpts *ListCustomerOptions,
+) *ListCustomerOptions {
+	return &ListCustomerOptions{
+		Filter:                filter,
+		IncludeState:          additionalOpts.IncludeState,
+		IncludeBillingProfile: additionalOpts.IncludeBillingProfile,
+		IncludeEmailProfile:   additionalOpts.IncludeEmailProfile,
+	}
 }
 
 type GetCustomerByIDOptions struct {

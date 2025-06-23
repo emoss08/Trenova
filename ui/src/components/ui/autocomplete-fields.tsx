@@ -430,10 +430,10 @@ export function RoleAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.name}
       renderOption={(option) => option.name}
       getOptionLabel={(option) => option.name}
+      nestedValues={true}
       extraSearchParams={{
         includePermissions: "true",
       }}
-      nestedValues={true}
       {...props}
     />
   );
@@ -448,6 +448,7 @@ export function DocumentTypeAutocompleteField<T extends FieldValues>({
       link="/document-types/"
       getOptionValue={(option) => option.id || ""}
       getOptionLabel={(option) => option.name}
+      nestedValues={true}
       renderOption={(option) => (
         <div className="flex flex-col gap-0.5 items-start size-full">
           <ColorOptionValue color={option.color} value={option.code} />

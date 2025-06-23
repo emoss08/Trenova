@@ -81,11 +81,11 @@ func (s *Service) List(
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
+				BusinessUnitID: opts.Filter.TenantOpts.BuID,
+				OrganizationID: opts.Filter.TenantOpts.OrgID,
 				UserID:         opts.Filter.TenantOpts.UserID,
 				Resource:       permission.ResourceCustomer,
 				Action:         permission.ActionRead,
-				BusinessUnitID: opts.Filter.TenantOpts.BuID,
-				OrganizationID: opts.Filter.TenantOpts.OrgID,
 			},
 		},
 	)

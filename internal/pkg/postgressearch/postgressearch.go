@@ -20,6 +20,9 @@ var DefaultConfig = infra.PostgresSearchConfig{
 	MaxTerms:  6,
 }
 
+// BuildSearchQuery builds a search query for a given entity and query.
+//
+// Deprecated: Use QueryBuilder instead
 func BuildSearchQuery[T infra.PostgresSearchable](
 	q *bun.SelectQuery,
 	query string,

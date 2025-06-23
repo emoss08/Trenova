@@ -4,7 +4,7 @@ import { getRoutePageInfo } from "@/lib/utils";
 import { AuditEntry } from "@/types/audit-entry";
 import { useMemo } from "react";
 import {
-  AuditEntryActionBadge,
+  ActionBadge,
   AuditEntryResourceBadge,
 } from "./audit-column-components";
 
@@ -58,7 +58,7 @@ export function AuditLogDetails({ entry }: { entry: AuditEntry }) {
     },
     {
       title: "Action",
-      value: <AuditEntryActionBadge action={entry.action} withDot={false} />,
+      value: <ActionBadge action={entry.action} withDot={false} />,
     },
     {
       title: "Resource",

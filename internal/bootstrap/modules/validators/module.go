@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator/hazardousmaterialvalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/hazmatsegreationrulevalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/locationvalidator"
+	"github.com/emoss08/trenova/internal/pkg/validator/notificationpreferencevalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/organizationvalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/servicetypevalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/shipmentcontrolvalidator"
@@ -29,17 +30,14 @@ import (
 var Module = fx.Module("validators",
 	fx.Provide(
 		compliancevalidator.NewValidator,
-		workervalidator.NewWorkerProfileValidator,
-		workervalidator.NewWorkerPTOValidator,
-		workervalidator.NewValidator,
 		fleetcodevalidator.NewValidator,
+		locationvalidator.NewLocationCategoryValidator,
 		equipmenttypevalidator.NewValidator,
 		equipmentmanufacturervalidator.NewValidator,
 		shipmenttypevalidator.NewValidator,
 		servicetypevalidator.NewValidator,
 		hazardousmaterialvalidator.NewValidator,
 		commodityvalidator.NewValidator,
-		locationvalidator.NewLocationCategoryValidator,
 		locationvalidator.NewValidator,
 		tractorvalidator.NewValidator,
 		trailervalidator.NewValidator,
@@ -54,6 +52,10 @@ var Module = fx.Module("validators",
 		accessorialchargevalidator.NewValidator,
 		documenttypevalidator.NewValidator,
 		organizationvalidator.NewValidator,
+		workervalidator.NewWorkerPTOValidator,
+		workervalidator.NewWorkerProfileValidator,
+		workervalidator.NewValidator,
+		notificationpreferencevalidator.NewValidator,
 	),
 	fx.Options(
 		framework.Module,

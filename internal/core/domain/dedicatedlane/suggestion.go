@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -34,6 +35,7 @@ const (
 	SuggestionStatusExpired  = SuggestionStatus("Expired")
 )
 
+//nolint:revive // This is a domain object
 type DedicatedLaneSuggestion struct {
 	bun.BaseModel `bun:"table:dedicated_lane_suggestions,alias:dls" json:"-"`
 
@@ -48,19 +50,17 @@ type DedicatedLaneSuggestion struct {
 	ShipmentTypeID         *pulid.ID            `json:"shipmentTypeId,omitzero" bun:"shipment_type_id,type:VARCHAR(100),nullzero"`
 	TrailerTypeID          *pulid.ID            `json:"trailerTypeId,omitzero"  bun:"trailer_type_id,type:VARCHAR(100),nullzero"`
 	TractorTypeID          *pulid.ID            `json:"tractorTypeId,omitzero"  bun:"tractor_type_id,type:VARCHAR(100),nullzero"`
-	ConfidenceScore        decimal.Decimal      `json:"confidenceScore"         bun:"confidence_score,type:NUMERIC(5,4),notnull"`
-	FrequencyCount         int64                `json:"frequencyCount"          bun:"frequency_count,type:INTEGER,notnull"`
-	AverageFreightCharge   *decimal.NullDecimal `json:"averageFreightCharge"    bun:"average_freight_charge,type:NUMERIC(19,4),nullzero"`
-	TotalFreightValue      *decimal.NullDecimal `json:"totalFreightValue"       bun:"total_freight_value,type:NUMERIC(19,4),nullzero"`
-	LastShipmentDate       int64                `json:"lastShipmentDate"        bun:"last_shipment_date,type:BIGINT,notnull"`
-	FirstShipmentDate      int64                `json:"firstShipmentDate"       bun:"first_shipment_date,type:BIGINT,notnull"`
-	AnalysisStartDate      int64                `json:"analysisStartDate"       bun:"analysis_start_date,type:BIGINT,notnull"`
-	AnalysisEndDate        int64                `json:"analysisEndDate"         bun:"analysis_end_date,type:BIGINT,notnull"`
-	SuggestedName          string               `json:"suggestedName"           bun:"suggested_name,type:VARCHAR(200),notnull"`
-	PatternDetails         map[string]any       `json:"patternDetails"          bun:"pattern_details,type:JSONB,notnull"`
 	CreatedDedicatedLaneID *pulid.ID            `json:"createdDedicatedLaneId"  bun:"created_dedicated_lane_id,type:VARCHAR(100),nullzero"`
 	ProcessedByID          *pulid.ID            `json:"processedById"           bun:"processed_by_id,type:VARCHAR(100),nullzero"`
+	AverageFreightCharge   *decimal.NullDecimal `json:"averageFreightCharge"    bun:"average_freight_charge,type:NUMERIC(19,4),nullzero"`
+	TotalFreightValue      *decimal.NullDecimal `json:"totalFreightValue"       bun:"total_freight_value,type:NUMERIC(19,4),nullzero"`
 	ProcessedAt            *int64               `json:"processedAt"             bun:"processed_at,type:BIGINT,nullzero"`
+	ConfidenceScore        decimal.Decimal      `json:"confidenceScore"         bun:"confidence_score,type:NUMERIC(5,4),notnull"`
+	SuggestedName          string               `json:"suggestedName"           bun:"suggested_name,type:VARCHAR(200),notnull"`
+	PatternDetails         map[string]any       `json:"patternDetails"          bun:"pattern_details,type:JSONB,notnull"`
+	LastShipmentDate       int64                `json:"lastShipmentDate"        bun:"last_shipment_date,type:BIGINT,notnull"`
+	FrequencyCount         int64                `json:"frequencyCount"          bun:"frequency_count,type:INTEGER,notnull"`
+	FirstShipmentDate      int64                `json:"firstShipmentDate"       bun:"first_shipment_date,type:BIGINT,notnull"`
 	ExpiresAt              int64                `json:"expiresAt"               bun:"expires_at,type:BIGINT,notnull"`
 	Version                int64                `json:"version"                 bun:"version,type:BIGINT"`
 	CreatedAt              int64                `json:"createdAt"               bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
@@ -76,6 +76,7 @@ type DedicatedLaneSuggestion struct {
 	ShipmentType         *shipmenttype.ShipmentType   `json:"shipmentType,omitzero"         bun:"rel:belongs-to,join:shipment_type_id=id"`
 	TractorType          *equipmenttype.EquipmentType `json:"tractorType,omitzero"          bun:"rel:belongs-to,join:tractor_type_id=id"`
 	TrailerType          *equipmenttype.EquipmentType `json:"trailerType,omitzero"          bun:"rel:belongs-to,join:trailer_type_id=id"`
+	ProcessedBy          *user.User                   `json:"processedBy,omitzero"          bun:"rel:belongs-to,join:processed_by_id=id"`
 	CreatedDedicatedLane *DedicatedLane               `json:"createdDedicatedLane,omitzero" bun:"rel:belongs-to,join:created_dedicated_lane_id=id"`
 }
 

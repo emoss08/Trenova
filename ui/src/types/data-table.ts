@@ -120,6 +120,10 @@ export type EditTableSheetProps<TData extends Record<string, any>> = {
   currentRecord?: TData;
   isLoading?: boolean;
   error?: Error | null;
+  // New properties for independent modal data fetching
+  useIndependentFetch?: boolean;
+  apiEndpoint?: API_ENDPOINTS;
+  queryKey?: string;
 };
 
 type CurrentRecord<TData extends Record<string, unknown>> = TData | undefined;
@@ -154,18 +158,14 @@ type DataTableProps<TData extends Record<string, any>> = {
   name: string;
   link: API_ENDPOINTS;
   queryKey: string;
-  // filterFields: DataTableAdvancedFilterField<TData>[];
-  // filterColumn: string;
   TableModal?: React.ComponentType<TableSheetProps>;
   TableEditModal?: React.ComponentType<EditTableSheetProps<TData>>;
   exportModelName: string;
   extraSearchParams?: Record<string, any>;
   resource: Resource;
   initialPageSize?: number;
-  defaultSort?: SortingState;
   includeHeader?: boolean;
   includeOptions?: boolean;
-  // onDataChange?: (data: TData[]) => void;
   pageSizeOptions?: Readonly<number[]>;
   extraActions?: ExtraAction[];
   getRowClassName?: (row: Row<TData>) => string;

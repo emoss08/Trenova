@@ -1,5 +1,6 @@
 // API constants
 export const API_URL = import.meta.env.VITE_API_URL as string;
+export const WEBSOCKET_URL = import.meta.env.VITE_WEBSOCKET_URL as string;
 
 // Client constants
 export const CLIENT_VERSION = import.meta.env.VITE_CLIENT_VERSION as string;

@@ -69,6 +69,7 @@ func RegisterEntities() []any {
 		&hazardousmaterial.HazardousMaterial{},
 		&commodity.Commodity{},
 		&customer.CustomerEmailProfile{},
+		&customer.BillingProfileDocumentType{},
 		&customer.BillingProfile{},
 		&customer.Customer{},
 		&tractor.Tractor{},
@@ -88,5 +89,7 @@ func RegisterEntities() []any {
 		&integration.Integration{},
 		&pagefavorite.PageFavorite{},
 		&dedicatedlane.DedicatedLane{},
+		&dedicatedlane.PatternConfig{},
+		&dedicatedlane.DedicatedLaneSuggestion{},
 	}
 }

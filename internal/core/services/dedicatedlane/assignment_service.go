@@ -81,8 +81,8 @@ func (s *AssignmentService) HandleDedicatedLaneOperations(
 			OrganizationID:        shp.OrganizationID,
 			BusinessUnitID:        shp.BusinessUnitID,
 			CustomerID:            shp.CustomerID,
-			ServiceTypeID:         shp.ServiceTypeID,
-			ShipmentTypeID:        shp.ShipmentTypeID,
+			ServiceTypeID:         &shp.ServiceTypeID,
+			ShipmentTypeID:        &shp.ShipmentTypeID,
 			OriginLocationID:      originLocationID,
 			DestinationLocationID: destinationLocationID,
 			TrailerTypeID:         shp.TrailerTypeID,
@@ -96,6 +96,12 @@ func (s *AssignmentService) HandleDedicatedLaneOperations(
 		}
 		log.Error().Err(err).Msg("failed to query dedicated lane")
 		return err
+	}
+
+	// Check if dedicated lane was found
+	if dl == nil {
+		log.Info().Msg("no dedicated lane found for shipment")
+		return nil
 	}
 
 	// Auto-assign if configured
@@ -143,6 +149,11 @@ func (s *AssignmentService) performAutoAssignment(
 		Str("dedicatedLaneID", dl.ID.String()).
 		Msg("auto-assigning shipment to dedicated lane")
 
+	// ! Do nothing if the primary worker is not set
+	if dl.PrimaryWorkerID == nil {
+		return nil
+	}
+
 	// * Fetch the tractor by it's primary worker id
 	tractor, err := s.tractorRepo.GetByPrimaryWorkerID(
 		ctx,
@@ -162,7 +173,7 @@ func (s *AssignmentService) performAutoAssignment(
 	// Bulk assign shipment moves to dedicated lane
 	_, err = s.assignmentRepo.BulkAssign(ctx, &repositories.AssignmentRequest{
 		ShipmentID:        shp.ID,
-		PrimaryWorkerID:   dl.PrimaryWorkerID,
+		PrimaryWorkerID:   pulid.ConvertFromPtr(dl.PrimaryWorkerID),
 		SecondaryWorkerID: dl.SecondaryWorkerID,
 		TractorID:         tractor.ID,
 		OrgID:             shp.OrganizationID,

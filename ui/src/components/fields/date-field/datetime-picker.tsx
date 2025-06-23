@@ -105,11 +105,7 @@ export function DateTimePicker({
       // If an outside update provides a date, sync the input to it.
       const formatted = generateDateTimeString(dateTime);
       setInputValue(formatted);
-      console.info("dateTime is defined");
-      console.info(formatted);
     } else {
-      console.info("dateTime is undefined");
-      // If outside set `date` to undefined, clear the input
       setInputValue("");
     }
   }, [dateTime]);

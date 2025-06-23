@@ -163,18 +163,15 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
     [table],
   );
 
-  // Get the raw visibility state from the table, used as a dependency for comprehensive state
-  const currentRawVisibilityState = table.getState().columnVisibility;
-
-  // Create a comprehensive visibility state that includes all hideable columns
-  // and their current actual visibility status.
+  // * Create a comprehensive visibility state that includes all hideable columns
+  // * and their current actual visibility status.
   const comprehensiveVisibilityState = useMemo(() => {
     const state: VisibilityState = {};
     hideableColumns.forEach((column) => {
       state[column.id] = column.getIsVisible();
     });
     return state;
-  }, [hideableColumns, currentRawVisibilityState]);
+  }, [hideableColumns]);
 
   return (
     <>

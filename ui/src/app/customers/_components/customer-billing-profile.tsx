@@ -34,7 +34,7 @@ export default function CustomerBillingProfile() {
           <FormControl>
             <DocumentTypeAutocompleteField<CustomerSchema>
               control={control}
-              name="billingProfile.documentTypeIds"
+              name="billingProfile.documentTypes"
               label="Document Types"
               rules={{ required: true }}
               placeholder="Select Document Types"

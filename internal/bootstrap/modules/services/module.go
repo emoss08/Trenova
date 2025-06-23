@@ -1,6 +1,7 @@
 package services
 
 import (
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/services/assignment"
 	"github.com/emoss08/trenova/internal/core/services/audit"
@@ -27,6 +28,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/integration"
 	"github.com/emoss08/trenova/internal/core/services/location"
 	"github.com/emoss08/trenova/internal/core/services/locationcategory"
+	"github.com/emoss08/trenova/internal/core/services/notification"
 	"github.com/emoss08/trenova/internal/core/services/organization"
 	"github.com/emoss08/trenova/internal/core/services/permission"
 	"github.com/emoss08/trenova/internal/core/services/reporting"
@@ -44,7 +46,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/trailer"
 	"github.com/emoss08/trenova/internal/core/services/user"
 	"github.com/emoss08/trenova/internal/core/services/usstate"
+	"github.com/emoss08/trenova/internal/core/services/websocket"
 	"github.com/emoss08/trenova/internal/core/services/worker"
+	"github.com/rs/zerolog/log"
 	"go.uber.org/fx"
 )
 
@@ -95,7 +99,15 @@ var Module = fx.Module("services", fx.Provide(
 	dedicatedlane.NewAssignmentService,
 	dedicatedlane.NewPatternService,
 	dedicatedlane.NewSuggestionService,
+	websocket.NewService,
+	notification.NewService,
+	notification.NewPreferenceService,
+	notification.NewBatchProcessor,
+	notification.NewAuditListenerService,
 ),
+	fx.Invoke(func(s services.WebSocketService) {
+		log.Info().Msg("websocket service initialized")
+	}),
 )
 
 var CalculatorModule = fx.Module("calculator", fx.Provide(

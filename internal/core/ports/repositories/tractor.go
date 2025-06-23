@@ -29,7 +29,7 @@ type GetTractorByIDRequest struct {
 }
 
 type GetTractorByPrimaryWorkerIDRequest struct {
-	WorkerID pulid.ID
+	WorkerID *pulid.ID
 	OrgID    pulid.ID
 	BuID     pulid.ID
 }

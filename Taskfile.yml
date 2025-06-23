@@ -69,6 +69,8 @@ tasks:
       gocritic check -enableAll -disable=sloppyReassign ./...
   security:
     cmd: gosec ./...
+  deadcode:
+    cmd: deadcode ./...
   tidy:
     cmd: go mod tidy
   db-reset:
@@ -81,9 +83,5 @@ tasks:
     cmd: go run cmd/db/main.go db seed
   redis-flushall:
     cmd: go run cmd/db/main.go redis flushall
-  swag-init:
-    cmd: swag init --parseDependency --parseInternal --parseDepth 1 -g internal/api/server/server.go
-  swag-fmt:
-    cmd: swag fmt
-  run-workflow-server:
-    cmd: cd microservices/workflow && go run main.go
+  ent-generate:
+    cmd: go generate ./internal/core/ent/
