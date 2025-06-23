@@ -8,7 +8,6 @@ export default function ShipmentDetailsHeader({
 }: {
   selectedShipment?: ShipmentSchema | null;
 }) {
-  console.log("selectedShipment", selectedShipment);
   return (
     <ShipmentDetailsHeaderInner>
       <ShipmentDetailsHeaderTitle selectedShipment={selectedShipment} />
