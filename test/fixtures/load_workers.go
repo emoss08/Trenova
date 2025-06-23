@@ -1,6 +1,7 @@
 package fixtures
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain"
@@ -13,7 +14,6 @@ import (
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 	"github.com/uptrace/bun/dbfixture"
-	"golang.org/x/exp/rand"
 	"golang.org/x/net/context"
 )
 

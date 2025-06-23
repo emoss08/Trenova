@@ -3,7 +3,7 @@ import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
 import { lazy } from "react";
 
-const CustomersDataTable = lazy(() => import("./_components/customer-table"));
+const CustomerTable = lazy(() => import("./_components/customer-table"));
 
 export function Customers() {
   return (
@@ -11,7 +11,7 @@ export function Customers() {
       <MetaTags title="Customers" description="Customers" />
       <FormSaveProvider>
         <LazyComponent>
-          <CustomersDataTable />
+          <CustomerTable />
         </LazyComponent>
       </FormSaveProvider>
     </>

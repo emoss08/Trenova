@@ -4,9 +4,9 @@ import { MetaTags } from "@/components/meta-tags";
 import { lazy, memo } from "react";
 
 const ShipmentTable = lazy(() => import("./_components/shipment-table"));
-// const ShipmentAnalytics = lazy(
-//   () => import("./_components/analytics/shipment-analytics"),
-// );
+const ShipmentAnalytics = lazy(
+  () => import("./_components/analytics/shipment-analytics"),
+);
 export function Shipment() {
   return (
     <FormSaveProvider>
@@ -14,7 +14,7 @@ export function Shipment() {
         <MetaTags title="Shipments" description="Shipments" />
         <Header />
         <QueryLazyComponent queryKey={["shipment-list"]}>
-          {/* <ShipmentAnalytics /> */}
+          <ShipmentAnalytics />
           <ShipmentTable />
         </QueryLazyComponent>
       </div>

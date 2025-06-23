@@ -30,7 +30,7 @@ type User struct {
 	Status                domain.Status `json:"status"                bun:"status,type:status_enum,notnull,default:'Active'"`
 	Name                  string        `json:"name"                  bun:"name,type:VARCHAR(255),notnull"`
 	Username              string        `json:"username"              bun:"username,type:VARCHAR(20),notnull"`
-	Password              string        `json:"-,omitzero"            bun:"password,type:VARCHAR(255),notnull"`
+	Password              string        `json:"-"                     bun:"password,type:VARCHAR(255),notnull"` // ! We will hide this in the response
 	EmailAddress          string        `json:"emailAddress"          bun:"email_address,type:VARCHAR(255),notnull"`
 	ProfilePicURL         string        `json:"profilePicUrl"         bun:"profile_pic_url,type:VARCHAR(255)"`
 	ThumbnailURL          string        `json:"thumbnailUrl"          bun:"thumbnail_url,type:VARCHAR(255)"`

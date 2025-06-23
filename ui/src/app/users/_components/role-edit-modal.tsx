@@ -96,7 +96,7 @@ export function EditRoleSheet({
   const {
     data: roleDetails,
     isLoading: isDetailsLoading,
-    isError: isDetailsError,
+    // isError: isDetailsError,
   } = useQuery({
     ...queries.role.getById(currentRecord?.id ?? ""),
   });

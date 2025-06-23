@@ -10,7 +10,7 @@ type PatternDetectionConfig struct {
 	MinFrequency          int64           `json:"minFrequency"`          // Minimum occurrences to trigger suggestion
 	AnalysisWindowDays    int64           `json:"analysisWindowDays"`    // Number of days to look back
 	MinConfidenceScore    decimal.Decimal `json:"minConfidenceScore"`    // Minimum confidence score to create suggestion
-	SuggestionTTLDays     int64           `json:"suggestionTTLDays"`     // Days before suggestion expires
+	SuggestionTTLDays     int64           `json:"suggestionTtlDays"`     // Days before suggestion expires
 	RequireExactMatch     bool            `json:"requireExactMatch"`     // Whether to require exact equipment/service matches
 	WeightRecentShipments bool            `json:"weightRecentShipments"` // Give more weight to recent shipments
 }
@@ -29,6 +29,8 @@ func DefaultPatternDetectionConfig() *PatternDetectionConfig {
 
 // PatternMatch represents a detected shipping pattern
 type PatternMatch struct {
+	OrganizationID        pulid.ID             `json:"organizationId"`
+	BusinessUnitID        pulid.ID             `json:"businessUnitId"`
 	CustomerID            pulid.ID             `json:"customerId"`
 	OriginLocationID      pulid.ID             `json:"originLocationId"`
 	DestinationLocationID pulid.ID             `json:"destinationLocationId"`
@@ -48,26 +50,17 @@ type PatternMatch struct {
 
 // PatternAnalysisRequest represents a request to analyze patterns
 type PatternAnalysisRequest struct {
-	OrganizationID  pulid.ID                `json:"organizationId"`
-	BusinessUnitID  pulid.ID                `json:"businessUnitId"`
-	CustomerID      *pulid.ID               `json:"customerId,omitempty"` // Optional: analyze specific customer
-	StartDate       int64                   `json:"startDate"`            // Unix timestamp
-	EndDate         int64                   `json:"endDate"`              // Unix timestamp
-	Config          *PatternDetectionConfig `json:"config,omitempty"`     // Optional: override default config
-	ExcludeExisting bool                    `json:"excludeExisting"`      // Skip patterns that already have dedicated lanes
+	Config          *PatternDetectionConfig `json:"config,omitempty"` // Optional: override default config
+	ExcludeExisting bool                    `json:"excludeExisting"`  // Skip patterns that already have dedicated lanes
 }
 
 // PatternAnalysisResult represents the result of pattern analysis
 type PatternAnalysisResult struct {
-	TotalPatternsDetected  int64                   `json:"totalPatternsDetected"`
-	PatternsAboveThreshold int64                   `json:"patternsAboveThreshold"`
-	SuggestionsCreated     int64                   `json:"suggestionsCreated"`
-	SuggestionsSkipped     int64                   `json:"suggestionsSkipped"`
-	AnalysisStartDate      int64                   `json:"analysisStartDate"`
-	AnalysisEndDate        int64                   `json:"analysisEndDate"`
-	ConfigUsed             *PatternDetectionConfig `json:"configUsed"`
-	Patterns               []*PatternMatch         `json:"patterns"`
-	ProcessingTimeMs       int64                   `json:"processingTimeMs"`
+	TotalPatternsDetected  int64                     `json:"totalPatternsDetected"`
+	PatternsAboveThreshold int64                     `json:"patternsAboveThreshold"`
+	ConfigsUsed            []*PatternDetectionConfig `json:"configsUsed"`
+	Patterns               []*PatternMatch           `json:"patterns"`
+	ProcessingTimeMs       int64                     `json:"processingTimeMs"`
 }
 
 // SuggestionAcceptRequest represents a request to accept a suggestion
@@ -77,7 +70,7 @@ type SuggestionAcceptRequest struct {
 	BusinessUnitID    pulid.ID  `json:"businessUnitId"`
 	ProcessedByID     pulid.ID  `json:"processedById"`
 	DedicatedLaneName *string   `json:"dedicatedLaneName,omitempty"` // Override suggested name
-	PrimaryWorkerID   pulid.ID  `json:"primaryWorkerId"`
+	PrimaryWorkerID   *pulid.ID `json:"primaryWorkerId"`
 	SecondaryWorkerID *pulid.ID `json:"secondaryWorkerId,omitempty"`
 	AutoAssign        bool      `json:"autoAssign"`
 }

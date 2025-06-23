@@ -2,8 +2,9 @@ package jobs
 
 import (
 	"context"
-	"encoding/json"
+	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/hibiken/asynq"
 )
@@ -18,6 +19,7 @@ const (
 
 	// Shipment Jobs
 	JobTypeShipmentStatusUpdate JobType = "shipment:status_update"
+	JobTypeDuplicateShipment    JobType = "shipment:duplicate"
 	JobTypeShipmentNotification JobType = "shipment:notification"
 
 	// Compliance Jobs
@@ -66,11 +68,8 @@ type BasePayload struct {
 // PatternAnalysisPayload for dedicated lane pattern analysis jobs
 type PatternAnalysisPayload struct {
 	BasePayload
-	CustomerID    *pulid.ID `json:"customerId,omitempty"`
-	StartDate     int64     `json:"startDate"`
-	EndDate       int64     `json:"endDate"`
-	MinFrequency  int64     `json:"minFrequency"`
-	TriggerReason string    `json:"triggerReason"` // "shipment_created", "scheduled", "manual"
+	MinFrequency  int64  `json:"minFrequency"`
+	TriggerReason string `json:"triggerReason"` // "shipment_created", "scheduled", "manual"
 }
 
 // ExpireSuggestionsPayload for expiring old suggestions
@@ -85,6 +84,15 @@ type ShipmentStatusUpdatePayload struct {
 	ShipmentID pulid.ID `json:"shipmentId"`
 	OldStatus  string   `json:"oldStatus"`
 	NewStatus  string   `json:"newStatus"`
+}
+
+type DuplicateShipmentPayload struct {
+	BasePayload
+	ShipmentID               pulid.ID `json:"shipmentId"`
+	Count                    int      `json:"count"`
+	OverrideDates            bool     `json:"overrideDates"`
+	IncludeCommodities       bool     `json:"includeCommodities"`
+	IncludeAdditionalCharges bool     `json:"includeAdditionalCharges"`
 }
 
 // ComplianceCheckPayload for compliance verification jobs
@@ -140,11 +148,21 @@ func CriticalJobOptions() *JobOptions {
 	}
 }
 
+// JobServiceStats provides health and performance metrics
+type JobServiceStats struct {
+	IsRunning    bool       `json:"isRunning"`
+	StartTime    time.Time  `json:"startTime"`
+	Uptime       string     `json:"uptime"`
+	PanicCount   int        `json:"panicCount"`
+	LastPanic    *time.Time `json:"lastPanic,omitempty"`
+	HandlerCount int        `json:"handlerCount"`
+}
+
 // Helper functions for payload marshaling
 func MarshalPayload(payload any) ([]byte, error) {
-	return json.Marshal(payload)
+	return sonic.Marshal(payload)
 }
 
 func UnmarshalPayload(data []byte, payload any) error {
-	return json.Unmarshal(data, payload)
+	return sonic.Unmarshal(data, payload)
 }

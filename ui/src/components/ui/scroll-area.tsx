@@ -55,6 +55,12 @@ export function VirtualizedScrollArea({
   );
 }
 
+export function ScrollAreaShadow() {
+  return (
+    <div className="pointer-events-none rounded-b-lg absolute bottom-0 z-50 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />
+  );
+}
+
 function ScrollBar({
   className,
   orientation = "vertical",

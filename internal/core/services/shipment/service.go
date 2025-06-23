@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	dedicatedlaneservice "github.com/emoss08/trenova/internal/core/services/dedicatedlane"
 	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
@@ -33,6 +34,7 @@ type ServiceParams struct {
 	AuditService               services.AuditService
 	Validator                  *shipmentvalidator.Validator
 	DedicatedLaneAssignService *dedicatedlaneservice.AssignmentService
+	JobService                 jobs.JobServiceInterface
 }
 
 type Service struct {
@@ -43,6 +45,7 @@ type Service struct {
 	as            services.AuditService
 	v             *shipmentvalidator.Validator
 	dlas          *dedicatedlaneservice.AssignmentService
+	js            jobs.JobServiceInterface
 }
 
 //nolint:gocritic // The p parameter is passed using fx.In
@@ -59,6 +62,7 @@ func NewService(p ServiceParams) *Service {
 		as:            p.AuditService,
 		v:             p.Validator,
 		dlas:          p.DedicatedLaneAssignService,
+		js:            p.JobService,
 	}
 }
 
@@ -405,7 +409,7 @@ func (s *Service) Cancel(
 func (s *Service) Duplicate(
 	ctx context.Context,
 	req *repositories.DuplicateShipmentRequest,
-) (*shipment.Shipment, error) {
+) error {
 	log := s.l.With().
 		Str("operation", "Duplicate").
 		Str("shipmentID", req.ShipmentID.String()).
@@ -424,52 +428,43 @@ func (s *Service) Duplicate(
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
+		return err
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
+		return errors.NewAuthorizationError(
 			"You do not have permission to duplicate this shipment",
 		)
 	}
 
 	// * Validate the request
 	if err := req.Validate(ctx); err != nil {
-		return nil, err
+		return err
 	}
 
-	newEntity, err := s.repo.Duplicate(ctx, req)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to duplicate shipment")
-		return nil, err
-	}
-
-	// Log the update if the insert was successful
-	err = s.as.LogAction(
-		&services.LogActionParams{
-			Resource:       permission.ResourceShipment,
-			ResourceID:     req.ShipmentID.String(),
-			Action:         permission.ActionDuplicate,
-			UserID:         req.UserID,
+	payload := &jobs.DuplicateShipmentPayload{
+		BasePayload: jobs.BasePayload{
 			OrganizationID: req.OrgID,
 			BusinessUnitID: req.BuID,
+			UserID:         req.UserID,
 		},
-		audit.WithComment("Shipment duplicated"),
-		audit.WithCategory("operations"),
-		audit.WithMetadata(map[string]any{
-			"proNumber":  newEntity.ProNumber,
-			"customerID": newEntity.CustomerID.String(),
-		}),
-		audit.WithTags(
-			"shipment-duplication",
-			fmt.Sprintf("customer-%s", newEntity.CustomerID.String()),
-		),
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to log shipment duplication")
+		ShipmentID:               req.ShipmentID,
+		Count:                    req.Count,
+		OverrideDates:            req.OverrideDates,
+		IncludeCommodities:       req.IncludeCommodities,
+		IncludeAdditionalCharges: req.IncludeAdditionalCharges,
 	}
 
-	return newEntity, nil
+	if _, err = s.js.Enqueue(
+		jobs.JobTypeDuplicateShipment,
+		payload,
+		jobs.DefaultJobOptions(),
+	); err != nil {
+		log.Error().Err(err).Msg("failed to enqueue shipment duplication job")
+		return err
+	}
+
+	return nil
 }
 
 func (s *Service) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shipment) error {

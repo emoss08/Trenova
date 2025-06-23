@@ -1,4 +1,4 @@
-import { DataTable } from "@/components/data-table/data-table";
+import { DataTableV2 } from "@/components/data-table/data-table-v2";
 import { type CustomerSchema } from "@/lib/schemas/customer-schema";
 import { Resource } from "@/types/audit-entry";
 import { useMemo } from "react";
@@ -10,19 +10,32 @@ export default function CustomersDataTable() {
   const columns = useMemo(() => getColumns(), []);
 
   return (
-    <DataTable<CustomerSchema>
-      resource={Resource.Customer}
+    <DataTableV2<CustomerSchema>
       name="Customer"
+      resource={Resource.Customer}
+      columns={columns}
       link="/customers/"
-      queryKey="customer-list"
-      extraSearchParams={{
-        includeBillingProfile: true,
-        includeEmailProfile: true,
-      }}
-      exportModelName="customer"
+      queryKey="customers"
+      exportModelName="Customer"
       TableModal={CreateCustomerModal}
       TableEditModal={EditCustomerModal}
-      columns={columns}
+      config={{
+        enableFiltering: true,
+        enableSorting: true,
+        enableMultiSort: true,
+        maxFilters: 5,
+        maxSorts: 3,
+        searchDebounce: 300,
+        showFilterUI: true,
+        showSortUI: true,
+      }}
+      useEnhancedBackend={true}
+      extraSearchParams={{
+        includeState: true,
+        includeBillingProfile: false,
+        includeEmailProfile: false,
+      }}
+      defaultSort={[{ field: "createdAt", direction: "desc" }]}
     />
   );
 }

@@ -5,6 +5,7 @@ import { HelmetProvider } from "@dr.pogodin/react-helmet";
 import { NuqsAdapter } from "nuqs/adapters/react-router";
 import { ThemeProvider } from "./theme-provider";
 import { Toaster } from "./ui/sonner";
+import { WebSocketProvider } from "./websocket-provider";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -27,11 +28,13 @@ export function Providers({ children }: { children: React.ReactNode }) {
     <NuqsAdapter>
       <HelmetProvider>
         <QueryClientProvider client={queryClient}>
-          <ThemeProvider defaultTheme="dark" storageKey="trenova-ui-theme">
-            {/* <ReactQueryDevtools /> */}
-            {children}
-            <Toaster richColors />
-          </ThemeProvider>
+          <WebSocketProvider>
+            <ThemeProvider defaultTheme="dark" storageKey="trenova-ui-theme">
+              {/* <ReactQueryDevtools /> */}
+              {children}
+              <Toaster position="top-center" />
+            </ThemeProvider>
+          </WebSocketProvider>
         </QueryClientProvider>
       </HelmetProvider>
     </NuqsAdapter>

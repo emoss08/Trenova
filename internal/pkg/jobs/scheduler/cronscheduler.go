@@ -1,6 +1,8 @@
 package scheduler
 
 import (
+	"time"
+
 	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
@@ -95,12 +97,12 @@ func (cs *CronScheduler) SchedulePatternAnalysisJobs() error {
 	// Daily pattern analysis at 2 AM
 	dailyPatternTask := asynq.NewTask(
 		string(jobs.JobTypeAnalyzePatterns),
-		cs.createGlobalPatternAnalysisPayload(7), // Analyze last 7 days daily
+		cs.createGlobalPatternAnalysisPayload(), // Analyze last 30 days daily
+		asynq.Retention(24*time.Hour),
 	)
 
-	entryID, err := cs.scheduler.Register("0 2 * * *", dailyPatternTask,
+	entryID, err := cs.scheduler.Register("@every 10m", dailyPatternTask,
 		asynq.Queue(jobs.QueuePattern),
-		asynq.MaxRetry(2),
 	)
 	if err != nil {
 		return err
@@ -114,7 +116,7 @@ func (cs *CronScheduler) SchedulePatternAnalysisJobs() error {
 	// Weekly comprehensive analysis on Sundays at 1 AM
 	weeklyPatternTask := asynq.NewTask(
 		string(jobs.JobTypeAnalyzePatterns),
-		cs.createGlobalPatternAnalysisPayload(30), // Analyze last 30 days weekly
+		cs.createGlobalPatternAnalysisPayload(),
 	)
 
 	entryID, err = cs.scheduler.Register("0 1 * * 0", weeklyPatternTask,
@@ -160,19 +162,12 @@ func (cs *CronScheduler) ScheduleMaintenanceJobs() error {
 }
 
 // createGlobalPatternAnalysisPayload creates a payload for global pattern analysis
-func (cs *CronScheduler) createGlobalPatternAnalysisPayload(daysBack int) []byte {
-	endDate := timeutils.NowUnix()
-	startDate := endDate - (int64(daysBack) * 86400)
-
+func (cs *CronScheduler) createGlobalPatternAnalysisPayload() []byte {
 	payload := &jobs.PatternAnalysisPayload{
 		BasePayload: jobs.BasePayload{
 			JobID:     pulid.MustNew("job_").String(),
 			Timestamp: timeutils.NowUnix(),
 		},
-		// No specific org/customer - this will need to be handled in the job handler
-		// to iterate through all organizations
-		StartDate:     startDate,
-		EndDate:       endDate,
 		MinFrequency:  3, // Conservative frequency for scheduled analysis
 		TriggerReason: "scheduled",
 	}
@@ -200,22 +195,22 @@ type asynqLogger struct {
 	logger *zerolog.Logger
 }
 
-func (l *asynqLogger) Debug(args ...interface{}) {
+func (l *asynqLogger) Debug(args ...any) {
 	l.logger.Debug().Interface("args", args).Msg("asynq debug")
 }
 
-func (l *asynqLogger) Info(args ...interface{}) {
+func (l *asynqLogger) Info(args ...any) {
 	l.logger.Info().Interface("args", args).Msg("asynq info")
 }
 
-func (l *asynqLogger) Warn(args ...interface{}) {
+func (l *asynqLogger) Warn(args ...any) {
 	l.logger.Warn().Interface("args", args).Msg("asynq warning")
 }
 
-func (l *asynqLogger) Error(args ...interface{}) {
+func (l *asynqLogger) Error(args ...any) {
 	l.logger.Error().Interface("args", args).Msg("asynq error")
 }
 
-func (l *asynqLogger) Fatal(args ...interface{}) {
+func (l *asynqLogger) Fatal(args ...any) {
 	l.logger.Fatal().Interface("args", args).Msg("asynq fatal")
 }

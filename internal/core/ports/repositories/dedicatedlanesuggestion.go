@@ -74,10 +74,6 @@ type DedicatedLaneSuggestionRepository interface {
 	// CheckForDuplicatePattern checks if a similar suggestion already exists
 	CheckForDuplicatePattern(
 		ctx context.Context,
-		customerID pulid.ID,
-		originLocationID pulid.ID,
-		destinationLocationID pulid.ID,
-		orgID pulid.ID,
-		buID pulid.ID,
+		req *FindDedicatedLaneByShipmentRequest,
 	) (*dedicatedlane.DedicatedLaneSuggestion, error)
 }

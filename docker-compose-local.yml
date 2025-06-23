@@ -86,6 +86,19 @@ services:
         limits:
           memory: 1G
 
+  asynqmon:
+    image: hibiken/asynqmon:latest
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+    environment:
+      REDIS_URL: redis://redis:6379
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
   minio:
     image: quay.io/minio/minio
     command: server /data --console-address ":9001"
@@ -109,47 +122,6 @@ services:
       interval: 30s
       timeout: 20s
       retries: 3
-
-  dozzle:
-    image: amir20/dozzle:latest
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    ports:
-      - 8084:8080
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-
-  # email-service:
-  #   build:
-  #     context: ./microservices/email
-  #     dockerfile: Dockerfile
-  #   restart: unless-stopped
-  #   env_file:
-  #     - ./microservices/email/.env
-  #   environment:
-  #     - EMAIL_SMTP_HOST=mailhog
-  #     - EMAIL_SMTP_PORT=1025
-  #     - EMAIL_SMTP_USER=
-  #     - EMAIL_SMTP_PASSWORD=
-  #     - EMAIL_SMTP_TLS_POLICY=none
-  #   ports:
-  #     - "${EMAIL_PORT:-8082}:${EMAIL_PORT:-8082}"
-  #   volumes:
-  #     - ./microservices/email/templates:/app/templates
-  #   depends_on:
-  #     - rabbitmq
-  #     - mailhog
-  #   networks:
-  #     - app-network
-  #   deploy:
-  #     resources:
-  #       limits:
-  #         memory: 512M
-  #         cpus: '0.3' # Limit CPU usage to 10%
 
   mailhog:
     image: mailhog/mailhog:latest

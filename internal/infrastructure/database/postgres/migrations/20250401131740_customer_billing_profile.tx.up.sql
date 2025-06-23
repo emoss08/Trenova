@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS "customer_billing_profiles"(
     "business_unit_id" varchar(100) NOT NULL,
     -- Core fields
     "billing_cycle_type" billing_cycle_type_enum NOT NULL DEFAULT 'Immediate',
-    "document_type_ids" varchar(100)[] NOT NULL DEFAULT '{}', -- Array of document type ids
+    -- "document_type_ids" varchar(100)[] NOT NULL DEFAULT '{}', -- Array of document type ids
     -- Billing Control Overrides
     "enforce_customer_billing_req" boolean NOT NULL DEFAULT TRUE,
     "validate_customer_rates" boolean NOT NULL DEFAULT TRUE,
@@ -33,11 +33,35 @@ CREATE TABLE IF NOT EXISTS "customer_billing_profiles"(
     CONSTRAINT "fk_customer_billing_profiles_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_customer_billing_profiles_customer" FOREIGN KEY ("customer_id", "organization_id", "business_unit_id") REFERENCES "customers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE,
     -- Ensure one billing profile per customer
-    CONSTRAINT "uq_customer_billing_profiles_customer" UNIQUE ("customer_id", "organization_id", "business_unit_id")
+    CONSTRAINT "uq_customer_billing_profiles_customer" UNIQUE ("customer_id", "organization_id", "business_unit_id"),
+    -- Add unique constraint for foreign key reference
+    CONSTRAINT "uq_customer_billing_profiles_id_org_bu" UNIQUE ("id", "organization_id", "business_unit_id")
 );
 
 CREATE INDEX IF NOT EXISTS "idx_customer_billing_profiles_customer_id" ON "customer_billing_profiles"("customer_id", "organization_id", "business_unit_id");
 
 -- Add GIN index for the document_type_ids array
-CREATE INDEX IF NOT EXISTS "idx_customer_billing_profiles_document_type_ids" ON "customer_billing_profiles" USING GIN("document_type_ids");
+-- CREATE INDEX IF NOT EXISTS "idx_customer_billing_profiles_document_type_ids" ON "customer_billing_profiles" USING GIN("document_type_ids");
+--bun:split
+CREATE TABLE IF NOT EXISTS "customer_billing_profile_document_types"(
+    "organization_id" varchar(100) NOT NULL,
+    "business_unit_id" varchar(100) NOT NULL,
+    "billing_profile_id" varchar(100) NOT NULL,
+    "document_type_id" varchar(100) NOT NULL,
+    CONSTRAINT "pk_customer_billing_profile_document_types" PRIMARY KEY ("organization_id", "business_unit_id", "billing_profile_id", "document_type_id"),
+    CONSTRAINT "fk_customer_billing_profile_document_types_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_customer_billing_profile_document_types_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_customer_billing_profile_document_types_billing_profile" FOREIGN KEY ("billing_profile_id", "organization_id", "business_unit_id") REFERENCES "customer_billing_profiles"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_customer_billing_profile_document_types_document_type" FOREIGN KEY ("document_type_id", "organization_id", "business_unit_id") REFERENCES "document_types"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE
+);
+
+--bun:split
+ALTER TABLE customer_billing_profile_document_types
+    ALTER COLUMN business_unit_id SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE customer_billing_profile_document_types
+    ALTER COLUMN organization_id SET STATISTICS 1000;
+
+COMMENT ON TABLE customer_billing_profile_document_types IS 'Junction table linking billing profiles to their assigned document types';
 

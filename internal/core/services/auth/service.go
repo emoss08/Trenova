@@ -55,6 +55,13 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
+// createSessionRequest is the request for the createSession method.
+type createSessionRequest struct {
+	User      *user.User
+	IP        string
+	UserAgent string
+}
+
 // Login logs a user in and returns a session ID.
 func (s *Service) Login(
 	ctx context.Context,
@@ -79,7 +86,7 @@ func (s *Service) Login(
 		return nil, err
 	}
 
-	sess, err := s.createSession(ctx, createSessionParams{
+	sess, err := s.createSession(ctx, createSessionRequest{
 		User:      usr,
 		IP:        ip,
 		UserAgent: userAgent,
@@ -270,19 +277,12 @@ func (s *Service) Logout(ctx context.Context, sessionID pulid.ID, ip, userAgent 
 	return nil
 }
 
-type createSessionParams struct {
-	User      *user.User
-	IP        string
-	UserAgent string
-}
-
 // createSession creates a session for a user.
 func (s *Service) createSession(
 	ctx context.Context,
-	p createSessionParams,
+	p createSessionRequest,
 ) (*session.Session, error) {
-	// Use the constructor instead of manual creation
-	expiresAt := timeutils.NowUnix() + 30*24*60*60 // 30 days
+	expiresAt := timeutils.NowUnix() + 30*24*60*60 // * 30 days
 	sess := session.NewSession(
 		p.User.ID,
 		p.User.BusinessUnitID,
@@ -292,12 +292,12 @@ func (s *Service) createSession(
 		expiresAt,
 	)
 
-	// The session is already validated in the constructor, but we can double-check
+	// * The session is already validated in the constructor, but we can double-check
 	if err := sess.Validate(p.IP); err != nil {
 		return nil, eris.Wrap(err, "failed to validate session")
 	}
 
-	// Initial login event should be added here
+	// * Initial login event should be added here
 	sess.AddEvent(session.EventTypeLogin, p.IP, p.UserAgent, nil)
 
 	if err := s.sessionRepo.Create(ctx, sess); err != nil {

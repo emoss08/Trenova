@@ -148,6 +148,9 @@ export default function StopTimeline({
   const hasStopInfo =
     currentStop.location?.addressLine1 || currentStop.plannedArrival;
 
+  const hasActualDates =
+    currentStop.actualArrival || currentStop.actualDeparture;
+
   const nextStopHasInfo =
     currentNextStop?.location?.addressLine1 || currentNextStop?.plannedArrival;
   const shouldShowLine = !isLast && hasStopInfo && nextStopHasInfo;
@@ -274,24 +277,28 @@ export default function StopTimeline({
         </div>
       </ContextMenuTrigger>
       <ContextMenuContent>
-        <ContextMenuItem onClick={handleRevert}>
-          <StopContextMenuItem
-            title="Revert"
-            description="Revert and clear the stop arrival date and times"
-          />
-        </ContextMenuItem>
-        <ContextMenuItem>
-          <StopContextMenuItem
-            title="Cancel"
-            description="Cancel the stop and clear the stop arrival date and times"
-          />
-        </ContextMenuItem>
         <ContextMenuItem onClick={openEditDialog}>
           <StopContextMenuItem
             title="Edit"
             description="Edit the stop information"
           />
         </ContextMenuItem>
+        {hasActualDates && (
+          <ContextMenuItem onClick={handleRevert}>
+            <StopContextMenuItem
+              title="Revert"
+              description="Revert and clear the stop arrival date and times"
+            />
+          </ContextMenuItem>
+        )}
+        {hasActualDates && hasStopInfo && (
+          <ContextMenuItem>
+            <StopContextMenuItem
+              title="Cancel"
+              description="Cancel the stop and clear the stop arrival date and times"
+            />
+          </ContextMenuItem>
+        )}
         <ContextMenuItem variant="destructive">
           <StopContextMenuItem
             title="Remove"

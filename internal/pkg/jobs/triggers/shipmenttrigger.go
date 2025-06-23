@@ -194,9 +194,6 @@ func (st *ShipmentTrigger) TriggerPatternAnalysisForCustomer(
 			UserID:         userID,
 			Timestamp:      timeutils.NowUnix(),
 		},
-		CustomerID:    &customerID,
-		StartDate:     startDate,
-		EndDate:       endDate,
 		MinFrequency:  3, // Look for patterns with at least 3 occurrences
 		TriggerReason: reason,
 	}
@@ -229,19 +226,12 @@ func (st *ShipmentTrigger) scheduleDelayedPatternAnalysis(
 	reason string,
 	delay time.Duration,
 ) (*asynq.TaskInfo, error) {
-	// Analyze last 60 days when triggered by shipment events
-	endDate := timeutils.NowUnix()
-	startDate := endDate - (60 * 86400) // 60 days ago
-
 	payload := &jobs.PatternAnalysisPayload{
 		BasePayload: jobs.BasePayload{
 			OrganizationID: shp.OrganizationID,
 			BusinessUnitID: shp.BusinessUnitID,
 			Timestamp:      timeutils.NowUnix(),
 		},
-		CustomerID:    &shp.CustomerID,
-		StartDate:     startDate,
-		EndDate:       endDate,
 		MinFrequency:  2, // More aggressive detection for real-time triggers
 		TriggerReason: reason,
 	}

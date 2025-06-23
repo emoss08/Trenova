@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS "dedicated_lanes"(
     "tractor_type_id" varchar(100),
     "origin_location_id" varchar(100) NOT NULL,
     "destination_location_id" varchar(100) NOT NULL,
-    "primary_worker_id" varchar(100) NOT NULL,
+    "primary_worker_id" varchar(100),
     "secondary_worker_id" varchar(100),
     -- Lane Configuration
     "auto_assign" boolean NOT NULL DEFAULT FALSE,

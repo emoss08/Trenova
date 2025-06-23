@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/stretchr/testify/require"
 
 	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -266,7 +267,7 @@ func TestTractorRepository(t *testing.T) {
 
 	t.Run("get tractor by primary worker id", func(t *testing.T) {
 		entity, err := repo.GetByPrimaryWorkerID(ctx, repoports.GetTractorByPrimaryWorkerIDRequest{
-			WorkerID: wrk.ID,
+			WorkerID: &wrk.ID,
 			OrgID:    org.ID,
 			BuID:     wrk.BusinessUnitID,
 		})
@@ -281,7 +282,7 @@ func TestTractorRepository(t *testing.T) {
 
 	t.Run("get tractor by primary worker id failure", func(t *testing.T) {
 		entity, err := repo.GetByPrimaryWorkerID(ctx, repoports.GetTractorByPrimaryWorkerIDRequest{
-			WorkerID: "invalid-id",
+			WorkerID: pulid.NilPtr,
 			OrgID:    org.ID,
 			BuID:     wrk.BusinessUnitID,
 		})

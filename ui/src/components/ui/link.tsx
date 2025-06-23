@@ -166,6 +166,7 @@ export const EntityRedirectLink = React.memo(function EntityRedirectLink({
   return (
     <Link
       to={url}
+      target={modelOpen ? "_blank" : undefined}
       className={linkClassName}
       title={`View ${entityId}`}
       aria-label={`View ${entityId}`}

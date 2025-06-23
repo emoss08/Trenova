@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/bytedance/sonic"
@@ -62,7 +61,7 @@ func (sr *sessionRepository) Create(ctx context.Context, sess *session.Session) 
 
 	// Store session data
 	sessionKey := sr.sessionKey(sess.ID)
-	if err := sr.redis.SetJSON(ctx, sessionKey, sess, defaultSessionTTL); err != nil {
+	if err := sr.redis.SetJSON(ctx, ".", sessionKey, sess, defaultSessionTTL); err != nil {
 		return eris.Wrap(err, "store session data")
 	}
 
@@ -116,7 +115,7 @@ func (sr *sessionRepository) GetUserActiveSessions(
 
 		// Get session without IP validation since we're just listing
 		var sess session.Session
-		if err = sr.redis.GetJSON(ctx, sr.sessionKey(sessionID), &sess); err != nil {
+		if err = sr.redis.GetJSON(ctx, ".", sr.sessionKey(sessionID), &sess); err != nil {
 			if eris.Is(err, redis.ErrNil) {
 				log.Error().
 					Err(err).
@@ -132,6 +131,27 @@ func (sr *sessionRepository) GetUserActiveSessions(
 	}
 
 	return sessions, nil
+}
+
+func (sr *sessionRepository) getSessionEvents(
+	ctx context.Context,
+	sessionID pulid.ID,
+) ([]session.Event, error) {
+	eventStrings, err := sr.redis.SMembers(ctx, sr.sessionEventsKey(sessionID))
+	if err != nil {
+		return nil, eris.Wrap(err, "get event members")
+	}
+
+	events := make([]session.Event, 0, len(eventStrings))
+	for _, eventStr := range eventStrings {
+		var event session.Event
+		if err = sonic.Unmarshal([]byte(eventStr), &event); err != nil {
+			return nil, eris.Wrap(err, "unmarshal event")
+		}
+		events = append(events, event)
+	}
+
+	return events, nil
 }
 
 func (sr *sessionRepository) RevokeUserSessions(
@@ -173,21 +193,20 @@ func (sr *sessionRepository) GetValidSession(
 		Str("clientIP", clientIP).
 		Logger()
 
-	var sess session.Session
-	if err := sr.redis.GetJSON(ctx, sr.sessionKey(sessionID), &sess); err != nil {
-		if eris.Is(err, redis.ErrNil) {
+	sess := new(session.Session)
+	if err := sr.redis.GetJSON(ctx, ".", sr.sessionKey(sessionID), sess); err != nil {
+		switch {
+		case eris.Is(err, redis.ErrNil):
+			log.Debug().Msg("session not found")
 			return nil, session.ErrNotFound
-		}
-
-		// Check if this is a circuit breaker error
-		if strings.Contains(err.Error(), "circuit breaker is open") {
+		case eris.Is(err, redis.ErrCircuitBreakerOpen):
 			log.Warn().
 				Err(err).
 				Msg("Redis circuit breaker is open, attempting fallback session validation")
 
-			// For circuit breaker failures, we'll use a basic fallback:
-			// Create a minimal valid session to prevent cascading failures
-			// This is acceptable for short periods when Redis is unavailable
+			// ! For circuit breaker failures, we'll use a basic fallback:
+			// ! Create a minimal valid session to prevent cascading failures
+			// ! This is acceptable for short periods when Redis is unavailable
 			fallbackSession := sr.createFallbackSession(sessionID, clientIP)
 
 			log.Info().
@@ -206,22 +225,21 @@ func (sr *sessionRepository) GetValidSession(
 		log.Warn().Err(err).Msg("session is not valid")
 		return nil, err
 	}
-
 	events, err := sr.getSessionEvents(ctx, sessionID)
 	if err != nil {
-		// If we can't get events due to circuit breaker, continue without them
-		if strings.Contains(err.Error(), "circuit breaker is open") {
+		if eris.Is(err, redis.ErrCircuitBreakerOpen) {
 			log.Debug().Msg("skipping session events due to circuit breaker")
 			sess.Events = []session.Event{} // Empty events
-		} else {
-			log.Error().Err(err).Msg("failed to get session events")
-			return nil, eris.Wrap(err, "failed to get session events")
+			return sess, nil
 		}
-	} else {
-		sess.Events = events
+
+		log.Error().Err(err).Msg("failed to get session events")
+		return nil, eris.Wrap(err, "failed to get session events")
 	}
 
-	return &sess, nil
+	sess.Events = events
+
+	return sess, nil
 }
 
 func (sr *sessionRepository) UpdateSessionActivity(
@@ -249,7 +267,7 @@ func (sr *sessionRepository) UpdateSessionActivity(
 	event := sess.AddEvent(eventType, clientIP, userAgent, metadata)
 
 	// Update session data
-	if err = sr.redis.SetJSON(ctx, sr.sessionKey(sessionID), sess, defaultSessionTTL); err != nil {
+	if err = sr.redis.SetJSON(ctx, ".", sr.sessionKey(sessionID), sess, defaultSessionTTL); err != nil {
 		log.Error().Err(err).Msg("failed to update session data")
 		return eris.Wrap(err, "failed to update session data")
 	}
@@ -296,7 +314,7 @@ func (sr *sessionRepository) RevokeSession(
 	)
 
 	// Update session data
-	if err = sr.redis.SetJSON(ctx, sr.sessionKey(sessionID), sess, defaultSessionTTL); err != nil {
+	if err = sr.redis.SetJSON(ctx, ".", sr.sessionKey(sessionID), sess, defaultSessionTTL); err != nil {
 		log.Error().Err(err).Msg("failed to update session data")
 		return eris.Wrap(err, "failed to update session data")
 	}
@@ -344,27 +362,6 @@ func (sr *sessionRepository) storeSessionEvent(
 	}
 
 	return sr.redis.SAdd(ctx, sr.sessionEventsKey(sessionID), string(eventData))
-}
-
-func (sr *sessionRepository) getSessionEvents(
-	ctx context.Context,
-	sessionID pulid.ID,
-) ([]session.Event, error) {
-	eventStrings, err := sr.redis.SMembers(ctx, sr.sessionEventsKey(sessionID))
-	if err != nil {
-		return nil, eris.Wrap(err, "get event members")
-	}
-
-	events := make([]session.Event, 0, len(eventStrings))
-	for _, eventStr := range eventStrings {
-		var event session.Event
-		if err = sonic.Unmarshal([]byte(eventStr), &event); err != nil {
-			return nil, eris.Wrap(err, "unmarshal event")
-		}
-		events = append(events, event)
-	}
-
-	return events, nil
 }
 
 // createFallbackSession creates a minimal valid session for use when Redis is unavailable

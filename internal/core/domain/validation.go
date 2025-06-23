@@ -100,3 +100,12 @@ func ValidateCommaSeparatedEmails(value any) error {
 
 	return nil
 }
+
+func ValidateStringSlice(v any) error {
+	_, ok := v.([]string)
+	if !ok {
+		return eris.New("value must be a slice of strings")
+	}
+
+	return nil
+}

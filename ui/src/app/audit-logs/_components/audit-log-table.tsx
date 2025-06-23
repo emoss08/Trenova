@@ -17,7 +17,6 @@ export default function AuditLogTable() {
       queryKey="audit-log-list"
       exportModelName="audit-log"
       TableEditModal={AuditLogDetailsSheet}
-      defaultSort={[{ id: "timestamp", desc: true }]}
       columns={columns}
       liveMode={LiveModePresets.auditLogs()}
     />

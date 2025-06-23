@@ -19,6 +19,7 @@ import {
 } from "@/types/hazmat-segregation-rule";
 import { FacilityType, LocationCategoryType } from "@/types/location-category";
 import { MoveStatus } from "@/types/move";
+import { NotificationResources } from "@/types/notification";
 import { RoleType } from "@/types/roles-permissions";
 import {
   RatingMethod,
@@ -631,3 +632,36 @@ export const roleTypeChoices = [
     color: "#f59e0b",
   },
 ] satisfies ReadonlyArray<ChoiceProps<RoleType>>;
+
+export const notificationResourceChoices = [
+  {
+    value: NotificationResources.Shipment,
+    label: "Shipment",
+    description: "Shipment",
+  },
+  {
+    value: NotificationResources.Worker,
+    label: "Worker",
+    description: "Worker",
+  },
+  {
+    value: NotificationResources.Customer,
+    label: "Customer",
+    description: "Customer",
+  },
+  {
+    value: NotificationResources.Tractor,
+    label: "Tractor",
+    description: "Tractor",
+  },
+  {
+    value: NotificationResources.Trailer,
+    label: "Trailer",
+    description: "Trailer",
+  },
+  {
+    value: NotificationResources.Location,
+    label: "Location",
+    description: "Location",
+  },
+] satisfies ReadonlyArray<ChoiceProps<NotificationResources>>;

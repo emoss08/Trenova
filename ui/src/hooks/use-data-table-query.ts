@@ -13,9 +13,21 @@ export async function fetchData<TData extends Record<string, any>>(
   fetchURL.searchParams.set("limit", pageSize.toString());
   fetchURL.searchParams.set("offset", (pageIndex * pageSize).toString());
   if (extraSearchParams) {
-    Object.entries(extraSearchParams).forEach(([key, value]) =>
-      fetchURL.searchParams.set(key, value),
-    );
+    Object.entries(extraSearchParams).forEach(([key, value]) => {
+      if (value !== undefined && value !== null) {
+        // Handle different value types appropriately
+        if (typeof value === "string") {
+          fetchURL.searchParams.set(key, value);
+        } else if (typeof value === "boolean") {
+          fetchURL.searchParams.set(key, value.toString());
+        } else if (typeof value === "number") {
+          fetchURL.searchParams.set(key, value.toString());
+        } else {
+          // For objects and arrays, convert to string
+          fetchURL.searchParams.set(key, String(value));
+        }
+      }
+    });
   }
 
   const response = await fetch(fetchURL.href, {

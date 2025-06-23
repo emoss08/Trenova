@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/emoss08/trenova/test/testutils"
 )
 
@@ -64,7 +65,7 @@ func TestWorkerRepository(t *testing.T) {
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
-				ID:     wrk.ID,
+				ID:     pulid.Must(wrk.ID.String()),
 				TenantOpts: &ports.TenantOptions{
 					OrgID: org.ID,
 					BuID:  bu.ID,

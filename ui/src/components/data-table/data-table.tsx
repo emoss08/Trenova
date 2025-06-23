@@ -1,3 +1,17 @@
+/**
+ * ACKNOWLEDGMENTS
+ *
+ * This Table component incorporates design patterns and architectural concepts
+ * inspired by the following open-source projects:
+ *
+ * - SHADCN Table: https://github.com/sadmann7/shadcn-table
+ * - OpenStatus Data Table: https://github.com/openstatusHQ/data-table-filters
+ *
+ * While the implementation is original, we acknowledge the foundational work
+ * and innovative approaches demonstrated by these projects in the React table
+ * ecosystem.
+ */
+
 "use no memo";
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
@@ -75,13 +89,13 @@ export function DataTable<TData extends Record<string, any>>({
     liveMode?.autoRefresh || false,
   );
 
-  // Fetch persisted table configuration from the server
+  // * Fetch persisted table configuration from the server
   const { data: tableConfig } = useQuery({
     ...queries.tableConfiguration.get(resource),
   });
 
-  // On first successful fetch, hydrate the local column visibility if there is
-  // nothing stored locally yet.
+  // * On first successful fetch, hydrate the local column visibility if there is
+  // * nothing stored locally yet.
   useEffect(() => {
     if (!tableConfig) return;
     // Only overwrite if the current local storage value is empty
@@ -93,7 +107,7 @@ export function DataTable<TData extends Record<string, any>>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [tableConfig]);
 
-  // Derive pagination state from URL
+  // * Derive pagination state from URL
   const pagination = useMemo(
     () => ({
       pageIndex: (page ?? 1) - 1,
@@ -109,7 +123,7 @@ export function DataTable<TData extends Record<string, any>>({
     extraSearchParams,
   );
 
-  // Live mode integration - memoize to prevent unnecessary re-renders
+  // * Live mode integration
   const liveData = useLiveDataTable({
     queryKey,
     endpoint: liveMode?.endpoint || "",
@@ -171,25 +185,49 @@ export function DataTable<TData extends Record<string, any>>({
     dataQuery.data?.results,
   ]);
 
+  // * Sync row selection with URL entityId (for visual feedback)
+  useEffect(() => {
+    if (entityId && !rowSelection[entityId]) {
+      // * If entityId is in URL but not selected, sync row selection
+      // * This handles direct URL navigation or bookmarked links
+      setRowSelection({ [entityId]: true });
+    }
+  }, [entityId]); // Remove rowSelection from deps to prevent infinite loop
+
+  // * Handle row selection changes (when user clicks on table rows)
   useEffect(() => {
     if (dataQuery.isLoading || dataQuery.isFetching) return;
-    if (modalType === "create") return; // * Don't override "create" modalType
-    if (Object.keys(rowSelection)?.length && !selectedRow) {
-      setSearchParams({ entityId: null, modalType: null });
-      setRowSelection({});
-    } else {
-      setSearchParams({
-        entityId: selectedRow?.id || null,
-        modalType: selectedRow ? "edit" : null,
-      });
+    if (modalType === "create") return; // Don't override "create" modalType
+
+    const selectedKeys = Object.keys(rowSelection);
+
+    if (selectedKeys.length > 0) {
+      const selectedId = selectedKeys[0];
+      // * Only update URL if different from current entityId
+      if (selectedId !== entityId) {
+        setSearchParams({
+          entityId: selectedId,
+          modalType: "edit",
+        });
+      }
+    } else if (entityId && modalType === "edit") {
+      // * Clear selection if no row selected but entityId exists
+      // * Only clear if the entity is not in current table data (filtered out)
+      const entityInCurrentData = table
+        .getCoreRowModel()
+        .flatRows.some((row) => row.id === entityId);
+      if (entityInCurrentData) {
+        setSearchParams({ entityId: null, modalType: null });
+      }
     }
   }, [
     rowSelection,
-    selectedRow,
+    entityId,
+    modalType,
     setSearchParams,
     dataQuery.isLoading,
     dataQuery.isFetching,
-    modalType,
+    table,
   ]);
 
   const handleCreateClick = useCallback(() => {
@@ -201,21 +239,6 @@ export function DataTable<TData extends Record<string, any>>({
   }, [setSearchParams]);
 
   const isCreateModalOpen = Boolean(modalType === "create");
-
-  // Memoize modal props to prevent unnecessary re-renders
-  const editModalProps = useMemo(
-    () => ({
-      isLoading: dataQuery.isFetching || dataQuery.isLoading,
-      currentRecord: selectedRow?.original,
-      error: dataQuery.error,
-    }),
-    [
-      dataQuery.isFetching,
-      dataQuery.isLoading,
-      selectedRow?.original,
-      dataQuery.error,
-    ],
-  );
 
   return (
     <DataTableProvider
@@ -280,7 +303,15 @@ export function DataTable<TData extends Record<string, any>>({
               onOpenChange={handleCreateModalClose}
             />
           )}
-          {TableEditModal && <TableEditModal {...editModalProps} />}
+          {TableEditModal && (
+            <TableEditModal
+              isLoading={dataQuery.isFetching || dataQuery.isLoading}
+              currentRecord={selectedRow?.original}
+              error={dataQuery.error}
+              apiEndpoint={link}
+              queryKey={queryKey}
+            />
+          )}
         </>
       ) : (
         <DataTablePermissionDeniedSkeleton

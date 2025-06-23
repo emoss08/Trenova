@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
@@ -22,6 +23,20 @@ type ListByResourceIDRequest struct {
 	UserID     pulid.ID
 }
 
+type GetAuditByResourceRequest struct {
+	Resource       permission.Resource
+	ResourceID     string
+	Action         permission.Action
+	OrganizationID pulid.ID
+	Limit          int
+}
+
+type GetRecentEntriesRequest struct {
+	SinceTimestamp int64
+	Action         permission.Action
+	Limit          int
+}
+
 type AuditRepository interface {
 	InsertAuditEntries(ctx context.Context, entries []*audit.Entry) error
 	List(
@@ -33,4 +48,9 @@ type AuditRepository interface {
 		opts ListByResourceIDRequest,
 	) (*ports.ListResult[*audit.Entry], error)
 	GetByID(ctx context.Context, opts GetAuditEntryByIDOptions) (*audit.Entry, error)
+	GetByResourceAndAction(
+		ctx context.Context,
+		req *GetAuditByResourceRequest,
+	) ([]*audit.Entry, error)
+	GetRecentEntries(ctx context.Context, req *GetRecentEntriesRequest) ([]*audit.Entry, error)
 }

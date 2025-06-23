@@ -2,6 +2,7 @@ package jobs
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -12,6 +13,10 @@ import (
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
+)
+
+const (
+	unknownJobID = "unknown"
 )
 
 // JobServiceParams defines dependencies for the job service
@@ -25,11 +30,15 @@ type JobServiceParams struct {
 
 // JobService manages background job scheduling and processing
 type JobService struct {
-	client   *asynq.Client
-	server   *asynq.Server
-	mux      *asynq.ServeMux
-	logger   *zerolog.Logger
-	handlers map[JobType]JobHandler
+	client     *asynq.Client
+	server     *asynq.Server
+	mux        *asynq.ServeMux
+	logger     *zerolog.Logger
+	handlers   map[JobType]JobHandler
+	isRunning  bool
+	startTime  time.Time
+	lastPanic  *time.Time
+	panicCount int
 }
 
 // JobServiceInterface defines the contract for the job service
@@ -81,9 +90,15 @@ type JobServiceInterface interface {
 	Start() error
 	Shutdown() error
 	RegisterHandler(handler JobHandler)
+
+	// Health Monitoring
+	IsHealthy() bool
+	GetStats() JobServiceStats
 }
 
 // NewJobService creates a new job service instance
+//
+//nolint:gocritic // this is dependency injection
 func NewJobService(p JobServiceParams) JobServiceInterface {
 	log := p.Logger.With().
 		Str("service", "job").
@@ -108,7 +123,12 @@ func NewJobService(p JobServiceParams) JobServiceInterface {
 				delay := time.Duration(1<<n) * time.Second
 				log.Warn().
 					Str("job_type", task.Type()).
-					Str("job_id", task.ResultWriter().TaskID()).
+					Str("job_id", func() string {
+						if rw := task.ResultWriter(); rw != nil {
+							return rw.TaskID()
+						}
+						return unknownJobID
+					}()).
 					Int("retry_attempt", n+1).
 					Dur("retry_delay", delay).
 					Msg("job retry scheduled")
@@ -122,14 +142,24 @@ func NewJobService(p JobServiceParams) JobServiceInterface {
 						log.Error().
 							Err(err).
 							Str("job_type", task.Type()).
-							Str("job_id", task.ResultWriter().TaskID()).
+							Str("job_id", func() string {
+								if rw := task.ResultWriter(); rw != nil {
+									return rw.TaskID()
+								}
+								return unknownJobID
+							}()).
 							Interface("payload", payloadInfo).
 							Msg("job processing failed permanently")
 					} else {
 						log.Error().
 							Err(err).
 							Str("job_type", task.Type()).
-							Str("job_id", task.ResultWriter().TaskID()).
+							Str("job_id", func() string {
+								if rw := task.ResultWriter(); rw != nil {
+									return rw.TaskID()
+								}
+								return unknownJobID
+							}()).
 							Msg("job processing failed permanently")
 					}
 				},
@@ -141,11 +171,12 @@ func NewJobService(p JobServiceParams) JobServiceInterface {
 	mux := asynq.NewServeMux()
 
 	js := &JobService{
-		client:   client,
-		server:   server,
-		mux:      mux,
-		logger:   &log,
-		handlers: make(map[JobType]JobHandler),
+		client:    client,
+		server:    server,
+		mux:       mux,
+		logger:    &log,
+		handlers:  make(map[JobType]JobHandler),
+		isRunning: false,
 	}
 
 	// Register all provided handlers
@@ -197,8 +228,7 @@ func (js *JobService) SchedulePatternAnalysis(
 
 	// Set unique key to prevent duplicate analysis for same org/timeframe
 	if opts.UniqueKey == "" {
-		opts.UniqueKey = fmt.Sprintf("pattern_analysis_%s_%d_%d",
-			payload.OrganizationID.String(), payload.StartDate, payload.EndDate)
+		opts.UniqueKey = fmt.Sprintf("pattern_analysis_%s", payload.OrganizationID.String())
 	}
 
 	payload.JobID = pulid.MustNew("job_").String()
@@ -289,7 +319,7 @@ func (js *JobService) enqueueJob(
 	}
 
 	// Create Asynq task
-	task := asynq.NewTask(string(jobType), data)
+	task := asynq.NewTask(string(jobType), data, asynq.Retention(24*time.Hour))
 
 	// Build task options
 	taskOpts := []asynq.Option{
@@ -341,37 +371,62 @@ func (js *JobService) enqueueJob(
 }
 
 // CancelJob cancels a scheduled job
-func (js *JobService) CancelJob(ctx context.Context, queue string, jobID string) error {
+func (js *JobService) CancelJob(_ context.Context, _ string, _ string) error {
 	// Note: Asynq doesn't support direct job cancellation by ID
 	// This would need to be implemented using job inspection and manual cancellation
-	return fmt.Errorf("job cancellation not implemented - use Asynq web UI or inspector")
+	return errors.New("job cancellation not implemented - use Asynq web UI or inspector")
 }
 
 // GetJobInfo retrieves information about a job
 func (js *JobService) GetJobInfo(
-	ctx context.Context,
-	queue string,
-	jobID string,
+	_ context.Context,
+	_ string,
+	_ string,
 ) (*asynq.TaskInfo, error) {
 	// Create inspector with the same Redis config as the client
 	// Note: This requires access to the underlying Redis config
-	return nil, fmt.Errorf("job info retrieval not implemented - use Asynq web UI or inspector")
+	return nil, errors.New("job info retrieval not implemented - use Asynq web UI or inspector")
 }
 
-// RegisterHandler registers a job handler
+// RegisterHandler registers a job handler with panic recovery
 func (js *JobService) RegisterHandler(handler JobHandler) {
 	jobType := handler.JobType()
 	js.handlers[jobType] = handler
 
+	// Wrap handler with panic recovery
+	wrappedHandler := js.wrapHandlerWithRecovery(handler)
+
 	// Register with Asynq mux
-	js.mux.HandleFunc(string(jobType), handler.ProcessTask)
+	js.mux.HandleFunc(string(jobType), wrappedHandler)
 
 	js.logger.Info().
 		Str("job_type", string(jobType)).
 		Msg("registered job handler")
 }
 
-// Start begins processing jobs
+// wrapHandlerWithRecovery wraps a job handler with panic recovery
+func (js *JobService) wrapHandlerWithRecovery(
+	handler JobHandler,
+) func(context.Context, *asynq.Task) error {
+	return func(ctx context.Context, task *asynq.Task) (err error) {
+		defer func() {
+			if r := recover(); r != nil {
+				js.logger.Error().
+					Str("job_type", task.Type()).
+					Interface("panic", r).
+					Msg("job handler panicked")
+
+				// Convert panic to error
+				err = fmt.Errorf("job handler panicked: %v", r)
+			}
+		}()
+
+		// Execute the actual handler
+		return handler.ProcessTask(ctx, task)
+	}
+}
+
+// Start begins processing jobs with panic recovery
 func (js *JobService) Start() error {
 	js.logger.Info().
 		Int("concurrency", 10).
@@ -384,27 +439,80 @@ func (js *JobService) Start() error {
 		Int("registered_handlers", len(js.handlers)).
 		Msg("starting job service")
 
-	// Start the server in a goroutine
-	go func() {
-		js.logger.Info().Msg("job worker server started")
-		if err := js.server.Run(js.mux); err != nil {
-			js.logger.Error().Err(err).Msg("job server stopped unexpectedly")
-		}
-	}()
+	// Mark as running and set start time
+	js.isRunning = true
+	js.startTime = time.Now()
+
+	// Start the server in a goroutine with panic recovery
+	go js.runWithRecovery()
 
 	js.logger.Info().Msg("job service started successfully")
 	return nil
+}
+
+// runWithRecovery runs the job server with panic recovery
+func (js *JobService) runWithRecovery() {
+	defer func() {
+		if r := recover(); r != nil {
+			// Track panic stats
+			now := time.Now()
+			js.panicCount++
+			js.lastPanic = &now
+
+			js.logger.Error().
+				Interface("panic", r).
+				Int("total_panics", js.panicCount).
+				Msg("job service panicked - attempting restart")
+
+			// Wait a bit before restarting to avoid rapid restart loops
+			time.Sleep(5 * time.Second)
+
+			// Attempt to restart the service
+			go js.runWithRecovery()
+		}
+	}()
+
+	js.logger.Info().Msg("job worker server started")
+	if err := js.server.Run(js.mux); err != nil {
+		js.logger.Error().Err(err).Msg("job server stopped unexpectedly")
+	}
 }
 
 // Shutdown gracefully stops the job service
 func (js *JobService) Shutdown() error {
 	js.logger.Info().Msg("shutting down job service")
 
+	js.isRunning = false
 	js.server.Shutdown()
-	js.client.Close()
+
+	if err := js.client.Close(); err != nil {
+		js.logger.Warn().Err(err).Msg("error closing job client")
+	}
 
 	js.logger.Info().Msg("job service shutdown completed")
 	return nil
+}
+
+// IsHealthy returns true if the job service is running and healthy
+func (js *JobService) IsHealthy() bool {
+	return js.isRunning && js.panicCount < 10 // Consider unhealthy after 10 panics
+}
+
+// GetStats returns comprehensive statistics about the job service
+func (js *JobService) GetStats() JobServiceStats {
+	uptime := ""
+	if js.isRunning && !js.startTime.IsZero() {
+		uptime = time.Since(js.startTime).String()
+	}
+
+	return JobServiceStats{
+		IsRunning:    js.isRunning,
+		StartTime:    js.startTime,
+		Uptime:       uptime,
+		PanicCount:   js.panicCount,
+		LastPanic:    js.lastPanic,
+		HandlerCount: len(js.handlers),
+	}
 }
 
 // extractPayloadSummary creates a concise summary of the payload for logging
@@ -416,12 +524,8 @@ func (js *JobService) extractPayloadSummary(payload any) map[string]any {
 		summary["type"] = "pattern_analysis"
 		summary["organization_id"] = p.OrganizationID.String()
 		summary["business_unit_id"] = p.BusinessUnitID.String()
-		if p.CustomerID != nil {
-			summary["customer_id"] = p.CustomerID.String()
-		}
 		summary["trigger_reason"] = p.TriggerReason
 		summary["min_frequency"] = p.MinFrequency
-		summary["date_range_days"] = (p.EndDate - p.StartDate) / 86400
 
 	case *ExpireSuggestionsPayload:
 		summary["type"] = "expire_suggestions"
@@ -447,6 +551,11 @@ func (js *JobService) extractPayloadSummary(payload any) map[string]any {
 		if p.ShipmentID != nil {
 			summary["shipment_id"] = p.ShipmentID.String()
 		}
+	case *DuplicateShipmentPayload:
+		summary["type"] = "duplicate_shipment"
+		summary["organization_id"] = p.OrganizationID.String()
+		summary["business_unit_id"] = p.BusinessUnitID.String()
+		summary["count"] = p.Count
 
 	default:
 		summary["type"] = "unknown"

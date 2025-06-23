@@ -31,7 +31,7 @@ func TestCustomerRepository(t *testing.T) {
 
 	t.Run("list customers", func(t *testing.T) {
 		opts := &repoports.ListCustomerOptions{
-			Filter: &ports.LimitOffsetQueryOptions{
+			Filter: &ports.QueryOptions{
 				Limit:  10,
 				Offset: 0,
 				TenantOpts: &ports.TenantOptions{
@@ -46,7 +46,7 @@ func TestCustomerRepository(t *testing.T) {
 
 	t.Run("list customers with query", func(t *testing.T) {
 		opts := &repoports.ListCustomerOptions{
-			Filter: &ports.LimitOffsetQueryOptions{
+			Filter: &ports.QueryOptions{
 				Limit:  10,
 				Offset: 0,
 				TenantOpts: &ports.TenantOptions{
@@ -63,7 +63,7 @@ func TestCustomerRepository(t *testing.T) {
 	t.Run("list customers with state", func(t *testing.T) {
 		opts := &repoports.ListCustomerOptions{
 			IncludeState: true,
-			Filter: &ports.LimitOffsetQueryOptions{
+			Filter: &ports.QueryOptions{
 				Limit:  10,
 				Offset: 0,
 				TenantOpts: &ports.TenantOptions{

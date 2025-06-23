@@ -29,7 +29,6 @@ type BillingProfile struct {
 	CustomerID                pulid.ID            `json:"customerId"                bun:"customer_id,pk,notnull,type:VARCHAR(100)"`
 	BillingCycleType          BillingCycleType    `json:"billingCycleType"          bun:"billing_cycle_type,type:billing_cycle_type_enum,nullzero,default:'Immediate'"`
 	PaymentTerm               billing.PaymentTerm `json:"paymentTerm"               bun:"payment_term,type:payment_term_enum,nullzero,default:'Net30'"`
-	DocumentTypeIDs           []string            `json:"documentTypeIds"           bun:"document_type_ids,type:VARCHAR(100)[],notnull,default:{}"`
 	HasOverrides              bool                `json:"hasOverrides"              bun:"has_overrides,type:BOOLEAN,notnull,default:false"`
 	EnforceCustomerBillingReq bool                `json:"enforceCustomerBillingReq" bun:"enforce_customer_billing_req,type:BOOLEAN,notnull,default:true"`
 	ValidateCustomerRates     bool                `json:"validateCustomerRates"     bun:"validate_customer_rates,type:BOOLEAN,notnull,default:true"`
@@ -41,20 +40,16 @@ type BillingProfile struct {
 	UpdatedAt                 int64               `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit  *businessunit.BusinessUnit `json:"-"             bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization  *organization.Organization `json:"-"             bun:"rel:belongs-to,join:organization_id=id"`
+	DocumentTypes []*billing.DocumentType    `json:"documentTypes" bun:"m2m:customer_billing_profile_document_types,join:BillingProfile=DocumentType"`
 }
 
 func (b *BillingProfile) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(
 		ctx,
 		b,
-		// * Ensure Customer ID is set
 		validation.Field(&b.CustomerID, validation.Required.Error("Customer ID is required")),
-		validation.Field(
-			&b.DocumentTypeIDs,
-			validation.Required.Error("Document Type IDs are required"),
-		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
@@ -87,4 +82,15 @@ func (b *BillingProfile) BeforeAppendModel(_ context.Context, query bun.Query) e
 	}
 
 	return nil
+}
+
+type BillingProfileDocumentType struct {
+	bun.BaseModel `bun:"table:customer_billing_profile_document_types,alias:bpdt" json:"-"`
+
+	OrganizationID   pulid.ID              `json:"-"              bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	BusinessUnitID   pulid.ID              `json:"-"              bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
+	BillingProfileID pulid.ID              `json:"-"              bun:"billing_profile_id,pk,notnull,type:VARCHAR(100)"`
+	DocumentTypeID   pulid.ID              `json:"documentTypeId" bun:"document_type_id,pk,notnull,type:VARCHAR(100)"`
+	BillingProfile   *BillingProfile       `json:"-"              bun:"rel:belongs-to,join:billing_profile_id=id"`
+	DocumentType     *billing.DocumentType `json:"-"              bun:"rel:belongs-to,join:document_type_id=id"`
 }

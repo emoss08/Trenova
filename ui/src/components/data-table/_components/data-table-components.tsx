@@ -133,7 +133,7 @@ export function HoverCardTimestamp({
       <HoverCardTrigger asChild>
         <div
           className={cn(
-            "font-mono whitespace-nowrap max-w-[140px] truncate",
+            "font-mono whitespace-nowrap max-w-[150px] truncate",
             className,
           )}
         >

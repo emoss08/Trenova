@@ -1,4 +1,4 @@
-import { AuditEntryActionBadge } from "@/app/audit-logs/_components/audit-column-components";
+import { ActionBadge } from "@/app/audit-logs/_components/audit-column-components";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { api } from "@/services/api";
 import { AuditEntry } from "@/types/audit-entry";
@@ -106,10 +106,7 @@ function AuditEntryTable({ data }: { data: AuditEntry[] }) {
               return (
                 <TableRow key={key} className="hover:bg-transparent">
                   <TableCell>
-                    <AuditEntryActionBadge
-                      action={value.action}
-                      withDot={false}
-                    />
+                    <ActionBadge action={value.action} withDot={false} />
                   </TableCell>
                   <TableCell>{value.user?.name || "-"}</TableCell>
                   <TableCell>

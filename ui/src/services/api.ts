@@ -8,12 +8,14 @@ import { BillingAPI } from "./billing";
 import { BillingControlAPI } from "./billing-control";
 import { CustomerAPI } from "./customer";
 import { DatabaseBackupAPI } from "./database-backups";
-import { DedicatedLaneAPI } from "./dedicated-lane";
+import { DedicatedLaneAPI, DedicatedLaneSuggestionAPI } from "./dedicated-lane";
 import { DocumentAPI } from "./document";
 import { FavoriteAPI } from "./favorite";
 import { GoogleMapsAPI } from "./google-maps";
 import { IntegrationAPI } from "./integration";
+import { NotificationAPI } from "./notification";
 import { OrganizationAPI } from "./organization";
+import { PatternConfigAPI } from "./pattern-config";
 import { PermissionAPI } from "./permission";
 import { RoleAPI } from "./role";
 import { ShipmentAPI } from "./shipment";
@@ -53,6 +55,9 @@ class API {
   permissions: PermissionAPI;
   roles: RoleAPI;
   dedicatedLane: DedicatedLaneAPI;
+  dedicatedLaneSuggestions: DedicatedLaneSuggestionAPI;
+  patternConfig: PatternConfigAPI;
+  notifications: NotificationAPI;
 
   constructor() {
     this.assignments = new AssignmentsAPI();
@@ -75,6 +80,9 @@ class API {
     this.permissions = new PermissionAPI();
     this.roles = new RoleAPI();
     this.dedicatedLane = new DedicatedLaneAPI();
+    this.dedicatedLaneSuggestions = new DedicatedLaneSuggestionAPI();
+    this.patternConfig = new PatternConfigAPI();
+    this.notifications = new NotificationAPI();
   }
 }
 

@@ -66,12 +66,12 @@ func (h *Handler) update(c *fiber.Ctx) error {
 	}
 
 	sc := new(shipment.ShipmentControl)
-	sc.OrganizationID = reqCtx.OrgID
-	sc.BusinessUnitID = reqCtx.BuID
-
 	if err = c.BodyParser(sc); err != nil {
 		return h.eh.HandleError(c, err)
 	}
+
+	sc.OrganizationID = reqCtx.OrgID
+	sc.BusinessUnitID = reqCtx.BuID
 
 	entity, err := h.sc.Update(c.UserContext(), sc, reqCtx.UserID)
 	if err != nil {

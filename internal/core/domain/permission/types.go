@@ -32,6 +32,9 @@ const (
 	ResourceShipmentControl = Resource(
 		"shipment_control",
 	) // Represents resources related to shipment control.
+	ResourcePatternConfig = Resource(
+		"pattern_config",
+	) // Represents resources related to pattern config.
 	ResourceGoogleMapsConfig = Resource(
 		"google_maps_config",
 	) // Represents resources related to google maps config.
@@ -44,6 +47,9 @@ const (
 	ResourceDedicatedLane = Resource(
 		"dedicated_lane",
 	) // Represents resources related to dedicated lanes.
+	ResourceDedicatedLaneSuggestion = Resource(
+		"dedicated_lane_suggestion",
+	) // Represents resources related to dedicated lane suggestions.
 	ResourceRole = Resource(
 		"role",
 	) // Represents resources related to roles.
@@ -373,6 +379,12 @@ var (
 			ActionAudit,
 			ActionModifyField,
 		),
+		ResourceDedicatedLaneSuggestion: append(
+			BaseActions,
+			ActionConfigure,
+			ActionAudit,
+			ActionModifyField,
+		),
 		ResourcePageFavorite: append(
 			BaseActions,
 			ActionConfigure,
@@ -451,6 +463,10 @@ var (
 		),
 		ResourceEquipmentManufacturer: append(
 			BaseActions,
+			append(DataActions, FieldActions...)...,
+		),
+		ResourcePatternConfig: append(
+			append(BaseActions, ActionConfigure),
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceShipmentType: append(

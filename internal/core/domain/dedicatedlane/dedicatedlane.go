@@ -38,7 +38,7 @@ type DedicatedLane struct {
 	DestinationLocationID pulid.ID      `json:"destinationLocationId"      bun:"destination_location_id,type:VARCHAR(100),notnull"`
 	ServiceTypeID         pulid.ID      `json:"serviceTypeId"              bun:"service_type_id,type:VARCHAR(100),notnull"`
 	ShipmentTypeID        pulid.ID      `json:"shipmentTypeId"             bun:"shipment_type_id,type:VARCHAR(100),notnull"`
-	PrimaryWorkerID       pulid.ID      `json:"primaryWorkerId"            bun:"primary_worker_id,type:VARCHAR(100),notnull"`
+	PrimaryWorkerID       *pulid.ID     `json:"primaryWorkerId,omitzero"   bun:"primary_worker_id,type:VARCHAR(100),nullzero"`
 	SecondaryWorkerID     *pulid.ID     `json:"secondaryWorkerId,omitzero" bun:"secondary_worker_id,type:VARCHAR(100),nullzero"`
 	TrailerTypeID         *pulid.ID     `json:"trailerTypeId,omitzero"     bun:"trailer_type_id,type:VARCHAR(100),nullzero"`
 	TractorTypeID         *pulid.ID     `json:"tractorTypeId,omitzero"     bun:"tractor_type_id,type:VARCHAR(100),nullzero"`
@@ -87,12 +87,15 @@ func (d *DedicatedLane) Validate(ctx context.Context, multiErr *errors.MultiErro
 			),
 		),
 		validation.Field(
-			&d.PrimaryWorkerID,
-			validation.Required.Error("Primary Worker is required"),
+			validation.When(
+				d.AutoAssign,
+				validation.Required.Error("Primary Worker is required when auto assign is true."),
+			),
 		),
 		validation.Field(&d.SecondaryWorkerID,
 			validation.When(
-				d.SecondaryWorkerID != nil && pulid.Equals(d.PrimaryWorkerID, *d.SecondaryWorkerID),
+				d.SecondaryWorkerID != nil && d.PrimaryWorkerID != nil &&
+					pulid.Equals(*d.PrimaryWorkerID, *d.SecondaryWorkerID),
 				validation.Required.Error("Primary and Secondary Workers cannot be the same"),
 			),
 		),

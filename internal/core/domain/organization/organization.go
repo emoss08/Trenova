@@ -43,7 +43,7 @@ type Organization struct {
 	ScacCode     string `json:"scacCode"     bun:"scac_code,type:VARCHAR(4),notnull"`
 	DOTNumber    string `json:"dotNumber"    bun:"dot_number,type:VARCHAR(8),notnull"`
 	LogoURL      string `json:"logoUrl"      bun:"logo_url,type:VARCHAR(255)"`
-	OrgType      Type   `json:"orgType"      bun:"org_type,type:org_type_enum,notnull,default:'Asset'"`
+	OrgType      Type   `json:"orgType"      bun:"org_type,type:org_type_enum,notnull,default:'Carrier'"`
 	BucketName   string `json:"bucketName"   bun:"bucket_name,type:VARCHAR(63),notnull"`
 	AddressLine1 string `json:"addressLine1" bun:"address_line1,type:VARCHAR(150),notnull"`
 	AddressLine2 string `json:"addressLine2" bun:"address_line2,type:VARCHAR(150)"`

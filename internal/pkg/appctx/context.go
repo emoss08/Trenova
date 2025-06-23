@@ -1,6 +1,8 @@
 package appctx
 
 import (
+	"reflect"
+
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
@@ -91,4 +93,33 @@ func WithRequestContext(c *fiber.Ctx) (*RequestContext, error) {
 	}
 
 	return ctx, nil
+}
+
+// AddContextToRequest populates a request with context from the fiber context using reflection.
+// The `req` parameter must be a pointer to a struct.
+func AddContextToRequest(reqCtx *RequestContext, req any) {
+	val := reflect.ValueOf(req)
+	if val.Kind() != reflect.Ptr {
+		return // Not a pointer
+	}
+
+	elem := val.Elem()
+	if elem.Kind() != reflect.Struct {
+		return // Not a pointer to a struct
+	}
+
+	orgID := elem.FieldByName("OrgID")
+	if orgID.IsValid() && orgID.CanSet() {
+		orgID.Set(reflect.ValueOf(reqCtx.OrgID))
+	}
+
+	buID := elem.FieldByName("BuID")
+	if buID.IsValid() && buID.CanSet() {
+		buID.Set(reflect.ValueOf(reqCtx.BuID))
+	}
+
+	userID := elem.FieldByName("UserID")
+	if userID.IsValid() && userID.CanSet() {
+		userID.Set(reflect.ValueOf(reqCtx.UserID))
+	}
 }

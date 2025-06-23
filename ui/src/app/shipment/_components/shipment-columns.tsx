@@ -2,9 +2,11 @@
 import {
   createNestedEntityRefColumn,
   EntityRefCell,
+  NestedEntityRefCell,
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { HoverCardTimestamp } from "@/components/data-table/_components/data-table-components";
 import { ShipmentStatusBadge } from "@/components/status-badge";
+import { shipmentStatusChoices } from "@/lib/choices";
 import type { CustomerSchema } from "@/lib/schemas/customer-schema";
 import { LocationSchema } from "@/lib/schemas/location-schema";
 import {
@@ -20,22 +22,35 @@ export function getColumns(): ColumnDef<Shipment>[] {
   const columnHelper = createColumnHelper<Shipment>();
 
   return [
-    columnHelper.display({
-      id: "status",
+    {
+      accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
-        const status = row.original.status;
+        const { status } = row.original;
         return <ShipmentStatusBadge status={status} />;
       },
-      size: 100,
-      enableHiding: false,
-    }),
+      meta: {
+        apiField: "status",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: shipmentStatusChoices,
+        defaultFilterOperator: "eq",
+      },
+    },
     {
       accessorKey: "proNumber",
       header: "Pro Number",
       cell: ({ row }) => {
         const proNumber = row.original.proNumber;
         return <p>{proNumber}</p>;
+      },
+      meta: {
+        apiField: "proNumber",
+        filterable: true,
+        sortable: true,
+        filterType: "text",
+        defaultFilterOperator: "contains",
       },
       enableHiding: false,
     },
@@ -62,28 +77,56 @@ export function getColumns(): ColumnDef<Shipment>[] {
           />
         );
       },
+      meta: {
+        apiField: "customer.name",
+        filterable: true,
+        sortable: true,
+        filterType: "text",
+        defaultFilterOperator: "contains",
+      },
     },
-    createNestedEntityRefColumn(columnHelper, {
-      columnId: "originLocation",
-      basePath: "/dispatch/configurations/locations",
-      getHeaderText: "Origin Location",
-      getId: (location) => location.id,
-      getDisplayText: (location: LocationSchema) => location.name,
-      getSecondaryInfo: (location) => {
-        return {
-          entity: location,
-          displayText: formatLocation(location),
-          clickable: false,
-        };
-      },
-      getEntity: (shipment) => {
-        try {
-          return ShipmentLocations.useLocations(shipment).origin;
-        } catch {
-          throw new Error("Shipment has no origin location");
+    {
+      id: "originLocation",
+      header: "Origin Location",
+      cell: ({ row }) => {
+        const { customer } = row.original;
+
+        if (!customer) {
+          return <p className="text-muted-foreground">-</p>;
         }
+
+        return (
+          <NestedEntityRefCell<LocationSchema, Shipment>
+            getValue={() => {
+              return ShipmentLocations.useLocations(row.original).origin;
+            }}
+            row={row}
+            config={{
+              getEntity: (shipment) => {
+                return ShipmentLocations.useLocations(shipment).origin;
+              },
+              basePath: "/dispatch/configurations/locations",
+              getId: (location) => location.id,
+              getDisplayText: (location: LocationSchema) => location.name,
+              getSecondaryInfo: (location) => {
+                return {
+                  entity: location,
+                  displayText: formatLocation(location),
+                  clickable: false,
+                };
+              },
+            }}
+          />
+        );
       },
-    }),
+      meta: {
+        apiField: "originLocation.name",
+        filterable: true,
+        sortable: true,
+        filterType: "text",
+        defaultFilterOperator: "contains",
+      },
+    },
     {
       id: "originPickup",
       accessorKey: "originPickup",
@@ -92,7 +135,12 @@ export function getColumns(): ColumnDef<Shipment>[] {
         const shipment = row.original;
         const originStop = getOriginStopInfo(shipment);
 
-        return <HoverCardTimestamp timestamp={originStop?.plannedArrival} />;
+        return (
+          <HoverCardTimestamp
+            className="font-table tracking-tight"
+            timestamp={originStop?.plannedArrival}
+          />
+        );
       },
     },
     createNestedEntityRefColumn(columnHelper, {
@@ -125,7 +173,10 @@ export function getColumns(): ColumnDef<Shipment>[] {
         const destinationStop = getDestinationStopInfo(shipment);
 
         return (
-          <HoverCardTimestamp timestamp={destinationStop?.plannedArrival} />
+          <HoverCardTimestamp
+            className="font-table tracking-tight"
+            timestamp={destinationStop?.plannedArrival}
+          />
         );
       },
     },
