@@ -36,7 +36,8 @@
       "Bash(task reset)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(task check)"
     ],
     "deny": []
   },
