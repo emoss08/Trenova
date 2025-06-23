@@ -119,6 +119,202 @@ func TestShipmentRepository(t *testing.T) {
 			}
 		})
 
+		t.Run("List with Nested Field Filters", func(t *testing.T) {
+			t.Run("Filter by Customer Name", func(t *testing.T) {
+				opts := &repoports.ListShipmentOptions{
+					ShipmentOptions: repoports.ShipmentOptions{
+						ExpandShipmentDetails: true,
+					},
+					Filter: &ports.QueryOptions{
+						Limit:  10,
+						Offset: 0,
+						FieldFilters: []ports.FieldFilter{
+							{
+								Field:    "customer.name",
+								Operator: ports.OpContains,
+								Value:    "Honeywell",
+							},
+						},
+						TenantOpts: &ports.TenantOptions{
+							OrgID: org.ID,
+							BuID:  bu.ID,
+						},
+					},
+				}
+
+				result, err := repo.List(ctx, opts)
+				require.NoError(t, err, "List with customer name filter should not return error")
+				require.NotNil(t, result, "Result should not be nil")
+				
+				// Verify that results contain the expected customer
+				for _, item := range result.Items {
+					if item.Customer != nil {
+						assert.Contains(t, item.Customer.Name, "Honeywell", "Customer name should contain 'Honeywell'")
+					}
+				}
+			})
+
+			t.Run("Filter by Origin Location Name", func(t *testing.T) {
+				opts := &repoports.ListShipmentOptions{
+					ShipmentOptions: repoports.ShipmentOptions{
+						ExpandShipmentDetails: true,
+					},
+					Filter: &ports.QueryOptions{
+						Limit:  10,
+						Offset: 0,
+						FieldFilters: []ports.FieldFilter{
+							{
+								Field:    "originLocation.name",
+								Operator: ports.OpEqual,
+								Value:    location1.Name,
+							},
+						},
+						TenantOpts: &ports.TenantOptions{
+							OrgID: org.ID,
+							BuID:  bu.ID,
+						},
+					},
+				}
+
+				result, err := repo.List(ctx, opts)
+				require.NoError(t, err, "List with origin location filter should not return error")
+				require.NotNil(t, result, "Result should not be nil")
+				
+				// This tests that the query executes without error
+				// The specific results will depend on test data
+				assert.GreaterOrEqual(t, result.Total, 0, "Total should be non-negative")
+			})
+
+			t.Run("Filter by Destination Location Name", func(t *testing.T) {
+				opts := &repoports.ListShipmentOptions{
+					ShipmentOptions: repoports.ShipmentOptions{
+						ExpandShipmentDetails: true,
+					},
+					Filter: &ports.QueryOptions{
+						Limit:  10,
+						Offset: 0,
+						FieldFilters: []ports.FieldFilter{
+							{
+								Field:    "destinationLocation.name",
+								Operator: ports.OpStartsWith,
+								Value:    location2.Name[:3],
+							},
+						},
+						TenantOpts: &ports.TenantOptions{
+							OrgID: org.ID,
+							BuID:  bu.ID,
+						},
+					},
+				}
+
+				result, err := repo.List(ctx, opts)
+				require.NoError(t, err, "List with destination location filter should not return error")
+				require.NotNil(t, result, "Result should not be nil")
+				assert.GreaterOrEqual(t, result.Total, 0, "Total should be non-negative")
+			})
+
+			t.Run("Sort by Customer Name", func(t *testing.T) {
+				opts := &repoports.ListShipmentOptions{
+					ShipmentOptions: repoports.ShipmentOptions{
+						ExpandShipmentDetails: true,
+					},
+					Filter: &ports.QueryOptions{
+						Limit:  10,
+						Offset: 0,
+						Sort: []ports.SortField{
+							{
+								Field:     "customer.name",
+								Direction: ports.SortAsc,
+							},
+						},
+						TenantOpts: &ports.TenantOptions{
+							OrgID: org.ID,
+							BuID:  bu.ID,
+						},
+					},
+				}
+
+				result, err := repo.List(ctx, opts)
+				require.NoError(t, err, "List with customer name sort should not return error")
+				require.NotNil(t, result, "Result should not be nil")
+				assert.GreaterOrEqual(t, result.Total, 0, "Total should be non-negative")
+			})
+
+			t.Run("Complex Nested Field Query", func(t *testing.T) {
+				opts := &repoports.ListShipmentOptions{
+					ShipmentOptions: repoports.ShipmentOptions{
+						ExpandShipmentDetails: true,
+					},
+					Filter: &ports.QueryOptions{
+						Limit:  10,
+						Offset: 0,
+						FieldFilters: []ports.FieldFilter{
+							{
+								Field:    "status",
+								Operator: ports.OpEqual,
+								Value:    string(shipment.StatusNew),
+							},
+							{
+								Field:    "customer.name",
+								Operator: ports.OpContains,
+								Value:    "Honeywell",
+							},
+						},
+						Sort: []ports.SortField{
+							{
+								Field:     "originLocation.name",
+								Direction: ports.SortAsc,
+							},
+							{
+								Field:     "customer.name",
+								Direction: ports.SortDesc,
+							},
+						},
+						TenantOpts: &ports.TenantOptions{
+							OrgID: org.ID,
+							BuID:  bu.ID,
+						},
+					},
+				}
+
+				result, err := repo.List(ctx, opts)
+				require.NoError(t, err, "Complex nested field query should not return error")
+				require.NotNil(t, result, "Result should not be nil")
+				assert.GreaterOrEqual(t, result.Total, 0, "Total should be non-negative")
+			})
+
+			t.Run("Filter by Origin Date Range", func(t *testing.T) {
+				opts := &repoports.ListShipmentOptions{
+					ShipmentOptions: repoports.ShipmentOptions{
+						ExpandShipmentDetails: true,
+					},
+					Filter: &ports.QueryOptions{
+						Limit:  10,
+						Offset: 0,
+						FieldFilters: []ports.FieldFilter{
+							{
+								Field:    "originDate",
+								Operator: ports.OpDateRange,
+								Value: map[string]any{
+									"start": "2024-01-01",
+									"end":   "2024-12-31",
+								},
+							},
+						},
+						TenantOpts: &ports.TenantOptions{
+							OrgID: org.ID,
+							BuID:  bu.ID,
+						},
+					},
+				}
+
+				result, err := repo.List(ctx, opts)
+				require.NoError(t, err, "List with origin date filter should not return error")
+				require.NotNil(t, result, "Result should not be nil")
+				assert.GreaterOrEqual(t, result.Total, 0, "Total should be non-negative")
+			})
+		})
+
 		t.Run("List with Expanded Details", func(t *testing.T) {
 			opts := &repoports.ListShipmentOptions{
 				ShipmentOptions: repoports.ShipmentOptions{

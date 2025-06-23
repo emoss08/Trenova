@@ -14,19 +14,130 @@ import (
 
 var ShipmentFieldConfig = &ports.FieldConfiguration{
 	FilterableFields: map[string]bool{
-		"proNumber": true,
-		"status":    true,
+		"proNumber":                true,
+		"status":                   true,
+		"bol":                      true,
+		"customer.name":            true,
+		"originLocation.name":      true,
+		"destinationLocation.name": true,
+		"originDate":               true,
+		"destinationDate":          true,
 	},
 	SortableFields: map[string]bool{
-		"proNumber": true,
-		"status":    true,
+		"proNumber":                true,
+		"status":                   true,
+		"bol":                      true,
+		"customer.name":            true,
+		"originLocation.name":      true,
+		"destinationLocation.name": true,
+		"originDate":               true,
+		"destinationDate":          true,
 	},
 	FieldMap: map[string]string{
 		"proNumber": "pro_number",
 		"status":    "status",
+		"bol":       "bol",
 	},
 	EnumMap: map[string]bool{
 		"status": true,
+	},
+	NestedFields: map[string]ports.NestedFieldDefinition{
+		"customer.name": {
+			DatabaseField: "cust.name",
+			RequiredJoins: []ports.JoinDefinition{
+				{
+					Table:     "customers",
+					Alias:     "cust",
+					Condition: "sp.customer_id = cust.id",
+					JoinType:  "LEFT",
+				},
+			},
+			IsEnum: false,
+		},
+		"originLocation.name": {
+			DatabaseField: "orig_loc.name",
+			RequiredJoins: []ports.JoinDefinition{
+				{
+					Table:     "shipment_moves",
+					Alias:     "sm_orig",
+					Condition: "sp.id = sm_orig.shipment_id",
+					JoinType:  "LEFT",
+				},
+				{
+					Table:     "stops",
+					Alias:     "stop_orig",
+					Condition: "sm_orig.id = stop_orig.shipment_move_id AND stop_orig.type = 'Pickup' AND stop_orig.sequence = 0",
+					JoinType:  "LEFT",
+				},
+				{
+					Table:     "locations",
+					Alias:     "orig_loc",
+					Condition: "stop_orig.location_id = orig_loc.id",
+					JoinType:  "LEFT",
+				},
+			},
+			IsEnum: false,
+		},
+		"destinationLocation.name": {
+			DatabaseField: "dest_loc.name",
+			RequiredJoins: []ports.JoinDefinition{
+				{
+					Table:     "shipment_moves",
+					Alias:     "sm_dest",
+					Condition: "sp.id = sm_dest.shipment_id",
+					JoinType:  "LEFT",
+				},
+				{
+					Table:     "stops",
+					Alias:     "stop_dest",
+					Condition: "sm_dest.id = stop_dest.shipment_move_id AND stop_dest.type = 'Delivery'",
+					JoinType:  "LEFT",
+				},
+				{
+					Table:     "locations",
+					Alias:     "dest_loc",
+					Condition: "stop_dest.location_id = dest_loc.id",
+					JoinType:  "LEFT",
+				},
+			},
+			IsEnum: false,
+		},
+		"originDate": {
+			DatabaseField: "stop_orig_date.planned_arrival",
+			RequiredJoins: []ports.JoinDefinition{
+				{
+					Table:     "shipment_moves",
+					Alias:     "sm_orig_date",
+					Condition: "sp.id = sm_orig_date.shipment_id",
+					JoinType:  "LEFT",
+				},
+				{
+					Table:     "stops",
+					Alias:     "stop_orig_date",
+					Condition: "sm_orig_date.id = stop_orig_date.shipment_move_id AND stop_orig_date.type = 'PICKUP' AND stop_orig_date.sequence = 0",
+					JoinType:  "LEFT",
+				},
+			},
+			IsEnum: false,
+		},
+		"destinationDate": {
+			DatabaseField: "stop_dest_date.planned_arrival",
+			RequiredJoins: []ports.JoinDefinition{
+				{
+					Table:     "shipment_moves",
+					Alias:     "sm_dest_date",
+					Condition: "sp.id = sm_dest_date.shipment_id",
+					JoinType:  "LEFT",
+				},
+				{
+					Table:     "stops",
+					Alias:     "stop_dest_date",
+					Condition: "sm_dest_date.id = stop_dest_date.shipment_move_id AND stop_dest_date.type = 'DELIVERY'",
+					JoinType:  "LEFT",
+				},
+			},
+			IsEnum: false,
+		},
 	},
 }
 

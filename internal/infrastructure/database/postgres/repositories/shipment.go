@@ -164,7 +164,7 @@ func (sr *shipmentRepository) filterQuery(
 		}
 
 		if opts.Filter.Query != "" {
-			qb.ApplyTextSearch(opts.Filter.Query, []string{"pro_number", "bol"})
+			qb.ApplyTextSearch(opts.Filter.Query, []string{"pro_number", "bol", "status"})
 		}
 
 		q = qb.GetQuery()
@@ -873,6 +873,7 @@ func (sr *shipmentRepository) BulkDuplicate(
 	ctx context.Context,
 	req *repositories.DuplicateShipmentRequest,
 ) ([]*shipment.Shipment, error) {
+	// TODO(wolfred): break this into smaller function
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, oops.

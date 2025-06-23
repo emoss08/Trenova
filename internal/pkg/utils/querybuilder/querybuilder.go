@@ -24,6 +24,7 @@ type QueryBuilder struct {
 	searchConfig      *infra.PostgresSearchConfig
 	usePostgresSearch bool
 	appliedSorts      []ports.SortField // Track user-specified sorts
+	appliedJoins      map[string]bool   // Track applied joins to avoid duplicates
 }
 
 // New creates a new QueryBuilder
@@ -38,6 +39,7 @@ func New(
 		fieldConfig:       fieldConfig,
 		usePostgresSearch: false,
 		appliedSorts:      make([]ports.SortField, 0),
+		appliedJoins:      make(map[string]bool),
 	}
 }
 
@@ -56,6 +58,7 @@ func NewWithPostgresSearch[T infra.PostgresSearchable](
 		searchConfig:      &config,
 		usePostgresSearch: true,
 		appliedSorts:      make([]ports.SortField, 0),
+		appliedJoins:      make(map[string]bool),
 	}
 }
 
@@ -127,6 +130,14 @@ func (qb *QueryBuilder) applyPendingSorts() {
 
 // getDBField gets the database field name from the API field name
 func (qb *QueryBuilder) getDBField(apiField string) string {
+	// Check if it's a nested field first
+	if nestedDef, exists := qb.fieldConfig.NestedFields[apiField]; exists {
+		// Apply required joins
+		qb.applyNestedFieldJoins(nestedDef.RequiredJoins)
+		return nestedDef.DatabaseField
+	}
+
+	// Check regular field mapping
 	if dbField, exists := qb.fieldConfig.FieldMap[apiField]; exists {
 		return dbField
 	}
@@ -134,8 +145,56 @@ func (qb *QueryBuilder) getDBField(apiField string) string {
 	return apiField
 }
 
+// applyNestedFieldJoins applies the required joins for a nested field
+func (qb *QueryBuilder) applyNestedFieldJoins(joins []ports.JoinDefinition) {
+	for _, join := range joins {
+		// Create a unique key for this join
+		joinKey := fmt.Sprintf("%s_%s", join.Table, join.Alias)
+
+		// Skip if we've already applied this join
+		if qb.appliedJoins[joinKey] {
+			continue
+		}
+
+		// Apply the join based on type
+		switch strings.ToUpper(join.JoinType) {
+		case "LEFT":
+			qb.query = qb.query.Join(
+				fmt.Sprintf("LEFT JOIN %s AS %s ON %s", join.Table, join.Alias, join.Condition),
+			)
+		case "RIGHT":
+			qb.query = qb.query.Join(
+				fmt.Sprintf("RIGHT JOIN %s AS %s ON %s", join.Table, join.Alias, join.Condition),
+			)
+		case "INNER", "":
+			qb.query = qb.query.Join(
+				fmt.Sprintf("INNER JOIN %s AS %s ON %s", join.Table, join.Alias, join.Condition),
+			)
+		default:
+			qb.query = qb.query.Join(
+				fmt.Sprintf(
+					"%s JOIN %s AS %s ON %s",
+					join.JoinType,
+					join.Table,
+					join.Alias,
+					join.Condition,
+				),
+			)
+		}
+
+		// Mark this join as applied
+		qb.appliedJoins[joinKey] = true
+	}
+}
+
 // isEnumField checks if a field is an enum field
 func (qb *QueryBuilder) isEnumField(apiField string) bool {
+	// Check if it's a nested field first
+	if nestedDef, exists := qb.fieldConfig.NestedFields[apiField]; exists {
+		return nestedDef.IsEnum
+	}
+
+	// Check regular enum mapping
 	_, exists := qb.fieldConfig.EnumMap[apiField]
 	return exists
 }
@@ -248,6 +307,12 @@ func (qb *QueryBuilder) applyDateRangeFilter(fieldRef string, value any) {
 
 // getFieldReference returns the properly formatted field reference for SQL
 func (qb *QueryBuilder) getFieldReference(dbField string) string {
+	// If the field already contains a dot, it's already qualified (nested field)
+	if strings.Contains(dbField, ".") {
+		return dbField
+	}
+
+	// Otherwise, qualify it with the table alias
 	if qb.tableAlias != "" {
 		return fmt.Sprintf("%s.%s", qb.tableAlias, dbField)
 	}

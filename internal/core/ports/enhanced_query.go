@@ -140,6 +140,28 @@ func isValidOperator(op FilterOperator) bool {
 // EnhancedPageableHandler is a function that handles an enhanced pageable request
 type EnhancedPageableHandler[T any] func(ctx *fiber.Ctx, opts *QueryOptions) (*ListResult[T], error)
 
+// JoinDefinition defines how to join a related table
+type JoinDefinition struct {
+	// Table to join (e.g., "locations")
+	Table string
+	// Table alias (e.g., "loc")
+	Alias string
+	// Join condition (e.g., "sp.origin_location_id = loc.id")
+	Condition string
+	// Join type (INNER, LEFT, etc.)
+	JoinType string
+}
+
+// NestedFieldDefinition defines a nested field mapping
+type NestedFieldDefinition struct {
+	// The database table alias and column (e.g., "loc.name")
+	DatabaseField string
+	// Required joins to access this field
+	RequiredJoins []JoinDefinition
+	// Whether this field is an enum
+	IsEnum bool
+}
+
 // FieldConfiguration defines allowed fields for filtering and sorting
 type FieldConfiguration struct {
 	// * Allowed fields for filtering (API field name -> allowed)
@@ -150,4 +172,6 @@ type FieldConfiguration struct {
 	FieldMap map[string]string
 	// * Field mapping from API names to enum values
 	EnumMap map[string]bool
+	// * Nested field definitions (API field name -> definition)
+	NestedFields map[string]NestedFieldDefinition
 }
