@@ -7,7 +7,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/gofiber/fiber/v2"
 )
 
 type LogActionParams struct {
@@ -52,6 +54,11 @@ type AuditService interface {
 		opts repositories.ListByResourceIDRequest,
 	) (*ports.ListResult[*audit.Entry], error)
 	GetByID(ctx context.Context, opts repositories.GetAuditEntryByIDOptions) (*audit.Entry, error)
+	LiveStream(
+		c *fiber.Ctx,
+		dataFetcher func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*audit.Entry, error),
+		timestampExtractor func(entry *audit.Entry) int64,
+	) error
 
 	// Core functionality
 	LogAction(params *LogActionParams, opts ...LogOption) error

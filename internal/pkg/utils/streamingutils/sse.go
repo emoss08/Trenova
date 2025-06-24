@@ -80,6 +80,10 @@ func (s *SSEStreamer[T]) Stream(c *fiber.Ctx) error {
 			// Track last timestamp to only send new entries
 			lastTimestamp := time.Now().Unix()
 
+			// Create context for this connection with cancellation
+			ctx, cancel := context.WithCancel(c.UserContext())
+			defer cancel()
+
 			// Send initial connection event
 			s.sendEvent(w, "connected", map[string]string{"status": "connected"})
 			if err = w.Flush(); err != nil {
@@ -99,13 +103,16 @@ func (s *SSEStreamer[T]) Stream(c *fiber.Ctx) error {
 
 			for {
 				select {
+				case <-ctx.Done():
+					fmt.Println("Connection context cancelled, closing stream")
+					return
 				case <-streamTimeout:
 					fmt.Println("Stream timeout reached, closing connection")
 					return
 				case <-ticker.C:
-					// Fetch new data
+					// Fetch new data using connection context
 					items, latestTimestamp, iErr := s.dataFetcher(
-						context.Background(),
+						ctx,
 						reqCtx,
 						lastTimestamp,
 					)

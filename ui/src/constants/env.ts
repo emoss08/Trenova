@@ -32,3 +32,6 @@ export const SITE_SEARCH_RECENT_SEARCHES_KEY = import.meta.env
 export const PDF_STORAGE_KEY = import.meta.env.VITE_PDF_STORAGE_KEY as string;
 
 export const DEBUG_TABLE = import.meta.env.VITE_DEBUG_TABLE as boolean;
+
+export const SHOW_FAVORITES_KEY = import.meta.env
+  .VITE_SHOW_FAVORITES_KEY as string;

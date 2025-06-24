@@ -235,7 +235,7 @@ function ShipmentsByExpectedDeliverDateCard({
               </div>
             ))}
           </div>
-          <div className="pointer-events-none rounded-b-lg absolute bottom-0 z-50 left-0 right-0 h-8 bg-gradient-to-t dark:from-card from-background to-transparent" />
+          <div className="pointer-events-none rounded-b-lg absolute bottom-0 z-50 left-0 right-0 h-8 bg-gradient-to-t from-card to-transparent" />
         </ScrollArea>
       </CardContent>
     </Card>

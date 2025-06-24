@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
-	"github.com/emoss08/trenova/internal/pkg/utils/streamingutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -378,7 +377,6 @@ func (h *Handler) calculateTotals(c *fiber.Ctx) error {
 }
 
 func (h *Handler) liveStream(c *fiber.Ctx) error {
-	// Use the simplified streaming helper for shipments
 	fetchFunc := func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*shipmentdomain.Shipment, error) {
 		result, err := h.ss.List(ctx, &repositories.ListShipmentOptions{
 			ShipmentOptions: repositories.ShipmentOptions{
@@ -400,14 +398,8 @@ func (h *Handler) liveStream(c *fiber.Ctx) error {
 	}
 
 	timestampFunc := func(s *shipmentdomain.Shipment) int64 {
-		// Use CreatedAt to only track new shipments, not existing ones
 		return s.CreatedAt
 	}
 
-	return streamingutils.StreamWithSimplePoller(
-		c,
-		streamingutils.DefaultSSEConfig(),
-		fetchFunc,
-		timestampFunc,
-	)
+	return h.ss.LiveStream(c, fetchFunc, timestampFunc)
 }
