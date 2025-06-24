@@ -101,7 +101,7 @@ export function DataTableV2<TData extends Record<string, any>>({
   const { can } = usePermissions();
   const [columnVisibility, setColumnVisibility] =
     useLocalStorage<VisibilityState>(
-      `${resource.toLowerCase()}-column-visibility`,
+      `trenova-${resource.toLowerCase()}-column-visibility`,
       {},
     );
 
@@ -164,11 +164,11 @@ export function DataTableV2<TData extends Record<string, any>>({
 
   // Live mode state management
   const [liveModeEnabled, setLiveModeEnabled] = useLocalStorage(
-    `${resource.toLowerCase()}-live-mode-enabled`,
+    `trenova-${resource.toLowerCase()}-live-mode-enabled`,
     liveMode?.enabled || false,
   );
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useLocalStorage(
-    `${resource.toLowerCase()}-auto-refresh-enabled`,
+    `trenova-${resource.toLowerCase()}-auto-refresh-enabled`,
     liveMode?.autoRefresh || false,
   );
 
