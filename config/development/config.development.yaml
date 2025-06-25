@@ -1,0 +1,115 @@
+app:
+  name: Trenova
+  environment: development
+  version: 0.7.3
+
+server:
+  secretKey: "hP+CDHvBuylwv8VM21HUaD1IP6iBE2ZPUFGIGqh6Tj0="
+  listenAddress: ":3001"
+  immutable: false
+  readBufferSize: 4096
+  writeBufferSize: 4096
+  enablePrefork: false
+  enablePrintRoutes: false
+  concurrency: 262144
+  disableStartupMessage: true
+  streamRequestBody: true
+  strictRouting: false
+  caseSensitive: true
+  enableIPValidation: true
+  enableTrustedProxyCheck: true
+  proxyHeader: "X-Forwarded-For"
+  readTimeout: 30
+  writeTimeout: 30
+  idleTimeout: 60
+  passLocalsToViews: false
+
+logging:
+  level: debug
+  samplingPeriod: 10s
+  samplingInterval: 1000
+  file:
+    enabled: true
+    path: "logs"
+    fileName: "trenova.log"
+    maxSize: 10
+    maxAge: 10
+    maxBackups: 10
+    compress: true
+
+db:
+  driver: postgresql
+  host: localhost
+  port: 5432
+  database: trenova_go_db
+  username: postgres
+  password: postgres
+  sslMode: disable
+  maxConnections: 10
+  maxIdleConns: 10
+  connMaxLifetime: 3600
+  connMaxIdleTime: 3600
+  debug: true
+
+auth:
+  sessionCookieName: "trv-session-id"
+  cookiePath: "/"
+  cookieDomain: ""
+  cookieHTTPOnly: false
+  cookieSecure: false
+  cookieSameSite: "Lax"
+
+audit:
+  bufferSize: 1000
+  flushInterval: 10
+
+cors:
+  allowedOrigins: "http://localhost:5173, http://localhost:3001, http://localhost:4173"
+  allowedHeaders: "Content-Type, Authorization, Content-Length, X-Requested-With, Origin, Accept, X-Csrftoken, X-Forwarded-For, X-Request-Id"
+  allowedMethods: "GET, POST, PUT, DELETE, OPTIONS"
+  allowCredentials: true
+  maxAge: 0
+
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+  connTimeout: 10s
+  readTimeout: 10s
+  writeTimeout: 10s
+  poolSize: 10
+  minIdleConns: 10
+
+minio:
+  endpoint: "localhost:9000"
+  accessKey: "minioadmin"
+  secretKey: "minioadmin"
+  useSSL: false
+
+search:
+  host: "http://localhost:7700"
+  apiKey: "masterKey"
+  indexPrefix: "trv"
+  batchInterval: 10
+
+rabbitmq:
+  host: "localhost"
+  port: 5674
+  username: "user"
+  password: "password"
+  vhost: "/"
+  exchangeName: "trenova"
+  queueName: "trenova"
+  timeout: 10s
+
+backup:
+  enabled: true
+  backupDir: "./backups"
+  retentionDays: 30
+  schedule: "0 0 * * *"
+  compression: 6
+  maxConcurrentBackups: 1
+  backupTimeout: 1800 # 30 minutes
+  notifyOnFailure: true
+  notifyOnSuccess: false
+  notificationEmail: "admin@example.com"
