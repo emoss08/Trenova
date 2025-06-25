@@ -140,6 +140,15 @@ func isValidOperator(op FilterOperator) bool {
 // EnhancedPageableHandler is a function that handles an enhanced pageable request
 type EnhancedPageableHandler[T any] func(ctx *fiber.Ctx, opts *QueryOptions) (*ListResult[T], error)
 
+type JoinType string
+
+const (
+	JoinTypeInner = JoinType("INNER")
+	JoinTypeLeft  = JoinType("LEFT")
+	JoinTypeRight = JoinType("RIGHT")
+	JoinTypeNone  = JoinType("")
+)
+
 // JoinDefinition defines how to join a related table
 type JoinDefinition struct {
 	// Table to join (e.g., "locations")
@@ -149,7 +158,7 @@ type JoinDefinition struct {
 	// Join condition (e.g., "sp.origin_location_id = loc.id")
 	Condition string
 	// Join type (INNER, LEFT, etc.)
-	JoinType string
+	JoinType JoinType
 }
 
 // NestedFieldDefinition defines a nested field mapping

@@ -157,16 +157,16 @@ func (qb *QueryBuilder) applyNestedFieldJoins(joins []ports.JoinDefinition) {
 		}
 
 		// Apply the join based on type
-		switch strings.ToUpper(join.JoinType) {
-		case "LEFT":
+		switch join.JoinType {
+		case ports.JoinTypeLeft:
 			qb.query = qb.query.Join(
 				fmt.Sprintf("LEFT JOIN %s AS %s ON %s", join.Table, join.Alias, join.Condition),
 			)
-		case "RIGHT":
+		case ports.JoinTypeRight:
 			qb.query = qb.query.Join(
 				fmt.Sprintf("RIGHT JOIN %s AS %s ON %s", join.Table, join.Alias, join.Condition),
 			)
-		case "INNER", "":
+		case ports.JoinTypeInner, ports.JoinTypeNone:
 			qb.query = qb.query.Join(
 				fmt.Sprintf("INNER JOIN %s AS %s ON %s", join.Table, join.Alias, join.Condition),
 			)

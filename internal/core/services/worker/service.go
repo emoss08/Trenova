@@ -104,10 +104,7 @@ func (s *Service) List(
 		return nil, eris.Wrap(err, "failed to list workers")
 	}
 
-	return &ports.ListResult[*worker.Worker]{
-		Items: entities.Items,
-		Total: entities.Total,
-	}, nil
+	return entities, nil
 }
 
 func (s *Service) Get(

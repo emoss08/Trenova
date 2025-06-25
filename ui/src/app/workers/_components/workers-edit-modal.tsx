@@ -61,17 +61,17 @@ function WorkerEditForm({ currentRecord }: EditTableSheetProps<WorkerSchema>) {
       });
 
       const previousCustomer = queryClient.getQueryData([
-        "customer",
+        "worker",
         currentRecord?.id,
       ]);
 
-      queryClient.setQueryData(["customer", currentRecord?.id], newValues);
+      queryClient.setQueryData(["worker", currentRecord?.id], newValues);
 
       return { previousCustomer, newValues };
     },
     onSuccess: (newValues) => {
       toast.success("Changes have been saved", {
-        description: `Customer updated successfully`,
+        description: `Worker updated successfully`,
       });
 
       broadcastQueryInvalidation({
