@@ -2,9 +2,13 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+interface TableProps extends React.ComponentProps<"table"> {
+  containerClassName?: string;
+}
+
+function Table({ containerClassName, className, ...props }: TableProps) {
   return (
-    <div data-slot="table-container">
+    <div data-slot="table-container" className={containerClassName}>
       <table
         data-slot="table"
         className={cn(
