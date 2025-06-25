@@ -425,7 +425,7 @@ export function DataTableV2<TData extends Record<string, any>>({
               onDismiss={liveData.dismissBanner}
             />
           )}
-          <Table className="rounded-md border-x border-border border-separate border-spacing-0">
+          <Table>
             {includeHeader && <DataTableHeader table={table} />}
             <DataTableBody
               table={table}

@@ -75,7 +75,7 @@
     --sidebar-accent-foreground: oklch(1 0 0);
     --sidebar-border: oklch(0.2600 0 0);
     --sidebar-ring: oklch(0.7200 0 0);
-    --font-sans: Inter, sans-serif;
+    --font-sans: "Inter Variable", sans-serif;
     --font-serif: Georgia, serif;
     --font-mono: Geist Mono, monospace;
     --font-table: Geist Mono, monospace;
@@ -111,8 +111,8 @@
 
 
     --font-*: initial;
-    --font-sans: "Inter", sans-serif;
-    --font-mono: "Inter", sans-serif;
+    --font-sans: "Inter Variable", sans-serif;
+    --font-mono: "Inter Variable", sans-serif;
     --font-table: "Geist Mono", monospace;
 
     --radius-lg: var(--radius);
