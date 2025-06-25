@@ -28,7 +28,6 @@ tsconfig.app.tsbuildinfo
 *.sln
 *.sw?
 /dev-dist
-.env
 stats.html
 # Million Lint
 .million
