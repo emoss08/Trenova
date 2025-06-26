@@ -517,11 +517,13 @@ func (s *Service) TransferOwnership(
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceShipment,
-			ResourceID:     req.ShipmentID.String(),
+			ResourceID:     updatedEntity.GetID(),
 			Action:         permission.ActionUpdate,
 			UserID:         req.UserID,
-			OrganizationID: req.OrgID,
-			BusinessUnitID: req.BuID,
+			CurrentState:   jsonutils.MustToJSON(updatedEntity),
+			PreviousState:  jsonutils.MustToJSON(original),
+			OrganizationID: updatedEntity.OrganizationID,
+			BusinessUnitID: updatedEntity.BusinessUnitID,
 		},
 		audit.WithComment("Shipment ownership transferred"),
 		audit.WithDiff(original, updatedEntity),
