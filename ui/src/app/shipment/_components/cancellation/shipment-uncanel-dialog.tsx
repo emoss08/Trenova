@@ -9,21 +9,19 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
+import { useApiMutation } from "@/hooks/use-api-mutation";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
-import { toUnixTimeStamp } from "@/lib/date";
-import { http } from "@/lib/http-client";
 import {
-  shipmentCancellationSchema,
-  type ShipmentCancellationSchema,
+  shipmentUncancelSchema,
+  type ShipmentUncancelSchema,
 } from "@/lib/schemas/shipment-cancellation-schema";
-import { useUser } from "@/stores/user-store";
-import { APIError } from "@/types/errors";
+import { api } from "@/services/api";
+import { Resource } from "@/types/audit-entry";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { FormProvider, type Path, useForm } from "react-hook-form";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { ShipmentCancellationForm } from "./shipment-cancellation-form";
+import { ShipmentUncancelForm } from "./shipment-uncancel-form";
 
 type ShipmentCancellationDialogProps = {
   open: boolean;
@@ -31,20 +29,16 @@ type ShipmentCancellationDialogProps = {
   shipmentId?: string;
 };
 
-export function ShipmentCancellationDialog({
+export function UnCancelShipmentDialog({
   open,
   onOpenChange,
   shipmentId,
 }: ShipmentCancellationDialogProps) {
-  const user = useUser();
-
   const form = useForm({
-    resolver: zodResolver(shipmentCancellationSchema),
+    resolver: zodResolver(shipmentUncancelSchema),
     defaultValues: {
-      cancelReason: "",
       shipmentId: shipmentId || "",
-      canceledById: user?.id || "",
-      canceledAt: toUnixTimeStamp(new Date()) || 0,
+      updateAppointments: false,
     },
   });
 
@@ -55,10 +49,9 @@ export function ShipmentCancellationDialog({
     reset,
   } = form;
 
-  const { mutateAsync } = useMutation({
-    mutationFn: async (values: ShipmentCancellationSchema) => {
-      const response = await http.post(`/shipments/cancel/`, values);
-      return response.data;
+  const { mutateAsync } = useApiMutation({
+    mutationFn: async (values: ShipmentUncancelSchema) => {
+      return await api.shipments.uncancel(values);
     },
     onSuccess: () => {
       toast.success("Shipment cancelled successfully", {
@@ -69,7 +62,7 @@ export function ShipmentCancellationDialog({
 
       // Invalidate the query to refresh the table
       broadcastQueryInvalidation({
-        queryKey: ["assignment-list", "shipment"],
+        queryKey: ["assignment-list", "shipment", "stop", "shipment-list"],
         options: {
           correlationId: `create-shipment-move-assignment-${Date.now()}`,
         },
@@ -79,26 +72,12 @@ export function ShipmentCancellationDialog({
         },
       });
     },
-    onError: (error: APIError) => {
-      if (error.isValidationError()) {
-        error.getFieldErrors().forEach((fieldError) => {
-          setError(fieldError.name as Path<ShipmentCancellationSchema>, {
-            message: fieldError.reason,
-          });
-        });
-      }
-
-      if (error.isRateLimitError()) {
-        toast.error("Rate limit exceeded", {
-          description:
-            "You have exceeded the rate limit. Please try again later.",
-        });
-      }
-    },
+    setFormError: setError,
+    resourceName: Resource.Shipment,
   });
 
   const onSubmit = useCallback(
-    async (values: ShipmentCancellationSchema) => {
+    async (values: ShipmentUncancelSchema) => {
       await mutateAsync(values);
     },
     [mutateAsync],
@@ -123,7 +102,7 @@ export function ShipmentCancellationDialog({
             }}
           >
             <DialogBody>
-              <ShipmentCancellationForm />
+              <ShipmentUncancelForm />
             </DialogBody>
             <DialogFooter>
               <Button
@@ -137,9 +116,8 @@ export function ShipmentCancellationDialog({
                 type="button"
                 onClick={() => handleSubmit(onSubmit)()}
                 isSubmitting={isSubmitting}
-                title="shipment cancellation"
-                text="Confirm Cancellation"
-                variant="destructive"
+                title="shipment uncancellation"
+                text="Confirm"
               />
             </DialogFooter>
           </Form>
