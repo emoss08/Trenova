@@ -267,6 +267,7 @@ func (h *Handler) unCancel(c *fiber.Ctx) error {
 	req := new(repositories.UnCancelShipmentRequest)
 	req.OrgID = reqCtx.OrgID
 	req.BuID = reqCtx.BuID
+	req.UserID = reqCtx.UserID
 
 	if err = c.BodyParser(req); err != nil {
 		return h.eh.HandleError(c, err)
