@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"strings"
 	"sync"
 	"time"
 
@@ -12,8 +13,21 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/appctx"
+	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/rs/zerolog/log"
 )
+
+// StreamMetrics contains metrics for a streaming endpoint
+type StreamMetrics struct {
+	// ActiveConnections is the current number of active connections
+	ActiveConnections int `json:"activeConnections"`
+	// TotalConnections is the total number of connections since startup
+	TotalConnections int64 `json:"totalConnections"`
+	// DataFetchErrors is the number of data fetch errors
+	DataFetchErrors int64 `json:"dataFetchErrors"`
+	// LastDataFetch is the timestamp of the last successful data fetch
+	LastDataFetch int64 `json:"lastDataFetch"`
+}
 
 // StreamManager manages connections for a specific stream key
 type StreamManager struct {
@@ -26,8 +40,8 @@ type StreamManager struct {
 	cancel        context.CancelFunc
 	dataFetcher   services.DataFetcher
 	timestampFunc services.TimestampExtractor
-	config        services.StreamConfig
-	metrics       services.StreamMetrics
+	config        *config.StreamingConfig
+	metrics       StreamMetrics
 	// Circuit breaker and resilience
 	consecutiveErrors    int
 	maxConsecutiveErrors int
@@ -47,10 +61,9 @@ func (sm *StreamManager) handleNewClient(
 	clientID string,
 	writer *bufio.Writer,
 ) {
-	// Create client context with timeout to handle disconnections
 	clientCtx, clientCancel := context.WithTimeout(
 		ctx,
-		time.Duration(sm.config.StreamTimeout)*time.Second,
+		sm.config.StreamTimeout,
 	)
 	defer clientCancel()
 
@@ -109,7 +122,12 @@ func (sm *StreamManager) handleNewClient(
 			})
 
 			if err := writer.Flush(); err != nil {
-				log.Error().Err(err).Interface("client", client).Msg("Connection lost")
+				// Check if it's a connection closed error (normal when client disconnects)
+				if isConnectionClosed(err) {
+					log.Debug().Str("client_id", client.ID).Msg("Client disconnected (normal)")
+				} else {
+					log.Warn().Err(err).Str("client_id", client.ID).Msg("Client connection error")
+				}
 				return
 			}
 
@@ -219,10 +237,10 @@ func (sm *StreamManager) runDataStream(reqCtx *appctx.RequestContext) {
 		sm.mu.Unlock()
 	}()
 
-	ticker := time.NewTicker(time.Duration(sm.config.PollInterval) * time.Millisecond)
+	ticker := time.NewTicker(sm.config.PollInterval)
 	defer ticker.Stop()
 
-	timeout := time.After(time.Duration(sm.config.StreamTimeout) * time.Second)
+	timeout := time.After(sm.config.StreamTimeout)
 
 	for {
 		select {
@@ -274,7 +292,7 @@ func (sm *StreamManager) runDataStream(reqCtx *appctx.RequestContext) {
 			// Reset consecutive errors on successful fetch
 			sm.mu.Lock()
 			sm.consecutiveErrors = 0
-			sm.backoffDuration = time.Duration(sm.config.PollInterval) * time.Millisecond
+			sm.backoffDuration = sm.config.PollInterval
 			sm.metrics.LastDataFetch = time.Now().Unix()
 			sm.lastDataChange = time.Now()
 			sm.mu.Unlock()
@@ -458,7 +476,13 @@ func (sm *StreamManager) broadcastHeartbeat() {
 	for _, client := range clients {
 		sm.sendEventToClient(client, "heartbeat", heartbeat)
 		if err := client.Writer.Flush(); err != nil {
-			fmt.Printf("Error flushing heartbeat to client %s: %v\n", client.ID, err)
+			if isConnectionClosed(err) {
+				log.Debug().
+					Str("client_id", client.ID).
+					Msg("Client disconnected during heartbeat (normal)")
+			} else {
+				log.Warn().Err(err).Str("client_id", client.ID).Msg("Error flushing heartbeat to client")
+			}
 			sm.removeClient(client.ID)
 		}
 	}
@@ -481,7 +505,13 @@ func (sm *StreamManager) broadcastError(errorMsg string) {
 	for _, client := range clients {
 		sm.sendEventToClient(client, "error", errorData)
 		if err := client.Writer.Flush(); err != nil {
-			fmt.Printf("Error flushing error to client %s: %v\n", client.ID, err)
+			if isConnectionClosed(err) {
+				log.Debug().
+					Str("client_id", client.ID).
+					Msg("Client disconnected during error broadcast (normal)")
+			} else {
+				log.Warn().Err(err).Str("client_id", client.ID).Msg("Error flushing error to client")
+			}
 			sm.removeClient(client.ID)
 		}
 	}
@@ -593,6 +623,23 @@ func (sm *StreamManager) cleanupDisconnectedClients() {
 	}
 }
 
+// broadcastDataUpdate immediately broadcasts a data update to all connected clients
+func (sm *StreamManager) broadcastDataUpdate(data any) {
+	sm.mu.RLock()
+	clients := make([]*Client, 0, len(sm.clients))
+	for _, client := range sm.clients {
+		if !client.isSlowClient {
+			clients = append(clients, client)
+		}
+	}
+	sm.mu.RUnlock()
+
+	// Immediately broadcast to all clients
+	for _, client := range clients {
+		sm.sendEventToClientAsync(client, "new-entry", data)
+	}
+}
+
 // shutdown gracefully shuts down the stream manager
 func (sm *StreamManager) shutdown() {
 	sm.mu.Lock()
@@ -607,4 +654,20 @@ func (sm *StreamManager) shutdown() {
 	}
 	sm.clients = make(map[string]*Client)
 	sm.isRunning = false
+}
+
+// isConnectionClosed checks if an error indicates a closed connection
+func isConnectionClosed(err error) bool {
+	if err == nil {
+		return false
+	}
+
+	errStr := strings.ToLower(err.Error())
+
+	// Check for common connection closed error patterns
+	return strings.Contains(errStr, "connection closed") ||
+		strings.Contains(errStr, "broken pipe") ||
+		strings.Contains(errStr, "connection reset") ||
+		strings.Contains(errStr, "use of closed") ||
+		strings.Contains(errStr, "connection refused")
 }

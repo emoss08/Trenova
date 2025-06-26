@@ -9,6 +9,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/appctx"
+	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
@@ -19,7 +20,7 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Config services.StreamConfig
+	Config *config.Manager
 	Logger *logger.Logger
 }
 
@@ -28,10 +29,9 @@ type Service struct {
 	l                     *zerolog.Logger
 	mu                    sync.RWMutex
 	streams               map[string]*StreamManager
-	config                services.StreamConfig
+	config                *config.StreamingConfig
 	userConnections       map[string]int // userID -> connection count
 	connectionMu          sync.RWMutex
-	maxConnectionsPerUser int
 }
 
 // Client represents a connected streaming client
@@ -58,12 +58,11 @@ func NewService(p ServiceParams) services.StreamingService {
 		Logger()
 
 	return &Service{
-		l:                     &log,
-		streams:               make(map[string]*StreamManager),
-		config:                p.Config,
-		userConnections:       make(map[string]int),
-		maxConnectionsPerUser: 5, // Configurable limit per user
-		connectionMu:          sync.RWMutex{},
+		l:               &log,
+		streams:         make(map[string]*StreamManager),
+		config:          p.Config.Streaming(),
+		userConnections: make(map[string]int),
+		connectionMu:    sync.RWMutex{},
 	}
 }
 
@@ -93,7 +92,7 @@ func (s *Service) StreamData(
 	// Implement per-user connection rate limiting
 	userID := reqCtx.UserID.String()
 	s.connectionMu.Lock()
-	if s.userConnections[userID] >= s.maxConnectionsPerUser {
+	if s.userConnections[userID] >= s.config.MaxConnectionsPerUser {
 		s.connectionMu.Unlock()
 		return fiber.NewError(fiber.StatusTooManyRequests, "Too many connections for user")
 	}
@@ -159,6 +158,36 @@ func (s *Service) GetActiveStreams(streamKey string) int {
 	return 0
 }
 
+// BroadcastToStream immediately broadcasts data to all clients of a specific stream
+func (s *Service) BroadcastToStream(streamKey string, orgID, buID string, data any) error {
+	log := s.l.With().Str("operation", "broadcast_to_stream").Logger()
+	
+	// Create tenant-aware stream key
+	tenantStreamKey := fmt.Sprintf("%s:%s:%s", streamKey, orgID, buID)
+	
+	s.mu.RLock()
+	streamMgr, exists := s.streams[tenantStreamKey]
+	s.mu.RUnlock()
+	
+	if !exists {
+		log.Debug().
+			Str("stream_key", streamKey).
+			Str("tenant_key", tenantStreamKey).
+			Msg("No active stream found for broadcast")
+		return nil // No active stream, nothing to broadcast
+	}
+	
+	// Broadcast the data immediately to all connected clients
+	streamMgr.broadcastDataUpdate(data)
+	
+	log.Debug().
+		Str("stream_key", streamKey).
+		Str("tenant_key", tenantStreamKey).
+		Msg("Data broadcasted to stream")
+	
+	return nil
+}
+
 // Shutdown gracefully shuts down all active streams
 func (s *Service) Shutdown() error {
 	log := s.l.With().Str("operation", "shutdown").Logger()
@@ -195,12 +224,12 @@ func (s *Service) getOrCreateStreamManager(
 		timestampFunc:        timestampExtractor,
 		config:               s.config,
 		maxConsecutiveErrors: 5,
-		backoffDuration:      time.Duration(s.config.PollInterval) * time.Millisecond,
+		backoffDuration:      s.config.PollInterval,
 		idleTimeout:          30 * time.Minute,
 		maxSentItems:         10000,
 		lastCleanup:          time.Now(),
 		lastDataChange:       time.Now(),
-		metrics: services.StreamMetrics{
+		metrics: StreamMetrics{
 			ActiveConnections: 0,
 			TotalConnections:  0,
 			DataFetchErrors:   0,

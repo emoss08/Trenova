@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/pkg/types"
@@ -749,7 +750,7 @@ func (s *Service) LiveStream(
 		if shp, ok := item.(*shipment.Shipment); ok {
 			return timestampExtractor(shp)
 		}
-		return 0
+		return timeutils.NowUnix()
 	}
 
 	return s.ss.StreamData(c, "shipments", streamDataFetcher, streamTimestampExtractor)
