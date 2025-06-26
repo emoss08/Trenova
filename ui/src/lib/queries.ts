@@ -53,6 +53,12 @@ export const queries = createQueryKeyStore({
       },
     }),
   },
+  user: {
+    getUserById: (userId: string) => ({
+      queryKey: ["user", userId],
+      queryFn: async () => api.user.getUserById(userId),
+    }),
+  },
   usState: {
     list: () => ({
       queryKey: ["us-states"],

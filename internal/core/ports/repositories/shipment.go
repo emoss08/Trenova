@@ -186,6 +186,21 @@ type CancelShipmentRequest struct {
 	CancelReason string   `json:"cancelReason" query:"cancelReason"`
 }
 
+type UnCancelShipmentRequest struct {
+	ShipmentID pulid.ID `json:"shipmentId" query:"shipmentId"`
+	OrgID      pulid.ID `json:"orgId"      query:"orgId"`
+	BuID       pulid.ID `json:"buId"       query:"buId"`
+	UserID     pulid.ID `json:"userId"     query:"userId"`
+}
+
+type TransferOwnershipRequest struct {
+	ShipmentID pulid.ID `json:"shipmentId" query:"shipmentId"`
+	OrgID      pulid.ID `json:"orgId"      query:"orgId"`
+	BuID       pulid.ID `json:"buId"       query:"buId"`
+	UserID     pulid.ID `json:"userId"     query:"userId"`
+	OwnerID    pulid.ID `json:"ownerId"    query:"ownerId"`
+}
+
 type DuplicateShipmentRequest struct {
 	// The ID of the shipment to duplicate
 	ShipmentID pulid.ID `json:"shipmentId" query:"shipmentId"`
@@ -279,6 +294,11 @@ type ShipmentRepository interface {
 	Update(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
 	UpdateStatus(ctx context.Context, opts *UpdateShipmentStatusRequest) (*shipment.Shipment, error)
 	Cancel(ctx context.Context, req *CancelShipmentRequest) (*shipment.Shipment, error)
+	TransferOwnership(
+		ctx context.Context,
+		req *TransferOwnershipRequest,
+	) (*shipment.Shipment, error)
+	UnCancel(ctx context.Context, req *UnCancelShipmentRequest) (*shipment.Shipment, error)
 	BulkDuplicate(ctx context.Context, req *DuplicateShipmentRequest) ([]*shipment.Shipment, error)
 	CheckForDuplicateBOLs(
 		ctx context.Context,

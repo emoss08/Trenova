@@ -9,17 +9,21 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
+import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { usePermissions } from "@/hooks/use-permissions";
+import { http } from "@/lib/http-client";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { Resource } from "@/types/audit-entry";
 import { Action } from "@/types/roles-permissions";
 import { ShipmentStatus } from "@/types/shipment";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { parseAsBoolean, useQueryState } from "nuqs";
+import { toast } from "sonner";
 import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellatioin-dialog";
 import { ShipmentDocumentDialog } from "../document/shipment-document-dialog";
 import { ShipmentDocumentWorkflow } from "../document/shipment-document-workflow";
 import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog";
+import { TransferOwnershipDialog } from "../transfer-ownership/transfer-ownership-dialog";
 
 // Map of status that are allowed to be canceled.
 const cancellatedStatuses = [
@@ -36,6 +40,7 @@ const dialogs = {
   addDocumentDialogOpen: parseAsBoolean.withDefault(false),
   cancellationDialogOpen: parseAsBoolean.withDefault(false),
   duplicateDialogOpen: parseAsBoolean.withDefault(false),
+  transferDialogOpen: parseAsBoolean.withDefault(false),
 };
 
 export function ShipmentActions({
@@ -67,12 +72,39 @@ export function ShipmentActions({
       "addDocumentDialogOpen",
       dialogs.addDocumentDialogOpen.withOptions({}),
     );
+  const [transferDialogOpen, setTransferDialogOpen] = useQueryState<boolean>(
+    "transferDialogOpen",
+    dialogs.transferDialogOpen.withOptions({}),
+  );
 
   if (!shipment) {
     return null;
   }
 
-  const isCancellable = cancellatedStatuses.includes(shipment.status);
+  const handleUncancel = async () => {
+    const response = await http.post("/shipments/uncancel/", {
+      shipmentId: shipment.id,
+    });
+    if (response.status === 200) {
+      toast.success("Shipment un-cancelled successfully", {
+        description: `The shipment has been un-cancelled`,
+      });
+      broadcastQueryInvalidation({
+        queryKey: ["shipment", "shipment-list", "stop", "assignment"],
+        options: {
+          correlationId: `update-shipment-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
+    } else {
+      toast.error("Failed to un-cancel shipment", {
+        description: `The shipment has not been un-cancelled`,
+      });
+    }
+  };
 
   return (
     <>
@@ -97,10 +129,24 @@ export function ShipmentActions({
             disabled={!can(Resource.Shipment, Action.Duplicate)}
           />
           <DropdownMenuItem
-            title="Cancel"
+            title={
+              shipment.status === ShipmentStatus.Canceled
+                ? "Un-Cancel"
+                : "Cancel"
+            }
             description="Cancel this shipment and update its status."
-            onClick={() => setCancellationDialogOpen(!cancellationDialogOpen)}
-            disabled={!isCancellable}
+            onClick={() => {
+              if (shipment.status === ShipmentStatus.Canceled) {
+                handleUncancel();
+              } else {
+                setCancellationDialogOpen(!cancellationDialogOpen);
+              }
+            }}
+          />
+          <DropdownMenuItem
+            title="Transfer Ownership"
+            description="Transfer this shipment to a different user."
+            onClick={() => setTransferDialogOpen(!transferDialogOpen)}
           />
           <DropdownMenuLabel>Management Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -171,6 +217,12 @@ export function ShipmentActions({
         shipmentId={shipment.id}
         customerId={shipment.customerId}
         shipmentStatus={shipment.status}
+      />
+      <TransferOwnershipDialog
+        open={transferDialogOpen}
+        onOpenChange={setTransferDialogOpen}
+        shipmentId={shipment.id}
+        currentOwnerId={shipment.ownerId}
       />
     </>
   );

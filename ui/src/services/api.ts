@@ -22,6 +22,7 @@ import { ShipmentAPI } from "./shipment";
 import { ShipmentControlAPI } from "./shipment-control";
 import { TableConfigurationAPI } from "./table-configuration";
 import { UsStateAPI } from "./us-state";
+import { UserAPI } from "./user";
 
 class AssignmentsAPI {
   // Get a tractor's assignments from the API
@@ -37,6 +38,7 @@ class AssignmentsAPI {
 class API {
   assignments: AssignmentsAPI;
   auth: AuthAPI;
+  user: UserAPI;
   shipments: ShipmentAPI;
   usStates: UsStateAPI;
   customers: CustomerAPI;
@@ -83,6 +85,7 @@ class API {
     this.dedicatedLaneSuggestions = new DedicatedLaneSuggestionAPI();
     this.patternConfig = new PatternConfigAPI();
     this.notifications = new NotificationAPI();
+    this.user = new UserAPI();
   }
 }
 

@@ -508,6 +508,63 @@ func (sr *shipmentRepository) Create(
 	return shp, nil
 }
 
+func (sr *shipmentRepository) TransferOwnership(
+	ctx context.Context,
+	req *repositories.TransferOwnershipRequest,
+) (*shipment.Shipment, error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "TransferOwnership").
+		Str("shipmentID", req.ShipmentID.String()).
+		Str("ownerID", req.OwnerID.String()).
+		Logger()
+
+	shp := new(shipment.Shipment)
+
+	res, err := dba.NewUpdate().Model(shp).
+		Set("owner_id = ?", req.OwnerID).
+		Set("version = version + 1").
+		OmitZero().
+		WhereGroup(" AND ", func(q *bun.UpdateQuery) *bun.UpdateQuery {
+			return q.
+				Where("sp.id = ?", req.ShipmentID).
+				Where("sp.organization_id = ?", req.OrgID).
+				Where("sp.business_unit_id = ?", req.BuID)
+		}).
+		Returning("*").
+		Exec(ctx)
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to transfer ownership")
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "transfer ownership")
+	}
+
+	rows, err := res.RowsAffected()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get rows affected")
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get rows affected")
+	}
+
+	if rows == 0 {
+		return nil, errors.NewNotFoundError("Shipment not found")
+	}
+
+	return shp, nil
+}
+
 // Update modifies an existing shipment and updates its associated commodities.
 // It uses optimistic locking to avoid concurrent modification issues.
 //
@@ -849,6 +906,137 @@ func (sr *shipmentRepository) cancelShipmentComponents(
 	_, err = tx.NewUpdate().
 		Model((*shipment.Stop)(nil)).
 		Set("status = ?", shipment.StopStatusCanceled).
+		Where("stp.shipment_move_id IN (?)", bun.In(moveIDs)).
+		Exec(ctx)
+	if err != nil {
+		sr.l.Error().Err(err).Msg("failed to cancel stops")
+		return err
+	}
+
+	return nil
+}
+
+func (sr *shipmentRepository) UnCancel(
+	ctx context.Context,
+	req *repositories.UnCancelShipmentRequest,
+) (*shipment.Shipment, error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "Cancel").
+		Str("shipmentID", req.ShipmentID.String()).
+		Logger()
+
+	// * Create a new shipment
+	shp := new(shipment.Shipment)
+
+	// * Run in a transaction
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		// * Update shipment status
+		results, rErr := tx.NewUpdate().
+			Model(shp).
+			Where("sp.id = ? AND sp.organization_id = ? AND sp.business_unit_id = ?",
+				req.ShipmentID, req.OrgID, req.BuID).
+			Set("status = ?", shipment.StatusNew).
+			Set("canceled_at = ?", nil).
+			Set("canceled_by_id = ?", pulid.Nil).
+			Set("cancel_reason = ?", "").
+			Set("version = version + 1").
+			Returning("*").
+			Exec(c)
+
+		if rErr != nil {
+			log.Error().Err(rErr).Msg("failed to update shipment status")
+			return rErr
+		}
+
+		rows, roErr := results.RowsAffected()
+		if roErr != nil {
+			log.Error().Err(roErr).Msg("failed to get rows affected")
+			return roErr
+		}
+
+		// * If no rows were affected, return a not found error
+		if rows == 0 {
+			return errors.NewNotFoundError("Shipment not found")
+		}
+
+		// * Cancel associated moves and their assignments
+		if err = sr.unCancelShipmentComponents(c, tx, req); err != nil {
+			log.Error().Err(err).Msg("failed to cancel shipment components")
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to cancel shipment")
+		return nil, err
+	}
+
+	return shp, nil
+}
+
+// cancelShipmentComponents cancels the shipment components
+func (sr *shipmentRepository) unCancelShipmentComponents(
+	ctx context.Context,
+	tx bun.Tx,
+	req *repositories.UnCancelShipmentRequest,
+) error {
+	// * Get all moves for the shipment
+	moves := make([]*shipment.ShipmentMove, 0)
+	err := tx.NewSelect().
+		Model(&moves).
+		Where("sm.shipment_id = ?", req.ShipmentID).
+		Scan(ctx)
+	if err != nil {
+		sr.l.Error().Err(err).Msg("failed to fetch shipment moves")
+		return err
+	}
+
+	if len(moves) == 0 {
+		// * No moves to cancel
+		return nil
+	}
+
+	// * Create a slice of move IDs and loop through each move and append the ID to the slice
+	moveIDs := make([]pulid.ID, len(moves))
+	for i, move := range moves {
+		moveIDs[i] = move.ID
+	}
+
+	// * Cancel moves in bulk
+	_, err = tx.NewUpdate().
+		Model((*shipment.ShipmentMove)(nil)).
+		Set("status = ?", shipment.MoveStatusNew).
+		Where("sm.id IN (?)", bun.In(moveIDs)).
+		Exec(ctx)
+	if err != nil {
+		sr.l.Error().Err(err).Msg("failed to cancel moves")
+		return err
+	}
+
+	// * Cancel assignments in bulk
+	_, err = tx.NewUpdate().
+		Model((*shipment.Assignment)(nil)).
+		Set("status = ?", shipment.AssignmentStatusNew).
+		Where("a.shipment_move_id IN (?)", bun.In(moveIDs)).
+		Exec(ctx)
+	if err != nil {
+		sr.l.Error().Err(err).Msg("failed to cancel assignments")
+		return err
+	}
+
+	// * Cancel stops in bulk
+	_, err = tx.NewUpdate().
+		Model((*shipment.Stop)(nil)).
+		Set("status = ?", shipment.StopStatusNew).
 		Where("stp.shipment_move_id IN (?)", bun.In(moveIDs)).
 		Exec(ctx)
 	if err != nil {

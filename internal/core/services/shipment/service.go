@@ -411,6 +411,130 @@ func (s *Service) Cancel(
 	return newEntity, nil
 }
 
+func (s *Service) UnCancel(
+	ctx context.Context,
+	req *repositories.UnCancelShipmentRequest,
+) (*shipment.Shipment, error) {
+	log := s.l.With().
+		Str("operation", "UnCancel").
+		Str("shipmentID", req.ShipmentID.String()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         req.UserID,
+			Resource:       permission.ResourceShipment,
+			Action:         permission.ActionUpdate,
+			BusinessUnitID: req.BuID,
+			OrganizationID: req.OrgID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to un-cancel this shipment",
+		)
+	}
+
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDOptions{
+		ID:    req.ShipmentID,
+		OrgID: req.OrgID,
+		BuID:  req.BuID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get shipment")
+		return nil, err
+	}
+
+	if original.Status != shipment.StatusCanceled {
+		return nil, errors.NewBusinessError("Shipment is not canceled")
+	}
+
+	updatedEntity, err := s.repo.UnCancel(ctx, req)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to un-cancel shipment")
+		return nil, err
+	}
+
+	return updatedEntity, nil
+}
+
+func (s *Service) TransferOwnership(
+	ctx context.Context,
+	req *repositories.TransferOwnershipRequest,
+) (*shipment.Shipment, error) {
+	log := s.l.With().
+		Str("operation", "TransferOwnership").
+		Str("shipmentID", req.ShipmentID.String()).
+		Logger()
+
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDOptions{
+		ID:    req.ShipmentID,
+		OrgID: req.OrgID,
+		BuID:  req.BuID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get shipment")
+		return nil, err
+	}
+
+	result, err := s.ps.HasPermission(ctx, &services.PermissionCheck{
+		UserID:         req.UserID,
+		Resource:       permission.ResourceShipment,
+		Action:         permission.ActionManage,
+		BusinessUnitID: req.BuID,
+		OrganizationID: req.OrgID,
+	},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	isNotOwner := original.OwnerID != nil && *original.OwnerID != req.UserID
+	hasNoManagePermission := !result.Allowed
+
+	// * User must be either the current owner OR have manage permission
+	if isNotOwner && hasNoManagePermission {
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to transfer ownership of this shipment",
+		)
+	}
+
+	log.Info().Interface("req", req).Msg("req for transfer ownership")
+
+	updatedEntity, err := s.repo.TransferOwnership(ctx, req)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to transfer ownership of shipment")
+		return nil, err
+	}
+
+	// Log the update if the insert was successful
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceShipment,
+			ResourceID:     req.ShipmentID.String(),
+			Action:         permission.ActionUpdate,
+			UserID:         req.UserID,
+			OrganizationID: req.OrgID,
+			BusinessUnitID: req.BuID,
+		},
+		audit.WithComment("Shipment ownership transferred"),
+		audit.WithDiff(original, updatedEntity),
+		audit.WithCategory("operations"),
+		audit.WithTags("ownership-transfer"),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log shipment ownership transfer")
+	}
+
+	return updatedEntity, nil
+}
+
 func (s *Service) Duplicate(
 	ctx context.Context,
 	req *repositories.DuplicateShipmentRequest,
@@ -609,7 +733,7 @@ func (s *Service) LiveStream(
 		if err != nil {
 			return nil, err
 		}
-		
+
 		// Convert to []any for the streaming service
 		result := make([]any, len(shipments))
 		for i, shp := range shipments {
