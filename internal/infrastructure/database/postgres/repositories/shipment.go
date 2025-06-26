@@ -211,9 +211,6 @@ func (sr *shipmentRepository) List(
 	// * Append filters to base query
 	q = sr.filterQuery(q, opts)
 
-	// * Order by status and created at
-	q.Order("sp.status ASC", "sp.created_at DESC")
-
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to scan shipments")
@@ -941,13 +938,17 @@ func (sr *shipmentRepository) UnCancel(
 		// * Update shipment status
 		results, rErr := tx.NewUpdate().
 			Model(shp).
-			Where("sp.id = ? AND sp.organization_id = ? AND sp.business_unit_id = ?",
-				req.ShipmentID, req.OrgID, req.BuID).
 			Set("status = ?", shipment.StatusNew).
 			Set("canceled_at = ?", nil).
 			Set("canceled_by_id = ?", pulid.Nil).
 			Set("cancel_reason = ?", "").
 			Set("version = version + 1").
+			OmitZero().
+			WhereGroup(" AND", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return uq.Where("sp.id = ?", req.ShipmentID).
+					Where("sp.organization_id = ?", req.OrgID).
+					Where("sp.business_unit_id = ?", req.BuID)
+			}).
 			Returning("*").
 			Exec(c)
 
@@ -997,11 +998,15 @@ func (sr *shipmentRepository) unCancelShipmentComponents(
 		Scan(ctx)
 	if err != nil {
 		sr.l.Error().Err(err).Msg("failed to fetch shipment moves")
-		return err
+		return oops.In("shipment_repository").
+			With("op", "un_cancel_shipment_components").
+			Time(time.Now()).
+			WithContext(ctx).
+			Wrapf(err, "failed to fetch shipment moves")
 	}
 
 	if len(moves) == 0 {
-		// * No moves to cancel
+		// * No moves to un-cancel
 		return nil
 	}
 
@@ -1011,37 +1016,59 @@ func (sr *shipmentRepository) unCancelShipmentComponents(
 		moveIDs[i] = move.ID
 	}
 
-	// * Cancel moves in bulk
+	// * Update Movement back to `New` status
 	_, err = tx.NewUpdate().
 		Model((*shipment.ShipmentMove)(nil)).
+		OmitZero().
 		Set("status = ?", shipment.MoveStatusNew).
 		Where("sm.id IN (?)", bun.In(moveIDs)).
 		Exec(ctx)
 	if err != nil {
 		sr.l.Error().Err(err).Msg("failed to cancel moves")
-		return err
+		return oops.In("shipment_repository").
+			With("op", "un_cancel_shipment_components").
+			Time(time.Now()).
+			WithContext(ctx).
+			Wrapf(err, "failed to un-cancel moves")
 	}
 
-	// * Cancel assignments in bulk
+	// * Un-cancel assignments in bulk
 	_, err = tx.NewUpdate().
 		Model((*shipment.Assignment)(nil)).
+		OmitZero().
 		Set("status = ?", shipment.AssignmentStatusNew).
 		Where("a.shipment_move_id IN (?)", bun.In(moveIDs)).
 		Exec(ctx)
 	if err != nil {
 		sr.l.Error().Err(err).Msg("failed to cancel assignments")
-		return err
+		return oops.In("shipment_repository").
+			With("op", "un_cancel_shipment_components").
+			With("moveIDs", moveIDs).
+			Time(time.Now()).
+			WithContext(ctx).
+			Wrapf(err, "failed to un-cancel assignments")
 	}
 
-	// * Cancel stops in bulk
-	_, err = tx.NewUpdate().
+	// * Un-cancel stops in bulk
+	stpQuery := tx.NewUpdate().
 		Model((*shipment.Stop)(nil)).
 		Set("status = ?", shipment.StopStatusNew).
-		Where("stp.shipment_move_id IN (?)", bun.In(moveIDs)).
-		Exec(ctx)
-	if err != nil {
+		OmitZero().
+		Where("stp.shipment_move_id IN (?)", bun.In(moveIDs))
+
+	if req.UpdateAppointments {
+		stpQuery.Set("planned_arrival = ?", timeutils.NowUnix())
+		stpQuery.Set("planned_departure = ?", timeutils.NowUnix()+timeutils.DaysToSeconds(1))
+	}
+
+	if _, err = stpQuery.Exec(ctx); err != nil {
 		sr.l.Error().Err(err).Msg("failed to cancel stops")
-		return err
+		return oops.In("shipment_repository").
+			With("op", "un_cancel_shipment_components").
+			With("moveIDs", moveIDs).
+			Time(time.Now()).
+			WithContext(ctx).
+			Wrapf(err, "failed to un-cancel stops")
 	}
 
 	return nil
