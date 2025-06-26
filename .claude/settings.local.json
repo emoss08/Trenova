@@ -37,7 +37,9 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(npx tsc:*)",
-      "Bash(task check)"
+      "Bash(task check)",
+      "Bash(bash:*)",
+      "Bash(task run)"
     ],
     "deny": []
   },
