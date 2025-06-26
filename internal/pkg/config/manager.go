@@ -85,15 +85,6 @@ func (m *Manager) Load() (*Config, error) {
 		return nil, eris.Wrap(err, "failed to unmarshal config")
 	}
 
-	// Expand environment variables in specific configuration fields
-	// using our custom expander
-	if config.RabbitMQ.Username != "" {
-		config.RabbitMQ.Username = expandWithDefault(config.RabbitMQ.Username)
-	}
-	if config.RabbitMQ.Password != "" {
-		config.RabbitMQ.Password = expandWithDefault(config.RabbitMQ.Password)
-	}
-
 	// Expand for DB User and Password as well, as they use the same pattern
 	if config.DB.Username != "" {
 		config.DB.Username = expandWithDefault(config.DB.Username)
@@ -147,6 +138,26 @@ func (m *Manager) setDefaults() {
 	m.Viper.SetDefault("backup.backupTimeout", 30*60) // 30 minutes in seconds
 	m.Viper.SetDefault("backup.notifyOnFailure", true)
 	m.Viper.SetDefault("backup.notifyOnSuccess", false)
+
+	// Kafka defaults
+	m.Viper.SetDefault("kafka.enabled", false)
+	m.Viper.SetDefault("kafka.brokers", []string{"localhost:9092"})
+	m.Viper.SetDefault("kafka.consumerGroupId", "trenova-shipment-streaming")
+	m.Viper.SetDefault("kafka.topicPattern", "trenova.public.*")
+	m.Viper.SetDefault("kafka.commitInterval", "1s")
+	m.Viper.SetDefault("kafka.startOffset", "latest")
+	m.Viper.SetDefault("kafka.maxRetries", 3)
+	m.Viper.SetDefault("kafka.retryBackoff", "1s")
+	m.Viper.SetDefault("kafka.readTimeout", "10s")
+	m.Viper.SetDefault("kafka.writeTimeout", "10s")
+
+	// Streaming defaults
+	m.Viper.SetDefault("streaming.pollInterval", "2s")
+	m.Viper.SetDefault("streaming.maxConnections", 100)
+	m.Viper.SetDefault("streaming.streamTimeout", "30m")
+	m.Viper.SetDefault("streaming.enableHeartbeat", true)
+	m.Viper.SetDefault("streaming.heartbeatInterval", "30s")
+	m.Viper.SetDefault("streaming.maxConnectionsPerUser", 5)
 }
 
 func (m *Manager) Get() *Config {
@@ -265,13 +276,6 @@ func (m *Manager) Redis() *RedisConfig {
 	return &m.Cfg.Redis
 }
 
-func (m *Manager) RabbitMQ() *RabbitMQConfig {
-	if m.Cfg == nil {
-		return nil
-	}
-	return &m.Cfg.RabbitMQ
-}
-
 func (m *Manager) Auth() *AuthConfig {
 	if m.Cfg == nil {
 		return nil
@@ -312,6 +316,20 @@ func (m *Manager) Backup() *BackupConfig {
 		return nil
 	}
 	return &m.Cfg.Backup
+}
+
+func (m *Manager) Kafka() *KafkaConfig {
+	if m.Cfg == nil {
+		return nil
+	}
+	return &m.Cfg.Kafka
+}
+
+func (m *Manager) Streaming() *StreamingConfig {
+	if m.Cfg == nil {
+		return nil
+	}
+	return &m.Cfg.Streaming
 }
 
 // GetDSN returns a formatted database connection string

@@ -17,6 +17,9 @@ type StreamingService interface {
 		timestampExtractor TimestampExtractor,
 	) error
 
+	// BroadcastToStream immediately broadcasts data to all clients of a specific stream
+	BroadcastToStream(streamKey string, orgID, buID string, data any) error
+
 	// GetActiveStreams returns the number of active streams for a given key
 	GetActiveStreams(streamKey string) int
 
@@ -24,7 +27,7 @@ type StreamingService interface {
 	Shutdown() error
 }
 
-// DataFetcher is a function that fetches data for streaming
+// DataFetcher is a function that fetches data for streaming (used for fallback polling)
 type DataFetcher func(ctx context.Context, reqCtx *appctx.RequestContext) (any, error)
 
 // TimestampExtractor extracts timestamp from data items for change detection

@@ -4,7 +4,7 @@ app:
   version: 0.7.3
 
 server:
-  secretKey: "hP+CDHvBuylwv8VM21HUaD1IP6iBE2ZPUFGIGqh6Tj0="
+  secretKey: "mBYDjH5A9c5dLhV2TjGa8g8KZx5Wou0BO0jyvhzKHQo="
   listenAddress: ":3001"
   immutable: false
   readBufferSize: 4096
@@ -113,3 +113,19 @@ backup:
   notifyOnFailure: true
   notifyOnSuccess: false
   notificationEmail: "admin@example.com"
+
+kafka:
+  enabled: true
+  brokers:
+    - "localhost:9092"
+  consumerGroupId: "trenova-cdc-consumer"
+  topicPattern: "trenova.public.*"
+  commitInterval: 5s
+  startOffset: "latest"
+
+streaming:
+  pollInterval: 2s
+  maxConnections: 100
+  maxConnectionsPerUser: 10
+  streamTimeout: 300s
+  enableHeartbeat: true

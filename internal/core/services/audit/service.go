@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
@@ -948,7 +949,7 @@ func (s *service) LiveStream(
 			return timestampExtractor(entry)
 		}
 
-		return time.Now().Unix()
+		return timeutils.NowUnix()
 	}
 
 	return s.ss.StreamData(c, "audit", streamDataFetcher, streamTimestampExtractor)
