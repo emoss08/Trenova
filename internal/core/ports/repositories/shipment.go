@@ -187,10 +187,11 @@ type CancelShipmentRequest struct {
 }
 
 type UnCancelShipmentRequest struct {
-	ShipmentID pulid.ID `json:"shipmentId" query:"shipmentId"`
-	OrgID      pulid.ID `json:"orgId"      query:"orgId"`
-	BuID       pulid.ID `json:"buId"       query:"buId"`
-	UserID     pulid.ID `json:"userId"     query:"userId"`
+	ShipmentID         pulid.ID `json:"shipmentId"         query:"shipmentId"`
+	OrgID              pulid.ID `json:"orgId"              query:"orgId"`
+	BuID               pulid.ID `json:"buId"               query:"buId"`
+	UserID             pulid.ID `json:"userId"             query:"userId"`
+	UpdateAppointments bool     `json:"updateAppointments" query:"updateAppointments" default:"false"`
 }
 
 type TransferOwnershipRequest struct {
