@@ -27,11 +27,12 @@ import { Separator } from "@/components/ui/separator";
 import {
   Table,
   TableBody,
+  TableCaption,
   TableCell,
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
+} from "@/components/ui/shadcn-table";
 import {
   faArrowUpRightFromSquare,
   faChevronDown,
@@ -311,38 +312,37 @@ export function ChangesTable({
         </div>
         <ChangeActions changes={changes} />
       </div>
-      <div className="overflow-x-auto">
-        <Table>
-          <TableHeader className="bg-transparent">
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="font-medium bg-transparent">
-                Field
-              </TableHead>
-              <TableHead className="font-medium bg-transparent">
-                Previous Value
-              </TableHead>
-              <TableHead className="font-medium bg-transparent">
-                Current Value
-              </TableHead>
+      <Table className="w-full">
+        <TableCaption>
+          {Object.keys(changes).length} fields were modified in this operation
+        </TableCaption>
+        <TableHeader className="bg-transparent">
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="font-medium bg-transparent">Field</TableHead>
+            <TableHead className="font-medium bg-transparent">
+              Previous Value
+            </TableHead>
+            <TableHead className="font-medium bg-transparent">
+              Current Value
+            </TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {Object.entries(changes).map(([key, change]) => (
+            <TableRow key={key} className="hover:bg-transparent">
+              <TableCell className="font-medium whitespace-nowrap">
+                {key}
+              </TableCell>
+              <TableCell className="max-w-xs">
+                <DisplayValue value={change.from} />
+              </TableCell>
+              <TableCell className="max-w-xs">
+                <DisplayValue value={change.to} />
+              </TableCell>
             </TableRow>
-          </TableHeader>
-          <TableBody>
-            {Object.entries(changes).map(([key, change]) => (
-              <TableRow key={key} className="hover:bg-transparent">
-                <TableCell className="font-medium whitespace-nowrap">
-                  {key}
-                </TableCell>
-                <TableCell className="max-w-xs">
-                  <DisplayValue value={change.from} />
-                </TableCell>
-                <TableCell className="max-w-xs">
-                  <DisplayValue value={change.to} />
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+          ))}
+        </TableBody>
+      </Table>
 
       <ChangeDiffDialog
         changes={changes}

@@ -195,38 +195,50 @@ function AuditLogDetailsContent({ entry }: { entry?: AuditEntry }) {
   }
 
   return (
-    <ScrollArea className="flex flex-col overflow-y-auto max-h-[calc(100vh-8.5rem)] px-4">
-      <div className="space-y-6 pb-8">
-        <AuditLogDetails entry={entry} />
+    <ScrollArea className="flex flex-col overflow-y-auto max-h-[calc(100vh-8.5rem)] px-4 [&_[data-slot=scroll-area-viewport]>div]:block!">
+      <div className="space-y-6 pb-8 w-full max-w-full overflow-hidden">
+        <div className="w-full max-w-full overflow-hidden">
+          <AuditLogDetails entry={entry} />
+        </div>
 
-        <ChangesTable changes={entry.changes} />
+        <div className="w-full max-w-full overflow-hidden">
+          <ChangesTable changes={entry.changes} />
+        </div>
 
         <AuditLogDetailsSection
           title="Metadata"
           description="Additional contextual information"
         >
-          <JsonViewer data={entry.metadata} />
+          <div className="w-full max-w-full overflow-hidden">
+            <JsonViewer data={entry.metadata} />
+          </div>
         </AuditLogDetailsSection>
 
         <AuditLogDetailsSection
           title="Previous State"
           description="State before the operation"
         >
-          <JsonViewer data={entry.previousState} />
+          <div className="w-full max-w-full overflow-hidden">
+            <JsonViewer data={entry.previousState} />
+          </div>
         </AuditLogDetailsSection>
 
         <AuditLogDetailsSection
           title="Current State"
           description="State after the operation"
         >
-          <JsonViewer data={entry.currentState} />
+          <div className="w-full max-w-full overflow-hidden">
+            <JsonViewer data={entry.currentState} />
+          </div>
         </AuditLogDetailsSection>
 
         <AuditLogDetailsSection
           title="Full Event Data"
           description="Complete raw data"
         >
-          <JsonViewer data={entry} />
+          <div className="w-full max-w-full overflow-hidden">
+            <JsonViewer data={entry} />
+          </div>
         </AuditLogDetailsSection>
       </div>
     </ScrollArea>
@@ -243,12 +255,12 @@ function AuditLogDetailsSection({
   description: string;
 }) {
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 w-full max-w-full overflow-hidden">
       <div className="flex flex-col">
         <h3 className="text-sm font-normal">{title}</h3>
         <p className="text-2xs text-muted-foreground">{description}</p>
       </div>
-      {children}
+      <div className="w-full max-w-full overflow-hidden">{children}</div>
     </div>
   );
 }
