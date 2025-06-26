@@ -41,23 +41,28 @@ export const statusChoices = [
 ] satisfies ReadonlyArray<ChoiceProps<Status>>;
 
 export const shipmentStatusChoices = [
-  { value: ShipmentStatus.New, label: "New", color: "#15803d" },
+  { value: ShipmentStatus.New, label: "New", color: "#9333ea" },
   {
     value: ShipmentStatus.PartiallyAssigned,
     label: "Partially Assigned",
-    color: "#7e22ce",
+    color: "#4f46e5",
   },
-  { value: ShipmentStatus.Assigned, label: "Assigned", color: "#b91c1c" },
-  { value: ShipmentStatus.InTransit, label: "In Transit", color: "#f59e0b" },
-  { value: ShipmentStatus.Delayed, label: "Delayed", color: "#0369a1" },
+  { value: ShipmentStatus.Assigned, label: "Assigned", color: "#ca8a04" },
+  { value: ShipmentStatus.InTransit, label: "In Transit", color: "#2563eb" },
+  { value: ShipmentStatus.Delayed, label: "Delayed", color: "#ea580c" },
   {
     value: ShipmentStatus.PartiallyCompleted,
     label: "Partially Completed",
-    color: "#10b981",
+    color: "#4f46e5",
   },
-  { value: ShipmentStatus.Completed, label: "Completed", color: "#10b981" },
-  { value: ShipmentStatus.Billed, label: "Billed", color: "#ec4899" },
-  { value: ShipmentStatus.Canceled, label: "Canceled", color: "#b91c1c" },
+  { value: ShipmentStatus.Completed, label: "Completed", color: "#16a34a" },
+  {
+    value: ShipmentStatus.ReadyToBill,
+    label: "Ready to Bill",
+    color: "#db2777",
+  },
+  { value: ShipmentStatus.Billed, label: "Billed", color: "#0d9488" },
+  { value: ShipmentStatus.Canceled, label: "Canceled", color: "#dc2626" },
 ] satisfies ReadonlyArray<ChoiceProps<ShipmentStatus>>;
 
 export const ratingMethodChoices = [

@@ -12,8 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/postgressearch"
-	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
+	"github.com/emoss08/trenova/internal/pkg/utils/querybuilder"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -78,21 +77,29 @@ func (wr *workerRepository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListWorkerRequest,
 ) *bun.SelectQuery {
-	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
-		Query:      q,
-		Filter:     req.Filter,
-		TableAlias: "wrk",
-	})
+	qb := querybuilder.NewWithPostgresSearch(
+		q,
+		"wrk",
+		repositories.WorkerFieldConfig,
+		(*worker.Worker)(nil),
+	)
 
-	if req.Filter.Query != "" {
-		q = postgressearch.BuildSearchQuery(
-			q,
-			req.Filter.Query,
-			(*worker.Worker)(nil),
-		)
+	qb.ApplyTenantFilters(req.Filter.TenantOpts)
+
+	if req.Filter != nil {
+		qb.ApplyFilters(req.Filter.FieldFilters)
+
+		if len(req.Filter.Sort) > 0 {
+			qb.ApplySort(req.Filter.Sort)
+		}
+
+		if req.Filter.Query != "" {
+			qb.ApplyTextSearch(req.Filter.Query, []string{"first_name", "last_name"})
+		}
+
+		q = qb.GetQuery()
 	}
-
-	q = wr.addOptions(q, req.FilterOptions)
+	q = wr.addOptions(q, req.WorkerFilterOptions)
 
 	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
 }

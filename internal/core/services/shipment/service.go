@@ -12,14 +12,17 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	dedicatedlaneservice "github.com/emoss08/trenova/internal/core/services/dedicatedlane"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )
@@ -32,6 +35,7 @@ type ServiceParams struct {
 	ProNumberRepo              repositories.ProNumberRepository
 	PermService                services.PermissionService
 	AuditService               services.AuditService
+	StreamingService           services.StreamingService
 	Validator                  *shipmentvalidator.Validator
 	DedicatedLaneAssignService *dedicatedlaneservice.AssignmentService
 	JobService                 jobs.JobServiceInterface
@@ -43,6 +47,7 @@ type Service struct {
 	proNumberRepo repositories.ProNumberRepository
 	ps            services.PermissionService
 	as            services.AuditService
+	ss            services.StreamingService
 	v             *shipmentvalidator.Validator
 	dlas          *dedicatedlaneservice.AssignmentService
 	js            jobs.JobServiceInterface
@@ -60,6 +65,7 @@ func NewService(p ServiceParams) *Service {
 		proNumberRepo: p.ProNumberRepo,
 		ps:            p.PermService,
 		as:            p.AuditService,
+		ss:            p.StreamingService,
 		v:             p.Validator,
 		dlas:          p.DedicatedLaneAssignService,
 		js:            p.JobService,
@@ -406,6 +412,132 @@ func (s *Service) Cancel(
 	return newEntity, nil
 }
 
+func (s *Service) UnCancel(
+	ctx context.Context,
+	req *repositories.UnCancelShipmentRequest,
+) (*shipment.Shipment, error) {
+	log := s.l.With().
+		Str("operation", "UnCancel").
+		Str("shipmentID", req.ShipmentID.String()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         req.UserID,
+			Resource:       permission.ResourceShipment,
+			Action:         permission.ActionUpdate,
+			BusinessUnitID: req.BuID,
+			OrganizationID: req.OrgID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to un-cancel this shipment",
+		)
+	}
+
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDOptions{
+		ID:    req.ShipmentID,
+		OrgID: req.OrgID,
+		BuID:  req.BuID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get shipment")
+		return nil, err
+	}
+
+	if original.Status != shipment.StatusCanceled {
+		return nil, errors.NewBusinessError("Shipment is not canceled")
+	}
+
+	updatedEntity, err := s.repo.UnCancel(ctx, req)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to un-cancel shipment")
+		return nil, err
+	}
+
+	return updatedEntity, nil
+}
+
+func (s *Service) TransferOwnership(
+	ctx context.Context,
+	req *repositories.TransferOwnershipRequest,
+) (*shipment.Shipment, error) {
+	log := s.l.With().
+		Str("operation", "TransferOwnership").
+		Str("shipmentID", req.ShipmentID.String()).
+		Logger()
+
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDOptions{
+		ID:    req.ShipmentID,
+		OrgID: req.OrgID,
+		BuID:  req.BuID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get shipment")
+		return nil, err
+	}
+
+	result, err := s.ps.HasPermission(ctx, &services.PermissionCheck{
+		UserID:         req.UserID,
+		Resource:       permission.ResourceShipment,
+		Action:         permission.ActionManage,
+		BusinessUnitID: req.BuID,
+		OrganizationID: req.OrgID,
+	},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	isNotOwner := original.OwnerID != nil && *original.OwnerID != req.UserID
+	hasNoManagePermission := !result.Allowed
+
+	// * User must be either the current owner OR have manage permission
+	if isNotOwner && hasNoManagePermission {
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to transfer ownership of this shipment",
+		)
+	}
+
+	log.Info().Interface("req", req).Msg("req for transfer ownership")
+
+	updatedEntity, err := s.repo.TransferOwnership(ctx, req)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to transfer ownership of shipment")
+		return nil, err
+	}
+
+	// Log the update if the insert was successful
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceShipment,
+			ResourceID:     updatedEntity.GetID(),
+			Action:         permission.ActionUpdate,
+			UserID:         req.UserID,
+			CurrentState:   jsonutils.MustToJSON(updatedEntity),
+			PreviousState:  jsonutils.MustToJSON(original),
+			OrganizationID: updatedEntity.OrganizationID,
+			BusinessUnitID: updatedEntity.BusinessUnitID,
+		},
+		audit.WithComment("Shipment ownership transferred"),
+		audit.WithDiff(original, updatedEntity),
+		audit.WithCategory("operations"),
+		audit.WithTags("ownership-transfer"),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log shipment ownership transfer")
+	}
+
+	return updatedEntity, nil
+}
+
 func (s *Service) Duplicate(
 	ctx context.Context,
 	req *repositories.DuplicateShipmentRequest,
@@ -590,4 +722,36 @@ func (s *Service) CalculateShipmentTotals(
 	}
 
 	return resp, nil
+}
+
+// LiveStream provides real-time streaming of shipment changes
+func (s *Service) LiveStream(
+	c *fiber.Ctx,
+	dataFetcher func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*shipment.Shipment, error),
+	timestampExtractor func(s *shipment.Shipment) int64,
+) error {
+	// Create data fetcher that returns any for the streaming service
+	streamDataFetcher := func(ctx context.Context, reqCtx *appctx.RequestContext) (any, error) {
+		shipments, err := dataFetcher(ctx, reqCtx)
+		if err != nil {
+			return nil, err
+		}
+
+		// Convert to []any for the streaming service
+		result := make([]any, len(shipments))
+		for i, shp := range shipments {
+			result[i] = shp
+		}
+		return result, nil
+	}
+
+	// Create timestamp extractor that works with any
+	streamTimestampExtractor := func(item any) int64 {
+		if shp, ok := item.(*shipment.Shipment); ok {
+			return timestampExtractor(shp)
+		}
+		return timeutils.NowUnix()
+	}
+
+	return s.ss.StreamData(c, "shipments", streamDataFetcher, streamTimestampExtractor)
 }

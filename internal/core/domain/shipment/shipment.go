@@ -39,6 +39,7 @@ type Shipment struct {
 	CustomerID          pulid.ID            `json:"customerId"          bun:"customer_id,type:VARCHAR(100),notnull"`
 	TractorTypeID       *pulid.ID           `json:"tractorTypeId"       bun:"tractor_type_id,type:VARCHAR(100),nullzero"`
 	TrailerTypeID       *pulid.ID           `json:"trailerTypeId"       bun:"trailer_type_id,type:VARCHAR(100),nullzero"`
+	OwnerID             *pulid.ID           `json:"ownerId"             bun:"owner_id,type:VARCHAR(100),nullzero"`
 	CanceledByID        *pulid.ID           `json:"canceledById"        bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
 	Status              Status              `json:"status"              bun:"status,type:status_enum,notnull,default:'New'"`
 	ProNumber           string              `json:"proNumber"           bun:"pro_number,type:VARCHAR(100),notnull"`

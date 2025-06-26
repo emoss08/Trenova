@@ -1,5 +1,5 @@
 // @ts-expect-error fontsource-variable is not typed
-import "@fontsource/inter";
+import "@fontsource-variable/inter"; // Defaults to wght axis
 // @ts-expect-error fontsource-variable is not typed
 import "@fontsource/geist-mono";
 import { RouterProvider } from "react-router";

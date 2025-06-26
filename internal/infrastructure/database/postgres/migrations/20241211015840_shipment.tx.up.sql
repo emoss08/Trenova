@@ -143,3 +143,11 @@ CREATE INDEX idx_shipments_bu_org_status_created_at ON shipments(business_unit_i
 
 CREATE INDEX idx_shipments_bu_org_include ON shipments(business_unit_id, organization_id) INCLUDE (status, created_at, pro_number, bol);
 
+--bun:split
+ALTER TABLE shipments
+    ADD COLUMN IF NOT EXISTS "owner_id" varchar(100);
+
+-- Add relationship to users
+ALTER TABLE shipments
+    ADD CONSTRAINT "fk_shipments_owner" FOREIGN KEY ("owner_id") REFERENCES "users"("id") ON UPDATE NO ACTION ON DELETE SET NULL;
+

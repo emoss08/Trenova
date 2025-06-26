@@ -1,3 +1,4 @@
+import { HoverCardTimestamp } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
 import { statusChoices } from "@/lib/choices";
 import type { CustomerSchema } from "@/lib/schemas/customer-schema";
@@ -49,32 +50,11 @@ export function getColumns(): ColumnDef<CustomerSchema>[] {
         <div>
           <p className="font-medium">{row.original.name}</p>
           <p className="text-sm text-muted-foreground">
-            {row.original.city}, {row.original.postalCode}
+            {row.original.addressLine1}, {row.original.city}{" "}
+            {row.original.postalCode}
           </p>
         </div>
       ),
-    },
-    {
-      accessorKey: "city",
-      header: "City",
-      meta: {
-        apiField: "city",
-        filterable: true,
-        sortable: true,
-        filterType: "text",
-        defaultFilterOperator: "contains",
-      },
-    },
-    {
-      accessorKey: "postalCode",
-      header: "Postal Code",
-      meta: {
-        apiField: "postalCode",
-        filterable: true,
-        sortable: true,
-        filterType: "text",
-        defaultFilterOperator: "contains",
-      },
     },
     {
       accessorKey: "createdAt",
@@ -88,12 +68,13 @@ export function getColumns(): ColumnDef<CustomerSchema>[] {
       },
       cell: ({ row }) => {
         if (!row.original.createdAt) return "-";
-        const date = new Date(row.original.createdAt * 1000);
-        return date.toLocaleDateString("en-US", {
-          year: "numeric",
-          month: "short",
-          day: "numeric",
-        });
+
+        return (
+          <HoverCardTimestamp
+            className="font-table tracking-tight"
+            timestamp={row.original.createdAt}
+          />
+        );
       },
     },
   ];

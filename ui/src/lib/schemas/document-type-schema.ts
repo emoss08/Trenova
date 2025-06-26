@@ -1,5 +1,5 @@
 import { DocumentCategory, DocumentClassification } from "@/types/billing";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 export const documentTypeSchema = z.object({
   id: z.string().optional(),
@@ -9,13 +9,21 @@ export const documentTypeSchema = z.object({
 
   // * Core Fields
   code: z
-    .string()
+    .string({
+      error: "Code must be at least 1 character",
+    })
     .min(1, "Code must be at least 1 character")
     .max(10, "Code must be less than 10 characters"),
   name: z
-    .string()
-    .min(1, "Name must be at least 1 character")
-    .max(100, "Name must be less than 100 characters"),
+    .string({
+      error: "Name must be at least 1 character",
+    })
+    .min(1, {
+      error: "Name must be at least 1 character",
+    })
+    .max(100, {
+      error: "Name must be less than 100 characters",
+    }),
   description: z.string().optional(),
   color: z
     .string()
@@ -24,11 +32,11 @@ export const documentTypeSchema = z.object({
       "Color must be a valid hex color",
     )
     .optional(),
-  documentClassification: z.nativeEnum(DocumentClassification, {
-    message: "Document classification is required",
+  documentClassification: z.enum(DocumentClassification, {
+    error: "Document classification is required",
   }),
-  documentCategory: z.nativeEnum(DocumentCategory, {
-    message: "Document category is required",
+  documentCategory: z.enum(DocumentCategory, {
+    error: "Document category is required",
   }),
 });
 

@@ -1,5 +1,5 @@
 import { AssignmentStatus } from "@/types/assignment";
-import { z } from "zod";
+import * as z from "zod/v4";
 import { tractorSchema } from "./tractor-schema";
 import { trailerSchema } from "./trailer-schema";
 import { workerSchema } from "./worker-schema";
@@ -11,10 +11,10 @@ export const assignmentSchema = z.object({
   updatedAt: z.number().optional(),
 
   // * Core Fields
-  status: z.nativeEnum(AssignmentStatus),
+  status: z.enum(AssignmentStatus),
   shipmentMoveId: z.string().optional(),
   primaryWorkerId: z
-    .string({ required_error: "Primary Worker is required" })
+    .string({ error: "Primary Worker is required" })
     .min(1, "Primary Worker is required"),
   secondaryWorkerId: z.string().nullable().optional(),
   trailerId: z.string().min(1, "Trailer is required"),

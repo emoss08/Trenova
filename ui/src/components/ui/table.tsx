@@ -2,15 +2,19 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
-function Table({ className, ...props }: React.ComponentProps<"table">) {
+interface TableProps extends React.ComponentProps<"table"> {
+  containerClassName?: string;
+}
+
+function Table({ containerClassName, className, ...props }: TableProps) {
   return (
-    <div
-      data-slot="table-container"
-      className="relative w-full overflow-x-auto"
-    >
+    <div data-slot="table-container" className={containerClassName}>
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
+        className={cn(
+          "-my-1 w-full caption-bottom border-separate border-spacing-y-1 text-xs max-md:flex max-md:w-full max-md:flex-col max-md:py-2",
+          className,
+        )}
         {...props}
       />
     </div>
@@ -21,7 +25,10 @@ function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (
     <thead
       data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
+      className={cn(
+        "z-20 rounded-md backdrop-blur-md md:sticky md:top-0 before:absolute before:inset-x-0 before:-top-[2px] before:-z-10 before:h-[5px] before:bg-background max-md:hidden",
+        className,
+      )}
       {...props}
     />
   );
@@ -31,7 +38,10 @@ function TableBody({ className, ...props }: React.ComponentProps<"tbody">) {
   return (
     <tbody
       data-slot="table-body"
-      className={cn("[&_tr:last-child]:border-0", className)}
+      className={cn(
+        "pb-4 md:pb-12 content-visibility-auto contain-intrinsic-size-auto max-md:flex max-md:w-full max-md:flex-col max-md:gap-4",
+        className,
+      )}
       {...props}
     />
   );
@@ -55,7 +65,7 @@ function TableRow({ className, ...props }: React.ComponentProps<"tr">) {
     <tr
       data-slot="table-row"
       className={cn(
-        "border-b transition-colors hover:bg-muted/50 font-table data-[state=selected]:bg-muted",
+        "group/row whitespace-nowrap md:[&_td:first-child]:border-l md:[&_td:last-child]:border-r md:[&_td]:border-y max-md:flex max-md:w-full max-md:flex-col bg-card [&:hover_td]:md:bg-muted-foreground/10 [&_td]:md:border-border max-md:overflow-hidden max-md:rounded-lg max-md:border content-visibility-auto",
         className,
       )}
       {...props}
@@ -68,7 +78,7 @@ function TableHead({ className, ...props }: React.ComponentProps<"th">) {
     <th
       data-slot="table-head"
       className={cn(
-        "h-10 px-4 border-b text-left align-middle font-medium font-sans uppercase text-muted-foreground [&:has([role=checkbox])]:pr-0",
+        "h-10 px-2 text-left align-middle font-mono font-medium uppercase text-muted-foreground first:rounded-l-md first:pl-5 last:rounded-r-md last:pr-5 md:px-3.5 [&:has([role=checkbox])]:pr-0 first:border-l last:border-r border-y border-border max-md:hidden",
         className,
       )}
       {...props}
@@ -86,7 +96,7 @@ const TableCell = React.memo(function TableCellInner({
     <td
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle [&:has([role=checkbox])]:pr-0 font-table",
+        "h-11 px-2 py-2 align-middle font-mono first:pl-5 last:rounded-r-md last:pr-5 [&:has([role=checkbox])]:pr-0 max-md:first:rounded-y-lg max-md max-md:flex max-md:h-9 max-md:w-full max-md:items-center max-md:justify-between max-md:gap-3 max-md:border-t max-md:!px-3 max-md:text-right max-md:first:border-t-0 md:px-3.5 md:first:rounded-l-md overflow-hidden md:max-w-px",
         className,
       )}
       {...props}

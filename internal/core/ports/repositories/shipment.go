@@ -49,7 +49,7 @@ var ShipmentFieldConfig = &ports.FieldConfiguration{
 					Table:     "customers",
 					Alias:     "cust",
 					Condition: "sp.customer_id = cust.id",
-					JoinType:  "LEFT",
+					JoinType:  ports.JoinTypeLeft,
 				},
 			},
 			IsEnum: false,
@@ -61,19 +61,19 @@ var ShipmentFieldConfig = &ports.FieldConfiguration{
 					Table:     "shipment_moves",
 					Alias:     "sm_orig",
 					Condition: "sp.id = sm_orig.shipment_id",
-					JoinType:  "LEFT",
+					JoinType:  ports.JoinTypeLeft,
 				},
 				{
 					Table:     "stops",
 					Alias:     "stop_orig",
 					Condition: "sm_orig.id = stop_orig.shipment_move_id AND stop_orig.type = 'Pickup' AND stop_orig.sequence = 0",
-					JoinType:  "LEFT",
+					JoinType:  ports.JoinTypeLeft,
 				},
 				{
 					Table:     "locations",
 					Alias:     "orig_loc",
 					Condition: "stop_orig.location_id = orig_loc.id",
-					JoinType:  "LEFT",
+					JoinType:  ports.JoinTypeLeft,
 				},
 			},
 			IsEnum: false,
@@ -85,19 +85,19 @@ var ShipmentFieldConfig = &ports.FieldConfiguration{
 					Table:     "shipment_moves",
 					Alias:     "sm_dest",
 					Condition: "sp.id = sm_dest.shipment_id",
-					JoinType:  "LEFT",
+					JoinType:  ports.JoinTypeLeft,
 				},
 				{
 					Table:     "stops",
 					Alias:     "stop_dest",
 					Condition: "sm_dest.id = stop_dest.shipment_move_id AND stop_dest.type = 'Delivery'",
-					JoinType:  "LEFT",
+					JoinType:  ports.JoinTypeLeft,
 				},
 				{
 					Table:     "locations",
 					Alias:     "dest_loc",
 					Condition: "stop_dest.location_id = dest_loc.id",
-					JoinType:  "LEFT",
+					JoinType:  ports.JoinTypeLeft,
 				},
 			},
 			IsEnum: false,
@@ -109,13 +109,13 @@ var ShipmentFieldConfig = &ports.FieldConfiguration{
 					Table:     "shipment_moves",
 					Alias:     "sm_orig_date",
 					Condition: "sp.id = sm_orig_date.shipment_id",
-					JoinType:  "LEFT",
+					JoinType:  ports.JoinTypeLeft,
 				},
 				{
 					Table:     "stops",
 					Alias:     "stop_orig_date",
 					Condition: "sm_orig_date.id = stop_orig_date.shipment_move_id AND stop_orig_date.type = 'PICKUP' AND stop_orig_date.sequence = 0",
-					JoinType:  "LEFT",
+					JoinType:  ports.JoinTypeLeft,
 				},
 			},
 			IsEnum: false,
@@ -127,13 +127,13 @@ var ShipmentFieldConfig = &ports.FieldConfiguration{
 					Table:     "shipment_moves",
 					Alias:     "sm_dest_date",
 					Condition: "sp.id = sm_dest_date.shipment_id",
-					JoinType:  "LEFT",
+					JoinType:  ports.JoinTypeLeft,
 				},
 				{
 					Table:     "stops",
 					Alias:     "stop_dest_date",
 					Condition: "sm_dest_date.id = stop_dest_date.shipment_move_id AND stop_dest_date.type = 'DELIVERY'",
-					JoinType:  "LEFT",
+					JoinType:  ports.JoinTypeLeft,
 				},
 			},
 			IsEnum: false,
@@ -184,6 +184,22 @@ type CancelShipmentRequest struct {
 	CanceledByID pulid.ID `json:"canceledById" query:"canceledById"`
 	CanceledAt   int64    `json:"canceledAt"   query:"canceledAt"`
 	CancelReason string   `json:"cancelReason" query:"cancelReason"`
+}
+
+type UnCancelShipmentRequest struct {
+	ShipmentID         pulid.ID `json:"shipmentId"         query:"shipmentId"`
+	OrgID              pulid.ID `json:"orgId"              query:"orgId"`
+	BuID               pulid.ID `json:"buId"               query:"buId"`
+	UserID             pulid.ID `json:"userId"             query:"userId"`
+	UpdateAppointments bool     `json:"updateAppointments" query:"updateAppointments" default:"false"`
+}
+
+type TransferOwnershipRequest struct {
+	ShipmentID pulid.ID `json:"shipmentId" query:"shipmentId"`
+	OrgID      pulid.ID `json:"orgId"      query:"orgId"`
+	BuID       pulid.ID `json:"buId"       query:"buId"`
+	UserID     pulid.ID `json:"userId"     query:"userId"`
+	OwnerID    pulid.ID `json:"ownerId"    query:"ownerId"`
 }
 
 type DuplicateShipmentRequest struct {
@@ -279,6 +295,11 @@ type ShipmentRepository interface {
 	Update(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
 	UpdateStatus(ctx context.Context, opts *UpdateShipmentStatusRequest) (*shipment.Shipment, error)
 	Cancel(ctx context.Context, req *CancelShipmentRequest) (*shipment.Shipment, error)
+	TransferOwnership(
+		ctx context.Context,
+		req *TransferOwnershipRequest,
+	) (*shipment.Shipment, error)
+	UnCancel(ctx context.Context, req *UnCancelShipmentRequest) (*shipment.Shipment, error)
 	BulkDuplicate(ctx context.Context, req *DuplicateShipmentRequest) ([]*shipment.Shipment, error)
 	CheckForDuplicateBOLs(
 		ctx context.Context,

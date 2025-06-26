@@ -172,6 +172,10 @@ export function getDataTableEndpoint(
       legacy: "/shipments/",
       enhanced: "/shipments/",
     },
+    audit_entry: {
+      legacy: "/audit-logs/",
+      enhanced: "/audit-logs/",
+    },
     worker: {
       legacy: "/workers/",
       enhanced: "/workers/",

@@ -11,7 +11,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
-	"github.com/emoss08/trenova/internal/pkg/utils/streamingutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -54,6 +53,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerSecond(5), // 5 writes per second
 	)...)
 
+	api.Post("/uncancel/", rl.WithRateLimit(
+		[]fiber.Handler{h.unCancel},
+		middleware.PerSecond(5), // 5 writes per second
+	)...)
+
 	api.Get("/select-options/", rl.WithRateLimit(
 		[]fiber.Handler{h.selectOptions},
 		middleware.PerMinute(120), // 120 reads per minute
@@ -66,6 +70,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 
 	api.Put("/:shipmentID/", rl.WithRateLimit(
 		[]fiber.Handler{h.update},
+		middleware.PerMinute(60), // 60 writes per minute
+	)...)
+
+	api.Put("/:shipmentID/transfer-ownership/", rl.WithRateLimit(
+		[]fiber.Handler{h.transferOwnership},
 		middleware.PerMinute(60), // 60 writes per minute
 	)...)
 
@@ -249,6 +258,29 @@ func (h *Handler) cancel(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(newEntity)
 }
 
+func (h *Handler) unCancel(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := new(repositories.UnCancelShipmentRequest)
+	req.OrgID = reqCtx.OrgID
+	req.BuID = reqCtx.BuID
+	req.UserID = reqCtx.UserID
+
+	if err = c.BodyParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	newEntity, err := h.ss.UnCancel(c.UserContext(), req)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(newEntity)
+}
+
 func (h *Handler) duplicate(c *fiber.Ctx) error {
 	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
@@ -377,8 +409,36 @@ func (h *Handler) calculateTotals(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(resp)
 }
 
+func (h *Handler) transferOwnership(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	shipmentID, err := pulid.MustParse(c.Params("shipmentID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := new(repositories.TransferOwnershipRequest)
+	if err = c.BodyParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req.ShipmentID = shipmentID
+	req.BuID = reqCtx.BuID
+	req.OrgID = reqCtx.OrgID
+	req.UserID = reqCtx.UserID
+
+	newEntity, err := h.ss.TransferOwnership(c.UserContext(), req)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(newEntity)
+}
+
 func (h *Handler) liveStream(c *fiber.Ctx) error {
-	// Use the simplified streaming helper for shipments
 	fetchFunc := func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*shipmentdomain.Shipment, error) {
 		result, err := h.ss.List(ctx, &repositories.ListShipmentOptions{
 			ShipmentOptions: repositories.ShipmentOptions{
@@ -400,14 +460,8 @@ func (h *Handler) liveStream(c *fiber.Ctx) error {
 	}
 
 	timestampFunc := func(s *shipmentdomain.Shipment) int64 {
-		// Use CreatedAt to only track new shipments, not existing ones
 		return s.CreatedAt
 	}
 
-	return streamingutils.StreamWithSimplePoller(
-		c,
-		streamingutils.DefaultSSEConfig(),
-		fetchFunc,
-		timestampFunc,
-	)
+	return h.ss.LiveStream(c, fetchFunc, timestampFunc)
 }

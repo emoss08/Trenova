@@ -32,8 +32,8 @@ export default function CustomersDataTable() {
       useEnhancedBackend={true}
       extraSearchParams={{
         includeState: true,
-        includeBillingProfile: false,
-        includeEmailProfile: false,
+        includeBillingProfile: true,
+        includeEmailProfile: true,
       }}
       defaultSort={[{ field: "createdAt", direction: "desc" }]}
     />

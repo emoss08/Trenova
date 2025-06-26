@@ -113,7 +113,11 @@ export function ShipmentDuplicateDialog({
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
-          <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
+          <Form className="space-y-0 p-0" onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSubmit(onSubmit)(e);
+          }}>
             <DialogBody>
               <ShipmentDuplicateForm />
             </DialogBody>

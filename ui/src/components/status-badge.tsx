@@ -433,7 +433,7 @@ export function PlainShipmentStatusBadge({
         "All required equipment and workers have been assigned to this shipment's moves.",
     },
     [ShipmentStatus.InTransit]: {
-      className: "bg-info",
+      className: "bg-blue-600",
       text: "In Transit",
       description:
         "Active shipment with cargo currently in transport between designated locations.",
@@ -480,7 +480,7 @@ export function PlainShipmentStatusBadge({
     <div className="flex items-center gap-x-1">
       <div
         className={cn(
-          "size-2 rounded-full",
+          "size-2 mb-0.5 rounded-full",
           statusAttributes[status].className,
         )}
       />

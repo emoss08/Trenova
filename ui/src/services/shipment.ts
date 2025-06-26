@@ -1,4 +1,5 @@
 import { http } from "@/lib/http-client";
+import type { ShipmentUncancelSchema } from "@/lib/schemas/shipment-cancellation-schema";
 import type { ShipmentDuplicateSchema } from "@/lib/schemas/shipment-duplicate-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { LimitOffsetResponse } from "@/types/server";
@@ -41,6 +42,12 @@ export class ShipmentAPI {
 
   async create(shipment: ShipmentSchema) {
     return await http.post<ShipmentSchema>("/shipments/", shipment);
+  }
+
+  async uncancel(values: ShipmentUncancelSchema) {
+    const response = await http.post<Shipment>(`/shipments/uncancel/`, values);
+
+    return response.data;
   }
 
   // Check for duplicate BOLs

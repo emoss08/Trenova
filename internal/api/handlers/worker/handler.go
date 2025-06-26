@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/worker"
 	"github.com/emoss08/trenova/internal/pkg/appctx"
+	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types"
@@ -67,14 +68,13 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 	}
 
 	req := &repositories.ListWorkerRequest{
-		Filter: &ports.LimitOffsetQueryOptions{
-			Query: c.Query("query"),
+		Filter: &ports.QueryOptions{
 			TenantOpts: &ports.TenantOptions{
 				OrgID:  reqCtx.OrgID,
 				BuID:   reqCtx.BuID,
 				UserID: reqCtx.UserID,
 			},
-			Limit:  10,
+			Limit:  100,
 			Offset: 0,
 		},
 	}
@@ -98,19 +98,24 @@ func (h *Handler) list(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
+	eo, err := paginationutils.ParseEnhancedQueryFromJSON(c, reqCtx)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	qo := new(repositories.ListWorkerRequest)
+	if err = paginationutils.ParseAdditionalQueryParams(c, qo); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	listOpts := repositories.BuildWorkerListOptions(eo, qo)
+
 	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*workerdomain.Worker], error) {
 		if err = fc.QueryParser(filter); err != nil {
 			return nil, h.eh.HandleError(fc, err)
 		}
 
-		return h.ws.List(fc.UserContext(), &repositories.ListWorkerRequest{
-			Filter: filter,
-			FilterOptions: repositories.WorkerFilterOptions{
-				Status:         fc.Query("status"),
-				IncludeProfile: fc.QueryBool("includeProfile"),
-				IncludePTO:     fc.QueryBool("includePTO"),
-			},
-		})
+		return h.ws.List(fc.UserContext(), listOpts)
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)

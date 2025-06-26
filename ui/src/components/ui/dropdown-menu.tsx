@@ -52,7 +52,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
     <DropdownMenuPrimitive.SubTrigger
       ref={ref}
       className={cn(
-        "flex cursor-default gap-2 select-none items-center rounded-sm px-2 py-1 text-sm outline-hidden focus:bg-muted-foreground/10 data-[state=open]:bg-muted-foreground/10 [&_svg]:pointer-events-none [&_svg]:size-3 [&_svg]:shrink-0",
+        "flex cursor-default gap-2 select-none items-center rounded-sm px-2 py-1 text-sm outline-hidden focus:bg-muted data-[state=open]:bg-muted [&_svg]:pointer-events-none [&_svg]:size-3 [&_svg]:shrink-0",
         inset && "pl-8",
         color && statusColors[color],
         className,
@@ -155,7 +155,7 @@ const DropdownMenuItem = React.forwardRef<
       data-slot="dropdown-menu-item"
       data-inset={inset}
       className={cn(
-        "group relative flex cursor-pointer select-none items-center gap-2 focus:bg-muted-foreground/10 hover:bg-muted-foreground/10 rounded-sm px-2 py-1 text-sm outline-hidden focus:text-accent-foreground transition-colors data-disabled:opacity-50 data-disabled:pointer-events-none [&>svg]:size-3 [&>svg]:shrink-0",
+        "group relative flex cursor-pointer select-none items-center gap-2 focus:bg-muted hover:bg-muted rounded-sm px-2 py-1 text-sm outline-hidden focus:text-accent-foreground transition-colors data-disabled:opacity-50 data-disabled:pointer-events-none [&>svg]:size-3 [&>svg]:shrink-0",
         inset && "pl-8",
         color && statusColors[color],
 
@@ -217,7 +217,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
   <DropdownMenuPrimitive.CheckboxItem
     ref={ref}
     className={cn(
-      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-xs outline-hidden transition-colors focus:bg-muted-foreground/10 focus:text-accent-foreground data-disabled:cursor-not-allowed data-disabled:opacity-50 data-disabled:pointer-events-none",
+      "relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-xs outline-hidden transition-colors focus:bg-muted focus:text-accent-foreground data-disabled:cursor-not-allowed data-disabled:opacity-50 data-disabled:pointer-events-none",
       className,
     )}
     checked={checked}
@@ -276,7 +276,7 @@ const DropdownMenuSeparator = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <DropdownMenuPrimitive.Separator
     ref={ref}
-    className={cn("-mx-1 my-1 h-px bg-muted-foreground/10", className)}
+    className={cn("-mx-1 my-1 h-px bg-muted", className)}
     {...props}
   />
 ));

@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
-	"github.com/emoss08/trenova/internal/pkg/utils/streamingutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
@@ -127,19 +126,14 @@ func (h *Handler) get(c *fiber.Ctx) error {
 }
 
 func (h *Handler) liveStream(c *fiber.Ctx) error {
-	// Use the simplified streaming helper for audit entries
 	fetchFunc := func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*audit.Entry, error) {
-		filter := &ports.LimitOffsetQueryOptions{
+		result, err := h.auditService.List(ctx, &ports.LimitOffsetQueryOptions{
 			TenantOpts: &ports.TenantOptions{
 				BuID:   reqCtx.BuID,
 				OrgID:  reqCtx.OrgID,
 				UserID: reqCtx.UserID,
 			},
-			Limit:  10, // Get last 10 entries
-			Offset: 0,
-		}
-
-		result, err := h.auditService.List(ctx, filter)
+		})
 		if err != nil {
 			return nil, err
 		}
@@ -151,10 +145,5 @@ func (h *Handler) liveStream(c *fiber.Ctx) error {
 		return entry.Timestamp
 	}
 
-	return streamingutils.StreamWithSimplePoller(
-		c,
-		streamingutils.DefaultSSEConfig(),
-		fetchFunc,
-		timestampFunc,
-	)
+	return h.auditService.LiveStream(c, fetchFunc, timestampFunc)
 }

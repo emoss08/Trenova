@@ -62,30 +62,6 @@ services:
       timeout: 5s
       retries: 5
 
-  rabbitmq:
-    image: "rabbitmq:3-management"
-    ports:
-      - "5674:5672" # RabbitMQ
-      - "15674:15672" # Management UI
-    environment:
-      RABBITMQ_DEFAULT_USER: "user"
-      RABBITMQ_DEFAULT_PASS: "password"
-    volumes:
-      - "rabbitmq_data:/var/lib/rabbitmq"
-      - "rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf" # Configuration file mount
-    restart: always
-    healthcheck:
-      test: [ "CMD", "rabbitmqctl", "status" ]
-      interval: 30s
-      timeout: 10s
-      retries: 10
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-
   asynqmon:
     image: hibiken/asynqmon:latest
     ports:
@@ -136,6 +112,141 @@ services:
         limits:
           memory: 512M
 
+  # Kafka and CDC services
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.4.0
+    hostname: zookeeper
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
+    networks:
+      - app-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  kafka:
+    image: confluentinc/cp-kafka:7.4.0
+    hostname: kafka
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - app-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    healthcheck:
+      test: kafka-broker-api-versions --bootstrap-server kafka:29092
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:7.4.0
+    hostname: schema-registry
+    container_name: schema-registry
+    depends_on:
+      - kafka
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: kafka:29092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    networks:
+      - app-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
+  kafka-connect:
+    image: debezium/connect:2.4
+    hostname: kafka-connect
+    container_name: kafka-connect
+    depends_on:
+      - kafka
+      - db
+    ports:
+      - "8083:8083"
+    environment:
+      BOOTSTRAP_SERVERS: kafka:29092
+      GROUP_ID: 1
+      CONFIG_STORAGE_TOPIC: connect-configs
+      OFFSET_STORAGE_TOPIC: connect-offsets
+      STATUS_STORAGE_TOPIC: connect-statuses
+      CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
+      CONNECT_PLUGIN_PATH: /kafka/connect,/debezium/connector
+    volumes:
+      - kafka_connect_data:/kafka/connect
+    networks:
+      - app-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    healthcheck:
+      test: curl -f http://localhost:8083/connectors
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    depends_on:
+      - kafka
+      - schema-registry
+      - kafka-connect
+    ports:
+      - "8082:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: debezium
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect:8083
+    networks:
+      - app-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+
 volumes:
   pg_data: {}
   redis_data: {}
@@ -143,6 +254,10 @@ volumes:
   rabbitmq_data: {}
   rabbitmq.conf: {}
   watchtower_data: {}
+  zookeeper_data: {}
+  zookeeper_logs: {}
+  kafka_data: {}
+  kafka_connect_data: {}
 
 networks:
   app-network:

@@ -1,10 +1,6 @@
 package config
 
 import (
-	"fmt"
-	"net"
-	"strconv"
-	"strings"
 	"time"
 )
 
@@ -25,9 +21,6 @@ type Config struct {
 	// Redis is the redis configuration.
 	Redis RedisConfig `mapstructure:"redis"`
 
-	// RabbitMQ is the rabbitmq configuration.
-	RabbitMQ RabbitMQConfig `mapstructure:"rabbitmq"`
-
 	// Auth is the auth configuration.
 	Auth AuthConfig `mapstructure:"auth"`
 
@@ -46,6 +39,12 @@ type Config struct {
 
 	// Backup is the backup configuration.
 	Backup BackupConfig `mapstructure:"backup"`
+
+	// Kafka is the kafka configuration for CDC.
+	Kafka KafkaConfig `mapstructure:"kafka"`
+
+	// Streaming is the streaming configuration.
+	Streaming StreamingConfig `mapstructure:"streaming"`
 }
 
 type LogConfig struct {
@@ -315,51 +314,6 @@ type RedisConfig struct {
 	MinIdleConns int `mapstructure:"minIdleConns"`
 }
 
-type RabbitMQConfig struct {
-	// Host is the rabbitmq host.
-	Host string `mapstructure:"host"`
-
-	// Port is the rabbitmq port.
-	Port int `mapstructure:"port"`
-
-	// Username is the rabbitmq username.
-	Username string `mapstructure:"username"`
-
-	// Password is the rabbitmq password.
-	Password string `mapstructure:"password"`
-
-	// VHost is the rabbitmq vhost.
-	VHost string `mapstructure:"vhost"`
-
-	// ExchangeName is the rabbitmq exchange name.
-	ExchangeName string `mapstructure:"exchangeName"`
-
-	// QueueName is the rabbitmq queue name.
-	QueueName string `mapstructure:"queueName"`
-
-	// Timeout is the rabbitmq timeout.
-	Timeout time.Duration `mapstructure:"timeout"`
-}
-
-func (c *RabbitMQConfig) URL() string {
-	vhost := c.VHost
-	// Ensure that if VHost from config is "/", the URL path is "/"
-	// If VHost is "custom", path is "/custom"
-	// If VHost is "/custom", path is "/custom"
-	if vhost == "/" {
-		vhost = "" // Sprintf will add the leading slash, resulting in amqp://...@host:port/
-	} else if strings.HasPrefix(vhost, "/") {
-		vhost = strings.TrimPrefix(vhost, "/")
-	}
-	return fmt.Sprintf(
-		"amqp://%s:%s@%s/%s",
-		c.Username,
-		c.Password,
-		net.JoinHostPort(c.Host, strconv.Itoa(c.Port)),
-		vhost,
-	)
-}
-
 // AuthConfig is the configuration for the auth.
 type AuthConfig struct {
 	// SessionCookieName is the session cookie name.
@@ -508,4 +462,58 @@ type BackupConfig struct {
 	// NotificationEmail is the email address to send notifications to.
 	// If empty, email notifications will be disabled.
 	NotificationEmail string `mapstructure:"notificationEmail"`
+}
+
+// KafkaConfig is the configuration for Kafka CDC
+type KafkaConfig struct {
+	// Enabled determines whether Kafka CDC is active
+	Enabled bool `mapstructure:"enabled"`
+
+	// Brokers is the list of Kafka broker addresses
+	Brokers []string `mapstructure:"brokers"`
+
+	// ConsumerGroupID is the Kafka consumer group ID
+	ConsumerGroupID string `mapstructure:"consumerGroupId"`
+
+	// TopicPattern is the Kafka topic pattern for all table changes (e.g., "trenova.public.*")
+	TopicPattern string `mapstructure:"topicPattern"`
+
+	// CommitInterval is the interval for committing offsets
+	CommitInterval time.Duration `mapstructure:"commitInterval"`
+
+	// StartOffset determines where to start reading (earliest/latest)
+	StartOffset string `mapstructure:"startOffset"`
+
+	// MaxRetries is the maximum number of retries for failed operations
+	MaxRetries int `mapstructure:"maxRetries"`
+
+	// RetryBackoff is the backoff duration between retries
+	RetryBackoff time.Duration `mapstructure:"retryBackoff"`
+
+	// ReadTimeout is the timeout for reading messages
+	ReadTimeout time.Duration `mapstructure:"readTimeout"`
+
+	// WriteTimeout is the timeout for writing messages
+	WriteTimeout time.Duration `mapstructure:"writeTimeout"`
+}
+
+// StreamingConfig is the configuration for real-time streaming
+type StreamingConfig struct {
+	// PollInterval is the interval between data fetches (fallback mode)
+	PollInterval time.Duration `mapstructure:"pollInterval"`
+
+	// MaxConnections is the maximum number of concurrent connections per stream
+	MaxConnections int `mapstructure:"maxConnections"`
+
+	// StreamTimeout is the maximum duration for a stream connection
+	StreamTimeout time.Duration `mapstructure:"streamTimeout"`
+
+	// EnableHeartbeat enables periodic heartbeat messages
+	EnableHeartbeat bool `mapstructure:"enableHeartbeat"`
+
+	// HeartbeatInterval is the interval for sending heartbeat messages
+	HeartbeatInterval time.Duration `mapstructure:"heartbeatInterval"`
+
+	// MaxConnectionsPerUser limits connections per user
+	MaxConnectionsPerUser int `mapstructure:"maxConnectionsPerUser"`
 }

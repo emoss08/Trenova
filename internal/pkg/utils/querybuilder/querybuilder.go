@@ -93,9 +93,13 @@ func (qb *QueryBuilder) ApplySort(sorts []ports.SortField) *QueryBuilder {
 		dbField := qb.getDBField(sort.Field)
 		direction := strings.ToUpper(string(sort.Direction))
 
-		if qb.tableAlias != "" {
+		// Check if the field is already qualified (contains a dot)
+		switch {
+		case strings.Contains(dbField, "."):
+			qb.query = qb.query.Order(fmt.Sprintf("%s %s", dbField, direction))
+		case qb.tableAlias != "":
 			qb.query = qb.query.Order(fmt.Sprintf("%s.%s %s", qb.tableAlias, dbField, direction))
-		} else {
+		default:
 			qb.query = qb.query.Order(fmt.Sprintf("%s %s", dbField, direction))
 		}
 	}
@@ -118,9 +122,13 @@ func (qb *QueryBuilder) applyPendingSorts() {
 		dbField := qb.getDBField(sort.Field)
 		direction := strings.ToUpper(string(sort.Direction))
 
-		if qb.tableAlias != "" {
+		// Check if the field is already qualified (contains a dot)
+		switch {
+		case strings.Contains(dbField, "."):
+			qb.query = qb.query.Order(fmt.Sprintf("%s %s", dbField, direction))
+		case qb.tableAlias != "":
 			qb.query = qb.query.Order(fmt.Sprintf("%s.%s %s", qb.tableAlias, dbField, direction))
-		} else {
+		default:
 			qb.query = qb.query.Order(fmt.Sprintf("%s %s", dbField, direction))
 		}
 	}
@@ -157,16 +165,16 @@ func (qb *QueryBuilder) applyNestedFieldJoins(joins []ports.JoinDefinition) {
 		}
 
 		// Apply the join based on type
-		switch strings.ToUpper(join.JoinType) {
-		case "LEFT":
+		switch join.JoinType {
+		case ports.JoinTypeLeft:
 			qb.query = qb.query.Join(
 				fmt.Sprintf("LEFT JOIN %s AS %s ON %s", join.Table, join.Alias, join.Condition),
 			)
-		case "RIGHT":
+		case ports.JoinTypeRight:
 			qb.query = qb.query.Join(
 				fmt.Sprintf("RIGHT JOIN %s AS %s ON %s", join.Table, join.Alias, join.Condition),
 			)
-		case "INNER", "":
+		case ports.JoinTypeInner, ports.JoinTypeNone:
 			qb.query = qb.query.Join(
 				fmt.Sprintf("INNER JOIN %s AS %s ON %s", join.Table, join.Alias, join.Condition),
 			)

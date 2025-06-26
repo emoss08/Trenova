@@ -75,17 +75,17 @@ export function DataTable<TData extends Record<string, any>>({
   const { can } = usePermissions();
   const [columnVisibility, setColumnVisibility] =
     useLocalStorage<VisibilityState>(
-      `${resource.toLowerCase()}-column-visibility`,
+      `trenova-${resource.toLowerCase()}-column-visibility`,
       {},
     );
 
   // Live mode state management
   const [liveModeEnabled, setLiveModeEnabled] = useLocalStorage(
-    `${resource.toLowerCase()}-live-mode-enabled`,
+    `trenova-${resource.toLowerCase()}-live-mode-enabled`,
     liveMode?.enabled || false,
   );
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useLocalStorage(
-    `${resource.toLowerCase()}-auto-refresh-enabled`,
+    `trenova-${resource.toLowerCase()}-auto-refresh-enabled`,
     liveMode?.autoRefresh || false,
   );
 
@@ -279,7 +279,7 @@ export function DataTable<TData extends Record<string, any>>({
             />
           )}
 
-          <Table className="rounded-md border-x border-border border-separate border-spacing-0">
+          <Table>
             {includeHeader && <DataTableHeader table={table} />}
             <DataTableBody
               table={table}

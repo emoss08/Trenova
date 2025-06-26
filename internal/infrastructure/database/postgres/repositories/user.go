@@ -72,7 +72,8 @@ func (ur *userRepository) filterQuery(
 	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 		return sq.
 			Where("usr.business_unit_id = ?", req.Filter.TenantOpts.BuID).
-			Where("usr.current_organization_id = ?", req.Filter.TenantOpts.OrgID)
+			Where("usr.current_organization_id = ?", req.Filter.TenantOpts.OrgID).
+			Where("usr.username != ?", "system") // ! Exclude the system user
 	})
 
 	if req.Filter.Query != "" {
