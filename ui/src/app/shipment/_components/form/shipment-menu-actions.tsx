@@ -11,15 +11,17 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { usePermissions } from "@/hooks/use-permissions";
+import { shipmentActionsParser } from "@/hooks/use-shipment-actions-state";
 import { http } from "@/lib/http-client";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { Resource } from "@/types/audit-entry";
 import { Action } from "@/types/roles-permissions";
 import { ShipmentStatus } from "@/types/shipment";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
-import { parseAsBoolean, useQueryState } from "nuqs";
+import { useQueryStates } from "nuqs";
 import { toast } from "sonner";
 import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellatioin-dialog";
+import { UnCancelShipmentDialog } from "../cancellation/shipment-uncanel-dialog";
 import { ShipmentDocumentDialog } from "../document/shipment-document-dialog";
 import { ShipmentDocumentWorkflow } from "../document/shipment-document-workflow";
 import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog";
@@ -34,48 +36,13 @@ const cancellatedStatuses = [
   ShipmentStatus.Completed,
 ];
 
-const dialogs = {
-  auditDialogOpen: parseAsBoolean.withDefault(false),
-  documentDialogOpen: parseAsBoolean.withDefault(false),
-  addDocumentDialogOpen: parseAsBoolean.withDefault(false),
-  cancellationDialogOpen: parseAsBoolean.withDefault(false),
-  duplicateDialogOpen: parseAsBoolean.withDefault(false),
-  transferDialogOpen: parseAsBoolean.withDefault(false),
-};
-
 export function ShipmentActions({
   shipment,
 }: {
   shipment?: ShipmentSchema | null;
 }) {
   const { can } = usePermissions();
-
-  const [cancellationDialogOpen, setCancellationDialogOpen] =
-    useQueryState<boolean>(
-      "cancellationDialogOpen",
-      dialogs.cancellationDialogOpen.withOptions({}),
-    );
-  const [duplicateDialogOpen, setDuplicateDialogOpen] = useQueryState<boolean>(
-    "duplicateDialogOpen",
-    dialogs.duplicateDialogOpen.withOptions({}),
-  );
-  const [documentDialogOpen, setDocumentDialogOpen] = useQueryState<boolean>(
-    "documentDialogOpen",
-    dialogs.documentDialogOpen.withOptions({}),
-  );
-  const [auditDialogOpen, setAuditDialogOpen] = useQueryState<boolean>(
-    "auditDialogOpen",
-    dialogs.auditDialogOpen.withOptions({}),
-  );
-  const [addDocumentDialogOpen, setAddDocumentDialogOpen] =
-    useQueryState<boolean>(
-      "addDocumentDialogOpen",
-      dialogs.addDocumentDialogOpen.withOptions({}),
-    );
-  const [transferDialogOpen, setTransferDialogOpen] = useQueryState<boolean>(
-    "transferDialogOpen",
-    dialogs.transferDialogOpen.withOptions({}),
-  );
+  const [searchParams, setSearchParams] = useQueryStates(shipmentActionsParser);
 
   if (!shipment) {
     return null;
@@ -125,7 +92,7 @@ export function ShipmentActions({
           <DropdownMenuItem
             title="Duplicate"
             description="Create a copy of this shipment."
-            onClick={() => setDuplicateDialogOpen(!duplicateDialogOpen)}
+            onClick={() => setSearchParams({ duplicateDialogOpen: true })}
             disabled={!can(Resource.Shipment, Action.Duplicate)}
           />
           <DropdownMenuItem
@@ -137,16 +104,16 @@ export function ShipmentActions({
             description="Cancel this shipment and update its status."
             onClick={() => {
               if (shipment.status === ShipmentStatus.Canceled) {
-                handleUncancel();
+                setSearchParams({ unCancelDialogOpen: true });
               } else {
-                setCancellationDialogOpen(!cancellationDialogOpen);
+                setSearchParams({ cancellationDialogOpen: true });
               }
             }}
           />
           <DropdownMenuItem
             title="Transfer Ownership"
             description="Transfer this shipment to a different user."
-            onClick={() => setTransferDialogOpen(!transferDialogOpen)}
+            onClick={() => setSearchParams({ transferDialogOpen: true })}
           />
           <DropdownMenuLabel>Management Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
@@ -165,7 +132,7 @@ export function ShipmentActions({
           <DropdownMenuItem
             title="Add Document(s)"
             description="Attach relevant documents to this shipment."
-            onClick={() => setAddDocumentDialogOpen(!addDocumentDialogOpen)}
+            onClick={() => setSearchParams({ addDocumentDialogOpen: true })}
           />
           <DropdownMenuItem
             title="Add Comment(s)"
@@ -177,7 +144,7 @@ export function ShipmentActions({
           <DropdownMenuItem
             title="View Documents"
             description="Review attached shipment documents."
-            onClick={() => setDocumentDialogOpen(!documentDialogOpen)}
+            onClick={() => setSearchParams({ documentDialogOpen: true })}
           />
           <DropdownMenuItem
             title="View Comments"
@@ -187,40 +154,49 @@ export function ShipmentActions({
           <DropdownMenuItem
             title="View Audit Log"
             description="Track all modifications and updates to this shipment."
-            onClick={() => setAuditDialogOpen(!auditDialogOpen)}
+            onClick={() => setSearchParams({ auditDialogOpen: true })}
           />
         </DropdownMenuContent>
       </DropdownMenu>
       <ShipmentDuplicateDialog
-        open={duplicateDialogOpen}
-        onOpenChange={setDuplicateDialogOpen}
+        open={searchParams.duplicateDialogOpen}
+        onOpenChange={(open) => setSearchParams({ duplicateDialogOpen: open })}
         shipment={shipment}
       />
       <ShipmentCancellationDialog
-        open={cancellationDialogOpen}
-        onOpenChange={setCancellationDialogOpen}
+        open={searchParams.cancellationDialogOpen}
+        onOpenChange={(open) =>
+          setSearchParams({ cancellationDialogOpen: open })
+        }
         shipmentId={shipment.id ?? ""}
       />
       <EntryAuditViewer
-        open={auditDialogOpen}
-        onOpenChange={setAuditDialogOpen}
+        open={searchParams.auditDialogOpen}
+        onOpenChange={(open) => setSearchParams({ auditDialogOpen: open })}
         resourceId={shipment.id ?? ""}
       />
       <ShipmentDocumentDialog
-        open={documentDialogOpen}
-        onOpenChange={setDocumentDialogOpen}
+        open={searchParams.documentDialogOpen}
+        onOpenChange={(open) => setSearchParams({ documentDialogOpen: open })}
         shipmentId={shipment.id}
       />
       <ShipmentDocumentWorkflow
-        open={addDocumentDialogOpen}
-        onOpenChange={setAddDocumentDialogOpen}
+        open={searchParams.addDocumentDialogOpen}
+        onOpenChange={(open) =>
+          setSearchParams({ addDocumentDialogOpen: open })
+        }
         shipmentId={shipment.id}
         customerId={shipment.customerId}
         shipmentStatus={shipment.status}
       />
+      <UnCancelShipmentDialog
+        open={searchParams.unCancelDialogOpen}
+        onOpenChange={(open) => setSearchParams({ unCancelDialogOpen: open })}
+        shipmentId={shipment.id}
+      />
       <TransferOwnershipDialog
-        open={transferDialogOpen}
-        onOpenChange={setTransferDialogOpen}
+        open={searchParams.transferDialogOpen}
+        onOpenChange={(open) => setSearchParams({ transferDialogOpen: open })}
         shipmentId={shipment.id}
         currentOwnerId={shipment.ownerId}
       />
