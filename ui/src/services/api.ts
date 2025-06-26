@@ -1,6 +1,7 @@
 import { http } from "@/lib/http-client";
 import type { TractorAssignment } from "@/types/assignment";
 import { Tractor } from "@/types/tractor";
+import { AccessorialChargeAPI } from "./accessorial-charge";
 import { AnalyticsAPI } from "./analytics";
 import { AuditEntryAPI } from "./audit-entry";
 import { AuthAPI } from "./auth";
@@ -60,6 +61,7 @@ class API {
   dedicatedLaneSuggestions: DedicatedLaneSuggestionAPI;
   patternConfig: PatternConfigAPI;
   notifications: NotificationAPI;
+  accessorialCharge: AccessorialChargeAPI;
 
   constructor() {
     this.assignments = new AssignmentsAPI();
@@ -86,6 +88,7 @@ class API {
     this.patternConfig = new PatternConfigAPI();
     this.notifications = new NotificationAPI();
     this.user = new UserAPI();
+    this.accessorialCharge = new AccessorialChargeAPI();
   }
 }
 

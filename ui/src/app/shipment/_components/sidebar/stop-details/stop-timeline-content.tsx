@@ -137,8 +137,6 @@ export default function StopTimeline({
   const currentMove = watchedMoves?.[moveIdx];
   const currentStop = currentMove?.stops?.[stopIdx] || stop;
   const currentNextStop = currentMove?.stops?.[stopIdx + 1] || nextStop;
-  const lineStyles = getLineStyles(currentStop.status, prevStopStatus);
-  const plannedArrival = formatSplitDateTime(currentStop.plannedArrival);
 
   // Check for errors
   const stopErrors = errors.moves?.[moveIdx]?.stops?.[stopIdx];
@@ -153,7 +151,6 @@ export default function StopTimeline({
 
   const nextStopHasInfo =
     currentNextStop?.location?.addressLine1 || currentNextStop?.plannedArrival;
-  const shouldShowLine = !isLast && hasStopInfo && nextStopHasInfo;
 
   // Handler to open dialog
   const openEditDialog = useCallback(() => {
@@ -192,121 +189,157 @@ export default function StopTimeline({
   }, [getValues, moveIdx, setValue, stopIdx]);
 
   return (
-    <ContextMenu>
-      <ContextMenuTrigger asChild>
-        <div>
-          <div
-            className={cn(
-              "relative h-[60px] rounded-lg select-none bg-muted pt-2 border border-border",
-              hasErrors && "border-destructive bg-destructive/10",
-            )}
-          >
-            {hasStopInfo ? (
-              <>
-                {shouldShowLine && (
-                  <div
-                    className={cn(
-                      "absolute left-[121px] ml-[2px] top-[20px] bottom-0 w-[2px] z-10",
-                      lineStyles,
-                    )}
-                    style={{ height: "80px" }}
-                  />
-                )}
-                <div className="flex items-start gap-4 py-1">
-                  <div className="w-24 text-right text-sm">
-                    <div className="text-primary text-xs">
-                      {plannedArrival.date}
-                    </div>
-                    <div className="text-muted-foreground text-2xs">
-                      {plannedArrival.time}
-                    </div>
-                  </div>
-                  <div className="relative z-10">
-                    <StopCircle
-                      status={currentStop.status}
-                      isLast={isLast}
-                      moveStatus={moveStatus}
-                      hasErrors={hasErrors}
-                      prevStopStatus={prevStopStatus}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <LocationDisplay
-                      location={currentStop.location}
-                      type={currentStop.type}
-                      locationId={currentStop.locationId}
-                    />
-                  </div>
-                </div>
-              </>
-            ) : (
-              <div className="flex flex-col items-center justify-center text-center">
-                {hasErrors ? (
-                  <div className="flex flex-col items-center justify-center">
-                    <span className="mt-1 text-sm text-red-500">
-                      Error in &apos;{getStopTypeLabel(currentStop.type)}&apos;
-                      stop
-                    </span>
-                    <p className="text-red-500 text-xs">
-                      Please click to edit and fix the errors.
-                    </p>
-                  </div>
-                ) : (
-                  <>
-                    <div className="text-foreground text-sm">
-                      Enter {getStopTypeLabel(currentStop.type)} Information
-                    </div>
-                    <p className="text-muted-foreground text-xs">
-                      {getStopTypeLabel(currentStop.type)} information is
-                      required to create a shipment.
-                    </p>
-                  </>
-                )}
-              </div>
-            )}
+    <>
+      <ContextMenu>
+        <ContextMenuTrigger asChild>
+          <div>
+            <StopTimelineItem
+              stop={currentStop}
+              hasErrors={hasErrors}
+              nextStopHasInfo={nextStopHasInfo}
+              isLast={isLast}
+              moveStatus={moveStatus}
+              prevStopStatus={prevStopStatus}
+            />
           </div>
+        </ContextMenuTrigger>
+        <ContextMenuContent>
+          <ContextMenuItem onClick={openEditDialog}>
+            <StopContextMenuItem
+              title="Edit"
+              description="Edit the stop information"
+            />
+          </ContextMenuItem>
+          {hasActualDates && (
+            <ContextMenuItem onClick={handleRevert}>
+              <StopContextMenuItem
+                title="Revert"
+                description="Revert and clear the stop arrival date and times"
+              />
+            </ContextMenuItem>
+          )}
+          {hasActualDates && hasStopInfo && (
+            <ContextMenuItem>
+              <StopContextMenuItem
+                title="Cancel"
+                description="Cancel the stop and clear the stop arrival date and times"
+              />
+            </ContextMenuItem>
+          )}
+          <ContextMenuItem variant="destructive">
+            <StopContextMenuItem
+              title="Remove"
+              description="Remove the stop from the movement"
+            />
+          </ContextMenuItem>
+        </ContextMenuContent>
+      </ContextMenu>
+      {isDialogOpen && (
+        <StopDialog
+          open={isDialogOpen}
+          onOpenChange={handleDialogChange}
+          moveIdx={moveIdx}
+          stopIdx={stopIdx}
+        />
+      )}
+    </>
+  );
+}
 
-          {isDialogOpen && (
-            <StopDialog
-              open={isDialogOpen}
-              onOpenChange={handleDialogChange}
-              moveIdx={moveIdx}
-              stopIdx={stopIdx}
+function StopTimelineItem({
+  stop,
+  hasErrors,
+  nextStopHasInfo,
+  isLast,
+  moveStatus,
+  prevStopStatus,
+}: {
+  stop: StopSchema;
+  nextStopHasInfo: string | number;
+  isLast: boolean;
+  moveStatus: MoveStatus;
+  prevStopStatus?: StopStatus;
+  hasErrors?: boolean;
+}) {
+  const currentStop = stop;
+
+  // Check if we have stop info
+  const hasStopInfo =
+    currentStop.location?.addressLine1 || currentStop.plannedArrival;
+
+  const shouldShowLine = !isLast && hasStopInfo && nextStopHasInfo;
+
+  const lineStyles = getLineStyles(currentStop.status, prevStopStatus);
+  const plannedArrival = formatSplitDateTime(currentStop.plannedArrival);
+
+  return (
+    <div
+      className={cn(
+        "relative h-[60px] rounded-lg select-none bg-muted pt-2 border border-border group",
+        hasErrors && "border-destructive bg-destructive/10",
+      )}
+    >
+      {hasStopInfo ? (
+        <>
+          {shouldShowLine && (
+            <div
+              className={cn(
+                "absolute left-[121px] ml-[2px] top-[20px] bottom-0 w-[2px] z-10",
+                lineStyles,
+              )}
+              style={{ height: "80px" }}
             />
           )}
+          <div className="flex items-start gap-4 py-1">
+            <div className="w-24 text-right text-sm">
+              <div className="text-primary text-xs">{plannedArrival.date}</div>
+              <div className="text-muted-foreground text-2xs">
+                {plannedArrival.time}
+              </div>
+            </div>
+            <div className="relative z-10">
+              <StopCircle
+                status={currentStop.status}
+                isLast={isLast}
+                moveStatus={moveStatus}
+                hasErrors={hasErrors}
+                prevStopStatus={prevStopStatus}
+              />
+            </div>
+            <div className="flex-1">
+              <LocationDisplay
+                location={currentStop.location}
+                type={currentStop.type}
+                locationId={currentStop.locationId}
+              />
+            </div>
+          </div>
+        </>
+      ) : (
+        <div className="flex flex-col items-center justify-center text-center">
+          {hasErrors ? (
+            <div className="flex flex-col items-center justify-center">
+              <span className="mt-1 text-sm text-red-500">
+                Error in &apos;{getStopTypeLabel(currentStop.type)}&apos; stop
+              </span>
+              <p className="text-red-500 text-xs">
+                Please click to edit and fix the errors.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="text-foreground text-sm">
+                Enter {getStopTypeLabel(currentStop.type)} Information
+              </div>
+              <p className="text-muted-foreground text-xs">
+                {getStopTypeLabel(currentStop.type)} information is required to
+                create a shipment.
+              </p>
+            </>
+          )}
         </div>
-      </ContextMenuTrigger>
-      <ContextMenuContent>
-        <ContextMenuItem onClick={openEditDialog}>
-          <StopContextMenuItem
-            title="Edit"
-            description="Edit the stop information"
-          />
-        </ContextMenuItem>
-        {hasActualDates && (
-          <ContextMenuItem onClick={handleRevert}>
-            <StopContextMenuItem
-              title="Revert"
-              description="Revert and clear the stop arrival date and times"
-            />
-          </ContextMenuItem>
-        )}
-        {hasActualDates && hasStopInfo && (
-          <ContextMenuItem>
-            <StopContextMenuItem
-              title="Cancel"
-              description="Cancel the stop and clear the stop arrival date and times"
-            />
-          </ContextMenuItem>
-        )}
-        <ContextMenuItem variant="destructive">
-          <StopContextMenuItem
-            title="Remove"
-            description="Remove the stop from the movement"
-          />
-        </ContextMenuItem>
-      </ContextMenuContent>
-    </ContextMenu>
+      )}
+    </div>
   );
 }
 

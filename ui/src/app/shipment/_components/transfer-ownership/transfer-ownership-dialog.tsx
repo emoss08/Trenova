@@ -49,8 +49,6 @@ export function TransferOwnershipDialog({
     handleSubmit,
   } = form;
 
-  console.info("isDirty", isDirty);
-
   const { mutateAsync } = useApiMutation({
     setFormError: setError,
     resourceName: "Ownership Transfer",
