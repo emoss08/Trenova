@@ -114,7 +114,11 @@ export function ShipmentCancellationDialog({
           </DialogDescription>
         </DialogHeader>
         <FormProvider {...form}>
-          <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
+          <Form className="space-y-0 p-0" onSubmit={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            handleSubmit(onSubmit)(e);
+          }}>
             <DialogBody>
               <ShipmentCancellationForm />
             </DialogBody>
@@ -127,7 +131,8 @@ export function ShipmentCancellationDialog({
                 Cancel
               </Button>
               <FormSaveButton
-                type="submit"
+                type="button"
+                onClick={() => handleSubmit(onSubmit)()}
                 isSubmitting={isSubmitting}
                 title="shipment cancellation"
                 text="Confirm Cancellation"

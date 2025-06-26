@@ -15,6 +15,7 @@ export const shipmentSchema = z.object({
   serviceTypeId: z.string().min(1, "Service Type is required"),
   shipmentTypeId: z.string().min(1, "Shipment Type is required"),
   customerId: z.string().min(1, "Customer is required"),
+  ownerId: z.string().nullable().optional(),
   tractorTypeId: z
     .string()
     .nullable()

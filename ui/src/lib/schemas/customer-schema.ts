@@ -28,11 +28,10 @@ export const billingProfileSchema = z.object({
   updatedAt: z.number().optional(),
   organizationId: z.string().optional(),
   businessUnitId: z.string().optional(),
-
-  // * Core Fields
   customerId: z.string().nullable().optional(),
   billingCycleType: z.nativeEnum(BillingCycleType),
-  // documentTypeIds: z.array(z.string()).min(1, "Document Type IDs are required"),
+
+  // * Billing Profile Fields
   hasOverrides: z.boolean(),
   enforceCustomerBillingReq: z.boolean(),
   validateCustomerRates: z.boolean(),
@@ -41,7 +40,6 @@ export const billingProfileSchema = z.object({
   autoMarkReadyToBill: z.boolean(),
   autoBill: z.boolean(),
   specialInstructions: z.string().optional(),
-
   documentTypes: z.array(documentTypeSchema).optional(),
 });
 
@@ -52,8 +50,6 @@ export const customerSchema = z.object({
   updatedAt: z.number().optional(),
   organizationId: z.string().optional(),
   businessUnitId: z.string().optional(),
-
-  // * Core Fields
   status: z.nativeEnum(Status),
   name: z.string().min(1, "Name is required"),
   code: z.string().min(1, "Code is required"),

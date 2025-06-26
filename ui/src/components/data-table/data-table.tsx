@@ -279,7 +279,7 @@ export function DataTable<TData extends Record<string, any>>({
             />
           )}
 
-          <Table className="rounded-md border-x border-border border-separate border-spacing-0">
+          <Table>
             {includeHeader && <DataTableHeader table={table} />}
             <DataTableBody
               table={table}
