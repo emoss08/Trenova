@@ -6,6 +6,7 @@ import type { GetCustomerByIDParams } from "@/types/customer";
 import type { IntegrationType } from "@/types/integration";
 import type { NotificationQueryParams } from "@/types/notification";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
+import type { AccessorialChargeSchema } from "./schemas/accessorial-charge-schema";
 import type { PatternConfigSchema } from "./schemas/pattern-config-schema";
 import type { TableConfigurationSchema } from "./schemas/table-configuration-schema";
 
@@ -51,6 +52,12 @@ export const queries = createQueryKeyStore({
       queryFn: async () => {
         return await api.databaseBackups.get();
       },
+    }),
+  },
+  accessorialCharge: {
+    getById: (accId: AccessorialChargeSchema["id"]) => ({
+      queryKey: ["accessorial-charge", accId],
+      queryFn: async () => api.accessorialCharge.getById(accId),
     }),
   },
   user: {
