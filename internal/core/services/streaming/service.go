@@ -26,12 +26,12 @@ type ServiceParams struct {
 
 // Service implements the StreamingService interface
 type Service struct {
-	l                     *zerolog.Logger
-	mu                    sync.RWMutex
-	streams               map[string]*StreamManager
-	config                *config.StreamingConfig
-	userConnections       map[string]int // userID -> connection count
-	connectionMu          sync.RWMutex
+	l               *zerolog.Logger
+	mu              sync.RWMutex
+	streams         map[string]*StreamManager
+	config          *config.StreamingConfig
+	userConnections map[string]int // userID -> connection count
+	connectionMu    sync.RWMutex
 }
 
 // Client represents a connected streaming client
@@ -161,14 +161,14 @@ func (s *Service) GetActiveStreams(streamKey string) int {
 // BroadcastToStream immediately broadcasts data to all clients of a specific stream
 func (s *Service) BroadcastToStream(streamKey string, orgID, buID string, data any) error {
 	log := s.l.With().Str("operation", "broadcast_to_stream").Logger()
-	
+
 	// Create tenant-aware stream key
 	tenantStreamKey := fmt.Sprintf("%s:%s:%s", streamKey, orgID, buID)
-	
+
 	s.mu.RLock()
 	streamMgr, exists := s.streams[tenantStreamKey]
 	s.mu.RUnlock()
-	
+
 	if !exists {
 		log.Debug().
 			Str("stream_key", streamKey).
@@ -176,15 +176,15 @@ func (s *Service) BroadcastToStream(streamKey string, orgID, buID string, data a
 			Msg("No active stream found for broadcast")
 		return nil // No active stream, nothing to broadcast
 	}
-	
+
 	// Broadcast the data immediately to all connected clients
 	streamMgr.broadcastDataUpdate(data)
-	
+
 	log.Debug().
 		Str("stream_key", streamKey).
 		Str("tenant_key", tenantStreamKey).
 		Msg("Data broadcasted to stream")
-	
+
 	return nil
 }
 
