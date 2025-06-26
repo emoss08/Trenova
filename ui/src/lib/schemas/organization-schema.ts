@@ -1,5 +1,5 @@
 import { OrganizationType } from "@/types/organization";
-import { z } from "zod";
+import * as z from "zod/v4";
 import { usStateSchema } from "./us-state-schema";
 
 const organizationMetadataSchema = z.object({
@@ -15,17 +15,35 @@ export const organizationSchema = z.object({
   updatedAt: z.number().optional(),
 
   // * Core Fields
-  name: z.string().min(1, "Name is required"),
-  scacCode: z.string().min(1, "SCAC code is required"),
-  dotNumber: z.string().min(1, "DOT number is required"),
+  name: z.string().min(1, {
+    error: "Name is required",
+  }),
+  scacCode: z.string().min(1, {
+    error: "SCAC code is required",
+  }),
+  dotNumber: z.string().min(1, {
+    error: "DOT number is required",
+  }),
   logoUrl: z.string().optional(),
-  orgType: z.nativeEnum(OrganizationType),
-  addressLine1: z.string().min(1, "Address line 1 is required"),
+  orgType: z.enum(OrganizationType, {
+    error: "Organization type is required",
+  }),
+  addressLine1: z.string().min(1, {
+    error: "Address line 1 is required",
+  }),
   addressLine2: z.string().optional(),
-  city: z.string().min(1, "City is required"),
-  stateId: z.string().min(1, "State is required"),
-  postalCode: z.string().min(1, "Postal code is required"),
-  timezone: z.string().min(1, "Timezone is required"),
+  city: z.string().min(1, {
+    error: "City is required",
+  }),
+  stateId: z.string().min(1, {
+    error: "State is required",
+  }),
+  postalCode: z.string().min(1, {
+    error: "Postal code is required",
+  }),
+  timezone: z.string().min(1, {
+    error: "Timezone is required",
+  }),
   taxId: z.string().optional(),
   state: usStateSchema.optional(),
   metadata: organizationMetadataSchema.optional(),

@@ -1,5 +1,5 @@
 import { Status } from "@/types/common";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 export const serviceTypeSchema = z.object({
   id: z.string().optional(),
@@ -8,8 +8,12 @@ export const serviceTypeSchema = z.object({
   updatedAt: z.number().optional(),
 
   // * Core Fields
-  status: z.nativeEnum(Status),
-  code: z.string().min(1, "Code is required"),
+  status: z.enum(Status),
+  code: z
+    .string({
+      error: "Code is required",
+    })
+    .min(1, "Code is required"),
   description: z.string().optional(),
   color: z.string().optional(),
 });

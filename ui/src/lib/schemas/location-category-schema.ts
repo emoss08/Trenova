@@ -1,5 +1,5 @@
 import { FacilityType, LocationCategoryType } from "@/types/location-category";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 export const locationCategorySchema = z.object({
   id: z.string().optional(),
@@ -8,10 +8,18 @@ export const locationCategorySchema = z.object({
   updatedAt: z.number().optional(),
 
   // * Core Fields
-  name: z.string().min(1, "Name is required"),
+  name: z
+    .string({
+      error: "Name is required",
+    })
+    .min(1, "Name is required"),
   description: z.string().optional(),
-  type: z.nativeEnum(LocationCategoryType),
-  facilityType: z.nativeEnum(FacilityType),
+  type: z.enum(LocationCategoryType, {
+    error: "Type is required",
+  }),
+  facilityType: z.enum(FacilityType, {
+    error: "Facility type is required",
+  }),
   hasSecureParking: z.boolean().default(false),
   requiresAppointment: z.boolean().default(false),
   allowsOvernight: z.boolean().default(false),

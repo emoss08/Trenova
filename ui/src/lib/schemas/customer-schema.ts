@@ -1,6 +1,6 @@
 import { BillingCycleType, PaymentTerm } from "@/types/billing";
 import { Status } from "@/types/common";
-import { z } from "zod";
+import * as z from "zod/v4";
 import { documentTypeSchema } from "./document-type-schema";
 
 export const emailProfileSchema = z.object({
@@ -29,13 +29,13 @@ export const billingProfileSchema = z.object({
   organizationId: z.string().optional(),
   businessUnitId: z.string().optional(),
   customerId: z.string().nullable().optional(),
-  billingCycleType: z.nativeEnum(BillingCycleType),
+  billingCycleType: z.enum(BillingCycleType),
 
   // * Billing Profile Fields
   hasOverrides: z.boolean(),
   enforceCustomerBillingReq: z.boolean(),
   validateCustomerRates: z.boolean(),
-  paymentTerm: z.nativeEnum(PaymentTerm),
+  paymentTerm: z.enum(PaymentTerm),
   autoTransfer: z.boolean(),
   autoMarkReadyToBill: z.boolean(),
   autoBill: z.boolean(),
@@ -50,7 +50,7 @@ export const customerSchema = z.object({
   updatedAt: z.number().optional(),
   organizationId: z.string().optional(),
   businessUnitId: z.string().optional(),
-  status: z.nativeEnum(Status),
+  status: z.enum(Status),
   name: z.string().min(1, "Name is required"),
   code: z.string().min(1, "Code is required"),
   description: z.string().optional(),

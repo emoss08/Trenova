@@ -1,5 +1,5 @@
 import { MoveStatus } from "@/types/move";
-import { z } from "zod";
+import * as z from "zod/v4";
 import { assignmentSchema } from "./assignment-schema";
 import { stopSchema } from "./stop-schema";
 
