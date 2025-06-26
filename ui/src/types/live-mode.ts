@@ -120,10 +120,6 @@ export interface LiveUpdateStrategy {
 export const LIVE_MODE_ENDPOINTS = {
   AUDIT_LOGS: "/audit-logs/live",
   SHIPMENTS: "/shipments/live",
-  SHIPMENT_TYPES: "/shipment-types/live",
-  // WORKERS: '/workers/live',
-  // TRACTORS: '/tractors/live',
-  // etc...
 } as const;
 
 /**

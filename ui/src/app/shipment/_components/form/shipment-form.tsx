@@ -53,7 +53,6 @@ const ShipmentSections = memo(() => {
     </>
   );
 });
-
 export function ShipmentFormBody({
   selectedShipment,
   isError,

@@ -83,10 +83,10 @@ export function BillingReadinessBadge({
               className={cn(
                 "w-1.5 h-5 rounded-sm mr-2",
                 billingReadiness.ready
-                  ? "bg-green-700 border border-green-500/60"
+                  ? "bg-green-700"
                   : billingReadiness.isDocumentsComplete &&
                       !billingReadiness.isShipmentCompleted
-                    ? "bg-blue-700 border border-blue-500/60"
+                    ? "bg-blue-700"
                     : "bg-primary",
               )}
             />
@@ -111,7 +111,7 @@ export function BillingReadinessBadge({
                 "text-2xs",
                 billingReadiness.isDocumentsComplete &&
                   !billingReadiness.isShipmentCompleted &&
-                  "bg-blue-700/20 text-blue-500 border border-blue-500/60",
+                  "bg-blue-700 text-white border-none",
               )}
             >
               {billingReadiness.completed}/{billingReadiness.total} Documents
@@ -127,10 +127,10 @@ export function BillingReadinessBadge({
                 "h-full flex-1 mx-px first:ml-0 last:mr-0 transition-colors",
                 index < billingReadiness.completed
                   ? billingReadiness.ready
-                    ? "bg-green-700 border border-green-500/60"
+                    ? "bg-green-700"
                     : billingReadiness.isDocumentsComplete &&
                         !billingReadiness.isShipmentCompleted
-                      ? "bg-blue-700 border border-blue-500/60"
+                      ? "bg-blue-700"
                       : "bg-primary"
                   : "bg-transparent",
               )}
@@ -140,7 +140,7 @@ export function BillingReadinessBadge({
 
         {billingReadiness.isDocumentsComplete &&
           !billingReadiness.isShipmentCompleted && (
-            <div className="flex items-center mt-2 px-2 py-1 bg-blue-600/20 border border-blue-500 rounded text-xs text-blue-500">
+            <div className="flex items-center mt-2 px-2 py-1 bg-blue-700 rounded text-xs text-white">
               Waiting for shipment completion
             </div>
           )}

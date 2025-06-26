@@ -1,5 +1,5 @@
 import { Status } from "@/types/common";
-import { z } from "zod";
+import * as z from "zod/v4";
 import { locationCategorySchema } from "./location-category-schema";
 import { usStateSchema } from "./us-state-schema";
 

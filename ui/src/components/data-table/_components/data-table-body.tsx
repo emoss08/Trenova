@@ -24,12 +24,12 @@ function LiveModeTableRow({
   };
 }) {
   return (
-    <TableRow className="bg-blue-500/10 hover:bg-blue-500/20">
+    <TableRow className="bg-blue-500/10 hover:!bg-blue-500/20 [&:hover_td]:md:!bg-blue-500/10 [&_td]:md:border-blue-500/10">
       <TableCell colSpan={columns.length} className="p-3 select-none">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3 text-blue-600">
             <div className="flex items-center gap-1">
-              <Icon icon={faPlay} className="size-3" />
+              <Icon icon={faPlay} className="size-3 text-blue-600" />
               <span className="text-sm font-medium">Live Mode</span>
             </div>
           </div>
@@ -57,7 +57,6 @@ function LiveModeTableRow({
 function DataTableRow<TData>({
   row,
   selected,
-  isLastRow = false,
   table,
   // We don't actually use columnVisibility in the component,
   // but we need it for the memo comparison
@@ -66,7 +65,6 @@ function DataTableRow<TData>({
 }: {
   row: Row<TData>;
   selected?: boolean;
-  isLastRow?: boolean;
   columnVisibility: Record<string, boolean>;
   table: Table<TData>;
 }) {
@@ -83,26 +81,16 @@ function DataTableRow<TData>({
         }
       }}
       className={cn(
-        "[&>:not(:last-child)]:border-r border-border",
-        "-outline-offset-1 outline-primary transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline",
+        "-outline-offset-2 rounded-md outline-muted-foreground transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline",
         table.options.meta?.getRowClassName?.(row),
       )}
     >
-      {row.getVisibleCells().map((cell, index) => {
-        const isFirstCell = index === 0;
-        const isLastCell = index === row.getVisibleCells().length - 1;
-
+      {row.getVisibleCells().map((cell) => {
         return (
           <TableCell
             key={cell.id}
             role="cell"
             aria-label={`${cell.column.id} cell`}
-            className={cn(
-              "border-b border-border bg-transparent",
-              cell.column.columnDef.meta?.cellClassName,
-              isLastRow && isFirstCell && "rounded-bl-md",
-              isLastRow && isLastCell && "rounded-br-md",
-            )}
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </TableCell>
@@ -145,19 +133,17 @@ export function DataTableBody<TData extends Record<string, any>>({
   liveMode,
 }: DataTableBodyProps<TData>) {
   return (
-    <TableBody id="content" tabIndex={-1} className="p-2">
+    <TableBody id="content" tabIndex={-1}>
       {liveMode?.enabled && (
         <LiveModeTableRow columns={columns} liveMode={liveMode} />
       )}
       {table.getRowModel().rows?.length ? (
-        table.getRowModel().rows.map((row, index) => {
-          const isLastRow = index === table.getRowModel().rows.length - 1;
+        table.getRowModel().rows.map((row) => {
           return (
             <MemoizedRow
               key={row.id}
               row={row}
               selected={row.getIsSelected()}
-              isLastRow={isLastRow}
               columnVisibility={table.getState().columnVisibility}
               table={table}
             />

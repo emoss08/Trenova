@@ -367,31 +367,6 @@ func InferErrorCode(err error) ErrorCode {
 	}
 }
 
-// Deprecated: Use FromOzzoErrors instead.
-func FromValidationErrors(valErrors val.Errors, multiErr *MultiError, prefix string) {
-	for field, err := range valErrors {
-		fieldName := field
-		fullPrefix := multiErr.getFullPrefix() // Get the full prefix from MultiError
-
-		// Combine prefixes if both exist
-		if fullPrefix != "" {
-			if prefix != "" {
-				fieldName = fmt.Sprintf("%s.%s.%s", fullPrefix, prefix, field)
-			} else {
-				fieldName = fmt.Sprintf("%s.%s", fullPrefix, field)
-			}
-		} else if prefix != "" {
-			fieldName = fmt.Sprintf("%s.%s", prefix, field)
-		}
-
-		multiErr.AddError(&Error{
-			Field:   fieldName,
-			Code:    InferErrorCode(err),
-			Message: err.Error(),
-		})
-	}
-}
-
 func FromOzzoErrors(valErrors val.Errors, multiErr *MultiError) {
 	for field, err := range valErrors {
 		validationErr := &Error{

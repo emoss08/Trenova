@@ -10,3 +10,10 @@ export const shipmentCancellationSchema = z.object({
 export type ShipmentCancellationSchema = z.infer<
   typeof shipmentCancellationSchema
 >;
+
+export const shipmentUncancelSchema = z.object({
+  shipmentId: z.string().min(1, "Shipment ID is required"),
+  updateAppointments: z.boolean().default(false),
+});
+
+export type ShipmentUncancelSchema = z.infer<typeof shipmentUncancelSchema>;

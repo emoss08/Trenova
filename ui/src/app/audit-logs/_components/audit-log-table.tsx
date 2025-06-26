@@ -1,4 +1,4 @@
-import { DataTable } from "@/components/data-table/data-table";
+import { DataTableV2 } from "@/components/data-table/data-table-v2";
 import { LiveModePresets } from "@/lib/live-mode-utils";
 import { AuditEntry, Resource } from "@/types/audit-entry";
 import { useMemo } from "react";
@@ -9,7 +9,7 @@ export default function AuditLogTable() {
   const columns = useMemo(() => getColumns(), []);
 
   return (
-    <DataTable<AuditEntry>
+    <DataTableV2<AuditEntry>
       resource={Resource.AuditEntry}
       name="Audit Entry"
       link="/audit-logs/"
@@ -18,7 +18,18 @@ export default function AuditLogTable() {
       exportModelName="audit-log"
       TableEditModal={AuditLogDetailsSheet}
       columns={columns}
+      useEnhancedBackend={true}
       liveMode={LiveModePresets.auditLogs()}
+      config={{
+        enableFiltering: true,
+        enableSorting: true,
+        enableMultiSort: true,
+        maxFilters: 5,
+        maxSorts: 3,
+        searchDebounce: 300,
+        showFilterUI: true,
+        showSortUI: true,
+      }}
     />
   );
 }

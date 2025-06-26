@@ -2,33 +2,42 @@ version: "3"
 
 tasks:
   run:
+    desc: Run the application
     cmd: go run ./cmd/api/main.go serve
   reset:
+    desc: Reset the database, Redis, and Kafka
     cmds:
       - task: db-reset
       - task: redis-flushall
+      - task: kafka-reset
       - task: db-init
       - task: db-migrate
       - task: db-seed
   format:
+    desc: Format the code
     cmds:
       - task: fmt
       - task: fmt-lines
   check:
+    desc: Check the code
     cmds:
       - task: critic
       - task: security
   swag:
+    desc: Generate Swagger documentation
     cmds:
       - task: swag-fmt
       - task: swag-init
   lint:
+    desc: Lint the code
     cmds:
       - task: ci-lint
       - task: modernize
   test:
+    desc: Run tests
     cmd: go test ./... -v
   test-pretty:
+    desc: Run tests with tparse
     cmd: |
       if ! command -v tparse &> /dev/null
       then
@@ -39,16 +48,22 @@ tasks:
     silent: true
   update-go-deps:
     cmd: go get -u ./... && go mod tidy
+    desc: Update Go dependencies
   fix:
     cmd: goimports -w ./.. && go mod tidy
+    desc: Fix the code with goimports
   ci-lint:
     cmd: golangci-lint run --timeout 5m
+    desc: Run the linter with golangci-lint
   modernize:
     cmd: go run golang.org/x/tools/gopls/internal/analysis/modernize/cmd/modernize@latest -test ./...
+    desc: Modernize the code with go modernize
   fmt:
     cmd: go fmt ./...
+    desc: Format the code with go fmt
   fmt-lines:
     cmd: golines ./.. -w 
+    desc: Format the code with golines
   format-sql:
     cmd: |
       if ! command -v pg_format &> /dev/null
@@ -67,21 +82,34 @@ tasks:
         go install github.com/go-critic/go-critic/cmd/gocritic@latest
       fi
       gocritic check -enableAll -disable=sloppyReassign ./...
+    desc: Check for code quality issues
   security:
     cmd: gosec ./...
+    desc: Check for security vulnerabilities
   deadcode:
     cmd: deadcode ./...
+    desc: Check for unused code
   tidy:
     cmd: go mod tidy
+    desc: Tidy the Go modules
   db-reset:
     cmd: go run cmd/db/main.go db reset
+    desc: Reset the database
   db-init:
     cmd: go run cmd/db/main.go db init
+    desc: Initialize the database
   db-migrate:
     cmd: go run cmd/db/main.go db migrate
+    desc: Run database migrations
   db-seed:
     cmd: go run cmd/db/main.go db seed
+    desc: Seed the database with initial data
   redis-flushall:
     cmd: go run cmd/db/main.go redis flushall
-  ent-generate:
-    cmd: go generate ./internal/core/ent/
+    desc: Flush all Redis data
+  kafka-reset:
+    cmd: bash scripts/kafka/reset-kafka.sh
+    desc: Reset Kafka completely - stops services, removes data volumes, and restarts with clean state
+  kafka-setup:
+    cmd: bash scripts/kafka/setup-debezium-connector.sh
+    desc: Setup Debezium connector for Kafka

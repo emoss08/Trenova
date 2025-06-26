@@ -1,19 +1,30 @@
 import { Status } from "@/types/common";
 import { EquipmentClass } from "@/types/equipment-type";
-import { z } from "zod";
+import * as z from "zod/v4";
+import {
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "./helpers";
 
 export const equipmentTypeSchema = z.object({
-  id: z.string().optional(),
-  version: z.number().optional(),
-  createdAt: z.number().optional(),
-  updatedAt: z.number().optional(),
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
 
   // * Core Fields
-  status: z.nativeEnum(Status),
-  code: z.string().min(1, "Code is required"),
+  status: z.enum(Status, {
+    error: "Status is required",
+  }),
+  code: z.string().min(1, {
+    error: "Code is required",
+  }),
   description: z.string().optional(),
-  class: z.nativeEnum(EquipmentClass, {
-    message: "Class is required",
+  class: z.enum(EquipmentClass, {
+    error: "Class is required",
   }),
   color: z.string().optional(),
 });

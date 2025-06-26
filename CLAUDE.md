@@ -123,3 +123,7 @@ The system manages transportation logistics including:
 - **Containerization**: Docker with multi-stage builds
 - **Reverse Proxy**: Caddy with automatic HTTPS
 - **Orchestration**: Docker Compose for local development
+
+## Development Best Practices
+
+- Always follow golang best practices for go 1.24

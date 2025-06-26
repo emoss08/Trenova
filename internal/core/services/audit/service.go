@@ -13,10 +13,13 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/sourcegraph/conc"
@@ -56,11 +59,12 @@ const (
 type ServiceParams struct {
 	fx.In
 
-	LC              fx.Lifecycle
-	AuditRepository repositories.AuditRepository
-	PermService     services.PermissionService
-	Logger          *logger.Logger
-	Config          *config.Manager
+	LC               fx.Lifecycle
+	AuditRepository  repositories.AuditRepository
+	StreamingService services.StreamingService
+	PermService      services.PermissionService
+	Logger           *logger.Logger
+	Config           *config.Manager
 }
 
 type service struct {
@@ -69,6 +73,7 @@ type service struct {
 	repo          repositories.AuditRepository
 	config        *config.AuditConfig
 	ps            services.PermissionService
+	ss            services.StreamingService
 	wg            *conc.WaitGroup
 	sdm           *SensitiveDataManager
 	mutex         sync.RWMutex
@@ -111,6 +116,7 @@ func NewService(p ServiceParams) services.AuditService {
 		repo:          p.AuditRepository,
 		l:             &log,
 		ps:            p.PermService,
+		ss:            p.StreamingService,
 		buffer:        NewBuffer(cfg.BufferSize),
 		config:        &p.Config.Get().Audit,
 		sdm:           NewSensitiveDataManager(),
@@ -917,4 +923,34 @@ func (s *service) registerDefaultSensitiveFields() error {
 	}
 
 	return nil
+}
+
+func (s *service) LiveStream(
+	c *fiber.Ctx,
+	dataFetcher func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*audit.Entry, error),
+	timestampExtractor func(entry *audit.Entry) int64,
+) error {
+	streamDataFetcher := func(ctx context.Context, reqCtx *appctx.RequestContext) (any, error) {
+		entries, err := dataFetcher(ctx, reqCtx)
+		if err != nil {
+			return nil, err
+		}
+
+		result := make([]any, len(entries))
+		for i, entry := range entries {
+			result[i] = entry
+		}
+
+		return result, nil
+	}
+
+	streamTimestampExtractor := func(item any) int64 {
+		if entry, ok := item.(*audit.Entry); ok {
+			return timestampExtractor(entry)
+		}
+
+		return timeutils.NowUnix()
+	}
+
+	return s.ss.StreamData(c, "audit", streamDataFetcher, streamTimestampExtractor)
 }

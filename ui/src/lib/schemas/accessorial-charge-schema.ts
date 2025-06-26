@@ -1,6 +1,6 @@
 import { AccessorialChargeMethod } from "@/types/billing";
 import { Status } from "@/types/common";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 export const accessorialChargeSchema = z.object({
   id: z.string().optional(),
@@ -25,8 +25,8 @@ export const accessorialChargeSchema = z.object({
     },
     z.number().int("Unit must be a whole number").min(1, "Unit is required"),
   ),
-  method: z.nativeEnum(AccessorialChargeMethod, {
-    required_error: "Method is required",
+  method: z.enum(AccessorialChargeMethod, {
+    error: "Method is required",
   }),
   amount: z.preprocess(
     (val) => {

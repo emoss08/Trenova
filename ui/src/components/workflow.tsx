@@ -95,7 +95,7 @@ const colorStyles = {
 
 export function WorkflowPlaceholder() {
   const [selectedWorkflow, setSelectedWorkflow] = useState<Workflow>(
-    workflows[0],
+    workflows[4],
   );
   const currentColor = colorStyles[selectedWorkflow.color];
 

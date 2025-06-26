@@ -49,7 +49,7 @@ export const filterUtils: FilterUtils = {
     }
 
     // Filters
-    if (typeof params.filters === "string") {
+    if (typeof params.filters === "string" && params.filters) {
       try {
         const filters = JSON.parse(params.filters);
         if (Array.isArray(filters)) {
@@ -61,7 +61,7 @@ export const filterUtils: FilterUtils = {
     }
 
     // Sort
-    if (typeof params.sort === "string") {
+    if (typeof params.sort === "string" && params.sort) {
       try {
         const sort = JSON.parse(params.sort);
         if (Array.isArray(sort)) {

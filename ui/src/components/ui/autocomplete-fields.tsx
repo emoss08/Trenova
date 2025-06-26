@@ -111,17 +111,17 @@ export function UserAutocompleteField<T extends FieldValues>({
       )}
       renderOption={(option) => (
         <div className="flex flex-col gap-1 items-start size-full">
-          <div className="flex flex-row items-center gap-1.5">
+          <div className="flex flex-row items-center gap-1.5 w-full shrink-0">
             <LazyImage
               src={
                 option.profilePicUrl ||
                 `https://avatar.vercel.sh/${option.name}.svg`
               }
               alt={option.name}
-              className="size-4 rounded-full"
+              className="size-4 rounded-full shrink-0"
             />
-            <span className="text-xs font-medium">
-              {truncateText(option.name, 15)}
+            <span className="w-full truncate text-xs font-medium">
+              {option.name}
             </span>
           </div>
           <span className="text-2xs text-muted-foreground truncate w-full">

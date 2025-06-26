@@ -1,3 +1,4 @@
+"use no memo";
 import { SelectField } from "@/components/fields/select-field";
 import { AccessorialChargeAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { Button } from "@/components/ui/button";
@@ -13,9 +14,11 @@ import {
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { NumberField } from "@/components/ui/number-input";
 import { accessorialChargeMethodChoices } from "@/lib/choices";
+import { queries } from "@/lib/queries";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { type TableSheetProps } from "@/types/data-table";
-import { useCallback, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useCallback, useEffect, useRef } from "react";
 import {
   type UseFieldArrayRemove,
   type UseFieldArrayUpdate,
@@ -42,7 +45,6 @@ export function AdditionalChargeDialog({
   const handleSave = useCallback(() => {
     const formValues = getValues();
     const additionalCharge = formValues.additionalCharges?.[index];
-
     if (additionalCharge?.accessorialChargeId) {
       const updatedAdditionalCharge = {
         accessorialChargeId: additionalCharge.accessorialChargeId,
@@ -125,39 +127,48 @@ export function AdditionalChargeDialog({
 }
 
 function AdditionalChargeForm({ index }: { index: number }) {
-  const { control, setValue } = useFormContext<ShipmentSchema>();
+  const { control, setValue, watch } = useFormContext<ShipmentSchema>();
+  const additionalCharge = watch(`additionalCharges.${index}`);
 
-  // const additionalCharge = watch(`additionalCharges.${index}`);
+  const { data: accessorialChargeData, isLoading: isLoadingAccessorialCharge } =
+    useQuery({
+      ...queries.accessorialCharge.getById(
+        additionalCharge?.accessorialChargeId,
+      ),
+      enabled: !!additionalCharge?.accessorialChargeId,
+    });
 
-  // // Add a ref to track previous accessorialChargeId to detect changes
-  // const prevAccessorialChargeIdRef = useRef<string | undefined>(
-  //   additionalCharge?.accessorialChargeId,
-  // );
+  // Add a ref to track previous accessorialChargeId to detect changes
+  const prevAccessorialChargeIdRef = useRef<string | undefined>(
+    additionalCharge?.accessorialChargeId,
+  );
 
-  // useEffect(() => {
-  //   // Only set default values when the accessorialChargeId changes or when it's first selected
-  //   const currentAccessorialChargeId = additionalCharge?.accessorialChargeId;
-  //   const accessorialCharge = additionalCharge?.accessorialCharge;
+  useEffect(() => {
+    // Only set default values when the accessorialChargeId changes or when it's first selected
+    const currentAccessorialChargeId = additionalCharge?.accessorialChargeId;
+    const accessorialCharge = accessorialChargeData;
 
-  //   if (
-  //     currentAccessorialChargeId &&
-  //     accessorialCharge &&
-  //     currentAccessorialChargeId !== prevAccessorialChargeIdRef.current
-  //   ) {
-  //     // Only set default values from the accessorial charge when it's newly selected
-  //     setValue(`additionalCharges.${index}.unit`, accessorialCharge.unit);
-  //     setValue(`additionalCharges.${index}.method`, accessorialCharge.method);
-  //     setValue(`additionalCharges.${index}.amount`, accessorialCharge.amount);
+    if (
+      currentAccessorialChargeId &&
+      accessorialCharge &&
+      accessorialCharge.id === currentAccessorialChargeId &&
+      !isLoadingAccessorialCharge
+    ) {
+      // Only set default values from the accessorial charge when it's newly selected
+      setValue(`additionalCharges.${index}.unit`, accessorialCharge.unit);
+      setValue(`additionalCharges.${index}.method`, accessorialCharge.method);
+      setValue(`additionalCharges.${index}.amount`, accessorialCharge.amount);
 
-  //     // Update the ref to the current ID
-  //     prevAccessorialChargeIdRef.current = currentAccessorialChargeId;
-  //   }
-  // }, [
-  //   additionalCharge?.accessorialChargeId,
-  //   additionalCharge?.accessorialCharge,
-  //   setValue,
-  //   index,
-  // ]);
+      // Update the ref to the current ID
+      prevAccessorialChargeIdRef.current = currentAccessorialChargeId;
+    }
+  }, [
+    accessorialChargeData,
+    additionalCharge?.accessorialChargeId,
+    setValue,
+    index,
+    isLoadingAccessorialCharge,
+  ]);
 
   return (
     <AdditionalChargeFormInner>

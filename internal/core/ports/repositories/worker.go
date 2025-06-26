@@ -8,10 +8,43 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
+var WorkerFieldConfig = &ports.FieldConfiguration{
+	FilterableFields: map[string]bool{
+		"status":    true,
+		"firstName": true,
+		"lastName":  true,
+		"type":      true,
+	},
+	SortableFields: map[string]bool{
+		"status":    true,
+		"firstName": true,
+		"lastName":  true,
+	},
+	FieldMap: map[string]string{
+		"firstName": "first_name",
+		"lastName":  "last_name",
+		"status":    "status",
+	},
+	EnumMap: map[string]bool{
+		"status": true,
+		"type":   true,
+	},
+}
+
 type WorkerFilterOptions struct {
 	Status         string `query:"status"`
 	IncludeProfile bool   `query:"includeProfile"`
 	IncludePTO     bool   `query:"includePTO"`
+}
+
+func BuildWorkerListOptions(
+	filter *ports.QueryOptions,
+	additionalOpts *ListWorkerRequest,
+) *ListWorkerRequest {
+	return &ListWorkerRequest{
+		Filter:              filter,
+		WorkerFilterOptions: additionalOpts.WorkerFilterOptions,
+	}
 }
 
 type GetWorkerByIDRequest struct {
@@ -23,8 +56,8 @@ type GetWorkerByIDRequest struct {
 }
 
 type ListWorkerRequest struct {
-	Filter        *ports.LimitOffsetQueryOptions
-	FilterOptions WorkerFilterOptions `query:"filterOptions"`
+	Filter              *ports.QueryOptions `json:"filter"              query:"filter"`
+	WorkerFilterOptions `json:"workerFilterOptions" query:"workerFilterOptions"`
 }
 
 type UpdateWorkerOptions struct {
