@@ -4,7 +4,6 @@ import (
 	"context"
 	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/gofiber/fiber/v2"
@@ -29,9 +28,9 @@ type Server struct {
 func NewServer(p Params) *Server {
 	// Create Fiber app with configuration
 	app := fiber.New(fiber.Config{
-		AppName:                 p.Config.App.Name,
-		JSONEncoder:             sonic.Marshal,
-		JSONDecoder:             sonic.Unmarshal,
+		AppName: p.Config.App.Name,
+		// JSONEncoder:             sonic.Marshal,
+		// JSONDecoder:             sonic.Unmarshal,
 		BodyLimit:               16 * 1024 * 1024, // 16MB
 		ReadBufferSize:          p.Config.Server.ReadBufferSize,
 		WriteBufferSize:         p.Config.Server.WriteBufferSize,
