@@ -134,6 +134,16 @@ type AuditConfig struct {
 	// State data smaller than this threshold will not be compressed.
 	// Defaults to 10 KB.
 	CompressionThreshold int `mapstructure:"compressionThreshold"`
+
+	// BatchSize is the batch size for processing audit entries.
+	// This is the number of entries processed in a single batch.
+	// Defaults to 50.
+	BatchSize int `mapstructure:"batchSize"`
+
+	// Workers is the number of worker goroutines for processing audit entries.
+	// More workers can process entries faster but use more resources.
+	// Defaults to 2.
+	Workers int `mapstructure:"workers"`
 }
 
 // AppConfig is the configuration for the app.

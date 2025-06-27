@@ -107,6 +107,10 @@ var entryPool = sync.Pool{
 	},
 }
 
+// NewService creates a new audit service
+// Deprecated: use NewServiceV2 instead
+//
+//nolint:gocritic // dependency injection
 func NewService(p ServiceParams) services.AuditService {
 	log := p.Logger.With().Str("service", "audit").Logger()
 
@@ -492,6 +496,9 @@ func (s *service) processEmergencyLogs() {
 
 // processEmergencyEntry handles a single emergency audit entry with retries
 func (s *service) processEmergencyEntry(entry *audit.Entry, maxRetries int) {
+	// * Ensure entry is returned to pool when processing is complete
+	defer entryPool.Put(entry)
+
 	success, err := s.attemptInsertWithRetry(entry, maxRetries)
 
 	if success {
@@ -618,6 +625,13 @@ func (s *service) flushBuffer(ctx context.Context) error {
 	}
 
 	s.l.Debug().Int("entries", len(entries)).Msg("flushing buffer")
+
+	// * Ensure entries are returned to pool when function exits
+	defer func() {
+		for _, entry := range entries {
+			entryPool.Put(entry)
+		}
+	}()
 
 	// * Determine optimal chunk size based on entry count
 	// Small batches: use smaller chunks to reduce overhead
@@ -756,6 +770,13 @@ func (s *service) performFinalFlush(ctx context.Context) error {
 		s.l.Info().
 			Int("count", len(emergencyEntries)).
 			Msg("processing emergency entries during shutdown")
+
+		// * Ensure emergency entries are returned to pool after processing
+		defer func() {
+			for _, entry := range emergencyEntries {
+				entryPool.Put(entry)
+			}
+		}()
 
 		// Process in batches of 10 for better efficiency
 		for i := 0; i < len(emergencyEntries); i += 10 {

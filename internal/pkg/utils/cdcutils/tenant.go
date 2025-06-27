@@ -44,24 +44,24 @@ func ExtractStringField(data map[string]any, field string) string {
 	if data == nil {
 		return ""
 	}
-	
+
 	value := data[field]
 	if value == nil {
 		return ""
 	}
-	
+
 	// Handle direct string
 	if str, ok := value.(string); ok {
 		return str
 	}
-	
+
 	// Handle Avro optional format {"string": "value"}
 	if m, ok := value.(map[string]any); ok {
 		if str, ok := m["string"].(string); ok {
 			return str
 		}
 	}
-	
+
 	return ""
 }
 
@@ -70,12 +70,12 @@ func ExtractIntField(data map[string]any, field string) *int64 {
 	if data == nil {
 		return nil
 	}
-	
+
 	value := data[field]
 	if value == nil {
 		return nil
 	}
-	
+
 	// Handle direct numeric types
 	switch v := value.(type) {
 	case int64:
@@ -87,7 +87,7 @@ func ExtractIntField(data map[string]any, field string) *int64 {
 		i := int64(v)
 		return &i
 	}
-	
+
 	// Handle Avro optional format {"int": 123} or {"long": 123}
 	if m, ok := value.(map[string]any); ok {
 		for _, key := range []string{"int", "long"} {
@@ -105,6 +105,6 @@ func ExtractIntField(data map[string]any, field string) *int64 {
 			}
 		}
 	}
-	
+
 	return nil
 }

@@ -306,3 +306,33 @@ func (s *Service) createSession(
 
 	return sess, nil
 }
+
+// UpdateSessionOrganization updates the organization ID in a user's session
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - sessionID: The ID of the session to update.
+//   - newOrgID: The new organization ID.
+//
+// Returns:
+//   - error: An error if the operation fails.
+func (s *Service) UpdateSessionOrganization(
+	ctx context.Context,
+	sessionID pulid.ID,
+	newOrgID pulid.ID,
+) error {
+	log := s.l.With().
+		Str("operation", "UpdateSessionOrganization").
+		Str("sessionID", sessionID.String()).
+		Str("newOrgID", newOrgID.String()).
+		Logger()
+
+	err := s.sessionRepo.UpdateSessionOrganization(ctx, sessionID, newOrgID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to update session organization")
+		return eris.Wrap(err, "failed to update session organization")
+	}
+
+	log.Info().Msg("session organization updated successfully")
+	return nil
+}

@@ -237,7 +237,10 @@ func (ar *auditRepository) InsertAuditEntries(ctx context.Context, entries []*au
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		_, err = tx.NewInsert().Model(&entries).Exec(c)
 		if err != nil {
-			ar.l.Error().Err(err).Msg("failed to insert audit entries")
+			ar.l.Error().
+				Interface("entries", entries).
+				Err(err).
+				Msg("failed to insert audit entries")
 			return eris.Wrap(err, "failed to insert audit entries")
 		}
 		return nil

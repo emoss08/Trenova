@@ -2,6 +2,7 @@ package user
 
 import (
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/session"
 	userdomain "github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -63,6 +64,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api.Put("/:userID/", rl.WithRateLimit(
 		[]fiber.Handler{h.update},
 		middleware.PerMinute(60), // 60 writes per minute
+	)...)
+
+	api.Put("/:userID/switch-organization/", rl.WithRateLimit(
+		[]fiber.Handler{h.switchOrganization},
+		middleware.PerMinute(30), // 30 organization switches per minute
 	)...)
 }
 
@@ -208,4 +214,51 @@ func (h *Handler) update(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(entity)
+}
+
+type SwitchOrganizationRequest struct {
+	OrganizationID pulid.ID `json:"organizationId" validate:"required"`
+}
+
+func (h *Handler) switchOrganization(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	userID, err := pulid.MustParse(c.Params("userID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	// * Only allow users to switch their own organization or admin users
+	if userID != reqCtx.UserID {
+		return h.eh.HandleError(c, fiber.NewError(
+			fiber.StatusForbidden,
+			"You can only switch your own organization",
+		))
+	}
+
+	var req SwitchOrganizationRequest
+	if err = c.BodyParser(&req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	// * Get the session ID from context
+	var sessionID pulid.ID
+	if sess, ok := c.Locals(appctx.CTXSessionID).(*session.Session); ok && sess != nil {
+		sessionID = sess.ID
+	}
+
+	updatedUser, err := h.uh.SwitchOrganization(
+		c.UserContext(),
+		userID,
+		req.OrganizationID,
+		sessionID,
+	)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(updatedUser)
 }

@@ -280,6 +280,41 @@ func (sr *sessionRepository) UpdateSessionActivity(
 	return nil
 }
 
+func (sr *sessionRepository) UpdateSessionOrganization(
+	ctx context.Context,
+	sessionID pulid.ID,
+	newOrgID pulid.ID,
+) error {
+	log := sr.logger.With().
+		Str("operation", "UpdateSessionOrganization").
+		Str("sessionId", sessionID.String()).
+		Str("newOrgID", newOrgID.String()).
+		Logger()
+
+	sess := new(session.Session)
+	if err := sr.redis.GetJSON(ctx, ".", sr.sessionKey(sessionID), sess); err != nil {
+		if eris.Is(err, redis.ErrNil) {
+			log.Debug().Msg("session not found")
+			return session.ErrNotFound
+		}
+		log.Error().Err(err).Msg("failed to get session")
+		return eris.Wrap(err, "failed to get session")
+	}
+
+	// * Update the organization ID
+	sess.OrganizationID = newOrgID
+	sess.UpdatedAt = timeutils.NowUnix()
+
+	// * Store the updated session back to Redis
+	if err := sr.redis.SetJSON(ctx, ".", sr.sessionKey(sessionID), sess, defaultSessionTTL); err != nil {
+		log.Error().Err(err).Msg("failed to update session organization")
+		return eris.Wrap(err, "failed to update session organization")
+	}
+
+	log.Info().Msg("session organization updated successfully")
+	return nil
+}
+
 func (sr *sessionRepository) RevokeSession(
 	ctx context.Context,
 	sessionID pulid.ID,

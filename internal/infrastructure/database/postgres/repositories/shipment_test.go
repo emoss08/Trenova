@@ -145,11 +145,16 @@ func TestShipmentRepository(t *testing.T) {
 				result, err := repo.List(ctx, opts)
 				require.NoError(t, err, "List with customer name filter should not return error")
 				require.NotNil(t, result, "Result should not be nil")
-				
+
 				// Verify that results contain the expected customer
 				for _, item := range result.Items {
 					if item.Customer != nil {
-						assert.Contains(t, item.Customer.Name, "Honeywell", "Customer name should contain 'Honeywell'")
+						assert.Contains(
+							t,
+							item.Customer.Name,
+							"Honeywell",
+							"Customer name should contain 'Honeywell'",
+						)
 					}
 				}
 			})
@@ -179,7 +184,7 @@ func TestShipmentRepository(t *testing.T) {
 				result, err := repo.List(ctx, opts)
 				require.NoError(t, err, "List with origin location filter should not return error")
 				require.NotNil(t, result, "Result should not be nil")
-				
+
 				// This tests that the query executes without error
 				// The specific results will depend on test data
 				assert.GreaterOrEqual(t, result.Total, 0, "Total should be non-negative")
@@ -208,7 +213,11 @@ func TestShipmentRepository(t *testing.T) {
 				}
 
 				result, err := repo.List(ctx, opts)
-				require.NoError(t, err, "List with destination location filter should not return error")
+				require.NoError(
+					t,
+					err,
+					"List with destination location filter should not return error",
+				)
 				require.NotNil(t, result, "Result should not be nil")
 				assert.GreaterOrEqual(t, result.Total, 0, "Total should be non-negative")
 			})
