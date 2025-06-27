@@ -3,13 +3,21 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { queries } from "@/lib/queries";
 import type { OrganizationSchema } from "@/lib/schemas/organization-schema";
-import { useIsAuthenticated, useUser } from "@/stores/user-store";
+import { api } from "@/services/api";
+import {
+  useAuthActions,
+  useIsAuthenticated,
+  useUser,
+} from "@/stores/user-store";
+import type { APIError } from "@/types/errors";
 import { faCheckCircle } from "@fortawesome/pro-solid-svg-icons";
 import { CaretSortIcon, DragHandleDots2Icon } from "@radix-ui/react-icons";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { toast } from "sonner";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Icon } from "./ui/icons";
 import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
@@ -31,13 +39,11 @@ function OrganizationSwitcherButtonSkeleton() {
 
 type OrganizationSwitcherButtonProps = {
   org: OrganizationSchema | undefined;
-  setOpen: (open: boolean) => void;
   isLoading: boolean;
 };
 
 function OrganizationSwitcherButton({
   org,
-  setOpen,
   isLoading,
 }: OrganizationSwitcherButtonProps) {
   return isLoading ? (
@@ -45,7 +51,6 @@ function OrganizationSwitcherButton({
   ) : (
     <SidebarMenuButton
       size="lg"
-      onClick={() => setOpen(true)}
       className="bg-sidebar data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground [&>svg]:size-5"
     >
       <Avatar className="size-8 items-center rounded-lg">
@@ -73,6 +78,9 @@ export function OrganizationSwitcher() {
   const [open, setOpen] = useState(false);
   const user = useUser();
   const isAuthenticated = useIsAuthenticated();
+  const { setUser } = useAuthActions();
+  const queryClient = useQueryClient();
+
   const userOrganization = useQuery({
     ...queries.organization.getOrgById(
       user?.currentOrganizationId ?? "",
@@ -87,6 +95,38 @@ export function OrganizationSwitcher() {
     enabled: isAuthenticated,
   });
 
+  const switchOrganizationMutation = useMutation({
+    mutationFn: async (organizationId: string) => {
+      if (!user?.id) throw new Error("User not found");
+      return await api.user.switchOrganization(user.id, organizationId);
+    },
+    onSuccess: (updatedUser) => {
+      // * Update the user in the store with the new organization
+      setUser(updatedUser);
+
+      // * Invalidate all queries to refresh data for the new organization
+      queryClient.invalidateQueries();
+
+      // * Broadcast query invalidation to other tabs/windows
+      broadcastQueryInvalidation({
+        queryKey: ["*"], // Invalidate all queries
+        options: {
+          correlationId: `switch-organization-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
+
+      toast.success("Organization switched successfully");
+      setOpen(false);
+    },
+    onError: (error: APIError) => {
+      toast.error(error.message || "Failed to switch organization");
+    },
+  });
+
   const org = userOrganization.data;
   const organizations = userOrganizations.data;
 
@@ -97,11 +137,9 @@ export function OrganizationSwitcher() {
       <SidebarMenuItem>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <OrganizationSwitcherButton
-              org={org}
-              setOpen={() => setOpen(!open)}
-              isLoading={isLoading}
-            />
+            <div>
+              <OrganizationSwitcherButton org={org} isLoading={isLoading} />
+            </div>
           </PopoverTrigger>
           <PopoverContent align="start" className="w-[300px] p-1">
             <span className="ml-1.5 select-none text-xs text-foreground">
@@ -114,6 +152,10 @@ export function OrganizationSwitcher() {
                   key={org.id}
                   org={org}
                   currentOrgId={user?.currentOrganizationId ?? ""}
+                  onSwitchOrganization={(orgId) =>
+                    switchOrganizationMutation.mutate(orgId)
+                  }
+                  isLoading={switchOrganizationMutation.isPending}
                 />
               ))}
             </div>
@@ -127,13 +169,23 @@ export function OrganizationSwitcher() {
 function OrganizationContent({
   org,
   currentOrgId,
+  onSwitchOrganization,
+  isLoading,
 }: {
   org: OrganizationSchema;
   currentOrgId: string;
+  onSwitchOrganization: (orgId: string) => void;
+  isLoading: boolean;
 }) {
+  const isCurrentOrg = currentOrgId === org.id;
+
   return (
     <div className="flex items-center justify-between">
-      <button className="flex w-full items-center gap-1 rounded-md p-1 hover:bg-muted">
+      <button
+        className="flex w-full items-center gap-1 rounded-md p-1 hover:bg-muted disabled:opacity-50 disabled:cursor-not-allowed"
+        onClick={() => !isCurrentOrg && org.id && onSwitchOrganization(org.id)}
+        disabled={isCurrentOrg || isLoading}
+      >
         <DragHandleDots2Icon className="size-4" />
         <Avatar className="size-8 rounded-lg">
           <AvatarImage src={org.logoUrl} />
@@ -148,7 +200,7 @@ function OrganizationContent({
             {org.postalCode}
           </span>
         </div>
-        {currentOrgId === org.id && (
+        {isCurrentOrg && (
           <Icon
             icon={faCheckCircle}
             className="ml-auto size-4 pr-2 text-primary"

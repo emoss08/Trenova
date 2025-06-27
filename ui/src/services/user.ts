@@ -7,4 +7,13 @@ export class UserAPI {
 
     return response.data;
   }
+
+  async switchOrganization(userId: UserSchema["id"], organizationId: string) {
+    const response = await http.put<UserSchema>(
+      `/users/${userId}/switch-organization/`,
+      { organizationId },
+    );
+
+    return response.data;
+  }
 }
