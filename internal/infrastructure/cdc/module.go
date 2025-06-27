@@ -31,10 +31,10 @@ func registerCDCHandlers(
 
 	// Add lifecycle hooks to start/stop the CDC service
 	lifecycle.Append(fx.Hook{
-		OnStart: func(ctx context.Context) error {
-			return cdcService.Start(ctx)
+		OnStart: func(context.Context) error {
+			return cdcService.Start()
 		},
-		OnStop: func(ctx context.Context) error {
+		OnStop: func(context.Context) error {
 			return cdcService.Stop()
 		},
 	})
