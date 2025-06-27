@@ -122,10 +122,11 @@ kafka:
   topicPattern: "trenova.public.*"
   commitInterval: 5s
   startOffset: "latest"
+  schemaRegistryUrl: "http://localhost:8081"
 
 streaming:
   pollInterval: 2s
   maxConnections: 100
   maxConnectionsPerUser: 10
-  streamTimeout: 300s
+  streamTimeout: 0s  # 0 means no timeout - streams will run indefinitely
   enableHeartbeat: true
