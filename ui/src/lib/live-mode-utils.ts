@@ -39,23 +39,37 @@ export function setupLiveMode(
  */
 export const LiveModePresets = {
   /**
-   * Setup for audit logs with default configuration
+   * Setup for audit logs with optimized configuration
    */
   auditLogs: () => ({
     enabled: true,
     endpoint: LIVE_MODE_ENDPOINTS.AUDIT_LOGS,
     autoRefresh: true,
     showToggle: true,
+    options: {
+      batchWindow: 50, // Smaller batch window for audit logs
+      debounceDelay: 300, // Shorter debounce for more responsive updates
+      pollInterval: 2000,
+      maxReconnectAttempts: 5,
+      showConnectionStatus: true,
+    },
   }),
 
   /**
-   * Setup for shipments with default configuration
+   * Setup for shipments with optimized batching configuration
    */
   shipments: () => ({
     enabled: true,
     endpoint: LIVE_MODE_ENDPOINTS.SHIPMENTS,
     autoRefresh: true,
     showToggle: true,
+    options: {
+      batchWindow: 100, // Batch events within 100ms window
+      debounceDelay: 500, // Wait 500ms after last event before refreshing
+      pollInterval: 2000,
+      maxReconnectAttempts: 5,
+      showConnectionStatus: true,
+    },
   }),
 
   /**
