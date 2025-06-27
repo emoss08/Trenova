@@ -205,12 +205,15 @@ export function DataTableV2<TData extends Record<string, any>>({
     enhancedSearchParams,
   );
 
-  // Live mode integration
+  // Live mode integration with performance optimization
   const liveData = useLiveDataTable({
     queryKey,
     endpoint: liveMode?.endpoint || "",
     enabled: liveModeEnabled && !!liveMode?.endpoint,
     autoRefresh: autoRefreshEnabled,
+    batchWindow: liveMode?.options?.batchWindow || 100,
+    debounceDelay: liveMode?.options?.debounceDelay || 300,
+    onNewData: liveMode?.options?.onNewData,
   });
 
   const table = useReactTable({

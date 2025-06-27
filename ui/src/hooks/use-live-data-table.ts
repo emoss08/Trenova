@@ -8,6 +8,8 @@ export interface LiveDataTableOptions {
   enabled?: boolean;
   autoRefresh?: boolean; // Auto-refresh on new data instead of showing banner
   onNewData?: (data: any) => void;
+  batchWindow?: number; // Time window in ms to batch events (default: 100ms)
+  debounceDelay?: number; // Debounce delay for auto-refresh (default: 300ms)
 }
 
 export function useLiveDataTable({
@@ -16,6 +18,8 @@ export function useLiveDataTable({
   enabled = false,
   autoRefresh = false,
   onNewData,
+  batchWindow = 100,
+  debounceDelay = 300,
 }: LiveDataTableOptions) {
   const queryClient = useQueryClient();
   const [newItemsCount, setNewItemsCount] = useState(0);
@@ -25,18 +29,30 @@ export function useLiveDataTable({
     new Map(),
   );
 
-  const handleNewData = useCallback(
-    (data: any) => {
-      // Add the new item ID to the set for highlighting
-      if (data.id) {
-        setNewItemIds((prev) => {
-          const newSet = new Set(prev);
-          newSet.add(data.id);
-          return newSet;
-        });
+  // Refs for batching and debouncing
+  const pendingEventsRef = useRef<any[]>([]);
+  const batchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const debounceTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Process batched events
+  const processBatchedEvents = useCallback(() => {
+    const events = pendingEventsRef.current;
+    if (events.length === 0) return;
+
+    console.log(`📦 Processing batch of ${events.length} events`);
+
+    // Clear pending events
+    pendingEventsRef.current = [];
+
+    // Process all IDs for highlighting
+    const newIds = new Set<string>();
+    events.forEach((event) => {
+      if (event.id || event.shipment?.id) {
+        const itemId = event.id || event.shipment?.id;
+        newIds.add(itemId);
 
         // Clear any existing timeout for this ID
-        const existingTimeout = timeoutRefs.current.get(data.id);
+        const existingTimeout = timeoutRefs.current.get(itemId);
         if (existingTimeout) {
           clearTimeout(existingTimeout);
         }
@@ -45,33 +61,62 @@ export function useLiveDataTable({
         const timeout = setTimeout(() => {
           setNewItemIds((prev) => {
             const newSet = new Set(prev);
-            newSet.delete(data.id);
+            newSet.delete(itemId);
             return newSet;
           });
-          timeoutRefs.current.delete(data.id);
+          timeoutRefs.current.delete(itemId);
         }, 3000);
 
-        timeoutRefs.current.set(data.id, timeout);
+        timeoutRefs.current.set(itemId, timeout);
+      }
+    });
+
+    // Update all new IDs at once
+    setNewItemIds((prev) => {
+      const newSet = new Set(prev);
+      newIds.forEach((id) => newSet.add(id));
+      return newSet;
+    });
+
+    if (autoRefresh) {
+      // Clear any existing debounce timeout
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
       }
 
-      if (autoRefresh) {
-        // Auto-refresh: immediately invalidate and refetch the query
-        // Use more specific invalidation to reduce impact on other components
+      // Debounce the query invalidation
+      debounceTimeoutRef.current = setTimeout(() => {
+        console.log("🔄 Invalidating queries after debounce");
         queryClient.invalidateQueries({
           queryKey: [queryKey],
           type: "active",
           exact: false,
         });
-      } else {
-        // Banner mode: increment the count of new items
-        setNewItemsCount((prev) => prev + 1);
-        setShowNewItemsBanner(true);
-      }
+      }, debounceDelay);
+    } else {
+      // Banner mode: update count with batch size
+      setNewItemsCount((prev) => prev + events.length);
+      setShowNewItemsBanner(true);
+    }
 
-      // Call custom handler if provided
-      onNewData?.(data);
+    // Call custom handlers for each event
+    events.forEach((event) => onNewData?.(event));
+  }, [autoRefresh, queryClient, queryKey, onNewData, debounceDelay]);
+
+  const handleNewData = useCallback(
+    (data: any) => {
+      // Add event to pending batch
+      pendingEventsRef.current.push(data);
+
+      // If no batch timeout is running, start one
+      if (!batchTimeoutRef.current) {
+        batchTimeoutRef.current = setTimeout(() => {
+          processBatchedEvents();
+          batchTimeoutRef.current = null;
+        }, batchWindow);
+      }
     },
-    [autoRefresh, queryClient, queryKey, onNewData],
+    [batchWindow, processBatchedEvents],
   );
 
   const handleError = useCallback((error: string) => {
@@ -115,8 +160,17 @@ export function useLiveDataTable({
   // Cleanup timeouts on unmount
   useEffect(() => {
     return () => {
+      // Clear all highlight timeouts
       timeoutRefs.current.forEach((timeout) => clearTimeout(timeout));
       timeoutRefs.current.clear();
+
+      // Clear batch and debounce timeouts
+      if (batchTimeoutRef.current) {
+        clearTimeout(batchTimeoutRef.current);
+      }
+      if (debounceTimeoutRef.current) {
+        clearTimeout(debounceTimeoutRef.current);
+      }
     };
   }, []);
 
