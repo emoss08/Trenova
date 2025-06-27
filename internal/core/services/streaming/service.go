@@ -49,6 +49,9 @@ type Client struct {
 	sendTimeout  time.Duration
 	isSlowClient bool
 	errorCount   int
+	// Channel state management
+	closed   bool
+	closedMu sync.Mutex
 }
 
 // NewService creates a new streaming service

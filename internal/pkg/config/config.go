@@ -495,6 +495,9 @@ type KafkaConfig struct {
 
 	// WriteTimeout is the timeout for writing messages
 	WriteTimeout time.Duration `mapstructure:"writeTimeout"`
+
+	// SchemaRegistryURL is the URL of the schema registry
+	SchemaRegistryURL string `mapstructure:"schemaRegistryURL"`
 }
 
 // StreamingConfig is the configuration for real-time streaming

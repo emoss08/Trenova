@@ -61,10 +61,16 @@ func (sm *StreamManager) handleNewClient(
 	clientID string,
 	writer *bufio.Writer,
 ) {
-	clientCtx, clientCancel := context.WithTimeout(
-		ctx,
-		sm.config.StreamTimeout,
-	)
+	// Use context without timeout if StreamTimeout is 0
+	var clientCtx context.Context
+	var clientCancel context.CancelFunc
+	
+	if sm.config.StreamTimeout > 0 {
+		clientCtx, clientCancel = context.WithTimeout(ctx, sm.config.StreamTimeout)
+	} else {
+		// No timeout - connection will be managed by client disconnect detection
+		clientCtx, clientCancel = context.WithCancel(ctx)
+	}
 	defer clientCancel()
 
 	client := &Client{
@@ -80,6 +86,7 @@ func (sm *StreamManager) handleNewClient(
 		sendTimeout:  100 * time.Millisecond,
 		isSlowClient: false,
 		errorCount:   0,
+		closed:       false,
 	}
 
 	// Add client to manager
@@ -144,16 +151,13 @@ func (sm *StreamManager) handleNewClient(
 // clientMessageSender handles message sending for a specific client with quality detection
 func (sm *StreamManager) clientMessageSender(client *Client) {
 	defer func() {
-		// Safely drain and close the channel
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					log.Error().Interface("client", client).Msg("Client sender panic recovered")
-					// ! Channel already closed, ignore
-				}
-			}()
+		// Mark client as closed and close the channel safely
+		client.closedMu.Lock()
+		if !client.closed {
+			client.closed = true
 			close(client.sendQueue)
-		}()
+		}
+		client.closedMu.Unlock()
 
 		if r := recover(); r != nil {
 			log.Error().Interface("client", client).Msgf("Client sender panic recovered: %v", r)
@@ -240,14 +244,10 @@ func (sm *StreamManager) runDataStream(reqCtx *appctx.RequestContext) {
 	ticker := time.NewTicker(sm.config.PollInterval)
 	defer ticker.Stop()
 
-	timeout := time.After(sm.config.StreamTimeout)
-
+	// Remove the stream timeout - streams should run as long as clients are connected
 	for {
 		select {
 		case <-sm.ctx.Done():
-			return
-		case <-timeout:
-			fmt.Println("Stream timeout reached, shutting down")
 			return
 		case <-ticker.C:
 			// Check if we have any clients
@@ -519,6 +519,14 @@ func (sm *StreamManager) broadcastError(errorMsg string) {
 
 // sendEventToClientAsync sends an event to a client asynchronously via queue
 func (sm *StreamManager) sendEventToClientAsync(client *Client, eventType string, data any) {
+	// Check if client is closed
+	client.closedMu.Lock()
+	if client.closed {
+		client.closedMu.Unlock()
+		return
+	}
+	client.closedMu.Unlock()
+
 	dataJSON, err := sonic.Marshal(data)
 	if err != nil {
 		fmt.Printf("Error marshaling data for client %s: %v\n", client.ID, err)
@@ -528,6 +536,9 @@ func (sm *StreamManager) sendEventToClientAsync(client *Client, eventType string
 	message := fmt.Sprintf("event: %s\ndata: %s\n\n", eventType, dataJSON)
 
 	select {
+	case <-client.ctx.Done():
+		// Client disconnected
+		return
 	case client.sendQueue <- []byte(message):
 		// Message queued successfully
 	case <-time.After(client.sendTimeout):
@@ -550,6 +561,14 @@ func (sm *StreamManager) sendEventDirectly(client *Client, eventType string, dat
 
 // sendEventToClient sends an event to a specific client with proper channel state checking
 func (sm *StreamManager) sendEventToClient(client *Client, eventType string, data any) {
+	// Check if client is closed
+	client.closedMu.Lock()
+	if client.closed {
+		client.closedMu.Unlock()
+		return
+	}
+	client.closedMu.Unlock()
+
 	dataJSON, err := sonic.Marshal(data)
 	if err != nil {
 		fmt.Printf("Error marshaling data for client %s: %v\n", client.ID, err)
@@ -566,17 +585,25 @@ func (sm *StreamManager) sendEventToClient(client *Client, eventType string, dat
 		// Client is still connected, proceed
 	}
 
-	// Try to queue the message, fallback to direct write for compatibility
-	select {
-	case client.sendQueue <- []byte(message):
-		// Message queued successfully
-	case <-time.After(10 * time.Millisecond):
-		// Quick timeout - if queue is full, mark as slow and skip
-		client.isSlowClient = true
-	case <-client.ctx.Done():
-		// Client disconnected while waiting
-		return
-	}
+	// Try to queue the message with panic recovery
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				fmt.Printf("Stream panic recovered: %v\n", r)
+			}
+		}()
+		
+		select {
+		case client.sendQueue <- []byte(message):
+			// Message queued successfully
+		case <-time.After(10 * time.Millisecond):
+			// Quick timeout - if queue is full, mark as slow and skip
+			client.isSlowClient = true
+		case <-client.ctx.Done():
+			// Client disconnected while waiting
+			return
+		}
+	}()
 }
 
 // addClient adds a client to the stream manager
@@ -595,7 +622,15 @@ func (sm *StreamManager) removeClient(clientID string) {
 	defer sm.mu.Unlock()
 
 	if client, exists := sm.clients[clientID]; exists {
+		// Mark as closed to prevent any further sends
+		client.closedMu.Lock()
+		client.closed = true
+		client.closedMu.Unlock()
+		
+		// Cancel the client context
 		client.cancel()
+		
+		// Remove from manager
 		delete(sm.clients, clientID)
 		sm.metrics.ActiveConnections--
 	}
