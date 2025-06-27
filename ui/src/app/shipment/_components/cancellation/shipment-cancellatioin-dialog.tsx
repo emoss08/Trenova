@@ -1,3 +1,4 @@
+import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,6 +38,7 @@ export function ShipmentCancellationDialog({
   shipmentId,
 }: ShipmentCancellationDialogProps) {
   const user = useUser();
+  const { table } = useDataTable();
 
   const form = useForm({
     resolver: zodResolver(shipmentCancellationSchema),
@@ -66,6 +68,8 @@ export function ShipmentCancellationDialog({
       });
       onOpenChange(false);
       reset();
+
+      table.resetRowSelection();
 
       // Invalidate the query to refresh the table
       broadcastQueryInvalidation({
