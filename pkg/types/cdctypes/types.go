@@ -31,18 +31,18 @@ type DebeziumAvroEnvelope struct {
 
 // DebeziumAvroSource contains source metadata in Avro format
 type DebeziumAvroSource struct {
-	Version   string             `json:"version"`   // Debezium version
-	Connector string             `json:"connector"` // Source connector type
-	Name      string             `json:"name"`      // Connector name
-	TsMs      int64              `json:"ts_ms"`     // Source timestamp
-	Snapshot  DebeziumOptional   `json:"snapshot"`  // Snapshot info (optional)
-	Db        string             `json:"db"`        // Database name
-	Sequence  DebeziumOptional   `json:"sequence"`  // Sequence info (optional)
-	Schema    string             `json:"schema"`    // Schema name
-	Table     string             `json:"table"`     // Table name
-	TxId      *DebeziumLong      `json:"txId"`      // Transaction ID (optional)
-	Lsn       *DebeziumLong      `json:"lsn"`       // Log sequence number (optional)
-	Xmin      any                `json:"xmin"`      // PostgreSQL xmin (optional)
+	Version   string           `json:"version"`   // Debezium version
+	Connector string           `json:"connector"` // Source connector type
+	Name      string           `json:"name"`      // Connector name
+	TsMs      int64            `json:"ts_ms"`     // Source timestamp
+	Snapshot  DebeziumOptional `json:"snapshot"`  // Snapshot info (optional)
+	Db        string           `json:"db"`        // Database name
+	Sequence  DebeziumOptional `json:"sequence"`  // Sequence info (optional)
+	Schema    string           `json:"schema"`    // Schema name
+	Table     string           `json:"table"`     // Table name
+	TxId      *DebeziumLong    `json:"txId"`      // Transaction ID (optional)
+	Lsn       *DebeziumLong    `json:"lsn"`       // Log sequence number (optional)
+	Xmin      any              `json:"xmin"`      // PostgreSQL xmin (optional)
 }
 
 // DebeziumOptional represents Avro optional fields that come as {"string": value} or null
@@ -92,8 +92,8 @@ func (t *DebeziumTimestamp) Value() int64 {
 
 // DebeziumTransaction represents transaction information
 type DebeziumTransaction struct {
-	ID                string `json:"id"`
-	TotalOrder        int64  `json:"total_order"`
+	ID                  string `json:"id"`
+	TotalOrder          int64  `json:"total_order"`
 	DataCollectionOrder int64  `json:"data_collection_order"`
 }
 
@@ -161,17 +161,17 @@ func ExtractValueField(data map[string]any) map[string]any {
 	if data == nil {
 		return nil
 	}
-	
+
 	// Check if this is wrapped in a "Value" field (uppercase)
 	if value, ok := data["Value"].(map[string]any); ok {
 		return value
 	}
-	
+
 	// Check if this is wrapped in a "value" field (lowercase)
 	if value, ok := data["value"].(map[string]any); ok {
 		return value
 	}
-	
+
 	// If the data only has one key and it's a map, extract it
 	// This handles cases where the wrapper key might be dynamic
 	if len(data) == 1 {
@@ -181,7 +181,7 @@ func ExtractValueField(data map[string]any) map[string]any {
 			}
 		}
 	}
-	
+
 	// Otherwise return as-is
 	return data
 }
@@ -192,7 +192,7 @@ func ConvertAvroOptionalField(field any) any {
 	if field == nil {
 		return nil
 	}
-	
+
 	// Handle map format for optional fields
 	if m, ok := field.(map[string]any); ok {
 		// Return the first value found
@@ -200,7 +200,7 @@ func ConvertAvroOptionalField(field any) any {
 			return v
 		}
 	}
-	
+
 	// Return as-is if not in optional format
 	return field
 }
