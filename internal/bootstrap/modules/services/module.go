@@ -56,7 +56,7 @@ var Module = fx.Module("services", fx.Provide(
 	permission.NewService,
 	role.NewService,
 	file.NewService,
-	audit.NewService,
+	audit.NewServiceV2,
 	auth.NewService,
 	organization.NewService,
 	session.NewService,

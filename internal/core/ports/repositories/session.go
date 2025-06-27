@@ -22,5 +22,10 @@ type SessionRepository interface {
 		eventType session.EventType,
 		metadata map[string]any,
 	) error
+	UpdateSessionOrganization(
+		ctx context.Context,
+		sessionID pulid.ID,
+		newOrgID pulid.ID,
+	) error
 	RevokeSession(ctx context.Context, sessionID pulid.ID, ip, userAgent, reason string) error
 }

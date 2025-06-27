@@ -610,3 +610,118 @@ func (ur *userRepository) GetSystemUser(ctx context.Context) (*user.User, error)
 
 	return u, nil
 }
+
+// SwitchOrganization switches a user's current organization
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - userID: The ID of the user switching organizations.
+//   - newOrgID: The ID of the organization to switch to.
+//
+// Returns:
+//   - *user.User: The updated user with the new organization.
+//   - error: An error if the operation fails.
+func (ur *userRepository) SwitchOrganization(
+	ctx context.Context,
+	userID, newOrgID pulid.ID,
+) (*user.User, error) {
+	dba, err := ur.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := ur.l.With().
+		Str("operation", "SwitchOrganization").
+		Str("userID", userID.String()).
+		Str("newOrgID", newOrgID.String()).
+		Logger()
+
+	var updatedUser *user.User
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		// * First, verify the user exists and has access to the organization
+		u := new(user.User)
+		if err = tx.NewSelect().
+			Model(u).
+			Relation("Organizations").
+			Where("usr.id = ?", userID).
+			Scan(c); err != nil {
+			if eris.Is(err, sql.ErrNoRows) {
+				return errors.NewValidationError(
+					"userID",
+					errors.ErrNotFound,
+					"User not found",
+				)
+			}
+			return eris.Wrap(err, "failed to get user")
+		}
+
+		// * Verify the user has access to the new organization
+		hasAccess := false
+		for _, org := range u.Organizations {
+			if org.ID == newOrgID {
+				hasAccess = true
+				break
+			}
+		}
+
+		if !hasAccess {
+			return errors.NewValidationError(
+				"organizationID",
+				errors.ErrNotFound,
+				"You do not have access to this organization",
+			)
+		}
+
+		// * Update the user's current organization
+		result, uErr := tx.NewUpdate().
+			Model((*user.User)(nil)).
+			Set("current_organization_id = ?", newOrgID).
+			Set("updated_at = ?", timeutils.NowUnix()).
+			Where("usr.id = ?", userID).
+			Exec(c)
+
+		if uErr != nil {
+			log.Error().Err(uErr).Msg("failed to update user organization")
+			return eris.Wrap(uErr, "failed to update user organization")
+		}
+
+		// * Check if the update was successful
+		rowsAffected, raErr := result.RowsAffected()
+		if raErr != nil {
+			return eris.Wrap(raErr, "failed to get rows affected")
+		}
+
+		if rowsAffected == 0 {
+			return errors.NewValidationError(
+				"userID",
+				errors.ErrNotFound,
+				"User not found or no changes made",
+			)
+		}
+
+		// * Get the updated user with the new organization information
+		updatedUser = new(user.User)
+		if err = tx.NewSelect().
+			Model(updatedUser).
+			Relation("CurrentOrganization").
+			Relation("Organizations").
+			Where("usr.id = ?", userID).
+			Scan(c); err != nil {
+			return eris.Wrap(err, "failed to get updated user")
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to switch organization")
+		return nil, err
+	}
+
+	log.Info().
+		Str("previousOrgID", updatedUser.CurrentOrganizationID.String()).
+		Msg("successfully switched organization")
+
+	return updatedUser, nil
+}

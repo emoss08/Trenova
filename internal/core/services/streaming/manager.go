@@ -64,7 +64,7 @@ func (sm *StreamManager) handleNewClient(
 	// Use context without timeout if StreamTimeout is 0
 	var clientCtx context.Context
 	var clientCancel context.CancelFunc
-	
+
 	if sm.config.StreamTimeout > 0 {
 		clientCtx, clientCancel = context.WithTimeout(ctx, sm.config.StreamTimeout)
 	} else {
@@ -592,7 +592,7 @@ func (sm *StreamManager) sendEventToClient(client *Client, eventType string, dat
 				fmt.Printf("Stream panic recovered: %v\n", r)
 			}
 		}()
-		
+
 		select {
 		case client.sendQueue <- []byte(message):
 			// Message queued successfully
@@ -626,10 +626,10 @@ func (sm *StreamManager) removeClient(clientID string) {
 		client.closedMu.Lock()
 		client.closed = true
 		client.closedMu.Unlock()
-		
+
 		// Cancel the client context
 		client.cancel()
-		
+
 		// Remove from manager
 		delete(sm.clients, clientID)
 		sm.metrics.ActiveConnections--

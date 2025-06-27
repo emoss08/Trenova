@@ -6,12 +6,13 @@ The Audit Service provides a robust, enterprise-grade auditing capability for th
 
 ## Core Features
 
-- **High-throughput buffered logging**: Efficiently handles high volumes of audit events
-- **Circuit breaker pattern**: Prevents system degradation during high load or outages
-- **Sensitive data protection**: Configurable masking, hashing, and encryption of sensitive fields
-- **Flexible metadata**: Rich contextual information for comprehensive audit trails
-- **Critical event prioritization**: Special handling for high-priority audit events
-- **Resilient error handling**: Automatic retries and failure management
+- **Queue-based asynchronous processing**: Non-blocking audit logging with configurable workers
+- **Automatic sensitive data detection**: AI-powered detection of SSNs, credit cards, API keys, etc.
+- **Environment-aware configuration**: Automatic adjustment of security levels based on deployment
+- **Advanced masking strategies**: Configurable data masking for different security requirements
+- **Thread-safe design**: Prevents memory corruption and race conditions
+- **Resilient error handling**: Automatic retries with exponential backoff
+- **Performance metrics**: Built-in monitoring and observability
 
 ## Setup and Configuration
 
@@ -27,8 +28,20 @@ type AuditConfig struct {
     // Interval in seconds to flush buffer even if not full
     FlushInterval int `yaml:"flushInterval" validate:"required,min=5"`
     
-    // Enable or disable the audit service
-    Enabled bool `yaml:"enabled" default:"true"`
+    // Number of entries to process in a single batch
+    BatchSize int `yaml:"batchSize" default:"50"`
+    
+    // Number of worker goroutines for processing
+    Workers int `yaml:"workers" default:"2"`
+    
+    // Enable compression for large audit entries
+    CompressionEnabled bool `yaml:"compressionEnabled" default:"false"`
+    
+    // Compression level (1-9)
+    CompressionLevel int `yaml:"compressionLevel" default:"6"`
+    
+    // Size in KB before compression is applied
+    CompressionThreshold int `yaml:"compressionThreshold" default:"10"`
 }
 ```
 
@@ -38,8 +51,23 @@ Example configuration in YAML:
 audit:
   bufferSize: 1000
   flushInterval: 30
-  enabled: true
+  batchSize: 50
+  workers: 2
+  compressionEnabled: true
+  compressionLevel: 6
+  compressionThreshold: 10
 ```
+
+### Environment-Based Configuration
+
+The audit service automatically configures sensitive data handling based on your environment:
+
+| Environment | Auto-Detection | Masking Strategy | Description |
+|-------------|----------------|------------------|-------------|
+| Production | ON | Strict | Maximum security, minimal information shown |
+| Staging | ON | Default | Balanced between security and debugging |
+| Development | ON | Partial | More information shown for easier debugging |
+| Testing | OFF | Partial | Predictable output for testing |
 
 ### Service Registration
 
@@ -139,38 +167,86 @@ audit.WithTags("safety-critical", "eld-compliance", "hours-of-service")
 
 ## Handling Sensitive Data
 
-### Registering Sensitive Fields
+### Automatic Detection
 
-To protect sensitive data in your audit logs, register fields that need special handling:
+The audit service automatically detects and masks common sensitive patterns:
+
+- **Social Security Numbers**: `123-45-6789` → `XXX-XX-6789` (or based on strategy)
+- **Credit Cards**: `4111111111111111` → `************1111`
+- **API Keys**: Long alphanumeric strings are masked
+- **JWT Tokens**: Three-part tokens are automatically detected
+- **Private Keys**: PEM-formatted keys are completely redacted
+- **Common Fields**: `password`, `secret`, `token`, `apiKey`, etc.
+
+### Registering Custom Sensitive Fields
+
+To protect additional sensitive data in your audit logs:
 
 ```go
 // During service initialization
 auditService.RegisterSensitiveFields(permission.ResourceDriver, []services.SensitiveField{
-    {Name: "licenseNumber", Action: audit.SensitiveFieldMask},
-    {Name: "socialSecurityNumber", Action: audit.SensitiveFieldOmit},
-    {Name: "medicalCardNumber", Action: audit.SensitiveFieldMask},
-    {Name: "password", Action: audit.SensitiveFieldOmit},
+    {Name: "licenseNumber", Action: services.SensitiveFieldMask},
+    {Name: "socialSecurityNumber", Action: services.SensitiveFieldOmit},
+    {Name: "medicalCardNumber", Action: services.SensitiveFieldMask},
+    {Name: "password", Action: services.SensitiveFieldOmit},
 })
 ```
 
 Available actions for sensitive fields:
 
-| Action | Description |
-|--------|-------------|
-| SensitiveFieldOmit | Completely removes the field from audit logs |
-| SensitiveFieldMask | Replaces part of the value with asterisks (*) |
-| SensitiveFieldHash | Replaces the value with a SHA-256 hash |
-| SensitiveFieldEncrypt | Encrypts the value (requires encryption key setup) |
+| Action | Description | Example |
+|--------|-------------|---------|
+| SensitiveFieldOmit | Completely removes the field | `password: "secret"` → field removed |
+| SensitiveFieldMask | Masks based on current strategy | `ssn: "123-45-6789"` → `ssn: "XXX-XX-6789"` |
+| SensitiveFieldHash | SHA-256 hash (first 16 chars) | `token: "abc123"` → `token: "sha256:ba7816bf8f01cfea"` |
+| SensitiveFieldEncrypt | AES-GCM encryption | `data: "sensitive"` → `data: "enc:gcm:base64data..."` |
 
 ### Pattern-based Sensitive Data
 
-You can also apply sensitive data handling based on field name patterns:
+Apply sensitive data handling based on field name patterns:
 
 ```go
 auditService.RegisterSensitiveFields(permission.ResourceFinancial, []services.SensitiveField{
-    {Name: "", Action: audit.SensitiveFieldMask, Pattern: "card.*number$"},
-    {Name: "", Action: audit.SensitiveFieldMask, Pattern: "^account.*"},
+    {Name: "", Action: services.SensitiveFieldMask, Pattern: "card.*number$"},
+    {Name: "", Action: services.SensitiveFieldMask, Pattern: "^account.*"},
 })
+```
+
+### Masking Strategies
+
+Different masking strategies are automatically applied based on environment:
+
+#### Strict Strategy (Production)
+- Email: `test@example.com` → `****@example.com`
+- String: `mysecretvalue` → `*************`
+- SSN: `123-45-6789` → `XXX-XX-XXXX`
+
+#### Default Strategy (Staging)
+- Email: `test@example.com` → `t***@example.com`
+- String: `mysecretvalue` → `m***********e`
+- SSN: `123-45-6789` → `***-**-6789`
+
+#### Partial Strategy (Development)
+- Email: `test@example.com` → `te***@example.com`
+- String: `mysecretvalue` → `my*********ue`
+- SSN: `123-45-6789` → `XXX-XX-6789`
+
+### Runtime Configuration
+
+You can adjust sensitive data handling at runtime:
+
+```go
+// Temporarily enable more verbose masking for debugging
+auditService.SetSensitiveDataMaskStrategy(MaskStrategyPartial)
+defer auditService.SetSensitiveDataMaskStrategy(MaskStrategyStrict)
+
+// Disable auto-detection during data migration
+auditService.SetSensitiveDataAutoDetect(false)
+// ... perform migration ...
+auditService.SetSensitiveDataAutoDetect(true)
+
+// Clear regex cache if patterns are updated
+auditService.ClearSensitiveDataCache()
 ```
 
 ## Real-World Examples
@@ -332,21 +408,54 @@ if err != nil {
 }
 ```
 
+## Performance and Monitoring
+
+### Queue Statistics
+
+Monitor the audit service queue health:
+
+```go
+stats := auditService.GetQueueStats()
+log.Info().
+    Int("queued", stats.QueuedEntries).
+    Int("capacity", stats.QueueCapacity).
+    Msg("audit queue statistics")
+```
+
+### Sensitive Data Metrics
+
+Track sensitive data sanitization performance:
+
+```go
+metrics := auditService.GetSensitiveDataMetrics()
+log.Info().
+    Int64("sanitized", metrics.SanitizedFields).
+    Int64("encrypted", metrics.EncryptedFields).
+    Int64("hashed", metrics.HashedFields).
+    Int64("masked", metrics.MaskedFields).
+    Int64("errors", metrics.Errors).
+    Msg("sensitive data processing metrics")
+```
+
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Circuit Breaker Open**
-   - Symptom: Audit entries are being rejected
-   - Solution: Check database connectivity, increase buffer size, or implement backoff strategy
+1. **Queue Full**
+   - Symptom: `ErrQueueFull` errors
+   - Solution: Increase buffer size, add more workers, or reduce audit volume
 
 2. **Sensitive Data Appearing in Logs**
    - Symptom: Unmasked sensitive data in audit logs
-   - Solution: Register all sensitive fields and verify pattern matching
+   - Solution: Ensure auto-detection is enabled, register custom fields, verify environment
 
 3. **Performance Degradation**
    - Symptom: Operations slowing down when audit service is active
-   - Solution: Reduce the size of audited data, use compact diffs, or adjust buffer configuration
+   - Solution: Adjust batch size, increase workers, enable compression for large entries
+
+4. **Memory Corruption (Old Service)**
+   - Symptom: Corrupted user IDs or field values
+   - Solution: Update to ServiceV2 which uses queue-based processing without object pooling
 
 ### Monitoring the Audit Service
 
@@ -358,8 +467,59 @@ The audit service exposes its state through the `GetServiceStatus()` method, whi
 - `stopping`: Service is shutting down
 - `stopped`: Service is not running
 
+### Debug Mode
+
+For troubleshooting sensitive data issues:
+
+```go
+// Enable partial masking to see more data
+auditService.SetSensitiveDataMaskStrategy(MaskStrategyPartial)
+
+// Check what fields are registered
+fields := auditService.GetRegisteredSensitiveFields(permission.ResourceUser)
+for name, field := range fields {
+    log.Debug().
+        Str("field", name).
+        Str("action", field.Action.String()).
+        Msg("registered sensitive field")
+}
+```
+
+## Migration from V1 to V2
+
+If you're upgrading from the original audit service to V2:
+
+### Key Differences
+
+1. **No Object Pooling**: V2 doesn't use `sync.Pool`, eliminating memory corruption issues
+2. **Queue-Based**: Non-blocking with configurable worker threads
+3. **Auto-Detection**: Automatic sensitive data detection is enabled by default
+4. **Environment Aware**: Security settings adjust automatically based on deployment
+
+### Migration Steps
+
+1. Update your configuration to include new fields:
+   ```yaml
+   audit:
+     bufferSize: 1000
+     flushInterval: 30
+     batchSize: 50      # New
+     workers: 2         # New
+   ```
+
+2. The API remains the same - no code changes needed for `LogAction` calls
+
+3. New runtime configuration options are available but optional
+
+### Performance Improvements
+
+- **Async Processing**: Audit logging no longer blocks main operations
+- **Batch Processing**: Multiple entries processed together for efficiency
+- **Worker Scaling**: Add more workers for higher throughput
+- **Memory Safety**: No risk of corrupted data from object reuse
+
 ## Conclusion
 
-The audit service provides a comprehensive solution for maintaining detailed records of system activity to meet regulatory requirements, support security monitoring, and enable operational insights. By following the guidelines in this documentation, you can ensure effective use of the audit service throughout your application.
+The audit service provides a comprehensive solution for maintaining detailed records of system activity to meet regulatory requirements, support security monitoring, and enable operational insights. Version 2 introduces significant improvements in performance, security, and reliability while maintaining full backward compatibility.
 
 For additional questions or concerns, contact the platform team or refer to the detailed code documentation.

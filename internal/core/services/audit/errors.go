@@ -21,4 +21,8 @@ var (
 	// Storage errors
 	ErrRepositoryFailure  = eris.New("audit repository operation failed")
 	ErrMaxRetriesExceeded = eris.New("max retries exceeded for repository operation")
+
+	// Queue errors
+	ErrQueueFull    = eris.New("audit queue is full")
+	ErrQueueTimeout = eris.New("timeout while enqueuing audit entry")
 )

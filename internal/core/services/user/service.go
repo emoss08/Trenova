@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
+	"github.com/emoss08/trenova/internal/core/services/auth"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
@@ -26,6 +27,7 @@ type ServiceParams struct {
 	Repo         repositories.UserRepository
 	AuditService services.AuditService
 	PermService  services.PermissionService
+	AuthService  *auth.Service
 }
 
 type Service struct {
@@ -33,6 +35,7 @@ type Service struct {
 	l    *zerolog.Logger
 	ps   services.PermissionService
 	as   services.AuditService
+	auth *auth.Service
 }
 
 func NewService(p ServiceParams) *Service {
@@ -45,6 +48,7 @@ func NewService(p ServiceParams) *Service {
 		l:    &log,
 		ps:   p.PermService,
 		as:   p.AuditService,
+		auth: p.AuthService,
 	}
 }
 
@@ -246,4 +250,75 @@ func (s *Service) Update(
 	}
 
 	return updatedEntity, nil
+}
+
+func (s *Service) SwitchOrganization(
+	ctx context.Context,
+	userID, newOrgID, sessionID pulid.ID,
+) (*user.User, error) {
+	log := s.l.With().
+		Str("operation", "SwitchOrganization").
+		Str("userID", userID.String()).
+		Str("newOrgID", newOrgID.String()).
+		Str("sessionID", sessionID.String()).
+		Logger()
+
+	// * Get the original user for audit logging
+	originalUser, err := s.repo.GetByID(ctx, repositories.GetUserByIDOptions{
+		UserID:      userID,
+		IncludeOrgs: true,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get original user")
+		return nil, err
+	}
+
+	// * Switch the organization
+	updatedUser, err := s.repo.SwitchOrganization(ctx, userID, newOrgID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to switch organization")
+		return nil, err
+	}
+
+	log.Info().
+		Str("userID", userID.String()).
+		Str("newOrgID", newOrgID.String()).
+		Msg("organization switched successfully")
+
+	// * Log the organization switch
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceUser,
+			ResourceID:     updatedUser.GetID(),
+			Action:         permission.ActionUpdate,
+			UserID:         userID,
+			CurrentState:   jsonutils.MustToJSON(updatedUser),
+			PreviousState:  jsonutils.MustToJSON(originalUser),
+			OrganizationID: updatedUser.CurrentOrganizationID,
+			BusinessUnitID: updatedUser.BusinessUnitID,
+		},
+		audit.WithComment("Organization switched"),
+		audit.WithCritical(),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log organization switch")
+		// ! Don't fail the operation if audit logging fails
+	}
+
+	// * Update the session with the new organization ID
+	if sessionID.IsNotNil() {
+		if err = s.auth.UpdateSessionOrganization(ctx, sessionID, newOrgID); err != nil {
+			log.Error().Err(err).Msg("failed to update session organization")
+			// ! Don't fail the operation if session update fails, but log it
+		} else {
+			log.Debug().Msg("session organization updated successfully")
+		}
+	}
+
+	log.Info().
+		Str("previousOrgID", originalUser.CurrentOrganizationID.String()).
+		Str("newOrgID", updatedUser.CurrentOrganizationID.String()).
+		Msg("organization switched successfully")
+
+	return updatedUser, nil
 }
