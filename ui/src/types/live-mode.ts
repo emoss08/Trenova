@@ -30,6 +30,12 @@ export interface LiveModeConfig {
 
     /** Custom error handler */
     onError?: (error: string) => void;
+
+    /** Time window in ms to batch events before processing (default: 100ms) */
+    batchWindow?: number;
+
+    /** Debounce delay for auto-refresh to prevent rapid API calls (default: 300ms) */
+    debounceDelay?: number;
   };
 }
 
@@ -38,6 +44,7 @@ export type LiveModeTableConfig = {
   endpoint: API_ENDPOINTS | string;
   autoRefresh?: boolean;
   showToggle?: boolean;
+  options?: LiveModeConfig["options"];
 };
 
 export interface LiveModeState {
@@ -152,5 +159,7 @@ export const DEFAULT_LIVE_MODE_CONFIG: Required<LiveModeConfig> = {
     pollInterval: 2000,
     maxReconnectAttempts: 5,
     showConnectionStatus: true,
+    batchWindow: 100,
+    debounceDelay: 300,
   },
 };
