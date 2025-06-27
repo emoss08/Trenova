@@ -190,7 +190,7 @@ services:
           memory: 512M
 
   kafka-connect:
-    image: debezium/connect:2.4
+    image: confluentinc/cp-kafka-connect:7.4.0
     hostname: kafka-connect
     container_name: kafka-connect
     depends_on:
@@ -199,18 +199,30 @@ services:
     ports:
       - "8083:8083"
     environment:
-      BOOTSTRAP_SERVERS: kafka:29092
-      GROUP_ID: 1
-      CONFIG_STORAGE_TOPIC: connect-configs
-      OFFSET_STORAGE_TOPIC: connect-offsets
-      STATUS_STORAGE_TOPIC: connect-statuses
-      CONFIG_STORAGE_REPLICATION_FACTOR: 1
-      OFFSET_STORAGE_REPLICATION_FACTOR: 1
-      STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_BOOTSTRAP_SERVERS: kafka:29092
+      CONNECT_GROUP_ID: 1
+      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: connect-statuses
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
       CONNECT_REST_ADVERTISED_HOST_NAME: kafka-connect
-      CONNECT_PLUGIN_PATH: /kafka/connect,/debezium/connector
+      CONNECT_PLUGIN_PATH: /usr/share/confluent-hub-components,/usr/share/java
+      CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://schema-registry:8081
     volumes:
       - kafka_connect_data:/kafka/connect
+    command:
+      - bash
+      - -c
+      - |
+        echo "Installing Debezium PostgreSQL connector..."
+        confluent-hub install --no-prompt debezium/debezium-connector-postgresql:2.4.2
+        echo "Starting Kafka Connect..."
+        /etc/confluent/docker/run
     networks:
       - app-network
     restart: always
