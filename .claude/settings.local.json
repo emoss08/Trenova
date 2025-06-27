@@ -39,7 +39,9 @@
       "Bash(npx tsc:*)",
       "Bash(task check)",
       "Bash(bash:*)",
-      "Bash(task run)"
+      "Bash(task run)",
+      "Bash(git checkout:*)",
+      "Bash(docker logs:*)"
     ],
     "deny": []
   },
