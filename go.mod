@@ -18,11 +18,12 @@ require (
 	github.com/jackc/pgx/v5 v5.7.5
 	github.com/jaswdr/faker/v2 v2.5.0
 	github.com/lib/pq v1.10.9
+	github.com/linkedin/goavro/v2 v2.13.1
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/minio/minio-go/v7 v7.0.94
 	github.com/oklog/ulid/v2 v2.1.1
-	github.com/rabbitmq/amqp091-go v1.10.0
 	github.com/redis/go-redis/v9 v9.10.0
+	github.com/riferrei/srclient v0.7.2
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rotisserie/eris v0.5.4
 	github.com/rs/zerolog v1.34.0
@@ -112,6 +113,7 @@ require (
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/gohugoio/hugo v0.139.4 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
+	github.com/golang/snappy v1.0.0 // indirect
 	github.com/google/pprof v0.0.0-20250607225305-033d6d78b36a // indirect
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.26.1 // indirect
@@ -168,6 +170,7 @@ require (
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/sagikazarmark/locafero v0.9.0 // indirect
 	github.com/sajari/fuzzy v1.0.0 // indirect
+	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
 	github.com/savsgio/gotils v0.0.0-20250408102913-196191ec6287 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
 	github.com/shirou/gopsutil/v4 v4.25.5 // indirect

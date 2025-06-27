@@ -127,3 +127,8 @@ The system manages transportation logistics including:
 ## Development Best Practices
 
 - Always follow golang best practices for go 1.24
+
+## Code Optimization Recommendations
+
+- Instead of sync.WaitGroup use conc.WaitGroup("github.com/sourcegraph/conc")
+- Use sonic instead of the standard library json package when possible
