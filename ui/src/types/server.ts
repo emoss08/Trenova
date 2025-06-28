@@ -24,6 +24,11 @@ export type LimitOffsetOptions = {
   offset: number;
 };
 
+export type ListResult<TData> = {
+  items: TData[];
+  total: number;
+};
+
 export type LimitOffsetResponse<TData> = {
   results: TData[];
   count: number;

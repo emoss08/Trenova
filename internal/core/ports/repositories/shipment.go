@@ -279,10 +279,27 @@ type GetShipmentsByDateRangeRequest struct {
 	CustomerID *pulid.ID `json:"customerId"` // Optional customer filter
 }
 
+type GetPreviousRatesRequest struct {
+	UserID                pulid.ID `json:"userId"`
+	OrgID                 pulid.ID `json:"orgId"`
+	BuID                  pulid.ID `json:"buId"`
+	OriginLocationID      pulid.ID `json:"originLocationId"`
+	DestinationLocationID pulid.ID `json:"destinationLocationId"`
+	ShipmentTypeID        pulid.ID `json:"shipmentTypeId"`
+	ServiceTypeID         pulid.ID `json:"serviceTypeId"`
+
+	// * Optional Customer filter
+	CustomerID *pulid.ID `json:"customerId" query:"customerId"`
+}
+
 type ShipmentRepository interface {
 	List(
 		ctx context.Context,
 		opts *ListShipmentOptions,
+	) (*ports.ListResult[*shipment.Shipment], error)
+	GetPreviousRates(
+		ctx context.Context,
+		req *GetPreviousRatesRequest,
 	) (*ports.ListResult[*shipment.Shipment], error)
 	GetAll(ctx context.Context) (*ports.ListResult[*shipment.Shipment], error)
 	GetByOrgID(ctx context.Context, orgID pulid.ID) (*ports.ListResult[*shipment.Shipment], error)
