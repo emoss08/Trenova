@@ -32,7 +32,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "../ui/table";
+} from "../ui/shadcn-table";
 
 type EntryAuditViewerProps = TableSheetProps & {
   resourceId: string;
