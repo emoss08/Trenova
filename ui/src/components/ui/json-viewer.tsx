@@ -42,7 +42,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "./table";
+} from "./shadcn-table";
 
 function CollapsibleNode({
   name,
