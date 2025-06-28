@@ -2,6 +2,7 @@ package audit
 
 import (
 	"context"
+	"maps"
 	"sync"
 	"time"
 
@@ -38,28 +39,19 @@ type ServiceV2Params struct {
 
 // ServiceV2 is the improved audit service implementation
 type ServiceV2 struct {
-	// Core dependencies
-	repo   repositories.AuditRepository
-	ps     services.PermissionService
-	ss     services.StreamingService
-	logger *zerolog.Logger
-	config *config.AuditConfig
-
-	// Queue system
-	queue     *EntryQueue
-	processor *BatchProcessor
-
-	// Sensitive data management
-	sdm *SensitiveDataManagerV2
-
-	// Service state
+	repo          repositories.AuditRepository
+	ps            services.PermissionService
+	ss            services.StreamingService
+	logger        *zerolog.Logger
+	config        *config.AuditConfig
+	queue         *EntryQueue
+	processor     *BatchProcessor
+	sdm           *SensitiveDataManagerV2
 	mu            sync.RWMutex
 	isRunning     atomic.Bool
 	serviceState  atomic.String
 	defaultFields map[string]any
-
-	// Metrics
-	metrics struct {
+	metrics       struct {
 		totalEntries   atomic.Int64
 		failedEntries  atomic.Int64
 		processedBatch atomic.Int64
@@ -74,10 +66,8 @@ func NewServiceV2(p ServiceV2Params) services.AuditService {
 	log := p.Logger.With().Str("service", "audit_v2").Logger()
 	cfg := p.Config.Audit()
 
-	// * Create processor
 	processor := NewBatchProcessor(p.AuditRepository, p.Logger)
 
-	// * Create queue configuration
 	queueConfig := QueueConfig{
 		BufferSize:   cfg.BufferSize,
 		BatchSize:    cfg.BatchSize,
@@ -85,7 +75,6 @@ func NewServiceV2(p ServiceV2Params) services.AuditService {
 		Workers:      cfg.Workers,
 	}
 
-	// * Create queue
 	queue := NewEntryQueue(queueConfig, processor, p.Logger)
 
 	srv := &ServiceV2{
@@ -100,29 +89,23 @@ func NewServiceV2(p ServiceV2Params) services.AuditService {
 		defaultFields: make(map[string]any),
 	}
 
-	// * Set initial state
 	srv.serviceState.Store(string(ServiceStateInitializing))
 	srv.metrics.startTime = time.Now()
 
-	// * Validate configuration
 	if err := srv.validateConfig(cfg); err != nil {
 		log.Error().Err(err).Msg("invalid audit configuration, using defaults")
 		srv.applyDefaultConfig()
 	}
 
-	// * Configure sensitive data manager based on environment
 	srv.configureSensitiveDataManager(p.Config.Get().App.Environment)
 
-	// * Register default sensitive fields
 	if err := srv.registerDefaultSensitiveFields(); err != nil {
 		log.Error().Err(err).Msg("failed to register default sensitive fields")
 	}
 
-	// * Set default metadata fields
 	srv.defaultFields["auditVersion"] = AuditVersionTag
 	srv.defaultFields["environment"] = p.Config.Get().App.Environment
 
-	// * Register lifecycle hooks
 	p.LC.Append(fx.Hook{
 		OnStart: func(context.Context) error {
 			return srv.Start()
@@ -206,7 +189,6 @@ func (s *ServiceV2) LogAction(params *services.LogActionParams, opts ...services
 
 // Start starts the audit service
 func (s *ServiceV2) Start() error {
-	// * Ensure we're not already running
 	if !s.isRunning.CompareAndSwap(false, true) {
 		s.logger.Warn().Msg("audit service is already running")
 		return nil
@@ -214,10 +196,9 @@ func (s *ServiceV2) Start() error {
 
 	s.serviceState.Store(string(ServiceStateRunning))
 
-	// * Start the queue workers
 	workers := s.config.Workers
 	if workers == 0 {
-		workers = 2 // Default to 2 workers
+		workers = 2
 	}
 	s.queue.Start(workers)
 
@@ -407,10 +388,10 @@ func (s *ServiceV2) validateConfig(cfg *config.AuditConfig) error {
 		return eris.Wrapf(ErrInvalidConfig, "flush interval too small (min: %d)", MinFlushInterval)
 	}
 	if cfg.BatchSize <= 0 {
-		cfg.BatchSize = 50 // Default batch size
+		cfg.BatchSize = 50
 	}
 	if cfg.Workers <= 0 {
-		cfg.Workers = 2 // Default workers
+		cfg.Workers = 2
 	}
 	return nil
 }
@@ -437,9 +418,7 @@ func (s *ServiceV2) copyDefaultFields() map[string]any {
 	defer s.mu.RUnlock()
 
 	result := make(map[string]any, len(s.defaultFields))
-	for k, v := range s.defaultFields {
-		result[k] = v
-	}
+	maps.Copy(result, s.defaultFields)
 	return result
 }
 
@@ -455,9 +434,7 @@ func (s *ServiceV2) deepCopyMap(m map[string]any) map[string]any {
 		s.logger.Error().Err(err).Msg("failed to marshal map for deep copy, using shallow copy")
 		// * Fallback to shallow copy
 		result := make(map[string]any, len(m))
-		for k, v := range m {
-			result[k] = v
-		}
+		maps.Copy(result, m)
 		return result
 	}
 
@@ -466,9 +443,7 @@ func (s *ServiceV2) deepCopyMap(m map[string]any) map[string]any {
 		s.logger.Error().Err(err).Msg("failed to unmarshal map for deep copy, using shallow copy")
 		// * Fallback to shallow copy
 		res := make(map[string]any, len(m))
-		for k, v := range m {
-			res[k] = v
-		}
+		maps.Copy(res, m)
 		return result
 	}
 

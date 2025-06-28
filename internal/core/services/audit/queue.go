@@ -2,12 +2,12 @@ package audit
 
 import (
 	"context"
-	"sync"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/rs/zerolog"
+	"github.com/sourcegraph/conc"
 )
 
 // EntryQueue represents a thread-safe queue for audit entries
@@ -16,7 +16,7 @@ type EntryQueue struct {
 	batchSize    int
 	flushTimeout time.Duration
 	processor    EntryProcessor
-	wg           sync.WaitGroup
+	wg           *conc.WaitGroup
 	stopCh       chan struct{}
 	logger       *zerolog.Logger
 }
@@ -43,6 +43,7 @@ func NewEntryQueue(cfg QueueConfig, processor EntryProcessor, lg *logger.Logger)
 		batchSize:    cfg.BatchSize,
 		flushTimeout: cfg.FlushTimeout,
 		processor:    processor,
+		wg:           conc.NewWaitGroup(),
 		stopCh:       make(chan struct{}),
 		logger:       &log,
 	}
@@ -72,8 +73,7 @@ func (q *EntryQueue) EnqueueWithTimeout(entry *audit.Entry, timeout time.Duratio
 // Start begins processing entries
 func (q *EntryQueue) Start(workers int) {
 	for i := 0; i < workers; i++ {
-		q.wg.Add(1)
-		go q.worker()
+		q.wg.Go(q.worker)
 	}
 }
 
@@ -112,8 +112,6 @@ func (q *EntryQueue) Stop(ctx context.Context) error {
 
 // worker processes entries from the queue
 func (q *EntryQueue) worker() {
-	defer q.wg.Done()
-
 	batch := make([]*audit.Entry, 0, q.batchSize)
 	ticker := time.NewTicker(q.flushTimeout)
 	defer ticker.Stop()
