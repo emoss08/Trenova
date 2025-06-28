@@ -49,11 +49,11 @@ const (
 type ServiceState string
 
 const (
-	ServiceStateInitializing ServiceState = "initializing"
-	ServiceStateRunning      ServiceState = "running"
-	ServiceStateDegraded     ServiceState = "degraded"
-	ServiceStateStopping     ServiceState = "stopping"
-	ServiceStateStopped      ServiceState = "stopped"
+	ServiceStateInitializing = ServiceState("initializing")
+	ServiceStateRunning      = ServiceState("running")
+	ServiceStateDegraded     = ServiceState("degraded")
+	ServiceStateStopping     = ServiceState("stopping")
+	ServiceStateStopped      = ServiceState("stopped")
 )
 
 type ServiceParams struct {
@@ -202,10 +202,10 @@ func (s *service) Stop() error {
 
 	s.serviceState.Store(string(ServiceStateStopped))
 	s.l.Info().
-		Int64("total_entries", s.entryCount.Load()).
-		Int64("total_flushes", s.flushCount.Load()).
-		Int64("total_errors", s.errorCount.Load()).
-		Int64("emergency_entries", s.emergencyLog.count.Load()).
+		Int64("totalEntries", s.entryCount.Load()).
+		Int64("totalFlushes", s.flushCount.Load()).
+		Int64("totalErrors", s.errorCount.Load()).
+		Int64("emergencyEntries", s.emergencyLog.count.Load()).
 		Str("uptime", time.Since(s.startTime).String()).
 		Msg("audit service stopped successfully")
 
@@ -471,9 +471,9 @@ func (s *service) Start() error {
 	}()
 
 	s.l.Info().
-		Int("buffer_size", s.config.BufferSize).
-		Int("flush_interval", s.config.FlushInterval).
-		Str("audit_version", AuditVersionTag).
+		Int("bufferSize", s.config.BufferSize).
+		Int("flushInterval", s.config.FlushInterval).
+		Str("auditVersion", AuditVersionTag).
 		Msg("🚀 Audit service initialized")
 
 	return nil
@@ -811,14 +811,14 @@ func (s *service) checkServiceHealth() bool {
 
 	// * Log the current status
 	s.l.Debug().
-		Int("buffer_size", bufferSize).
-		Float64("buffer_utilization_pct", utilization).
-		Int64("entries_processed", s.entryCount.Load()).
+		Int("bufferSize", bufferSize).
+		Float64("bufferUtilizationPct", utilization).
+		Int64("entriesProcessed", s.entryCount.Load()).
 		Int64("flushes", s.flushCount.Load()).
 		Int64("errors", errorCount).
-		Str("circuit_state", circuitStateToString(state)).
-		Bool("is_running", s.isRunning.Load()).
-		Str("service_state", s.serviceState.Load()).
+		Str("circuitState", circuitStateToString(state)).
+		Bool("isRunning", s.isRunning.Load()).
+		Str("serviceState", s.serviceState.Load()).
 		Msg("audit service health check")
 
 	isHealthy := true
@@ -839,7 +839,7 @@ func (s *service) checkServiceHealth() bool {
 
 	// Warn if buffer utilization is high
 	if utilization > 80 {
-		s.l.Warn().Float64("utilization_pct", utilization).Msg("audit buffer utilization high")
+		s.l.Warn().Float64("utilizationPct", utilization).Msg("audit buffer utilization high")
 		isHealthy = false
 	}
 
