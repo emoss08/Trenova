@@ -92,16 +92,6 @@ search:
   indexPrefix: "trv"
   batchInterval: 10
 
-rabbitmq:
-  host: "localhost"
-  port: 5674
-  username: "user"
-  password: "password"
-  vhost: "/"
-  exchangeName: "trenova"
-  queueName: "trenova"
-  timeout: 10s
-
 backup:
   enabled: true
   backupDir: "./backups"

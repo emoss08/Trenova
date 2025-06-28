@@ -1,8 +1,3 @@
-x-build-args: &build-args
-  DOCKER_BUILDKIT: 1
-  GO_VERSION: 1.24
-  ALPINE_VERSION: latest
-
 name: trenova-prod
 services:
   tren-db:
@@ -11,9 +6,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
-      POSTGRES_USER: ${DB_USER:-postgres}
-      POSTGRES_DB: ${DB_NAME:-trenova_go_db}
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: trenova_go_db
       POSTGRES_INITDB_ARGS: "--data-checksums"
       POSTGRES_MULTIPLE_EXTENSIONS: "pg_stat_statements,pg_trgm,btree_gin,btree_gist"
     command:
@@ -29,11 +24,11 @@ services:
       - "-c"
       - "max_connections=100"
       - "-c"
-      - "shared_buffers=128MB" # 25% of container memory
+      - "shared_buffers=256MB"  # Increased for production
       - "-c"
-      - "effective_cache_size=384MB" # 75% of container memory
+      - "effective_cache_size=768MB"
       - "-c"
-      - "maintenance_work_mem=64MB"
+      - "maintenance_work_mem=128MB"
       - "-c"
       - "checkpoint_completion_target=0.9"
       - "-c"
@@ -41,33 +36,34 @@ services:
       - "-c"
       - "effective_io_concurrency=200"
       - "-c"
-      - "work_mem=4MB"
+      - "work_mem=8MB"
       - "-c"
-      - "min_wal_size=1GB"
+      - "min_wal_size=2GB"
       - "-c"
-      - "max_wal_size=4GB"
+      - "max_wal_size=8GB"
     restart: always
     volumes:
       - pg_data:/var/lib/postgresql/data
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     deploy:
       resources:
         limits:
-          memory: 512M
-          cpus: "1"
+          memory: 1G
+          cpus: "2"
         reservations:
-          memory: 256M
+          memory: 512M
     networks:
       - app-network
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d trenova_go_db" ]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 30s # Allow time for initial startup
+      start_period: 30s
 
   tren-pgbouncer:
     container_name: tren-pgbouncer
-    image: edoburu/pgbouncer:latest # Using a pre-built image for simplicity
+    image: edoburu/pgbouncer:latest
     environment:
       - DATABASE_URL=postgres://postgres:postgres@tren-db:5432/trenova_go_db?sslmode=disable
     volumes:
@@ -84,11 +80,11 @@ services:
     deploy:
       resources:
         limits:
-          memory: 128M
+          memory: 256M
         reservations:
-          memory: 64M
+          memory: 128M
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -h localhost -p 6432 -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}" ]
+      test: [ "CMD-SHELL", "pg_isready -h localhost -p 6432 -U postgres -d trenova_go_db" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -102,7 +98,7 @@ services:
     command: >
       sh -c '
         redis-server
-        --maxmemory 1536mb
+        --maxmemory 2048mb
         --maxmemory-policy allkeys-lru
         --tcp-keepalive 300
         --tcp-backlog 511
@@ -116,9 +112,8 @@ services:
         --lazyfree-lazy-expire yes
         --lazyfree-lazy-server-del yes
         --replica-lazy-flush yes
+        --requirepass yourStrongRedisPassword
       '
-    environment:
-      - ALLOW_EMPTY_PASSWORD=yes
     restart: always
     volumes:
       - redis_data:/data
@@ -127,12 +122,12 @@ services:
     deploy:
       resources:
         limits:
-          memory: 2G          # Increased for production concurrent load
-          cpus: "1"           # Dedicated CPU for Redis performance
+          memory: 3G
+          cpus: "2"
         reservations:
-          memory: 1G          # Reserve memory for consistent performance
+          memory: 2G
     healthcheck:
-      test: [ "CMD", "redis-cli", "ping" ]
+      test: [ "CMD", "redis-cli", "-a", "yourStrongRedisPassword", "ping" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -142,65 +137,196 @@ services:
     image: quay.io/minio/minio
     command: server /data --console-address ":9001"
     environment:
-      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
-      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+      - MINIO_ROOT_USER=minioadmin
+      - MINIO_ROOT_PASSWORD=minioadmin
     volumes:
       - minio_data:/data
     ports:
-      - 9000:9000 # API
-      - 9001:9001 # Console
+      - "9000:9000"
+      - "9001:9001"
     restart: always
     networks:
       - app-network
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1G
+          cpus: "1"
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:9000/minio/health/live" ]
       interval: 30s
       timeout: 20s
       retries: 3
 
-  tren-rabbitmq:
-    container_name: tren-rabbitmq
-    image: "rabbitmq:3-management"
+  # Kafka ecosystem for CDC
+  tren-zookeeper:
+    container_name: tren-zookeeper
+    image: confluentinc/cp-zookeeper:7.4.0
+    hostname: tren-zookeeper
     ports:
-      - "5674:5672" # RabbitMQ
-      - "15674:15672" # Management UI
+      - "2181:2181"
     environment:
-      RABBITMQ_DEFAULT_USER: user
-      RABBITMQ_DEFAULT_PASS: password
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
     volumes:
-      - "rabbitmq_data:/var/lib/rabbitmq"
-      - "rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf" # Configuration file mount
-    restart: always
-    healthcheck:
-      test: [ "CMD", "rabbitmqctl", "status" ]
-      interval: 30s
-      timeout: 10s
-      retries: 10
+      - zookeeper_data:/var/lib/zookeeper/data
+      - zookeeper_logs:/var/lib/zookeeper/log
     networks:
       - app-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  tren-kafka:
+    container_name: tren-kafka
+    image: confluentinc/cp-kafka:7.4.0
+    hostname: tren-kafka
+    depends_on:
+      - tren-zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: tren-zookeeper:2181
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://tren-kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_CONFLUENT_SCHEMA_REGISTRY_URL: http://tren-schema-registry:8081
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 720  # 30 days for production
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+      KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - app-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "2"
+    healthcheck:
+      test: kafka-broker-api-versions --bootstrap-server tren-kafka:29092
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  tren-schema-registry:
+    container_name: tren-schema-registry
+    image: confluentinc/cp-schema-registry:7.4.0
+    hostname: tren-schema-registry
+    depends_on:
+      - tren-kafka
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: tren-schema-registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: tren-kafka:29092
+      SCHEMA_REGISTRY_LISTENERS: http://0.0.0.0:8081
+    networks:
+      - app-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
+
+  tren-kafka-connect:
+    container_name: tren-kafka-connect
+    image: confluentinc/cp-kafka-connect:7.4.0
+    hostname: tren-kafka-connect
+    depends_on:
+      tren-kafka:
+        condition: service_healthy
+      tren-db:
+        condition: service_healthy
+    ports:
+      - "8083:8083"
+    environment:
+      CONNECT_BOOTSTRAP_SERVERS: tren-kafka:29092
+      CONNECT_GROUP_ID: 1
+      CONNECT_CONFIG_STORAGE_TOPIC: connect-configs
+      CONNECT_OFFSET_STORAGE_TOPIC: connect-offsets
+      CONNECT_STATUS_STORAGE_TOPIC: connect-statuses
+      CONNECT_CONFIG_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_OFFSET_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_STATUS_STORAGE_REPLICATION_FACTOR: 1
+      CONNECT_REST_ADVERTISED_HOST_NAME: tren-kafka-connect
+      CONNECT_PLUGIN_PATH: /usr/share/confluent-hub-components,/usr/share/java
+      CONNECT_KEY_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_VALUE_CONVERTER: io.confluent.connect.avro.AvroConverter
+      CONNECT_KEY_CONVERTER_SCHEMA_REGISTRY_URL: http://tren-schema-registry:8081
+      CONNECT_VALUE_CONVERTER_SCHEMA_REGISTRY_URL: http://tren-schema-registry:8081
+    volumes:
+      - kafka_connect_data:/kafka/connect
+    command:
+      - bash
+      - -c
+      - |
+        echo "Installing Debezium PostgreSQL connector..."
+        confluent-hub install --no-prompt debezium/debezium-connector-postgresql:2.4.2
+        echo "Starting Kafka Connect..."
+        /etc/confluent/docker/run
+    networks:
+      - app-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: "1"
+    healthcheck:
+      test: curl -f http://localhost:8083/connectors
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  tren-kafka-ui:
+    container_name: tren-kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    depends_on:
+      - tren-kafka
+      - tren-schema-registry
+      - tren-kafka-connect
+    ports:
+      - "8082:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: production
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: tren-kafka:29092
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://tren-schema-registry:8081
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: debezium
+      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://tren-kafka-connect:8083
+    networks:
+      - app-network
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "0.5"
 
   tren-api:
     container_name: tren-api
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        <<: *build-args
+    image: wolfredstep/trenova-api:latest
+    # Uncomment to build locally instead of using Docker Hub image
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
     ports:
       - "3001:3001"
     environment:
       - TRENOVA_APP_ENVIRONMENT=production
-      - TRENOVA_SERVER_SECRET_KEY=${SERVER_SECRET_KEY:-secretKey}
-      - REDIS_PASSWORD=${REDIS_PASSWORD:-yourStrongRedisPassword}
-      - DB_HOST=tren-pgbouncer
-      - DB_PORT=6432
-      - DB_USER=${DB_USER:-postgres}
-      - DB_PASSWORD=${DB_PASSWORD:-postgres}
-      - DB_NAME=${DB_NAME:-postgres}
+      - TRENOVA_CONFIG_PATH=/app/config/production/config.production.yaml
+    volumes:
+      - ./config/production/config.production.yaml:/app/config/production/config.production.yaml:ro
+      - ./logs:/app/logs
     depends_on:
       tren-pgbouncer:
         condition: service_healthy
@@ -208,28 +334,30 @@ services:
         condition: service_healthy
       tren-minio:
         condition: service_healthy
-      tren-rabbitmq:
+      tren-kafka:
         condition: service_healthy
     networks:
       - app-network
     deploy:
       resources:
         limits:
-          memory: 512M
-          cpus: "1"
+          memory: 1G
+          cpus: "2"
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8080/health" ]
+      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:3001/health" ]
       interval: 10s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 30s
     restart: always
 
   tren-client:
     container_name: tren-client
-    build:
-      context: ./ui
-      dockerfile: Dockerfile
+    image: wolfredstep/trenova-ui:latest
+    # Uncomment to build locally instead of using Docker Hub image
+    # build:
+    #   context: ./ui
+    #   dockerfile: Dockerfile
     ports:
       - "5173:5173"
     networks:
@@ -238,18 +366,21 @@ services:
       - tren-api
     environment:
       - VITE_API_URL=https://trenova.local/api/v1
+      - NODE_ENV=production
     restart: always
     deploy:
       resources:
         limits:
-          memory: 256M
-          cpus: "0.5"
+          memory: 512M
+          cpus: "1"
 
   tren-caddy:
     container_name: tren-caddy
-    build:
-      context: .
-      dockerfile: Dockerfile.caddy
+    image: wolfredstep/trenova-caddy:latest
+    # Uncomment to build locally instead of using Docker Hub image
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile.caddy
     ports:
       - "80:80"
       - "443:443"
@@ -259,6 +390,7 @@ services:
       - ./logs/caddy:/var/log/caddy
     environment:
       - ACME_AGREE=true
+      - DOMAIN=trenova.local
     networks:
       - app-network
     depends_on:
@@ -268,8 +400,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 128M
-          cpus: "0.5"
+          memory: 256M
+          cpus: "1"
 
 volumes:
   pg_data: {}
@@ -277,8 +409,10 @@ volumes:
   minio_data: {}
   caddy_data: {}
   caddy_config: {}
-  rabbitmq_data: {}
-  rabbitmq.conf: {}
+  zookeeper_data: {}
+  zookeeper_logs: {}
+  kafka_data: {}
+  kafka_connect_data: {}
 
 networks:
   app-network:

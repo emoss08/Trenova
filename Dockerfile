@@ -37,16 +37,25 @@ RUN go mod download
 COPY . .
 
 # Build the binary
-RUN CGO_ENABLED=1 go build -o apiserver cmd/api/main.go
+RUN go build -o apiserver cmd/api/main.go
 
 FROM debian:bookworm-slim AS final
 
-# Install runtime dependencies
+# Install runtime dependencies and PostgreSQL client
 RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
-    postgresql-client \
     libffi8 \
+    wget \
+    gnupg \
+    lsb-release \
+    && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
+    && echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends postgresql-client-17 \
+    && apt-get remove -y wget gnupg lsb-release \
+    && apt-get autoremove -y \
     && rm -rf /var/lib/apt/lists/*
+
 
 # Set the environment variable
 ENV APP_ENV=production

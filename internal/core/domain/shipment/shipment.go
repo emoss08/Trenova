@@ -31,37 +31,40 @@ var (
 type Shipment struct {
 	bun.BaseModel `bun:"table:shipments,alias:sp" json:"-"`
 
-	ID                  pulid.ID            `json:"id"                  bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID      pulid.ID            `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID      pulid.ID            `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ServiceTypeID       pulid.ID            `json:"serviceTypeId"       bun:"service_type_id,type:VARCHAR(100),notnull"`
-	ShipmentTypeID      pulid.ID            `json:"shipmentTypeId"      bun:"shipment_type_id,type:VARCHAR(100),notnull"`
-	CustomerID          pulid.ID            `json:"customerId"          bun:"customer_id,type:VARCHAR(100),notnull"`
-	TractorTypeID       *pulid.ID           `json:"tractorTypeId"       bun:"tractor_type_id,type:VARCHAR(100),nullzero"`
-	TrailerTypeID       *pulid.ID           `json:"trailerTypeId"       bun:"trailer_type_id,type:VARCHAR(100),nullzero"`
-	OwnerID             *pulid.ID           `json:"ownerId"             bun:"owner_id,type:VARCHAR(100),nullzero"`
-	CanceledByID        *pulid.ID           `json:"canceledById"        bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
-	Status              Status              `json:"status"              bun:"status,type:status_enum,notnull,default:'New'"`
-	ProNumber           string              `json:"proNumber"           bun:"pro_number,type:VARCHAR(100),notnull"`
-	BOL                 string              `json:"bol"                 bun:"bol,type:VARCHAR(100),notnull"`
-	CancelReason        string              `json:"cancelReason"        bun:"cancel_reason,type:VARCHAR(100),nullzero"`
-	SearchVector        string              `json:"-"                   bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank                string              `json:"-"                   bun:"rank,type:VARCHAR(100),scanonly"`
-	RatingMethod        RatingMethod        `json:"ratingMethod"        bun:"rating_method,type:rating_method_enum,notnull,default:'Flat'"`
-	OtherChargeAmount   decimal.NullDecimal `json:"otherChargeAmount"   bun:"other_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
-	FreightChargeAmount decimal.NullDecimal `json:"freightChargeAmount" bun:"freight_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
-	TotalChargeAmount   decimal.NullDecimal `json:"totalChargeAmount"   bun:"total_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
-	Pieces              *int64              `json:"pieces"              bun:"pieces,type:INTEGER,nullzero"`
-	Weight              *int64              `json:"weight"              bun:"weight,type:INTEGER,nullzero"`
-	TemperatureMin      *int16              `json:"temperatureMin"      bun:"temperature_min,type:temperature_fahrenheit,nullzero"`
-	TemperatureMax      *int16              `json:"temperatureMax"      bun:"temperature_max,type:temperature_fahrenheit,nullzero"`
-	ActualDeliveryDate  *int64              `json:"actualDeliveryDate"  bun:"actual_delivery_date,type:BIGINT,nullzero"`
-	ActualShipDate      *int64              `json:"actualShipDate"      bun:"actual_ship_date,type:BIGINT,nullzero"`
-	CanceledAt          *int64              `json:"canceledAt"          bun:"canceled_at,type:BIGINT,nullzero"`
-	RatingUnit          int64               `json:"ratingUnit"          bun:"rating_unit,type:INTEGER,notnull,default:1"`
-	Version             int64               `json:"version"             bun:"version,type:BIGINT"`
-	CreatedAt           int64               `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt           int64               `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID  `json:"id"                   bun:"id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID pulid.ID  `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID pulid.ID  `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	ServiceTypeID  pulid.ID  `json:"serviceTypeId"        bun:"service_type_id,type:VARCHAR(100),notnull"`
+	ShipmentTypeID pulid.ID  `json:"shipmentTypeId"       bun:"shipment_type_id,type:VARCHAR(100),notnull"`
+	CustomerID     pulid.ID  `json:"customerId"           bun:"customer_id,type:VARCHAR(100),notnull"`
+	TractorTypeID  *pulid.ID `json:"tractorTypeId"        bun:"tractor_type_id,type:VARCHAR(100),nullzero"`
+	TrailerTypeID  *pulid.ID `json:"trailerTypeId"        bun:"trailer_type_id,type:VARCHAR(100),nullzero"`
+	OwnerID        *pulid.ID `json:"ownerId"              bun:"owner_id,type:VARCHAR(100),nullzero"`
+	CanceledByID   *pulid.ID `json:"canceledById"         bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
+	// Simple consolidation group identifier - links shipments that should be coordinated together
+	// Shipments in the same group are meant to be planned/optimized together but can have separate moves/assignments
+	ConsolidationGroupID *pulid.ID           `json:"consolidationGroupId" bun:"consolidation_group_id,type:VARCHAR(100),nullzero"`
+	Status               Status              `json:"status"               bun:"status,type:status_enum,notnull,default:'New'"`
+	ProNumber            string              `json:"proNumber"            bun:"pro_number,type:VARCHAR(100),notnull"`
+	BOL                  string              `json:"bol"                  bun:"bol,type:VARCHAR(100),notnull"`
+	CancelReason         string              `json:"cancelReason"         bun:"cancel_reason,type:VARCHAR(100),nullzero"`
+	SearchVector         string              `json:"-"                    bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank                 string              `json:"-"                    bun:"rank,type:VARCHAR(100),scanonly"`
+	RatingMethod         RatingMethod        `json:"ratingMethod"         bun:"rating_method,type:rating_method_enum,notnull,default:'Flat'"`
+	OtherChargeAmount    decimal.NullDecimal `json:"otherChargeAmount"    bun:"other_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
+	FreightChargeAmount  decimal.NullDecimal `json:"freightChargeAmount"  bun:"freight_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
+	TotalChargeAmount    decimal.NullDecimal `json:"totalChargeAmount"    bun:"total_charge_amount,type:NUMERIC(19,4),notnull,default:0"`
+	Pieces               *int64              `json:"pieces"               bun:"pieces,type:INTEGER,nullzero"`
+	Weight               *int64              `json:"weight"               bun:"weight,type:INTEGER,nullzero"`
+	TemperatureMin       *int16              `json:"temperatureMin"       bun:"temperature_min,type:temperature_fahrenheit,nullzero"`
+	TemperatureMax       *int16              `json:"temperatureMax"       bun:"temperature_max,type:temperature_fahrenheit,nullzero"`
+	ActualDeliveryDate   *int64              `json:"actualDeliveryDate"   bun:"actual_delivery_date,type:BIGINT,nullzero"`
+	ActualShipDate       *int64              `json:"actualShipDate"       bun:"actual_ship_date,type:BIGINT,nullzero"`
+	CanceledAt           *int64              `json:"canceledAt"           bun:"canceled_at,type:BIGINT,nullzero"`
+	RatingUnit           int64               `json:"ratingUnit"           bun:"rating_unit,type:INTEGER,notnull,default:1"`
+	Version              int64               `json:"version"              bun:"version,type:BIGINT"`
+	CreatedAt            int64               `json:"createdAt"            bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit      *businessunit.BusinessUnit   `json:"businessUnit,omitempty"     bun:"rel:belongs-to,join:business_unit_id=id"`

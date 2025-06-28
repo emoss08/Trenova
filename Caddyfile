@@ -1,20 +1,136 @@
-prod.trenova.app {
-	tls internal
+# Production Caddyfile for Trenova
+{
+	# Global options
+	admin 0.0.0.0:2019
+	persist_config off
+	auto_https on
+	servers {
+		trusted_proxies static private_ranges
+		client_ip_headers X-Forwarded-For X-Real-IP
+	}
+}
+
+# Production domain configuration
+{$DOMAIN:trenova.local} {
+	# TLS configuration
+	@production {
+		host trenova.com www.trenova.com
+	}
+	tls @production {
+		# Production uses Let's Encrypt
+	}
 	
-	handle /ws/* {
+	@local {
+		host trenova.local
+	}
+	tls @local {
+		# Local uses internal certificates
+		internal
+	}
+
+	# Security headers
+	header {
+		# Remove server info
+		-Server
+		
+		# Security headers
+		X-Content-Type-Options "nosniff"
+		X-Frame-Options "DENY"
+		X-XSS-Protection "1; mode=block"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		Content-Security-Policy "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; font-src 'self' data:; connect-src 'self' wss: https:; frame-ancestors 'none';"
+		
+		# HSTS (only for production)
+		@production {
+			host trenova.com www.trenova.com
+		}
+		Strict-Transport-Security @production "max-age=31536000; includeSubDomains; preload"
+	}
+
+	# Logging
+	log {
+		output file /var/log/caddy/access.log {
+			roll_size 100mb
+			roll_keep 10
+			roll_keep_for 720h
+		}
+		format json
+	}
+
+	# WebSocket handling
+	@websocket {
+		header Connection *Upgrade*
+		header Upgrade websocket
+	}
+	
+	handle @websocket {
 		reverse_proxy tren-api:3001 {
 			header_up Host {host}
-			header_up X-Real-IP {remote}
-			header_up Connection "Upgrade"
-			header_up Upgrade "websocket"
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			
+			# WebSocket specific headers
+			header_up Connection {http.request.header.Connection}
+			header_up Upgrade {http.request.header.Upgrade}
 		}
 	}
 
+	# API routes
 	handle /api/* {
-		reverse_proxy tren-api:3001
+		reverse_proxy tren-api:3001 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			
+			# Health check
+			health_uri /health
+			health_interval 10s
+			health_timeout 5s
+			health_status 200
+			
+			# Load balancing
+			lb_policy first
+			lb_try_duration 5s
+			lb_try_interval 250ms
+			
+			# Timeouts
+			transport http {
+				dial_timeout 5s
+				response_header_timeout 30s
+				read_timeout 60s
+				write_timeout 60s
+			}
+		}
 	}
 
-	handle /* {
-		reverse_proxy tren-client:5173
+	# Health check endpoint
+	handle /health {
+		respond "OK" 200
 	}
+
+	# Static files and SPA
+	handle {
+		reverse_proxy tren-client:5173 {
+			header_up Host {host}
+			header_up X-Real-IP {remote_host}
+			header_up X-Forwarded-For {remote_host}
+			header_up X-Forwarded-Proto {scheme}
+			
+			# Health check
+			health_uri /
+			health_interval 10s
+			health_timeout 5s
+			health_status 200
+		}
+	}
+}
+
+# Redirect www to non-www for production
+www.trenova.com {
+	@production {
+		host www.trenova.com
+	}
+	redir @production https://trenova.com{uri} permanent
 }

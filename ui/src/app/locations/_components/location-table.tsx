@@ -1,4 +1,4 @@
-import { DataTable } from "@/components/data-table/data-table";
+import { DataTableV2 } from "@/components/data-table/data-table-v2";
 import { LocationSchema } from "@/lib/schemas/location-schema";
 import { Resource } from "@/types/audit-entry";
 import { useMemo } from "react";
@@ -10,7 +10,7 @@ export default function LocationsDataTable() {
   const columns = useMemo(() => getColumns(), []);
 
   return (
-    <DataTable<LocationSchema>
+    <DataTableV2<LocationSchema>
       resource={Resource.Location}
       name="Location"
       link="/locations/"

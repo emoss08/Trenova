@@ -51,7 +51,7 @@ export function getColumns(): ColumnDef<CustomerSchema>[] {
           <p className="font-medium">{row.original.name}</p>
           <p className="text-sm text-muted-foreground">
             {row.original.addressLine1}, {row.original.city}{" "}
-            {row.original.postalCode}
+            {row.original.state?.abbreviation} {row.original.postalCode}
           </p>
         </div>
       ),
