@@ -2,8 +2,10 @@ import type {
   EnhancedColumnDef,
   EnhancedQueryParams,
   FieldFilter,
+  FilterOperator,
   FilterState,
   FilterUtils,
+  SortDirection,
   SortField,
   URLFilterParams,
 } from "@/types/enhanced-data-table";
@@ -281,6 +283,46 @@ export function getAvailableOperators(filterType: string) {
         { value: "eq", label: "Equals" },
         { value: "ne", label: "Not equals" },
       ];
+  }
+}
+
+export function getFilterOperatorLabel(operator: FilterOperator) {
+  switch (operator) {
+    case "eq":
+      return "Equals";
+    case "ne":
+      return "Not equals";
+    case "gt":
+      return "Greater than";
+    case "gte":
+      return "Greater than or equal";
+    case "lt":
+      return "Less than";
+    case "lte":
+      return "Less than or equal";
+    case "daterange":
+      return "Date range";
+    case "in":
+      return "In";
+    case "notin":
+      return "Not in";
+    case "contains":
+      return "Contains";
+    case "startswith":
+      return "Starts with";
+    case "endswith":
+      return "Ends with";
+    default:
+      return operator;
+  }
+}
+
+export function getSortDirectionLabel(direction: SortDirection) {
+  switch (direction) {
+    case "asc":
+      return "Ascending";
+    case "desc":
+      return "Descending";
   }
 }
 

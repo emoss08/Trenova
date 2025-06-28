@@ -6,7 +6,15 @@ import { FormControl, FormGroup } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { visibilityChoices } from "@/lib/choices";
+import {
+  getFilterOperatorLabel,
+  getSortDirectionLabel,
+} from "@/lib/enhanced-data-table-utils";
 import { TableConfigurationSchema } from "@/lib/schemas/table-configuration-schema";
+import type {
+  FilterOperator,
+  SortDirection,
+} from "@/types/enhanced-data-table";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 // Helper function to format column names for display
@@ -21,6 +29,16 @@ export function TableConfigurationForm() {
   const columnVisibilityKeys = useWatch({
     control,
     name: "tableConfig.columnVisibility",
+  });
+
+  const filters = useWatch({
+    control,
+    name: "tableConfig.filters",
+  });
+
+  const sort = useWatch({
+    control,
+    name: "tableConfig.sort",
   });
 
   return (
@@ -101,6 +119,92 @@ export function TableConfigurationForm() {
             No column visibility options to configure for this table.
           </p>
         )}
+      </div>
+      <div className="flex flex-col gap-3 bg-muted rounded-md p-2 border border-border border-dashed">
+        <h3 className="text-sm text-center font-medium border-b border-border border-dashed pb-2">
+          Filters
+        </h3>
+        {filters && filters.length > 0 ? (
+          <div className="flex flex-col">
+            {filters.map((filter, index) => (
+              <div key={filter.field}>
+                <div className="grid grid-cols-3 gap-4 items-start">
+                  <FilterRow
+                    label="Field"
+                    value={formatColumnName(filter.field)}
+                  />
+                  <FilterRow
+                    label="Operator"
+                    value={getFilterOperatorLabel(
+                      filter.operator as FilterOperator,
+                    )}
+                  />
+                  <FilterRow label="Value" value={filter.value} />
+                </div>
+                {index < filters.length - 1 && (
+                  <div className="flex justify-center py-2">
+                    <span className="px-3 py-1 bg-background border border-border rounded-md text-xs font-medium text-muted-foreground">
+                      AND
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-center text-muted-foreground py-2">
+            No filters to configure for this table.
+          </p>
+        )}
+      </div>
+      <div className="flex flex-col gap-3 bg-muted rounded-md p-2 border border-border border-dashed">
+        <h3 className="text-sm text-center font-medium border-b border-border border-dashed pb-2">
+          Sort
+        </h3>
+        {sort && sort.length > 0 ? (
+          <div className="flex flex-col">
+            {sort.map((filter, index) => (
+              <div key={filter.field}>
+                <div className="grid grid-cols-2 gap-4 items-center">
+                  <FilterRow
+                    label="Field"
+                    value={formatColumnName(filter.field)}
+                  />
+                  <FilterRow
+                    label="Direction"
+                    value={getSortDirectionLabel(
+                      filter.direction as SortDirection,
+                    )}
+                  />
+                </div>
+                {index < sort.length - 1 && (
+                  <div className="flex justify-center py-2">
+                    <span className="px-3 py-1 bg-background border border-border rounded-md text-xs font-medium text-muted-foreground">
+                      AND
+                    </span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-center text-muted-foreground py-2">
+            No sort to configure for this table.
+          </p>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function FilterRow({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex flex-col gap-1 text-center">
+      <h3 className="text-xs font-medium uppercase text-muted-foreground">
+        {label}
+      </h3>
+      <div className="px-2 py-1 bg-background border border-border rounded text-sm">
+        {value}
       </div>
     </div>
   );

@@ -91,7 +91,7 @@ export function DataTable<TData extends Record<string, any>>({
 
   // * Fetch persisted table configuration from the server
   const { data: tableConfig } = useQuery({
-    ...queries.tableConfiguration.get(resource),
+    ...queries.tableConfiguration.getDefaultOrLatestConfiguration(resource),
   });
 
   // * On first successful fetch, hydrate the local column visibility if there is

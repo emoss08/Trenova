@@ -73,7 +73,7 @@ export function TableConfigurationEditModal({
       ]);
 
       queryClient.setQueryData(
-        [queries.tableConfiguration.get._def],
+        [queries.tableConfiguration.getDefaultOrLatestConfiguration._def],
         newValues,
       );
 
