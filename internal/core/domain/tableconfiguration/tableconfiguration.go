@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/user"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
@@ -22,23 +23,15 @@ var (
 	_ infra.PostgresSearchable  = (*Configuration)(nil)
 )
 
-type Filter struct {
-	ID       string   `json:"id"`
-	Value    []string `json:"value"`    // Assuming "value" is always an array of strings
-	Operator string   `json:"operator"` // e.g., "in"
-	Type     string   `json:"type"`     // e.g., "multi-select"
-	RowID    string   `json:"rowId"`    // Additional field
-}
-
 // TableConfig is a JSONB blob that stores all user-specific table preferences.
 // Over time we can safely extend it with new optional fields without having to
 // run DB migrations.
 type TableConfig struct {
-	Filters          []Filter        `json:"filters"`          // User-defined filters
-	JoinOperator     string          `json:"joinOperator"`     // "and" | "or"
-	Sorting          []any           `json:"sorting"`          // Sorting preference
-	PageSize         int             `json:"pageSize"`         // Default page size
-	ColumnVisibility map[string]bool `json:"columnVisibility"` // NEW – column -> visible?
+	Filters          []ports.FieldFilter `json:"filters"`
+	JoinOperator     string              `json:"joinOperator"`
+	Sort             []ports.SortField   `json:"sort"`
+	PageSize         int                 `json:"pageSize"`
+	ColumnVisibility map[string]bool     `json:"columnVisibility"`
 }
 
 type Configuration struct {

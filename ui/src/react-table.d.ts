@@ -1,4 +1,5 @@
 import "@tanstack/react-table";
+import type { FilterState } from "./types/enhanced-data-table";
 import type { SelectOption } from "./types/fields";
 
 declare module "@tanstack/react-table" {
@@ -20,6 +21,10 @@ declare module "@tanstack/react-table" {
 
     // Allow for other existing metadata
     [key: string]: any;
+  }
+
+  interface TableState {
+    filters: FilterState;
   }
 
   interface FilterFns {

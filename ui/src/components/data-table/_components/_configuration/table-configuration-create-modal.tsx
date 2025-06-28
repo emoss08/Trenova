@@ -18,6 +18,7 @@ import {
 import { api } from "@/services/api";
 import type { Resource } from "@/types/audit-entry";
 import { TableSheetProps } from "@/types/data-table";
+import type { FilterState } from "@/types/enhanced-data-table";
 import { Visibility } from "@/types/table-configuration";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog } from "@radix-ui/react-dialog";
@@ -31,6 +32,7 @@ import { TableConfigurationForm } from "./table-configuration-form";
 type CreateTableConfigurationModalProps = TableSheetProps & {
   resource: Resource;
   visiblityState: VisibilityState;
+  tableFilters: FilterState;
 };
 
 export function CreateTableConfigurationModal({
@@ -38,6 +40,7 @@ export function CreateTableConfigurationModal({
   onOpenChange,
   resource,
   visiblityState,
+  tableFilters,
 }: CreateTableConfigurationModalProps) {
   const { isPopout, closePopout } = usePopoutWindow();
   const queryClient = useQueryClient();
@@ -52,6 +55,8 @@ export function CreateTableConfigurationModal({
       resource: resource,
       tableConfig: {
         columnVisibility: visiblityState,
+        filters: tableFilters.filters,
+        sort: tableFilters.sort,
       },
     },
   });
@@ -97,6 +102,8 @@ export function CreateTableConfigurationModal({
         resource: resource,
         tableConfig: {
           columnVisibility: visiblityState,
+          filters: tableFilters.filters,
+          sort: tableFilters.sort,
         },
       });
 
@@ -111,6 +118,7 @@ export function CreateTableConfigurationModal({
   const onSubmit = useCallback(
     async (values: TableConfigurationSchema) => {
       await mutateAsync(values);
+      console.log("Values", values);
     },
     [mutateAsync],
   );
@@ -143,10 +151,12 @@ export function CreateTableConfigurationModal({
         resource: resource,
         tableConfig: {
           columnVisibility: visiblityState,
+          filters: tableFilters.filters,
+          sort: tableFilters.sort,
         },
       });
     }
-  }, [isSubmitSuccessful, reset, open, resource, visiblityState]);
+  }, [isSubmitSuccessful, reset, open, resource, visiblityState, tableFilters]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

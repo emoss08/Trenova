@@ -1,5 +1,6 @@
 import { api } from "@/services/api";
 import type { GetDedicatedLaneByShipmentRequest } from "@/services/dedicated-lane";
+import type { GetPreviousRatesRequest } from "@/services/shipment";
 import type { AnalyticsPage } from "@/types/analytics";
 import { Resource } from "@/types/audit-entry";
 import type { GetCustomerByIDParams } from "@/types/customer";
@@ -130,6 +131,10 @@ export const queries = createQueryKeyStore({
       },
       enabled,
     }),
+    getPreviousRates: (values: GetPreviousRatesRequest) => ({
+      queryKey: ["shipment/previous-rates", values],
+      queryFn: async () => api.shipments.getPreviousRates(values),
+    }),
   },
   customer: {
     getDocumentRequirements: (customerId: string) => ({
@@ -185,9 +190,10 @@ export const queries = createQueryKeyStore({
       queryFn: async () =>
         api.tableConfigurations.listUserConfigurations(resource),
     }),
-    get: (resource: Resource) => ({
+    getDefaultOrLatestConfiguration: (resource: Resource) => ({
       queryKey: ["table-configurations", resource],
-      queryFn: async () => api.tableConfigurations.get(resource),
+      queryFn: async () =>
+        api.tableConfigurations.getDefaultOrLatestConfiguration(resource),
     }),
     create: (payload: TableConfigurationSchema) => ({
       queryKey: ["table-configurations", payload],

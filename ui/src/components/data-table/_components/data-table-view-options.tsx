@@ -274,6 +274,7 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
         open={showCreateModal}
         onOpenChange={setShowCreateModal}
         resource={resource}
+        tableFilters={table.getState().filters}
         visiblityState={comprehensiveVisibilityState}
       />
     </>

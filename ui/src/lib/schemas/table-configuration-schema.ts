@@ -2,11 +2,22 @@ import { Resource } from "@/types/audit-entry";
 import { Visibility } from "@/types/table-configuration";
 import { z } from "zod";
 
+const filterFieldSchema = z.object({
+  field: z.string(),
+  operator: z.string(),
+  value: z.any(),
+});
+
+const sortFieldSchema = z.object({
+  field: z.string(),
+  direction: z.string(),
+});
+
 const tableConfigSchema = z.object({
   columnVisibility: z.record(z.boolean()),
   pageSize: z.number().optional(),
-  sorting: z.any().optional(),
-  filters: z.any().optional(),
+  sort: z.array(sortFieldSchema).optional(),
+  filters: z.array(filterFieldSchema).optional(),
   joinOperator: z.string().optional(),
 });
 

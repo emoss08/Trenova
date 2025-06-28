@@ -35,6 +35,7 @@ import {
   useMemo,
   useState,
 } from "react";
+import { toast } from "sonner";
 import { DataTablePermissionDeniedSkeleton } from "../ui/permission-skeletons";
 import { Table } from "../ui/table";
 import { DataTableBody } from "./_components/data-table-body";
@@ -173,20 +174,54 @@ export function DataTableV2<TData extends Record<string, any>>({
   );
 
   // Fetch persisted table configuration from the server
-  const { data: tableConfig } = useQuery({
-    ...queries.tableConfiguration.get(resource),
+  const {
+    data: tableConfig,
+    isLoading: isTableConfigLoading,
+    isError,
+  } = useQuery({
+    ...queries.tableConfiguration.getDefaultOrLatestConfiguration(resource),
   });
 
   // On first successful fetch, hydrate the local column visibility
   useEffect(() => {
-    if (!tableConfig) return;
-    if (Object.keys(columnVisibility || {}).length === 0) {
+    if (isError) {
+      toast.error("Unable to fetch table configuration", {
+        description: "Please try again later or contact support",
+      });
+      return;
+    }
+
+    // Don't do anything while still loading
+    if (isTableConfigLoading) return;
+
+    console.info("tableConfig", tableConfig);
+
+    // * Check if there is no table configuration only after the query is done loading
+    if (!tableConfig) {
+      console.info(`no table configuration for ${resource}`);
+      return;
+    }
+
+    // Only set column visibility if we have a valid tableConfig and no existing visibility settings
+    if (
+      Object.keys(columnVisibility || {}).length === 0 &&
+      tableConfig.tableConfig?.columnVisibility
+    ) {
       setColumnVisibility(
         tableConfig.tableConfig.columnVisibility as VisibilityState,
       );
     }
+
+    console.log("tableConfig.tableConfig.sort", tableConfig.tableConfig.sort);
+
+    handleFilterChange({
+      globalSearch: "",
+      filters: tableConfig.tableConfig.filters || [],
+      sort: tableConfig.tableConfig.sort || [],
+    });
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tableConfig]);
+  }, [tableConfig, isTableConfigLoading, isError]);
 
   // Derive pagination state from URL
   const pagination = useMemo(
@@ -227,6 +262,7 @@ export function DataTableV2<TData extends Record<string, any>>({
       pagination,
       rowSelection,
       columnVisibility,
+      filters: filterState,
     },
     onColumnVisibilityChange: setColumnVisibility,
     enableMultiRowSelection: false,

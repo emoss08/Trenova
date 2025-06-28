@@ -310,7 +310,6 @@ func (tcr *tableConfigurationRepository) Update(
 		results, rErr := tx.NewUpdate().
 			Model(config).
 			WherePK().
-			OmitZero().
 			Where("version = ?", ov).
 			Returning("*").
 			Exec(c)

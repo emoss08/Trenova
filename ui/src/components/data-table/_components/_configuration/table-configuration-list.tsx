@@ -11,6 +11,7 @@ import { Icon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { searchParamsParser } from "@/hooks/use-data-table-state";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
@@ -24,6 +25,7 @@ import {
   faTrash,
 } from "@fortawesome/pro-solid-svg-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryStates } from "nuqs";
 import React, { memo, useState } from "react";
 import { toast } from "sonner";
 import { useDataTable } from "../../data-table-provider";
@@ -145,10 +147,18 @@ function TableConfigurationListItem({
   const queryClient = useQueryClient();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [, setSearchParams] = useQueryStates(searchParamsParser);
+
   const applyConfig = () => {
     if (!table) return;
 
     table.setColumnVisibility(config.tableConfig.columnVisibility);
+
+    // * Set the search params to the configuration filters and sort
+    setSearchParams({
+      filters: JSON.stringify(config.tableConfig.filters) as string,
+      sort: JSON.stringify(config.tableConfig.sort) as string,
+    });
   };
 
   const { mutate: deleteConfig, isPending: isDeletingConfig } = useMutation({

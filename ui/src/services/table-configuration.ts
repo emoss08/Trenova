@@ -9,7 +9,7 @@ export class TableConfigurationAPI {
    * Fetch the table configuration for the given identifier. If none exists, the
    * API should create a default record and return it.
    */
-  async get(resource: Resource) {
+  async getDefaultOrLatestConfiguration(resource: Resource) {
     try {
       const { data } = await http.get<TableConfiguration>(
         `/table-configurations/${resource}/`,
