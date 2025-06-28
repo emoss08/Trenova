@@ -274,6 +274,11 @@ func (s *KafkaConsumerService) logKafkaError(msg string, args ...any) {
 		s.l.Debug().Msgf("Kafka rebalancing: "+msg, args...)
 		return
 	}
+	// * Downgrade timeout errors to debug level as they're normal when no messages
+	if strings.Contains(msg, "i/o timeout") || strings.Contains(msg, "timeout") {
+		s.l.Debug().Msgf("Kafka timeout (normal when idle): "+msg, args...)
+		return
+	}
 	s.l.Error().Msgf("Kafka error: "+msg, args...)
 }
 
