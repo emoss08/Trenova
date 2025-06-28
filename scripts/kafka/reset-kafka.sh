@@ -34,10 +34,6 @@ docker network prune -f
 echo "🚀 Starting Kafka services..."
 docker-compose -f docker-compose-local.yml up -d zookeeper kafka schema-registry kafka-connect kafka-ui
 
-# Wait for services to be ready
-echo "⏳ Waiting for services to start..."
-sleep 30
-
 # Check if Debezium Connect is ready
 echo "🔍 Checking Debezium Connect status..."
 for i in {1..30}; do

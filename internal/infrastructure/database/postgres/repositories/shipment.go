@@ -1543,17 +1543,21 @@ func (sr *shipmentRepository) GetPreviousRates(
 				Where("sp.business_unit_id = ?", req.BuID).
 				Where("sp.shipment_type_id = ?", req.ShipmentTypeID).
 				Where("sp.service_type_id = ?", req.ServiceTypeID).
+				Where("sp.status = ?", shipment.StatusBilled).
 				Where("sp.id IN (SELECT shipment_id FROM origin_shipments)").
 				Where("sp.id IN (SELECT shipment_id FROM dest_shipments)")
 		})
 
-	// Add customer filter if specified
+	// * Add customer filter if specified
 	if req.CustomerID != nil {
 		q = q.Where("sp.customer_id = ?", req.CustomerID)
 	}
 
-	// Order by created_at descending to get most recent rates first
+	// * Order by created_at descending to get most recent rates first
 	q = q.Order("sp.created_at DESC")
+
+	// * Limit by 50 rates
+	q = q.Limit(50)
 
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {

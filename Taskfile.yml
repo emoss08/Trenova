@@ -5,11 +5,10 @@ tasks:
     desc: Run the application
     cmd: go run ./cmd/api/main.go serve
   reset:
-    desc: Reset the database, Redis, and Kafka
+    desc: Reset the database, Redis
     cmds:
       - task: db-reset
       - task: redis-flushall
-      - task: kafka-reset
       - task: db-init
       - task: db-migrate
       - task: db-seed

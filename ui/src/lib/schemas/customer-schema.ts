@@ -2,6 +2,7 @@ import { BillingCycleType, PaymentTerm } from "@/types/billing";
 import { Status } from "@/types/common";
 import * as z from "zod/v4";
 import { documentTypeSchema } from "./document-type-schema";
+import { usStateSchema } from "./us-state-schema";
 
 export const emailProfileSchema = z.object({
   id: z.string().optional(),
@@ -59,6 +60,9 @@ export const customerSchema = z.object({
   city: z.string().min(1, "City is required"),
   postalCode: z.string().min(1, "Postal code is required"),
   stateId: z.string().min(1, "State is required"),
+
+  // * Relationships
+  state: usStateSchema.optional(),
   billingProfile: billingProfileSchema.optional(),
   emailProfile: emailProfileSchema.optional(),
 });
