@@ -127,6 +127,43 @@ func (s *Service) List(
 	return entities, nil
 }
 
+func (s *Service) GetPreviousRates(
+	ctx context.Context,
+	req *repositories.GetPreviousRatesRequest,
+) (*ports.ListResult[*shipment.Shipment], error) {
+	log := s.l.With().
+		Str("operation", "GetPreviousRates").
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         req.UserID,
+			Resource:       permission.ResourceShipment,
+			Action:         permission.ActionRead,
+			BusinessUnitID: req.BuID,
+			OrganizationID: req.OrgID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read previous rates",
+		)
+	}
+
+	entities, err := s.repo.GetPreviousRates(ctx, req)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get previous rates")
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (s *Service) Get(
 	ctx context.Context,
 	opts *repositories.GetShipmentByIDOptions,

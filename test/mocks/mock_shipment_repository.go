@@ -30,6 +30,20 @@ func (m *MockShipmentRepository) List(
 	return nil, nil
 }
 
+func (m *MockShipmentRepository) TransferOwnership(
+	ctx context.Context,
+	req *repositories.TransferOwnershipRequest,
+) (*shipment.Shipment, error) {
+	return nil, nil
+}
+
+func (m *MockShipmentRepository) UnCancel(
+	ctx context.Context,
+	req *repositories.UnCancelShipmentRequest,
+) (*shipment.Shipment, error) {
+	return nil, nil
+}
+
 func (m *MockShipmentRepository) GetAll(
 	ctx context.Context,
 ) (*ports.ListResult[*shipment.Shipment], error) {
@@ -106,5 +120,12 @@ func (m *MockShipmentRepository) GetByDateRange(
 func (m *MockShipmentRepository) CalculateShipmentTotals(
 	shp *shipment.Shipment,
 ) (*repositories.ShipmentTotalsResponse, error) {
+	return nil, nil
+}
+
+func (m *MockShipmentRepository) GetPreviousRates(
+	ctx context.Context,
+	req *repositories.GetPreviousRatesRequest,
+) (*ports.ListResult[*shipment.Shipment], error) {
 	return nil, nil
 }

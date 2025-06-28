@@ -1,6 +1,7 @@
 import type { UserSchema } from "@/lib/schemas/user-schema";
 import type { Resource } from "./audit-entry";
 import type { BaseModelWithOrganization, Status } from "./common";
+import type { FieldFilter, SortField } from "./enhanced-data-table";
 
 export enum ShareType {
   User = "User",
@@ -71,9 +72,9 @@ export interface TableConfig {
   /** Optional page size preference */
   pageSize?: number;
   /** Optional sorting preference */
-  sorting?: unknown;
+  sort?: SortField[];
   /** Optional filters the user has applied */
-  filters?: unknown;
+  filters?: FieldFilter[];
   /** Logical operator to join filters */
   joinOperator?: string;
   /** Anything else we may store later */

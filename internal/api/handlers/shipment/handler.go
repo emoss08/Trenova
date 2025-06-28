@@ -58,6 +58,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerSecond(5), // 5 writes per second
 	)...)
 
+	api.Post("/previous-rates/", rl.WithRateLimit(
+		[]fiber.Handler{h.getPreviousRates},
+		middleware.PerMinute(60), // 60 reads per minute
+	)...)
+
 	api.Get("/select-options/", rl.WithRateLimit(
 		[]fiber.Handler{h.selectOptions},
 		middleware.PerMinute(120), // 120 reads per minute
@@ -157,6 +162,31 @@ func (h *Handler) list(c *fiber.Ctx) error {
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
+}
+
+func (h *Handler) getPreviousRates(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := new(repositories.GetPreviousRatesRequest)
+
+	if err = c.BodyParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	// * Apply the request context to the request
+	req.BuID = reqCtx.BuID
+	req.OrgID = reqCtx.OrgID
+	req.UserID = reqCtx.UserID
+
+	entities, err := h.ss.GetPreviousRates(c.UserContext(), req)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entities)
 }
 
 func (h *Handler) get(c *fiber.Ctx) error {

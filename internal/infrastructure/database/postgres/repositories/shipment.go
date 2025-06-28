@@ -1490,3 +1490,81 @@ func (sr *shipmentRepository) CalculateShipmentTotals(
 		TotalChargeAmount: total,
 	}, nil
 }
+
+func (sr *shipmentRepository) GetPreviousRates(
+	ctx context.Context,
+	req *repositories.GetPreviousRatesRequest,
+) (*ports.ListResult[*shipment.Shipment], error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	shipments := make([]*shipment.Shipment, 0)
+
+	// * Create CTE to find origin locations (first stop of first move)
+	originCTE := dba.NewSelect().
+		Column("first_move.shipment_id").
+		TableExpr("shipment_moves first_move").
+		Join("JOIN stops origin_stop ON origin_stop.shipment_move_id = first_move.id").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("first_move.sequence = 0").
+				Where("origin_stop.sequence = 0").
+				Where("origin_stop.type IN (?)", bun.In([]shipment.StopType{shipment.StopTypePickup, shipment.StopTypeSplitPickup})).
+				Where("origin_stop.location_id = ?", req.OriginLocationID)
+		})
+
+	// * Create CTE to find destination locations (last stop of last move)
+	destCTE := dba.NewSelect().
+		Column("last_move.shipment_id").
+		TableExpr("shipment_moves last_move").
+		Join("JOIN stops delivery_stop ON delivery_stop.shipment_move_id = last_move.id").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("last_move.sequence = (SELECT MAX(sm3.sequence) FROM shipment_moves sm3 WHERE sm3.shipment_id = last_move.shipment_id)").
+				Where("delivery_stop.sequence = (SELECT MAX(stp3.sequence) FROM stops stp3 WHERE stp3.shipment_move_id = last_move.id)").
+				Where("delivery_stop.location_id = ?", req.DestinationLocationID).
+				Where("delivery_stop.type IN (?)", bun.In([]shipment.StopType{shipment.StopTypeDelivery, shipment.StopTypeSplitDelivery}))
+		})
+
+	q := dba.NewSelect().
+		Model(&shipments).
+		With("origin_shipments", originCTE).
+		With("dest_shipments", destCTE).
+		Relation("ShipmentType").
+		Relation("ServiceType").
+		Relation("Customer").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("sp.organization_id = ?", req.OrgID).
+				Where("sp.business_unit_id = ?", req.BuID).
+				Where("sp.shipment_type_id = ?", req.ShipmentTypeID).
+				Where("sp.service_type_id = ?", req.ServiceTypeID).
+				Where("sp.id IN (SELECT shipment_id FROM origin_shipments)").
+				Where("sp.id IN (SELECT shipment_id FROM dest_shipments)")
+		})
+
+	// Add customer filter if specified
+	if req.CustomerID != nil {
+		q = q.Where("sp.customer_id = ?", req.CustomerID)
+	}
+
+	// Order by created_at descending to get most recent rates first
+	q = q.Order("sp.created_at DESC")
+
+	total, err := q.ScanAndCount(ctx)
+	if err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "scan and count previous rates")
+	}
+
+	return &ports.ListResult[*shipment.Shipment]{
+		Items: shipments,
+		Total: total,
+	}, nil
+}
