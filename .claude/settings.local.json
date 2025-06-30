@@ -41,7 +41,8 @@
       "Bash(bash:*)",
       "Bash(task run)",
       "Bash(git checkout:*)",
-      "Bash(docker logs:*)"
+      "Bash(docker logs:*)",
+      "Bash(golines:*)"
     ],
     "deny": []
   },
