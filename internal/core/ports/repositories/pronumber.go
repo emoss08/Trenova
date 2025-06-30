@@ -9,9 +9,7 @@ import (
 type GetProNumberRequest struct {
 	OrgID pulid.ID
 	BuID  pulid.ID
-	Year  int
-	Month int
-	Count int
+	Count int // For batch generation only
 }
 
 type ProNumberRepository interface {

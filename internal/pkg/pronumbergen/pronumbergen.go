@@ -25,61 +25,58 @@ var (
 
 // ProNumberFormat represents the configuration for generating pro numbers
 type ProNumberFormat struct {
-	// Prefix is the letter prefix for pro numbers (e.g., "S")
+	// * Prefix is the letter prefix for pro numbers (e.g., "S")
 	Prefix string
 
-	// IncludeYear determines whether to include year digits in the pro number
+	// * IncludeYear determines whether to include year digits in the pro number
 	IncludeYear bool
 
 	// YearDigits is the number of digits to use for the year (e.g., 2 for "23" representing 2023)
 	YearDigits int
 
-	// IncludeMonth determines whether to include month digits in the pro number
+	// * IncludeMonth determines whether to include month digits in the pro number
 	IncludeMonth bool
 
-	// SequenceDigits is the number of digits to use for the sequence number (will be zero-padded)
+	// * SequenceDigits is the number of digits to use for the sequence number (will be zero-padded)
 	SequenceDigits int
 
-	// IncludeLocationCode determines whether to include location code in the pro number
+	// * IncludeLocationCode determines whether to include location code in the pro number
 	IncludeLocationCode bool
 
-	// LocationCode is a code representing the location/region (e.g., "12" for a specific terminal)
+	// * LocationCode is a code representing the location/region (e.g., "12" for a specific terminal)
 	LocationCode string
 
-	// IncludeRandomDigits determines whether to include random digits for additional uniqueness
+	// * IncludeRandomDigits determines whether to include random digits for additional uniqueness
 	IncludeRandomDigits bool
 
-	// RandomDigitsCount is the number of random digits to include
+	// * RandomDigitsCount is the number of random digits to include
 	RandomDigitsCount int
 
-	// New enterprise features
-	// ================================
-
-	// IncludeCheckDigit adds a check digit for validation (Luhn algorithm)
+	// * IncludeCheckDigit adds a check digit for validation (Luhn algorithm)
 	IncludeCheckDigit bool
 
-	// IncludeBusinessUnitCode adds the business unit code to the pro number
+	// * IncludeBusinessUnitCode adds the business unit code to the pro number
 	IncludeBusinessUnitCode bool
 
-	// BusinessUnitCode is the code representing the business unit
+	// * BusinessUnitCode is the code representing the business unit
 	BusinessUnitCode string
 
-	// UseSeparators determines whether to use separators in the pro number
+	// * UseSeparators determines whether to use separators in the pro number
 	UseSeparators bool
 
-	// SeparatorChar is the character to use as a separator (e.g., "-")
+	// * SeparatorChar is the character to use as a separator (e.g., "-")
 	SeparatorChar string
 
-	// IncludeWeekNumber determines whether to include the week number instead of month
+	// * IncludeWeekNumber determines whether to include the week number instead of month
 	IncludeWeekNumber bool
 
-	// IncludeDay determines whether to include the day of month
+	// * IncludeDay determines whether to include the day of month
 	IncludeDay bool
 
-	// AllowCustomFormat allows for a completely custom format string with placeholders
+	// * AllowCustomFormat allows for a completely custom format string with placeholders
 	AllowCustomFormat bool
 
-	// CustomFormat is a string with placeholders for dynamic values
+	// * CustomFormat is a string with placeholders for dynamic values
 	// Example: "{P}-{Y}{M}-{S}-{C}" where:
 	// {P} = Prefix, {Y} = Year, {M} = Month, {S} = Sequence, {R} = Random, {C} = Checksum
 	// {B} = Business unit, {L} = Location, {W} = Week, {D} = Day

@@ -31,7 +31,7 @@ func TestWorkerRepository(t *testing.T) {
 
 	t.Run("list workers", func(t *testing.T) {
 		opts := &repoports.ListWorkerRequest{
-			Filter: &ports.LimitOffsetQueryOptions{
+			Filter: &ports.QueryOptions{
 				Limit:  10,
 				Offset: 0,
 				TenantOpts: &ports.TenantOptions{
@@ -46,7 +46,7 @@ func TestWorkerRepository(t *testing.T) {
 
 	t.Run("list workers with query", func(t *testing.T) {
 		opts := &repoports.ListWorkerRequest{
-			Filter: &ports.LimitOffsetQueryOptions{
+			Filter: &ports.QueryOptions{
 				Limit:  10,
 				Offset: 0,
 				Query:  "John",
@@ -62,7 +62,7 @@ func TestWorkerRepository(t *testing.T) {
 
 	t.Run("list workers with filter id", func(t *testing.T) {
 		opts := &repoports.ListWorkerRequest{
-			Filter: &ports.LimitOffsetQueryOptions{
+			Filter: &ports.QueryOptions{
 				Limit:  10,
 				Offset: 0,
 				ID:     pulid.Must(wrk.ID.String()),
@@ -78,10 +78,7 @@ func TestWorkerRepository(t *testing.T) {
 
 	t.Run("list workers with profiles", func(t *testing.T) {
 		opts := &repoports.ListWorkerRequest{
-			FilterOptions: repoports.WorkerFilterOptions{
-				IncludeProfile: true,
-			},
-			Filter: &ports.LimitOffsetQueryOptions{
+			Filter: &ports.QueryOptions{
 				Limit:  10,
 				Offset: 0,
 				TenantOpts: &ports.TenantOptions{
@@ -100,11 +97,7 @@ func TestWorkerRepository(t *testing.T) {
 
 	t.Run("list workers with pto", func(t *testing.T) {
 		opts := &repoports.ListWorkerRequest{
-			FilterOptions: repoports.WorkerFilterOptions{
-				IncludePTO:     true,
-				IncludeProfile: true,
-			},
-			Filter: &ports.LimitOffsetQueryOptions{
+			Filter: &ports.QueryOptions{
 				Limit:  10,
 				Offset: 0,
 				TenantOpts: &ports.TenantOptions{
