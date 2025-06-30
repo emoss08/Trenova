@@ -111,3 +111,75 @@ ALTER TABLE "shipments"
 
 COMMENT ON COLUMN "shipments"."consolidation_group_id" IS 'Simple consolidation group identifier - links shipments that should be coordinated together';
 
+--bun:split
+CREATE TABLE IF NOT EXISTS "consolidation_settings"(
+    "id" varchar(100) NOT NULL,
+    "organization_id" varchar(100) NOT NULL,
+    "business_unit_id" varchar(100) NOT NULL,
+    "max_pickup_distance" float NOT NULL DEFAULT 25,
+    "max_delivery_distance" float NOT NULL DEFAULT 25,
+    "max_route_detour" float NOT NULL DEFAULT 15,
+    "max_time_window_gap" bigint NOT NULL DEFAULT 240,
+    "min_time_buffer" bigint NOT NULL DEFAULT 30,
+    "max_shipments_per_group" int NOT NULL DEFAULT 3,
+    -- Metadata
+    "version" bigint NOT NULL DEFAULT 0,
+    "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
+    "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
+    -- Constraints
+    CONSTRAINT "pk_consolidation_settings" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
+    CONSTRAINT "fk_consolidation_settings_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_consolidation_settings_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    -- Ensure one consolidation group per organization
+    CONSTRAINT "uq_consolidation_groups_organization" UNIQUE ("organization_id")
+);
+
+--bun:split
+CREATE INDEX IF NOT EXISTS "idx_consolidation_settings_business_unit" ON "consolidation_settings"("business_unit_id", "organization_id");
+
+--bun:split
+CREATE INDEX IF NOT EXISTS "idx_consolidation_settings_created_at" ON "consolidation_settings"("created_at", "updated_at");
+
+--bun:split
+CREATE OR REPLACE FUNCTION consolidation_settings_update_timestamp()
+    RETURNS TRIGGER
+    AS $$
+BEGIN
+    NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
+    RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+--bun:split
+DROP TRIGGER IF EXISTS consolidation_settings_update_timestamp_trigger ON "consolidation_settings";
+
+--bun:split
+CREATE TRIGGER consolidation_settings_update_timestamp_trigger
+    BEFORE UPDATE ON "consolidation_settings"
+    FOR EACH ROW
+    EXECUTE FUNCTION consolidation_settings_update_timestamp();
+
+--bun:split
+ALTER TABLE "consolidation_settings"
+    ALTER COLUMN "business_unit_id" SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE "consolidation_settings"
+    ALTER COLUMN "organization_id" SET STATISTICS 1000;
+
+--bun:split
+COMMENT ON TABLE "consolidation_settings" IS 'Stores configuration for consolidation settings';
+
+COMMENT ON COLUMN "consolidation_settings"."max_pickup_distance" IS 'Maximum distance in miles between pickup locations for shipments to be considered for consolidation';
+
+COMMENT ON COLUMN "consolidation_settings"."max_delivery_distance" IS 'Maximum distance in miles between delivery locations for shipments to be considered for consolidation';
+
+COMMENT ON COLUMN "consolidation_settings"."max_route_detour" IS 'Maximum percentage increase in total route distance that''s acceptable for consolidation';
+
+COMMENT ON COLUMN "consolidation_settings"."max_time_window_gap" IS 'Maximum time gap in minutes between shipments'' planned pickup/delivery windows for consolidation';
+
+COMMENT ON COLUMN "consolidation_settings"."min_time_buffer" IS 'Minimum time buffer in minutes required between stops when consolidating shipments';
+
+COMMENT ON COLUMN "consolidation_settings"."max_shipments_per_group" IS 'Maximum number of shipments that can be consolidated into a single group';
+
