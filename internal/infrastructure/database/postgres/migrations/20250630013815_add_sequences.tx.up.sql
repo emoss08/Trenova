@@ -1,5 +1,5 @@
 -- Create enum for sequence types
-CREATE TYPE sequence_type_enum AS ENUM(
+CREATE TYPE "sequence_type_enum" AS ENUM(
     'pro_number',
     'consolidation',
     'invoice',
@@ -7,7 +7,7 @@ CREATE TYPE sequence_type_enum AS ENUM(
 );
 
 -- Create the sequences table
-CREATE TABLE IF NOT EXISTS sequences(
+CREATE TABLE IF NOT EXISTS "sequences"(
     "id" varchar(100) PRIMARY KEY,
     "sequence_type" sequence_type_enum NOT NULL,
     "organization_id" varchar(100) NOT NULL,

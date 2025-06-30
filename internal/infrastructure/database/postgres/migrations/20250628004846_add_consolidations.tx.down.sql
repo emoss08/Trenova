@@ -1,3 +1,6 @@
-SET statement_timeout = 0;
+DROP TABLE IF EXISTS "consolidation_groups";
 
-SELECT 1;
+DROP TABLE IF EXISTS "consolidation_settings";
+
+DROP TYPE IF EXISTS "consolidation_group_status_enum";
+

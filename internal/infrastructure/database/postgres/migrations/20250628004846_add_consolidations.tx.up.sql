@@ -112,6 +112,10 @@ ALTER TABLE "shipments"
 COMMENT ON COLUMN "shipments"."consolidation_group_id" IS 'Simple consolidation group identifier - links shipments that should be coordinated together';
 
 --bun:split
+ALTER TABLE "consolidation_groups" REPLICA IDENTITY
+    FULL;
+
+--bun:split
 CREATE TABLE IF NOT EXISTS "consolidation_settings"(
     "id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
@@ -182,4 +186,8 @@ COMMENT ON COLUMN "consolidation_settings"."max_time_window_gap" IS 'Maximum tim
 COMMENT ON COLUMN "consolidation_settings"."min_time_buffer" IS 'Minimum time buffer in minutes required between stops when consolidating shipments';
 
 COMMENT ON COLUMN "consolidation_settings"."max_shipments_per_group" IS 'Maximum number of shipments that can be consolidated into a single group';
+
+--bun:split
+ALTER TABLE "consolidation_settings" REPLICA IDENTITY
+    FULL;
 
