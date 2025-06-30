@@ -445,7 +445,13 @@ func (sr *shipmentRepository) Create(
 		Logger()
 
 	// * Generate the pro number
-	proNumber, err := sr.proNumberRepo.GetNextProNumber(ctx, shp.OrganizationID)
+	proNumber, err := sr.proNumberRepo.GetNextProNumber(ctx, &repositories.GetProNumberRequest{
+		OrgID: shp.OrganizationID,
+		BuID:  shp.BusinessUnitID,
+		// Year:  time.Now().Year(),
+		// Month: int(time.Now().Month()),
+		// Count: 1,
+	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get next pro number")
 		return nil, err
@@ -1359,7 +1365,15 @@ func (sr *shipmentRepository) duplicateShipmentFields(
 	original *shipment.Shipment,
 ) (*shipment.Shipment, error) {
 	// * Get new pro number
-	proNumber, err := sr.proNumberRepo.GetNextProNumber(ctx, original.OrganizationID)
+	proNumber, err := sr.proNumberRepo.GetNextProNumber(
+		ctx,
+		&repositories.GetProNumberRequest{
+			OrgID: original.OrganizationID,
+			BuID:  original.BusinessUnitID,
+			// Year:  time.Now().Year(),
+			// Month: int(time.Now().Month()),
+			// Count: 1,
+		})
 	if err != nil {
 		sr.l.Error().Err(err).Msg("failed to get next pro number")
 		return nil, err
