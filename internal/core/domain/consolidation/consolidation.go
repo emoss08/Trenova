@@ -17,6 +17,7 @@ var (
 	_ infra.PostgresSearchable  = (*ConsolidationGroup)(nil)
 )
 
+//nolint:revive // valid struct name
 type ConsolidationGroup struct {
 	bun.BaseModel `bun:"table:consolidation_groups,alias:cg"`
 
