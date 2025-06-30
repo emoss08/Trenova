@@ -24,7 +24,7 @@ type ConsolidationGroup struct {
 	ID                  pulid.ID    `json:"id"                  bun:",pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID      pulid.ID    `json:"businessUnitId"      bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID      pulid.ID    `json:"organizationId"      bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	ConsolidationNumber string      `json:"consolidationNumber" bun:"consolidation_number,type:VARCHAR(100),notnull"`
+	ConsolidationNumber string      `json:"consolidationNumber" bun:"consolidation_number,type:VARCHAR(100),notnull,unique"`
 	Status              GroupStatus `json:"status"              bun:"status,type:consolidation_group_status_enum,notnull,default:'New'"`
 	Version             int64       `json:"version"             bun:"version,type:BIGINT"`
 	CreatedAt           int64       `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

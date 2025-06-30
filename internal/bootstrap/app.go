@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/external"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
+	"github.com/emoss08/trenova/internal/bootstrap/modules/seqgen"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/services"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/validators"
 	"github.com/emoss08/trenova/internal/core/services/analytics"
@@ -33,6 +34,7 @@ func Bootstrap() error {
 		infrastructure.BackupModule,
 		redisRepos.Module,
 		statemachine.Module,
+		seqgen.Module,
 		services.CalculatorModule,
 		postgresRepos.Module,
 		external.Module,

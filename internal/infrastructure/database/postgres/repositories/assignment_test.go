@@ -12,6 +12,8 @@ import (
 	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/seqgen"
+	"github.com/emoss08/trenova/internal/pkg/seqgen/adapters"
 	"github.com/emoss08/trenova/test/testutils"
 	"github.com/stretchr/testify/require"
 )
@@ -41,9 +43,14 @@ func TestAssignmentRepository(t *testing.T) {
 		DB:     ts.DB,
 		Logger: log,
 	})
+	generator := seqgen.NewGenerator(seqgen.GeneratorParams{
+		Store:    seqgen.NewSequenceStore(ts.DB, log),
+		Provider: adapters.NewProNumberFormatProvider(),
+		Logger:   log,
+	})
 	proNumberRepo := repositories.NewProNumberRepository(repositories.ProNumberRepositoryParams{
-		DB:     ts.DB,
-		Logger: log,
+		Logger:    log,
+		Generator: generator,
 	})
 
 	shipmentCommodityRepo := repositories.NewShipmentCommodityRepository(

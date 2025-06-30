@@ -20,6 +20,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/calculator"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/seqgen"
+	"github.com/emoss08/trenova/internal/pkg/seqgen/adapters"
 	"github.com/emoss08/trenova/internal/pkg/statemachine"
 	"github.com/emoss08/trenova/internal/pkg/utils/intutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
@@ -1069,9 +1071,15 @@ func TestShipmentRepository(t *testing.T) {
 
 // setupShipmentRepository creates a shipment repository with all dependencies
 func setupShipmentRepository(log *logger.Logger) repoports.ShipmentRepository {
+	generator := seqgen.NewGenerator(seqgen.GeneratorParams{
+		Store:    seqgen.NewSequenceStore(ts.DB, log),
+		Provider: adapters.NewProNumberFormatProvider(),
+		Logger:   log,
+	})
+
 	proNumberRepo := repositories.NewProNumberRepository(repositories.ProNumberRepositoryParams{
-		Logger: log,
-		DB:     ts.DB,
+		Logger:    log,
+		Generator: generator,
 	})
 
 	stopRepo := repositories.NewStopRepository(repositories.StopRepositoryParams{
