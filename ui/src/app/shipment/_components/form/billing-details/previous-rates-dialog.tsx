@@ -7,6 +7,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { EmptyState } from "@/components/ui/empty-state";
 import {
   Table,
   TableBody,
@@ -21,6 +22,11 @@ import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { ShipmentLocations } from "@/lib/shipment/utils";
 import { formatLocation, USDollarFormat } from "@/lib/utils";
 import type { TableSheetProps } from "@/types/data-table";
+import {
+  faFileInvoiceDollar,
+  faTruckContainer,
+  faTruckFast,
+} from "@fortawesome/pro-solid-svg-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useFormContext } from "react-hook-form";
 
@@ -55,7 +61,14 @@ export function PreviousRatesDialog(props: TableSheetProps) {
           {isLoading ? (
             <p>Loading...</p>
           ) : previousRates?.total === 0 ? (
-            <p>No previous rates found</p>
+            <div className="flex justify-center items-center h-full p-4">
+              <EmptyState
+                className="max-h-full max-w-full"
+                title="No Previous Rates"
+                description="No previous rates associated with this lane"
+                icons={[faFileInvoiceDollar, faTruckContainer, faTruckFast]}
+              />
+            </div>
           ) : (
             <Table>
               <TableHeader>
