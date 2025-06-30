@@ -1,5 +1,12 @@
 package intutils
 
+import "fmt"
+
+const (
+	maxInt16 = 32767
+	minInt16 = -32768
+)
+
 // SafeInt16Ptr converts an int to a *int16.
 // If the input is 0 and returnNilOnZero is true, it returns nil.
 // Otherwise, it returns a pointer to the converted int16 value.
@@ -22,6 +29,14 @@ func SafeInt16Ptr(i int, returnNilOnZero bool) *int16 {
 
 	i16 := int16(i)
 	return &i16
+}
+
+// SafeInt16 converts an int to int16 safely, returning an error if the value would overflow
+func SafeInt16(value int) (int16, error) {
+	if value > maxInt16 || value < minInt16 {
+		return 0, fmt.Errorf("value %d is outside int16 range", value)
+	}
+	return int16(value), nil
 }
 
 func SafeUint64Ptr(i uint64, returnNilOnZero bool) *uint64 {
