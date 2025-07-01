@@ -126,6 +126,7 @@ func (p *SMTPProvider) Send(ctx context.Context, email *model.Email) error {
 		mail.WithPassword(p.cfg.Password),
 		mail.WithTimeout(p.cfg.Timeout),
 		mail.WithTLSPolicy(tlsPolicy),
+		mail.WithSMTPAuth(mail.SMTPAuthAutoDiscover),
 	)
 	if err != nil {
 		return eris.Wrap(err, "failed to create mail client")
