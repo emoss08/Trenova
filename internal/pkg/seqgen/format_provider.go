@@ -21,7 +21,7 @@ func (p *defaultFormatProvider) GetFormat(
 	sequenceType sequencestore.SequenceType,
 	orgID, buID pulid.ID,
 ) (*Format, error) {
-	// * In a real implementation, this would fetch from database
+	// * TODO(wolfred): this should fetch from database
 	// * For now, return defaults based on sequence type
 
 	switch sequenceType {

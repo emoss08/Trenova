@@ -103,7 +103,7 @@ export const booleanStringSchema = z
  * Helper for temperature validation (Fahrenheit range)
  */
 export const temperatureSchema = nullableIntegerSchema.refine(
-  (val) => val === null || (val >= -100 && val <= 200),
+  (val) => val === null || (val !== undefined && val >= -100 && val <= 200),
   { message: "Temperature must be between -100 and 200 degrees Fahrenheit" },
 );
 

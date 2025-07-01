@@ -26,7 +26,7 @@ type HazardousMaterial struct {
 	BusinessUnitID              pulid.ID       `bun:"business_unit_id,notnull,type:VARCHAR(100),pk"                                        json:"businessUnitId"`
 	OrganizationID              pulid.ID       `bun:"organization_id,notnull,type:VARCHAR(100),pk"                                         json:"organizationId"`
 	Status                      domain.Status  `bun:"status,type:status,default:'Active'"                                                  json:"status"`
-	Code                        string         `bun:"code,notnull,type:VARCHAR(100)"                                                       json:"code"`
+	Code                        string         `bun:"code,notnull,type:VARCHAR(10)"                                                        json:"code"`
 	Name                        string         `bun:"name,notnull,type:VARCHAR(100)"                                                       json:"name"`
 	Description                 string         `bun:"description,type:TEXT,notnull"                                                        json:"description"`
 	Class                       HazardousClass `bun:"class,type:hazardous_class_enum,notnull"                                              json:"class"`

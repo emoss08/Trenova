@@ -3,72 +3,61 @@ import {
   PaymentTerm,
   TransferSchedule,
 } from "@/types/billing";
-import { z } from "zod";
+import * as z from "zod/v4";
+import {
+  decimalStringSchema,
+  nullableIntegerSchema,
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "./helpers";
 
 export const billingControlSchema = z
   .object({
-    id: z.string(),
-    version: z.number().optional(),
-    createdAt: z.number().optional(),
-    updatedAt: z.number().optional(),
+    id: optionalStringSchema,
+    version: versionSchema,
+    createdAt: timestampSchema,
+    updatedAt: timestampSchema,
 
     // * Core Fields
     creditMemoNumberPrefix: z
       .string({
-        required_error: "Credit memo number prefix is required",
+        error: "Credit memo number prefix is required",
       })
-      .min(3, "Credit memo number prefix must be at least 3 characters")
-      .max(10, "Credit memo number prefix must be less than 10 characters"),
+      .min(3, {
+        error: "Credit memo number prefix must be at least 3 characters",
+      })
+      .max(10, {
+        error: "Credit memo number prefix must be less than 10 characters",
+      }),
     invoiceNumberPrefix: z
       .string({
-        required_error: "Invoice number prefix is required",
+        error: "Invoice number prefix is required",
       })
-      .min(3, "Invoice number prefix must be at least 3 characters")
-      .max(10, "Invoice number prefix must be less than 10 characters"),
+      .min(3, { error: "Invoice number prefix must be at least 3 characters" })
+      .max(10, {
+        error: "Invoice number prefix must be less than 10 characters",
+      }),
     // * Invoice terms
-    paymentTerm: z.nativeEnum(PaymentTerm),
+    paymentTerm: z.enum(PaymentTerm),
     showInvoiceDueDate: z.boolean(),
     invoiceTerms: z.string().optional(),
     invoiceFooter: z.string().optional(),
     showAmountDue: z.boolean(),
     autoTransfer: z.boolean(),
-    transferSchedule: z.nativeEnum(TransferSchedule),
-    transferBatchSize: z.preprocess((val) => {
-      if (val === "" || val === null || val === undefined) {
-        return undefined;
-      }
-      const parsed = parseInt(String(val), 10);
-      return isNaN(parsed) ? undefined : parsed;
-    }, z.number().optional()),
+    transferSchedule: z.enum(TransferSchedule),
+    transferBatchSize: nullableIntegerSchema,
     autoMarkReadyToBill: z.boolean(),
     enforceCustomerBillingReq: z.boolean(),
     validateCustomerRates: z.boolean(),
     autoBill: z.boolean(),
     sendAutoBillNotifications: z.boolean(),
-    autoBillBatchSize: z.preprocess((val) => {
-      if (val === "" || val === null || val === undefined) {
-        return undefined;
-      }
-      const parsed = parseInt(String(val), 10);
-      return isNaN(parsed) ? undefined : parsed;
-    }, z.number().optional()),
-    billingExceptionHandling: z.nativeEnum(BillingExceptionHandling),
-    rateDiscrepancyThreshold: z.preprocess((val) => {
-      if (val === "" || val === null || val === undefined) {
-        return undefined;
-      }
-      const parsed = parseFloat(String(val));
-      return isNaN(parsed) ? undefined : parsed;
-    }, z.number().optional()),
+    autoBillBatchSize: nullableIntegerSchema,
+    billingExceptionHandling: z.enum(BillingExceptionHandling),
+    rateDiscrepancyThreshold: decimalStringSchema,
     autoResolveMinorDiscrepancies: z.boolean(),
     allowInvoiceConsolidation: z.boolean(),
-    consolidationPeriodDays: z.preprocess((val) => {
-      if (val === "" || val === null || val === undefined) {
-        return undefined;
-      }
-      const parsed = parseInt(String(val), 10);
-      return isNaN(parsed) ? undefined : parsed;
-    }, z.number().optional()),
+    consolidationPeriodDays: nullableIntegerSchema,
     groupConsolidatedInvoices: z.boolean(),
   })
   .refine(

@@ -1,35 +1,33 @@
 import { Status } from "@/types/common";
-import { object, z } from "zod";
+import * as z from "zod/v4";
+import {
+  decimalStringSchema,
+  nullableIntegerSchema,
+  nullableStringSchema,
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "./helpers";
 
-export const commoditySchema = object({
-  id: z.string().optional(),
-  version: z.number().optional(),
-  createdAt: z.number().optional(),
-  updatedAt: z.number().optional(),
+export const commoditySchema = z.object({
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
 
   // * Core Fields
-  hazardousMaterialId: z.string().nullable().optional(),
-  status: z.nativeEnum(Status),
-  name: z.string().min(1, "Name is required"),
-  description: z.string().min(1, "Description is required"),
-  minTemperature: z.number().nullable().optional(),
-  maxTemperature: z.number().nullable().optional(),
-  weightPerUnit: z.preprocess((val) => {
-    if (val === "" || val === null || val === undefined) {
-      return undefined;
-    }
-    const parsed = parseFloat(String(val));
-    return isNaN(parsed) ? undefined : parsed;
-  }, z.number().optional()),
-  linearFeetPerUnit: z.preprocess((val) => {
-    if (val === "" || val === null || val === undefined) {
-      return undefined;
-    }
-    const parsed = parseFloat(String(val));
-    return isNaN(parsed) ? undefined : parsed;
-  }, z.number().optional()),
-  freightClass: z.string().optional(),
-  dotClassification: z.string().optional(),
+  hazardousMaterialId: nullableStringSchema,
+  status: z.enum(Status),
+  name: z.string().min(1, { error: "Name is required" }),
+  description: z.string().min(1, { error: "Description is required" }),
+  minTemperature: nullableIntegerSchema,
+  maxTemperature: nullableIntegerSchema,
+  weightPerUnit: decimalStringSchema,
+  linearFeetPerUnit: decimalStringSchema,
+  freightClass: optionalStringSchema,
+  dotClassification: optionalStringSchema,
   stackable: z.boolean(),
   fragile: z.boolean(),
 });

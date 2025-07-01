@@ -32,10 +32,10 @@ type EquipmentType struct {
 
 	// Core Fields
 	Status      domain.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code        string        `json:"code"        bun:"code,type:VARCHAR(100),notnull"`
-	Description string        `json:"description" bun:"description,type:VARCHAR(255)"`
+	Code        string        `json:"code"        bun:"code,type:VARCHAR(10),notnull"`
+	Description string        `json:"description" bun:"description,type:TEXT,nullzero"`
 	Class       Class         `json:"class"       bun:"class,type:equipment_class_enum,notnull"`
-	Color       string        `json:"color"       bun:"color,type:VARCHAR(10)"`
+	Color       string        `json:"color"       bun:"color,type:VARCHAR(10),nullzero"`
 
 	// Metadata
 	Version      int64  `json:"version"   bun:"version,type:BIGINT"`

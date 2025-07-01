@@ -22,11 +22,11 @@ export const equipmentTypeSchema = z.object({
   code: z.string().min(1, {
     error: "Code is required",
   }),
-  description: z.string().optional(),
+  description: optionalStringSchema,
   class: z.enum(EquipmentClass, {
     error: "Class is required",
   }),
-  color: z.string().optional(),
+  color: optionalStringSchema,
 });
 
 export type EquipmentTypeSchema = z.infer<typeof equipmentTypeSchema>;

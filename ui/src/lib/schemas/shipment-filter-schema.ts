@@ -1,13 +1,9 @@
 import { ShipmentStatus } from "@/types/shipment";
-import { z } from "zod";
+import * as z from "zod/v4";
 
 export const shipmentFilterSchema = z.object({
   search: z.string().optional(),
-  status: z
-    .nativeEnum(ShipmentStatus, {
-      message: "Status is required",
-    })
-    .optional(),
+  status: z.enum(ShipmentStatus).optional(),
 });
 
 export type ShipmentFilterSchema = z.infer<typeof shipmentFilterSchema>;

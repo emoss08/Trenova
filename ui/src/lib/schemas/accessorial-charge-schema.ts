@@ -9,11 +9,11 @@ export const accessorialChargeSchema = z.object({
   updatedAt: z.number().optional(),
 
   // * Core Fields
-  status: z.nativeEnum(Status),
+  status: z.enum(Status),
   code: z
     .string()
-    .min(3, "Code must be at least 3 characters")
-    .max(10, "Code must be less than 10 characters"),
+    .min(3, { error: "Code must be at least 3 characters" })
+    .max(10, { error: "Code must be less than 10 characters" }),
   description: z.string().min(1, "Description is required"),
   unit: z.preprocess(
     (val) => {
@@ -23,7 +23,10 @@ export const accessorialChargeSchema = z.object({
       const parsed = parseInt(String(val), 10);
       return isNaN(parsed) ? undefined : parsed;
     },
-    z.number().int("Unit must be a whole number").min(1, "Unit is required"),
+    z
+      .number()
+      .int({ error: "Unit must be a whole number" })
+      .min(1, { error: "Unit is required" }),
   ),
   method: z.enum(AccessorialChargeMethod, {
     error: "Method is required",
@@ -36,7 +39,7 @@ export const accessorialChargeSchema = z.object({
       const parsed = parseInt(String(val), 10);
       return isNaN(parsed) ? undefined : parsed;
     },
-    z.number().min(1, "Amount is required"),
+    z.number().min(1, { error: "Amount is required" }),
   ),
 });
 

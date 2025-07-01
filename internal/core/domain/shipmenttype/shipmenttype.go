@@ -32,8 +32,8 @@ type ShipmentType struct {
 
 	// Core Fields
 	Status      domain.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code        string        `json:"code"        bun:"code,type:VARCHAR(100),notnull"`
-	Description string        `json:"description" bun:"description,type:VARCHAR(255)"`
+	Code        string        `json:"code"        bun:"code,type:VARCHAR(10),notnull"`
+	Description string        `json:"description" bun:"description,type:TEXT,nullzero"`
 	Color       string        `json:"color"       bun:"color,type:VARCHAR(10)"`
 
 	// Metadata

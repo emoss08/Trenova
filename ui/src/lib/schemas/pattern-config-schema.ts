@@ -1,40 +1,25 @@
-import { z } from "zod";
+import * as z from "zod/v4";
+import {
+  decimalStringSchema,
+  nullableBigIntegerSchema,
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "./helpers";
 
 export const patternConfigSchema = z.object({
-  id: z.string(),
-  version: z.number(),
-  createdAt: z.number(),
-  updatedAt: z.number().optional().nullable(),
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
 
-  enabled: z.boolean(),
-  minFrequency: z.preprocess((val) => {
-    if (val === "" || val === null || val === undefined) {
-      return undefined;
-    }
-    const parsed = parseInt(String(val));
-    return isNaN(parsed) ? undefined : parsed;
-  }, z.number().default(3)),
-  analysisWindowDays: z.preprocess((val) => {
-    if (val === "" || val === null || val === undefined) {
-      return undefined;
-    }
-    const parsed = parseInt(String(val));
-    return isNaN(parsed) ? undefined : parsed;
-  }, z.number().default(90)),
-  minConfidenceScore: z.preprocess((val) => {
-    if (val === "" || val === null || val === undefined) {
-      return undefined;
-    }
-    const parsed = parseFloat(String(val));
-    return isNaN(parsed) ? undefined : parsed;
-  }, z.number().default(0.7)),
-  suggestionTtlDays: z.preprocess((val) => {
-    if (val === "" || val === null || val === undefined) {
-      return undefined;
-    }
-    const parsed = parseInt(String(val));
-    return isNaN(parsed) ? undefined : parsed;
-  }, z.number().default(30)),
+  enabled: z.boolean().default(true),
+  minFrequency: nullableBigIntegerSchema,
+  analysisWindowDays: nullableBigIntegerSchema,
+  minConfidenceScore: decimalStringSchema,
+  suggestionTtlDays: nullableBigIntegerSchema,
   requireExactMatch: z.boolean().default(false),
   weightRecentShipments: z.boolean().default(true),
 });

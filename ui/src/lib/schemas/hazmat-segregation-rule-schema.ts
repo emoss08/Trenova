@@ -1,36 +1,39 @@
 import { Status } from "@/types/common";
 import { HazardousClassChoiceProps } from "@/types/hazardous-material";
 import { SegregationType } from "@/types/hazmat-segregation-rule";
-import { z } from "zod";
+import * as z from "zod/v4";
+import {
+  decimalStringSchema,
+  nullableStringSchema,
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "./helpers";
 
 export const hazmatSegregationRuleSchema = z
   .object({
-    id: z.string().optional(),
-    version: z.number().optional(),
-    createdAt: z.number().optional(),
-    updatedAt: z.number().optional(),
+    id: optionalStringSchema,
+    version: versionSchema,
+    createdAt: timestampSchema,
+    updatedAt: timestampSchema,
+    organizationId: optionalStringSchema,
+    businessUnitId: optionalStringSchema,
 
     // * Core Fields
-    status: z.nativeEnum(Status),
-    name: z.string().min(1, "Name is required"),
-    description: z.string().optional(),
-    classA: z.nativeEnum(HazardousClassChoiceProps),
-    classB: z.nativeEnum(HazardousClassChoiceProps),
-    hazmatAId: z.string().nullable().optional(),
-    hazmatBId: z.string().nullable().optional(),
-    segregationType: z.nativeEnum(SegregationType),
-    minimumDistance: z.preprocess((val) => {
-      if (val === "" || val === null || val === undefined) {
-        return undefined;
-      }
-      const parsed = parseFloat(String(val));
-      return isNaN(parsed) ? undefined : parsed;
-    }, z.number().optional()),
-    distanceUnit: z.string().optional(),
-    hasExceptions: z.boolean().optional(),
-    exceptionNotes: z.string().optional(),
-    referenceCode: z.string().optional(),
-    regulationSource: z.string().optional(),
+    status: z.enum(Status),
+    name: z.string().min(1, { error: "Name is required" }),
+    description: optionalStringSchema,
+    classA: z.enum(HazardousClassChoiceProps),
+    classB: z.enum(HazardousClassChoiceProps),
+    hazmatAId: nullableStringSchema,
+    hazmatBId: nullableStringSchema,
+    segregationType: z.enum(SegregationType),
+    minimumDistance: decimalStringSchema,
+    distanceUnit: optionalStringSchema,
+    hasExceptions: z.boolean(),
+    exceptionNotes: optionalStringSchema,
+    referenceCode: optionalStringSchema,
+    regulationSource: optionalStringSchema,
   })
   .refine(
     (data) => {

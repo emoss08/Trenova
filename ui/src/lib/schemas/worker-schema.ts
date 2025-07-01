@@ -6,72 +6,85 @@ import {
   PTOType,
   WorkerType,
 } from "@/types/worker";
-import { z } from "zod";
+import * as z from "zod/v4";
+import {
+  nullableIntegerSchema,
+  nullableStringSchema,
+  nullableTimestampSchema,
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "./helpers";
 
 /* Worker Profile Schema */
 const workerProfileSchema = z.object({
-  id: z.string().optional(),
-  version: z.number().optional(),
-  createdAt: z.number().optional(),
-  updatedAt: z.number().optional(),
-  workerId: z.string().optional(),
-  organizationId: z.string().optional(),
-  businessUnitId: z.string().optional(),
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
+  workerId: optionalStringSchema,
 
   // * Core Fields
-  dob: z.number(),
+  dob: nullableIntegerSchema,
   licenseNumber: z.string(),
-  endorsement: z.nativeEnum(Endorsement),
-  hazmatExpiry: z.number().optional(),
-  complianceStatus: z.nativeEnum(ComplianceStatus),
+  endorsement: z.enum(Endorsement),
+  hazmatExpiry: nullableIntegerSchema,
+  complianceStatus: z.enum(ComplianceStatus),
   isQualified: z.boolean(),
-  licenseExpiry: z.number(),
-  hireDate: z.number(),
+  licenseExpiry: nullableIntegerSchema,
+  hireDate: nullableIntegerSchema,
   licenseStateId: z.string(),
-  terminationDate: z.number().nullable().optional(),
-  physicalDueDate: z.number().nullable().optional(),
-  mvrDueDate: z.number().nullable().optional(),
+  terminationDate: nullableIntegerSchema,
+  physicalDueDate: nullableTimestampSchema,
+  mvrDueDate: nullableTimestampSchema,
   lastMvrCheck: z.number(),
   lastDrugTest: z.number(),
 });
 
 /* Worker PTO Schema */
 const workerPTOSchema = z.object({
-  id: z.string().optional(),
-  version: z.number().optional(),
-  createdAt: z.number().optional(),
-  updatedAt: z.number().optional(),
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
+  workerId: optionalStringSchema,
 
   // * Core Fields
-  status: z.nativeEnum(PTOStatus),
-  type: z.nativeEnum(PTOType),
-  startDate: z.number().min(1, "Start date is required"),
-  endDate: z.number().min(1, "End date is required"),
+  status: z.enum(PTOStatus),
+  type: z.enum(PTOType),
+  startDate: z.number().min(1, { error: "Start date is required" }),
+  endDate: z.number().min(1, { error: "End date is required" }),
   reason: z.string().optional(),
 });
 
 /* Worker Schema */
 export const workerSchema = z
   .object({
-    id: z.string().optional(),
-    version: z.number().optional(),
-    createdAt: z.number().optional(),
-    updatedAt: z.number().optional(),
+    id: optionalStringSchema,
+    version: versionSchema,
+    createdAt: timestampSchema,
+    updatedAt: timestampSchema,
+    organizationId: optionalStringSchema,
+    businessUnitId: optionalStringSchema,
 
     // * Core Fields
-    profilePictureUrl: z.string().optional(),
-    status: z.nativeEnum(Status),
-    type: z.nativeEnum(WorkerType),
+    profilePictureUrl: optionalStringSchema,
+    status: z.enum(Status),
+    type: z.enum(WorkerType),
     firstName: z.string(),
     lastName: z.string(),
     addressLine1: z.string(),
-    addressLine2: z.string().optional(),
+    addressLine2: optionalStringSchema,
     city: z.string(),
     stateId: z.string(),
-    fleetCodeId: z.string().nullable().optional(),
-    gender: z.nativeEnum(Gender),
+    fleetCodeId: nullableStringSchema,
+    gender: z.enum(Gender),
     postalCode: z.string(),
-    profile: workerProfileSchema.nullable().optional(),
+    profile: workerProfileSchema.nullable(),
     pto: z.array(workerPTOSchema).optional(),
   })
   .refine(

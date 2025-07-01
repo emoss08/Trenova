@@ -1,34 +1,41 @@
 import { EquipmentStatus } from "@/types/tractor";
-import { z } from "zod";
+import * as z from "zod/v4";
+import {
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "./helpers";
 
 export const tractorSchema = z
   .object({
-    id: z.string().optional(),
-    version: z.number().optional(),
-    createdAt: z.number().optional(),
-    updatedAt: z.number().optional(),
+    id: optionalStringSchema,
+    version: versionSchema,
+    createdAt: timestampSchema,
+    updatedAt: timestampSchema,
+    organizationId: optionalStringSchema,
+    businessUnitId: optionalStringSchema,
 
     // * Core Fields
-    equipmentTypeId: z.string().min(1, "Equipment Type is required"),
-    primaryWorkerId: z.string().min(1, "Primary Worker is required"),
+    equipmentTypeId: z.string().min(1, { error: "Equipment Type is required" }),
+    primaryWorkerId: z.string().min(1, { error: "Primary Worker is required" }),
     secondaryWorkerId: z.string().nullable().optional(),
     equipmentManufacturerId: z
       .string()
-      .min(1, "Equipment Manufacturer is required"),
+      .min(1, { error: "Equipment Manufacturer is required" }),
     stateId: z.string().nullable().optional(),
-    fleetCodeId: z.string().min(1, "Fleet Code is required"),
-    status: z.nativeEnum(EquipmentStatus, {
+    fleetCodeId: z.string().min(1, { error: "Fleet Code is required" }),
+    status: z.enum(EquipmentStatus, {
       message: "Status is required",
     }),
     code: z
       .string()
-      .min(1, "Code is required")
-      .max(50, "Code must be less than 50 characters"),
+      .min(1, { error: "Code is required" })
+      .max(50, { error: "Code must be less than 50 characters" }),
     model: z.string().max(50, {
-      message: "Model must be less than 50 characters",
+      error: "Model must be less than 50 characters",
     }),
     make: z.string().max(50, {
-      message: "Make must be less than 50 characters",
+      error: "Make must be less than 50 characters",
     }),
     registrationNumber: z.string().optional(),
     year: z.preprocess(
@@ -42,10 +49,10 @@ export const tractorSchema = z
       z
         .number()
         .min(1900, {
-          message: "Year must be between 1900 and 2099",
+          error: "Year must be between 1900 and 2099",
         })
         .max(2099, {
-          message: "Year must be between 1900 and 2099",
+          error: "Year must be between 1900 and 2099",
         })
         .optional(),
     ),
