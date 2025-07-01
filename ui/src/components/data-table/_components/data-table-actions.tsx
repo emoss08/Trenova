@@ -1,7 +1,6 @@
 "use no memo";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
-import { Separator } from "@/components/ui/separator";
 import { usePermissions } from "@/hooks/use-permissions";
 import type { Resource } from "@/types/audit-entry";
 import type { ExtraAction } from "@/types/data-table";
@@ -40,7 +39,7 @@ export default function DataTableActions({
       <DataTableViewOptions resource={resource} />
       {liveModeConfig && (
         <Button
-          variant={liveModeEnabled ? "green" : "outline"}
+          variant={liveModeEnabled ? "red" : "outline"}
           onClick={() => onLiveModeToggle(!liveModeEnabled)}
         >
           {liveModeEnabled ? (
@@ -54,7 +53,7 @@ export default function DataTableActions({
 
       {can(resource, Action.Create) ? (
         <>
-          <Separator className="h-6 w-px bg-border" orientation="vertical" />
+          <div className="h-6 w-px bg-border" />
           <DataTableCreateButton
             name={name}
             exportModelName={exportModelName}
