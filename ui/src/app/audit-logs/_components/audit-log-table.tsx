@@ -1,4 +1,4 @@
-import { DataTableV2 } from "@/components/data-table/data-table-v2";
+import { DataTable } from "@/components/data-table/data-table";
 import { LiveModePresets } from "@/lib/live-mode-utils";
 import { AuditEntry, Resource } from "@/types/audit-entry";
 import { useMemo } from "react";
@@ -9,7 +9,7 @@ export default function AuditLogTable() {
   const columns = useMemo(() => getColumns(), []);
 
   return (
-    <DataTableV2<AuditEntry>
+    <DataTable<AuditEntry>
       resource={Resource.AuditEntry}
       name="Audit Entry"
       link="/audit-logs/"
