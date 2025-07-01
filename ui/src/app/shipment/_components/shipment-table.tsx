@@ -1,4 +1,4 @@
-import { DataTableV2 } from "@/components/data-table/data-table-v2";
+import { DataTable } from "@/components/data-table/data-table";
 import { LiveModePresets } from "@/lib/live-mode-utils";
 import { getShipmentStatusRowClassName } from "@/lib/table-styles";
 import { cn } from "@/lib/utils";
@@ -13,7 +13,7 @@ export default function ShipmentTable() {
   const columns = useMemo(() => getColumns(), []);
 
   return (
-    <DataTableV2<Shipment>
+    <DataTable<Shipment>
       name="Shipment"
       link="/shipments/"
       extraSearchParams={{

@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { type SwitchFieldProps } from "@/types/fields";
 import { Controller, FieldValues } from "react-hook-form";
 import { Label } from "../ui/label";
+import RecommendedBadge from "../ui/recommended-badge";
 import { Switch } from "../ui/switch";
 
 export function SwitchField<T extends FieldValues>({
@@ -11,6 +12,7 @@ export function SwitchField<T extends FieldValues>({
   control,
   rules,
   outlined,
+  recommended,
   position = "right",
   "aria-describedby": ariaDescribedBy,
   ...props
@@ -61,7 +63,10 @@ export function SwitchField<T extends FieldValues>({
               position === "left" ? "order-1" : "order-0",
             )}
           >
-            <Label htmlFor={inputId}>{label}</Label>
+            <div className="flex items-center gap-2">
+              <Label htmlFor={inputId}>{label}</Label>
+              {recommended && <RecommendedBadge size="sm" variant="warning" />}
+            </div>
             {description && (
               <p id={descriptionId} className="text-2xs text-muted-foreground">
                 {description}

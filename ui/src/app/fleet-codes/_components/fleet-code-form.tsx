@@ -33,6 +33,7 @@ export function FleetCodeForm() {
           label="Name"
           placeholder="Name"
           description="The name of the fleet code"
+          maxLength={100}
         />
       </FormControl>
       <FormControl cols="full">

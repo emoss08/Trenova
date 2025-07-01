@@ -31,6 +31,7 @@ export function ShipmentTypeForm() {
           label="Code"
           placeholder="Code"
           description="The code of the shipment type"
+          maxLength={10}
         />
       </FormControl>
       <FormControl cols="full">

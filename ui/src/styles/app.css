@@ -42,6 +42,11 @@
     --vitess-string: oklch(65.19% 0.1227 53.68);
     --vitess-number: oklch(70.03% 0.09 220.23);
     --vitess-boolean: oklch(70.03% 0.09 220.23);
+    --color-1: oklch(66.2% 0.225 25.9);
+    --color-2: oklch(60.4% 0.26 302);
+    --color-3: oklch(69.6% 0.165 251);
+    --color-4: oklch(80.2% 0.134 225);
+    --color-5: oklch(90.7% 0.231 133);
 }
 
 .dark {
@@ -61,7 +66,7 @@
     --muted-foreground: oklch(0.7200 0 0);
     --accent: oklch(0.2600 0 0);
     --accent-foreground: oklch(1 0 0);
-    --destructive: oklch(0.6900 0.2000 23.9100);
+    --destructive: oklch(0.5386 0.2 23.91);
     --destructive-foreground: oklch(0 0 0);
     --border: oklch(0.2600 0 0);
     --input: oklch(0.2600 0 0);
@@ -92,6 +97,11 @@
     --shadow-lg: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 4px 6px -1px hsl(0 0% 0% / 0.18);
     --shadow-xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.18), 0px 8px 10px -1px hsl(0 0% 0% / 0.18);
     --shadow-2xl: 0px 1px 2px 0px hsl(0 0% 0% / 0.45);
+    --color-1: oklch(66.2% 0.225 25.9);
+    --color-2: oklch(60.4% 0.26 302);
+    --color-3: oklch(69.6% 0.165 251);
+    --color-4: oklch(80.2% 0.134 225);
+    --color-5: oklch(90.7% 0.231 133);
 }
 
 @theme inline {
@@ -168,11 +178,19 @@
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
 
+    --color-color-5: var(--color-5);
+    --color-color-4: var(--color-4);
+    --color-color-3: var(--color-3);
+    --color-color-2: var(--color-2);
+    --color-color-1: var(--color-1);
+
     --color-vitess-node: var(--vitess-node);
     --color-vitess-string: var(--vitess-string);
     --color-vitess-number: var(--vitess-number);
     --color-vitess-boolean: var(--vitess-boolean);
     --animate-flow-down: flow-down 1.5s linear infinite;
+    --animate-rainbow: rainbow var(--speed, 2s) infinite linear;
+
 
     @keyframes flow-down {
         0% {
@@ -181,6 +199,19 @@
 
         100% {
             background-position: 0 100%;
+        }
+    }
+
+
+
+
+    @keyframes rainbow {
+        0% {
+            background-position: 0%;
+        }
+
+        100% {
+            background-position: 200%;
         }
     }
 }

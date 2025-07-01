@@ -94,6 +94,7 @@ function BOLField() {
         rules={{ required: true }}
         description="The BOL is the bill of lading number for the shipment."
         placeholder="Enter BOL"
+        maxLength={100}
       />
     </FormControl>
   );

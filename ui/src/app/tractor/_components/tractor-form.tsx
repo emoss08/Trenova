@@ -42,6 +42,7 @@ export function TractorForm() {
             label="Code"
             placeholder="Code"
             description="A unique code identifying the tractor."
+            maxLength={50}
           />
         </FormControl>
         <FormControl>
@@ -77,6 +78,7 @@ export function TractorForm() {
             label="Model"
             placeholder="Model"
             description="The specific model of the tractor."
+            maxLength={50}
           />
         </FormControl>
         <FormControl>
@@ -86,6 +88,7 @@ export function TractorForm() {
             label="Make"
             placeholder="Make"
             description="The manufacturer of the tractor."
+            maxLength={50}
           />
         </FormControl>
         <FormControl>
@@ -131,6 +134,7 @@ function RegistrationInformationSection() {
             label="License Plate Number"
             placeholder="License Plate Number"
             description="The license plate number associated with the tractor."
+            maxLength={50}
           />
         </FormControl>
         <FormControl>
@@ -150,6 +154,7 @@ function RegistrationInformationSection() {
             label="Registration Number"
             placeholder="Registration Number"
             description="The unique registration number assigned to the tractor."
+            maxLength={50}
           />
         </FormControl>
         <FormControl>
@@ -169,6 +174,7 @@ function RegistrationInformationSection() {
             label="VIN"
             placeholder="VIN"
             description="The Vehicle Identification Number (VIN) of the tractor."
+            maxLength={17}
           />
         </FormControl>
       </FormGroup>

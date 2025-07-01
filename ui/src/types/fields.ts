@@ -20,6 +20,7 @@ type BaseInputFieldProps = Omit<InputProps, "name"> & {
   description?: string;
   inputClassProps?: string;
   hideLabel?: boolean;
+  maxLength?: number;
 };
 
 export type InputFieldProps<T extends FieldValues> = BaseInputFieldProps &
@@ -69,6 +70,7 @@ type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   position?: "left" | "right";
   switchInputClassName?: string;
   size?: "xs" | "sm" | "default" | "lg";
+  recommended?: boolean;
 };
 
 export type SwitchFieldProps<T extends FieldValues> = BaseSwitchFieldProps &

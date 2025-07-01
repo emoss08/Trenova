@@ -9,6 +9,8 @@ export const buttonVariants = cva(
           "border bg-blue-700 border-blue-500/60 hover:bg-blue-600 hover:border-blue-400 text-white [&_svg]:text-white",
         green:
           "border bg-green-700 border-green-500/60 hover:bg-green-600 hover:border-green-400 text-white [&_svg]:text-white",
+        red: "border bg-red-700 border-red-500/60 hover:bg-red-600 hover:border-red-400 text-white [&_svg]:text-white",
+
         destructive: "bg-destructive text-white hover:bg-destructive/90",
         outline:
           "border border-input bg-background hover:bg-accent hover:text-accent-foreground",

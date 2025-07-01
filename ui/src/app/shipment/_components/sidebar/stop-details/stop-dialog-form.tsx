@@ -152,6 +152,7 @@ export function StopDialogForm({
               label="Address"
               placeholder="Full address details"
               description="Specifies the street address or main location detail for this stop."
+              maxLength={200}
             />
           </FormControl>
         </FormGroup>

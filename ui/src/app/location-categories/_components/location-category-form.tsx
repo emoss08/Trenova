@@ -24,6 +24,7 @@ export function LocationCategoryForm() {
           label="Name"
           placeholder="Name"
           description="The name of the location category"
+          maxLength={100}
         />
       </FormControl>
       <FormControl cols="full">

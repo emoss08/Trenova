@@ -199,8 +199,8 @@ function AcceptSuggestionForm({
           name="autoAssign"
           control={control}
           outlined
-          position="left"
           label="Auto Assign"
+          recommended
           description="Automatically assign the primary and secondary workers to the dedicated lane."
         />
       </FormControl>

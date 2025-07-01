@@ -1,3 +1,4 @@
+"use no memo";
 import { StopDialog } from "@/app/shipment/_components/sidebar/stop-details/stop-dialog";
 import {
   ContextMenu,
