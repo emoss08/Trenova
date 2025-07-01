@@ -1,3 +1,4 @@
+"use no memo";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -13,8 +14,7 @@ import {
 } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { NumberField } from "@/components/ui/number-input";
-import { useApiMutation } from "@/hooks/use-api-mutation";
-import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
+import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import {
   billingExceptionHandlingChoices,
   paymentTermChoices,
@@ -27,13 +27,11 @@ import {
 } from "@/lib/schemas/billing-schema";
 import { api } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQueryClient, useSuspenseQuery } from "@tanstack/react-query";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import { FormProvider, useForm, useFormContext } from "react-hook-form";
-import { toast } from "sonner";
 
 export default function BillingControlForm() {
-  const queryClient = useQueryClient();
   const billingControl = useSuspenseQuery({
     ...queries.organization.getBillingControl(),
   });
@@ -44,56 +42,15 @@ export default function BillingControlForm() {
   });
 
   const { handleSubmit, setError, reset } = form;
-
-  const { mutateAsync } = useApiMutation({
-    mutationFn: async (values: BillingControlSchema) => {
-      return await api.billingControl.update(values);
-    },
-    onMutate: async (newValues) => {
-      // * Cancel any outgoing refetches so they don't overwrite our optimistic update
-      await queryClient.cancelQueries({
-        queryKey: queries.organization.getBillingControl._def,
-      });
-
-      // * Snapshot the previous value
-      const previousShipmentControl = queryClient.getQueryData([
-        queries.organization.getBillingControl._def,
-      ]);
-
-      // * Optimistically update to the new value
-      queryClient.setQueryData(
-        [queries.organization.getBillingControl._def],
-        newValues,
-      );
-
-      return { previousShipmentControl, newValues };
-    },
-    onSuccess: (newValues) => {
-      toast.success("Billing control updated successfully");
-
-      broadcastQueryInvalidation({
-        queryKey: queries.organization.getBillingControl
-          ._def as unknown as string[],
-        options: {
-          correlationId: `update-billing-control-${Date.now()}`,
-        },
-        config: {
-          predicate: true,
-          refetchType: "all",
-        },
-      });
-
-      // * Reset the form to the new values
-      reset(newValues);
-    },
-    onSettled: () => {
-      // * Invalidate the query to refresh the data
-      queryClient.invalidateQueries({
-        queryKey: queries.organization.getShipmentControl._def,
-      });
-    },
-    setFormError: setError,
+  const { mutateAsync } = useOptimisticMutation({
+    queryKey: queries.organization.getBillingControl._def,
+    mutationFn: async (values: BillingControlSchema) =>
+      api.billingControl.update(values),
+    successMessage: "Billing control updated successfully",
     resourceName: "Billing Control",
+    setFormError: setError,
+    resetForm: reset,
+    invalidateQueries: [queries.organization.getShipmentControl._def],
   });
 
   const onSubmit = useCallback(
@@ -338,7 +295,8 @@ function InvoiceSettings() {
             <InputField
               control={control}
               name="invoiceNumberPrefix"
-              rules={{ required: true, minLength: 3, maxLength: 10 }}
+              rules={{ required: true }}
+              maxLength={10}
               label="Invoice Number Prefix"
               placeholder="Enter the prefix for the invoice number"
               description="Establishes the standardized identifier that precedes the sequential number in all invoices."
@@ -348,7 +306,8 @@ function InvoiceSettings() {
             <InputField
               control={control}
               name="creditMemoNumberPrefix"
-              rules={{ required: true, minLength: 3, maxLength: 10 }}
+              rules={{ required: true }}
+              maxLength={10}
               label="Credit Memo Number Prefix"
               placeholder="Enter the prefix for the credit memo number"
               description="Defines the standardized identifier that precedes the sequential number in all credit memos."
@@ -468,8 +427,10 @@ function ConsolidationSettings() {
 
   useEffect(() => {
     if (allowInvoiceConsolidation) {
+      console.log("allowInvoiceConsolidation", allowInvoiceConsolidation);
       setShowConsolidationOptions(true);
     } else {
+      console.log("allowInvoiceConsolidation", allowInvoiceConsolidation);
       setShowConsolidationOptions(false);
     }
   }, [allowInvoiceConsolidation]);
@@ -517,7 +478,7 @@ function ConsolidationSettings() {
                   label="Consolidation Period Duration"
                   placeholder="Enter the consolidation period days"
                   description="Defines the timeframe (in days) during which shipments are grouped into a single invoice."
-                  rules={{ required: true, min: 1, max: 30 }}
+                  rules={{ required: true }}
                   sideText="days"
                 />
               </FormControl>

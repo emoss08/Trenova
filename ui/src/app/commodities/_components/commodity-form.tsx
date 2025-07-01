@@ -33,6 +33,7 @@ export function CommodityForm() {
           label="Name"
           placeholder="Name"
           description="The official name used to identify the commodity."
+          maxLength={100}
         />
       </FormControl>
       <FormControl cols="full">
@@ -61,6 +62,7 @@ export function CommodityForm() {
           label="Freight Class"
           placeholder="Freight Class"
           description="The NMFC code used for pricing and handling in LTL shipping."
+          maxLength={100}
         />
       </FormControl>
       <FormControl>
@@ -108,6 +110,7 @@ export function CommodityForm() {
           label="DOT Classification"
           placeholder="DOT Classification"
           description="The U.S. Department of Transportation classification used for regulatory compliance."
+          maxLength={100}
         />
       </FormControl>
       <FormControl cols="full">
