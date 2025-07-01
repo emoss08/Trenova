@@ -16,6 +16,12 @@ export function EditLocationModal({
     defaultValues: currentRecord,
   });
 
+  const {
+    formState: { errors },
+  } = form;
+
+  console.log(errors);
+
   return (
     <FormEditModal
       currentRecord={currentRecord}

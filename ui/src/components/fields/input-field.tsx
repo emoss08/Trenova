@@ -1,3 +1,4 @@
+import { useCharacterLimit } from "@/hooks/use-character-limit";
 import { cn } from "@/lib/utils";
 import { InputFieldProps } from "@/types/fields";
 import { faPencil } from "@fortawesome/pro-regular-svg-icons";
@@ -29,47 +30,87 @@ export function InputField<T extends FieldValues>({
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedBy,
   readOnly,
+  maxLength,
   ...props
 }: InputFieldProps<T>) {
   const inputId = `input-${name}`;
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;
 
+  // * Always call the hook to satisfy React's rules of hooks
+  const characterLimit = useCharacterLimit({
+    maxLength: maxLength || Infinity,
+    initialValue: "",
+  });
+
+  // * Determine if we should show character limit UI
+  const showCharacterLimit = maxLength !== undefined;
+
   return (
     <Controller<T>
       name={name}
       control={control}
       rules={rules}
-      render={({ field, fieldState }) => (
-        <FieldWrapper
-          label={label}
-          description={description}
-          required={!!rules?.required}
-          error={fieldState.error?.message}
-          className={className}
-        >
-          <Input
-            {...field}
-            {...props}
-            id={inputId}
-            type={type}
-            readOnly={readOnly}
-            disabled={disabled}
-            value={field.value ?? ""} // * Handle null values by setting to empty string
-            autoComplete={autoComplete}
-            placeholder={placeholder}
-            aria-label={ariaLabel || label}
-            className={inputClassProps}
-            isInvalid={fieldState.invalid}
-            icon={icon}
-            aria-describedby={cn(
-              description && descriptionId,
-              fieldState.error && errorId,
-              ariaDescribedBy,
-            )}
-          />
-        </FieldWrapper>
-      )}
+      render={({ field, fieldState }) => {
+        // * Update character count when field value changes
+        if (showCharacterLimit && field.value !== characterLimit.value) {
+          const event = {
+            target: { value: field.value || "" },
+          } as React.ChangeEvent<HTMLInputElement>;
+          characterLimit.handleChange(event);
+        }
+
+        return (
+          <FieldWrapper
+            label={label}
+            description={description}
+            required={!!rules?.required}
+            error={fieldState.error?.message}
+            className={className}
+          >
+            <Input
+              {...field}
+              {...props}
+              id={inputId}
+              type={type}
+              readOnly={readOnly}
+              disabled={disabled}
+              value={field.value ?? ""}
+              onChange={(e) => {
+                if (showCharacterLimit) {
+                  characterLimit.handleChange(e);
+                  field.onChange(e.target.value);
+                } else {
+                  field.onChange(e);
+                }
+              }}
+              autoComplete={autoComplete}
+              placeholder={placeholder}
+              aria-label={ariaLabel || label}
+              className={inputClassProps}
+              isInvalid={fieldState.invalid}
+              icon={icon}
+              rightElement={
+                showCharacterLimit ? (
+                  <div
+                    id={`${inputId}-description`}
+                    className="text-muted-foreground pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-xs tabular-nums peer-disabled:opacity-50"
+                    aria-live="polite"
+                    role="status"
+                  >
+                    {characterLimit.characterCount}/{maxLength}
+                  </div>
+                ) : undefined
+              }
+              aria-describedby={cn(
+                description && descriptionId,
+                fieldState.error && errorId,
+                ariaDescribedBy,
+              )}
+            />
+          </FieldWrapper>
+        );
+      }}
     />
   );
 }

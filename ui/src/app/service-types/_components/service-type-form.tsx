@@ -31,6 +31,7 @@ export function ServiceTypeForm() {
           label="Code"
           placeholder="Code"
           description="The code of the service type"
+          maxLength={10}
         />
       </FormControl>
       <FormControl cols="full">

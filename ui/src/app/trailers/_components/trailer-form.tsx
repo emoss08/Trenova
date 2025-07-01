@@ -42,6 +42,7 @@ function GeneralInformationSection({
           label="Code"
           placeholder="Code"
           description="A unique code identifying the trailer."
+          maxLength={50}
         />
       </FormControl>
       <FormControl>
@@ -77,6 +78,7 @@ function GeneralInformationSection({
           label="Model"
           placeholder="Model"
           description="The specific model of the trailer."
+          maxLength={50}
         />
       </FormControl>
       <FormControl>
@@ -86,6 +88,7 @@ function GeneralInformationSection({
           label="Make"
           placeholder="Make"
           description="The manufacturer of the trailer."
+          maxLength={50}
         />
       </FormControl>
       <FormControl>
@@ -141,6 +144,7 @@ function RegistrationInformationSecond({
             label="VIN"
             placeholder="VIN"
             description="The Vehicle Identification Number (VIN) of the trailer."
+            maxLength={17}
           />
         </FormControl>
         <FormControl>
@@ -150,6 +154,7 @@ function RegistrationInformationSecond({
             label="Registration Number"
             placeholder="Registration Number"
             description="The unique registration number assigned to the trailer."
+            maxLength={50}
           />
         </FormControl>
         <FormControl>
@@ -178,6 +183,7 @@ function RegistrationInformationSecond({
             label="License Plate Number"
             placeholder="License Plate Number"
             description="The license plate number associated with the trailer."
+            maxLength={50}
           />
         </FormControl>
         <FormControl>

@@ -30,6 +30,7 @@ export function EquipManufacturerForm() {
           label="Name"
           placeholder="Name"
           description="The name of the equipment manufacturer"
+          maxLength={100}
         />
       </FormControl>
       <FormControl cols="full">

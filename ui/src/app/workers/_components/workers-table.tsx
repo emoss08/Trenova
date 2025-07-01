@@ -1,4 +1,4 @@
-import { DataTableV2 } from "@/components/data-table/data-table-v2";
+import { DataTable } from "@/components/data-table/data-table";
 import { type WorkerSchema } from "@/lib/schemas/worker-schema";
 import { Resource } from "@/types/audit-entry";
 import { useMemo } from "react";
@@ -10,7 +10,7 @@ export default function WorkersDataTable() {
   const columns = useMemo(() => getColumns(), []);
 
   return (
-    <DataTableV2<WorkerSchema>
+    <DataTable<WorkerSchema>
       extraSearchParams={{
         includeProfile: "true",
         includePTO: "true",

@@ -40,6 +40,7 @@ export function DedicatedLaneForm() {
             label="Lane Name"
             placeholder="Enter Lane Name"
             description="Unique identifier for the dedicated lane"
+            maxLength={100}
           />
         </FormControl>
         <FormControl cols="full">
@@ -173,6 +174,7 @@ function WorkerAssignmentSection() {
             name="autoAssign"
             label="Automatic Worker Assignment"
             description="Automatically assign designated workers when creating shipments for this lane"
+            recommended
             outlined
           />
         </FormControl>

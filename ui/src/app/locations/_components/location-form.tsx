@@ -39,6 +39,7 @@ export function LocationForm() {
           label="Code"
           placeholder="Code"
           description="A unique identifier for the location."
+          maxLength={10}
         />
       </FormControl>
       <FormControl cols="full">
@@ -49,6 +50,7 @@ export function LocationForm() {
           label="Name"
           placeholder="Name"
           description="The official name of the location."
+          maxLength={100}
         />
       </FormControl>
       <FormControl cols="full">
@@ -82,6 +84,7 @@ export function LocationForm() {
           label="Address Line 2"
           placeholder="Address Line 2"
           description="Additional address details, if applicable."
+          maxLength={150}
         />
       </FormControl>
       <FormControl>
@@ -92,6 +95,7 @@ export function LocationForm() {
           label="City"
           placeholder="City"
           description="The city where the location is situated."
+          maxLength={100}
         />
       </FormControl>
       <FormControl>
@@ -113,6 +117,7 @@ export function LocationForm() {
           placeholder="Postal Code"
           description="The ZIP code for the location."
           rules={{ required: true }}
+          maxLength={150}
         />
       </FormControl>
     </FormGroup>

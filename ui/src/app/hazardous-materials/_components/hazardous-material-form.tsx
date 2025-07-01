@@ -35,6 +35,7 @@ export function HazardousMaterialForm() {
           label="Code"
           placeholder="Code"
           description="The code of the hazardous material"
+          maxLength={10}
         />
       </FormControl>
       <FormControl cols="full">
@@ -45,6 +46,7 @@ export function HazardousMaterialForm() {
           label="Name"
           placeholder="Name"
           description="The name of the hazardous material"
+          maxLength={100}
         />
       </FormControl>
       <FormControl cols="full">

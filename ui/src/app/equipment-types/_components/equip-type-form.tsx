@@ -31,6 +31,7 @@ export function EquipTypeForm() {
           label="Code"
           placeholder="Code"
           description="The code of the equipment type"
+          maxLength={10}
         />
       </FormControl>
       <FormControl cols="full">
