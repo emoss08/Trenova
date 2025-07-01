@@ -88,6 +88,7 @@ function DataTableRow<TData>({
       {row.getVisibleCells().map((cell) => {
         return (
           <TableCell
+            className="font-table"
             key={cell.id}
             role="cell"
             aria-label={`${cell.column.id} cell`}
