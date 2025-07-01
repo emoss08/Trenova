@@ -1,15 +1,23 @@
-import { z } from "zod";
+import * as z from "zod/v4";
+import {
+  nullableStringSchema,
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "./helpers";
 
 export const shipmentControlSchema = z
   .object({
-    id: z.string(),
-    version: z.number(),
-    createdAt: z.number(),
-    updatedAt: z.number(),
+    id: optionalStringSchema,
+    version: versionSchema,
+    createdAt: timestampSchema,
+    updatedAt: timestampSchema,
+    organizationId: optionalStringSchema,
+    businessUnitId: optionalStringSchema,
 
     // * Core Fields
     enableAutoAssignment: z.boolean(),
-    autoAssignmentStrategy: z.string().optional().nullable(),
+    autoAssignmentStrategy: nullableStringSchema,
 
     // Service Failure Related Fields
     recordServiceFailures: z.boolean().default(false),

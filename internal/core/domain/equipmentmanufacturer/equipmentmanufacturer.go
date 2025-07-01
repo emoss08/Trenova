@@ -28,7 +28,7 @@ type EquipmentManufacturer struct {
 	OrganizationID pulid.ID      `bun:"organization_id,type:VARCHAR(100),notnull,pk"                                         json:"organizationId"`
 	Status         domain.Status `bun:"status,type:status_enum,notnull,default:'Active'"                                     json:"status"`
 	Name           string        `bun:"name,type:VARCHAR(100),notnull"                                                       json:"name"`
-	Description    string        `bun:"description,type:VARCHAR(255)"                                                        json:"description"`
+	Description    string        `bun:"description,type:TEXT,nullzero"                                                       json:"description"`
 	SearchVector   string        `bun:"search_vector,type:TSVECTOR,scanonly"                                                 json:"-"`
 	Rank           string        `bun:"rank,type:VARCHAR(100),scanonly"                                                      json:"-"`
 	Version        int64         `bun:"version,type:BIGINT"                                                                  json:"version"`

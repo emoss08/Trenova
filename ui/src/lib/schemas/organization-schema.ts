@@ -1,5 +1,10 @@
 import { OrganizationType } from "@/types/organization";
 import * as z from "zod/v4";
+import {
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "./helpers";
 import { usStateSchema } from "./us-state-schema";
 
 const organizationMetadataSchema = z.object({
@@ -7,12 +12,12 @@ const organizationMetadataSchema = z.object({
 });
 
 export const organizationSchema = z.object({
-  id: z.string().optional(),
-  bucketName: z.string().optional(),
-  businessUnitId: z.string().optional(),
-  version: z.number().optional(),
-  createdAt: z.number().optional(),
-  updatedAt: z.number().optional(),
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+  bucketName: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
 
   // * Core Fields
   name: z.string().min(1, {
@@ -44,7 +49,7 @@ export const organizationSchema = z.object({
   timezone: z.string().min(1, {
     error: "Timezone is required",
   }),
-  taxId: z.string().optional(),
+  taxId: optionalStringSchema,
   state: usStateSchema.optional(),
   metadata: organizationMetadataSchema.optional(),
 });

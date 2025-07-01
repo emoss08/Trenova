@@ -1,32 +1,42 @@
 import { Status } from "@/types/common";
-import { z } from "zod";
+import * as z from "zod/v4";
 import { customerSchema } from "./customer-schema";
 import { equipmentTypeSchema } from "./equipment-type-schema";
+import {
+  nullableStringSchema,
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "./helpers";
 import { locationSchema } from "./location-schema";
 import { serviceTypeSchema } from "./service-type-schema";
 import { shipmentTypeSchema } from "./shipment-type-schema";
 import { workerSchema } from "./worker-schema";
 
 export const dedicatedLaneSchema = z.object({
-  id: z.string().optional(),
-  version: z.number().optional(),
-  createdAt: z.number().optional(),
-  updatedAt: z.number().optional(),
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
 
-  status: z.nativeEnum(Status),
+  status: z.enum(Status),
   name: z
     .string()
-    .min(1, "Name is required")
-    .max(100, "Name must be less than 100 characters"),
-  customerId: z.string().min(1, "Customer is required"),
-  originLocationId: z.string().min(1, "Origin Location is required"),
-  destinationLocationId: z.string().min(1, "Destination Location is required"),
-  primaryWorkerId: z.string().min(1, "Primary Worker is required"),
-  secondaryWorkerId: z.string().nullable().optional(),
-  serviceTypeId: z.string().min(1, "Service Type is required"),
-  shipmentTypeId: z.string().min(1, "Shipment Type is required"),
-  tractorTypeId: z.string().nullable().optional(),
-  trailerTypeId: z.string().nullable().optional(),
+    .min(1, { error: "Name is required" })
+    .max(100, { error: "Name must be less than 100 characters" }),
+  customerId: z.string().min(1, { error: "Customer is required" }),
+  originLocationId: z.string().min(1, { error: "Origin Location is required" }),
+  destinationLocationId: z
+    .string()
+    .min(1, { error: "Destination Location is required" }),
+  primaryWorkerId: z.string().min(1, { error: "Primary Worker is required" }),
+  serviceTypeId: z.string().min(1, { error: "Service Type is required" }),
+  shipmentTypeId: z.string().min(1, { error: "Shipment Type is required" }),
+  tractorTypeId: nullableStringSchema,
+  trailerTypeId: nullableStringSchema,
+  secondaryWorkerId: nullableStringSchema,
   autoAssign: z.boolean(),
 
   shipmentType: shipmentTypeSchema.nullable().optional(),
@@ -55,7 +65,7 @@ export const dedicatedLaneSuggestionSchema = z.object({
   createdAt: z.number().optional(),
   updatedAt: z.number().optional(),
 
-  status: z.nativeEnum(SuggestionStatus),
+  status: z.enum(SuggestionStatus),
   customerId: z.string().min(1, "Customer is required"),
   originLocationId: z.string().min(1, "Origin Location is required"),
   destinationLocationId: z.string().min(1, "Destination Location is required"),

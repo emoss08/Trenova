@@ -26,7 +26,7 @@ type Stop struct {
 	LocationID       pulid.ID   `json:"locationId"       bun:"location_id,notnull,type:VARCHAR(100)"`
 	Status           StopStatus `json:"status"           bun:"status,notnull,type:VARCHAR(100)"`
 	Type             StopType   `json:"type"             bun:"type,notnull,type:VARCHAR(100)"`
-	AddressLine      string     `json:"addressLine"      bun:"address_line,type:VARCHAR(255),nullzero"`
+	AddressLine      string     `json:"addressLine"      bun:"address_line,type:VARCHAR(200),nullzero"`
 	Sequence         int        `json:"sequence"         bun:"sequence,notnull,type:INT"`
 	Pieces           *int       `json:"pieces"           bun:"pieces,type:INTEGER,nullzero"`
 	Weight           *int       `json:"weight"           bun:"weight,type:INTEGER,nullzero"`

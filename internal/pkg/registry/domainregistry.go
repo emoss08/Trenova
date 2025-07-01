@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/compliance"
+	"github.com/emoss08/trenova/internal/core/domain/consolidation"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/domain/documentqualityconfig"
@@ -91,5 +92,6 @@ func RegisterEntities() []any {
 		&dedicatedlane.DedicatedLane{},
 		&dedicatedlane.PatternConfig{},
 		&dedicatedlane.DedicatedLaneSuggestion{},
+		&consolidation.ConsolidationSettings{},
 	}
 }

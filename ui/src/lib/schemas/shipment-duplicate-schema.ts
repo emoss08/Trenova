@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as z from "zod/v4";
 
 export const shipmentDuplicateSchema = z.object({
   count: z.preprocess(
@@ -10,16 +10,14 @@ export const shipmentDuplicateSchema = z.object({
       return isNaN(parsed) ? undefined : parsed;
     },
     z
-      .number({
-        required_error: "Count is required",
-      })
-      .min(1, "Count is required")
-      .max(20, "Count must be less than 20"),
+      .number()
+      .min(1, { error: "Count is required" })
+      .max(20, { error: "Count must be less than 20" }),
   ),
   overrideDates: z.boolean(),
   includeCommodities: z.boolean(),
   includeAdditionalCharges: z.boolean(),
-  shipmentID: z.string().min(1, "Shipment ID is required"),
+  shipmentID: z.string().min(1, { error: "Shipment ID is required" }),
 });
 
 export type ShipmentDuplicateSchema = z.infer<typeof shipmentDuplicateSchema>;

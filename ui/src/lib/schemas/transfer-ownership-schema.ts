@@ -1,8 +1,9 @@
-import { z } from "zod";
+import * as z from "zod/v4";
+import { nullableStringSchema } from "./helpers";
 
 export const transferOwnershipSchema = z.object({
-  ownerId: z.string().nullable().optional(),
-  shipmentId: z.string().min(1, "Shipment ID is required"),
+  ownerId: nullableStringSchema,
+  shipmentId: z.string().min(1, { error: "Shipment ID is required" }),
 });
 
 export type TransferOwnershipSchema = z.infer<typeof transferOwnershipSchema>;

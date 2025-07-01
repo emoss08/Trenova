@@ -1,11 +1,18 @@
 import { EquipmentStatus } from "@/types/tractor";
-import { z } from "zod";
+import * as z from "zod/v4";
+import {
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "./helpers";
 
 export const trailerSchema = z.object({
-  id: z.string().optional(),
-  version: z.number().optional(),
-  createdAt: z.number().optional(),
-  updatedAt: z.number().optional(),
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
 
   // * Core Fields
   code: z.string().min(1, {
@@ -19,14 +26,14 @@ export const trailerSchema = z.object({
   }),
   fleetCodeId: z.string().nullable().optional(),
   registrationStateId: z.string().nullable().optional(),
-  status: z.nativeEnum(EquipmentStatus, {
-    required_error: "Status is required",
+  status: z.enum(EquipmentStatus, {
+    error: "Status is required",
   }),
   model: z.string().max(50, {
-    message: "Model must be less than 50 characters",
+    error: "Model must be less than 50 characters",
   }),
   make: z.string().max(50, {
-    message: "Make must be less than 50 characters",
+    error: "Make must be less than 50 characters",
   }),
   year: z.preprocess(
     (val) => {
@@ -39,10 +46,10 @@ export const trailerSchema = z.object({
     z
       .number()
       .min(1900, {
-        message: "Year must be between 1900 and 2099",
+        error: "Year must be between 1900 and 2099",
       })
       .max(2099, {
-        message: "Year must be between 1900 and 2099",
+        error: "Year must be between 1900 and 2099",
       })
       .optional(),
   ),
@@ -60,7 +67,7 @@ export const trailerSchema = z.object({
     z
       .number()
       .min(0, {
-        message: "Max Load Weight must be greater than 0",
+        error: "Max Load Weight must be greater than 0",
       })
       .optional(),
   ),

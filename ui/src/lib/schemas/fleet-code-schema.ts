@@ -1,32 +1,29 @@
 import { Status } from "@/types/common";
-import { z } from "zod";
+import * as z from "zod/v4";
+import {
+  decimalStringSchema,
+  nullableStringSchema,
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "./helpers";
 
 export const fleetCodeSchema = z.object({
-  id: z.string().optional(),
-  version: z.number().optional(),
-  createdAt: z.number().optional(),
-  updatedAt: z.number().optional(),
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
 
   // * Core Fields
-  status: z.nativeEnum(Status),
+  status: z.enum(Status),
   name: z.string().min(1, "Name is required"),
-  description: z.string().optional(),
-  revenueGoal: z.preprocess((val) => {
-    if (val === "" || val === null || val === undefined) {
-      return undefined;
-    }
-    const parsed = parseFloat(String(val));
-    return isNaN(parsed) ? undefined : parsed;
-  }, z.number().optional()),
-  deadheadGoal: z.preprocess((val) => {
-    if (val === "" || val === null || val === undefined) {
-      return undefined;
-    }
-    const parsed = parseFloat(String(val));
-    return isNaN(parsed) ? undefined : parsed;
-  }, z.number().optional()),
-  color: z.string().optional(),
-  managerId: z.string().nullable(),
+  description: optionalStringSchema,
+  revenueGoal: decimalStringSchema,
+  deadheadGoal: decimalStringSchema,
+  color: optionalStringSchema,
+  managerId: nullableStringSchema,
   // TODO(wolfred): We need to add the manager field to the schema once we add the user schema
 });
 
