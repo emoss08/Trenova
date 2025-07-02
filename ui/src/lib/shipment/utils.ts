@@ -1,4 +1,3 @@
-import { Shipment } from "@/types/shipment";
 import { useMemo } from "react";
 import { LocationSchema } from "../schemas/location-schema";
 import type { ShipmentSchema } from "../schemas/shipment-schema";
@@ -115,7 +114,7 @@ export const ShipmentLocations = {
     });
     return result;
   },
-  invalidate: (shipment: Shipment) => {
+  invalidate: (shipment: ShipmentSchema) => {
     locationCache.delete(shipment);
   },
 } as const;

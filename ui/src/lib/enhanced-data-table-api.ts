@@ -2,8 +2,8 @@
  * Enhanced data table API utilities for converting frontend filter state to backend API calls
  */
 
-import type { FilterState } from "@/types/enhanced-data-table";
 import type { API_ENDPOINTS } from "@/types/server";
+import type { FilterStateSchema } from "./schemas/table-configuration-schema";
 
 export interface EnhancedAPIParams {
   // Base parameters
@@ -23,7 +23,7 @@ export interface EnhancedAPIParams {
  * Converts filter state to API parameters that support both legacy and enhanced backends
  */
 export function convertFilterStateToAPIParams(
-  filterState: FilterState,
+  filterState: FilterStateSchema,
   options: {
     useLegacyMode?: boolean;
     additionalParams?: Record<string, any>;
@@ -63,7 +63,7 @@ export function convertFilterStateToAPIParams(
  * Convert to legacy parameters for backward compatibility
  */
 function convertToLegacyParams(
-  filterState: FilterState,
+  filterState: FilterStateSchema,
   additionalParams: Record<string, any>,
 ): EnhancedAPIParams {
   const params: EnhancedAPIParams = {
@@ -147,6 +147,7 @@ export function supportsEnhancedFiltering(endpoint: string): boolean {
     "/customers",
     "/shipments",
     "/workers",
+    "/consolidations",
     // Add more as they're implemented
   ];
 
@@ -180,6 +181,10 @@ export function getDataTableEndpoint(
       legacy: "/workers/",
       enhanced: "/workers/",
     },
+    consolidation_group: {
+      legacy: "/consolidations/",
+      enhanced: "/consolidations/",
+    },
     // Add more resources as needed
   };
 
@@ -190,9 +195,7 @@ export function getDataTableEndpoint(
   if (!resourceEndpoints) {
     // Fallback to generic pattern
     return (
-      useEnhanced
-        ? `/${normalizedResource}s/enhanced/`
-        : `/${normalizedResource}s/`
+      useEnhanced ? `/${normalizedResource}s/` : `/${normalizedResource}s/`
     ) as API_ENDPOINTS;
   }
 

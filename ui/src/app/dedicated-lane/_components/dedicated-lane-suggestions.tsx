@@ -16,6 +16,7 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { EntityRedirectLink } from "@/components/ui/link";
 import { type DedicatedLaneSuggestionSchema } from "@/lib/schemas/dedicated-lane-schema";
+import type { LocationSchema } from "@/lib/schemas/location-schema";
 import { formatLocation, pluralize } from "@/lib/utils";
 import { Status } from "@/types/common";
 import { faDash, faEllipsis } from "@fortawesome/pro-solid-svg-icons";
@@ -26,6 +27,20 @@ import { RejectSuggestionDialog } from "./modals/suggestion-rejection-modal";
 const dialogs = {
   acceptSuggestionDialogOpen: parseAsBoolean.withDefault(false),
   rejectSuggestionDialogOpen: parseAsBoolean.withDefault(false),
+};
+
+const unknownLocation: LocationSchema = {
+  name: "Unknown",
+  status: Status.Active,
+  code: "UNKNOWN",
+  addressLine1: "Unknown",
+  city: "Unknown",
+  stateId: "UNKNOWN",
+  postalCode: "UNKNOWN",
+  isGeocoded: false,
+  locationCategoryId: "UNKNOWN",
+  longitude: null,
+  latitude: null,
 };
 
 export function DedicatedLaneSuggestions({
@@ -91,17 +106,7 @@ export function DedicatedLaneSuggestions({
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {formatLocation(
-                        suggestion?.originLocation ?? {
-                          name: "Unknown",
-                          status: Status.Active,
-                          code: "UNKNOWN",
-                          addressLine1: "Unknown",
-                          city: "Unknown",
-                          stateId: "Unknown",
-                          postalCode: "Unknown",
-                          isGeocoded: false,
-                          locationCategoryId: "UNKNOWN",
-                        },
+                        suggestion?.originLocation ?? unknownLocation,
                       )}
                     </div>
                   </div>
@@ -119,17 +124,7 @@ export function DedicatedLaneSuggestions({
                     </div>
                     <div className="text-xs text-muted-foreground">
                       {formatLocation(
-                        suggestion?.destinationLocation ?? {
-                          name: "Unknown",
-                          status: Status.Active,
-                          code: "UNKNOWN",
-                          addressLine1: "Unknown",
-                          city: "Unknown",
-                          stateId: "Unknown",
-                          postalCode: "Unknown",
-                          isGeocoded: false,
-                          locationCategoryId: "UNKNOWN",
-                        },
+                        suggestion?.destinationLocation ?? unknownLocation,
                       )}
                     </div>
                   </div>

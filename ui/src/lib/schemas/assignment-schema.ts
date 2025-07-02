@@ -1,6 +1,7 @@
 import { AssignmentStatus } from "@/types/assignment";
 import * as z from "zod/v4";
 import {
+  nullableStringSchema,
   optionalStringSchema,
   timestampSchema,
   versionSchema,
@@ -17,18 +18,19 @@ export const assignmentSchema = z.object({
 
   // * Core Fields
   status: z.enum(AssignmentStatus),
-  shipmentMoveId: z.string().optional(),
+  shipmentMoveId: optionalStringSchema,
   primaryWorkerId: z
     .string({ error: "Primary Worker is required" })
     .min(1, { error: "Primary Worker is required" }),
-  secondaryWorkerId: z.string().nullable().optional(),
+  secondaryWorkerId: nullableStringSchema,
   trailerId: z.string().min(1, { error: "Trailer is required" }),
   tractorId: z.string().min(1, { error: "Tractor is required" }),
 
-  tractor: tractorSchema.optional().nullable(),
-  trailer: trailerSchema.optional().nullable(),
-  primaryWorker: workerSchema.optional().nullable(),
-  secondaryWorker: workerSchema.optional().nullable(),
+  // * Relationships
+  tractor: tractorSchema.nullish(),
+  trailer: trailerSchema.nullish(),
+  primaryWorker: workerSchema.nullish(),
+  secondaryWorker: workerSchema.nullish(),
 });
 
 export type AssignmentSchema = z.infer<typeof assignmentSchema>;

@@ -2,12 +2,12 @@ import { cn } from "@/lib/utils";
 import { faLoader } from "@fortawesome/pro-solid-svg-icons";
 import type { PDFDocumentProxy } from "pdfjs-dist";
 import { Document, Outline, Page } from "react-pdf";
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import "react-pdf/dist/esm/Page/TextLayer.css";
+import "react-pdf/dist/Page/AnnotationLayer.css";
+import "react-pdf/dist/Page/TextLayer.css";
 import type {
   CustomTextRenderer,
   OnItemClickArgs,
-} from "react-pdf/dist/esm/shared/types.js";
+} from "react-pdf/dist/shared/types.js";
 import { Icon } from "../ui/icons";
 import type { PDFFile } from "./types";
 

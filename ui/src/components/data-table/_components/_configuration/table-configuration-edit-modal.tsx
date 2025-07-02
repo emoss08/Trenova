@@ -37,7 +37,7 @@ export function TableConfigurationEditModal({
   const queryClient = useQueryClient();
   const user = useUser();
 
-  const form = useForm<TableConfigurationSchema>({
+  const form = useForm({
     resolver: zodResolver(tableConfigurationSchema),
     defaultValues: config,
   });

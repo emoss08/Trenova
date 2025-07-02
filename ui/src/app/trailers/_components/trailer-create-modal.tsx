@@ -1,7 +1,7 @@
 import { FormCreateModal } from "@/components/ui/form-create-modal";
+import { EquipmentStatus } from "@/lib/schemas/tractor-schema";
 import { trailerSchema } from "@/lib/schemas/trailer-schema";
 import { type TableSheetProps } from "@/types/data-table";
-import { EquipmentStatus } from "@/types/tractor";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { TrailerForm } from "./trailer-form";
@@ -29,6 +29,10 @@ export function CreateTrailerModal({ open, onOpenChange }: TableSheetProps) {
       updatedAt: undefined,
       id: undefined,
       version: undefined,
+      equipmentManufacturer: undefined,
+      equipmentType: undefined,
+      fleetCode: undefined,
+      registrationState: undefined,
     },
   });
 

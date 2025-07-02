@@ -8,9 +8,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { LocationSchema } from "@/lib/schemas/location-schema";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { ShipmentLocations } from "@/lib/shipment/utils";
 import { formatLocation } from "@/lib/utils";
-import type { Shipment, ShipmentCardProps } from "@/types/shipment";
+import type { ShipmentCardProps } from "@/types/shipment";
 import { faSignalStream } from "@fortawesome/pro-regular-svg-icons";
 import { Timeline } from "./shipment-timeline";
 
@@ -54,7 +55,7 @@ function ProNumber({
   onSelect,
   inputValue,
 }: {
-  shipment: Shipment;
+  shipment: ShipmentSchema;
   onSelect: (shipmentId: string) => void;
   inputValue?: string;
 }) {
@@ -75,7 +76,7 @@ function ProNumber({
   );
 }
 
-function StopInformation({ shipment }: { shipment: Shipment }) {
+function StopInformation({ shipment }: { shipment: ShipmentSchema }) {
   const { destination, origin } = ShipmentLocations.useLocations(shipment);
 
   if (!origin || !destination) {

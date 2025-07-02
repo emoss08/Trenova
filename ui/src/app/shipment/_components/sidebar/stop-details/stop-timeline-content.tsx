@@ -8,11 +8,10 @@ import {
 } from "@/components/ui/context-menu";
 import { Icon } from "@/components/ui/icons";
 import { formatSplitDateTime } from "@/lib/date";
+import type { MoveSchema } from "@/lib/schemas/move-schema";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import type { StopSchema } from "@/lib/schemas/stop-schema";
 import { cn } from "@/lib/utils";
-import { MoveStatus } from "@/types/move";
-import { Stop, StopStatus, StopType } from "@/types/stop";
 import { useCallback, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
@@ -31,8 +30,8 @@ function LocationDisplay({
   type,
   locationId,
 }: {
-  location?: Stop["location"] | null;
-  type: StopType;
+  location?: StopSchema["location"] | null;
+  type: StopSchema["type"];
   locationId?: string;
 }) {
   // If we have a locationId but no location, fetch the location data directly
@@ -72,11 +71,11 @@ function StopCircle({
   hasErrors,
   prevStopStatus,
 }: {
-  status: StopStatus;
+  status: StopSchema["status"];
   isLast: boolean;
-  moveStatus: MoveStatus;
+  moveStatus: MoveSchema["status"];
   hasErrors?: boolean;
-  prevStopStatus?: StopStatus;
+  prevStopStatus?: StopSchema["status"];
 }) {
   const stopIcon = getStatusIcon(status, isLast, moveStatus);
   const bgColor = getStopStatusBgColor(status);
@@ -117,10 +116,10 @@ export default function StopTimeline({
   stop: StopSchema;
   nextStop: StopSchema | null;
   isLast: boolean;
-  moveStatus: MoveStatus;
+  moveStatus: MoveSchema["status"];
   moveIdx: number;
   stopIdx: number;
-  prevStopStatus?: StopStatus;
+  prevStopStatus?: StopSchema["status"];
 }) {
   const {
     setValue,
@@ -258,8 +257,8 @@ function StopTimelineItem({
   stop: StopSchema;
   nextStopHasInfo: string | number;
   isLast: boolean;
-  moveStatus: MoveStatus;
-  prevStopStatus?: StopStatus;
+  moveStatus: MoveSchema["status"];
+  prevStopStatus?: StopSchema["status"];
   hasErrors?: boolean;
 }) {
   const currentStop = stop;

@@ -1,5 +1,10 @@
+import type {
+  FilterFieldSchema,
+  FilterStateSchema,
+  SortFieldSchema,
+} from "@/lib/schemas/table-configuration-schema";
 import type { DataTableProps } from "@/types/data-table";
-import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import type { SelectOption } from "./fields";
 
 // Filter operators supported by the enhanced data table (must match backend)
@@ -21,24 +26,6 @@ export type FilterOperator =
   | "isnotnull"
   | "daterange";
 
-export type LogicalOperator = "and" | "or";
-
-// Sort directions
-export type SortDirection = "asc" | "desc";
-
-// Field filter definition
-export interface FieldFilter {
-  field: string;
-  operator: FilterOperator;
-  value: any;
-}
-
-// Sort field definition
-export interface SortField {
-  field: string;
-  direction: SortDirection;
-}
-
 // Enhanced query parameters that get sent to the backend
 export interface EnhancedQueryParams {
   // Basic pagination
@@ -47,8 +34,8 @@ export interface EnhancedQueryParams {
   query?: string;
 
   // Enhanced filtering and sorting
-  filters?: FieldFilter[];
-  sort?: SortField[];
+  filters?: FilterFieldSchema[];
+  sort?: SortFieldSchema[];
 }
 
 // Column metadata for enhanced filtering
@@ -74,23 +61,19 @@ export type EnhancedColumnDef<TData, TValue = unknown> = ColumnDef<
   TValue
 >;
 
-// Filter state management
-export interface FilterState {
-  filters: FieldFilter[];
-  sort: SortField[];
-  globalSearch: string;
-  logicalOperators?: LogicalOperator[];
-}
-
 // Filter actions
 export type FilterAction =
-  | { type: "ADD_FILTER"; filter: FieldFilter }
+  | { type: "ADD_FILTER"; filter: FilterStateSchema["filters"] }
   | { type: "REMOVE_FILTER"; index: number }
-  | { type: "UPDATE_FILTER"; index: number; filter: FieldFilter }
+  | {
+      type: "UPDATE_FILTER";
+      index: number;
+      filter: FilterStateSchema["filters"];
+    }
   | { type: "CLEAR_FILTERS" }
-  | { type: "ADD_SORT"; sort: SortField }
+  | { type: "ADD_SORT"; sort: FilterStateSchema["sort"] }
   | { type: "REMOVE_SORT"; index: number }
-  | { type: "UPDATE_SORT"; index: number; sort: SortField }
+  | { type: "UPDATE_SORT"; index: number; sort: FilterStateSchema["sort"] }
   | { type: "CLEAR_SORT" }
   | { type: "SET_GLOBAL_SEARCH"; query: string }
   | { type: "RESET_ALL" };
@@ -122,8 +105,8 @@ export interface FilterPreset {
   id: string;
   name: string;
   description?: string;
-  filters: FieldFilter[];
-  sort: SortField[];
+  filters: FilterStateSchema["filters"];
+  sort: FilterStateSchema["sort"];
   globalSearch?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -137,14 +120,14 @@ export interface URLFilterParams {
 // Utility functions type definitions
 export interface FilterUtils {
   // Serialize filters to URL-safe format
-  serializeToURL(state: FilterState): URLFilterParams;
+  serializeToURL(state: FilterStateSchema): URLFilterParams;
   // Deserialize filters from URL parameters
-  deserializeFromURL(params: URLFilterParams): FilterState;
+  deserializeFromURL(params: URLFilterParams): FilterStateSchema;
   // Serialize filters for API requests
-  serializeForAPI(state: FilterState): EnhancedQueryParams;
+  serializeForAPI(state: FilterStateSchema): EnhancedQueryParams;
   // Validate filter state
   validateFilterState(
-    state: FilterState,
+    state: FilterStateSchema,
     columns: EnhancedColumnDef<any>[],
   ): boolean;
 }
@@ -154,24 +137,24 @@ export interface EnhancedDataTableProps<TData extends Record<string, any>>
   extends Omit<DataTableProps<TData>, "columns"> {
   columns: EnhancedColumnDef<TData>[];
   config?: EnhancedDataTableConfig;
-  defaultFilters?: FieldFilter[];
-  defaultSort?: SortingState;
-  onFilterChange?: (state: FilterState) => void;
+  defaultFilters?: FilterFieldSchema[];
+  defaultSort?: SortFieldSchema[];
+  onFilterChange?: (state: FilterStateSchema) => void;
 }
 
 // Filter component props
 export interface DataTableFilterProps {
   columns: EnhancedColumnDef<any>[];
-  filterState: FilterState;
-  onFilterChange: (state: FilterState) => void;
+  filterState: FilterStateSchema;
+  onFilterChange: (state: FilterStateSchema) => void;
   config?: EnhancedDataTableConfig;
 }
 
 // Sort component props
 export interface DataTableSortProps {
   columns: EnhancedColumnDef<any>[];
-  sortState: SortField[];
-  onSortChange: (sort: SortField[]) => void;
+  sortState: FilterStateSchema["sort"];
+  onSortChange: (sort: FilterStateSchema["sort"]) => void;
   config?: EnhancedDataTableConfig;
 }
 

@@ -1,10 +1,29 @@
-import { EquipmentStatus } from "@/types/tractor";
 import * as z from "zod/v4";
+import { equipmentManufacturerSchema } from "./equipment-manufacturer-schema";
+import { equipmentTypeSchema } from "./equipment-type-schema";
+import { fleetCodeSchema } from "./fleet-code-schema";
 import {
+  nullableIntegerSchema,
+  nullableStringSchema,
   optionalStringSchema,
   timestampSchema,
   versionSchema,
 } from "./helpers";
+import { workerSchema } from "./worker-schema";
+
+export enum EquipmentStatus {
+  Available = "Available",
+  OOS = "OutOfService",
+  AtMaintenance = "AtMaintenance",
+  Sold = "Sold",
+}
+
+export const EquipmentStatusSchema = z.enum([
+  "Available",
+  "OutOfService",
+  "AtMaintenance",
+  "Sold",
+]);
 
 export const tractorSchema = z
   .object({
@@ -18,15 +37,13 @@ export const tractorSchema = z
     // * Core Fields
     equipmentTypeId: z.string().min(1, { error: "Equipment Type is required" }),
     primaryWorkerId: z.string().min(1, { error: "Primary Worker is required" }),
-    secondaryWorkerId: z.string().nullable().optional(),
+    secondaryWorkerId: nullableStringSchema,
     equipmentManufacturerId: z
       .string()
       .min(1, { error: "Equipment Manufacturer is required" }),
-    stateId: z.string().nullable().optional(),
+    stateId: nullableStringSchema,
     fleetCodeId: z.string().min(1, { error: "Fleet Code is required" }),
-    status: z.enum(EquipmentStatus, {
-      message: "Status is required",
-    }),
+    status: z.enum(EquipmentStatus),
     code: z
       .string()
       .min(1, { error: "Code is required" })
@@ -37,28 +54,16 @@ export const tractorSchema = z
     make: z.string().max(50, {
       error: "Make must be less than 50 characters",
     }),
-    registrationNumber: z.string().optional(),
-    year: z.preprocess(
-      (val) => {
-        if (val === "" || val === null || val === undefined) {
-          return undefined;
-        }
-        const parsed = parseInt(String(val), 10);
-        return isNaN(parsed) ? undefined : parsed;
-      },
-      z
-        .number()
-        .min(1900, {
-          error: "Year must be between 1900 and 2099",
-        })
-        .max(2099, {
-          error: "Year must be between 1900 and 2099",
-        })
-        .optional(),
-    ),
-    licensePlateNumber: z.string().optional(),
-    vin: z.string().optional(),
-    registrationExpiry: z.number().nullable().optional(),
+    registrationNumber: optionalStringSchema,
+    year: nullableIntegerSchema,
+    licensePlateNumber: optionalStringSchema,
+    vin: optionalStringSchema,
+    registrationExpiry: nullableIntegerSchema,
+    primaryWorker: workerSchema.nullish(),
+    secondaryWorker: workerSchema.nullish(),
+    equipmentType: equipmentTypeSchema.nullish(),
+    equipmentManufacturer: equipmentManufacturerSchema.nullish(),
+    fleetCode: fleetCodeSchema.nullish(),
   })
   .refine(
     (data) => {

@@ -1,11 +1,11 @@
 import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
 import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
-import { type FleetCode } from "@/types/fleet-code";
+import type { FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
-export function getColumns(): ColumnDef<FleetCode>[] {
-  const columnHelper = createColumnHelper<FleetCode>();
-  const commonColumns = createCommonColumns<FleetCode>();
+export function getColumns(): ColumnDef<FleetCodeSchema>[] {
+  const columnHelper = createColumnHelper<FleetCodeSchema>();
+  const commonColumns = createCommonColumns<FleetCodeSchema>();
 
   return [
     commonColumns.status,

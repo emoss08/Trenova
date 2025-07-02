@@ -1,6 +1,4 @@
 import { faXmark } from "@fortawesome/pro-solid-svg-icons";
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import "react-pdf/dist/esm/Page/TextLayer.css";
 import { Button } from "../ui/button";
 import { Icon } from "../ui/icons";
 

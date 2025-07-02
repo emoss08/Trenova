@@ -10,8 +10,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { http } from "@/lib/http-client";
-import type { MoveSchema } from "@/lib/schemas/move-schema";
-import { MoveStatus } from "@/types/move";
+import { MoveStatus, type MoveSchema } from "@/lib/schemas/move-schema";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
@@ -19,7 +18,10 @@ import { useFieldArray } from "react-hook-form";
 import { AssignmentDialog } from "../../assignment/assignment-dialog";
 
 // * Statuses where the worker can be assigned.
-const validAssignmentStatuses = [MoveStatus.New, MoveStatus.Assigned];
+const validAssignmentStatuses: MoveSchema["status"][] = [
+  MoveStatus.enum.New,
+  MoveStatus.enum.Assigned,
+];
 
 export function MoveActions({
   move,
@@ -49,7 +51,7 @@ export function MoveActions({
   const { assignment, status } = move;
 
   // Move is not new, so we cannot assign equipment and workers
-  const reassignEnabled = status === MoveStatus.Assigned;
+  const reassignEnabled = status === MoveStatus.enum.Assigned;
   const assignEnabled = validAssignmentStatuses.includes(status);
 
   const handleOpenAssignmentDialog = useCallback(() => {

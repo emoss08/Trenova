@@ -17,9 +17,12 @@ import {
 } from "@/components/ui/select";
 import { createSortField } from "@/lib/enhanced-data-table-utils";
 import type {
+  FilterStateSchema,
+  SortFieldSchema,
+} from "@/lib/schemas/table-configuration-schema";
+import type {
   EnhancedColumnDef,
   EnhancedDataTableConfig,
-  SortField,
 } from "@/types/enhanced-data-table";
 import {
   faArrowUpArrowDown,
@@ -29,8 +32,8 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 
 interface EnhancedDataTableSortProps {
   columns: EnhancedColumnDef<any>[];
-  sortState: SortField[];
-  onSortChange: (sort: SortField[]) => void;
+  sortState: FilterStateSchema["sort"];
+  onSortChange: (sort: FilterStateSchema["sort"]) => void;
   config?: EnhancedDataTableConfig;
 }
 
@@ -64,7 +67,10 @@ export function EnhancedDataTableSort({
   );
 
   // Handle updating a sort field
-  const handleUpdateSort = (index: number, updatedSort: SortField) => {
+  const handleUpdateSort = (
+    index: number,
+    updatedSort: FilterStateSchema["sort"][number],
+  ) => {
     const newSort = sortState.map((sort, i) =>
       i === index ? updatedSort : sort,
     );
@@ -172,11 +178,11 @@ export function EnhancedDataTableSort({
 }
 
 interface SortRowProps {
-  sort: SortField;
+  sort: FilterStateSchema["sort"][number];
   index: number;
   columns: EnhancedColumnDef<any>[];
-  sortState: SortField[];
-  onUpdate: (index: number, sort: SortField) => void;
+  sortState: FilterStateSchema["sort"];
+  onUpdate: (index: number, sort: FilterStateSchema["sort"][number]) => void;
   onRemove: (index: number) => void;
 }
 
@@ -196,17 +202,17 @@ function SortRow({
     return null;
   }
 
-  const handleDirectionChange = (direction: string) => {
+  const handleDirectionChange = (direction: SortFieldSchema["direction"]) => {
     onUpdate(index, {
       ...sort,
-      direction: direction as SortField["direction"],
+      direction: direction,
     });
   };
 
   const handleFieldChange = (field: string) => {
     onUpdate(index, {
       ...sort,
-      field: field as SortField["field"],
+      field: field,
     });
   };
 

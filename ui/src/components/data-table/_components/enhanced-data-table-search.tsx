@@ -2,14 +2,14 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { createDebouncedSearch } from "@/lib/enhanced-data-table-utils";
-import type { FilterState } from "@/types/enhanced-data-table";
+import type { FilterStateSchema } from "@/lib/schemas/table-configuration-schema";
 import { faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { X } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 interface EnhancedDataTableSearchProps {
-  filterState: FilterState;
-  onFilterChange: (state: FilterState) => void;
+  filterState: FilterStateSchema;
+  onFilterChange: (state: FilterStateSchema) => void;
   placeholder?: string;
   debounceMs?: number;
   className?: string;
@@ -20,7 +20,6 @@ export function EnhancedDataTableSearch({
   onFilterChange,
   placeholder = "Search...",
   debounceMs = 300,
-  className,
 }: EnhancedDataTableSearchProps) {
   const [searchValue, setSearchValue] = useState(
     filterState.globalSearch || "",
@@ -67,7 +66,6 @@ export function EnhancedDataTableSearch({
         placeholder={placeholder}
         value={searchValue}
         onChange={(e) => handleSearchChange(e.target.value)}
-        className="pr-10"
         icon={<Icon icon={faSearch} className="size-3 text-muted-foreground" />}
       />
       {searchValue && (

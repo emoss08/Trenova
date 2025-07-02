@@ -12,15 +12,16 @@ import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
+import { MoveStatus } from "@/lib/schemas/move-schema";
 import {
+  RatingMethod,
   shipmentSchema,
+  ShipmentStatus,
   type ShipmentSchema,
 } from "@/lib/schemas/shipment-schema";
+import { StopStatus, StopType } from "@/lib/schemas/stop-schema";
 import { api } from "@/services/api";
 import { TableSheetProps } from "@/types/data-table";
-import { MoveStatus } from "@/types/move";
-import { RatingMethod, ShipmentStatus } from "@/types/shipment";
-import { StopStatus, StopType } from "@/types/stop";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
@@ -33,12 +34,13 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
   const queryClient = useQueryClient();
   const { isPopout, closePopout } = usePopoutWindow();
 
+  // TODO(Wolfred): Add placeholder data
   const form = useForm({
     resolver: zodResolver(shipmentSchema),
     defaultValues: {
-      status: ShipmentStatus.New,
+      status: ShipmentStatus.enum.New,
       proNumber: undefined,
-      ratingMethod: RatingMethod.FlatRate,
+      ratingMethod: RatingMethod.enum.FlatRate,
       ratingUnit: 1,
       actualDeliveryDate: undefined,
       actualShipDate: undefined,
@@ -62,16 +64,14 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
         {
           sequence: 0,
           loaded: true,
-          tractorId: undefined,
-          trailerId: undefined,
           assignment: undefined,
           distance: 0,
-          status: MoveStatus.New,
+          status: MoveStatus.enum.New,
           stops: [
             {
               sequence: 0,
-              status: StopStatus.New,
-              type: StopType.Pickup,
+              status: StopStatus.enum.New,
+              type: StopType.enum.Pickup,
               locationId: "",
               addressLine: "",
               pieces: undefined,
@@ -85,8 +85,8 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
             },
             {
               sequence: 1,
-              status: StopStatus.New,
-              type: StopType.Delivery,
+              status: StopStatus.enum.New,
+              type: StopType.enum.Delivery,
               locationId: "",
               addressLine: "",
               pieces: undefined,

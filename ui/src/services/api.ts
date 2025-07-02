@@ -1,12 +1,14 @@
 import { http } from "@/lib/http-client";
+import type { TractorSchema } from "@/lib/schemas/tractor-schema";
 import type { TractorAssignment } from "@/types/assignment";
-import { Tractor } from "@/types/tractor";
 import { AccessorialChargeAPI } from "./accessorial-charge";
 import { AnalyticsAPI } from "./analytics";
 import { AuditEntryAPI } from "./audit-entry";
 import { AuthAPI } from "./auth";
 import { BillingAPI } from "./billing";
 import { BillingControlAPI } from "./billing-control";
+import { ConsolidationAPI } from "./consolidation";
+import { ConsolidationSettingsAPI } from "./consolidation-setting";
 import { CustomerAPI } from "./customer";
 import { DatabaseBackupAPI } from "./database-backups";
 import { DedicatedLaneAPI, DedicatedLaneSuggestionAPI } from "./dedicated-lane";
@@ -27,7 +29,7 @@ import { UserAPI } from "./user";
 
 class AssignmentsAPI {
   // Get a tractor's assignments from the API
-  async getTractorAssignments(tractorId?: Tractor["id"]) {
+  async getTractorAssignments(tractorId?: TractorSchema["id"]) {
     const response = await http.get<TractorAssignment>(
       `/tractors/${tractorId}/assignment/`,
     );
@@ -62,6 +64,8 @@ class API {
   patternConfig: PatternConfigAPI;
   notifications: NotificationAPI;
   accessorialCharge: AccessorialChargeAPI;
+  consolidations: ConsolidationAPI;
+  consolidationSettings: ConsolidationSettingsAPI;
 
   constructor() {
     this.assignments = new AssignmentsAPI();
@@ -89,6 +93,8 @@ class API {
     this.notifications = new NotificationAPI();
     this.user = new UserAPI();
     this.accessorialCharge = new AccessorialChargeAPI();
+    this.consolidations = new ConsolidationAPI();
+    this.consolidationSettings = new ConsolidationSettingsAPI();
   }
 }
 

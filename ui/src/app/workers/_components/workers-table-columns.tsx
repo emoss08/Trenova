@@ -76,7 +76,7 @@ export function getColumns(): ColumnDef<WorkerSchema>[] {
       header: "License Expiry",
       cell: ({ row }) => {
         const licenseExpiry = row.original.profile?.licenseExpiry;
-        const date = toDate(licenseExpiry);
+        const date = toDate(licenseExpiry ?? undefined);
         const today = getTodayDate();
 
         return (

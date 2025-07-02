@@ -13,10 +13,10 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
 import { queries } from "@/lib/queries";
+import type { TableConfigurationSchema } from "@/lib/schemas/table-configuration-schema";
 import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
 import type { Resource } from "@/types/audit-entry";
-import type { TableConfiguration } from "@/types/table-configuration";
 import { faSearch } from "@fortawesome/pro-regular-svg-icons";
 import {
   faEllipsis,
@@ -47,7 +47,7 @@ const TableConfigurationListHeader = memo(
   function TableConfigurationListHeader({
     userConfigurations,
   }: {
-    userConfigurations: TableConfiguration[];
+    userConfigurations: TableConfigurationSchema[];
   }) {
     return (
       <div className="flex justify-center text-center items-center gap-1 text-muted-foreground text-2xs border-b border-border border-dashed pb-1">
@@ -108,7 +108,7 @@ function TableConfigurationContent({
   userConfigurations,
 }: {
   isLoadingUserConfigurations: boolean;
-  userConfigurations: TableConfiguration[];
+  userConfigurations: TableConfigurationSchema[];
 }) {
   return (
     <ScrollArea className="h-[150px] w-full pt-2">
@@ -141,7 +141,7 @@ function TableConfigurationContent({
 function TableConfigurationListItem({
   config,
 }: {
-  config: TableConfiguration;
+  config: TableConfigurationSchema;
 }) {
   const { table } = useDataTable();
   const queryClient = useQueryClient();
@@ -236,7 +236,7 @@ function TableConfigurationListItem({
                   title="Delete"
                   color="danger"
                   description="Delete the configuration"
-                  onClick={() => deleteConfig(config.id)}
+                  onClick={() => deleteConfig(config.id ?? "")}
                   disabled={isDeletingConfig}
                   startContent={<Icon icon={faTrash} className="size-3" />}
                 />

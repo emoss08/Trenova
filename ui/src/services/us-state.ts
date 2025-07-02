@@ -1,11 +1,11 @@
 import { http } from "@/lib/http-client";
+import type { UsStateSchema } from "@/lib/schemas/us-state-schema";
 import { SelectOptionResponse } from "@/types/server";
-import { type UsState } from "@/types/us-state";
 
 export class UsStateAPI {
   // Get all US states
   async getUsStates() {
-    const response = await http.get<UsState[]>("/us-states");
+    const response = await http.get<UsStateSchema[]>("/us-states");
     return response.data;
   }
   // Get US state select options

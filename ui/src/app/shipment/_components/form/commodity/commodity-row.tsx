@@ -1,8 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { EntityRedirectLink } from "@/components/ui/link";
+import type { ShipmentCommoditySchema } from "@/lib/schemas/shipment-commodity-schema";
 import { cn } from "@/lib/utils";
-import { ShipmentCommodity } from "@/types/shipment";
 import { faPencil, faTrash } from "@fortawesome/pro-solid-svg-icons";
 import { memo } from "react";
 
@@ -14,7 +14,7 @@ export function CommodityRow({
   onDelete,
 }: {
   index: number;
-  shipmentCommodity: ShipmentCommodity;
+  shipmentCommodity: ShipmentCommoditySchema;
   isLast: boolean;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;
@@ -47,8 +47,10 @@ function CommodityRowContent({ children }: { children: React.ReactNode }) {
 function CommodityRedirectLink({
   shipmentCommodity,
 }: {
-  shipmentCommodity: ShipmentCommodity;
+  shipmentCommodity: ShipmentCommoditySchema;
 }) {
+  if (!shipmentCommodity.commodity) return null;
+
   return (
     <EntityRedirectLink
       entityId={shipmentCommodity.commodity.id}

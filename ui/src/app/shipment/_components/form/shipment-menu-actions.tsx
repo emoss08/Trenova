@@ -9,17 +9,16 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
-import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { usePermissions } from "@/hooks/use-permissions";
 import { shipmentActionsParser } from "@/hooks/use-shipment-actions-state";
-import { http } from "@/lib/http-client";
-import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import {
+  ShipmentStatus,
+  type ShipmentSchema,
+} from "@/lib/schemas/shipment-schema";
 import { Resource } from "@/types/audit-entry";
 import { Action } from "@/types/roles-permissions";
-import { ShipmentStatus } from "@/types/shipment";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { useQueryStates } from "nuqs";
-import { toast } from "sonner";
 import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellatioin-dialog";
 import { UnCancelShipmentDialog } from "../cancellation/shipment-uncanel-dialog";
 import { ShipmentDocumentDialog } from "../document/shipment-document-dialog";
@@ -28,13 +27,13 @@ import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog"
 import { TransferOwnershipDialog } from "../transfer-ownership/transfer-ownership-dialog";
 
 // Map of status that are allowed to be canceled.
-const cancellatedStatuses = [
-  ShipmentStatus.New,
-  ShipmentStatus.InTransit,
-  ShipmentStatus.Delayed,
-  ShipmentStatus.PartiallyCompleted,
-  ShipmentStatus.Completed,
-];
+// const cancellatedStatuses = [
+//   ShipmentStatus.New,
+//   ShipmentStatus.InTransit,
+//   ShipmentStatus.Delayed,
+//   ShipmentStatus.PartiallyCompleted,
+//   ShipmentStatus.Completed,
+// ];
 
 export function ShipmentActions({
   shipment,
@@ -47,31 +46,6 @@ export function ShipmentActions({
   if (!shipment) {
     return null;
   }
-
-  const handleUncancel = async () => {
-    const response = await http.post("/shipments/uncancel/", {
-      shipmentId: shipment.id,
-    });
-    if (response.status === 200) {
-      toast.success("Shipment un-cancelled successfully", {
-        description: `The shipment has been un-cancelled`,
-      });
-      broadcastQueryInvalidation({
-        queryKey: ["shipment", "shipment-list", "stop", "assignment"],
-        options: {
-          correlationId: `update-shipment-${Date.now()}`,
-        },
-        config: {
-          predicate: true,
-          refetchType: "all",
-        },
-      });
-    } else {
-      toast.error("Failed to un-cancel shipment", {
-        description: `The shipment has not been un-cancelled`,
-      });
-    }
-  };
 
   return (
     <>
@@ -97,13 +71,13 @@ export function ShipmentActions({
           />
           <DropdownMenuItem
             title={
-              shipment.status === ShipmentStatus.Canceled
+              shipment.status === ShipmentStatus.enum.Canceled
                 ? "Un-Cancel"
                 : "Cancel"
             }
             description="Cancel this shipment and update its status."
             onClick={() => {
-              if (shipment.status === ShipmentStatus.Canceled) {
+              if (shipment.status === ShipmentStatus.enum.Canceled) {
                 setSearchParams({ unCancelDialogOpen: true });
               } else {
                 setSearchParams({ cancellationDialogOpen: true });

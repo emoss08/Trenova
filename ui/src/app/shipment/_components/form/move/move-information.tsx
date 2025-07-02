@@ -1,7 +1,6 @@
 import { MoveStatusBadge } from "@/components/status-badge";
 import type { MoveSchema } from "@/lib/schemas/move-schema";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { type ShipmentMove } from "@/types/move";
 import { useQueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
 import React, { memo, useCallback, useEffect, useMemo } from "react";
@@ -73,7 +72,7 @@ const MoveInformation = memo(function MoveInformation({
     return moves.map((move, moveIdx) => (
       <MoveRow
         key={move.id || nanoid()}
-        move={move as ShipmentMove}
+        move={move}
         moveIdx={moveIdx}
         update={update}
         remove={remove}

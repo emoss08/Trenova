@@ -1,100 +1,4 @@
-import { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
-import { AdditionalChargeSchema } from "@/lib/schemas/additional-charge-schema";
-import { type CommoditySchema } from "@/lib/schemas/commodity-schema";
-import { type CustomerSchema } from "@/lib/schemas/customer-schema";
-import { type EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
-import { type ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
-import { type ShipmentCommoditySchema } from "@/lib/schemas/shipment-commodity-schema";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { type ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
-import type { UserSchema } from "@/lib/schemas/user-schema";
-import { BaseModel } from "./common";
-import { type ShipmentMove } from "./move";
-
-export enum ShipmentStatus {
-  New = "New",
-  PartiallyAssigned = "PartiallyAssigned",
-  Assigned = "Assigned",
-  InTransit = "InTransit",
-  Delayed = "Delayed",
-  PartiallyCompleted = "PartiallyCompleted",
-  Completed = "Completed",
-  Billed = "Billed",
-  ReadyToBill = "ReadyToBill",
-  Canceled = "Canceled",
-}
-
-export const mapToShipmentStatus = (status: ShipmentStatus) => {
-  const statusLabels = {
-    New: "New",
-    PartiallyAssigned: "Partially Assigned",
-    PartiallyCompleted: "Partially Completed",
-    Assigned: "Assigned",
-    InTransit: "In Transit",
-    Delayed: "Delayed",
-    Completed: "Completed",
-    Billed: "Billed",
-    ReadyToBill: "Ready to Bill",
-    Canceled: "Canceled",
-  };
-
-  return statusLabels[status];
-};
-
-export enum RatingMethod {
-  FlatRate = "FlatRate",
-  PerMile = "PerMile",
-  PerStop = "PerStop",
-  PerPound = "PerPound",
-  PerPallet = "PerPallet",
-  PerLinearFoot = "PerLinearFoot",
-  Other = "Other",
-}
-
-export const mapToRatingMethod = (ratingMethod: RatingMethod) => {
-  const ratingMethodLabels = {
-    FlatRate: "Flat Rate",
-    PerMile: "Per Mile",
-    PerStop: "Per Stop",
-    PerPound: "Per Pound",
-    PerPallet: "Per Pallet",
-    PerLinearFoot: "Per Linear Foot",
-    Other: "Other",
-  };
-
-  return ratingMethodLabels[ratingMethod];
-};
-
-export enum EntryMethod {
-  Manual = "Manual",
-  Electronic = "Electronic",
-}
-
-export type ShipmentCommodity = ShipmentCommoditySchema & {
-  commodity: CommoditySchema;
-  shipment: ShipmentSchema;
-};
-
-export type AdditionalCharge = AdditionalChargeSchema & {
-  accessorialCharge: AccessorialChargeSchema;
-  shipment: ShipmentSchema;
-};
-
-export type Shipment = BaseModel &
-  ShipmentSchema & {
-    serviceType: ServiceTypeSchema;
-    shipmentType: ShipmentTypeSchema;
-    customer: CustomerSchema;
-    commodities: ShipmentCommodity[];
-    tractorType?: EquipmentTypeSchema | null;
-    trailerType?: EquipmentTypeSchema | null;
-    moves: ShipmentMove[];
-    // Cancelation Related Fields
-    canceledAt?: number | null;
-    canceledById?: string | null;
-    cancelReason?: string | null;
-    canceledBy?: UserSchema | null;
-  };
 
 export type ShipmentQueryParams = {
   pageIndex?: number;
@@ -102,7 +6,7 @@ export type ShipmentQueryParams = {
   expandShipmentDetails?: boolean;
   query?: string;
   enabled?: boolean;
-  status?: ShipmentStatus;
+  status?: ShipmentSchema["status"];
 };
 
 export type ShipmentDetailsQueryParams = {
@@ -121,13 +25,13 @@ export type ShipmentPaginationProps = {
 };
 
 export type ShipmentCardProps = {
-  shipment?: Shipment;
+  shipment?: ShipmentSchema;
   onSelect: (shipmentId: string) => void;
   inputValue?: string;
 };
 
 export type ShipmentListProps = {
-  displayData: (Shipment | undefined)[];
+  displayData: ShipmentSchema[];
   isLoading: boolean;
   selectedShipmentId?: string | null;
   onShipmentSelect: (shipmentId: string) => void;

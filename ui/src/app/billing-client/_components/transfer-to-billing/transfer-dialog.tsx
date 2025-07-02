@@ -16,7 +16,10 @@ import { ZoomableImage } from "@/components/zoomable-image";
 import { formatDurationFromSeconds } from "@/lib/date";
 import { queries } from "@/lib/queries";
 import type { LocationSchema } from "@/lib/schemas/location-schema";
-import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import {
+  ShipmentStatus,
+  type ShipmentSchema,
+} from "@/lib/schemas/shipment-schema";
 import {
   calculateShipmentDuration,
   calculateShipmentMileage,
@@ -26,7 +29,6 @@ import {
 import { formatLocation } from "@/lib/utils";
 import { Resource } from "@/types/audit-entry";
 import type { TableSheetProps } from "@/types/data-table";
-import { ShipmentStatus } from "@/types/shipment";
 import {
   faBox,
   faChevronDown,
@@ -62,7 +64,7 @@ export function TransferDialog({ ...props }: TableSheetProps) {
 
 function TransferDialogContent({ open }: { open: boolean }) {
   const { data } = useShipments({
-    status: ShipmentStatus.ReadyToBill,
+    status: ShipmentStatus.enum.ReadyToBill,
     pageIndex: 0,
     pageSize: 10,
     expandShipmentDetails: true,

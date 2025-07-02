@@ -1,6 +1,9 @@
-import { type BaseModel } from "./common";
-
-export interface Favorite extends BaseModel {
+// TODO(wolfred): Convert to zod schema
+export interface Favorite {
+  id: string;
+  version: number;
+  createdAt: string;
+  updatedAt: string;
   // Primary identifiers
   businessUnitId: string;
   organizationId: string;

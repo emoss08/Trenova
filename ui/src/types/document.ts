@@ -68,6 +68,7 @@ export enum DocumentStatus {
   PendingApproval = "PendingApproval",
 }
 
+//TODO: Remove this type and convert to zod schema
 export type Document = {
   id: string;
   fileName: string;

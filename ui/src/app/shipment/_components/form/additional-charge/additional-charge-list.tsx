@@ -1,7 +1,6 @@
 import { EmptyState } from "@/components/ui/empty-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { AdditionalCharge } from "@/types/shipment";
 import {
   faBoxesStacked,
   faMoneyBill,
@@ -72,7 +71,7 @@ export function AdditionalChargeList({
           return (
             <AdditionalChargeRow
               key={index}
-              additionalCharge={additionalCharge as AdditionalCharge}
+              additionalCharge={additionalCharge}
               isDuplicate={isDuplicate}
               onEdit={handleEdit}
               onDelete={handleDelete}

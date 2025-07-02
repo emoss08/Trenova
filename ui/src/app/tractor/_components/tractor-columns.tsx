@@ -4,7 +4,6 @@ import {
 } from "@/components/data-table/_components/data-table-column-helpers";
 import { EquipmentStatusBadge } from "@/components/status-badge";
 import type { TractorSchema } from "@/lib/schemas/tractor-schema";
-import { type Tractor } from "@/types/tractor";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<TractorSchema>[] {
@@ -28,7 +27,7 @@ export function getColumns(): ColumnDef<TractorSchema>[] {
         return <p>{code}</p>;
       },
     }),
-    createEntityRefColumn<Tractor, "equipmentType">(
+    createEntityRefColumn<TractorSchema, "equipmentType">(
       columnHelper,
       "equipmentType",
       {
@@ -41,7 +40,7 @@ export function getColumns(): ColumnDef<TractorSchema>[] {
         },
       },
     ),
-    createEntityRefColumn<Tractor, "equipmentManufacturer">(
+    createEntityRefColumn<TractorSchema, "equipmentManufacturer">(
       columnHelper,
       "equipmentManufacturer",
       {
@@ -51,7 +50,7 @@ export function getColumns(): ColumnDef<TractorSchema>[] {
         getHeaderText: "Equipment Manufacturer",
       },
     ),
-    createEntityRefColumn<Tractor, "primaryWorker">(
+    createEntityRefColumn<TractorSchema, "primaryWorker">(
       columnHelper,
       "primaryWorker",
       {
@@ -69,15 +68,19 @@ export function getColumns(): ColumnDef<TractorSchema>[] {
             : null,
       },
     ),
-    createEntityRefColumn<Tractor, "fleetCode">(columnHelper, "fleetCode", {
-      basePath: "/dispatch/configurations/fleet-codes",
-      getId: (fleetCode) => fleetCode.id,
-      getDisplayText: (fleetCode) => fleetCode.name,
-      getHeaderText: "Fleet Code",
-      color: {
-        getColor: (fleetCode) => fleetCode.color,
+    createEntityRefColumn<TractorSchema, "fleetCode">(
+      columnHelper,
+      "fleetCode",
+      {
+        basePath: "/dispatch/configurations/fleet-codes",
+        getId: (fleetCode) => fleetCode.id,
+        getDisplayText: (fleetCode) => fleetCode.name,
+        getHeaderText: "Fleet Code",
+        color: {
+          getColor: (fleetCode) => fleetCode.color,
+        },
       },
-    }),
+    ),
     commonColumns.createdAt,
   ];
 }

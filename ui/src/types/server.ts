@@ -131,6 +131,7 @@ export type BaseEndpoint =
   | "/accounting-control/"
   | "/table-configurations/"
   | "/dedicated-lanes/"
+  | "/consolidations/"
   | "/document-types/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;

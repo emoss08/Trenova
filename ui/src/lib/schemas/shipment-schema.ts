@@ -1,4 +1,3 @@
-import { RatingMethod, ShipmentStatus } from "@/types/shipment";
 import * as z from "zod/v4";
 import { additionalChargeSchema } from "./additional-charge-schema";
 import { customerSchema } from "./customer-schema";
@@ -16,6 +15,29 @@ import { serviceTypeSchema } from "./service-type-schema";
 import { shipmentCommoditySchema } from "./shipment-commodity-schema";
 import { shipmentTypeSchema } from "./shipment-type-schema";
 import { userSchema } from "./user-schema";
+
+export const ShipmentStatus = z.enum([
+  "New",
+  "PartiallyAssigned",
+  "Assigned",
+  "InTransit",
+  "Delayed",
+  "PartiallyCompleted",
+  "Completed",
+  "Billed",
+  "ReadyToBill",
+  "Canceled",
+]);
+
+export const RatingMethod = z.enum([
+  "FlatRate",
+  "PerMile",
+  "PerStop",
+  "PerPound",
+  "PerPallet",
+  "PerLinearFoot",
+  "Other",
+]);
 
 // Temperature validation helper
 const temperatureSchema = z.number().int().min(-100).max(200);
@@ -54,18 +76,14 @@ export const shipmentSchema = z
     trailerTypeId: nullableStringSchema,
     ownerId: nullableStringSchema,
     canceledById: nullableStringSchema,
-    status: z.enum(ShipmentStatus, {
-      error: "Status is required",
-    }),
+    status: ShipmentStatus,
     cancelReason: nullableStringSchema,
-    ratingMethod: z.enum(RatingMethod, {
-      error: "Rating Method is required",
-    }),
+    ratingMethod: RatingMethod,
     otherChargeAmount: chargeAmountSchema,
     freightChargeAmount: chargeAmountSchema,
     totalChargeAmount: chargeAmountSchema,
-    temperatureMin: temperatureSchema.nullable().optional(),
-    temperatureMax: temperatureSchema.nullable().optional(),
+    temperatureMin: temperatureSchema.nullish(),
+    temperatureMax: temperatureSchema.nullish(),
     pieces: nullableIntegerSchema,
     weight: nullableIntegerSchema,
     actualDeliveryDate: nullableIntegerSchema,
@@ -74,18 +92,18 @@ export const shipmentSchema = z
     ratingUnit: z.number().int().default(1),
 
     // * Relationships
-    shipmentType: shipmentTypeSchema.nullable().optional(),
-    serviceType: serviceTypeSchema.nullable().optional(),
-    customer: customerSchema.nullable().optional(),
-    tractorType: equipmentTypeSchema.nullable().optional(),
-    trailerType: equipmentTypeSchema.nullable().optional(),
-    owner: userSchema.nullable().optional(),
-    canceledBy: userSchema.nullable().optional(),
+    shipmentType: shipmentTypeSchema.nullish(),
+    serviceType: serviceTypeSchema.nullish(),
+    customer: customerSchema.nullish(),
+    tractorType: equipmentTypeSchema.nullish(),
+    trailerType: equipmentTypeSchema.nullish(),
+    owner: userSchema.nullish(),
+    canceledBy: userSchema.nullish(),
 
     // * Collections
     moves: z.array(moveSchema),
-    commodities: z.array(shipmentCommoditySchema).nullable().optional(),
-    additionalCharges: z.array(additionalChargeSchema).nullable().optional(),
+    commodities: z.array(shipmentCommoditySchema).nullish(),
+    additionalCharges: z.array(additionalChargeSchema).nullish(),
   })
   .refine(
     (data) => {

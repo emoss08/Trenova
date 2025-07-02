@@ -8,16 +8,16 @@ import { ShipmentStatusBadge } from "@/components/status-badge";
 import { shipmentStatusChoices } from "@/lib/choices";
 import type { CustomerSchema } from "@/lib/schemas/customer-schema";
 import { LocationSchema } from "@/lib/schemas/location-schema";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import {
   getDestinationStopInfo,
   getOriginStopInfo,
   ShipmentLocations,
 } from "@/lib/shipment/utils";
 import { formatLocation } from "@/lib/utils";
-import { Shipment } from "@/types/shipment";
 import { type ColumnDef } from "@tanstack/react-table";
 
-export function getColumns(): ColumnDef<Shipment>[] {
+export function getColumns(): ColumnDef<ShipmentSchema>[] {
   return [
     {
       accessorKey: "status",
@@ -62,7 +62,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
         }
 
         return (
-          <EntityRefCell<CustomerSchema, Shipment>
+          <EntityRefCell<CustomerSchema, ShipmentSchema>
             entity={customer}
             config={{
               basePath: "/billing/configurations/customers",
@@ -93,7 +93,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
         }
 
         return (
-          <NestedEntityRefCell<LocationSchema, Shipment>
+          <NestedEntityRefCell<LocationSchema, ShipmentSchema>
             getValue={() => {
               return ShipmentLocations.useLocations(row.original).origin;
             }}
@@ -151,7 +151,7 @@ export function getColumns(): ColumnDef<Shipment>[] {
         }
 
         return (
-          <NestedEntityRefCell<LocationSchema, Shipment>
+          <NestedEntityRefCell<LocationSchema, ShipmentSchema>
             getValue={() => {
               return ShipmentLocations.useLocations(row.original).destination;
             }}

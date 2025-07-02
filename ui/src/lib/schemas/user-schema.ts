@@ -55,8 +55,8 @@ const permissionSchema = z.object({
   scope: z.string().optional(),
   description: z.string().optional(),
   isSystemLevel: z.boolean(),
-  fieldPermissions: z.array(fieldPermissionSchema).nullable().optional(),
-  conditions: z.array(conditionSchema).nullable().optional(),
+  fieldPermissions: z.array(fieldPermissionSchema).nullish(),
+  conditions: z.array(conditionSchema).nullish(),
   dependencies: z.array(z.string()).optional(),
   customSettings: z.record(z.string(), z.any()).optional(),
 });

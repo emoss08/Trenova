@@ -3,12 +3,14 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
-import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import {
+  ShipmentStatus,
+  type ShipmentSchema,
+} from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
 import { AnalyticsPage } from "@/types/analytics";
 import type { DocumentCategory } from "@/types/document";
-import { ShipmentStatus } from "@/types/shipment";
 import { faArrowRight } from "@fortawesome/pro-solid-svg-icons";
 import { useMemo } from "react";
 import { toast } from "sonner";
@@ -25,7 +27,8 @@ export function BillingReadinessBadge({
   const billingReadiness = useMemo(() => {
     const requiredCategories = documentCategories;
     const completedRequired = documentCategories.filter((cat) => cat.complete);
-    const isShipmentCompleted = shipmentStatus === ShipmentStatus.Completed;
+    const isShipmentCompleted =
+      shipmentStatus === ShipmentStatus.enum.Completed;
 
     return {
       total: requiredCategories.length,
@@ -75,7 +78,7 @@ export function BillingReadinessBadge({
 
   return (
     billingReadiness.total > 0 &&
-    shipmentStatus !== ShipmentStatus.ReadyToBill && (
+    shipmentStatus !== ShipmentStatus.enum.ReadyToBill && (
       <div className="mt-3 p-3 rounded-lg bg-background border border-border">
         <div className="flex items-center justify-between mb-2">
           <div className="flex items-center">

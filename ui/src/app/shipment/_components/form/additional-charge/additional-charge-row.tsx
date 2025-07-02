@@ -2,8 +2,8 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { EntityRedirectLink } from "@/components/ui/link";
 import type { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
+import type { AdditionalChargeSchema } from "@/lib/schemas/additional-charge-schema";
 import { cn } from "@/lib/utils";
-import { type AdditionalCharge } from "@/types/shipment";
 import {
   faPencil,
   faTrash,
@@ -19,7 +19,7 @@ export function AdditionalChargeRow({
   onDelete,
 }: {
   index: number;
-  additionalCharge: AdditionalCharge;
+  additionalCharge: AdditionalChargeSchema;
   isDuplicate?: boolean;
   onEdit: (index: number) => void;
   onDelete: (index: number) => void;

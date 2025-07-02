@@ -3,15 +3,13 @@ import { InputField } from "@/components/fields/input-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { LazyImage } from "@/components/ui/image";
 import { ExternalLink } from "@/components/ui/link";
-import {
-  IntegrationType,
-  type GoogleMapsConfigData,
-} from "@/types/integration";
+import type { GoogleMapsConfigurationSchema } from "@/lib/schemas/integration-schema";
+import { IntegrationType } from "@/types/integration";
 import { useFormContext } from "react-hook-form";
 import { integrationImages } from "../_utils/integration";
 
 export function GoogleMapsForm() {
-  const { control } = useFormContext<GoogleMapsConfigData>();
+  const { control } = useFormContext<GoogleMapsConfigurationSchema>();
 
   return (
     <div className="flex flex-col gap-6">
