@@ -1,7 +1,6 @@
 import { EmptyState } from "@/components/ui/empty-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ShipmentCommoditySchema } from "@/lib/schemas/shipment-commodity-schema";
-import { ShipmentCommodity } from "@/types/shipment";
 import {
   faBoxesStacked,
   faTrailer,
@@ -43,7 +42,7 @@ export function CommodityList({
         {commodities.map((field, index) => (
           <CommodityRow
             key={field.id}
-            shipmentCommodity={field as ShipmentCommodity}
+            shipmentCommodity={field}
             isLast={index === commodities.length - 1}
             onEdit={handleEdit}
             onDelete={handleDelete}

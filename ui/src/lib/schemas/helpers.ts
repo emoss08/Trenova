@@ -26,8 +26,7 @@ export const optionalStringSchema = z.string().optional();
  */
 export const nullableStringSchema = z
   .union([z.string().transform((val) => (val === "" ? null : val)), z.null()])
-  .optional()
-  .nullable();
+  .nullish();
 
 /**
  * Helper to handle nullable integers from Go backends
@@ -39,8 +38,7 @@ export const nullableIntegerSchema = z
     z.number().int(),
     z.null(),
   ])
-  .optional()
-  .nullable();
+  .nullish();
 
 /**
  * Helper to handle nullable big integers (int64) from Go backends
@@ -58,13 +56,13 @@ export const nullableBigIntegerSchema = z
  * Helper for Go pointer fields that might come as null or undefined
  * Makes the field optional and nullable
  */
-export const optionalNullableString = z.string().nullable().optional();
+export const optionalNullableString = z.string().nullish();
 
 /**
  * Helper for Go pointer fields that might come as null or undefined
  * Makes the field optional and nullable
  */
-export const optionalIntegerSchema = z.number().int().nullable().optional();
+export const optionalIntegerSchema = z.number().int().nullish();
 
 /**
  * Helper for Go PULID fields (always strings, never null in practice)
@@ -76,8 +74,7 @@ export const pulidSchema = z.string().min(1);
  */
 export const nullablePulidSchema = z
   .union([z.string().min(1), z.null()])
-  .nullable()
-  .optional();
+  .nullish();
 
 /**
  * Helper for Go timestamps (Unix timestamps as int64)
@@ -89,8 +86,7 @@ export const timestampSchema = z.number().int().positive().optional();
  */
 export const nullableTimestampSchema = z
   .union([z.number().int().positive(), z.null()])
-  .nullable()
-  .optional();
+  .nullish();
 
 /**
  * Helper for Go boolean fields that might come as strings

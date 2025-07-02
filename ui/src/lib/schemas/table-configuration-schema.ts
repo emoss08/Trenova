@@ -8,15 +8,45 @@ import {
   versionSchema,
 } from "./helpers";
 
+export const LogicalOperatorSchema = z.enum(["and", "or"]);
+
+export const SortDirectionSchema = z.enum(["asc", "desc"]);
+
+export const FilterOperatorSchema = z.enum([
+  "eq",
+  "ne",
+  "gt",
+  "gte",
+  "lt",
+  "lte",
+  "contains",
+  "startswith",
+  "endswith",
+  "like",
+  "ilike",
+  "in",
+  "notin",
+  "isnull",
+  "isnotnull",
+  "daterange",
+]);
+
 const filterFieldSchema = z.object({
   field: z.string(),
-  operator: z.string(),
+  operator: FilterOperatorSchema,
   value: z.any(),
 });
 
 const sortFieldSchema = z.object({
   field: z.string(),
-  direction: z.string(),
+  direction: SortDirectionSchema,
+});
+
+export const FilterStateSchema = z.object({
+  filters: z.array(filterFieldSchema),
+  sort: z.array(sortFieldSchema),
+  globalSearch: z.string(),
+  logicalOperators: z.array(LogicalOperatorSchema).optional(),
 });
 
 const tableConfigSchema = z.object({
@@ -45,3 +75,13 @@ export const tableConfigurationSchema = z.object({
 });
 
 export type TableConfigurationSchema = z.infer<typeof tableConfigurationSchema>;
+export type FilterStateSchema = z.infer<typeof FilterStateSchema>;
+
+export type FilterFieldSchema = z.infer<typeof filterFieldSchema>;
+export type SortFieldSchema = z.infer<typeof sortFieldSchema>;
+
+export type LogicalOperator = z.infer<typeof LogicalOperatorSchema>;
+export type SortDirection = z.infer<typeof SortDirectionSchema>;
+export type FilterOperator = z.infer<typeof FilterOperatorSchema>;
+export type FilterField = z.infer<typeof filterFieldSchema>;
+export type SortField = z.infer<typeof sortFieldSchema>;

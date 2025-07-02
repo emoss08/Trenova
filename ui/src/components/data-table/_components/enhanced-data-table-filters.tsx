@@ -29,11 +29,12 @@ import {
   getAvailableOperators,
 } from "@/lib/enhanced-data-table-utils";
 import type {
+  FilterStateSchema,
+  LogicalOperator,
+} from "@/lib/schemas/table-configuration-schema";
+import type {
   EnhancedColumnDef,
   EnhancedDataTableConfig,
-  FieldFilter,
-  FilterState,
-  LogicalOperator,
 } from "@/types/enhanced-data-table";
 import type { SelectOption } from "@/types/fields";
 import { faBarsFilter, faTrashCan } from "@fortawesome/pro-regular-svg-icons";
@@ -42,8 +43,8 @@ import { useState } from "react";
 
 interface EnhancedDataTableFiltersProps {
   columns: EnhancedColumnDef<any>[];
-  filterState: FilterState;
-  onFilterChange: (state: FilterState) => void;
+  filterState: FilterStateSchema;
+  onFilterChange: (state: FilterStateSchema) => void;
   config?: EnhancedDataTableConfig;
 }
 
@@ -88,7 +89,10 @@ export function EnhancedDataTableFilters({
   };
 
   // Handle updating a filter
-  const handleUpdateFilter = (index: number, updatedFilter: FieldFilter) => {
+  const handleUpdateFilter = (
+    index: number,
+    updatedFilter: FilterStateSchema["filters"][number],
+  ) => {
     const newFilters = filterState.filters.map((filter, i) =>
       i === index ? updatedFilter : filter,
     );
@@ -227,11 +231,14 @@ export function EnhancedDataTableFilters({
 }
 
 interface FilterRowProps {
-  filter: FieldFilter;
+  filter: FilterStateSchema["filters"][number];
   index: number;
   columns: EnhancedColumnDef<any>[];
   logicalOperator?: LogicalOperator;
-  onUpdate: (index: number, filter: FieldFilter) => void;
+  onUpdate: (
+    index: number,
+    filter: FilterStateSchema["filters"][number],
+  ) => void;
   onRemove: (index: number) => void;
   onLogicalOperatorChange?: (operator: LogicalOperator) => void;
 }
@@ -257,7 +264,7 @@ function FilterRow({
   const handleOperatorChange = (operator: string) => {
     onUpdate(index, {
       ...filter,
-      operator: operator as FieldFilter["operator"],
+      operator: operator as FilterStateSchema["filters"][number]["operator"],
     });
   };
 

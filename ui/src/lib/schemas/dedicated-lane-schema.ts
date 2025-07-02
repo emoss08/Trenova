@@ -39,15 +39,15 @@ export const dedicatedLaneSchema = z.object({
   secondaryWorkerId: nullableStringSchema,
   autoAssign: z.boolean(),
 
-  shipmentType: shipmentTypeSchema.nullable().optional(),
-  serviceType: serviceTypeSchema.nullable().optional(),
-  tractorType: equipmentTypeSchema.nullable().optional(),
-  trailerType: equipmentTypeSchema.nullable().optional(),
-  customer: customerSchema.nullable().optional(),
-  originLocation: locationSchema.nullable().optional(),
-  destinationLocation: locationSchema.nullable().optional(),
-  primaryWorker: workerSchema.nullable().optional(),
-  secondaryWorker: workerSchema.nullable().optional(),
+  shipmentType: shipmentTypeSchema.nullish(),
+  serviceType: serviceTypeSchema.nullish(),
+  tractorType: equipmentTypeSchema.nullish(),
+  trailerType: equipmentTypeSchema.nullish(),
+  customer: customerSchema.nullish(),
+  originLocation: locationSchema.nullish(),
+  destinationLocation: locationSchema.nullish(),
+  primaryWorker: workerSchema.nullish(),
+  secondaryWorker: workerSchema.nullish(),
 });
 
 export type DedicatedLaneSchema = z.infer<typeof dedicatedLaneSchema>;
@@ -71,8 +71,8 @@ export const dedicatedLaneSuggestionSchema = z.object({
   destinationLocationId: z.string().min(1, "Destination Location is required"),
   serviceTypeId: z.string().min(1, "Service Type is required"),
   shipmentTypeId: z.string().min(1, "Shipment Type is required"),
-  trailerTypeId: z.string().nullable().optional(),
-  tractorTypeId: z.string().nullable().optional(),
+  trailerTypeId: z.string().nullish(),
+  tractorTypeId: z.string().nullish(),
   confidenceScore: z
     .string()
     .min(0, "Confidence Score must be greater than 0")
@@ -114,19 +114,19 @@ export const dedicatedLaneSuggestionSchema = z.object({
     .min(0, "Analysis End Date must be greater than 0"),
   suggestedName: z.string().min(1, "Suggested Name is required"),
   patternDetails: z.record(z.string(), z.any()),
-  createdDedicatedLaneId: z.string().nullable().optional(),
-  processedById: z.string().nullable().optional(),
-  processedAt: z.number().nullable().optional(),
-  expiredAt: z.number().nullable().optional(),
+  createdDedicatedLaneId: z.string().nullish(),
+  processedById: z.string().nullish(),
+  processedAt: z.number().nullish(),
+  expiredAt: z.number().nullish(),
 
-  customer: customerSchema.nullable().optional(),
-  originLocation: locationSchema.nullable().optional(),
-  destinationLocation: locationSchema.nullable().optional(),
-  serviceType: serviceTypeSchema.nullable().optional(),
-  shipmentType: shipmentTypeSchema.nullable().optional(),
-  tractorType: equipmentTypeSchema.nullable().optional(),
-  trailerType: equipmentTypeSchema.nullable().optional(),
-  createdDedicatedLane: dedicatedLaneSchema.nullable().optional(),
+  customer: customerSchema.nullish(),
+  originLocation: locationSchema.nullish(),
+  destinationLocation: locationSchema.nullish(),
+  serviceType: serviceTypeSchema.nullish(),
+  shipmentType: shipmentTypeSchema.nullish(),
+  tractorType: equipmentTypeSchema.nullish(),
+  trailerType: equipmentTypeSchema.nullish(),
+  createdDedicatedLane: dedicatedLaneSchema.nullish(),
 });
 
 export type DedicatedLaneSuggestionSchema = z.infer<

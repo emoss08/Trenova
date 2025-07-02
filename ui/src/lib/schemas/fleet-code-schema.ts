@@ -7,6 +7,7 @@ import {
   timestampSchema,
   versionSchema,
 } from "./helpers";
+import { userSchema } from "./user-schema";
 
 export const fleetCodeSchema = z.object({
   id: optionalStringSchema,
@@ -24,7 +25,7 @@ export const fleetCodeSchema = z.object({
   deadheadGoal: decimalStringSchema,
   color: optionalStringSchema,
   managerId: nullableStringSchema,
-  // TODO(wolfred): We need to add the manager field to the schema once we add the user schema
+  manager: userSchema.nullish(),
 });
 
 export type FleetCodeSchema = z.infer<typeof fleetCodeSchema>;

@@ -1,16 +1,16 @@
 import { http } from "@/lib/http-client";
-import type { Integration, IntegrationType } from "@/types/integration";
+import type { IntegrationSchema } from "@/lib/schemas/integration-schema";
 import type { LimitOffsetResponse } from "@/types/server";
 
 export class IntegrationAPI {
   async get() {
     const response =
-      await http.get<LimitOffsetResponse<Integration>>("/integrations/");
+      await http.get<LimitOffsetResponse<IntegrationSchema>>("/integrations/");
     return response.data;
   }
 
-  async getByType(type: IntegrationType) {
-    const response = await http.get<Integration>(`/integrations/${type}`);
+  async getByType(type: IntegrationSchema["type"]) {
+    const response = await http.get<IntegrationSchema>(`/integrations/${type}`);
     return response.data;
   }
 

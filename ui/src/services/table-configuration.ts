@@ -2,7 +2,6 @@ import { http } from "@/lib/http-client";
 import type { TableConfigurationSchema } from "@/lib/schemas/table-configuration-schema";
 import type { Resource } from "@/types/audit-entry";
 import type { LimitOffsetResponse } from "@/types/server";
-import type { TableConfiguration } from "@/types/table-configuration";
 
 export class TableConfigurationAPI {
   /**
@@ -11,22 +10,22 @@ export class TableConfigurationAPI {
    */
   async getDefaultOrLatestConfiguration(resource: Resource) {
     try {
-      const { data } = await http.get<TableConfiguration>(
+      const { data } = await http.get<TableConfigurationSchema>(
         `/table-configurations/${resource}/`,
       );
       return data;
     } catch (error: any) {
       if (error?.status === 404) {
-        return undefined as unknown as TableConfiguration;
+        return undefined as unknown as TableConfigurationSchema;
       }
       throw error;
     }
   }
 
   async listUserConfigurations(resource: Resource) {
-    const { data } = await http.get<LimitOffsetResponse<TableConfiguration>>(
-      `/table-configurations/me/${resource}`,
-    );
+    const { data } = await http.get<
+      LimitOffsetResponse<TableConfigurationSchema>
+    >(`/table-configurations/me/${resource}`);
 
     return data;
   }

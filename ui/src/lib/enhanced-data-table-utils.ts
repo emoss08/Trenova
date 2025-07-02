@@ -1,14 +1,14 @@
 import type {
   EnhancedColumnDef,
   EnhancedQueryParams,
-  FieldFilter,
   FilterOperator,
-  FilterState,
   FilterUtils,
-  SortDirection,
-  SortField,
   URLFilterParams,
 } from "@/types/enhanced-data-table";
+import type {
+  FilterStateSchema,
+  SortFieldSchema,
+} from "./schemas/table-configuration-schema";
 
 /**
  * Utility functions for enhanced data table filtering and sorting
@@ -17,7 +17,7 @@ export const filterUtils: FilterUtils = {
   /**
    * Serialize filter state to URL-safe parameters
    */
-  serializeToURL(state: FilterState): URLFilterParams {
+  serializeToURL(state: FilterStateSchema): URLFilterParams {
     const params: URLFilterParams = {};
 
     // Global search
@@ -38,8 +38,8 @@ export const filterUtils: FilterUtils = {
   /**
    * Deserialize filter state from URL parameters
    */
-  deserializeFromURL(params: URLFilterParams): FilterState {
-    const state: FilterState = {
+  deserializeFromURL(params: URLFilterParams): FilterStateSchema {
+    const state: FilterStateSchema = {
       filters: [],
       sort: [],
       globalSearch: "",
@@ -80,7 +80,7 @@ export const filterUtils: FilterUtils = {
   /**
    * Serialize filter state for API requests
    */
-  serializeForAPI(state: FilterState): EnhancedQueryParams {
+  serializeForAPI(state: FilterStateSchema): EnhancedQueryParams {
     const params: EnhancedQueryParams = {};
 
     if (state.globalSearch) {
@@ -102,7 +102,7 @@ export const filterUtils: FilterUtils = {
    * Validate filter state against column definitions
    */
   validateFilterState(
-    state: FilterState,
+    state: FilterStateSchema,
     columns: EnhancedColumnDef<any>[],
   ): boolean {
     const filterableFields = new Set(
@@ -141,7 +141,7 @@ export const filterUtils: FilterUtils = {
  * Convert filter state to query string format expected by backend
  */
 export function serializeFiltersForBackend(
-  filters: FieldFilter[],
+  filters: FilterStateSchema["filters"],
 ): Record<string, string> {
   const params: Record<string, string> = {};
 
@@ -166,7 +166,7 @@ export function serializeFiltersForBackend(
  * Convert sort state to query string format expected by backend
  */
 export function serializeSortForBackend(
-  sort: SortField[],
+  sort: FilterStateSchema["sort"],
 ): Record<string, string> {
   const params: Record<string, string> = {};
 
@@ -182,7 +182,7 @@ export function serializeSortForBackend(
  * Combine all parameters for backend API call
  */
 export function buildAPIParams(
-  filterState: FilterState,
+  filterState: FilterStateSchema,
   pagination: { page: number; pageSize: number },
 ): Record<string, string> {
   const params: Record<string, string> = {};
@@ -210,9 +210,9 @@ export function buildAPIParams(
  */
 export function createFieldFilter(
   field: string,
-  operator: FieldFilter["operator"],
+  operator: FilterStateSchema["filters"][number]["operator"],
   value: any,
-): FieldFilter {
+): FilterStateSchema["filters"][number] {
   return { field, operator, value };
 }
 
@@ -221,8 +221,8 @@ export function createFieldFilter(
  */
 export function createSortField(
   field: string,
-  direction: SortField["direction"],
-): SortField {
+  direction: FilterStateSchema["sort"][number]["direction"],
+): FilterStateSchema["sort"][number] {
   return { field, direction };
 }
 
@@ -317,7 +317,7 @@ export function getFilterOperatorLabel(operator: FilterOperator) {
   }
 }
 
-export function getSortDirectionLabel(direction: SortDirection) {
+export function getSortDirectionLabel(direction: SortFieldSchema["direction"]) {
   switch (direction) {
     case "asc":
       return "Ascending";

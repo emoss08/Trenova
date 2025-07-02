@@ -10,11 +10,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
-import { mapToStopType, type Stop } from "@/types/stop";
+import { mapToStopType, type StopSchema } from "@/lib/schemas/stop-schema";
 import { faEdit, faLock, faTrash } from "@fortawesome/pro-solid-svg-icons";
 
 type CompactStopsTableProps = {
-  stops: Stop[];
+  stops: StopSchema[];
   onEdit: (stopIdx: number) => void;
   onDelete: (stopIdx: number) => void;
 };

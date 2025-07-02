@@ -11,10 +11,6 @@ import {
   getSortDirectionLabel,
 } from "@/lib/enhanced-data-table-utils";
 import { TableConfigurationSchema } from "@/lib/schemas/table-configuration-schema";
-import type {
-  FilterOperator,
-  SortDirection,
-} from "@/types/enhanced-data-table";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 // Helper function to format column names for display
@@ -135,9 +131,7 @@ export function TableConfigurationForm() {
                   />
                   <FilterRow
                     label="Operator"
-                    value={getFilterOperatorLabel(
-                      filter.operator as FilterOperator,
-                    )}
+                    value={getFilterOperatorLabel(filter.operator)}
                   />
                   <FilterRow label="Value" value={filter.value} />
                 </div>
@@ -172,9 +166,7 @@ export function TableConfigurationForm() {
                   />
                   <FilterRow
                     label="Direction"
-                    value={getSortDirectionLabel(
-                      filter.direction as SortDirection,
-                    )}
+                    value={getSortDirectionLabel(filter.direction)}
                   />
                 </div>
                 {index < sort.length - 1 && (

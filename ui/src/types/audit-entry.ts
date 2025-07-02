@@ -1,5 +1,4 @@
 import type { UserSchema } from "@/lib/schemas/user-schema";
-import { BaseModel } from "./common";
 import type { Action } from "./roles-permissions";
 
 export type AuditEntryResponse = {
@@ -7,12 +6,13 @@ export type AuditEntryResponse = {
   total: number;
 };
 
-export interface AuditEntry extends BaseModel {
+// TODO: Remove this type and convert to zod schema
+export interface AuditEntry {
   id: string;
   resourceId: string;
-  userId: string;
   businessUnitId: string;
   organizationId: string;
+  userId: string;
   correlationId: string;
   timestamp: number;
   changes: Record<string, any>;
@@ -39,6 +39,7 @@ export enum Resource {
   Organization = "organization", // Represents resources related to organizations.
   DocumentQualityConfig = "document_quality_config", // Represents resources related to document quality config.
   ShipmentControl = "shipment_control", // Represents resources related to shipment control.
+  ConsolidationSettings = "consolidation_settings", // Represents resources related to consolidation settings.
   PatternConfig = "pattern_config", // Represents resources related to pattern config.
   GoogleMapsConfig = "google_maps_config", // Represents resources related to google maps config.
   BillingControl = "billing_control", // Represents resources related to billing control.
@@ -50,6 +51,7 @@ export enum Resource {
 
   // Operations resources
   Worker = "worker", // Represents resources related to workers.
+  Consolidation = "consolidation", // Represents resources related to consolidation groups.
   Tractor = "tractor", // Represents resources for managing tractors.
   Trailer = "trailer", // Represents resources for managing trailers.
   Shipment = "shipment", // Represents resources for managing shipments.

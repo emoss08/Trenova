@@ -6,15 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
+import { NumberField } from "@/components/ui/number-input";
 import { stopStatusChoices, stopTypeChoices } from "@/lib/choices";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import { StopType } from "@/lib/schemas/stop-schema";
 import { cn, formatLocation } from "@/lib/utils";
-import { StopType } from "@/types/stop";
 import { faInfoCircle, faLocationDot } from "@fortawesome/pro-solid-svg-icons";
 import { memo, useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
 import { useLocationData } from "../../sidebar/stop-details/queries";
-import { NumberField } from "@/components/ui/number-input";
 
 type CompactStopFormProps = {
   moveIdx: number;
@@ -101,7 +101,7 @@ const CompactStopFormComponent = ({
           <div
             className={cn(
               "size-8 rounded-full flex items-center justify-center",
-              stopType === StopType.Pickup
+              stopType === StopType.enum.Pickup
                 ? "bg-blue-100 text-blue-600"
                 : "bg-green-100 text-green-600",
             )}

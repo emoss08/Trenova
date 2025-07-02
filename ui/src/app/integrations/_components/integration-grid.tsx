@@ -1,5 +1,5 @@
 import { queries } from "@/lib/queries";
-import type { Integration } from "@/types/integration";
+import type { IntegrationSchema } from "@/lib/schemas/integration-schema";
 import { IntegrationCategory } from "@/types/integration";
 import { useQuery } from "@tanstack/react-query";
 import { lazy, Suspense, useMemo, useState } from "react";
@@ -11,7 +11,7 @@ const IntegrationCard = lazy(() => import("./integration-card"));
 
 export function IntegrationGrid() {
   const [selectedIntegration, setSelectedIntegration] =
-    useState<Integration | null>(null);
+    useState<IntegrationSchema | null>(null);
 
   // Fetch integrations
   const { data } = useQuery({
@@ -22,7 +22,7 @@ export function IntegrationGrid() {
   const groupedIntegrations = useMemo(() => {
     if (!data?.results) return {};
 
-    return data.results.reduce<Record<string, Integration[]>>(
+    return data.results.reduce<Record<string, IntegrationSchema[]>>(
       (acc, integration) => {
         const category = integration.category;
         if (!acc[category]) {
@@ -35,7 +35,7 @@ export function IntegrationGrid() {
     );
   }, [data?.results]);
 
-  const handleConfigureClick = (integration: Integration) => {
+  const handleConfigureClick = (integration: IntegrationSchema) => {
     setSelectedIntegration(integration);
   };
 

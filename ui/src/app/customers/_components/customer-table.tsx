@@ -1,4 +1,4 @@
-import { DataTableV2 } from "@/components/data-table/data-table-v2";
+import { DataTable } from "@/components/data-table/data-table";
 import { type CustomerSchema } from "@/lib/schemas/customer-schema";
 import { Resource } from "@/types/audit-entry";
 import { useMemo } from "react";
@@ -10,7 +10,7 @@ export default function CustomersDataTable() {
   const columns = useMemo(() => getColumns(), []);
 
   return (
-    <DataTableV2<CustomerSchema>
+    <DataTable<CustomerSchema>
       name="Customer"
       resource={Resource.Customer}
       columns={columns}

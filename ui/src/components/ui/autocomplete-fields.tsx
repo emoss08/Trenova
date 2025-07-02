@@ -10,13 +10,15 @@ import type { LocationCategorySchema } from "@/lib/schemas/location-category-sch
 import type { LocationSchema } from "@/lib/schemas/location-schema";
 import type { ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
 import type { ShipmentTypeSchema } from "@/lib/schemas/shipment-type-schema";
-import type { TractorSchema } from "@/lib/schemas/tractor-schema";
+import {
+  EquipmentStatus,
+  type TractorSchema,
+} from "@/lib/schemas/tractor-schema";
 import type { TrailerSchema } from "@/lib/schemas/trailer-schema";
 import type { RoleSchema, UserSchema } from "@/lib/schemas/user-schema";
 import type { WorkerSchema } from "@/lib/schemas/worker-schema";
 import { formatLocation, truncateText } from "@/lib/utils";
 import { Status } from "@/types/common";
-import { EquipmentStatus } from "@/types/tractor";
 import type {
   Control,
   FieldPath,

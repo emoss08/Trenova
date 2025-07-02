@@ -4,7 +4,6 @@ import {
 } from "@/components/data-table/_components/data-table-column-helpers";
 import type { LocationSchema } from "@/lib/schemas/location-schema";
 import { formatLocation } from "@/lib/utils";
-import { Location } from "@/types/location";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<LocationSchema>[] {
@@ -21,7 +20,7 @@ export function getColumns(): ColumnDef<LocationSchema>[] {
         return <p>{name}</p>;
       },
     }),
-    createEntityRefColumn<Location, "locationCategory">(
+    createEntityRefColumn<LocationSchema, "locationCategory">(
       columnHelper,
       "locationCategory",
       {

@@ -13,12 +13,12 @@ import { useApiMutation } from "@/hooks/use-api-mutation";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import {
   tableConfigurationSchema,
+  type FilterStateSchema,
   type TableConfigurationSchema,
 } from "@/lib/schemas/table-configuration-schema";
 import { api } from "@/services/api";
 import type { Resource } from "@/types/audit-entry";
 import { TableSheetProps } from "@/types/data-table";
-import type { FilterState } from "@/types/enhanced-data-table";
 import { Visibility } from "@/types/table-configuration";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Dialog } from "@radix-ui/react-dialog";
@@ -32,7 +32,7 @@ import { TableConfigurationForm } from "./table-configuration-form";
 type CreateTableConfigurationModalProps = TableSheetProps & {
   resource: Resource;
   visiblityState: VisibilityState;
-  tableFilters: FilterState;
+  tableFilters: FilterStateSchema;
 };
 
 export function CreateTableConfigurationModal({
@@ -45,7 +45,7 @@ export function CreateTableConfigurationModal({
   const { isPopout, closePopout } = usePopoutWindow();
   const queryClient = useQueryClient();
 
-  const form = useForm<TableConfigurationSchema>({
+  const form = useForm({
     resolver: zodResolver(tableConfigurationSchema),
     defaultValues: {
       name: "",

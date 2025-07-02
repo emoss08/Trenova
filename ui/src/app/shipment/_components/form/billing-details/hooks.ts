@@ -1,5 +1,4 @@
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { RatingMethod } from "@/types/shipment";
 import { useEffect } from "react";
 import {
   Control,
@@ -318,38 +317,4 @@ export function useOtherRatingWatcher({
     dirtyFields.freightChargeAmount,
     dirtyFields.ratingUnit,
   ]);
-}
-
-/**
- * Gets the appropriate watcher hook based on the rating method
- */
-export function useRatingMethodSpecificWatcher(
-  ratingMethod: RatingMethod | undefined,
-  options: WatchOptions,
-) {
-  if (!ratingMethod) return;
-
-  switch (ratingMethod) {
-    case RatingMethod.FlatRate:
-      useFlatRateWatcher(options);
-      break;
-    case RatingMethod.PerMile:
-      usePerMileWatcher(options);
-      break;
-    case RatingMethod.PerStop:
-      usePerStopWatcher(options);
-      break;
-    case RatingMethod.PerPound:
-      usePerPoundWatcher(options);
-      break;
-    case RatingMethod.PerPallet:
-      usePerPalletWatcher(options);
-      break;
-    case RatingMethod.PerLinearFoot:
-      usePerLinearFootWatcher(options);
-      break;
-    case RatingMethod.Other:
-      useOtherRatingWatcher(options);
-      break;
-  }
 }

@@ -1,6 +1,10 @@
+import { MoveStatus, type MoveSchema } from "@/lib/schemas/move-schema";
+import {
+  StopStatus,
+  StopType,
+  type StopSchema,
+} from "@/lib/schemas/stop-schema";
 import { cn } from "@/lib/utils";
-import { MoveStatus } from "@/types/move";
-import { StopStatus, StopType } from "@/types/stop";
 import {
   faArrowDown,
   faCheck,
@@ -9,75 +13,78 @@ import {
 import { faCircle, faTruck, faXmark } from "@fortawesome/pro-solid-svg-icons";
 
 export const getStatusIcon = (
-  status: StopStatus,
+  status: StopSchema["status"],
   isLastStop: boolean,
-  moveStatus: MoveStatus,
+  moveStatus: MoveSchema["status"],
 ) => {
-  if (isLastStop && moveStatus === MoveStatus.Completed) {
+  if (isLastStop && moveStatus === MoveStatus.enum.Completed) {
     return faCheck;
   }
 
   switch (status) {
-    case StopStatus.New:
+    case StopStatus.enum.New:
       return faPlus;
-    case StopStatus.InTransit:
+    case StopStatus.enum.InTransit:
       return faTruck;
-    case StopStatus.Completed:
+    case StopStatus.enum.Completed:
       return faArrowDown;
-    case StopStatus.Canceled:
+    case StopStatus.enum.Canceled:
       return faXmark;
     default:
       return faCircle;
   }
 };
 
-export const getStopTypeLabel = (type: StopType) => {
+export const getStopTypeLabel = (type: StopSchema["type"]) => {
   switch (type) {
-    case StopType.Pickup:
+    case StopType.enum.Pickup:
       return "Pickup";
-    case StopType.Delivery:
+    case StopType.enum.Delivery:
       return "Delivery";
-    case StopType.SplitPickup:
+    case StopType.enum.SplitPickup:
       return "Split Pickup";
-    case StopType.SplitDelivery:
+    case StopType.enum.SplitDelivery:
       return "Split Delivery";
     default:
       return "Unknown";
   }
 };
 
-export const getStopStatusBgColor = (status: StopStatus) => {
+export const getStopStatusBgColor = (status: StopSchema["status"]) => {
   switch (status) {
-    case StopStatus.New:
+    case StopStatus.enum.New:
       return "bg-purple-500";
-    case StopStatus.InTransit:
+    case StopStatus.enum.InTransit:
       return "bg-blue-500";
-    case StopStatus.Completed:
+    case StopStatus.enum.Completed:
       return "bg-green-500";
-    case StopStatus.Canceled:
+    case StopStatus.enum.Canceled:
       return "bg-red-500";
     default:
       return "bg-gray-500";
   }
 };
 
-export const getStopStatusBorderColor = (status: StopStatus) => {
+export const getStopStatusBorderColor = (status: StopSchema["status"]) => {
   switch (status) {
-    case StopStatus.New:
+    case StopStatus.enum.New:
       return "border-purple-500";
-    case StopStatus.InTransit:
+    case StopStatus.enum.InTransit:
       return "border-blue-500";
-    case StopStatus.Completed:
+    case StopStatus.enum.Completed:
       return "border-green-500";
-    case StopStatus.Canceled:
+    case StopStatus.enum.Canceled:
       return "border-red-500";
     default:
       return "border-gray-500";
   }
 };
 
-export const getLineStyles = (status: StopStatus, prevStatus?: StopStatus) => {
-  if (status === StopStatus.InTransit) {
+export const getLineStyles = (
+  status: StopSchema["status"],
+  prevStatus?: StopSchema["status"],
+) => {
+  if (status === StopStatus.enum.InTransit) {
     return cn(
       "bg-[length:2px_8px]",
       "bg-gradient-to-b from-blue-500 from-50% to-transparent to-50%",

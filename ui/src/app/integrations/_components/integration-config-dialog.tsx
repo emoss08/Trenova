@@ -6,12 +6,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
+import type { IntegrationSchema } from "@/lib/schemas/integration-schema";
 import type { TableSheetProps } from "@/types/data-table";
-import { Integration } from "@/types/integration";
 import { IntegrationConfigForm } from "./integration-config-form";
 
 type IntegrationConfigDialogProps = {
-  integration: Integration;
+  integration: IntegrationSchema;
 } & TableSheetProps;
 
 export function IntegrationConfigDialog({

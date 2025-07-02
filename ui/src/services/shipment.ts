@@ -3,7 +3,7 @@ import type { ShipmentUncancelSchema } from "@/lib/schemas/shipment-cancellation
 import type { ShipmentDuplicateSchema } from "@/lib/schemas/shipment-duplicate-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { LimitOffsetResponse, type ListResult } from "@/types/server";
-import { type Shipment, type ShipmentQueryParams } from "@/types/shipment";
+import { type ShipmentQueryParams } from "@/types/shipment";
 
 export type GetPreviousRatesRequest = {
   originLocationId: string;
@@ -16,7 +16,7 @@ export type GetPreviousRatesRequest = {
 export class ShipmentAPI {
   // Get shipments from the API
   async getShipments(queryParams: ShipmentQueryParams) {
-    const response = await http.get<LimitOffsetResponse<Shipment>>(
+    const response = await http.get<LimitOffsetResponse<ShipmentSchema>>(
       "/shipments/",
       {
         params: {
@@ -36,14 +36,17 @@ export class ShipmentAPI {
 
   // Get a shipment by ID from the API
   async getShipmentByID(
-    shipmentId: Shipment["id"],
+    shipmentId: ShipmentSchema["id"],
     expandShipmentDetails = false,
   ) {
-    const response = await http.get<Shipment>(`/shipments/${shipmentId}/`, {
-      params: {
-        expandShipmentDetails: expandShipmentDetails.toString(),
+    const response = await http.get<ShipmentSchema>(
+      `/shipments/${shipmentId}/`,
+      {
+        params: {
+          expandShipmentDetails: expandShipmentDetails.toString(),
+        },
       },
-    });
+    );
 
     return response.data;
   }
@@ -53,15 +56,18 @@ export class ShipmentAPI {
   }
 
   async uncancel(values: ShipmentUncancelSchema) {
-    const response = await http.post<Shipment>(`/shipments/uncancel/`, values);
+    const response = await http.post<ShipmentSchema>(
+      `/shipments/uncancel/`,
+      values,
+    );
 
     return response.data;
   }
 
   // Check for duplicate BOLs
   async checkForDuplicateBOLs(
-    bol: Shipment["bol"],
-    shipmentId?: Shipment["id"],
+    bol: ShipmentSchema["bol"],
+    shipmentId?: ShipmentSchema["id"],
   ) {
     const response = await http.post<{ valid: boolean }>(
       `/shipments/check-for-duplicate-bols/`,
@@ -75,8 +81,8 @@ export class ShipmentAPI {
   }
 
   // Mark a shipment as ready to bill
-  async markReadyToBill(shipmentId: Shipment["id"]) {
-    const response = await http.put<Shipment>(
+  async markReadyToBill(shipmentId: ShipmentSchema["id"]) {
+    const response = await http.put<ShipmentSchema>(
       `/shipments/${shipmentId}/mark-ready-to-bill/`,
       {},
     );
@@ -105,7 +111,7 @@ export class ShipmentAPI {
   }
 
   async getPreviousRates(values: GetPreviousRatesRequest) {
-    const response = await http.post<ListResult<Shipment>>(
+    const response = await http.post<ListResult<ShipmentSchema>>(
       `/shipments/previous-rates/`,
       values,
     );

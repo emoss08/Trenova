@@ -1,14 +1,14 @@
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { api } from "@/services/api";
 import { type LimitOffsetResponse } from "@/types/server";
 import type {
   ShipmentDetailsQueryParams,
   ShipmentQueryParams,
-  Shipment as ShipmentResponse,
 } from "@/types/shipment";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 
 export function useShipments(queryParams: ShipmentQueryParams) {
-  return useQuery<LimitOffsetResponse<ShipmentResponse>>({
+  return useQuery<LimitOffsetResponse<ShipmentSchema>>({
     queryKey: ["shipments", queryParams],
     queryFn: async () => {
       return await api.shipments.getShipments(queryParams);
@@ -21,11 +21,12 @@ export function useShipmentDetails({
   shipmentId,
   enabled,
 }: ShipmentDetailsQueryParams) {
-  return useQuery<ShipmentResponse>({
+  return useQuery<ShipmentSchema>({
     queryKey: ["shipment", shipmentId],
     queryFn: async () => {
       return await api.shipments.getShipmentByID(shipmentId, true);
     },
     enabled: enabled,
+    placeholderData: keepPreviousData,
   });
 }

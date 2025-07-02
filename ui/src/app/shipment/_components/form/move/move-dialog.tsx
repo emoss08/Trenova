@@ -13,10 +13,10 @@ import {
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
 import { moveStatusChoices } from "@/lib/choices";
+import { MoveStatus } from "@/lib/schemas/move-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import { StopStatus, StopType } from "@/lib/schemas/stop-schema";
 import { type TableSheetProps } from "@/types/data-table";
-import { MoveStatus } from "@/types/move";
-import { StopStatus, StopType, type Stop } from "@/types/stop";
 import { faPlus } from "@fortawesome/pro-regular-svg-icons";
 import { AnimatePresence, motion } from "motion/react";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -90,7 +90,7 @@ const MoveDialogComponent = ({
     if (!open || isEditing) return;
 
     // Set default values for a new move
-    setValue(`moves.${moveIdx}.status`, MoveStatus.New);
+    setValue(`moves.${moveIdx}.status`, MoveStatus.enum.New);
     setValue(`moves.${moveIdx}.distance`, 0);
     setValue(`moves.${moveIdx}.loaded`, true);
     setValue(`moves.${moveIdx}.sequence`, moveIdx);
@@ -100,24 +100,27 @@ const MoveDialogComponent = ({
     const oneHour = 3600;
 
     // Append two new stops to the move
+    // TODO(Wolfred): Add placeholder data
     setValue(`moves.${moveIdx}.stops`, [
       {
         sequence: 0,
-        status: StopStatus.New,
-        type: StopType.Pickup,
+        status: StopStatus.enum.New,
+        type: StopType.enum.Pickup,
         locationId: "",
         plannedArrival: now,
         plannedDeparture: now + oneHour / 2,
         addressLine: "",
+        location: null,
       },
       {
         sequence: 1,
-        status: StopStatus.New,
-        type: StopType.Delivery,
+        status: StopStatus.enum.New,
+        type: StopType.enum.Delivery,
         locationId: "",
         plannedArrival: now + oneHour,
         plannedDeparture: now + oneHour + oneHour / 2,
         addressLine: "",
+        location: null,
       },
     ]);
   }, [open, isEditing, moveIdx, setValue]);
@@ -173,7 +176,7 @@ const MoveDialogComponent = ({
       // Ensure all required fields have values and preserve location data in stops
       const updatedMove = {
         ...move,
-        status: move.status || MoveStatus.New,
+        status: move.status || MoveStatus.enum.New,
         distance: move.distance ?? 0,
         loaded: move.loaded ?? true,
         // Make sure we preserve all stop data
@@ -217,17 +220,21 @@ const MoveDialogComponent = ({
 
     // Alternate pickup/delivery for intermediate stops
     const isEvenPosition = insertPosition % 2 === 0;
-    const stopType = isEvenPosition ? StopType.Pickup : StopType.Delivery;
+    const stopType = isEvenPosition
+      ? StopType.enum.Pickup
+      : StopType.enum.Delivery;
 
     // Insert the new stop at position just before the last stop
+    // TODO(Wolfred): Add placeholder data
     insert(insertPosition, {
       sequence: insertPosition,
-      status: StopStatus.New,
+      status: StopStatus.enum.New,
       type: stopType,
       locationId: "",
       plannedArrival: plannedArrival,
       plannedDeparture: plannedDeparture,
       addressLine: "",
+      location: null,
     });
 
     // Update sequences of all stops
@@ -400,7 +407,7 @@ const MoveDialogComponent = ({
                   transition={{ duration: 0.2 }}
                 >
                   <CompactStopsTable
-                    stops={fields as Stop[]}
+                    stops={fields}
                     onEdit={handleEditStop}
                     onDelete={handleDeleteStop}
                   />

@@ -1,6 +1,5 @@
 import { http } from "@/lib/http-client";
 import { type OrganizationSchema } from "@/lib/schemas/organization-schema";
-import { type Organization } from "@/types/organization";
 import { type LimitOffsetResponse } from "@/types/server";
 
 /**
@@ -38,7 +37,7 @@ export class OrganizationAPI {
     return response.data;
   }
 
-  async update(orgId: Organization["id"], data: OrganizationSchema) {
+  async update(orgId: OrganizationSchema["id"], data: OrganizationSchema) {
     const response = await http.put<OrganizationSchema>(
       `/organizations/${orgId}/`,
       data,

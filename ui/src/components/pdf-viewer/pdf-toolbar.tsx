@@ -1,15 +1,13 @@
 import { cn } from "@/lib/utils";
 import {
-    faBarsSort,
-    faChevronLeft,
-    faChevronRight,
-    faMagnifyingGlass,
-    faMinus,
-    faPlus,
-    faRotate,
+  faBarsSort,
+  faChevronLeft,
+  faChevronRight,
+  faMagnifyingGlass,
+  faMinus,
+  faPlus,
+  faRotate,
 } from "@fortawesome/pro-solid-svg-icons";
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import "react-pdf/dist/esm/Page/TextLayer.css";
 import { Button } from "../ui/button";
 import { Icon } from "../ui/icons";
 import { Input } from "../ui/input";

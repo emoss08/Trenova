@@ -11,9 +11,13 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { STOP_DIALOG_NOTICE_KEY } from "@/constants/env";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { stopSchema, type StopSchema } from "@/lib/schemas/stop-schema";
+import {
+  stopSchema,
+  StopStatus,
+  StopType,
+  type StopSchema,
+} from "@/lib/schemas/stop-schema";
 import { type TableSheetProps } from "@/types/data-table";
-import { StopStatus, StopType } from "@/types/stop";
 import { faInfoCircle, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { memo, useCallback, useEffect, useState } from "react";
@@ -57,12 +61,12 @@ export function StopDialog({
   const localForm = useForm<{ stop: StopSchema }>({
     defaultValues: {
       stop: {
-        status: StopStatus.New,
+        status: StopStatus.enum.New,
         actualArrival: undefined,
         actualDeparture: undefined,
         pieces: 0,
         weight: 0,
-        type: StopType.Pickup,
+        type: StopType.enum.Pickup,
         sequence: stopIdx,
         locationId: "",
         addressLine: "",
@@ -90,12 +94,12 @@ export function StopDialog({
         // Initialize with default values for new stop
         localForm.reset({
           stop: {
-            status: StopStatus.New,
+            status: StopStatus.enum.New,
             actualArrival: undefined,
             actualDeparture: undefined,
             pieces: 0,
             weight: 0,
-            type: StopType.Pickup,
+            type: StopType.enum.Pickup,
             sequence: stopIdx,
             locationId: "",
             addressLine: "",

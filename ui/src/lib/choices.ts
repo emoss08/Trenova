@@ -7,7 +7,7 @@ import {
   PaymentTerm,
   TransferSchedule,
 } from "@/types/billing";
-import { type ChoiceProps, Gender, Status } from "@/types/common";
+import { Gender, Status, type ChoiceProps } from "@/types/common";
 import { EquipmentClass } from "@/types/equipment-type";
 import {
   HazardousClassChoiceProps,
@@ -18,18 +18,20 @@ import {
   SegregationType,
 } from "@/types/hazmat-segregation-rule";
 import { FacilityType, LocationCategoryType } from "@/types/location-category";
-import { MoveStatus } from "@/types/move";
 import { NotificationResources } from "@/types/notification";
 import { RoleType } from "@/types/roles-permissions";
+import { ShipmentDocumentType } from "@/types/shipment";
+import { Visibility } from "@/types/table-configuration";
+import { Endorsement, PTOStatus, PTOType, WorkerType } from "@/types/worker";
+import { ConsolidationStatus } from "./schemas/consolidation-schema";
+import { MoveStatus, type MoveSchema } from "./schemas/move-schema";
 import {
   RatingMethod,
-  ShipmentDocumentType,
   ShipmentStatus,
-} from "@/types/shipment";
-import { StopStatus, StopType } from "@/types/stop";
-import { Visibility } from "@/types/table-configuration";
-import { EquipmentStatus } from "@/types/tractor";
-import { Endorsement, PTOStatus, PTOType, WorkerType } from "@/types/worker";
+  type ShipmentSchema,
+} from "./schemas/shipment-schema";
+import { StopSchema, StopStatus, StopType } from "./schemas/stop-schema";
+import { EquipmentStatus } from "./schemas/tractor-schema";
 
 /**
  * Returns status choices for a select input.
@@ -40,44 +42,67 @@ export const statusChoices = [
   { value: Status.Inactive, label: "Inactive", color: "#b91c1c" },
 ] satisfies ReadonlyArray<ChoiceProps<Status>>;
 
-export const shipmentStatusChoices = [
-  { value: ShipmentStatus.New, label: "New", color: "#9333ea" },
+export const consolidationStatusChoices = [
+  { value: ConsolidationStatus.New, label: "New", color: "#9333ea" },
   {
-    value: ShipmentStatus.PartiallyAssigned,
+    value: ConsolidationStatus.InProgress,
+    label: "In Progress",
+    color: "#4f46e5",
+  },
+  {
+    value: ConsolidationStatus.Completed,
+    label: "Completed",
+    color: "#16a34a",
+  },
+  { value: ConsolidationStatus.Canceled, label: "Canceled", color: "#dc2626" },
+] satisfies ReadonlyArray<ChoiceProps<ConsolidationStatus>>;
+
+export const shipmentStatusChoices = [
+  { value: ShipmentStatus.enum.New, label: "New", color: "#9333ea" },
+  {
+    value: ShipmentStatus.enum.PartiallyAssigned,
     label: "Partially Assigned",
     color: "#4f46e5",
   },
-  { value: ShipmentStatus.Assigned, label: "Assigned", color: "#ca8a04" },
-  { value: ShipmentStatus.InTransit, label: "In Transit", color: "#2563eb" },
-  { value: ShipmentStatus.Delayed, label: "Delayed", color: "#ea580c" },
+  { value: ShipmentStatus.enum.Assigned, label: "Assigned", color: "#ca8a04" },
   {
-    value: ShipmentStatus.PartiallyCompleted,
+    value: ShipmentStatus.enum.InTransit,
+    label: "In Transit",
+    color: "#2563eb",
+  },
+  { value: ShipmentStatus.enum.Delayed, label: "Delayed", color: "#ea580c" },
+  {
+    value: ShipmentStatus.enum.PartiallyCompleted,
     label: "Partially Completed",
     color: "#4f46e5",
   },
-  { value: ShipmentStatus.Completed, label: "Completed", color: "#16a34a" },
   {
-    value: ShipmentStatus.ReadyToBill,
+    value: ShipmentStatus.enum.Completed,
+    label: "Completed",
+    color: "#16a34a",
+  },
+  {
+    value: ShipmentStatus.enum.ReadyToBill,
     label: "Ready to Bill",
     color: "#db2777",
   },
-  { value: ShipmentStatus.Billed, label: "Billed", color: "#0d9488" },
-  { value: ShipmentStatus.Canceled, label: "Canceled", color: "#dc2626" },
-] satisfies ReadonlyArray<ChoiceProps<ShipmentStatus>>;
+  { value: ShipmentStatus.enum.Billed, label: "Billed", color: "#0d9488" },
+  { value: ShipmentStatus.enum.Canceled, label: "Canceled", color: "#dc2626" },
+] satisfies ReadonlyArray<ChoiceProps<ShipmentSchema["status"]>>;
 
 export const ratingMethodChoices = [
-  { value: RatingMethod.FlatRate, label: "Flat Rate", color: "#15803d" },
-  { value: RatingMethod.PerMile, label: "Per Mile", color: "#7e22ce" },
-  { value: RatingMethod.PerStop, label: "Per Stop", color: "#b91c1c" },
-  { value: RatingMethod.PerPound, label: "Per Pound", color: "#f59e0b" },
-  { value: RatingMethod.PerPallet, label: "Per Pallet", color: "#0369a1" },
+  { value: RatingMethod.enum.FlatRate, label: "Flat Rate", color: "#15803d" },
+  { value: RatingMethod.enum.PerMile, label: "Per Mile", color: "#7e22ce" },
+  { value: RatingMethod.enum.PerStop, label: "Per Stop", color: "#b91c1c" },
+  { value: RatingMethod.enum.PerPound, label: "Per Pound", color: "#f59e0b" },
+  { value: RatingMethod.enum.PerPallet, label: "Per Pallet", color: "#0369a1" },
   {
-    value: RatingMethod.PerLinearFoot,
+    value: RatingMethod.enum.PerLinearFoot,
     label: "Per Linear Foot",
     color: "#10b981",
   },
-  { value: RatingMethod.Other, label: "Other", color: "#ec4899" },
-] satisfies ReadonlyArray<ChoiceProps<RatingMethod>>;
+  { value: RatingMethod.enum.Other, label: "Other", color: "#ec4899" },
+] satisfies ReadonlyArray<ChoiceProps<ShipmentSchema["ratingMethod"]>>;
 
 export const equipmentStatusChoices = [
   { value: EquipmentStatus.Available, label: "Available", color: "#15803d" },
@@ -95,26 +120,30 @@ export const equipmentStatusChoices = [
 ] satisfies ReadonlyArray<ChoiceProps<EquipmentStatus>>;
 
 export const stopStatusChoices = [
-  { value: StopStatus.New, label: "New", color: "#7e22ce" },
-  { value: StopStatus.InTransit, label: "In Transit", color: "#1d4ed8" },
-  { value: StopStatus.Completed, label: "Completed", color: "#15803d" },
-  { value: StopStatus.Canceled, label: "Canceled", color: "#b91c1c" },
-] satisfies ReadonlyArray<ChoiceProps<StopStatus>>;
+  { value: StopStatus.enum.New, label: "New", color: "#7e22ce" },
+  { value: StopStatus.enum.InTransit, label: "In Transit", color: "#1d4ed8" },
+  { value: StopStatus.enum.Completed, label: "Completed", color: "#15803d" },
+  { value: StopStatus.enum.Canceled, label: "Canceled", color: "#b91c1c" },
+] satisfies ReadonlyArray<ChoiceProps<StopSchema["status"]>>;
 
 export const moveStatusChoices = [
-  { value: MoveStatus.New, label: "New", color: "#7e22ce" },
-  { value: MoveStatus.Assigned, label: "Assigned", color: "#1d4ed8" },
-  { value: MoveStatus.InTransit, label: "In Transit", color: "#15803d" },
-  { value: MoveStatus.Completed, label: "Completed", color: "#15803d" },
-  { value: MoveStatus.Canceled, label: "Canceled", color: "#b91c1c" },
-] satisfies ReadonlyArray<ChoiceProps<MoveStatus>>;
+  { value: MoveStatus.enum.New, label: "New", color: "#7e22ce" },
+  { value: MoveStatus.enum.Assigned, label: "Assigned", color: "#1d4ed8" },
+  { value: MoveStatus.enum.InTransit, label: "In Transit", color: "#15803d" },
+  { value: MoveStatus.enum.Completed, label: "Completed", color: "#15803d" },
+  { value: MoveStatus.enum.Canceled, label: "Canceled", color: "#b91c1c" },
+] satisfies ReadonlyArray<ChoiceProps<MoveSchema["status"]>>;
 
 export const stopTypeChoices = [
-  { value: StopType.Pickup, label: "Pickup", color: "#1d4ed8" },
-  { value: StopType.Delivery, label: "Delivery", color: "#15803d" },
-  { value: StopType.SplitPickup, label: "Split Pickup", color: "#a855f7" },
-  { value: StopType.SplitDelivery, label: "Split Delivery", color: "#f59e0b" },
-] satisfies ReadonlyArray<ChoiceProps<StopType>>;
+  { value: StopType.enum.Pickup, label: "Pickup", color: "#1d4ed8" },
+  { value: StopType.enum.Delivery, label: "Delivery", color: "#15803d" },
+  { value: StopType.enum.SplitPickup, label: "Split Pickup", color: "#a855f7" },
+  {
+    value: StopType.enum.SplitDelivery,
+    label: "Split Delivery",
+    color: "#f59e0b",
+  },
+] satisfies ReadonlyArray<ChoiceProps<StopSchema["type"]>>;
 
 export const segregationTypeChoices = [
   { value: SegregationType.Prohibited, label: "Prohibited", color: "#b91c1c" },

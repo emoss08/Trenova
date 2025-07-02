@@ -6,7 +6,6 @@ import {
 import { LastInspectionDateBadge } from "@/components/data-table/_components/data-table-components";
 import { EquipmentStatusBadge } from "@/components/status-badge";
 import type { TrailerSchema } from "@/lib/schemas/trailer-schema";
-import { type Trailer } from "@/types/trailer";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<TrailerSchema>[] {
@@ -30,7 +29,7 @@ export function getColumns(): ColumnDef<TrailerSchema>[] {
         return <p>{code}</p>;
       },
     }),
-    createEntityRefColumn<Trailer, "equipmentType">(
+    createEntityRefColumn<TrailerSchema, "equipmentType">(
       columnHelper,
       "equipmentType",
       {
@@ -43,7 +42,7 @@ export function getColumns(): ColumnDef<TrailerSchema>[] {
         },
       },
     ),
-    createEntityRefColumn<Trailer, "equipmentManufacturer">(
+    createEntityRefColumn<TrailerSchema, "equipmentManufacturer">(
       columnHelper,
       "equipmentManufacturer",
       {
@@ -53,15 +52,19 @@ export function getColumns(): ColumnDef<TrailerSchema>[] {
         getHeaderText: "Equipment Manufacturer",
       },
     ),
-    createEntityRefColumn<Trailer, "fleetCode">(columnHelper, "fleetCode", {
-      basePath: "/dispatch/configurations/fleet-codes",
-      getId: (fleetCode) => fleetCode.id,
-      getDisplayText: (fleetCode) => fleetCode.name,
-      getHeaderText: "Fleet Code",
-      color: {
-        getColor: (fleetCode) => fleetCode.color,
+    createEntityRefColumn<TrailerSchema, "fleetCode">(
+      columnHelper,
+      "fleetCode",
+      {
+        basePath: "/dispatch/configurations/fleet-codes",
+        getId: (fleetCode) => fleetCode.id,
+        getDisplayText: (fleetCode) => fleetCode.name,
+        getHeaderText: "Fleet Code",
+        color: {
+          getColor: (fleetCode) => fleetCode.color,
+        },
       },
-    }),
+    ),
     columnHelper.display({
       id: "lastInspectionDate",
       header: ({ column }) => (

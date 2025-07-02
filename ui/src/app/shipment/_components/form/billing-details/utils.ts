@@ -1,9 +1,8 @@
 import { AdditionalChargeSchema } from "@/lib/schemas/additional-charge-schema";
 import { ShipmentCommoditySchema } from "@/lib/schemas/shipment-commodity-schema";
-import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import { RatingMethod, ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { toNumber } from "@/lib/utils";
 import { AccessorialChargeMethod } from "@/types/billing";
-import { RatingMethod } from "@/types/shipment";
 
 /**
  * Calculate the amount for a single additional charge
@@ -84,26 +83,26 @@ export function calculateBaseCharge(shipment: ShipmentSchema) {
   let baseCharge = 0;
 
   switch (shipment.ratingMethod) {
-    case RatingMethod.FlatRate:
+    case RatingMethod.enum.FlatRate:
       baseCharge = toNumber(shipment.freightChargeAmount);
       break;
-    case RatingMethod.PerMile:
+    case RatingMethod.enum.PerMile:
       baseCharge =
         toNumber(shipment.ratingUnit) * toNumber(shipment.freightChargeAmount);
       break;
-    case RatingMethod.PerStop:
+    case RatingMethod.enum.PerStop:
       baseCharge = calculatePerStopRate(shipment);
       break;
-    case RatingMethod.PerPound:
+    case RatingMethod.enum.PerPound:
       baseCharge = toNumber(shipment.weight) * toNumber(shipment.ratingUnit);
       break;
-    case RatingMethod.PerPallet:
+    case RatingMethod.enum.PerPallet:
       baseCharge = toNumber(shipment.pieces) * toNumber(shipment.ratingUnit);
       break;
-    case RatingMethod.PerLinearFoot:
+    case RatingMethod.enum.PerLinearFoot:
       baseCharge = calculatePerLinearFootRate(shipment);
       break;
-    case RatingMethod.Other:
+    case RatingMethod.enum.Other:
       baseCharge =
         toNumber(shipment.ratingUnit) * toNumber(shipment.freightChargeAmount);
       break;

@@ -17,16 +17,16 @@ import {
 export const targetingSchema = z.object({
   channel: z.enum(Channel),
   organizationId: z.string(),
-  businessUnitId: z.string().optional().nullable(),
-  targetUserId: z.string().optional().nullable(),
-  targetRoleId: z.string().optional().nullable(),
+  businessUnitId: z.string().nullish(),
+  targetUserId: z.string().nullish(),
+  targetRoleId: z.string().nullish(),
 });
 
 const relatedEntitySchema = z.object({
   type: z.string(),
   id: z.string(),
-  name: z.string().optional().nullable(),
-  url: z.string().optional().nullable(),
+  name: z.string().nullish(),
+  url: z.string().nullish(),
 });
 
 const actionSchema = z.object({
@@ -34,8 +34,8 @@ const actionSchema = z.object({
   label: z.string(),
   type: z.string(),
   style: z.string(),
-  endpoint: z.string().optional().nullable(),
-  payload: z.record(z.string(), z.any()).optional().nullable(),
+  endpoint: z.string().nullish(),
+  payload: z.record(z.string(), z.any()).nullish(),
 });
 
 export const notificationSchema = z.object({
@@ -45,9 +45,9 @@ export const notificationSchema = z.object({
   priority: z.enum(Priority),
   channel: z.enum(Channel),
   organizationId: z.string(),
-  businessUnitId: z.string().optional().nullable(),
-  targetUserId: z.string().optional().nullable(),
-  targetRoleId: z.string().optional().nullable(),
+  businessUnitId: z.string().nullish(),
+  targetUserId: z.string().nullish(),
+  targetRoleId: z.string().nullish(),
 
   title: z.string(),
   message: z.string(),
@@ -68,8 +68,8 @@ export const notificationSchema = z.object({
   maxRetries: z.number(),
 
   source: z.string(),
-  jobId: z.string().optional().nullable(),
-  correlationId: z.string().optional().nullable(),
+  jobId: z.string().nullish(),
+  correlationId: z.string().nullish(),
   tags: z.array(z.string()),
 
   version: z.number(),

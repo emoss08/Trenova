@@ -1,9 +1,9 @@
 import { DataTable } from "@/components/data-table/data-table";
 import { LiveModePresets } from "@/lib/live-mode-utils";
+import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { getShipmentStatusRowClassName } from "@/lib/table-styles";
 import { cn } from "@/lib/utils";
 import { Resource } from "@/types/audit-entry";
-import { Shipment } from "@/types/shipment";
 import { useMemo } from "react";
 import { getColumns } from "./shipment-columns";
 import { ShipmentCreateSheet } from "./shipment-create-sheet";
@@ -13,7 +13,7 @@ export default function ShipmentTable() {
   const columns = useMemo(() => getColumns(), []);
 
   return (
-    <DataTable<Shipment>
+    <DataTable<ShipmentSchema>
       name="Shipment"
       link="/shipments/"
       extraSearchParams={{

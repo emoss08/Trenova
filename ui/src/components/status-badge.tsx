@@ -1,3 +1,11 @@
+import { ConsolidationStatus } from "@/lib/schemas/consolidation-schema";
+import { MoveStatus, type MoveSchema } from "@/lib/schemas/move-schema";
+import {
+  ShipmentStatus,
+  type ShipmentSchema,
+} from "@/lib/schemas/shipment-schema";
+import { StopStatus, type StopSchema } from "@/lib/schemas/stop-schema";
+import { EquipmentStatus } from "@/lib/schemas/tractor-schema";
 import { type WorkerSchema } from "@/lib/schemas/worker-schema";
 import { cn } from "@/lib/utils";
 import { badgeVariants } from "@/lib/variants/badge";
@@ -5,10 +13,6 @@ import { type Status } from "@/types/common";
 import { DocumentStatus, DocumentType } from "@/types/document";
 import { type PackingGroupChoiceProps } from "@/types/hazardous-material";
 import { IntegrationCategory } from "@/types/integration";
-import { MoveStatus } from "@/types/move";
-import { ShipmentStatus } from "@/types/shipment";
-import { StopStatus } from "@/types/stop";
-import { EquipmentStatus } from "@/types/tractor";
 import {
   faBadgeCheck,
   faCheck,
@@ -65,21 +69,21 @@ export function WorkerTypeBadge({ type }: { type: WorkerSchema["type"] }) {
   return <Badge {...typeAttr[type]}>{typeAttr[type].text}</Badge>;
 }
 
-export function StopStatusBadge({ status }: { status: StopStatus }) {
-  const stopStatusAttributes: Record<StopStatus, BadgeAttrProps> = {
-    [StopStatus.New]: {
+export function StopStatusBadge({ status }: { status: StopSchema["status"] }) {
+  const stopStatusAttributes: Record<StopSchema["status"], BadgeAttrProps> = {
+    [StopStatus.enum.New]: {
       variant: "purple",
       text: "New",
     },
-    [StopStatus.InTransit]: {
+    [StopStatus.enum.InTransit]: {
       variant: "info",
       text: "In Transit",
     },
-    [StopStatus.Completed]: {
+    [StopStatus.enum.Completed]: {
       variant: "active",
       text: "Completed",
     },
-    [StopStatus.Canceled]: {
+    [StopStatus.enum.Canceled]: {
       variant: "inactive",
       text: "Canceled",
     },
@@ -125,27 +129,27 @@ export function IntegrationCategoryBadge({
   );
 }
 
-export function MoveStatusBadge({ status }: { status: MoveStatus }) {
-  const moveStatusAttributes: Record<MoveStatus, BadgeAttrProps> = {
-    [MoveStatus.New]: {
+export function MoveStatusBadge({ status }: { status: MoveSchema["status"] }) {
+  const moveStatusAttributes: Record<MoveSchema["status"], BadgeAttrProps> = {
+    [MoveStatus.enum.New]: {
       variant: "purple",
       text: "New",
     },
-    [MoveStatus.Assigned]: {
+    [MoveStatus.enum.Assigned]: {
       variant: "warning",
       text: "Assigned",
     },
-    [StopStatus.InTransit]: {
+    [MoveStatus.enum.InTransit]: {
       variant: "info",
       text: "In Transit",
       icon: faSpinner,
     },
-    [StopStatus.Completed]: {
+    [MoveStatus.enum.Completed]: {
       variant: "active",
       text: "Completed",
       icon: faBadgeCheck,
     },
-    [StopStatus.Canceled]: {
+    [MoveStatus.enum.Canceled]: {
       variant: "inactive",
       text: "Canceled",
       icon: faXmark,
@@ -163,7 +167,7 @@ export function MoveStatusBadge({ status }: { status: MoveStatus }) {
           icon={moveStatusAttributes[status].icon}
           className={cn(
             "!size-3",
-            status === MoveStatus.InTransit &&
+            status === MoveStatus.enum.InTransit &&
               "motion-safe:animate-[spin_0.6s_linear_infinite]",
           )}
         />
@@ -235,79 +239,110 @@ export function DocumentStatusBadge({ status }: { status: DocumentStatus }) {
   );
 }
 
+export function ConsolidationStatusBadge({
+  status,
+}: {
+  status: ConsolidationStatus;
+}) {
+  const statusAttributes: Record<ConsolidationStatus, BadgeAttrProps> = {
+    [ConsolidationStatus.New]: {
+      variant: "purple",
+      text: "New",
+    },
+    [ConsolidationStatus.InProgress]: {
+      variant: "indigo",
+      text: "In Progress",
+    },
+    [ConsolidationStatus.Completed]: {
+      variant: "active",
+      text: "Completed",
+    },
+    [ConsolidationStatus.Canceled]: {
+      variant: "inactive",
+      text: "Canceled",
+    },
+  };
+
+  return (
+    <Badge variant={statusAttributes[status].variant} className="max-h-6">
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
 export function ShipmentStatusBadge({
   status,
   withDot = false,
   className,
 }: {
-  status?: ShipmentStatus;
+  status?: ShipmentSchema["status"];
   withDot?: boolean;
   className?: string;
 }) {
   if (!status) return null;
 
-  const statusAttributes: Record<ShipmentStatus, BadgeAttrProps> = {
-    [ShipmentStatus.New]: {
+  const statusAttributes: Record<ShipmentSchema["status"], BadgeAttrProps> = {
+    [ShipmentStatus.enum.New]: {
       variant: "purple",
       text: "New",
       icon: faSparkles,
       description:
         "Shipment has been created and is pending initial assignment.",
     },
-    [ShipmentStatus.PartiallyAssigned]: {
+    [ShipmentStatus.enum.PartiallyAssigned]: {
       variant: "indigo",
       text: "Partially Assigned",
       description:
         "Equipment or worker assignments are pending for one or more moves within this shipment.",
     },
-    [ShipmentStatus.PartiallyCompleted]: {
+    [ShipmentStatus.enum.PartiallyCompleted]: {
       variant: "indigo",
       text: "Partially Completed",
       description:
         "Some moves within this shipment have been completed, but not all.",
     },
-    [ShipmentStatus.Assigned]: {
+    [ShipmentStatus.enum.Assigned]: {
       variant: "warning",
       text: "Assigned",
       description:
         "All required equipment and workers have been assigned to this shipment's moves.",
     },
-    [ShipmentStatus.InTransit]: {
+    [ShipmentStatus.enum.InTransit]: {
       variant: "info",
       text: "In Transit",
       icon: faSpinner,
       description:
         "Active shipment with cargo currently in transport between designated locations.",
     },
-    [ShipmentStatus.Delayed]: {
+    [ShipmentStatus.enum.Delayed]: {
       variant: "orange",
       text: "Delayed",
       icon: faClock,
       description:
         "Shipment has exceeded scheduled arrival or delivery timeframes at one or more stops.",
     },
-    [ShipmentStatus.Completed]: {
+    [ShipmentStatus.enum.Completed]: {
       variant: "active",
       text: "Completed",
       icon: faCheck,
       description:
         "All transportation activities for this shipment have been successfully completed.",
     },
-    [ShipmentStatus.Billed]: {
+    [ShipmentStatus.enum.Billed]: {
       variant: "teal",
       text: "Billed",
       icon: faFileInvoiceDollar,
       description:
         "Invoice has been generated and posted for completed transportation services.",
     },
-    [ShipmentStatus.ReadyToBill]: {
+    [ShipmentStatus.enum.ReadyToBill]: {
       variant: "pink",
       text: "Ready to Bill",
       icon: faPaperPlane,
       description:
         "All moves within this shipment have been completed, and the shipment is ready to be billed.",
     },
-    [ShipmentStatus.Canceled]: {
+    [ShipmentStatus.enum.Canceled]: {
       variant: "inactive",
       text: "Canceled",
       icon: faCircleXmark,
@@ -327,7 +362,7 @@ export function ShipmentStatusBadge({
           icon={statusAttributes[status].icon}
           className={cn(
             "!size-3",
-            status === ShipmentStatus.InTransit &&
+            status === ShipmentStatus.enum.InTransit &&
               "motion-safe:animate-[spin_0.6s_linear_infinite]",
           )}
         />
@@ -411,64 +446,67 @@ export function DocumentTypeBadge({
 export function PlainShipmentStatusBadge({
   status,
 }: {
-  status: ShipmentStatus;
+  status: ShipmentSchema["status"];
 }) {
-  const statusAttributes: Record<ShipmentStatus, PlainBadgeAttrProps> = {
-    [ShipmentStatus.New]: {
+  const statusAttributes: Record<
+    ShipmentSchema["status"],
+    PlainBadgeAttrProps
+  > = {
+    [ShipmentStatus.enum.New]: {
       className: "bg-purple-600",
       text: "New",
       description:
         "Shipment has been created and is pending initial assignment.",
     },
-    [ShipmentStatus.PartiallyAssigned]: {
+    [ShipmentStatus.enum.PartiallyAssigned]: {
       className: "bg-indigo-600",
       text: "Partially Assigned",
       description:
         "Equipment or worker assignments are pending for one or more moves within this shipment.",
     },
-    [ShipmentStatus.Assigned]: {
+    [ShipmentStatus.enum.Assigned]: {
       className: "bg-warning",
       text: "Assigned",
       description:
         "All required equipment and workers have been assigned to this shipment's moves.",
     },
-    [ShipmentStatus.InTransit]: {
+    [ShipmentStatus.enum.InTransit]: {
       className: "bg-blue-600",
       text: "In Transit",
       description:
         "Active shipment with cargo currently in transport between designated locations.",
     },
-    [ShipmentStatus.Delayed]: {
+    [ShipmentStatus.enum.Delayed]: {
       className: "bg-orange-600",
       text: "Delayed",
       description:
         "Shipment has exceeded scheduled arrival or delivery timeframes at one or more stops.",
     },
-    [ShipmentStatus.Completed]: {
+    [ShipmentStatus.enum.Completed]: {
       className: "bg-green-600",
       text: "Completed",
       description:
         "All transportation activities for this shipment have been successfully completed.",
     },
-    [ShipmentStatus.PartiallyCompleted]: {
+    [ShipmentStatus.enum.PartiallyCompleted]: {
       className: "bg-indigo-600",
       text: "Partially Completed",
       description:
         "Some moves within this shipment have been completed, but not all.",
     },
-    [ShipmentStatus.Billed]: {
+    [ShipmentStatus.enum.Billed]: {
       className: "bg-teal-600",
       text: "Billed",
       description:
         "Invoice has been generated and posted for completed transportation services.",
     },
-    [ShipmentStatus.ReadyToBill]: {
+    [ShipmentStatus.enum.ReadyToBill]: {
       className: "bg-teal-600",
       text: "Ready to Bill",
       description:
         "All moves within this shipment have been completed, and the shipment is ready to be billed.",
     },
-    [ShipmentStatus.Canceled]: {
+    [ShipmentStatus.enum.Canceled]: {
       className: "bg-red-600",
       text: "Canceled",
       description:

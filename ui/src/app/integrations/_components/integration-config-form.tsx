@@ -4,10 +4,11 @@ import { Form } from "@/components/ui/form";
 import { useFormWithSave } from "@/hooks/use-form-with-save";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { queries } from "@/lib/queries";
+import type { IntegrationSchema } from "@/lib/schemas/integration-schema";
 import { upperFirst } from "@/lib/utils";
 import { api } from "@/services/api";
 import { useUser } from "@/stores/user-store";
-import { Integration, IntegrationType } from "@/types/integration";
+import { IntegrationType } from "@/types/integration";
 import { useEffect } from "react";
 import { FormProvider } from "react-hook-form";
 import { GoogleMapsForm } from "../_forms/google-maps";
@@ -32,7 +33,7 @@ function getDefaultValues(integrationType: string): Record<string, any> {
 }
 
 type IntegrationConfigFormProps = {
-  integration: Integration;
+  integration: IntegrationSchema;
   onOpenChange: (open: boolean) => void;
 };
 
@@ -51,7 +52,7 @@ export function IntegrationConfigForm({
     },
     mutationFn: async (data: Record<string, any>) => {
       const response = await api.integrations.update(
-        integration.id,
+        integration.id!,
         data,
         user?.id || "",
       );

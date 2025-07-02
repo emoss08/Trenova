@@ -1,17 +1,17 @@
 import { IntegrationCategoryBadge } from "@/components/status-badge";
 import { Button } from "@/components/ui/button";
 import { LazyImage } from "@/components/ui/image";
-import type { Integration } from "@/types/integration";
+import type { IntegrationSchema } from "@/lib/schemas/integration-schema";
 import { integrationImages } from "../_utils/integration";
 
 export default function IntegrationCard({
   integration,
   handleConfigureClick,
 }: {
-  integration: Integration;
-  handleConfigureClick: (integration: Integration) => void;
+  integration: IntegrationSchema;
+  handleConfigureClick: (integration: IntegrationSchema) => void;
 }) {
-  const getButtonText = (integration: Integration) => {
+  const getButtonText = (integration: IntegrationSchema) => {
     return integration.enabled ? "Manage" : "Enable";
   };
 

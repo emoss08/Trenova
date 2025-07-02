@@ -23,11 +23,11 @@ import {
 } from "@/lib/enhanced-data-table-api";
 import { filterUtils } from "@/lib/enhanced-data-table-utils";
 import { queries } from "@/lib/queries";
+import type { FilterStateSchema } from "@/lib/schemas/table-configuration-schema";
 import { DataTableProps } from "@/types/data-table";
 import type {
   EnhancedColumnDef,
   EnhancedDataTableConfig,
-  FilterState,
 } from "@/types/enhanced-data-table";
 import { Action } from "@/types/roles-permissions";
 import type { API_ENDPOINTS } from "@/types/server";
@@ -68,9 +68,9 @@ export interface EnhancedDataTableProps<TData extends Record<string, any>>
   extends Omit<DataTableProps<TData>, "columns"> {
   columns: EnhancedColumnDef<TData>[];
   config?: EnhancedDataTableConfig;
-  defaultFilters?: FilterState["filters"];
-  defaultSort?: FilterState["sort"];
-  onFilterChange?: (state: FilterState) => void;
+  defaultFilters?: FilterStateSchema["filters"];
+  defaultSort?: FilterStateSchema["sort"];
+  onFilterChange?: (state: FilterStateSchema) => void;
   useEnhancedBackend?: boolean;
 }
 
@@ -121,7 +121,7 @@ export function DataTable<TData extends Record<string, any>>({
     );
 
   // Derive filter state from URL parameters
-  const filterState = useMemo<FilterState>(() => {
+  const filterState = useMemo<FilterStateSchema>(() => {
     const deserialized = filterUtils.deserializeFromURL({
       query: searchParams.query || "",
       filters: searchParams.filters || "",
@@ -322,6 +322,7 @@ export function DataTable<TData extends Record<string, any>>({
     if (entityId && !rowSelection[entityId]) {
       setRowSelection({ [entityId]: true });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [entityId]); // Remove rowSelection from deps to prevent infinite loop
 
   // Handle row selection changes (when user clicks on table rows)
@@ -358,7 +359,7 @@ export function DataTable<TData extends Record<string, any>>({
   ]);
 
   const handleFilterChange = useCallback(
-    (newFilterState: FilterState) => {
+    (newFilterState: FilterStateSchema) => {
       const urlParams = filterUtils.serializeToURL(newFilterState);
 
       setSearchParams({

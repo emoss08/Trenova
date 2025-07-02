@@ -41,6 +41,11 @@ export const adminLinks: SidebarLink[] = [
     group: "Organization",
   },
   {
+    href: "/organization/consolidation-settings/",
+    title: "Consolidation Settings",
+    group: "Organization",
+  },
+  {
     href: "/organization/route-controls/",
     title: "Route Controls",
     group: "Organization",
@@ -282,6 +287,12 @@ export const routes: RouteInfo[] = [
         supportsModal: true,
       },
       {
+        key: Resource.Consolidation,
+        label: "Consolidation Groups",
+        link: "/shipments/consolidation-groups",
+        supportsModal: true,
+      },
+      {
         key: Resource.ConfigurationFiles,
         label: "Configuration Files",
         icon: faFiles,
@@ -393,6 +404,12 @@ export const routes: RouteInfo[] = [
         key: Resource.Integration,
         label: "Apps & Integrations",
         link: "/organization/integrations/",
+        supportsModal: false,
+      },
+      {
+        key: Resource.ConsolidationSettings,
+        label: "Consolidation Settings",
+        link: "/organization/consolidation-settings/",
         supportsModal: false,
       },
       {

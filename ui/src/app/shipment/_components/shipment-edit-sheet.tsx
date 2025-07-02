@@ -21,7 +21,6 @@ import {
   type ShipmentSchema,
 } from "@/lib/schemas/shipment-schema";
 import { EditTableSheetProps } from "@/types/data-table";
-import { type Shipment } from "@/types/shipment";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
@@ -121,7 +120,7 @@ export function ShipmentEditSheet({
 
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: ShipmentSchema) => {
-      const response = await http.put<Shipment>(
+      const response = await http.put<ShipmentSchema>(
         `/shipments/${currentRecord?.id}`,
         values,
       );

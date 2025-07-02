@@ -48,6 +48,12 @@ export const queries = createQueryKeyStore({
       },
       enabled,
     }),
+    getConsolidationSettings: () => ({
+      queryKey: ["consolidationSettings"],
+      queryFn: async () => {
+        return await api.consolidationSettings.get();
+      },
+    }),
     getDatabaseBackups: () => ({
       queryKey: ["databaseBackups"],
       queryFn: async () => {

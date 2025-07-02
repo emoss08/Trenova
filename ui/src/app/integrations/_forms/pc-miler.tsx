@@ -1,10 +1,10 @@
 import { InputField } from "@/components/fields/input-field";
 import { FormControl } from "@/components/ui/form";
-import type { PCMilerConfigData } from "@/types/integration";
+import type { PCMilerConfigurationSchema } from "@/lib/schemas/integration-schema";
 import { useFormContext } from "react-hook-form";
 
 export function PCMilerForm() {
-  const { control } = useFormContext<PCMilerConfigData>();
+  const { control } = useFormContext<PCMilerConfigurationSchema>();
 
   return (
     <>

@@ -1,7 +1,6 @@
 import { FormCreateModal } from "@/components/ui/form-create-modal";
-import { tractorSchema } from "@/lib/schemas/tractor-schema";
+import { EquipmentStatus, tractorSchema } from "@/lib/schemas/tractor-schema";
 import { type TableSheetProps } from "@/types/data-table";
-import { EquipmentStatus } from "@/types/tractor";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { TractorForm } from "./tractor-form";
@@ -10,6 +9,7 @@ export function CreateTractorModal({ open, onOpenChange }: TableSheetProps) {
   const form = useForm({
     resolver: zodResolver(tractorSchema),
     defaultValues: {
+      id: undefined,
       status: EquipmentStatus.Available,
       vin: "",
       equipmentManufacturerId: "",
@@ -21,14 +21,20 @@ export function CreateTractorModal({ open, onOpenChange }: TableSheetProps) {
       code: "",
       model: "",
       make: "",
-      year: undefined,
+      year: 0,
       registrationNumber: "",
       licensePlateNumber: "",
       registrationExpiry: undefined,
       createdAt: undefined,
       updatedAt: undefined,
       version: undefined,
-      id: undefined,
+      fleetCode: null,
+      equipmentType: null,
+      equipmentManufacturer: null,
+      primaryWorker: null,
+      secondaryWorker: null,
+      organizationId: undefined,
+      businessUnitId: undefined,
     },
   });
 
