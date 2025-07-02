@@ -1,0 +1,98 @@
+import { Button } from "@/components/ui/button";
+import {
+  Sheet,
+  SheetBody,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
+import {
+  createConsolidationSchema,
+  type CreateConsolidationSchema,
+} from "@/lib/schemas/consolidation-schema";
+import { api } from "@/services/api";
+import { TableSheetProps } from "@/types/data-table";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
+import { useCallback } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { ConsolidationForm } from "./consolidation-form";
+
+export function ConsolidationCreateSheet({
+  open,
+  onOpenChange,
+}: TableSheetProps) {
+  const queryClient = useQueryClient();
+
+  const form = useForm<CreateConsolidationSchema>({
+    resolver: zodResolver(createConsolidationSchema),
+    defaultValues: {
+      shipmentIds: [],
+    },
+  });
+
+  const createMutation = useApiMutation({
+    mutationFn: (values: CreateConsolidationSchema) =>
+      api.consolidations.create(values),
+    onSuccess: async () => {
+      await broadcastQueryInvalidation({ queryKey: ["consolidation-list"] });
+      await queryClient.invalidateQueries({
+        queryKey: ["consolidation-list"],
+      });
+      toast.success("Consolidation created successfully");
+      onOpenChange(false);
+      form.reset();
+    },
+    onError: (error) => {
+      toast.error("Failed to create consolidation", {
+        description: error.message,
+      });
+    },
+  });
+
+  const handleSubmit = useCallback(
+    async (values: CreateConsolidationSchema) => {
+      await createMutation.mutateAsync(values);
+    },
+    [createMutation],
+  );
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent className="w-full sm:max-w-[600px]">
+        <SheetHeader>
+          <SheetTitle>Create New Consolidation</SheetTitle>
+          <SheetDescription>
+            Create a new consolidation group by selecting shipments to
+            consolidate together.
+          </SheetDescription>
+        </SheetHeader>
+        <FormProvider {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)}>
+            <SheetBody>
+              <ConsolidationForm />
+            </SheetBody>
+            <SheetFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => onOpenChange(false)}
+                disabled={createMutation.isPending}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" disabled={createMutation.isPending}>
+                {createMutation.isPending ? "Creating..." : "Create"}
+              </Button>
+            </SheetFooter>
+          </form>
+        </FormProvider>
+      </SheetContent>
+    </Sheet>
+  );
+}

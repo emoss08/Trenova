@@ -69,6 +69,9 @@ const (
 	ResourceShipment = Resource(
 		"shipment",
 	) // Represents resources for managing shipments.
+	ResourceConsolidation = Resource(
+		"consolidation",
+	) // Represents resources for managing consolidation groups.
 	ResourceBillingQueue = Resource(
 		"billing_queue",
 	) // Represents resources for managing billing queue.
@@ -433,6 +436,10 @@ var (
 				ActionReadyToBill,
 				ActionSplit,
 			)...,
+		),
+		ResourceConsolidation: append(
+			BaseActions,
+			WorkflowActions...,
 		),
 		ResourceAssignment: {
 			ActionAssign, // can the user assign the move to the worker?

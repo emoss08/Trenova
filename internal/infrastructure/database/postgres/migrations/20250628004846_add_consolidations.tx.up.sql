@@ -12,13 +12,19 @@ CREATE TABLE IF NOT EXISTS "consolidation_groups"(
     "organization_id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
     "status" consolidation_group_status_enum NOT NULL DEFAULT 'New',
+    -- Cancellation Related Fields
+    "canceled_by_id" varchar(100),
+    "canceled_at" bigint,
+    "cancel_reason" varchar(100),
+    -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
     -- Constraints
     CONSTRAINT "pk_consolidation_groups" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
     CONSTRAINT "fk_consolidation_groups_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "fk_consolidation_groups_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE
+    CONSTRAINT "fk_consolidation_groups_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_consolidation_groups_canceled_by" FOREIGN KEY ("canceled_by_id") REFERENCES "users"("id") ON UPDATE NO ACTION ON DELETE SET NULL
 );
 
 --bun:split

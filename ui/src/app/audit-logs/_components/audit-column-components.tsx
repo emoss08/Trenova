@@ -149,6 +149,7 @@ export function ActionBadge({
   );
 }
 
+// TODO(Wolfred): We need to figure out how to auto-generate this.
 export function AuditEntryResourceBadge({
   resource,
   withDot,
@@ -214,6 +215,14 @@ export function AuditEntryResourceBadge({
     [Resource.Shipment]: {
       variant: "indigo",
       text: "Shipment",
+    },
+    [Resource.Consolidation]: {
+      variant: "indigo",
+      text: "Shipment",
+    },
+    [Resource.ConsolidationSettings]: {
+      variant: "indigo",
+      text: "Consolidation Group",
     },
     [Resource.DocumentType]: {
       variant: "indigo",

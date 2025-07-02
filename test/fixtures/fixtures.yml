@@ -323,7 +323,6 @@
       description: "Trenova Transportation"
       created_at: "{{ timestamp }}"
 
-
 - model: Organization
   rows:
     - _id: trenova
@@ -738,7 +737,7 @@
       name: "Target"
       address_line_1: "1234 Main St"
       code: "TAR001"
-      city: "Minneapolis" 
+      city: "Minneapolis"
       postal_code: "55401"
       state_id: "{{ $.UsState.mn.ID }}"
       longitude: -93.263611
@@ -761,7 +760,7 @@
       location_category_id: "{{ $.LocationCategory.location_category_1.ID }}"
       place_id: "ChIJN1t_Hh4kF4RUsoyG83frY4"
       is_geocoded: true
-    - _id: test_location_6  
+    - _id: test_location_6
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ now.Unix }}"
@@ -1101,7 +1100,7 @@
       created_at: "{{ now.Unix }}"
     - _id: walmart_billing_profile
       organization_id: "{{ $.Organization.trenova.ID }}"
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}" 
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       customer_id: "{{ $.Customer.walmart_customer.ID }}"
       created_at: "{{ now.Unix }}"
 
@@ -1128,6 +1127,17 @@
       customer_id: "{{ $.Customer.walmart_customer.ID }}"
       created_at: "{{ now.Unix }}"
 
+- model: ConsolidationGroup
+  rows:
+    - _id: consolidation_group_1
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ now.Unix }}"
+      status: "New"
+      consolidation_number: "C1234512321"
+      version: 1
+      updated_at: "{{ now.Unix }}"
+
 - model: Shipment
   rows:
     - _id: test_shipment
@@ -1149,6 +1159,7 @@
       weight: 1000
       temperature_min: 10
       temperature_max: 20
+      consolidation_group_id: "{{ $.ConsolidationGroup.consolidation_group_1.ID }}"
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
       trailer_type_id: "{{ $.EquipmentType.trailer_equip_type.ID }}"
 
@@ -1171,6 +1182,7 @@
       weight: 1000
       temperature_min: 10
       temperature_max: 20
+      consolidation_group_id: "{{ $.ConsolidationGroup.consolidation_group_1.ID }}"
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
       trailer_type_id: "{{ $.EquipmentType.trailer_equip_type.ID }}"
 
@@ -1301,6 +1313,7 @@
       canceled_at: "{{ now.Unix }}"
       canceled_by_id: "{{ $.User.test_user.ID }}"
       cancel_reason: "Test"
+
 
 - model: ShipmentMove
   rows:
