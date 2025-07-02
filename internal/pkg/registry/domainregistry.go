@@ -93,5 +93,6 @@ func RegisterEntities() []any {
 		&dedicatedlane.PatternConfig{},
 		&dedicatedlane.DedicatedLaneSuggestion{},
 		&consolidation.ConsolidationSettings{},
+		&consolidation.ConsolidationGroup{},
 	}
 }

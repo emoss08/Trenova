@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/billingqueue"
 	"github.com/emoss08/trenova/internal/core/services/calculator"
 	"github.com/emoss08/trenova/internal/core/services/commodity"
+	"github.com/emoss08/trenova/internal/core/services/consolidation"
 	"github.com/emoss08/trenova/internal/core/services/customer"
 	"github.com/emoss08/trenova/internal/core/services/dbbackup"
 	"github.com/emoss08/trenova/internal/core/services/dedicatedlane"
@@ -78,6 +79,7 @@ var Module = fx.Module("services", fx.Provide(
 	tractor.NewService,
 	trailer.NewService,
 	customer.NewService,
+	consolidation.NewService,
 	shipment.NewService,
 	routing.NewService,
 	assignment.NewService,

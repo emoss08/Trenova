@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrol"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueue"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
+	"github.com/emoss08/trenova/internal/api/handlers/consolidation"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlane"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlanesuggestion"
@@ -76,6 +77,7 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	tractor.NewHandler,
 	trailer.NewHandler,
 	customer.NewHandler,
+	consolidation.NewHandler,
 	shipment.NewHandler,
 	routing.NewHandler,
 	assignment.NewHandler,

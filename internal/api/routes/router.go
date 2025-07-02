@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/billingcontrol"
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueue"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
+	"github.com/emoss08/trenova/internal/api/handlers/consolidation"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlane"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlanesuggestion"
@@ -108,6 +109,7 @@ type RouterParams struct {
 	TractorHandler                 *tractor.Handler
 	TrailerHandler                 *trailer.Handler
 	CustomerHandler                *customer.Handler
+	ConsolidationHandler           *consolidation.Handler
 	ShipmentHandler                *shipment.Handler
 	RoutingHandler                 *routing.Handler
 	AssignmentHandler              *assignment.Handler
@@ -262,6 +264,9 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Customers
 	r.p.CustomerHandler.RegisterRoutes(router, rl)
+
+	// Consolidations
+	r.p.ConsolidationHandler.RegisterRoutes(router, rl)
 
 	// Shipments
 	r.p.ShipmentHandler.RegisterRoutes(router, rl)
