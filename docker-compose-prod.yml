@@ -11,6 +11,9 @@ services:
       POSTGRES_DB: trenova_go_db
       POSTGRES_INITDB_ARGS: "--data-checksums"
       POSTGRES_MULTIPLE_EXTENSIONS: "pg_stat_statements,pg_trgm,btree_gin,btree_gist"
+      POSTGRES_REPLICATION_MODE: master
+      POSTGRES_REPLICATION_USER: replicator
+      POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:-replicator_password}
     command:
       - "postgres"
       - "-c"
@@ -45,6 +48,7 @@ services:
     volumes:
       - pg_data:/var/lib/postgresql/data
       - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./scripts/init-replication.sh:/docker-entrypoint-initdb.d/init-replication.sh:ro
     deploy:
       resources:
         limits:
@@ -61,34 +65,89 @@ services:
       retries: 5
       start_period: 30s
 
-  tren-pgbouncer:
-    container_name: tren-pgbouncer
-    image: edoburu/pgbouncer:latest
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres@tren-db:5432/trenova_go_db?sslmode=disable
-    volumes:
-      - ./config/production/pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
-      - ./config/production/pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+  tren-db-replica1:
+    container_name: tren-db-replica1
+    image: postgres:latest
     ports:
-      - "6432:6432"
-    depends_on:
-      tren-db:
-        condition: service_healthy
+      - "5433:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: trenova_go_db
+      POSTGRES_MASTER_SERVICE: tren-db
+      POSTGRES_REPLICATION_MODE: slave
+      POSTGRES_REPLICATION_USER: replicator
+      POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:-replicator_password}
+      POSTGRES_MASTER_PORT: 5432
+    volumes:
+      - pg_replica1_data:/var/lib/postgresql/data
+      - ./config/postgresql-replica.conf:/etc/postgresql/postgresql.conf:ro
+      - ./scripts/setup-replica.sh:/docker-entrypoint-initdb.d/setup-replica.sh:ro
+    command:
+      - "postgres"
+      - "-c"
+      - "config_file=/etc/postgresql/postgresql.conf"
     restart: always
-    networks:
-      - app-network
     deploy:
       resources:
         limits:
-          memory: 256M
+          memory: 1G
+          cpus: "2"
         reservations:
-          memory: 128M
+          memory: 512M
+    networks:
+      - app-network
+    depends_on:
+      tren-db:
+        condition: service_healthy
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -h localhost -p 6432 -U postgres -d trenova_go_db" ]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d trenova_go_db" ]
       interval: 10s
       timeout: 5s
       retries: 5
-      start_period: 10s
+      start_period: 60s
+
+  tren-db-replica2:
+    container_name: tren-db-replica2
+    image: postgres:latest
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_DB: trenova_go_db
+      POSTGRES_MASTER_SERVICE: tren-db
+      POSTGRES_REPLICATION_MODE: slave
+      POSTGRES_REPLICATION_USER: replicator
+      POSTGRES_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:-replicator_password}
+      POSTGRES_MASTER_PORT: 5432
+    volumes:
+      - pg_replica2_data:/var/lib/postgresql/data
+      - ./config/postgresql-replica.conf:/etc/postgresql/postgresql.conf:ro
+      - ./scripts/setup-replica.sh:/docker-entrypoint-initdb.d/setup-replica.sh:ro
+    command:
+      - "postgres"
+      - "-c"
+      - "config_file=/etc/postgresql/postgresql.conf"
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "2"
+        reservations:
+          memory: 512M
+    networks:
+      - app-network
+    depends_on:
+      tren-db:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d trenova_go_db" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
 
   tren-redis:
     container_name: tren-redis
@@ -405,6 +464,8 @@ services:
 
 volumes:
   pg_data: {}
+  pg_replica1_data: {}
+  pg_replica2_data: {}
   redis_data: {}
   minio_data: {}
   caddy_data: {}

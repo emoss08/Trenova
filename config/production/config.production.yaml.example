@@ -1,0 +1,52 @@
+# Production Configuration Example with Read Replicas
+
+app:
+  name: "Trenova"
+  environment: "production"
+  version: "1.0.0"
+
+server:
+  listenAddress: ":3001"
+  secretKey: "${SERVER_SECRET_KEY}"
+
+db:
+  driver: "postgresql"
+  host: "${DB_HOST:-tren-pgbouncer}"
+  port: ${DB_PORT:-6432}
+  username: "${DB_USER}"
+  password: "${DB_PASSWORD}"
+  database: "${DB_NAME:-trenova_go_db}"
+  sslMode: "${DB_SSL_MODE:-require}"
+  maxConnections: 50
+  maxIdleConns: 20
+  connMaxLifetime: 600
+  connMaxIdleTime: 120
+  debug: false
+  
+  # Read/Write Separation Configuration
+  enableReadWriteSeparation: true
+  replicaLagThreshold: 10  # seconds - higher threshold for production
+  
+  readReplicas:
+    - name: "replica1"
+      host: "${DB_REPLICA1_HOST:-tren-db-replica1}"
+      port: ${DB_REPLICA1_PORT:-5432}
+      weight: 2  # Higher weight = more traffic
+      maxConnections: 40
+      maxIdleConns: 20
+    
+    - name: "replica2"
+      host: "${DB_REPLICA2_HOST:-tren-db-replica2}"
+      port: ${DB_REPLICA2_PORT:-5432}
+      weight: 1
+      maxConnections: 30
+      maxIdleConns: 15
+
+redis:
+  addr: "${REDIS_ADDR:-tren-redis:6379}"
+  password: "${REDIS_PASSWORD}"
+  db: ${REDIS_DB:-0}
+  poolSize: 50
+  minIdleConns: 20
+
+# Other configuration sections...

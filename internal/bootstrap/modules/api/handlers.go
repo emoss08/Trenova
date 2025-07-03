@@ -49,6 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/usstate"
 	"github.com/emoss08/trenova/internal/api/handlers/websocket"
 	"github.com/emoss08/trenova/internal/api/handlers/worker"
+	"github.com/emoss08/trenova/internal/api/handlers"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"go.uber.org/fx"
 )
@@ -103,4 +104,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	websocket.NewHandler,
 	notificationpreference.NewHandler,
 	notification.NewHandler,
+	handlers.NewMetricsHandler,
 ))

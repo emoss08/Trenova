@@ -1,18 +1,18 @@
 app:
   name: Trenova
   environment: development
-  version: 0.7.3
+  version: 0.7.4-preview
 
 server:
   secretKey: "mBYDjH5A9c5dLhV2TjGa8g8KZx5Wou0BO0jyvhzKHQo="
   listenAddress: ":3001"
   immutable: false
-  readBufferSize: 4096
-  writeBufferSize: 4096
+  readBufferSize: 8192
+  writeBufferSize: 8192
   enablePrefork: false
   enablePrintRoutes: false
-  concurrency: 262144
-  disableStartupMessage: true
+  concurrency: 1048576
+  disableStartupMessage: false
   streamRequestBody: true
   strictRouting: false
   caseSensitive: true
@@ -26,10 +26,10 @@ server:
 
 logging:
   level: debug
-  samplingPeriod: 10s
-  samplingInterval: 1000
+  samplingPeriod: 30s
+  samplingInterval: 5000
   file:
-    enabled: true
+    enabled: false
     path: "logs"
     fileName: "trenova.log"
     maxSize: 10
@@ -45,10 +45,10 @@ db:
   username: postgres
   password: postgres
   sslMode: disable
-  maxConnections: 10
-  maxIdleConns: 10
-  connMaxLifetime: 3600
-  connMaxIdleTime: 3600
+  maxConnections: 80
+  maxIdleConns: 40
+  connMaxLifetime: 300
+  connMaxIdleTime: 60
   debug: false
 
 auth:
@@ -60,8 +60,8 @@ auth:
   cookieSameSite: "Lax"
 
 audit:
-  bufferSize: 1000
-  flushInterval: 10
+  bufferSize: 5000
+  flushInterval: 30
 
 cors:
   allowedOrigins: "http://localhost:5173, http://localhost:3001, http://localhost:4173"
@@ -77,8 +77,8 @@ redis:
   connTimeout: 10s
   readTimeout: 10s
   writeTimeout: 10s
-  poolSize: 10
-  minIdleConns: 10
+  poolSize: 200
+  minIdleConns: 100
 
 minio:
   endpoint: "localhost:9000"
@@ -116,7 +116,7 @@ kafka:
 
 streaming:
   pollInterval: 2s
-  maxConnections: 100
-  maxConnectionsPerUser: 10
+  maxConnections: 500
+  maxConnectionsPerUser: 50
   streamTimeout: 0s  # 0 means no timeout - streams will run indefinitely
   enableHeartbeat: true
