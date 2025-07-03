@@ -20,6 +20,7 @@ LOG_FILE="stress_test_$(date +%Y%m%d_%H%M%S).log"
 COOKIE_FILE="cookie.txt"
 RESULTS_DIR="stress_test_results"
 SESSION_COOKIE_NAME="trv-session-id"
+USE_HEY="${USE_HEY:-false}"
 
 # Default test configuration (can be overridden via command line)
 DEFAULT_CONCURRENT_REQUESTS=50
@@ -74,6 +75,7 @@ log() {
 	local level=$1
 	local message=$2
 	local color=""
+	local timestamp=$(date '+%Y-%m-%d %H:%M:%S')
 
 	case $level in
 	"ERROR") color=$RED ;;
@@ -130,7 +132,16 @@ start_system_monitor() {
 stop_system_monitor() {
 	if [ "$MONITOR_SYSTEM" = true ] && [ -n "${MONITOR_PID:-}" ]; then
 		kill "$MONITOR_PID" 2>/dev/null || true
-		wait "$MONITOR_PID" 2>/dev/null || true
+		# Wait for up to 2 seconds for the process to terminate
+		local count=0
+		while kill -0 "$MONITOR_PID" 2>/dev/null && [ $count -lt 20 ]; do
+			sleep 0.1
+			count=$((count + 1))
+		done
+		# Force kill if still running
+		if kill -0 "$MONITOR_PID" 2>/dev/null; then
+			kill -9 "$MONITOR_PID" 2>/dev/null || true
+		fi
 		log "INFO" "System monitoring stopped"
 	fi
 }
@@ -146,6 +157,11 @@ setup() {
 			missing_deps+=("$cmd")
 		fi
 	done
+	
+	# Check for hey if USE_HEY is true
+	if [ "$USE_HEY" = true ] && ! command -v hey >/dev/null 2>&1; then
+		missing_deps+=("hey")
+	fi
 
 	if [ ${#missing_deps[@]} -ne 0 ]; then
 		log "ERROR" "Missing dependencies: ${missing_deps[*]}"
@@ -289,15 +305,15 @@ execute_request() {
 	duration=$(echo "$end_time - $start_time" | bc -l)
 
 	# Parse curl output
-	if [ $curl_exit_code -eq 0 ] && [[ $curl_output =~ ^[0-9]+,[0-9.]+,[0-9]+,[0-9]+$ ]]; then
-		IFS=',' read -r http_code size_download size_upload <<<"$curl_output"
+	if [ $curl_exit_code -eq 0 ] && [[ $curl_output =~ ^[0-9]+,[0-9.]+,[0-9.]+,[0-9.]+$ ]]; then
+		IFS=',' read -r http_code curl_time size_download size_upload <<<"$curl_output"
 
 		# Log result
 		echo "$http_code $duration $size_download $size_upload $request_id" >>"$RESULTS_FILE"
 
 		# Update global metrics
-		TOTAL_BYTES_SENT=$((TOTAL_BYTES_SENT + size_upload))
-		TOTAL_BYTES_RECEIVED=$((TOTAL_BYTES_RECEIVED + size_download))
+		TOTAL_BYTES_SENT=$(echo "$TOTAL_BYTES_SENT + $size_upload" | bc -l)
+		TOTAL_BYTES_RECEIVED=$(echo "$TOTAL_BYTES_RECEIVED + $size_download" | bc -l)
 
 		if [ "$http_code" = "200" ]; then
 			SUCCESSFUL_REQUESTS=$((SUCCESSFUL_REQUESTS + 1))
@@ -319,6 +335,100 @@ execute_request() {
 	rm -f "$response_file" "$headers_file"
 }
 
+# Hey-based test execution
+execute_hey_test() {
+	local endpoint=$1
+	local concurrent=$2
+	local total=$3
+	local duration=${4:-0}
+	local test_type=$5
+	
+	log "INFO" "Running hey-based $test_type test"
+	
+	# Prepare hey command
+	local hey_cmd="hey"
+	
+	if [ "$duration" -gt 0 ]; then
+		hey_cmd="$hey_cmd -z ${duration}s"
+	else
+		hey_cmd="$hey_cmd -n $total"
+	fi
+	
+	hey_cmd="$hey_cmd -c $concurrent"
+	hey_cmd="$hey_cmd -o csv"
+	hey_cmd="$hey_cmd -H \"Cookie: $(cat $COOKIE_FILE)\""
+	hey_cmd="$hey_cmd -H \"Content-Type: application/json\""
+	hey_cmd="$hey_cmd \"${API_BASE_URL}/${endpoint}\""
+	
+	# Execute hey and capture output
+	local hey_output
+	hey_output=$(mktemp)
+	
+	log "DEBUG" "Executing: $hey_cmd"
+	eval "$hey_cmd" > "$hey_output" 2>&1
+	
+	# Parse hey CSV output for metrics
+	if [ -f "$hey_output" ]; then
+		# Check if hey produced valid output
+		local first_line=$(head -1 "$hey_output")
+		if [[ "$first_line" == "response-time"* ]]; then
+			# Hey CSV format: response-time,DNS+dialup,DNS,Request-write,Response-delay,Response-read,status,error
+			local total_requests=0
+			local successful_requests=0
+			local failed_requests=0
+			local total_time=0
+			
+			while IFS=',' read -r response_time dialup dns req_write resp_delay resp_read status error; do
+				# Skip header
+				if [[ "$response_time" == "response-time" ]]; then
+					continue
+				fi
+				
+				# Skip empty lines
+				if [ -z "$response_time" ]; then
+					continue
+				fi
+				
+				total_requests=$((total_requests + 1))
+				
+				if [ "$status" = "200" ]; then
+					successful_requests=$((successful_requests + 1))
+					# Convert nanoseconds to seconds
+					local time_in_seconds=$(echo "scale=6; $response_time / 1000000000" | bc -l)
+					echo "200 $time_in_seconds 0 0 $total_requests" >> "$RESULTS_FILE"
+				else
+					failed_requests=$((failed_requests + 1))
+					echo "000 0 0 0 $total_requests" >> "$RESULTS_FILE"
+				fi
+				
+				# Convert to seconds and accumulate
+				total_time=$(echo "$total_time + $response_time / 1000000000" | bc -l)
+			done < "$hey_output"
+			
+			# Update global metrics
+			TOTAL_REQUESTS=$total_requests
+			SUCCESSFUL_REQUESTS=$successful_requests
+			FAILED_REQUESTS=$failed_requests
+			
+			# Calculate average response time
+			if [ "$total_requests" -gt 0 ]; then
+				local avg_time=$(echo "scale=3; $total_time / $total_requests" | bc -l)
+				log "METRICS" "Total: $total_requests, Success: $successful_requests, Failed: $failed_requests, Avg: ${avg_time}s"
+			fi
+		else
+			# Hey produced an error or summary output
+			log "ERROR" "Hey output: $(cat $hey_output)"
+			FAILED_REQUESTS=1000
+			SUCCESSFUL_REQUESTS=0
+			TOTAL_REQUESTS=1000
+		fi
+	else
+		log "ERROR" "Hey test failed to produce output"
+	fi
+	
+	rm -f "$hey_output"
+}
+
 # Spike test pattern
 run_spike_test() {
 	local endpoint=$1
@@ -327,16 +437,20 @@ run_spike_test() {
 
 	log "INFO" "Running SPIKE test pattern (instant load)"
 
-	# Launch all requests at once
-	for ((i = 1; i <= total; i++)); do
-		execute_request "$endpoint" "$i" 15 &
+	if [ "$USE_HEY" = true ]; then
+		execute_hey_test "$endpoint" "$concurrent" "$total" 0 "spike"
+	else
+		# Launch all requests at once
+		for ((i = 1; i <= total; i++)); do
+			execute_request "$endpoint" "$i" 15 &
 
-		# Prevent system overload
-		if ((i % concurrent == 0)); then
-			wait
-		fi
-	done
-	wait
+			# Prevent system overload
+			if ((i % concurrent == 0)); then
+				wait
+			fi
+		done
+		wait
+	fi
 }
 
 # Ramp-up test pattern
@@ -378,17 +492,21 @@ run_sustained_test() {
 
 	log "INFO" "Running SUSTAINED test pattern (${concurrent} concurrent for ${duration}s)"
 
-	local end_time=$(($(date +%s) + duration))
-	local request_counter=0
+	if [ "$USE_HEY" = true ]; then
+		execute_hey_test "$endpoint" "$concurrent" 0 "$duration" "sustained"
+	else
+		local end_time=$(($(date +%s) + duration))
+		local request_counter=0
 
-	while [ "$(date +%s)" -lt $end_time ]; do
-		for ((i = 1; i <= concurrent; i++)); do
-			request_counter=$((request_counter + 1))
-			execute_request "$endpoint" "$request_counter" 10 &
+		while [ "$(date +%s)" -lt $end_time ]; do
+			for ((i = 1; i <= concurrent; i++)); do
+				request_counter=$((request_counter + 1))
+				execute_request "$endpoint" "$request_counter" 10 &
+			done
+			wait
+			sleep 0.1
 		done
-		wait
-		sleep 0.1
-	done
+	fi
 }
 
 # Burst test pattern
@@ -698,6 +816,7 @@ OPTIONS:
     -r, --ramp-time N      Ramp-up time in seconds (default: 10)
     -m, --monitor          Enable system monitoring
     -v, --verbose          Enable verbose logging
+    --hey                  Use hey load testing tool instead of curl
 
 COMMANDS:
     test PATTERN ENDPOINT  Run specific test pattern on endpoint
@@ -887,6 +1006,10 @@ main() {
 			set -x
 			shift
 			;;
+		--hey)
+			USE_HEY=true
+			shift
+			;;
 		test)
 			command="test"
 			pattern="$2"
@@ -984,3 +1107,9 @@ EOF
 
 # Execute main function with all arguments
 main "$@"
+
+# Ensure cleanup is called
+cleanup
+
+# Exit cleanly
+exit 0

@@ -55,11 +55,6 @@ cd microservices/email/
 make dev                   # Development
 make build                 # Build
 make test                  # Test
-
-# Workflow service
-cd microservices/workflow/
-make run                   # Development
-make build                 # Build
 ```
 
 ## Architecture
@@ -135,5 +130,5 @@ The system manages transportation logistics including:
 
 ## Code Comments and Documentation
 
-- When writing inline comments (comments inside functions) make sure to prefix them with * for example // * this is a comment. 
+- When writing inline comments (comments inside functions) make sure to prefix them with *for example //* this is a comment.
 - If the comment is important and notes some type of behavior that may be unexpected or just an important note use the prefix ! for example // ! this is an important comment.

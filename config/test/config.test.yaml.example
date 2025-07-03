@@ -1,0 +1,64 @@
+# Test Configuration with Read Replicas
+# This configuration is used for integration tests that need read/write separation
+
+app:
+  name: "Trenova Test"
+  environment: "test"
+  version: "1.0.0"
+
+server:
+  listenAddress: ":3001"
+  secretKey: "test-secret-key"
+
+db:
+  driver: "postgresql"
+  host: "localhost"
+  port: 5432
+  username: "postgres"
+  password: "postgres"
+  database: "trenova_test_db"
+  sslMode: "disable"
+  maxConnections: 10
+  maxIdleConns: 5
+  connMaxLifetime: 300
+  connMaxIdleTime: 60
+  debug: false
+  
+  # Read/Write Separation Configuration for Testing
+  enableReadWriteSeparation: true
+  replicaLagThreshold: 2  # Lower threshold for testing
+  
+  readReplicas:
+    - name: "test-replica1"
+      host: "localhost"
+      port: 5433
+      weight: 1
+      maxConnections: 10
+      maxIdleConns: 5
+    
+    - name: "test-replica2"
+      host: "localhost"
+      port: 5434
+      weight: 1
+      maxConnections: 10
+      maxIdleConns: 5
+
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 1  # Use different DB for tests
+  poolSize: 10
+  minIdleConns: 5
+
+# Simplified configuration for testing
+logging:
+  level: "debug"
+  file:
+    enabled: false
+
+auth:
+  sessionCookieName: "test_session"
+  cookiePath: "/"
+  cookieSecure: false
+  cookieHTTPOnly: true
+  sessionTTL: 3600

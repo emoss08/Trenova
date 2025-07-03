@@ -8,6 +8,17 @@ This document outlines the system resource requirements needed to self-host the 
 
 Trenova is a containerized application with integrated background job processing that provides a comprehensive Transportation Management System (TMS). When self-hosting, you'll be responsible for managing all these components on your own infrastructure. The application is designed to be scalable and can be adjusted based on your organization's needs and available resources.
 
+## Quick Sizing Guide
+
+| User Count | Concurrent Users | CPU Cores | RAM | Storage | Expected Performance |
+|------------|------------------|-----------|-----|---------|---------------------|
+| < 10,000 | 50 | 8 | 16GB | 100GB SSD | 20,000+ req/s |
+| 10K-50K | 100-200 | 16 | 32GB | 200GB SSD | 30,000-130,000 req/s |
+| 50K-100K | 200-500 | 24 | 64GB | 500GB NVMe | 25,000-130,000 req/s |
+| 100K+ | 500+ | 32+ | 96GB+ | 1TB+ NVMe | Requires clustering |
+
+> **Performance Note**: These specifications are based on real-world performance testing achieving up to 131,921 requests/second sustained load.
+
 ## Infrastructure Components
 
 ### Database Layer
@@ -33,60 +44,80 @@ Trenova is a containerized application with integrated background job processing
 
 ### Base Server Specifications
 
-- **CPU**: 6 cores (Intel/AMD x86_64)
-- **RAM**: 12GB
+- **CPU**: 4 cores (Intel/AMD x86_64)
+- **RAM**: 8GB
 - **Storage**: 30GB available disk space
-- **Network**: Stable internet connection
+- **Network**: Stable internet connection (10+ Mbps)
 - **Operating System**: Linux (Ubuntu 20.04+, CentOS 8+, or similar)
 
 ### Container Runtime
 
 - **Docker**: Version 20.10+ with Docker Compose V2
-- **Available Docker Memory**: 10GB allocated to Docker
-- **Available Docker CPU**: 6 cores allocated to Docker
+- **Available Docker Memory**: 6GB allocated to Docker
+- **Available Docker CPU**: 4 cores allocated to Docker
 
 ## Recommended Production Requirements
 
-### Server Specifications (1-50 concurrent users)
+> **Note**: These requirements are based on actual performance testing achieving up to 130,000+ requests/second on optimized hardware.
 
-- **CPU**: 12+ cores
-- **RAM**: 24GB+
-- **Storage**: 100GB+ SSD
-- **Network**: High-speed internet with low latency
+### Small Deployment (up to 10,000 users / 50 concurrent)
 
-### Server Specifications (50-200 concurrent users)
+- **CPU**: 8 cores
+- **RAM**: 16GB
+- **Storage**: 100GB SSD
+- **Network**: 100 Mbps internet connection
+- **Expected Performance**: 20,000+ requests/second
+- **Average Response Time**: < 3ms
 
-- **CPU**: 20+ cores
-- **RAM**: 48GB+
-- **Storage**: 200GB+ SSD
-- **Network**: Dedicated bandwidth with redundancy
+### Medium Deployment (10,000-50,000 users / 100-200 concurrent)
 
-### Server Specifications (200+ concurrent users)
+- **CPU**: 16 cores
+- **RAM**: 32GB
+- **Storage**: 200GB SSD (NVMe preferred)
+- **Network**: 1 Gbps connection
+- **Expected Performance**: 30,000-130,000 requests/second
+- **Average Response Time**: < 10ms
+
+### Large Deployment (50,000-100,000 users / 200-500 concurrent)
+
+- **CPU**: 24+ cores
+- **RAM**: 64GB+
+- **Storage**: 500GB NVMe SSD
+- **Network**: 1 Gbps dedicated connection
+- **Expected Performance**: 25,000-130,000 requests/second
+- **Average Response Time**: < 20ms
+
+### Enterprise Deployment (100,000+ users / 500+ concurrent)
 
 - **CPU**: 32+ cores
 - **RAM**: 96GB+
-- **Storage**: 500GB+ SSD with high IOPS
-- **Network**: Enterprise-grade connectivity
-- **Additional**: Consider load balancing and horizontal scaling
+- **Storage**: 1TB+ NVMe SSD with high IOPS
+- **Network**: 10 Gbps connection
+- **Additional**: Horizontal scaling with load balancer required
+- **Expected Performance**: Variable based on cluster size
+- **Average Response Time**: < 50ms
 
 ## Detailed Resource Allocation
 
 ### PostgreSQL Database (tren-db)
 
-- **Memory Limit**: 512MB (configurable)
-- **Memory Reservation**: 256MB
-- **CPU Limit**: 1 core
+- **Memory Limit**: 2GB (minimum for production)
+- **Memory Reservation**: 1GB
+- **CPU Limit**: 2 cores
 - **Storage**: Persistent volume for data
-- **Configuration**: Optimized for 512MB memory allocation
-  - `shared_buffers`: 128MB (25% of memory)
-  - `effective_cache_size`: 384MB (75% of memory)
-  - `max_connections`: 100 (adjustable based on load)
+- **Critical Configuration Settings**:
+  - `max_connections`: 300 (tested optimal)
+  - `shared_buffers`: 512MB (25% of memory)
+  - `effective_cache_size`: 1.5GB (75% of memory)
+  - `work_mem`: 4MB
+  - **Important**: Add composite index on frequently queried columns (e.g., `(organization_id, business_unit_id)`)
 
-**Scaling Recommendations**:
+**Scaling Recommendations by User Load**:
 
-- For 50+ users: Increase memory to 2GB, CPU to 2 cores
-- For 200+ users: Increase memory to 4GB+, CPU to 4+ cores
-- Consider increasing `max_connections` to 200-500 for high concurrency
+- **Small (< 10K users)**: 2GB memory, 2 cores, 100 connections
+- **Medium (10-50K users)**: 4GB memory, 4 cores, 200 connections
+- **Large (50-100K users)**: 8GB memory, 8 cores, 300 connections
+- **Enterprise (100K+ users)**: 16GB+ memory, 16+ cores, 500+ connections, consider read replicas
 
 ### Redis Cache (tren-redis)
 
@@ -114,17 +145,27 @@ Trenova is a containerized application with integrated background job processing
 
 ### Trenova API (tren-api)
 
-- **Memory Limit**: 512MB
-- **CPU Limit**: 1 core
+- **Memory Limit**: 2GB (recommended for production)
+- **CPU Limit**: 4 cores
 - **Language**: Go (efficient memory usage)
 - **Features**: Integrated background job processing with Asynq
+- **Critical Configuration**:
+  - Database connection pool: 80 connections (optimal)
+  - Redis connection pool: 200 connections
+  - Server concurrency: 1048576
+  - Read/Write buffer size: 8192 bytes
 
-**Scaling Recommendations**:
+**Scaling Recommendations by User Load**:
 
-- For 50+ users: Increase memory to 1GB, consider multiple instances
-- For 200+ users: Deploy multiple API instances behind load balancer
-- Monitor memory usage and adjust based on application behavior
-- Scale background job workers based on queue depth
+- **Small (< 10K users)**: 1GB memory, 2 cores, single instance
+- **Medium (10-50K users)**: 2GB memory, 4 cores, 2-3 instances with load balancer
+- **Large (50-100K users)**: 4GB memory, 8 cores, 4-6 instances
+- **Enterprise (100K+ users)**: 8GB+ memory, 16+ cores, horizontal scaling with multiple instances
+
+**Performance Expectations**:
+
+- Can handle 20,000-130,000 requests/second depending on concurrency
+- Maintains < 10ms response time with proper configuration
 
 ### Trenova Client (tren-client)
 
@@ -272,19 +313,31 @@ Trenova is a containerized application with integrated background job processing
 ### Performance Tuning
 
 1. **Database Optimization**:
-   - Adjust PostgreSQL configuration based on available memory
-   - Optimize queries and add indexes as needed
-   - Monitor slow query logs
+   - **Critical**: Add composite indexes on frequently queried columns (e.g., `CREATE INDEX idx_workers_org_bu ON workers(organization_id, business_unit_id)`)
+   - Set `max_connections` to at least 300 for production
+   - Configure connection pooling: 80 connections for API, managed by PGBouncer
+   - Monitor slow query logs (queries > 100ms need optimization)
+   - Adjust `shared_buffers` to 25% of allocated PostgreSQL memory
+   - Set `effective_cache_size` to 75% of allocated memory
 
 2. **Cache Optimization**:
-   - Tune Redis memory policies
-   - Monitor cache hit ratios
-   - Adjust cache expiration policies
+   - Configure Redis pool size to 200 connections
+   - Set `minIdleConns` to 100 for consistent performance
+   - Monitor cache hit ratios (target > 80%)
+   - Use `allkeys-lru` eviction policy
 
 3. **Application Tuning**:
-   - Monitor Go application garbage collection
-   - Optimize API endpoint performance
-   - Implement proper error handling and retry logic
+   - Set server `readBufferSize` and `writeBufferSize` to 8192
+   - Configure server `concurrency` to 1048576
+   - Set logging level to `error` in production (debug logging impacts performance)
+   - Database connection pool: `maxConnections`: 80, `maxIdleConns`: 40
+   - Connection lifetimes: `connMaxLifetime`: 300s, `connMaxIdleTime`: 60s
+
+4. **Performance Benchmarks** (tested on 16-core, 32GB RAM server):
+   - 50 concurrent users: 20,708 req/s (2.3ms avg response)
+   - 100 concurrent users: 37,908 req/s (2.5ms avg response)
+   - 200 concurrent users: 131,921 req/s sustained (6ms avg response)
+   - Breaking point: ~1500 concurrent connections
 
 ## Security Considerations
 

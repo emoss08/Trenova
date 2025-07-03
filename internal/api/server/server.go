@@ -2,8 +2,10 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/gofiber/fiber/v2"
@@ -28,24 +30,28 @@ type Server struct {
 func NewServer(p Params) *Server {
 	// Create Fiber app with configuration
 	app := fiber.New(fiber.Config{
-		AppName: p.Config.App.Name,
-		// JSONEncoder:             sonic.Marshal,
-		// JSONDecoder:             sonic.Unmarshal,
+		AppName: fmt.Sprintf(
+			"%s v%s",
+			p.Config.App.Name,
+			p.Config.App.Version,
+		),
+		JSONEncoder:             sonic.Marshal,
+		JSONDecoder:             sonic.Unmarshal,
 		BodyLimit:               16 * 1024 * 1024, // 16MB
 		ReadBufferSize:          p.Config.Server.ReadBufferSize,
 		WriteBufferSize:         p.Config.Server.WriteBufferSize,
 		EnableTrustedProxyCheck: p.Config.Server.EnableTrustedProxyCheck,
 		ProxyHeader:             p.Config.Server.ProxyHeader,
-		Prefork:                 p.Config.Server.EnablePrefork,
-		StreamRequestBody:       p.Config.Server.StreamRequestBody,
-		DisableStartupMessage:   p.Config.Server.DisableStartupMessage,
-		StrictRouting:           p.Config.Server.StrictRouting,
-		CaseSensitive:           p.Config.Server.CaseSensitive,
-		EnableIPValidation:      p.Config.Server.EnableIPValidation,
-		Immutable:               p.Config.Server.Immutable,
-		EnablePrintRoutes:       p.Config.Server.EnablePrintRoutes,
-		PassLocalsToViews:       p.Config.Server.PassLocalsToViews,
-		ErrorHandler:            defaultErrorHandler(p.Logger),
+		// Prefork:                 p.Config.Server.EnablePrefork, // ! Disabled after performance benchmark.
+		StreamRequestBody:     p.Config.Server.StreamRequestBody,
+		DisableStartupMessage: p.Config.Server.DisableStartupMessage,
+		StrictRouting:         p.Config.Server.StrictRouting,
+		CaseSensitive:         p.Config.Server.CaseSensitive,
+		EnableIPValidation:    p.Config.Server.EnableIPValidation,
+		Immutable:             p.Config.Server.Immutable,
+		EnablePrintRoutes:     p.Config.Server.EnablePrintRoutes,
+		PassLocalsToViews:     p.Config.Server.PassLocalsToViews,
+		ErrorHandler:          defaultErrorHandler(p.Logger),
 	})
 
 	server := &Server{
@@ -67,13 +73,13 @@ func NewServer(p Params) *Server {
 }
 
 func (s *Server) Start() error {
+	s.l.Info().Str("listenAddress", s.cfg.Server.ListenAddress).Msg("🚀 HTTP server initialized")
+
 	go func() {
 		if err := s.app.Listen(s.cfg.Server.ListenAddress); err != nil {
 			s.l.Error().Err(err).Msg("failed to start HTTP server")
 		}
 	}()
-
-	s.l.Info().Str("listenAddress", s.cfg.Server.ListenAddress).Msg("🚀 HTTP server initialized")
 
 	return nil
 }

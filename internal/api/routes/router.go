@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"time"
 	"github.com/emoss08/trenova/internal/api/handlers/accessorialcharge"
 	"github.com/emoss08/trenova/internal/api/handlers/analytics"
 	"github.com/emoss08/trenova/internal/api/handlers/assignment"
@@ -49,6 +50,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/usstate"
 	"github.com/emoss08/trenova/internal/api/handlers/websocket"
 	"github.com/emoss08/trenova/internal/api/handlers/worker"
+	"github.com/emoss08/trenova/internal/api/handlers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/server"
 	"github.com/emoss08/trenova/internal/core/services/auth"
@@ -136,6 +138,7 @@ type RouterParams struct {
 	WebSocketHandler               *websocket.Handler
 	NotificationPreferenceHandler  *notificationpreference.Handler
 	NotificationHandler            *notification.Handler
+	MetricsHandler                 *handlers.MetricsHandler
 }
 
 type Router struct {
@@ -167,6 +170,17 @@ func (r *Router) Setup() {
 
 	// setup the global middlewares
 	r.setupMiddleware()
+
+	// Metrics endpoint (outside API versioning for Prometheus compatibility)
+	r.app.Get("/metrics", r.p.MetricsHandler.GetMetrics())
+	
+	// Health check endpoint
+	r.app.Get("/health", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status": "healthy",
+			"timestamp": time.Now().Unix(),
+		})
+	})
 
 	r.p.AuthHandler.RegisterRoutes(v1)
 	r.setupProtectedRoutes(v1, rl)

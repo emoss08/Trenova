@@ -20,7 +20,16 @@ type ConnectionInfo struct {
 // and close the connection.
 type Connection interface {
 	// DB returns a database connection.
+	// For backward compatibility, this returns the primary (write) connection.
 	DB(ctx context.Context) (*bun.DB, error)
+
+	// ReadDB returns a read-only database connection.
+	// If read replicas are not configured, this returns the primary connection.
+	ReadDB(ctx context.Context) (*bun.DB, error)
+
+	// WriteDB returns a write database connection.
+	// This always returns the primary connection.
+	WriteDB(ctx context.Context) (*bun.DB, error)
 
 	// ConnectionInfo returns information about the database connection
 	ConnectionInfo() (*ConnectionInfo, error)

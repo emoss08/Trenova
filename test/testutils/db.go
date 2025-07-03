@@ -28,6 +28,18 @@ func (t *TestDBConnection) DB(ctx context.Context) (*bun.DB, error) {
 	return t.db, nil
 }
 
+// ReadDB returns the test database for read operations
+// In tests, we use the same database for both read and write
+func (t *TestDBConnection) ReadDB(ctx context.Context) (*bun.DB, error) {
+	return t.db, nil
+}
+
+// WriteDB returns the test database for write operations
+// In tests, we use the same database for both read and write
+func (t *TestDBConnection) WriteDB(ctx context.Context) (*bun.DB, error) {
+	return t.db, nil
+}
+
 func (t *TestDBConnection) ConnectionInfo() (*db.ConnectionInfo, error) {
 	return &db.ConnectionInfo{
 		Host:     "localhost",

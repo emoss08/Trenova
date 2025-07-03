@@ -1,7 +1,0 @@
-ignore:
-  - cmd/*
-  - docs/*
-  - test/*
-  - scripts/*
-  - web/*
-  - ui/*

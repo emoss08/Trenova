@@ -1,0 +1,65 @@
+x-build-args: &build-args
+  DOCKER_BUILDKIT: 1
+  GO_VERSION: 1.24
+  ALPINE_VERSION: latest
+
+services:
+  db:
+    image: postgres:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_DB: ${DB_NAME:-trenova_go_db}
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+      POSTGRES_MULTIPLE_EXTENSIONS: "pg_stat_statements,pg_trgm,btree_gin,btree_gist"
+    volumes:
+      - pg_data_perf:/var/lib/postgresql/data
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '4'
+    networks:
+      - perf-network
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis/redis-stack:latest
+    ports:
+      - "6379:6379"
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+    volumes:
+      - redis_data_perf:/data
+      - ./config/redis-performance.conf:/redis-stack.conf:ro
+    command: redis-server /redis-stack.conf
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2'
+    networks:
+      - perf-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  perf-network:
+    driver: bridge
+
+volumes:
+  pg_data_perf:
+  redis_data_perf:

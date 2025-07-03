@@ -221,7 +221,8 @@ type ServerConfig struct {
 	// ran through a shell because prefork mode sets environment variables.
 	// If you're using Docker, make sure the app is ran with CMD ./app or
 	// CMD ["sh", "-c", "/app"]. For more info, see this issue comment.
-	EnablePrefork bool `mapstructure:"enablePrefork"`
+	// ! No longer available after performance benchmark.
+	// EnablePrefork bool `mapstructure:"enablePrefork"`
 
 	// EnablePrintRoutes enables print all routes with their method,
 	// path, name and handler..
@@ -277,6 +278,41 @@ type DatabaseConfig struct {
 
 	// Debug is the debug mode.
 	Debug bool `mapstructure:"debug" json:"debug"`
+
+	// ReadReplicas is the configuration for read replicas.
+	// When provided, read operations will be distributed across these replicas.
+	ReadReplicas []ReadReplicaConfig `mapstructure:"readReplicas" json:"readReplicas"`
+
+	// EnableReadWriteSeparation enables automatic routing of read queries to replicas.
+	EnableReadWriteSeparation bool `mapstructure:"enableReadWriteSeparation" json:"enableReadWriteSeparation"`
+
+	// ReplicaLagThreshold is the maximum allowed replication lag in seconds.
+	// If a replica is lagging more than this threshold, it will be temporarily removed from the pool.
+	ReplicaLagThreshold int `mapstructure:"replicaLagThreshold" json:"replicaLagThreshold"`
+}
+
+// ReadReplicaConfig is the configuration for a read replica.
+type ReadReplicaConfig struct {
+	// Name is a unique identifier for the replica.
+	Name string `mapstructure:"name" json:"name"`
+
+	// Host is the replica host.
+	Host string `mapstructure:"host" json:"host"`
+
+	// Port is the replica port.
+	Port int `mapstructure:"port" json:"port"`
+
+	// Weight is the relative weight for load balancing (higher = more traffic).
+	// Default is 1.
+	Weight int `mapstructure:"weight" json:"weight"`
+
+	// MaxConnections is the maximum number of connections for this replica.
+	// If not specified, uses the primary database's MaxConnections.
+	MaxConnections int `mapstructure:"maxConnections" json:"maxConnections"`
+
+	// MaxIdleConns is the maximum number of idle connections for this replica.
+	// If not specified, uses the primary database's MaxIdleConns.
+	MaxIdleConns int `mapstructure:"maxIdleConns" json:"maxIdleConns"`
 }
 
 // RedisConfig is the configuration for the redis.

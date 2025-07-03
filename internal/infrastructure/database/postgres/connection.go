@@ -3,13 +3,19 @@ package postgres
 import (
 	"context"
 	"database/sql"
+	"fmt"
+	"net"
+	"strconv"
 	"sync"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/metrics"
+	"github.com/emoss08/trenova/internal/pkg/middleware"
 	"github.com/emoss08/trenova/internal/pkg/registry"
+	"github.com/emoss08/trenova/internal/pkg/utils/intutils"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/jackc/pgx/v5/stdlib"
@@ -36,12 +42,25 @@ var (
 )
 
 type connection struct {
-	cfg  *config.Manager
-	log  *zerolog.Logger
-	db   *bun.DB
-	sql  *sql.DB
-	pool *pgxpool.Pool
-	mu   sync.RWMutex
+	cfg               *config.Manager
+	log               *zerolog.Logger
+	db                *bun.DB
+	sql               *sql.DB
+	pool              *pgxpool.Pool
+	connectionPool    *ConnectionPool
+	mu                sync.RWMutex
+	healthCheckCancel context.CancelFunc
+}
+
+type readReplica struct {
+	name      string
+	db        *bun.DB
+	sql       *sql.DB
+	pool      *pgxpool.Pool
+	weight    int
+	healthy   bool
+	lastCheck time.Time
+	mu        sync.RWMutex
 }
 
 func NewConnection(p ConnectionParams) db.Connection {
@@ -73,6 +92,16 @@ func NewConnection(p ConnectionParams) db.Connection {
 }
 
 func (c *connection) DB(ctx context.Context) (*bun.DB, error) {
+	// * For backward compatibility, DB() returns the write connection
+	return c.WriteDB(ctx)
+}
+
+func (c *connection) WriteDB(ctx context.Context) (*bun.DB, error) {
+	return c.initializePrimaryIfNeeded(ctx)
+}
+
+func (c *connection) initializePrimaryIfNeeded(ctx context.Context) (*bun.DB, error) {
+	// Fast path: check with read lock first
 	c.mu.RLock()
 	if c.db != nil {
 		defer c.mu.RUnlock()
@@ -123,13 +152,16 @@ func (c *connection) DB(ctx context.Context) (*bun.DB, error) {
 
 	bunDB := bun.NewDB(sqldb, pgdialect.New(), bun.WithDiscardUnknownColumns())
 
-	// If the environment is development and debug is enabled, add a query hook to the database
+	// Add query hooks for debugging and metrics
 	if appCfg.Environment == "development" && dbCfg.Debug {
 		bunDB.AddQueryHook(bundebug.NewQueryHook(
 			bundebug.WithVerbose(true),
 			bundebug.FromEnv("BUNDEBUG"),
 		))
 	}
+
+	// Add metrics hook for all environments
+	bunDB.AddQueryHook(middleware.NewDatabaseQueryHook(c.log, "primary", true))
 
 	bunDB.RegisterModel(registry.RegisterEntities()...)
 
@@ -141,13 +173,57 @@ func (c *connection) DB(ctx context.Context) (*bun.DB, error) {
 
 	// Verify connection
 	if err = bunDB.PingContext(ctx); err != nil {
+		metrics.RecordConnectionAttempt("primary", false)
 		return nil, eris.Wrap(err, "failed to ping database")
 	}
 
+	metrics.RecordConnectionAttempt("primary", true)
+
 	c.db = bunDB
-	c.log.Info().Msg("🚀 Established connection to Postgres database!")
+	c.log.Info().Msg("🚀 Established connection to primary Postgres database!")
+
+	// Start monitoring connection pool stats
+	go c.monitorConnectionPoolStats(ctx)
+
+	// * Initialize connection pool
+	c.connectionPool = NewConnectionPool(c.db, c.log)
+
+	// * Initialize read replicas if configured
+	if dbCfg.EnableReadWriteSeparation && len(dbCfg.ReadReplicas) > 0 {
+		if err = c.initializeReadReplicas(ctx); err != nil {
+			c.log.Error().
+				Err(err).
+				Msg("failed to initialize read replicas, continuing with primary only")
+		}
+	}
 
 	return c.db, nil
+}
+
+func (c *connection) ReadDB(ctx context.Context) (*bun.DB, error) {
+	start := time.Now()
+
+	// * Ensure primary connection is initialized first
+	if _, err := c.initializePrimaryIfNeeded(ctx); err != nil {
+		return nil, err
+	}
+
+	c.mu.RLock()
+	if c.connectionPool == nil {
+		c.mu.RUnlock()
+		return c.db, nil
+	}
+	pool := c.connectionPool
+	c.mu.RUnlock()
+
+	conn, connName := pool.GetReadConnection()
+
+	c.log.Debug().
+		Str("connection", connName).
+		Dur("duration", time.Since(start)).
+		Msg("read connection acquired")
+
+	return conn, nil
 }
 
 func (c *connection) ConnectionInfo() (*db.ConnectionInfo, error) {
@@ -170,11 +246,17 @@ func (c *connection) Close() error {
 
 	c.log.Info().Msg("closing PostgreSQL database connection")
 
+	// Cancel health check monitoring
+	if c.healthCheckCancel != nil {
+		c.healthCheckCancel()
+	}
+
 	// First, we'll mark everything as nil after we're done to prevent any lingering references
 	defer func() {
 		c.db = nil
 		c.sql = nil
 		c.pool = nil
+		c.connectionPool = nil
 		c.log.Info().Msg("PostgreSQL database connection resources cleared")
 	}()
 
@@ -205,6 +287,14 @@ func (c *connection) Close() error {
 			c.pool.Close()
 			c.log.Debug().Msg("connection pool closed")
 		}
+
+		// * Close connection pool (handles replicas)
+		if c.connectionPool != nil {
+			c.log.Debug().Msg("closing connection pool manager")
+			if err := c.connectionPool.Close(); err != nil {
+				c.log.Error().Err(err).Msg("error closing connection pool manager")
+			}
+		}
 	}()
 
 	// Wait for completion or timeout
@@ -227,4 +317,191 @@ func (c *connection) SQLDB(_ context.Context) (*sql.DB, error) {
 	}
 
 	return c.db.DB, nil
+}
+
+func (c *connection) initializeReadReplicas(ctx context.Context) error {
+	dbCfg := c.cfg.Database()
+	appCfg := c.cfg.App()
+
+	successCount := 0
+	for _, replicaCfg := range dbCfg.ReadReplicas {
+		c.log.Info().Str("replica", replicaCfg.Name).Msg("initializing read replica")
+
+		start := time.Now()
+
+		// * Build DSN for replica
+		hostPort := net.JoinHostPort(replicaCfg.Host, strconv.Itoa(replicaCfg.Port))
+		dsn := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s",
+			dbCfg.Username,
+			dbCfg.Password,
+			hostPort,
+			dbCfg.Database,
+			dbCfg.SSLMode,
+		)
+
+		// Parse the database connection string
+		cfg, err := pgxpool.ParseConfig(dsn)
+		if err != nil {
+			c.log.Error().
+				Err(err).
+				Str("replica", replicaCfg.Name).
+				Msg("failed to parse replica config")
+			continue
+		}
+
+		cfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
+
+		// Setup connection pool
+		pool, err := pgxpool.NewWithConfig(ctx, cfg)
+		if err != nil {
+			c.log.Error().
+				Err(err).
+				Str("replica", replicaCfg.Name).
+				Msg("failed to create replica pool")
+			continue
+		}
+
+		sqldb := stdlib.OpenDBFromPool(pool)
+		bunDB := bun.NewDB(sqldb, pgdialect.New(), bun.WithDiscardUnknownColumns())
+
+		// Add query hooks
+		if appCfg.Environment == "development" && dbCfg.Debug {
+			bunDB.AddQueryHook(bundebug.NewQueryHook(
+				bundebug.WithVerbose(true),
+				bundebug.FromEnv("BUNDEBUG"),
+			))
+		}
+
+		// Add metrics hook for replica
+		bunDB.AddQueryHook(middleware.NewDatabaseQueryHook(c.log, replicaCfg.Name, true))
+
+		bunDB.RegisterModel(registry.RegisterEntities()...)
+
+		// Configure connection pool settings
+		maxConns := replicaCfg.MaxConnections
+		if maxConns == 0 {
+			maxConns = dbCfg.MaxConnections
+		}
+		maxIdleConns := replicaCfg.MaxIdleConns
+		if maxIdleConns == 0 {
+			maxIdleConns = dbCfg.MaxIdleConns
+		}
+
+		sqldb.SetConnMaxIdleTime(time.Duration(dbCfg.ConnMaxIdleTime) * time.Second)
+		sqldb.SetMaxOpenConns(maxConns)
+		sqldb.SetMaxIdleConns(maxIdleConns)
+		sqldb.SetConnMaxLifetime(time.Duration(dbCfg.ConnMaxLifetime) * time.Second)
+
+		// Verify connection
+		if err = bunDB.PingContext(ctx); err != nil {
+			c.log.Error().Err(err).Str("replica", replicaCfg.Name).Msg("failed to ping replica")
+			pool.Close()
+			metrics.RecordConnectionAttempt(replicaCfg.Name, false)
+			continue
+		}
+
+		weight := replicaCfg.Weight
+		if weight <= 0 {
+			weight = 1
+		}
+
+		replica := &readReplica{
+			name:      replicaCfg.Name,
+			db:        bunDB,
+			sql:       sqldb,
+			pool:      pool,
+			weight:    weight,
+			healthy:   true,
+			lastCheck: time.Now(),
+		}
+
+		c.connectionPool.AddReplica(replica)
+		successCount++
+
+		metrics.RecordConnectionAttempt(replicaCfg.Name, true)
+		metrics.RecordDatabaseOperation("replica_init", replicaCfg.Name, time.Since(start))
+		c.log.Info().
+			Str("replica", replicaCfg.Name).
+			Dur("duration", time.Since(start)).
+			Msg("🚀 Established connection to read replica!")
+	}
+
+	if successCount == 0 {
+		return eris.New("no read replicas could be initialized")
+	}
+
+	// * Start health check goroutine with proper cancellation
+	ctx, cancel := context.WithCancel(context.Background())
+	c.healthCheckCancel = cancel
+	go c.monitorReplicaHealth(ctx)
+
+	return nil
+}
+
+func (c *connection) monitorReplicaHealth(ctx context.Context) {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	// * Initial health check
+	c.performHealthCheck(ctx)
+
+	for {
+		select {
+		case <-ctx.Done():
+			c.log.Info().Msg("stopping health check monitor")
+			return
+		case <-ticker.C:
+			c.performHealthCheck(ctx)
+		}
+	}
+}
+
+func (c *connection) performHealthCheck(ctx context.Context) {
+	c.mu.RLock()
+	dbCfg := c.cfg.Database()
+	if c.connectionPool == nil {
+		c.mu.RUnlock()
+		return
+	}
+	pool := c.connectionPool
+	c.mu.RUnlock()
+
+	lagThreshold := time.Duration(dbCfg.ReplicaLagThreshold) * time.Second
+	pool.HealthCheck(ctx, lagThreshold)
+
+	// * Update pool statistics
+	pool.GetPoolStats()
+}
+
+func (c *connection) monitorConnectionPoolStats(ctx context.Context) {
+	ticker := time.NewTicker(15 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			c.updatePoolStats()
+		}
+	}
+}
+
+func (c *connection) updatePoolStats() {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+
+	// Update primary connection stats
+	if c.sql != nil {
+		stats := c.sql.Stats()
+		metrics.UpdateConnectionPoolStats("primary",
+			intutils.SafeInt32(stats.MaxOpenConnections),
+			intutils.SafeInt32(stats.Idle),
+			intutils.SafeInt32(stats.InUse))
+	}
+
+	// Update connection pool stats if available
+	if c.connectionPool != nil {
+		c.connectionPool.GetPoolStats()
+	}
 }
