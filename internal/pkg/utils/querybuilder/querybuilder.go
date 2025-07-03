@@ -300,14 +300,16 @@ func (qb *QueryBuilder) applyDateRangeFilter(fieldRef string, value any) {
 	if dateRange, ok := value.(map[string]any); ok {
 		if startStr, hasStart := dateRange["start"]; hasStart {
 			if start, err := time.Parse("2006-01-02", fmt.Sprintf("%v", startStr)); err == nil {
-				qb.query = qb.query.Where(fmt.Sprintf("%s >= ?", fieldRef), start)
+				// * Always convert to Unix timestamp since all date fields are bigints
+				qb.query = qb.query.Where(fmt.Sprintf("%s >= ?", fieldRef), start.Unix())
 			}
 		}
 		if endStr, hasEnd := dateRange["end"]; hasEnd {
 			if end, err := time.Parse("2006-01-02", fmt.Sprintf("%v", endStr)); err == nil {
 				// Add 1 day to make it inclusive of the end date
 				endInclusive := end.AddDate(0, 0, 1)
-				qb.query = qb.query.Where(fmt.Sprintf("%s < ?", fieldRef), endInclusive)
+				// * Always convert to Unix timestamp since all date fields are bigints
+				qb.query = qb.query.Where(fmt.Sprintf("%s < ?", fieldRef), endInclusive.Unix())
 			}
 		}
 	}
