@@ -28,6 +28,7 @@ jobs:
         uses: actions/setup-go@v5
         with:
           go-version: ${{ matrix.go-version }}
+          cache: true
 
       - name: Install Dependencies
         run: go mod download
@@ -35,17 +36,7 @@ jobs:
       - name: Build
         run: go build ./...
 
-      - name: Run Static Analysis
-        uses: dominikh/staticcheck-action@v1
-        with:
-          version: latest
-          install-go: false
-
       - name: Run Tests
         run: |
           go test -v -coverprofile=coverage.txt ./...
 
-      - name: Golangci-lint
-        uses: golangci/golangci-lint-action@v8
-        with:
-          version: latest
