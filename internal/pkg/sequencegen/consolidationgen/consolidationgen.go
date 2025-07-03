@@ -1,9 +1,8 @@
-package pronumbergen
+package consolidationgen
 
 import (
 	"context"
 	"crypto/rand"
-	"errors"
 	"fmt"
 	"math/big"
 	"regexp"
@@ -11,83 +10,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/emoss08/trenova/internal/pkg/sequencegen"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
-// Errors
-var (
-	ErrSequenceUpdateConflict = errors.New("sequence update conflict")
-	ErrInvalidYear            = errors.New("year out of range for int16")
-	ErrInvalidMonth           = errors.New("month out of range for int16")
-	ErrInvalidFormat          = errors.New("invalid pro number format")
-	ErrInvalidProNumber       = errors.New("invalid pro number")
-)
-
-// ProNumberFormat represents the configuration for generating pro numbers
-type ProNumberFormat struct {
-	// * Prefix is the letter prefix for pro numbers (e.g., "S")
-	Prefix string
-
-	// * IncludeYear determines whether to include year digits in the pro number
-	IncludeYear bool
-
-	// YearDigits is the number of digits to use for the year (e.g., 2 for "23" representing 2023)
-	YearDigits int
-
-	// * IncludeMonth determines whether to include month digits in the pro number
-	IncludeMonth bool
-
-	// * SequenceDigits is the number of digits to use for the sequence number (will be zero-padded)
-	SequenceDigits int
-
-	// * IncludeLocationCode determines whether to include location code in the pro number
-	IncludeLocationCode bool
-
-	// * LocationCode is a code representing the location/region (e.g., "12" for a specific terminal)
-	LocationCode string
-
-	// * IncludeRandomDigits determines whether to include random digits for additional uniqueness
-	IncludeRandomDigits bool
-
-	// * RandomDigitsCount is the number of random digits to include
-	RandomDigitsCount int
-
-	// * IncludeCheckDigit adds a check digit for validation (Luhn algorithm)
-	IncludeCheckDigit bool
-
-	// * IncludeBusinessUnitCode adds the business unit code to the pro number
-	IncludeBusinessUnitCode bool
-
-	// * BusinessUnitCode is the code representing the business unit
-	BusinessUnitCode string
-
-	// * UseSeparators determines whether to use separators in the pro number
-	UseSeparators bool
-
-	// * SeparatorChar is the character to use as a separator (e.g., "-")
-	SeparatorChar string
-
-	// * IncludeWeekNumber determines whether to include the week number instead of month
-	IncludeWeekNumber bool
-
-	// * IncludeDay determines whether to include the day of month
-	IncludeDay bool
-
-	// * AllowCustomFormat allows for a completely custom format string with placeholders
-	AllowCustomFormat bool
-
-	// * CustomFormat is a string with placeholders for dynamic values
-	// Example: "{P}-{Y}{M}-{S}-{C}" where:
-	// {P} = Prefix, {Y} = Year, {M} = Month, {S} = Sequence, {R} = Random, {C} = Checksum
-	// {B} = Business unit, {L} = Location, {W} = Week, {D} = Day
-	CustomFormat string
-}
-
-// DefaultProNumberFormat returns the default pro number format configuration
-// that matches the examples provided: S121094129213012
-func DefaultProNumberFormat() *ProNumberFormat {
-	return &ProNumberFormat{
-		Prefix:                  "S",
+func DefaultConsolidationFormat() *sequencegen.SequenceFormat {
+	return &sequencegen.SequenceFormat{
+		Prefix:                  "C",
 		IncludeYear:             true,
 		YearDigits:              2,
 		IncludeMonth:            true,
@@ -108,22 +37,28 @@ func DefaultProNumberFormat() *ProNumberFormat {
 	}
 }
 
-// GetOrganizationProNumberFormat retrieves the pro number format configuration for a specific organization
-// from the database. It looks up the configuration in pro_number_configs table.
-func GetOrganizationProNumberFormat(_ context.Context, _ pulid.ID) (*ProNumberFormat, error) {
-	return DefaultProNumberFormat(), nil
+// GetOrganizationConsolidationFormat retrieves the consolidation number format configuration for a specific organization
+// from the database. It looks up the configuration in consolidation_number_configs table.
+func GetOrganizationConsolidationFormat(
+	_ context.Context,
+	_ pulid.ID,
+) (*sequencegen.SequenceFormat, error) {
+	return DefaultConsolidationFormat(), nil
 }
 
-// GetProNumberFormatForBusinessUnit retrieves the pro number format for a specific business unit
-func GetProNumberFormatForBusinessUnit(
+// GetConsolidationFormatForBusinessUnit retrieves the consolidation number format for a specific business unit
+func GetConsolidationFormatForBusinessUnit(
 	ctx context.Context,
 	orgID, _ pulid.ID,
-) (*ProNumberFormat, error) {
-	return GetOrganizationProNumberFormat(ctx, orgID)
+) (*sequencegen.SequenceFormat, error) {
+	return GetOrganizationConsolidationFormat(ctx, orgID)
 }
 
-// GenerateProNumber generates a pro number based on the given format, sequence, year, and month
-func GenerateProNumber(format *ProNumberFormat, sequence, year, month int) string {
+// GenerateConsolidationNumber generates a consolidation number based on the given format, sequence, year, and month
+func GenerateConsolidationNumber(
+	format *sequencegen.SequenceFormat,
+	sequence, year, month int,
+) string {
 	if format.AllowCustomFormat && format.CustomFormat != "" {
 		return generateCustomFormat(format, sequence, year, month)
 	}
@@ -216,8 +151,8 @@ func GenerateProNumber(format *ProNumberFormat, sequence, year, month int) strin
 	return strings.Join(parts, "")
 }
 
-// generateCustomFormat generates a pro number using the custom format template
-func generateCustomFormat(format *ProNumberFormat, sequence, year, month int) string {
+// generateCustomFormat generates a consolidation number using the custom format template
+func generateCustomFormat(format *sequencegen.SequenceFormat, sequence, year, month int) string {
 	result := format.CustomFormat
 
 	// * Replace placeholders with actual values
@@ -336,22 +271,25 @@ func calculateCheckDigit(input string) int {
 	return (10 - (sum % 10)) % 10
 }
 
-// ValidateProNumber validates a pro number according to its format
-// Returns true if the pro number is valid, false otherwise
-func ValidateProNumber(proNumber string, format *ProNumberFormat) bool {
+// ValidateConsolidationNumber validates a consolidation number according to its format
+// Returns true if the consolidation number is valid, false otherwise
+func ValidateConsolidationNumber(
+	consolidationNumber string,
+	format *sequencegen.SequenceFormat,
+) bool {
 	if format.IncludeCheckDigit {
 		// * Extract the check digit (last digit)
-		if len(proNumber) < 1 {
+		if len(consolidationNumber) < 1 {
 			return false
 		}
 
-		checkDigit, err := strconv.Atoi(string(proNumber[len(proNumber)-1]))
+		checkDigit, err := strconv.Atoi(string(consolidationNumber[len(consolidationNumber)-1]))
 		if err != nil {
 			return false
 		}
 
 		// * Calculate the expected check digit using all but the last character
-		numericPart := proNumber[:len(proNumber)-1]
+		numericPart := consolidationNumber[:len(consolidationNumber)-1]
 		expectedCheckDigit := calculateCheckDigit(numericPart)
 
 		return checkDigit == expectedCheckDigit
@@ -362,14 +300,17 @@ func ValidateProNumber(proNumber string, format *ProNumberFormat) bool {
 	return true
 }
 
-// ParseProNumber attempts to parse a pro number string into its components
+// ParseConsolidationNumber attempts to parse a consolidation number string into its components
 // Returns a map of component names to values
-func ParseProNumber(proNumber string, format *ProNumberFormat) (map[string]string, error) {
+func ParseConsolidationNumber(
+	consolidationNumber string,
+	format *sequencegen.SequenceFormat,
+) (map[string]string, error) {
 	// * This is a simplistic implementation that would need to be expanded
 	// * based on the specific format rules in a real implementation
 
-	if !ValidateProNumber(proNumber, format) {
-		return nil, ErrInvalidProNumber
+	if !ValidateConsolidationNumber(consolidationNumber, format) {
+		return nil, ErrInvalidConsolidationNumber
 	}
 
 	result := make(map[string]string)
@@ -378,19 +319,19 @@ func ParseProNumber(proNumber string, format *ProNumberFormat) (map[string]strin
 	// * and would handle the custom format properly
 
 	// * For now, just return the whole pro number
-	result["full"] = proNumber
+	result["full"] = consolidationNumber
 
 	return result, nil
 }
 
-// GenerateBatch generates a batch of pro numbers
+// GenerateBatch generates a batch of consolidation numbers
 func GenerateBatch(ctx context.Context, orgID pulid.ID, count int) ([]string, error) {
 	if count <= 0 {
 		return []string{}, nil
 	}
 
 	// * Get the organization format
-	format, err := GetOrganizationProNumberFormat(ctx, orgID)
+	format, err := GetOrganizationConsolidationFormat(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -413,35 +354,35 @@ func GenerateBatch(ctx context.Context, orgID pulid.ID, count int) ([]string, er
 
 	for i := range count {
 		sequence := startSequence + i
-		proNumber := GenerateProNumber(format, sequence, year, month)
-		results = append(results, proNumber)
+		consolidationNumber := GenerateConsolidationNumber(format, sequence, year, month)
+		results = append(results, consolidationNumber)
 	}
 
 	return results, nil
 }
 
-// DetectFormat attempts to detect the format of a pro number
-// Returns a ProNumberFormat that could generate this pro number
-func DetectFormat(proNumber string) (*ProNumberFormat, error) {
-	if len(proNumber) < 3 {
-		return nil, ErrInvalidProNumber
+// DetectFormat attempts to detect the format of a consolidation number
+// Returns a ConsolidationFormat that could generate this consolidation number
+func DetectFormat(consolidationNumber string) (*sequencegen.SequenceFormat, error) {
+	if len(consolidationNumber) < 3 {
+		return nil, ErrInvalidConsolidationNumber
 	}
 
 	// * This is a simplistic implementation that guesses the format
 	// * A real implementation would be much more sophisticated
-	format := &ProNumberFormat{}
+	format := &sequencegen.SequenceFormat{}
 
 	// * Detect prefix (assume first character is alphabetic)
-	if first := proNumber[0]; first >= 'A' && first <= 'Z' {
+	if first := consolidationNumber[0]; first >= 'A' && first <= 'Z' {
 		format.Prefix = string(first)
-		proNumber = proNumber[1:]
+		consolidationNumber = consolidationNumber[1:]
 	}
 
 	// * Rough detection of components
 	// * This is very simplistic and would need to be improved
-	hasYear := len(proNumber) > 2
-	hasMonth := len(proNumber) > 4
-	hasLocationCode := len(proNumber) > 6
+	hasYear := len(consolidationNumber) > 2
+	hasMonth := len(consolidationNumber) > 4
+	hasLocationCode := len(consolidationNumber) > 6
 
 	format.IncludeYear = hasYear
 	format.YearDigits = 2
@@ -449,26 +390,28 @@ func DetectFormat(proNumber string) (*ProNumberFormat, error) {
 	format.SequenceDigits = 4
 	format.IncludeLocationCode = hasLocationCode
 	format.LocationCode = "00" // This is a guess
-	format.IncludeRandomDigits = len(proNumber) > 10
+	format.IncludeRandomDigits = len(consolidationNumber) > 10
 	format.RandomDigitsCount = 6
 
 	return format, nil
 }
 
-// NormalizeProNumber normalizes a pro number by removing separators and spaces
-func NormalizeProNumber(proNumber string) string {
-	// * Remove common separators and spaces
-	proNumber = strings.ReplaceAll(proNumber, "-", "")
-	proNumber = strings.ReplaceAll(proNumber, " ", "")
-	proNumber = strings.ReplaceAll(proNumber, ".", "")
-	return strings.ToUpper(proNumber)
+// NormalizeConsolidationNumber normalizes a consolidation number by removing separators and spaces
+func NormalizeConsolidationNumber(consolidationNumber string) string {
+	consolidationNumber = strings.ReplaceAll(consolidationNumber, "-", "")
+	consolidationNumber = strings.ReplaceAll(consolidationNumber, " ", "")
+	consolidationNumber = strings.ReplaceAll(consolidationNumber, ".", "")
+	return strings.ToUpper(consolidationNumber)
 }
 
-// FormatProNumber formats a pro number according to a display format
+// FormatConsolidationNumber formats a consolidation number according to a display format
 // The display format can include separators for better readability
-func FormatProNumber(proNumber string, format *ProNumberFormat) string {
+func FormatConsolidationNumber(
+	consolidationNumber string,
+	format *sequencegen.SequenceFormat,
+) string {
 	if !format.UseSeparators || format.SeparatorChar == "" {
-		return proNumber
+		return consolidationNumber
 	}
 
 	// * This is a simplistic implementation that just adds separators
@@ -476,54 +419,57 @@ func FormatProNumber(proNumber string, format *ProNumberFormat) string {
 	var result strings.Builder
 
 	// * Prefix is separate
-	if proNumber != "" && format.Prefix != "" {
-		result.WriteString(proNumber[:1])
+	if consolidationNumber != "" && format.Prefix != "" {
+		result.WriteString(consolidationNumber[:1])
 		result.WriteString(format.SeparatorChar)
-		proNumber = proNumber[1:]
+		consolidationNumber = consolidationNumber[1:]
 	}
 
 	// * Add year-month block
-	if format.IncludeYear && format.IncludeMonth && len(proNumber) >= 4 {
-		result.WriteString(proNumber[:4])
+	if format.IncludeYear && format.IncludeMonth && len(consolidationNumber) >= 4 {
+		result.WriteString(consolidationNumber[:4])
 		result.WriteString(format.SeparatorChar)
-		proNumber = proNumber[4:]
+		consolidationNumber = consolidationNumber[4:]
 	}
 
 	// * Add location code
-	if format.IncludeLocationCode && len(proNumber) >= 2 {
-		result.WriteString(proNumber[:2])
+	if format.IncludeLocationCode && len(consolidationNumber) >= 2 {
+		result.WriteString(consolidationNumber[:2])
 		result.WriteString(format.SeparatorChar)
-		proNumber = proNumber[2:]
+		consolidationNumber = consolidationNumber[2:]
 	}
 
 	// * Add sequence
-	if len(proNumber) >= format.SequenceDigits {
-		result.WriteString(proNumber[:format.SequenceDigits])
-		proNumber = proNumber[format.SequenceDigits:]
+	if len(consolidationNumber) >= format.SequenceDigits {
+		result.WriteString(consolidationNumber[:format.SequenceDigits])
+		consolidationNumber = consolidationNumber[format.SequenceDigits:]
 
 		// * If anything remains, add another separator
-		if proNumber != "" {
+		if consolidationNumber != "" {
 			result.WriteString(format.SeparatorChar)
 		}
 	}
 
 	// * Add the rest
-	result.WriteString(proNumber)
+	result.WriteString(consolidationNumber)
 
 	return result.String()
 }
 
-// GetProNumberComponents extracts components from a pro number based on its format
+// GetConsolidationNumberComponents extracts components from a consolidation number based on its format
 // Returns a map of component names to extracted values
 //
 //nolint:funlen,gocognit // This is a complex function that needs to be refactored
-func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[string]string, error) {
-	if !ValidateProNumber(proNumber, format) {
-		return nil, ErrInvalidProNumber
+func GetConsolidationNumberComponents(
+	consolidationNumber string,
+	format *sequencegen.SequenceFormat,
+) (map[string]string, error) {
+	if !ValidateConsolidationNumber(consolidationNumber, format) {
+		return nil, ErrInvalidConsolidationNumber
 	}
 
 	result := make(map[string]string)
-	result["full"] = proNumber
+	result["full"] = consolidationNumber
 
 	offset := 0
 	var err error
@@ -534,7 +480,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		func() error {
 			if format.Prefix != "" {
 				offset, err = extractComponent(
-					proNumber,
+					consolidationNumber,
 					offset,
 					len(format.Prefix),
 					"prefix",
@@ -548,7 +494,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		func() error {
 			if format.IncludeBusinessUnitCode && format.BusinessUnitCode != "" {
 				offset, err = extractComponent(
-					proNumber,
+					consolidationNumber,
 					offset,
 					len(format.BusinessUnitCode),
 					"businessUnit",
@@ -561,7 +507,13 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		// * Extract year
 		func() error {
 			if format.IncludeYear && format.YearDigits > 0 {
-				offset, err = extractComponent(proNumber, offset, format.YearDigits, "year", result)
+				offset, err = extractComponent(
+					consolidationNumber,
+					offset,
+					format.YearDigits,
+					"year",
+					result,
+				)
 				return err
 			}
 			return nil
@@ -569,10 +521,10 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		// * Extract month or week
 		func() error {
 			if format.IncludeMonth {
-				offset, err = extractComponent(proNumber, offset, 2, "month", result)
+				offset, err = extractComponent(consolidationNumber, offset, 2, "month", result)
 				return err
 			} else if format.IncludeWeekNumber {
-				offset, err = extractComponent(proNumber, offset, 2, "week", result)
+				offset, err = extractComponent(consolidationNumber, offset, 2, "week", result)
 				return err
 			}
 			return nil
@@ -580,7 +532,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		// * Extract day
 		func() error {
 			if format.IncludeDay {
-				offset, err = extractComponent(proNumber, offset, 2, "day", result)
+				offset, err = extractComponent(consolidationNumber, offset, 2, "day", result)
 				return err
 			}
 			return nil
@@ -589,7 +541,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		func() error {
 			if format.IncludeLocationCode {
 				offset, err = extractComponent(
-					proNumber,
+					consolidationNumber,
 					offset,
 					len(format.LocationCode),
 					"location",
@@ -603,7 +555,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		func() error {
 			if format.SequenceDigits > 0 {
 				offset, err = extractComponent(
-					proNumber,
+					consolidationNumber,
 					offset,
 					format.SequenceDigits,
 					"sequence",
@@ -617,7 +569,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		func() error {
 			if format.IncludeRandomDigits && format.RandomDigitsCount > 0 {
 				offset, err = extractComponent(
-					proNumber,
+					consolidationNumber,
 					offset,
 					format.RandomDigitsCount,
 					"random",
@@ -630,7 +582,7 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 		// * Extract check digit
 		func() error {
 			if format.IncludeCheckDigit {
-				offset, err = extractComponent(proNumber, offset, 1, "checkDigit", result)
+				offset, err = extractComponent(consolidationNumber, offset, 1, "checkDigit", result)
 				return err
 			}
 			return nil
@@ -646,19 +598,19 @@ func GetProNumberComponents(proNumber string, format *ProNumberFormat) (map[stri
 	return result, nil
 }
 
-// extractComponent extracts a component from the proNumber at the given offset
+// extractComponent extracts a component from the consolidationNumber at the given offset
 // with the specified length and adds it to the result map with the given key.
 // Returns the new offset and any error.
 func extractComponent(
-	proNumber string,
+	consolidationNumber string,
 	offset, length int,
 	key string,
 	result map[string]string,
 ) (int, error) {
-	if len(proNumber) < offset+length {
-		return offset, ErrInvalidProNumber
+	if len(consolidationNumber) < offset+length {
+		return offset, ErrInvalidConsolidationNumber
 	}
-	result[key] = proNumber[offset : offset+length]
+	result[key] = consolidationNumber[offset : offset+length]
 
 	return offset + length, nil
 }

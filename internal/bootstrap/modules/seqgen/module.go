@@ -20,8 +20,11 @@ var Module = fx.Module("seqgen",
 		// * Provide the sequence store
 		seqgen.NewSequenceStore,
 
-		// * Provide the format provider - using the adapter for pro numbers
-		adapters.NewProNumberFormatProvider,
+		// * Provide the unified format provider for all sequence types
+		fx.Annotate(
+			adapters.NewUnifiedFormatProvider,
+			fx.As(new(seqgen.FormatProvider)),
+		),
 
 		// * Provide the main generator that can be used for all sequence types
 		seqgen.NewGenerator,

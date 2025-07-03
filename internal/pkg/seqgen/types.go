@@ -59,6 +59,12 @@ type Format struct {
 
 	// * CustomFormat is a string with placeholders
 	CustomFormat string
+
+	// * IncludeWeekNumber determines whether to include week number instead of month
+	IncludeWeekNumber bool
+
+	// * IncludeDay determines whether to include day of month
+	IncludeDay bool
 }
 
 // SequenceStore interface for storing and retrieving sequences

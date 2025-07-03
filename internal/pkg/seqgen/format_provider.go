@@ -17,9 +17,9 @@ func NewDefaultFormatProvider() FormatProvider {
 
 // GetFormat returns the format configuration for a given sequence type
 func (p *defaultFormatProvider) GetFormat(
-	ctx context.Context,
+	_ context.Context,
 	sequenceType sequencestore.SequenceType,
-	orgID, buID pulid.ID,
+	_, _ pulid.ID,
 ) (*Format, error) {
 	// * TODO(wolfred): this should fetch from database
 	// * For now, return defaults based on sequence type

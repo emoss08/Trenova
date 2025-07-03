@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/pkg/dbutil"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/postgressearch"
@@ -29,8 +30,10 @@ type EquipmentTypeRespositoryParams struct {
 }
 
 type equipmentTypeRepository struct {
-	db db.Connection
-	l  *zerolog.Logger
+	db       db.Connection
+	dbSelect *dbutil.ConnectionSelector
+	txHelper *dbutil.TransactionHelper
+	l        *zerolog.Logger
 }
 
 func NewEquipmentTypeRepository(
@@ -41,8 +44,10 @@ func NewEquipmentTypeRepository(
 		Logger()
 
 	return &equipmentTypeRepository{
-		db: p.DB,
-		l:  &log,
+		db:       p.DB,
+		dbSelect: dbutil.NewConnectionSelector(p.DB),
+		txHelper: dbutil.NewTransactionHelper(p.DB),
+		l:        &log,
 	}
 }
 
@@ -87,7 +92,8 @@ func (fcr *equipmentTypeRepository) List(
 	ctx context.Context,
 	req *repositories.ListEquipmentTypeRequest,
 ) (*ports.ListResult[*equipmenttype.EquipmentType], error) {
-	dba, err := fcr.db.DB(ctx)
+	// * List is a read operation - use read connection
+	dba, err := fcr.dbSelect.Read(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -119,7 +125,8 @@ func (fcr *equipmentTypeRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetEquipmentTypeByIDOptions,
 ) (*equipmenttype.EquipmentType, error) {
-	dba, err := fcr.db.DB(ctx)
+	// * GetByID is a read operation - use read connection
+	dba, err := fcr.dbSelect.Read(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -150,7 +157,8 @@ func (fcr *equipmentTypeRepository) Create(
 	ctx context.Context,
 	et *equipmenttype.EquipmentType,
 ) (*equipmenttype.EquipmentType, error) {
-	dba, err := fcr.db.DB(ctx)
+	// * Create is a write operation - use write connection
+	dba, err := fcr.dbSelect.Write(ctx)
 	if err != nil {
 		return nil, oops.
 			In("equipment_type_repository").
@@ -182,18 +190,14 @@ func (fcr *equipmentTypeRepository) Update(
 	ctx context.Context,
 	et *equipmenttype.EquipmentType,
 ) (*equipmenttype.EquipmentType, error) {
-	dba, err := fcr.db.DB(ctx)
-	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
-	}
-
 	log := fcr.l.With().
 		Str("operation", "Update").
 		Str("id", et.GetID()).
 		Int64("version", et.Version).
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+	// * Update is a write operation - use transaction helper which ensures write connection
+	err := fcr.txHelper.RunInTx(ctx, func(c context.Context, tx bun.Tx) error {
 		ov := et.Version
 
 		et.Version++
