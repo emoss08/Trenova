@@ -49,7 +49,7 @@ db:
   maxIdleConns: 40
   connMaxLifetime: 300
   connMaxIdleTime: 60
-  debug: false
+  debug: true
 
 auth:
   sessionCookieName: "trv-session-id"
