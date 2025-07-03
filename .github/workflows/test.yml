@@ -36,7 +36,7 @@ jobs:
         run: go build ./...
 
       - name: Run Static Analysis
-        uses: dominikh/staticcheck-action@v1.2.0
+        uses: dominikh/staticcheck-action@v1
         with:
           version: latest
           install-go: false
@@ -46,6 +46,6 @@ jobs:
           go test -v -coverprofile=coverage.txt ./...
 
       - name: Golangci-lint
-        uses: golangci/golangci-lint-action@v8.0.0
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
