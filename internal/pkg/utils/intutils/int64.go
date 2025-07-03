@@ -5,6 +5,8 @@ import "fmt"
 const (
 	maxInt16 = 32767
 	minInt16 = -32768
+	maxInt32 = 2147483647
+	minInt32 = -2147483648
 )
 
 // SafeInt16Ptr converts an int to a *int16.
@@ -37,6 +39,17 @@ func SafeInt16(value int) (int16, error) {
 		return 0, fmt.Errorf("value %d is outside int16 range", value)
 	}
 	return int16(value), nil
+}
+
+// SafeInt32 converts an int to int32 safely, clamping to int32 bounds
+func SafeInt32(value int) int32 {
+	if value > maxInt32 {
+		return maxInt32
+	}
+	if value < minInt32 {
+		return minInt32
+	}
+	return int32(value)
 }
 
 func SafeUint64Ptr(i uint64, returnNilOnZero bool) *uint64 {
