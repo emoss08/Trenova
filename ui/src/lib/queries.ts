@@ -6,6 +6,7 @@ import { Resource } from "@/types/audit-entry";
 import type { GetCustomerByIDParams } from "@/types/customer";
 import type { IntegrationType } from "@/types/integration";
 import type { NotificationQueryParams } from "@/types/notification";
+import type { ShipmentQueryParams } from "@/types/shipment";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 import type { AccessorialChargeSchema } from "./schemas/accessorial-charge-schema";
 import type { PatternConfigSchema } from "./schemas/pattern-config-schema";
@@ -130,6 +131,10 @@ export const queries = createQueryKeyStore({
     }),
   },
   shipment: {
+    list: (params: ShipmentQueryParams) => ({
+      queryKey: ["shipment/list", params],
+      queryFn: async () => api.shipments.getShipments(params),
+    }),
     getShipment: (shipmentId: string, enabled: boolean = true) => ({
       queryKey: ["shipment", shipmentId],
       queryFn: async () => {

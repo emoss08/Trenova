@@ -20,13 +20,22 @@ export class ShipmentAPI {
       "/shipments/",
       {
         params: {
-          limit: queryParams.pageSize?.toString(),
-          offset: (
-            (queryParams?.pageIndex ?? 0) * (queryParams?.pageSize ?? 10)
-          ).toString(),
+          id: queryParams.id,
+          query: queryParams.query,
+          limit: queryParams.limit?.toString(),
+          offset: queryParams.offset?.toString(),
           expandShipmentDetails: queryParams.expandShipmentDetails?.toString(),
-          query: queryParams.query ?? "",
-          status: queryParams.status,
+          ...(queryParams.tenantOpts && {
+            buId: queryParams.tenantOpts.buId,
+            orgId: queryParams.tenantOpts.orgId,
+            userId: queryParams.tenantOpts.userId,
+          }),
+          ...(queryParams.sort && {
+            sort: JSON.stringify(queryParams.sort),
+          }),
+          ...(queryParams.filters && {
+            filters: JSON.stringify(queryParams.filters),
+          }),
         },
       },
     );
