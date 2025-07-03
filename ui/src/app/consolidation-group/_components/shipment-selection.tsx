@@ -4,12 +4,12 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
+import { queries } from "@/lib/queries";
 import { type CreateConsolidationSchema } from "@/lib/schemas/consolidation-schema";
 import {
   ShipmentStatus,
   type ShipmentSchema,
 } from "@/lib/schemas/shipment-schema";
-import { api } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { Calendar, MapPin, Package, Search } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -22,25 +22,33 @@ export function ShipmentSelection() {
 
   // * Fetch available shipments
   const { data: shipments, isLoading } = useQuery({
-    queryKey: ["shipments", { status: ShipmentStatus.enum.New, limit: 100 }],
-    queryFn: async () => {
-      const response = await api.shipments.getShipments({
-        status: ShipmentStatus.enum.New,
-        pageSize: 100,
-        pageIndex: 0,
-        expandShipmentDetails: true,
-      });
-      return response.results;
-    },
+    ...queries.shipment.list({
+      limit: 100,
+      offset: 0,
+      filters: [
+        {
+          field: "status",
+          operator: "eq",
+          value: ShipmentStatus.enum.New,
+        },
+      ],
+      sort: [
+        {
+          field: "createdAt",
+          direction: "asc",
+        },
+      ],
+      expandShipmentDetails: true,
+    }),
   });
 
   // * Filter shipments based on search term
   const filteredShipments = useMemo(() => {
     if (!shipments) return [];
-    if (!searchTerm) return shipments;
+    if (!searchTerm) return shipments.results;
 
     const lowerSearch = searchTerm.toLowerCase();
-    return shipments.filter(
+    return shipments.results.filter(
       (shipment) =>
         shipment.proNumber?.toLowerCase().includes(lowerSearch) ||
         shipment.bol?.toLowerCase().includes(lowerSearch) ||
@@ -54,7 +62,10 @@ export function ShipmentSelection() {
       ? currentIds.filter((id) => id !== shipmentId)
       : [...currentIds, shipmentId];
 
-    setValue("shipmentIds", newIds, { shouldValidate: true });
+    setValue("shipmentIds", newIds, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   const handleSelectAll = () => {
@@ -62,11 +73,17 @@ export function ShipmentSelection() {
     const allIds = filteredShipments
       .map((s) => s.id)
       .filter(Boolean) as string[];
-    setValue("shipmentIds", allIds, { shouldValidate: true });
+    setValue("shipmentIds", allIds, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   const handleClearAll = () => {
-    setValue("shipmentIds", [], { shouldValidate: true });
+    setValue("shipmentIds", [], {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
   };
 
   if (isLoading) {
@@ -172,6 +189,7 @@ function ShipmentItem({ shipment, isSelected, onToggle }: ShipmentItemProps) {
             </Badge>
           </div>
           <span className="text-sm text-muted-foreground">
+            {shipment.status}
             {shipment.customer?.name || "Unknown Customer"}
           </span>
         </div>

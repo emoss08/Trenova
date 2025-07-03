@@ -6,7 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/pronumbergen"
+	"github.com/emoss08/trenova/internal/pkg/sequencegen"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -176,9 +176,9 @@ func (pnc *ProNumberConfig) BeforeAppendModel(_ context.Context, query bun.Query
 	return nil
 }
 
-// ToProNumberFormat converts the config to a ProNumberFormat
-func (pnc *ProNumberConfig) ToProNumberFormat() *pronumbergen.ProNumberFormat {
-	return &pronumbergen.ProNumberFormat{
+// ToSequenceFormat converts the config to a SequenceFormat
+func (pnc *ProNumberConfig) ToSequenceFormat() *sequencegen.SequenceFormat {
+	return &sequencegen.SequenceFormat{
 		Prefix:                  pnc.Prefix,
 		IncludeYear:             pnc.IncludeYear,
 		YearDigits:              pnc.YearDigits,

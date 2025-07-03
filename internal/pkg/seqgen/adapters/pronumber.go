@@ -4,8 +4,9 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/sequencestore"
-	"github.com/emoss08/trenova/internal/pkg/pronumbergen"
 	"github.com/emoss08/trenova/internal/pkg/seqgen"
+	"github.com/emoss08/trenova/internal/pkg/sequencegen"
+	"github.com/emoss08/trenova/internal/pkg/sequencegen/pronumbergen"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 )
@@ -29,7 +30,7 @@ func (p *ProNumberFormatProvider) GetFormat(
 		return nil, eris.New("invalid sequence type for pro number provider")
 	}
 
-	var proFormat *pronumbergen.ProNumberFormat
+	var proFormat *sequencegen.SequenceFormat
 	var err error
 
 	// * Try business unit specific format first
@@ -47,7 +48,7 @@ func (p *ProNumberFormatProvider) GetFormat(
 		return nil, eris.Wrap(err, "get pro number format")
 	}
 
-	// * Convert pronumbergen.ProNumberFormat to seqgen.Format
+	// * Convert sequencegen.ProNumberFormat to seqgen.Format
 	return &seqgen.Format{
 		Type:                    sequencestore.SequenceTypeProNumber,
 		Prefix:                  proFormat.Prefix,
@@ -69,9 +70,9 @@ func (p *ProNumberFormatProvider) GetFormat(
 	}, nil
 }
 
-// ConvertToProNumberFormat converts a seqgen.Format back to pronumbergen.ProNumberFormat
-func ConvertToProNumberFormat(format *seqgen.Format) *pronumbergen.ProNumberFormat {
-	return &pronumbergen.ProNumberFormat{
+// ConvertToProNumberFormat converts a seqgen.Format back to sequencegen.SequenceFormat
+func ConvertToProNumberFormat(format *seqgen.Format) *sequencegen.SequenceFormat {
+	return &sequencegen.SequenceFormat{
 		Prefix:                  format.Prefix,
 		IncludeYear:             format.IncludeYear,
 		YearDigits:              format.YearDigits,

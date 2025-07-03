@@ -1,10 +1,10 @@
-import { Button } from "@/components/ui/button";
+import { FormSaveDock } from "@/components/form";
+import { Form } from "@/components/ui/form";
 import {
   Sheet,
   SheetBody,
   SheetContent,
   SheetDescription,
-  SheetFooter,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
@@ -36,6 +36,12 @@ export function ConsolidationCreateSheet({
     },
   });
 
+  const {
+    reset,
+    watch,
+    formState: { errors, isDirty },
+  } = form;
+
   const createMutation = useApiMutation({
     mutationFn: (values: CreateConsolidationSchema) =>
       api.consolidations.create(values),
@@ -44,9 +50,10 @@ export function ConsolidationCreateSheet({
       await queryClient.invalidateQueries({
         queryKey: ["consolidation-list"],
       });
+
       toast.success("Consolidation created successfully");
       onOpenChange(false);
-      form.reset();
+      reset();
     },
     onError: (error) => {
       toast.error("Failed to create consolidation", {
@@ -62,10 +69,15 @@ export function ConsolidationCreateSheet({
     [createMutation],
   );
 
+  console.log("Consolidation Form Information");
+  console.log("Is Dirty", isDirty);
+  console.log("Errors", errors);
+  console.log("Watch", watch());
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-[600px]">
-        <SheetHeader>
+        <SheetHeader className="px-4 py-2 space-y-0">
           <SheetTitle>Create New Consolidation</SheetTitle>
           <SheetDescription>
             Create a new consolidation group by selecting shipments to
@@ -73,24 +85,12 @@ export function ConsolidationCreateSheet({
           </SheetDescription>
         </SheetHeader>
         <FormProvider {...form}>
-          <form onSubmit={form.handleSubmit(handleSubmit)}>
+          <Form onSubmit={form.handleSubmit(handleSubmit)}>
             <SheetBody>
               <ConsolidationForm />
             </SheetBody>
-            <SheetFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => onOpenChange(false)}
-                disabled={createMutation.isPending}
-              >
-                Cancel
-              </Button>
-              <Button type="submit" disabled={createMutation.isPending}>
-                {createMutation.isPending ? "Creating..." : "Create"}
-              </Button>
-            </SheetFooter>
-          </form>
+            <FormSaveDock position="right" />
+          </Form>
         </FormProvider>
       </SheetContent>
     </Sheet>

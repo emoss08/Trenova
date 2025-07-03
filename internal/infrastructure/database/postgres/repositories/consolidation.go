@@ -149,7 +149,7 @@ func (r *consolidationRepository) GetNextConsolidationNumber(
 			Str("orgID", orgID.String()).
 			Str("buID", buID.String()).
 			Msg("failed to generate consolidation number")
-		return "", eris.Wrap(err, "generate consolidation number")
+		return "", err
 	}
 
 	return consolidationNumber, nil
