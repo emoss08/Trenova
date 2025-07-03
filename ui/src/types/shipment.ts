@@ -1,13 +1,9 @@
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import type { QueryOptions } from "./common";
 
 export type ShipmentQueryParams = {
-  pageIndex?: number;
-  pageSize?: number;
   expandShipmentDetails?: boolean;
-  query?: string;
-  enabled?: boolean;
-  status?: ShipmentSchema["status"];
-};
+} & QueryOptions;
 
 export type ShipmentDetailsQueryParams = {
   shipmentId: string;

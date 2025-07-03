@@ -1,3 +1,7 @@
+import type {
+  FieldFilter,
+  SortField,
+} from "@/lib/schemas/table-configuration-schema";
 import type { IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 
 export enum Status {
@@ -19,3 +23,17 @@ export enum Gender {
 }
 
 export type HasField<T, K extends keyof T> = K extends keyof T ? true : false;
+
+export type QueryOptions = {
+  id?: string;
+  tenantOpts?: {
+    buId: string;
+    orgId: string;
+    userId: string;
+  };
+  query?: string;
+  sort?: SortField[];
+  filters?: FieldFilter[];
+  limit?: number;
+  offset?: number;
+};

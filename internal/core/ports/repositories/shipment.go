@@ -32,11 +32,13 @@ var ShipmentFieldConfig = &ports.FieldConfiguration{
 		"destinationLocation.name": true,
 		"originDate":               true,
 		"destinationDate":          true,
+		"createdAt":                true,
 	},
 	FieldMap: map[string]string{
 		"proNumber": "pro_number",
 		"status":    "status",
 		"bol":       "bol",
+		"createdAt": "created_at",
 	},
 	EnumMap: map[string]bool{
 		"status": true,
@@ -114,7 +116,7 @@ var ShipmentFieldConfig = &ports.FieldConfiguration{
 				{
 					Table:     "stops",
 					Alias:     "stop_orig_date",
-					Condition: "sm_orig_date.id = stop_orig_date.shipment_move_id AND stop_orig_date.type = 'PICKUP' AND stop_orig_date.sequence = 0",
+					Condition: "sm_orig_date.id = stop_orig_date.shipment_move_id AND stop_orig_date.type = 'Pickup' AND stop_orig_date.sequence = 0",
 					JoinType:  ports.JoinTypeLeft,
 				},
 			},
@@ -132,7 +134,7 @@ var ShipmentFieldConfig = &ports.FieldConfiguration{
 				{
 					Table:     "stops",
 					Alias:     "stop_dest_date",
-					Condition: "sm_dest_date.id = stop_dest_date.shipment_move_id AND stop_dest_date.type = 'DELIVERY'",
+					Condition: "sm_dest_date.id = stop_dest_date.shipment_move_id AND stop_dest_date.type = 'Delivery'",
 					JoinType:  ports.JoinTypeLeft,
 				},
 			},
