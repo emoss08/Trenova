@@ -208,11 +208,8 @@ export function DataTable<TData extends Record<string, any>>({
     // Don't do anything while still loading
     if (isTableConfigLoading) return;
 
-    console.info("tableConfig", tableConfig);
-
     // * Check if there is no table configuration only after the query is done loading
     if (!tableConfig) {
-      console.info(`no table configuration for ${resource}`);
       return;
     }
 
