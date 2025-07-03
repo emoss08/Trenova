@@ -83,5 +83,5 @@ export type SortFieldSchema = z.infer<typeof sortFieldSchema>;
 export type LogicalOperator = z.infer<typeof LogicalOperatorSchema>;
 export type SortDirection = z.infer<typeof SortDirectionSchema>;
 export type FilterOperator = z.infer<typeof FilterOperatorSchema>;
-export type FilterField = z.infer<typeof filterFieldSchema>;
+export type FieldFilter = z.infer<typeof filterFieldSchema>;
 export type SortField = z.infer<typeof sortFieldSchema>;
