@@ -59,6 +59,9 @@ CREATE INDEX "idx_workers_name" ON "workers"("last_name", "first_name");
 CREATE INDEX "idx_workers_created_updated" ON "workers"("created_at", "updated_at");
 
 --bun:split
+CREATE INDEX "idx_workers_org_bu" ON "workers"("organization_id", "business_unit_id");
+
+--bun:split
 COMMENT ON TABLE workers IS 'Stores information about company workers (employees and contractors)';
 
 --bun:split
