@@ -49,7 +49,6 @@ func NewTestConfig() *config.Config {
 			PassLocalsToViews:       false,
 			ReadBufferSize:          16384,
 			WriteBufferSize:         16384,
-			EnablePrefork:           false,
 			EnablePrintRoutes:       false,
 			DisableStartupMessage:   true,
 			StreamRequestBody:       true,
