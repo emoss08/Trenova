@@ -27,6 +27,7 @@ export function InputField<T extends FieldValues>({
   autoComplete,
   placeholder,
   inputClassProps,
+  rightElement,
   "aria-label": ariaLabel,
   "aria-describedby": ariaDescribedBy,
   readOnly,
@@ -100,6 +101,8 @@ export function InputField<T extends FieldValues>({
                   >
                     {characterLimit.characterCount}/{maxLength}
                   </div>
+                ) : rightElement ? (
+                  rightElement
                 ) : undefined
               }
               aria-describedby={cn(
