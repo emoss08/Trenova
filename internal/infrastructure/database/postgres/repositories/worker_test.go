@@ -86,13 +86,25 @@ func TestWorkerRepository(t *testing.T) {
 					BuID:  bu.ID,
 				},
 			},
+			WorkerFilterOptions: repoports.WorkerFilterOptions{
+				IncludeProfile: true,
+			},
 		}
 
 		result, err := repo.List(ctx, opts)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.NotEmpty(t, result.Items)
-		require.NotNil(t, result.Items[0].Profile)
+
+		// Check if any worker has a profile
+		hasWorkerWithProfile := false
+		for _, worker := range result.Items {
+			if worker.Profile != nil {
+				hasWorkerWithProfile = true
+				break
+			}
+		}
+		require.True(t, hasWorkerWithProfile, "At least one worker should have a profile")
 	})
 
 	t.Run("list workers with pto", func(t *testing.T) {
@@ -105,13 +117,24 @@ func TestWorkerRepository(t *testing.T) {
 					BuID:  bu.ID,
 				},
 			},
+			WorkerFilterOptions: repoports.WorkerFilterOptions{
+				IncludePTO: true,
+			},
 		}
 
 		result, err := repo.List(ctx, opts)
 		require.NoError(t, err)
 		require.NotNil(t, result)
 		require.NotEmpty(t, result.Items)
-		require.NotEmpty(t, result.Items[1].PTO)
+		// Check if any worker has PTO - worker_1 has PTO in fixtures
+		hasWorkerWithPTO := false
+		for _, worker := range result.Items {
+			if len(worker.PTO) > 0 {
+				hasWorkerWithPTO = true
+				break
+			}
+		}
+		require.True(t, hasWorkerWithPTO, "At least one worker should have PTO")
 	})
 
 	t.Run("get by id", func(t *testing.T) {
