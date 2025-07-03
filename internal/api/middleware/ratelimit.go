@@ -152,15 +152,7 @@ func (rl *RateLimiter) createLimitHandler(config *RateLimitConfig) fiber.Handler
 			return rl.handleRateLimitError(c, config, err)
 		}
 
-		// Handle reset time edge cases
-		allowed, remaining, reset = rl.handleResetTimeEdgeCases(ctx, c, &handleEdgeCasesParams{
-			Key:         key,
-			Config:      config,
-			Remaining:   remaining,
-			MaxRequests: maxRequests,
-			Reset:       reset,
-			Allowed:     allowed,
-		}, &log)
+		// * Reset time edge cases are now handled atomically in the Lua script
 
 		// Set rate limit headers
 		rl.setRateLimitHeaders(c, maxRequests, remaining, reset, config.Strategy)
@@ -275,48 +267,7 @@ func (rl *RateLimiter) handleRateLimitError(
 	return c.Next() // Allow request on error for high availability
 }
 
-type handleEdgeCasesParams struct {
-	Key         string
-	Config      *RateLimitConfig
-	Remaining   int
-	MaxRequests int
-	Reset       int64
-	Allowed     bool
-}
 
-// handleResetTimeEdgeCases handles the case when reset time is in the past
-func (rl *RateLimiter) handleResetTimeEdgeCases(
-	ctx context.Context,
-	c *fiber.Ctx,
-	p *handleEdgeCasesParams,
-	log *zerolog.Logger,
-) (isAllowed bool, remaining int, reset int64) {
-	now := time.Now().Unix()
-	if reset <= now {
-		// If reset time is in the past, set it to a small time in the future
-		p.Reset = now + 1
-
-		// Also, we should reset the counter if the reset time was in the past
-		if !p.Allowed {
-			log.Warn().
-				Str("ip", c.IP()).
-				Str("path", c.Path()).
-				Msg("reset time was in the past but limit was exceeded; forcing counter reset")
-
-			// Force reset the counter
-			if err := rl.resetCounter(ctx, p.Key, p.Config.Strategy); err != nil {
-				log.Error().Err(err).Msg("failed to reset rate limit counter")
-				// Continue despite error - we'll try to allow the request anyway
-			}
-
-			// Allow this request since we're resetting
-			p.Allowed = true
-			p.Remaining = p.MaxRequests - 1
-		}
-	}
-
-	return p.Allowed, p.Remaining, p.Reset
-}
 
 // setRateLimitHeaders sets the rate limit headers in the response
 func (rl *RateLimiter) setRateLimitHeaders(
@@ -374,11 +325,12 @@ func (rl *RateLimiter) resetCounter(ctx context.Context, key, strategy string) e
 		}
 		err = rl.redis.Del(ctx, key+":timestamp")
 	default:
-		// For fixed window, delete both counter and window keys
-		if err = rl.redis.Del(ctx, key); err != nil {
+		// For fixed window, delete the new hash key and old keys for migration
+		if err = rl.redis.Del(ctx, key+":data"); err != nil {
 			return err
 		}
-		err = rl.redis.Del(ctx, key+":window")
+		// Clean up old format keys if they exist
+		rl.redis.Del(ctx, key, key+":window")
 	}
 
 	if err != nil {
@@ -388,53 +340,6 @@ func (rl *RateLimiter) resetCounter(ctx context.Context, key, strategy string) e
 	return err
 }
 
-// verifyCounterConsistency ensures window and counter keys are consistent
-func (rl *RateLimiter) verifyCounterConsistency(ctx context.Context, key, windowKey string) error {
-	// Check if window exists but counter doesn't or vice versa
-	exists, err := rl.redis.Exists(ctx, windowKey)
-	if err != nil {
-		// If circuit breaker is open, skip consistency check
-		if strings.Contains(err.Error(), "circuit breaker is open") {
-			rl.l.Debug().
-				Str("key", key).
-				Str("windowKey", windowKey).
-				Msg("skipping consistency check due to circuit breaker")
-			return nil
-		}
-		return eris.Wrap(err, "failed to check window key existence")
-	}
-
-	counterExists, err := rl.redis.Exists(ctx, key)
-	if err != nil {
-		// If circuit breaker is open, skip consistency check
-		if strings.Contains(err.Error(), "circuit breaker is open") {
-			rl.l.Debug().
-				Str("key", key).
-				Str("windowKey", windowKey).
-				Msg("skipping consistency check due to circuit breaker")
-			return nil
-		}
-		return eris.Wrap(err, "failed to check counter key existence")
-	}
-
-	// If only one of the keys exists, delete both to ensure consistency
-	if (exists && !counterExists) || (!exists && counterExists) {
-		rl.l.Warn().
-			Str("key", key).
-			Str("windowKey", windowKey).
-			Msg("inconsistent rate limit state detected, resetting")
-
-		if err = rl.deleteRedisKeyHandlingCircuitBreaker(ctx, key, "failed to delete counter key"); err != nil {
-			return err
-		}
-
-		if err = rl.deleteRedisKeyHandlingCircuitBreaker(ctx, windowKey, "failed to delete window key"); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
 
 // deleteRedisKeyHandlingCircuitBreaker attempts to delete a Redis key and handles circuit breaker errors.
 func (rl *RateLimiter) deleteRedisKeyHandlingCircuitBreaker(
@@ -500,12 +405,7 @@ func (rl *RateLimiter) checkFixedWindowLimit(
 ) (isAllowed bool, remaining int, reset int64, err error) {
 	windowKey := key + ":window"
 
-	// First verify counter consistency
-	if err = rl.verifyCounterConsistency(ctx, key, windowKey); err != nil {
-		rl.l.Warn().
-			Err(err).
-			Msg("counter consistency check failed, proceeding with rate limit check")
-	}
+	// * Consistency is now maintained atomically in the Lua script
 
 	now := time.Now().Unix()
 
@@ -544,25 +444,7 @@ func (rl *RateLimiter) checkFixedWindowLimit(
 	remaining = int(remainingVal)
 	reset = resetVal
 
-	// Double-check: if reset time is in the past, something is wrong
-	if reset < now {
-		rl.l.Warn().
-			Str("key", key).
-			Int64("reset", reset).
-			Int64("now", now).
-			Msg("reset time is in the past, possible clock skew or expired window")
-
-		// Force reset the window
-		err = rl.resetCounter(ctx, key, "fixed")
-		if err != nil {
-			rl.l.Error().Err(err).Msg("failed to reset counter after detecting past reset time")
-		}
-
-		// Set new reset time
-		reset = now + int64(interval.Seconds())
-		isAllowed = true
-		remaining = maxRequests - 1
-	}
+	// * Clock skew is now handled in the Lua script with a grace period
 
 	return isAllowed, remaining, reset, nil
 }
@@ -759,31 +641,35 @@ func (rl *RateLimiter) getIP(c *fiber.Ctx) string {
 
 // ClearRateLimits clears all rate limits for a specific key pattern
 func (rl *RateLimiter) ClearRateLimits(ctx context.Context, keyPattern string) error {
-	// Use SCAN to find all matching keys
-	iter := rl.redis.Scan(ctx, 0, keyPattern+"*", 100).Iterator()
+	// Use SCAN to find all matching keys (including new :data suffix)
+	patterns := []string{keyPattern + "*", keyPattern + "*:data"}
+	
+	for _, pattern := range patterns {
+		iter := rl.redis.Scan(ctx, 0, pattern, 100).Iterator()
 
-	var keys []string
-	for iter.Next(ctx) {
-		keys = append(keys, iter.Val())
+		var keys []string
+		for iter.Next(ctx) {
+			keys = append(keys, iter.Val())
 
-		// Delete in batches of 100 to avoid blocking Redis
-		if len(keys) >= 100 {
+			// Delete in batches of 100 to avoid blocking Redis
+			if len(keys) >= 100 {
+				if err := rl.redis.Del(ctx, keys...); err != nil {
+					return err
+				}
+				keys = keys[:0]
+			}
+		}
+
+		// Delete any remaining keys
+		if len(keys) > 0 {
 			if err := rl.redis.Del(ctx, keys...); err != nil {
 				return err
 			}
-			keys = keys[:0]
 		}
-	}
 
-	// Delete any remaining keys
-	if len(keys) > 0 {
-		if err := rl.redis.Del(ctx, keys...); err != nil {
+		if err := iter.Err(); err != nil {
 			return err
 		}
-	}
-
-	if err := iter.Err(); err != nil {
-		return err
 	}
 
 	return nil

@@ -1,4 +1,4 @@
--- Fixed window rate limiting script with robust window expiration
+-- Fixed window rate limiting script with improved consistency
 -- KEYS[1]: rate limit counter key
 -- KEYS[2]: window key (timestamp when the current window started)
 -- ARGV[1]: max requests allowed
@@ -11,43 +11,52 @@ local max_requests = tonumber(ARGV[1])
 local window_size_sec = tonumber(ARGV[2])
 local now = tonumber(ARGV[3])
 
--- Get the window timestamp and counter atomically
-local window_timestamp = redis.call('GET', window_key)
-local counter = redis.call('GET', counter_key)
+-- Use a transaction-like approach with a single combined key
+-- Store both window timestamp and counter in a hash
+local data_key = counter_key .. ":data"
 
--- Initialize window if needed or check if it has expired
-if not window_timestamp then
-    -- No window exists yet, create a new one
-    redis.call('SET', window_key, now, 'EX', window_size_sec)
-    redis.call('SET', counter_key, 1, 'EX', window_size_sec)
-    return { 1, max_requests - 1, now + window_size_sec }
-end
+-- Get current window data
+local window_data = redis.call('HMGET', data_key, 'window_start', 'counter')
+local window_start = window_data[1] and tonumber(window_data[1])
+local counter = window_data[2] and tonumber(window_data[2]) or 0
 
--- Convert values to numbers
-window_timestamp = tonumber(window_timestamp)
-counter = counter and tonumber(counter) or 0
-
--- Calculate when the current window expires
-local window_expires = window_timestamp + window_size_sec
-
--- Check if window has expired (allow a small buffer for clock skew)
-if now >= window_expires then
-    -- Window has expired, start a new one
-    redis.call('SET', window_key, now, 'EX', window_size_sec)
-    redis.call('SET', counter_key, 1, 'EX', window_size_sec)
-    return { 1, max_requests - 1, now + window_size_sec }
-end
-
--- Window is still active, check if we're within limits
-if counter < max_requests then
-    -- Still within limit, increment and return
-    redis.call('INCR', counter_key)
-    -- Ensure both keys have the same expiration
-    local remaining_ttl = window_expires - now
-    if remaining_ttl > 0 then
-        redis.call('EXPIRE', counter_key, remaining_ttl)
-        redis.call('EXPIRE', window_key, remaining_ttl)
+-- Check if we need to create or reset the window
+local needs_reset = false
+if not window_start then
+    needs_reset = true
+else
+    -- Calculate window expiration with 1-second grace period for clock skew
+    local window_expires = window_start + window_size_sec
+    if now >= window_expires - 1 then
+        needs_reset = true
     end
+end
+
+if needs_reset then
+    -- Reset window with atomic operation
+    redis.call('HMSET', data_key, 'window_start', now, 'counter', 1)
+    redis.call('EXPIRE', data_key, window_size_sec + 2) -- Add 2 seconds buffer
+    
+    -- Clean up old keys if they exist (migration support)
+    redis.call('DEL', counter_key, window_key)
+    
+    return { 1, max_requests - 1, now + window_size_sec }
+end
+
+-- Window is still active
+local window_expires = window_start + window_size_sec
+
+-- Check rate limit
+if counter < max_requests then
+    -- Increment counter atomically
+    redis.call('HINCRBY', data_key, 'counter', 1)
+    
+    -- Update expiration to match window end (with buffer)
+    local remaining_ttl = window_expires - now + 2
+    if remaining_ttl > 0 then
+        redis.call('EXPIRE', data_key, remaining_ttl)
+    end
+    
     return { 1, max_requests - counter - 1, window_expires }
 else
     -- Rate limit exceeded
