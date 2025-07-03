@@ -70,6 +70,22 @@ function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
   const hasActive = hasActiveChild(currentPath, item);
   const [isOpen, setIsOpen] = React.useState(hasActive);
 
+  // Helper to handle navigation - prevent navigation if already on the same route
+  const handleNavigation = React.useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>, targetPath: string | undefined) => {
+      if (!targetPath || targetPath === "#") return;
+      
+      // If we're already on this route, prevent navigation to preserve query params
+      if (isRouteActive(currentPath, targetPath)) {
+        e.preventDefault();
+        return;
+      }
+      
+      // Otherwise, allow normal navigation (clears query params for different tables)
+    },
+    [currentPath]
+  );
+
   // Update open state when active state changes
   React.useEffect(() => {
     if (hasActive) {
@@ -82,7 +98,10 @@ function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton asChild data-active={isActive} isActive={isActive}>
-            <Link to={item.link || "#"}>
+            <Link 
+              to={item.link || "#"}
+              onClick={(e) => handleNavigation(e, item.link)}
+            >
               {item.icon && (
                 <Icon
                   icon={item.icon}
@@ -102,7 +121,10 @@ function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
       <SidebarMenuItem className="items-center">
         <Collapsible open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
           <SidebarMenuButton className="cursor-default" asChild>
-            <Link to={item.link || "#"}>
+            <Link 
+              to={item.link || "#"}
+              onClick={(e) => handleNavigation(e, item.link)}
+            >
               {item.icon && <Icon icon={item.icon} />}
               <span>{item.label}</span>
             </Link>
@@ -131,6 +153,7 @@ function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
                     >
                       <Link
                         to={subItem.link || "#"}
+                        onClick={(e) => handleNavigation(e, subItem.link)}
                         className="flex items-center gap-2"
                       >
                         {subItem.icon && <Icon icon={subItem.icon} />}
