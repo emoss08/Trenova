@@ -46,6 +46,13 @@ type ListConsolidationRequest struct {
 	ConsolidationOptions `json:"consolidationOptions" query:"consolidationOptions"`
 }
 
+type CreateConsolidationRequest struct {
+	BuID        pulid.ID   `json:"buId"`
+	OrgID       pulid.ID   `json:"orgId"`
+	UserID      pulid.ID   `json:"userId"`
+	ShipmentIDs []pulid.ID `json:"shipmentIds"`
+}
+
 // ConsolidationRepository defines operations for consolidation management
 type ConsolidationRepository interface {
 	// * Consolidation number generation
@@ -59,7 +66,7 @@ type ConsolidationRepository interface {
 	// * CRUD operations (no delete - use status cancellation instead)
 	Create(
 		ctx context.Context,
-		group *consolidation.ConsolidationGroup,
+		req *CreateConsolidationRequest,
 	) (*consolidation.ConsolidationGroup, error)
 	Get(ctx context.Context, id pulid.ID) (*consolidation.ConsolidationGroup, error)
 	GetByConsolidationNumber(

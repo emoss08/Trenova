@@ -198,7 +198,7 @@ func (r *consolidationRepository) GetNextConsolidationNumberBatch(
 //   - error: If creation fails or consolidation number generation fails.
 func (r *consolidationRepository) Create(
 	ctx context.Context,
-	group *consolidation.ConsolidationGroup,
+	req *repositories.CreateConsolidationRequest,
 ) (*consolidation.ConsolidationGroup, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -209,14 +209,14 @@ func (r *consolidationRepository) Create(
 
 	log := r.l.With().
 		Str("operation", "Create").
-		Str("orgID", group.OrganizationID.String()).
-		Str("buID", group.BusinessUnitID.String()).
+		Str("orgID", req.OrgID.String()).
+		Str("buID", req.BuID.String()).
 		Logger()
 
 	consolidationNumber, err := r.GetNextConsolidationNumber(
 		ctx,
-		group.OrganizationID,
-		group.BusinessUnitID,
+		req.OrgID,
+		req.BuID,
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate consolidation number")
@@ -226,7 +226,12 @@ func (r *consolidationRepository) Create(
 			Time(time.Now()).
 			Wrapf(err, "generate consolidation number")
 	}
-	group.ConsolidationNumber = consolidationNumber
+
+	group := &consolidation.ConsolidationGroup{
+		ConsolidationNumber: consolidationNumber,
+		OrganizationID:      req.OrgID,
+		BusinessUnitID:      req.BuID,
+	}
 
 	if _, err = dba.NewInsert().
 		Model(group).
@@ -238,6 +243,18 @@ func (r *consolidationRepository) Create(
 			Tags("crud", "create").
 			Time(time.Now()).
 			Wrapf(err, "create consolidation group")
+	}
+
+	if _, err = dba.NewUpdate().Model((*shipment.Shipment)(nil)).
+		Where("id IN (?)", bun.In(req.ShipmentIDs)).
+		Set("consolidation_group_id = ?", group.ID).
+		Exec(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to update shipment consolidation group id")
+		return nil, oops.
+			In("consolidation_repository").
+			Tags("crud", "create").
+			Time(time.Now()).
+			Wrapf(err, "update shipment consolidation group id")
 	}
 
 	log.Info().

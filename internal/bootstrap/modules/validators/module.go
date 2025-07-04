@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator/commodityvalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/compliancevalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/consolidationsettingvalidator"
+	"github.com/emoss08/trenova/internal/pkg/validator/consolidationvalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/customervalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/documenttypevalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/equipmentmanufacturervalidator"
@@ -58,6 +59,7 @@ var Module = fx.Module("validators",
 		workervalidator.NewValidator,
 		notificationpreferencevalidator.NewValidator,
 		consolidationsettingvalidator.NewValidator,
+		consolidationvalidator.NewValidator,
 	),
 	fx.Options(
 		framework.Module,

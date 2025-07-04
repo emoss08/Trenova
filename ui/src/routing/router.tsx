@@ -359,19 +359,19 @@ const routes: RouteObject[] = [
                   title: "Shipment Controls",
                 },
               },
-              // {
-              //   path: "consolidation-settings",
-              //   async lazy() {
-              //     let { ConsolidationSettings } = await import(
-              //       "@/app/consolidation-settings/page"
-              //     );
-              //     return { Component: ConsolidationSettings };
-              //   },
-              //   handle: {
-              //     crumb: "Consolidation Settings",
-              //     title: "Consolidation Settings",
-              //   },
-              // },
+              {
+                path: "consolidation-settings",
+                async lazy() {
+                  let { ConsolidationSetting } = await import(
+                    "@/app/consolidation-setting/page"
+                  );
+                  return { Component: ConsolidationSetting };
+                },
+                handle: {
+                  crumb: "Consolidation Settings",
+                  title: "Consolidation Settings",
+                },
+              },
               {
                 path: "billing-controls",
                 async lazy() {

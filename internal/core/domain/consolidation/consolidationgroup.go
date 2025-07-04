@@ -25,14 +25,16 @@ type ConsolidationGroup struct {
 	ID                  pulid.ID    `json:"id"                  bun:",pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID      pulid.ID    `json:"businessUnitId"      bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID      pulid.ID    `json:"organizationId"      bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	CanceledByID        *pulid.ID   `json:"canceledById"        bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
 	ConsolidationNumber string      `json:"consolidationNumber" bun:"consolidation_number,type:VARCHAR(100),notnull,unique"`
 	Status              GroupStatus `json:"status"              bun:"status,type:consolidation_group_status_enum,notnull,default:'New'"`
 	CancelReason        string      `json:"cancelReason"        bun:"cancel_reason,type:VARCHAR(100),nullzero"`
-	Version             int64       `json:"version"             bun:"version,type:BIGINT"`
-	CreatedAt           int64       `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt           int64       `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	CanceledByID        *pulid.ID   `json:"canceledById"        bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
 	CanceledAt          *int64      `json:"canceledAt"          bun:"canceled_at,type:BIGINT,nullzero"`
+
+	// Metadata
+	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
+	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	Shipments    []*shipment.Shipment       `json:"shipments,omitempty"    bun:"rel:has-many,join:id=consolidation_group_id"`

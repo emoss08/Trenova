@@ -23,7 +23,7 @@ export const consolidationSettingSchema = z.object({
   minTimeBuffer: nullableIntegerSchema,
   maxShipmentsPerGroup: nullableIntegerSchema,
 
-  organization: organizationSchema,
+  organization: organizationSchema.nullish(),
 });
 
 export type ConsolidationSettingSchema = z.infer<

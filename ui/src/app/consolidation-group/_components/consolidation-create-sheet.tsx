@@ -36,11 +36,7 @@ export function ConsolidationCreateSheet({
     },
   });
 
-  const {
-    reset,
-    watch,
-    formState: { errors, isDirty },
-  } = form;
+  const { reset } = form;
 
   const createMutation = useApiMutation({
     mutationFn: (values: CreateConsolidationSchema) =>
@@ -68,11 +64,6 @@ export function ConsolidationCreateSheet({
     },
     [createMutation],
   );
-
-  console.log("Consolidation Form Information");
-  console.log("Is Dirty", isDirty);
-  console.log("Errors", errors);
-  console.log("Watch", watch());
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
