@@ -15,7 +15,7 @@ Trenova is an AI-driven transportation management system for trucking companies 
 task run                    # Run main API server
 task test                   # Run all Go tests
 task test-pretty           # Run tests with formatted output
-task format                # Format Go code 
+task format                # Format Go code
 task lint                  # Run linting
 task check                 # Run security checks
 
@@ -130,5 +130,5 @@ The system manages transportation logistics including:
 
 ## Code Comments and Documentation
 
-- When writing inline comments (comments inside functions) make sure to prefix them with *for example //* this is a comment.
+- When writing inline comments (comments inside functions) make sure to prefix them with _for example //_ this is a comment.
 - If the comment is important and notes some type of behavior that may be unexpected or just an important note use the prefix ! for example // ! this is an important comment.

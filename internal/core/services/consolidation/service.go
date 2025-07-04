@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/internal/pkg/validator/consolidationvalidator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
@@ -30,6 +31,7 @@ type ServiceParams struct {
 	ShipmentRepo      repositories.ShipmentRepository
 	PermService       services.PermissionService
 	AuditService      services.AuditService
+	Validator         *consolidationvalidator.Validator
 }
 
 // Service implements business logic for consolidation management.
@@ -40,6 +42,7 @@ type Service struct {
 	shipmentRepo      repositories.ShipmentRepository
 	ps                services.PermissionService
 	as                services.AuditService
+	v                 *consolidationvalidator.Validator
 }
 
 // NewService creates a new consolidation service instance.
@@ -60,6 +63,7 @@ func NewService(p ServiceParams) *Service {
 		shipmentRepo:      p.ShipmentRepo,
 		ps:                p.PermService,
 		as:                p.AuditService,
+		v:                 p.Validator,
 	}
 }
 
@@ -215,24 +219,23 @@ func (s *Service) Get(
 //   - error: If permissions fail or creation fails.
 func (s *Service) Create(
 	ctx context.Context,
-	group *consolidation.ConsolidationGroup,
-	userID pulid.ID,
+	req *repositories.CreateConsolidationRequest,
 ) (*consolidation.ConsolidationGroup, error) {
 	log := s.l.With().
 		Str("operation", "Create").
-		Str("orgID", group.OrganizationID.String()).
-		Str("buID", group.BusinessUnitID.String()).
+		Str("orgID", req.OrgID.String()).
+		Str("buID", req.BuID.String()).
 		Logger()
 
 	// * Check permissions
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         userID,
+				UserID:         req.UserID,
 				Resource:       permission.ResourceConsolidation,
 				Action:         permission.ActionCreate,
-				BusinessUnitID: group.BusinessUnitID,
-				OrganizationID: group.OrganizationID,
+				BusinessUnitID: req.BuID,
+				OrganizationID: req.OrgID,
 			},
 		},
 	)
@@ -247,8 +250,10 @@ func (s *Service) Create(
 		)
 	}
 
+	// ! We need to write a validation to check if the shipments are eligible for consolidation
+
 	// * Create the consolidation group
-	createdEntity, err := s.consolidationRepo.Create(ctx, group)
+	createdEntity, err := s.consolidationRepo.Create(ctx, req)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create consolidation group")
 		return nil, eris.Wrap(err, "create consolidation group")
@@ -260,10 +265,10 @@ func (s *Service) Create(
 			Resource:       permission.ResourceConsolidation,
 			ResourceID:     createdEntity.ID.String(),
 			Action:         permission.ActionCreate,
-			UserID:         userID,
+			UserID:         req.UserID,
 			CurrentState:   jsonutils.MustToJSON(createdEntity),
-			OrganizationID: createdEntity.OrganizationID,
-			BusinessUnitID: createdEntity.BusinessUnitID,
+			OrganizationID: req.OrgID,
+			BusinessUnitID: req.BuID,
 		},
 		audit.WithComment("consolidation group created"),
 	)
