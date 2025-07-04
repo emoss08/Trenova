@@ -1,6 +1,7 @@
 package api
 
 import (
+	"github.com/emoss08/trenova/internal/api/handlers"
 	"github.com/emoss08/trenova/internal/api/handlers/accessorialcharge"
 	"github.com/emoss08/trenova/internal/api/handlers/analytics"
 	"github.com/emoss08/trenova/internal/api/handlers/assignment"
@@ -11,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueue"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
 	"github.com/emoss08/trenova/internal/api/handlers/consolidation"
+	"github.com/emoss08/trenova/internal/api/handlers/consolidationsetting"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlane"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlanesuggestion"
@@ -49,7 +51,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/usstate"
 	"github.com/emoss08/trenova/internal/api/handlers/websocket"
 	"github.com/emoss08/trenova/internal/api/handlers/worker"
-	"github.com/emoss08/trenova/internal/api/handlers"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"go.uber.org/fx"
 )
@@ -105,4 +106,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	notificationpreference.NewHandler,
 	notification.NewHandler,
 	handlers.NewMetricsHandler,
+	consolidationsetting.NewHandler,
 ))

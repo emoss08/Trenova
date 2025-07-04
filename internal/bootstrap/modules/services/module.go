@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/calculator"
 	"github.com/emoss08/trenova/internal/core/services/commodity"
 	"github.com/emoss08/trenova/internal/core/services/consolidation"
+	"github.com/emoss08/trenova/internal/core/services/consolidationsetting"
 	"github.com/emoss08/trenova/internal/core/services/customer"
 	"github.com/emoss08/trenova/internal/core/services/dbbackup"
 	"github.com/emoss08/trenova/internal/core/services/dedicatedlane"
@@ -106,8 +107,9 @@ var Module = fx.Module("services", fx.Provide(
 	notification.NewPreferenceService,
 	notification.NewBatchProcessor,
 	notification.NewAuditListenerService,
+	consolidationsetting.NewService,
 ),
-	fx.Invoke(func(s services.WebSocketService) {
+	fx.Invoke(func(s services.WebSocketService) { //nolint:revive // required for fx
 		log.Info().Msg("websocket service initialized")
 	}),
 )

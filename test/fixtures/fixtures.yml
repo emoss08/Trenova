@@ -363,6 +363,19 @@
       created_at: "{{ timestamp }}"
       updated_at: "{{ timestamp }}"
 
+- model: ConsolidationSettings
+  rows:
+    - _id: trenova
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+      updated_at: "{{ timestamp }}"
+    - _id: trenova_2
+      organization_id: "{{ $.Organization.trenova_2.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+      updated_at: "{{ timestamp }}"
+
 - model: PatternConfig
   rows:
     - _id: trenova

@@ -1,9 +1,9 @@
-package shipmentcontrolvalidator
+package consolidationsettingvalidator
 
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/consolidation"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/validator"
@@ -20,8 +20,8 @@ type ValidatorParams struct {
 	ValidationEngineFactory framework.ValidationEngineFactory
 }
 
-// Validator is a validator for shipment controls.
-// It validates shipment controls, and other related entities.
+// Validator is a validator for consolidation settings.
+// It validates consolidation settings, and other related entities.
 type Validator struct {
 	db  db.Connection
 	vef framework.ValidationEngineFactory
@@ -41,7 +41,7 @@ func NewValidator(p ValidatorParams) *Validator {
 	}
 }
 
-// Validate validates a shipment control.
+// Validate validates a consolidation settings.
 //
 // Parameters:
 //   - ctx: The context of the request.
@@ -53,7 +53,7 @@ func NewValidator(p ValidatorParams) *Validator {
 func (v *Validator) Validate(
 	ctx context.Context,
 	_ *validator.ValidationContext,
-	sc *shipment.ShipmentControl,
+	cs *consolidation.ConsolidationSettings,
 ) *errors.MultiError {
 	engine := v.vef.CreateEngine()
 
@@ -63,7 +63,7 @@ func (v *Validator) Validate(
 			framework.ValidationStageBasic,
 			framework.ValidationPriorityHigh,
 			func(c context.Context, multiErr *errors.MultiError) error {
-				sc.Validate(c, multiErr)
+				cs.Validate(c, multiErr)
 				return nil
 			},
 		),
