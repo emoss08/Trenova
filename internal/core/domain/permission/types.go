@@ -29,6 +29,9 @@ const (
 	ResourceDocumentQualityConfig = Resource(
 		"document_quality_config",
 	) // Represents resources related to document quality config.
+	ResourceConsolidationSettings = Resource(
+		"consolidation_settings",
+	) // Represents resources related to consolidation settings.
 	ResourceShipmentControl = Resource(
 		"shipment_control",
 	) // Represents resources related to shipment control.
@@ -395,6 +398,12 @@ var (
 			ActionModifyField,
 		),
 		ResourceShipmentControl: append(
+			BaseActions,
+			ActionConfigure,
+			ActionAudit,
+			ActionModifyField,
+		),
+		ResourceConsolidationSettings: append(
 			BaseActions,
 			ActionConfigure,
 			ActionAudit,

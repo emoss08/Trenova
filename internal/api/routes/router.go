@@ -2,6 +2,8 @@ package routes
 
 import (
 	"time"
+
+	"github.com/emoss08/trenova/internal/api/handlers"
 	"github.com/emoss08/trenova/internal/api/handlers/accessorialcharge"
 	"github.com/emoss08/trenova/internal/api/handlers/analytics"
 	"github.com/emoss08/trenova/internal/api/handlers/assignment"
@@ -12,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/billingqueue"
 	"github.com/emoss08/trenova/internal/api/handlers/commodity"
 	"github.com/emoss08/trenova/internal/api/handlers/consolidation"
+	"github.com/emoss08/trenova/internal/api/handlers/consolidationsetting"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlane"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlanesuggestion"
@@ -50,7 +53,6 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/usstate"
 	"github.com/emoss08/trenova/internal/api/handlers/websocket"
 	"github.com/emoss08/trenova/internal/api/handlers/worker"
-	"github.com/emoss08/trenova/internal/api/handlers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/api/server"
 	"github.com/emoss08/trenova/internal/core/services/auth"
@@ -139,6 +141,7 @@ type RouterParams struct {
 	NotificationPreferenceHandler  *notificationpreference.Handler
 	NotificationHandler            *notification.Handler
 	MetricsHandler                 *handlers.MetricsHandler
+	ConsolidationSettingHandler    *consolidationsetting.Handler
 }
 
 type Router struct {
@@ -173,11 +176,11 @@ func (r *Router) Setup() {
 
 	// Metrics endpoint (outside API versioning for Prometheus compatibility)
 	r.app.Get("/metrics", r.p.MetricsHandler.GetMetrics())
-	
+
 	// Health check endpoint
 	r.app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
-			"status": "healthy",
+			"status":    "healthy",
 			"timestamp": time.Now().Unix(),
 		})
 	})
@@ -356,4 +359,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Notifications
 	r.p.NotificationHandler.RegisterRoutes(router, rl)
+
+	// Consolidation Settings
+	r.p.ConsolidationSettingHandler.RegisterRoutes(router, rl)
 }
