@@ -1,0 +1,9 @@
+server:
+  port: 8084
+
+database:
+  dsn: postgres://routing:routing@localhost:5433/routing?sslmode=disable
+  auto_migrate: true
+
+redis:
+  addr: localhost:6380

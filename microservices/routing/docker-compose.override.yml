@@ -1,0 +1,14 @@
+# Development override - includes hot reloading
+services:
+  routing:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    volumes:
+      - .:/app
+      - /app/tmp
+    environment:
+      - CGO_ENABLED=0
+      - GOOS=linux
+      - GOARCH=amd64
+    command: air
