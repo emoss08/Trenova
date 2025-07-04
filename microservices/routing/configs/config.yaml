@@ -1,0 +1,37 @@
+server:
+  port: 8084
+  read_timeout: 30s
+  write_timeout: 30s
+  idle_timeout: 120s
+
+database:
+  dsn: postgres://postgres:password@localhost:5432/routing?sslmode=disable
+  auto_migrate: true
+  max_connections: 25
+  min_connections: 5
+  max_conn_lifetime: 1h
+  max_conn_idle_time: 30m
+
+redis:
+  addr: localhost:6379
+  password: ""
+  db: 0
+  pool_size: 10
+  min_idle_conns: 5
+  max_retries: 3
+
+routing:
+  # California bounding box for initial implementation
+  bounds:
+    min_lat: 32.0
+    min_lon: -125.0
+    max_lat: 42.0
+    max_lon: -114.0
+  
+  # Cache settings
+  cache_ttl: 24h
+  postgres_cache_ttl: 48h
+  
+  # Performance settings
+  max_route_distance_km: 5000
+  use_bidirectional_threshold_km: 100

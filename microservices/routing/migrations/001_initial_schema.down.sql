@@ -1,0 +1,7 @@
+DROP TABLE IF EXISTS cached_routes;
+DROP TABLE IF EXISTS zip_nodes;
+DROP TABLE IF EXISTS edges;
+DROP TABLE IF EXISTS nodes;
+DROP FUNCTION IF EXISTS clean_expired_cache();
+DROP EXTENSION IF EXISTS postgis_topology;
+DROP EXTENSION IF EXISTS postgis;

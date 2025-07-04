@@ -1,0 +1,65 @@
+version: '3.8'
+
+services:
+  routing:
+    build: .
+    ports:
+      - "8084:8084"
+    environment:
+      - ROUTING_DATABASE_DSN=postgres://routing:routing@postgres:5432/routing?sslmode=disable
+      - ROUTING_REDIS_ADDR=redis:6379
+      - ROUTING_SERVER_PORT=8084
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - routing-network
+    restart: unless-stopped
+
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      - POSTGRES_USER=routing
+      - POSTGRES_PASSWORD=routing
+      - POSTGRES_DB=routing
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+    networks:
+      - routing-network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6380:6379"
+    networks:
+      - routing-network
+    restart: unless-stopped
+
+  migrate:
+    build: .
+    command: |
+      sh -c "
+        until nc -z postgres 5432; do
+          echo 'Waiting for PostgreSQL...'
+          sleep 1
+        done
+        echo 'PostgreSQL is ready!'
+        # Run migrations using golang-migrate or custom migration tool
+        echo 'Running migrations...'
+        # Add migration command here
+      "
+    depends_on:
+      - postgres
+    networks:
+      - routing-network
+
+volumes:
+  postgres-data:
+
+networks:
+  routing-network:
+    driver: bridge
