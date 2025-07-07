@@ -7,9 +7,9 @@ import (
 
 // Custom error types for better error handling
 var (
-	ErrInvalidZipCode    = errors.New("invalid zip code format")
-	ErrZipCodeNotFound   = errors.New("zip code not found in database")
-	ErrNoRouteAvailable  = errors.New("no route available between locations")
+	ErrInvalidZipCode     = errors.New("invalid zip code format")
+	ErrZipCodeNotFound    = errors.New("zip code not found in database")
+	ErrNoRouteAvailable   = errors.New("no route available between locations")
 	ErrServiceUnavailable = errors.New("routing service temporarily unavailable")
 )
 

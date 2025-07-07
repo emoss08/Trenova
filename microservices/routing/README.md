@@ -121,11 +121,48 @@ See `configs/config.yaml` for available configuration options:
 The importer supports both local files and URLs:
 
 ```bash
-# From URL
-./importer -url https://download.geofabrik.de/north-america/us/california-latest.osm.pbf
+# From URL (California data ~900MB)
+make import-osm-ca
 
 # From local file
-./importer -file california.osm.pbf
+make import-osm file=/path/to/california.osm.pbf
+```
+
+## Graph Visualization
+
+The service includes a visualization tool to generate images of the road network graph:
+
+```bash
+# Build the visualization tool
+make build
+
+# Generate visualization of default region
+make visualize
+
+# Visualize specific region (lat1,lon1,lat2,lon2)
+make visualize-region region="34.0,-118.5,34.1,-118.4"
+
+# Visualize area around zip code (requires zip_nodes data)
+make visualize-zip zip=90001 radius=10
+```
+
+The visualization tool generates GraphViz-based images showing:
+- Blue dots: Road intersections (nodes)
+- Gray lines: Regular roads
+- Red lines: Roads where trucks are not allowed
+- Dark green lines: Long-distance roads (>10km segments)
+
+### Visualization Examples
+
+```bash
+# Small area in Los Angeles
+./bin/routing-visualize -region "34.0,-118.3,34.1,-118.2" -output la-small.png
+
+# Different output formats (png, svg, pdf)
+./bin/routing-visualize -region "34.0,-118.3,34.1,-118.2" -format svg -output graph.svg
+
+# Limit number of nodes for cleaner visualization
+./bin/routing-visualize -max-nodes 500 -output graph-limited.png
 ```
 
 ## Performance Targets

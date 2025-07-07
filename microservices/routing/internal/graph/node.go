@@ -26,6 +26,30 @@ type Graph struct {
 	Nodes map[int64]*Node
 }
 
+// Bounds represents a geographic bounding box
+type Bounds struct {
+	MinLat float64
+	MinLon float64
+	MaxLat float64
+	MaxLon float64
+}
+
+// SimpleNode represents a basic node for storage operations
+type SimpleNode struct {
+	ID  int64
+	Lat float64
+	Lon float64
+}
+
+// SimpleEdge represents a basic edge for storage operations
+type SimpleEdge struct {
+	FromNodeID   int64
+	ToNodeID     int64
+	Distance     float64
+	TravelTime   float64
+	TruckAllowed bool
+}
+
 // NewGraph creates a new graph instance
 func NewGraph() *Graph {
 	return &Graph{

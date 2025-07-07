@@ -39,8 +39,8 @@ func createTestGraph() *Graph {
 
 	// _ Horizontal edges
 	edges := []struct {
-		from, to int64
-		distance float64
+		from, to     int64
+		distance     float64
 		truckAllowed bool
 	}{
 		// _ Horizontal connections
@@ -62,7 +62,7 @@ func createTestGraph() *Graph {
 	for _, e := range edges {
 		fromNode := g.Nodes[e.from]
 		toNode := g.Nodes[e.to]
-		
+
 		edge := &Edge{
 			ID:           e.from*1000 + e.to,
 			From:         fromNode,
@@ -72,7 +72,7 @@ func createTestGraph() *Graph {
 			TruckAllowed: e.truckAllowed,
 		}
 		g.AddEdge(edge)
-		
+
 		// _ Add reverse edge for bidirectional connectivity
 		reverseEdge := &Edge{
 			ID:           e.to*1000 + e.from,
@@ -92,7 +92,7 @@ func TestAStar_BasicPath(t *testing.T) {
 	g := createTestGraph()
 
 	// _ Test path from node 0 to node 8 (diagonal)
-	route, err := g.AStar(0, 8, AStarOptions{})
+	route, err := g.AStar(0, 8, PathOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, route)
 
@@ -110,7 +110,7 @@ func TestAStar_SameStartEnd(t *testing.T) {
 	g := createTestGraph()
 
 	// _ Test path from node 4 to itself
-	route, err := g.AStar(4, 4, AStarOptions{})
+	route, err := g.AStar(4, 4, PathOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, route)
 
@@ -130,7 +130,7 @@ func TestAStar_NoPath(t *testing.T) {
 	})
 
 	// _ Test path to isolated node
-	route, err := g.AStar(0, 99, AStarOptions{})
+	route, err := g.AStar(0, 99, PathOptions{})
 	assert.Error(t, err)
 	assert.Nil(t, route)
 	assert.Equal(t, ErrNoPathFound, err)
@@ -140,13 +140,13 @@ func TestAStar_InvalidNodes(t *testing.T) {
 	g := createTestGraph()
 
 	// _ Test with non-existent start node
-	route, err := g.AStar(999, 8, AStarOptions{})
+	route, err := g.AStar(999, 8, PathOptions{})
 	assert.Error(t, err)
 	assert.Nil(t, route)
 	assert.Equal(t, ErrNodeNotFound, err)
 
 	// _ Test with non-existent end node
-	route, err = g.AStar(0, 999, AStarOptions{})
+	route, err = g.AStar(0, 999, PathOptions{})
 	assert.Error(t, err)
 	assert.Nil(t, route)
 	assert.Equal(t, ErrNodeNotFound, err)
@@ -166,7 +166,7 @@ func TestAStar_WithConstraints(t *testing.T) {
 	}
 
 	// _ Test with height constraint that blocks the edge
-	opts := AStarOptions{
+	opts := PathOptions{
 		MaxHeight: 4.0, // _ 4 meter vehicle (too tall)
 	}
 
@@ -192,20 +192,20 @@ func TestAStar_TruckOnlyRoutes(t *testing.T) {
 	for _, node := range g.Nodes {
 		for _, edge := range node.Edges {
 			if (edge.From.ID == 0 && edge.To.ID == 1) ||
-			   (edge.From.ID == 1 && edge.To.ID == 0) ||
-			   (edge.From.ID == 1 && edge.To.ID == 4) ||
-			   (edge.From.ID == 4 && edge.To.ID == 1) ||
-			   (edge.From.ID == 4 && edge.To.ID == 7) ||
-			   (edge.From.ID == 7 && edge.To.ID == 4) ||
-			   (edge.From.ID == 7 && edge.To.ID == 8) ||
-			   (edge.From.ID == 8 && edge.To.ID == 7) {
+				(edge.From.ID == 1 && edge.To.ID == 0) ||
+				(edge.From.ID == 1 && edge.To.ID == 4) ||
+				(edge.From.ID == 4 && edge.To.ID == 1) ||
+				(edge.From.ID == 4 && edge.To.ID == 7) ||
+				(edge.From.ID == 7 && edge.To.ID == 4) ||
+				(edge.From.ID == 7 && edge.To.ID == 8) ||
+				(edge.From.ID == 8 && edge.To.ID == 7) {
 				edge.TruckAllowed = true
 			}
 		}
 	}
 
 	// _ Find truck route
-	opts := AStarOptions{
+	opts := PathOptions{
 		TruckOnly: true,
 	}
 	route, err := g.AStar(0, 8, opts)
@@ -250,12 +250,11 @@ func TestAStar_SearchSpaceLimit(t *testing.T) {
 
 	// _ Try to find path from connected to disconnected part
 	// _ This should exhaust search space
-	route, err := g.AStar(0, 199, AStarOptions{})
+	route, err := g.AStar(0, 199, PathOptions{})
 	assert.Error(t, err)
 	assert.Nil(t, route)
 	assert.Equal(t, ErrNoPathFound, err)
 }
-
 
 func TestAStar_Performance(t *testing.T) {
 	// _ Skip in short test mode
@@ -280,7 +279,7 @@ func TestAStar_Performance(t *testing.T) {
 	for i := 0; i < gridSize*gridSize; i++ {
 		row := i / gridSize
 		col := i % gridSize
-		
+
 		if col < gridSize-1 {
 			fromNode := g.Nodes[int64(i)]
 			toNode := g.Nodes[int64(i+1)]
@@ -301,7 +300,7 @@ func TestAStar_Performance(t *testing.T) {
 				TruckAllowed: true,
 			})
 		}
-		
+
 		if row < gridSize-1 {
 			fromNode := g.Nodes[int64(i)]
 			toNode := g.Nodes[int64(i+gridSize)]
@@ -325,17 +324,17 @@ func TestAStar_Performance(t *testing.T) {
 	}
 
 	start := time.Now()
-	
+
 	// _ Find path from corner to corner
-	route, err := g.AStar(0, int64(gridSize*gridSize-1), AStarOptions{})
-	
+	route, err := g.AStar(0, int64(gridSize*gridSize-1), PathOptions{})
+
 	elapsed := time.Since(start)
-	
+
 	require.NoError(t, err)
 	require.NotNil(t, route)
-	
+
 	// _ Performance assertion - should complete within reasonable time
 	assert.Less(t, elapsed, 5*time.Second, "A* took too long: %v", elapsed)
-	
+
 	t.Logf("A* performance: found path of length %d in %v", len(route.Path), elapsed)
 }

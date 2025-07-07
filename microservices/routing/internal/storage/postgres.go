@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -43,7 +44,10 @@ func NewPostgresStorage(ctx context.Context, dsn string) (*PostgresStorage, erro
 }
 
 // LoadGraphForRegion loads the graph data for a specific region
-func (s *PostgresStorage) LoadGraphForRegion(ctx context.Context, minLat, minLon, maxLat, maxLon float64) (*graph.Graph, error) {
+func (s *PostgresStorage) LoadGraphForRegion(
+	ctx context.Context,
+	minLat, minLon, maxLat, maxLon float64,
+) (*graph.Graph, error) {
 	g := graph.NewGraph()
 
 	// _ Load nodes within the bounding box
@@ -114,9 +118,9 @@ func (s *PostgresStorage) LoadGraphForRegion(ctx context.Context, minLat, minLon
 
 	for rows.Next() {
 		var (
-			edge        graph.Edge
-			fromNodeID  int64
-			toNodeID    int64
+			edge       graph.Edge
+			fromNodeID int64
+			toNodeID   int64
 		)
 
 		if err := rows.Scan(
@@ -170,7 +174,7 @@ func (s *PostgresStorage) GetNodeIDForZip(ctx context.Context, zipCode string) (
 	var nodeID int64
 	err := s.db.QueryRow(ctx, query, zipCode).Scan(&nodeID)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return 0, fmt.Errorf("zip code not found: %s", zipCode)
 		}
 		return 0, fmt.Errorf("querying zip node: %w", err)
@@ -180,7 +184,11 @@ func (s *PostgresStorage) GetNodeIDForZip(ctx context.Context, zipCode string) (
 }
 
 // SaveCachedRoute saves a calculated route to the cache
-func (s *PostgresStorage) SaveCachedRoute(ctx context.Context, originZip, destZip string, distance, travelTime float64) error {
+func (s *PostgresStorage) SaveCachedRoute(
+	ctx context.Context,
+	originZip, destZip string,
+	distance, travelTime float64,
+) error {
 	query := `
 		INSERT INTO cached_routes (origin_zip, dest_zip, distance, travel_time)
 		VALUES ($1, $2, $3, $4)
@@ -201,7 +209,10 @@ func (s *PostgresStorage) SaveCachedRoute(ctx context.Context, originZip, destZi
 }
 
 // GetCachedRoute retrieves a cached route if it exists and hasn't expired
-func (s *PostgresStorage) GetCachedRoute(ctx context.Context, originZip, destZip string) (distance, travelTime float64, found bool, err error) {
+func (s *PostgresStorage) GetCachedRoute(
+	ctx context.Context,
+	originZip, destZip string,
+) (distance, travelTime float64, found bool, err error) {
 	query := `
 		SELECT distance, travel_time
 		FROM cached_routes
@@ -210,13 +221,101 @@ func (s *PostgresStorage) GetCachedRoute(ctx context.Context, originZip, destZip
 
 	err = s.db.QueryRow(ctx, query, originZip, destZip).Scan(&distance, &travelTime)
 	if err != nil {
-		if err == pgx.ErrNoRows {
+		if errors.Is(err, pgx.ErrNoRows) {
 			return 0, 0, false, nil
 		}
 		return 0, 0, false, fmt.Errorf("querying cached route: %w", err)
 	}
 
 	return distance, travelTime, true, nil
+}
+
+// GetNodeForZip retrieves the node associated with a zip code
+func (s *PostgresStorage) GetNodeForZip(
+	ctx context.Context,
+	zipCode string,
+) (*graph.SimpleNode, error) {
+	query := `
+		SELECT n.id, ST_Y(n.location::geometry) as lat, ST_X(n.location::geometry) as lon
+		FROM nodes n
+		JOIN zip_nodes z ON z.node_id = n.id
+		WHERE z.zip_code = $1
+		LIMIT 1
+	`
+
+	var node graph.SimpleNode
+	err := s.db.QueryRow(ctx, query, zipCode).Scan(&node.ID, &node.Lat, &node.Lon)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, fmt.Errorf("no node found for zip code %s", zipCode)
+		}
+		return nil, fmt.Errorf("querying node for zip: %w", err)
+	}
+
+	return &node, nil
+}
+
+// GetNodesInBounds retrieves nodes within a geographic bounding box
+func (s *PostgresStorage) GetNodesInBounds(
+	ctx context.Context,
+	minLat, minLon, maxLat, maxLon float64,
+	limit int,
+) ([]*graph.SimpleNode, error) {
+	query := `
+		SELECT id, ST_Y(location::geometry) as lat, ST_X(location::geometry) as lon
+		FROM nodes
+		WHERE ST_Within(
+			location::geometry,
+			ST_MakeEnvelope($1, $2, $3, $4, 4326)
+		)
+		LIMIT $5
+	`
+
+	rows, err := s.db.Query(ctx, query, minLon, minLat, maxLon, maxLat, limit)
+	if err != nil {
+		return nil, fmt.Errorf("querying nodes in bounds: %w", err)
+	}
+	defer rows.Close()
+
+	var nodes []*graph.SimpleNode
+	for rows.Next() {
+		var node graph.SimpleNode
+		if err := rows.Scan(&node.ID, &node.Lat, &node.Lon); err != nil {
+			return nil, fmt.Errorf("scanning node: %w", err)
+		}
+		nodes = append(nodes, &node)
+	}
+
+	return nodes, nil
+}
+
+// GetOutgoingEdges retrieves all edges from a specific node
+func (s *PostgresStorage) GetOutgoingEdges(
+	ctx context.Context,
+	nodeID int64,
+) ([]*graph.SimpleEdge, error) {
+	query := `
+		SELECT from_node_id, to_node_id, distance, travel_time, truck_allowed
+		FROM edges
+		WHERE from_node_id = $1
+	`
+
+	rows, err := s.db.Query(ctx, query, nodeID)
+	if err != nil {
+		return nil, fmt.Errorf("querying outgoing edges: %w", err)
+	}
+	defer rows.Close()
+
+	var edges []*graph.SimpleEdge
+	for rows.Next() {
+		var edge graph.SimpleEdge
+		if err := rows.Scan(&edge.FromNodeID, &edge.ToNodeID, &edge.Distance, &edge.TravelTime, &edge.TruckAllowed); err != nil {
+			return nil, fmt.Errorf("scanning edge: %w", err)
+		}
+		edges = append(edges, &edge)
+	}
+
+	return edges, nil
 }
 
 // Close closes the database connection

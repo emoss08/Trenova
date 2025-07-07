@@ -7,3 +7,24 @@ database:
 
 redis:
   addr: localhost:6380
+
+kafka:
+  brokers:
+    - localhost:9092
+  producer:
+    batch_size: 100
+    batch_timeout: 1s
+    async: true
+    compression: snappy
+  consumer:
+    group_id: routing-service
+    min_bytes: 10240
+    max_bytes: 10485760
+    max_wait: 500ms
+    commit_interval: 1s
+  topics:
+    route_events: routing.events.route-calculated
+    batch_requests: routing.requests.batch-calculate
+    osm_updates: routing.data.osm-updates
+    restriction_updates: routing.data.restriction-updates
+    cache_invalidation: routing.cache.invalidation

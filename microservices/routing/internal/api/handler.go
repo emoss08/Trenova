@@ -10,6 +10,7 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/routing/internal/graph"
+	"github.com/emoss08/routing/internal/kafka"
 	"github.com/emoss08/routing/internal/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/redis/go-redis/v9"
@@ -18,22 +19,33 @@ import (
 
 // Handler handles routing API requests
 type Handler struct {
-	storage *storage.PostgresStorage
-	cache   *redis.Client
-	logger  zerolog.Logger
-	router  *graph.Router
-	mu      sync.RWMutex
+	storage      *storage.PostgresStorage
+	cache        *redis.Client
+	logger       zerolog.Logger
+	router       *graph.Router
+	metrics      *Metrics
+	kafkaProducer *kafka.Producer
+	mu           sync.RWMutex
 }
 
 // NewHandler creates a new API handler
-func NewHandler(storage *storage.PostgresStorage, cache *redis.Client, logger zerolog.Logger) *Handler {
+func NewHandler(storage *storage.PostgresStorage, cache *redis.Client, logger zerolog.Logger, kafkaProducer *kafka.Producer) *Handler {
 	return &Handler{
-		storage: storage,
-		cache:   cache,
-		logger:  logger,
-		router:  nil, // Initialized lazily
+		storage:       storage,
+		cache:         cache,
+		logger:        logger,
+		router:        nil, // Initialized lazily
+		metrics:       NewMetrics(),
+		kafkaProducer: kafkaProducer,
 	}
 }
+
+// Metrics returns the metrics instance
+func (h *Handler) Metrics() *Metrics {
+	return h.metrics
+}
+
+const defaultVehicleType = "truck"
 
 var (
 	// zipCodeRegex validates US zip codes (5 digits or 5+4 format)
@@ -84,7 +96,7 @@ func (h *Handler) GetRouteDistance(c *fiber.Ctx) error {
 
 	// _ Default to truck if not specified
 	if req.VehicleType == "" {
-		req.VehicleType = "truck"
+		req.VehicleType = defaultVehicleType
 	}
 
 	ctx := c.Context()
@@ -133,13 +145,13 @@ func (h *Handler) GetRouteDistance(c *fiber.Ctx) error {
 	if err != nil {
 		return h.handleRouteError(c, err)
 	}
-	
+
 	// _ Save to caches
 	h.cacheResponse(ctx, cacheKey, resp)
 	if err := h.storage.SaveCachedRoute(ctx, req.OriginZip, req.DestZip, resp.DistanceMiles, resp.TimeMinutes); err != nil {
 		h.logger.Error().Err(err).Msg("Error saving to PostgreSQL cache")
 	}
-	
+
 	return c.JSON(resp)
 }
 
@@ -171,6 +183,8 @@ func (h *Handler) ensureRouter(ctx context.Context) error {
 }
 
 func (h *Handler) calculateRoute(ctx context.Context, req RouteDistanceRequest) (RouteDistanceResponse, error) {
+	startTime := time.Now()
+	
 	// _ Get node IDs for zip codes
 	originNode, err := h.storage.GetNodeIDForZip(ctx, req.OriginZip)
 	if err != nil {
@@ -191,6 +205,7 @@ func (h *Handler) calculateRoute(ctx context.Context, req RouteDistanceRequest) 
 	opts := graph.PathOptions{
 		TruckOnly: req.VehicleType == "truck",
 		Algorithm: graph.AlgorithmAStar,
+		OptimizationType: graph.OptimizeFastest,
 	}
 
 	// _ Calculate route with timeout
@@ -202,19 +217,45 @@ func (h *Handler) calculateRoute(ctx context.Context, req RouteDistanceRequest) 
 		return RouteDistanceResponse{}, fmt.Errorf("pathfinding failed: %w", err)
 	}
 
+	computeTimeMS := time.Since(startTime).Milliseconds()
+	
 	h.logger.Info().
-		Int64("compute_ms", result.ComputeTime).
+		Float64("compute_seconds", result.ComputeTime).
 		Int("path_nodes", len(result.Path)).
 		Str("algorithm", result.Algorithm).
 		Msg("Route calculated")
 
 	// _ Convert to response
-	return RouteDistanceResponse{
+	resp := RouteDistanceResponse{
 		DistanceMiles: result.Distance * 0.000621371, // meters to miles
 		TimeMinutes:   result.TravelTime / 60,        // seconds to minutes
 		CalculatedAt:  time.Now(),
 		CacheHit:      false,
-	}, nil
+	}
+	
+	// _ Publish route calculation event to Kafka
+	if h.kafkaProducer != nil {
+		event := kafka.RouteCalculatedEvent{
+			OriginZip:        req.OriginZip,
+			DestZip:          req.DestZip,
+			VehicleType:      req.VehicleType,
+			DistanceMiles:    resp.DistanceMiles,
+			TimeMinutes:      resp.TimeMinutes,
+			Algorithm:        result.Algorithm,
+			OptimizationType: getOptimizationTypeString(opts.OptimizationType),
+			ComputeTimeMS:    computeTimeMS,
+			CacheHit:         false,
+		}
+		
+		// _ Publish asynchronously
+		go func() {
+			if err := h.kafkaProducer.PublishRouteCalculated(context.Background(), event); err != nil {
+				h.logger.Error().Err(err).Msg("Failed to publish route event to Kafka")
+			}
+		}()
+	}
+
+	return resp, nil
 }
 
 // calculateRouteWithVisualization calculates a route and returns visualization data
@@ -322,28 +363,77 @@ func (h *Handler) cacheResponse(ctx context.Context, key string, resp RouteDista
 	}
 }
 
+// getOptimizationTypeString converts OptimizationType to string
+func getOptimizationTypeString(opt graph.OptimizationType) string {
+	switch opt {
+	case graph.OptimizeShortest:
+		return "shortest"
+	case graph.OptimizeFastest:
+		return "fastest"
+	case graph.OptimizePractical:
+		return "practical"
+	default:
+		return "unknown"
+	}
+}
+
 // HealthCheck returns the health status of the service
 func (h *Handler) HealthCheck(c *fiber.Ctx) error {
 	ctx := c.Context()
+	
+	health := fiber.Map{
+		"status": "healthy",
+		"time":   time.Now(),
+		"checks": fiber.Map{},
+	}
+	checks := health["checks"].(fiber.Map)
 
 	// _ Check database
 	if _, _, _, err := h.storage.GetCachedRoute(ctx, "test", "test"); err != nil {
-		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+		checks["database"] = fiber.Map{
 			"status": "unhealthy",
-			"error":  "Database connection failed",
-		})
+			"error":  err.Error(),
+		}
+		health["status"] = "unhealthy"
+	} else {
+		checks["database"] = fiber.Map{
+			"status": "healthy",
+		}
 	}
 
 	// _ Check Redis
 	if err := h.cache.Ping(ctx).Err(); err != nil {
-		return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{
+		checks["redis"] = fiber.Map{
 			"status": "unhealthy",
-			"error":  "Redis connection failed",
-		})
+			"error":  err.Error(),
+		}
+		health["status"] = "unhealthy"
+	} else {
+		checks["redis"] = fiber.Map{
+			"status": "healthy",
+		}
+	}
+	
+	// _ Check Kafka if configured
+	if h.kafkaProducer != nil {
+		stats := h.kafkaProducer.Stats()
+		checks["kafka"] = fiber.Map{
+			"status": "healthy",
+			"stats": fiber.Map{
+				"messages": stats.Messages,
+				"bytes":    stats.Bytes,
+				"errors":   stats.Errors,
+			},
+		}
+	} else {
+		checks["kafka"] = fiber.Map{
+			"status": "disabled",
+		}
 	}
 
-	return c.JSON(fiber.Map{
-		"status": "healthy",
-		"time":   time.Now(),
-	})
+	if health["status"] == "unhealthy" {
+		return c.Status(fiber.StatusServiceUnavailable).JSON(health)
+	}
+	
+	return c.JSON(health)
 }

@@ -7,7 +7,7 @@ import (
 )
 
 // BidirectionalAStar implements bidirectional A* for improved performance on long routes
-func (g *Graph) BidirectionalAStar(startID, endID int64, opts AStarOptions) (*PathResult, error) {
+func (g *Graph) BidirectionalAStar(startID, endID int64, opts PathOptions) (*PathResult, error) {
 	start, ok := g.Nodes[startID]
 	if !ok {
 		return nil, ErrNodeNotFound
@@ -63,9 +63,9 @@ func (g *Graph) BidirectionalAStar(startID, endID int64, opts AStarOptions) (*Pa
 	heap.Push(backward.openSet, &item{node: end, priority: backward.fScore[endID]})
 
 	var (
-		meetingNode   int64
-		bestPathCost  = math.Inf(1)
-		mu            sync.RWMutex
+		meetingNode  int64
+		bestPathCost = math.Inf(1)
+		mu           sync.RWMutex
 	)
 
 	// _ Process both directions
@@ -98,9 +98,9 @@ func (g *Graph) BidirectionalAStar(startID, endID int64, opts AStarOptions) (*Pa
 
 		// _ Check termination condition
 		mu.RLock()
-		terminate := bestPathCost < math.Inf(1) && 
+		terminate := bestPathCost < math.Inf(1) &&
 			(forward.openSet.Len() == 0 || backward.openSet.Len() == 0 ||
-			forward.fScore[forward.openSet.peek().node.ID]+backward.fScore[backward.openSet.peek().node.ID] >= bestPathCost)
+				forward.fScore[forward.openSet.peek().node.ID]+backward.fScore[backward.openSet.peek().node.ID] >= bestPathCost)
 		mu.RUnlock()
 
 		if terminate {
@@ -114,7 +114,7 @@ func (g *Graph) BidirectionalAStar(startID, endID int64, opts AStarOptions) (*Pa
 
 	// _ Reconstruct the complete path
 	path := reconstructBidirectionalPath(forward.cameFrom, backward.cameFrom, meetingNode, g.Nodes)
-	
+
 	// _ Convert to PathNodes for JSON serialization
 	pathNodes := make([]PathNode, len(path))
 	for i, node := range path {
@@ -123,7 +123,7 @@ func (g *Graph) BidirectionalAStar(startID, endID int64, opts AStarOptions) (*Pa
 			Location: []float64{node.Location[0], node.Location[1]},
 		}
 	}
-	
+
 	return &PathResult{
 		Path:        path,
 		PathNodes:   pathNodes,
@@ -142,12 +142,17 @@ type searchState struct {
 	closedSet map[int64]bool
 }
 
-func expandSearch(g *Graph, current, opposite *searchState, target *Node, opts AStarOptions, isForward bool) int64 {
+func expandSearch(g *Graph, current, opposite *searchState, target *Node, opts PathOptions, isForward bool) int64 {
 	if current.openSet.Len() == 0 {
 		return -1
 	}
 
-	node := heap.Pop(current.openSet).(*item).node
+	poppedItem := heap.Pop(current.openSet)
+	currentItem, ok := poppedItem.(*item)
+	if !ok {
+		return -1
+	}
+	node := currentItem.node
 
 	if current.closedSet[node.ID] {
 		return -1
@@ -185,12 +190,34 @@ func expandSearch(g *Graph, current, opposite *searchState, target *Node, opts A
 		}
 
 		tentativeGScore := current.gScore[node.ID] + edgeToUse.Distance
+		tentativeTimeScore := current.timeScore[node.ID] + edgeToUse.TravelTime
 
 		if currentGScore, exists := current.gScore[neighbor.ID]; !exists || tentativeGScore < currentGScore {
 			current.cameFrom[neighbor.ID] = node.ID
 			current.gScore[neighbor.ID] = tentativeGScore
-			current.timeScore[neighbor.ID] = current.timeScore[node.ID] + edgeToUse.TravelTime
-			current.fScore[neighbor.ID] = tentativeGScore + heuristic(neighbor, target)
+			current.timeScore[neighbor.ID] = tentativeTimeScore
+
+			// _ Calculate heuristic based on optimization type
+			var h float64
+			switch opts.OptimizationType {
+			case OptimizeShortest:
+				h = heuristic(neighbor, target)
+				current.fScore[neighbor.ID] = tentativeGScore + h
+			case OptimizeFastest:
+				// _ Estimate time based on straight-line distance at highway speed
+				dist := heuristic(neighbor, target)
+				h = (dist / 1609.34) / 65 * 3600 // _ Convert to seconds at 65 mph
+				current.fScore[neighbor.ID] = tentativeTimeScore + h
+			case OptimizePractical:
+				// _ Balanced heuristic
+				dist := heuristic(neighbor, target)
+				timeH := (dist / 1609.34) / 55 * 3600 // _ 55 mph average
+				h = dist*0.3 + timeH*0.7
+				current.fScore[neighbor.ID] = tentativeGScore*0.3 + tentativeTimeScore*0.7 + h
+			default: // OptimizeShortest
+				h = heuristic(neighbor, target)
+				current.fScore[neighbor.ID] = tentativeGScore + h
+			}
 
 			heap.Push(current.openSet, &item{
 				node:     neighbor,
