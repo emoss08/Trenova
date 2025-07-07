@@ -8,8 +8,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports/infra"
+	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
+	validation "github.com/go-ozzo/ozzo-validation/v4"
+	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 )
 
@@ -41,6 +44,21 @@ type ConsolidationGroup struct {
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	CanceledBy   *user.User                 `json:"canceledBy,omitempty"   bun:"rel:belongs-to,join:canceled_by_id=id"`
+}
+
+func (cg *ConsolidationGroup) Validate(ctx context.Context, multiErr *errors.MultiError) {
+	err := validation.ValidateStructWithContext(ctx, cg,
+		// validation.Field(&cg.Status, validation.Required.Error("Status is required")),
+		validation.Field(&cg.Shipments,
+			validation.Required.Error("Shipments are required"),
+		),
+	)
+	if err != nil {
+		var validationErrs validation.Errors
+		if eris.As(err, &validationErrs) {
+			errors.FromOzzoErrors(validationErrs, multiErr)
+		}
+	}
 }
 
 func (cg *ConsolidationGroup) GetID() string {

@@ -198,7 +198,7 @@ func (r *consolidationRepository) GetNextConsolidationNumberBatch(
 //   - error: If creation fails or consolidation number generation fails.
 func (r *consolidationRepository) Create(
 	ctx context.Context,
-	req *repositories.CreateConsolidationRequest,
+	cg *consolidation.ConsolidationGroup,
 ) (*consolidation.ConsolidationGroup, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -209,14 +209,14 @@ func (r *consolidationRepository) Create(
 
 	log := r.l.With().
 		Str("operation", "Create").
-		Str("orgID", req.OrgID.String()).
-		Str("buID", req.BuID.String()).
+		Str("buID", cg.BusinessUnitID.String()).
+		Str("orgID", cg.OrganizationID.String()).
 		Logger()
 
 	consolidationNumber, err := r.GetNextConsolidationNumber(
 		ctx,
-		req.OrgID,
-		req.BuID,
+		cg.OrganizationID,
+		cg.BusinessUnitID,
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate consolidation number")
@@ -229,8 +229,8 @@ func (r *consolidationRepository) Create(
 
 	group := &consolidation.ConsolidationGroup{
 		ConsolidationNumber: consolidationNumber,
-		OrganizationID:      req.OrgID,
-		BusinessUnitID:      req.BuID,
+		OrganizationID:      cg.OrganizationID,
+		BusinessUnitID:      cg.BusinessUnitID,
 	}
 
 	if _, err = dba.NewInsert().
@@ -245,8 +245,14 @@ func (r *consolidationRepository) Create(
 			Wrapf(err, "create consolidation group")
 	}
 
+	// * Get the ids of the shipments to update
+	shipmentIDs := make([]pulid.ID, len(cg.Shipments))
+	for i, shp := range cg.Shipments {
+		shipmentIDs[i] = shp.ID
+	}
+
 	if _, err = dba.NewUpdate().Model((*shipment.Shipment)(nil)).
-		Where("id IN (?)", bun.In(req.ShipmentIDs)).
+		Where("id IN (?)", bun.In(shipmentIDs)).
 		Set("consolidation_group_id = ?", group.ID).
 		Exec(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to update shipment consolidation group id")
@@ -297,7 +303,6 @@ func (r *consolidationRepository) Get(
 		Relation("BusinessUnit").
 		Relation("Organization").
 		Scan(ctx)
-
 	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			log.Error().Err(err).Msg("consolidation group not found")
@@ -345,7 +350,6 @@ func (r *consolidationRepository) GetByConsolidationNumber(
 		Relation("BusinessUnit").
 		Relation("Organization").
 		Scan(ctx)
-
 	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			log.Error().Err(err).Msg("consolidation group not found")
@@ -398,7 +402,6 @@ func (r *consolidationRepository) Update(
 		OmitZero().
 		Returning("*").
 		Exec(ctx)
-
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -473,7 +476,6 @@ func (r *consolidationRepository) AddShipmentToGroup(
 		Where("id = ?", shipmentID).
 		Where("consolidation_group_id IS NULL").
 		Exec(ctx)
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to add shipment to group")
 		return oops.
@@ -537,7 +539,6 @@ func (r *consolidationRepository) RemoveShipmentFromGroup(
 		Where("id = ?", shipmentID).
 		Where("consolidation_group_id = ?", groupID).
 		Exec(ctx)
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to remove shipment from group")
 		return oops.
@@ -598,7 +599,6 @@ func (r *consolidationRepository) GetGroupShipments(
 		Relation("Moves").
 		Relation("Moves.Stops").
 		Scan(ctx)
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get group shipments")
 		return nil, oops.

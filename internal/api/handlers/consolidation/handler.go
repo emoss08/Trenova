@@ -192,16 +192,15 @@ func (h *Handler) create(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	req := new(repositories.CreateConsolidationRequest)
+	req := new(consolidation.ConsolidationGroup)
 	if err = c.BodyParser(req); err != nil {
 		return h.eh.HandleError(c, err)
 	}
 
-	req.OrgID = reqCtx.OrgID
-	req.BuID = reqCtx.BuID
-	req.UserID = reqCtx.UserID
+	req.OrganizationID = reqCtx.OrgID
+	req.BusinessUnitID = reqCtx.BuID
 
-	entity, err := h.cs.Create(c.UserContext(), req)
+	entity, err := h.cs.Create(c.UserContext(), req, reqCtx.UserID)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}

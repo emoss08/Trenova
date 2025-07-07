@@ -10,9 +10,13 @@ import { ShipmentSelection } from "./shipment-selection";
 
 interface ConsolidationFormProps {
   isEdit?: boolean;
+  shipmentErrors?: string | null;
 }
 
-export function ConsolidationForm({ isEdit = false }: ConsolidationFormProps) {
+export function ConsolidationForm({
+  isEdit = false,
+  shipmentErrors,
+}: ConsolidationFormProps) {
   return (
     <div className="space-y-6">
       {/* Shipment Selection - Only show for new consolidations */}
@@ -29,7 +33,7 @@ export function ConsolidationForm({ isEdit = false }: ConsolidationFormProps) {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <ShipmentSelection />
+            <ShipmentSelection shipmentErrors={shipmentErrors} />
           </CardContent>
         </Card>
       )}
