@@ -16,10 +16,11 @@ import {
 } from "@/lib/schemas/consolidation-schema";
 import { api } from "@/services/api";
 import { TableSheetProps } from "@/types/data-table";
+import { APIError } from "@/types/errors";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
-import { FormProvider, useForm } from "react-hook-form";
+import { useCallback, useState } from "react";
+import { FormProvider, useForm, type Path } from "react-hook-form";
 import { toast } from "sonner";
 import { ConsolidationForm } from "./consolidation-form";
 
@@ -28,15 +29,18 @@ export function ConsolidationCreateSheet({
   onOpenChange,
 }: TableSheetProps) {
   const queryClient = useQueryClient();
+  const [shipmentErrors, setShipmentErrors] = useState<string | null>(null);
 
-  const form = useForm<CreateConsolidationSchema>({
+  const form = useForm({
     resolver: zodResolver(createConsolidationSchema),
     defaultValues: {
-      shipmentIds: [],
+      shipments: [],
     },
   });
 
   const { reset } = form;
+
+  console.info("shipmentErrors", shipmentErrors);
 
   const createMutation = useApiMutation({
     mutationFn: (values: CreateConsolidationSchema) =>
@@ -52,8 +56,13 @@ export function ConsolidationCreateSheet({
       reset();
     },
     onError: (error) => {
-      toast.error("Failed to create consolidation", {
-        description: error.message,
+      const apiError = error instanceof APIError ? error : null;
+
+      apiError?.getFieldErrors().forEach((fieldError) => {
+        form.setError(fieldError.name as Path<CreateConsolidationSchema>, {
+          message: fieldError.reason,
+        });
+        setShipmentErrors(fieldError.reason);
       });
     },
   });
@@ -78,7 +87,7 @@ export function ConsolidationCreateSheet({
         <FormProvider {...form}>
           <Form onSubmit={form.handleSubmit(handleSubmit)}>
             <SheetBody>
-              <ConsolidationForm />
+              <ConsolidationForm shipmentErrors={shipmentErrors} />
             </SheetBody>
             <FormSaveDock position="right" />
           </Form>

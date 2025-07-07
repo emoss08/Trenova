@@ -2,19 +2,27 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { queries } from "@/lib/queries";
 import { type CreateConsolidationSchema } from "@/lib/schemas/consolidation-schema";
-import { ShipmentStatus } from "@/lib/schemas/shipment-schema";
+import { ShipmentSchema, ShipmentStatus } from "@/lib/schemas/shipment-schema";
 import { useQuery } from "@tanstack/react-query";
 import { useFormContext } from "react-hook-form";
 
-export function ShipmentSelection() {
+export function ShipmentSelection({
+  shipmentErrors,
+}: {
+  shipmentErrors?: string | null;
+}) {
   const { setValue, watch } = useFormContext<CreateConsolidationSchema>();
-  const selectedShipmentIds = watch("shipmentIds") || [];
+  const selectedShipments = watch("shipments") || [];
+
+  // * Get the selected shipment IDs, for the checkbo
+  const selectedShipmentIds = selectedShipments.map((s) => s.id);
 
   // Fetch available shipments
   const { data: shipments, isLoading } = useQuery({
     ...queries.shipment.list({
       limit: 100,
       offset: 0,
+      expandShipmentDetails: true,
       filters: [
         {
           field: "status",
@@ -25,17 +33,22 @@ export function ShipmentSelection() {
     }),
   });
 
-  const handleToggle = (shipmentId: string) => {
-    const currentIds = [...selectedShipmentIds];
-    const index = currentIds.indexOf(shipmentId);
+  const handleToggle = (shipment: ShipmentSchema) => {
+    const currentShipments = [...selectedShipments];
+    const index = currentShipments.indexOf(shipment);
 
-    if (index > -1) {
-      currentIds.splice(index, 1);
-    } else {
-      currentIds.push(shipmentId);
+    // * Check to ensure the same shipment is not added twice
+    if (currentShipments.some((s) => s.id === shipment.id)) {
+      return;
     }
 
-    setValue("shipmentIds", currentIds, {
+    if (index > -1) {
+      currentShipments.splice(index, 1);
+    } else {
+      currentShipments.push(shipment);
+    }
+
+    setValue("shipments", currentShipments, {
       shouldDirty: true,
       shouldValidate: true,
     });
@@ -57,10 +70,8 @@ export function ShipmentSelection() {
           variant="outline"
           size="sm"
           onClick={() => {
-            const allIds = shipments.results
-              .map((s) => s.id)
-              .filter(Boolean) as string[];
-            setValue("shipmentIds", allIds);
+            const allShipments = shipments.results.map((s) => s);
+            setValue("shipments", allShipments);
           }}
         >
           Select All
@@ -69,21 +80,30 @@ export function ShipmentSelection() {
           type="button"
           variant="outline"
           size="sm"
-          onClick={() => setValue("shipmentIds", [])}
+          onClick={() => setValue("shipments", [])}
         >
           Clear All
         </Button>
       </div>
 
       <div className="border rounded-lg p-4 space-y-2 max-h-[400px] overflow-y-auto">
+        {shipmentErrors && (
+          <div className="bg-destructive/10 border border-destructive/20 rounded-md p-2">
+            {shipmentErrors.split(";").map((error, idx) => (
+              <div key={idx} className="text-red-100 text-sm">
+                {error}
+              </div>
+            ))}
+          </div>
+        )}
         {shipments.results.map((shipment) => (
           <label
             key={shipment.id}
             className="flex items-center space-x-3 p-2 hover:bg-accent rounded cursor-pointer"
           >
             <Checkbox
-              checked={selectedShipmentIds.includes(shipment.id!)}
-              onCheckedChange={() => handleToggle(shipment.id!)}
+              checked={selectedShipmentIds.includes(shipment.id)}
+              onCheckedChange={() => handleToggle(shipment)}
             />
             <div className="flex-1">
               <div className="font-medium">
@@ -97,9 +117,9 @@ export function ShipmentSelection() {
         ))}
       </div>
 
-      {selectedShipmentIds.length > 0 && (
+      {selectedShipments.length > 0 && (
         <div className="text-sm text-muted-foreground">
-          {selectedShipmentIds.length} shipment(s) selected
+          {selectedShipments.length} shipment(s) selected
         </div>
       )}
     </div>

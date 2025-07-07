@@ -1,9 +1,8 @@
 import { http } from "@/lib/http-client";
-import type { ConsolidationGroupSchema } from "@/lib/schemas/consolidation-schema";
-
-export type CreateConsolidationRequest = {
-  shipmentIds: string[];
-};
+import type {
+  ConsolidationGroupSchema,
+  CreateConsolidationSchema,
+} from "@/lib/schemas/consolidation-schema";
 
 export type AddShipmentsRequest = {
   consolidationId: string;
@@ -16,8 +15,6 @@ export type RemoveShipmentsRequest = {
 };
 
 export class ConsolidationAPI {
-  // Get consolidation groups from the API
-  // Get a consolidation group by ID from the API
   async getConsolidationGroupByID(
     consolidationId: ConsolidationGroupSchema["id"],
     expandDetails = true,
@@ -35,7 +32,7 @@ export class ConsolidationAPI {
   }
 
   // Create a new consolidation group
-  async create(request: CreateConsolidationRequest) {
+  async create(request: CreateConsolidationSchema) {
     const response = await http.post<ConsolidationGroupSchema>(
       "/consolidations/",
       request,

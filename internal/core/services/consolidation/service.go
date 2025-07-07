@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/internal/pkg/validator/consolidationvalidator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -219,23 +220,24 @@ func (s *Service) Get(
 //   - error: If permissions fail or creation fails.
 func (s *Service) Create(
 	ctx context.Context,
-	req *repositories.CreateConsolidationRequest,
+	cg *consolidation.ConsolidationGroup,
+	userID pulid.ID,
 ) (*consolidation.ConsolidationGroup, error) {
 	log := s.l.With().
 		Str("operation", "Create").
-		Str("orgID", req.OrgID.String()).
-		Str("buID", req.BuID.String()).
+		Str("buID", cg.BusinessUnitID.String()).
+		Str("orgID", cg.OrganizationID.String()).
 		Logger()
 
 	// * Check permissions
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         req.UserID,
+				UserID:         userID,
 				Resource:       permission.ResourceConsolidation,
 				Action:         permission.ActionCreate,
-				BusinessUnitID: req.BuID,
-				OrganizationID: req.OrgID,
+				OrganizationID: cg.OrganizationID,
+				BusinessUnitID: cg.BusinessUnitID,
 			},
 		},
 	)
@@ -251,9 +253,17 @@ func (s *Service) Create(
 	}
 
 	// ! We need to write a validation to check if the shipments are eligible for consolidation
+	valCtx := &validator.ValidationContext{
+		IsCreate: true,
+		IsUpdate: false,
+	}
+
+	if err := s.v.Validate(ctx, valCtx, cg); err != nil {
+		return nil, err
+	}
 
 	// * Create the consolidation group
-	createdEntity, err := s.consolidationRepo.Create(ctx, req)
+	createdEntity, err := s.consolidationRepo.Create(ctx, cg)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create consolidation group")
 		return nil, eris.Wrap(err, "create consolidation group")
@@ -265,10 +275,10 @@ func (s *Service) Create(
 			Resource:       permission.ResourceConsolidation,
 			ResourceID:     createdEntity.ID.String(),
 			Action:         permission.ActionCreate,
-			UserID:         req.UserID,
 			CurrentState:   jsonutils.MustToJSON(createdEntity),
-			OrganizationID: req.OrgID,
-			BusinessUnitID: req.BuID,
+			OrganizationID: cg.OrganizationID,
+			BusinessUnitID: cg.BusinessUnitID,
+			UserID:         userID,
 		},
 		audit.WithComment("consolidation group created"),
 	)

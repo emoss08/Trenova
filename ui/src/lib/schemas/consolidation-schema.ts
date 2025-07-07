@@ -1,6 +1,5 @@
 import * as z from "zod/v4";
 import {
-  decimalStringSchema,
   optionalStringSchema,
   timestampSchema,
   versionSchema,
@@ -22,13 +21,10 @@ export const consolidationGroupSchema = z.object({
   updatedAt: timestampSchema,
   organizationId: optionalStringSchema,
   businessUnitId: optionalStringSchema,
-
-  // Basic Information
-  name: z.string().min(1, "Name is required"),
+  name: z.string().min(1, { error: "Name is required" }),
   description: optionalStringSchema,
   status: z.enum(ConsolidationStatus).default(ConsolidationStatus.New),
   consolidationNumber: optionalStringSchema, // * Auto-generated consolidation code
-
   // Consolidation Details
   // totalShipments: nullableIntegerSchema,
   // totalWeight: decimalStringSchema,
@@ -43,30 +39,24 @@ export const consolidationGroupSchema = z.object({
   // plannedDeliveryDate: timestampSchema,
   // actualPickupDate: timestampSchema.nullish(),
   // actualDeliveryDate: timestampSchema.nullish(),
-
   // // Financial Information
   // estimatedCost: decimalStringSchema,
   // actualCost: decimalStringSchema,
   // estimatedSavings: decimalStringSchema,
-
   // // Completion Information
   // completedById: optionalStringSchema,
   // completedBy: userSchema.optional(),
   // completedAt: timestampSchema.nullish(),
-
   // Cancellation Information
   canceledById: optionalStringSchema,
   canceledBy: userSchema.optional(),
   canceledAt: timestampSchema.nullable(),
   cancelReason: optionalStringSchema,
-
-  // Related Data
   shipments: z.array(shipmentSchema).optional(),
 
   // Metrics
-  routeEfficiencyScore: decimalStringSchema,
-  consolidationScore: decimalStringSchema,
-
+  // routeEfficiencyScore: decimalStringSchema,
+  // consolidationScore: decimalStringSchema,
   // // Notes
   // notes: optionalStringSchema,
   // internalNotes: optionalStringSchema,
@@ -76,8 +66,9 @@ export type ConsolidationGroupSchema = z.infer<typeof consolidationGroupSchema>;
 
 // Schema for creating a new consolidation
 export const createConsolidationSchema = z.object({
-  shipmentIds: z.array(z.string()).min(2, "At least 2 shipments are required"),
-  // notes: optionalStringSchema,
+  shipments: z.array(shipmentSchema).min(2, {
+    error: "At least 2 shipments are required",
+  }),
 });
 
 export type CreateConsolidationSchema = z.infer<
