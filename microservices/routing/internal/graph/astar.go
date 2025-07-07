@@ -2,18 +2,14 @@ package graph
 
 import (
 	"container/heap"
+	"errors"
 	"sync"
 
 	"github.com/paulmach/orb/geo"
 )
 
-
-// AStarOptions contains options for the A* algorithm
-type AStarOptions struct {
-	MaxHeight float64
-	MaxWeight float64
-	TruckOnly bool
-}
+// DefaultMaxSearchNodes is the default limit for search nodes
+const DefaultMaxSearchNodes = 100000
 
 // nodePool is a sync.Pool for reusing node-related data structures
 var nodePool = sync.Pool{
@@ -29,16 +25,16 @@ var nodePool = sync.Pool{
 }
 
 type nodeData struct {
-	gScore       map[int64]float64
-	fScore       map[int64]float64
-	cameFrom     map[int64]int64
-	timeScore    map[int64]float64
-	closedSet    map[int64]bool
-	searchNodes  int
+	gScore      map[int64]float64
+	fScore      map[int64]float64
+	cameFrom    map[int64]int64
+	timeScore   map[int64]float64
+	closedSet   map[int64]bool
+	searchNodes int
 }
 
 // AStar implements the A* pathfinding algorithm with optimizations
-func (g *Graph) AStar(startID, endID int64, opts AStarOptions) (*PathResult, error) {
+func (g *Graph) AStar(startID, endID int64, opts PathOptions) (*PathResult, error) {
 	start, ok := g.Nodes[startID]
 	if !ok {
 		return nil, ErrNodeNotFound
@@ -60,7 +56,10 @@ func (g *Graph) AStar(startID, endID int64, opts AStarOptions) (*PathResult, err
 	}
 
 	// _ Get pooled data structures
-	data := nodePool.Get().(*nodeData)
+	data, ok := nodePool.Get().(*nodeData)
+	if !ok {
+		return nil, errors.New("failed to get nodeData from pool")
+	}
 	defer func() {
 		// _ Clear maps for reuse
 		clear(data.gScore)
@@ -87,7 +86,12 @@ func (g *Graph) AStar(startID, endID int64, opts AStarOptions) (*PathResult, err
 	})
 
 	for openSet.Len() > 0 {
-		current := heap.Pop(openSet).(*item).node
+		currentItem := heap.Pop(openSet)
+		poppedItem, validItem := currentItem.(*item)
+		if !validItem {
+			continue
+		}
+		current := poppedItem.node
 
 		// _ Skip if already processed
 		if data.closedSet[current.ID] {
@@ -140,13 +144,38 @@ func (g *Graph) AStar(startID, endID int64, opts AStarOptions) (*PathResult, err
 				// _ This path to neighbor is better
 				data.cameFrom[neighbor.ID] = current.ID
 				data.gScore[neighbor.ID] = tentativeGScore
-				data.timeScore[neighbor.ID] = data.timeScore[current.ID] + edge.TravelTime
-				data.fScore[neighbor.ID] = tentativeGScore + heuristic(neighbor, end)
+				tentativeTimeScore := data.timeScore[current.ID] + edge.TravelTime
+				data.timeScore[neighbor.ID] = tentativeTimeScore
+
+				// _ Calculate priority based on optimization type
+				var priority float64
+				switch opts.OptimizationType {
+				case OptimizeShortest:
+					data.fScore[neighbor.ID] = tentativeGScore + heuristic(neighbor, end)
+					priority = data.fScore[neighbor.ID]
+				case OptimizeFastest:
+					// _ Optimize for time: use time score + time heuristic
+					dist := heuristic(neighbor, end)
+					timeHeuristic := (dist / 1609.34) / 65 * 3600 // _ Estimate time at 65 mph
+					data.fScore[neighbor.ID] = tentativeTimeScore + timeHeuristic
+					priority = data.fScore[neighbor.ID]
+				case OptimizePractical:
+					// _ Balance distance and time
+					dist := heuristic(neighbor, end)
+					timeHeuristic := (dist / 1609.34) / 55 * 3600 // _ 55 mph average
+					practicalScore := tentativeGScore*0.3 + tentativeTimeScore*0.7
+					practicalHeuristic := dist*0.3 + timeHeuristic*0.7
+					data.fScore[neighbor.ID] = practicalScore + practicalHeuristic
+					priority = data.fScore[neighbor.ID]
+				default: // OptimizeShortest
+					data.fScore[neighbor.ID] = tentativeGScore + heuristic(neighbor, end)
+					priority = data.fScore[neighbor.ID]
+				}
 
 				// _ Add to open set
 				heap.Push(openSet, &item{
 					node:     neighbor,
-					priority: data.fScore[neighbor.ID],
+					priority: priority,
 				})
 			}
 		}
@@ -161,7 +190,7 @@ func heuristic(a, b *Node) float64 {
 }
 
 // isEdgeTraversable checks if an edge can be traversed given the constraints
-func isEdgeTraversable(edge *Edge, opts AStarOptions) bool {
+func isEdgeTraversable(edge *Edge, opts PathOptions) bool {
 	if opts.TruckOnly && !edge.TruckAllowed {
 		return false
 	}
@@ -190,12 +219,12 @@ func reconstructPath(cameFrom map[int64]int64, currentID int64, nodes map[int64]
 			break
 		}
 	}
-	
+
 	// _ Pre-allocate path slice
 	path := make([]*Node, pathLen)
 	idx := pathLen - 1
 	path[idx] = nodes[currentID]
-	
+
 	for idx > 0 {
 		if prevID, exists := cameFrom[currentID]; exists {
 			idx--
@@ -205,7 +234,7 @@ func reconstructPath(cameFrom map[int64]int64, currentID int64, nodes map[int64]
 			break
 		}
 	}
-	
+
 	return path
 }
 
@@ -232,7 +261,10 @@ func (pq priorityQueue) Swap(i, j int) {
 
 func (pq *priorityQueue) Push(x any) {
 	n := len(*pq)
-	it := x.(*item)
+	it, ok := x.(*item)
+	if !ok {
+		return
+	}
 	it.index = n
 	*pq = append(*pq, it)
 }

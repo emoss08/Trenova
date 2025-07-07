@@ -13,7 +13,7 @@ func TestBidirectionalAStar_BasicPath(t *testing.T) {
 	g := createTestGraph()
 
 	// _ Test path from node 0 to node 8 (diagonal)
-	route, err := g.BidirectionalAStar(0, 8, AStarOptions{})
+	route, err := g.BidirectionalAStar(0, 8, PathOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, route)
 
@@ -31,7 +31,7 @@ func TestBidirectionalAStar_SameStartEnd(t *testing.T) {
 	g := createTestGraph()
 
 	// _ Test path from node 4 to itself
-	route, err := g.BidirectionalAStar(4, 4, AStarOptions{})
+	route, err := g.BidirectionalAStar(4, 4, PathOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, route)
 
@@ -57,7 +57,7 @@ func TestBidirectionalAStar_MeetingPoint(t *testing.T) {
 	for i := 0; i < 9; i++ {
 		fromNode := g.Nodes[int64(i)]
 		toNode := g.Nodes[int64(i+1)]
-		
+
 		// _ Forward edge
 		g.AddEdge(&Edge{
 			ID:           int64(i*1000 + i + 1),
@@ -67,7 +67,7 @@ func TestBidirectionalAStar_MeetingPoint(t *testing.T) {
 			TravelTime:   20.0,
 			TruckAllowed: true,
 		})
-		
+
 		// _ Backward edge
 		g.AddEdge(&Edge{
 			ID:           int64((i+1)*1000 + i),
@@ -80,7 +80,7 @@ func TestBidirectionalAStar_MeetingPoint(t *testing.T) {
 	}
 
 	// _ Find path from start to end
-	route, err := g.BidirectionalAStar(0, 9, AStarOptions{})
+	route, err := g.BidirectionalAStar(0, 9, PathOptions{})
 	require.NoError(t, err)
 	require.NotNil(t, route)
 
@@ -99,7 +99,7 @@ func TestBidirectionalAStar_NoPath(t *testing.T) {
 	})
 
 	// _ Test path to isolated node
-	route, err := g.BidirectionalAStar(0, 99, AStarOptions{})
+	route, err := g.BidirectionalAStar(0, 99, PathOptions{})
 	assert.Error(t, err)
 	assert.Nil(t, route)
 	assert.Equal(t, ErrNoPathFound, err)
@@ -109,13 +109,13 @@ func TestBidirectionalAStar_InvalidNodes(t *testing.T) {
 	g := createTestGraph()
 
 	// _ Test with non-existent start node
-	route, err := g.BidirectionalAStar(999, 8, AStarOptions{})
+	route, err := g.BidirectionalAStar(999, 8, PathOptions{})
 	assert.Error(t, err)
 	assert.Nil(t, route)
 	assert.Equal(t, ErrNodeNotFound, err)
 
 	// _ Test with non-existent end node
-	route, err = g.BidirectionalAStar(0, 999, AStarOptions{})
+	route, err = g.BidirectionalAStar(0, 999, PathOptions{})
 	assert.Error(t, err)
 	assert.Nil(t, route)
 	assert.Equal(t, ErrNodeNotFound, err)
@@ -128,14 +128,14 @@ func TestBidirectionalAStar_WithConstraints(t *testing.T) {
 	for _, node := range g.Nodes {
 		for _, edge := range node.Edges {
 			if (edge.From.ID == 0 && edge.To.ID == 1) ||
-			   (edge.From.ID == 1 && edge.To.ID == 2) {
+				(edge.From.ID == 1 && edge.To.ID == 2) {
 				edge.MaxWeight = 10000.0 // _ 10 tons limit
 			}
 		}
 	}
 
 	// _ Test with weight constraint
-	opts := AStarOptions{
+	opts := PathOptions{
 		MaxWeight: 20000.0, // _ 20 ton vehicle
 	}
 
@@ -170,7 +170,7 @@ func TestBidirectionalAStar_Performance(t *testing.T) {
 	for i := 0; i < gridSize*gridSize; i++ {
 		row := i / gridSize
 		col := i % gridSize
-		
+
 		if col < gridSize-1 {
 			fromNode := g.Nodes[int64(i)]
 			toNode := g.Nodes[int64(i+1)]
@@ -191,7 +191,7 @@ func TestBidirectionalAStar_Performance(t *testing.T) {
 				TruckAllowed: true,
 			})
 		}
-		
+
 		if row < gridSize-1 {
 			fromNode := g.Nodes[int64(i)]
 			toNode := g.Nodes[int64(i+gridSize)]
@@ -215,18 +215,18 @@ func TestBidirectionalAStar_Performance(t *testing.T) {
 	}
 
 	start := time.Now()
-	
+
 	// _ Find path from corner to corner
-	route, err := g.BidirectionalAStar(0, int64(gridSize*gridSize-1), AStarOptions{})
-	
+	route, err := g.BidirectionalAStar(0, int64(gridSize*gridSize-1), PathOptions{})
+
 	elapsed := time.Since(start)
-	
+
 	require.NoError(t, err)
 	require.NotNil(t, route)
-	
+
 	// _ Bidirectional should be faster than regular A*
 	assert.Less(t, elapsed, 3*time.Second, "Bidirectional A* took too long: %v", elapsed)
-	
+
 	t.Logf("Bidirectional A* performance: found path of length %d in %v", len(route.Path), elapsed)
 }
 
@@ -234,8 +234,8 @@ func TestBidirectionalAStar_CompareWithAStar(t *testing.T) {
 	g := createTestGraph()
 
 	// _ Test same path with both algorithms
-	routeAStar, err1 := g.AStar(0, 8, AStarOptions{})
-	routeBi, err2 := g.BidirectionalAStar(0, 8, AStarOptions{})
+	routeAStar, err1 := g.AStar(0, 8, PathOptions{})
+	routeBi, err2 := g.BidirectionalAStar(0, 8, PathOptions{})
 
 	require.NoError(t, err1)
 	require.NoError(t, err2)
@@ -245,9 +245,9 @@ func TestBidirectionalAStar_CompareWithAStar(t *testing.T) {
 	assert.Equal(t, len(routeAStar.Path), len(routeBi.Path))
 
 	// _ Log search nodes for comparison
-	t.Logf("A* searched %d nodes, Bidirectional A* searched %d nodes", 
+	t.Logf("A* searched %d nodes, Bidirectional A* searched %d nodes",
 		routeAStar.SearchNodes, routeBi.SearchNodes)
-	
+
 	// ! Note: On small graphs, bidirectional might search more nodes due to overhead
 	// _ The benefit shows on larger graphs with longer paths
 }

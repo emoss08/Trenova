@@ -10,6 +10,7 @@ import (
 
 	"github.com/emoss08/routing/internal/api"
 	"github.com/emoss08/routing/internal/database"
+	"github.com/emoss08/routing/internal/kafka"
 	"github.com/emoss08/routing/internal/storage"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/compress"
@@ -85,8 +86,31 @@ func main() {
 	}
 	defer cache.Close()
 
+	// _ Initialize Kafka producer if configured
+	var kafkaProducer *kafka.Producer
+	if len(viper.GetStringSlice("kafka.brokers")) > 0 {
+		kafkaConfig := kafka.ProducerConfig{
+			Brokers:      viper.GetStringSlice("kafka.brokers"),
+			Topic:        viper.GetString("kafka.topics.route_events"),
+			BatchSize:    viper.GetInt("kafka.producer.batch_size"),
+			BatchTimeout: viper.GetDuration("kafka.producer.batch_timeout"),
+			Async:        viper.GetBool("kafka.producer.async"),
+			Compression:  viper.GetString("kafka.producer.compression"),
+		}
+		
+		kafkaProducer = kafka.NewProducer(kafkaConfig, log.Logger)
+		defer kafkaProducer.Close()
+		
+		log.Info().
+			Strs("brokers", kafkaConfig.Brokers).
+			Str("topic", kafkaConfig.Topic).
+			Msg("Kafka producer initialized")
+	} else {
+		log.Warn().Msg("Kafka not configured, events will not be published")
+	}
+
 	// _ Create API handler
-	handler := api.NewHandler(storage, cache, log.Logger)
+	handler := api.NewHandler(storage, cache, log.Logger, kafkaProducer)
 
 	// _ Initialize template engine
 	engine := html.New("./views", ".html")
@@ -124,6 +148,9 @@ func main() {
 		AllowMethods: "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders: "Origin,Content-Type,Accept,Authorization",
 	}))
+
+	// _ Add metrics middleware
+	app.Use(handler.Metrics().RecordHTTPMetrics())
 
 	// _ Routes
 	setupRoutes(app, handler)
@@ -194,6 +221,9 @@ func setupRoutes(app *fiber.App, handler *api.Handler) {
 
 	// _ Health check
 	app.Get("/health", handler.HealthCheck)
+
+	// _ Metrics endpoint
+	app.Get("/metrics", api.PrometheusHandler())
 
 	// _ API v1 routes
 	v1 := app.Group("/api/v1")

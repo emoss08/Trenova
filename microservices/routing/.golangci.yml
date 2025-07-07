@@ -1,0 +1,181 @@
+version: "2"
+run:
+  go: "1.23"
+  tests: false
+linters:
+  default: none
+  enable:
+    - asasalint
+    - asciicheck
+    - bidichk
+    - bodyclose
+    - copyloopvar
+    - cyclop
+    - depguard
+    - durationcheck
+    - errcheck
+    - errname
+    - errorlint
+    - exhaustive
+    - funlen
+    - gocheckcompilerdirectives
+    - gochecksumtype
+    - gocognit
+    - goconst
+    - gocritic
+    - gocyclo
+    - gomoddirectives
+    - gomodguard
+    - goprintffuncname
+    - gosec
+    - govet
+    - ineffassign
+    - loggercheck
+    - makezero
+    - mirror
+    - musttag
+    - nakedret
+    - nestif
+    - nilerr
+    - nilnil
+    - noctx
+    - nolintlint
+    - nosprintfhostport
+    - perfsprint
+    - predeclared
+    - promlinter
+    - protogetter
+    - reassign
+    - revive
+    - rowserrcheck
+    - sloglint
+    - spancheck
+    - sqlclosecheck
+    - staticcheck
+    - tagliatelle
+    - testableexamples
+    - testifylint
+    - testpackage
+    - tparallel
+    - unconvert
+    - unparam
+    - unused
+    - usestdlibvars
+    - usetesting
+    - wastedassign
+    - whitespace
+    - zerologlint
+  settings:
+    cyclop:
+      max-complexity: 20
+    depguard:
+      rules:
+        main:
+          deny:
+            - pkg: encoding/json
+              desc: use bytedance/sonic instead of encoding/json
+            - pkg: io/ioutil
+              desc: use os or io instead
+    errcheck:
+      check-type-assertions: true
+    exhaustive:
+      check:
+        - switch
+        - map
+    exhaustruct:
+      exclude:
+        - ^net/http.Client$
+        - ^net/http.Cookie$
+        - ^net/http.Request$
+        - ^net/http.Response$
+        - ^net/http.Server$
+        - ^net/http.Transport$
+        - ^net/url.URL$
+        - ^os/exec.Cmd$
+        - ^reflect.StructField$
+        - ^github.com/Shopify/sarama.Config$
+        - ^github.com/Shopify/sarama.ProducerMessage$
+        - ^github.com/mitchellh/mapstructure.DecoderConfig$
+        - ^github.com/prometheus/client_golang/.+Opts$
+        - ^github.com/spf13/cobra.Command$
+        - ^github.com/spf13/cobra.CompletionOptions$
+        - ^github.com/stretchr/testify/mock.Mock$
+        - ^github.com/testcontainers/testcontainers-go.+Request$
+        - ^github.com/testcontainers/testcontainers-go.FromDockerfile$
+        - ^golang.org/x/tools/go/analysis.Analyzer$
+        - ^google.golang.org/protobuf/.+Options$
+        - ^gopkg.in/yaml.v3.Node$
+    funlen:
+      lines: 100
+      statements: 50
+      ignore-comments: true
+    gocognit:
+      min-complexity: 20
+    gocritic:
+      enable-all: true
+      disabled-checks:
+        - sloppyReassign
+    gomodguard:
+      blocked:
+        modules:
+          - github.com/golang/protobuf:
+              recommendations:
+                - google.golang.org/protobuf
+              reason: see https://developers.google.com/protocol-buffers/docs/reference/go/faq#modules
+          - github.com/satori/go.uuid:
+              recommendations:
+                - github.com/google/uuid
+              reason: satori's package is not maintained
+          - github.com/gofrs/uuid:
+              recommendations:
+                - github.com/gofrs/uuid/v5
+              reason: gofrs' package was not go module before v5
+    govet:
+      disable:
+        - fieldalignment
+      enable-all: true
+      settings:
+        shadow:
+          strict: true
+    inamedparam:
+      skip-single-param: true
+    nakedret:
+      max-func-lines: 0
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+      allow-no-explanation:
+        - funlen
+        - gocognit
+    perfsprint:
+      strconcat: false
+    rowserrcheck:
+      packages:
+        - github.com/uptrace/bun
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    paths:
+      - cmd
+      - test
+      - third_party$
+      - builtin$
+      - examples$
+issues:
+  max-same-issues: 50
+formatters:
+  enable:
+    - goimports
+    - golines
+  exclusions:
+    generated: lax
+    paths:
+      - cmd
+      - test
+      - third_party$
+      - builtin$
+      - examples$

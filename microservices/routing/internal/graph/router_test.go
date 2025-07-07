@@ -38,7 +38,7 @@ func TestRouter_FindRoute_BasicPath(t *testing.T) {
 	assert.Equal(t, int64(8), result.Path[len(result.Path)-1].ID)
 	assert.Greater(t, result.Distance, 0.0)
 	assert.NotEmpty(t, result.Algorithm)
-	assert.GreaterOrEqual(t, result.ComputeTime, int64(0)) // _ Can be 0 for very fast operations
+	assert.GreaterOrEqual(t, result.ComputeTime, 0.0) // _ Can be 0 for very fast operations
 }
 
 func TestRouter_FindRoute_AlgorithmSelection(t *testing.T) {
@@ -129,7 +129,7 @@ func TestRouter_FindRoute_Timeout(t *testing.T) {
 	}
 
 	router := NewRouter(g)
-	
+
 	// _ Create a context with very short timeout
 	ctx, cancel := context.WithTimeout(context.Background(), 1*time.Nanosecond)
 	defer cancel()

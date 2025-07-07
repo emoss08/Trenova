@@ -10,6 +10,7 @@ DOCKER_COMPOSE := docker-compose
 GO := go
 BINARY_NAME := routing-server
 IMPORTER_NAME := routing-importer
+VISUALIZER_NAME := routing-visualize
 
 ## help: Display this help message
 help:
@@ -29,11 +30,32 @@ run:
 	@echo "Starting server..."
 	@$(GO) run cmd/server/main.go
 
+## run-batch-consumer: Run batch consumer
+run-batch-consumer:
+	@echo "Starting batch consumer..."
+	@$(GO) run cmd/batch-consumer/main.go
+
+## run-data-consumer: Run data consumer
+run-data-consumer:
+	@echo "Starting data consumer..."
+	@$(GO) run cmd/data-consumer/main.go
+
+## run-all: Run all services with Kafka (requires tmux)
+run-all: docker-up kafka-up
+	@echo "Starting all services..."
+	@tmux new-session -d -s routing 'make run' \; \
+		split-window -h 'make run-batch-consumer' \; \
+		split-window -v 'make run-data-consumer' \; \
+		attach-session -t routing
+
 ## build: Build the application binaries
 build:
 	@echo "Building binaries..."
 	@$(GO) build -o bin/$(BINARY_NAME) cmd/server/main.go
 	@$(GO) build -o bin/$(IMPORTER_NAME) cmd/importer/main.go
+	@$(GO) build -o bin/$(VISUALIZER_NAME) ./cmd/visualize
+	@$(GO) build -o bin/batch-consumer cmd/batch-consumer/main.go
+	@$(GO) build -o bin/data-consumer cmd/data-consumer/main.go
 
 ## test: Run tests (excluding importer that requires zlib)
 test:
@@ -62,6 +84,27 @@ clean:
 	@echo "Cleaning..."
 	@rm -rf bin/
 	@rm -f coverage.out coverage.html
+
+## clean-cache: Clean OSM download cache
+clean-cache:
+	@echo "Cleaning OSM cache..."
+	@rm -rf osm-cache/ .osm-cache/
+
+## cache-info: Show information about cached OSM files
+cache-info:
+	@echo "OSM Cache Information:"
+	@echo "====================="
+	@if [ -d "osm-cache" ]; then \
+		echo "osm-cache:"; \
+		ls -lah osm-cache/*.pbf 2>/dev/null || echo "  No cached files found"; \
+	fi; \
+	if [ -d ".osm-cache" ]; then \
+		echo ".osm-cache:"; \
+		ls -lah .osm-cache/*.pbf 2>/dev/null || echo "  No cached files found"; \
+	fi; \
+	if [ ! -d "osm-cache" ] && [ ! -d ".osm-cache" ]; then \
+		echo "No cache directories found"; \
+	fi
 
 ##@ Database
 
@@ -97,6 +140,20 @@ docker-down:
 	@echo "Stopping Docker containers..."
 	@$(DOCKER_COMPOSE) down
 
+## kafka-up: Start Kafka infrastructure
+kafka-up:
+	@echo "Starting Kafka containers..."
+	@$(DOCKER_COMPOSE) -f docker-compose-kafka.yml up -d
+
+## kafka-down: Stop Kafka infrastructure
+kafka-down:
+	@echo "Stopping Kafka containers..."
+	@$(DOCKER_COMPOSE) -f docker-compose-kafka.yml down
+
+## kafka-logs: View Kafka logs
+kafka-logs:
+	@$(DOCKER_COMPOSE) -f docker-compose-kafka.yml logs -f
+
 ## docker-build: Build Docker image for the service
 docker-build:
 	@echo "Building Docker image..."
@@ -116,10 +173,47 @@ docker-reset: docker-down
 
 ##@ Data Import
 
-## import-osm-ca: Import California OSM data
+## import-osm-ca: Import California OSM data (uses cache if available)
 import-osm-ca: build
 	@echo "Importing California OSM data..."
 	@./bin/$(IMPORTER_NAME) -url https://download.geofabrik.de/north-america/us/california-latest.osm.pbf
+
+## import-osm-ca-fresh: Import California OSM data (force fresh download)
+import-osm-ca-fresh: build
+	@echo "Importing California OSM data (fresh download)..."
+	@./bin/$(IMPORTER_NAME) -url https://download.geofabrik.de/north-america/us/california-latest.osm.pbf -force-download
+
+## import-osm-us: Import full US OSM data (WARNING: Very large ~8GB download)
+import-osm-us: build
+	@echo "WARNING: This will download ~8GB of data. Press Ctrl+C to cancel, or wait 5 seconds to continue..."
+	@sleep 5
+	@echo "Importing US OSM data..."
+	@./bin/$(IMPORTER_NAME) -url https://download.geofabrik.de/north-america/us-latest.osm.pbf -smart -enhanced
+
+## import-osm-northeast: Import US Northeast region (NY, NJ, PA, CT, MA, VT, NH, ME, RI)
+import-osm-northeast: build
+	@echo "Importing US Northeast OSM data..."
+	@./bin/$(IMPORTER_NAME) -url https://download.geofabrik.de/north-america/us-northeast-latest.osm.pbf -smart -enhanced
+
+## import-osm-midwest: Import US Midwest region  
+import-osm-midwest: build
+	@echo "Importing US Midwest OSM data..."
+	@./bin/$(IMPORTER_NAME) -url https://download.geofabrik.de/north-america/us-midwest-latest.osm.pbf -smart -enhanced
+
+## import-osm-south: Import US South region
+import-osm-south: build
+	@echo "Importing US South OSM data..."
+	@./bin/$(IMPORTER_NAME) -url https://download.geofabrik.de/north-america/us-south-latest.osm.pbf -smart -enhanced
+
+## import-osm-west: Import US West region
+import-osm-west: build
+	@echo "Importing US West OSM data..."
+	@./bin/$(IMPORTER_NAME) -url https://download.geofabrik.de/north-america/us-west-latest.osm.pbf -smart -enhanced
+
+## import-osm-state: Import specific US state (usage: make import-osm-state state=texas)
+import-osm-state: build
+	@echo "Importing $(state) OSM data..."
+	@./bin/$(IMPORTER_NAME) -url https://download.geofabrik.de/north-america/us/$(state)-latest.osm.pbf -smart -enhanced
 
 ## import-osm: Import OSM data (usage: make import-osm file=/path/to/file.pbf)
 import-osm: build
@@ -165,3 +259,21 @@ check-health:
 test-api:
 	@echo "Testing distance API..."
 	@curl -s "http://localhost:8084/api/v1/route/distance?origin_zip=90001&dest_zip=94102&vehicle_type=truck" | jq
+
+## visualize: Generate graph visualization from database (default region)
+visualize: build
+	@echo "Generating graph visualization..."
+	@./bin/$(VISUALIZER_NAME) -output graph.png
+	@echo "Graph saved to graph.png"
+
+## visualize-region: Visualize specific region (usage: make visualize-region region="34.0,-118.5,34.1,-118.4")
+visualize-region: build
+	@echo "Generating graph visualization for region..."
+	@./bin/$(VISUALIZER_NAME) -region="$(region)" -output graph-region.png
+	@echo "Graph saved to graph-region.png"
+
+## visualize-zip: Visualize area around zip code (usage: make visualize-zip zip=90001 radius=10)
+visualize-zip: build
+	@echo "Generating graph visualization for zip code area..."
+	@./bin/$(VISUALIZER_NAME) -zip="$(zip)" -radius=$(if $(radius),$(radius),5) -output graph-zip-$(zip).png
+	@echo "Graph saved to graph-zip-$(zip).png"
