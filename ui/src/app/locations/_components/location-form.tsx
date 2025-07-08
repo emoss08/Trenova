@@ -148,7 +148,7 @@ export function LocationForm() {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-center gap-2 border-t bg-muted/30 px-4 py-2 rounded-b-md">
+                <div className="flex items-center justify-center gap-0.5 border-t bg-muted/30 px-4 py-2 rounded-b-md">
                   <span className="text-xs text-muted-foreground">
                     Powered by
                   </span>
@@ -156,7 +156,7 @@ export function LocationForm() {
                     onClick={() =>
                       window.open("https://www.anthropic.com", "_blank")
                     }
-                    className="flex items-center gap-1.5 text-xs font-medium text-foreground hover:text-primary transition-colors"
+                    className="flex items-center gap-1 text-xs font-medium text-foreground hover:text-primary transition-colors cursor-pointer"
                   >
                     <AnthropicIcon className="size-4 fill-current" />
                     Anthropic
