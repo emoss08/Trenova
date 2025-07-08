@@ -3,6 +3,7 @@ package services
 import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/services/ai"
 	"github.com/emoss08/trenova/internal/core/services/assignment"
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/core/services/auth"
@@ -60,6 +61,7 @@ var Module = fx.Module("services", fx.Provide(
 	file.NewService,
 	audit.NewServiceV2,
 	auth.NewService,
+	ai.NewClassificationService,
 	organization.NewService,
 	session.NewService,
 	usstate.NewService,

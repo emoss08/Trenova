@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/handlers"
 	"github.com/emoss08/trenova/internal/api/handlers/accessorialcharge"
+	"github.com/emoss08/trenova/internal/api/handlers/ai"
 	"github.com/emoss08/trenova/internal/api/handlers/analytics"
 	"github.com/emoss08/trenova/internal/api/handlers/assignment"
 	"github.com/emoss08/trenova/internal/api/handlers/audit"
@@ -95,6 +96,7 @@ type RouterParams struct {
 	StateHandler                   *usstate.Handler
 	ErrorHandler                   *validator.ErrorHandler
 	AuthHandler                    *authHandler.Handler
+	AIHandler                      *ai.Handler
 	UserHandler                    *user.Handler
 	SessionHandler                 *session.Handler
 	WorkerHandler                  *worker.Handler
@@ -362,4 +364,7 @@ func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLi
 
 	// Consolidation Settings
 	r.p.ConsolidationSettingHandler.RegisterRoutes(router, rl)
+
+	// AI Classification
+	r.p.AIHandler.RegisterRoutes(router, rl)
 }

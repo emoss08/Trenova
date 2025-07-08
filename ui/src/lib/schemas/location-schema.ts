@@ -26,8 +26,8 @@ export const locationSchema = z.object({
   addressLine2: optionalStringSchema,
   city: z.string().min(1, { error: "City is required" }),
   postalCode: z.string().min(1, { error: "Postal code is required" }),
-  longitude: decimalStringSchema,
-  latitude: decimalStringSchema,
+  longitude: decimalStringSchema.nullish(),
+  latitude: decimalStringSchema.nullish(),
   placeId: optionalStringSchema,
   isGeocoded: z.boolean().default(false),
   locationCategoryId: z

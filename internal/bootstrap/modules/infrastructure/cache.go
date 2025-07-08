@@ -10,6 +10,8 @@ import (
 var CacheModule = fx.Module("cache",
 	fx.Provide(redis.NewClient),
 	fx.Provide(redis.NewScriptLoader),
+	// Provide Redis client as infra.CacheClient interface
+	fx.Provide(redis.NewCacheAdapter),
 	fx.Invoke(func(lc fx.Lifecycle, scriptLoader *redis.ScriptLoader) (*redis.ScriptLoader, error) {
 		lc.Append(fx.Hook{
 			OnStart: func(ctx context.Context) error {

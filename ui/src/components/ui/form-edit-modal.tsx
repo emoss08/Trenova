@@ -56,6 +56,7 @@ type FormEditModalProps<T extends FieldValues> = EditTableSheetProps<T> & {
   form: UseFormReturn<T>;
   className?: string;
   fieldKey?: keyof T;
+  titleComponent?: (currentRecord: T) => React.ReactNode;
 };
 
 export function FormEditModal<T extends FieldValues>({
@@ -67,6 +68,7 @@ export function FormEditModal<T extends FieldValues>({
   fieldKey,
   form,
   className,
+  titleComponent,
 }: FormEditModalProps<T>) {
   const { table, rowSelection, isLoading } = useDataTable();
   const { isPopout, closePopout } = usePopoutWindow();
@@ -258,13 +260,17 @@ export function FormEditModal<T extends FieldValues>({
         <div className="flex items-center justify-between gap-2">
           <div className="flex flex-col">
             <DialogTitle>
-              <div>
-                {isLoading
-                  ? "Loading record..."
-                  : fieldKey && currentRecord
-                    ? currentRecord[fieldKey]
-                    : title}
-              </div>
+              {titleComponent ? (
+                titleComponent(currentRecord as T)
+              ) : (
+                <div>
+                  {isLoading
+                    ? "Loading record..."
+                    : fieldKey && currentRecord
+                      ? currentRecord[fieldKey]
+                      : title}
+                </div>
+              )}
             </DialogTitle>
             {!isLoading && currentRecord && (
               <DialogDescription>

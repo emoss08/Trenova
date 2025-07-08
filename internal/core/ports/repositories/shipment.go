@@ -22,6 +22,7 @@ var ShipmentFieldConfig = &ports.FieldConfiguration{
 		"destinationLocation.name": true,
 		"originDate":               true,
 		"destinationDate":          true,
+		"consolidationGroupId":     true,
 	},
 	SortableFields: map[string]bool{
 		"proNumber":                true,
@@ -33,12 +34,14 @@ var ShipmentFieldConfig = &ports.FieldConfiguration{
 		"originDate":               true,
 		"destinationDate":          true,
 		"createdAt":                true,
+		"consolidationGroupId":     true,
 	},
 	FieldMap: map[string]string{
-		"proNumber": "pro_number",
-		"status":    "status",
-		"bol":       "bol",
-		"createdAt": "created_at",
+		"proNumber":            "pro_number",
+		"status":               "status",
+		"bol":                  "bol",
+		"createdAt":            "created_at",
+		"consolidationGroupId": "consolidation_group_id",
 	},
 	EnumMap: map[string]bool{
 		"status": true,

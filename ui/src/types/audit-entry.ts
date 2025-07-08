@@ -108,4 +108,5 @@ export enum Resource {
   DivisionCode = "division_code",
   GlAccount = "gl_account",
   RevenueCode = "revenue_code",
+  AIClassification = "ai_classification",
 }

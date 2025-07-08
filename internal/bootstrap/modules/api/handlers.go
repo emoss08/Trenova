@@ -3,6 +3,7 @@ package api
 import (
 	"github.com/emoss08/trenova/internal/api/handlers"
 	"github.com/emoss08/trenova/internal/api/handlers/accessorialcharge"
+	"github.com/emoss08/trenova/internal/api/handlers/ai"
 	"github.com/emoss08/trenova/internal/api/handlers/analytics"
 	"github.com/emoss08/trenova/internal/api/handlers/assignment"
 	"github.com/emoss08/trenova/internal/api/handlers/audit"
@@ -58,6 +59,7 @@ import (
 var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	validator.NewErrorHandler,
 	auth.NewHandler,
+	ai.New,
 	analytics.NewHandler,
 	organization.NewHandler,
 	usstate.NewHandler,

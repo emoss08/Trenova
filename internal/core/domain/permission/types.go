@@ -72,6 +72,9 @@ const (
 	ResourceShipment = Resource(
 		"shipment",
 	) // Represents resources for managing shipments.
+	ResourceAIClassification = Resource(
+		"ai_classification",
+	) // Represents resources for managing AI classifications.
 	ResourceConsolidation = Resource(
 		"consolidation",
 	) // Represents resources for managing consolidation groups.
@@ -215,6 +218,9 @@ const (
 	ActionBulkTransfer  = Action("bulk_transfer")  // Bulk transfer shipments to the billing queue.
 	ActionReviewInvoice = Action("review_invoice") // Review an invoice.
 	ActionPostInvoice   = Action("post_invoice")   // Post an invoice.
+
+	// AI related actions
+	ActionClassify = Action("classify") // Classify a resource.
 )
 
 type Scope string

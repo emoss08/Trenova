@@ -26,6 +26,7 @@ import { ShipmentControlAPI } from "./shipment-control";
 import { TableConfigurationAPI } from "./table-configuration";
 import { UsStateAPI } from "./us-state";
 import { UserAPI } from "./user";
+import { AIAPI } from "./ai";
 
 class AssignmentsAPI {
   // Get a tractor's assignments from the API
@@ -66,6 +67,7 @@ class API {
   accessorialCharge: AccessorialChargeAPI;
   consolidations: ConsolidationAPI;
   consolidationSettings: ConsolidationSettingsAPI;
+  ai: AIAPI;
 
   constructor() {
     this.assignments = new AssignmentsAPI();
@@ -95,6 +97,7 @@ class API {
     this.accessorialCharge = new AccessorialChargeAPI();
     this.consolidations = new ConsolidationAPI();
     this.consolidationSettings = new ConsolidationSettingsAPI();
+    this.ai = new AIAPI();
   }
 }
 

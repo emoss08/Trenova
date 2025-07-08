@@ -45,6 +45,9 @@ type Config struct {
 
 	// Streaming is the streaming configuration.
 	Streaming StreamingConfig `mapstructure:"streaming"`
+
+	// AI is the AI configuration.
+	AI AIConfig `mapstructure:"ai"`
 }
 
 type LogConfig struct {
@@ -565,4 +568,25 @@ type StreamingConfig struct {
 
 	// MaxConnectionsPerUser limits connections per user
 	MaxConnectionsPerUser int `mapstructure:"maxConnectionsPerUser"`
+}
+
+// AIConfig is the configuration for AI services
+type AIConfig struct {
+	// ClaudeAPIKey is the Anthropic Claude API key
+	ClaudeAPIKey string `mapstructure:"claudeApiKey"`
+
+	// ClaudeModel is the Claude model to use (e.g., "claude-3-haiku-20240307")
+	ClaudeModel string `mapstructure:"claudeModel"`
+
+	// MaxTokens is the maximum number of tokens for AI responses
+	MaxTokens int `mapstructure:"maxTokens"`
+
+	// Temperature controls the randomness of AI responses (0.0-1.0)
+	Temperature float64 `mapstructure:"temperature"`
+
+	// CacheEnabled enables caching of AI responses
+	CacheEnabled bool `mapstructure:"cacheEnabled"`
+
+	// CacheTTL is the time-to-live for cached AI responses in seconds
+	CacheTTL int `mapstructure:"cacheTtl"`
 }

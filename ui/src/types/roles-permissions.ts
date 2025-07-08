@@ -51,6 +51,9 @@ export enum Action {
   BulkTransfer = "bulk_transfer", // Bulk transfer shipments to the billing queue.
   ReviewInvoice = "review_invoice", // Review an invoice.
   PostInvoice = "post_invoice", // Post an invoice.
+
+  // AI related actions
+  Classify = "classify", // Classify a resource.
 }
 
 export enum Scope {
