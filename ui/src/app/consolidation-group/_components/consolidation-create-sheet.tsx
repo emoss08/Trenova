@@ -11,8 +11,9 @@ import {
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import {
-  createConsolidationSchema,
-  type CreateConsolidationSchema,
+  consolidationGroupSchema,
+  ConsolidationStatus,
+  type ConsolidationGroupSchema,
 } from "@/lib/schemas/consolidation-schema";
 import { api } from "@/services/api";
 import { TableSheetProps } from "@/types/data-table";
@@ -32,18 +33,17 @@ export function ConsolidationCreateSheet({
   const [shipmentErrors, setShipmentErrors] = useState<string | null>(null);
 
   const form = useForm({
-    resolver: zodResolver(createConsolidationSchema),
+    resolver: zodResolver(consolidationGroupSchema),
     defaultValues: {
+      status: ConsolidationStatus.New,
       shipments: [],
     },
   });
 
   const { reset } = form;
 
-  console.info("shipmentErrors", shipmentErrors);
-
   const createMutation = useApiMutation({
-    mutationFn: (values: CreateConsolidationSchema) =>
+    mutationFn: (values: ConsolidationGroupSchema) =>
       api.consolidations.create(values),
     onSuccess: async () => {
       await broadcastQueryInvalidation({ queryKey: ["consolidation-list"] });
@@ -59,7 +59,7 @@ export function ConsolidationCreateSheet({
       const apiError = error instanceof APIError ? error : null;
 
       apiError?.getFieldErrors().forEach((fieldError) => {
-        form.setError(fieldError.name as Path<CreateConsolidationSchema>, {
+        form.setError(fieldError.name as Path<ConsolidationGroupSchema>, {
           message: fieldError.reason,
         });
         setShipmentErrors(fieldError.reason);
@@ -68,7 +68,7 @@ export function ConsolidationCreateSheet({
   });
 
   const handleSubmit = useCallback(
-    async (values: CreateConsolidationSchema) => {
+    async (values: ConsolidationGroupSchema) => {
       await createMutation.mutateAsync(values);
     },
     [createMutation],
@@ -76,7 +76,7 @@ export function ConsolidationCreateSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className="w-full sm:max-w-[600px]">
+      <SheetContent className="w-full sm:max-w-[780px]">
         <SheetHeader className="px-4 py-2 space-y-0">
           <SheetTitle>Create New Consolidation</SheetTitle>
           <SheetDescription>

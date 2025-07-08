@@ -21,8 +21,7 @@ export const consolidationGroupSchema = z.object({
   updatedAt: timestampSchema,
   organizationId: optionalStringSchema,
   businessUnitId: optionalStringSchema,
-  name: z.string().min(1, { error: "Name is required" }),
-  description: optionalStringSchema,
+
   status: z.enum(ConsolidationStatus).default(ConsolidationStatus.New),
   consolidationNumber: optionalStringSchema, // * Auto-generated consolidation code
   // Consolidation Details

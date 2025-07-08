@@ -29,99 +29,99 @@ export default function ShipmentBillingDetails() {
       </LazyComponent>
     </ShipmentBillingDetailsInner>
   );
-}
 
-function ShipmentBillingDetailsInner({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <>
-      <div className="flex flex-col gap-2 border-y border-bg-sidebar-border py-4">
-        <div className="flex justify-between items-center">
-          <h3 className="text-sm font-medium">Billing Information</h3>
-          <PreviousRatesDialog />
+  function ShipmentBillingDetailsInner({
+    children,
+  }: {
+    children: React.ReactNode;
+  }) {
+    return (
+      <>
+        <div className="flex flex-col gap-2 border-y border-bg-sidebar-border py-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-sm font-medium">Billing Information</h3>
+            <PreviousRatesDialog />
+          </div>
+          {children}
         </div>
-        {children}
-      </div>
-    </>
-  );
-}
+      </>
+    );
+  }
 
-function ShipmentBillingDetailsForm() {
-  const { control } = useFormContext<ShipmentSchema>();
+  function ShipmentBillingDetailsForm() {
+    const { control } = useFormContext<ShipmentSchema>();
 
-  return (
-    <FormGroup cols={2} className="gap-4">
-      <FormControl>
-        <CustomerAutocompleteField<ShipmentSchema>
-          name="customerId"
-          control={control}
-          label="Customer"
-          rules={{ required: true }}
-          placeholder="Select Customer"
-          description="Choose the customer who requested this shipment."
-        />
-      </FormControl>
-      <FormControl>
-        <SelectField
-          control={control}
-          rules={{ required: true }}
-          name="ratingMethod"
-          label="Rating Method"
-          placeholder="Select Rating Method"
-          description="Select how the shipment charges are calculated (e.g., per mile, per stop, flat rate)."
-          options={ratingMethodChoices}
-        />
-      </FormControl>
-      <FormControl>
-        <InputField
-          control={control}
-          rules={{ required: true }}
-          name="ratingUnit"
-          label="Rating Unit"
-          type="number"
-          placeholder="Enter Rating Unit"
-          description="Specify the cost per selected rating method (e.g., per mile or per pallet)."
-        />
-      </FormControl>
-      <FormControl>
-        <InputField
-          tabIndex={-1}
-          readOnly
-          control={control}
-          name="otherChargeAmount"
-          type="number"
-          label="Other Charges"
-          placeholder="Additional Charges"
-          description="Sum of all additional charges (tolls, fees, etc.)."
-        />
-      </FormControl>
-      <FormControl>
-        <InputField
-          control={control}
-          rules={{ required: true }}
-          name="freightChargeAmount"
-          label="Freight Charges"
-          placeholder="Enter Freight Charges"
-          description="Base charge for transporting the shipment, excluding additional fees."
-          type="number"
-        />
-      </FormControl>
-      <FormControl>
-        <InputField
-          tabIndex={-1}
-          readOnly
-          control={control}
-          rules={{ required: true }}
-          name="totalChargeAmount"
-          label="Total Charge"
-          placeholder="Total Charge"
-          description="Automatically calculated total, including base and additional charges."
-          type="number"
-        />
-      </FormControl>
-    </FormGroup>
-  );
+    return (
+      <FormGroup cols={2} className="gap-4">
+        <FormControl>
+          <CustomerAutocompleteField<ShipmentSchema>
+            name="customerId"
+            control={control}
+            label="Customer"
+            rules={{ required: true }}
+            placeholder="Select Customer"
+            description="Choose the customer who requested this shipment."
+          />
+        </FormControl>
+        <FormControl>
+          <SelectField
+            control={control}
+            rules={{ required: true }}
+            name="ratingMethod"
+            label="Rating Method"
+            placeholder="Select Rating Method"
+            description="Select how the shipment charges are calculated (e.g., per mile, per stop, flat rate)."
+            options={ratingMethodChoices}
+          />
+        </FormControl>
+        <FormControl>
+          <InputField
+            control={control}
+            rules={{ required: true }}
+            name="ratingUnit"
+            label="Rating Unit"
+            type="number"
+            placeholder="Enter Rating Unit"
+            description="Specify the cost per selected rating method (e.g., per mile or per pallet)."
+          />
+        </FormControl>
+        <FormControl>
+          <InputField
+            tabIndex={-1}
+            readOnly
+            control={control}
+            name="otherChargeAmount"
+            type="number"
+            label="Other Charges"
+            placeholder="Additional Charges"
+            description="Sum of all additional charges (tolls, fees, etc.)."
+          />
+        </FormControl>
+        <FormControl>
+          <InputField
+            control={control}
+            rules={{ required: true }}
+            name="freightChargeAmount"
+            label="Freight Charges"
+            placeholder="Enter Freight Charges"
+            description="Base charge for transporting the shipment, excluding additional fees."
+            type="number"
+          />
+        </FormControl>
+        <FormControl>
+          <InputField
+            tabIndex={-1}
+            readOnly
+            control={control}
+            rules={{ required: true }}
+            name="totalChargeAmount"
+            label="Total Charge"
+            placeholder="Total Charge"
+            description="Automatically calculated total, including base and additional charges."
+            type="number"
+          />
+        </FormControl>
+      </FormGroup>
+    );
+  }
 }

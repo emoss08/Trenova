@@ -1,8 +1,5 @@
 import { http } from "@/lib/http-client";
-import type {
-  ConsolidationGroupSchema,
-  CreateConsolidationSchema,
-} from "@/lib/schemas/consolidation-schema";
+import type { ConsolidationGroupSchema } from "@/lib/schemas/consolidation-schema";
 
 export type AddShipmentsRequest = {
   consolidationId: string;
@@ -32,7 +29,7 @@ export class ConsolidationAPI {
   }
 
   // Create a new consolidation group
-  async create(request: CreateConsolidationSchema) {
+  async create(request: ConsolidationGroupSchema) {
     const response = await http.post<ConsolidationGroupSchema>(
       "/consolidations/",
       request,
