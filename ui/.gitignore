@@ -31,3 +31,4 @@ tsconfig.app.tsbuildinfo
 stats.html
 # Million Lint
 .million
+.env
