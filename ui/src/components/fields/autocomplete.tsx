@@ -8,7 +8,7 @@ import {
   AutocompleteFieldProps,
   BaseAutocompleteFieldProps,
 } from "@/types/fields";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Controller, FieldValues } from "react-hook-form";
 import { AutocompleteCommandContent } from "./autocompete/autocomplete-content";
 import { AutocompleteTrigger } from "./autocompete/autocomplete-input";
@@ -48,6 +48,14 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
     onChange("");
     setSelectedOption(null);
   }, [onChange]);
+
+  // _ Reset selectedOption when value changes externally
+  useEffect(() => {
+    // _ Only reset if value changed and selectedOption exists
+    if (selectedOption && value !== getOptionValue(selectedOption)) {
+      setSelectedOption(null);
+    }
+  }, [value, selectedOption, getOptionValue]);
 
   return (
     <div className="relative">
