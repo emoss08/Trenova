@@ -3,11 +3,10 @@ import { LazyComponent } from "@/components/error-boundary";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { CustomerAutocompleteField } from "@/components/ui/autocomplete-fields";
-import { Button } from "@/components/ui/button";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { ratingMethodChoices } from "@/lib/choices";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import React, { lazy, useState } from "react";
+import React, { lazy } from "react";
 import { useFormContext } from "react-hook-form";
 import { PreviousRatesDialog } from "./previous-rates-dialog";
 
@@ -37,27 +36,15 @@ function ShipmentBillingDetailsInner({
 }: {
   children: React.ReactNode;
 }) {
-  const [open, setOpen] = useState(false);
   return (
     <>
       <div className="flex flex-col gap-2 border-y border-bg-sidebar-border py-4">
         <div className="flex justify-between items-center">
           <h3 className="text-sm font-medium">Billing Information</h3>
-          <Button
-            type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setOpen(true);
-            }}
-            size="xs"
-          >
-            View Previous Rates
-          </Button>
+          <PreviousRatesDialog />
         </div>
         {children}
       </div>
-      <PreviousRatesDialog open={open} onOpenChange={setOpen} />
     </>
   );
 }

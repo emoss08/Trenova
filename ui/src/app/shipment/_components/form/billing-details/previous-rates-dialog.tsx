@@ -1,4 +1,5 @@
 import { BetaTag } from "@/components/ui/beta-tag";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogBody,
@@ -6,6 +7,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogTrigger,
 } from "@/components/ui/dialog";
 import { EmptyState } from "@/components/ui/empty-state";
 import {
@@ -21,19 +23,27 @@ import type { LocationSchema } from "@/lib/schemas/location-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { ShipmentLocations } from "@/lib/shipment/utils";
 import { formatLocation, USDollarFormat } from "@/lib/utils";
-import type { TableSheetProps } from "@/types/data-table";
 import {
   faFileInvoiceDollar,
   faTruckContainer,
   faTruckFast,
 } from "@fortawesome/pro-solid-svg-icons";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { useFormContext } from "react-hook-form";
 
-export function PreviousRatesDialog(props: TableSheetProps) {
+export function PreviousRatesDialog() {
   const { getValues } = useFormContext<ShipmentSchema>();
+  const [open, setOpen] = useState(false);
   const shipment = getValues();
   const { origin, destination } = ShipmentLocations.useLocations(shipment);
+
+  const canViewPreviousRates =
+    !!shipment.serviceTypeId &&
+    !!shipment.shipmentTypeId &&
+    !!origin &&
+    !!destination &&
+    !!shipment.customerId;
 
   const { data: previousRates, isLoading } = useQuery({
     ...queries.shipment.getPreviousRates({
@@ -43,10 +53,24 @@ export function PreviousRatesDialog(props: TableSheetProps) {
       shipmentTypeId: shipment.shipmentTypeId,
       serviceTypeId: shipment.serviceTypeId,
     }),
+    enabled: canViewPreviousRates,
   });
 
   return (
-    <Dialog {...props}>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            setOpen(true);
+          }}
+          disabled={!canViewPreviousRates}
+          size="xs"
+        >
+          <span>View Previous Rates</span>
+        </Button>
+      </DialogTrigger>
       <DialogContent className="w-[1200px] max-w-[1800px] max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
