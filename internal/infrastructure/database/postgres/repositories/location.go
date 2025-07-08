@@ -130,7 +130,11 @@ func (lr *locationRepository) GetByID(
 	entity := new(location.Location)
 
 	query := dba.NewSelect().Model(entity).
-		Where("loc.id = ? AND loc.organization_id = ? AND loc.business_unit_id = ?", opts.ID, opts.OrgID, opts.BuID)
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("loc.id = ?", opts.ID).
+				Where("loc.organization_id = ?", opts.OrgID).
+				Where("loc.business_unit_id = ?", opts.BuID)
+		})
 
 	if opts.IncludeCategory {
 		query = query.Relation("LocationCategory")
@@ -167,6 +171,9 @@ func (lr *locationRepository) Create(
 		Str("buID", l.BusinessUnitID.String()).
 		Logger()
 
+	// * Check if the location needs to be geocoded
+	l = lr.GeocodeIfApplicable(l)
+
 	if _, err = dba.NewInsert().Model(l).
 		Returning("*").
 		Exec(ctx); err != nil {
@@ -199,6 +206,8 @@ func (lr *locationRepository) Update(
 		ov := loc.Version
 
 		loc.Version++
+
+		loc = lr.GeocodeIfApplicable(loc)
 
 		results, rErr := tx.NewUpdate().
 			Model(loc).
@@ -243,4 +252,14 @@ func (lr *locationRepository) Update(
 	}
 
 	return loc, nil
+}
+
+func (lr *locationRepository) GeocodeIfApplicable(l *location.Location) *location.Location {
+	if l.PlaceID == "" || l.Latitude == nil || l.Longitude == nil {
+		l.IsGeocoded = false
+		return l
+	}
+
+	l.IsGeocoded = true
+	return l
 }

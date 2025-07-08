@@ -9,3 +9,5 @@ node_modules
 logs/*
 certs/*
 backups/*
+config/development/*
+config/production/*

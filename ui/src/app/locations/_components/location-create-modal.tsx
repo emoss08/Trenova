@@ -23,6 +23,9 @@ export function CreateLocationModal({ open, onOpenChange }: TableSheetProps) {
       stateId: "",
       state: undefined,
       locationCategory: undefined,
+      latitude: undefined,
+      longitude: undefined,
+      placeId: undefined,
     },
   });
 

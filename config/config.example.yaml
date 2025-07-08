@@ -1,0 +1,151 @@
+# Trenova Configuration Example
+# Copy this file to config/development/config.development.yaml and update with your settings
+
+app:
+  name: Trenova
+  environment: development
+  version: 0.7.4-preview
+
+server:
+  secretKey: "your-secret-key-here"
+  listenAddress: ":3001"
+  immutable: false
+  readBufferSize: 8192
+  writeBufferSize: 8192
+  enablePrefork: false
+  enablePrintRoutes: false
+  concurrency: 1048576
+  disableStartupMessage: false
+  streamRequestBody: true
+  strictRouting: false
+  caseSensitive: true
+  enableIPValidation: true
+  enableTrustedProxyCheck: true
+  proxyHeader: "X-Forwarded-For"
+  readTimeout: 30
+  writeTimeout: 30
+  idleTimeout: 60
+  passLocalsToViews: false
+
+logging:
+  level: debug
+  samplingPeriod: 30s
+  samplingInterval: 5000
+  file:
+    enabled: false
+    path: "logs"
+    fileName: "trenova.log"
+    maxSize: 10
+    maxAge: 10
+    maxBackups: 10
+    compress: true
+
+db:
+  driver: postgresql
+  host: localhost
+  port: 5432
+  database: trenova_go_db
+  username: postgres
+  password: postgres
+  sslMode: disable
+  maxConnections: 80
+  maxIdleConns: 40
+  connMaxLifetime: 300
+  connMaxIdleTime: 60
+  debug: true
+
+auth:
+  sessionCookieName: "trv-session-id"
+  cookiePath: "/"
+  cookieDomain: ""
+  cookieHTTPOnly: false
+  cookieSecure: false
+  cookieSameSite: "Lax"
+
+audit:
+  bufferSize: 5000
+  flushInterval: 30
+
+cors:
+  allowedOrigins: "http://localhost:5173, http://localhost:3001, http://localhost:4173"
+  allowedHeaders: "Content-Type, Authorization, Content-Length, X-Requested-With, Origin, Accept, X-Csrftoken, X-Forwarded-For, X-Request-Id"
+  allowedMethods: "GET, POST, PUT, DELETE, OPTIONS"
+  allowCredentials: true
+  maxAge: 0
+
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+  connTimeout: 10s
+  readTimeout: 10s
+  writeTimeout: 10s
+  poolSize: 200
+  minIdleConns: 100
+
+minio:
+  endpoint: "localhost:9000"
+  accessKey: "minioadmin"
+  secretKey: "minioadmin"
+  useSSL: false
+
+search:
+  host: "http://localhost:7700"
+  apiKey: "masterKey"
+  indexPrefix: "trv"
+  batchInterval: 10
+
+backup:
+  enabled: true
+  backupDir: "./backups"
+  retentionDays: 30
+  schedule: "0 0 * * *"
+  compression: 6
+  maxConcurrentBackups: 1
+  backupTimeout: 1800 # 30 minutes
+  notifyOnFailure: true
+  notifyOnSuccess: false
+  notificationEmail: "admin@example.com"
+
+kafka:
+  enabled: true
+  brokers:
+    - "localhost:9092"
+  consumerGroupId: "trenova-cdc-consumer"
+  topicPattern: "trenova.public.*"
+  commitInterval: 5s
+  startOffset: "latest"
+  schemaRegistryUrl: "http://localhost:8081"
+
+streaming:
+  pollInterval: 2s
+  maxConnections: 500
+  maxConnectionsPerUser: 50
+  streamTimeout: 0s  # 0 means no timeout - streams will run indefinitely
+  enableHeartbeat: true
+
+# AI Configuration for Location Category Classification
+ai:
+  # Anthropic Claude API Key
+  # Get your API key from https://console.anthropic.com/
+  claudeApiKey: "sk-ant-api03-your-api-key-here"
+  
+  # Claude Model Selection
+  # Available models:
+  # - claude-3-haiku-20240307 (fastest, most cost-effective)
+  # - claude-3-sonnet-20240229 (balanced performance)
+  # - claude-3-opus-20240229 (most capable, highest cost)
+  claudeModel: "claude-3-haiku-20240307"
+  
+  # Maximum tokens for AI responses
+  maxTokens: 150
+  
+  # Temperature controls randomness (0.0-1.0)
+  # Lower values = more deterministic, higher = more creative
+  temperature: 0.3
+  
+  # Enable caching of AI responses
+  cacheEnabled: true
+  
+  # Cache time-to-live in seconds (1 hour = 3600)
+  cacheTtl: 3600
