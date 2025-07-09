@@ -93,22 +93,3 @@ func (s *Session) Revoke() {
 	s.RevokedAt = &now
 	s.UpdatedAt = now
 }
-
-// AddEvent adds an event to the session
-func (s *Session) AddEvent(
-	eventType EventType,
-	ip, userAgent string,
-	metadata map[string]any,
-) *Event {
-	event := &Event{
-		ID:        pulid.MustNew("sev_"),
-		SessionID: s.ID,
-		Type:      eventType,
-		IP:        ip,
-		UserAgent: userAgent,
-		Metadata:  metadata,
-		CreatedAt: timeutils.NowUnix(),
-	}
-	s.Events = append(s.Events, *event)
-	return event
-}

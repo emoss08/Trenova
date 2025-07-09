@@ -292,13 +292,9 @@ func (s *Service) createSession(
 		expiresAt,
 	)
 
-	// * The session is already validated in the constructor, but we can double-check
 	if err := sess.Validate(p.IP); err != nil {
 		return nil, eris.Wrap(err, "failed to validate session")
 	}
-
-	// * Initial login event should be added here
-	sess.AddEvent(session.EventTypeLogin, p.IP, p.UserAgent, nil)
 
 	if err := s.sessionRepo.Create(ctx, sess); err != nil {
 		return nil, eris.Wrap(err, "failed to create session")
