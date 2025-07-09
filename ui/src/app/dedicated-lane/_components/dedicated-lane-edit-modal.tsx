@@ -20,7 +20,7 @@ export function EditDedicatedLaneModal({
     formState: { errors },
   } = form;
 
-  console.log(errors);
+  console.log("errors", errors);
 
   return (
     <FormEditModal
