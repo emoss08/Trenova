@@ -33,6 +33,14 @@ var JobNotificationRegistry = map[string]*JobNotificationConfig{
 		MessageTemplate: "Pattern analysis job %s has %s: %s",
 		Tags:            []string{"job", "analysis", "patterns"},
 	},
+	"delay_shipment": {
+		EventType:       notification.EventJobShipmentDelay,
+		Priority:        notification.PriorityMedium,
+		FailurePriority: notification.PriorityHigh,
+		TitleTemplate:   "Shipment Delay %s",
+		MessageTemplate: "Shipment delay job %s has %s: %s",
+		Tags:            []string{"job", "shipment", "delay"},
+	},
 	"compliance_check": {
 		EventType:       notification.EventJobComplianceCheck,
 		Priority:        notification.PriorityHigh,

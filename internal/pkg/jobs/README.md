@@ -197,6 +197,205 @@ _, err := jobService.SchedulePatternAnalysis(ctx, &jobs.PatternAnalysisPayload{
 5. **Monitoring**: Full visibility into job processing and results
 6. **Extensible**: Easy to add new job types for future features
 
+## Creating a New Job - Step by Step Guide
+
+### 1. Define the Job Type
+
+Add your new job type to `types.go`:
+
+```go
+const (
+    // ... existing job types
+    JobTypeYourNewJob JobType = "category:your_job_name"
+)
+```
+
+### 2. Create the Payload Structure
+
+Add your payload to `types.go`:
+
+```go
+type YourJobPayload struct {
+    BasePayload
+    // Add your specific fields here
+    YourField string `json:"yourField"`
+}
+```
+
+### 3. Create the Job Handler
+
+Create a new file in `handlers/your_job.go`:
+
+```go
+package handlers
+
+import (
+    "context"
+    "github.com/emoss08/trenova/internal/pkg/jobs"
+    "github.com/hibiken/asynq"
+    "go.uber.org/fx"
+)
+
+type YourJobHandlerParams struct {
+    fx.In
+    
+    Logger *logger.Logger
+    // Add your dependencies here
+}
+
+type YourJobHandler struct {
+    l *zerolog.Logger
+    // Add your dependencies here
+}
+
+func NewYourJobHandler(p YourJobHandlerParams) jobs.JobHandler {
+    log := p.Logger.With().
+        Str("handler", "your_job").
+        Logger()
+    
+    return &YourJobHandler{
+        l: &log,
+    }
+}
+
+func (h *YourJobHandler) ProcessTask(ctx context.Context, task *asynq.Task) error {
+    var payload jobs.YourJobPayload
+    if err := jobs.UnmarshalPayload(task.Payload(), &payload); err != nil {
+        return err
+    }
+    
+    // Implement your job logic here
+    
+    return nil
+}
+
+func (h *YourJobHandler) JobType() jobs.JobType {
+    return jobs.JobTypeYourNewJob
+}
+```
+
+### 4. Register the Handler in Infrastructure Module
+
+Update `internal/infrastructure/jobs/module.go`:
+
+```go
+var Module = fx.Module(
+    "jobs",
+    fx.Provide(
+        // ... existing providers
+        
+        // Add your handler
+        fx.Annotate(
+            handlers.NewYourJobHandler,
+            fx.As(new(jobs.JobHandler)),
+            fx.ResultTags(`group:"job_handlers"`),
+        ),
+    ),
+    // ... rest of module
+)
+```
+
+### 5. Configure the Queue (IMPORTANT!)
+
+If using a custom queue, update `service.go` to include it in the server config:
+
+```go
+Queues: map[string]int{
+    QueueCritical:   6,
+    QueueShipment:   2,  // If using shipment queue
+    QueuePattern:    1,
+    QueueCompliance: 1,
+    QueueDefault:    1,
+    // Add your queue here if using a custom one
+},
+```
+
+### 6. Create Job Options (Optional)
+
+Add to `types.go` if you need custom options:
+
+```go
+func YourJobOptions() *JobOptions {
+    return &JobOptions{
+        Queue:    QueueShipment, // or your custom queue
+        Priority: PriorityNormal,
+        MaxRetry: 3,
+    }
+}
+```
+
+### 7. Add Scheduling Method (Optional)
+
+Add to `service.go` if you want a dedicated scheduling method:
+
+```go
+func (js *JobService) ScheduleYourJob(
+    payload *YourJobPayload,
+    opts *JobOptions,
+) (*asynq.TaskInfo, error) {
+    if opts == nil {
+        opts = YourJobOptions()
+    }
+    
+    payload.JobID = pulid.MustNew("job_").String()
+    payload.Timestamp = timeutils.NowUnix()
+    
+    return js.Enqueue(JobTypeYourNewJob, payload, opts)
+}
+```
+
+### 8. Add to Cron Scheduler (If Recurring)
+
+Update `scheduler/cronscheduler.go`:
+
+```go
+func (cs *CronScheduler) ScheduleYourRecurringJob() error {
+    task := asynq.NewTask(
+        string(jobs.JobTypeYourNewJob),
+        cs.createYourJobPayload(),
+    )
+    
+    entryID, err := cs.scheduler.Register("@every 5m", task,
+        asynq.Queue(jobs.QueueShipment), // MUST match handler's queue!
+        asynq.MaxRetry(2),
+    )
+    
+    // Don't forget to call this in Start()
+    return err
+}
+```
+
+## Common Pitfalls to Avoid
+
+1. **Queue Mismatch**: Ensure the queue in scheduler matches the queue in job options
+2. **Missing Queue Configuration**: Add custom queues to the server's Queues map
+3. **Wrong Payload Type**: Double-check you're unmarshaling the correct payload type
+4. **Handler Not Registered**: Ensure handler is added to infrastructure module
+5. **Missing Dependencies**: Verify all handler dependencies are available via DI
+
+## Debugging Tips
+
+1. Check logs for "job enqueued successfully" messages
+2. Verify the queue name in logs matches your configuration
+3. Use Asynq Web UI to inspect pending/failed jobs
+4. Check Redis directly: `redis-cli KEYS "asynq:*"`
+5. Enable debug logging in Asynq for more details
+
+## Testing Your Job
+
+```go
+// Manual test
+ctx := context.Background()
+jobService.ScheduleYourJob(&YourJobPayload{
+    BasePayload: jobs.BasePayload{
+        OrganizationID: orgID,
+        BusinessUnitID: buID,
+        UserID:         userID,
+    },
+    YourField: "test value",
+}, nil)
+```
+
 ## Next Steps
 
 1. **Add job service to your infrastructure module**

@@ -20,6 +20,7 @@ const (
 	// Shipment Jobs
 	JobTypeShipmentStatusUpdate JobType = "shipment:status_update"
 	JobTypeDuplicateShipment    JobType = "shipment:duplicate"
+	JobTypeDelayShipment        JobType = "shipment:delay"
 	JobTypeShipmentNotification JobType = "shipment:notification"
 
 	// Compliance Jobs
@@ -45,6 +46,7 @@ const (
 	QueueDefault    = "default"
 	QueuePattern    = "pattern_analysis"
 	QueueCompliance = "compliance"
+	QueueShipment   = "shipment"
 	QueueSystem     = "system"
 	QueueCritical   = "critical"
 )
@@ -95,6 +97,10 @@ type DuplicateShipmentPayload struct {
 	IncludeAdditionalCharges bool     `json:"includeAdditionalCharges"`
 }
 
+type DelayShipmentPayload struct {
+	BasePayload
+}
+
 // ComplianceCheckPayload for compliance verification jobs
 type ComplianceCheckPayload struct {
 	BasePayload
@@ -135,6 +141,14 @@ func PatternAnalysisOptions() *JobOptions {
 	return &JobOptions{
 		Queue:    QueuePattern,
 		Priority: PriorityNormal,
+		MaxRetry: 2,
+	}
+}
+
+func DelayShipmentOptions() *JobOptions {
+	return &JobOptions{
+		Queue:    QueueShipment,
+		Priority: PriorityHigh,
 		MaxRetry: 2,
 	}
 }

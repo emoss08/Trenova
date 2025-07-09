@@ -38,6 +38,11 @@ var Module = fx.Module(
 			fx.As(new(jobs.JobHandler)),
 			fx.ResultTags(`group:"job_handlers"`),
 		),
+		fx.Annotate(
+			handlers.NewDelayShipmentHandler,
+			fx.As(new(jobs.JobHandler)),
+			fx.ResultTags(`group:"job_handlers"`),
+		),
 	),
 	fx.Invoke(
 		RegisterLifecycleHooks,
