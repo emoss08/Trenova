@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/session"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/cache/redis"
@@ -21,8 +20,6 @@ const (
 	// Key prefixes
 	sessionPrefix      = "session:"
 	userSessionsPrefix = "user-sessions:"
-	sessionEventPrefix = "session-events:"
-
 	// Default TTLs
 	defaultSessionTTL = time.Hour * 72
 )
@@ -69,18 +66,6 @@ func (sr *sessionRepository) Create(ctx context.Context, sess *session.Session) 
 	userSessionsKey := sr.userSessionsKey(sess.UserID)
 	pipe.SAdd(ctx, userSessionsKey, sess.ID.String())
 	pipe.Expire(ctx, userSessionsKey, defaultSessionTTL) // Also set TTL for the set
-
-	if len(sess.Events) > 0 {
-		event := sess.Events[0]
-		eventData, err := sonic.Marshal(event)
-		if err != nil {
-			return eris.Wrap(err, "marshal event")
-		}
-
-		eventsKey := sr.sessionEventsKey(sess.ID)
-		pipe.SAdd(ctx, eventsKey, string(eventData))
-		pipe.Expire(ctx, eventsKey, defaultSessionTTL)
-	}
 
 	if _, err := pipe.Exec(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to create session")
@@ -131,27 +116,6 @@ func (sr *sessionRepository) GetUserActiveSessions(
 	}
 
 	return sessions, nil
-}
-
-func (sr *sessionRepository) getSessionEvents(
-	ctx context.Context,
-	sessionID pulid.ID,
-) ([]session.Event, error) {
-	eventStrings, err := sr.redis.SMembers(ctx, sr.sessionEventsKey(sessionID))
-	if err != nil {
-		return nil, eris.Wrap(err, "get event members")
-	}
-
-	events := make([]session.Event, 0, len(eventStrings))
-	for _, eventStr := range eventStrings {
-		var event session.Event
-		if err = sonic.Unmarshal([]byte(eventStr), &event); err != nil {
-			return nil, eris.Wrap(err, "unmarshal event")
-		}
-		events = append(events, event)
-	}
-
-	return events, nil
 }
 
 func (sr *sessionRepository) RevokeUserSessions(
@@ -225,19 +189,6 @@ func (sr *sessionRepository) GetValidSession(
 		log.Warn().Err(err).Msg("session is not valid")
 		return nil, err
 	}
-	events, err := sr.getSessionEvents(ctx, sessionID)
-	if err != nil {
-		if eris.Is(err, redis.ErrCircuitBreakerOpen) {
-			log.Debug().Msg("skipping session events due to circuit breaker")
-			sess.Events = []session.Event{} // Empty events
-			return sess, nil
-		}
-
-		log.Error().Err(err).Msg("failed to get session events")
-		return nil, eris.Wrap(err, "failed to get session events")
-	}
-
-	sess.Events = events
 
 	return sess, nil
 }
@@ -264,17 +215,10 @@ func (sr *sessionRepository) UpdateSessionActivity(
 	}
 
 	sess.UpdateLastAccessedAt()
-	event := sess.AddEvent(eventType, clientIP, userAgent, metadata)
 
-	// Update session data
 	if err = sr.redis.SetJSON(ctx, ".", sr.sessionKey(sessionID), sess, defaultSessionTTL); err != nil {
 		log.Error().Err(err).Msg("failed to update session data")
 		return eris.Wrap(err, "failed to update session data")
-	}
-
-	if err = sr.storeSessionEvent(ctx, sessionID, event); err != nil {
-		log.Error().Err(err).Msg("failed to store session event")
-		return eris.Wrap(err, "failed to store session event")
 	}
 
 	return nil
@@ -301,11 +245,9 @@ func (sr *sessionRepository) UpdateSessionOrganization(
 		return eris.Wrap(err, "failed to get session")
 	}
 
-	// * Update the organization ID
 	sess.OrganizationID = newOrgID
 	sess.UpdatedAt = timeutils.NowUnix()
 
-	// * Store the updated session back to Redis
 	if err := sr.redis.SetJSON(ctx, ".", sr.sessionKey(sessionID), sess, defaultSessionTTL); err != nil {
 		log.Error().Err(err).Msg("failed to update session organization")
 		return eris.Wrap(err, "failed to update session organization")
@@ -334,30 +276,11 @@ func (sr *sessionRepository) RevokeSession(
 		return eris.Wrap(err, "failed to get valid session")
 	}
 
-	// Do not revoke the current session
-	// If it's been accessed in the last 5 minutes, do not revoke
-	// if time.Unix(sess.LastAccessedAt, 0).After(time.Now().Add(-time.Minute * 5)) {
-	// 	return errors.NewBusinessError("cannot revoke session that was recently accessed")
-	// }
-
 	sess.Revoke()
-	event := sess.AddEvent(
-		session.EventTypeRevoked,
-		ip,
-		userAgent,
-		map[string]any{"reason": reason},
-	)
 
-	// Update session data
 	if err = sr.redis.SetJSON(ctx, ".", sr.sessionKey(sessionID), sess, defaultSessionTTL); err != nil {
 		log.Error().Err(err).Msg("failed to update session data")
 		return eris.Wrap(err, "failed to update session data")
-	}
-
-	// Store revocation event
-	if err = sr.storeSessionEvent(ctx, sessionID, event); err != nil {
-		log.Error().Err(err).Msg("failed to store revoked event")
-		return eris.Wrap(err, "failed to store revoked event")
 	}
 
 	// Remove from user's active sessions
@@ -380,23 +303,6 @@ func (sr *sessionRepository) sessionKey(sessionID pulid.ID) string {
 
 func (sr *sessionRepository) userSessionsKey(userID pulid.ID) string {
 	return fmt.Sprintf("%s%s", userSessionsPrefix, userID.String())
-}
-
-func (sr *sessionRepository) sessionEventsKey(sessionID pulid.ID) string {
-	return fmt.Sprintf("%s%s", sessionEventPrefix, sessionID.String())
-}
-
-func (sr *sessionRepository) storeSessionEvent(
-	ctx context.Context,
-	sessionID pulid.ID,
-	event *session.Event,
-) error {
-	eventData, err := sonic.Marshal(event)
-	if err != nil {
-		return eris.Wrap(err, "marshal event")
-	}
-
-	return sr.redis.SAdd(ctx, sr.sessionEventsKey(sessionID), string(eventData))
 }
 
 // createFallbackSession creates a minimal valid session for use when Redis is unavailable
