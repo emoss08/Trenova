@@ -351,7 +351,8 @@ export function AutocompleteCommandOption<TOption>({
       <Icon
         icon={faCheck}
         className={cn(
-          "ml-auto size-3",
+          "size-3",
+          "absolute right-2 top-1/2 -translate-y-1/2",
           value === getOptionValue(option).toString()
             ? "opacity-100"
             : "opacity-0",

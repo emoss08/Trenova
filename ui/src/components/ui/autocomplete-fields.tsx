@@ -342,10 +342,19 @@ export function LocationAutocompleteField<T extends FieldValues>({
     <AutocompleteField<LocationSchema, T>
       link="/locations/"
       getOptionValue={(option) => option.id || ""}
-      getDisplayValue={(option) => option.name}
+      getDisplayValue={(option) => (
+        <span className="text-left truncate w-full">{option.name}</span>
+      )}
       renderOption={(option) => (
         <div className="flex flex-col gap-0.5 items-start size-full">
-          <span className="text-sm font-normal">{option.name}</span>
+          <div className="flex items-center gap-1">
+            <span className="text-sm font-normal truncate w-prose">
+              {option.name}
+            </span>
+            <span className="text-2xs text-muted-foreground truncate w-prose">
+              {option.locationCategory?.name}
+            </span>
+          </div>
           <span className="text-2xs text-muted-foreground truncate w-full">
             {formatLocation(option)}
           </span>
@@ -353,6 +362,8 @@ export function LocationAutocompleteField<T extends FieldValues>({
       )}
       extraSearchParams={{
         status: [Status.Active],
+        includeState: "true",
+        includeCategory: "true",
       }}
       {...props}
     />
