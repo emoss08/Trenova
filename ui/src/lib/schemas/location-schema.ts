@@ -34,8 +34,8 @@ export const locationSchema = z.object({
     .string()
     .min(1, { error: "Location category is required" }),
   stateId: z.string().min(1, { error: "State is required" }),
-  state: usStateSchema.optional(),
-  locationCategory: locationCategorySchema.optional(),
+  state: usStateSchema.nullish(),
+  locationCategory: locationCategorySchema.nullish(),
 });
 
 export type LocationSchema = z.infer<typeof locationSchema>;

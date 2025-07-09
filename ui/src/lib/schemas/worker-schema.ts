@@ -84,8 +84,8 @@ export const workerSchema = z
     fleetCodeId: nullableStringSchema,
     gender: z.enum(Gender),
     postalCode: z.string(),
-    profile: workerProfileSchema.nullable(),
-    pto: z.array(workerPTOSchema).optional(),
+    profile: workerProfileSchema.nullish(),
+    pto: z.array(workerPTOSchema).nullish(),
   })
   .refine(
     (data) => {
