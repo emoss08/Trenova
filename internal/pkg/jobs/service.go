@@ -67,6 +67,10 @@ type JobServiceInterface interface {
 		payload *PatternAnalysisPayload,
 		opts *JobOptions,
 	) (*asynq.TaskInfo, error)
+	ScheduleDelayShipmentJobs(
+		payload *DelayShipmentPayload,
+		opts *JobOptions,
+	) (*asynq.TaskInfo, error)
 	ScheduleExpireSuggestions(
 		payload *ExpireSuggestionsPayload,
 		opts *JobOptions,
@@ -114,7 +118,8 @@ func NewJobService(p JobServiceParams) JobServiceInterface {
 			Concurrency: 10, // Number of concurrent workers
 			Queues: map[string]int{
 				QueueCritical:   6, // Highest priority - 60% of workers
-				QueuePattern:    2, // Pattern analysis - 20% of workers
+				QueueShipment:   2, // Shipment jobs - 20% of workers
+				QueuePattern:    1, // Pattern analysis - 10% of workers
 				QueueCompliance: 1, // Compliance checks - 10% of workers
 				QueueDefault:    1, // Default queue - 10% of workers
 			},
@@ -235,6 +240,21 @@ func (js *JobService) SchedulePatternAnalysis(
 	payload.Timestamp = timeutils.NowUnix()
 
 	return js.Enqueue(JobTypeAnalyzePatterns, payload, opts)
+}
+
+// ScheduleDelayShipmentJobs schedules a delay shipment job
+func (js *JobService) ScheduleDelayShipmentJobs(
+	payload *DelayShipmentPayload,
+	opts *JobOptions,
+) (*asynq.TaskInfo, error) {
+	if opts == nil {
+		opts = DelayShipmentOptions()
+	}
+
+	payload.JobID = pulid.MustNew("job_").String()
+	payload.Timestamp = timeutils.NowUnix()
+
+	return js.Enqueue(JobTypeDelayShipment, payload, opts)
 }
 
 // ScheduleExpireSuggestions schedules a job to expire old suggestions
@@ -432,7 +452,8 @@ func (js *JobService) Start() error {
 		Int("concurrency", 10).
 		Interface("queue_distribution", map[string]int{
 			QueueCritical:   6,
-			QueuePattern:    2,
+			QueueShipment:   2,
+			QueuePattern:    1,
 			QueueCompliance: 1,
 			QueueDefault:    1,
 		}).
@@ -539,7 +560,10 @@ func (js *JobService) extractPayloadSummary(payload any) map[string]any {
 		summary["business_unit_id"] = p.BusinessUnitID.String()
 		summary["shipment_id"] = p.ShipmentID.String()
 		summary["status_change"] = p.OldStatus + " -> " + p.NewStatus
-
+	case *DelayShipmentPayload:
+		summary["type"] = "delay_shipment"
+		summary["organization_id"] = p.OrganizationID.String()
+		summary["business_unit_id"] = p.BusinessUnitID.String()
 	case *ComplianceCheckPayload:
 		summary["type"] = "compliance_check"
 		summary["organization_id"] = p.OrganizationID.String()

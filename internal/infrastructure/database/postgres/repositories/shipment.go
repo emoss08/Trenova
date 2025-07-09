@@ -1406,6 +1406,129 @@ func (sr *shipmentRepository) duplicateShipmentFields(
 	return shp, nil
 }
 
+// DelayShipments is a function that delays shipments that have scheduled dates in the past.
+// It returns a list of shipments that have been delayed.
+//
+// Parameters:
+//   - ctx: Context for request scope and cancellation
+//
+// Returns:
+//   - []*shipment.Shipment: List of shipments that have been delayed
+//   - error: If the database query fails
+func (sr *shipmentRepository) DelayShipments(ctx context.Context) ([]*shipment.Shipment, error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "DelayShipments").
+		Logger()
+
+	currentTime := timeutils.NowUnix()
+	updatedShipments := make([]*shipment.Shipment, 0)
+
+	// _ Run in a transaction to ensure consistency
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		// _ Find shipments with overdue stops using CTEs for efficient querying
+		// _ CTE 1: Find all stops that are overdue (planned departure is in the past and not completed)
+		stopCte := tx.NewSelect().
+			Column("stp.shipment_move_id").
+			TableExpr("stops stp").
+			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					Where("stp.status NOT IN (?)", bun.In([]shipment.StopStatus{
+						shipment.StopStatusCompleted,
+						shipment.StopStatusCanceled,
+					})).
+					Where("stp.actual_departure IS NULL").
+					Where("stp.planned_departure < ?", currentTime)
+			})
+
+		// _ CTE 2: Get unique shipment IDs from moves with overdue stops
+		moveCte := tx.NewSelect().
+			ColumnExpr("DISTINCT sm.shipment_id").
+			TableExpr("shipment_moves sm").
+			Where("sm.id IN (SELECT shipment_move_id FROM stop_cte)").
+			Where("sm.status NOT IN (?)", bun.In([]shipment.MoveStatus{
+				shipment.MoveStatusCompleted,
+				shipment.MoveStatusCanceled,
+			}))
+
+		// _ Select shipments that need to be delayed
+		// _ Only select shipments that are not already delayed, canceled, completed, or billed
+		q := tx.NewSelect().
+			Model(&updatedShipments).
+			With("stop_cte", stopCte).
+			With("move_cte", moveCte).
+			Where("sp.id IN (SELECT shipment_id FROM move_cte)").
+			Where("sp.status NOT IN (?)", bun.In([]shipment.Status{
+				shipment.StatusDelayed,
+				shipment.StatusCanceled,
+				shipment.StatusCompleted,
+				shipment.StatusBilled,
+			}))
+
+		if err := q.Scan(c); err != nil {
+			log.Error().Err(err).Msg("failed to find delayed shipments")
+			return oops.
+				In("shipment_repository").
+				Time(time.Now()).
+				Wrapf(err, "find delayed shipments")
+		}
+
+		if len(updatedShipments) == 0 {
+			log.Info().Msg("no shipments to delay")
+			return nil
+		}
+
+		// _ Extract shipment IDs for bulk update
+		shipmentIDs := make([]pulid.ID, len(updatedShipments))
+		for i, shp := range updatedShipments {
+			shipmentIDs[i] = shp.ID
+		}
+
+		// _ Update shipment status to Delayed in bulk
+		_, err := tx.NewUpdate().
+			Model((*shipment.Shipment)(nil)).
+			Set("status = ?", shipment.StatusDelayed).
+			Set("updated_at = ?", currentTime).
+			Where("sp.id IN (?)", bun.In(shipmentIDs)).
+			Exec(c)
+		if err != nil {
+			log.Error().
+				Err(err).
+				Int("count", len(shipmentIDs)).
+				Msg("failed to update shipment status to delayed")
+			return oops.
+				In("shipment_repository").
+				Time(time.Now()).
+				Wrapf(err, "update shipment status to delayed")
+		}
+
+		log.Info().
+			Int("count", len(updatedShipments)).
+			Msg("successfully delayed shipments")
+
+		// _ Update the status in the returned shipments
+		for _, shp := range updatedShipments {
+			shp.Status = shipment.StatusDelayed
+			shp.UpdatedAt = currentTime
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+
+	return updatedShipments, nil
+}
+
 // checkForDuplicateBOLs verifies if a BOL number already exists in the system
 // It returns a list of shipments with the same BOL, optionally excluding a specific shipment ID
 //
@@ -1509,7 +1632,7 @@ func (sr *shipmentRepository) GetPreviousRates(
 	ctx context.Context,
 	req *repositories.GetPreviousRatesRequest,
 ) (*ports.ListResult[*shipment.Shipment], error) {
-	dba, err := sr.db.DB(ctx)
+	dba, err := sr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("shipment_repository").

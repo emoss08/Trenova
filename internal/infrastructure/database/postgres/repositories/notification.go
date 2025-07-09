@@ -292,7 +292,7 @@ func (nr *notificationRepository) ReadAllNotifications(
 
 	now := timeutils.NowUnix()
 
-	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		results, rErr := tx.NewUpdate().Model((*notification.Notification)(nil)).
 			Set("read_at = ?", now).
 			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
@@ -301,7 +301,7 @@ func (nr *notificationRepository) ReadAllNotifications(
 					Where("notif.target_user_id = ?", req.UserID)
 			}).
 			OmitZero().
-			Exec(ctx)
+			Exec(c)
 
 		if rErr != nil {
 			log.Error().Err(rErr).Msg("failed to read all notifications")
@@ -406,7 +406,7 @@ func (nr *notificationRepository) MarkAsDismissed(
 		return eris.Wrap(err, "get database connection")
 	}
 
-	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		results, rErr := tx.NewUpdate().
 			Model((*notification.Notification)(nil)).
 			Set("dismissed_at = ?", timeutils.NowUnix()).
@@ -423,7 +423,7 @@ func (nr *notificationRepository) MarkAsDismissed(
 						notification.ChannelRole, req.UserID)
 			}).
 			OmitZero().
-			Exec(ctx)
+			Exec(c)
 
 		if rErr != nil {
 			log.Error().Err(rErr).Msg("failed to mark notification as dismissed")

@@ -13,6 +13,9 @@ const (
 	// EventJobPatternAnalysis is fired when a pattern analysis job completes
 	EventJobPatternAnalysis = EventType("job.analysis.pattern_complete")
 
+	// EventJobShipmentDelay is fired when a shipment delay job completes
+	EventJobShipmentDelay = EventType("job.shipment.delay_complete")
+
 	// EventJobComplianceCheck is fired when a compliance check job completes
 	EventJobComplianceCheck = EventType("job.compliance.check_complete")
 

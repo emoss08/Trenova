@@ -68,6 +68,11 @@ func (cs *CronScheduler) Start() error {
 		return err
 	}
 
+	if err := cs.ScheduleDelayShipmentJobs(); err != nil {
+		cs.logger.Error().Err(err).Msg("failed to schedule delay shipment jobs")
+		return err
+	}
+
 	if err := cs.ScheduleMaintenanceJobs(); err != nil {
 		cs.logger.Error().Err(err).Msg("failed to schedule maintenance jobs")
 		return err
@@ -90,6 +95,33 @@ func (cs *CronScheduler) Stop() error {
 	return nil
 }
 
+func (cs *CronScheduler) ScheduleDelayShipmentJobs() error {
+	cs.logger.Info().Msg("scheduling delay shipment jobs")
+
+	// Delay shipments every 3 minutes
+	delayTask := asynq.NewTask(
+		string(jobs.JobTypeDelayShipment),
+		cs.createDelayShipmentPayload(),
+	)
+
+	entryID, err := cs.scheduler.Register("@every 1m", delayTask,
+		asynq.Queue(jobs.QueueShipment),
+		asynq.MaxRetry(2),
+		asynq.Retention(24*time.Hour),
+		asynq.Timeout(1*time.Minute), // * Timeout of 1 minute
+	)
+	if err != nil {
+		return err
+	}
+
+	cs.logger.Info().
+		Str("entry_id", entryID).
+		Str("schedule", "@every 3m (every 3 minutes)").
+		Msg("scheduled delay shipment job")
+
+	return nil
+}
+
 // SchedulePatternAnalysisJobs schedules recurring pattern analysis jobs
 func (cs *CronScheduler) SchedulePatternAnalysisJobs() error {
 	cs.logger.Info().Msg("scheduling pattern analysis jobs")
@@ -97,11 +129,11 @@ func (cs *CronScheduler) SchedulePatternAnalysisJobs() error {
 	// Daily pattern analysis at 2 AM
 	dailyPatternTask := asynq.NewTask(
 		string(jobs.JobTypeAnalyzePatterns),
-		cs.createGlobalPatternAnalysisPayload(), // Analyze last 30 days daily
+		cs.createGlobalPatternAnalysisPayload(),
 		asynq.Retention(24*time.Hour),
 	)
 
-	entryID, err := cs.scheduler.Register("@every 10m", dailyPatternTask,
+	entryID, err := cs.scheduler.Register("@every 24h", dailyPatternTask,
 		asynq.Queue(jobs.QueuePattern),
 	)
 	if err != nil {
@@ -110,7 +142,7 @@ func (cs *CronScheduler) SchedulePatternAnalysisJobs() error {
 
 	cs.logger.Info().
 		Str("entry_id", entryID).
-		Str("schedule", "0 2 * * * (daily at 2 AM)").
+		Str("schedule", "@every 24h (daily at 2 AM)").
 		Msg("scheduled daily pattern analysis")
 
 	// Weekly comprehensive analysis on Sundays at 1 AM
@@ -170,6 +202,18 @@ func (cs *CronScheduler) createGlobalPatternAnalysisPayload() []byte {
 		},
 		MinFrequency:  3, // Conservative frequency for scheduled analysis
 		TriggerReason: "scheduled",
+	}
+
+	data, _ := jobs.MarshalPayload(payload)
+	return data
+}
+
+func (cs *CronScheduler) createDelayShipmentPayload() []byte {
+	payload := &jobs.DelayShipmentPayload{
+		BasePayload: jobs.BasePayload{
+			JobID:     pulid.MustNew("job_").String(),
+			Timestamp: timeutils.NowUnix(),
+		},
 	}
 
 	data, _ := jobs.MarshalPayload(payload)
