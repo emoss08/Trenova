@@ -22,10 +22,6 @@ export function StopDialogForm({
 }) {
   const { control, setValue, getValues } = useFormContext<ShipmentSchema>();
 
-  // * StopIdx, is nullable because there are instances where the dialog is going to add a new stop, and there is no stop index yet.
-  // * If there is no stop index, we will use the append function to add a new stop.
-  // * If there is a stop index, we will use the update function to update the stop because the stop index is already set.
-
   const locationId = useWatch({
     control,
     name: `${stopFieldName}.locationId` as any,
@@ -139,9 +135,6 @@ export function StopDialogForm({
               rules={{ required: true }}
               placeholder="Select location"
               description="Select the designated location for this stop."
-              extraSearchParams={{
-                includeState: "true",
-              }}
             />
           </FormControl>
           <FormControl cols="full">
