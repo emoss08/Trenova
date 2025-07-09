@@ -137,8 +137,7 @@ export function ShipmentSelection({
 
       <div
         ref={parentRef}
-        className="border rounded-lg p-4 overflow-y-auto"
-        style={{ height: "400px" }}
+        className="border rounded-lg p-4 overflow-y-auto bg-background h-[400px]"
       >
         {shipmentErrors && (
           <div className="bg-destructive/10 border border-destructive/20 rounded-md p-2 mb-4">
@@ -181,7 +180,7 @@ export function ShipmentSelection({
                     handleCollapsibleChange(shipment.id ?? "", open)
                   }
                 >
-                  <div className="border rounded-lg p-2">
+                  <div className="border rounded-lg p-2 bg-card">
                     <div className="flex items-center space-x-3">
                       <Checkbox
                         checked={selectedShipmentIds.includes(shipment.id)}

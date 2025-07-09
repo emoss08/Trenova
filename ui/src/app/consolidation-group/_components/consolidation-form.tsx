@@ -19,7 +19,6 @@ export function ConsolidationForm({
 }: ConsolidationFormProps) {
   return (
     <div className="space-y-6">
-      {/* Shipment Selection - Only show for new consolidations */}
       {!isEdit && (
         <Card>
           <CardHeader>
