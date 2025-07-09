@@ -75,6 +75,7 @@ type Shipment struct {
 	TractorType       *equipmenttype.EquipmentType `json:"tractorType,omitempty"      bun:"rel:belongs-to,join:tractor_type_id=id"`
 	TrailerType       *equipmenttype.EquipmentType `json:"trailerType,omitempty"      bun:"rel:belongs-to,join:trailer_type_id=id"`
 	CanceledBy        *user.User                   `json:"canceledBy,omitempty"       bun:"rel:belongs-to,join:canceled_by_id=id"`
+	Owner             *user.User                   `json:"owner,omitempty"            bun:"rel:belongs-to,join:owner_id=id"`
 	Moves             []*ShipmentMove              `json:"moves,omitempty"            bun:"rel:has-many,join:id=shipment_id"`
 	Commodities       []*ShipmentCommodity         `json:"commodities,omitempty"      bun:"rel:has-many,join:id=shipment_id"`
 	AdditionalCharges []*AdditionalCharge          `json:"additionalCharges,omitzero" bun:"rel:has-many,join:id=shipment_id"`
