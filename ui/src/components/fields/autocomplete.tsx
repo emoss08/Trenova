@@ -49,9 +49,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
     setSelectedOption(null);
   }, [onChange]);
 
-  // _ Reset selectedOption when value changes externally
   useEffect(() => {
-    // _ Only reset if value changed and selectedOption exists
     if (selectedOption && value !== getOptionValue(selectedOption)) {
       setSelectedOption(null);
     }
