@@ -304,6 +304,36 @@ func (tcr *tableConfigurationRepository) Update(
 			return err
 		}
 
+		// TODO(wolfred): this is a temporary fix we should clean this up.
+		// * if the incoming config is marked as default, then we need to get the existing default and set it to not default
+		if config.IsDefault {
+			existingDefault, edErr := tcr.GetDefaultOrLatestConfiguration(
+				ctx,
+				config.Resource,
+				&repositories.TableConfigurationFilters{
+					Base: &ports.FilterQueryOptions{
+						OrgID: config.OrganizationID,
+						BuID:  config.BusinessUnitID,
+					},
+				},
+			)
+			if edErr != nil {
+				// ! if there is no default configuration we don't need to do anything.
+				log.Debug().Msg("no existing default configuration found, moving on...")
+			}
+
+			if existingDefault != nil {
+				_, err = tx.NewUpdate().Model(existingDefault).
+					Set("is_default = ?", false).
+					Where("tc.id = ?", existingDefault.ID).
+					Exec(c)
+				if err != nil {
+					log.Error().Err(err).Msg("failed to update existing default configuration")
+					return eris.Wrap(err, "update existing default configuration")
+				}
+			}
+		}
+
 		ov := config.Version
 		config.Version++
 
