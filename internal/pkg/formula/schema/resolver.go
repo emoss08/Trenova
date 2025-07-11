@@ -6,7 +6,8 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/shopspring/decimal"
+	"github.com/emoss08/trenova/internal/pkg/formula/conversion"
+	"github.com/emoss08/trenova/internal/pkg/formula/errors"
 )
 
 // * DataResolver is responsible for fetching and transforming data based on schemas
@@ -67,7 +68,11 @@ func (r *DefaultDataResolver) ResolveField(entity any, fieldSource *FieldSource)
 	// * Extract value using reflection
 	value, err := r.extractFieldValue(entity, fieldSource.Path)
 	if err != nil {
-		return nil, err
+		entityType := "unknown"
+		if entity != nil {
+			entityType = reflect.TypeOf(entity).String()
+		}
+		return nil, errors.NewResolveError(fieldSource.Path, entityType, err)
 	}
 
 	// * Apply transform if specified
@@ -76,7 +81,15 @@ func (r *DefaultDataResolver) ResolveField(entity any, fieldSource *FieldSource)
 		if !exists {
 			return nil, fmt.Errorf("transform not found: %s", fieldSource.Transform)
 		}
-		return transform(value)
+		transformedValue, err := transform(value)
+		if err != nil {
+			sourceType := "unknown"
+			if value != nil {
+				sourceType = reflect.TypeOf(value).String()
+			}
+			return nil, errors.NewTransformError(sourceType, fieldSource.Transform, value, err)
+		}
+		return transformedValue, nil
 	}
 
 	return value, nil
@@ -89,7 +102,15 @@ func (r *DefaultDataResolver) ResolveComputed(entity any, fieldSource *FieldSour
 		return nil, fmt.Errorf("compute function not found: %s", fieldSource.Function)
 	}
 
-	return computer(entity)
+	result, err := computer(entity)
+	if err != nil {
+		entityType := "unknown"
+		if entity != nil {
+			entityType = reflect.TypeOf(entity).String()
+		}
+		return nil, errors.NewComputeError(fieldSource.Function, entityType, err)
+	}
+	return result, nil
 }
 
 // * extractFieldValue uses reflection to extract a value from a struct
@@ -141,57 +162,16 @@ func (r *DefaultDataResolver) extractFieldValue(entity any, path string) (any, e
 
 // * Standard transform functions
 func transformDecimalToFloat64(value any) (any, error) {
-	if value == nil {
-		return 0.0, nil
-	}
-
-	switch v := value.(type) {
-	case decimal.Decimal:
-		f, _ := v.Float64()
-		return f, nil
-	case decimal.NullDecimal:
-		if v.Valid {
-			f, _ := v.Decimal.Float64()
-			return f, nil
-		}
-		return 0.0, nil
-	default:
-		return nil, fmt.Errorf("cannot transform %T to float64", value)
-	}
+	f, _ := conversion.ToFloat64(value)
+	return f, nil
 }
 
 func transformInt64ToFloat64(value any) (any, error) {
-	if value == nil {
-		return 0.0, nil
-	}
-
-	switch v := value.(type) {
-	case int64:
-		return float64(v), nil
-	case *int64:
-		if v != nil {
-			return float64(*v), nil
-		}
-		return 0.0, nil
-	default:
-		return nil, fmt.Errorf("cannot transform %T to float64", value)
-	}
+	f, _ := conversion.ToFloat64(value)
+	return f, nil
 }
 
 func transformInt16ToFloat64(value any) (any, error) {
-	if value == nil {
-		return 0.0, nil
-	}
-
-	switch v := value.(type) {
-	case int16:
-		return float64(v), nil
-	case *int16:
-		if v != nil {
-			return float64(*v), nil
-		}
-		return 0.0, nil
-	default:
-		return nil, fmt.Errorf("cannot transform %T to float64", value)
-	}
+	f, _ := conversion.ToFloat64(value)
+	return f, nil
 }

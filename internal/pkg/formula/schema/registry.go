@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/santhosh-tekuri/jsonschema/v6"
+	"github.com/emoss08/trenova/internal/pkg/formula/errors"
 )
 
 // * SchemaRegistry manages JSON schemas for formula contexts
@@ -71,28 +72,28 @@ func (r *SchemaRegistry) RegisterSchema(id string, schemaJSON []byte) error {
 
 	var schemaDef SchemaDefinition
 	if err := json.Unmarshal(schemaJSON, &schemaDef); err != nil {
-		return fmt.Errorf("invalid schema JSON: %w", err)
+		return errors.NewSchemaError(id, "unmarshal", err)
 	}
 
 	if schemaDef.ID == "" {
-		return fmt.Errorf("missing $id field in schema")
+		return errors.NewSchemaError(id, "validation", fmt.Errorf("missing $id field in schema"))
 	}
 
 	// * Use jsonschema.UnmarshalJSON to properly parse the schema for the compiler
 	schema, err := jsonschema.UnmarshalJSON(bytes.NewReader(schemaJSON))
 	if err != nil {
-		return fmt.Errorf("failed to parse schema for compiler: %w", err)
+		return errors.NewSchemaError(schemaDef.ID, "parse", err)
 	}
 
 	// * Add schema to compiler
 	if err := r.compiler.AddResource(schemaDef.ID, schema); err != nil {
-		return fmt.Errorf("failed to add schema to compiler: %w", err)
+		return errors.NewSchemaError(schemaDef.ID, "add to compiler", err)
 	}
 
 	// * Compile the schema
 	compiled, err := r.compiler.Compile(schemaDef.ID)
 	if err != nil {
-		return fmt.Errorf("failed to compile schema: %w", err)
+		return errors.NewSchemaError(schemaDef.ID, "compile", err)
 	}
 	schemaDef.compiled = compiled
 
@@ -123,7 +124,10 @@ func (r *SchemaRegistry) ValidateData(schemaID string, data any) error {
 		return err
 	}
 
-	return schema.compiled.Validate(data)
+	if err := schema.compiled.Validate(data); err != nil {
+		return errors.NewSchemaError(schemaID, "validate", err)
+	}
+	return nil
 }
 
 // * ValidateJSON validates JSON data against a schema
