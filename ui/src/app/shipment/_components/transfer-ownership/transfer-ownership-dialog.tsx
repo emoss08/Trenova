@@ -20,7 +20,7 @@ import {
 } from "@/lib/schemas/transfer-ownership-schema";
 import type { TableSheetProps } from "@/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 
@@ -43,9 +43,10 @@ export function TransferOwnershipDialog({
   });
 
   const {
+    reset,
     setError,
     control,
-    formState: { isSubmitting, isDirty },
+    formState: { isSubmitSuccessful, isSubmitting, isDirty },
     handleSubmit,
   } = form;
 
@@ -88,6 +89,11 @@ export function TransferOwnershipDialog({
     },
     [mutateAsync],
   );
+
+  useEffect(() => {
+    reset();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSubmitSuccessful]);
 
   return (
     <Dialog {...props}>

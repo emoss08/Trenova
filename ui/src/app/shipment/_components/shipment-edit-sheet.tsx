@@ -229,6 +229,7 @@ export function ShipmentEditSheet({
             const el = selectedRowKey
               ? document.getElementById(selectedRowKey)
               : null;
+
             table.resetRowSelection();
 
             setTimeout(() => el?.focus(), 0);
