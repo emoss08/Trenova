@@ -223,7 +223,35 @@ func (p *Parser) parseUnary() Node {
 		}
 	}
 
-	return p.parsePrimary()
+	return p.parsePostfix()
+}
+
+// * parsePostfix handles postfix operations like array indexing
+func (p *Parser) parsePostfix() Node {
+	node := p.parsePrimary()
+	
+	for {
+		if p.current.Type == TokenLeftBracket {
+			p.advance() // consume '['
+			
+			index := p.parseExpression()
+			
+			if p.current.Type != TokenRightBracket {
+				p.addError(fmt.Errorf("expected ']' after array index, got %s", p.current.Type))
+			} else {
+				p.advance() // consume ']'
+			}
+			
+			node = &IndexNode{
+				Array: node,
+				Index: index,
+			}
+		} else {
+			break
+		}
+	}
+	
+	return node
 }
 
 // * parsePrimary handles primary expressions
@@ -262,6 +290,9 @@ func (p *Parser) parsePrimary() Node {
 		}
 
 		return node
+
+	case TokenLeftBracket:
+		return p.parseArrayLiteral()
 
 	default:
 		p.addError(fmt.Errorf("unexpected token: %s", p.current.Type))
@@ -346,4 +377,44 @@ func (p *Parser) addError(err error) {
 	err = fmt.Errorf("%w at position %d (line %d, column %d)",
 		err, p.current.Position, p.current.Line, p.current.Column)
 	p.errors = append(p.errors, err)
+}
+
+// * parseArrayLiteral parses array literal syntax: [expr1, expr2, ...]
+func (p *Parser) parseArrayLiteral() Node {
+	p.advance() // consume '['
+	
+	elements := []Node{}
+	
+	// Handle empty array
+	if p.current.Type == TokenRightBracket {
+		p.advance() // consume ']'
+		return &ArrayNode{Elements: elements}
+	}
+	
+	for {
+		elem := p.parseExpression()
+		elements = append(elements, elem)
+		
+		if p.current.Type == TokenComma {
+			p.advance() // consume ','
+			
+			// Check for trailing comma
+			if p.current.Type == TokenRightBracket {
+				break
+			}
+		} else if p.current.Type == TokenRightBracket {
+			break
+		} else {
+			p.addError(fmt.Errorf("expected ',' or ']' in array literal, got %s", p.current.Type))
+			break
+		}
+	}
+	
+	if p.current.Type == TokenRightBracket {
+		p.advance() // consume ']'
+	} else {
+		p.addError(fmt.Errorf("expected ']' to close array literal, got %s", p.current.Type))
+	}
+	
+	return &ArrayNode{Elements: elements}
 }

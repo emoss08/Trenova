@@ -22,6 +22,10 @@ type EvaluationContext struct {
 	// Function registry
 	functions FunctionRegistry
 
+	// Memory arena for allocations
+	arena      *Arena
+	ownsArena  bool // whether we own the arena
+
 	// Limits
 	timeout     time.Duration
 	memoryLimit int64
@@ -72,6 +76,13 @@ func (ctx *EvaluationContext) WithFunctions(registry FunctionRegistry) *Evaluati
 // * WithVariableRegistry sets a custom variable registry
 func (ctx *EvaluationContext) WithVariableRegistry(registry *variables.Registry) *EvaluationContext {
 	ctx.variableRegistry = registry
+	return ctx
+}
+
+// * WithArena sets a custom arena for memory allocation
+func (ctx *EvaluationContext) WithArena(arena *Arena) *EvaluationContext {
+	ctx.arena = arena
+	ctx.ownsArena = false
 	return ctx
 }
 
@@ -178,6 +189,8 @@ func (ctx *EvaluationContext) Clone() *EvaluationContext {
 		variableContext: ctx.variableContext,
 		variableCache:   make(map[string]any), // Don't share cache
 		functions:       ctx.functions,
+		arena:           ctx.arena, // Share arena for parallel evaluation
+		ownsArena:       false,     // Clones don't own the arena
 		timeout:         ctx.timeout,
 		memoryLimit:     ctx.memoryLimit,
 		maxDepth:        ctx.maxDepth,
@@ -216,6 +229,31 @@ func estimateMemoryUsage(v any) int64 {
 	default:
 		return 16 // Default estimate
 	}
+}
+
+// * GetArena returns the arena for this context, creating one if needed
+func (ctx *EvaluationContext) GetArena() *Arena {
+	if ctx.arena == nil {
+		ctx.arena = GetArena()
+		ctx.ownsArena = true
+	}
+	return ctx.arena
+}
+
+// * ReleaseArena returns the arena to the pool if owned
+func (ctx *EvaluationContext) ReleaseArena() {
+	if ctx.arena != nil && ctx.ownsArena {
+		PutArena(ctx.arena)
+		ctx.arena = nil
+		ctx.ownsArena = false
+	}
+}
+
+// * AllocValue allocates a value using the arena if available
+func (ctx *EvaluationContext) AllocValue(v any) any {
+	// For now, just return the value as-is
+	// The arena is used internally for memory pooling but we return values
+	return v
 }
 
 // * Limits

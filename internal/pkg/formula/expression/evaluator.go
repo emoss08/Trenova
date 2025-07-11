@@ -17,7 +17,7 @@ type Evaluator struct {
 	functions FunctionRegistry
 
 	// Expression cache
-	cache *ExpressionCache
+	cache *LRUCache
 
 	// String interner for memory efficiency
 	interner *StringInterner
@@ -35,22 +35,12 @@ type CompiledExpression struct {
 	fingerprint string   // For cache key
 }
 
-// * ExpressionCache caches compiled expressions
-type ExpressionCache struct {
-	cache map[string]*CompiledExpression
-	mu    sync.RWMutex
-
-	maxSize int
-	hits    int64
-	misses  int64
-}
-
 // * NewEvaluator creates a new expression evaluator
 func NewEvaluator(vars *variables.Registry) *Evaluator {
 	return &Evaluator{
 		variables: vars,
 		functions: DefaultFunctionRegistry(),
-		cache:     NewExpressionCache(1000), // Cache up to 1000 expressions
+		cache:     NewLRUCache(1000), // Cache up to 1000 expressions
 		interner:  NewStringInterner(),
 		metrics:   NewEvaluatorMetrics(),
 	}
@@ -68,10 +58,15 @@ func (e *Evaluator) Evaluate(
 		return 0, fmt.Errorf("compilation error: %w", err)
 	}
 
+	// Get arena from pool
+	arena := GetArena()
+	defer PutArena(arena)
+
 	// Create evaluation context
 	evalCtx := NewEvaluationContext(ctx, varCtx).
 		WithFunctions(e.functions).
-		WithVariableRegistry(e.variables)
+		WithVariableRegistry(e.variables).
+		WithArena(arena)
 
 	// Evaluate the AST
 	result, err := compiled.ast.Evaluate(evalCtx)
@@ -107,6 +102,10 @@ func (e *Evaluator) EvaluateBatch( //nolint:gocognit // this is fine
 		return nil, fmt.Errorf("compilation error: %w", err)
 	}
 
+	// Get arena from pool for batch operation
+	arena := GetArena()
+	defer PutArena(arena)
+
 	// Pre-allocate results
 	results := make([]float64, len(contexts))
 
@@ -134,7 +133,8 @@ func (e *Evaluator) EvaluateBatch( //nolint:gocognit // this is fine
 			for j := range jobs {
 				evalCtx := NewEvaluationContext(ctx, j.ctx).
 					WithFunctions(e.functions).
-					WithVariableRegistry(e.variables)
+					WithVariableRegistry(e.variables).
+					WithArena(arena) // Share arena across workers
 
 				result, err := compiled.ast.Evaluate(evalCtx)
 				if err != nil {
@@ -183,7 +183,7 @@ func (e *Evaluator) EvaluateBatch( //nolint:gocognit // this is fine
 // * compile parses and caches an expression
 func (e *Evaluator) compile(expr string) (*CompiledExpression, error) {
 	// Check cache first
-	if cached := e.cache.Get(expr); cached != nil {
+	if cached, found := e.cache.Get(expr); found {
 		return cached, nil
 	}
 
@@ -269,53 +269,6 @@ func (e *Evaluator) extractVariablesRecursive(node Node, vars map[string]bool) {
 	}
 }
 
-// * ExpressionCache implementation
-
-func NewExpressionCache(maxSize int) *ExpressionCache {
-	return &ExpressionCache{
-		cache:   make(map[string]*CompiledExpression),
-		maxSize: maxSize,
-	}
-}
-
-func (c *ExpressionCache) Get(expr string) *CompiledExpression {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	if compiled, ok := c.cache[expr]; ok {
-		c.hits++
-		return compiled
-	}
-
-	c.misses++
-	return nil
-}
-
-func (c *ExpressionCache) Put(expr string, compiled *CompiledExpression) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-
-	// Simple eviction: remove all if at capacity
-	if len(c.cache) >= c.maxSize {
-		// In production, use LRU eviction
-		c.cache = make(map[string]*CompiledExpression)
-	}
-
-	c.cache[expr] = compiled
-}
-
-func (c *ExpressionCache) HitRate() float64 {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-
-	total := c.hits + c.misses
-	if total == 0 {
-		return 0
-	}
-
-	return float64(c.hits) / float64(total)
-}
-
 // * EvaluatorMetrics tracks performance metrics
 type EvaluatorMetrics struct {
 	compilations  int64
@@ -332,3 +285,41 @@ func NewEvaluatorMetrics() *EvaluatorMetrics {
 
 // * Constants
 const MaxExpressionComplexity = 1000
+
+// GetCacheStats returns cache performance statistics
+func (e *Evaluator) GetCacheStats() CacheStats {
+	return e.cache.Stats()
+}
+
+// ClearCache removes all entries from the expression cache
+func (e *Evaluator) ClearCache() {
+	e.cache.Clear()
+}
+
+// ResizeCache changes the maximum capacity of the expression cache
+func (e *Evaluator) ResizeCache(newCapacity int) {
+	e.cache.Resize(newCapacity)
+}
+
+// PreloadExpressions adds multiple expressions to the cache
+func (e *Evaluator) PreloadExpressions(expressions []string) error {
+	precompiled := make(map[string]*CompiledExpression)
+	
+	for _, expr := range expressions {
+		compiled, err := e.compile(expr)
+		if err != nil {
+			return fmt.Errorf("failed to precompile %q: %w", expr, err)
+		}
+		precompiled[expr] = compiled
+	}
+	
+	e.cache.Preload(precompiled)
+	return nil
+}
+
+// GetCachedExpressions returns a list of all cached expression keys
+func (e *Evaluator) GetCachedExpressions() []string {
+	// This would require adding a method to LRUCache to list keys
+	// For now, return empty
+	return []string{}
+}

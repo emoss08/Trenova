@@ -35,6 +35,55 @@ func TestParser_Parse(t *testing.T) {
 			wantAST: "variable",
 		},
 		
+		// Array literals
+		{
+			name:    "empty array",
+			input:   "[]",
+			wantAST: "[]",
+		},
+		{
+			name:    "array with one element",
+			input:   "[42]",
+			wantAST: "[42]",
+		},
+		{
+			name:    "array with multiple elements",
+			input:   "[1, 2, 3]",
+			wantAST: "[1, 2, 3]",
+		},
+		{
+			name:    "array with mixed types",
+			input:   `[1, "hello", true]`,
+			wantAST: `[1, "hello", true]`,
+		},
+		{
+			name:    "nested arrays",
+			input:   "[[1, 2], [3, 4]]",
+			wantAST: "[[1, 2], [3, 4]]",
+		},
+		
+		// Array indexing
+		{
+			name:    "simple array indexing",
+			input:   "arr[0]",
+			wantAST: "arr[0]",
+		},
+		{
+			name:    "array literal indexing",
+			input:   "[1, 2, 3][1]",
+			wantAST: "[1, 2, 3][1]",
+		},
+		{
+			name:    "nested indexing",
+			input:   "matrix[0][1]",
+			wantAST: "matrix[0][1]",
+		},
+		{
+			name:    "computed index",
+			input:   "arr[i + 1]",
+			wantAST: "arr[(i + 1)]",
+		},
+		
 		// Binary operations
 		{
 			name:    "addition",

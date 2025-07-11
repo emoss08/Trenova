@@ -125,6 +125,12 @@ func (t *Tokenizer) nextToken() Token {
 	case ',':
 		tok.Type = TokenComma
 		t.readChar()
+	case '[':
+		tok.Type = TokenLeftBracket
+		t.readChar()
+	case ']':
+		tok.Type = TokenRightBracket
+		t.readChar()
 	case '?':
 		tok.Type = TokenQuestion
 		t.readChar()

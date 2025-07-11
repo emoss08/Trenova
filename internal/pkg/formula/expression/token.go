@@ -41,9 +41,11 @@ const (
 	TokenNot // !
 
 	// * Delimiters
-	TokenLeftParen  // (
-	TokenRightParen // )
-	TokenComma      // ,
+	TokenLeftParen   // (
+	TokenRightParen  // )
+	TokenComma       // ,
+	TokenLeftBracket // [
+	TokenRightBracket // ]
 
 	// * Conditional
 	TokenQuestion // ?
@@ -77,6 +79,8 @@ var tokenTypeStrings = [...]string{
 	TokenLeftParen:    "(",
 	TokenRightParen:   ")",
 	TokenComma:        ",",
+	TokenLeftBracket:  "[",
+	TokenRightBracket: "]",
 	TokenQuestion:     "?",
 	TokenColon:        ":",
 }
