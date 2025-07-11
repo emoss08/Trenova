@@ -121,7 +121,8 @@ The system manages transportation logistics including:
 
 ## Development Best Practices
 
-- Always follow golang best practices for go 1.24
+- Always follow golang best practices for go 1.24+
+- Ensure using correct syntax for go 1.24+ for example `interface{}` is `any` you can also discover this with the modernize tool that is in the editor
 
 ## Code Optimization Recommendations
 
@@ -130,5 +131,14 @@ The system manages transportation logistics including:
 
 ## Code Comments and Documentation
 
-- When writing inline comments (comments inside functions) make sure to prefix them with _for example //_ this is a comment.
+- When writing inline comments (comments inside functions) make sure to prefix them with for example // \* this is a comment.
 - If the comment is important and notes some type of behavior that may be unexpected or just an important note use the prefix ! for example // ! this is an important comment.
+
+## Development Workflow
+
+- Always check for errors in the current file before moving forward
+
+## Implementation Guidelines
+
+- Do not put in a placeholder note for implementation. If something needs to be done, implement the actual feature or functionality directly
+- Avoid comments like "//! Note: In a real implementation, you'd sort by Priority field" - instead, actually implement the sorting functionality

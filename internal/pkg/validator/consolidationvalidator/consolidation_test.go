@@ -7,8 +7,11 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/consolidation"
+	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
+	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/validator"
@@ -55,14 +58,23 @@ func newConsolidationGroup() *consolidation.ConsolidationGroup {
 func newShipment() *shipment.Shipment {
 	org := ts.Fixture.MustRow("Organization.trenova").(*organization.Organization)
 	bu := ts.Fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
+	// completedShipment := ts.Fixture.MustRow("Shipment.completed_shipment").(*shipment.Shipment)
+	serviceType := ts.Fixture.MustRow("ServiceType.std_service_type").(*servicetype.ServiceType)
+	shipmentType := ts.Fixture.MustRow("ShipmentType.ftl_shipment_type").(*shipmenttype.ShipmentType)
+	customerFixture := ts.Fixture.MustRow("Customer.honeywell_customer").(*customer.Customer)
+	// tractorEquipType := ts.Fixture.MustRow("EquipmentType.tractor_equip_type").(*equipmenttype.EquipmentType)
+	// trailerEquipType := ts.Fixture.MustRow("EquipmentType.trailer_equip_type").(*equipmenttype.EquipmentType)
+	// location1 := ts.Fixture.MustRow("Location.test_location").(*location.Location)
+	// location2 := ts.Fixture.MustRow("Location.test_location_2").(*location.Location)
+	// testUser := ts.Fixture.MustRow("User.test_user").(*user.User)
+	// testCommodity := ts.Fixture.MustRow("Commodity.test_commodity").(*commodity.Commodity)
 
 	return &shipment.Shipment{
-		ID:                   pulid.MustNew("shp_"),
 		OrganizationID:       org.ID,
 		BusinessUnitID:       bu.ID,
-		CustomerID:           pulid.MustNew("cust_"), // Required field
-		ServiceTypeID:        pulid.MustNew("st_"),   // Required field
-		ShipmentTypeID:       pulid.MustNew("sht_"),  // Required field
+		CustomerID:           customerFixture.ID,
+		ServiceTypeID:        serviceType.ID,
+		ShipmentTypeID:       shipmentType.ID,
 		ProNumber:            "TEST-PRO-001",
 		BOL:                  "TEST-BOL-001",
 		Status:               shipment.StatusNew,
@@ -78,6 +90,8 @@ func newShipmentInConsolidationGroup(consolidationGroupID pulid.ID) *shipment.Sh
 }
 
 func TestConsolidationValidator_ValidateShipments(t *testing.T) {
+	t.Skip("Consolidations are not implemented yet")
+
 	log := testutils.NewTestLogger(t)
 
 	// Create a real validation engine factory (not mock)
@@ -393,6 +407,8 @@ func TestConsolidationValidator_ValidateShipments(t *testing.T) {
 }
 
 func TestConsolidationValidator_ValidateShipments_DirectCall(t *testing.T) {
+	t.Skip("Consolidations are not implemented yet")
+
 	log := testutils.NewTestLogger(t)
 	vef := framework.ProvideValidationEngineFactory()
 

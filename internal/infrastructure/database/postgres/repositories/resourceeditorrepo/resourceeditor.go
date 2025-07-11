@@ -1351,7 +1351,6 @@ func (r *repository) executeQueryAndProcessResults(
 	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		return r.processQueryInTransaction(ctx, tx, query, &result, &resultsData)
 	})
-
 	if err != nil {
 		r.logger.Error().Err(err).Msg("Error executing SQL query")
 		return result, err

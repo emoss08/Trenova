@@ -129,3 +129,13 @@ func (m *MockShipmentRepository) GetPreviousRates(
 ) (*ports.ListResult[*shipment.Shipment], error) {
 	return nil, nil
 }
+
+func (m *MockShipmentRepository) DelayShipments(ctx context.Context) ([]*shipment.Shipment, error) {
+	return nil, nil
+}
+
+func (m *MockShipmentRepository) GetDelayedShipments(
+	ctx context.Context,
+) ([]*shipment.Shipment, error) {
+	return nil, nil
+}

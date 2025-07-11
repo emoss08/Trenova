@@ -3,11 +3,11 @@ package claude
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"io"
 	"net/http"
 	"time"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
@@ -70,7 +70,7 @@ type Message struct {
 type Request struct {
 	Model       string    `json:"model"`
 	Messages    []Message `json:"messages"`
-	MaxTokens   int       `json:"max_tokens"`
+	MaxTokens   int       `json:"max_tokens"` //nolint:tagliatelle // this is for the API request
 	Temperature float64   `json:"temperature"`
 }
 
@@ -84,11 +84,11 @@ type Response struct {
 		Text string `json:"text"`
 	} `json:"content"`
 	Model        string `json:"model"`
-	StopReason   string `json:"stop_reason"`
-	StopSequence string `json:"stop_sequence"`
+	StopReason   string `json:"stop_reason"`   //nolint:tagliatelle // this is for the API response
+	StopSequence string `json:"stop_sequence"` //nolint:tagliatelle // this is for the API response
 	Usage        struct {
-		InputTokens  int `json:"input_tokens"`
-		OutputTokens int `json:"output_tokens"`
+		InputTokens  int `json:"input_tokens"`  //nolint:tagliatelle // this is for the API response
+		OutputTokens int `json:"output_tokens"` //nolint:tagliatelle // this is for the API response
 	} `json:"usage"`
 }
 
@@ -109,12 +109,12 @@ func (c *Client) Complete(
 		Temperature: c.config.Temperature,
 	}
 
-	body, err := json.Marshal(req)
+	body, err := sonic.Marshal(req)
 	if err != nil {
 		return "", eris.Wrap(err, "failed to marshal request")
 	}
 
-	httpReq, err := http.NewRequestWithContext(ctx, "POST", apiURL, bytes.NewReader(body))
+	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, apiURL, bytes.NewReader(body))
 	if err != nil {
 		return "", eris.Wrap(err, "failed to create request")
 	}
@@ -143,7 +143,7 @@ func (c *Client) Complete(
 	}
 
 	var response Response
-	if err := json.Unmarshal(respBody, &response); err != nil {
+	if err = sonic.Unmarshal(respBody, &response); err != nil {
 		return "", eris.Wrap(err, "failed to unmarshal response")
 	}
 
