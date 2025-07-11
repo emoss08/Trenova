@@ -315,8 +315,8 @@ type ShipmentRepository interface {
 		req *GetShipmentsByDateRangeRequest,
 	) (*ports.ListResult[*shipment.Shipment], error)
 	GetByID(ctx context.Context, opts *GetShipmentByIDOptions) (*shipment.Shipment, error)
-	Create(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
-	Update(ctx context.Context, t *shipment.Shipment) (*shipment.Shipment, error)
+	Create(ctx context.Context, t *shipment.Shipment, userID pulid.ID) (*shipment.Shipment, error)
+	Update(ctx context.Context, t *shipment.Shipment, userID pulid.ID) (*shipment.Shipment, error)
 	UpdateStatus(ctx context.Context, opts *UpdateShipmentStatusRequest) (*shipment.Shipment, error)
 	Cancel(ctx context.Context, req *CancelShipmentRequest) (*shipment.Shipment, error)
 	TransferOwnership(
@@ -334,5 +334,9 @@ type ShipmentRepository interface {
 		buID pulid.ID,
 		excludeID *pulid.ID,
 	) ([]DuplicateBOLsResult, error)
-	CalculateShipmentTotals(shp *shipment.Shipment) (*ShipmentTotalsResponse, error)
+	CalculateShipmentTotals(
+		ctx context.Context,
+		shp *shipment.Shipment,
+		userID pulid.ID,
+	) (*ShipmentTotalsResponse, error)
 }
