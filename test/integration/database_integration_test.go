@@ -16,17 +16,17 @@ func TestDatabaseReadWriteSeparation(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	
+
 	// * Use the test database connection
 	testDB := testutils.GetTestDB()
 	require.NotNil(t, testDB)
-	
+
 	t.Run("Connection initialization", func(t *testing.T) {
 		// Test primary connection
 		primaryDB, err := testDB.WriteDB(ctx)
 		require.NoError(t, err)
 		require.NotNil(t, primaryDB)
-		
+
 		// Test read connection
 		readDB, err := testDB.ReadDB(ctx)
 		require.NoError(t, err)
@@ -44,14 +44,14 @@ func TestDatabaseReadWriteSeparation(t *testing.T) {
 	t.Run("Multiple read requests", func(t *testing.T) {
 		// Should handle multiple concurrent read requests
 		results := make(chan error, 10)
-		
+
 		for i := 0; i < 10; i++ {
 			go func() {
 				_, err := testDB.ReadDB(ctx)
 				results <- err
 			}()
 		}
-		
+
 		// Collect results
 		for i := 0; i < 10; i++ {
 			err := <-results
@@ -66,11 +66,11 @@ func TestConnectionPerformance(t *testing.T) {
 	}
 
 	ctx := context.Background()
-	
+
 	// * Use the test database connection
 	conn := testutils.GetTestDB()
 	require.NotNil(t, conn)
-	
+
 	// Initialize connection
 	_, err := conn.DB(ctx)
 	require.NoError(t, err)
@@ -84,7 +84,7 @@ func TestConnectionPerformance(t *testing.T) {
 
 		// Measure performance
 		iterations := 10000
-		
+
 		start := time.Now()
 		for i := 0; i < iterations; i++ {
 			_, err := conn.ReadDB(ctx)
@@ -102,7 +102,7 @@ func TestConnectionPerformance(t *testing.T) {
 		avgWrite := writeDuration / time.Duration(iterations)
 
 		// Performance should be excellent
-		assert.Less(t, avgRead, time.Microsecond, 
+		assert.Less(t, avgRead, time.Microsecond,
 			"ReadDB average duration %v exceeds 1μs", avgRead)
 		assert.Less(t, avgWrite, time.Microsecond,
 			"WriteDB average duration %v exceeds 1μs", avgWrite)

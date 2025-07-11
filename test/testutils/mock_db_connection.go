@@ -38,24 +38,24 @@ func (m *MockDBConnection) DB(ctx context.Context) (*bun.DB, error) {
 // ReadDB returns a read database using round-robin selection
 func (m *MockDBConnection) ReadDB(ctx context.Context) (*bun.DB, error) {
 	atomic.AddInt64(&m.readCount, 1)
-	
+
 	m.mu.RLock()
 	defer m.mu.RUnlock()
-	
+
 	if m.forceFailure {
 		// * Simulate all replicas being unhealthy, fall back to write DB
 		return m.writeDB, nil
 	}
-	
+
 	if len(m.readDBs) == 0 {
 		// * No read replicas configured, use write DB
 		return m.writeDB, nil
 	}
-	
+
 	// * Simple round-robin selection
 	idx := atomic.AddInt32(&m.currentRead, 1)
 	selectedDB := m.readDBs[int(idx-1)%len(m.readDBs)]
-	
+
 	return selectedDB, nil
 }
 
@@ -86,14 +86,14 @@ func (m *MockDBConnection) SQLDB(ctx context.Context) (*sql.DB, error) {
 func (m *MockDBConnection) Close() error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	// * Close write DB
 	if m.writeDB != nil {
 		if err := m.writeDB.Close(); err != nil {
 			return err
 		}
 	}
-	
+
 	// * Close all read DBs
 	for _, readDB := range m.readDBs {
 		if readDB != nil {
@@ -102,7 +102,7 @@ func (m *MockDBConnection) Close() error {
 			}
 		}
 	}
-	
+
 	return nil
 }
 
@@ -140,7 +140,7 @@ func (m *MockDBConnection) AddReadReplica(db *bun.DB) {
 func (m *MockDBConnection) RemoveReadReplica(index int) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	
+
 	if index >= 0 && index < len(m.readDBs) {
 		m.readDBs = append(m.readDBs[:index], m.readDBs[index+1:]...)
 	}

@@ -213,7 +213,10 @@ func (r *Router) setupMiddleware() {
 }
 
 // setupProtectedRoutes configures the protected routes
-func (r *Router) setupProtectedRoutes(router fiber.Router, rl *middleware.RateLimiter) {
+func (r *Router) setupProtectedRoutes(
+	router fiber.Router,
+	rl *middleware.RateLimiter,
+) { //nolint:funlen // we need to keep this function long
 	router.Use(middleware.NewAuthMiddleware(middleware.AuthMiddlewareParams{
 		Logger: r.p.Logger,
 		Config: r.cfg,

@@ -20,7 +20,11 @@ type DatabaseQueryHook struct {
 var _ bun.QueryHook = (*DatabaseQueryHook)(nil)
 
 // NewDatabaseQueryHook creates a new database query hook
-func NewDatabaseQueryHook(log *zerolog.Logger, connectionName string, enableMetrics bool) *DatabaseQueryHook {
+func NewDatabaseQueryHook(
+	log *zerolog.Logger,
+	connectionName string,
+	enableMetrics bool,
+) *DatabaseQueryHook {
 	return &DatabaseQueryHook{
 		log:            log,
 		connectionName: connectionName,
@@ -28,7 +32,10 @@ func NewDatabaseQueryHook(log *zerolog.Logger, connectionName string, enableMetr
 	}
 }
 
-func (h *DatabaseQueryHook) BeforeQuery(ctx context.Context, event *bun.QueryEvent) context.Context {
+func (h *DatabaseQueryHook) BeforeQuery(
+	ctx context.Context,
+	event *bun.QueryEvent,
+) context.Context {
 	return ctx
 }
 

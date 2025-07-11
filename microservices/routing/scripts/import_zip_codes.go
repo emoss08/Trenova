@@ -149,7 +149,11 @@ func main() {
 		br.Close()
 	}
 
-	log.Printf("Import complete! Processed %d total records, %d California zip codes", count, caCount)
+	log.Printf(
+		"Import complete! Processed %d total records, %d California zip codes",
+		count,
+		caCount,
+	)
 
 	// _ Verify results
 	var finalCount int

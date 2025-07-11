@@ -359,7 +359,11 @@ func GetSpeedForRoadType(roadType string, isTruck bool) float64 {
 }
 
 // LogImportStats logs detailed import statistics
-func LogImportStats(_ context.Context, nodeCount, wayCount, edgeCount int64, restrictions EnhancedRestrictions) {
+func LogImportStats(
+	_ context.Context,
+	nodeCount, wayCount, edgeCount int64,
+	restrictions EnhancedRestrictions,
+) {
 	log.Printf("Import Statistics:")
 	log.Printf("  - Nodes: %d", nodeCount)
 	log.Printf("  - Ways: %d", wayCount)

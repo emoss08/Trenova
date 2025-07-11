@@ -48,8 +48,10 @@ func (g *Graph) AStar(startID, endID int64, opts PathOptions) (*PathResult, erro
 	// _ Early exit if start and end are the same
 	if startID == endID {
 		return &PathResult{
-			Path:       []*Node{start},
-			PathNodes:  []PathNode{{ID: start.ID, Location: []float64{start.Location[0], start.Location[1]}}},
+			Path: []*Node{start},
+			PathNodes: []PathNode{
+				{ID: start.ID, Location: []float64{start.Location[0], start.Location[1]}},
+			},
 			Distance:   0,
 			TravelTime: 0,
 		}, nil
@@ -140,7 +142,8 @@ func (g *Graph) AStar(startID, endID int64, opts PathOptions) (*PathResult, erro
 			neighbor := edge.To
 			tentativeGScore := data.gScore[current.ID] + edge.Distance
 
-			if currentGScore, exists := data.gScore[neighbor.ID]; !exists || tentativeGScore < currentGScore {
+			if currentGScore, exists := data.gScore[neighbor.ID]; !exists ||
+				tentativeGScore < currentGScore {
 				// _ This path to neighbor is better
 				data.cameFrom[neighbor.ID] = current.ID
 				data.gScore[neighbor.ID] = tentativeGScore

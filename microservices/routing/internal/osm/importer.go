@@ -148,7 +148,11 @@ func (i *Importer) ImportPBF(ctx context.Context, reader io.Reader) error {
 		return fmt.Errorf("scanning OSM file: %w", err)
 	}
 
-	log.Printf("Processed %d nodes in %.2f seconds", i.processedNodes.Load(), time.Since(i.startTime).Seconds())
+	log.Printf(
+		"Processed %d nodes in %.2f seconds",
+		i.processedNodes.Load(),
+		time.Since(i.startTime).Seconds(),
+	)
 
 	// _ Finalize node imports from temp table
 	if err := i.finalizeNodes(ctx); err != nil {
@@ -167,7 +171,11 @@ func (i *Importer) ImportPBF(ctx context.Context, reader io.Reader) error {
 	}
 
 	close(progressDone)
-	log.Printf("Import complete. Processed %d ways in %.2f seconds", i.processedWays.Load(), time.Since(i.startTime).Seconds())
+	log.Printf(
+		"Import complete. Processed %d ways in %.2f seconds",
+		i.processedWays.Load(),
+		time.Since(i.startTime).Seconds(),
+	)
 
 	return nil
 }
@@ -347,12 +355,16 @@ func (i *Importer) finalizeNodes(ctx context.Context) error {
 		chunkElapsed := time.Since(chunkStart)
 		overallElapsed := time.Since(start)
 
-		log.Printf("Inserted chunk %d-%d (%.2f%%) in %.1fs - Overall: %d nodes in %.1fs (%.0f nodes/sec)",
-			offset, offset+chunkRows,
+		log.Printf(
+			"Inserted chunk %d-%d (%.2f%%) in %.1fs - Overall: %d nodes in %.1fs (%.0f nodes/sec)",
+			offset,
+			offset+chunkRows,
 			float64(totalInserted)/float64(totalNodes)*100,
 			chunkElapsed.Seconds(),
-			totalInserted, overallElapsed.Seconds(),
-			float64(totalInserted)/overallElapsed.Seconds())
+			totalInserted,
+			overallElapsed.Seconds(),
+			float64(totalInserted)/overallElapsed.Seconds(),
+		)
 	}
 
 	elapsed := time.Since(start)

@@ -264,7 +264,15 @@ func (m *Metrics) RecordHTTPMetrics() fiber.Handler {
 }
 
 // RecordRouteCalculation records metrics for a route calculation
-func (m *Metrics) RecordRouteCalculation(vehicleType string, cacheHit bool, distance float64, duration float64, algorithm string, optimizationType string, nodesSearched int) {
+func (m *Metrics) RecordRouteCalculation(
+	vehicleType string,
+	cacheHit bool,
+	distance float64,
+	duration float64,
+	algorithm string,
+	optimizationType string,
+	nodesSearched int,
+) {
 	// _ Count the calculation
 	m.RouteCalculations.WithLabelValues(vehicleType, formatBool(cacheHit)).Inc()
 

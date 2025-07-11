@@ -16,7 +16,10 @@ import (
 
 // RouteCalculator interface for route calculation
 type RouteCalculator interface {
-	CalculateRoute(ctx context.Context, originZip, destZip, vehicleType string) (float64, float64, error)
+	CalculateRoute(
+		ctx context.Context,
+		originZip, destZip, vehicleType string,
+	) (float64, float64, error)
 }
 
 // BatchRouteProcessor processes batch route calculation requests
@@ -28,7 +31,11 @@ type BatchRouteProcessor struct {
 }
 
 // NewBatchRouteProcessor creates a new batch route processor
-func NewBatchRouteProcessor(calculator RouteCalculator, logger zerolog.Logger, maxConcurrent int) *BatchRouteProcessor {
+func NewBatchRouteProcessor(
+	calculator RouteCalculator,
+	logger zerolog.Logger,
+	maxConcurrent int,
+) *BatchRouteProcessor {
 	return &BatchRouteProcessor{
 		calculator:    calculator,
 		logger:        logger,
@@ -39,12 +46,12 @@ func NewBatchRouteProcessor(calculator RouteCalculator, logger zerolog.Logger, m
 
 // BatchResult represents the result of a batch calculation
 type BatchResult struct {
-	BatchID   string                `json:"batch_id"`
-	Timestamp time.Time             `json:"timestamp"`
-	Status    string                `json:"status"` // completed, partial, failed
-	Results   []RouteResult         `json:"results"`
-	Errors    []RouteError          `json:"errors,omitempty"`
-	Stats     BatchStats            `json:"stats"`
+	BatchID   string        `json:"batch_id"`
+	Timestamp time.Time     `json:"timestamp"`
+	Status    string        `json:"status"` // completed, partial, failed
+	Results   []RouteResult `json:"results"`
+	Errors    []RouteError  `json:"errors,omitempty"`
+	Stats     BatchStats    `json:"stats"`
 }
 
 // RouteResult represents a single route calculation result
@@ -75,9 +82,12 @@ type BatchStats struct {
 }
 
 // ProcessBatch processes a batch of route calculations
-func (p *BatchRouteProcessor) ProcessBatch(ctx context.Context, request BatchCalculationRequest) error {
+func (p *BatchRouteProcessor) ProcessBatch(
+	ctx context.Context,
+	request BatchCalculationRequest,
+) error {
 	startTime := time.Now()
-	
+
 	p.logger.Info().
 		Str("batch_id", request.BatchID).
 		Int("route_count", len(request.Routes)).
@@ -93,14 +103,14 @@ func (p *BatchRouteProcessor) ProcessBatch(ctx context.Context, request BatchCal
 
 	// Process routes concurrently with limit
 	var (
-		mu          sync.Mutex
-		wg          = conc.NewWaitGroup()
-		semaphore   = make(chan struct{}, p.maxConcurrent)
+		mu        sync.Mutex
+		wg        = conc.NewWaitGroup()
+		semaphore = make(chan struct{}, p.maxConcurrent)
 	)
 
 	for _, route := range request.Routes {
 		route := route // Capture loop variable
-		
+
 		wg.Go(func() {
 			// Acquire semaphore
 			semaphore <- struct{}{}
@@ -108,7 +118,7 @@ func (p *BatchRouteProcessor) ProcessBatch(ctx context.Context, request BatchCal
 
 			// Calculate route
 			routeResult := p.calculateSingleRoute(ctx, route)
-			
+
 			// Add to results
 			mu.Lock()
 			result.Results = append(result.Results, routeResult)
@@ -127,7 +137,7 @@ func (p *BatchRouteProcessor) ProcessBatch(ctx context.Context, request BatchCal
 
 	// Calculate statistics
 	result.Stats = p.calculateStats(result, startTime)
-	
+
 	// Determine overall status
 	if result.Stats.FailedRoutes == 0 {
 		result.Status = "completed"
@@ -160,7 +170,10 @@ func (p *BatchRouteProcessor) ProcessBatch(ctx context.Context, request BatchCal
 }
 
 // calculateSingleRoute calculates a single route
-func (p *BatchRouteProcessor) calculateSingleRoute(ctx context.Context, route RouteRequest) RouteResult {
+func (p *BatchRouteProcessor) calculateSingleRoute(
+	ctx context.Context,
+	route RouteRequest,
+) RouteResult {
 	result := RouteResult{
 		ID:           route.ID,
 		OriginZip:    route.OriginZip,
@@ -175,13 +188,18 @@ func (p *BatchRouteProcessor) calculateSingleRoute(ctx context.Context, route Ro
 	}
 
 	// Calculate route using the calculator interface
-	distanceMiles, timeMinutes, err := p.calculator.CalculateRoute(ctx, route.OriginZip, route.DestZip, vehicleType)
+	distanceMiles, timeMinutes, err := p.calculator.CalculateRoute(
+		ctx,
+		route.OriginZip,
+		route.DestZip,
+		vehicleType,
+	)
 	if err != nil {
 		result.Status = "error"
 		result.Error = err.Error()
 		return result
 	}
-	
+
 	result.DistanceMiles = distanceMiles
 	result.TimeMinutes = timeMinutes
 	result.Status = "success"
@@ -212,7 +230,11 @@ func (p *BatchRouteProcessor) calculateStats(result BatchResult, startTime time.
 }
 
 // sendCallback sends the batch result to the callback URL
-func (p *BatchRouteProcessor) sendCallback(ctx context.Context, callbackURL string, result BatchResult) error {
+func (p *BatchRouteProcessor) sendCallback(
+	ctx context.Context,
+	callbackURL string,
+	result BatchResult,
+) error {
 	// Marshal result to JSON
 	data, err := json.Marshal(result)
 	if err != nil {
@@ -284,7 +306,10 @@ func (s *GraphUpdateService) UpdateOSMData(ctx context.Context, update OSMUpdate
 }
 
 // UpdateRestrictions handles restriction updates
-func (s *GraphUpdateService) UpdateRestrictions(ctx context.Context, update RestrictionUpdate) error {
+func (s *GraphUpdateService) UpdateRestrictions(
+	ctx context.Context,
+	update RestrictionUpdate,
+) error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 

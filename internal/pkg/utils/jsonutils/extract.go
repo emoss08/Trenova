@@ -14,15 +14,15 @@ func ExtractJSON(s string) string {
 
 	// Determine if it's an object or array
 	isJSONObject := s[start] == '{'
-	
+
 	// Find the matching closing bracket
 	depth := 0
 	inString := false
 	escaped := false
-	
+
 	for i := start; i < len(s); i++ {
 		ch := s[i]
-		
+
 		// Handle string literals
 		if ch == '"' && !escaped {
 			inString = !inString
@@ -30,7 +30,7 @@ func ExtractJSON(s string) string {
 			escaped = true
 			continue
 		}
-		
+
 		// Only count brackets outside of strings
 		if !inString {
 			switch ch {
@@ -43,7 +43,7 @@ func ExtractJSON(s string) string {
 				}
 			}
 		}
-		
+
 		escaped = false
 	}
 

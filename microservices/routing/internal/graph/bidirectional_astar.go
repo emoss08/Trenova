@@ -21,8 +21,10 @@ func (g *Graph) BidirectionalAStar(startID, endID int64, opts PathOptions) (*Pat
 	// _ Early exit if start and end are the same
 	if startID == endID {
 		return &PathResult{
-			Path:       []*Node{start},
-			PathNodes:  []PathNode{{ID: start.ID, Location: []float64{start.Location[0], start.Location[1]}}},
+			Path: []*Node{start},
+			PathNodes: []PathNode{
+				{ID: start.ID, Location: []float64{start.Location[0], start.Location[1]}},
+			},
 			Distance:   0,
 			TravelTime: 0,
 		}, nil
@@ -142,7 +144,13 @@ type searchState struct {
 	closedSet map[int64]bool
 }
 
-func expandSearch(g *Graph, current, opposite *searchState, target *Node, opts PathOptions, isForward bool) int64 {
+func expandSearch(
+	g *Graph,
+	current, opposite *searchState,
+	target *Node,
+	opts PathOptions,
+	isForward bool,
+) int64 {
 	if current.openSet.Len() == 0 {
 		return -1
 	}
@@ -192,7 +200,8 @@ func expandSearch(g *Graph, current, opposite *searchState, target *Node, opts P
 		tentativeGScore := current.gScore[node.ID] + edgeToUse.Distance
 		tentativeTimeScore := current.timeScore[node.ID] + edgeToUse.TravelTime
 
-		if currentGScore, exists := current.gScore[neighbor.ID]; !exists || tentativeGScore < currentGScore {
+		if currentGScore, exists := current.gScore[neighbor.ID]; !exists ||
+			tentativeGScore < currentGScore {
 			current.cameFrom[neighbor.ID] = node.ID
 			current.gScore[neighbor.ID] = tentativeGScore
 			current.timeScore[neighbor.ID] = tentativeTimeScore
@@ -240,7 +249,11 @@ func findReverseEdge(g *Graph, edge *Edge) *Edge {
 	return nil
 }
 
-func reconstructBidirectionalPath(forwardCameFrom, backwardCameFrom map[int64]int64, meetingNode int64, nodes map[int64]*Node) []*Node {
+func reconstructBidirectionalPath(
+	forwardCameFrom, backwardCameFrom map[int64]int64,
+	meetingNode int64,
+	nodes map[int64]*Node,
+) []*Node {
 	// _ Reconstruct forward path
 	forwardPath := []*Node{}
 	current := meetingNode
