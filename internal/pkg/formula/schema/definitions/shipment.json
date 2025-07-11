@@ -1,0 +1,323 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trenova.com/schemas/formula/shipment.schema.json",
+  "title": "Shipment",
+  "description": "A shipment entity with all fields available for formula calculations",
+  "type": "object",
+  "version": "1.0.0",
+  "x-formula-context": {
+    "category": "shipment",
+    "entities": ["Shipment"],
+    "permissions": ["formula:read:shipment"]
+  },
+  "x-data-source": {
+    "table": "shipments",
+    "entity": "github.com/emoss08/trenova/internal/core/domain/shipment.Shipment",
+    "preload": [
+      "Customer",
+      "TractorType",
+      "TrailerType",
+      "Commodities.Commodity.HazardousMaterial",
+      "Moves.Stops"
+    ]
+  },
+  "properties": {
+    "proNumber": {
+      "description": "The PRO number uniquely identifying the shipment",
+      "type": "string",
+      "x-source": {
+        "field": "pro_number",
+        "path": "ProNumber"
+      }
+    },
+    "status": {
+      "description": "Current status of the shipment",
+      "type": "string",
+      "enum": ["New", "InTransit", "Delayed", "Completed", "Billed", "PartiallyAssigned", "Assigned", "PartiallyCompleted", "Cancelled"],
+      "x-source": {
+        "field": "status",
+        "path": "Status"
+      }
+    },
+    "weight": {
+      "description": "Total weight of the shipment in pounds",
+      "type": ["number", "null"],
+      "minimum": 0,
+      "x-source": {
+        "field": "weight",
+        "path": "Weight",
+        "nullable": true,
+        "transform": "int64ToFloat64"
+      }
+    },
+    "pieces": {
+      "description": "Number of pieces in the shipment",
+      "type": ["integer", "null"],
+      "minimum": 0,
+      "x-source": {
+        "field": "pieces",
+        "path": "Pieces",
+        "nullable": true
+      }
+    },
+    "temperatureMin": {
+      "description": "Minimum required temperature in Fahrenheit",
+      "type": ["number", "null"],
+      "x-source": {
+        "field": "temperature_min",
+        "path": "TemperatureMin",
+        "nullable": true,
+        "transform": "int16ToFloat64"
+      }
+    },
+    "temperatureMax": {
+      "description": "Maximum required temperature in Fahrenheit",
+      "type": ["number", "null"],
+      "x-source": {
+        "field": "temperature_max",
+        "path": "TemperatureMax",
+        "nullable": true,
+        "transform": "int16ToFloat64"
+      }
+    },
+    "freightChargeAmount": {
+      "description": "Base freight charge amount in USD",
+      "type": "number",
+      "minimum": 0,
+      "x-source": {
+        "field": "freight_charge_amount",
+        "path": "FreightChargeAmount",
+        "transform": "decimalToFloat64"
+      }
+    },
+    "ratingMethod": {
+      "description": "Method used to calculate shipment pricing",
+      "type": "string",
+      "enum": ["Flat", "PerMile", "PerStop", "PerPound", "PerPallet", "PerLinearFoot", "Other"],
+      "x-source": {
+        "field": "rating_method",
+        "path": "RatingMethod"
+      }
+    },
+    "ratingUnit": {
+      "description": "Unit value used in rating calculations",
+      "type": "integer",
+      "minimum": 1,
+      "x-source": {
+        "field": "rating_unit",
+        "path": "RatingUnit"
+      }
+    },
+    "customer": {
+      "description": "Customer associated with the shipment",
+      "type": "object",
+      "x-source": {
+        "relation": "Customer",
+        "preload": true
+      },
+      "properties": {
+        "name": {
+          "description": "Customer company name",
+          "type": "string",
+          "x-source": {
+            "path": "Customer.Name"
+          }
+        },
+        "code": {
+          "description": "Customer code",
+          "type": "string",
+          "x-source": {
+            "path": "Customer.Code"
+          }
+        }
+      },
+      "required": ["name", "code"]
+    },
+    "tractorType": {
+      "description": "Equipment type for the tractor",
+      "type": ["object", "null"],
+      "x-source": {
+        "relation": "TractorType",
+        "preload": true,
+        "nullable": true
+      },
+      "properties": {
+        "name": {
+          "description": "Equipment type name",
+          "type": "string",
+          "x-source": {
+            "path": "TractorType.Name"
+          }
+        },
+        "code": {
+          "description": "Equipment type code",
+          "type": "string",
+          "x-source": {
+            "path": "TractorType.Code"
+          }
+        },
+        "costPerMile": {
+          "description": "Operating cost per mile in USD",
+          "type": ["number", "null"],
+          "minimum": 0,
+          "x-source": {
+            "path": "TractorType.CostPerMile",
+            "transform": "decimalToFloat64",
+            "nullable": true
+          }
+        }
+      }
+    },
+    "trailerType": {
+      "description": "Equipment type for the trailer",
+      "type": ["object", "null"],
+      "x-source": {
+        "relation": "TrailerType",
+        "preload": true,
+        "nullable": true
+      },
+      "properties": {
+        "name": {
+          "description": "Equipment type name",
+          "type": "string",
+          "x-source": {
+            "path": "TrailerType.Name"
+          }
+        },
+        "code": {
+          "description": "Equipment type code",
+          "type": "string",
+          "x-source": {
+            "path": "TrailerType.Code"
+          }
+        },
+        "costPerMile": {
+          "description": "Operating cost per mile in USD",
+          "type": ["number", "null"],
+          "minimum": 0,
+          "x-source": {
+            "path": "TrailerType.CostPerMile",
+            "transform": "decimalToFloat64",
+            "nullable": true
+          }
+        }
+      }
+    },
+    "temperatureDifferential": {
+      "description": "Difference between maximum and minimum temperature requirements",
+      "type": "number",
+      "x-source": {
+        "computed": true,
+        "function": "computeTemperatureDifferential",
+        "requires": ["temperatureMin", "temperatureMax"]
+      }
+    },
+    "hasHazmat": {
+      "description": "Whether the shipment contains hazardous materials",
+      "type": "boolean",
+      "x-source": {
+        "computed": true,
+        "function": "computeHasHazmat",
+        "requires": ["Commodities.Commodity.HazardousMaterial"],
+        "preload": ["Commodities.Commodity.HazardousMaterial"]
+      }
+    },
+    "commodities": {
+      "description": "List of commodities in the shipment",
+      "type": "array",
+      "x-source": {
+        "relation": "Commodities",
+        "preload": true
+      },
+      "items": {
+        "type": "object",
+        "properties": {
+          "weight": {
+            "type": "integer",
+            "description": "Weight of this commodity in the shipment",
+            "x-source": {
+              "path": "Weight"
+            }
+          },
+          "pieces": {
+            "type": "integer",
+            "description": "Number of pieces of this commodity",
+            "x-source": {
+              "path": "Pieces"
+            }
+          },
+          "commodity": {
+            "type": "object",
+            "description": "The commodity details",
+            "x-source": {
+              "relation": "Commodity",
+              "preload": true
+            },
+            "properties": {
+              "name": {
+                "type": "string",
+                "x-source": {
+                  "path": "Commodity.Name"
+                }
+              },
+              "freightClass": {
+                "type": "string",
+                "x-source": {
+                  "path": "Commodity.FreightClass"
+                }
+              },
+              "hazardousMaterial": {
+                "type": ["object", "null"],
+                "x-source": {
+                  "relation": "HazardousMaterial",
+                  "preload": true,
+                  "nullable": true
+                },
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "x-source": {
+                      "path": "HazardousMaterial.Name"
+                    }
+                  },
+                  "class": {
+                    "type": "string",
+                    "x-source": {
+                      "path": "HazardousMaterial.Class"
+                    }
+                  },
+                  "unNumber": {
+                    "type": "string",
+                    "x-source": {
+                      "path": "HazardousMaterial.UNNumber"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "requiresTemperatureControl": {
+      "description": "Whether the shipment requires temperature control",
+      "type": "boolean",
+      "x-source": {
+        "computed": true,
+        "function": "computeRequiresTemperatureControl",
+        "requires": ["temperatureMin", "temperatureMax"]
+      }
+    },
+    "totalStops": {
+      "description": "Total number of stops across all moves",
+      "type": "integer",
+      "minimum": 0,
+      "x-source": {
+        "computed": true,
+        "function": "computeTotalStops",
+        "requires": ["Moves"]
+      }
+    }
+  },
+  "required": ["proNumber", "status", "freightChargeAmount", "ratingMethod", "ratingUnit", "customer"]
+}
