@@ -58,8 +58,6 @@ type shipmentRepository struct {
 //
 // Returns:
 //   - repositories.ShipmentRepository: A ready-to-use shipment repository instance.
-//
-//nolint:gocritic // The p parameter is passed using fx.In
 func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepository {
 	log := p.Logger.With().
 		Str("repository", "shipment").
@@ -202,13 +200,10 @@ func (sr *shipmentRepository) List(
 		Str("userID", opts.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	// * Create a slice of shipments
 	entities := make([]*shipment.Shipment, 0)
 
-	// * Build base query
 	q := dba.NewSelect().Model(&entities)
 
-	// * Append filters to base query
 	q = sr.filterQuery(q, opts)
 
 	total, err := q.ScanAndCount(ctx)
@@ -543,7 +538,6 @@ func (sr *shipmentRepository) TransferOwnership(
 		}).
 		Returning("*").
 		Exec(ctx)
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to transfer ownership")
 		return nil, oops.
@@ -1406,8 +1400,84 @@ func (sr *shipmentRepository) duplicateShipmentFields(
 	return shp, nil
 }
 
-// DelayShipments is a function that delays shipments that have scheduled dates in the past.
-// It returns a list of shipments that have been delayed.
+// GetDelayedShipments retrieves shipments that have scheduled dates in the past and should be marked as delayed.
+// This method only queries for shipments but does not update their status.
+//
+// Parameters:
+//   - ctx: Context for request scope and cancellation
+//
+// Returns:
+//   - []*shipment.Shipment: List of shipments that should be delayed
+//   - error: If the database query fails
+func (sr *shipmentRepository) GetDelayedShipments(
+	ctx context.Context,
+) ([]*shipment.Shipment, error) {
+	dba, err := sr.db.DB(ctx)
+	if err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := sr.l.With().
+		Str("operation", "GetDelayedShipments").
+		Logger()
+
+	currentTime := timeutils.NowUnix()
+	delayedShipments := make([]*shipment.Shipment, 0)
+
+	stopCte := dba.NewSelect().
+		Column("stp.shipment_move_id").
+		TableExpr("stops stp").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("stp.status NOT IN (?)", bun.In([]shipment.StopStatus{
+					shipment.StopStatusCompleted,
+					shipment.StopStatusCanceled,
+				})).
+				Where("stp.actual_departure IS NULL").
+				Where("stp.planned_departure < ?", currentTime)
+		})
+
+	moveCte := dba.NewSelect().
+		ColumnExpr("DISTINCT sm.shipment_id").
+		TableExpr("shipment_moves sm").
+		Where("sm.id IN (SELECT shipment_move_id FROM stop_cte)").
+		Where("sm.status NOT IN (?)", bun.In([]shipment.MoveStatus{
+			shipment.MoveStatusCompleted,
+			shipment.MoveStatusCanceled,
+		}))
+
+	q := dba.NewSelect().
+		Model(&delayedShipments).
+		With("stop_cte", stopCte).
+		With("move_cte", moveCte).
+		Where("sp.id IN (SELECT shipment_id FROM move_cte)").
+		Where("sp.status NOT IN (?)", bun.In([]shipment.Status{
+			shipment.StatusDelayed,
+			shipment.StatusCanceled,
+			shipment.StatusCompleted,
+			shipment.StatusBilled,
+		}))
+
+	if err := q.Scan(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to find delayed shipments")
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "find delayed shipments")
+	}
+
+	log.Debug().
+		Int("count", len(delayedShipments)).
+		Msg("found shipments that should be delayed")
+
+	return delayedShipments, nil
+}
+
+// DelayShipments updates the status of shipments that have scheduled dates in the past to "Delayed".
+// It uses GetDelayedShipments to retrieve the shipments and then updates their status.
 //
 // Parameters:
 //   - ctx: Context for request scope and cancellation
@@ -1428,70 +1498,26 @@ func (sr *shipmentRepository) DelayShipments(ctx context.Context) ([]*shipment.S
 		Str("operation", "DelayShipments").
 		Logger()
 
+	// * Get shipments that should be delayed
+	delayedShipments, err := sr.GetDelayedShipments(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(delayedShipments) == 0 {
+		log.Info().Msg("no shipments to delay")
+		return delayedShipments, nil
+	}
+
 	currentTime := timeutils.NowUnix()
-	updatedShipments := make([]*shipment.Shipment, 0)
 
-	// _ Run in a transaction to ensure consistency
+	// * Update the shipments in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// _ Find shipments with overdue stops using CTEs for efficient querying
-		// _ CTE 1: Find all stops that are overdue (planned departure is in the past and not completed)
-		stopCte := tx.NewSelect().
-			Column("stp.shipment_move_id").
-			TableExpr("stops stp").
-			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.
-					Where("stp.status NOT IN (?)", bun.In([]shipment.StopStatus{
-						shipment.StopStatusCompleted,
-						shipment.StopStatusCanceled,
-					})).
-					Where("stp.actual_departure IS NULL").
-					Where("stp.planned_departure < ?", currentTime)
-			})
-
-		// _ CTE 2: Get unique shipment IDs from moves with overdue stops
-		moveCte := tx.NewSelect().
-			ColumnExpr("DISTINCT sm.shipment_id").
-			TableExpr("shipment_moves sm").
-			Where("sm.id IN (SELECT shipment_move_id FROM stop_cte)").
-			Where("sm.status NOT IN (?)", bun.In([]shipment.MoveStatus{
-				shipment.MoveStatusCompleted,
-				shipment.MoveStatusCanceled,
-			}))
-
-		// _ Select shipments that need to be delayed
-		// _ Only select shipments that are not already delayed, canceled, completed, or billed
-		q := tx.NewSelect().
-			Model(&updatedShipments).
-			With("stop_cte", stopCte).
-			With("move_cte", moveCte).
-			Where("sp.id IN (SELECT shipment_id FROM move_cte)").
-			Where("sp.status NOT IN (?)", bun.In([]shipment.Status{
-				shipment.StatusDelayed,
-				shipment.StatusCanceled,
-				shipment.StatusCompleted,
-				shipment.StatusBilled,
-			}))
-
-		if err := q.Scan(c); err != nil {
-			log.Error().Err(err).Msg("failed to find delayed shipments")
-			return oops.
-				In("shipment_repository").
-				Time(time.Now()).
-				Wrapf(err, "find delayed shipments")
-		}
-
-		if len(updatedShipments) == 0 {
-			log.Info().Msg("no shipments to delay")
-			return nil
-		}
-
-		// _ Extract shipment IDs for bulk update
-		shipmentIDs := make([]pulid.ID, len(updatedShipments))
-		for i, shp := range updatedShipments {
+		shipmentIDs := make([]pulid.ID, len(delayedShipments))
+		for i, shp := range delayedShipments {
 			shipmentIDs[i] = shp.ID
 		}
 
-		// _ Update shipment status to Delayed in bulk
 		_, err := tx.NewUpdate().
 			Model((*shipment.Shipment)(nil)).
 			Set("status = ?", shipment.StatusDelayed).
@@ -1510,23 +1536,22 @@ func (sr *shipmentRepository) DelayShipments(ctx context.Context) ([]*shipment.S
 		}
 
 		log.Info().
-			Int("count", len(updatedShipments)).
+			Int("count", len(delayedShipments)).
 			Msg("successfully delayed shipments")
-
-		// _ Update the status in the returned shipments
-		for _, shp := range updatedShipments {
-			shp.Status = shipment.StatusDelayed
-			shp.UpdatedAt = currentTime
-		}
 
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}
 
-	return updatedShipments, nil
+	// * Update the status in the returned objects
+	for _, shp := range delayedShipments {
+		shp.Status = shipment.StatusDelayed
+		shp.UpdatedAt = currentTime
+	}
+
+	return delayedShipments, nil
 }
 
 // checkForDuplicateBOLs verifies if a BOL number already exists in the system

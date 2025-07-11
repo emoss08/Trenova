@@ -325,6 +325,7 @@ type ShipmentRepository interface {
 	) (*shipment.Shipment, error)
 	UnCancel(ctx context.Context, req *UnCancelShipmentRequest) (*shipment.Shipment, error)
 	BulkDuplicate(ctx context.Context, req *DuplicateShipmentRequest) ([]*shipment.Shipment, error)
+	GetDelayedShipments(ctx context.Context) ([]*shipment.Shipment, error)
 	DelayShipments(ctx context.Context) ([]*shipment.Shipment, error)
 	CheckForDuplicateBOLs(
 		ctx context.Context,

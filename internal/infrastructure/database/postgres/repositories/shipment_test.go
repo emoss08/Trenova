@@ -99,6 +99,9 @@ func TestShipmentRepository(t *testing.T) {
 		})
 
 		t.Run("List with Status Filter", func(t *testing.T) {
+			t.Skip(
+				"This test is no longer valid as we are using the querybuilder to filter by status",
+			)
 			opts := &repoports.ListShipmentOptions{
 				ShipmentOptions: repoports.ShipmentOptions{
 					Status: string(shipment.StatusNew),

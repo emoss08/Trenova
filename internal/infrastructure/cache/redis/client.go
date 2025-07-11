@@ -33,6 +33,8 @@ const (
 
 type StringCmd = redis.StringCmd
 
+type Z = redis.Z
+
 // Client wraps the Redis client with additional functionality including circuit breaker
 type Client struct {
 	*redis.Client
@@ -251,14 +253,10 @@ func (c *Client) isConnectionError(err error) bool {
 }
 
 // Get is a helper function to get a value from redis
-func (c *Client) Get(ctx context.Context, key string) (string, error) {
-	// Add debug logging for the get operation
+func (c *Client) Get(ctx context.Context, key string) (val string, err error) {
 	c.l.Debug().
 		Str("key", key).
 		Msg("attempting redis get operation")
-
-	var val string
-	var err error
 
 	executeErr := c.executeWithCircuitBreaker(ctx, "GET", func() error {
 		val, err = c.Client.Get(ctx, key).Result()

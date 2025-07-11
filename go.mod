@@ -31,6 +31,7 @@ require (
 	github.com/samber/lo v1.51.0
 	github.com/samber/oops v1.19.0
 	github.com/samber/oops/loggers/zerolog v0.0.0-20250706145642-cd991be35e42
+	github.com/santhosh-tekuri/jsonschema/v6 v6.0.2
 	github.com/segmentio/kafka-go v0.4.48
 	github.com/shopspring/decimal v1.4.0
 	github.com/sourcegraph/conc v0.3.0
@@ -212,6 +213,7 @@ require (
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/arch v0.18.0 // indirect
 	golang.org/x/exp v0.0.0-20250606033433-dcc06ee1d476 // indirect
+	golang.org/x/image v0.25.0 // indirect
 	golang.org/x/mod v0.25.0 // indirect
 	golang.org/x/sys v0.33.0 // indirect
 	golang.org/x/term v0.32.0 // indirect

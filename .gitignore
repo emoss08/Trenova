@@ -11,3 +11,4 @@ certs/*
 backups/*
 config/development/*
 config/production/*
+summaries/*

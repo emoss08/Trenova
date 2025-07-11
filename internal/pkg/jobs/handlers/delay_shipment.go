@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
@@ -88,7 +89,7 @@ func (dsh *DelayShipmentHandler) ProcessTask(ctx context.Context, task *asynq.Ta
 
 	if len(shipments) == 0 {
 		log.Info().Msg("no shipments found that need to be delayed")
-		if _, err := task.ResultWriter().Write(fmt.Appendf(nil, "no shipments found that need to be delayed")); err != nil {
+		if _, err := task.ResultWriter().Write(fmt.Appendf(nil, "no shipments found that need to be delayed for anytime before %d", timeutils.NowUnix())); err != nil {
 			log.Error().Err(err).Msg("failed to write result")
 		}
 		return nil
@@ -159,7 +160,7 @@ func (dsh *DelayShipmentHandler) ProcessTask(ctx context.Context, task *asynq.Ta
 		processedCount++
 	}
 
-	if _, err := task.ResultWriter().Write(fmt.Appendf(nil, "Successfully delayed %d shipments", processedCount)); err != nil {
+	if _, err := task.ResultWriter().Write(fmt.Appendf(nil, "Successfully delayed %d shipments for anytime before %d", processedCount, timeutils.NowUnix())); err != nil {
 		log.Error().Err(err).Msg("failed to write result")
 		return oops.
 			In("delay_shipment_handler").
