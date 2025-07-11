@@ -23,7 +23,12 @@ func (a *CacheAdapter) Get(ctx context.Context, key string) (string, error) {
 }
 
 // Set stores a value with expiration
-func (a *CacheAdapter) Set(ctx context.Context, key string, value any, expiration time.Duration) error {
+func (a *CacheAdapter) Set(
+	ctx context.Context,
+	key string,
+	value any,
+	expiration time.Duration,
+) error {
 	return a.client.Set(ctx, key, value, expiration)
 }
 
@@ -44,7 +49,12 @@ func (a *CacheAdapter) GetJSON(ctx context.Context, key string, dest any) error 
 }
 
 // SetJSON marshals and stores JSON data
-func (a *CacheAdapter) SetJSON(ctx context.Context, key string, value any, expiration time.Duration) error {
+func (a *CacheAdapter) SetJSON(
+	ctx context.Context,
+	key string,
+	value any,
+	expiration time.Duration,
+) error {
 	// Use "$" as the default path to set the entire JSON document
 	return a.client.SetJSON(ctx, "$", key, value, expiration)
 }

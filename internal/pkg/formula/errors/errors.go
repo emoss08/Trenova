@@ -13,7 +13,7 @@ type ResolveError struct {
 
 // * Error implements the error interface
 func (e *ResolveError) Error() string {
-	return fmt.Sprintf("failed to resolve %s on %s: %v", 
+	return fmt.Sprintf("failed to resolve %s on %s: %v",
 		e.Path, e.EntityType, e.Cause)
 }
 
@@ -53,7 +53,7 @@ type TransformError struct {
 
 // * Error implements the error interface
 func (e *TransformError) Error() string {
-	return fmt.Sprintf("failed to transform %s to %s: %v", 
+	return fmt.Sprintf("failed to transform %s to %s: %v",
 		e.SourceType, e.TargetType, e.Cause)
 }
 
@@ -81,7 +81,7 @@ type ComputeError struct {
 
 // * Error implements the error interface
 func (e *ComputeError) Error() string {
-	return fmt.Sprintf("failed to compute %s for %s: %v", 
+	return fmt.Sprintf("failed to compute %s for %s: %v",
 		e.Function, e.EntityType, e.Cause)
 }
 
@@ -108,7 +108,7 @@ type VariableError struct {
 
 // * Error implements the error interface
 func (e *VariableError) Error() string {
-	return fmt.Sprintf("failed to resolve variable '%s' in context %s: %v", 
+	return fmt.Sprintf("failed to resolve variable '%s' in context %s: %v",
 		e.VariableName, e.Context, e.Cause)
 }
 
@@ -135,7 +135,7 @@ type SchemaError struct {
 
 // * Error implements the error interface
 func (e *SchemaError) Error() string {
-	return fmt.Sprintf("schema error for '%s' during %s: %v", 
+	return fmt.Sprintf("schema error for '%s' during %s: %v",
 		e.SchemaID, e.Action, e.Cause)
 }
 

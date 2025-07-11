@@ -61,17 +61,17 @@ func TestSchemaRegistry_RegisterAndGet(t *testing.T) {
 	assert.NotNil(t, def)
 	assert.Equal(t, "Test Entity", def.Title)
 	assert.Equal(t, "Test entity for unit tests", def.Description)
-	
+
 	// * Check field sources were extracted
 	assert.Len(t, def.FieldSources, 2)
 	assert.Contains(t, def.FieldSources, "name")
 	assert.Contains(t, def.FieldSources, "value")
-	
+
 	// * Verify field source details
 	nameSource := def.FieldSources["name"]
 	assert.Equal(t, "Name", nameSource.Path)
 	assert.Empty(t, nameSource.Transform)
-	
+
 	valueSource := def.FieldSources["value"]
 	assert.Equal(t, "Value", valueSource.Path)
 	assert.Equal(t, "float64", valueSource.Transform)
@@ -79,11 +79,11 @@ func TestSchemaRegistry_RegisterAndGet(t *testing.T) {
 
 func TestSchemaRegistry_RegisterInvalidSchema(t *testing.T) {
 	registry := schema.NewSchemaRegistry()
-	
+
 	tests := []struct {
-		name        string
-		schemaJSON  string
-		wantErrMsg  string
+		name       string
+		schemaJSON string
+		wantErrMsg string
 	}{
 		{
 			name:       "invalid JSON",
@@ -111,7 +111,7 @@ func TestSchemaRegistry_RegisterInvalidSchema(t *testing.T) {
 			wantErrMsg: "",
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			err := registry.RegisterSchema(tt.name, []byte(tt.schemaJSON))
@@ -125,7 +125,7 @@ func TestSchemaRegistry_RegisterInvalidSchema(t *testing.T) {
 
 func TestSchemaRegistry_GetNonExistent(t *testing.T) {
 	registry := schema.NewSchemaRegistry()
-	
+
 	def, err := registry.GetSchema("non-existent")
 	assert.Error(t, err)
 	assert.Nil(t, def)
@@ -134,11 +134,11 @@ func TestSchemaRegistry_GetNonExistent(t *testing.T) {
 
 func TestSchemaRegistry_ListSchemas(t *testing.T) {
 	registry := schema.NewSchemaRegistry()
-	
+
 	// * Initially empty
 	schemas := registry.ListSchemas()
 	assert.Empty(t, schemas)
-	
+
 	// * Register multiple schemas
 	schema1 := `{
 		"$id": "https://example.com/entity1.schema.json",
@@ -146,24 +146,24 @@ func TestSchemaRegistry_ListSchemas(t *testing.T) {
 		"title": "Entity 1",
 		"type": "object"
 	}`
-	
+
 	schema2 := `{
 		"$id": "https://example.com/entity2.schema.json",
 		"$schema": "https://json-schema.org/draft/2020-12/schema",
 		"title": "Entity 2",
 		"type": "object"
 	}`
-	
+
 	err := registry.RegisterSchema("entity1", []byte(schema1))
 	require.NoError(t, err)
-	
+
 	err = registry.RegisterSchema("entity2", []byte(schema2))
 	require.NoError(t, err)
-	
+
 	// * List all schemas
 	schemas = registry.ListSchemas()
 	assert.Len(t, schemas, 2)
-	
+
 	// * Check that both schemas are present
 	titles := make([]string, 0, len(schemas))
 	for _, s := range schemas {
@@ -175,7 +175,7 @@ func TestSchemaRegistry_ListSchemas(t *testing.T) {
 
 func TestSchemaRegistry_ComputedFields(t *testing.T) {
 	registry := schema.NewSchemaRegistry()
-	
+
 	schemaJSON := `{
 		"$id": "https://example.com/computed.schema.json",
 		"$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -210,26 +210,26 @@ func TestSchemaRegistry_ComputedFields(t *testing.T) {
 			"table": "computed_entities"
 		}
 	}`
-	
+
 	err := registry.RegisterSchema("computed", []byte(schemaJSON))
 	require.NoError(t, err)
-	
+
 	def, err := registry.GetSchema("computed")
 	require.NoError(t, err)
-	
+
 	// * Verify computed fields
 	assert.Len(t, def.FieldSources, 3)
-	
+
 	// * Check regular field
 	baseField := def.FieldSources["baseValue"]
 	assert.False(t, baseField.Computed)
 	assert.Equal(t, "BaseValue", baseField.Path)
-	
+
 	// * Check computed fields
 	computedField := def.FieldSources["computedValue"]
 	assert.True(t, computedField.Computed)
 	assert.Equal(t, "computeDouble", computedField.Function)
-	
+
 	derivedField := def.FieldSources["derivedField"]
 	assert.True(t, derivedField.Computed)
 	assert.Equal(t, "deriveString", derivedField.Function)
@@ -237,7 +237,7 @@ func TestSchemaRegistry_ComputedFields(t *testing.T) {
 
 func TestSchemaRegistry_NestedProperties(t *testing.T) {
 	registry := schema.NewSchemaRegistry()
-	
+
 	schemaJSON := `{
 		"$id": "https://example.com/nested.schema.json",
 		"$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -291,20 +291,20 @@ func TestSchemaRegistry_NestedProperties(t *testing.T) {
 			}
 		}
 	}`
-	
+
 	err := registry.RegisterSchema("nested", []byte(schemaJSON))
 	require.NoError(t, err)
-	
+
 	def, err := registry.GetSchema("nested")
 	require.NoError(t, err)
-	
+
 	// * Verify nested field sources were extracted
 	assert.Len(t, def.FieldSources, 4)
 	assert.Contains(t, def.FieldSources, "customer.name")
 	assert.Contains(t, def.FieldSources, "customer.code")
 	assert.Contains(t, def.FieldSources, "customer.contact.email")
 	assert.Contains(t, def.FieldSources, "items[].quantity")
-	
+
 	// * Check nested paths
 	assert.Equal(t, "Customer.Name", def.FieldSources["customer.name"].Path)
 	assert.Equal(t, "Customer.Code", def.FieldSources["customer.code"].Path)
@@ -314,7 +314,7 @@ func TestSchemaRegistry_NestedProperties(t *testing.T) {
 
 func TestSchemaRegistry_DataSourceExtension(t *testing.T) {
 	registry := schema.NewSchemaRegistry()
-	
+
 	schemaJSON := `{
 		"$id": "https://example.com/datasource.schema.json",
 		"$schema": "https://json-schema.org/draft/2020-12/schema",
@@ -349,31 +349,31 @@ func TestSchemaRegistry_DataSourceExtension(t *testing.T) {
 			"orderBy": "created_at DESC"
 		}
 	}`
-	
+
 	err := registry.RegisterSchema("datasource", []byte(schemaJSON))
 	require.NoError(t, err)
-	
+
 	def, err := registry.GetSchema("datasource")
 	require.NoError(t, err)
-	
+
 	// * Verify data source information
 	assert.Equal(t, "TestEntity", def.DataSource.Entity)
 	assert.Equal(t, "test_entities", def.DataSource.Table)
 	assert.Equal(t, "created_at DESC", def.DataSource.OrderBy)
-	
+
 	// * Check joins
 	assert.Len(t, def.DataSource.Joins, 1)
 	relatedJoin := def.DataSource.Joins["related"]
 	assert.Equal(t, "related_entities", relatedJoin.Table)
 	assert.Equal(t, "test_entities.related_id = related_entities.id", relatedJoin.On)
 	assert.Equal(t, "LEFT", relatedJoin.Type)
-	
+
 	// * Check filters
 	assert.Len(t, def.DataSource.Filters, 2)
 	assert.Equal(t, "status", def.DataSource.Filters[0].Field)
 	assert.Equal(t, "eq", def.DataSource.Filters[0].Operator)
 	assert.Equal(t, "active", def.DataSource.Filters[0].Value)
-	
+
 	// * Check preloads
 	assert.Contains(t, def.DataSource.Preload, "Customer")
 	assert.Contains(t, def.DataSource.Preload, "Items")
@@ -381,7 +381,7 @@ func TestSchemaRegistry_DataSourceExtension(t *testing.T) {
 
 func TestSchemaRegistry_ConcurrentAccess(t *testing.T) {
 	registry := schema.NewSchemaRegistry()
-	
+
 	// * Register initial schema
 	schemaJSON := `{
 		"$id": "https://example.com/concurrent.schema.json",
@@ -389,14 +389,14 @@ func TestSchemaRegistry_ConcurrentAccess(t *testing.T) {
 		"title": "Concurrent Test",
 		"type": "object"
 	}`
-	
+
 	err := registry.RegisterSchema("concurrent", []byte(schemaJSON))
 	require.NoError(t, err)
-	
+
 	// * Test concurrent reads and writes
 	done := make(chan bool)
 	errors := make(chan error, 10)
-	
+
 	// * Multiple readers
 	for i := 0; i < 5; i++ {
 		go func() {
@@ -410,7 +410,7 @@ func TestSchemaRegistry_ConcurrentAccess(t *testing.T) {
 			}
 		}()
 	}
-	
+
 	// * Multiple writers (updating same schema)
 	for i := 0; i < 5; i++ {
 		go func(id int) {
@@ -427,14 +427,14 @@ func TestSchemaRegistry_ConcurrentAccess(t *testing.T) {
 			}
 		}(i)
 	}
-	
+
 	// * Wait for all goroutines
 	for i := 0; i < 10; i++ {
 		<-done
 	}
-	
+
 	close(errors)
-	
+
 	// * Check for errors
 	for err := range errors {
 		t.Errorf("Concurrent access error: %v", err)
@@ -443,7 +443,7 @@ func TestSchemaRegistry_ConcurrentAccess(t *testing.T) {
 
 func TestSchemaRegistry_ValidationOfProperties(t *testing.T) {
 	registry := schema.NewSchemaRegistry()
-	
+
 	// * Test schema with various validation rules
 	schemaJSON := `{
 		"$id": "https://example.com/validation.schema.json",
@@ -487,20 +487,20 @@ func TestSchemaRegistry_ValidationOfProperties(t *testing.T) {
 		},
 		"required": ["email", "status"]
 	}`
-	
+
 	err := registry.RegisterSchema("validation", []byte(schemaJSON))
 	require.NoError(t, err)
-	
+
 	def, err := registry.GetSchema("validation")
 	require.NoError(t, err)
-	
+
 	// * Verify all field sources were extracted
 	assert.Len(t, def.FieldSources, 4)
 	assert.Contains(t, def.FieldSources, "age")
 	assert.Contains(t, def.FieldSources, "email")
 	assert.Contains(t, def.FieldSources, "status")
 	assert.Contains(t, def.FieldSources, "tags")
-	
+
 	// * The schema is valid and registered
 	assert.Equal(t, "Validation Test", def.Title)
 }

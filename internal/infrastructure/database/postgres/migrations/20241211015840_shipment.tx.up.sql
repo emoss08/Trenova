@@ -36,7 +36,8 @@ CREATE TYPE "rating_method_enum" AS ENUM(
     -- Rate calculated by pallet position
     'PerLiearFoot',
     -- Rate calculated by linear feet of trailer space
-    'Other' -- Custom rating method
+    'Other', -- Custom rating method
+    'FormulaTemplate' -- Formula template rating method
 );
 
 --bun:split

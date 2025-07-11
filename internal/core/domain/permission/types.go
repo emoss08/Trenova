@@ -427,7 +427,6 @@ var (
 			ActionAudit,
 			ActionModifyField,
 		),
-
 		// Operations resources
 		ResourceWorker: append(
 			BaseActions,
@@ -607,6 +606,12 @@ var (
 			ActionManage,
 			ActionShare,
 		},
+		ResourceAIClassification: append(
+			BaseActions,
+			ActionConfigure,
+			ActionAudit,
+			ActionModifyField,
+		),
 	}
 )
 

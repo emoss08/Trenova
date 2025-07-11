@@ -149,7 +149,9 @@ func (sm *StreamManager) handleNewClient(
 }
 
 // clientMessageSender handles message sending for a specific client with quality detection
-func (sm *StreamManager) clientMessageSender(client *Client) {
+func (sm *StreamManager) clientMessageSender( //nolint:gocognit // we need to keep this function long
+	client *Client,
+) {
 	defer func() {
 		// Mark client as closed and close the channel safely
 		client.closedMu.Lock()
@@ -230,7 +232,9 @@ func (sm *StreamManager) ensureStreamRunning(reqCtx *appctx.RequestContext) {
 }
 
 // runDataStream runs the main data streaming loop
-func (sm *StreamManager) runDataStream(reqCtx *appctx.RequestContext) {
+func (sm *StreamManager) runDataStream( //nolint:gocognit // we need to keep this function long
+	reqCtx *appctx.RequestContext,
+) {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Printf("Stream panic recovered: %v\n", r)
@@ -312,7 +316,7 @@ func (sm *StreamManager) runDataStream(reqCtx *appctx.RequestContext) {
 }
 
 // processAndBroadcastDataWithPermissions processes data and broadcasts with permission filtering
-func (sm *StreamManager) processAndBroadcastDataWithPermissions(
+func (sm *StreamManager) processAndBroadcastDataWithPermissions( //nolint:gocognit // we need to keep this function long
 	data any,
 ) {
 	// Group items by user permissions

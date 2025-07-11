@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
@@ -31,18 +32,17 @@ var (
 type Shipment struct {
 	bun.BaseModel `bun:"table:shipments,alias:sp" json:"-"`
 
-	ID             pulid.ID  `json:"id"                   bun:"id,type:VARCHAR(100),pk,notnull"`
-	BusinessUnitID pulid.ID  `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID pulid.ID  `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
-	ServiceTypeID  pulid.ID  `json:"serviceTypeId"        bun:"service_type_id,type:VARCHAR(100),notnull"`
-	ShipmentTypeID pulid.ID  `json:"shipmentTypeId"       bun:"shipment_type_id,type:VARCHAR(100),notnull"`
-	CustomerID     pulid.ID  `json:"customerId"           bun:"customer_id,type:VARCHAR(100),notnull"`
-	TractorTypeID  *pulid.ID `json:"tractorTypeId"        bun:"tractor_type_id,type:VARCHAR(100),nullzero"`
-	TrailerTypeID  *pulid.ID `json:"trailerTypeId"        bun:"trailer_type_id,type:VARCHAR(100),nullzero"`
-	OwnerID        *pulid.ID `json:"ownerId"              bun:"owner_id,type:VARCHAR(100),nullzero"`
-	CanceledByID   *pulid.ID `json:"canceledById"         bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
-	// Simple consolidation group identifier - links shipments that should be coordinated together
-	// Shipments in the same group are meant to be planned/optimized together but can have separate moves/assignments
+	ID                   pulid.ID            `json:"id"                   bun:"id,type:VARCHAR(100),pk,notnull"`
+	BusinessUnitID       pulid.ID            `json:"businessUnitId"       bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID       pulid.ID            `json:"organizationId"       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
+	ServiceTypeID        pulid.ID            `json:"serviceTypeId"        bun:"service_type_id,type:VARCHAR(100),notnull"`
+	ShipmentTypeID       pulid.ID            `json:"shipmentTypeId"       bun:"shipment_type_id,type:VARCHAR(100),notnull"`
+	CustomerID           pulid.ID            `json:"customerId"           bun:"customer_id,type:VARCHAR(100),notnull"`
+	TractorTypeID        *pulid.ID           `json:"tractorTypeId"        bun:"tractor_type_id,type:VARCHAR(100),nullzero"`
+	TrailerTypeID        *pulid.ID           `json:"trailerTypeId"        bun:"trailer_type_id,type:VARCHAR(100),nullzero"`
+	OwnerID              *pulid.ID           `json:"ownerId"              bun:"owner_id,type:VARCHAR(100),nullzero"`
+	CanceledByID         *pulid.ID           `json:"canceledById"         bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
+	FormulaTemplateID    *pulid.ID           `json:"formulaTemplateId"    bun:"formula_template_id,type:VARCHAR(100),nullzero"`
 	ConsolidationGroupID *pulid.ID           `json:"consolidationGroupId" bun:"consolidation_group_id,type:VARCHAR(100),nullzero"`
 	Status               Status              `json:"status"               bun:"status,type:status_enum,notnull,default:'New'"`
 	ProNumber            string              `json:"proNumber"            bun:"pro_number,type:VARCHAR(100),notnull"`
@@ -67,18 +67,19 @@ type Shipment struct {
 	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit      *businessunit.BusinessUnit   `json:"businessUnit,omitempty"     bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization      *organization.Organization   `json:"organization,omitempty"     bun:"rel:belongs-to,join:organization_id=id"`
-	ShipmentType      *shipmenttype.ShipmentType   `json:"shipmentType,omitempty"     bun:"rel:belongs-to,join:shipment_type_id=id"`
-	ServiceType       *servicetype.ServiceType     `json:"serviceType,omitempty"      bun:"rel:belongs-to,join:service_type_id=id"`
-	Customer          *customer.Customer           `json:"customer,omitempty"         bun:"rel:belongs-to,join:customer_id=id"`
-	TractorType       *equipmenttype.EquipmentType `json:"tractorType,omitempty"      bun:"rel:belongs-to,join:tractor_type_id=id"`
-	TrailerType       *equipmenttype.EquipmentType `json:"trailerType,omitempty"      bun:"rel:belongs-to,join:trailer_type_id=id"`
-	CanceledBy        *user.User                   `json:"canceledBy,omitempty"       bun:"rel:belongs-to,join:canceled_by_id=id"`
-	Owner             *user.User                   `json:"owner,omitempty"            bun:"rel:belongs-to,join:owner_id=id"`
-	Moves             []*ShipmentMove              `json:"moves,omitempty"            bun:"rel:has-many,join:id=shipment_id"`
-	Commodities       []*ShipmentCommodity         `json:"commodities,omitempty"      bun:"rel:has-many,join:id=shipment_id"`
-	AdditionalCharges []*AdditionalCharge          `json:"additionalCharges,omitzero" bun:"rel:has-many,join:id=shipment_id"`
+	BusinessUnit      *businessunit.BusinessUnit       `json:"businessUnit,omitempty"     bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization      *organization.Organization       `json:"organization,omitempty"     bun:"rel:belongs-to,join:organization_id=id"`
+	ShipmentType      *shipmenttype.ShipmentType       `json:"shipmentType,omitempty"     bun:"rel:belongs-to,join:shipment_type_id=id"`
+	ServiceType       *servicetype.ServiceType         `json:"serviceType,omitempty"      bun:"rel:belongs-to,join:service_type_id=id"`
+	Customer          *customer.Customer               `json:"customer,omitempty"         bun:"rel:belongs-to,join:customer_id=id"`
+	TractorType       *equipmenttype.EquipmentType     `json:"tractorType,omitempty"      bun:"rel:belongs-to,join:tractor_type_id=id"`
+	TrailerType       *equipmenttype.EquipmentType     `json:"trailerType,omitempty"      bun:"rel:belongs-to,join:trailer_type_id=id"`
+	CanceledBy        *user.User                       `json:"canceledBy,omitempty"       bun:"rel:belongs-to,join:canceled_by_id=id"`
+	Owner             *user.User                       `json:"owner,omitempty"            bun:"rel:belongs-to,join:owner_id=id"`
+	FormulaTemplate   *formulatemplate.FormulaTemplate `json:"formulaTemplate,omitempty"  bun:"rel:belongs-to,join:formula_template_id=id"`
+	Moves             []*ShipmentMove                  `json:"moves,omitempty"            bun:"rel:has-many,join:id=shipment_id"`
+	Commodities       []*ShipmentCommodity             `json:"commodities,omitempty"      bun:"rel:has-many,join:id=shipment_id"`
+	AdditionalCharges []*AdditionalCharge              `json:"additionalCharges,omitzero" bun:"rel:has-many,join:id=shipment_id"`
 }
 
 func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
@@ -126,6 +127,7 @@ func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 				RatingMethodPerPallet,
 				RatingMethodPerLinearFoot,
 				RatingMethodOther,
+				RatingMethodFormulaTemplate,
 			).Error("Rating Method must be a valid rating method"),
 		),
 
@@ -171,6 +173,16 @@ func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 			validation.When(st.RatingMethod == RatingMethodPerMile,
 				validation.Required.Error("Rating Unit is required when rating method is Per Mile"),
 				validation.Min(1).Error("Rating Unit must be greater than 0"),
+			),
+		),
+
+		// Formula Template ID is required when rating method is FormulaTemplate
+		validation.Field(&st.FormulaTemplateID,
+			validation.When(
+				st.RatingMethod == RatingMethodFormulaTemplate,
+				validation.Required.Error(
+					"Formula Template is required when rating method is Formula Template",
+				),
 			),
 		),
 	)

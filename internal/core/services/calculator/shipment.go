@@ -68,7 +68,7 @@ func (sc *ShipmentCalculator) CalculateBillingAmounts(
 	}
 }
 
-// calculateBaseCharge determines the base charge based on the shipment's rating method
+// CalculateBaseCharge determines the base charge based on the shipment's rating method
 func (sc *ShipmentCalculator) CalculateBaseCharge(shp *shipment.Shipment) decimal.Decimal {
 	// Get default value if FreightChargeAmount is null
 	freightChargeAmount := decimal.Zero

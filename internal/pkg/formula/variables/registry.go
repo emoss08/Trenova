@@ -11,7 +11,7 @@ import (
 type Registry struct {
 	mu        sync.RWMutex
 	variables map[string]Variable
-	
+
 	// * Group variables by category for easier discovery
 	byCategory map[string][]Variable
 }
@@ -28,24 +28,24 @@ func NewRegistry() *Registry {
 func (r *Registry) Register(variable Variable) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	name := variable.Name()
 	if name == "" {
 		return fmt.Errorf("variable name cannot be empty")
 	}
-	
+
 	// * Check for duplicates
 	if _, exists := r.variables[name]; exists {
 		return fmt.Errorf("variable %s already registered", name)
 	}
-	
+
 	// * Register the variable
 	r.variables[name] = variable
-	
+
 	// * Add to category index
 	category := variable.Category()
 	r.byCategory[category] = append(r.byCategory[category], variable)
-	
+
 	return nil
 }
 
@@ -53,12 +53,12 @@ func (r *Registry) Register(variable Variable) error {
 func (r *Registry) Get(name string) (Variable, error) {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	variable, exists := r.variables[name]
 	if !exists {
 		return nil, errors.NewVariableError(name, "registry", fmt.Errorf("variable not found"))
 	}
-	
+
 	return variable, nil
 }
 
@@ -66,7 +66,7 @@ func (r *Registry) Get(name string) (Variable, error) {
 func (r *Registry) GetByCategory(category string) []Variable {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	vars := r.byCategory[category]
 	// * Return a copy to prevent external modification
 	result := make([]Variable, len(vars))
@@ -78,7 +78,7 @@ func (r *Registry) GetByCategory(category string) []Variable {
 func (r *Registry) List() []Variable {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	result := make([]Variable, 0, len(r.variables))
 	for _, v := range r.variables {
 		result = append(result, v)
@@ -90,7 +90,7 @@ func (r *Registry) List() []Variable {
 func (r *Registry) ListNames() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	names := make([]string, 0, len(r.variables))
 	for name := range r.variables {
 		names = append(names, name)
@@ -102,7 +102,7 @@ func (r *Registry) ListNames() []string {
 func (r *Registry) Categories() []string {
 	r.mu.RLock()
 	defer r.mu.RUnlock()
-	
+
 	categories := make([]string, 0, len(r.byCategory))
 	for cat := range r.byCategory {
 		categories = append(categories, cat)
@@ -114,7 +114,7 @@ func (r *Registry) Categories() []string {
 func (r *Registry) Clear() {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	
+
 	r.variables = make(map[string]Variable)
 	r.byCategory = make(map[string][]Variable)
 }

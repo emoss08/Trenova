@@ -11,7 +11,7 @@ import (
 
 func TestRegistry_Register(t *testing.T) {
 	registry := variables.NewRegistry()
-	
+
 	// * Create a test variable
 	var1 := variables.NewVariable(
 		"test_var",
@@ -22,16 +22,16 @@ func TestRegistry_Register(t *testing.T) {
 			return 42.0, nil
 		},
 	)
-	
+
 	// * Register should succeed
 	err := registry.Register(var1)
 	require.NoError(t, err)
-	
+
 	// * Duplicate registration should fail
 	err = registry.Register(var1)
 	assert.Error(t, err)
 	assert.Contains(t, err.Error(), "already registered")
-	
+
 	// * Empty name should fail
 	var2 := variables.NewVariable(
 		"",
@@ -47,7 +47,7 @@ func TestRegistry_Register(t *testing.T) {
 
 func TestRegistry_Get(t *testing.T) {
 	registry := variables.NewRegistry()
-	
+
 	// * Register a variable
 	var1 := variables.NewVariable(
 		"test_var",
@@ -59,14 +59,14 @@ func TestRegistry_Get(t *testing.T) {
 		},
 	)
 	registry.MustRegister(var1)
-	
+
 	// * Get should return the variable
 	retrieved, err := registry.Get("test_var")
 	require.NoError(t, err)
 	assert.Equal(t, "test_var", retrieved.Name())
 	assert.Equal(t, "Test variable", retrieved.Description())
 	assert.Equal(t, formula.ValueTypeNumber, retrieved.Type())
-	
+
 	// * Get non-existent should fail
 	_, err = registry.Get("non_existent")
 	assert.Error(t, err)
@@ -75,24 +75,24 @@ func TestRegistry_Get(t *testing.T) {
 
 func TestRegistry_GetByCategory(t *testing.T) {
 	registry := variables.NewRegistry()
-	
+
 	// * Register variables in different categories
 	var1 := variables.NewVariable("var1", "Var 1", formula.ValueTypeNumber, "cat1", nil)
 	var2 := variables.NewVariable("var2", "Var 2", formula.ValueTypeString, "cat1", nil)
 	var3 := variables.NewVariable("var3", "Var 3", formula.ValueTypeBoolean, "cat2", nil)
-	
+
 	registry.MustRegister(var1)
 	registry.MustRegister(var2)
 	registry.MustRegister(var3)
-	
+
 	// * Get by category
 	cat1Vars := registry.GetByCategory("cat1")
 	assert.Len(t, cat1Vars, 2)
-	
+
 	cat2Vars := registry.GetByCategory("cat2")
 	assert.Len(t, cat2Vars, 1)
 	assert.Equal(t, "var3", cat2Vars[0].Name())
-	
+
 	// * Non-existent category returns empty
 	emptyVars := registry.GetByCategory("non_existent")
 	assert.Empty(t, emptyVars)
@@ -100,22 +100,22 @@ func TestRegistry_GetByCategory(t *testing.T) {
 
 func TestRegistry_List(t *testing.T) {
 	registry := variables.NewRegistry()
-	
+
 	// * Initially empty
 	assert.Empty(t, registry.List())
 	assert.Empty(t, registry.ListNames())
-	
+
 	// * Add variables
 	var1 := variables.NewVariable("var1", "Var 1", formula.ValueTypeNumber, "cat1", nil)
 	var2 := variables.NewVariable("var2", "Var 2", formula.ValueTypeString, "cat2", nil)
-	
+
 	registry.MustRegister(var1)
 	registry.MustRegister(var2)
-	
+
 	// * List all
 	allVars := registry.List()
 	assert.Len(t, allVars, 2)
-	
+
 	// * List names
 	names := registry.ListNames()
 	assert.Len(t, names, 2)
@@ -125,12 +125,12 @@ func TestRegistry_List(t *testing.T) {
 
 func TestRegistry_Categories(t *testing.T) {
 	registry := variables.NewRegistry()
-	
+
 	// * Register variables in different categories
 	registry.MustRegister(variables.NewVariable("v1", "V1", formula.ValueTypeNumber, "cat1", nil))
 	registry.MustRegister(variables.NewVariable("v2", "V2", formula.ValueTypeString, "cat2", nil))
 	registry.MustRegister(variables.NewVariable("v3", "V3", formula.ValueTypeBoolean, "cat1", nil))
-	
+
 	categories := registry.Categories()
 	assert.Len(t, categories, 2)
 	assert.Contains(t, categories, "cat1")
@@ -139,16 +139,16 @@ func TestRegistry_Categories(t *testing.T) {
 
 func TestRegistry_Clear(t *testing.T) {
 	registry := variables.NewRegistry()
-	
+
 	// * Add variables
 	registry.MustRegister(variables.NewVariable("v1", "V1", formula.ValueTypeNumber, "cat1", nil))
 	registry.MustRegister(variables.NewVariable("v2", "V2", formula.ValueTypeString, "cat2", nil))
-	
+
 	assert.Len(t, registry.List(), 2)
-	
+
 	// * Clear
 	registry.Clear()
-	
+
 	assert.Empty(t, registry.List())
 	assert.Empty(t, registry.Categories())
 }
@@ -164,14 +164,14 @@ func TestVariableDefinition_Resolve(t *testing.T) {
 			// * Simulate computation
 			val1, _ := ctx.GetField("Field1")
 			val2, _ := ctx.GetField("Field2")
-			
+
 			num1, _ := val1.(float64)
 			num2, _ := val2.(float64)
-			
+
 			return num1 + num2, nil
 		},
 	)
-	
+
 	// * Create mock context
 	mockCtx := &mockVariableContext{
 		fields: map[string]any{
@@ -179,7 +179,7 @@ func TestVariableDefinition_Resolve(t *testing.T) {
 			"Field2": 32.0,
 		},
 	}
-	
+
 	// * Resolve should compute
 	result, err := var1.Resolve(mockCtx)
 	require.NoError(t, err)
@@ -195,16 +195,16 @@ func TestVariableDefinition_Validate(t *testing.T) {
 		"test",
 		nil,
 	)
-	
+
 	// * Valid numbers
 	assert.NoError(t, var1.Validate(42.0))
 	assert.NoError(t, var1.Validate(42))
 	assert.NoError(t, var1.Validate(int64(42)))
 	assert.NoError(t, var1.Validate(nil))
-	
+
 	// * Invalid type
 	assert.Error(t, var1.Validate("not a number"))
-	
+
 	// * Custom validator
 	var2 := variables.NewVariableWithValidator(
 		"positive_num",
@@ -216,20 +216,20 @@ func TestVariableDefinition_Validate(t *testing.T) {
 			if value == nil {
 				return nil
 			}
-			
+
 			num, ok := value.(float64)
 			if !ok {
 				return assert.AnError
 			}
-			
+
 			if num < 0 {
 				return assert.AnError
 			}
-			
+
 			return nil
 		},
 	)
-	
+
 	assert.NoError(t, var2.Validate(42.0))
 	assert.Error(t, var2.Validate(-42.0))
 }

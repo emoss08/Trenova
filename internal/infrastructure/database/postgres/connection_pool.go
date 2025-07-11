@@ -191,7 +191,7 @@ func (cp *ConnectionPool) checkReplicaHealth(
 	}
 
 	// Check replication lag if threshold is set
-	if lagThreshold > 0 {
+	if lagThreshold > 0 { //nolint:nestif // this is necessary
 		lag, lErr := cp.getReplicationLag(checkCtx, replica)
 		if lErr != nil {
 			cp.log.Error().

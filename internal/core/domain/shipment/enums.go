@@ -97,6 +97,10 @@ const (
 	// Other takes the rating units and the rate and does multiplication
 	// of the two to get the total cost
 	RatingMethodOther = RatingMethod("Other")
+
+	// FormulaTemplate uses a formula template to calculate the shipment rate
+	// based on complex business rules and multiple variables
+	RatingMethodFormulaTemplate = RatingMethod("FormulaTemplate")
 )
 
 type EntryMethod string

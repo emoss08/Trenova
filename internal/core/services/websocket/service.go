@@ -179,7 +179,7 @@ func (s *Service) registerClient(c *Client) {
 		Msg("client registered")
 }
 
-func (s *Service) unregisterClient(c *Client) {
+func (s *Service) unregisterClient(c *Client) { //nolint:gocognit // this is fine
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -228,7 +228,7 @@ func (s *Service) unregisterClient(c *Client) {
 	}
 
 	// Remove from room index
-	if c.roomID != "" {
+	if c.roomID != "" { //nolint:nestif // this is fine
 		roomClients := s.roomIndex[c.roomID]
 		if roomClients != nil {
 			delete(roomClients, c)
