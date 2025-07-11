@@ -112,8 +112,7 @@
       "description": "Customer associated with the shipment",
       "type": "object",
       "x-source": {
-        "relation": "Customer",
-        "preload": true
+        "relation": "Customer"
       },
       "properties": {
         "name": {
@@ -138,7 +137,6 @@
       "type": ["object", "null"],
       "x-source": {
         "relation": "TractorType",
-        "preload": true,
         "nullable": true
       },
       "properties": {
@@ -173,7 +171,6 @@
       "type": ["object", "null"],
       "x-source": {
         "relation": "TrailerType",
-        "preload": true,
         "nullable": true
       },
       "properties": {
@@ -226,8 +223,7 @@
       "description": "List of commodities in the shipment",
       "type": "array",
       "x-source": {
-        "relation": "Commodities",
-        "preload": true
+        "relation": "Commodities"
       },
       "items": {
         "type": "object",
@@ -250,8 +246,7 @@
             "type": "object",
             "description": "The commodity details",
             "x-source": {
-              "relation": "Commodity",
-              "preload": true
+              "relation": "Commodity"
             },
             "properties": {
               "name": {
@@ -270,7 +265,6 @@
                 "type": ["object", "null"],
                 "x-source": {
                   "relation": "HazardousMaterial",
-                  "preload": true,
                   "nullable": true
                 },
                 "properties": {
