@@ -25,7 +25,11 @@ func NewDefaultContext(entity any, resolver *schema.DefaultDataResolver) *Defaul
 }
 
 // * NewDefaultContextWithMetadata creates a new context with metadata
-func NewDefaultContextWithMetadata(entity any, resolver *schema.DefaultDataResolver, metadata map[string]any) *DefaultVariableContext {
+func NewDefaultContextWithMetadata(
+	entity any,
+	resolver *schema.DefaultDataResolver,
+	metadata map[string]any,
+) *DefaultVariableContext {
 	if metadata == nil {
 		metadata = make(map[string]any)
 	}
@@ -50,11 +54,11 @@ func (c *DefaultVariableContext) GetField(path string) (any, error) {
 		}
 		return nil, errors.NewResolveError(path, entityType, fmt.Errorf("no resolver configured"))
 	}
-	
+
 	fieldSource := &schema.FieldSource{
 		Path: path,
 	}
-	
+
 	return c.resolver.ResolveField(c.entity, fieldSource)
 }
 
@@ -65,14 +69,18 @@ func (c *DefaultVariableContext) GetComputed(function string) (any, error) {
 		if c.entity != nil {
 			entityType = reflect.TypeOf(c.entity).String()
 		}
-		return nil, errors.NewComputeError(function, entityType, fmt.Errorf("no resolver configured"))
+		return nil, errors.NewComputeError(
+			function,
+			entityType,
+			fmt.Errorf("no resolver configured"),
+		)
 	}
-	
+
 	fieldSource := &schema.FieldSource{
 		Computed: true,
 		Function: function,
 	}
-	
+
 	return c.resolver.ResolveField(c.entity, fieldSource)
 }
 
@@ -96,7 +104,9 @@ func (c *DefaultVariableContext) WithEntity(entity any) *DefaultVariableContext 
 }
 
 // * WithResolver returns a new context with a different resolver
-func (c *DefaultVariableContext) WithResolver(resolver *schema.DefaultDataResolver) *DefaultVariableContext {
+func (c *DefaultVariableContext) WithResolver(
+	resolver *schema.DefaultDataResolver,
+) *DefaultVariableContext {
 	return &DefaultVariableContext{
 		entity:   c.entity,
 		resolver: resolver,

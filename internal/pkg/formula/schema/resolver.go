@@ -42,9 +42,9 @@ func NewDefaultDataResolver() *DefaultDataResolver {
 	}
 
 	// * Register standard transforms
-	resolver.RegisterTransform(TransformDecimalToFloat64, transformDecimalToFloat64)
-	resolver.RegisterTransform(TransformInt64ToFloat64, transformInt64ToFloat64)
-	resolver.RegisterTransform(TransformInt16ToFloat64, transformInt16ToFloat64)
+	resolver.RegisterTransform(TransformDecimalToFloat64, transformNumericToFloat64)
+	resolver.RegisterTransform(TransformInt64ToFloat64, transformNumericToFloat64)
+	resolver.RegisterTransform(TransformInt16ToFloat64, transformNumericToFloat64)
 
 	return resolver
 }
@@ -161,17 +161,7 @@ func (r *DefaultDataResolver) extractFieldValue(entity any, path string) (any, e
 }
 
 // * Standard transform functions
-func transformDecimalToFloat64(value any) (any, error) {
-	f, _ := conversion.ToFloat64(value)
-	return f, nil
-}
-
-func transformInt64ToFloat64(value any) (any, error) {
-	f, _ := conversion.ToFloat64(value)
-	return f, nil
-}
-
-func transformInt16ToFloat64(value any) (any, error) {
+func transformNumericToFloat64(value any) (any, error) {
 	f, _ := conversion.ToFloat64(value)
 	return f, nil
 }

@@ -5,11 +5,11 @@ import (
 )
 
 // * ToFloat64 safely converts various numeric types to float64
-func ToFloat64(v any) (float64, bool) {
+func ToFloat64(v any) (float64, bool) { //nolint:cyclop,funlen // we need to keep this function long
 	if v == nil {
 		return 0, false
 	}
-	
+
 	switch val := v.(type) {
 	case float64:
 		return val, true
@@ -35,7 +35,7 @@ func ToFloat64(v any) (float64, bool) {
 		return float64(val), true
 	case uint64:
 		return float64(val), true
-		
+
 	// Pointer types
 	case *float64:
 		if val != nil {
@@ -67,7 +67,7 @@ func ToFloat64(v any) (float64, bool) {
 			return float64(*val), true
 		}
 		return 0, false
-		
+
 	// Decimal types
 	case decimal.Decimal:
 		f, _ := val.Float64()
@@ -78,7 +78,7 @@ func ToFloat64(v any) (float64, bool) {
 			return f, true
 		}
 		return 0, false
-		
+
 	default:
 		return 0, false
 	}
@@ -91,11 +91,11 @@ func ToFloat64OrZero(v any) float64 {
 }
 
 // * ToInt64 safely converts various numeric types to int64
-func ToInt64(v any) (int64, bool) {
+func ToInt64(v any) (int64, bool) { //nolint:cyclop,funlen // we need to keep this function long
 	if v == nil {
 		return 0, false
 	}
-	
+
 	switch val := v.(type) {
 	case int64:
 		return val, true
@@ -125,7 +125,7 @@ func ToInt64(v any) (int64, bool) {
 		return int64(val), true
 	case float64:
 		return int64(val), true
-		
+
 	// Pointer types
 	case *int64:
 		if val != nil {
@@ -147,7 +147,7 @@ func ToInt64(v any) (int64, bool) {
 			return int64(*val), true
 		}
 		return 0, false
-		
+
 	// Decimal types
 	case decimal.Decimal:
 		return val.IntPart(), true
@@ -156,7 +156,7 @@ func ToInt64(v any) (int64, bool) {
 			return val.Decimal.IntPart(), true
 		}
 		return 0, false
-		
+
 	default:
 		return 0, false
 	}
@@ -167,7 +167,7 @@ func ToBool(v any) (bool, bool) {
 	if v == nil {
 		return false, false
 	}
-	
+
 	switch val := v.(type) {
 	case bool:
 		return val, true

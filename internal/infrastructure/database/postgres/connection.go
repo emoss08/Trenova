@@ -319,7 +319,9 @@ func (c *connection) SQLDB(_ context.Context) (*sql.DB, error) {
 	return c.db.DB, nil
 }
 
-func (c *connection) initializeReadReplicas(ctx context.Context) error {
+func (c *connection) initializeReadReplicas( //nolint:funlen // we need to keep this function long
+	ctx context.Context,
+) error {
 	dbCfg := c.cfg.Database()
 	appCfg := c.cfg.App()
 

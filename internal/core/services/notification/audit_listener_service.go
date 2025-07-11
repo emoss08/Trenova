@@ -514,7 +514,7 @@ func (s *AuditListenerService) getEventTypeForResource(
 	resource permission.Resource,
 ) notification.EventType {
 	// Map resources to their update event types
-	eventMap := map[permission.Resource]notification.EventType{
+	eventMap := map[permission.Resource]notification.EventType{ //nolint:exhaustive // we only support these resources
 		permission.ResourceShipment: notification.EventShipmentUpdated,
 		permission.ResourceWorker:   notification.EventWorkerUpdated,
 		permission.ResourceCustomer: notification.EventCustomerUpdated,
@@ -532,7 +532,7 @@ func (s *AuditListenerService) getEventTypeForResource(
 
 func (s *AuditListenerService) getResourceDisplayName(resource permission.Resource) string {
 	// Map resources to display names
-	displayMap := map[permission.Resource]string{
+	displayMap := map[permission.Resource]string{ //nolint:exhaustive // we only support these resources
 		permission.ResourceShipment:              "Shipment",
 		permission.ResourceWorker:                "Worker",
 		permission.ResourceCustomer:              "Customer",
@@ -557,7 +557,7 @@ func (s *AuditListenerService) getResourceURL(
 	resourceID string,
 ) string {
 	// Map resources to their URL patterns
-	urlMap := map[permission.Resource]string{
+	urlMap := map[permission.Resource]string{ //nolint:exhaustive // we only support these resources
 		permission.ResourceShipment:              "/shipments/%s",
 		permission.ResourceWorker:                "/workers/%s",
 		permission.ResourceCustomer:              "/customers/%s",
@@ -733,7 +733,7 @@ func (s *AuditListenerService) SendNotification(
 func (s *AuditListenerService) determinePriority(
 	updateType notification.UpdateType,
 ) notification.Priority {
-	switch updateType {
+	switch updateType { //nolint:exhaustive // we only support these update types
 	case notification.UpdateTypeStatusChange:
 		return notification.PriorityHigh
 	case notification.UpdateTypeComplianceChange:
@@ -758,7 +758,7 @@ func (s *AuditListenerService) buildNotificationTitle(
 ) string {
 	entityName := s.formatEntityName(entity)
 
-	switch changeType {
+	switch changeType { //nolint:exhaustive // we only support these update types
 	case notification.UpdateTypeStatusChange:
 		return fmt.Sprintf("%s Status Changed", entityName)
 	case notification.UpdateTypeAssignment:
@@ -784,7 +784,7 @@ func (s *AuditListenerService) buildNotificationMessage(
 ) string {
 	entityName := s.formatEntityName(entity)
 
-	switch changeType {
+	switch changeType { //nolint:exhaustive // we only support these update types
 	case notification.UpdateTypeStatusChange:
 		return fmt.Sprintf(
 			"%s has updated the status of your %s #%s",

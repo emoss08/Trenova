@@ -80,8 +80,12 @@ func ValidateDatabaseConfig(cfg *DatabaseConfig) error {
 			for _, replica := range cfg.ReadReplicas {
 				if replica.Weight > avgWeight*3 {
 					// This is just a warning in logs, not an error
-					fmt.Printf("WARNING: Replica %s has weight %d, which is significantly higher than average %d\n",
-						replica.Name, replica.Weight, avgWeight)
+					fmt.Printf(
+						"WARNING: Replica %s has weight %d, which is significantly higher than average %d\n",
+						replica.Name,
+						replica.Weight,
+						avgWeight,
+					)
 				}
 			}
 		}
@@ -121,25 +125,25 @@ func SuggestOptimalSettings(totalMemoryMB int, cpuCount int) DatabaseConfig {
 	// - Shared buffers: 25% of RAM (totalMemoryMB / 4)
 	// - Effective cache size: 50-75% of RAM ((totalMemoryMB * 3) / 4)
 	// - Work mem: RAM / (max_connections * 3)
-	
+
 	// Connection pool settings
 	maxConnections := cpuCount * 25
 	if maxConnections > 200 {
 		maxConnections = 200
 	}
-	
+
 	maxIdleConns := maxConnections / 2
-	
+
 	return DatabaseConfig{
 		MaxConnections:  maxConnections,
 		MaxIdleConns:    maxIdleConns,
 		ConnMaxLifetime: 3600, // 1 hour
 		ConnMaxIdleTime: 900,  // 15 minutes
-		
+
 		// If using replicas
 		EnableReadWriteSeparation: cpuCount >= 4, // Enable for 4+ CPUs
-		ReplicaLagThreshold:      10,             // 10 seconds is reasonable
-		
+		ReplicaLagThreshold:       10,            // 10 seconds is reasonable
+
 		// These would need to be set in postgresql.conf
 		// Including here for reference
 		//SharedBuffers: fmt.Sprintf("%dMB", sharedBuffersMB),
@@ -176,9 +180,9 @@ func EstimateConnectionPoolMemory(cfg *DatabaseConfig) int {
 	// PostgreSQL connection memory estimation
 	// Each connection uses approximately 10MB
 	connectionMemoryMB := 10
-	
+
 	primaryMemory := cfg.MaxConnections * connectionMemoryMB
-	
+
 	replicaMemory := 0
 	for _, replica := range cfg.ReadReplicas {
 		maxConns := replica.MaxConnections
@@ -187,6 +191,6 @@ func EstimateConnectionPoolMemory(cfg *DatabaseConfig) int {
 		}
 		replicaMemory += maxConns * connectionMemoryMB
 	}
-	
+
 	return primaryMemory + replicaMemory
 }

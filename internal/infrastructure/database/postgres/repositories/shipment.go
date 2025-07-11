@@ -58,6 +58,8 @@ type shipmentRepository struct {
 //
 // Returns:
 //   - repositories.ShipmentRepository: A ready-to-use shipment repository instance.
+//
+//nolint:gocritic // this is for dependency injection
 func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepository {
 	log := p.Logger.With().
 		Str("repository", "shipment").
@@ -1084,7 +1086,7 @@ func (sr *shipmentRepository) unCancelShipmentComponents(
 // Returns:
 //   - *shipment.Shipment: The newly duplicated shipment.
 //   - error: If duplication fails.
-func (sr *shipmentRepository) BulkDuplicate(
+func (sr *shipmentRepository) BulkDuplicate( //nolint:gocognit,funlen // this is fine
 	ctx context.Context,
 	req *repositories.DuplicateShipmentRequest,
 ) ([]*shipment.Shipment, error) {
@@ -1461,7 +1463,7 @@ func (sr *shipmentRepository) GetDelayedShipments(
 			shipment.StatusBilled,
 		}))
 
-	if err := q.Scan(ctx); err != nil {
+	if err = q.Scan(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to find delayed shipments")
 		return nil, oops.
 			In("shipment_repository").
@@ -1518,7 +1520,7 @@ func (sr *shipmentRepository) DelayShipments(ctx context.Context) ([]*shipment.S
 			shipmentIDs[i] = shp.ID
 		}
 
-		_, err := tx.NewUpdate().
+		_, err = tx.NewUpdate().
 			Model((*shipment.Shipment)(nil)).
 			Set("status = ?", shipment.StatusDelayed).
 			Set("updated_at = ?", currentTime).

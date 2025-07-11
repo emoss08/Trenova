@@ -15,7 +15,10 @@ type MockAIClassificationService struct {
 	mock.Mock
 }
 
-func (m *MockAIClassificationService) ClassifyLocation(ctx context.Context, req *ai.ClassificationRequest) (*ai.ClassificationResponse, error) {
+func (m *MockAIClassificationService) ClassifyLocation(
+	ctx context.Context,
+	req *ai.ClassificationRequest,
+) (*ai.ClassificationResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -23,7 +26,10 @@ func (m *MockAIClassificationService) ClassifyLocation(ctx context.Context, req 
 	return args.Get(0).(*ai.ClassificationResponse), args.Error(1)
 }
 
-func (m *MockAIClassificationService) ClassifyLocationBatch(ctx context.Context, req *ai.BatchClassificationRequest) (*ai.BatchClassificationResponse, error) {
+func (m *MockAIClassificationService) ClassifyLocationBatch(
+	ctx context.Context,
+	req *ai.BatchClassificationRequest,
+) (*ai.BatchClassificationResponse, error) {
 	args := m.Called(ctx, req)
 	if args.Get(0) == nil {
 		return nil, args.Error(1)
@@ -62,9 +68,9 @@ func TestClassifyLocation(t *testing.T) {
 				Description: ptrString("Truck stop with fuel and amenities"),
 			},
 			expected: &ai.ClassificationResponse{
-				Category:   location.CategoryTruckStop,
-				Confidence: 0.98,
-				Reasoning:  "Love's is a well-known truck stop chain, name contains 'Travel Stop'",
+				Category:              location.CategoryTruckStop,
+				Confidence:            0.98,
+				Reasoning:             "Love's is a well-known truck stop chain, name contains 'Travel Stop'",
 				AlternativeCategories: []ai.AlternativeCategory{},
 			},
 		},
@@ -74,9 +80,9 @@ func TestClassifyLocation(t *testing.T) {
 				Name: "Port of Los Angeles",
 			},
 			expected: &ai.ClassificationResponse{
-				Category:   location.CategoryPort,
-				Confidence: 0.99,
-				Reasoning:  "'Port of' prefix clearly indicates a seaport facility",
+				Category:              location.CategoryPort,
+				Confidence:            0.99,
+				Reasoning:             "'Port of' prefix clearly indicates a seaport facility",
 				AlternativeCategories: []ai.AlternativeCategory{},
 			},
 		},

@@ -18,6 +18,7 @@ const (
 	ValueTypeDate    = ValueType("DATE")
 	ValueTypeArray   = ValueType("ARRAY")
 	ValueTypeObject  = ValueType("OBJECT")
+	ValueTypeAny     = ValueType("ANY") // For runtime-determined types
 )
 
 // * FormulaAction represents actions that can be performed on formulas

@@ -97,7 +97,7 @@ func TestDefaultDataResolver_ResolveField(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name: "field not found",
+			name:   "field not found",
 			entity: &shipment.Shipment{},
 			fieldSource: &schema.FieldSource{
 				Path: "NonExistentField",
@@ -196,13 +196,13 @@ func TestDefaultDataResolver_ComputedFields(t *testing.T) {
 			Commodities: []*shipment.ShipmentCommodity{
 				{
 					Commodity: &commodity.Commodity{
-						Name: "Chemical A",
+						Name:                "Chemical A",
 						HazardousMaterialID: &hazmatID,
 					},
 				},
 				{
 					Commodity: &commodity.Commodity{
-						Name: "Regular Cargo",
+						Name:                "Regular Cargo",
 						HazardousMaterialID: nil,
 					},
 				},
@@ -223,13 +223,13 @@ func TestDefaultDataResolver_ComputedFields(t *testing.T) {
 			Commodities: []*shipment.ShipmentCommodity{
 				{
 					Commodity: &commodity.Commodity{
-						Name: "Regular Cargo 1",
+						Name:                "Regular Cargo 1",
 						HazardousMaterialID: nil,
 					},
 				},
 				{
 					Commodity: &commodity.Commodity{
-						Name: "Regular Cargo 2",
+						Name:                "Regular Cargo 2",
 						HazardousMaterialID: nil,
 					},
 				},

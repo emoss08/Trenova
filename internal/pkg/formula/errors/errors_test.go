@@ -39,7 +39,7 @@ func TestResolveError(t *testing.T) {
 			err := errors.NewResolveError(tt.path, tt.entityType, tt.cause)
 			require.Error(t, err)
 			assert.Equal(t, tt.wantMsg, err.Error())
-			
+
 			// * Test unwrapping
 			unwrapped := err.Unwrap()
 			assert.Equal(t, tt.cause, unwrapped)
@@ -79,7 +79,7 @@ func TestTransformError(t *testing.T) {
 			err := errors.NewTransformError(tt.sourceType, tt.targetType, tt.value, tt.cause)
 			require.Error(t, err)
 			assert.Equal(t, tt.wantMsg, err.Error())
-			
+
 			// * Test unwrapping
 			unwrapped := err.Unwrap()
 			assert.Equal(t, tt.cause, unwrapped)
@@ -116,7 +116,7 @@ func TestComputeError(t *testing.T) {
 			err := errors.NewComputeError(tt.function, tt.entityType, tt.cause)
 			require.Error(t, err)
 			assert.Equal(t, tt.wantMsg, err.Error())
-			
+
 			// * Test unwrapping
 			unwrapped := err.Unwrap()
 			assert.Equal(t, tt.cause, unwrapped)
@@ -153,7 +153,7 @@ func TestVariableError(t *testing.T) {
 			err := errors.NewVariableError(tt.variableName, tt.context, tt.cause)
 			require.Error(t, err)
 			assert.Equal(t, tt.wantMsg, err.Error())
-			
+
 			// * Test unwrapping
 			unwrapped := err.Unwrap()
 			assert.Equal(t, tt.cause, unwrapped)
@@ -190,7 +190,7 @@ func TestSchemaError(t *testing.T) {
 			err := errors.NewSchemaError(tt.schemaID, tt.action, tt.cause)
 			require.Error(t, err)
 			assert.Equal(t, tt.wantMsg, err.Error())
-			
+
 			// * Test unwrapping
 			unwrapped := err.Unwrap()
 			assert.Equal(t, tt.cause, unwrapped)
@@ -204,7 +204,7 @@ func TestValidationError(t *testing.T) {
 		Value:   -100,
 		Message: "weight must be positive",
 	}
-	
+
 	assert.Equal(t, "validation failed for field Weight: weight must be positive", err.Error())
 }
 
@@ -213,15 +213,15 @@ func TestErrorChaining(t *testing.T) {
 	baseErr := fmt.Errorf("base error")
 	computeErr := errors.NewComputeError("computeHasHazmat", "*shipment.Shipment", baseErr)
 	resolveErr := errors.NewResolveError("Commodities", "*shipment.Shipment", computeErr)
-	
+
 	// * Check the full error message
 	fullMsg := resolveErr.Error()
 	assert.True(t, strings.Contains(fullMsg, "failed to resolve Commodities"))
-	
+
 	// * Check unwrapping works
 	unwrapped1 := resolveErr.Unwrap()
 	assert.Equal(t, computeErr, unwrapped1)
-	
+
 	unwrapped2 := unwrapped1.(*errors.ComputeError).Unwrap()
 	assert.Equal(t, baseErr, unwrapped2)
 }
