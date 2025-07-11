@@ -44,7 +44,8 @@
       "Bash(docker logs:*)",
       "Bash(golines:*)",
       "Bash(mkdir:*)",
-      "Bash(mv:*)"
+      "Bash(mv:*)",
+      "Bash(go doc:*)"
     ],
     "deny": []
   },
