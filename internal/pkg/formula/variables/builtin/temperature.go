@@ -72,14 +72,14 @@ func temperatureDifferentialResolver(ctx variables.VariableContext) (any, error)
 	}
 
 	// * Convert to float64 and calculate
-	min, ok1 := conversion.ToFloat64(minTemp)
-	max, ok2 := conversion.ToFloat64(maxTemp)
+	minFloat, ok1 := conversion.ToFloat64(minTemp)
+	maxFloat, ok2 := conversion.ToFloat64(maxTemp)
 
 	if !ok1 || !ok2 {
 		return 0.0, nil
 	}
 
-	return max - min, nil
+	return maxFloat - minFloat, nil
 }
 
 // * temperatureDifferentialValidator ensures the differential is non-negative
