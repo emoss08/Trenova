@@ -134,6 +134,9 @@ const (
 	ResourceDocumentType = Resource(
 		"document_type",
 	) // Represents resources related to document types.
+	ResourceFormulaTemplate = Resource(
+		"formula_template",
+	) // Represents resources related to formula templates.
 
 	// Management resources
 	ResourceDispatch   = Resource("dispatch") // Represents resources for dispatch management.
@@ -390,6 +393,10 @@ var (
 			ActionConfigure,
 			ActionAudit,
 			ActionModifyField,
+		),
+		ResourceFormulaTemplate: append(
+			BaseActions,
+			ActionConfigure,
 		),
 		ResourceDedicatedLaneSuggestion: append(
 			BaseActions,

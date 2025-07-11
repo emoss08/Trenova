@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/cdc"
 	postgresRepos "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/jobs"
+	"github.com/emoss08/trenova/internal/pkg/formula"
 	"github.com/emoss08/trenova/internal/pkg/statemachine"
 
 	"go.uber.org/fx"
@@ -35,6 +36,7 @@ func Bootstrap() error {
 		redisRepos.Module,
 		statemachine.Module,
 		seqgen.Module,
+		formula.Module,
 		services.CalculatorModule,
 		postgresRepos.Module,
 		external.Module,

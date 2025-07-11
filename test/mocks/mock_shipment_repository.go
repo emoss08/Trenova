@@ -61,6 +61,7 @@ func (m *MockShipmentRepository) GetByID(
 func (m *MockShipmentRepository) Create(
 	ctx context.Context,
 	entity *shipment.Shipment,
+	userID pulid.ID,
 ) (*shipment.Shipment, error) {
 	return nil, nil
 }
@@ -68,6 +69,7 @@ func (m *MockShipmentRepository) Create(
 func (m *MockShipmentRepository) Update(
 	ctx context.Context,
 	entity *shipment.Shipment,
+	userID pulid.ID,
 ) (*shipment.Shipment, error) {
 	return nil, nil
 }
@@ -118,7 +120,9 @@ func (m *MockShipmentRepository) GetByDateRange(
 }
 
 func (m *MockShipmentRepository) CalculateShipmentTotals(
+	ctx context.Context,
 	shp *shipment.Shipment,
+	userID pulid.ID,
 ) (*repositories.ShipmentTotalsResponse, error) {
 	return nil, nil
 }

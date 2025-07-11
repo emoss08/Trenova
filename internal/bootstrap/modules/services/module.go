@@ -25,6 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/favorite"
 	"github.com/emoss08/trenova/internal/core/services/file"
 	"github.com/emoss08/trenova/internal/core/services/fleetcode"
+	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/services/imagegen"
@@ -110,6 +111,7 @@ var Module = fx.Module("services", fx.Provide(
 	notification.NewBatchProcessor,
 	notification.NewAuditListenerService,
 	consolidationsetting.NewService,
+	formula.NewService,
 ),
 	fx.Invoke(func(s services.WebSocketService) { //nolint:revive // required for fx
 		log.Info().Msg("websocket service initialized")

@@ -12,16 +12,16 @@ import (
 type Evaluator struct {
 	// Variable registry for resolving variables
 	variables *variables.Registry
-	
+
 	// Function registry
 	functions FunctionRegistry
-	
+
 	// Expression cache
 	cache *ExpressionCache
-	
+
 	// String interner for memory efficiency
 	interner *StringInterner
-	
+
 	// Metrics (optional)
 	metrics *EvaluatorMetrics
 }
@@ -39,7 +39,7 @@ type CompiledExpression struct {
 type ExpressionCache struct {
 	cache map[string]*CompiledExpression
 	mu    sync.RWMutex
-	
+
 	maxSize int
 	hits    int64
 	misses  int64
@@ -57,23 +57,28 @@ func NewEvaluator(vars *variables.Registry) *Evaluator {
 }
 
 // * Evaluate parses and evaluates an expression
-func (e *Evaluator) Evaluate(ctx context.Context, expr string, varCtx variables.VariableContext) (float64, error) {
+func (e *Evaluator) Evaluate(
+	ctx context.Context,
+	expr string,
+	varCtx variables.VariableContext,
+) (float64, error) {
 	// Get or compile the expression
 	compiled, err := e.compile(expr)
 	if err != nil {
 		return 0, fmt.Errorf("compilation error: %w", err)
 	}
-	
+
 	// Create evaluation context
 	evalCtx := NewEvaluationContext(ctx, varCtx).
-		WithFunctions(e.functions)
-	
+		WithFunctions(e.functions).
+		WithVariableRegistry(e.variables)
+
 	// Evaluate the AST
 	result, err := compiled.ast.Evaluate(evalCtx)
 	if err != nil {
 		return 0, fmt.Errorf("evaluation error: %w", err)
 	}
-	
+
 	// Convert result to float64
 	switch v := result.(type) {
 	case float64:
@@ -91,47 +96,52 @@ func (e *Evaluator) Evaluate(ctx context.Context, expr string, varCtx variables.
 }
 
 // * EvaluateBatch evaluates the same expression for multiple contexts
-func (e *Evaluator) EvaluateBatch(ctx context.Context, expr string, contexts []variables.VariableContext) ([]float64, error) {
+func (e *Evaluator) EvaluateBatch( //nolint:gocognit // this is fine
+	ctx context.Context,
+	expr string,
+	contexts []variables.VariableContext,
+) ([]float64, error) {
 	// Compile once
 	compiled, err := e.compile(expr)
 	if err != nil {
 		return nil, fmt.Errorf("compilation error: %w", err)
 	}
-	
+
 	// Pre-allocate results
 	results := make([]float64, len(contexts))
-	
+
 	// Use worker pool for parallel evaluation
 	numWorkers := 4 // Could be configurable
 	if len(contexts) < numWorkers {
 		numWorkers = len(contexts)
 	}
-	
+
 	type job struct {
 		index int
 		ctx   variables.VariableContext
 	}
-	
+
 	jobs := make(chan job, len(contexts))
 	errors := make(chan error, len(contexts))
-	
+
 	// Start workers
 	var wg sync.WaitGroup
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			
+
 			for j := range jobs {
 				evalCtx := NewEvaluationContext(ctx, j.ctx).
-					WithFunctions(e.functions)
-				
+					WithFunctions(e.functions).
+					WithVariableRegistry(e.variables)
+
 				result, err := compiled.ast.Evaluate(evalCtx)
 				if err != nil {
 					errors <- fmt.Errorf("context %d: %w", j.index, err)
 					continue
 				}
-				
+
 				// Convert to float64
 				switch v := result.(type) {
 				case float64:
@@ -148,17 +158,17 @@ func (e *Evaluator) EvaluateBatch(ctx context.Context, expr string, contexts []v
 			}
 		}()
 	}
-	
+
 	// Send jobs
 	for i, ctx := range contexts {
 		jobs <- job{index: i, ctx: ctx}
 	}
 	close(jobs)
-	
+
 	// Wait for completion
 	wg.Wait()
 	close(errors)
-	
+
 	// Check for errors
 	var firstErr error
 	for err := range errors {
@@ -166,7 +176,7 @@ func (e *Evaluator) EvaluateBatch(ctx context.Context, expr string, contexts []v
 			firstErr = err
 		}
 	}
-	
+
 	return results, firstErr
 }
 
@@ -176,85 +186,85 @@ func (e *Evaluator) compile(expr string) (*CompiledExpression, error) {
 	if cached := e.cache.Get(expr); cached != nil {
 		return cached, nil
 	}
-	
+
 	// Tokenize
 	tokenizer := NewTokenizer(expr)
 	tokens, err := tokenizer.Tokenize()
 	if err != nil {
 		return nil, fmt.Errorf("tokenization error: %w", err)
 	}
-	
+
 	// Parse
 	parser := NewParser(tokens)
 	ast, err := parser.Parse()
 	if err != nil {
 		return nil, fmt.Errorf("parse error: %w", err)
 	}
-	
+
 	// Extract metadata
-	variables := e.extractVariables(ast)
+	vars := e.extractVariables(ast)
 	complexity := ast.Complexity()
-	
+
 	// Validate complexity
 	if complexity > MaxExpressionComplexity {
-		return nil, fmt.Errorf("expression too complex: complexity %d exceeds limit %d", 
+		return nil, fmt.Errorf("expression too complex: complexity %d exceeds limit %d",
 			complexity, MaxExpressionComplexity)
 	}
-	
+
 	// Create compiled expression
 	compiled := &CompiledExpression{
 		ast:         ast,
 		expression:  expr,
-		variables:   variables,
+		variables:   vars,
 		complexity:  complexity,
 		fingerprint: expr, // Could use hash for longer expressions
 	}
-	
+
 	// Cache it
 	e.cache.Put(expr, compiled)
-	
+
 	return compiled, nil
 }
 
 // * extractVariables extracts all variable names from an AST
 func (e *Evaluator) extractVariables(node Node) []string {
-	variables := make(map[string]bool)
-	e.extractVariablesRecursive(node, variables)
-	
+	vars := make(map[string]bool)
+	e.extractVariablesRecursive(node, vars)
+
 	// Convert to slice
-	result := make([]string, 0, len(variables))
-	for v := range variables {
+	result := make([]string, 0, len(vars))
+	for v := range vars {
 		result = append(result, v)
 	}
-	
+
 	return result
 }
 
-func (e *Evaluator) extractVariablesRecursive(node Node, variables map[string]bool) {
+func (e *Evaluator) extractVariablesRecursive(node Node, vars map[string]bool) {
 	switch n := node.(type) {
 	case *IdentifierNode:
-		variables[n.Name] = true
-		
+		vars[n.Name] = true
+
 	case *BinaryOpNode:
-		e.extractVariablesRecursive(n.Left, variables)
-		e.extractVariablesRecursive(n.Right, variables)
-		
+		e.extractVariablesRecursive(n.Left, vars)
+		e.extractVariablesRecursive(n.Right, vars)
+
 	case *UnaryOpNode:
-		e.extractVariablesRecursive(n.Operand, variables)
-		
+		e.extractVariablesRecursive(n.Operand, vars)
+
 	case *ConditionalNode:
-		e.extractVariablesRecursive(n.Condition, variables)
-		e.extractVariablesRecursive(n.TrueExpr, variables)
-		e.extractVariablesRecursive(n.FalseExpr, variables)
-		
+		e.extractVariablesRecursive(n.Condition, vars)
+		e.extractVariablesRecursive(n.TrueExpr, vars)
+		e.extractVariablesRecursive(n.FalseExpr, vars)
+
 	case *FunctionCallNode:
 		for _, arg := range n.Arguments {
-			e.extractVariablesRecursive(arg, variables)
+			e.extractVariablesRecursive(arg, vars)
 		}
-		
+
 	case *ArrayNode:
 		for _, elem := range n.Elements {
-			e.extractVariablesRecursive(elem, variables)
+			e.extractVariablesRecursive(elem, vars)
 		}
 	}
 }
@@ -271,12 +281,12 @@ func NewExpressionCache(maxSize int) *ExpressionCache {
 func (c *ExpressionCache) Get(expr string) *CompiledExpression {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	if compiled, ok := c.cache[expr]; ok {
 		c.hits++
 		return compiled
 	}
-	
+
 	c.misses++
 	return nil
 }
@@ -284,36 +294,36 @@ func (c *ExpressionCache) Get(expr string) *CompiledExpression {
 func (c *ExpressionCache) Put(expr string, compiled *CompiledExpression) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	// Simple eviction: remove all if at capacity
 	if len(c.cache) >= c.maxSize {
 		// In production, use LRU eviction
 		c.cache = make(map[string]*CompiledExpression)
 	}
-	
+
 	c.cache[expr] = compiled
 }
 
 func (c *ExpressionCache) HitRate() float64 {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	total := c.hits + c.misses
 	if total == 0 {
 		return 0
 	}
-	
+
 	return float64(c.hits) / float64(total)
 }
 
 // * EvaluatorMetrics tracks performance metrics
 type EvaluatorMetrics struct {
-	compilations   int64
-	evaluations    int64
-	cacheHits      int64
-	cacheMisses    int64
-	totalDuration  int64 // nanoseconds
-	mu             sync.Mutex
+	compilations  int64
+	evaluations   int64
+	cacheHits     int64
+	cacheMisses   int64
+	totalDuration int64 // nanoseconds
+	mu            sync.Mutex
 }
 
 func NewEvaluatorMetrics() *EvaluatorMetrics {

@@ -1,10 +1,14 @@
 package calculator
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/statemachine"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/shopspring/decimal"
@@ -16,11 +20,13 @@ type ShipmentCalculatorParams struct {
 
 	Logger              *logger.Logger
 	StateMachineManager *statemachine.Manager
+	FormulaService      *formula.Service
 }
 
 type ShipmentCalculator struct {
-	l         *zerolog.Logger
-	smManager *statemachine.Manager
+	l              *zerolog.Logger
+	smManager      *statemachine.Manager
+	formulaService *formula.Service
 }
 
 func NewShipmentCalculator(p ShipmentCalculatorParams) *ShipmentCalculator {
@@ -29,19 +35,20 @@ func NewShipmentCalculator(p ShipmentCalculatorParams) *ShipmentCalculator {
 		Logger()
 
 	return &ShipmentCalculator{
-		smManager: p.StateMachineManager,
-		l:         &log,
+		smManager:      p.StateMachineManager,
+		formulaService: p.FormulaService,
+		l:              &log,
 	}
 }
 
 // CalculateTotals handles all calculations for a shipment
-func (sc *ShipmentCalculator) CalculateTotals(shp *shipment.Shipment) {
+func (sc *ShipmentCalculator) CalculateTotals(ctx context.Context, shp *shipment.Shipment, userID pulid.ID) {
 	sc.CalculateCommodityTotals(shp)
-	sc.calculateShipmentCharge(shp)
+	sc.calculateShipmentCharge(ctx, shp, userID)
 }
 
-func (sc *ShipmentCalculator) calculateShipmentCharge(shp *shipment.Shipment) {
-	totals := sc.CalculateBillingAmounts(shp)
+func (sc *ShipmentCalculator) calculateShipmentCharge(ctx context.Context, shp *shipment.Shipment, userID pulid.ID) {
+	totals := sc.CalculateBillingAmounts(ctx, shp, userID)
 
 	shp.FreightChargeAmount = decimal.NewNullDecimal(totals.BaseCharge)
 	shp.OtherChargeAmount = decimal.NewNullDecimal(totals.OtherChargeAmount)
@@ -50,10 +57,12 @@ func (sc *ShipmentCalculator) calculateShipmentCharge(shp *shipment.Shipment) {
 
 // CalculateBillingAmounts calculates all billing amounts for a shipment
 func (sc *ShipmentCalculator) CalculateBillingAmounts(
+	ctx context.Context,
 	shp *shipment.Shipment,
+	userID pulid.ID,
 ) ShipmentTotalsResponse {
 	// Step 1: Calculate base charge based on rating method
-	baseCharge := sc.CalculateBaseCharge(shp)
+	baseCharge := sc.CalculateBaseCharge(ctx, shp, userID)
 
 	// Step 2: Calculate additional charges total
 	additionalChargesTotal := sc.calculateAdditionalCharges(shp, baseCharge)
@@ -69,7 +78,11 @@ func (sc *ShipmentCalculator) CalculateBillingAmounts(
 }
 
 // CalculateBaseCharge determines the base charge based on the shipment's rating method
-func (sc *ShipmentCalculator) CalculateBaseCharge(shp *shipment.Shipment) decimal.Decimal {
+func (sc *ShipmentCalculator) CalculateBaseCharge(
+	ctx context.Context,
+	shp *shipment.Shipment,
+	userID pulid.ID,
+) decimal.Decimal {
 	// Get default value if FreightChargeAmount is null
 	freightChargeAmount := decimal.Zero
 	if shp.FreightChargeAmount.Valid {
@@ -114,6 +127,9 @@ func (sc *ShipmentCalculator) CalculateBaseCharge(shp *shipment.Shipment) decima
 			return ratingUnit.Mul(freightChargeAmount)
 		}
 		return decimal.Zero
+
+	case shipment.RatingMethodFormulaTemplate:
+		return sc.calculateFormulaTemplateRate(ctx, shp, userID)
 
 	default:
 		sc.l.Warn().
@@ -161,6 +177,40 @@ func (sc *ShipmentCalculator) calculatePerLinearFootRate(shp *shipment.Shipment)
 	ratingUnit := decimal.NewFromInt(shp.RatingUnit)
 
 	return linearFeet.Div(ratingUnit)
+}
+
+// calculateFormulaTemplateRate calculates the charge using a formula template
+func (sc *ShipmentCalculator) calculateFormulaTemplateRate(
+	ctx context.Context,
+	shp *shipment.Shipment,
+	userID pulid.ID,
+) decimal.Decimal {
+	// * Check if formula template ID is set
+	if shp.FormulaTemplateID == nil || shp.FormulaTemplateID.IsNil() {
+		sc.l.Warn().
+			Str("shipmentID", shp.ID.String()).
+			Msg("formula template rating method selected but no formula template ID provided")
+		return decimal.Zero
+	}
+
+	// * Calculate rate using formula service
+	rate, err := sc.formulaService.CalculateShipmentRate(ctx, *shp.FormulaTemplateID, shp, userID)
+	if err != nil {
+		sc.l.Error().
+			Str("shipmentID", shp.ID.String()).
+			Str("formulaTemplateID", shp.FormulaTemplateID.String()).
+			Err(err).
+			Msg("failed to calculate rate using formula template")
+		return decimal.Zero
+	}
+
+	sc.l.Info().
+		Str("shipmentID", shp.ID.String()).
+		Str("formulaTemplateID", shp.FormulaTemplateID.String()).
+		Str("calculatedRate", rate.String()).
+		Msg("calculated rate using formula template")
+
+	return rate
 }
 
 func (sc *ShipmentCalculator) calculateAdditionalCharges(

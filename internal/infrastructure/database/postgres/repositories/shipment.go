@@ -225,6 +225,10 @@ func (sr *shipmentRepository) List(
 // Parameters:
 //   - ctx: Context for request scope and cancellation.
 //
+// Note:
+// This method is does not isolate the tenant. If you need to get all shipments for a tenant,
+// use the List method instead. This method is used for pattern analysis.
+//
 // Returns:
 func (sr *shipmentRepository) GetAll(
 	ctx context.Context,
@@ -426,6 +430,7 @@ func (sr *shipmentRepository) GetByDateRange(
 func (sr *shipmentRepository) Create(
 	ctx context.Context,
 	shp *shipment.Shipment,
+	userID pulid.ID,
 ) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
@@ -455,7 +460,7 @@ func (sr *shipmentRepository) Create(
 	}
 
 	// * Calculate the totals for the shipment
-	sr.calc.CalculateTotals(shp)
+	sr.calc.CalculateTotals(ctx, shp, userID)
 
 	// * Calculate the status for the shipment
 	if err = sr.calc.CalculateStatus(shp); err != nil {
@@ -579,6 +584,7 @@ func (sr *shipmentRepository) TransferOwnership(
 func (sr *shipmentRepository) Update(
 	ctx context.Context,
 	shp *shipment.Shipment,
+	userID pulid.ID,
 ) (*shipment.Shipment, error) {
 	dba, err := sr.db.DB(ctx)
 	if err != nil {
@@ -595,7 +601,7 @@ func (sr *shipmentRepository) Update(
 		Logger()
 
 	// * Calculate the totals for the shipment
-	sr.calc.CalculateTotals(shp)
+	sr.calc.CalculateTotals(ctx, shp, userID)
 
 	// * Calculate the status and timestamps for the shipment
 	if err = sr.calc.CalculateStatus(shp); err != nil {
@@ -663,19 +669,16 @@ func (sr *shipmentRepository) Update(
 			)
 		}
 
-		// * Handle commodity operations
 		if err = sr.shipmentCommodityRepository.HandleCommodityOperations(c, tx, shp, false); err != nil {
 			log.Error().Err(err).Msg("failed to handle commodity operations")
 			return err
 		}
 
-		// * Handle move operations
 		if err = sr.shipmentMoveRepository.HandleMoveOperations(c, tx, shp, false); err != nil {
 			log.Error().Err(err).Msg("failed to handle move operations")
 			return err
 		}
 
-		// * Handle additional charge operations
 		if err = sr.additionalChargeRepository.HandleAdditionalChargeOperations(c, tx, shp, false); err != nil {
 			log.Error().Err(err).Msg("failed to handle additional charge operations")
 			return err
@@ -1629,15 +1632,17 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(
 }
 
 func (sr *shipmentRepository) CalculateShipmentTotals(
+	ctx context.Context,
 	shp *shipment.Shipment,
+	userID pulid.ID,
 ) (*repositories.ShipmentTotalsResponse, error) {
 	// All calculations are in-memory. We let the shared calculator populate the
 	// monetary fields, then fetch the base charge via the new helper to avoid
 	// duplicating the algorithm.
 
-	sr.calc.CalculateTotals(shp)
+	sr.calc.CalculateTotals(ctx, shp, userID)
 
-	baseCharge := sr.calc.CalculateBaseCharge(shp)
+	baseCharge := sr.calc.CalculateBaseCharge(ctx, shp, userID)
 	otherCharge := decimal.Zero
 	if shp.OtherChargeAmount.Valid {
 		otherCharge = shp.OtherChargeAmount.Decimal

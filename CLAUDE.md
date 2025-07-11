@@ -129,11 +129,6 @@ The system manages transportation logistics including:
 - Instead of sync.WaitGroup use conc.WaitGroup("github.com/sourcegraph/conc")
 - Use sonic instead of the standard library json package when possible
 
-## Code Comments and Documentation
-
-- When writing inline comments (comments inside functions) make sure to prefix them with for example // \* this is a comment.
-- If the comment is important and notes some type of behavior that may be unexpected or just an important note use the prefix ! for example // ! this is an important comment.
-
 ## Development Workflow
 
 - Always check for errors in the current file before moving forward

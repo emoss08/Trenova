@@ -17,6 +17,7 @@ type EvaluationContext struct {
 	// Variable resolution
 	variableContext variables.VariableContext
 	variableCache   map[string]any // Cache resolved variables
+	variableRegistry *variables.Registry // Registry to use for variable lookup
 
 	// Function registry
 	functions FunctionRegistry
@@ -68,6 +69,12 @@ func (ctx *EvaluationContext) WithFunctions(registry FunctionRegistry) *Evaluati
 	return ctx
 }
 
+// * WithVariableRegistry sets a custom variable registry
+func (ctx *EvaluationContext) WithVariableRegistry(registry *variables.Registry) *EvaluationContext {
+	ctx.variableRegistry = registry
+	return ctx
+}
+
 // * CheckLimits verifies execution limits haven't been exceeded
 func (ctx *EvaluationContext) CheckLimits() error {
 	// Check context cancellation
@@ -111,7 +118,13 @@ func (ctx *EvaluationContext) ResolveVariable(name string) (any, error) {
 	}
 
 	// Get variable from registry
-	varDef, err := variables.Get(name)
+	var varDef variables.Variable
+	var err error
+	if ctx.variableRegistry != nil {
+		varDef, err = ctx.variableRegistry.Get(name)
+	} else {
+		varDef, err = variables.Get(name)
+	}
 	if err != nil {
 		return nil, errors.NewVariableError(name, "resolve", err)
 	}

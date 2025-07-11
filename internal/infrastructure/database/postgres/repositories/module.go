@@ -52,4 +52,5 @@ var Module = fx.Module("postgres-repositories", fx.Provide(
 	NewNotificationPreferenceRepository,
 	NewConsolidationRepository,
 	NewConsolidationSettingRepository,
+	NewFormulaTemplateRepository,
 ))

@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/favorite"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcode"
+	"github.com/emoss08/trenova/internal/api/handlers/formula"
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/api/handlers/integration"
@@ -102,6 +103,7 @@ type RouterParams struct {
 	WorkerHandler                  *worker.Handler
 	TableConfigurationHandler      *tableconfiguration.Handler
 	FleetCodeHandler               *fleetcode.Handler
+	FormulaHandler                 *formula.Handler
 	DocumentQualityConfigHandler   *documentqualityconfig.Handler
 	EquipmentTypeHandler           *equipmenttype.Handler
 	EquipmentManufacturerHandler   *equipmentmanufacturer.Handler
@@ -213,10 +215,10 @@ func (r *Router) setupMiddleware() {
 }
 
 // setupProtectedRoutes configures the protected routes
-func (r *Router) setupProtectedRoutes(
+func (r *Router) setupProtectedRoutes( //nolint:funlen // this is to setup protected routes
 	router fiber.Router,
 	rl *middleware.RateLimiter,
-) { //nolint:funlen // we need to keep this function long
+) {
 	router.Use(middleware.NewAuthMiddleware(middleware.AuthMiddlewareParams{
 		Logger: r.p.Logger,
 		Config: r.cfg,
@@ -247,6 +249,9 @@ func (r *Router) setupProtectedRoutes(
 
 	// Fleet Codes
 	r.p.FleetCodeHandler.RegisterRoutes(router, rl)
+
+	// Formulas
+	r.p.FormulaHandler.RegisterRoutes(router, rl)
 
 	// Document Quality Configs
 	r.p.DocumentQualityConfigHandler.RegisterRoutes(router, rl)

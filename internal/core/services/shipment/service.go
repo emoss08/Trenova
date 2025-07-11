@@ -241,7 +241,7 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	createdEntity, err := s.repo.Create(ctx, shp)
+	createdEntity, err := s.repo.Create(ctx, shp, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -332,7 +332,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	updatedEntity, err := s.repo.Update(ctx, shp)
+	updatedEntity, err := s.repo.Update(ctx, shp, userID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update shipment")
 		return nil, err
@@ -739,7 +739,9 @@ func (s *Service) MarkReadyToBill(
 }
 
 func (s *Service) CalculateShipmentTotals(
+	ctx context.Context,
 	shp *shipment.Shipment,
+	userID pulid.ID,
 ) (*repositories.ShipmentTotalsResponse, error) {
 	log := s.l.With().Str("operation", "CalculateShipmentTotals").Logger()
 
@@ -752,7 +754,7 @@ func (s *Service) CalculateShipmentTotals(
 	// accessing or mutating any stored resources. If that ever changes, a
 	// read permission check similar to the one in List/Get can be added.
 
-	resp, err := s.repo.CalculateShipmentTotals(shp)
+	resp, err := s.repo.CalculateShipmentTotals(ctx, shp, userID)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to calculate shipment totals")
 		return nil, err

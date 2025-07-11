@@ -24,6 +24,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/favorite"
 	"github.com/emoss08/trenova/internal/api/handlers/fleetcode"
+	"github.com/emoss08/trenova/internal/api/handlers/formula"
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/api/handlers/integration"
@@ -109,4 +110,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	notification.NewHandler,
 	handlers.NewMetricsHandler,
 	consolidationsetting.NewHandler,
+	formula.NewHandler,
 ))
