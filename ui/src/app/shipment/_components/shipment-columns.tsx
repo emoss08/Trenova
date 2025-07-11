@@ -49,7 +49,6 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
         filterType: "text",
         defaultFilterOperator: "contains",
       },
-      enableHiding: false,
     },
     {
       accessorKey: "customer",
@@ -84,6 +83,7 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
     },
     {
       id: "originLocation",
+      accessorKey: "originLocation",
       header: "Origin Location",
       cell: ({ row }) => {
         const { customer } = row.original;
@@ -125,7 +125,7 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
       },
     },
     {
-      id: "originPickup",
+      id: "originPlannedArrival",
       accessorKey: "originPickup",
       header: "Origin Date",
       cell: ({ row }) => {
@@ -142,6 +142,7 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
     },
     {
       id: "destinationLocation",
+      accessorKey: "destinationLocation",
       header: "Destination Location",
       cell: ({ row }) => {
         const { customer } = row.original;
@@ -183,7 +184,7 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
       },
     },
     {
-      id: "destinationPickup",
+      id: "destinationPlannedArrival",
       accessorKey: "destinationPickup",
       header: "Destination Date",
       cell: ({ row }) => {
