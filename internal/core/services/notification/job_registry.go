@@ -13,6 +13,9 @@ type JobNotificationConfig struct {
 	TitleTemplate   string
 	MessageTemplate string
 	Tags            []string
+	// _ Override flags for custom message formatting
+	UseCustomTitle   bool
+	UseCustomMessage bool
 }
 
 // JobNotificationRegistry maps job types to their notification configurations
@@ -34,12 +37,14 @@ var JobNotificationRegistry = map[string]*JobNotificationConfig{
 		Tags:            []string{"job", "analysis", "patterns"},
 	},
 	"delay_shipment": {
-		EventType:       notification.EventJobShipmentDelay,
-		Priority:        notification.PriorityMedium,
-		FailurePriority: notification.PriorityHigh,
-		TitleTemplate:   "Shipment Delay %s",
-		MessageTemplate: "Shipment delay job %s has %s: %s",
-		Tags:            []string{"job", "shipment", "delay"},
+		EventType:        notification.EventJobShipmentDelay,
+		Priority:         notification.PriorityMedium,
+		FailurePriority:  notification.PriorityHigh,
+		TitleTemplate:    "Shipment Delay Notice!",
+		MessageTemplate:  "%s",
+		Tags:             []string{"job", "shipment", "delay"},
+		UseCustomTitle:   true,
+		UseCustomMessage: true,
 	},
 	"compliance_check": {
 		EventType:       notification.EventJobComplianceCheck,
@@ -107,6 +112,11 @@ func GetTitle(jobType string, success bool) string {
 		return "Job Failed"
 	}
 
+	// _ Check if custom title is enabled
+	if config.UseCustomTitle {
+		return config.TitleTemplate
+	}
+
 	status := "Completed"
 	if !success {
 		status = "Failed"
@@ -124,6 +134,12 @@ func GetMessage(success bool, jobType, jobID, result string) string {
 			status = "failed"
 		}
 		return fmt.Sprintf("Job %s (%s) has %s: %s", jobID, jobType, status, result)
+	}
+
+	// _ Check if custom message is enabled
+	if config.UseCustomMessage {
+		// ! For custom messages, only use the result directly
+		return fmt.Sprintf(config.MessageTemplate, result)
 	}
 
 	status := "completed successfully"

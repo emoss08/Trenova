@@ -75,7 +75,7 @@ var Module = fx.Module(
 // In your shipment service
 type ShipmentServiceParams struct {
     fx.In
-    
+
     // ... existing dependencies
     ShipmentTrigger triggers.ShipmentTriggerInterface
 }
@@ -83,13 +83,13 @@ type ShipmentServiceParams struct {
 // In shipment creation method
 func (ss *ShipmentService) Create(ctx context.Context, shipment *shipment.Shipment) error {
     // ... create shipment logic
-    
+
     // Trigger background pattern analysis
     if err := ss.shipmentTrigger.OnShipmentCreated(ctx, shipment); err != nil {
         // Log error but don't fail shipment creation
         ss.logger.Error().Err(err).Msg("failed to trigger pattern analysis")
     }
-    
+
     return nil
 }
 ```
@@ -99,11 +99,11 @@ func (ss *ShipmentService) Create(ctx context.Context, shipment *shipment.Shipme
 ```go
 // Trigger analysis for specific customer
 err := shipmentTrigger.TriggerPatternAnalysisForCustomer(
-    ctx, 
-    customerID, 
-    orgID, 
-    buID, 
-    userID, 
+    ctx,
+    customerID,
+    orgID,
+    buID,
+    userID,
     "manual_trigger"
 )
 ```
@@ -136,6 +136,44 @@ err := shipmentTrigger.TriggerPatternAnalysisForCustomer(
 - Configurable max retries per job type
 - Dead letter queue for failed jobs
 
+### Job Notifications
+
+The job system automatically generates notifications for job completions and failures. Notifications can be customized per job type.
+
+#### Default Notification Behavior
+
+By default, notifications use templated messages:
+
+- **Title**: `"Job Type Completed"` or `"Job Type Failed"`
+- **Message**: `"Job type job {jobID} has completed successfully: {result}"`
+
+#### Custom Notification Messages
+
+For jobs that need specific notification formats, you can enable custom messages in the `JobNotificationConfig`:
+
+```go
+// In job_registry.go
+"delay_shipment": {
+    EventType:        notification.EventJobShipmentDelay,
+    Priority:         notification.PriorityMedium,
+    FailurePriority:  notification.PriorityHigh,
+    TitleTemplate:    "Shipment Delay Notice!",  // Custom static title
+    MessageTemplate:  "%s",                       // Only show the result
+    Tags:             []string{"job", "shipment", "delay"},
+    UseCustomTitle:   true,    // Enable custom title (no status suffix)
+    UseCustomMessage: true,    // Enable custom message (only result shown)
+},
+```
+
+When `UseCustomTitle` is `true`:
+
+- The title will be exactly what's in `TitleTemplate` without appending status
+
+When `UseCustomMessage` is `true`:
+
+- The message will only format with the job result, not the job ID or status
+- This is useful when the job result already contains all necessary information
+
 ## Monitoring
 
 ### Asynq Web UI
@@ -156,7 +194,7 @@ Access job monitoring at: `http://localhost:8080` (when running Asynq web UI)
 When a user creates shipments:
 
 ```
-User creates shipment → ShipmentTrigger.OnShipmentCreated() 
+User creates shipment → ShipmentTrigger.OnShipmentCreated()
 → Schedules pattern analysis job (30s delay)
 → PatternAnalysisHandler processes job
 → Creates dedicated lane suggestions if patterns found
@@ -238,7 +276,7 @@ import (
 
 type YourJobHandlerParams struct {
     fx.In
-    
+
     Logger *logger.Logger
     // Add your dependencies here
 }
@@ -252,7 +290,7 @@ func NewYourJobHandler(p YourJobHandlerParams) jobs.JobHandler {
     log := p.Logger.With().
         Str("handler", "your_job").
         Logger()
-    
+
     return &YourJobHandler{
         l: &log,
     }
@@ -263,9 +301,9 @@ func (h *YourJobHandler) ProcessTask(ctx context.Context, task *asynq.Task) erro
     if err := jobs.UnmarshalPayload(task.Payload(), &payload); err != nil {
         return err
     }
-    
+
     // Implement your job logic here
-    
+
     return nil
 }
 
@@ -283,7 +321,7 @@ var Module = fx.Module(
     "jobs",
     fx.Provide(
         // ... existing providers
-        
+
         // Add your handler
         fx.Annotate(
             handlers.NewYourJobHandler,
@@ -336,10 +374,10 @@ func (js *JobService) ScheduleYourJob(
     if opts == nil {
         opts = YourJobOptions()
     }
-    
+
     payload.JobID = pulid.MustNew("job_").String()
     payload.Timestamp = timeutils.NowUnix()
-    
+
     return js.Enqueue(JobTypeYourNewJob, payload, opts)
 }
 ```
@@ -354,12 +392,12 @@ func (cs *CronScheduler) ScheduleYourRecurringJob() error {
         string(jobs.JobTypeYourNewJob),
         cs.createYourJobPayload(),
     )
-    
+
     entryID, err := cs.scheduler.Register("@every 5m", task,
         asynq.Queue(jobs.QueueShipment), // MUST match handler's queue!
         asynq.MaxRetry(2),
     )
-    
+
     // Don't forget to call this in Start()
     return err
 }
