@@ -45,6 +45,80 @@ func TestBuiltinFunctions(t *testing.T) {
 			args:      []any{},
 			wantError: true,
 		},
+		
+		// Advanced math functions
+		{
+			name:     "log natural",
+			function: "log",
+			args:     []any{math.E},
+			want:     1.0,
+		},
+		{
+			name:     "log base 10",
+			function: "log",
+			args:     []any{100.0, 10.0},
+			want:     2.0,
+		},
+		{
+			name:      "log negative",
+			function:  "log",
+			args:      []any{-1.0},
+			wantError: true,
+		},
+		{
+			name:      "log zero base",
+			function:  "log",
+			args:      []any{10.0, 0.0},
+			wantError: true,
+		},
+		{
+			name:      "log base 1",
+			function:  "log",
+			args:      []any{10.0, 1.0},
+			wantError: true,
+		},
+		{
+			name:     "exp of 0",
+			function: "exp",
+			args:     []any{0.0},
+			want:     1.0,
+		},
+		{
+			name:     "exp of 1",
+			function: "exp",
+			args:     []any{1.0},
+			want:     math.E,
+		},
+		{
+			name:     "sin of 0",
+			function: "sin",
+			args:     []any{0.0},
+			want:     0.0,
+		},
+		{
+			name:     "sin of pi/2",
+			function: "sin",
+			args:     []any{math.Pi / 2},
+			want:     1.0,
+		},
+		{
+			name:     "cos of 0",
+			function: "cos",
+			args:     []any{0.0},
+			want:     1.0,
+		},
+		{
+			name:     "cos of pi",
+			function: "cos",
+			args:     []any{math.Pi},
+			want:     -1.0,
+		},
+		{
+			name:     "tan of 0",
+			function: "tan",
+			args:     []any{0.0},
+			want:     0.0,
+		},
 		{
 			name:     "min two args",
 			function: "min",
@@ -235,6 +309,92 @@ func TestBuiltinFunctions(t *testing.T) {
 			args:      []any{[]any{}},
 			wantError: true,
 		},
+		
+		// Array manipulation functions
+		{
+			name:     "slice array middle",
+			function: "slice",
+			args:     []any{[]any{10.0, 20.0, 30.0, 40.0, 50.0}, 1.0, 4.0},
+			want:     []any{20.0, 30.0, 40.0},
+		},
+		{
+			name:     "slice array negative indices",
+			function: "slice",
+			args:     []any{[]any{10.0, 20.0, 30.0, 40.0, 50.0}, -3.0, -1.0},
+			want:     []any{30.0, 40.0},
+		},
+		{
+			name:     "slice string",
+			function: "slice",
+			args:     []any{"hello world", 6.0, 11.0},
+			want:     "world",
+		},
+		{
+			name:     "concat arrays",
+			function: "concat",
+			args:     []any{[]any{1.0, 2.0}, []any{3.0, 4.0}, []any{5.0}},
+			want:     []any{1.0, 2.0, 3.0, 4.0, 5.0},
+		},
+		{
+			name:     "concat strings",
+			function: "concat",
+			args:     []any{"hello", " ", "world"},
+			want:     "hello world",
+		},
+		{
+			name:     "concat mixed",
+			function: "concat",
+			args:     []any{[]any{1.0}, 2.0, []any{3.0, 4.0}},
+			want:     []any{1.0, 2.0, 3.0, 4.0},
+		},
+		{
+			name:     "contains array true",
+			function: "contains",
+			args:     []any{[]any{10.0, 20.0, 30.0}, 20.0},
+			want:     true,
+		},
+		{
+			name:     "contains array false",
+			function: "contains",
+			args:     []any{[]any{10.0, 20.0, 30.0}, 40.0},
+			want:     false,
+		},
+		{
+			name:     "contains string true",
+			function: "contains",
+			args:     []any{"hello world", "world"},
+			want:     true,
+		},
+		{
+			name:     "contains string false",
+			function: "contains",
+			args:     []any{"hello world", "goodbye"},
+			want:     false,
+		},
+		{
+			name:     "indexOf array found",
+			function: "indexOf",
+			args:     []any{[]any{10.0, 20.0, 30.0}, 20.0},
+			want:     1.0,
+		},
+		{
+			name:     "indexOf array not found",
+			function: "indexOf",
+			args:     []any{[]any{10.0, 20.0, 30.0}, 40.0},
+			want:     -1.0,
+		},
+		{
+			name:     "indexOf string found",
+			function: "indexOf",
+			args:     []any{"hello world", "world"},
+			want:     6.0,
+		},
+		{
+			name:     "indexOf string not found",
+			function: "indexOf",
+			args:     []any{"hello world", "goodbye"},
+			want:     -1.0,
+		},
 
 		// Conditional functions
 		{
@@ -347,8 +507,9 @@ func TestFunctionRegistry(t *testing.T) {
 	// Test that we have the expected number of built-in functions
 	expectedFunctions := []string{
 		"abs", "min", "max", "round", "floor", "ceil", "sqrt", "pow",
+		"log", "exp", "sin", "cos", "tan",
 		"number", "string", "bool",
-		"len", "sum", "avg",
+		"len", "sum", "avg", "slice", "concat", "contains", "indexOf",
 		"if", "coalesce",
 	}
 

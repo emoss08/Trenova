@@ -341,6 +341,71 @@ func (n *ArrayNode) Complexity() int {
 	return complexity
 }
 
+// * IndexNode represents array indexing operation
+type IndexNode struct {
+	Array Node
+	Index Node
+}
+
+func (n *IndexNode) Evaluate(ctx *EvaluationContext) (any, error) {
+	if err := ctx.CheckLimits(); err != nil {
+		return nil, err
+	}
+
+	// Evaluate the array
+	arrayVal, err := n.Array.Evaluate(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Evaluate the index
+	indexVal, err := n.Index.Evaluate(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	// Convert index to integer
+	idx, ok := indexVal.(float64)
+	if !ok {
+		return nil, fmt.Errorf("array index must be a number, got %T", indexVal)
+	}
+
+	intIdx := int(idx)
+	if float64(intIdx) != idx {
+		return nil, fmt.Errorf("array index must be an integer, got %v", idx)
+	}
+
+	// Handle array indexing
+	switch arr := arrayVal.(type) {
+	case []any:
+		if intIdx < 0 || intIdx >= len(arr) {
+			return nil, fmt.Errorf("array index out of bounds: %d (array length: %d)", intIdx, len(arr))
+		}
+		return arr[intIdx], nil
+	case string:
+		// Support string indexing
+		runes := []rune(arr)
+		if intIdx < 0 || intIdx >= len(runes) {
+			return nil, fmt.Errorf("string index out of bounds: %d (string length: %d)", intIdx, len(runes))
+		}
+		return string(runes[intIdx]), nil
+	default:
+		return nil, fmt.Errorf("cannot index %T", arrayVal)
+	}
+}
+
+func (n *IndexNode) Type() formula.ValueType {
+	return formula.ValueTypeAny // Type depends on array content
+}
+
+func (n *IndexNode) String() string {
+	return fmt.Sprintf("%s[%s]", n.Array.String(), n.Index.String())
+}
+
+func (n *IndexNode) Complexity() int {
+	return n.Array.Complexity() + n.Index.Complexity() + 1
+}
+
 // * Node pool for reusing AST nodes
 var (
 	numberNodePool = sync.Pool{
@@ -369,6 +434,9 @@ var (
 	}
 	arrayNodePool = sync.Pool{
 		New: func() any { return &ArrayNode{} },
+	}
+	indexNodePool = sync.Pool{
+		New: func() any { return &IndexNode{} },
 	}
 )
 

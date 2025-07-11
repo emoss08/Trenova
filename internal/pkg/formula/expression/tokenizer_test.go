@@ -73,6 +73,34 @@ func TestTokenizer_Tokenize(t *testing.T) {
 			},
 		},
 		
+		// Array brackets
+		{
+			name:  "array literals",
+			input: "[1, 2, 3]",
+			want: []TokenType{
+				TokenLeftBracket, TokenNumber, TokenComma,
+				TokenNumber, TokenComma, TokenNumber,
+				TokenRightBracket, TokenEOF,
+			},
+		},
+		{
+			name:  "array indexing",
+			input: "arr[0]",
+			want: []TokenType{
+				TokenIdentifier, TokenLeftBracket,
+				TokenNumber, TokenRightBracket, TokenEOF,
+			},
+		},
+		{
+			name:  "nested arrays",
+			input: "[[1, 2], [3, 4]]",
+			want: []TokenType{
+				TokenLeftBracket, TokenLeftBracket, TokenNumber, TokenComma, TokenNumber, TokenRightBracket,
+				TokenComma, TokenLeftBracket, TokenNumber, TokenComma, TokenNumber, TokenRightBracket,
+				TokenRightBracket, TokenEOF,
+			},
+		},
+		
 		// Numbers
 		{
 			name:  "integer",

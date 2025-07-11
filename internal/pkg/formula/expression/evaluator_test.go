@@ -11,12 +11,15 @@ func TestEvaluator_Evaluate(t *testing.T) {
 	// Create mock variable context
 	mockVarCtx := &mockVariableContext{
 		fields: map[string]any{
-			"distance":     100.0,
-			"weight":       500.0,
-			"base_rate":    2.5,
-			"has_hazmat":   true,
-			"temperature":  -10.0,
+			"distance":       100.0,
+			"weight":         500.0,
+			"base_rate":      2.5,
+			"has_hazmat":     true,
+			"temperature":    -10.0,
 			"equipment_type": "Reefer",
+			"prices":         []any{10.5, 20.0, 30.75},
+			"matrix":         []any{[]any{1.0, 2.0}, []any{3.0, 4.0}},
+			"index":          1.0,
 		},
 	}
 
@@ -152,6 +155,41 @@ func TestEvaluator_Evaluate(t *testing.T) {
 			name: "nested functions",
 			expr: "max(abs(-5), min(10, 20))",
 			want: 10.0,
+		},
+
+		// Array operations
+		{
+			name: "array literal",
+			expr: "[1, 2, 3]",
+			want: 0.0,
+			wantError: true, // Arrays not numeric
+		},
+		{
+			name: "array indexing",
+			expr: "[10, 20, 30][1]",
+			want: 20.0,
+		},
+		{
+			name: "variable array indexing",
+			expr: "prices[1]",
+			want: 20.0,
+			wantError: true, // Variables not registered
+		},
+		{
+			name: "nested array indexing",
+			expr: "[[1, 2], [3, 4]][1][0]",
+			want: 3.0,
+		},
+		{
+			name: "computed index",
+			expr: "[10, 20, 30][1 + 1]",
+			want: 30.0,
+		},
+		{
+			name: "string indexing",
+			expr: `"hello"[1]`,
+			want: 0.0,
+			wantError: true, // Would return "e" which is not numeric
 		},
 
 		// String concatenation (would fail - expressions must return numeric)
