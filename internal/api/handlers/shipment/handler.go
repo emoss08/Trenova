@@ -431,7 +431,7 @@ func (h *Handler) calculateTotals(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	resp, err := h.ss.CalculateShipmentTotals(shp)
+	resp, err := h.ss.CalculateShipmentTotals(c.UserContext(), shp, reqCtx.UserID)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
