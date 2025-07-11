@@ -140,7 +140,12 @@ func parseBounds(region string) (*graph.Bounds, error) {
 	}, nil
 }
 
-func getBoundsForZip(ctx context.Context, st *storage.PostgresStorage, zipCode string, radiusMiles float64) (*graph.Bounds, error) {
+func getBoundsForZip(
+	ctx context.Context,
+	st *storage.PostgresStorage,
+	zipCode string,
+	radiusMiles float64,
+) (*graph.Bounds, error) {
 	// _ Get the node associated with the zip code
 	node, err := st.GetNodeForZip(ctx, zipCode)
 	if err != nil {
@@ -160,7 +165,12 @@ func getBoundsForZip(ctx context.Context, st *storage.PostgresStorage, zipCode s
 	}, nil
 }
 
-func generateDotFile(ctx context.Context, st *storage.PostgresStorage, bounds *graph.Bounds, maxNodes int) (string, error) {
+func generateDotFile(
+	ctx context.Context,
+	st *storage.PostgresStorage,
+	bounds *graph.Bounds,
+	maxNodes int,
+) (string, error) {
 	// _ Create temporary DOT file
 	tmpFile, err := os.CreateTemp("", "graph-*.dot")
 	if err != nil {
@@ -178,7 +188,14 @@ func generateDotFile(ctx context.Context, st *storage.PostgresStorage, bounds *g
 	fmt.Fprintln(tmpFile)
 
 	// _ Load nodes within bounds
-	nodes, err := st.GetNodesInBounds(ctx, bounds.MinLat, bounds.MinLon, bounds.MaxLat, bounds.MaxLon, maxNodes)
+	nodes, err := st.GetNodesInBounds(
+		ctx,
+		bounds.MinLat,
+		bounds.MinLon,
+		bounds.MaxLat,
+		bounds.MaxLon,
+		maxNodes,
+	)
 	if err != nil {
 		return "", fmt.Errorf("loading nodes: %w", err)
 	}

@@ -73,11 +73,13 @@ func TestReadWriteSeparation(t *testing.T) {
 
 	t.Run("GetByID operations should use read connection", func(t *testing.T) {
 		// * Create a fresh repository to avoid connection caching
-		freshRepo := postgresrepos.NewEquipmentTypeRepository(postgresrepos.EquipmentTypeRespositoryParams{
-			DB:     mockConn,
-			Logger: log,
-		})
-		
+		freshRepo := postgresrepos.NewEquipmentTypeRepository(
+			postgresrepos.EquipmentTypeRespositoryParams{
+				DB:     mockConn,
+				Logger: log,
+			},
+		)
+
 		// * Reset counters
 		mockConn.ResetCounters()
 
@@ -126,11 +128,13 @@ func TestReadWriteSeparation(t *testing.T) {
 
 	t.Run("Replica failure should fall back to write connection", func(t *testing.T) {
 		// * Create a fresh repository to avoid connection caching
-		freshRepo := postgresrepos.NewEquipmentTypeRepository(postgresrepos.EquipmentTypeRespositoryParams{
-			DB:     mockConn,
-			Logger: log,
-		})
-		
+		freshRepo := postgresrepos.NewEquipmentTypeRepository(
+			postgresrepos.EquipmentTypeRespositoryParams{
+				DB:     mockConn,
+				Logger: log,
+			},
+		)
+
 		// * Simulate all replicas being unhealthy
 		mockConn.SimulateReplicaFailure(true)
 		mockConn.ResetCounters()

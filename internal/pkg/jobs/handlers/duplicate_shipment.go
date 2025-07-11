@@ -50,7 +50,10 @@ func (dsh *DuplicateShipmentHandler) JobType() jobs.JobType {
 	return jobs.JobTypeDuplicateShipment
 }
 
-func (dsh *DuplicateShipmentHandler) ProcessTask(ctx context.Context, task *asynq.Task) error {
+func (dsh *DuplicateShipmentHandler) ProcessTask( //nolint:funlen // we need to keep this function long
+	ctx context.Context,
+	task *asynq.Task,
+) error {
 	jobStartTime := time.Now()
 
 	log := dsh.l.With().

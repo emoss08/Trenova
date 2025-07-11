@@ -39,7 +39,7 @@ func NewProducer(config ProducerConfig, logger zerolog.Logger) *Producer {
 		Async:        config.Async,
 		RequiredAcks: kafka.RequireOne,
 	}
-	
+
 	// Set up compression
 	switch config.Compression {
 	case "gzip":
@@ -60,17 +60,17 @@ func NewProducer(config ProducerConfig, logger zerolog.Logger) *Producer {
 
 // RouteCalculatedEvent represents a route calculation event
 type RouteCalculatedEvent struct {
-	EventID            string                 `json:"event_id"`
-	Timestamp          time.Time              `json:"timestamp"`
-	OriginZip          string                 `json:"origin_zip"`
-	DestZip            string                 `json:"dest_zip"`
-	VehicleType        string                 `json:"vehicle_type"`
-	DistanceMiles      float64                `json:"distance_miles"`
-	TimeMinutes        float64                `json:"time_minutes"`
-	Algorithm          string                 `json:"algorithm"`
-	OptimizationType   string                 `json:"optimization_type"`
-	ComputeTimeMS      int64                  `json:"compute_time_ms"`
-	CacheHit           bool                   `json:"cache_hit"`
+	EventID             string                 `json:"event_id"`
+	Timestamp           time.Time              `json:"timestamp"`
+	OriginZip           string                 `json:"origin_zip"`
+	DestZip             string                 `json:"dest_zip"`
+	VehicleType         string                 `json:"vehicle_type"`
+	DistanceMiles       float64                `json:"distance_miles"`
+	TimeMinutes         float64                `json:"time_minutes"`
+	Algorithm           string                 `json:"algorithm"`
+	OptimizationType    string                 `json:"optimization_type"`
+	ComputeTimeMS       int64                  `json:"compute_time_ms"`
+	CacheHit            bool                   `json:"cache_hit"`
 	RestrictionsApplied map[string]interface{} `json:"restrictions_applied,omitempty"`
 }
 
@@ -122,9 +122,9 @@ func (p *Producer) PublishRouteCalculated(ctx context.Context, event RouteCalcul
 
 // BatchCalculationRequest represents a batch route calculation request
 type BatchCalculationRequest struct {
-	BatchID     string        `json:"batch_id"`
-	Timestamp   time.Time     `json:"timestamp"`
-	CallbackURL string        `json:"callback_url"`
+	BatchID     string         `json:"batch_id"`
+	Timestamp   time.Time      `json:"timestamp"`
+	CallbackURL string         `json:"callback_url"`
 	Routes      []RouteRequest `json:"routes"`
 }
 

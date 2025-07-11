@@ -19,13 +19,13 @@ type Consumer struct {
 
 // ConsumerConfig contains configuration for Kafka consumer
 type ConsumerConfig struct {
-	Brokers       []string
-	Topic         string
-	GroupID       string
-	MinBytes      int
-	MaxBytes      int
-	MaxWait       time.Duration
-	StartOffset   int64
+	Brokers        []string
+	Topic          string
+	GroupID        string
+	MinBytes       int
+	MaxBytes       int
+	MaxWait        time.Duration
+	StartOffset    int64
 	CommitInterval time.Duration
 }
 
@@ -123,7 +123,10 @@ type BatchProcessor interface {
 }
 
 // NewBatchProcessorHandler creates a new batch processor handler
-func NewBatchProcessorHandler(processor BatchProcessor, logger zerolog.Logger) *BatchProcessorHandler {
+func NewBatchProcessorHandler(
+	processor BatchProcessor,
+	logger zerolog.Logger,
+) *BatchProcessorHandler {
 	return &BatchProcessorHandler{
 		logger:    logger,
 		processor: processor,
@@ -159,16 +162,16 @@ type GraphUpdater interface {
 
 // OSMUpdate represents an OSM data update
 type OSMUpdate struct {
-	UpdateID      string    `json:"update_id"`
-	Timestamp     time.Time `json:"timestamp"`
-	Region        string    `json:"region"`
-	BBox          BoundingBox `json:"bbox"`
-	NodesAdded    int       `json:"nodes_added"`
-	NodesUpdated  int       `json:"nodes_updated"`
-	NodesDeleted  int       `json:"nodes_deleted"`
-	EdgesAdded    int       `json:"edges_added"`
-	EdgesUpdated  int       `json:"edges_updated"`
-	EdgesDeleted  int       `json:"edges_deleted"`
+	UpdateID     string      `json:"update_id"`
+	Timestamp    time.Time   `json:"timestamp"`
+	Region       string      `json:"region"`
+	BBox         BoundingBox `json:"bbox"`
+	NodesAdded   int         `json:"nodes_added"`
+	NodesUpdated int         `json:"nodes_updated"`
+	NodesDeleted int         `json:"nodes_deleted"`
+	EdgesAdded   int         `json:"edges_added"`
+	EdgesUpdated int         `json:"edges_updated"`
+	EdgesDeleted int         `json:"edges_deleted"`
 }
 
 // BoundingBox represents a geographic bounding box
@@ -181,11 +184,11 @@ type BoundingBox struct {
 
 // RestrictionUpdate represents a truck restriction update
 type RestrictionUpdate struct {
-	UpdateID         string       `json:"update_id"`
-	Timestamp        time.Time    `json:"timestamp"`
-	RestrictionType  string       `json:"restriction_type"`
-	EdgeIDs          []int64      `json:"edge_ids"`
-	Restriction      Restriction  `json:"restriction"`
+	UpdateID        string      `json:"update_id"`
+	Timestamp       time.Time   `json:"timestamp"`
+	RestrictionType string      `json:"restriction_type"`
+	EdgeIDs         []int64     `json:"edge_ids"`
+	Restriction     Restriction `json:"restriction"`
 }
 
 // Restriction represents a specific restriction

@@ -28,7 +28,11 @@ func NewRouter(graph *Graph) *Router {
 }
 
 // FindRoute finds a route between two nodes with the given options
-func (r *Router) FindRoute(ctx context.Context, startID, endID int64, opts PathOptions) (*PathResult, error) {
+func (r *Router) FindRoute(
+	ctx context.Context,
+	startID, endID int64,
+	opts PathOptions,
+) (*PathResult, error) {
 	// _ Set defaults
 	if opts.MaxSearchNodes == 0 {
 		opts.MaxSearchNodes = 100000 // Default limit
@@ -60,7 +64,11 @@ func (r *Router) FindRoute(ctx context.Context, startID, endID int64, opts PathO
 }
 
 // GetRouteVisualization returns a route with visualization data
-func (r *Router) GetRouteVisualization(ctx context.Context, startID, endID int64, opts PathOptions) (*RouteVisualization, error) {
+func (r *Router) GetRouteVisualization(
+	ctx context.Context,
+	startID, endID int64,
+	opts PathOptions,
+) (*RouteVisualization, error) {
 	// _ Find the route
 	result, err := r.FindRoute(ctx, startID, endID, opts)
 	if err != nil {
@@ -112,7 +120,11 @@ type aStarPathFinder struct {
 	graph *Graph
 }
 
-func (a *aStarPathFinder) FindPath(ctx context.Context, startID, endID int64, opts PathOptions) (*PathResult, error) {
+func (a *aStarPathFinder) FindPath(
+	ctx context.Context,
+	startID, endID int64,
+	opts PathOptions,
+) (*PathResult, error) {
 	start := time.Now()
 
 	// _ Create a context-aware version of A*
@@ -146,7 +158,11 @@ type bidirectionalAStarPathFinder struct {
 	graph *Graph
 }
 
-func (b *bidirectionalAStarPathFinder) FindPath(ctx context.Context, startID, endID int64, opts PathOptions) (*PathResult, error) {
+func (b *bidirectionalAStarPathFinder) FindPath(
+	ctx context.Context,
+	startID, endID int64,
+	opts PathOptions,
+) (*PathResult, error) {
 	start := time.Now()
 
 	// _ Create a context-aware version

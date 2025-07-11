@@ -267,8 +267,6 @@ func (rl *RateLimiter) handleRateLimitError(
 	return c.Next() // Allow request on error for high availability
 }
 
-
-
 // setRateLimitHeaders sets the rate limit headers in the response
 func (rl *RateLimiter) setRateLimitHeaders(
 	c *fiber.Ctx,
@@ -309,52 +307,6 @@ func (rl *RateLimiter) handleRateLimitExceeded(
 
 	rlErr := errors.NewRateLimitError(c.Path(), "Rate limit exceeded. Please try again later.")
 	return c.Status(fiber.StatusTooManyRequests).JSON(rlErr)
-}
-
-// resetCounter resets the rate limit counter based on the strategy
-func (rl *RateLimiter) resetCounter(ctx context.Context, key, strategy string) error {
-	var err error
-	switch strategy {
-	case "sliding":
-		// For sliding window, just delete the key
-		err = rl.redis.Del(ctx, key)
-	case "token":
-		// For token bucket, reset to full bucket size
-		if err = rl.redis.Del(ctx, key); err != nil {
-			return err
-		}
-		err = rl.redis.Del(ctx, key+":timestamp")
-	default:
-		// For fixed window, delete the new hash key and old keys for migration
-		if err = rl.redis.Del(ctx, key+":data"); err != nil {
-			return err
-		}
-		// Clean up old format keys if they exist
-		rl.redis.Del(ctx, key, key+":window")
-	}
-
-	if err != nil {
-		rl.l.Error().Err(err).Str("key", key).Msg("failed to reset counter")
-	}
-
-	return err
-}
-
-
-// deleteRedisKeyHandlingCircuitBreaker attempts to delete a Redis key and handles circuit breaker errors.
-func (rl *RateLimiter) deleteRedisKeyHandlingCircuitBreaker(
-	ctx context.Context,
-	key, errMsgOnFailure string,
-) error {
-	if err := rl.redis.Del(ctx, key); err != nil {
-		// If circuit breaker is open, ignore cleanup errors
-		if strings.Contains(err.Error(), "circuit breaker is open") {
-			rl.l.Debug().Str("key", key).Msg("skipping key cleanup due to circuit breaker")
-			return nil // Treat as success or non-critical failure
-		}
-		return eris.Wrap(err, errMsgOnFailure)
-	}
-	return nil
 }
 
 // defaultKeyGenerator generates a unique Redis key for the rate limit
@@ -643,7 +595,7 @@ func (rl *RateLimiter) getIP(c *fiber.Ctx) string {
 func (rl *RateLimiter) ClearRateLimits(ctx context.Context, keyPattern string) error {
 	// Use SCAN to find all matching keys (including new :data suffix)
 	patterns := []string{keyPattern + "*", keyPattern + "*:data"}
-	
+
 	for _, pattern := range patterns {
 		iter := rl.redis.Scan(ctx, 0, pattern, 100).Iterator()
 

@@ -19,17 +19,22 @@ import (
 
 // Handler handles routing API requests
 type Handler struct {
-	storage      *storage.PostgresStorage
-	cache        *redis.Client
-	logger       zerolog.Logger
-	router       *graph.Router
-	metrics      *Metrics
+	storage       *storage.PostgresStorage
+	cache         *redis.Client
+	logger        zerolog.Logger
+	router        *graph.Router
+	metrics       *Metrics
 	kafkaProducer *kafka.Producer
-	mu           sync.RWMutex
+	mu            sync.RWMutex
 }
 
 // NewHandler creates a new API handler
-func NewHandler(storage *storage.PostgresStorage, cache *redis.Client, logger zerolog.Logger, kafkaProducer *kafka.Producer) *Handler {
+func NewHandler(
+	storage *storage.PostgresStorage,
+	cache *redis.Client,
+	logger zerolog.Logger,
+	kafkaProducer *kafka.Producer,
+) *Handler {
 	return &Handler{
 		storage:       storage,
 		cache:         cache,
@@ -54,10 +59,10 @@ var (
 
 // RouteDistanceRequest represents the request for route distance calculation
 type RouteDistanceRequest struct {
-	OriginZip   string `query:"origin_zip" validate:"required,len=5"`
-	DestZip     string `query:"dest_zip" validate:"required,len=5"`
+	OriginZip   string `query:"origin_zip"   validate:"required,len=5"`
+	DestZip     string `query:"dest_zip"     validate:"required,len=5"`
 	VehicleType string `query:"vehicle_type" validate:"omitempty,oneof=truck car"`
-	Visualize   bool   `query:"visualize" validate:"omitempty"`
+	Visualize   bool   `query:"visualize"    validate:"omitempty"`
 }
 
 // RouteDistanceResponse represents the response for route distance calculation
@@ -182,9 +187,12 @@ func (h *Handler) ensureRouter(ctx context.Context) error {
 	return nil
 }
 
-func (h *Handler) calculateRoute(ctx context.Context, req RouteDistanceRequest) (RouteDistanceResponse, error) {
+func (h *Handler) calculateRoute(
+	ctx context.Context,
+	req RouteDistanceRequest,
+) (RouteDistanceResponse, error) {
 	startTime := time.Now()
-	
+
 	// _ Get node IDs for zip codes
 	originNode, err := h.storage.GetNodeIDForZip(ctx, req.OriginZip)
 	if err != nil {
@@ -203,8 +211,8 @@ func (h *Handler) calculateRoute(ctx context.Context, req RouteDistanceRequest) 
 
 	// _ Set up routing options
 	opts := graph.PathOptions{
-		TruckOnly: req.VehicleType == "truck",
-		Algorithm: graph.AlgorithmAStar,
+		TruckOnly:        req.VehicleType == "truck",
+		Algorithm:        graph.AlgorithmAStar,
 		OptimizationType: graph.OptimizeFastest,
 	}
 
@@ -218,7 +226,7 @@ func (h *Handler) calculateRoute(ctx context.Context, req RouteDistanceRequest) 
 	}
 
 	computeTimeMS := time.Since(startTime).Milliseconds()
-	
+
 	h.logger.Info().
 		Float64("compute_seconds", result.ComputeTime).
 		Int("path_nodes", len(result.Path)).
@@ -232,7 +240,7 @@ func (h *Handler) calculateRoute(ctx context.Context, req RouteDistanceRequest) 
 		CalculatedAt:  time.Now(),
 		CacheHit:      false,
 	}
-	
+
 	// _ Publish route calculation event to Kafka
 	if h.kafkaProducer != nil {
 		event := kafka.RouteCalculatedEvent{
@@ -246,7 +254,7 @@ func (h *Handler) calculateRoute(ctx context.Context, req RouteDistanceRequest) 
 			ComputeTimeMS:    computeTimeMS,
 			CacheHit:         false,
 		}
-		
+
 		// _ Publish asynchronously
 		go func() {
 			if err := h.kafkaProducer.PublishRouteCalculated(context.Background(), event); err != nil {
@@ -259,7 +267,10 @@ func (h *Handler) calculateRoute(ctx context.Context, req RouteDistanceRequest) 
 }
 
 // calculateRouteWithVisualization calculates a route and returns visualization data
-func (h *Handler) calculateRouteWithVisualization(ctx context.Context, req RouteDistanceRequest) (interface{}, error) {
+func (h *Handler) calculateRouteWithVisualization(
+	ctx context.Context,
+	req RouteDistanceRequest,
+) (interface{}, error) {
 	// _ Get node IDs for zip codes
 	originNode, err := h.storage.GetNodeIDForZip(ctx, req.OriginZip)
 	if err != nil {
@@ -380,7 +391,7 @@ func getOptimizationTypeString(opt graph.OptimizationType) string {
 // HealthCheck returns the health status of the service
 func (h *Handler) HealthCheck(c *fiber.Ctx) error {
 	ctx := c.Context()
-	
+
 	health := fiber.Map{
 		"status": "healthy",
 		"time":   time.Now(),
@@ -413,7 +424,7 @@ func (h *Handler) HealthCheck(c *fiber.Ctx) error {
 			"status": "healthy",
 		}
 	}
-	
+
 	// _ Check Kafka if configured
 	if h.kafkaProducer != nil {
 		stats := h.kafkaProducer.Stats()
@@ -434,6 +445,6 @@ func (h *Handler) HealthCheck(c *fiber.Ctx) error {
 	if health["status"] == "unhealthy" {
 		return c.Status(fiber.StatusServiceUnavailable).JSON(health)
 	}
-	
+
 	return c.JSON(health)
 }

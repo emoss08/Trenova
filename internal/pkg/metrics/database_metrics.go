@@ -76,7 +76,8 @@ var (
 // RecordDatabaseOperation records a database operation with timing
 func RecordDatabaseOperation(operationType, connectionType string, duration time.Duration) {
 	DatabaseOperationsTotal.WithLabelValues(operationType, connectionType).Inc()
-	DatabaseOperationDuration.WithLabelValues(operationType, connectionType).Observe(duration.Seconds())
+	DatabaseOperationDuration.WithLabelValues(operationType, connectionType).
+		Observe(duration.Seconds())
 }
 
 // RecordConnectionAttempt records a connection attempt

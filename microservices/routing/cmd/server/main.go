@@ -97,10 +97,10 @@ func main() {
 			Async:        viper.GetBool("kafka.producer.async"),
 			Compression:  viper.GetString("kafka.producer.compression"),
 		}
-		
+
 		kafkaProducer = kafka.NewProducer(kafkaConfig, log.Logger)
 		defer kafkaProducer.Close()
-		
+
 		log.Info().
 			Strs("brokers", kafkaConfig.Brokers).
 			Str("topic", kafkaConfig.Topic).

@@ -58,9 +58,9 @@ type ConsumerConfig struct {
 
 // TopicsConfig represents Kafka topic configuration
 type TopicsConfig struct {
-	RouteEvents         string `mapstructure:"route_events"`
-	BatchRequests       string `mapstructure:"batch_requests"`
-	OSMUpdates          string `mapstructure:"osm_updates"`
-	RestrictionUpdates  string `mapstructure:"restriction_updates"`
-	CacheInvalidation   string `mapstructure:"cache_invalidation"`
+	RouteEvents        string `mapstructure:"route_events"`
+	BatchRequests      string `mapstructure:"batch_requests"`
+	OSMUpdates         string `mapstructure:"osm_updates"`
+	RestrictionUpdates string `mapstructure:"restriction_updates"`
+	CacheInvalidation  string `mapstructure:"cache_invalidation"`
 }
