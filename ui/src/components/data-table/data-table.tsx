@@ -213,14 +213,14 @@ export function DataTable<TData extends Record<string, any>>({
       return;
     }
 
-    // Only set column visibility if we have a valid tableConfig and no existing visibility settings
-    if (
-      Object.keys(columnVisibility || {}).length === 0 &&
-      tableConfig.tableConfig?.columnVisibility
-    ) {
+    // * Set column visibility from table configuration
+    if (tableConfig.tableConfig?.columnVisibility) {
+      console.log("Setting column visibility from table configuration.");
       setColumnVisibility(
         tableConfig.tableConfig.columnVisibility as VisibilityState,
       );
+    } else {
+      console.log("No column visibility from table configuration.");
     }
 
     handleFilterChange({
@@ -294,6 +294,9 @@ export function DataTable<TData extends Record<string, any>>({
         return className;
       },
     },
+    debugTable: true,
+    debugHeaders: true,
+    debugColumns: true,
   });
 
   const selectedRow = useMemo(() => {
@@ -382,22 +385,6 @@ export function DataTable<TData extends Record<string, any>>({
   }, [setSearchParams]);
 
   const isCreateModalOpen = Boolean(modalType === "create");
-
-  // const handleRetry = useCallback(() => {
-  //   dataQuery.refetch();
-  // }, [dataQuery]);
-
-  // const handleClearFilters = useCallback(() => {
-  //   handleFilterChange({
-  //     globalSearch: "",
-  //     filters: [],
-  //     sort: defaultSort,
-  //   });
-  // }, [handleFilterChange, defaultSort]);
-
-  // const hasActiveFilters =
-  //   filterState.filters.length > 0 || filterState.globalSearch !== "";
-  // const hasData = (dataQuery.data?.results?.length ?? 0) > 0;
 
   return (
     <DataTableProvider
