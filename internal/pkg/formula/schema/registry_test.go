@@ -88,12 +88,12 @@ func TestSchemaRegistry_RegisterInvalidSchema(t *testing.T) {
 		{
 			name:       "invalid JSON",
 			schemaJSON: `{invalid json`,
-			wantErrMsg: "invalid schema JSON",
+			wantErrMsg: "unmarshal",
 		},
 		{
 			name:       "missing required fields",
 			schemaJSON: `{"type": "object"}`,
-			wantErrMsg: "missing $id",
+			wantErrMsg: "missing $id field in schema",
 		},
 		{
 			name: "invalid property type",
