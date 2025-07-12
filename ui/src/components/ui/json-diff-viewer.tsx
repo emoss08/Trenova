@@ -12,6 +12,8 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./dialog";
+import { formatJsonWithSpaces } from "@/lib/json-sensitive-utils";
+import { JsonSmartDiff } from "./json-smart-diff";
 
 export function JsonCodeDiffViewer({
   oldData,
@@ -19,25 +21,17 @@ export function JsonCodeDiffViewer({
   title = { old: "Previous Version", new: "Current Version" },
   className,
 }: JsonDiffViewerProps) {
-  // * Format the JSON data for display
+  // * Format the JSON data for display with spaces after colons
   const oldJson = useMemo(() => {
     if (!oldData) return [];
-    try {
-      return JSON.stringify(oldData, null, 2).split("\n");
-    } catch (error) {
-      console.error("Error formatting old data:", error);
-      return [];
-    }
+    const formatted = formatJsonWithSpaces(oldData);
+    return formatted ? formatted.split("\n") : [];
   }, [oldData]);
 
   const newJson = useMemo(() => {
     if (!newData) return [];
-    try {
-      return JSON.stringify(newData, null, 2).split("\n");
-    } catch (error) {
-      console.error("Error formatting new data:", error);
-      return [];
-    }
+    const formatted = formatJsonWithSpaces(newData);
+    return formatted ? formatted.split("\n") : [];
   }, [newData]);
 
   // * Prepare data for virtualized lists
@@ -125,7 +119,7 @@ export function ChangeDiffDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-5xl 4xl:max-w-8xl">
+      <DialogContent className="max-w-7xl">
         <DialogHeader>
           <DialogTitle>
             Detailed Change Comparison <BetaTag />
@@ -134,8 +128,8 @@ export function ChangeDiffDialog({
             Side-by-side view of all modified values in this record
           </DialogDescription>
         </DialogHeader>
-        <DialogBody className="p-4">
-          <JsonCodeDiffViewer
+        <DialogBody className="p-4 overflow-hidden">
+          <JsonSmartDiff
             oldData={fromData}
             newData={toData}
             title={{ old: "Previous Version", new: "Current Version" }}

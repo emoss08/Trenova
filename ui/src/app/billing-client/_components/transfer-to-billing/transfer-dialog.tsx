@@ -64,10 +64,16 @@ export function TransferDialog({ ...props }: TableSheetProps) {
 
 function TransferDialogContent({ open }: { open: boolean }) {
   const { data } = useShipments({
-    status: ShipmentStatus.enum.ReadyToBill,
-    pageIndex: 0,
-    pageSize: 10,
     expandShipmentDetails: true,
+    filters: [
+      {
+        field: "status",
+        operator: "eq",
+        value: ShipmentStatus.enum.ReadyToBill,
+      },
+    ],
+    limit: 10,
+    offset: 0,
     enabled: open,
   });
 

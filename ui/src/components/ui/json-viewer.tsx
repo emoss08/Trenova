@@ -11,9 +11,12 @@ import {
   faEllipsis,
   faMinus,
   faPlus,
+  faCopy,
+  faTable,
+  faExpand,
+  faCompress,
 } from "@fortawesome/pro-regular-svg-icons";
-import React, { useMemo, useState } from "react";
-import { toast } from "sonner";
+import React, { useMemo, useState, useEffect } from "react";
 import { BetaTag } from "./beta-tag";
 import {
   Dialog,
@@ -34,7 +37,6 @@ import {
 } from "./dropdown-menu";
 import { Icon } from "./icons";
 import { ScrollArea } from "./scroll-area";
-import { SensitiveBadge } from "./sensitive-badge";
 import {
   Table,
   TableBody,
@@ -43,6 +45,14 @@ import {
   TableHeader,
   TableRow,
 } from "./shadcn-table";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { SensitiveValue } from "./sensitive-value";
+
+interface CollapsibleNodeInternalProps extends CollapsibleNodeProps {
+  forceExpanded?: boolean;
+  onToggle?: (path: string) => void;
+  path?: string;
+}
 
 function CollapsibleNode({
   name,
@@ -50,71 +60,61 @@ function CollapsibleNode({
   isRoot = false,
   initiallyExpanded = false,
   withComma = false,
-}: CollapsibleNodeProps) {
+  forceExpanded,
+  onToggle,
+  path = "",
+}: CollapsibleNodeInternalProps) {
   const [isExpanded, setIsExpanded] = useState(initiallyExpanded || isRoot);
   const isObject = value !== null && typeof value === "object";
   const isArray = Array.isArray(value);
 
+  // Update expanded state when forceExpanded changes
+  useEffect(() => {
+    if (forceExpanded !== undefined) {
+      setIsExpanded(forceExpanded);
+    }
+  }, [forceExpanded]);
+
   const toggleExpand = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setIsExpanded(!isExpanded);
+    const newExpanded = !isExpanded;
+    setIsExpanded(newExpanded);
+    if (onToggle && path) {
+      onToggle(path);
+    }
   };
 
   const displayName =
     name !== null ? (
-      <span className="text-vitess-node font-medium">
+      <span className="text-blue-600 dark:text-blue-400 font-medium">
         {typeof name === "string" ? `"${name}"` : name}
       </span>
     ) : null;
 
   if (!isObject) {
-    let valueDisplay;
-    // Check if value appears to be masked/sensitive data
-    const isSensitiveData = typeof value === "string" && /^\*{3,}$/.test(value);
-
-    if (isSensitiveData) {
-      valueDisplay = (
-        <div className="inline-flex items-center">
-          <span
-            className="max-w-[350px] truncate text-vitess-string overflow-hidden text-ellipsis"
-            title={`${value}`}
-          >
-            &quot;{value}&quot;
-          </span>
-          <SensitiveBadge />
-        </div>
-      );
-    } else if (typeof value === "string") {
-      valueDisplay = (
-        <span
-          className="max-w-[350px] truncate text-vitess-string overflow-hidden text-ellipsis"
-          title={`${value}`}
-        >
-          &quot;{value}&quot;
-        </span>
-      );
-    } else if (typeof value === "number") {
-      valueDisplay = <span className="text-vitess-number">{value}</span>;
-    } else if (typeof value === "boolean") {
-      valueDisplay = (
-        <span className="text-vitess-number">{String(value)}</span>
-      );
-    } else if (value === null) {
-      valueDisplay = <span className="text-vitess-number">null</span>;
-    } else {
-      valueDisplay = <span>{String(value)}</span>;
-    }
+    const valueDisplay = (
+      <SensitiveValue 
+        value={value} 
+        className="max-w-[350px] truncate overflow-hidden text-ellipsis"
+        prefix=" "
+      />
+    );
 
     return (
-      <div className="px-3 py-1 hover:bg-muted rounded-sm flex items-center transition-colors">
+      <div
+        className={cn(
+          "px-3 py-1 rounded-sm flex items-center transition-all duration-150",
+          "hover:bg-muted-foreground/10",
+        )}
+      >
         {displayName && (
           <>
             {displayName}
-            <span className="text-foreground mx-1.5">:</span>
+            <span className="text-muted-foreground">: </span>
           </>
         )}
         {valueDisplay}
-        {withComma && <span className="text-foreground">,</span>}
+        {withComma && <span className="text-muted-foreground">,</span>}
       </div>
     );
   }
@@ -125,30 +125,35 @@ function CollapsibleNode({
   return (
     <div className="w-full">
       <div
-        className="flex items-center px-3 py-1 cursor-pointer"
+        className={cn(
+          "flex items-center px-3 py-1 cursor-pointer rounded-sm transition-all duration-150",
+          "hover:bg-muted-foreground/10",
+        )}
         onClick={toggleExpand}
       >
         <Icon
           icon={isExpanded ? faChevronDown : faChevronRight}
-          className="size-3.5 mr-1.5 text-muted-foreground"
+          className="size-3.5 mr-1.5 text-muted-foreground transition-transform duration-150"
         />
 
         {displayName && (
           <>
             {displayName}
-            <span className="text-foreground mx-1.5">:</span>
+            <span className="text-muted-foreground">: </span>
           </>
         )}
 
-        <span className="text-muted-foreground text-xs font-medium">
+        <span className="text-muted-foreground text-xs font-medium font-mono">
           {isExpanded ? (isArray ? "[" : "{") : summary}
         </span>
 
-        {!isExpanded && withComma && <span className="text-foreground">,</span>}
+        {!isExpanded && withComma && (
+          <span className="text-muted-foreground">,</span>
+        )}
       </div>
 
       {isExpanded && (
-        <ScrollArea className="ml-4 border-l border-border pl-3 py-0.5 max-h-[calc(100vh-200px)]">
+        <div className="ml-4 border-l-2 border-border pl-3 py-0.5">
           {isArray
             ? // Handle array rendering
               value.map((item: any, index: number) => (
@@ -157,6 +162,9 @@ function CollapsibleNode({
                   name={null}
                   value={item}
                   withComma={index < value.length - 1}
+                  forceExpanded={forceExpanded}
+                  onToggle={onToggle}
+                  path={`${path}[${index}]`}
                 />
               ))
             : // Handle object rendering
@@ -166,13 +174,18 @@ function CollapsibleNode({
                   name={key}
                   value={val}
                   withComma={index < arr.length - 1}
+                  forceExpanded={forceExpanded}
+                  onToggle={onToggle}
+                  path={path ? `${path}.${key}` : key}
                 />
               ))}
           <div className="px-3 py-1">
-            <span className="text-muted-foreground">{isArray ? "]" : "}"}</span>
-            {withComma && <span className="text-foreground">,</span>}
+            <span className="text-muted-foreground font-mono">
+              {isArray ? "]" : "}"}
+            </span>
+            {withComma && <span className="text-muted-foreground">,</span>}
           </div>
-        </ScrollArea>
+        </div>
       )}
     </div>
   );
@@ -183,6 +196,19 @@ export function JsonViewer({
   className = "",
   initiallyExpanded = false,
 }: JsonViewerProps) {
+  const [isFullyExpanded, setIsFullyExpanded] = useState(initiallyExpanded);
+  const [forceExpanded, setForceExpanded] = useState<boolean | undefined>(
+    undefined,
+  );
+
+  const handleToggleAll = () => {
+    const newExpanded = !isFullyExpanded;
+    setIsFullyExpanded(newExpanded);
+    setForceExpanded(newExpanded);
+    // Reset forceExpanded after a short delay to allow manual control
+    setTimeout(() => setForceExpanded(undefined), 100);
+  };
+
   // Handle states
   if (!data) {
     return (
@@ -199,21 +225,38 @@ export function JsonViewer({
     <>
       <div
         className={cn(
-          "size-full relative rounded-md overflow-hidden border border-border bg-card",
+          "size-full relative rounded-md overflow-hidden",
+          "border border-border",
+          "bg-muted",
+          "shadow-sm",
           className,
         )}
       >
-        <div className="absolute top-3 right-3 z-10">
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleToggleAll}
+            title={isFullyExpanded ? "Collapse all" : "Expand all"}
+          >
+            <Icon
+              icon={isFullyExpanded ? faCompress : faExpand}
+              className="size-4 text-muted-foreground"
+            />
+          </Button>
           <JsonViewerActions data={data} />
         </div>
-        <div className="p-3 font-mono text-sm overflow-x-auto">
-          <CollapsibleNode
-            name={null}
-            value={data}
-            isRoot={true}
-            initiallyExpanded={initiallyExpanded}
-          />
-        </div>
+        <ScrollArea className="h-full">
+          <div className="p-3 font-mono text-sm">
+            <CollapsibleNode
+              name={null}
+              value={data}
+              isRoot={true}
+              initiallyExpanded={isFullyExpanded}
+              forceExpanded={forceExpanded}
+            />
+          </div>
+        </ScrollArea>
       </div>
     </>
   );
@@ -231,36 +274,18 @@ export function ReadableJsonValue({
   const [isExpanded, setIsExpanded] = useState(false);
 
   if (value === null)
-    return <span className="text-muted-foreground">null</span>;
+    return <span className="text-muted-foreground italic">null</span>;
   if (value === undefined)
-    return <span className="text-muted-foreground">undefined</span>;
-
-  // Handle sensitive data detection
-  const isSensitiveData = typeof value === "string" && /^\*{3,}$/.test(value);
+    return <span className="text-muted-foreground italic">undefined</span>;
 
   // Handle primitive values
   if (typeof value !== "object") {
-    if (isSensitiveData) {
-      return (
-        <div className="flex items-center">
-          <span className="max-w-[450px] truncate text-vitess-string">
-            &quot;{value}&quot;
-          </span>
-          <SensitiveBadge />
-        </div>
-      );
-    } else if (typeof value === "string") {
-      return (
-        <span className="max-w-[450px] truncate text-vitess-string">
-          &quot;{value}&quot;
-        </span>
-      );
-    } else if (typeof value === "number") {
-      return <span className="text-vitess-number">{value}</span>;
-    } else if (typeof value === "boolean") {
-      return <span className="text-vitess-number">{value.toString()}</span>;
-    }
-    return <span>{String(value)}</span>;
+    return (
+      <SensitiveValue 
+        value={value} 
+        className="max-w-[450px] truncate"
+      />
+    );
   }
 
   // Handle arrays and objects
@@ -271,7 +296,9 @@ export function ReadableJsonValue({
 
   if (isEmpty) {
     return (
-      <span className="text-muted-foreground">{isArray ? "[]" : "{}"}</span>
+      <span className="text-muted-foreground font-mono">
+        {isArray ? "[]" : "{}"}
+      </span>
     );
   }
 
@@ -284,7 +311,7 @@ export function ReadableJsonValue({
         variant="ghost"
         size="sm"
         onClick={() => setIsExpanded(!isExpanded)}
-        className="px-3 py-1 h-7 text-foreground hover:bg-muted"
+        className="px-3 py-1 h-7 text-foreground hover:bg-muted-foreground/10"
       >
         <Icon icon={isExpanded ? faMinus : faPlus} className="size-3.5 mr-2" />
         <span className="text-xs font-medium">
@@ -293,12 +320,14 @@ export function ReadableJsonValue({
       </Button>
 
       {isExpanded && (
-        <div className="mt-3 pl-4 border-l border-border">
+        <div className="mt-3 pl-4 border-l-2 border-border">
           <Table className="border border-border rounded-md">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
-                <TableHead className="w-1/3 bg-muted">Key</TableHead>
-                <TableHead className="bg-muted">Value</TableHead>
+                <TableHead className="w-1/3 bg-muted font-medium">
+                  Key
+                </TableHead>
+                <TableHead className="bg-muted font-medium">Value</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -306,9 +335,9 @@ export function ReadableJsonValue({
                 ? value.map((item: any, index: number) => (
                     <TableRow
                       key={`${path}.${index}`}
-                      className="hover:bg-muted"
+                      className="hover:bg-muted-foreground/10"
                     >
-                      <TableCell className="font-mono text-xs font-medium">
+                      <TableCell className="font-mono text-xs font-medium text-muted-foreground">
                         [{index}]
                       </TableCell>
                       <TableCell>
@@ -321,8 +350,11 @@ export function ReadableJsonValue({
                     </TableRow>
                   ))
                 : Object.entries(value).map(([key, val]) => (
-                    <TableRow key={`${path}.${key}`} className="hover:bg-muted">
-                      <TableCell className="font-mono text-xs font-medium">
+                    <TableRow
+                      key={`${path}.${key}`}
+                      className="hover:bg-muted-foreground/10"
+                    >
+                      <TableCell className="font-mono text-xs font-medium text-blue-600">
                         {key}
                       </TableCell>
                       <TableCell>
@@ -344,7 +376,7 @@ export function ReadableJsonValue({
 
 function JsonViewerActions({ data }: { data: any }) {
   const [error, setError] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
+  const { copy, isCopied } = useCopyToClipboard();
   const [readableDialogOpen, setReadableDialogOpen] = useState(false);
 
   // Format JSON data as a string for copying
@@ -354,7 +386,7 @@ function JsonViewerActions({ data }: { data: any }) {
     }
 
     try {
-      return JSON.stringify(data);
+      return JSON.stringify(data, null, 2);
     } catch (err) {
       console.error("Error stringifying JSON:", err);
       setError("Failed to format JSON data");
@@ -368,38 +400,19 @@ function JsonViewerActions({ data }: { data: any }) {
       return;
     }
 
-    try {
-      await navigator.clipboard.writeText(jsonString);
-      setCopied(true);
-
-      // Reset copied state after 2 seconds
-      setTimeout(() => {
-        setCopied(false);
-      }, 2000);
-    } catch (err) {
-      console.error("Failed to copy to clipboard:", err);
-    }
+    await copy(jsonString, { withToast: true });
   };
 
   if (error) {
     return <div className="text-red-500 text-sm">{error}</div>;
   }
 
-  // If copied pop up a toast
-  if (copied) {
-    toast.success("JSON copied to clipboard");
-  }
-
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            className="size-8 hover:bg-muted rounded-md"
-          >
-            <Icon icon={faEllipsis} className="size-4" />
+          <Button variant="ghost" size="icon">
+            <Icon icon={faEllipsis} className="size-4 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent side="bottom" align="end">
@@ -408,15 +421,21 @@ function JsonViewerActions({ data }: { data: any }) {
           <DropdownMenuGroup>
             <DropdownMenuItem
               onClick={handleCopyToClipboard}
-              className="flex flex-col items-start"
-              title="Copy JSON"
-              description="Copy formatted JSON data to clipboard"
+              className="flex items-center gap-2"
+              startContent={
+                <Icon icon={faCopy} className="size-4 text-muted-foreground" />
+              }
+              title={isCopied ? "Copied!" : "Copy JSON"}
+              description="Copy formatted JSON to clipboard"
             />
             <DropdownMenuItem
-              title="View in structured view"
-              description="Display data in a structured tabular format"
               onClick={() => setReadableDialogOpen(true)}
-              className="flex flex-col items-start"
+              className="flex items-center gap-2"
+              startContent={
+                <Icon icon={faTable} className="size-4 text-muted-foreground" />
+              }
+              title="Structured View"
+              description="Display in tabular format"
             />
           </DropdownMenuGroup>
         </DropdownMenuContent>
@@ -443,7 +462,7 @@ export function JsonViewerDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-4xl">
         <DialogHeader>
-          <DialogTitle>
+          <DialogTitle className="flex items-center gap-2">
             Data Structure View <BetaTag />
           </DialogTitle>
           <DialogDescription>
@@ -451,28 +470,30 @@ export function JsonViewerDialog({
           </DialogDescription>
         </DialogHeader>
         <DialogBody className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead className="w-1/3 bg-muted font-medium">
-                  Property
-                </TableHead>
-                <TableHead className="bg-muted font-medium">Value</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {Object.entries(data).map(([key, value]) => (
-                <TableRow key={key} className="hover:bg-muted">
-                  <TableCell className="font-mono text-xs font-medium border-r border-border/50">
-                    {key}
-                  </TableCell>
-                  <TableCell>
-                    <ReadableJsonValue value={value} path={key} />
-                  </TableCell>
+          <ScrollArea className="flex flex-col overflow-y-auto max-h-[calc(100vh-8.5rem)]">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-1/6 bg-muted font-medium">
+                    Property
+                  </TableHead>
+                  <TableHead className="bg-muted font-medium">Value</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
+              </TableHeader>
+              <TableBody>
+                {Object.entries(data).map(([key, value]) => (
+                  <TableRow key={key} className="hover:bg-muted-foreground/10">
+                    <TableCell className="font-mono text-xs font-medium text-blue-600 border-r border-border">
+                      {key}
+                    </TableCell>
+                    <TableCell>
+                      <ReadableJsonValue value={value} path={key} />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </ScrollArea>
         </DialogBody>
       </DialogContent>
     </Dialog>
