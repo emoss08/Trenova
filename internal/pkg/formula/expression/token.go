@@ -41,10 +41,10 @@ const (
 	TokenNot // !
 
 	// * Delimiters
-	TokenLeftParen   // (
-	TokenRightParen  // )
-	TokenComma       // ,
-	TokenLeftBracket // [
+	TokenLeftParen    // (
+	TokenRightParen   // )
+	TokenComma        // ,
+	TokenLeftBracket  // [
 	TokenRightBracket // ]
 
 	// * Conditional

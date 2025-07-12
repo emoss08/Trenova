@@ -36,9 +36,9 @@ func TestEvaluator_Evaluate(t *testing.T) {
 			want: 42.0,
 		},
 		{
-			name: "string literal",
-			expr: `"hello"`,
-			want: 0, // Strings would return 0
+			name:      "string literal",
+			expr:      `"hello"`,
+			want:      0,    // Strings would return 0
 			wantError: true, // Expression must return numeric
 		},
 
@@ -93,18 +93,18 @@ func TestEvaluator_Evaluate(t *testing.T) {
 
 		// Logical (returns 1 for true, 0 for false)
 		{
-			name: "logical and true", 
-			expr: "1 && 1",  // Use 1 for true
+			name: "logical and true",
+			expr: "1 && 1", // Use 1 for true
 			want: 1.0,
 		},
 		{
 			name: "logical or mixed",
-			expr: "1 || 0",  // Use 1 for true, 0 for false
+			expr: "1 || 0", // Use 1 for true, 0 for false
 			want: 1.0,
 		},
 		{
 			name: "logical not",
-			expr: "!0",  // Use 0 for false
+			expr: "!0", // Use 0 for false
 			want: 1.0,
 		},
 		{
@@ -159,9 +159,9 @@ func TestEvaluator_Evaluate(t *testing.T) {
 
 		// Array operations
 		{
-			name: "array literal",
-			expr: "[1, 2, 3]",
-			want: 0.0,
+			name:      "array literal",
+			expr:      "[1, 2, 3]",
+			want:      0.0,
 			wantError: true, // Arrays not numeric
 		},
 		{
@@ -170,9 +170,9 @@ func TestEvaluator_Evaluate(t *testing.T) {
 			want: 20.0,
 		},
 		{
-			name: "variable array indexing",
-			expr: "prices[1]",
-			want: 20.0,
+			name:      "variable array indexing",
+			expr:      "prices[1]",
+			want:      20.0,
 			wantError: true, // Variables not registered
 		},
 		{
@@ -186,31 +186,31 @@ func TestEvaluator_Evaluate(t *testing.T) {
 			want: 30.0,
 		},
 		{
-			name: "string indexing",
-			expr: `"hello"[1]`,
-			want: 0.0,
+			name:      "string indexing",
+			expr:      `"hello"[1]`,
+			want:      0.0,
 			wantError: true, // Would return "e" which is not numeric
 		},
 
 		// String concatenation (would fail - expressions must return numeric)
 		{
-			name: "string concat",
-			expr: `"hello" + " " + "world"`,
-			want: 0.0,
+			name:      "string concat",
+			expr:      `"hello" + " " + "world"`,
+			want:      0.0,
 			wantError: true,
 		},
 		{
-			name: "mixed concat",
-			expr: `"Value: " + 42`,
-			want: 0.0,
+			name:      "mixed concat",
+			expr:      `"Value: " + 42`,
+			want:      0.0,
 			wantError: true,
 		},
 
 		// Variables (would need to be registered)
 		{
-			name: "variable reference",
-			expr: "distance * base_rate",
-			want: 250.0,
+			name:      "variable reference",
+			expr:      "distance * base_rate",
+			want:      250.0,
 			wantError: true, // Variables not registered in this test
 		},
 
@@ -241,22 +241,22 @@ func TestEvaluator_Evaluate(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			// Create variable registry
 			varRegistry := variables.NewRegistry()
-			
+
 			// Create evaluator
 			evaluator := NewEvaluator(varRegistry)
-			
+
 			// Evaluate expression
 			got, err := evaluator.Evaluate(context.Background(), tt.expr, mockVarCtx)
-			
+
 			if (err != nil) != tt.wantError {
 				t.Errorf("Evaluate() error = %v, wantError %v", err, tt.wantError)
 				return
 			}
-			
+
 			if tt.wantError {
 				return
 			}
-			
+
 			// Compare results
 			if !equalFloatValues(got, tt.want) {
 				t.Errorf("Evaluate() = %v, want %v", got, tt.want)
@@ -269,7 +269,7 @@ func TestEvaluator_ParseOnly(t *testing.T) {
 	// Create variable registry
 	varRegistry := variables.NewRegistry()
 	evaluator := NewEvaluator(varRegistry)
-	
+
 	tests := []struct {
 		name      string
 		expr      string
@@ -294,21 +294,21 @@ func TestEvaluator_ParseOnly(t *testing.T) {
 			wantError: true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			// Test by compiling the expression
 			compiled, err := evaluator.compile(tt.expr)
-			
+
 			if (err != nil) != tt.wantError {
 				t.Errorf("compile() error = %v, wantError %v", err, tt.wantError)
 				return
 			}
-			
+
 			if tt.wantError {
 				return
 			}
-			
+
 			if compiled == nil || compiled.ast == nil {
 				t.Error("compile() returned nil AST")
 			}
@@ -322,10 +322,10 @@ func TestEvaluator_Caching(t *testing.T) {
 	mockVarCtx := &mockVariableContext{
 		fields: map[string]any{},
 	}
-	
+
 	// Evaluate same expression multiple times
 	expr := "2 + 3 * 4"
-	
+
 	for i := 0; i < 5; i++ {
 		result, err := evaluator.Evaluate(context.Background(), expr, mockVarCtx)
 		if err != nil {
@@ -335,7 +335,7 @@ func TestEvaluator_Caching(t *testing.T) {
 			t.Errorf("Evaluate() = %v, want 14.0", result)
 		}
 	}
-	
+
 	// The AST should be cached after first parse
 	// (This is more of an implementation detail test)
 }
@@ -344,7 +344,7 @@ func TestEvaluator_ComplexExpressions(t *testing.T) {
 	mockVarCtx := &mockVariableContext{
 		fields: map[string]any{},
 	}
-	
+
 	tests := []struct {
 		name      string
 		expr      string
@@ -373,23 +373,23 @@ func TestEvaluator_ComplexExpressions(t *testing.T) {
 			wantError: true, // This would fail - can't return string
 		},
 	}
-	
+
 	varRegistry := variables.NewRegistry()
 	evaluator := NewEvaluator(varRegistry)
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := evaluator.Evaluate(context.Background(), tt.expr, mockVarCtx)
-			
+
 			if (err != nil) != tt.wantError {
 				t.Errorf("Evaluate() error = %v, wantError %v", err, tt.wantError)
 				return
 			}
-			
+
 			if tt.wantError {
 				return
 			}
-			
+
 			if !equalFloatValues(got, tt.want) {
 				t.Errorf("Evaluate() = %v, want %v", got, tt.want)
 			}
@@ -403,7 +403,7 @@ func BenchmarkEvaluator(b *testing.B) {
 	mockVarCtx := &mockVariableContext{
 		fields: map[string]any{},
 	}
-	
+
 	expressions := []string{
 		"2 + 3",
 		"2 + 3 * 4 - 5 / 2",
@@ -411,7 +411,7 @@ func BenchmarkEvaluator(b *testing.B) {
 		"true ? 100 : 200",
 		"(5 > 3) && (10 < 20) || false",
 	}
-	
+
 	for _, expr := range expressions {
 		b.Run(expr, func(b *testing.B) {
 			for i := 0; i < b.N; i++ {

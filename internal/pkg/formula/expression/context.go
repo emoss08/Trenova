@@ -15,16 +15,16 @@ type EvaluationContext struct {
 	ctx context.Context
 
 	// Variable resolution
-	variableContext variables.VariableContext
-	variableCache   map[string]any // Cache resolved variables
+	variableContext  variables.VariableContext
+	variableCache    map[string]any      // Cache resolved variables
 	variableRegistry *variables.Registry // Registry to use for variable lookup
 
 	// Function registry
 	functions FunctionRegistry
 
 	// Memory arena for allocations
-	arena      *Arena
-	ownsArena  bool // whether we own the arena
+	arena     *Arena
+	ownsArena bool // whether we own the arena
 
 	// Limits
 	timeout     time.Duration

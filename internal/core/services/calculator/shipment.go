@@ -42,12 +42,20 @@ func NewShipmentCalculator(p ShipmentCalculatorParams) *ShipmentCalculator {
 }
 
 // CalculateTotals handles all calculations for a shipment
-func (sc *ShipmentCalculator) CalculateTotals(ctx context.Context, shp *shipment.Shipment, userID pulid.ID) {
+func (sc *ShipmentCalculator) CalculateTotals(
+	ctx context.Context,
+	shp *shipment.Shipment,
+	userID pulid.ID,
+) {
 	sc.CalculateCommodityTotals(shp)
 	sc.calculateShipmentCharge(ctx, shp, userID)
 }
 
-func (sc *ShipmentCalculator) calculateShipmentCharge(ctx context.Context, shp *shipment.Shipment, userID pulid.ID) {
+func (sc *ShipmentCalculator) calculateShipmentCharge(
+	ctx context.Context,
+	shp *shipment.Shipment,
+	userID pulid.ID,
+) {
 	totals := sc.CalculateBillingAmounts(ctx, shp, userID)
 
 	shp.FreightChargeAmount = decimal.NewNullDecimal(totals.BaseCharge)

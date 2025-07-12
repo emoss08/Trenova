@@ -34,7 +34,7 @@ func TestParser_Parse(t *testing.T) {
 			input:   "variable",
 			wantAST: "variable",
 		},
-		
+
 		// Array literals
 		{
 			name:    "empty array",
@@ -61,7 +61,7 @@ func TestParser_Parse(t *testing.T) {
 			input:   "[[1, 2], [3, 4]]",
 			wantAST: "[[1, 2], [3, 4]]",
 		},
-		
+
 		// Array indexing
 		{
 			name:    "simple array indexing",
@@ -83,7 +83,7 @@ func TestParser_Parse(t *testing.T) {
 			input:   "arr[i + 1]",
 			wantAST: "arr[(i + 1)]",
 		},
-		
+
 		// Binary operations
 		{
 			name:    "addition",
@@ -115,7 +115,7 @@ func TestParser_Parse(t *testing.T) {
 			input:   "2 ^ 3",
 			wantAST: "(2 ^ 3)",
 		},
-		
+
 		// Operator precedence
 		{
 			name:    "precedence: multiplication before addition",
@@ -137,7 +137,7 @@ func TestParser_Parse(t *testing.T) {
 			input:   "1 + 2 * 3 ^ 4 - 5",
 			wantAST: "((1 + (2 * (3 ^ 4))) - 5)",
 		},
-		
+
 		// Comparison operators
 		{
 			name:    "greater than",
@@ -169,7 +169,7 @@ func TestParser_Parse(t *testing.T) {
 			input:   "type != 0",
 			wantAST: "(type != 0)",
 		},
-		
+
 		// Logical operators
 		{
 			name:    "logical and",
@@ -196,7 +196,7 @@ func TestParser_Parse(t *testing.T) {
 			input:   "a > 5 && b < 10 || c == 0",
 			wantAST: "(((a > 5) && (b < 10)) || (c == 0))",
 		},
-		
+
 		// Unary operators
 		{
 			name:    "negative number",
@@ -218,7 +218,7 @@ func TestParser_Parse(t *testing.T) {
 			input:   "!!flag",
 			wantAST: "(!(!flag))",
 		},
-		
+
 		// Ternary conditional
 		{
 			name:    "simple ternary",
@@ -235,7 +235,7 @@ func TestParser_Parse(t *testing.T) {
 			input:   "x > 0 ? x * 2 : -x",
 			wantAST: "((x > 0) ? (x * 2) : (-x))",
 		},
-		
+
 		// Function calls
 		{
 			name:    "function no args",
@@ -262,7 +262,7 @@ func TestParser_Parse(t *testing.T) {
 			input:   "2 * max(a, b) + 1",
 			wantAST: "((2 * max(a, b)) + 1)",
 		},
-		
+
 		// Complex expressions
 		{
 			name:    "formula example 1",
@@ -284,7 +284,7 @@ func TestParser_Parse(t *testing.T) {
 			input:   "max(min_charge, weight * rate_per_pound)",
 			wantAST: "max(min_charge, (weight * rate_per_pound))",
 		},
-		
+
 		// Error cases
 		{
 			name:      "empty expression",
@@ -307,7 +307,7 @@ func TestParser_Parse(t *testing.T) {
 			wantError: true,
 		},
 		{
-			name:      "unexpected token", 
+			name:      "unexpected token",
 			input:     "1 + + 2",
 			wantError: true, // Unary plus not supported
 		},
@@ -329,20 +329,20 @@ func TestParser_Parse(t *testing.T) {
 				}
 				return
 			}
-			
+
 			// Parse
 			parser := NewParser(tokens)
 			ast, err := parser.Parse()
-			
+
 			if (err != nil) != tt.wantError {
 				t.Errorf("Parse() error = %v, wantError %v", err, tt.wantError)
 				return
 			}
-			
+
 			if tt.wantError {
 				return
 			}
-			
+
 			// Check AST string representation
 			gotAST := ast.String()
 			if gotAST != tt.wantAST {
@@ -393,13 +393,13 @@ func TestParser_ComplexityCheck(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Tokenize() error = %v", err)
 			}
-			
+
 			parser := NewParser(tokens)
 			ast, err := parser.Parse()
 			if err != nil {
 				t.Fatalf("Parse() error = %v", err)
 			}
-			
+
 			// Check complexity
 			got := ast.Complexity()
 			if got != tt.wantComplexity {
@@ -411,9 +411,9 @@ func TestParser_ComplexityCheck(t *testing.T) {
 
 func TestParser_ErrorMessages(t *testing.T) {
 	tests := []struct {
-		name        string
-		input       string
-		wantErrMsg  string
+		name       string
+		input      string
+		wantErrMsg string
 	}{
 		{
 			name:       "missing closing paren",
@@ -450,15 +450,15 @@ func TestParser_ErrorMessages(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Tokenize() error = %v", err)
 			}
-			
+
 			// Parse
 			parser := NewParser(tokens)
 			_, err = parser.Parse()
-			
+
 			if err == nil {
 				t.Fatalf("Parse() expected error, got nil")
 			}
-			
+
 			if !strings.Contains(err.Error(), tt.wantErrMsg) {
 				t.Errorf("Error message = %q, want to contain %q", err.Error(), tt.wantErrMsg)
 			}
@@ -469,9 +469,9 @@ func TestParser_ErrorMessages(t *testing.T) {
 // Test that parser creates correct AST node types
 func TestParser_NodeTypes(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		checkFn  func(Node) error
+		name    string
+		input   string
+		checkFn func(Node) error
 	}{
 		{
 			name:  "number node",
@@ -568,13 +568,13 @@ func TestParser_NodeTypes(t *testing.T) {
 			if err != nil {
 				t.Fatalf("Tokenize() error = %v", err)
 			}
-			
+
 			parser := NewParser(tokens)
 			ast, err := parser.Parse()
 			if err != nil {
 				t.Fatalf("Parse() error = %v", err)
 			}
-			
+
 			// Check node type
 			if err := tt.checkFn(ast); err != nil {
 				t.Error(err)

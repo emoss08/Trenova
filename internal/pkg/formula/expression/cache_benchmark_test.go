@@ -25,7 +25,7 @@ func BenchmarkCachePerformance(b *testing.B) {
 		for i := 0; i < 10; i++ {
 			evaluator.Evaluate(ctx, expr+"_"+string(rune(i)), nil)
 		}
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			// This will hit cache most of the time
@@ -36,7 +36,7 @@ func BenchmarkCachePerformance(b *testing.B) {
 	b.Run("single_expression_cached", func(b *testing.B) {
 		// Compile once
 		evaluator.Evaluate(ctx, expr, nil)
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			// Always hits cache

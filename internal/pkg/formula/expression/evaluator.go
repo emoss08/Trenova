@@ -304,7 +304,7 @@ func (e *Evaluator) ResizeCache(newCapacity int) {
 // PreloadExpressions adds multiple expressions to the cache
 func (e *Evaluator) PreloadExpressions(expressions []string) error {
 	precompiled := make(map[string]*CompiledExpression)
-	
+
 	for _, expr := range expressions {
 		compiled, err := e.compile(expr)
 		if err != nil {
@@ -312,7 +312,7 @@ func (e *Evaluator) PreloadExpressions(expressions []string) error {
 		}
 		precompiled[expr] = compiled
 	}
-	
+
 	e.cache.Preload(precompiled)
 	return nil
 }

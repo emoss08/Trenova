@@ -13,23 +13,23 @@ type Arena struct {
 	block     []byte
 	offset    int
 	blockSize int
-	
+
 	// List of all allocated blocks
 	blocks [][]byte
-	
+
 	// Object pool for common types
-	floatPool   []float64
-	stringPool  []string
-	boolPool    []bool
+	floatPool     []float64
+	stringPool    []string
+	boolPool      []bool
 	interfacePool []any
-	
+
 	// String interning map
 	strings map[string]string
-	
+
 	// Metrics
 	allocations int64
 	bytesUsed   int64
-	
+
 	mu sync.Mutex
 }
 
@@ -47,19 +47,19 @@ func NewArena(blockSize int) *Arena {
 	if blockSize <= 0 {
 		blockSize = 64 * 1024 // 64KB default
 	}
-	
+
 	a := &Arena{
 		blockSize: blockSize,
 		blocks:    make([][]byte, 0, 4),
 		strings:   make(map[string]string),
-		
+
 		// Pre-allocate pools
 		floatPool:     make([]float64, 0, 128),
 		stringPool:    make([]string, 0, 64),
 		boolPool:      make([]bool, 0, 32),
 		interfacePool: make([]any, 0, 64),
 	}
-	
+
 	a.allocateBlock()
 	return a
 }
@@ -76,10 +76,10 @@ func (a *Arena) allocateBlock() {
 func (a *Arena) Alloc(n int) unsafe.Pointer {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	
+
 	// Align to 8 bytes for better performance
 	n = (n + 7) &^ 7
-	
+
 	// Check if we need a new block
 	if a.offset+n > len(a.block) {
 		// If requested size is larger than block size, allocate a special block
@@ -90,23 +90,23 @@ func (a *Arena) Alloc(n int) unsafe.Pointer {
 			a.allocations++
 			return unsafe.Pointer(&specialBlock[0])
 		}
-		
+
 		a.allocateBlock()
 	}
-	
+
 	// Allocate from current block
 	ptr := unsafe.Pointer(&a.block[a.offset])
 	a.offset += n
 	a.bytesUsed += int64(n)
 	a.allocations++
-	
+
 	return ptr
 }
 
 // AllocFloat64 allocates a float64 from the arena
 func (a *Arena) AllocFloat64(v float64) *float64 {
 	a.mu.Lock()
-	
+
 	// Try to reuse from pool
 	if len(a.floatPool) < cap(a.floatPool) {
 		a.floatPool = append(a.floatPool, v)
@@ -116,9 +116,9 @@ func (a *Arena) AllocFloat64(v float64) *float64 {
 		a.mu.Unlock()
 		return result
 	}
-	
+
 	a.mu.Unlock()
-	
+
 	// Allocate new (Alloc will handle its own locking)
 	ptr := (*float64)(a.Alloc(int(unsafe.Sizeof(v))))
 	*ptr = v
@@ -129,18 +129,18 @@ func (a *Arena) AllocFloat64(v float64) *float64 {
 func (a *Arena) AllocString(s string) string {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	
+
 	// Check if already interned
 	if interned, ok := a.strings[s]; ok {
 		return interned
 	}
-	
+
 	// Allocate string data
 	n := len(s)
 	if n == 0 {
 		return ""
 	}
-	
+
 	// Use string pool if possible
 	if len(a.stringPool) < cap(a.stringPool) {
 		a.stringPool = append(a.stringPool, s)
@@ -150,7 +150,7 @@ func (a *Arena) AllocString(s string) string {
 		a.allocations++
 		return interned
 	}
-	
+
 	// Allocate new string (don't use Alloc to avoid deadlock)
 	data := make([]byte, n)
 	copy(data, s)
@@ -164,7 +164,7 @@ func (a *Arena) AllocString(s string) string {
 // AllocBool allocates a bool from the arena
 func (a *Arena) AllocBool(v bool) *bool {
 	a.mu.Lock()
-	
+
 	// Try to reuse from pool
 	if len(a.boolPool) < cap(a.boolPool) {
 		a.boolPool = append(a.boolPool, v)
@@ -174,9 +174,9 @@ func (a *Arena) AllocBool(v bool) *bool {
 		a.mu.Unlock()
 		return result
 	}
-	
+
 	a.mu.Unlock()
-	
+
 	// Allocate new (Alloc will handle its own locking)
 	ptr := (*bool)(a.Alloc(int(unsafe.Sizeof(v))))
 	*ptr = v
@@ -196,16 +196,16 @@ func (a *Arena) AllocInterface(v any) any {
 	case nil:
 		return nil
 	}
-	
+
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	
+
 	// Use interface pool if possible
 	if len(a.interfacePool) < cap(a.interfacePool) {
 		a.interfacePool = append(a.interfacePool, v)
 		return a.interfacePool[len(a.interfacePool)-1]
 	}
-	
+
 	// For other types, just return the value
 	// (arena allocation for arbitrary types is complex)
 	return v
@@ -216,24 +216,24 @@ func (a *Arena) AllocSlice(elemSize, length, capacity int) unsafe.Pointer {
 	if capacity < length {
 		capacity = length
 	}
-	
+
 	// Calculate sizes
 	arraySize := elemSize * capacity
 	sliceSize := int(unsafe.Sizeof(reflect.SliceHeader{}))
 	totalSize := arraySize + sliceSize
-	
+
 	// Allocate both array and header in one go
 	ptr := a.Alloc(totalSize)
-	
+
 	// Set up slice header
 	slicePtr := ptr
 	arrayPtr := unsafe.Pointer(uintptr(ptr) + uintptr(sliceSize))
-	
+
 	header := (*reflect.SliceHeader)(slicePtr)
 	header.Data = uintptr(arrayPtr)
 	header.Len = length
 	header.Cap = capacity
-	
+
 	return slicePtr
 }
 
@@ -241,25 +241,25 @@ func (a *Arena) AllocSlice(elemSize, length, capacity int) unsafe.Pointer {
 func (a *Arena) Reset() {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	
+
 	// Keep only the first block
 	if len(a.blocks) > 0 {
 		a.block = a.blocks[0]
 		a.blocks = a.blocks[:1]
 		a.offset = 0
 	}
-	
+
 	// Clear pools
 	a.floatPool = a.floatPool[:0]
 	a.stringPool = a.stringPool[:0]
 	a.boolPool = a.boolPool[:0]
 	a.interfacePool = a.interfacePool[:0]
-	
+
 	// Clear string intern map
 	for k := range a.strings {
 		delete(a.strings, k)
 	}
-	
+
 	// Reset metrics
 	a.bytesUsed = 0
 	a.allocations = 0
@@ -269,12 +269,12 @@ func (a *Arena) Reset() {
 func (a *Arena) Stats() ArenaStats {
 	a.mu.Lock()
 	defer a.mu.Unlock()
-	
+
 	totalBytes := int64(0)
 	for _, block := range a.blocks {
 		totalBytes += int64(len(block))
 	}
-	
+
 	return ArenaStats{
 		BlocksAllocated: len(a.blocks),
 		BytesAllocated:  totalBytes,
@@ -350,7 +350,7 @@ func (a *ArenaAllocator) AllocFloat64(v float64) any {
 	return a.arena.AllocFloat64(v)
 }
 
-// AllocString allocates a string  
+// AllocString allocates a string
 func (a *ArenaAllocator) AllocString(s string) any {
 	return a.arena.AllocString(s)
 }

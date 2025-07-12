@@ -82,7 +82,7 @@ func BenchmarkParser(b *testing.B) {
 		b.Run(tc.name, func(b *testing.B) {
 			tokenizer := expression.NewTokenizer(tc.expr)
 			tokens, _ := tokenizer.Tokenize()
-			
+
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				parser := expression.NewParser(tokens)
@@ -145,10 +145,10 @@ func BenchmarkEvaluator(b *testing.B) {
 			name: "complex_formula",
 			expr: `base_rate * distance * if(has_hazmat, 1.25, 1) * (1 + fuel_surcharge/100) + accessorial_charges`,
 			vars: map[string]any{
-				"base_rate":          2.50,
-				"distance":           500.0,
-				"has_hazmat":         true,
-				"fuel_surcharge":     15.0,
+				"base_rate":           2.50,
+				"distance":            500.0,
+				"has_hazmat":          true,
+				"fuel_surcharge":      15.0,
 				"accessorial_charges": 125.0,
 			},
 		},
@@ -157,7 +157,7 @@ func BenchmarkEvaluator(b *testing.B) {
 	for _, tc := range testCases {
 		b.Run(tc.name, func(b *testing.B) {
 			varCtx := &benchmarkVarContext{data: tc.vars}
-			
+
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				_, _ = evaluator.Evaluate(ctx, tc.expr, varCtx)
@@ -176,7 +176,7 @@ func BenchmarkEvaluatorCached(b *testing.B) {
 		"price * quantity",
 		"sqrt(x*x + y*y)",
 	}
-	
+
 	for _, expr := range expressions {
 		evaluator.Evaluate(ctx, expr, nil) // Warm up cache
 	}
@@ -209,11 +209,11 @@ func BenchmarkBatchEvaluation(b *testing.B) {
 	}
 
 	sizes := []int{10, 100, 1000}
-	
+
 	for _, size := range sizes {
 		b.Run(fmt.Sprintf("size_%d", size), func(b *testing.B) {
 			contexts := makeContexts(size)
-			
+
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				_, _ = evaluator.EvaluateBatch(ctx, "price * quantity", contexts)
@@ -224,7 +224,7 @@ func BenchmarkBatchEvaluation(b *testing.B) {
 
 func BenchmarkLRUCacheOperations(b *testing.B) {
 	cache := expression.NewLRUCache(1000)
-	
+
 	// Pre-populate cache
 	for i := 0; i < 500; i++ {
 		expr := fmt.Sprintf("expr_%d", i)
@@ -266,7 +266,7 @@ func BenchmarkComplexityScaling(b *testing.B) {
 	ctx := context.Background()
 
 	depths := []int{1, 2, 3, 4, 5}
-	
+
 	// Generate expressions of increasing complexity
 	var generateExpr func(int) string
 	generateExpr = func(depth int) string {
@@ -290,7 +290,7 @@ func BenchmarkComplexityScaling(b *testing.B) {
 func BenchmarkFunctions(b *testing.B) {
 	evaluator := expression.NewEvaluator(nil)
 	ctx := context.Background()
-	
+
 	functions := []struct {
 		name string
 		expr string
@@ -309,7 +309,7 @@ func BenchmarkFunctions(b *testing.B) {
 	for _, fn := range functions {
 		b.Run(fn.name, func(b *testing.B) {
 			varCtx := &benchmarkVarContext{data: fn.vars}
-			
+
 			b.ResetTimer()
 			for i := 0; i < b.N; i++ {
 				_, _ = evaluator.Evaluate(ctx, fn.expr, varCtx)
@@ -336,7 +336,7 @@ func BenchmarkMemoryAllocation(b *testing.B) {
 		b.Run(tc.name, func(b *testing.B) {
 			b.ReportAllocs()
 			b.ResetTimer()
-			
+
 			for i := 0; i < b.N; i++ {
 				_, _ = evaluator.Evaluate(ctx, tc.expr, nil)
 			}
@@ -347,7 +347,7 @@ func BenchmarkMemoryAllocation(b *testing.B) {
 func BenchmarkParallelEvaluation(b *testing.B) {
 	evaluator := expression.NewEvaluator(nil)
 	ctx := context.Background()
-	
+
 	expr := "price * quantity * (1 - discount)"
 	varCtx := &benchmarkVarContext{
 		data: map[string]any{
@@ -380,7 +380,7 @@ func BenchmarkOptimizations(b *testing.B) {
 		evaluator := expression.NewEvaluator(nil)
 		// Warm up cache
 		evaluator.Evaluate(ctx, expr, varCtx)
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = evaluator.Evaluate(ctx, expr, varCtx)
@@ -390,7 +390,7 @@ func BenchmarkOptimizations(b *testing.B) {
 	b.Run("without_cache", func(b *testing.B) {
 		evaluator := expression.NewEvaluator(nil)
 		evaluator.ResizeCache(0) // Disable cache
-		
+
 		b.ResetTimer()
 		for i := 0; i < b.N; i++ {
 			_, _ = evaluator.Evaluate(ctx, expr, varCtx)

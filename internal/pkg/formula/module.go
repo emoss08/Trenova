@@ -4,7 +4,9 @@ import (
 	"embed"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/pkg/formula/infrastructure"
 	"github.com/emoss08/trenova/internal/pkg/formula/schema"
+	"github.com/emoss08/trenova/internal/pkg/formula/services"
 	"github.com/emoss08/trenova/internal/pkg/formula/variables"
 	"github.com/emoss08/trenova/internal/pkg/formula/variables/builtin"
 	"github.com/emoss08/trenova/internal/pkg/logger"
@@ -26,17 +28,17 @@ func newVariableRegistry(p VariableRegistryParams) *variables.Registry {
 		Str("module", "formula").
 		Str("component", "variable_registry").
 		Logger()
-	
+
 	registry := variables.NewRegistry()
 	builtin.RegisterAll(registry)
-	
+
 	// * Log registered variables
 	varNames := registry.ListNames()
 	log.Info().
 		Int("total_variables", len(varNames)).
 		Strs("variables", varNames).
 		Msg("formula variable registry initialized")
-	
+
 	return registry
 }
 
@@ -52,10 +54,10 @@ func newDataResolver(p DataResolverParams) *schema.DefaultDataResolver {
 		Str("module", "formula").
 		Str("component", "data_resolver").
 		Logger()
-	
+
 	resolver := schema.NewDefaultDataResolver()
 	schema.RegisterShipmentComputers(resolver)
-	
+
 	log.Info().
 		Strs("computers", []string{
 			"computeTemperatureDifferential",
@@ -64,7 +66,7 @@ func newDataResolver(p DataResolverParams) *schema.DefaultDataResolver {
 			"computeTotalStops",
 		}).
 		Msg("formula data resolver initialized with shipment computers")
-	
+
 	return resolver
 }
 
@@ -80,31 +82,31 @@ func newSchemaRegistryWithSchemas(p SchemaRegistryParams) (*schema.SchemaRegistr
 		Str("module", "formula").
 		Str("component", "schema_registry").
 		Logger()
-	
+
 	registry := schema.NewSchemaRegistry()
-	
+
 	// * Load shipment schema
 	log.Info().Msg("loading formula schemas...")
-	
+
 	schemaJSON, err := schemaDefinitions.ReadFile("schema/definitions/shipment.json")
 	if err != nil {
 		return nil, fmt.Errorf("failed to load shipment schema: %w", err)
 	}
-	
+
 	if err := registry.RegisterSchema("shipment", schemaJSON); err != nil {
 		return nil, fmt.Errorf("failed to register shipment schema: %w", err)
 	}
-	
+
 	log.Info().
 		Str("schema", "shipment").
 		Msg("successfully registered schema")
-	
+
 	// * Log summary
 	schemas := registry.ListSchemas()
 	log.Info().
 		Int("total_schemas", len(schemas)).
 		Msg("formula schema registry initialized")
-	
+
 	return registry, nil
 }
 
@@ -113,5 +115,8 @@ var Module = fx.Module("formula",
 		newVariableRegistry,
 		newSchemaRegistryWithSchemas,
 		newDataResolver,
+		NewSchemaVariableBridge,
+		infrastructure.NewPostgresDataLoader,
+		services.NewFormulaEvaluationService,
 	),
 )

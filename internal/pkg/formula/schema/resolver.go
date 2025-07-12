@@ -113,14 +113,19 @@ func (r *DefaultDataResolver) ResolveComputed(entity any, fieldSource *FieldSour
 	return result, nil
 }
 
-// * extractFieldValue uses reflection to extract a value from a struct
+// * extractFieldValue uses reflection to extract a value from a struct or map
 func (r *DefaultDataResolver) extractFieldValue(entity any, path string) (any, error) {
 	// * Handle nil
 	if entity == nil {
 		return nil, nil
 	}
 
-	// * Get reflect value
+	// * Handle maps specially
+	if m, ok := entity.(map[string]any); ok {
+		return r.extractFromMap(m, path)
+	}
+
+	// * Get reflect value for structs
 	v := reflect.ValueOf(entity)
 	if v.Kind() == reflect.Ptr {
 		if v.IsNil() {
@@ -158,6 +163,40 @@ func (r *DefaultDataResolver) extractFieldValue(entity any, path string) (any, e
 	}
 
 	return current.Interface(), nil
+}
+
+// * extractFromMap extracts a value from a map using a path
+func (r *DefaultDataResolver) extractFromMap(m map[string]any, path string) (any, error) {
+	// Handle nested paths (e.g., "Customer.Name")
+	parts := strings.Split(path, ".")
+	current := any(m)
+
+	for i, part := range parts {
+		// Try to get the value as a map
+		if currentMap, ok := current.(map[string]any); ok {
+			value, exists := currentMap[part]
+			
+			// If the exact part doesn't exist, try camelCase version
+			if !exists {
+				camelCasePart := strings.ToLower(part[:1]) + part[1:]
+				if value, exists = currentMap[camelCasePart]; !exists {
+					return nil, fmt.Errorf("field not found: %s in path %s", part, path)
+				}
+			}
+
+			// If this is the last part, return the value
+			if i == len(parts)-1 {
+				return value, nil
+			}
+
+			// Otherwise, continue navigating
+			current = value
+		} else {
+			return nil, fmt.Errorf("cannot navigate path %s: %s is not a map", path, part)
+		}
+	}
+
+	return current, nil
 }
 
 // * Standard transform functions

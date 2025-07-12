@@ -36,8 +36,6 @@ CREATE TABLE IF NOT EXISTS "stops"(
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
-    "created_at_timestamp" timestamp GENERATED ALWAYS AS (to_timestamp(created_at)) STORED,
-    "updated_at_timestamp" timestamp GENERATED ALWAYS AS (to_timestamp(updated_at)) STORED,
     CONSTRAINT "pk_stops" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
     -- Added unique constraint for sequence within same shipment_move
     -- CONSTRAINT "uq_stops_shipment_move_sequence" UNIQUE ("shipment_move_id", "organization_id", "business_unit_id", "sequence"),
@@ -57,20 +55,20 @@ WHERE
     status != 'Canceled';
 
 -- Composite index for common filtering and sorting patterns
-CREATE INDEX IF NOT EXISTS "idx_stops_common_queries" ON "stops"("organization_id", "business_unit_id", "created_at_timestamp", "status", "type");
+CREATE INDEX IF NOT EXISTS "idx_stops_common_queries" ON "stops"("organization_id", "business_unit_id", "created_at", "status", "type");
 
 -- Index for timestamp range queries
-CREATE INDEX IF NOT EXISTS "idx_stops_timestamps" ON "stops"("created_at_timestamp", "updated_at_timestamp");
+CREATE INDEX IF NOT EXISTS "idx_stops_timestamps" ON "stops"("created_at", "updated_at");
 
 -- Index for shipment move relationship with included columns for common queries
 CREATE INDEX IF NOT EXISTS "idx_stops_shipment_move" ON "stops"("shipment_move_id", "organization_id", "business_unit_id") INCLUDE ("status", "type", "sequence", "planned_arrival");
 
 -- BRIN index for timestamp ranges (more efficient for large tables)
-CREATE INDEX IF NOT EXISTS "idx_stops_brin_timestamps" ON "stops" USING BRIN("created_at_timestamp", "updated_at_timestamp") WITH (pages_per_range = 128);
+CREATE INDEX IF NOT EXISTS "idx_stops_brin_timestamps" ON "stops" USING BRIN("created_at", "updated_at") WITH (pages_per_range = 128);
 
 COMMENT ON TABLE stops IS 'Stores information about pickup and delivery stops for shipments';
 
-COMMENT ON COLUMN stops.created_at_timestamp IS 'Converted timestamp from created_at epoch for easier querying';
+COMMENT ON COLUMN stops.created_at IS 'Converted timestamp from created_at epoch for easier querying';
 
-COMMENT ON COLUMN stops.updated_at_timestamp IS 'Converted timestamp from updated_at epoch for easier querying';
+COMMENT ON COLUMN stops.updated_at IS 'Converted timestamp from updated_at epoch for easier querying';
 

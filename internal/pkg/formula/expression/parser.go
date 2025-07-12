@@ -229,19 +229,19 @@ func (p *Parser) parseUnary() Node {
 // * parsePostfix handles postfix operations like array indexing
 func (p *Parser) parsePostfix() Node {
 	node := p.parsePrimary()
-	
+
 	for {
 		if p.current.Type == TokenLeftBracket {
 			p.advance() // consume '['
-			
+
 			index := p.parseExpression()
-			
+
 			if p.current.Type != TokenRightBracket {
 				p.addError(fmt.Errorf("expected ']' after array index, got %s", p.current.Type))
 			} else {
 				p.advance() // consume ']'
 			}
-			
+
 			node = &IndexNode{
 				Array: node,
 				Index: index,
@@ -250,7 +250,7 @@ func (p *Parser) parsePostfix() Node {
 			break
 		}
 	}
-	
+
 	return node
 }
 
@@ -382,22 +382,22 @@ func (p *Parser) addError(err error) {
 // * parseArrayLiteral parses array literal syntax: [expr1, expr2, ...]
 func (p *Parser) parseArrayLiteral() Node {
 	p.advance() // consume '['
-	
+
 	elements := []Node{}
-	
+
 	// Handle empty array
 	if p.current.Type == TokenRightBracket {
 		p.advance() // consume ']'
 		return &ArrayNode{Elements: elements}
 	}
-	
+
 	for {
 		elem := p.parseExpression()
 		elements = append(elements, elem)
-		
+
 		if p.current.Type == TokenComma {
 			p.advance() // consume ','
-			
+
 			// Check for trailing comma
 			if p.current.Type == TokenRightBracket {
 				break
@@ -409,12 +409,12 @@ func (p *Parser) parseArrayLiteral() Node {
 			break
 		}
 	}
-	
+
 	if p.current.Type == TokenRightBracket {
 		p.advance() // consume ']'
 	} else {
 		p.addError(fmt.Errorf("expected ']' to close array literal, got %s", p.current.Type))
 	}
-	
+
 	return &ArrayNode{Elements: elements}
 }
