@@ -20,7 +20,7 @@ var (
 	_ domain.Validatable        = (*FormulaTemplate)(nil)
 )
 
-// * TemplateVariable represents a variable used in a formula template
+// TemplateVariable represents a variable used in a formula template
 type TemplateVariable struct {
 	Name         string            `json:"name"`
 	Type         formula.ValueType `json:"type"`
@@ -30,7 +30,7 @@ type TemplateVariable struct {
 	Source       string            `json:"source"` // e.g., "shipment.weight", "shipment.distance"
 }
 
-// * TemplateParameter represents a configurable parameter in a template
+// TemplateParameter represents a configurable parameter in a template
 type TemplateParameter struct {
 	Name         string            `json:"name"`
 	Type         formula.ValueType `json:"type"`
@@ -42,14 +42,14 @@ type TemplateParameter struct {
 	Options      []ParameterOption `json:"options,omitempty"`
 }
 
-// * ParameterOption represents an option for a parameter
+// ParameterOption represents an option for a parameter
 type ParameterOption struct {
 	Value       any    `json:"value"`
 	Label       string `json:"label"`
 	Description string `json:"description,omitempty"`
 }
 
-// * TemplateExample shows how to use a template for rate calculation
+// TemplateExample shows how to use a template for rate calculation
 type TemplateExample struct {
 	Name         string         `json:"name"`
 	Description  string         `json:"description"`
@@ -58,14 +58,14 @@ type TemplateExample struct {
 	ExpectedRate float64        `json:"expectedRate"`
 }
 
-// * TemplateRequirement specifies what's needed for a template
+// TemplateRequirement specifies what's needed for a template
 type TemplateRequirement struct {
 	Type        string `json:"type"` // "variable", "field", "function"
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
-// * FormulaTemplate represents a formula template for shipment rate calculations
+// FormulaTemplate represents a formula template for shipment rate calculations
 type FormulaTemplate struct {
 	bun.BaseModel `bun:"table:formula_templates,alias:ft" json:"-"`
 
@@ -179,27 +179,27 @@ func (ft *FormulaTemplate) BeforeAppendModel(_ context.Context, query bun.Query)
 	return nil
 }
 
-// * HasParameters returns true if the template has configurable parameters
+// HasParameters returns true if the template has configurable parameters
 func (ft *FormulaTemplate) HasParameters() bool {
 	return len(ft.Parameters) > 0
 }
 
-// * HasRequirements returns true if the template has requirements
+// HasRequirements returns true if the template has requirements
 func (ft *FormulaTemplate) HasRequirements() bool {
 	return len(ft.Requirements) > 0
 }
 
-// * HasExamples returns true if the template has examples
+// HasExamples returns true if the template has examples
 func (ft *FormulaTemplate) HasExamples() bool {
 	return len(ft.Examples) > 0
 }
 
-// * IsValid checks if the template is valid for use
+// IsValid checks if the template is valid for use
 func (ft *FormulaTemplate) IsValid() bool {
 	return ft.IsActive
 }
 
-// * GetRequiredVariables returns all required variables
+// GetRequiredVariables returns all required variables
 func (ft *FormulaTemplate) GetRequiredVariables() []TemplateVariable {
 	var required []TemplateVariable
 	for _, v := range ft.Variables {

@@ -110,6 +110,32 @@ func newSchemaRegistryWithSchemas(p SchemaRegistryParams) (*schema.SchemaRegistr
 	return registry, nil
 }
 
+// * initializeFormulaSystem connects all components and registers variables
+func initializeFormulaSystem(
+	varRegistry *variables.Registry,
+	schemaRegistry *schema.SchemaRegistry,
+	resolver *schema.DefaultDataResolver,
+	logger *logger.Logger,
+) error {
+	log := logger.With().
+		Str("module", "formula").
+		Str("component", "system_initializer").
+		Logger()
+
+	// * Create bridge and register schema variables
+	bridge := NewSchemaVariableBridge(schemaRegistry, varRegistry)
+	
+	if err := bridge.RegisterSchemaVariables("shipment"); err != nil {
+		return fmt.Errorf("failed to register shipment variables: %w", err)
+	}
+
+	log.Info().
+		Str("schema", "shipment").
+		Msg("successfully registered schema variables")
+
+	return nil
+}
+
 var Module = fx.Module("formula",
 	fx.Provide(
 		newVariableRegistry,
@@ -119,4 +145,5 @@ var Module = fx.Module("formula",
 		infrastructure.NewPostgresDataLoader,
 		services.NewFormulaEvaluationService,
 	),
+	fx.Invoke(initializeFormulaSystem),
 )

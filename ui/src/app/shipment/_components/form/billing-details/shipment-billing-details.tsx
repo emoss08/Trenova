@@ -2,12 +2,15 @@
 import { LazyComponent } from "@/components/error-boundary";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
-import { CustomerAutocompleteField } from "@/components/ui/autocomplete-fields";
+import {
+  CustomerAutocompleteField,
+  FormulaTemplateAutocompleteField,
+} from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { ratingMethodChoices } from "@/lib/choices";
-import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import { RatingMethod, ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import React, { lazy } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 import { PreviousRatesDialog } from "./previous-rates-dialog";
 
 const AdditionalChargeDetails = lazy(
@@ -51,6 +54,10 @@ export default function ShipmentBillingDetails() {
   function ShipmentBillingDetailsForm() {
     const { control } = useFormContext<ShipmentSchema>();
 
+    const ratingMethod = useWatch({ name: "ratingMethod" });
+    const ratingMethodIsFormulaTemplate =
+      ratingMethod === RatingMethod.enum.FormulaTemplate;
+
     return (
       <FormGroup cols={2} className="gap-4">
         <FormControl>
@@ -85,6 +92,20 @@ export default function ShipmentBillingDetails() {
             description="Specify the cost per selected rating method (e.g., per mile or per pallet)."
           />
         </FormControl>
+        {ratingMethodIsFormulaTemplate && (
+          <FormControl>
+            <FormulaTemplateAutocompleteField<ShipmentSchema>
+              name="formulaTemplateId"
+              control={control}
+              rules={{
+                required: ratingMethodIsFormulaTemplate,
+              }}
+              label="Formula Template"
+              placeholder="Select Formula Template"
+              description="Select the formula template to use for calculating the shipment charges."
+            />
+          </FormControl>
+        )}
         <FormControl>
           <InputField
             tabIndex={-1}
@@ -108,7 +129,7 @@ export default function ShipmentBillingDetails() {
             type="number"
           />
         </FormControl>
-        <FormControl>
+        <FormControl cols={ratingMethodIsFormulaTemplate ? "full" : undefined}>
           <InputField
             tabIndex={-1}
             readOnly

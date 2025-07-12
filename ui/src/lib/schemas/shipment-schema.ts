@@ -15,6 +15,7 @@ import { serviceTypeSchema } from "./service-type-schema";
 import { shipmentCommoditySchema } from "./shipment-commodity-schema";
 import { shipmentTypeSchema } from "./shipment-type-schema";
 import { userSchema } from "./user-schema";
+import { formulaTemplateSchema } from "./formula-template-schema";
 
 export const ShipmentStatus = z.enum([
   "New",
@@ -37,6 +38,7 @@ export const RatingMethod = z.enum([
   "PerPallet",
   "PerLinearFoot",
   "Other",
+  "FormulaTemplate",
 ]);
 
 // Temperature validation helper
@@ -76,6 +78,7 @@ export const shipmentSchema = z
     trailerTypeId: nullableStringSchema,
     ownerId: nullableStringSchema,
     canceledById: nullableStringSchema,
+    formulaTemplateId: nullableStringSchema,
     status: ShipmentStatus,
     cancelReason: nullableStringSchema,
     ratingMethod: RatingMethod,
@@ -95,6 +98,7 @@ export const shipmentSchema = z
     shipmentType: shipmentTypeSchema.nullish(),
     serviceType: serviceTypeSchema.nullish(),
     customer: customerSchema.nullish(),
+    formulaTemplate: formulaTemplateSchema.nullish(),
     tractorType: equipmentTypeSchema.nullish(),
     trailerType: equipmentTypeSchema.nullish(),
     owner: userSchema.nullish(),
@@ -155,6 +159,25 @@ export const shipmentSchema = z
       message:
         "Rating Unit is required when rating method is Per Mile and must be greater than 0",
       path: ["ratingUnit"],
+    },
+  )
+  .refine(
+    (data) => {
+      if (data.ratingMethod === "FormulaTemplate") {
+        if (
+          data.formulaTemplateId === null ||
+          data.formulaTemplateId === undefined ||
+          data.formulaTemplateId === ""
+        ) {
+          return false;
+        }
+      }
+      return true;
+    },
+    {
+      message:
+        "Formula Template is required when rating method is Formula Template",
+      path: ["formulaTemplateId"],
     },
   )
   .refine(

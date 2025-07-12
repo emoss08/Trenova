@@ -15,6 +15,7 @@ export default function ShipmentGeneralInformation() {
       <GeneralInformationFormGroup>
         <BOLField />
         <TemperatureFields />
+        <WeightAndPiecesFields />
       </GeneralInformationFormGroup>
     </ShipmentGeneralInformationInner>
   );
@@ -124,6 +125,40 @@ function TemperatureFields() {
           description="The maximum temperature for the shipment."
           placeholder="Enter Temperature Max"
           sideText="°F"
+          type="number"
+        />
+      </FormControl>
+    </>
+  );
+}
+
+function WeightAndPiecesFields() {
+  const { control } = useFormContext<ShipmentSchema>();
+
+  return (
+    <>
+      <FormControl>
+        <InputField
+          control={control}
+          name="weight"
+          label="Total Weight"
+          readOnly
+          tabIndex={-1}
+          description="The total weight of the shipment."
+          placeholder="Enter Weight"
+          sideText="lbs"
+          type="number"
+        />
+      </FormControl>
+      <FormControl>
+        <InputField
+          control={control}
+          name="pieces"
+          readOnly
+          tabIndex={-1}
+          label="Total Pieces"
+          description="The total number of pieces in the shipment."
+          placeholder="Enter Pieces"
           type="number"
         />
       </FormControl>
