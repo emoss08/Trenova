@@ -1,6 +1,6 @@
 # Function Reference
 
-This document provides a comprehensive reference for all built-in functions available in formula expressions.
+This document provides a comprehensive reference for all built-in functions available in formula expressions. All functions listed here are actually implemented and tested.
 
 ## Table of Contents
 
@@ -148,9 +148,9 @@ Returns the sine of x (x in radians).
 **Examples:**
 ```javascript
 sin(0)                 // 0
-sin(PI/2)              // 1
-sin(PI)                // 0 (approximately)
-sin(3*PI/2)            // -1
+sin(1.571)             // ~1 (sin of π/2)
+sin(3.142)             // ~0 (sin of π)
+sin(4.712)             // ~-1 (sin of 3π/2)
 ```
 
 #### cos(x)
@@ -164,9 +164,9 @@ Returns the cosine of x (x in radians).
 **Examples:**
 ```javascript
 cos(0)                 // 1
-cos(PI/2)              // 0 (approximately)
-cos(PI)                // -1
-cos(2*PI)              // 1
+cos(1.571)             // ~0 (cos of π/2)
+cos(3.142)             // ~-1 (cos of π)
+cos(6.283)             // ~1 (cos of 2π)
 ```
 
 #### tan(x)
@@ -180,8 +180,8 @@ Returns the tangent of x (x in radians).
 **Examples:**
 ```javascript
 tan(0)                 // 0
-tan(PI/4)              // 1 (approximately)
-tan(PI)                // 0 (approximately)
+tan(0.785)             // ~1 (tan of π/4)
+tan(3.142)             // ~0 (tan of π)
 ```
 
 ### Rounding
@@ -246,8 +246,10 @@ Converts a value to a number.
 
 **Returns:** number
 
-**Errors:**
-- Returns error if value cannot be converted to a number
+**Conversion Rules:**
+- Strings containing valid numbers are converted
+- Booleans: `true` becomes `1`, `false` becomes `0`
+- Other values may cause errors
 
 **Examples:**
 ```javascript
@@ -255,7 +257,6 @@ number("42")           // 42
 number("3.14")         // 3.14
 number(true)           // 1
 number(false)          // 0
-number("abc")          // Error: cannot convert string "abc" to number
 ```
 
 #### string(value)
@@ -286,7 +287,7 @@ Converts a value to a boolean.
 - Numbers: 0 is false, all others are true
 - Strings: empty string is false, all others are true
 - Arrays: empty array is false, all others are true
-- null/nil is false
+- null is false
 
 **Examples:**
 ```javascript
@@ -429,7 +430,7 @@ indexOf(["a", "b", "c"], "b")    // 1
 
 ## String Functions
 
-String manipulation is primarily done through array functions that also work with strings:
+String manipulation uses the array functions that also work with strings:
 
 - `len(string)` - Returns string length
 - `slice(string, start, end?)` - Extracts substring
@@ -476,7 +477,7 @@ if(score > 90, "A",
 ```
 
 #### coalesce(...values)
-Returns the first non-null, non-zero, non-empty value from the arguments.
+Returns the first non-null, non-empty, non-zero value from the arguments.
 
 **Parameters:**
 - `...values` (any): Values to check
@@ -484,7 +485,7 @@ Returns the first non-null, non-zero, non-empty value from the arguments.
 **Returns:** any
 
 **Behavior:**
-- Skips null/nil values
+- Skips null values
 - Skips empty strings
 - Skips zero numbers
 - Returns first "truthy" value or null if all are falsy
@@ -495,39 +496,93 @@ coalesce(null, 0, "", "hello")   // "hello"
 coalesce(null, 42)               // 42
 coalesce(0, 10, 20)              // 10
 coalesce("", "default")          // "default"
-coalesce(false, true)            // false (booleans returned as-is)
 ```
 
 ## Function Composition
 
-Functions can be nested and combined:
+Functions can be nested and combined for complex operations:
 
+### Mathematical Composition
 ```javascript
-// Mathematical composition
-sqrt(pow(3, 2) + pow(4, 2))     // 5 (Pythagorean theorem)
+// Pythagorean theorem
+sqrt(pow(3, 2) + pow(4, 2))     // 5
 
-// Array operations
-sum(slice(prices, 0, -1))        // Sum all but last price
-avg(concat(scores1, scores2))    // Average of combined scores
+// Compound calculation
+base_rate * pow(1 + rate/100, years)
+```
 
-// Conditional logic
-if(contains(tags, "urgent"), 
+### Array Processing
+```javascript
+// Sum all but last element
+sum(slice(prices, 0, -1))
+
+// Average of combined arrays
+avg(concat(scores1, scores2))
+
+// Find max from first N elements
+max(slice(values, 0, min(len(values), 10)))
+```
+
+### Conditional Logic
+```javascript
+// Nested conditions with array lookup
+if(contains(["high", "urgent"], priority), 
    min(deadline, 24),
    max(deadline, 72)
 )
 
-// Type conversion
-number(slice("12345", 1, 3))     // 23
+// Type conversion with validation
+if(len(input) > 0, number(input), 0)
 ```
 
 ## Error Handling
 
 Functions validate their inputs and return descriptive errors:
 
-- **Type Errors**: When arguments are wrong type
-- **Argument Count**: When too few or too many arguments
-- **Range Errors**: When numeric inputs are out of valid range
-- **Division by Zero**: When dividing by zero
-- **Invalid Operations**: Like square root of negative number
+### Common Error Types
 
-Always test formulas with edge cases to ensure proper error handling.
+| Error Type | Description | Example |
+|------------|-------------|---------|
+| **Type Error** | Wrong argument type | `sum("not an array")` |
+| **Argument Count** | Wrong number of arguments | `pow(2)` (missing exponent) |
+| **Range Error** | Value out of valid range | `sqrt(-1)` |
+| **Division by Zero** | Attempting to divide by zero | `log(1, 1)` |
+| **Index Error** | Array index out of bounds | `[1, 2][5]` |
+
+### Error Messages
+
+Error messages include:
+- Function name
+- Expected vs actual arguments
+- Specific constraint violated
+- Position in expression
+
+**Example:**
+```
+Error: Function 'sqrt' expects non-negative number, got -4 at position 15
+```
+
+### Best Practices
+
+1. **Validate inputs**: Use conditionals to check values
+   ```javascript
+   if(x >= 0, sqrt(x), 0)
+   ```
+
+2. **Provide defaults**: Use coalesce function
+   ```javascript
+   coalesce(custom_rate, standard_rate, 0)
+   ```
+
+3. **Test edge cases**: Include null, zero, empty arrays
+   ```javascript
+   // Safe division
+   if(count > 0, total / count, 0)
+   ```
+
+4. **Handle array bounds**: Check lengths before indexing
+   ```javascript
+   if(len(values) > index, values[index], 0)
+   ```
+
+Always test formulas with representative data and edge cases to ensure proper error handling.
