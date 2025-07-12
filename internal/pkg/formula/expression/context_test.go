@@ -48,20 +48,20 @@ func TestEvaluationContext(t *testing.T) {
 			},
 		}
 		evalCtx := NewEvaluationContext(context.Background(), mockVarCtx)
-		
+
 		// Test function registry
 		if evalCtx.functions == nil {
 			t.Error("functions registry is nil")
 		}
-		
+
 		// Test that default functions are loaded
 		if _, exists := evalCtx.functions["abs"]; !exists {
 			t.Error("abs function not found in registry")
 		}
-		
+
 		// Test timeout setting
 		evalCtx = evalCtx.WithTimeout(200 * time.Millisecond)
-		
+
 		// Test memory limit setting
 		evalCtx = evalCtx.WithMemoryLimit(2 << 20)
 	})
@@ -71,7 +71,7 @@ func TestEvaluationContext(t *testing.T) {
 			fields: map[string]any{},
 		}
 		evalCtx := NewEvaluationContext(context.Background(), mockVarCtx)
-		
+
 		// Test calling a function
 		result, err := evalCtx.CallFunction("abs", -5.0)
 		if err != nil {
@@ -80,7 +80,7 @@ func TestEvaluationContext(t *testing.T) {
 		if result != 5.0 {
 			t.Errorf("CallFunction() = %v, want 5.0", result)
 		}
-		
+
 		// Test calling non-existent function
 		_, err = evalCtx.CallFunction("nonexistent", 42)
 		if err == nil {
@@ -94,16 +94,16 @@ func TestEvaluationContext(t *testing.T) {
 			fields: map[string]any{},
 		}
 		evalCtx := NewEvaluationContext(ctx, mockVarCtx)
-		
+
 		// Context should work normally
 		err := evalCtx.CheckLimits()
 		if err != nil {
 			t.Errorf("CheckLimits() error before cancellation: %v", err)
 		}
-		
+
 		// Cancel the context
 		cancel()
-		
+
 		// Context should return error
 		err = evalCtx.CheckLimits()
 		if err == nil {
@@ -117,16 +117,16 @@ func TestEvaluationContext(t *testing.T) {
 		}
 		evalCtx := NewEvaluationContext(context.Background(), mockVarCtx).
 			WithTimeout(50 * time.Millisecond)
-		
+
 		// Context should work initially
 		err := evalCtx.CheckLimits()
 		if err != nil {
 			t.Errorf("CheckLimits() error before timeout: %v", err)
 		}
-		
+
 		// Wait for timeout
 		time.Sleep(100 * time.Millisecond)
-		
+
 		// Context should return timeout error
 		err = evalCtx.CheckLimits()
 		if err == nil {
@@ -140,10 +140,10 @@ func TestEvaluationContext(t *testing.T) {
 		}
 		evalCtx := NewEvaluationContext(context.Background(), mockVarCtx).
 			WithMemoryLimit(100) // Very small limit
-		
+
 		// Manually set memory used to exceed limit
 		evalCtx.memoryUsed = 200
-		
+
 		err := evalCtx.CheckLimits()
 		if err == nil {
 			t.Error("CheckLimits() expected memory limit error")
@@ -155,10 +155,10 @@ func TestEvaluationContext(t *testing.T) {
 			fields: map[string]any{},
 		}
 		evalCtx := NewEvaluationContext(context.Background(), mockVarCtx)
-		
+
 		// Manually set depth to exceed limit
 		evalCtx.depth = 100
-		
+
 		err := evalCtx.CheckLimits()
 		if err == nil {
 			t.Error("CheckLimits() expected depth limit error")
@@ -169,19 +169,19 @@ func TestEvaluationContext(t *testing.T) {
 		mockVarCtx := &mockVariableContext{
 			fields: map[string]any{},
 		}
-		
+
 		// Create custom registry
 		customRegistry := make(FunctionRegistry)
 		customRegistry["test"] = &testFunction{}
-		
+
 		evalCtx := NewEvaluationContext(context.Background(), mockVarCtx).
 			WithFunctions(customRegistry)
-		
+
 		// Should have custom function
 		if _, exists := evalCtx.functions["test"]; !exists {
 			t.Error("custom function not found")
 		}
-		
+
 		// Should not have default functions
 		if _, exists := evalCtx.functions["abs"]; exists {
 			t.Error("default function found in custom registry")
@@ -195,10 +195,10 @@ func TestEvaluationContext(t *testing.T) {
 			},
 		}
 		evalCtx := NewEvaluationContext(context.Background(), mockVarCtx)
-		
+
 		// Clone the context
 		cloned := evalCtx.Clone()
-		
+
 		// Should share configuration
 		if cloned.timeout != evalCtx.timeout {
 			t.Error("Clone() did not copy timeout")
@@ -206,7 +206,7 @@ func TestEvaluationContext(t *testing.T) {
 		if cloned.memoryLimit != evalCtx.memoryLimit {
 			t.Error("Clone() did not copy memoryLimit")
 		}
-		
+
 		// Should have separate variable cache
 		if &cloned.variableCache == &evalCtx.variableCache {
 			t.Error("Clone() shared variable cache")
@@ -231,31 +231,31 @@ func BenchmarkEvaluationContext(b *testing.B) {
 		}
 		evalCtx := NewEvaluationContext(context.Background(), mockVarCtx)
 		b.ResetTimer()
-		
+
 		for i := 0; i < b.N; i++ {
 			evalCtx.CallFunction("abs", -42.0)
 		}
 	})
-	
+
 	b.Run("CheckLimits", func(b *testing.B) {
 		mockVarCtx := &mockVariableContext{
 			fields: map[string]any{},
 		}
 		evalCtx := NewEvaluationContext(context.Background(), mockVarCtx)
 		b.ResetTimer()
-		
+
 		for i := 0; i < b.N; i++ {
 			evalCtx.CheckLimits()
 		}
 	})
-	
+
 	b.Run("Clone", func(b *testing.B) {
 		mockVarCtx := &mockVariableContext{
 			fields: map[string]any{},
 		}
 		evalCtx := NewEvaluationContext(context.Background(), mockVarCtx)
 		b.ResetTimer()
-		
+
 		for i := 0; i < b.N; i++ {
 			evalCtx.Clone()
 		}

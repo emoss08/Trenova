@@ -39,7 +39,7 @@ func DefaultFunctionRegistry() FunctionRegistry {
 	registry["ceil"] = &ceilFunction{}
 	registry["sqrt"] = &sqrtFunction{}
 	registry["pow"] = &powFunction{}
-	
+
 	// Advanced math functions
 	registry["log"] = &logFunction{}
 	registry["exp"] = &expFunction{}
@@ -258,7 +258,7 @@ func (f *logFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if len(args) < 1 || len(args) > 2 {
 		return nil, fmt.Errorf("log: requires 1 or 2 arguments, got %d", len(args))
 	}
-	
+
 	x, ok := conversion.ToFloat64(args[0])
 	if !ok {
 		return nil, fmt.Errorf("log: first argument must be a number")
@@ -266,12 +266,12 @@ func (f *logFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if x <= 0 {
 		return nil, fmt.Errorf("log: argument must be positive")
 	}
-	
+
 	// Natural logarithm if no base specified
 	if len(args) == 1 {
 		return math.Log(x), nil
 	}
-	
+
 	// Logarithm with specified base
 	base, ok := conversion.ToFloat64(args[1])
 	if !ok {
@@ -280,7 +280,7 @@ func (f *logFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if base <= 0 || base == 1 {
 		return nil, fmt.Errorf("log: base must be positive and not equal to 1")
 	}
-	
+
 	return math.Log(x) / math.Log(base), nil
 }
 
@@ -293,17 +293,17 @@ func (f *expFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("exp: requires exactly 1 argument, got %d", len(args))
 	}
-	
+
 	x, ok := conversion.ToFloat64(args[0])
 	if !ok {
 		return nil, fmt.Errorf("exp: argument must be a number")
 	}
-	
+
 	result := math.Exp(x)
 	if math.IsInf(result, 0) {
 		return nil, fmt.Errorf("exp: result out of range")
 	}
-	
+
 	return result, nil
 }
 
@@ -316,12 +316,12 @@ func (f *sinFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("sin: requires exactly 1 argument, got %d", len(args))
 	}
-	
+
 	x, ok := conversion.ToFloat64(args[0])
 	if !ok {
 		return nil, fmt.Errorf("sin: argument must be a number")
 	}
-	
+
 	return math.Sin(x), nil
 }
 
@@ -334,12 +334,12 @@ func (f *cosFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("cos: requires exactly 1 argument, got %d", len(args))
 	}
-	
+
 	x, ok := conversion.ToFloat64(args[0])
 	if !ok {
 		return nil, fmt.Errorf("cos: argument must be a number")
 	}
-	
+
 	return math.Cos(x), nil
 }
 
@@ -352,12 +352,12 @@ func (f *tanFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("tan: requires exactly 1 argument, got %d", len(args))
 	}
-	
+
 	x, ok := conversion.ToFloat64(args[0])
 	if !ok {
 		return nil, fmt.Errorf("tan: argument must be a number")
 	}
-	
+
 	return math.Tan(x), nil
 }
 
@@ -372,13 +372,13 @@ func (f *numberFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf("number: requires exactly 1 argument, got %d", len(args))
 	}
-	
+
 	// First try the conversion helper
 	val, ok := conversion.ToFloat64(args[0])
 	if ok {
 		return val, nil
 	}
-	
+
 	// Handle special cases
 	switch v := args[0].(type) {
 	case string:
@@ -522,7 +522,7 @@ func (f *sliceFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if len(args) < 2 || len(args) > 3 {
 		return nil, fmt.Errorf("slice: requires 2 or 3 arguments, got %d", len(args))
 	}
-	
+
 	// Get the array or string
 	var result []any
 	switch val := args[0].(type) {
@@ -538,14 +538,14 @@ func (f *sliceFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	default:
 		return nil, fmt.Errorf("slice: first argument must be array or string")
 	}
-	
+
 	// Get start index
 	startFloat, ok := conversion.ToFloat64(args[1])
 	if !ok {
 		return nil, fmt.Errorf("slice: start index must be a number")
 	}
 	start := int(startFloat)
-	
+
 	// Get end index (default to length)
 	end := len(result)
 	if len(args) > 2 {
@@ -555,7 +555,7 @@ func (f *sliceFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 		}
 		end = int(endFloat)
 	}
-	
+
 	// Handle negative indices
 	if start < 0 {
 		start = len(result) + start
@@ -563,7 +563,7 @@ func (f *sliceFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if end < 0 {
 		end = len(result) + end
 	}
-	
+
 	// Bounds checking
 	if start < 0 {
 		start = 0
@@ -574,7 +574,7 @@ func (f *sliceFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if start > end {
 		return []any{}, nil
 	}
-	
+
 	// For strings, return a string
 	if _, isString := args[0].(string); isString {
 		chars := make([]string, end-start)
@@ -583,7 +583,7 @@ func (f *sliceFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 		}
 		return joinStrings(chars, ""), nil
 	}
-	
+
 	// For arrays, return a slice
 	return result[start:end], nil
 }
@@ -597,7 +597,7 @@ func (f *concatFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if len(args) < 2 {
 		return nil, fmt.Errorf("concat: requires at least 2 arguments, got %d", len(args))
 	}
-	
+
 	// Check if all arguments are strings
 	allStrings := true
 	for _, arg := range args {
@@ -606,7 +606,7 @@ func (f *concatFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 			break
 		}
 	}
-	
+
 	if allStrings {
 		// Concatenate strings
 		result := make([]string, len(args))
@@ -615,7 +615,7 @@ func (f *concatFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 		}
 		return joinStrings(result, ""), nil
 	}
-	
+
 	// Concatenate arrays
 	result := []any{}
 	for _, arg := range args {
@@ -627,7 +627,7 @@ func (f *concatFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 			result = append(result, val)
 		}
 	}
-	
+
 	return result, nil
 }
 
@@ -640,7 +640,7 @@ func (f *containsFunction) Call(_ *EvaluationContext, args ...any) (any, error) 
 	if len(args) != 2 {
 		return nil, fmt.Errorf("contains: requires exactly 2 arguments, got %d", len(args))
 	}
-	
+
 	// Handle string contains
 	if str, ok := args[0].(string); ok {
 		search, ok := args[1].(string)
@@ -649,20 +649,20 @@ func (f *containsFunction) Call(_ *EvaluationContext, args ...any) (any, error) 
 		}
 		return contains(str, search), nil
 	}
-	
+
 	// Handle array contains
 	arr, ok := args[0].([]any)
 	if !ok {
 		return nil, fmt.Errorf("contains: first argument must be string or array")
 	}
-	
+
 	// Check if array contains the value
 	for _, elem := range arr {
 		if equal(elem, args[1]) {
 			return true, nil
 		}
 	}
-	
+
 	return false, nil
 }
 
@@ -675,7 +675,7 @@ func (f *indexOfFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if len(args) != 2 {
 		return nil, fmt.Errorf("indexOf: requires exactly 2 arguments, got %d", len(args))
 	}
-	
+
 	// Handle string indexOf
 	if str, ok := args[0].(string); ok {
 		search, ok := args[1].(string)
@@ -684,20 +684,20 @@ func (f *indexOfFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 		}
 		return float64(indexOf(str, search)), nil
 	}
-	
+
 	// Handle array indexOf
 	arr, ok := args[0].([]any)
 	if !ok {
 		return nil, fmt.Errorf("indexOf: first argument must be string or array")
 	}
-	
+
 	// Find index of value in array
 	for i, elem := range arr {
 		if equal(elem, args[1]) {
 			return float64(i), nil
 		}
 	}
-	
+
 	return -1.0, nil
 }
 
@@ -753,28 +753,28 @@ func equal(a, b any) bool {
 	if a == nil || b == nil {
 		return a == b
 	}
-	
+
 	// Handle numeric comparison with type conversion
 	aFloat, aOk := conversion.ToFloat64(a)
 	bFloat, bOk := conversion.ToFloat64(b)
 	if aOk && bOk {
 		return aFloat == bFloat
 	}
-	
+
 	// Handle string comparison
 	aStr, aStrOk := a.(string)
 	bStr, bStrOk := b.(string)
 	if aStrOk && bStrOk {
 		return aStr == bStr
 	}
-	
+
 	// Handle bool comparison
 	aBool, aBoolOk := a.(bool)
 	bBool, bBoolOk := b.(bool)
 	if aBoolOk && bBoolOk {
 		return aBool == bBool
 	}
-	
+
 	// Arrays require deep comparison
 	aArr, aArrOk := a.([]any)
 	bArr, bArrOk := b.([]any)
@@ -789,7 +789,7 @@ func equal(a, b any) bool {
 		}
 		return true
 	}
-	
+
 	// Different types
 	return false
 }
@@ -801,4 +801,3 @@ func contains(str, substr string) bool {
 func indexOf(str, substr string) int {
 	return strings.Index(str, substr)
 }
-

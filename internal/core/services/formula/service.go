@@ -901,7 +901,7 @@ func (s *Service) generateEvaluationSteps(
 	// Use the tracing evaluator to get actual evaluation steps
 	tracingEval := expression.NewTracingEvaluator(s.variables)
 	_, traceSteps, err := tracingEval.EvaluateWithTrace(ctx, expr, varCtx)
-	
+
 	// Convert trace steps to evaluation steps
 	evalSteps := make([]formula.EvaluationStep, 0, len(traceSteps))
 	for _, trace := range traceSteps {
@@ -911,7 +911,7 @@ func (s *Service) generateEvaluationSteps(
 			Result:      trace.Result,
 		})
 	}
-	
+
 	// If there was an error, the trace will still contain the steps up to the error
 	if err != nil && len(evalSteps) == 0 {
 		// Fallback if no trace was generated
@@ -923,7 +923,7 @@ func (s *Service) generateEvaluationSteps(
 			},
 		}
 	}
-	
+
 	return evalSteps
 }
 

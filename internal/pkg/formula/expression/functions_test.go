@@ -45,7 +45,7 @@ func TestBuiltinFunctions(t *testing.T) {
 			args:      []any{},
 			wantError: true,
 		},
-		
+
 		// Advanced math functions
 		{
 			name:     "log natural",
@@ -309,7 +309,7 @@ func TestBuiltinFunctions(t *testing.T) {
 			args:      []any{[]any{}},
 			wantError: true,
 		},
-		
+
 		// Array manipulation functions
 		{
 			name:     "slice array middle",

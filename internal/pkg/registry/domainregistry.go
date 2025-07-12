@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
+	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/domain/integration"
@@ -94,5 +95,6 @@ func RegisterEntities() []any {
 		&dedicatedlane.DedicatedLaneSuggestion{},
 		&consolidation.ConsolidationSettings{},
 		&consolidation.ConsolidationGroup{},
+		&formulatemplate.FormulaTemplate{},
 	}
 }

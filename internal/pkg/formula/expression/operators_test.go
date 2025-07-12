@@ -92,7 +92,7 @@ func TestEvaluateBinaryOp(t *testing.T) {
 			right: 3.0,
 			want:  8.0,
 		},
-		
+
 		// Comparison operations
 		{
 			name:  "equal true",
@@ -157,7 +157,7 @@ func TestEvaluateBinaryOp(t *testing.T) {
 			right: 5.0,
 			want:  true,
 		},
-		
+
 		// Logical operations
 		{
 			name:  "and true true",
@@ -187,7 +187,7 @@ func TestEvaluateBinaryOp(t *testing.T) {
 			right: false,
 			want:  false,
 		},
-		
+
 		// Type coercion
 		{
 			name:  "add mixed types",
@@ -203,7 +203,7 @@ func TestEvaluateBinaryOp(t *testing.T) {
 			right:     5,
 			wantError: true,
 		},
-		
+
 		// Overflow checks
 		{
 			name:      "add overflow",
@@ -231,16 +231,16 @@ func TestEvaluateBinaryOp(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := evaluateBinaryOp(tt.op, tt.left, tt.right)
-			
+
 			if (err != nil) != tt.wantError {
 				t.Errorf("evaluateBinaryOp() error = %v, wantError %v", err, tt.wantError)
 				return
 			}
-			
+
 			if tt.wantError {
 				return
 			}
-			
+
 			// Compare results
 			switch want := tt.want.(type) {
 			case float64:
@@ -344,16 +344,16 @@ func TestEvaluateUnaryOp(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			got, err := evaluateUnaryOp(tt.op, tt.operand)
-			
+
 			if (err != nil) != tt.wantError {
 				t.Errorf("evaluateUnaryOp() error = %v, wantError %v", err, tt.wantError)
 				return
 			}
-			
+
 			if tt.wantError {
 				return
 			}
-			
+
 			// Compare results
 			switch want := tt.want.(type) {
 			case float64:
@@ -414,27 +414,27 @@ func TestEqualValues(t *testing.T) {
 		{"different numbers", 5.0, 6.0, false},
 		{"float epsilon", 1.0000000001, 1.0000000002, true}, // Within epsilon
 		{"mixed numeric types", float64(5), int(5), true},
-		
+
 		// Strings
 		{"equal strings", "hello", "hello", true},
 		{"different strings", "hello", "world", false},
-		
+
 		// Booleans
 		{"equal bools true", true, true, true},
 		{"equal bools false", false, false, true},
 		{"different bools", true, false, false},
-		
+
 		// Arrays
 		{"equal arrays", []any{1, 2, 3}, []any{1, 2, 3}, true},
 		{"different arrays length", []any{1, 2}, []any{1, 2, 3}, false},
 		{"different arrays content", []any{1, 2, 3}, []any{1, 2, 4}, false},
 		{"empty arrays", []any{}, []any{}, true},
-		
+
 		// Nil
 		{"both nil", nil, nil, true},
 		{"left nil", nil, 5, false},
 		{"right nil", "hello", nil, false},
-		
+
 		// Mixed types
 		{"number string", 5.0, "5", false},
 		{"bool number", true, 1.0, false},
@@ -461,12 +461,12 @@ func TestCompareValues(t *testing.T) {
 		{"greater than", 10.0, 5.0, 1},
 		{"equal", 5.0, 5.0, 0},
 		{"mixed types less", int(5), 10.0, -1},
-		
+
 		// Strings
 		{"string less", "apple", "banana", -1},
 		{"string greater", "zebra", "apple", 1},
 		{"string equal", "hello", "hello", 0},
-		
+
 		// Incomparable types
 		{"number string", 5.0, "hello", 0},
 		{"bool number", true, 5.0, 0},

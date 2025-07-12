@@ -9,12 +9,12 @@ import (
 
 // * TraceStep represents a single step in the evaluation trace
 type TraceStep struct {
-	Step        string         `json:"step"`
-	Description string         `json:"description"`
-	Result      string         `json:"result"`
-	Value       any            `json:"value,omitempty"`
-	NodeType    string         `json:"nodeType,omitempty"`
-	Children    []TraceStep    `json:"children,omitempty"`
+	Step        string      `json:"step"`
+	Description string      `json:"description"`
+	Result      string      `json:"result"`
+	Value       any         `json:"value,omitempty"`
+	NodeType    string      `json:"nodeType,omitempty"`
+	Children    []TraceStep `json:"children,omitempty"`
 }
 
 // * TracingEvaluator wraps an evaluator to capture evaluation steps
@@ -124,7 +124,7 @@ func (te *TracingEvaluator) EvaluateWithTrace(
 		EvaluationContext: NewEvaluationContext(ctx, varCtx).
 			WithFunctions(te.evaluator.functions).
 			WithVariableRegistry(te.evaluator.variables),
-		trace:            &evalStep,
+		trace: &evalStep,
 	}
 
 	result, err := te.evaluateNode(ast, evalCtx)
@@ -205,7 +205,7 @@ func (te *TracingEvaluator) evaluateNode(node Node, ctx *tracingEvaluationContex
 		// Evaluate left operand
 		leftCtx := &tracingEvaluationContext{
 			EvaluationContext: ctx.EvaluationContext,
-			trace:            &TraceStep{},
+			trace:             &TraceStep{},
 		}
 		leftVal, leftErr := te.evaluateNode(n.Left, leftCtx)
 		nodeTrace.Children = append(nodeTrace.Children, *leftCtx.trace)
@@ -219,7 +219,7 @@ func (te *TracingEvaluator) evaluateNode(node Node, ctx *tracingEvaluationContex
 		// Evaluate right operand
 		rightCtx := &tracingEvaluationContext{
 			EvaluationContext: ctx.EvaluationContext,
-			trace:            &TraceStep{},
+			trace:             &TraceStep{},
 		}
 		rightVal, rightErr := te.evaluateNode(n.Right, rightCtx)
 		nodeTrace.Children = append(nodeTrace.Children, *rightCtx.trace)
@@ -247,7 +247,7 @@ func (te *TracingEvaluator) evaluateNode(node Node, ctx *tracingEvaluationContex
 		for i, arg := range n.Arguments {
 			argCtx := &tracingEvaluationContext{
 				EvaluationContext: ctx.EvaluationContext,
-				trace:            &TraceStep{},
+				trace:             &TraceStep{},
 			}
 			_, argErr := te.evaluateNode(arg, argCtx)
 			argCtx.trace.Step = fmt.Sprintf("Argument %d", i+1)
@@ -273,7 +273,7 @@ func (te *TracingEvaluator) evaluateNode(node Node, ctx *tracingEvaluationContex
 		// Evaluate operand
 		operandCtx := &tracingEvaluationContext{
 			EvaluationContext: ctx.EvaluationContext,
-			trace:            &TraceStep{},
+			trace:             &TraceStep{},
 		}
 		operandVal, operandErr := te.evaluateNode(n.Operand, operandCtx)
 		nodeTrace.Children = append(nodeTrace.Children, *operandCtx.trace)
@@ -300,7 +300,7 @@ func (te *TracingEvaluator) evaluateNode(node Node, ctx *tracingEvaluationContex
 		// Evaluate condition
 		condCtx := &tracingEvaluationContext{
 			EvaluationContext: ctx.EvaluationContext,
-			trace:            &TraceStep{Step: "Condition"},
+			trace:             &TraceStep{Step: "Condition"},
 		}
 		condVal, condErr := te.evaluateNode(n.Condition, condCtx)
 		nodeTrace.Children = append(nodeTrace.Children, *condCtx.trace)
@@ -325,7 +325,7 @@ func (te *TracingEvaluator) evaluateNode(node Node, ctx *tracingEvaluationContex
 
 		branchCtx := &tracingEvaluationContext{
 			EvaluationContext: ctx.EvaluationContext,
-			trace:            &TraceStep{Step: branchName},
+			trace:             &TraceStep{Step: branchName},
 		}
 		result, err = te.evaluateNode(branchNode, branchCtx)
 		nodeTrace.Children = append(nodeTrace.Children, *branchCtx.trace)
@@ -345,7 +345,7 @@ func (te *TracingEvaluator) evaluateNode(node Node, ctx *tracingEvaluationContex
 		for i, elem := range n.Elements {
 			elemCtx := &tracingEvaluationContext{
 				EvaluationContext: ctx.EvaluationContext,
-				trace:            &TraceStep{Step: fmt.Sprintf("Element %d", i)},
+				trace:             &TraceStep{Step: fmt.Sprintf("Element %d", i)},
 			}
 			elemVal, elemErr := te.evaluateNode(elem, elemCtx)
 			nodeTrace.Children = append(nodeTrace.Children, *elemCtx.trace)

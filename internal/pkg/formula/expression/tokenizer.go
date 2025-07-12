@@ -15,10 +15,10 @@ type Tokenizer struct {
 	ch       rune // current char under examination
 	line     int
 	column   int
-	
+
 	// String interning for efficiency
 	interner *StringInterner
-	
+
 	// Debug mode
 	debug bool
 }
@@ -52,51 +52,51 @@ func (t *Tokenizer) debugf(format string, args ...interface{}) {
 func (t *Tokenizer) Tokenize() ([]Token, error) {
 	// Pre-allocate with reasonable capacity
 	tokens := make([]Token, 0, len(t.input)/3)
-	
+
 	// Validate input length
 	if len(t.input) > MaxExpressionLength {
-		return nil, fmt.Errorf("expression too long: %d characters (max %d)", 
+		return nil, fmt.Errorf("expression too long: %d characters (max %d)",
 			len(t.input), MaxExpressionLength)
 	}
-	
+
 	for {
 		// Check token count limit
 		if len(tokens) > MaxTokenCount {
-			return nil, fmt.Errorf("expression too complex: %d tokens (max %d)", 
+			return nil, fmt.Errorf("expression too complex: %d tokens (max %d)",
 				len(tokens), MaxTokenCount)
 		}
-		
+
 		tok := t.nextToken()
 		tokens = append(tokens, tok)
-		
+
 		if tok.Type == TokenEOF || tok.Type == TokenError {
 			break
 		}
 	}
-	
+
 	return tokens, nil
 }
 
 // * nextToken returns the next token from the input
 func (t *Tokenizer) nextToken() Token {
 	t.skipWhitespace()
-	
+
 	// Track position for error reporting
 	pos := t.position
 	line := t.line
 	col := t.column
-	
+
 	t.debugf("nextToken() at pos=%d, ch='%c' (%d)", pos, t.ch, t.ch)
-	
+
 	var tok Token
 	tok.Position = pos
 	tok.Line = uint16(line)
 	tok.Column = uint16(col)
-	
+
 	switch t.ch {
 	case 0:
 		tok.Type = TokenEOF
-		
+
 	// Operators and delimiters
 	case '+':
 		tok.Type = TokenPlus
@@ -137,7 +137,7 @@ func (t *Tokenizer) nextToken() Token {
 	case ':':
 		tok.Type = TokenColon
 		t.readChar()
-		
+
 	// Comparison operators
 	case '=':
 		t.readChar()
@@ -172,7 +172,7 @@ func (t *Tokenizer) nextToken() Token {
 		} else {
 			tok.Type = TokenGreater
 		}
-		
+
 	// Logical operators
 	case '&':
 		t.readChar()
@@ -192,7 +192,7 @@ func (t *Tokenizer) nextToken() Token {
 			tok.Type = TokenError
 			tok.Value = "unexpected '|', use '||' for logical OR"
 		}
-		
+
 	// String literals
 	case '"':
 		str, err := t.readString()
@@ -203,7 +203,7 @@ func (t *Tokenizer) nextToken() Token {
 			tok.Type = TokenString
 			tok.Value = t.interner.Intern(str)
 		}
-		
+
 	default:
 		if isDigit(t.ch) || (t.ch == '.' && isDigit(t.peekChar())) {
 			// Number literal
@@ -218,7 +218,7 @@ func (t *Tokenizer) nextToken() Token {
 		} else if isLetter(t.ch) || t.ch == '_' {
 			// Identifier or keyword
 			ident := t.readIdentifier()
-			
+
 			// Check for keywords
 			switch ident {
 			case "true":
@@ -237,7 +237,7 @@ func (t *Tokenizer) nextToken() Token {
 			t.readChar()
 		}
 	}
-	
+
 	t.debugf("nextToken() returning token: Type=%s, Value=%q", tok.Type, tok.Value)
 	return tok
 }
@@ -253,7 +253,7 @@ func (t *Tokenizer) readChar() {
 		t.ch = r
 		t.position = t.readPos
 		t.readPos += w
-		
+
 		// Track line and column
 		if r == '\n' {
 			t.line++
@@ -284,13 +284,13 @@ func (t *Tokenizer) skipWhitespace() {
 func (t *Tokenizer) readNumber() (string, error) {
 	startPos := t.position
 	t.debugf("readNumber() starting at pos=%d, ch='%c'", startPos, t.ch)
-	
+
 	// Read integer part
 	for isDigit(t.ch) {
 		t.debugf("  reading digit '%c' at pos=%d", t.ch, t.position)
 		t.readChar()
 	}
-	
+
 	// Read decimal part
 	if t.ch == '.' && isDigit(t.peekChar()) {
 		t.debugf("  found decimal point at pos=%d, next='%c'", t.position, t.peekChar())
@@ -300,18 +300,18 @@ func (t *Tokenizer) readNumber() (string, error) {
 			t.readChar()
 		}
 	}
-	
+
 	// Read exponent part
 	if t.ch == 'e' || t.ch == 'E' {
 		t.debugf("  found exponent '%c' at pos=%d", t.ch, t.position)
 		t.readChar() // consume 'e' or 'E'
-		
+
 		// Optional sign
 		if t.ch == '+' || t.ch == '-' {
 			t.debugf("  found exponent sign '%c' at pos=%d", t.ch, t.position)
 			t.readChar()
 		}
-		
+
 		// Exponent digits
 		if !isDigit(t.ch) {
 			return "", fmt.Errorf("invalid number: expected digits after exponent")
@@ -321,12 +321,12 @@ func (t *Tokenizer) readNumber() (string, error) {
 			t.readChar()
 		}
 	}
-	
+
 	// Validate that we don't have trailing invalid characters
 	if isLetter(t.ch) || t.ch == '_' {
 		return "", fmt.Errorf("invalid number: unexpected character '%c'", t.ch)
 	}
-	
+
 	result := t.input[startPos:t.position]
 	t.debugf("readNumber() returning %q (startPos=%d, position=%d)", result, startPos, t.position)
 	return result, nil
@@ -335,14 +335,14 @@ func (t *Tokenizer) readNumber() (string, error) {
 // * readString reads a string literal
 func (t *Tokenizer) readString() (string, error) {
 	t.readChar() // consume opening quote
-	
+
 	var result strings.Builder
 	startLine := t.line
-	
+
 	for t.ch != '"' && t.ch != 0 {
 		if t.ch == '\\' {
 			t.readChar()
-			
+
 			// Handle escape sequences
 			switch t.ch {
 			case '"', '\\', '/':
@@ -366,11 +366,11 @@ func (t *Tokenizer) readString() (string, error) {
 			t.readChar()
 		}
 	}
-	
+
 	if t.ch == 0 {
 		return "", fmt.Errorf("unterminated string literal starting at line %d", startLine)
 	}
-	
+
 	t.readChar() // consume closing quote
 	return result.String(), nil
 }
@@ -378,16 +378,16 @@ func (t *Tokenizer) readString() (string, error) {
 // * readIdentifier reads an identifier
 func (t *Tokenizer) readIdentifier() string {
 	startPos := t.position
-	
+
 	// First character must be letter or underscore
 	if !isLetter(t.ch) && t.ch != '_' {
 		return ""
 	}
-	
+
 	for isLetter(t.ch) || isDigit(t.ch) || t.ch == '_' {
 		t.readChar()
 	}
-	
+
 	return t.input[startPos:t.position]
 }
 

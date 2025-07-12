@@ -14,12 +14,12 @@ import (
 
 func TestRegisterShipmentComputers(t *testing.T) {
 	resolver := schema.NewDefaultDataResolver()
-	
+
 	// Should not panic
 	require.NotPanics(t, func() {
 		schema.RegisterShipmentComputers(resolver)
 	})
-	
+
 	// Test that computers are registered
 	expectedComputers := []string{
 		"computeTemperatureDifferential",
@@ -27,7 +27,7 @@ func TestRegisterShipmentComputers(t *testing.T) {
 		"computeRequiresTemperatureControl",
 		"computeTotalStops",
 	}
-	
+
 	for _, computerName := range expectedComputers {
 		// Test with a dummy shipment to verify registration
 		_, err := resolver.ResolveComputed(&shipment.Shipment{}, &schema.FieldSource{
@@ -44,7 +44,7 @@ func TestRegisterShipmentComputers(t *testing.T) {
 func TestComputeTemperatureDifferential(t *testing.T) {
 	resolver := schema.NewDefaultDataResolver()
 	schema.RegisterShipmentComputers(resolver)
-	
+
 	tests := []struct {
 		name     string
 		shipment *shipment.Shipment
@@ -86,7 +86,7 @@ func TestComputeTemperatureDifferential(t *testing.T) {
 			expected: 0.0,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := resolver.ResolveComputed(tt.shipment, &schema.FieldSource{
@@ -97,7 +97,7 @@ func TestComputeTemperatureDifferential(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
-	
+
 	// Test with non-shipment entity
 	t.Run("non-shipment entity", func(t *testing.T) {
 		result, err := resolver.ResolveComputed(struct{}{}, &schema.FieldSource{
@@ -112,7 +112,7 @@ func TestComputeTemperatureDifferential(t *testing.T) {
 func TestComputeHasHazmat(t *testing.T) {
 	resolver := schema.NewDefaultDataResolver()
 	schema.RegisterShipmentComputers(resolver)
-	
+
 	tests := []struct {
 		name     string
 		shipment *shipment.Shipment
@@ -177,7 +177,7 @@ func TestComputeHasHazmat(t *testing.T) {
 			expected: true,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := resolver.ResolveComputed(tt.shipment, &schema.FieldSource{
@@ -188,7 +188,7 @@ func TestComputeHasHazmat(t *testing.T) {
 			assert.Equal(t, tt.expected, result)
 		})
 	}
-	
+
 	// Test with non-shipment entity
 	t.Run("non-shipment entity", func(t *testing.T) {
 		result, err := resolver.ResolveComputed(struct{}{}, &schema.FieldSource{
@@ -203,7 +203,7 @@ func TestComputeHasHazmat(t *testing.T) {
 func TestComputeRequiresTemperatureControl(t *testing.T) {
 	resolver := schema.NewDefaultDataResolver()
 	schema.RegisterShipmentComputers(resolver)
-	
+
 	tests := []struct {
 		name     string
 		shipment *shipment.Shipment
@@ -237,7 +237,7 @@ func TestComputeRequiresTemperatureControl(t *testing.T) {
 			expected: false,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := resolver.ResolveComputed(tt.shipment, &schema.FieldSource{
@@ -253,7 +253,7 @@ func TestComputeRequiresTemperatureControl(t *testing.T) {
 func TestComputeTotalStops(t *testing.T) {
 	resolver := schema.NewDefaultDataResolver()
 	schema.RegisterShipmentComputers(resolver)
-	
+
 	tests := []struct {
 		name     string
 		shipment *shipment.Shipment
@@ -322,7 +322,7 @@ func TestComputeTotalStops(t *testing.T) {
 			expected: 0,
 		},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := resolver.ResolveComputed(tt.shipment, &schema.FieldSource{

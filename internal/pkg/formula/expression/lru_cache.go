@@ -11,7 +11,7 @@ type LRUCache struct {
 	cache    map[string]*list.Element
 	lru      *list.List
 	mu       sync.RWMutex
-	
+
 	// Metrics
 	hits      int64
 	misses    int64
@@ -29,7 +29,7 @@ func NewLRUCache(capacity int) *LRUCache {
 	if capacity <= 0 {
 		capacity = 100 // Default capacity
 	}
-	
+
 	return &LRUCache{
 		capacity: capacity,
 		cache:    make(map[string]*list.Element),
@@ -41,14 +41,14 @@ func NewLRUCache(capacity int) *LRUCache {
 func (c *LRUCache) Get(key string) (*CompiledExpression, bool) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	if elem, ok := c.cache[key]; ok {
 		// Move to front (most recently used)
 		c.lru.MoveToFront(elem)
 		c.hits++
 		return elem.Value.(*cacheEntry).expression, true
 	}
-	
+
 	c.misses++
 	return nil, false
 }
@@ -57,7 +57,7 @@ func (c *LRUCache) Get(key string) (*CompiledExpression, bool) {
 func (c *LRUCache) Put(key string, expr *CompiledExpression) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	// Check if key already exists
 	if elem, ok := c.cache[key]; ok {
 		// Update existing entry and move to front
@@ -65,7 +65,7 @@ func (c *LRUCache) Put(key string, expr *CompiledExpression) {
 		elem.Value.(*cacheEntry).expression = expr
 		return
 	}
-	
+
 	// Add new entry
 	entry := &cacheEntry{
 		key:        key,
@@ -73,7 +73,7 @@ func (c *LRUCache) Put(key string, expr *CompiledExpression) {
 	}
 	elem := c.lru.PushFront(entry)
 	c.cache[key] = elem
-	
+
 	// Evict least recently used if at capacity
 	if c.lru.Len() > c.capacity {
 		c.evictLRU()
@@ -95,7 +95,7 @@ func (c *LRUCache) evictLRU() {
 func (c *LRUCache) Clear() {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	c.cache = make(map[string]*list.Element)
 	c.lru = list.New()
 }
@@ -104,7 +104,7 @@ func (c *LRUCache) Clear() {
 func (c *LRUCache) Size() int {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	return c.lru.Len()
 }
 
@@ -117,13 +117,13 @@ func (c *LRUCache) Capacity() int {
 func (c *LRUCache) Stats() CacheStats {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	total := c.hits + c.misses
 	hitRate := 0.0
 	if total > 0 {
 		hitRate = float64(c.hits) / float64(total)
 	}
-	
+
 	return CacheStats{
 		Hits:      c.hits,
 		Misses:    c.misses,
@@ -149,12 +149,12 @@ func (c *LRUCache) Resize(newCapacity int) {
 	if newCapacity <= 0 {
 		return
 	}
-	
+
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	c.capacity = newCapacity
-	
+
 	// Evict entries if necessary
 	for c.lru.Len() > c.capacity {
 		c.evictLRU()
@@ -182,7 +182,7 @@ func NewLRUCacheWithCallback(capacity int, callback EvictionCallback) *LRUCacheW
 func (c *LRUCacheWithCallback) Put(key string, expr *CompiledExpression) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	
+
 	// Check if key already exists
 	if elem, ok := c.cache[key]; ok {
 		// Update existing entry and move to front
@@ -190,7 +190,7 @@ func (c *LRUCacheWithCallback) Put(key string, expr *CompiledExpression) {
 		elem.Value.(*cacheEntry).expression = expr
 		return
 	}
-	
+
 	// Add new entry
 	entry := &cacheEntry{
 		key:        key,
@@ -198,7 +198,7 @@ func (c *LRUCacheWithCallback) Put(key string, expr *CompiledExpression) {
 	}
 	elem := c.lru.PushFront(entry)
 	c.cache[key] = elem
-	
+
 	// Evict least recently used if at capacity
 	if c.lru.Len() > c.capacity {
 		c.evictLRUWithCallback()
@@ -213,7 +213,7 @@ func (c *LRUCacheWithCallback) evictLRUWithCallback() {
 		entry := elem.Value.(*cacheEntry)
 		delete(c.cache, entry.key)
 		c.evictions++
-		
+
 		// Call eviction callback if set
 		if c.callback != nil {
 			c.callback(entry.key, entry.expression)
@@ -231,13 +231,13 @@ func (c *LRUCache) Preload(expressions map[string]*CompiledExpression) {
 // GetMultiple retrieves multiple expressions from the cache
 func (c *LRUCache) GetMultiple(keys []string) map[string]*CompiledExpression {
 	result := make(map[string]*CompiledExpression)
-	
+
 	for _, key := range keys {
 		if expr, ok := c.Get(key); ok {
 			result[key] = expr
 		}
 	}
-	
+
 	return result
 }
 
@@ -245,7 +245,7 @@ func (c *LRUCache) GetMultiple(keys []string) map[string]*CompiledExpression {
 func (c *LRUCache) Contains(key string) bool {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
-	
+
 	_, ok := c.cache[key]
 	return ok
 }

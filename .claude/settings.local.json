@@ -45,7 +45,8 @@
       "Bash(golines:*)",
       "Bash(mkdir:*)",
       "Bash(mv:*)",
-      "Bash(go doc:*)"
+      "Bash(go doc:*)",
+      "Bash(task test:*)"
     ],
     "deny": []
   },
