@@ -1,9 +1,37 @@
+import { cn } from "@/lib/utils";
 
-export function SensitiveBadge() {
+interface SensitiveBadgeProps {
+  variant?: "default" | "warning" | "destructive";
+  size?: "xs" | "sm" | "md";
+  className?: string;
+}
+
+export function SensitiveBadge({
+  variant = "warning",
+  size = "sm",
+  className,
+}: SensitiveBadgeProps) {
+  const variantStyles = {
+    default: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300",
+    warning: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400",
+    destructive: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400",
+  };
+
+  const sizeStyles = {
+    xs: "text-[10px] px-1 py-0.5",
+    sm: "text-xs px-1.5 py-0.5",
+    md: "text-sm px-2 py-1",
+  };
+
   return (
     <span
-      title="Field is sensitive and has been masked."
-      className="ml-2 text-xs px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 rounded-sm font-medium select-none"
+      title="This field contains sensitive data that has been masked for security."
+      className={cn(
+        "inline-flex items-center rounded-sm font-medium select-none",
+        variantStyles[variant],
+        sizeStyles[size],
+        className
+      )}
     >
       Sensitive
     </span>

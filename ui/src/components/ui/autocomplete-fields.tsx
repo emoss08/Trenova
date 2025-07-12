@@ -31,6 +31,14 @@ import { AutocompleteField } from "../fields/autocomplete";
 import { ColorOptionValue } from "../fields/select-components";
 import { PackingGroupBadge } from "../status-badge";
 import { LazyImage } from "./image";
+import type { FormulaTemplateSchema } from "@/lib/schemas/formula-template-schema";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./tooltip";
+import { ExpressionHighlight } from "../formula-templates/expression-highliter";
 
 type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
   control: Control<TForm>;
@@ -475,5 +483,56 @@ export function DocumentTypeAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => option.name}
       renderBadge={(option) => option.name}
     />
+  );
+}
+
+export function FormulaTemplateAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<FormulaTemplateSchema, T>) {
+  return (
+    <TooltipProvider>
+      <AutocompleteField<FormulaTemplateSchema, T>
+        link="/formula-templates/"
+        getOptionValue={(option) => option.id ?? ""}
+        getDisplayValue={(option) => truncateText(option.name, 30)}
+        renderOption={(option) => (
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="flex flex-col gap-0.5 items-start size-full">
+                <p className="text-sm font-medium truncate w-full">
+                  {option.name}
+                </p>
+                {option.description && (
+                  <p className="text-xs text-muted-foreground truncate w-full">
+                    {option.description}
+                  </p>
+                )}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className="max-w-md" side="left" sideOffset={10}>
+              <div className="flex flex-col gap-0.5 items-start size-full">
+                <p className="text-sm font-medium truncate w-full">
+                  {option.name}
+                </p>
+                {option.description && (
+                  <p className="text-xs dark:text-muted-foreground">
+                    {option.description}
+                  </p>
+                )}
+                <div className="flex flex-col bg-muted/5 gap-0.5 items-start border border-muted/5 rounded-md size-full">
+                  <h4 className="text-sm font-medium truncate w-full border-b border-muted/5 p-1">
+                    Expression
+                  </h4>
+                  <p className="text-wrap text-xs text-background p-1">
+                    <ExpressionHighlight expression={option.expression} />
+                  </p>
+                </div>
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        )}
+        {...props}
+      />
+    </TooltipProvider>
   );
 }

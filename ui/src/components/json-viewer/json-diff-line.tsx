@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import type { DiffLineProps } from "@/types/json-viewer";
 import { useMemo } from "react";
 import { SensitiveBadge } from "../ui/sensitive-badge";
+import { detectSensitiveDataType, containsSensitivePattern } from "@/lib/json-sensitive-utils";
 
 export function DiffLine({ line, lineNumber, type }: DiffLineProps) {
   const bgColor = useMemo(() => {
@@ -50,32 +51,44 @@ export function DiffLine({ line, lineNumber, type }: DiffLineProps) {
       );
     }
 
-    // Check if the line contains sensitive data (masked with asterisks)
-    if (line.includes(':"****"') || line.includes(': "****"')) {
-      const parts = line.split(/(".*?"\s*:\s*"(\*+)")/).filter(Boolean);
-
-      return (
-        <>
-          {parts.map((part, index) => {
-            if (part.includes('"****"')) {
-              return (
-                <span key={index} className="inline-flex items-center">
-                  <span
-                    dangerouslySetInnerHTML={{
-                      __html: part.replace(
-                        '"****"',
-                        '<span class="text-vitess-string">"****"</span>',
-                      ),
-                    }}
-                  />
-                  <SensitiveBadge />
-                </span>
-              );
-            }
-            return <span key={index}>{part}</span>;
-          })}
-        </>
-      );
+    // Check if the line contains sensitive data
+    if (containsSensitivePattern(line)) {
+      // Extract and check the value part
+      const valueMatch = line.match(/:\s*"([^"]+)"/);
+      if (valueMatch) {
+        const value = valueMatch[1];
+        const sensitiveInfo = detectSensitiveDataType(value);
+        
+        if (sensitiveInfo.isSensitive) {
+          const parts = line.split(/(".*?"\s*:\s*"[^"]*")/).filter(Boolean);
+          
+          return (
+            <>
+              {parts.map((part, index) => {
+                if (part.includes(valueMatch[0])) {
+                  return (
+                    <span key={index} className="inline-flex items-center">
+                      <span
+                        dangerouslySetInnerHTML={{
+                          __html: part.replace(
+                            valueMatch[0],
+                            valueMatch[0].replace(/"([^"]+)"$/, '<span class="text-vitess-string">"$1"</span>'),
+                          ),
+                        }}
+                      />
+                      <SensitiveBadge 
+                        size="xs" 
+                        variant={sensitiveInfo.type === "redacted" ? "destructive" : "warning"}
+                      />
+                    </span>
+                  );
+                }
+                return <span key={index}>{part}</span>;
+              })}
+            </>
+          );
+        }
+      }
     }
 
     const parts = [];
@@ -149,20 +162,24 @@ export function DiffLine({ line, lineNumber, type }: DiffLineProps) {
           parts.push(<span key="pre-value">{preValueText}</span>);
 
           // Check if it's a sensitive value
-          if (valueText.includes('"****"')) {
-            parts.push(
-              <span key="value" className="inline-flex items-center">
-                <span className="text-vitess-string">{valueText}</span>
-                <span className="ml-2 text-xs px-1.5 py-0.5 bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400 rounded-sm font-medium">
-                  Sensitive
-                </span>
-              </span>,
-            );
-          } else if (
-            valueText.match(
-              /: "(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|0x[0-9a-fA-F]+)"/,
-            )
-          ) {
+          const extractedValue = valueText.match(/"([^"]+)"/)?.[1];
+          if (extractedValue) {
+            const sensitiveInfo = detectSensitiveDataType(extractedValue);
+            if (sensitiveInfo.isSensitive) {
+              parts.push(
+                <span key="value" className="inline-flex items-center gap-1.5">
+                  <span className="text-vitess-string">{valueText}</span>
+                  <SensitiveBadge 
+                    size="xs" 
+                    variant={sensitiveInfo.type === "redacted" ? "destructive" : "warning"}
+                  />
+                </span>,
+              );
+            } else if (
+              valueText.match(
+                /: "(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|0x[0-9a-fA-F]+)"/,
+              )
+            ) {
             // Handle numeric values in strings with comprehensive pattern matching:
             // - Regular numbers with optional decimal: 123, -123, 123.456, -123.456
             // - Scientific notation: 1.23e+4, -1.23e-4
@@ -191,7 +208,15 @@ export function DiffLine({ line, lineNumber, type }: DiffLineProps) {
                 <span className="text-vitess-string">&quot;</span>
               </span>,
             );
+            } else {
+              parts.push(
+                <span key="value" className="text-vitess-string">
+                  {valueText}
+                </span>,
+              );
+            }
           } else {
+            // No value extracted, just render as is
             parts.push(
               <span key="value" className="text-vitess-string">
                 {valueText}
