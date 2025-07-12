@@ -130,6 +130,8 @@ func (sr *shipmentRepository) addOptions(
 		q = q.Relation("TrailerType")
 
 		q = q.Relation("CanceledBy")
+
+		q = q.Relation("FormulaTemplate")
 	}
 
 	return q

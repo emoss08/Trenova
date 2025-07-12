@@ -91,17 +91,61 @@ export const shipmentStatusChoices = [
 ] satisfies ReadonlyArray<ChoiceProps<ShipmentSchema["status"]>>;
 
 export const ratingMethodChoices = [
-  { value: RatingMethod.enum.FlatRate, label: "Flat Rate", color: "#15803d" },
-  { value: RatingMethod.enum.PerMile, label: "Per Mile", color: "#7e22ce" },
-  { value: RatingMethod.enum.PerStop, label: "Per Stop", color: "#b91c1c" },
-  { value: RatingMethod.enum.PerPound, label: "Per Pound", color: "#f59e0b" },
-  { value: RatingMethod.enum.PerPallet, label: "Per Pallet", color: "#0369a1" },
+  {
+    value: RatingMethod.enum.FlatRate,
+    label: "Flat Rate",
+    description: "Calculate base rate of the shipment based on the flat rate",
+    color: "#15803d",
+  },
+  {
+    value: RatingMethod.enum.PerMile,
+    label: "Per Mile",
+    description:
+      "Calculate base rate of the shipment based on the number of miles",
+    color: "#7e22ce",
+  },
+  {
+    value: RatingMethod.enum.PerStop,
+    label: "Per Stop",
+    description:
+      "Calculate base rate of the shipment based on the number of stops",
+    color: "#b91c1c",
+  },
+  {
+    value: RatingMethod.enum.PerPound,
+    label: "Per Pound",
+    description:
+      "Calculate base rate of the shipment based on the total weight of the shipment",
+    color: "#f59e0b",
+  },
+  {
+    value: RatingMethod.enum.PerPallet,
+    label: "Per Pallet",
+    description:
+      "Calculate base rate of the shipment based on the number of pallets",
+    color: "#0369a1",
+  },
   {
     value: RatingMethod.enum.PerLinearFoot,
     label: "Per Linear Foot",
+    description:
+      "Calculate base rate of the shipment based on the total linear feet of the shipment",
     color: "#10b981",
   },
-  { value: RatingMethod.enum.Other, label: "Other", color: "#ec4899" },
+  {
+    value: RatingMethod.enum.Other,
+    label: "Other",
+    description:
+      "Use a custom rate to calculate the rate (Base Rate * Rating Unit)",
+    color: "#ec4899",
+  },
+  {
+    value: RatingMethod.enum.FormulaTemplate,
+    label: "Formula Template",
+    description:
+      "Use a formula template to calculate the rate (Defined by the formula template)",
+    color: "#15803d",
+  },
 ] satisfies ReadonlyArray<ChoiceProps<ShipmentSchema["ratingMethod"]>>;
 
 export const equipmentStatusChoices = [

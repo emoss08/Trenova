@@ -58,6 +58,13 @@ func (sc *ShipmentCalculator) calculateShipmentCharge(
 ) {
 	totals := sc.CalculateBillingAmounts(ctx, shp, userID)
 
+	sc.l.Info().
+		Str("shipmentID", shp.ID.String()).
+		Str("baseCharge", totals.BaseCharge.String()).
+		Str("otherChargeAmount", totals.OtherChargeAmount.String()).
+		Str("totalChargeAmount", totals.TotalChargeAmount.String()).
+		Msg("calculated shipment charge")
+
 	shp.FreightChargeAmount = decimal.NewNullDecimal(totals.BaseCharge)
 	shp.OtherChargeAmount = decimal.NewNullDecimal(totals.OtherChargeAmount)
 	shp.TotalChargeAmount = decimal.NewNullDecimal(totals.TotalChargeAmount)

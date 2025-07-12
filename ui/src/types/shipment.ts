@@ -3,6 +3,7 @@ import type { QueryOptions } from "./common";
 
 export type ShipmentQueryParams = {
   expandShipmentDetails?: boolean;
+  enabled?: boolean;
 } & QueryOptions;
 
 export type ShipmentDetailsQueryParams = {
