@@ -1,428 +1,693 @@
 package audit
 
 import (
-	"crypto/aes"
-	"crypto/cipher"
-	"crypto/rand"
-	"crypto/sha256"
-	"encoding/base64"
-	"encoding/hex"
 	"fmt"
-	"io"
 	"regexp"
 	"strings"
 	"sync"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/go-ozzo/ozzo-validation/v4/is"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
+	"go.uber.org/atomic"
 )
 
-// SensitiveDataManager is a manager for sensitive data.
-type SensitiveDataManager struct {
-	resourceFields map[permission.Resource][]services.SensitiveField
-	encryptionKey  []byte
-	regexCache     map[string]*regexp.Regexp
-	mu             sync.RWMutex
+// MaskStrategy defines how sensitive data should be masked
+type MaskStrategy int
+
+const (
+	// MaskStrategyStrict replaces entire value with mask (most secure)
+	MaskStrategyStrict MaskStrategy = iota
+	// MaskStrategyDefault shows partial information (balanced)
+	MaskStrategyDefault
+	// MaskStrategyPartial shows more information (least secure)
+	MaskStrategyPartial
+)
+
+// SensitiveDataManagerV2 is an improved version of the sensitive data manager
+// with better performance, more features, and auto-detection capabilities
+type SensitiveDataManagerV2 struct {
+	// Using sync.Map for better concurrent performance
+	fields       sync.Map // map[permission.Resource]map[string]SensitiveFieldConfig
+	patternCache sync.Map // map[string]*regexp.Regexp
+
+	// Configuration
+	autoDetect atomic.Bool
+	strategy   atomic.Int32
+
+	// Pre-compiled patterns for better performance
+	compiledFieldPatterns []*regexp.Regexp
+	patternMutex          sync.RWMutex
 }
 
-func NewSensitiveDataManager() *SensitiveDataManager {
-	return &SensitiveDataManager{
-		resourceFields: make(map[permission.Resource][]services.SensitiveField),
-		regexCache:     make(map[string]*regexp.Regexp),
+// SensitiveFieldConfig holds the configuration for a sensitive field
+type SensitiveFieldConfig struct {
+	Path   string
+	Name   string
+	Action services.SensitiveFieldAction
+}
+
+// Pre-defined sensitive data patterns for auto-detection
+var sensitivePatterns = map[string]string{
+	// US Social Security Number
+	"ssn": `\b\d{3}-\d{2}-\d{4}\b|\b\d{9}\b`,
+
+	// Credit Card Numbers (basic patterns)
+	"creditCard": `\b(?:\d[ -]*?){13,19}\b`,
+
+	// Email addresses
+	"email": `\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b`,
+
+	// Phone numbers (US format)
+	"phone": `\b(?:\+?1[-.\s]?)?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b`,
+
+	// API Keys (generic patterns - improved)
+	"apiKey": `\b(?i)(api[_-]?key|apikey|api[_-]?secret|access[_-]?token|auth[_-]?token|bearer)\s*[:=]\s*["']?[\w\-]{20,}["']?\b|^[A-Za-z0-9]{20,}$`,
+
+	// Google API Keys specifically
+	"googleApiKey": `\bAIza[0-9A-Za-z\-_]{35}\b`,
+
+	// AWS Keys
+	"awsKey": `\b(?:AKIA|A3T|AGPA|AIDA|AROA|AIPA|ANPA|ANVA|ASIA)[0-9A-Z]{16}\b`,
+
+	// JWT Tokens
+	"jwt": `\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b`,
+
+	// Database Connection Strings
+	"dbConnection": `\b(?i)(mongodb|postgres|postgresql|mysql|redis|mssql|oracle):\/\/[^\s]+\b`,
+
+	// Private Keys (generic pattern)
+	"privateKey": `-----BEGIN\s+(?:RSA\s+)?PRIVATE\s+KEY-----[\s\S]+?-----END\s+(?:RSA\s+)?PRIVATE\s+KEY-----`,
+
+	// IP Addresses (IPv4)
+	"ipAddress": `\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b`,
+
+	// Bank Account Numbers (US routing + account)
+	"bankAccount": `\b\d{9}\s*\d{1,17}\b`,
+
+	// Driver's License (generic pattern - numbers and letters)
+	"driversLicense": `\b(?i)(license|licence|dl|driver)\s*(?:number|no|#)?\s*[:=]?\s*[A-Z0-9]{5,20}\b`,
+
+	// Date of Birth (various formats)
+	"dateOfBirth": `\b(?:0[1-9]|1[0-2])[-/](?:0[1-9]|[12][0-9]|3[01])[-/](?:19|20)\d{2}\b`,
+
+	// Tax ID / EIN
+	"taxId": `\b\d{2}-\d{7}\b`,
+
+	// Passport Number (alphanumeric)
+	"passport": `\b(?i)passport\s*(?:number|no|#)?\s*[:=]?\s*[A-Z0-9]{6,20}\b`,
+}
+
+// Field name patterns that might contain sensitive data
+var sensitiveFieldPatterns = []string{
+	`(?i)password`,
+	`(?i)secret`,
+	`(?i)token`,
+	`(?i)api[_-]?key`,
+	`(?i)apikey`,
+	`(?i)private[_-]?key`,
+	`(?i)ssn|social[_-]?security`,
+	`(?i)credit[_-]?card`,
+	`(?i)bank[_-]?account`,
+	`(?i)routing[_-]?number`,
+	`(?i)license[_-]?number`,
+	`(?i)passport`,
+	`(?i)tax[_-]?id`,
+	`(?i)date[_-]?of[_-]?birth|dob`,
+	`(?i)salary|wage|income`,
+	`(?i)medical|health`,
+	`(?i)configuration\.apiKey`, // Specific pattern for nested API keys
+}
+
+// NewSensitiveDataManagerV2 creates a new improved sensitive data manager
+func NewSensitiveDataManagerV2() *SensitiveDataManagerV2 {
+	sdm := &SensitiveDataManagerV2{
+		compiledFieldPatterns: make([]*regexp.Regexp, 0, len(sensitiveFieldPatterns)),
+	}
+	sdm.autoDetect.Store(true)
+	sdm.strategy.Store(int32(MaskStrategyDefault))
+
+	// Pre-compile field patterns for better performance
+	sdm.precompileFieldPatterns()
+
+	return sdm
+}
+
+// precompileFieldPatterns compiles all field patterns at initialization
+func (s *SensitiveDataManagerV2) precompileFieldPatterns() {
+	s.patternMutex.Lock()
+	defer s.patternMutex.Unlock()
+
+	for _, pattern := range sensitiveFieldPatterns {
+		if regex, err := regexp.Compile(pattern); err == nil {
+			s.compiledFieldPatterns = append(s.compiledFieldPatterns, regex)
+		}
 	}
 }
 
-// SetEncryptionKey sets the encryption key for field-level encryption
-// This should be called during initialization with a secure key
-func (sdm *SensitiveDataManager) SetEncryptionKey(key []byte) error {
-	if len(key) != 32 { // AES-256 requires 32 bytes
-		return eris.New("encryption key must be 32 bytes for AES-256")
-	}
-
-	sdm.mu.Lock()
-	defer sdm.mu.Unlock()
-
-	sdm.encryptionKey = make([]byte, len(key))
-	copy(sdm.encryptionKey, key)
-
-	return nil
-}
-
-// RegisterSensitiveFields registers sensitive fields for a resource.
-func (sdm *SensitiveDataManager) RegisterSensitiveFields(
+// RegisterSensitiveFields registers sensitive fields for a resource
+func (s *SensitiveDataManagerV2) RegisterSensitiveFields(
 	resource permission.Resource,
 	fields []services.SensitiveField,
 ) error {
-	sdm.mu.Lock()
-	defer sdm.mu.Unlock()
-
-	// Precompile any regex patterns for efficiency
-	for i, field := range fields {
-		if field.Pattern != "" {
-			if _, exists := sdm.regexCache[field.Pattern]; !exists {
-				compiled, err := regexp.Compile(field.Pattern)
-				if err != nil {
-					return eris.Wrapf(err, "invalid regex pattern for field %s", field.Name)
-				}
-				sdm.regexCache[field.Pattern] = compiled
-			}
-		}
-
-		// Validate that we have an encryption key if any field uses encryption
-		if field.Action == services.SensitiveFieldEncrypt && len(sdm.encryptionKey) == 0 {
-			return eris.New("encryption key not set for encrypted fields")
-		}
-
-		// Store the validated field
-		fields[i] = field
-	}
-
-	sdm.resourceFields[resource] = fields
-	return nil
-}
-
-// GetSensitiveFields returns the sensitive fields for a resource.
-func (sdm *SensitiveDataManager) GetSensitiveFields(
-	resource permission.Resource,
-) []services.SensitiveField {
-	sdm.mu.RLock()
-	defer sdm.mu.RUnlock()
-
-	fields, ok := sdm.resourceFields[resource]
-	if !ok {
-		return nil
-	}
-
-	// Return a copy to prevent modification of internal state
-	result := make([]services.SensitiveField, len(fields))
-	copy(result, fields)
-
-	return result
-}
-
-// sanitizeData sanitizes the data in an audit entry.
-func (sdm *SensitiveDataManager) sanitizeData(entry *audit.Entry) error {
-	fields := sdm.GetSensitiveFields(entry.Resource)
 	if len(fields) == 0 {
 		return nil
 	}
 
-	// Sanitize Changes
-	if entry.Changes != nil {
-		if err := sdm.sanitizeJSONMap(entry.Changes, fields); err != nil {
-			return err
+	// Load existing fields for this resource
+	existingFieldsInterface, _ := s.fields.LoadOrStore(
+		resource,
+		make(map[string]SensitiveFieldConfig),
+	)
+	existingFields := existingFieldsInterface.(map[string]SensitiveFieldConfig)
+
+	// Create a new map to avoid concurrent modification
+	newFields := make(map[string]SensitiveFieldConfig, len(existingFields)+len(fields))
+	for k, v := range existingFields {
+		newFields[k] = v
+	}
+
+	// Add new fields
+	for _, field := range fields {
+		key := field.Path + "." + field.Name
+		if field.Path == "" {
+			key = field.Name
+		}
+
+		newFields[key] = SensitiveFieldConfig{
+			Path:   field.Path,
+			Name:   field.Name,
+			Action: field.Action,
 		}
 	}
 
-	// Sanitize States
-	if entry.PreviousState != nil {
-		if err := sdm.sanitizeJSONMap(entry.PreviousState, fields); err != nil {
-			return err
-		}
-	}
-	if entry.CurrentState != nil {
-		if err := sdm.sanitizeJSONMap(entry.CurrentState, fields); err != nil {
-			return err
-		}
-	}
+	// Store the updated map atomically
+	s.fields.Store(resource, newFields)
 
-	// Sanitize Metadata
-	if entry.Metadata != nil {
-		if err := sdm.sanitizeJSONMap(entry.Metadata, fields); err != nil {
-			return err
-		}
-	}
-
-	entry.SensitiveData = true
 	return nil
 }
 
-// sanitizeJSONMap sanitizes the data in a JSON map.
-func (sdm *SensitiveDataManager) sanitizeJSONMap(
-	data map[string]any,
-	fields []services.SensitiveField,
-) error {
-	// Apply direct and path-based sanitization
-	if err := sdm.applyNameAndPathRules(data, fields); err != nil {
-		return err
+// SanitizeEntry sanitizes sensitive data in an audit entry
+func (s *SensitiveDataManagerV2) SanitizeEntry(entry *audit.Entry) error {
+	if entry == nil {
+		return nil
 	}
 
-	// Apply pattern-based sanitization and handle recursion
-	return sdm.applyPatternsAndRecurse(data, fields)
+	// Get registered fields for this resource
+	var registeredFields map[string]SensitiveFieldConfig
+	if fieldsInterface, ok := s.fields.Load(entry.Resource); ok {
+		registeredFields = fieldsInterface.(map[string]SensitiveFieldConfig)
+	}
+
+	// Sanitize all data fields
+	if entry.CurrentState != nil {
+		s.sanitizeMap(entry.CurrentState, registeredFields, "")
+	}
+	if entry.PreviousState != nil {
+		s.sanitizeMap(entry.PreviousState, registeredFields, "")
+	}
+	if entry.Metadata != nil {
+		s.sanitizeMap(entry.Metadata, registeredFields, "")
+	}
+
+	// IMPORTANT: Also sanitize the Changes field which contains diff data
+	if entry.Changes != nil {
+		s.sanitizeChangesMap(entry.Changes, registeredFields)
+	}
+
+	// IMPORTANT: Sanitize the User object if present
+	// The User field is a relationship that contains sensitive data like email addresses
+	if entry.User != nil {
+		s.sanitizeUserObject(entry.User)
+	}
+
+	return nil
 }
 
-// applyNameAndPathRules handles the direct field matches and path-based rules (Phase 1)
-func (sdm *SensitiveDataManager) applyNameAndPathRules(
+// sanitizeChangesMap specifically handles the Changes field which has a special structure
+func (s *SensitiveDataManagerV2) sanitizeChangesMap(
+	changes map[string]any,
+	registeredFields map[string]SensitiveFieldConfig,
+) {
+	for changePath, changeData := range changes {
+		// Check if this change path is for a sensitive field
+		isSensitive := false
+
+		// Check registered fields
+		if _, ok := registeredFields[changePath]; ok {
+			isSensitive = true
+		}
+
+		// Check auto-detection patterns
+		if !isSensitive && s.autoDetect.Load() && s.isSensitiveFieldPath(changePath) {
+			isSensitive = true
+		}
+
+		if isSensitive {
+			// Sanitize the change data
+			if changeMap, ok := changeData.(map[string]any); ok {
+				// Mask the "from" and "to" values
+				if from, exists := changeMap["from"]; exists && from != nil {
+					changeMap["from"] = s.maskValue(from, services.SensitiveFieldMask)
+				}
+				if to, exists := changeMap["to"]; exists && to != nil {
+					changeMap["to"] = s.maskValue(to, services.SensitiveFieldMask)
+				}
+			}
+		} else if changeMap, ok := changeData.(map[string]any); ok {
+			// Even if the path itself isn't sensitive, check the actual values
+			if s.autoDetect.Load() {
+				// Check if the values contain sensitive patterns
+				if from, exists := changeMap["from"]; exists && from != nil {
+					if s.shouldMaskValue(from) {
+						changeMap["from"] = s.maskValue(from, services.SensitiveFieldMask)
+					}
+				}
+				if to, exists := changeMap["to"]; exists && to != nil {
+					if s.shouldMaskValue(to) {
+						changeMap["to"] = s.maskValue(to, services.SensitiveFieldMask)
+					}
+				}
+			}
+		}
+	}
+}
+
+// sanitizeUserObject specifically handles the User field in audit entries
+func (s *SensitiveDataManagerV2) sanitizeUserObject(u *user.User) {
+	if u == nil {
+		return
+	}
+
+	strategy := MaskStrategy(s.strategy.Load())
+
+	// Always mask the email address
+	if u.EmailAddress != "" {
+		switch strategy {
+		case MaskStrategyStrict:
+			// Show only domain
+			parts := strings.Split(u.EmailAddress, "@")
+			if len(parts) == 2 {
+				u.EmailAddress = "****@" + parts[1]
+			} else {
+				u.EmailAddress = "****"
+			}
+		case MaskStrategyDefault:
+			// Show first character and domain
+			parts := strings.Split(u.EmailAddress, "@")
+			if len(parts) == 2 && len(parts[0]) > 0 {
+				u.EmailAddress = parts[0][:1] + strings.Repeat(
+					"*",
+					len(parts[0])-1,
+				) + "@" + parts[1]
+			} else {
+				u.EmailAddress = "****"
+			}
+		case MaskStrategyPartial:
+			// Show first 2 characters and domain
+			parts := strings.Split(u.EmailAddress, "@")
+			if len(parts) == 2 && len(parts[0]) > 2 {
+				u.EmailAddress = parts[0][:2] + strings.Repeat(
+					"*",
+					len(parts[0])-2,
+				) + "@" + parts[1]
+			} else if len(parts) == 2 {
+				u.EmailAddress = parts[0] + "@" + parts[1]
+			} else {
+				u.EmailAddress = "****"
+			}
+		}
+	}
+
+	// Mask IDs based on strategy
+	if strategy != MaskStrategyPartial {
+		// For strict and default strategies, mask IDs
+		if u.ID != "" {
+			u.ID = s.maskPulID(u.ID)
+		}
+		if u.BusinessUnitID != "" {
+			u.BusinessUnitID = s.maskPulID(u.BusinessUnitID)
+		}
+		if u.CurrentOrganizationID != "" {
+			u.CurrentOrganizationID = s.maskPulID(u.CurrentOrganizationID)
+		}
+	}
+
+	// Clear profile picture URLs for privacy
+	if s.autoDetect.Load() && strategy == MaskStrategyStrict {
+		u.ProfilePicURL = ""
+		u.ThumbnailURL = ""
+	}
+}
+
+// maskPulID masks a PULID keeping the prefix and masking the rest
+func (s *SensitiveDataManagerV2) maskPulID(id pulid.ID) pulid.ID {
+	idStr := string(id)
+	if len(idStr) > 4 {
+		// Keep the prefix (e.g., "usr_") and mask the rest
+		parts := strings.Split(idStr, "_")
+		if len(parts) == 2 {
+			return pulid.ID(parts[0] + "_" + strings.Repeat("*", len(parts[1])))
+		}
+	}
+	return pulid.ID("****")
+}
+
+// shouldMaskValue checks if a value contains sensitive patterns
+func (s *SensitiveDataManagerV2) shouldMaskValue(value any) bool {
+	switch v := value.(type) {
+	case string:
+		return s.containsSensitivePattern(v)
+	case map[string]any:
+		// For nested objects, check if any field contains sensitive data
+		for key, val := range v {
+			if s.isSensitiveFieldName(key) {
+				return true
+			}
+			if strVal, ok := val.(string); ok && s.containsSensitivePattern(strVal) {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// sanitizeMap recursively sanitizes a map
+func (s *SensitiveDataManagerV2) sanitizeMap(
 	data map[string]any,
-	fields []services.SensitiveField,
-) error {
-	for _, fieldRule := range fields {
-		// Skip purely pattern-based rules
-		if fieldRule.Pattern != "" && fieldRule.Name == "" && fieldRule.Path == "" {
+	registeredFields map[string]SensitiveFieldConfig,
+	currentPath string,
+) {
+	for key, value := range data {
+		fullPath := key
+		if currentPath != "" {
+			fullPath = currentPath + "." + key
+		}
+
+		// Check if this field is registered as sensitive
+		if config, ok := registeredFields[fullPath]; ok {
+			data[key] = s.maskValue(value, config.Action)
 			continue
 		}
 
-		targetMap := data
-		keyName := fieldRule.Name
-
-		// Navigate to target map if path is specified
-		if fieldRule.Path != "" {
-			found, pathMap := sdm.findMapAtPath(data, fieldRule.Path)
-			if !found {
-				continue // Path not found
-			}
-			targetMap = pathMap
+		// Check if this field is registered without path
+		if config, ok := registeredFields[key]; ok && config.Path == "" {
+			data[key] = s.maskValue(value, config.Action)
+			continue
 		}
 
-		// Apply sanitization if field exists
-		if value, exists := targetMap[keyName]; exists {
-			if err := sdm.applySanitizationAction(targetMap, keyName, value, fieldRule.Action); err != nil {
-				return eris.Wrapf(
-					err,
-					"failed to apply sanitization to %s.%s",
-					fieldRule.Path,
-					keyName,
-				)
+		// Auto-detect sensitive fields if enabled
+		if s.autoDetect.Load() &&
+			(s.isSensitiveFieldName(key) || s.isSensitiveFieldPath(fullPath)) {
+			data[key] = s.maskValue(value, services.SensitiveFieldMask)
+			continue
+		}
+
+		// Check for sensitive patterns in string values if auto-detect is enabled
+		if s.autoDetect.Load() {
+			if strValue, ok := value.(string); ok && s.containsSensitivePattern(strValue) {
+				data[key] = s.maskValue(value, services.SensitiveFieldMask)
+				continue
 			}
 		}
+
+		// Recursively process nested maps
+		if nestedMap, ok := value.(map[string]any); ok {
+			s.sanitizeMap(nestedMap, registeredFields, fullPath)
+		}
+
+		// Process arrays and slices with improved path handling
+		if slice, ok := value.([]any); ok {
+			s.sanitizeSlice(slice, registeredFields, fullPath)
+		}
 	}
-	return nil
 }
 
-// findMapAtPath navigates to the map at the specified dot-separated path
-func (sdm *SensitiveDataManager) findMapAtPath(
-	data map[string]any,
-	path string,
-) (found bool, nestedMap map[string]any) {
-	currentMap := data
+// sanitizeSlice handles array/slice sanitization with better path tracking
+func (s *SensitiveDataManagerV2) sanitizeSlice(
+	slice []any,
+	registeredFields map[string]SensitiveFieldConfig,
+	parentPath string,
+) {
+	for i, item := range slice {
+		// Build array-aware path (e.g., "shipmentMoves[0]")
+		arrayPath := fmt.Sprintf("%s[%d]", parentPath, i)
 
-	for segment := range strings.SplitSeq(path, ".") {
-		nested, ok := currentMap[segment].(map[string]any)
-		if !ok {
-			return false, nil
+		switch v := item.(type) {
+		case map[string]any:
+			// For maps in arrays, sanitize with array-aware path
+			s.sanitizeMapInArray(v, registeredFields, parentPath, arrayPath)
+		case string:
+			// Check string items in arrays
+			if s.autoDetect.Load() && s.containsSensitivePattern(v) {
+				slice[i] = s.maskValue(v, services.SensitiveFieldMask)
+			}
+		case []any:
+			// Handle nested arrays
+			s.sanitizeSlice(v, registeredFields, arrayPath)
 		}
-		currentMap = nested
 	}
-
-	return true, currentMap
 }
 
-// applyPatternsAndRecurse handles pattern matching and recursion (Phase 2)
-func (sdm *SensitiveDataManager) applyPatternsAndRecurse(
+// sanitizeMapInArray handles maps within arrays with special path considerations
+func (s *SensitiveDataManagerV2) sanitizeMapInArray(
 	data map[string]any,
-	fields []services.SensitiveField,
-) error {
-	for key, val := range data {
-		// Apply pattern-based rules
-		if err := sdm.applyPatternRules(data, key, val, fields); err != nil {
-			return err
+	registeredFields map[string]SensitiveFieldConfig,
+	genericPath string, // e.g., "shipmentMoves"
+	specificPath string, // e.g., "shipmentMoves[0]"
+) {
+	for key, value := range data {
+		// Check both generic and specific paths
+		genericFieldPath := genericPath + "." + key
+		specificFieldPath := specificPath + "." + key
+
+		// Check if field is registered with array notation (e.g., "shipmentMoves[].tractorId")
+		arrayNotationPath := genericPath + "[]." + key
+
+		// Check all possible path variations
+		shouldMask := false
+		var config SensitiveFieldConfig
+
+		if c, ok := registeredFields[genericFieldPath]; ok {
+			shouldMask = true
+			config = c
+		} else if c, ok := registeredFields[specificFieldPath]; ok {
+			shouldMask = true
+			config = c
+		} else if c, ok := registeredFields[arrayNotationPath]; ok {
+			shouldMask = true
+			config = c
+		} else if c, ok := registeredFields[key]; ok && c.Path == "" {
+			shouldMask = true
+			config = c
 		}
 
-		// Recurse into nested structures
-		if err := sdm.recurseIntoNestedStructures(val, fields); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-// applyPatternRules applies pattern-based rules to a specific value
-func (sdm *SensitiveDataManager) applyPatternRules(
-	data map[string]any,
-	key string,
-	val any,
-	fields []services.SensitiveField,
-) error {
-	strVal, ok := val.(string)
-	if !ok {
-		return nil // Only strings can match patterns
-	}
-
-	for _, fieldRule := range fields {
-		if fieldRule.Pattern == "" {
-			continue // Skip non-pattern rules
+		if shouldMask {
+			data[key] = s.maskValue(value, config.Action)
+			continue
 		}
 
-		sdm.mu.RLock()
-		pattern, exists := sdm.regexCache[fieldRule.Pattern]
-		sdm.mu.RUnlock()
+		// Auto-detect sensitive fields
+		if s.autoDetect.Load() &&
+			(s.isSensitiveFieldName(key) || s.isSensitiveFieldPath(genericFieldPath)) {
+			data[key] = s.maskValue(value, services.SensitiveFieldMask)
+			continue
+		}
 
-		if exists && pattern.MatchString(strVal) {
-			if err := sdm.applySanitizationAction(data, key, val, fieldRule.Action); err != nil {
-				return eris.Wrapf(err, "failed to apply pattern sanitization to key %s", key)
+		// Check for sensitive patterns in string values
+		if s.autoDetect.Load() {
+			if strValue, ok := value.(string); ok && s.containsSensitivePattern(strValue) {
+				data[key] = s.maskValue(value, services.SensitiveFieldMask)
+				continue
 			}
 		}
-	}
-	return nil
-}
 
-// recurseIntoNestedStructures recursively processes nested maps and arrays
-func (sdm *SensitiveDataManager) recurseIntoNestedStructures(
-	val any,
-	fields []services.SensitiveField,
-) error {
-	switch v := val.(type) {
-	case map[string]any:
-		if err := sdm.sanitizeJSONMap(v, fields); err != nil {
-			return err
-		}
-	case []any:
-		if err := sdm.sanitizeJSONArray(v, fields); err != nil {
-			return err
+		// Recursively process nested structures
+		switch v := value.(type) {
+		case map[string]any:
+			s.sanitizeMap(v, registeredFields, specificFieldPath)
+		case []any:
+			s.sanitizeSlice(v, registeredFields, specificFieldPath)
 		}
 	}
-	return nil
 }
 
-// applySanitizationAction applies the specified sanitization action to a field
-func (sdm *SensitiveDataManager) applySanitizationAction(
-	data map[string]any,
-	key string,
-	value any,
-	action services.SensitiveFieldAction,
-) error {
+// isSensitiveFieldName checks if a field name matches sensitive patterns
+func (s *SensitiveDataManagerV2) isSensitiveFieldName(fieldName string) bool {
+	fieldNameLower := strings.ToLower(fieldName)
+
+	s.patternMutex.RLock()
+	defer s.patternMutex.RUnlock()
+
+	for _, regex := range s.compiledFieldPatterns {
+		if regex.MatchString(fieldNameLower) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// isSensitiveFieldPath checks if a full field path matches sensitive patterns
+func (s *SensitiveDataManagerV2) isSensitiveFieldPath(fieldPath string) bool {
+	fieldPathLower := strings.ToLower(fieldPath)
+
+	s.patternMutex.RLock()
+	defer s.patternMutex.RUnlock()
+
+	for _, regex := range s.compiledFieldPatterns {
+		if regex.MatchString(fieldPathLower) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// containsSensitivePattern checks if a string contains sensitive data patterns
+func (s *SensitiveDataManagerV2) containsSensitivePattern(value string) bool {
+	// Quick check for common API key patterns
+	if len(value) >= 20 && regexp.MustCompile(`^[A-Za-z0-9_\-]+$`).MatchString(value) {
+		// Likely an API key or token
+		return true
+	}
+
+	for _, pattern := range sensitivePatterns {
+		regex := s.getCompiledPattern(pattern)
+		if regex != nil && regex.MatchString(value) {
+			return true
+		}
+	}
+
+	return false
+}
+
+// getCompiledPattern retrieves or compiles a regex pattern with caching
+func (s *SensitiveDataManagerV2) getCompiledPattern(pattern string) *regexp.Regexp {
+	// Check cache first
+	if compiled, ok := s.patternCache.Load(pattern); ok {
+		return compiled.(*regexp.Regexp)
+	}
+
+	// Compile and cache the pattern
+	regex, err := regexp.Compile(pattern)
+	if err != nil {
+		// Log error but don't fail - pattern might be invalid
+		return nil
+	}
+
+	s.patternCache.Store(pattern, regex)
+	return regex
+}
+
+// maskValue masks a value based on the action and current strategy
+func (s *SensitiveDataManagerV2) maskValue(value any, action services.SensitiveFieldAction) any {
 	switch action {
 	case services.SensitiveFieldOmit:
-		delete(data, key)
+		return nil
+
 	case services.SensitiveFieldMask:
-		data[key] = sdm.maskValue(value)
-	case services.SensitiveFieldHash:
-		hashed, err := sdm.hashValue(value)
-		if err != nil {
-			return eris.Wrapf(err, "failed to hash field %s", key)
-		}
-		data[key] = hashed
-	case services.SensitiveFieldEncrypt:
-		encrypted, err := sdm.encryptValue(value)
-		if err != nil {
-			return eris.Wrapf(err, "failed to encrypt field %s", key)
-		}
-		data[key] = encrypted
-	}
-	return nil
-}
-
-// sanitizeJSONArray sanitizes elements in a JSON array
-func (sdm *SensitiveDataManager) sanitizeJSONArray(
-	arr []any,
-	fields []services.SensitiveField,
-) error {
-	for _, item := range arr {
-		if mapItem, ok := item.(map[string]any); ok {
-			if err := sdm.sanitizeJSONMap(mapItem, fields); err != nil {
-				return err
-			}
-		}
-	}
-	return nil
-}
-
-// maskValue masks the value of a sensitive field.
-func (sdm *SensitiveDataManager) maskValue(value any) any {
-	switch v := value.(type) {
-	case string:
-		// * Handle special cases first
-		if maskedValue, handled := sdm.handleSpecialCases(v); handled {
-			return maskedValue
-		}
-
-		// Default string masking for non-special cases
-		if len(v) <= 4 {
-			return DefaultMaskValue
-		}
-		visible := len(v) / 4
-		return v[:visible] + strings.Repeat("*", len(v)-visible)
-
-	case int, int32, int64, float32, float64:
-		return DefaultMaskValue
+		return s.applyMaskStrategy(value)
 
 	default:
-		return DefaultMaskValue
+		return value
 	}
 }
 
-// hashValue hashes the value of a sensitive field.
-func (sdm *SensitiveDataManager) hashValue(value any) (string, error) {
-	hash := sha256.New()
-	_, err := fmt.Fprintf(hash, "%v", value)
-	if err != nil {
-		return "", eris.Wrap(err, "failed to compute hash")
-	}
-	return hex.EncodeToString(hash.Sum(nil)), nil
-}
+// applyMaskStrategy applies the current masking strategy to a value
+func (s *SensitiveDataManagerV2) applyMaskStrategy(value any) any {
+	strategy := MaskStrategy(s.strategy.Load())
 
-// encryptValue encrypts a value using AES-GCM
-func (sdm *SensitiveDataManager) encryptValue(value any) (string, error) {
-	sdm.mu.RLock()
-	key := sdm.encryptionKey
-	sdm.mu.RUnlock()
-
-	if len(key) == 0 {
-		return "", eris.New("encryption key not set")
-	}
-
-	// Convert value to string
-	plaintext := fmt.Sprintf("%v", value)
-
-	// Create a new AES cipher block
-	block, err := aes.NewCipher(key)
-	if err != nil {
-		return "", eris.Wrap(err, "failed to create AES cipher")
-	}
-
-	// Create a GCM mode cipher
-	gcm, err := cipher.NewGCM(block)
-	if err != nil {
-		return "", eris.Wrap(err, "failed to create GCM cipher")
-	}
-
-	// Create a nonce
-	nonce := make([]byte, gcm.NonceSize())
-	if _, err = io.ReadFull(rand.Reader, nonce); err != nil {
-		return "", eris.Wrap(err, "failed to create nonce")
-	}
-
-	// Encrypt the plaintext
-	ciphertext := gcm.Seal(nonce, nonce, []byte(plaintext), nil)
-
-	// Return base64 encoded ciphertext
-	return base64.StdEncoding.EncodeToString(ciphertext), nil
-}
-
-// handleSpecialCases handles special cases for sensitive fields.
-func (sdm *SensitiveDataManager) handleSpecialCases(value string) (string, bool) {
-	// Handle URLs
-	if is.URL.Validate(value) == nil {
-		parts := strings.Split(value, "://")
-		if len(parts) >= 2 {
-			return parts[0] + "://" + DefaultMaskValue, true
+	switch v := value.(type) {
+	case string:
+		if v == "" {
+			return ""
 		}
-	}
 
-	// Handle emails
-	if is.Email.Validate(value) == nil {
-		parts := strings.Split(value, "@")
-		if len(parts) == 2 {
-			domain := parts[1]
-			return "****@" + domain, true
+		switch strategy {
+		case MaskStrategyStrict:
+			// Show nothing
+			return "****"
+
+		case MaskStrategyDefault:
+			// Show first and last character for strings longer than 4
+			if len(v) > 4 {
+				return v[:1] + strings.Repeat("*", len(v)-2) + v[len(v)-1:]
+			}
+			return "****"
+
+		case MaskStrategyPartial:
+			// Show more information
+			if len(v) > 8 {
+				return v[:3] + strings.Repeat("*", len(v)-6) + v[len(v)-3:]
+			} else if len(v) > 4 {
+				return v[:2] + strings.Repeat("*", len(v)-3) + v[len(v)-1:]
+			}
+			return "****"
 		}
+
+	case int, int32, int64, float32, float64:
+		switch strategy {
+		case MaskStrategyStrict:
+			return 0
+		case MaskStrategyDefault, MaskStrategyPartial:
+			// For numbers, return a masked string representation
+			return "****"
+		}
+
+	case bool:
+		// Booleans are typically not sensitive
+		return v
+
+	case map[string]any:
+		// For nested objects in Changes, mask the entire object
+		return "[REDACTED]"
+
+	default:
+		// For other types, return mask
+		return "****"
 	}
 
-	// Handle SSN (assuming US format XXX-XX-XXXX)
-	ssnPattern := regexp.MustCompile(`^\d{3}-\d{2}-\d{4}$`)
-	if ssnPattern.MatchString(value) {
-		return "XXX-XX-" + value[7:], true
+	return "****"
+}
+
+// SetAutoDetect enables or disables automatic sensitive data detection
+func (s *SensitiveDataManagerV2) SetAutoDetect(enabled bool) {
+	s.autoDetect.Store(enabled)
+}
+
+// SetMaskStrategy sets the masking strategy
+func (s *SensitiveDataManagerV2) SetMaskStrategy(strategy MaskStrategy) {
+	s.strategy.Store(int32(strategy))
+}
+
+// ClearCache clears the pattern cache (useful for memory management)
+func (s *SensitiveDataManagerV2) ClearCache() {
+	s.patternCache.Range(func(key, value any) bool {
+		s.patternCache.Delete(key)
+		return true
+	})
+}
+
+// AddCustomPattern adds a custom sensitive data pattern
+func (s *SensitiveDataManagerV2) AddCustomPattern(name, pattern string) error {
+	// Validate the pattern
+	_, err := regexp.Compile(pattern)
+	if err != nil {
+		return eris.Wrap(err, "invalid regex pattern")
 	}
 
-	// Handle credit card numbers
-	ccPattern := regexp.MustCompile(`^\d{13,19}$`)
-	if ccPattern.MatchString(value) {
-		last4 := value[len(value)-4:]
-		return strings.Repeat("*", len(value)-4) + last4, true
-	}
+	// Add to patterns
+	sensitivePatterns[name] = pattern
+	return nil
+}
 
-	return "", false
+// RemoveCustomPattern removes a custom sensitive data pattern
+func (s *SensitiveDataManagerV2) RemoveCustomPattern(name string) {
+	delete(sensitivePatterns, name)
+	// Also remove from cache if present
+	s.patternCache.Delete(sensitivePatterns[name])
 }
