@@ -1,376 +1,206 @@
-# Integration Guide
+# Formula Integration Guide
 
-This guide demonstrates how to integrate the formula system into your Trenova application, including common use cases and best practices.
+This guide explains how to integrate the formula package into your Trenova application components and create custom formula-based features.
 
 ## Table of Contents
 
-- [Getting Started](#getting-started)
-- [Basic Integration](#basic-integration)
-- [Working with Variables](#working-with-variables)
+- [Overview](#overview)
+- [Integration Patterns](#integration-patterns)
+- [Using Formulas in Services](#using-formulas-in-services)
+- [Creating Formula Templates](#creating-formula-templates)
 - [Schema Integration](#schema-integration)
-- [Formula Templates](#formula-templates)
-- [Real-World Examples](#real-world-examples)
-- [Testing Formulas](#testing-formulas)
-- [Performance Optimization](#performance-optimization)
+- [Adding Custom Variables](#adding-custom-variables)
 - [Error Handling](#error-handling)
+- [Testing Formula Integration](#testing-formula-integration)
+- [Performance Optimization](#performance-optimization)
 - [Security Considerations](#security-considerations)
+- [Best Practices](#best-practices)
 
-## Getting Started
+## Overview
 
-The formula system consists of three main components that work together:
+The formula package provides three main integration points:
 
-1. **Variable Registry** - Defines available variables
-2. **Schema Registry** - Validates and extracts data from entities
-3. **Formula Service** - Evaluates expressions using variables and schemas
+1. **Service Layer**: High-level APIs for formula evaluation
+2. **Schema System**: Define available fields and computed values
+3. **Variable Registry**: Register custom variables and functions
 
-### Dependency Injection Setup
+## Integration Patterns
 
-The formula module uses Uber fx for dependency injection:
+### 1. Formula-Based Pricing
+
+The most common use case is dynamic pricing for shipments:
 
 ```go
-import (
-    "github.com/emoss08/trenova/internal/pkg/formula"
-    "go.uber.org/fx"
-)
-
-// In your application module
-var AppModule = fx.Module("app",
-    // Other dependencies...
-    formula.Module,
-    fx.Provide(
-        NewShipmentCalculator,
-    ),
-)
+// In your shipment service
+func (s *ShipmentService) CalculateRate(ctx context.Context, shipment *Shipment) (decimal.Decimal, error) {
+    if shipment.RatingMethod == RatingMethodFormulaTemplate {
+        return s.formulaService.CalculateShipmentRate(
+            ctx,
+            *shipment.FormulaTemplateID,
+            shipment,
+            userID,
+        )
+    }
+    // Other rating methods...
+}
 ```
 
-## Basic Integration
+### 2. Business Rule Evaluation
 
-### Simple Expression Evaluation
-
-For basic expression evaluation without variables:
+Use formulas for complex business rules:
 
 ```go
-import (
-    "github.com/emoss08/trenova/internal/pkg/formula/expression"
-)
+// Example: Determine if expedited shipping is required
+template := &FormulaTemplate{
+    Expression: "weight > 100 && hasHazmat && contains(['HIGH', 'URGENT'], customer.priority)",
+}
 
-func calculateSimple() {
-    evaluator := expression.NewEvaluator()
+result, err := formulaService.EvaluateBoolean(ctx, template, shipment)
+if result {
+    shipment.ServiceType = ServiceTypeExpedited
+}
+```
+
+### 3. Dynamic Field Calculation
+
+Calculate fields based on other values:
+
+```go
+// Example: Calculate insurance amount
+template := &FormulaTemplate{
+    Expression: "max(declaredValue * 0.01, 25)",
+}
+
+insurance, err := formulaService.Calculate(ctx, template, shipment)
+shipment.InsuranceAmount = decimal.NewFromFloat(insurance)
+```
+
+## Using Formulas in Services
+
+### Dependency Injection
+
+First, inject the formula service into your service:
+
+```go
+type MyServiceParams struct {
+    fx.In
     
-    result, err := evaluator.Evaluate(
-        context.Background(),
-        "2 * 3 + 4",
-        nil, // No variables
-    )
+    FormulaService *formula.Service
+    Logger         *logger.Logger
+}
+
+type MyService struct {
+    formulaService *formula.Service
+    logger         *zerolog.Logger
+}
+
+func NewMyService(p MyServiceParams) *MyService {
+    return &MyService{
+        formulaService: p.FormulaService,
+        logger:         p.Logger,
+    }
+}
+```
+
+### Testing Formulas
+
+The formula service provides a test endpoint for validating expressions:
+
+```go
+func (s *MyService) ValidateFormula(ctx context.Context, expression string) error {
+    result, err := s.formulaService.TestFormula(ctx, &formula.TestFormulaRequest{
+        Expression: expression,
+        TestData: map[string]any{
+            "weight": 1000,
+            "distance": 500,
+            // ... other test values
+        },
+    })
     
     if err != nil {
-        log.Printf("Evaluation error: %v", err)
-        return
+        return fmt.Errorf("formula validation failed: %w", err)
     }
     
-    // result is 10.0
-    fmt.Printf("Result: %v\n", result)
-}
-```
-
-### With Variables
-
-```go
-func calculateWithVariables() {
-    evaluator := expression.NewEvaluator()
-    
-    variables := map[string]any{
-        "base_rate": 2.50,
-        "distance": 450,
-        "fuel_surcharge": 0.15,
-    }
-    
-    result, err := evaluator.Evaluate(
-        context.Background(),
-        "base_rate * distance * (1 + fuel_surcharge)",
-        variables,
-    )
-    
-    if err != nil {
-        log.Printf("Evaluation error: %v", err)
-        return
-    }
-    
-    // result is 1293.75
-    fmt.Printf("Total cost: $%.2f\n", result)
-}
-```
-
-## Working with Variables
-
-### Defining Custom Variables
-
-Create domain-specific variables for your business logic:
-
-```go
-import (
-    "github.com/emoss08/trenova/internal/core/types/formula"
-    "github.com/emoss08/trenova/internal/pkg/formula/variables"
-)
-
-func RegisterCustomVariables(registry *variables.VariableRegistry) {
-    // Fuel price variable
-    registry.Register(&variables.Variable{
-        Name:        "fuel_price_per_gallon",
-        Description: "Current fuel price per gallon",
-        Category:    "Fuel",
-        DataType:    formula.ValueTypeNumber,
-        Entity:      "market_rates",
-    })
-    
-    // Boolean flag
-    registry.Register(&variables.Variable{
-        Name:        "is_peak_season",
-        Description: "Whether current date is in peak season",
-        Category:    "Seasonal",
-        DataType:    formula.ValueTypeBoolean,
-        Entity:      "calendar",
-    })
-    
-    // Array variable
-    registry.Register(&variables.Variable{
-        Name:        "surcharge_rates",
-        Description: "List of applicable surcharge rates",
-        Category:    "Pricing",
-        DataType:    formula.ValueTypeArray,
-        Entity:      "rate_tables",
-    })
-}
-```
-
-### Variable Context Implementation
-
-Implement the `VariableContext` interface to resolve variables:
-
-```go
-type CustomVariableContext struct {
-    shipment *domain.Shipment
-    marketData *MarketData
-    baseCtx variables.VariableContext
-}
-
-func (c *CustomVariableContext) ResolveVariable(name string) (any, error) {
-    switch name {
-    case "fuel_price_per_gallon":
-        return c.marketData.FuelPrice, nil
-    
-    case "is_peak_season":
-        now := time.Now()
-        return now.Month() >= 6 && now.Month() <= 8, nil
-    
-    case "surcharge_rates":
-        return c.marketData.SurchargeRates, nil
-    
-    default:
-        // Delegate to base context for standard variables
-        return c.baseCtx.ResolveVariable(name)
-    }
-}
-
-func (c *CustomVariableContext) GetFieldSources() map[string]any {
-    sources := c.baseCtx.GetFieldSources()
-    sources["market_rates"] = c.marketData
-    sources["calendar"] = map[string]any{
-        "current_date": time.Now(),
-    }
-    return sources
-}
-```
-
-## Schema Integration
-
-### Registering Entity Schemas
-
-Define JSON schemas for your domain entities:
-
-```go
-func RegisterEntitySchemas(registry *schema.SchemaRegistry) error {
-    // Register shipment schema
-    shipmentSchema := []byte(`{
-        "$schema": "http://json-schema.org/draft-07/schema#",
-        "type": "object",
-        "properties": {
-            "weight": {
-                "type": "number",
-                "minimum": 0
-            },
-            "distance": {
-                "type": "number",
-                "minimum": 0
-            },
-            "commodity_class": {
-                "type": "string",
-                "enum": ["50", "55", "60", "65", "70", "77.5", "85", "92.5", "100"]
-            }
-        }
-    }`)
-    
-    if err := registry.RegisterSchema("shipment", shipmentSchema); err != nil {
-        return err
+    if !result.Success {
+        return fmt.Errorf("formula error: %s", result.Error)
     }
     
     return nil
 }
 ```
 
-### Adding Computed Fields
+### Batch Evaluation
 
-Register computed fields that derive values from entity data:
+For performance, evaluate formulas in batches:
 
 ```go
-func RegisterComputedFields(resolver *schema.DefaultDataResolver) {
-    // Dimensional weight calculation
-    resolver.RegisterComputer("dimensional_weight", func(ctx context.Context, entity any, variables map[string]any) (any, error) {
-        shipment, ok := entity.(*domain.Shipment)
-        if !ok {
-            return nil, fmt.Errorf("entity is not a shipment")
-        }
-        
-        if shipment.Length == 0 || shipment.Width == 0 || shipment.Height == 0 {
-            return 0.0, nil
-        }
-        
-        // Standard dimensional factor
-        dimFactor := 166.0
-        if intl, ok := variables["is_international"].(bool); ok && intl {
-            dimFactor = 139.0
-        }
-        
-        return (shipment.Length * shipment.Width * shipment.Height) / dimFactor, nil
-    })
-    
-    // Chargeable weight (greater of actual or dimensional)
-    resolver.RegisterComputer("chargeable_weight", func(ctx context.Context, entity any, variables map[string]any) (any, error) {
-        shipment, ok := entity.(*domain.Shipment)
-        if !ok {
-            return nil, fmt.Errorf("entity is not a shipment")
-        }
-        
-        dimWeight, err := resolver.Resolve(ctx, "dimensional_weight", entity, variables)
-        if err != nil {
-            return nil, err
-        }
-        
-        return math.Max(shipment.Weight, dimWeight.(float64)), nil
-    })
+// Evaluate pricing for multiple shipments
+shipments := []Shipment{...}
+contexts := make([]variables.VariableContext, len(shipments))
+
+for i, shipment := range shipments {
+    contexts[i] = variables.NewDefaultContext(&shipment, resolver)
 }
+
+results, err := evaluator.EvaluateBatch(ctx, expression, contexts)
 ```
 
-## Formula Templates
+## Creating Formula Templates
 
-### Creating Formula Templates
+### Template Structure
 
-Formula templates define reusable calculation logic:
-
-```go
-type FormulaTemplate struct {
-    ID          string
-    Name        string
-    Description string
-    Expression  string
-    Variables   []string // Required variables
-    Entity      string   // Required entity type
-}
-
-// Example templates
-var (
-    StandardRateTemplate = FormulaTemplate{
-        ID:          "standard-rate",
-        Name:        "Standard Shipping Rate",
-        Description: "Basic weight and distance calculation",
-        Expression:  "base_rate * chargeable_weight * distance_tier_multiplier",
-        Variables:   []string{"base_rate"},
-        Entity:      "shipment",
-    }
-    
-    HazmatSurchargeTemplate = FormulaTemplate{
-        ID:          "hazmat-surcharge",
-        Name:        "Hazmat Surcharge",
-        Description: "Additional charge for hazardous materials",
-        Expression:  "if(has_hazmat, base_rate * 0.25 * weight, 0)",
-        Variables:   []string{"base_rate"},
-        Entity:      "shipment",
-    }
-    
-    FuelSurchargeTemplate = FormulaTemplate{
-        ID:          "fuel-surcharge",
-        Name:        "Fuel Surcharge",
-        Description: "Fuel surcharge based on current prices",
-        Expression:  "distance * fuel_consumption_rate * (fuel_price_per_gallon - fuel_base_price) * 0.01",
-        Variables:   []string{"fuel_price_per_gallon", "fuel_base_price", "fuel_consumption_rate"},
-        Entity:      "shipment",
-    }
-)
-```
-
-### Using Formula Templates
+Formula templates define reusable expressions:
 
 ```go
-type ShipmentCalculator struct {
-    formulaService *formula.Service
-    templateRepo   ports.FormulaTemplateRepository
-}
-
-func (s *ShipmentCalculator) CalculateTotalRate(ctx context.Context, shipmentID, customerID string) (decimal.Decimal, error) {
-    // Get customer's rate configuration
-    customer, err := s.customerRepo.FindByID(ctx, customerID)
-    if err != nil {
-        return decimal.Zero, err
-    }
+template := &formulatemplate.FormulaTemplate{
+    Name:        "Zone-Based Pricing",
+    Description: "Calculates rate based on distance zones",
+    Category:    formulatemplate.CategoryShipmentRating,
+    Expression:  "base_rate * zone_rates[min(zone_index, len(zone_rates) - 1)] + weight * 0.05",
     
-    // Calculate base rate
-    baseRate, err := s.formulaService.CalculateShipmentRate(ctx, &formula.CalculateRateRequest{
-        FormulaTemplateID: customer.BaseRateTemplateID,
-        ShipmentID:        shipmentID,
-        Variables: map[string]any{
-            "base_rate": customer.BaseRate,
+    Variables: []formulatemplate.Variable{
+        {
+            Name:        "base_rate",
+            Type:        "number",
+            Required:    true,
+            Description: "Base rate per zone",
         },
-    })
-    
-    // Add surcharges
-    var totalRate decimal.Decimal = baseRate
-    
-    // Hazmat surcharge
-    if customer.HazmatSurchargeEnabled {
-        hazmatCharge, err := s.formulaService.CalculateShipmentRate(ctx, &formula.CalculateRateRequest{
-            FormulaTemplateID: HazmatSurchargeTemplate.ID,
-            ShipmentID:        shipmentID,
-            Variables: map[string]any{
-                "base_rate": customer.BaseRate,
-            },
-        })
-        totalRate = totalRate.Add(hazmatCharge)
-    }
-    
-    // Fuel surcharge
-    fuelCharge, err := s.formulaService.CalculateShipmentRate(ctx, &formula.CalculateRateRequest{
-        FormulaTemplateID: FuelSurchargeTemplate.ID,
-        ShipmentID:        shipmentID,
-        Variables: map[string]any{
-            "fuel_price_per_gallon":   s.marketData.FuelPrice,
-            "fuel_base_price":         2.50,
-            "fuel_consumption_rate":   0.15, // gallons per mile
+        {
+            Name:         "zone_multiplier",
+            Type:         "array",
+            Required:     true,
+            DefaultValue: []float64{1.0, 1.2, 1.5, 2.0},
         },
-    })
-    totalRate = totalRate.Add(fuelCharge)
+    },
     
-    return totalRate, nil
+    Parameters: []formulatemplate.Parameter{
+        {
+            Name:         "fuel_surcharge",
+            Type:         "number",
+            DefaultValue: 15.0,
+            Description:  "Current fuel surcharge percentage",
+        },
+    },
+    
+    MinRate: &minRate, // Optional constraints
+    MaxRate: &maxRate,
 }
 ```
 
-## Real-World Examples
+### Template Categories
 
-### Tiered Pricing System
+Organize templates by use case:
 
-```go
+- `CategoryShipmentRating` - Pricing calculations
+- `CategoryAccessorial` - Additional charges
+- `CategoryCustom` - User-defined formulas
+
+### Real-World Examples
+
+#### Tiered Pricing System
+
+```javascript
 // Formula expression for tiered weight-based pricing
-const tieredPricingFormula = `
-// Define tier breakpoints and rates
 if(weight <= 100,
    weight * tier1_rate,
    if(weight <= 500,
@@ -381,150 +211,319 @@ if(weight <= 100,
       )
    )
 )
-`
-
-variables := map[string]any{
-    "weight":     750,
-    "tier1_rate": 5.00,  // $5/lb for first 100 lbs
-    "tier2_rate": 4.00,  // $4/lb for 101-500 lbs
-    "tier3_rate": 3.00,  // $3/lb for 501-1000 lbs
-    "tier4_rate": 2.50,  // $2.50/lb for 1000+ lbs
-}
 ```
 
-### Zone-Based Pricing
+#### Zone-Based Pricing
 
-```go
-// Define zones as arrays of zip code prefixes
-variables := map[string]any{
-    "origin_zip":      "10001",
-    "destination_zip": "90210",
-    "zone1_prefixes":  []any{"100", "101", "102"},
-    "zone2_prefixes":  []any{"200", "201", "300"},
-    "zone3_prefixes":  []any{"400", "500", "600"},
-    "zone4_prefixes":  []any{"700", "800", "900"},
-    "zone1_rate":      1.0,
-    "zone2_rate":      1.5,
-    "zone3_rate":      2.0,
-    "zone4_rate":      2.5,
-}
-
-const zoneBasedFormula = `
-// Extract destination prefix
-dest_prefix = slice(destination_zip, 0, 3)
-
-// Determine zone multiplier
-zone_multiplier = if(contains(zone1_prefixes, dest_prefix), zone1_rate,
-                    if(contains(zone2_prefixes, dest_prefix), zone2_rate,
-                       if(contains(zone3_prefixes, dest_prefix), zone3_rate,
-                          if(contains(zone4_prefixes, dest_prefix), zone4_rate,
-                             3.0  // Default rate for unknown zones
-                          )
-                       )
-                    )
-                 )
-
-// Calculate final rate
-base_rate * distance * zone_multiplier
-`
+```javascript
+// Apply zone-based pricing based on destination prefix
+// Extract first 3 digits of zip and apply appropriate multiplier
+base_rate * distance * 
+  if(contains(zone1_prefixes, slice(destination_zip, 0, 3)), zone1_rate,
+     if(contains(zone2_prefixes, slice(destination_zip, 0, 3)), zone2_rate,
+        if(contains(zone3_prefixes, slice(destination_zip, 0, 3)), zone3_rate,
+           if(contains(zone4_prefixes, slice(destination_zip, 0, 3)), zone4_rate,
+              3.0  // Default rate for unknown zones
+           )
+        )
+     )
+  )
 ```
 
-### Time-Based Pricing
+#### Time-Based Pricing
 
-```go
-// Peak hours and weekend surcharges
-const timeBasedFormula = `
-// Check if delivery is during peak hours (8-10 AM, 4-6 PM)
-is_peak_hour = (delivery_hour >= 8 && delivery_hour < 10) || 
-               (delivery_hour >= 16 && delivery_hour < 18)
-
-// Weekend surcharge
-is_weekend = day_of_week == 0 || day_of_week == 6
-
-// Calculate multipliers
-time_multiplier = if(is_peak_hour, 1.25, 1.0)
-weekend_multiplier = if(is_weekend, 1.15, 1.0)
-
-// Apply to base rate
-base_rate * distance * time_multiplier * weekend_multiplier
-`
+```javascript
+// Apply time-based pricing with peak hours and weekend surcharges
+base_rate * distance * 
+  // Peak hour multiplier (8-10am or 4-6pm)
+  if((delivery_hour >= 8 && delivery_hour < 10) || 
+     (delivery_hour >= 16 && delivery_hour < 18), 1.25, 1.0) *
+  // Weekend multiplier (Sunday=0 or Saturday=6)
+  if(day_of_week == 0 || day_of_week == 6, 1.15, 1.0)
 ```
 
-## Testing Formulas
+## Schema Integration
 
-### Unit Testing Formulas
+### Defining a New Schema
 
-```go
-func TestTieredPricingFormula(t *testing.T) {
-    service := setupTestFormulaService(t)
+Create a JSON schema file in `schema/definitions/`:
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://trenova.com/schemas/formula/myentity.schema.json",
+  "title": "MyEntity",
+  "type": "object",
+  
+  "x-formula-context": {
+    "category": "myentity",
+    "entities": ["MyEntity"],
+    "permissions": ["formula:read:myentity"]
+  },
+  
+  "x-data-source": {
+    "table": "my_entities",
+    "entity": "github.com/emoss08/trenova/internal/core/domain/myentity.MyEntity",
+    "preload": ["RelatedEntity"]
+  },
+  
+  "properties": {
+    "customField": {
+      "description": "A custom field for calculations",
+      "type": "number",
+      "x-source": {
+        "field": "custom_field",
+        "path": "CustomField",
+        "transform": "decimalToFloat64"
+      }
+    },
     
-    tests := []struct {
-        name     string
-        weight   float64
-        expected float64
-    }{
-        {"Under 100 lbs", 50, 250},      // 50 * 5
-        {"Exactly 100 lbs", 100, 500},   // 100 * 5
-        {"Between tiers", 250, 1100},    // 100*5 + 150*4
-        {"Over 1000 lbs", 1200, 2900},   // 100*5 + 400*4 + 500*3 + 200*2.5
+    "computedValue": {
+      "description": "A computed value",
+      "type": "number",
+      "x-source": {
+        "computed": true,
+        "function": "computeMyValue",
+        "requires": ["customField", "relatedField"]
+      }
+    }
+  }
+}
+```
+
+### Registering the Schema
+
+Add schema registration in the module:
+
+```go
+func newSchemaRegistryWithSchemas(p SchemaRegistryParams) (*schema.SchemaRegistry, error) {
+    registry := schema.NewSchemaRegistry()
+    
+    // Load your schema
+    schemaJSON, err := schemaDefinitions.ReadFile("schema/definitions/myentity.json")
+    if err != nil {
+        return nil, err
     }
     
-    for _, tt := range tests {
-        t.Run(tt.name, func(t *testing.T) {
-            result, err := service.TestFormula(context.Background(), &formula.TestFormulaRequest{
-                Expression: tieredPricingFormula,
-                TestData: map[string]any{
-                    "weight":     tt.weight,
-                    "tier1_rate": 5.00,
-                    "tier2_rate": 4.00,
-                    "tier3_rate": 3.00,
-                    "tier4_rate": 2.50,
-                },
-            })
-            
-            require.NoError(t, err)
-            assert.InDelta(t, tt.expected, result.Result, 0.01)
-        })
+    if err := registry.RegisterSchema("myentity", schemaJSON); err != nil {
+        return nil, err
+    }
+    
+    return registry, nil
+}
+```
+
+### Adding Computed Fields
+
+Implement compute functions in `schema/computers.go`:
+
+```go
+func computeMyValue(entity any) (any, error) {
+    e, ok := entity.(*myentity.MyEntity)
+    if !ok {
+        return nil, fmt.Errorf("expected MyEntity, got %T", entity)
+    }
+    
+    // Perform calculation
+    // Perform calculation
+    result := e.CustomField * 1.5
+    if e.RelatedEntity != nil {
+        result = result + e.RelatedEntity.Modifier
+    }
+    
+    return result, nil
+}
+
+// Register in the resolver
+func RegisterMyEntityComputers(resolver *DefaultDataResolver) {
+    resolver.RegisterComputer("computeMyValue", computeMyValue)
+}
+```
+
+## Adding Custom Variables
+
+### Creating a Variable
+
+Define custom variables for domain-specific calculations:
+
+```go
+// In variables/custom/myvariable.go
+package custom
+
+import (
+    "github.com/emoss08/trenova/internal/pkg/formula/variables"
+    "github.com/emoss08/trenova/internal/core/types/formula"
+)
+
+func NewFuelSurchargeVariable() variables.Variable {
+    return variables.NewVariable(
+        "current_fuel_surcharge",
+        "Current fuel surcharge percentage",
+        formula.ValueTypeNumber,
+        variables.VariableSourceCustom,
+        func(ctx variables.VariableContext) (any, error) {
+            // Get from configuration or external service
+            return getFuelSurchargeFromConfig(), nil
+        },
+    )
+}
+```
+
+### Registering Variables
+
+Register during module initialization:
+
+```go
+func RegisterCustomVariables(registry *variables.Registry) {
+    registry.Register(custom.NewFuelSurchargeVariable())
+    registry.Register(custom.NewPeakSeasonVariable())
+    // ... more variables
+}
+```
+
+## Error Handling
+
+### Formula Errors
+
+Handle different types of formula errors:
+
+```go
+result, err := formulaService.CalculateShipmentRate(ctx, templateID, shipment, userID)
+if err != nil {
+    switch {
+    case errors.Is(err, formula.ErrInvalidExpression):
+        // Handle syntax errors
+        return nil, fmt.Errorf("invalid formula syntax: %w", err)
+        
+    case errors.Is(err, formula.ErrVariableNotFound):
+        // Handle missing variables
+        return nil, fmt.Errorf("formula references unknown variable: %w", err)
+        
+    case errors.Is(err, formula.ErrTimeout):
+        // Handle evaluation timeout
+        return nil, fmt.Errorf("formula evaluation timed out: %w", err)
+        
+    default:
+        // Handle other errors
+        return nil, fmt.Errorf("formula evaluation failed: %w", err)
     }
 }
 ```
 
-### Integration Testing
+### Validation
+
+Validate formulas before saving:
+
+```go
+func (s *FormulaService) ValidateTemplate(template *FormulaTemplate) error {
+    // Test with sample data
+    testResult, err := s.TestFormula(ctx, &TestFormulaRequest{
+        Expression: template.Expression,
+        TestData:   generateSampleData(template),
+    })
+    
+    if err != nil {
+        return fmt.Errorf("formula validation failed: %w", err)
+    }
+    
+    if !testResult.Success {
+        return fmt.Errorf("formula error: %s", testResult.Error)
+    }
+    
+    // Verify all required variables are used
+    for _, variable := range template.Variables {
+        if variable.Required && !contains(testResult.UsedVariables, variable.Name) {
+            return fmt.Errorf("required variable '%s' is not used in formula", variable.Name)
+        }
+    }
+    
+    return nil
+}
+```
+
+## Testing Formula Integration
+
+### Unit Tests
+
+Test formula integration in your services:
 
 ```go
 func TestShipmentRateCalculation(t *testing.T) {
-    // Setup test database and services
-    db := setupTestDB(t)
-    service := setupFormulaService(t, db)
+    // Setup
+    formulaService := setupMockFormulaService()
+    shipmentService := NewShipmentService(formulaService)
     
     // Create test shipment
-    shipment := &domain.Shipment{
-        ID:       "test-123",
-        Weight:   500,
-        Distance: 1000,
-        Commodities: []domain.Commodity{
-            {ClassCode: "85", IsHazmat: true},
-        },
+    shipment := &Shipment{
+        Weight:            1000,
+        Distance:          500,
+        RatingMethod:      RatingMethodFormulaTemplate,
+        FormulaTemplateID: &testTemplateID,
     }
     
-    // Create formula template
-    template := &domain.FormulaTemplate{
-        ID:         "test-template",
-        Expression: "base_rate * weight * distance * if(has_hazmat, 1.25, 1.0)",
-    }
+    // Test calculation
+    rate, err := shipmentService.CalculateRate(ctx, shipment)
+    require.NoError(t, err)
+    assert.Equal(t, "1250.00", rate.String()) // Expected: 1000 * 0.05 + 500 * 2.00
+}
+```
+
+### Integration Tests
+
+Test end-to-end formula evaluation:
+
+```go
+func TestFormulaIntegration(t *testing.T) {
+    // Setup complete formula system
+    schemaRegistry := schema.NewSchemaRegistry()
+    varRegistry := variables.NewRegistry()
+    resolver := schema.NewDefaultDataResolver()
     
-    // Calculate rate
-    rate, err := service.CalculateShipmentRate(context.Background(), &formula.CalculateRateRequest{
-        FormulaTemplateID: template.ID,
-        ShipmentID:        shipment.ID,
-        Variables: map[string]any{
-            "base_rate": 0.002,
-        },
-    })
+    // Register schemas and variables
+    registerTestSchemas(schemaRegistry)
+    registerTestVariables(varRegistry)
+    
+    // Create service
+    dataLoader := infrastructure.NewPostgresDataLoader(db, schemaRegistry)
+    evalService := services.NewFormulaEvaluationService(
+        dataLoader, schemaRegistry, varRegistry, resolver,
+    )
+    
+    // Test evaluation
+    result, err := evalService.EvaluateFormula(
+        ctx,
+        "weight * 0.05 + distance * 2.00",
+        "shipment",
+        shipmentID,
+    )
     
     require.NoError(t, err)
-    expected := 0.002 * 500 * 1000 * 1.25
-    assert.Equal(t, expected, rate.InexactFloat64())
+    assert.Equal(t, 1250.0, result)
+}
+```
+
+### Performance Tests
+
+Benchmark formula evaluation:
+
+```go
+func BenchmarkFormulaEvaluation(b *testing.B) {
+    // Setup
+    service := setupFormulaService()
+    contexts := generateTestContexts(1000)
+    
+    b.ResetTimer()
+    
+    for i := 0; i < b.N; i++ {
+        _, err := service.EvaluateBatch(
+            context.Background(),
+            "weight * 0.05 + distance * 2.00",
+            contexts,
+        )
+        if err != nil {
+            b.Fatal(err)
+        }
+    }
 }
 ```
 
@@ -532,272 +531,159 @@ func TestShipmentRateCalculation(t *testing.T) {
 
 ### Expression Caching
 
-The formula service automatically caches compiled expressions:
+The evaluator automatically caches compiled expressions:
 
 ```go
-// Expressions are cached by default
-evaluator := expression.NewEvaluator()
-
-// First call compiles and caches
+// First evaluation compiles and caches the expression
 result1, _ := evaluator.Evaluate(ctx, complexFormula, vars1)
 
-// Subsequent calls use cached AST
+// Subsequent evaluations use the cached AST
 result2, _ := evaluator.Evaluate(ctx, complexFormula, vars2)
 ```
 
-### Batch Evaluation
+### Batch Processing
 
-For bulk operations, use batch evaluation:
-
-```go
-func CalculateBulkRates(shipments []*domain.Shipment, formula string) ([]float64, error) {
-    evaluator := expression.NewEvaluator()
-    
-    // Pre-compile the expression once
-    compiled, err := evaluator.Compile(formula)
-    if err != nil {
-        return nil, err
-    }
-    
-    results := make([]float64, len(shipments))
-    errors := make([]error, len(shipments))
-    
-    // Use goroutines for parallel evaluation
-    var wg sync.WaitGroup
-    for i, shipment := range shipments {
-        wg.Add(1)
-        go func(idx int, s *domain.Shipment) {
-            defer wg.Done()
-            
-            vars := map[string]any{
-                "weight":   s.Weight,
-                "distance": s.Distance,
-            }
-            
-            result, err := evaluator.EvaluateCompiled(ctx, compiled, vars)
-            if err != nil {
-                errors[idx] = err
-                return
-            }
-            
-            results[idx] = result.(float64)
-        }(i, shipment)
-    }
-    
-    wg.Wait()
-    
-    // Check for errors
-    for _, err := range errors {
-        if err != nil {
-            return nil, err
-        }
-    }
-    
-    return results, nil
-}
-```
-
-### Variable Resolution Optimization
-
-Cache frequently accessed variables:
+Process multiple evaluations efficiently:
 
 ```go
-type CachedVariableContext struct {
-    base  variables.VariableContext
-    cache map[string]any
-    mu    sync.RWMutex
+// Pre-compile expression once
+compiled, err := evaluator.Compile(expression)
+if err != nil {
+    return nil, err
 }
 
-func (c *CachedVariableContext) ResolveVariable(name string) (any, error) {
-    // Check cache first
-    c.mu.RLock()
-    if val, ok := c.cache[name]; ok {
-        c.mu.RUnlock()
-        return val, nil
-    }
-    c.mu.RUnlock()
-    
-    // Resolve and cache
-    val, err := c.base.ResolveVariable(name)
-    if err != nil {
-        return nil, err
-    }
-    
-    c.mu.Lock()
-    c.cache[name] = val
-    c.mu.Unlock()
-    
-    return val, nil
+// Evaluate for multiple contexts in parallel
+results := make([]float64, len(contexts))
+var wg sync.WaitGroup
+
+for i, ctx := range contexts {
+    wg.Add(1)
+    go func(idx int, varCtx variables.VariableContext) {
+        defer wg.Done()
+        result, _ := evaluator.EvaluateCompiled(ctx, compiled, varCtx)
+        results[idx] = result.(float64)
+    }(i, ctx)
 }
+
+wg.Wait()
 ```
 
-## Error Handling
+### Arena Allocation
 
-### Graceful Error Handling
+The evaluator uses arena allocation to reduce GC pressure:
 
-```go
-func CalculateRateWithFallback(ctx context.Context, shipment *domain.Shipment) (decimal.Decimal, error) {
-    // Try primary formula
-    rate, err := calculateWithFormula(ctx, shipment, "primary_formula")
-    if err == nil {
-        return rate, nil
-    }
-    
-    // Log error and try fallback
-    log.Printf("Primary formula failed: %v", err)
-    
-    // Try simplified fallback formula
-    rate, err = calculateWithFormula(ctx, shipment, "fallback_formula")
-    if err == nil {
-        return rate, nil
-    }
-    
-    // Final fallback to fixed rate
-    log.Printf("Fallback formula failed: %v", err)
-    return calculateFixedRate(shipment), nil
-}
-```
-
-### Validation Before Execution
-
-```go
-func ValidateFormula(expression string, requiredVars []string) error {
-    evaluator := expression.NewEvaluator()
-    
-    // Parse to check syntax
-    compiled, err := evaluator.Compile(expression)
-    if err != nil {
-        return fmt.Errorf("invalid syntax: %w", err)
-    }
-    
-    // Extract variables used
-    usedVars := compiled.ExtractVariables()
-    
-    // Check required variables are present
-    for _, required := range requiredVars {
-        found := false
-        for _, used := range usedVars {
-            if used == required {
-                found = true
-                break
-            }
-        }
-        if !found {
-            return fmt.Errorf("formula must use required variable: %s", required)
-        }
-    }
-    
-    // Test with sample data
-    testVars := make(map[string]any)
-    for _, v := range usedVars {
-        testVars[v] = 1.0 // Dummy value
-    }
-    
-    _, err = evaluator.EvaluateCompiled(context.Background(), compiled, testVars)
-    if err != nil {
-        return fmt.Errorf("formula execution error: %w", err)
-    }
-    
-    return nil
-}
-```
+- Memory is allocated in blocks
+- Objects are pooled for reuse
+- Strings are interned
+- Minimal allocations during evaluation
 
 ## Security Considerations
 
-### Input Sanitization
+### Input Validation
 
-Always validate and sanitize user-provided formulas:
+Always validate user-provided formulas:
 
 ```go
-func CreateUserFormula(ctx context.Context, userID string, formula string) error {
-    // Check formula length
+func ValidateUserFormula(formula string) error {
+    // Check length
     if len(formula) > MaxFormulaLength {
         return errors.New("formula too long")
     }
     
-    // Check complexity
+    // Parse and check complexity
     compiled, err := evaluator.Compile(formula)
     if err != nil {
-        return err
+        return fmt.Errorf("invalid syntax: %w", err)
     }
     
     if compiled.Complexity() > MaxComplexity {
         return errors.New("formula too complex")
     }
     
-    // Restrict available functions for user formulas
-    allowedFunctions := []string{"min", "max", "round", "if"}
-    usedFunctions := extractFunctions(compiled)
-    
-    for _, fn := range usedFunctions {
-        allowed := false
-        for _, allowedFn := range allowedFunctions {
-            if fn == allowedFn {
-                allowed = true
-                break
-            }
-        }
-        if !allowed {
+    // Restrict functions for user formulas
+    allowedFunctions := []string{"min", "max", "round", "if", "sum", "avg"}
+    for _, fn := range compiled.Functions() {
+        if !contains(allowedFunctions, fn) {
             return fmt.Errorf("function not allowed: %s", fn)
         }
     }
     
-    // Store validated formula
-    return storeFormula(ctx, userID, formula)
+    return nil
 }
 ```
 
 ### Resource Limits
 
-Set appropriate limits for formula execution:
+The evaluator enforces resource limits:
 
-```go
-func ExecuteWithLimits(ctx context.Context, formula string, vars map[string]any) (any, error) {
-    // Set timeout
-    ctx, cancel := context.WithTimeout(ctx, 100*time.Millisecond)
-    defer cancel()
-    
-    // Create limited context
-    evalCtx := &expression.EvaluationContext{
-        Context:     ctx,
-        Variables:   vars,
-        MemoryLimit: 1024 * 1024, // 1MB
-    }
-    
-    // Execute with panic recovery
-    var result any
-    var err error
-    
-    done := make(chan bool)
-    go func() {
-        defer func() {
-            if r := recover(); r != nil {
-                err = fmt.Errorf("formula panic: %v", r)
-            }
-            done <- true
-        }()
-        
-        result, err = evaluator.EvaluateWithContext(evalCtx, formula)
-    }()
-    
-    select {
-    case <-done:
-        return result, err
-    case <-ctx.Done():
-        return nil, errors.New("formula execution timeout")
-    }
-}
-```
+- **Timeout**: 100ms default (configurable)
+- **Memory**: 1MB limit per evaluation
+- **Depth**: Maximum nesting depth of 50
+- **Iterations**: Maximum 10,000 evaluations
+
+### Safe Execution
+
+Formulas execute in a sandboxed environment:
+
+- No system access
+- No file operations
+- No network calls
+- No code execution
+- Pure mathematical operations only
 
 ## Best Practices
 
-1. **Keep Formulas Simple**: Break complex calculations into multiple steps
-2. **Use Descriptive Variable Names**: Make formulas self-documenting
-3. **Validate Early**: Check formulas when created, not when executed
-4. **Cache Aggressively**: Compiled expressions and computed values
-5. **Handle Errors Gracefully**: Always have fallback calculations
-6. **Test Thoroughly**: Include edge cases and error conditions
-7. **Monitor Performance**: Track execution times and cache hit rates
-8. **Document Formulas**: Explain business logic and assumptions
-9. **Version Control**: Track formula changes over time
-10. **Limit User Input**: Restrict functions and complexity for user-created formulas
+1. **Cache Formula Templates**: Load templates once and reuse
+2. **Validate Early**: Check formulas when created, not during evaluation
+3. **Use Descriptive Names**: Make variable and template names self-documenting
+4. **Handle Errors Gracefully**: Always have fallback calculations
+5. **Test Edge Cases**: Include zero, negative, and extreme values in tests
+6. **Monitor Performance**: Track evaluation times and optimize slow formulas
+7. **Version Templates**: Track changes to formula logic over time
+8. **Document Business Logic**: Explain why formulas work the way they do
+9. **Limit User Input**: Restrict complexity and functions for user formulas
+10. **Use Batch Operations**: Process multiple evaluations together when possible
+
+## Common Pitfalls
+
+### Division by Zero
+
+Always guard against division by zero:
+
+```javascript
+// Bad: Risk of division by zero
+distance / time
+
+// Good: Safe with fallback
+time > 0 ? distance / time : 0
+```
+
+### Null Values
+
+Handle missing data gracefully:
+
+```javascript
+// Use coalesce to provide defaults
+coalesce(weight, pieces * 10, 100)
+```
+
+### Type Mismatches
+
+Be explicit about type conversions:
+
+```javascript
+// Ensure numeric comparison
+if(number(status_code) == 200, "success", "failure")
+```
+
+### Performance Issues
+
+Break complex formulas into steps:
+
+```javascript
+// Instead of one complex formula, break it down:
+// Option 1: Create separate formula templates for each component
+// Option 2: Use nested expressions with clear structure
+(weight * rate_per_pound) +     // Base charge
+(distance * fuel_rate)          // Fuel charge
+```
