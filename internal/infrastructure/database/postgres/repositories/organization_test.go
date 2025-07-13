@@ -15,7 +15,7 @@ package repositories_test
 // 		opts := &ports.LimitOffsetQueryOptions{
 // 			Limit:  10,
 // 			Offset: 0,
-// 			TenantOpts: &ports.TenantOptions{
+// 			TenantOpts: ports.TenantOptions{
 // 				OrgID: org.ID,
 // 				BuID:  bu.ID,
 // 			},

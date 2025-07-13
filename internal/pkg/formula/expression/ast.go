@@ -2,12 +2,12 @@ package expression
 
 import (
 	"fmt"
-	"sync"
+	"strconv"
 
 	"github.com/emoss08/trenova/internal/core/types/formula"
 )
 
-// * Node represents an AST node that can be evaluated
+// Node represents an AST node that can be evaluated
 type Node interface {
 	// Evaluate computes the value of this node
 	Evaluate(ctx *EvaluationContext) (any, error)
@@ -22,12 +22,12 @@ type Node interface {
 	Complexity() int
 }
 
-// * NumberNode represents a numeric literal
+// NumberNode represents a numeric literal
 type NumberNode struct {
 	Value float64
 }
 
-func (n *NumberNode) Evaluate(ctx *EvaluationContext) (any, error) {
+func (n *NumberNode) Evaluate(_ *EvaluationContext) (any, error) {
 	return n.Value, nil
 }
 
@@ -43,12 +43,12 @@ func (n *NumberNode) Complexity() int {
 	return 1
 }
 
-// * StringNode represents a string literal
+// StringNode represents a string literal
 type StringNode struct {
 	Value string
 }
 
-func (n *StringNode) Evaluate(ctx *EvaluationContext) (any, error) {
+func (n *StringNode) Evaluate(_ *EvaluationContext) (any, error) {
 	return n.Value, nil
 }
 
@@ -64,12 +64,12 @@ func (n *StringNode) Complexity() int {
 	return 1
 }
 
-// * BooleanNode represents a boolean literal
+// BooleanNode represents a boolean literal
 type BooleanNode struct {
 	Value bool
 }
 
-func (n *BooleanNode) Evaluate(ctx *EvaluationContext) (any, error) {
+func (n *BooleanNode) Evaluate(_ *EvaluationContext) (any, error) {
 	return n.Value, nil
 }
 
@@ -78,14 +78,14 @@ func (n *BooleanNode) Type() formula.ValueType {
 }
 
 func (n *BooleanNode) String() string {
-	return fmt.Sprintf("%t", n.Value)
+	return strconv.FormatBool(n.Value)
 }
 
 func (n *BooleanNode) Complexity() int {
 	return 1
 }
 
-// * IdentifierNode represents a variable reference
+// IdentifierNode represents a variable reference
 type IdentifierNode struct {
 	Name string
 }
@@ -107,7 +107,7 @@ func (n *IdentifierNode) Complexity() int {
 	return 2 // Variable lookup has slight overhead
 }
 
-// * BinaryOpNode represents a binary operation
+// BinaryOpNode represents a binary operation
 type BinaryOpNode struct {
 	Left     Node
 	Right    Node
@@ -126,7 +126,7 @@ func (n *BinaryOpNode) Evaluate(ctx *EvaluationContext) (any, error) {
 	}
 
 	// Short-circuit evaluation for logical operators
-	switch n.Operator {
+	switch n.Operator { //nolint:exhaustive // all operators are covered
 	case TokenAnd:
 		if !toBool(left) {
 			return false, nil
@@ -146,7 +146,7 @@ func (n *BinaryOpNode) Evaluate(ctx *EvaluationContext) (any, error) {
 }
 
 func (n *BinaryOpNode) Type() formula.ValueType {
-	switch n.Operator {
+	switch n.Operator { //nolint:exhaustive // all operators are covered
 	case TokenEqual,
 		TokenNotEqual,
 		TokenGreater,
@@ -170,7 +170,7 @@ func (n *BinaryOpNode) Complexity() int {
 	return n.Left.Complexity() + n.Right.Complexity() + 1
 }
 
-// * UnaryOpNode represents a unary operation
+// UnaryOpNode represents a unary operation
 type UnaryOpNode struct {
 	Operand  Node
 	Operator TokenType
@@ -190,7 +190,7 @@ func (n *UnaryOpNode) Evaluate(ctx *EvaluationContext) (any, error) {
 }
 
 func (n *UnaryOpNode) Type() formula.ValueType {
-	switch n.Operator {
+	switch n.Operator { //nolint:exhaustive // all operators are covered
 	case TokenNot:
 		return formula.ValueTypeBoolean
 	default:
@@ -206,7 +206,7 @@ func (n *UnaryOpNode) Complexity() int {
 	return n.Operand.Complexity() + 1
 }
 
-// * ConditionalNode represents a ternary conditional (condition ? true : false)
+// ConditionalNode represents a ternary conditional (condition ? true : false)
 type ConditionalNode struct {
 	Condition Node
 	TrueExpr  Node
@@ -247,14 +247,11 @@ func (n *ConditionalNode) Complexity() int {
 	// Only one branch is evaluated, so use max
 	trueComplexity := n.TrueExpr.Complexity()
 	falseComplexity := n.FalseExpr.Complexity()
-	maxBranch := trueComplexity
-	if falseComplexity > maxBranch {
-		maxBranch = falseComplexity
-	}
+	maxBranch := max(falseComplexity, trueComplexity)
 	return n.Condition.Complexity() + maxBranch + 1
 }
 
-// * FunctionCallNode represents a function call
+// FunctionCallNode represents a function call
 type FunctionCallNode struct {
 	Name      string
 	Arguments []Node
@@ -299,7 +296,7 @@ func (n *FunctionCallNode) Complexity() int {
 	return complexity
 }
 
-// * ArrayNode represents an array literal
+// ArrayNode represents an array literal
 type ArrayNode struct {
 	Elements []Node
 }
@@ -341,7 +338,7 @@ func (n *ArrayNode) Complexity() int {
 	return complexity
 }
 
-// * IndexNode represents array indexing operation
+// IndexNode represents array indexing operation
 type IndexNode struct {
 	Array Node
 	Index Node
@@ -405,42 +402,6 @@ func (n *IndexNode) String() string {
 func (n *IndexNode) Complexity() int {
 	return n.Array.Complexity() + n.Index.Complexity() + 1
 }
-
-// * Node pool for reusing AST nodes
-var (
-	numberNodePool = sync.Pool{
-		New: func() any { return &NumberNode{} },
-	}
-	stringNodePool = sync.Pool{
-		New: func() any { return &StringNode{} },
-	}
-	booleanNodePool = sync.Pool{
-		New: func() any { return &BooleanNode{} },
-	}
-	identifierNodePool = sync.Pool{
-		New: func() any { return &IdentifierNode{} },
-	}
-	binaryOpNodePool = sync.Pool{
-		New: func() any { return &BinaryOpNode{} },
-	}
-	unaryOpNodePool = sync.Pool{
-		New: func() any { return &UnaryOpNode{} },
-	}
-	conditionalNodePool = sync.Pool{
-		New: func() any { return &ConditionalNode{} },
-	}
-	functionCallNodePool = sync.Pool{
-		New: func() any { return &FunctionCallNode{} },
-	}
-	arrayNodePool = sync.Pool{
-		New: func() any { return &ArrayNode{} },
-	}
-	indexNodePool = sync.Pool{
-		New: func() any { return &IndexNode{} },
-	}
-)
-
-// * Helper functions
 
 func toBool(v any) bool {
 	switch val := v.(type) {

@@ -170,7 +170,7 @@ func (a *Arena) AllocBool(v bool) *bool {
 		a.boolPool = append(a.boolPool, v)
 		result := &a.boolPool[len(a.boolPool)-1]
 		a.allocations++
-		a.bytesUsed += 1
+		a.bytesUsed++
 		a.mu.Unlock()
 		return result
 	}
@@ -304,7 +304,7 @@ func NewArenaPool(blockSize int) *ArenaPool {
 
 // Get obtains an arena from the pool
 func (p *ArenaPool) Get() *Arena {
-	arena := p.pool.Get().(*Arena)
+	arena, _ := p.pool.Get().(*Arena)
 	arena.Reset()
 	return arena
 }

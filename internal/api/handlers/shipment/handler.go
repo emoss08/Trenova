@@ -326,7 +326,6 @@ func (h *Handler) duplicate(c *fiber.Ctx) error {
 	req.BuID = reqCtx.BuID
 	req.UserID = reqCtx.UserID
 	err = h.ss.Duplicate(c.UserContext(), req)
-
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}

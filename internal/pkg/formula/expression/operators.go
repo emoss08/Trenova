@@ -6,11 +6,12 @@ import (
 
 	"github.com/emoss08/trenova/internal/pkg/formula/conversion"
 	"github.com/emoss08/trenova/internal/pkg/formula/errors"
+	"github.com/rotisserie/eris"
 )
 
 // * evaluateBinaryOp evaluates a binary operation
 func evaluateBinaryOp(op TokenType, left, right any) (any, error) {
-	switch op {
+	switch op { //nolint:exhaustive // all operators are covered
 	// Arithmetic operators
 	case TokenPlus:
 		return addValues(left, right)
@@ -52,7 +53,7 @@ func evaluateBinaryOp(op TokenType, left, right any) (any, error) {
 
 // * evaluateUnaryOp evaluates a unary operation
 func evaluateUnaryOp(op TokenType, operand any) (any, error) {
-	switch op {
+	switch op { //nolint:exhaustive // all operators are covered
 	case TokenNot:
 		return !toBool(operand), nil
 	case TokenMinus:
@@ -67,7 +68,7 @@ func evaluateUnaryOp(op TokenType, operand any) (any, error) {
 func addValues(left, right any) (any, error) {
 	// String concatenation
 	if l, ok := left.(string); ok {
-		if r, ok := right.(string); ok {
+		if r, valOk := right.(string); valOk {
 			return l + r, nil
 		}
 		return l + fmt.Sprint(right), nil
@@ -90,7 +91,7 @@ func addValues(left, right any) (any, error) {
 
 	// Check for overflow
 	if (r > 0 && l > math.MaxFloat64-r) || (r < 0 && l < -math.MaxFloat64-r) {
-		return nil, errors.NewComputeError("addition", "overflow", fmt.Errorf("numeric overflow"))
+		return nil, errors.NewComputeError("addition", "overflow", eris.New("numeric overflow"))
 	}
 
 	return l + r, nil
@@ -113,7 +114,7 @@ func subtractValues(left, right any) (any, error) {
 		return nil, errors.NewComputeError(
 			"subtraction",
 			"overflow",
-			fmt.Errorf("numeric overflow"),
+			eris.New("numeric overflow"),
 		)
 	}
 
@@ -137,7 +138,7 @@ func multiplyValues(left, right any) (any, error) {
 		return nil, errors.NewComputeError(
 			"multiplication",
 			"overflow",
-			fmt.Errorf("numeric overflow"),
+			eris.New("numeric overflow"),
 		)
 	}
 
@@ -157,7 +158,7 @@ func divideValues(left, right any) (any, error) {
 	}
 
 	if r == 0 {
-		return nil, errors.NewComputeError("division", "zero", fmt.Errorf("division by zero"))
+		return nil, errors.NewComputeError("division", "zero", eris.New("division by zero"))
 	}
 
 	return l / r, nil
@@ -176,7 +177,7 @@ func moduloValues(left, right any) (any, error) {
 	}
 
 	if r == 0 {
-		return nil, errors.NewComputeError("modulo", "zero", fmt.Errorf("modulo by zero"))
+		return nil, errors.NewComputeError("modulo", "zero", eris.New("modulo by zero"))
 	}
 
 	return math.Mod(l, r), nil
@@ -201,7 +202,7 @@ func powerValues(left, right any) (any, error) {
 		return nil, errors.NewComputeError(
 			"power",
 			"overflow",
-			fmt.Errorf("numeric overflow in power operation"),
+			eris.New("numeric overflow in power operation"),
 		)
 	}
 
@@ -224,7 +225,7 @@ func negateValue(operand any) (any, error) {
 
 // * Comparison operations
 
-func equalValues(left, right any) bool {
+func equalValues(left, right any) bool { //nolint:gocognit // this is fine
 	// Handle nil
 	if left == nil || right == nil {
 		return left == right
@@ -240,21 +241,21 @@ func equalValues(left, right any) bool {
 
 	// String comparison
 	if ls, ok := left.(string); ok {
-		if rs, ok := right.(string); ok {
+		if rs, valOk := right.(string); valOk {
 			return ls == rs
 		}
 	}
 
 	// Boolean comparison
 	if lb, ok := left.(bool); ok {
-		if rb, ok := right.(bool); ok {
+		if rb, valOk := right.(bool); valOk {
 			return lb == rb
 		}
 	}
 
 	// Array comparison (simple length check for now)
-	if la, ok := left.([]any); ok {
-		if ra, ok := right.([]any); ok {
+	if la, ok := left.([]any); ok { //nolint:nestif // this is fine
+		if ra, valOk := right.([]any); valOk {
 			if len(la) != len(ra) {
 				return false
 			}
@@ -287,8 +288,8 @@ func compareValues(left, right any) int {
 	}
 
 	// String comparison
-	if ls, ok := left.(string); ok {
-		if rs, ok := right.(string); ok {
+	if ls, ok := left.(string); ok { //nolint:nestif // this is fine
+		if rs, valOk := right.(string); valOk {
 			if ls < rs {
 				return -1
 			}

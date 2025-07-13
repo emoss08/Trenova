@@ -121,7 +121,10 @@ func (r *emailLogRepository) Get(ctx context.Context, id pulid.ID) (*email.Log, 
 }
 
 // GetByQueueID retrieves logs for a specific queue entry
-func (r *emailLogRepository) GetByQueueID(ctx context.Context, queueID pulid.ID) ([]*email.Log, error) {
+func (r *emailLogRepository) GetByQueueID(
+	ctx context.Context,
+	queueID pulid.ID,
+) ([]*email.Log, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -161,7 +164,10 @@ func (r *emailLogRepository) GetByQueueID(ctx context.Context, queueID pulid.ID)
 }
 
 // GetByMessageID retrieves a log by provider message ID
-func (r *emailLogRepository) GetByMessageID(ctx context.Context, messageID string) (*email.Log, error) {
+func (r *emailLogRepository) GetByMessageID(
+	ctx context.Context,
+	messageID string,
+) (*email.Log, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -266,3 +272,4 @@ func (r *emailLogRepository) List(
 		Total: total,
 	}, nil
 }
+

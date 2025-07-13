@@ -31,7 +31,7 @@ func TestEquipmentTypeRepository(t *testing.T) {
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
-				TenantOpts: &ports.TenantOptions{
+				TenantOpts: ports.TenantOptions{
 					OrgID: org.ID,
 					BuID:  bu.ID,
 				},
@@ -44,7 +44,7 @@ func TestEquipmentTypeRepository(t *testing.T) {
 	t.Run("list equipment types with trailer class filter", func(t *testing.T) {
 		opts := &repoports.ListEquipmentTypeRequest{
 			Filter: &ports.LimitOffsetQueryOptions{
-				TenantOpts: &ports.TenantOptions{
+				TenantOpts: ports.TenantOptions{
 					OrgID: org.ID,
 					BuID:  bu.ID,
 				},

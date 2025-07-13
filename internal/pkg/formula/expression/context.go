@@ -9,7 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/formula/variables"
 )
 
-// * EvaluationContext holds the state for expression evaluation
+// EvaluationContext holds the state for expression evaluation
 type EvaluationContext struct {
 	// Context for cancellation
 	ctx context.Context
@@ -38,7 +38,7 @@ type EvaluationContext struct {
 	evaluations int // Track number of evaluations for complexity limits
 }
 
-// * NewEvaluationContext creates a new evaluation context
+// NewEvaluationContext creates a new evaluation context
 func NewEvaluationContext(
 	ctx context.Context,
 	varCtx variables.VariableContext,
@@ -55,38 +55,40 @@ func NewEvaluationContext(
 	}
 }
 
-// * WithTimeout sets the evaluation timeout
+// WithTimeout sets the evaluation timeout
 func (ctx *EvaluationContext) WithTimeout(timeout time.Duration) *EvaluationContext {
 	ctx.timeout = timeout
 	return ctx
 }
 
-// * WithMemoryLimit sets the memory limit
+// WithMemoryLimit sets the memory limit
 func (ctx *EvaluationContext) WithMemoryLimit(limit int64) *EvaluationContext {
 	ctx.memoryLimit = limit
 	return ctx
 }
 
-// * WithFunctions sets a custom function registry
+// WithFunctions sets a custom function registry
 func (ctx *EvaluationContext) WithFunctions(registry FunctionRegistry) *EvaluationContext {
 	ctx.functions = registry
 	return ctx
 }
 
-// * WithVariableRegistry sets a custom variable registry
-func (ctx *EvaluationContext) WithVariableRegistry(registry *variables.Registry) *EvaluationContext {
+// WithVariableRegistry sets a custom variable registry
+func (ctx *EvaluationContext) WithVariableRegistry(
+	registry *variables.Registry,
+) *EvaluationContext {
 	ctx.variableRegistry = registry
 	return ctx
 }
 
-// * WithArena sets a custom arena for memory allocation
+// WithArena sets a custom arena for memory allocation
 func (ctx *EvaluationContext) WithArena(arena *Arena) *EvaluationContext {
 	ctx.arena = arena
 	ctx.ownsArena = false
 	return ctx
 }
 
-// * CheckLimits verifies execution limits haven't been exceeded
+// CheckLimits verifies execution limits haven't been exceeded
 func (ctx *EvaluationContext) CheckLimits() error {
 	// Check context cancellation
 	if err := ctx.ctx.Err(); err != nil {
@@ -121,7 +123,7 @@ func (ctx *EvaluationContext) CheckLimits() error {
 	return nil
 }
 
-// * ResolveVariable resolves a variable by name
+// ResolveVariable resolves a variable by name
 func (ctx *EvaluationContext) ResolveVariable(name string) (any, error) {
 	// Check cache first
 	if val, ok := ctx.variableCache[name]; ok {
@@ -147,7 +149,7 @@ func (ctx *EvaluationContext) ResolveVariable(name string) (any, error) {
 	}
 
 	// Validate value
-	if err := varDef.Validate(val); err != nil {
+	if err = varDef.Validate(val); err != nil {
 		return nil, errors.NewVariableError(name, "validate", err)
 	}
 
@@ -160,7 +162,7 @@ func (ctx *EvaluationContext) ResolveVariable(name string) (any, error) {
 	return val, nil
 }
 
-// * CallFunction calls a registered function
+// CallFunction calls a registered function
 func (ctx *EvaluationContext) CallFunction(name string, args ...any) (any, error) {
 	fn, ok := ctx.functions[name]
 	if !ok {
@@ -182,7 +184,7 @@ func (ctx *EvaluationContext) CallFunction(name string, args ...any) (any, error
 	return result, nil
 }
 
-// * Clone creates a shallow copy of the context for parallel evaluation
+// Clone creates a shallow copy of the context for parallel evaluation
 func (ctx *EvaluationContext) Clone() *EvaluationContext {
 	return &EvaluationContext{
 		ctx:             ctx.ctx,
@@ -231,7 +233,7 @@ func estimateMemoryUsage(v any) int64 {
 	}
 }
 
-// * GetArena returns the arena for this context, creating one if needed
+// GetArena returns the arena for this context, creating one if needed
 func (ctx *EvaluationContext) GetArena() *Arena {
 	if ctx.arena == nil {
 		ctx.arena = GetArena()
@@ -240,7 +242,7 @@ func (ctx *EvaluationContext) GetArena() *Arena {
 	return ctx.arena
 }
 
-// * ReleaseArena returns the arena to the pool if owned
+// ReleaseArena returns the arena to the pool if owned
 func (ctx *EvaluationContext) ReleaseArena() {
 	if ctx.arena != nil && ctx.ownsArena {
 		PutArena(ctx.arena)
@@ -249,7 +251,7 @@ func (ctx *EvaluationContext) ReleaseArena() {
 	}
 }
 
-// * AllocValue allocates a value using the arena if available
+// AllocValue allocates a value using the arena if available
 func (ctx *EvaluationContext) AllocValue(v any) any {
 	// For now, just return the value as-is
 	// The arena is used internally for memory pooling but we return values

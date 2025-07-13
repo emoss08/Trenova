@@ -251,7 +251,7 @@ func (s *templateService) ValidateVariables(
 
 	// Parse variable schema if defined
 	if template.VariablesSchema != nil {
-		if err := s.validateAgainstSchema(variables, template.VariablesSchema); err != nil {
+		if err = s.validateAgainstSchema(variables, template.VariablesSchema); err != nil {
 			log.Error().Err(err).Msg("variable validation failed")
 			return oops.In("template_service").
 				Tags("operation", "validate_schema").
@@ -262,7 +262,7 @@ func (s *templateService) ValidateVariables(
 	}
 
 	// Try to render template to catch missing variables
-	if _, err := s.RenderTemplate(ctx, template, variables); err != nil {
+	if _, err = s.RenderTemplate(ctx, template, variables); err != nil {
 		log.Error().Err(err).Msg("template rendering validation failed")
 		return oops.In("template_service").
 			Tags("operation", "render_validation").
@@ -275,7 +275,7 @@ func (s *templateService) ValidateVariables(
 }
 
 func (s *templateService) RenderTemplate(
-	ctx context.Context,
+	_ context.Context,
 	template *email.Template,
 	variables map[string]any,
 ) (*services.RenderedTemplate, error) {
@@ -475,7 +475,7 @@ func (s *templateService) validateAgainstSchema(
 	// Simple validation - check required fields
 	if required, ok := schema["required"].([]any); ok {
 		for _, field := range required {
-			if fieldName, ok := field.(string); ok {
+			if fieldName, fnOk := field.(string); fnOk {
 				if _, exists := variables[fieldName]; !exists {
 					return oops.In("template_service").
 						Tags("operation", "validate_required").

@@ -230,10 +230,39 @@ func (r *emailProfileRepository) Get(
 	return profile, nil
 }
 
+func (r *emailProfileRepository) filterQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListEmailProfileRequest,
+) *bun.SelectQuery {
+	qb := querybuilder.NewWithPostgresSearch(
+		q,
+		"ep",
+		repositories.EmailProfileFieldConfig,
+		(*email.Profile)(nil),
+	)
+	qb.ApplyTenantFilters(req.Filter.TenantOpts)
+
+	if req.Filter != nil {
+		qb.ApplyFilters(req.Filter.FieldFilters)
+
+		if len(req.Filter.Sort) > 0 {
+			qb.ApplySort(req.Filter.Sort)
+		}
+
+		if req.Filter.Query != "" {
+			qb.ApplyTextSearch(req.Filter.Query, []string{"name", "from_address", "host"})
+		}
+
+		q = qb.GetQuery()
+	}
+
+	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
+}
+
 // List retrieves a list of email profiles with pagination
 func (r *emailProfileRepository) List(
 	ctx context.Context,
-	filter *ports.QueryOptions,
+	req *repositories.ListEmailProfileRequest,
 ) (*ports.ListResult[*email.Profile], error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
@@ -246,38 +275,15 @@ func (r *emailProfileRepository) List(
 
 	log := r.l.With().
 		Str("operation", "List").
-		Str("orgID", filter.TenantOpts.OrgID.String()).
-		Str("buID", filter.TenantOpts.BuID.String()).
+		Str("orgID", req.Filter.TenantOpts.OrgID.String()).
+		Str("buID", req.Filter.TenantOpts.BuID.String()).
 		Logger()
 
 	profiles := make([]*email.Profile, 0)
 
 	q := dba.NewSelect().Model(&profiles)
 
-	// Apply filters using query builder
-	qb := querybuilder.NewWithPostgresSearch(
-		q,
-		"ep",
-		repositories.EmailProfileFieldConfig,
-		(*email.Profile)(nil),
-	)
-	qb.ApplyTenantFilters(filter.TenantOpts)
-
-	if filter != nil {
-		qb.ApplyFilters(filter.FieldFilters)
-
-		if len(filter.Sort) > 0 {
-			qb.ApplySort(filter.Sort)
-		}
-
-		if filter.Query != "" {
-			qb.ApplyTextSearch(filter.Query, []string{"name", "from_address", "host"})
-		}
-
-		q = qb.GetQuery()
-	}
-
-	q = q.Limit(filter.Limit).Offset(filter.Offset)
+	q = r.filterQuery(q, req)
 
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {

@@ -55,7 +55,7 @@ func TestReadWriteSeparation(t *testing.T) {
 		// * Perform a list operation
 		_, err := repo.List(ctx, &repositories.ListEquipmentTypeRequest{
 			Filter: &ports.LimitOffsetQueryOptions{
-				TenantOpts: &ports.TenantOptions{
+				TenantOpts: ports.TenantOptions{
 					BuID:   pulid.MustNew("bu_"),
 					OrgID:  pulid.MustNew("org_"),
 					UserID: pulid.MustNew("user_"),
@@ -142,7 +142,7 @@ func TestReadWriteSeparation(t *testing.T) {
 		// * Perform a read operation
 		_, err := freshRepo.List(ctx, &repositories.ListEquipmentTypeRequest{
 			Filter: &ports.LimitOffsetQueryOptions{
-				TenantOpts: &ports.TenantOptions{
+				TenantOpts: ports.TenantOptions{
 					BuID:   pulid.MustNew("bu_"),
 					OrgID:  pulid.MustNew("org_"),
 					UserID: pulid.MustNew("user_"),

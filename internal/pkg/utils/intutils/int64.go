@@ -3,10 +3,12 @@ package intutils
 import "fmt"
 
 const (
-	maxInt16 = 32767
-	minInt16 = -32768
-	maxInt32 = 2147483647
-	minInt32 = -2147483648
+	maxInt16  = 32767
+	minInt16  = -32768
+	maxInt32  = 2147483647
+	minInt32  = -2147483648
+	maxUInt16 = 65535
+	minUInt16 = 0
 )
 
 // SafeInt16Ptr converts an int to a *int16.
@@ -31,6 +33,14 @@ func SafeInt16Ptr(i int, returnNilOnZero bool) *int16 {
 
 	i16 := int16(i)
 	return &i16
+}
+
+func SafeUint16(value uint16) (uint16, error) {
+	if value > maxUInt16 {
+		return 0, fmt.Errorf("value %d is outside uint16 range", value)
+	}
+
+	return value, nil
 }
 
 // SafeInt16 converts an int to int16 safely, returning an error if the value would overflow
