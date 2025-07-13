@@ -61,7 +61,7 @@ type EmailProfileService interface {
 	// List retrieves a list of email profiles
 	List(
 		ctx context.Context,
-		filter *ports.QueryOptions,
+		req *repositories.ListEmailProfileRequest,
 	) (*ports.ListResult[*email.Profile], error)
 
 	// Delete deletes an email profile

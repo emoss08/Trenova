@@ -5,9 +5,11 @@ import (
 	"strings"
 	"unicode"
 	"unicode/utf8"
+
+	"github.com/rotisserie/eris"
 )
 
-// * Tokenizer performs lexical analysis on expression strings
+// Tokenizer performs lexical analysis on expression strings
 type Tokenizer struct {
 	input    string
 	position int  // current position in input (points to current char)
@@ -23,7 +25,7 @@ type Tokenizer struct {
 	debug bool
 }
 
-// * NewTokenizer creates a new tokenizer for the input string
+// NewTokenizer creates a new tokenizer for the input string
 func NewTokenizer(input string) *Tokenizer {
 	t := &Tokenizer{
 		input:    input,
@@ -36,13 +38,13 @@ func NewTokenizer(input string) *Tokenizer {
 	return t
 }
 
-// * EnableDebug turns on debug logging
+// EnableDebug turns on debug logging
 func (t *Tokenizer) EnableDebug() {
 	t.debug = true
 }
 
-// * debugf prints debug messages if debug mode is enabled
-func (t *Tokenizer) debugf(format string, args ...interface{}) {
+// debugf prints debug messages if debug mode is enabled
+func (t *Tokenizer) debugf(format string, args ...any) {
 	if t.debug {
 		fmt.Printf("[Tokenizer] "+format+"\n", args...)
 	}
@@ -242,7 +244,7 @@ func (t *Tokenizer) nextToken() Token {
 	return tok
 }
 
-// * readChar advances to the next character
+// readChar advances to the next character
 func (t *Tokenizer) readChar() {
 	if t.readPos >= len(t.input) {
 		t.ch = 0
@@ -314,7 +316,7 @@ func (t *Tokenizer) readNumber() (string, error) {
 
 		// Exponent digits
 		if !isDigit(t.ch) {
-			return "", fmt.Errorf("invalid number: expected digits after exponent")
+			return "", eris.New("invalid number: expected digits after exponent")
 		}
 		for isDigit(t.ch) {
 			t.debugf("  reading exponent digit '%c' at pos=%d", t.ch, t.position)

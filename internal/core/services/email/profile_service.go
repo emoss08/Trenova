@@ -153,9 +153,9 @@ func (s *profileService) Get(
 // List retrieves a list of email profiles
 func (s *profileService) List(
 	ctx context.Context,
-	filter *ports.QueryOptions,
+	req *repositories.ListEmailProfileRequest,
 ) (*ports.ListResult[*email.Profile], error) {
-	return s.repository.List(ctx, filter)
+	return s.repository.List(ctx, req)
 }
 
 // Delete deletes an email profile

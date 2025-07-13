@@ -161,16 +161,13 @@ func (c *LRUCache) Resize(newCapacity int) {
 	}
 }
 
-// SetEvictionCallback sets a callback function to be called when an entry is evicted
 type EvictionCallback func(key string, expr *CompiledExpression)
 
-// WithEvictionCallback creates a new LRU cache with an eviction callback
 type LRUCacheWithCallback struct {
 	*LRUCache
 	callback EvictionCallback
 }
 
-// NewLRUCacheWithCallback creates an LRU cache with eviction callback
 func NewLRUCacheWithCallback(capacity int, callback EvictionCallback) *LRUCacheWithCallback {
 	return &LRUCacheWithCallback{
 		LRUCache: NewLRUCache(capacity),

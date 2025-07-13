@@ -5,7 +5,7 @@ import (
 	"sync"
 )
 
-// * TokenType represents the type of a token
+// TokenType represents the type of a token
 type TokenType uint8 // Use uint8 to save memory
 
 const (
@@ -85,7 +85,7 @@ var tokenTypeStrings = [...]string{
 	TokenColon:        ":",
 }
 
-// * String returns the string representation of a token type
+// String returns the string representation of a token type
 func (t TokenType) String() string {
 	if int(t) < len(tokenTypeStrings) {
 		return tokenTypeStrings[t]
@@ -93,7 +93,7 @@ func (t TokenType) String() string {
 	return fmt.Sprintf("UNKNOWN(%d)", t)
 }
 
-// * Token represents a lexical token
+// Token represents a lexical token
 // Fields are ordered for optimal memory alignment
 type Token struct {
 	Value    string    // 16 bytes (string header)
@@ -104,7 +104,7 @@ type Token struct {
 	// Total: 29 bytes, padded to 32 bytes
 }
 
-// * String returns a string representation of the token
+// String returns a string representation of the token
 func (t Token) String() string {
 	if t.Value != "" && t.Value != t.Type.String() {
 		return fmt.Sprintf("%s:%s@%d:%d", t.Type, t.Value, t.Line, t.Column)
@@ -112,7 +112,7 @@ func (t Token) String() string {
 	return fmt.Sprintf("%s@%d:%d", t.Type, t.Line, t.Column)
 }
 
-// * Operator precedence levels
+// Operator precedence levels
 const (
 	PrecedenceLowest      = iota
 	PrecedenceConditional // ?:
@@ -127,9 +127,9 @@ const (
 	PrecedenceHighest
 )
 
-// * Precedence returns the operator precedence
+// Precedence returns the operator precedence
 func (t Token) Precedence() int {
-	switch t.Type {
+	switch t.Type { //nolint:exhaustive // all operators are covered
 	case TokenQuestion:
 		return PrecedenceConditional
 	case TokenOr:
@@ -151,9 +151,9 @@ func (t Token) Precedence() int {
 	}
 }
 
-// * IsOperator returns true if the token is an arithmetic operator
+// IsOperator returns true if the token is an arithmetic operator
 func (t Token) IsOperator() bool {
-	switch t.Type {
+	switch t.Type { //nolint:exhaustive // all operators are covered
 	case TokenPlus, TokenMinus, TokenMultiply, TokenDivide, TokenModulo, TokenPower:
 		return true
 	default:
@@ -161,9 +161,9 @@ func (t Token) IsOperator() bool {
 	}
 }
 
-// * IsBinaryOperator returns true if the token is a binary operator
+// IsBinaryOperator returns true if the token is a binary operator
 func (t Token) IsBinaryOperator() bool {
-	switch t.Type {
+	switch t.Type { //nolint:exhaustive // all operators are covered
 	case TokenPlus, TokenMinus, TokenMultiply, TokenDivide, TokenModulo, TokenPower,
 		TokenEqual, TokenNotEqual, TokenGreater, TokenLess, TokenGreaterEqual, TokenLessEqual,
 		TokenAnd, TokenOr:
@@ -173,9 +173,9 @@ func (t Token) IsBinaryOperator() bool {
 	}
 }
 
-// * IsUnaryOperator returns true if the token is a unary operator
+// IsUnaryOperator returns true if the token is a unary operator
 func (t Token) IsUnaryOperator() bool {
-	switch t.Type {
+	switch t.Type { //nolint:exhaustive // all operators are covered
 	case TokenNot, TokenMinus:
 		return true
 	default:
@@ -183,7 +183,7 @@ func (t Token) IsUnaryOperator() bool {
 	}
 }
 
-// * IsRightAssociative returns true if the operator is right associative
+// IsRightAssociative returns true if the operator is right associative
 func (t Token) IsRightAssociative() bool {
 	return t.Type == TokenPower || t.Type == TokenQuestion
 }
@@ -195,12 +195,12 @@ var tokenPool = sync.Pool{
 	},
 }
 
-// * GetToken returns a token from the pool
+// GetToken returns a token from the pool
 func GetToken() *Token {
 	return tokenPool.Get().(*Token)
 }
 
-// * PutToken returns a token to the pool
+// PutToken returns a token to the pool
 func PutToken(t *Token) {
 	t.Value = ""
 	t.Position = 0
@@ -210,20 +210,20 @@ func PutToken(t *Token) {
 	tokenPool.Put(t)
 }
 
-// * StringInterner for deduplicating string values
+// StringInterner for deduplicating string values
 type StringInterner struct {
 	strings map[string]string
 	mu      sync.RWMutex
 }
 
-// * NewStringInterner creates a new string interner
+// NewStringInterner creates a new string interner
 func NewStringInterner() *StringInterner {
 	return &StringInterner{
 		strings: make(map[string]string),
 	}
 }
 
-// * Intern returns an interned version of the string
+// Intern returns an interned version of the string
 func (si *StringInterner) Intern(s string) string {
 	si.mu.RLock()
 	if interned, ok := si.strings[s]; ok {
@@ -244,7 +244,7 @@ func (si *StringInterner) Intern(s string) string {
 	return s
 }
 
-// * Clear removes all interned strings
+// Clear removes all interned strings
 func (si *StringInterner) Clear() {
 	si.mu.Lock()
 	defer si.mu.Unlock()

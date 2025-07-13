@@ -6,9 +6,10 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/pkg/formula/conversion"
+	"github.com/rotisserie/eris"
 )
 
-// * Function represents a callable function in expressions
+// Function represents a callable function in expressions
 type Function interface {
 	// Name returns the function name
 	Name() string
@@ -23,10 +24,10 @@ type Function interface {
 	Call(ctx *EvaluationContext, args ...any) (any, error)
 }
 
-// * FunctionRegistry maps function names to implementations
+// FunctionRegistry maps function names to implementations
 type FunctionRegistry map[string]Function
 
-// * DefaultFunctionRegistry returns the standard function set
+// DefaultFunctionRegistry returns the standard function set
 func DefaultFunctionRegistry() FunctionRegistry {
 	registry := make(FunctionRegistry)
 
@@ -81,7 +82,7 @@ func (f *absFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	}
 	val, ok := conversion.ToFloat64(args[0])
 	if !ok {
-		return nil, fmt.Errorf("abs: argument must be a number")
+		return nil, eris.New("abs argument must be a number")
 	}
 	return math.Abs(val), nil
 }
@@ -93,18 +94,18 @@ func (f *minFunction) MinArgs() int { return 1 }
 func (f *minFunction) MaxArgs() int { return -1 }
 func (f *minFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if len(args) == 0 {
-		return nil, fmt.Errorf("min: requires at least one argument")
+		return nil, eris.New("min: requires at least one argument")
 	}
 
 	minimum, ok := conversion.ToFloat64(args[0])
 	if !ok {
-		return nil, fmt.Errorf("min: all arguments must be numbers")
+		return nil, eris.New("min: all arguments must be numbers")
 	}
 
 	for i := 1; i < len(args); i++ {
-		val, ok := conversion.ToFloat64(args[i])
-		if !ok {
-			return nil, fmt.Errorf("min: all arguments must be numbers")
+		val, valOk := conversion.ToFloat64(args[i])
+		if !valOk {
+			return nil, eris.New("min: all arguments must be numbers")
 		}
 		if val < minimum {
 			minimum = val
@@ -121,18 +122,18 @@ func (f *maxFunction) MinArgs() int { return 1 }
 func (f *maxFunction) MaxArgs() int { return -1 }
 func (f *maxFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if len(args) == 0 {
-		return nil, fmt.Errorf("max: requires at least one argument")
+		return nil, eris.New("max: requires at least one argument")
 	}
 
 	maximum, ok := conversion.ToFloat64(args[0])
 	if !ok {
-		return nil, fmt.Errorf("max: all arguments must be numbers")
+		return nil, eris.New("max: all arguments must be numbers")
 	}
 
 	for i := 1; i < len(args); i++ {
-		val, ok := conversion.ToFloat64(args[i])
-		if !ok {
-			return nil, fmt.Errorf("max: all arguments must be numbers")
+		val, valOk := conversion.ToFloat64(args[i])
+		if !valOk {
+			return nil, eris.New("max: all arguments must be numbers")
 		}
 		if val > maximum {
 			maximum = val
@@ -153,14 +154,14 @@ func (f *roundFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	}
 	val, ok := conversion.ToFloat64(args[0])
 	if !ok {
-		return nil, fmt.Errorf("round: first argument must be a number")
+		return nil, eris.New("round: first argument must be a number")
 	}
 
 	precision := 0
 	if len(args) > 1 {
-		p, ok := conversion.ToFloat64(args[1])
-		if !ok {
-			return nil, fmt.Errorf("round: precision must be a number")
+		p, valOk := conversion.ToFloat64(args[1])
+		if !valOk {
+			return nil, eris.New("round: precision must be a number")
 		}
 		precision = int(p)
 	}
@@ -180,7 +181,7 @@ func (f *floorFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	}
 	val, ok := conversion.ToFloat64(args[0])
 	if !ok {
-		return nil, fmt.Errorf("floor: argument must be a number")
+		return nil, eris.New("floor: argument must be a number")
 	}
 	return math.Floor(val), nil
 }
@@ -196,7 +197,7 @@ func (f *ceilFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	}
 	val, ok := conversion.ToFloat64(args[0])
 	if !ok {
-		return nil, fmt.Errorf("ceil: argument must be a number")
+		return nil, eris.New("ceil: argument must be a number")
 	}
 	return math.Ceil(val), nil
 }
@@ -212,10 +213,10 @@ func (f *sqrtFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	}
 	val, ok := conversion.ToFloat64(args[0])
 	if !ok {
-		return nil, fmt.Errorf("sqrt: argument must be a number")
+		return nil, eris.New("sqrt: argument must be a number")
 	}
 	if val < 0 {
-		return nil, fmt.Errorf("sqrt: cannot take square root of negative number")
+		return nil, eris.New("sqrt: cannot take square root of negative number")
 	}
 	return math.Sqrt(val), nil
 }
@@ -231,17 +232,17 @@ func (f *powFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	}
 	base, ok := conversion.ToFloat64(args[0])
 	if !ok {
-		return nil, fmt.Errorf("pow: base must be a number")
+		return nil, eris.New("pow: base must be a number")
 	}
 
 	exp, ok := conversion.ToFloat64(args[1])
 	if !ok {
-		return nil, fmt.Errorf("pow: exponent must be a number")
+		return nil, eris.New("pow: exponent must be a number")
 	}
 
 	result := math.Pow(base, exp)
 	if math.IsInf(result, 0) || math.IsNaN(result) {
-		return nil, fmt.Errorf("pow: result out of range")
+		return nil, eris.New("pow: result out of range")
 	}
 
 	return result, nil
@@ -261,10 +262,10 @@ func (f *logFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 
 	x, ok := conversion.ToFloat64(args[0])
 	if !ok {
-		return nil, fmt.Errorf("log: first argument must be a number")
+		return nil, eris.New("log: first argument must be a number")
 	}
 	if x <= 0 {
-		return nil, fmt.Errorf("log: argument must be positive")
+		return nil, eris.New("log: argument must be positive")
 	}
 
 	// Natural logarithm if no base specified
@@ -275,10 +276,10 @@ func (f *logFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	// Logarithm with specified base
 	base, ok := conversion.ToFloat64(args[1])
 	if !ok {
-		return nil, fmt.Errorf("log: base must be a number")
+		return nil, eris.New("log: base must be a number")
 	}
 	if base <= 0 || base == 1 {
-		return nil, fmt.Errorf("log: base must be positive and not equal to 1")
+		return nil, eris.New("log: base must be positive and not equal to 1")
 	}
 
 	return math.Log(x) / math.Log(base), nil
@@ -296,12 +297,12 @@ func (f *expFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 
 	x, ok := conversion.ToFloat64(args[0])
 	if !ok {
-		return nil, fmt.Errorf("exp: argument must be a number")
+		return nil, eris.New("exp: argument must be a number")
 	}
 
 	result := math.Exp(x)
 	if math.IsInf(result, 0) {
-		return nil, fmt.Errorf("exp: result out of range")
+		return nil, eris.New("exp: result out of range")
 	}
 
 	return result, nil
@@ -319,7 +320,7 @@ func (f *sinFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 
 	x, ok := conversion.ToFloat64(args[0])
 	if !ok {
-		return nil, fmt.Errorf("sin: argument must be a number")
+		return nil, eris.New("sin: argument must be a number")
 	}
 
 	return math.Sin(x), nil
@@ -337,7 +338,7 @@ func (f *cosFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 
 	x, ok := conversion.ToFloat64(args[0])
 	if !ok {
-		return nil, fmt.Errorf("cos: argument must be a number")
+		return nil, eris.New("cos: argument must be a number")
 	}
 
 	return math.Cos(x), nil
@@ -355,7 +356,7 @@ func (f *tanFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 
 	x, ok := conversion.ToFloat64(args[0])
 	if !ok {
-		return nil, fmt.Errorf("tan: argument must be a number")
+		return nil, eris.New("tan: argument must be a number")
 	}
 
 	return math.Tan(x), nil
@@ -440,7 +441,7 @@ func (f *lenFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	case []any:
 		return float64(len(val)), nil
 	default:
-		return nil, fmt.Errorf("len: argument must be string or array")
+		return nil, eris.New("len: argument must be string or array")
 	}
 }
 
@@ -456,17 +457,17 @@ func (f *sumFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 		if arr, ok := arg.([]any); ok {
 			// If argument is an array, sum its elements
 			for _, elem := range arr {
-				val, ok := conversion.ToFloat64(elem)
-				if !ok {
-					return nil, fmt.Errorf("sum: all elements must be numbers")
+				val, valOk := conversion.ToFloat64(elem)
+				if !valOk {
+					return nil, eris.New("sum: all elements must be numbers")
 				}
 				sum += val
 			}
 		} else {
 			// Otherwise treat as a number
-			val, ok := conversion.ToFloat64(arg)
-			if !ok {
-				return nil, fmt.Errorf("sum: all arguments must be numbers or arrays")
+			val, valOk := conversion.ToFloat64(arg)
+			if !valOk {
+				return nil, eris.New("sum: all arguments must be numbers or arrays")
 			}
 			sum += val
 		}
@@ -488,18 +489,18 @@ func (f *avgFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 		if arr, ok := arg.([]any); ok {
 			// If argument is an array, average its elements
 			for _, elem := range arr {
-				val, ok := conversion.ToFloat64(elem)
-				if !ok {
-					return nil, fmt.Errorf("avg: all elements must be numbers")
+				val, valOk := conversion.ToFloat64(elem)
+				if !valOk {
+					return nil, eris.New("avg: all elements must be numbers")
 				}
 				sum += val
 				count++
 			}
 		} else {
 			// Otherwise treat as a number
-			val, ok := conversion.ToFloat64(arg)
-			if !ok {
-				return nil, fmt.Errorf("avg: all arguments must be numbers or arrays")
+			val, valOk := conversion.ToFloat64(arg)
+			if !valOk {
+				return nil, eris.New("avg: all arguments must be numbers or arrays")
 			}
 			sum += val
 			count++
@@ -507,7 +508,7 @@ func (f *avgFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	}
 
 	if count == 0 {
-		return nil, fmt.Errorf("avg: cannot compute average of empty array")
+		return nil, eris.New("avg: cannot compute average of empty array")
 	}
 
 	return sum / float64(count), nil
@@ -536,22 +537,22 @@ func (f *sliceFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 			result[i] = string(r)
 		}
 	default:
-		return nil, fmt.Errorf("slice: first argument must be array or string")
+		return nil, eris.New("slice: first argument must be array or string")
 	}
 
 	// Get start index
 	startFloat, ok := conversion.ToFloat64(args[1])
 	if !ok {
-		return nil, fmt.Errorf("slice: start index must be a number")
+		return nil, eris.New("slice: start index must be a number")
 	}
 	start := int(startFloat)
 
 	// Get end index (default to length)
 	end := len(result)
 	if len(args) > 2 {
-		endFloat, ok := conversion.ToFloat64(args[2])
-		if !ok {
-			return nil, fmt.Errorf("slice: end index must be a number")
+		endFloat, valOk := conversion.ToFloat64(args[2])
+		if !valOk {
+			return nil, eris.New("slice: end index must be a number")
 		}
 		end = int(endFloat)
 	}
@@ -579,7 +580,7 @@ func (f *sliceFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	if _, isString := args[0].(string); isString {
 		chars := make([]string, end-start)
 		for i := start; i < end; i++ {
-			chars[i-start] = result[i].(string)
+			chars[i-start], _ = result[i].(string)
 		}
 		return joinStrings(chars, ""), nil
 	}
@@ -611,7 +612,7 @@ func (f *concatFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 		// Concatenate strings
 		result := make([]string, len(args))
 		for i, arg := range args {
-			result[i] = arg.(string)
+			result[i], _ = arg.(string)
 		}
 		return joinStrings(result, ""), nil
 	}
@@ -643,8 +644,8 @@ func (f *containsFunction) Call(_ *EvaluationContext, args ...any) (any, error) 
 
 	// Handle string contains
 	if str, ok := args[0].(string); ok {
-		search, ok := args[1].(string)
-		if !ok {
+		search, valOk := args[1].(string)
+		if !valOk {
 			return false, nil
 		}
 		return contains(str, search), nil
@@ -653,7 +654,7 @@ func (f *containsFunction) Call(_ *EvaluationContext, args ...any) (any, error) 
 	// Handle array contains
 	arr, ok := args[0].([]any)
 	if !ok {
-		return nil, fmt.Errorf("contains: first argument must be string or array")
+		return nil, eris.New("contains: first argument must be string or array")
 	}
 
 	// Check if array contains the value
@@ -678,8 +679,8 @@ func (f *indexOfFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 
 	// Handle string indexOf
 	if str, ok := args[0].(string); ok {
-		search, ok := args[1].(string)
-		if !ok {
+		search, valOk := args[1].(string)
+		if !valOk {
 			return -1.0, nil
 		}
 		return float64(indexOf(str, search)), nil
@@ -688,7 +689,7 @@ func (f *indexOfFunction) Call(_ *EvaluationContext, args ...any) (any, error) {
 	// Handle array indexOf
 	arr, ok := args[0].([]any)
 	if !ok {
-		return nil, fmt.Errorf("indexOf: first argument must be string or array")
+		return nil, eris.New("indexOf: first argument must be string or array")
 	}
 
 	// Find index of value in array
@@ -744,7 +745,7 @@ func (f *coalesceFunction) Call(_ *EvaluationContext, args ...any) (any, error) 
 			}
 		}
 	}
-	return nil, nil
+	return nil, eris.New("coalesce: all arguments must be non-nil")
 }
 
 // Helper functions for array operations

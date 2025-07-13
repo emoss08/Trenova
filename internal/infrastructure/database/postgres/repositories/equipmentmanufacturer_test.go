@@ -51,7 +51,7 @@ func TestEquipmentManufacturerRepository(t *testing.T) {
 			Filter: &ports.LimitOffsetQueryOptions{
 				Limit:  10,
 				Offset: 0,
-				TenantOpts: &ports.TenantOptions{
+				TenantOpts: ports.TenantOptions{
 					OrgID: org.ID,
 					BuID:  bu.ID,
 				},
@@ -70,7 +70,7 @@ func TestEquipmentManufacturerRepository(t *testing.T) {
 				Limit:  10,
 				Offset: 0,
 				Query:  "Kenworth",
-				TenantOpts: &ports.TenantOptions{
+				TenantOpts: ports.TenantOptions{
 					OrgID: org.ID,
 					BuID:  bu.ID,
 				},

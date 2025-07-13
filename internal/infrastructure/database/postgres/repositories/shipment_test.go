@@ -76,7 +76,7 @@ func TestShipmentRepository(t *testing.T) {
 				Filter: &ports.QueryOptions{
 					Limit:  10,
 					Offset: 0,
-					TenantOpts: &ports.TenantOptions{
+					TenantOpts: ports.TenantOptions{
 						OrgID: org.ID,
 						BuID:  bu.ID,
 					},
@@ -96,7 +96,7 @@ func TestShipmentRepository(t *testing.T) {
 					Limit:  10,
 					Offset: 0,
 					Query:  testShipment.ProNumber[:3], // Search by partial pro number
-					TenantOpts: &ports.TenantOptions{
+					TenantOpts: ports.TenantOptions{
 						OrgID: org.ID,
 						BuID:  bu.ID,
 					},
@@ -119,7 +119,7 @@ func TestShipmentRepository(t *testing.T) {
 				Filter: &ports.QueryOptions{
 					Limit:  10,
 					Offset: 0,
-					TenantOpts: &ports.TenantOptions{
+					TenantOpts: ports.TenantOptions{
 						OrgID: org.ID,
 						BuID:  bu.ID,
 					},
@@ -150,7 +150,7 @@ func TestShipmentRepository(t *testing.T) {
 								Value:    "Honeywell",
 							},
 						},
-						TenantOpts: &ports.TenantOptions{
+						TenantOpts: ports.TenantOptions{
 							OrgID: org.ID,
 							BuID:  bu.ID,
 						},
@@ -189,7 +189,7 @@ func TestShipmentRepository(t *testing.T) {
 								Value:    location1.Name,
 							},
 						},
-						TenantOpts: &ports.TenantOptions{
+						TenantOpts: ports.TenantOptions{
 							OrgID: org.ID,
 							BuID:  bu.ID,
 						},
@@ -220,7 +220,7 @@ func TestShipmentRepository(t *testing.T) {
 								Value:    location2.Name[:3],
 							},
 						},
-						TenantOpts: &ports.TenantOptions{
+						TenantOpts: ports.TenantOptions{
 							OrgID: org.ID,
 							BuID:  bu.ID,
 						},
@@ -251,7 +251,7 @@ func TestShipmentRepository(t *testing.T) {
 								Direction: ports.SortAsc,
 							},
 						},
-						TenantOpts: &ports.TenantOptions{
+						TenantOpts: ports.TenantOptions{
 							OrgID: org.ID,
 							BuID:  bu.ID,
 						},
@@ -294,7 +294,7 @@ func TestShipmentRepository(t *testing.T) {
 								Direction: ports.SortDesc,
 							},
 						},
-						TenantOpts: &ports.TenantOptions{
+						TenantOpts: ports.TenantOptions{
 							OrgID: org.ID,
 							BuID:  bu.ID,
 						},
@@ -325,7 +325,7 @@ func TestShipmentRepository(t *testing.T) {
 								},
 							},
 						},
-						TenantOpts: &ports.TenantOptions{
+						TenantOpts: ports.TenantOptions{
 							OrgID: org.ID,
 							BuID:  bu.ID,
 						},
@@ -347,7 +347,7 @@ func TestShipmentRepository(t *testing.T) {
 				Filter: &ports.QueryOptions{
 					Limit:  5,
 					Offset: 0,
-					TenantOpts: &ports.TenantOptions{
+					TenantOpts: ports.TenantOptions{
 						OrgID: org.ID,
 						BuID:  bu.ID,
 					},
@@ -375,7 +375,7 @@ func TestShipmentRepository(t *testing.T) {
 				Filter: &ports.QueryOptions{
 					Limit:  2,
 					Offset: 0,
-					TenantOpts: &ports.TenantOptions{
+					TenantOpts: ports.TenantOptions{
 						OrgID: org.ID,
 						BuID:  bu.ID,
 					},
@@ -391,7 +391,7 @@ func TestShipmentRepository(t *testing.T) {
 				Filter: &ports.QueryOptions{
 					Limit:  2,
 					Offset: 2,
-					TenantOpts: &ports.TenantOptions{
+					TenantOpts: ports.TenantOptions{
 						OrgID: org.ID,
 						BuID:  bu.ID,
 					},
@@ -914,7 +914,7 @@ func TestShipmentRepository(t *testing.T) {
 				Filter: &ports.QueryOptions{
 					Limit:  1000,
 					Offset: 0,
-					TenantOpts: &ports.TenantOptions{
+					TenantOpts: ports.TenantOptions{
 						OrgID: org.ID,
 						BuID:  bu.ID,
 					},
@@ -938,7 +938,7 @@ func TestShipmentRepository(t *testing.T) {
 					Limit:  10,
 					Offset: 0,
 					Query:  longQuery,
-					TenantOpts: &ports.TenantOptions{
+					TenantOpts: ports.TenantOptions{
 						OrgID: org.ID,
 						BuID:  bu.ID,
 					},
@@ -958,7 +958,7 @@ func TestShipmentRepository(t *testing.T) {
 				Filter: &ports.QueryOptions{
 					Limit:  5,
 					Offset: 0,
-					TenantOpts: &ports.TenantOptions{
+					TenantOpts: ports.TenantOptions{
 						OrgID: org.ID,
 						BuID:  bu.ID,
 					},

@@ -34,7 +34,7 @@ func TestWorkerRepository(t *testing.T) {
 			Filter: &ports.QueryOptions{
 				Limit:  10,
 				Offset: 0,
-				TenantOpts: &ports.TenantOptions{
+				TenantOpts: ports.TenantOptions{
 					OrgID: org.ID,
 					BuID:  bu.ID,
 				},
@@ -50,7 +50,7 @@ func TestWorkerRepository(t *testing.T) {
 				Limit:  10,
 				Offset: 0,
 				Query:  "John",
-				TenantOpts: &ports.TenantOptions{
+				TenantOpts: ports.TenantOptions{
 					OrgID: org.ID,
 					BuID:  bu.ID,
 				},
@@ -66,7 +66,7 @@ func TestWorkerRepository(t *testing.T) {
 				Limit:  10,
 				Offset: 0,
 				ID:     pulid.Must(wrk.ID.String()),
-				TenantOpts: &ports.TenantOptions{
+				TenantOpts: ports.TenantOptions{
 					OrgID: org.ID,
 					BuID:  bu.ID,
 				},
@@ -81,7 +81,7 @@ func TestWorkerRepository(t *testing.T) {
 			Filter: &ports.QueryOptions{
 				Limit:  10,
 				Offset: 0,
-				TenantOpts: &ports.TenantOptions{
+				TenantOpts: ports.TenantOptions{
 					OrgID: org.ID,
 					BuID:  bu.ID,
 				},
@@ -112,7 +112,7 @@ func TestWorkerRepository(t *testing.T) {
 			Filter: &ports.QueryOptions{
 				Limit:  10,
 				Offset: 0,
-				TenantOpts: &ports.TenantOptions{
+				TenantOpts: ports.TenantOptions{
 					OrgID: org.ID,
 					BuID:  bu.ID,
 				},

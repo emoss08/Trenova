@@ -22,6 +22,10 @@ type DeleteEmailProfileRequest struct {
 	BuID      pulid.ID
 }
 
+type ListEmailProfileRequest struct {
+	Filter *ports.QueryOptions `json:"filter" query:"filter"`
+}
+
 // EmailProfileRepository handles email profile persistence
 type EmailProfileRepository interface {
 	// Create creates a new email profile
@@ -36,7 +40,7 @@ type EmailProfileRepository interface {
 	// List retrieves a list of email profiles
 	List(
 		ctx context.Context,
-		filter *ports.QueryOptions,
+		req *ListEmailProfileRequest,
 	) (*ports.ListResult[*email.Profile], error)
 
 	// Delete deletes an email profile

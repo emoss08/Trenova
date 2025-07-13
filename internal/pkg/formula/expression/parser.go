@@ -3,9 +3,11 @@ package expression
 import (
 	"fmt"
 	"strconv"
+
+	"github.com/rotisserie/eris"
 )
 
-// * Parser builds an AST from tokens
+// Parser builds an AST from tokens
 type Parser struct {
 	tokens   []Token
 	position int
@@ -13,7 +15,7 @@ type Parser struct {
 	errors   []error
 }
 
-// * NewParser creates a new parser for the given tokens
+// NewParser creates a new parser for the given tokens
 func NewParser(tokens []Token) *Parser {
 	p := &Parser{
 		tokens: tokens,
@@ -25,10 +27,10 @@ func NewParser(tokens []Token) *Parser {
 	return p
 }
 
-// * Parse builds the AST from tokens
+// Parse builds the AST from tokens
 func (p *Parser) Parse() (Node, error) {
 	if len(p.tokens) == 0 {
-		return nil, fmt.Errorf("no tokens to parse")
+		return nil, eris.New("no tokens to parse")
 	}
 
 	// Parse the expression

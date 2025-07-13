@@ -8,7 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/formula/variables"
 )
 
-// * Evaluator evaluates formula expressions
+// Evaluator evaluates formula expressions
 type Evaluator struct {
 	// Variable registry for resolving variables
 	variables *variables.Registry
@@ -26,7 +26,7 @@ type Evaluator struct {
 	metrics *EvaluatorMetrics
 }
 
-// * CompiledExpression represents a parsed and validated expression
+// CompiledExpression represents a parsed and validated expression
 type CompiledExpression struct {
 	ast         Node
 	expression  string
@@ -35,7 +35,7 @@ type CompiledExpression struct {
 	fingerprint string   // For cache key
 }
 
-// * NewEvaluator creates a new expression evaluator
+// NewEvaluator creates a new expression evaluator
 func NewEvaluator(vars *variables.Registry) *Evaluator {
 	return &Evaluator{
 		variables: vars,
@@ -46,7 +46,7 @@ func NewEvaluator(vars *variables.Registry) *Evaluator {
 	}
 }
 
-// * Evaluate parses and evaluates an expression
+// Evaluate parses and evaluates an expression
 func (e *Evaluator) Evaluate(
 	ctx context.Context,
 	expr string,
@@ -90,7 +90,7 @@ func (e *Evaluator) Evaluate(
 	}
 }
 
-// * EvaluateBatch evaluates the same expression for multiple contexts
+// EvaluateBatch evaluates the same expression for multiple contexts
 func (e *Evaluator) EvaluateBatch( //nolint:gocognit // this is fine
 	ctx context.Context,
 	expr string,
@@ -110,10 +110,9 @@ func (e *Evaluator) EvaluateBatch( //nolint:gocognit // this is fine
 	results := make([]float64, len(contexts))
 
 	// Use worker pool for parallel evaluation
-	numWorkers := 4 // Could be configurable
-	if len(contexts) < numWorkers {
-		numWorkers = len(contexts)
-	}
+	numWorkers := min(
+		// Could be configurable
+		len(contexts), 4)
 
 	type job struct {
 		index int
@@ -125,7 +124,7 @@ func (e *Evaluator) EvaluateBatch( //nolint:gocognit // this is fine
 
 	// Start workers
 	var wg sync.WaitGroup
-	for i := 0; i < numWorkers; i++ {
+	for range numWorkers {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
@@ -136,9 +135,9 @@ func (e *Evaluator) EvaluateBatch( //nolint:gocognit // this is fine
 					WithVariableRegistry(e.variables).
 					WithArena(arena) // Share arena across workers
 
-				result, err := compiled.ast.Evaluate(evalCtx)
-				if err != nil {
-					errors <- fmt.Errorf("context %d: %w", j.index, err)
+				result, resultErr := compiled.ast.Evaluate(evalCtx)
+				if resultErr != nil {
+					errors <- fmt.Errorf("context %d: %w", j.index, resultErr)
 					continue
 				}
 
@@ -269,21 +268,13 @@ func (e *Evaluator) extractVariablesRecursive(node Node, vars map[string]bool) {
 	}
 }
 
-// * EvaluatorMetrics tracks performance metrics
-type EvaluatorMetrics struct {
-	compilations  int64
-	evaluations   int64
-	cacheHits     int64
-	cacheMisses   int64
-	totalDuration int64 // nanoseconds
-	mu            sync.Mutex
-}
+// EvaluatorMetrics tracks performance metrics
+type EvaluatorMetrics struct{}
 
 func NewEvaluatorMetrics() *EvaluatorMetrics {
 	return &EvaluatorMetrics{}
 }
 
-// * Constants
 const MaxExpressionComplexity = 1000
 
 // GetCacheStats returns cache performance statistics

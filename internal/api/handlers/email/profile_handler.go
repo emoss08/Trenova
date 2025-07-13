@@ -37,6 +37,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		[]fiber.Handler{h.list},
 		middleware.PerSecond(5), // 5 reads per second
 	)...)
+
+	api.Get("/:profileID/", rl.WithRateLimit(
+		[]fiber.Handler{h.get},
+		middleware.PerMinute(60), // 60 reads per minute
+	)...)
 }
 
 func (h *Handler) list(c *fiber.Ctx) error {
@@ -50,7 +55,9 @@ func (h *Handler) list(c *fiber.Ctx) error {
 			return nil, h.eh.HandleError(fc, err)
 		}
 
-		return h.ps.List(fc.Context(), filter)
+		return h.ps.List(fc.Context(), &repositories.ListEmailProfileRequest{
+			Filter: filter,
+		})
 	}
 
 	return limitoffsetpagination.HandleEnhancedPaginatedRequest(c, h.eh, reqCtx, handler)

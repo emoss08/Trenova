@@ -27,7 +27,7 @@ func (p *SMTPProvider) GetType() email.ProviderType {
 
 // Send sends an email using SMTP
 func (p *SMTPProvider) Send(
-	ctx context.Context,
+	_ context.Context,
 	config *ProviderConfig,
 	message *Message,
 ) (string, error) {
@@ -45,7 +45,7 @@ func (p *SMTPProvider) Send(
 
 	// Set from
 	if message.From.Name != "" {
-		if err := msg.FromFormat(message.From.Name, message.From.Email); err != nil {
+		if err = msg.FromFormat(message.From.Name, message.From.Email); err != nil {
 			return "", oops.In("smtp_provider").
 				Tags("operation", "set_from_format").
 				Tags("from_email", message.From.Email).
@@ -53,7 +53,7 @@ func (p *SMTPProvider) Send(
 				Wrapf(err, "failed to set from address")
 		}
 	} else {
-		if err := msg.From(message.From.Email); err != nil {
+		if err = msg.From(message.From.Email); err != nil {
 			return "", oops.In("smtp_provider").
 				Tags("operation", "set_from").
 				Tags("from_email", message.From.Email).
@@ -64,7 +64,7 @@ func (p *SMTPProvider) Send(
 
 	// Set reply-to
 	if message.ReplyTo != nil {
-		if err := msg.ReplyTo(message.ReplyTo.Email); err != nil {
+		if err = msg.ReplyTo(message.ReplyTo.Email); err != nil {
 			return "", oops.In("smtp_provider").
 				Tags("operation", "set_reply_to").
 				Tags("reply_to_email", message.ReplyTo.Email).
@@ -74,7 +74,7 @@ func (p *SMTPProvider) Send(
 	}
 
 	// Set recipients
-	if err := p.setRecipients(msg, message); err != nil {
+	if err = p.setRecipients(msg, message); err != nil {
 		return "", err
 	}
 
@@ -100,7 +100,7 @@ func (p *SMTPProvider) Send(
 
 	// Add attachments
 	if len(message.Attachments) > 0 {
-		if err := p.addAttachments(msg, message.Attachments); err != nil {
+		if err = p.addAttachments(msg, message.Attachments); err != nil {
 			return "", oops.In("smtp_provider").
 				Tags("operation", "add_attachments").
 				Time(time.Now()).
@@ -109,7 +109,7 @@ func (p *SMTPProvider) Send(
 	}
 
 	// Send the email
-	if err := client.DialAndSend(msg); err != nil {
+	if err = client.DialAndSend(msg); err != nil {
 		return "", oops.In("smtp_provider").
 			Tags("operation", "send_email").
 			Tags("subject", message.Subject).
@@ -145,7 +145,7 @@ func (p *SMTPProvider) ValidateConfig(config *ProviderConfig) error {
 }
 
 // TestConnection tests the SMTP connection
-func (p *SMTPProvider) TestConnection(ctx context.Context, config *ProviderConfig) error {
+func (p *SMTPProvider) TestConnection(_ context.Context, config *ProviderConfig) error {
 	client, err := p.createClient(config)
 	if err != nil {
 		return oops.In("smtp_provider").
@@ -157,7 +157,7 @@ func (p *SMTPProvider) TestConnection(ctx context.Context, config *ProviderConfi
 	}
 
 	// Test the connection
-	if err := client.DialAndSend(); err != nil {
+	if err = client.DialAndSend(); err != nil {
 		return oops.In("smtp_provider").
 			Tags("operation", "test_connection_dial").
 			Tags("host", config.Host).
@@ -177,9 +177,7 @@ func (p *SMTPProvider) createClient(config *ProviderConfig) (*mail.Client, error
 	}
 
 	// Configure authentication
-	if err := p.configureAuth(config, &options); err != nil {
-		return nil, err
-	}
+	p.configureAuth(config, &options)
 
 	// Configure encryption
 	p.configureEncryption(config, &options)
@@ -191,10 +189,9 @@ func (p *SMTPProvider) createClient(config *ProviderConfig) (*mail.Client, error
 }
 
 // configureAuth configures SMTP authentication
-func (p *SMTPProvider) configureAuth(config *ProviderConfig, options *[]mail.Option) error {
+func (p *SMTPProvider) configureAuth(config *ProviderConfig, options *[]mail.Option) {
 	if config.Username == "" || config.Password == "" {
 		*options = append(*options, mail.WithSMTPAuth(mail.SMTPAuthNoAuth))
-		return nil
 	}
 
 	// Set credentials
@@ -204,7 +201,7 @@ func (p *SMTPProvider) configureAuth(config *ProviderConfig, options *[]mail.Opt
 	)
 
 	// Set auth type
-	switch config.AuthType {
+	switch config.AuthType { //nolint:exhaustive // we only explicity handle the 4 auth types others are handled by the auto-discover
 	case email.AuthTypePlain:
 		*options = append(*options, mail.WithSMTPAuth(mail.SMTPAuthPlain))
 	case email.AuthTypeLogin:
@@ -215,13 +212,11 @@ func (p *SMTPProvider) configureAuth(config *ProviderConfig, options *[]mail.Opt
 		// Use auto-discover to find the best auth method
 		*options = append(*options, mail.WithSMTPAuth(mail.SMTPAuthAutoDiscover))
 	}
-
-	return nil
 }
 
 // configureEncryption configures SMTP encryption
 func (p *SMTPProvider) configureEncryption(config *ProviderConfig, options *[]mail.Option) {
-	switch config.EncryptionType {
+	switch config.EncryptionType { //nolint:exhaustive // default handles none type
 	case email.EncryptionTypeSSLTLS:
 		*options = append(*options,
 			mail.WithSSLPort(true),
@@ -243,7 +238,7 @@ func (p *SMTPProvider) configureDevOptions(config *ProviderConfig, options *[]ma
 	// Allow insecure TLS for development
 	if insecure, ok := config.Metadata["allow_insecure"].(bool); ok && insecure {
 		*options = append(*options, mail.WithTLSConfig(&tls.Config{
-			InsecureSkipVerify: true,
+			InsecureSkipVerify: true, //nolint:gosec // we are in development mode
 		}))
 	}
 }
@@ -298,7 +293,7 @@ func (p *SMTPProvider) setRecipients(msg *mail.Msg, message *Message) error {
 
 // setPriority sets the email priority
 func (p *SMTPProvider) setPriority(msg *mail.Msg, priority email.Priority) {
-	switch priority {
+	switch priority { //nolint:exhaustive // no need to handle all priorities
 	case email.PriorityHigh:
 		msg.SetImportance(mail.ImportanceHigh)
 		msg.SetGenHeaderPreformatted(mail.Header("X-Priority"), "1")
@@ -318,7 +313,7 @@ func (p *SMTPProvider) addAttachments(msg *mail.Msg, attachments []Attachment) e
 		if attachment.FileName == "" {
 			return oops.In("smtp_provider").
 				Tags("operation", "validate_attachment").
-				Tags("attachment_index", string(i)).
+				Tags("attachment_index", strconv.Itoa(i)).
 				Time(time.Now()).
 				Errorf("attachment %d has empty filename", i)
 		}
@@ -334,14 +329,28 @@ func (p *SMTPProvider) addAttachments(msg *mail.Msg, attachments []Attachment) e
 		// Add attachment to message
 		if attachment.ContentID != "" {
 			// Inline attachment (for embedded images, etc.)
-			msg.EmbedReader(
+			err := msg.EmbedReader(
 				attachment.FileName,
 				bytes.NewReader(attachment.Data),
 				mail.WithFileContentType(mail.ContentType(attachment.ContentType)),
 			)
+			if err != nil {
+				return oops.In("smtp_provider").
+					Tags("operation", "add_attachments").
+					Tags("attachment_index", strconv.Itoa(i)).
+					Time(time.Now()).
+					Wrapf(err, "failed to add attachment")
+			}
 		} else {
 			// Regular attachment
-			msg.AttachReader(attachment.FileName, bytes.NewReader(attachment.Data), mail.WithFileContentType(mail.ContentType(attachment.ContentType)))
+			err := msg.AttachReader(attachment.FileName, bytes.NewReader(attachment.Data), mail.WithFileContentType(mail.ContentType(attachment.ContentType)))
+			if err != nil {
+				return oops.In("smtp_provider").
+					Tags("operation", "add_attachments").
+					Tags("attachment_index", strconv.Itoa(i)).
+					Time(time.Now()).
+					Wrapf(err, "failed to add attachment")
+			}
 		}
 	}
 

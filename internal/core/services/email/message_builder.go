@@ -146,13 +146,7 @@ func (b *messageBuilder) convertAttachments(
 
 	result := make([]providers.Attachment, 0, len(attachments))
 
-	for i, attachment := range attachments {
-		log := log.With().
-			Int("attachment_index", i).
-			Str("filename", attachment.FileName).
-			Logger()
-
-		// Get attachment data from storage
+	for _, attachment := range attachments {
 		data, err := b.attachmentHandler.GetAttachmentData(ctx, &attachment, orgID)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to get attachment data")

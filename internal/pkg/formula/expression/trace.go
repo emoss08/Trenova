@@ -7,7 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/formula/variables"
 )
 
-// * TraceStep represents a single step in the evaluation trace
+// TraceStep represents a single step in the evaluation trace
 type TraceStep struct {
 	Step        string      `json:"step"`
 	Description string      `json:"description"`
@@ -17,19 +17,19 @@ type TraceStep struct {
 	Children    []TraceStep `json:"children,omitempty"`
 }
 
-// * TracingEvaluator wraps an evaluator to capture evaluation steps
+// TracingEvaluator wraps an evaluator to capture evaluation steps
 type TracingEvaluator struct {
 	evaluator *Evaluator
 }
 
-// * NewTracingEvaluator creates a new tracing evaluator
+// NewTracingEvaluator creates a new tracing evaluator
 func NewTracingEvaluator(vars *variables.Registry) *TracingEvaluator {
 	return &TracingEvaluator{
 		evaluator: NewEvaluator(vars),
 	}
 }
 
-// * EvaluateWithTrace evaluates an expression and returns both the result and trace
+// EvaluateWithTrace evaluates an expression and returns both the result and trace
 func (te *TracingEvaluator) EvaluateWithTrace(
 	ctx context.Context,
 	expr string,
