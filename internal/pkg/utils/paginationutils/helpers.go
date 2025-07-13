@@ -18,7 +18,7 @@ func ParseEnhancedQueryFromJSON(
 		Limit:  c.QueryInt("limit", 10),
 		Offset: c.QueryInt("offset", 0),
 		Query:  c.Query("query"),
-		TenantOpts: &ports.TenantOptions{
+		TenantOpts: ports.TenantOptions{
 			OrgID:  reqCtx.OrgID,
 			BuID:   reqCtx.BuID,
 			UserID: reqCtx.UserID,

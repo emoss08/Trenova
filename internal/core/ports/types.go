@@ -40,11 +40,11 @@ type FilterQueryOptions struct {
 
 // LimitOffsetQueryOptions is a struct that contains the options for a limit/offset pagination
 type LimitOffsetQueryOptions struct {
-	TenantOpts *TenantOptions `json:"tenantOpts"`
-	Limit      int            `json:"limit"      query:"limit"`
-	Offset     int            `json:"offset"     query:"offset"`
-	Query      string         `json:"query"      query:"query"`
-	ID         *pulid.ID      `json:"id"         query:"id"` // Only used for single item requests (I.E. Select Options)
+	TenantOpts TenantOptions `json:"tenantOpts"`
+	Limit      int           `json:"limit"      query:"limit"`
+	Offset     int           `json:"offset"     query:"offset"`
+	Query      string        `json:"query"      query:"query"`
+	ID         *pulid.ID     `json:"id"         query:"id"` // Only used for single item requests (I.E. Select Options)
 }
 
 type Response[T any] struct {

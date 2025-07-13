@@ -330,7 +330,7 @@ func (qb *QueryBuilder) getFieldReference(dbField string) string {
 }
 
 // ApplyTenantFilters applies common filters like tenant filtering
-func (qb *QueryBuilder) ApplyTenantFilters(tenantOpts *ports.TenantOptions) *QueryBuilder {
+func (qb *QueryBuilder) ApplyTenantFilters(tenantOpts ports.TenantOptions) *QueryBuilder {
 	qb.query = qb.query.Where(
 		fmt.Sprintf("%s.organization_id = ?", qb.tableAlias),
 		tenantOpts.OrgID,

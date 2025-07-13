@@ -128,7 +128,7 @@ func (h *Handler) get(c *fiber.Ctx) error {
 func (h *Handler) liveStream(c *fiber.Ctx) error {
 	fetchFunc := func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*audit.Entry, error) {
 		result, err := h.auditService.List(ctx, &ports.LimitOffsetQueryOptions{
-			TenantOpts: &ports.TenantOptions{
+			TenantOpts: ports.TenantOptions{
 				BuID:   reqCtx.BuID,
 				OrgID:  reqCtx.OrgID,
 				UserID: reqCtx.UserID,

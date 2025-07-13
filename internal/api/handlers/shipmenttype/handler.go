@@ -71,7 +71,7 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 			Query:  c.Query("query"),
 			Limit:  c.QueryInt("limit", 10),
 			Offset: c.QueryInt("offset", 0),
-			TenantOpts: &ports.TenantOptions{
+			TenantOpts: ports.TenantOptions{
 				OrgID:  reqCtx.OrgID,
 				BuID:   reqCtx.BuID,
 				UserID: reqCtx.UserID,
