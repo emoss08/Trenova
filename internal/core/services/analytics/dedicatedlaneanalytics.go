@@ -123,7 +123,7 @@ func (dlap *DedicatedLaneAnalyticsProvider) getPendingSuggestionsCount(
 	status := dedicatedlane.SuggestionStatusPending
 	req := &repositories.ListDedicatedLaneSuggestionRequest{
 		Filter: &ports.LimitOffsetQueryOptions{
-			TenantOpts: &ports.TenantOptions{
+			TenantOpts: ports.TenantOptions{
 				OrgID:  opts.OrgID,
 				BuID:   opts.BuID,
 				UserID: opts.UserID,
@@ -150,7 +150,7 @@ func (dlap *DedicatedLaneAnalyticsProvider) getProcessedSuggestionsCount(
 ) (int64, error) {
 	req := &repositories.ListDedicatedLaneSuggestionRequest{
 		Filter: &ports.LimitOffsetQueryOptions{
-			TenantOpts: &ports.TenantOptions{
+			TenantOpts: ports.TenantOptions{
 				OrgID:  opts.OrgID,
 				BuID:   opts.BuID,
 				UserID: opts.UserID,
@@ -183,7 +183,7 @@ func (dlap *DedicatedLaneAnalyticsProvider) getAcceptanceRate(
 ) (float64, error) {
 	req := &repositories.ListDedicatedLaneSuggestionRequest{
 		Filter: &ports.LimitOffsetQueryOptions{
-			TenantOpts: &ports.TenantOptions{
+			TenantOpts: ports.TenantOptions{
 				OrgID:  opts.OrgID,
 				BuID:   opts.BuID,
 				UserID: opts.UserID,
@@ -230,7 +230,7 @@ func (dlap *DedicatedLaneAnalyticsProvider) getRecentSuggestions(
 
 	req := &repositories.ListDedicatedLaneSuggestionRequest{
 		Filter: &ports.LimitOffsetQueryOptions{
-			TenantOpts: &ports.TenantOptions{
+			TenantOpts: ports.TenantOptions{
 				OrgID:  opts.OrgID,
 				BuID:   opts.BuID,
 				UserID: opts.UserID,
@@ -256,7 +256,7 @@ func (dlap *DedicatedLaneAnalyticsProvider) getTopCustomersBySuggestions(
 ) (map[string]int64, error) {
 	req := &repositories.ListDedicatedLaneSuggestionRequest{
 		Filter: &ports.LimitOffsetQueryOptions{
-			TenantOpts: &ports.TenantOptions{
+			TenantOpts: ports.TenantOptions{
 				OrgID:  opts.OrgID,
 				BuID:   opts.BuID,
 				UserID: opts.UserID,
@@ -287,7 +287,7 @@ func (dlap *DedicatedLaneAnalyticsProvider) getSuggestionStatusBreakdown(
 ) (map[string]int64, error) {
 	req := &repositories.ListDedicatedLaneSuggestionRequest{
 		Filter: &ports.LimitOffsetQueryOptions{
-			TenantOpts: &ports.TenantOptions{
+			TenantOpts: ports.TenantOptions{
 				OrgID:  opts.OrgID,
 				BuID:   opts.BuID,
 				UserID: opts.UserID,
@@ -330,7 +330,7 @@ func (dlap *DedicatedLaneAnalyticsProvider) getExpiredSuggestionsCount(
 ) (int64, error) {
 	req := &repositories.ListDedicatedLaneSuggestionRequest{
 		Filter: &ports.LimitOffsetQueryOptions{
-			TenantOpts: &ports.TenantOptions{
+			TenantOpts: ports.TenantOptions{
 				OrgID:  opts.OrgID,
 				BuID:   opts.BuID,
 				UserID: opts.UserID,

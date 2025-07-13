@@ -53,13 +53,13 @@ type SortField struct {
 
 // QueryOptions extends LimitOffsetQueryOptions with filtering and sorting
 type QueryOptions struct {
-	ID           *pulid.ID      `json:"id"         query:"id"` // * Only used for single item requests (I.E. Select Options)
-	TenantOpts   *TenantOptions `json:"tenantOpts"`
-	Query        string         `json:"query"      query:"query"`
-	FieldFilters []FieldFilter  `json:"filters"    query:"filters"`
-	Sort         []SortField    `json:"sort"       query:"sort"`
-	Limit        int            `json:"limit"      query:"limit"   default:"100"`
-	Offset       int            `json:"offset"     query:"offset"  default:"0"`
+	ID           *pulid.ID     `json:"id"         query:"id"` // * Only used for single item requests (I.E. Select Options)
+	TenantOpts   TenantOptions `json:"tenantOpts"`
+	Query        string        `json:"query"      query:"query"`
+	FieldFilters []FieldFilter `json:"filters"    query:"filters"`
+	Sort         []SortField   `json:"sort"       query:"sort"`
+	Limit        int           `json:"limit"      query:"limit"   default:"100"`
+	Offset       int           `json:"offset"     query:"offset"  default:"0"`
 }
 
 // ValidateFilters validates the filter conditions

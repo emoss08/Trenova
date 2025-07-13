@@ -59,14 +59,14 @@ func (s *classificationServiceImpl) ClassifyLocation(
 	cachedResult, err := s.cache.Get(ctx, cacheKey)
 	if err == nil && cachedResult != "" {
 		var response ai.ClassificationResponse
-		if err := sonic.Unmarshal([]byte(cachedResult), &response); err == nil {
+		if err = sonic.Unmarshal([]byte(cachedResult), &response); err == nil {
 			s.logger.Debug().Str("location", req.Name).Msg("Returning cached classification")
 			return &response, nil
 		}
 	}
 
 	categories, err := s.locationCategoryRepo.List(ctx, &ports.LimitOffsetQueryOptions{
-		TenantOpts: &ports.TenantOptions{
+		TenantOpts: ports.TenantOptions{
 			BuID:   req.TenantOpts.BuID,
 			OrgID:  req.TenantOpts.OrgID,
 			UserID: req.TenantOpts.UserID,
@@ -79,13 +79,7 @@ func (s *classificationServiceImpl) ClassifyLocation(
 			Wrapf(err, "failed to fetch location categories")
 	}
 
-	prompt, err := s.buildClassificationPromptWithCategories(req, categories.Items)
-	if err != nil {
-		return nil, oops.In("classification_service").
-			Time(time.Now()).
-			With("req", req).
-			Wrapf(err, "failed to build classification prompt")
-	}
+	prompt := s.buildClassificationPromptWithCategories(req, categories.Items)
 
 	result, err := s.claudeClient.Complete(ctx, prompt, "claude-3-haiku-20240307")
 	if err != nil {
@@ -107,7 +101,7 @@ func (s *classificationServiceImpl) ClassifyLocation(
 		}, nil
 	}
 
-	if responseJSON, err := sonic.Marshal(response); err == nil {
+	if responseJSON, reErr := sonic.Marshal(response); reErr == nil {
 		_ = s.cache.Set(ctx, cacheKey, string(responseJSON), time.Hour)
 	}
 
@@ -166,7 +160,7 @@ func (s *classificationServiceImpl) buildCacheKey(req *ai.ClassificationRequest)
 func (s *classificationServiceImpl) buildClassificationPromptWithCategories(
 	req *ai.ClassificationRequest,
 	categories []*locationDomain.LocationCategory,
-) (string, error) {
+) string {
 	var categoriesSection strings.Builder
 	categoryMap := make(map[string]string)
 
@@ -211,7 +205,7 @@ Return JSON with these exact fields:
 		categoriesSection.String(),
 		req.Name,
 		descriptionPart,
-		addressPart), nil
+		addressPart)
 }
 
 func (s *classificationServiceImpl) parseClassificationResponse(

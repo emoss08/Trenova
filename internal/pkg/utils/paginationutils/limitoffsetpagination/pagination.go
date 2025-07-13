@@ -25,7 +25,44 @@ func HandlePaginatedRequest[T any](
 	}
 
 	filter := &ports.LimitOffsetQueryOptions{
-		TenantOpts: &ports.TenantOptions{
+		TenantOpts: ports.TenantOptions{
+			OrgID:  reqCtx.OrgID,
+			BuID:   reqCtx.BuID,
+			UserID: reqCtx.UserID,
+		},
+		Limit:  pg.Limit,
+		Offset: pg.Offset,
+	}
+
+	result, err := handler(c, filter)
+	if err != nil {
+		return eh.HandleError(c, err)
+	}
+
+	nextURL := GetNextPageURL(c, pg.Limit, pg.Offset, result.Total)
+	prevURL := GetPrevPageURL(c, pg.Limit, pg.Offset)
+
+	return c.JSON(ports.Response[[]T]{
+		Count:   result.Total,
+		Results: result.Items,
+		Next:    nextURL,
+		Prev:    prevURL,
+	})
+}
+
+func HandleEnhancedPaginatedRequest[T any](
+	c *fiber.Ctx,
+	eh *validator.ErrorHandler,
+	reqCtx *appctx.RequestContext,
+	handler ports.EnhancedPageableHandler[T],
+) error {
+	pg, err := Params(c)
+	if err != nil {
+		return eh.HandleError(c, err)
+	}
+
+	filter := &ports.QueryOptions{
+		TenantOpts: ports.TenantOptions{
 			OrgID:  reqCtx.OrgID,
 			BuID:   reqCtx.BuID,
 			UserID: reqCtx.UserID,
@@ -129,7 +166,7 @@ func ParseEnhancedParams(
 		Limit:  pg.Limit,
 		Offset: pg.Offset,
 		Query:  c.Query("query", ""),
-		TenantOpts: &ports.TenantOptions{
+		TenantOpts: ports.TenantOptions{
 			OrgID:  reqCtx.OrgID,
 			BuID:   reqCtx.BuID,
 			UserID: reqCtx.UserID,

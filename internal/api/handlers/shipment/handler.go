@@ -112,7 +112,7 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 
 	opts := &repositories.ListShipmentOptions{
 		Filter: &ports.QueryOptions{
-			TenantOpts: &ports.TenantOptions{
+			TenantOpts: ports.TenantOptions{
 				OrgID:  reqCtx.OrgID,
 				BuID:   reqCtx.BuID,
 				UserID: reqCtx.UserID,
@@ -162,31 +162,6 @@ func (h *Handler) list(c *fiber.Ctx) error {
 	}
 
 	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
-}
-
-func (h *Handler) getPreviousRates(c *fiber.Ctx) error {
-	reqCtx, err := appctx.WithRequestContext(c)
-	if err != nil {
-		return h.eh.HandleError(c, err)
-	}
-
-	req := new(repositories.GetPreviousRatesRequest)
-
-	if err = c.BodyParser(req); err != nil {
-		return h.eh.HandleError(c, err)
-	}
-
-	// * Apply the request context to the request
-	req.BuID = reqCtx.BuID
-	req.OrgID = reqCtx.OrgID
-	req.UserID = reqCtx.UserID
-
-	entities, err := h.ss.GetPreviousRates(c.UserContext(), req)
-	if err != nil {
-		return h.eh.HandleError(c, err)
-	}
-
-	return c.Status(fiber.StatusOK).JSON(entities)
 }
 
 func (h *Handler) get(c *fiber.Ctx) error {
@@ -309,6 +284,31 @@ func (h *Handler) unCancel(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(newEntity)
+}
+
+func (h *Handler) getPreviousRates(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := new(repositories.GetPreviousRatesRequest)
+
+	if err = c.BodyParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	// * Apply the request context to the request
+	req.BuID = reqCtx.BuID
+	req.OrgID = reqCtx.OrgID
+	req.UserID = reqCtx.UserID
+
+	entities, err := h.ss.GetPreviousRates(c.UserContext(), req)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entities)
 }
 
 func (h *Handler) duplicate(c *fiber.Ctx) error {
@@ -475,7 +475,7 @@ func (h *Handler) liveStream(c *fiber.Ctx) error {
 				ExpandShipmentDetails: false, // Keep it lightweight for streaming
 			},
 			Filter: &ports.QueryOptions{
-				TenantOpts: &ports.TenantOptions{
+				TenantOpts: ports.TenantOptions{
 					BuID:   reqCtx.BuID,
 					OrgID:  reqCtx.OrgID,
 					UserID: reqCtx.UserID,

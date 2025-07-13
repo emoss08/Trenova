@@ -69,7 +69,7 @@ func (h *Handler) selectOptions(c *fiber.Ctx) error {
 
 	req := &repositories.ListWorkerRequest{
 		Filter: &ports.QueryOptions{
-			TenantOpts: &ports.TenantOptions{
+			TenantOpts: ports.TenantOptions{
 				OrgID:  reqCtx.OrgID,
 				BuID:   reqCtx.BuID,
 				UserID: reqCtx.UserID,
