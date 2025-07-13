@@ -79,7 +79,7 @@ func (h *Handler) liveStream(c *fiber.Ctx) error {
         case <-ticker.C:
             // Query for new entries since last check
             filter := &ports.LimitOffsetQueryOptions{
-                TenantOpts: &ports.TenantOptions{
+                TenantOpts: ports.TenantOptions{
                     BuID:   reqCtx.BuID,
                     OrgID:  reqCtx.OrgID,
                     UserID: reqCtx.UserID,

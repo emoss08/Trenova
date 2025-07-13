@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/document"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttype"
+	"github.com/emoss08/trenova/internal/api/handlers/email"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/favorite"
@@ -146,6 +147,7 @@ type RouterParams struct {
 	NotificationHandler            *notification.Handler
 	MetricsHandler                 *handlers.MetricsHandler
 	ConsolidationSettingHandler    *consolidationsetting.Handler
+	EmailProfileHandler            *email.Handler
 }
 
 type Router struct {
@@ -166,22 +168,17 @@ func NewRouter(p RouterParams) *Router {
 }
 
 func (r *Router) Setup() {
-	// API Versioning
 	v1 := r.app.Group("api/v1")
-	// define the rate limit middleware
 	rl := middleware.NewRateLimit(middleware.RateLimitParams{
 		Logger:       r.p.Logger,
 		Redis:        r.p.Redis,
 		ScriptLoader: r.p.ScriptLoader,
 	})
 
-	// setup the global middlewares
 	r.setupMiddleware()
 
-	// Metrics endpoint (outside API versioning for Prometheus compatibility)
 	r.app.Get("/metrics", r.p.MetricsHandler.GetMetrics())
 
-	// Health check endpoint
 	r.app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"status":    "healthy",
@@ -224,10 +221,6 @@ func (r *Router) setupProtectedRoutes( //nolint:funlen // this is to setup prote
 		Config: r.cfg,
 		Auth:   r.p.AuthService,
 	}).Authenticate())
-
-	// WebSocket routes (must be after auth middleware)
-	// router.Use("/ws", r.p.WebSocketHandler.WebSocketUpgrade)
-	// router.Get("/ws/notifications", websocket.New(r.p.WebSocketHandler.HandleWebSocket))
 
 	// Organization
 	r.p.OrganizationHandler.RegisterRoutes(router, rl)
@@ -375,4 +368,7 @@ func (r *Router) setupProtectedRoutes( //nolint:funlen // this is to setup prote
 
 	// AI Classification
 	r.p.AIHandler.RegisterRoutes(router, rl)
+
+	// Email Profiles
+	r.p.EmailProfileHandler.RegisterRoutes(router, rl)
 }

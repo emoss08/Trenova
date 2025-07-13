@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/hibiken/asynq"
 )
@@ -31,6 +32,10 @@ const (
 	JobTypeCleanupTempFiles JobType = "system:cleanup_temp_files"
 	JobTypeGenerateReports  JobType = "system:generate_reports"
 	JobTypeDataBackup       JobType = "system:data_backup"
+
+	// Email Jobs
+	JobTypeSendEmail      JobType = "email:send"
+	JobTypeProcessEmailQueue JobType = "email:process_queue"
 )
 
 // Priority levels for job processing
@@ -49,6 +54,7 @@ const (
 	QueueShipment   = "shipment"
 	QueueSystem     = "system"
 	QueueCritical   = "critical"
+	QueueEmail      = "email"
 )
 
 // JobHandler defines the interface for handling background jobs
@@ -114,6 +120,14 @@ type SystemMaintenancePayload struct {
 	BasePayload
 	TaskType   string            `json:"taskType"`
 	Parameters map[string]string `json:"parameters,omitempty"`
+}
+
+// SendEmailPayload for email sending jobs
+type SendEmailPayload struct {
+	BasePayload
+	EmailType        string                             `json:"emailType"` // "regular" or "templated"
+	Request          *services.SendEmailRequest         `json:"request,omitempty"`
+	TemplatedRequest *services.SendTemplatedEmailRequest `json:"templatedRequest,omitempty"`
 }
 
 // JobOptions defines options for job scheduling

@@ -86,6 +86,12 @@ type JobServiceInterface interface {
 		opts *JobOptions,
 	) (*asynq.TaskInfo, error)
 
+	// Email Jobs
+	ScheduleSendEmail(
+		payload *SendEmailPayload,
+		opts *JobOptions,
+	) (*asynq.TaskInfo, error)
+
 	// Job Management
 	CancelJob(ctx context.Context, queue string, jobID string) error
 	GetJobInfo(ctx context.Context, queue string, jobID string) (*asynq.TaskInfo, error)
@@ -117,8 +123,9 @@ func NewJobService(p JobServiceParams) JobServiceInterface {
 		asynq.Config{
 			Concurrency: 10, // Number of concurrent workers
 			Queues: map[string]int{
-				QueueCritical:   6, // Highest priority - 60% of workers
-				QueueShipment:   2, // Shipment jobs - 20% of workers
+				QueueCritical:   5, // Highest priority - 50% of workers
+				QueueEmail:      2, // Email jobs - 20% of workers
+				QueueShipment:   1, // Shipment jobs - 10% of workers
 				QueuePattern:    1, // Pattern analysis - 10% of workers
 				QueueCompliance: 1, // Compliance checks - 10% of workers
 				QueueDefault:    1, // Default queue - 10% of workers
@@ -304,6 +311,25 @@ func (js *JobService) ScheduleShipmentStatusUpdate(
 	return js.Enqueue(JobTypeShipmentStatusUpdate, payload, opts)
 }
 
+// ScheduleSendEmail schedules an email send job
+func (js *JobService) ScheduleSendEmail(
+	payload *SendEmailPayload,
+	opts *JobOptions,
+) (*asynq.TaskInfo, error) {
+	if opts == nil {
+		opts = &JobOptions{
+			Queue:    QueueEmail,
+			Priority: PriorityNormal,
+			MaxRetry: 3,
+		}
+	}
+
+	payload.JobID = pulid.MustNew("job_").String()
+	payload.Timestamp = timeutils.NowUnix()
+
+	return js.Enqueue(JobTypeSendEmail, payload, opts)
+}
+
 // enqueueJob is the internal method that handles job scheduling
 func (js *JobService) enqueueJob(
 	jobType JobType,
@@ -451,8 +477,9 @@ func (js *JobService) Start() error {
 	js.logger.Info().
 		Int("concurrency", 10).
 		Interface("queue_distribution", map[string]int{
-			QueueCritical:   6,
-			QueueShipment:   2,
+			QueueCritical:   5,
+			QueueEmail:      2,
+			QueueShipment:   1,
 			QueuePattern:    1,
 			QueueCompliance: 1,
 			QueueDefault:    1,
@@ -580,6 +607,20 @@ func (js *JobService) extractPayloadSummary(payload any) map[string]any {
 		summary["organization_id"] = p.OrganizationID.String()
 		summary["business_unit_id"] = p.BusinessUnitID.String()
 		summary["count"] = p.Count
+
+	case *SendEmailPayload:
+		summary["type"] = "send_email"
+		summary["organization_id"] = p.OrganizationID.String()
+		summary["business_unit_id"] = p.BusinessUnitID.String()
+		summary["email_type"] = p.EmailType
+		if p.Request != nil {
+			summary["subject"] = p.Request.Subject
+			summary["to_count"] = len(p.Request.To)
+		}
+		if p.TemplatedRequest != nil {
+			summary["template_id"] = p.TemplatedRequest.TemplateID.String()
+			summary["to_count"] = len(p.TemplatedRequest.To)
+		}
 
 	default:
 		summary["type"] = "unknown"

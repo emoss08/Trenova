@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/document"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttype"
+	"github.com/emoss08/trenova/internal/api/handlers/email"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/favorite"
@@ -111,4 +112,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	handlers.NewMetricsHandler,
 	consolidationsetting.NewHandler,
 	formula.NewHandler,
+	email.NewHandler,
 ))

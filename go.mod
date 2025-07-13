@@ -1,6 +1,6 @@
 module github.com/emoss08/trenova
 
-go 1.24.4
+go 1.24.5
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
@@ -45,6 +45,7 @@ require (
 	github.com/uptrace/bun/driver/pgdriver v1.2.14
 	github.com/uptrace/bun/extra/bundebug v1.2.14
 	github.com/valyala/fasthttp v1.63.0
+	github.com/wneessen/go-mail v0.6.2
 	go.uber.org/atomic v1.11.0
 	go.uber.org/fx v1.24.0
 	go.uber.org/zap v1.27.0

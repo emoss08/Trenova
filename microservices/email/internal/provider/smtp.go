@@ -120,13 +120,16 @@ func (p *SMTPProvider) Send(ctx context.Context, email *model.Email) error {
 	}
 
 	// Create a mail client
-	client, err := mail.NewClient(p.cfg.Host,
+	client, err := mail.NewClient(
+		p.cfg.Host,
 		mail.WithPort(p.cfg.Port),
 		mail.WithUsername(p.cfg.User),
 		mail.WithPassword(p.cfg.Password),
 		mail.WithTimeout(p.cfg.Timeout),
 		mail.WithTLSPolicy(tlsPolicy),
-		mail.WithSMTPAuth(mail.SMTPAuthAutoDiscover),
+		mail.WithSMTPAuth(
+			mail.SMTPAuthAutoDiscover,
+		), // * Important: This is required for SMTP authentication
 	)
 	if err != nil {
 		return eris.Wrap(err, "failed to create mail client")
