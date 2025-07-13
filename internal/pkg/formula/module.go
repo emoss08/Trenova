@@ -124,7 +124,7 @@ func initializeFormulaSystem(
 
 	// * Create bridge and register schema variables
 	bridge := NewSchemaVariableBridge(schemaRegistry, varRegistry)
-	
+
 	if err := bridge.RegisterSchemaVariables("shipment"); err != nil {
 		return fmt.Errorf("failed to register shipment variables: %w", err)
 	}

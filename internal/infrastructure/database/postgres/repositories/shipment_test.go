@@ -1696,11 +1696,11 @@ func TestShipmentRepository(t *testing.T) {
 		t.Run("Automatic Rate Calculation with Formula Template", func(t *testing.T) {
 			// This test demonstrates that when a shipment is updated with a formula template,
 			// the calculator automatically calculates the rate based on the formula expression.
-			
+
 			// Load a formula template with a simple weight-based calculation
 			formulaTemplate := ts.Fixture.MustRow("FormulaTemplate.weight_based_rate_template").(*formulatemplate.FormulaTemplate)
 			require.NotNil(t, formulaTemplate, "Formula template should be loaded")
-			
+
 			// Create a shipment with specific weight for predictable calculation
 			newShipment := &shipment.Shipment{
 				ServiceTypeID:       serviceType.ID,
@@ -1747,25 +1747,25 @@ func TestShipmentRepository(t *testing.T) {
 			created, err := repo.Create(ctx, newShipment, testUser.ID)
 			require.NoError(t, err, "Should create shipment")
 			require.NotNil(t, created, "Created shipment should not be nil")
-			
+
 			// Store original freight charge
 			originalFreightCharge := created.FreightChargeAmount.Decimal
 			t.Logf("Original freight charge: %s", originalFreightCharge.String())
-			
+
 			// Update to use formula template
 			created.RatingMethod = shipment.RatingMethodFormulaTemplate
 			created.FormulaTemplateID = &formulaTemplate.ID
-			
+
 			// Update the shipment - this should trigger automatic rate calculation
 			updated, err := repo.Update(ctx, created, testUser.ID)
 			require.NoError(t, err, "Should update shipment")
 			require.NotNil(t, updated, "Updated shipment should not be nil")
-			
+
 			// Verify formula template was assigned
 			assert.Equal(t, shipment.RatingMethodFormulaTemplate, updated.RatingMethod)
 			assert.NotNil(t, updated.FormulaTemplateID)
 			assert.Equal(t, formulaTemplate.ID, *updated.FormulaTemplateID)
-			
+
 			// The formula template uses: if(hasHazmat, weight * 0.15 + 200, weight * 0.10)
 			// For a 1000 lb shipment without hazmat, the rate should be: 1000 * 0.10 = 100
 			// With the formula service properly integrated, this will be automatically calculated
@@ -1773,7 +1773,7 @@ func TestShipmentRepository(t *testing.T) {
 			t.Logf("Formula expression: %s", formulaTemplate.Expression)
 			t.Logf("Updated freight charge: %s", updated.FreightChargeAmount.Decimal.String())
 			t.Logf("Weight: %d lbs", *updated.Weight)
-			
+
 			// In the actual application with formula service running, the freight charge
 			// would be automatically calculated based on the formula expression.
 			// The shipment calculator's calculateFormulaTemplateRate method handles this.
@@ -1837,7 +1837,7 @@ func setupShipmentRepository(log *logger.Logger) repoports.ShipmentRepository {
 
 	mockPermissionService := &mocks.MockPermissionService{}
 	mockAuditService := &mocks.MockAuditService{}
-	
+
 	// Setup permission service to allow all formula operations
 	mockPermissionService.On("HasAnyPermissions", mock.Anything, mock.Anything).Return(
 		services.PermissionCheckResult{Allowed: true},
