@@ -34,6 +34,7 @@ type CronSchedulerInterface interface {
 	Stop() error
 	SchedulePatternAnalysisJobs() error
 	ScheduleMaintenanceJobs() error
+	ScheduleEmailQueueJobs() error
 }
 
 // NewCronScheduler creates a new cron scheduler
@@ -75,6 +76,11 @@ func (cs *CronScheduler) Start() error {
 
 	if err := cs.ScheduleMaintenanceJobs(); err != nil {
 		cs.logger.Error().Err(err).Msg("failed to schedule maintenance jobs")
+		return err
+	}
+
+	if err := cs.ScheduleEmailQueueJobs(); err != nil {
+		cs.logger.Error().Err(err).Msg("failed to schedule email queue jobs")
 		return err
 	}
 
@@ -228,6 +234,45 @@ func (cs *CronScheduler) createExpireSuggestionsPayload() []byte {
 			Timestamp: timeutils.NowUnix(),
 		},
 		BatchSize: 100,
+	}
+
+	data, _ := jobs.MarshalPayload(payload)
+	return data
+}
+
+// ScheduleEmailQueueJobs schedules recurring email queue processing jobs
+func (cs *CronScheduler) ScheduleEmailQueueJobs() error {
+	cs.logger.Info().Msg("scheduling email queue processing jobs")
+
+	// Process email queue every 5 minutes
+	emailQueueTask := asynq.NewTask(
+		string(jobs.JobTypeProcessEmailQueue),
+		cs.createEmailQueuePayload(),
+		asynq.Retention(12*time.Hour),
+	)
+
+	entryID, err := cs.scheduler.Register("@every 5m", emailQueueTask,
+		asynq.Queue(jobs.QueueEmail),
+		asynq.MaxRetry(3),
+		asynq.Timeout(5*time.Minute),
+	)
+	if err != nil {
+		return err
+	}
+
+	cs.logger.Info().
+		Str("entry_id", entryID).
+		Str("schedule", "@every 5m (every 5 minutes)").
+		Msg("scheduled email queue processing job")
+
+	return nil
+}
+
+// createEmailQueuePayload creates a payload for email queue processing
+func (cs *CronScheduler) createEmailQueuePayload() []byte {
+	payload := &jobs.BasePayload{
+		JobID:     pulid.MustNew("job_").String(),
+		Timestamp: timeutils.NowUnix(),
 	}
 
 	data, _ := jobs.MarshalPayload(payload)

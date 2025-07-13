@@ -15,10 +15,12 @@ import (
 	"github.com/emoss08/trenova/internal/bootstrap/modules/services"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/validators"
 	"github.com/emoss08/trenova/internal/core/services/analytics"
+	"github.com/emoss08/trenova/internal/core/services/email"
 	"github.com/emoss08/trenova/internal/core/services/streaming"
 	redisRepos "github.com/emoss08/trenova/internal/infrastructure/cache/redis/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/cdc"
 	postgresRepos "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/encryption"
 	"github.com/emoss08/trenova/internal/infrastructure/jobs"
 	"github.com/emoss08/trenova/internal/pkg/formula"
 	"github.com/emoss08/trenova/internal/pkg/statemachine"
@@ -41,8 +43,10 @@ func Bootstrap() error {
 		postgresRepos.Module,
 		external.Module,
 		cdc.Module,
+		encryption.Module,
 		validators.Module,
 		analytics.Module,
+		email.Module,
 		services.Module,
 		streaming.Module,
 		api.Module,
