@@ -216,7 +216,7 @@ func (l *PostgresDataLoader) transformColumnNamesToFieldNames(
 	result map[string]any,
 ) map[string]any {
 	transformed := make(map[string]any)
-	
+
 	// Create reverse mapping from database column to schema field name
 	columnToField := make(map[string]string)
 	for fieldName, fieldSource := range schemaDef.FieldSources {
@@ -224,7 +224,7 @@ func (l *PostgresDataLoader) transformColumnNamesToFieldNames(
 			columnToField[fieldSource.Field] = fieldName
 		}
 	}
-	
+
 	// Transform the result map
 	for column, value := range result {
 		if fieldName, exists := columnToField[column]; exists {
@@ -234,7 +234,7 @@ func (l *PostgresDataLoader) transformColumnNamesToFieldNames(
 			transformed[column] = value
 		}
 	}
-	
+
 	return transformed
 }
 

@@ -192,7 +192,7 @@ func (c *SchemaAwareVariableContext) GetField(path string) (any, error) {
 				break
 			}
 		}
-		
+
 		// Try matching by field source path (e.g., path="temperature_max" matches source.Path="temperature_max")
 		if !ok {
 			for _, source := range schemaDef.FieldSources {
@@ -203,7 +203,7 @@ func (c *SchemaAwareVariableContext) GetField(path string) (any, error) {
 				}
 			}
 		}
-		
+
 		// Try case-insensitive match by field source path
 		if !ok {
 			for _, source := range schemaDef.FieldSources {
@@ -214,7 +214,7 @@ func (c *SchemaAwareVariableContext) GetField(path string) (any, error) {
 				}
 			}
 		}
-		
+
 		if !ok {
 			return nil, fmt.Errorf("field not found in schema: %s", path)
 		}

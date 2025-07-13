@@ -65,12 +65,12 @@ func computeHasHazmatMap(entity any) (any, error) {
 	for _, commodity := range commodities {
 		var commodityData map[string]any
 		var ok bool
-		
+
 		// Try both case variations
 		if commodityData, ok = commodity["Commodity"].(map[string]any); !ok {
 			commodityData, ok = commodity["commodity"].(map[string]any)
 		}
-		
+
 		if ok {
 			// Try both case variations for hazardous material
 			if _, hasHazmat := commodityData["HazardousMaterial"]; hasHazmat {

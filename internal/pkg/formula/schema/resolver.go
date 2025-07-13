@@ -175,7 +175,7 @@ func (r *DefaultDataResolver) extractFromMap(m map[string]any, path string) (any
 		// Try to get the value as a map
 		if currentMap, ok := current.(map[string]any); ok {
 			value, exists := currentMap[part]
-			
+
 			// If the exact part doesn't exist, try camelCase version
 			if !exists {
 				camelCasePart := strings.ToLower(part[:1]) + part[1:]

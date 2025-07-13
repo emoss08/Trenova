@@ -250,12 +250,12 @@ func resolveFromSchema(ctx variables.VariableContext, source *schema.FieldSource
 	if source.Computed {
 		return ctx.GetComputed(source.Function)
 	}
-	
+
 	// For schema-aware context, use the field source directly to avoid lookup issues
 	if schemaCtx, ok := ctx.(*SchemaAwareContext); ok {
 		return schemaCtx.resolver.ResolveField(schemaCtx.entity, source)
 	}
-	
+
 	return ctx.GetField(source.Path)
 }
 
@@ -280,7 +280,7 @@ func findFieldSource(schemaDef *schema.SchemaDefinition, path string) *schema.Fi
 		}
 	}
 
-	// Try matching by database field name (e.g., path="temperature_max" matches source.Field="temperature_max") 
+	// Try matching by database field name (e.g., path="temperature_max" matches source.Field="temperature_max")
 	for _, source := range schemaDef.FieldSources {
 		if source.Field == path {
 			return source
