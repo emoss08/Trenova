@@ -5,7 +5,7 @@ import { type IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 import { type CheckboxProps } from "@radix-ui/react-checkbox";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { SwitchProps } from "@radix-ui/react-switch";
-import { ComponentPropsWithoutRef } from "react";
+import { ComponentPropsWithoutRef, type ReactNode } from "react";
 import type {
   Control,
   FieldValues,
@@ -97,6 +97,7 @@ export type DateFieldProps<T extends FieldValues> = BaseDateFieldProps &
 
 export type SelectValue = React.ComponentProps<typeof SelectPrimitive.Value> & {
   color?: string;
+  icon?: IconDefinition | ReactNode;
 };
 
 export type SelectOption = React.ComponentProps<typeof SelectPrimitive.Item> & {
@@ -104,7 +105,8 @@ export type SelectOption = React.ComponentProps<typeof SelectPrimitive.Item> & {
   value: string | boolean | number;
   color?: string;
   description?: string;
-  icon?: IconDefinition;
+  icon?: IconDefinition | ReactNode;
+  disabled?: boolean;
 };
 
 export type AddNewButtonProps = {
