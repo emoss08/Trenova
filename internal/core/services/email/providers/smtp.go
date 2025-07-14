@@ -212,6 +212,15 @@ func (p *SMTPProvider) configureAuth(config *ProviderConfig, options *[]mail.Opt
 		// Use auto-discover to find the best auth method
 		*options = append(*options, mail.WithSMTPAuth(mail.SMTPAuthAutoDiscover))
 	}
+
+	// ! For localhost remove the authentication and TLS policy (this should be mailhog)
+	if p.isLocalhost(config) {
+		*options = append(*options,
+			mail.WithSMTPAuth(mail.SMTPAuthNoAuth),
+			mail.WithTLSPolicy(mail.NoTLS),
+		)
+		return
+	}
 }
 
 // configureEncryption configures SMTP encryption
@@ -355,4 +364,12 @@ func (p *SMTPProvider) addAttachments(msg *mail.Msg, attachments []Attachment) e
 	}
 
 	return nil
+}
+
+func (p *SMTPProvider) isLocalhost(config *ProviderConfig) bool {
+	if config.Host == "localhost" || config.Host == "127.0.0.1" {
+		return true
+	}
+
+	return false
 }

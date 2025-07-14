@@ -144,9 +144,6 @@ const (
 	ResourceAuditEntry = Resource(
 		"audit_entry",
 	) // Represents resources for tracking and auditing logs.
-	ResourceAuditLog = Resource(
-		"audit_log",
-	) // Represents resources for tracking and auditing logs.
 
 	// System resources
 	ResourceTableConfiguration = Resource(
@@ -167,6 +164,9 @@ const (
 	ResourcePermission = Resource(
 		"permission",
 	) // Represents resources for managing permissions.
+	ResourceEmailProfile = Resource(
+		"email_profile",
+	) // Represents resources for managing email profiles.
 )
 
 func (r Resource) MarshalJSON() ([]byte, error) {
@@ -558,12 +558,6 @@ var (
 			BaseActions,
 			ActionExport,
 		),
-		// * TODO(Wolfred): We need to remove this one
-		ResourceAuditLog: {
-			ActionRead,
-			ActionExport,
-			ActionManage,
-		},
 		ResourceAuditEntry: {
 			ActionRead,
 			ActionExport,
@@ -572,6 +566,11 @@ var (
 		ResourceTableConfiguration: append(
 			BaseActions,
 			TableConfigurationActions...,
+		),
+
+		ResourceEmailProfile: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
 		),
 
 		// System resources

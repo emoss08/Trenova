@@ -109,4 +109,5 @@ export enum Resource {
   GlAccount = "gl_account",
   RevenueCode = "revenue_code",
   AIClassification = "ai_classification",
+  EmailProfile = "email_profile",
 }

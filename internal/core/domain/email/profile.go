@@ -26,7 +26,6 @@ var (
 type Profile struct {
 	bun.BaseModel `bun:"table:email_profiles,alias:ep" json:"-"`
 
-	// Primary identifiers
 	ID                 pulid.ID       `json:"id"                       bun:"id,type:varchar(100),pk,notnull"`
 	BusinessUnitID     pulid.ID       `json:"businessUnitId"           bun:"business_unit_id,type:varchar(100),pk,notnull"`
 	OrganizationID     pulid.ID       `json:"organizationId"           bun:"organization_id,type:varchar(100),pk,notnull"`
@@ -59,14 +58,13 @@ type Profile struct {
 	UpdatedAt          int64          `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	Metadata           map[string]any `json:"metadata"                 bun:"metadata,type:jsonb"`
 	IsDefault          bool           `json:"isDefault"                bun:"is_default,type:boolean,default:false"`
+	// Transient fields for handling plain text values (not persisted)
+	Password string `json:"password,omitempty"       bun:"-"`
+	APIKey   string `json:"apiKey,omitempty"         bun:"-"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-
-	// Transient fields for handling plain text values (not persisted)
-	Password string `json:"password,omitempty" bun:"-"`
-	APIKey   string `json:"apiKey,omitempty"   bun:"-"`
 }
 
 // Validate implements the Validatable interface
@@ -164,7 +162,7 @@ func (p *Profile) Validate( //nolint:funlen // This is a validation function, th
 			validation.Max(1000000).Error("Rate Limit Per Day must not exceed 1000000"),
 		),
 
-		// Provider-specific validation for SMTP
+		// * Provider-specific validation for SMTP
 		validation.Field(&p.Host,
 			validation.When(
 				p.ProviderType == ProviderTypeSMTP,
@@ -188,16 +186,6 @@ func (p *Profile) Validate( //nolint:funlen // This is a validation function, th
 				),
 			),
 		),
-		validation.Field(&p.EncryptedPassword,
-			validation.When(
-				p.ProviderType == ProviderTypeSMTP &&
-					(p.AuthType == AuthTypePlain || p.AuthType == AuthTypeLogin),
-				validation.Required.Error(
-					"Password is required for SMTP provider with Plain or Login auth",
-				),
-			),
-		),
-
 		// API Key validation for API-based providers
 		validation.Field(&p.EncryptedAPIKey,
 			validation.When(

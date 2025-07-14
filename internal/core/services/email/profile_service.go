@@ -5,12 +5,16 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/infrastructure/encryption"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
@@ -20,13 +24,17 @@ type ProfileServiceParams struct {
 	fx.In
 
 	Logger            *logger.Logger
+	PermService       services.PermissionService
 	Repository        repositories.EmailProfileRepository
+	AuditService      services.AuditService
 	EncryptionService encryption.Service
 }
 
 type profileService struct {
 	l                 *zerolog.Logger
 	repository        repositories.EmailProfileRepository
+	ps                services.PermissionService
+	as                services.AuditService
 	encryptionService encryption.Service
 }
 
@@ -40,14 +48,93 @@ func NewProfileService(p ProfileServiceParams) services.EmailProfileService {
 		l:                 &log,
 		repository:        p.Repository,
 		encryptionService: p.EncryptionService,
+		ps:                p.PermService,
+		as:                p.AuditService,
 	}
+}
+
+// List retrieves a list of email profiles
+func (s *profileService) List(
+	ctx context.Context,
+	req *repositories.ListEmailProfileRequest,
+) (*ports.ListResult[*email.Profile], error) {
+	log := s.l.With().
+		Str("operation", "List").
+		Str("orgID", req.Filter.TenantOpts.OrgID.String()).
+		Str("buID", req.Filter.TenantOpts.BuID.String()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				Resource:       permission.ResourceEmailProfile,
+				Action:         permission.ActionRead,
+				BusinessUnitID: req.Filter.TenantOpts.BuID,
+				OrganizationID: req.Filter.TenantOpts.OrgID,
+				UserID:         req.Filter.TenantOpts.UserID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read email profiles",
+		)
+	}
+
+	return s.repository.List(ctx, req)
+}
+
+// Get retrieves an email profile by ID
+func (s *profileService) Get(
+	ctx context.Context,
+	req repositories.GetEmailProfileByIDRequest,
+) (*email.Profile, error) {
+	log := s.l.With().
+		Str("operation", "Get").
+		Str("profileID", req.ProfileID.String()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				Resource:       permission.ResourceEmailProfile,
+				Action:         permission.ActionRead,
+				BusinessUnitID: req.BuID,
+				OrganizationID: req.OrgID,
+				UserID:         req.UserID,
+			},
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read this email profile",
+		)
+	}
+
+	return s.repository.Get(ctx, req)
 }
 
 // Create creates a new email profile
 func (s *profileService) Create(
 	ctx context.Context,
 	profile *email.Profile,
+	userID pulid.ID,
 ) (*email.Profile, error) {
+	log := s.l.With().
+		Str("operation", "Create").
+		Interface("profile", profile).
+		Logger()
+
 	// Validate the profile
 	multiErr := errors.NewMultiError()
 	profile.Validate(ctx, multiErr)
@@ -80,8 +167,32 @@ func (s *profileService) Create(
 		profile.OAuth2ClientSecret = encrypted
 	}
 
+	createdEntity, err := s.repository.Create(ctx, profile)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceEmailProfile,
+			ResourceID:     createdEntity.ID.String(),
+			Action:         permission.ActionCreate,
+			CurrentState:   jsonutils.MustToJSON(createdEntity),
+			UserID:         userID,
+			OrganizationID: createdEntity.OrganizationID,
+			BusinessUnitID: createdEntity.BusinessUnitID,
+		},
+		audit.WithComment("Email profile created"),
+		audit.WithMetadata(map[string]any{
+			"name": createdEntity.Name,
+		}),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log email profile creation")
+	}
+
 	// Create the profile
-	return s.repository.Create(ctx, profile)
+	return createdEntity, nil
 }
 
 // Update updates an existing email profile
@@ -140,22 +251,6 @@ func (s *profileService) Update(
 
 	// Update the profile
 	return s.repository.Update(ctx, profile)
-}
-
-// Get retrieves an email profile by ID
-func (s *profileService) Get(
-	ctx context.Context,
-	req repositories.GetEmailProfileByIDRequest,
-) (*email.Profile, error) {
-	return s.repository.Get(ctx, req)
-}
-
-// List retrieves a list of email profiles
-func (s *profileService) List(
-	ctx context.Context,
-	req *repositories.ListEmailProfileRequest,
-) (*ports.ListResult[*email.Profile], error) {
-	return s.repository.List(ctx, req)
 }
 
 // Delete deletes an email profile

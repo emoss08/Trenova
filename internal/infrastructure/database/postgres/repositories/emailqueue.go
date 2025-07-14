@@ -344,3 +344,176 @@ func (r *emailQueueRepository) GetScheduled(
 
 	return queues, nil
 }
+
+func (r *emailQueueRepository) MarkAsSent(
+	ctx context.Context,
+	queueID pulid.ID,
+	messageID string,
+) error {
+	dba, err := r.db.DB(ctx)
+	if err != nil {
+		return oops.
+			In("email_queue_repository").
+			Tags("operation", "mark_as_sent").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := r.l.With().
+		Str("operation", "MarkAsSent").
+		Str("queueID", queueID.String()).
+		Str("messageID", messageID).
+		Logger()
+
+	results, err := dba.NewUpdate().
+		Model(&email.Queue{}).
+		Where("eq.id = ?", queueID).
+		Set("status = ?", email.QueueStatusSent).
+		Set("sent_at = ?", time.Now().Unix()).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to mark email as sent")
+		return oops.
+			In("email_queue_repository").
+			Tags("operation", "mark_as_sent").
+			Tags("queue_id", queueID.String()).
+			Time(time.Now()).
+			Wrapf(err, "failed to mark email as sent")
+	}
+
+	rows, err := results.RowsAffected()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get rows affected")
+		return oops.
+			In("email_queue_repository").
+			Tags("operation", "mark_as_sent").
+			Tags("queue_id", queueID.String()).
+			Time(time.Now()).
+			Wrapf(err, "failed to get rows affected")
+	}
+
+	if rows == 0 {
+		return errors.NewNotFoundError("Email queue entry not found")
+	}
+
+	log.Info().
+		Str("queueID", queueID.String()).
+		Str("messageID", messageID).
+		Msg("email marked as sent")
+
+	return nil
+}
+
+func (r *emailQueueRepository) MarkAsFailed(
+	ctx context.Context,
+	queueID pulid.ID,
+	errorMessage string,
+) error {
+	dba, err := r.db.DB(ctx)
+	if err != nil {
+		return oops.
+			In("email_queue_repository").
+			Tags("operation", "mark_as_failed").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := r.l.With().
+		Str("operation", "MarkAsFailed").
+		Str("queueID", queueID.String()).
+		Str("errorMessage", errorMessage).
+		Logger()
+
+	results, err := dba.NewUpdate().
+		Model(&email.Queue{}).
+		Where("eq.id = ?", queueID).
+		Set("status = ?", email.QueueStatusFailed).
+		Set("error_message = ?", errorMessage).
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to mark email as failed")
+		return oops.
+			In("email_queue_repository").
+			Tags("operation", "mark_as_failed").
+			Tags("queue_id", queueID.String()).
+			Time(time.Now()).
+			Wrapf(err, "failed to mark email as failed")
+	}
+
+	rows, err := results.RowsAffected()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get rows affected")
+		return oops.
+			In("email_queue_repository").
+			Tags("operation", "mark_as_failed").
+			Tags("queue_id", queueID.String()).
+			Time(time.Now()).
+			Wrapf(err, "failed to get rows affected")
+	}
+
+	if rows == 0 {
+		return errors.NewNotFoundError("Email queue entry not found")
+	}
+
+	log.Info().
+		Str("queueID", queueID.String()).
+		Str("errorMessage", errorMessage).
+		Msg("email marked as failed")
+
+	return nil
+}
+
+func (r *emailQueueRepository) IncrementRetryCount(ctx context.Context, queueID pulid.ID) error {
+	dba, err := r.db.DB(ctx)
+	if err != nil {
+		return oops.
+			In("email_queue_repository").
+			Tags("operation", "increment_retry_count").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := r.l.With().
+		Str("operation", "IncrementRetryCount").
+		Str("queueID", queueID.String()).
+		Logger()
+
+	results, err := dba.NewUpdate().
+		Model(&email.Queue{}).
+		Where("eq.id = ?", queueID).
+		Set("retry_count = retry_count + 1").
+		Returning("*").
+		Exec(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to increment retry count")
+		return oops.
+			In("email_queue_repository").
+			Tags("operation", "increment_retry_count").
+			Tags("queue_id", queueID.String()).
+			Time(time.Now()).
+			Wrapf(err, "failed to increment retry count")
+	}
+
+	rows, err := results.RowsAffected()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get rows affected")
+		return oops.
+			In("email_queue_repository").
+			Tags("operation", "increment_retry_count").
+			Tags("queue_id", queueID.String()).
+			Time(time.Now()).
+			Wrapf(err, "failed to get rows affected")
+	}
+
+	if rows == 0 {
+		return errors.NewNotFoundError("Email queue entry not found")
+	}
+
+	log.Info().
+		Str("queueID", queueID.String()).
+		Msg("retry count incremented")
+
+	return nil
+}

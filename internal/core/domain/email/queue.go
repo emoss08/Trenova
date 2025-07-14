@@ -34,7 +34,7 @@ type AttachmentMeta struct {
 
 // Queue represents an email in the sending queue
 type Queue struct {
-	bun.BaseModel `bun:"table:email_queue,alias:eq" json:"-"`
+	bun.BaseModel `bun:"table:email_queues,alias:eq" json:"-"`
 
 	ID                pulid.ID         `json:"id"                          bun:"id,type:varchar(100),pk"`
 	OrganizationID    pulid.ID         `json:"organizationId"              bun:"organization_id,type:varchar(100),notnull"`

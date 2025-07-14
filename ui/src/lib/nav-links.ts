@@ -95,7 +95,6 @@ export const adminLinks: SidebarLink[] = [
     href: "/organization/email-profiles/",
     title: "Email Profile(s)",
     group: "Email & SMS",
-    disabled: true,
   },
   {
     href: "#",
@@ -428,6 +427,12 @@ export const routes: RouteInfo[] = [
         key: Resource.DataRetention,
         label: "Data Retention",
         link: "/organization/data-retention/",
+        supportsModal: false,
+      },
+      {
+        key: Resource.EmailProfile,
+        label: "Email Profile(s)",
+        link: "/organization/email-profiles/",
         supportsModal: false,
       },
       {

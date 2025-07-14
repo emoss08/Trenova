@@ -96,6 +96,15 @@ type EmailQueueRepository interface {
 
 	// GetScheduled retrieves scheduled emails that are due
 	GetScheduled(ctx context.Context, limit int) ([]*email.Queue, error)
+
+	// MarkAsSent marks an email as sent
+	MarkAsSent(ctx context.Context, queueID pulid.ID, messageID string) error
+
+	// MarkAsFailed marks an email as failed
+	MarkAsFailed(ctx context.Context, queueID pulid.ID, errorMessage string) error
+
+	// IncrementRetryCount increments the retry count for an email
+	IncrementRetryCount(ctx context.Context, queueID pulid.ID) error
 }
 
 // EmailLogRepository handles email log persistence
