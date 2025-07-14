@@ -3,6 +3,7 @@ import type {
   SortField,
 } from "@/lib/schemas/table-configuration-schema";
 import type { IconDefinition } from "@fortawesome/pro-regular-svg-icons";
+import type { ReactNode } from "react";
 
 export enum Status {
   Active = "Active",
@@ -14,7 +15,8 @@ export interface ChoiceProps<T extends string | boolean | number> {
   label: string;
   color?: string;
   description?: string;
-  icon?: IconDefinition;
+  icon?: IconDefinition | ReactNode;
+  disabled?: boolean;
 }
 
 export enum Gender {

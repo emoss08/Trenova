@@ -22,17 +22,26 @@ function SelectGroup({
   return <SelectPrimitive.Group data-slot="select-group" {...props} />;
 }
 
-function SelectValue({ color, ...props }: SelectValue) {
+function SelectValue({ color, icon, ...props }: SelectValue) {
+  const renderIcon = () => {
+    if (typeof icon === "object" && icon !== null && "icon" in icon) {
+      return <Icon icon={icon} />;
+    }
+    return icon;
+  };
+
   return (
-    <div className="flex h-5 items-center text-xs font-normal text-foreground gap-x-1.5 flex-1 min-w-0 overflow-hidden">
-      {color && (
+    <div className="flex h-5 items-center text-xs font-normal text-foreground gap-x-1.5 flex-1 min-w-0 overflow-hidden [&_svg]:size-3 [&_svg]:shrink-0">
+      {color ? (
         <div
           className="size-2 rounded-full flex-shrink-0"
           style={{
             backgroundColor: color,
           }}
         />
-      )}
+      ) : icon ? (
+        renderIcon()
+      ) : null}
       <div className="truncate min-w-0 flex-1 text-left">
         <SelectPrimitive.Value data-slot="select-value" {...props} />
       </div>
@@ -122,6 +131,18 @@ function SelectItem({
   description,
   ...props
 }: Omit<SelectOption, "label">) {
+  const renderIcon = () => {
+    if (typeof icon === "object" && icon !== null && "icon" in icon) {
+      return (
+        <Icon
+          icon={icon}
+          className="size-3 data-[state=checked]:text-foreground data-[state=checked]:bg-muted-foreground/10"
+        />
+      );
+    }
+    return icon;
+  };
+
   return (
     <SelectPrimitive.Item
       data-slot="select-item"
@@ -132,10 +153,7 @@ function SelectItem({
       {...props}
     >
       {icon ? (
-        <Icon
-          icon={icon}
-          className="size-3 data-[state=checked]:text-foreground data-[state=checked]:bg-muted-foreground/10"
-        />
+        renderIcon()
       ) : color ? (
         <span
           className="block size-2 rounded-full"
@@ -230,5 +248,6 @@ export {
   SelectScrollUpButton,
   SelectSeparator,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 };
+

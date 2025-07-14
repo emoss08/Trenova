@@ -82,6 +82,7 @@ export function SelectField<T extends FieldValues>({
               <SelectValue
                 placeholder={placeholder}
                 color={selectedOption?.color}
+                icon={selectedOption?.icon}
               />
             </SelectTrigger>
             <SelectContent>
@@ -93,6 +94,7 @@ export function SelectField<T extends FieldValues>({
                     description={option.description}
                     icon={option.icon}
                     color={option.color}
+                    disabled={option.disabled}
                   >
                     {option.label}
                   </SelectItem>
