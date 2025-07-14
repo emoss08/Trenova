@@ -64,6 +64,7 @@ export function getColumns(): ColumnDef<EmailProfileSchema>[] {
           </p>
         );
       },
+      minSize: 100,
       meta: {
         apiField: "host",
         filterable: true,
