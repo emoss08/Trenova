@@ -38,6 +38,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerSecond(5), // 5 reads per second
 	)...)
 
+	api.Post("/", rl.WithRateLimit(
+		[]fiber.Handler{h.create},
+		middleware.PerMinute(60), // 60 writes per minute
+	)...)
+
 	api.Get("/:profileID/", rl.WithRateLimit(
 		[]fiber.Handler{h.get},
 		middleware.PerMinute(60), // 60 reads per minute
@@ -86,4 +91,26 @@ func (h *Handler) get(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(profile)
+}
+
+func (h *Handler) create(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	profile := new(email.Profile)
+	profile.OrganizationID = reqCtx.OrgID
+	profile.BusinessUnitID = reqCtx.BuID
+
+	if err = c.BodyParser(profile); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	entity, err := h.ps.Create(c.Context(), profile, reqCtx.UserID)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusCreated).JSON(entity)
 }
