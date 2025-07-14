@@ -1,12 +1,13 @@
+import { Status } from "@/types/common";
 import { z } from "zod/v4";
 import {
   nullableBigIntegerSchema,
+  nullableIntegerSchema,
   nullableStringSchema,
+  optionalStringSchema,
   timestampSchema,
   versionSchema,
 } from "./helpers";
-import { optionalStringSchema } from "./helpers";
-import { Status } from "@/types/common";
 
 export const ProviderType = z.enum([
   "SMTP",
@@ -72,14 +73,16 @@ export const emailProfileSchema = z.object({
   providerType: ProviderType,
   authType: AuthType,
   encryptionType: EncryptionType,
-  host: z.string().min(1, { error: "Host is required" }),
-  username: z.string().min(1, { error: "Username is required" }),
+  host: nullableStringSchema,
+  username: nullableStringSchema,
+  password: nullableStringSchema,
+  apiKey: nullableStringSchema,
   oauth2ClientId: nullableStringSchema,
   oauth2TenantId: nullableStringSchema,
   fromAddress: nullableStringSchema,
   fromName: nullableStringSchema,
   replyTo: nullableStringSchema,
-  port: z.number().min(1, { error: "Port is required" }),
+  port: nullableIntegerSchema,
   maxConnections: z
     .number()
     .min(1, { error: "Max Connections is required" })

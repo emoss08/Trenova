@@ -11,12 +11,16 @@ const (
 	ProviderTypePostmark  = ProviderType("Postmark")
 	ProviderTypeExchange  = ProviderType("Exchange")
 	ProviderTypeOffice365 = ProviderType("Office365")
+	ProviderTypeMailHog   = ProviderType(
+		"MailHog",
+	) // * For testing purposes only or local development
 )
 
 // AuthType represents the authentication method for email providers
 type AuthType string
 
 const (
+	AuthTypeNone    = AuthType("None")
 	AuthTypePlain   = AuthType("Plain")
 	AuthTypeLogin   = AuthType("Login")
 	AuthTypeCRAMMD5 = AuthType("CRAMMD5")
@@ -75,6 +79,15 @@ const (
 	LogStatusComplained   = LogStatus("Complained")
 	LogStatusUnsubscribed = LogStatus("Unsubscribed")
 	LogStatusRejected     = LogStatus("Rejected")
+)
+
+// TLSPolicy represents the TLS policy for SMTP connections
+type TLSPolicy string
+
+const (
+	TLSPolicyMandatory     = TLSPolicy("Mandatory")
+	TLSPolicyOpportunistic = TLSPolicy("Opportunistic")
+	TLSPolicyNone          = TLSPolicy("None")
 )
 
 // BounceType represents the type of email bounce

@@ -171,6 +171,10 @@ export function AuditEntryResourceBadge({
       variant: "orange",
       text: "User",
     },
+    [Resource.EmailProfile]: {
+      variant: "orange",
+      text: "Email Profile",
+    },
     [Resource.BusinessUnit]: {
       variant: "orange",
       text: "Business Unit",

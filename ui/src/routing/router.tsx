@@ -472,6 +472,19 @@ const routes: RouteObject[] = [
                   title: "Audit Entries",
                 },
               },
+              {
+                path: "email-profiles",
+                async lazy() {
+                  let { EmailProfiles } = await import(
+                    "@/app/email-profiles/page"
+                  );
+                  return { Component: EmailProfiles };
+                },
+                handle: {
+                  crumb: "Email Profiles",
+                  title: "Email Profiles",
+                },
+              },
             ],
           },
         ],
@@ -501,4 +514,3 @@ const routes: RouteObject[] = [
 const router = createBrowserRouter(routes);
 
 export { router, routes };
-

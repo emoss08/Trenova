@@ -78,7 +78,7 @@ func (s *Service) SendEmail(
 	}
 
 	// Get email profile
-	profile, err := s.getProfile(ctx, repositories.GetEmailProfileByIDRequest{
+	profile, err := s.getProfileOrDefault(ctx, repositories.GetEmailProfileByIDRequest{
 		OrgID:      req.OrganizationID,
 		BuID:       req.BusinessUnitID,
 		UserID:     req.UserID,
@@ -434,13 +434,14 @@ func (s *Service) CancelScheduledEmail(ctx context.Context, queueID pulid.ID) er
 
 // Helper methods
 
-func (s *Service) getProfile(
+func (s *Service) getProfileOrDefault(
 	ctx context.Context,
 	req repositories.GetEmailProfileByIDRequest,
 ) (*email.Profile, error) {
 	if req.ProfileID != pulid.Nil {
 		return s.profileService.Get(ctx, req)
 	}
+
 	return s.profileService.GetDefault(ctx, req)
 }
 
@@ -495,7 +496,7 @@ func (s *Service) createQueueEntry(
 		TextBody:       req.TextBody,
 		Attachments:    processedAttachments,
 		Priority:       req.Priority,
-		Status:         s.determineInitialStatus(nil), // Use helper to determine status
+		Status:         email.QueueStatusPending,
 		Metadata:       req.Metadata,
 	}
 

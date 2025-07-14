@@ -37,41 +37,30 @@ func NewQueueService(p QueueServiceParams) services.EmailQueueService {
 }
 
 func (s *queueService) Create(ctx context.Context, queue *email.Queue) (*email.Queue, error) {
-	// TODO: Implement queue creation
-	return nil, nil
+	return s.r.Create(ctx, queue)
 }
 
 func (s *queueService) Update(ctx context.Context, queue *email.Queue) (*email.Queue, error) {
-	// TODO: Implement queue update
-	return nil, nil
+	return s.r.Update(ctx, queue)
 }
 
 func (s *queueService) Get(ctx context.Context, id pulid.ID) (*email.Queue, error) {
-	// TODO: Implement get queue by ID
-	return nil, nil
+	return s.r.Get(ctx, id)
 }
 
 func (s *queueService) List(
 	ctx context.Context,
-	filter *ports.LimitOffsetQueryOptions,
+	filter *ports.QueryOptions,
 ) (*ports.ListResult[*email.Queue], error) {
-	// TODO: Implement list queues
-	return nil, nil
+	return s.r.List(ctx, filter)
 }
 
 func (s *queueService) GetPending(ctx context.Context, limit int) ([]*email.Queue, error) {
-	// TODO: Implement get pending emails
-	return nil, nil
+	return s.r.GetPending(ctx, limit)
 }
 
 func (s *queueService) GetScheduled(ctx context.Context, limit int) ([]*email.Queue, error) {
-	// TODO: Implement get scheduled emails
-	return nil, nil
-}
-
-func (s *queueService) MarkAsSent(ctx context.Context, queueID pulid.ID, messageID string) error {
-	// TODO: Implement mark as sent
-	return nil
+	return s.r.GetScheduled(ctx, limit)
 }
 
 func (s *queueService) MarkAsFailed(
@@ -79,11 +68,13 @@ func (s *queueService) MarkAsFailed(
 	queueID pulid.ID,
 	errorMessage string,
 ) error {
-	// TODO: Implement mark as failed
-	return nil
+	return s.r.MarkAsFailed(ctx, queueID, errorMessage)
 }
 
 func (s *queueService) IncrementRetryCount(ctx context.Context, queueID pulid.ID) error {
-	// TODO: Implement increment retry count
-	return nil
+	return s.r.IncrementRetryCount(ctx, queueID)
+}
+
+func (s *queueService) MarkAsSent(ctx context.Context, queueID pulid.ID, messageID string) error {
+	return s.r.MarkAsSent(ctx, queueID, messageID)
 }

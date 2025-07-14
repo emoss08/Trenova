@@ -50,7 +50,11 @@ type EmailService interface {
 // EmailProfileService manages email configuration profiles
 type EmailProfileService interface {
 	// Create creates a new email profile
-	Create(ctx context.Context, profile *email.Profile) (*email.Profile, error)
+	Create(
+		ctx context.Context,
+		profile *email.Profile,
+		userID pulid.ID,
+	) (*email.Profile, error)
 
 	// Update updates an existing email profile
 	Update(ctx context.Context, profile *email.Profile) (*email.Profile, error)
@@ -132,7 +136,7 @@ type EmailQueueService interface {
 	// List retrieves a list of email queue entries
 	List(
 		ctx context.Context,
-		filter *ports.LimitOffsetQueryOptions,
+		filter *ports.QueryOptions,
 	) (*ports.ListResult[*email.Queue], error)
 
 	// GetPending retrieves pending emails to process
@@ -217,10 +221,10 @@ func (r *SendEmailRequest) Validate() error {
 			validation.Required.Error("Subject is required"),
 			validation.Length(1, 500).Error("Subject must be between 1 and 500 characters"),
 		),
-		validation.Field(&r.HTMLBody,
-			validation.Required.Error("HTML body is required"),
-			validation.Length(1, 10485760).Error("HTML body must not exceed 10MB"),
-		),
+		// validation.Field(&r.HTMLBody,
+		// 	validation.Required.Error("HTML body is required"),
+		// 	validation.Length(1, 10485760).Error("HTML body must not exceed 10MB"),
+		// ),
 		validation.Field(&r.TextBody,
 			validation.Length(0, 5242880).Error("Text body must not exceed 5MB"),
 		),

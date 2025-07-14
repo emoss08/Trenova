@@ -36,6 +36,7 @@ type ProviderConfig struct {
 	// Authentication
 	AuthType       email.AuthType
 	EncryptionType email.EncryptionType
+	TLSPolicy      email.TLSPolicy // * Important: This is required for SMTP authentication
 
 	// Additional settings
 	TimeoutSeconds int

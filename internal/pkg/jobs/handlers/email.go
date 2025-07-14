@@ -89,7 +89,11 @@ func (h *EmailHandler) ProcessTask(ctx context.Context, task *asynq.Task) error 
 }
 
 // processSendEmail processes a regular email send request
-func (h *EmailHandler) processSendEmail(ctx context.Context, payload *jobs.SendEmailPayload, log *zerolog.Logger) error {
+func (h *EmailHandler) processSendEmail(
+	ctx context.Context,
+	payload *jobs.SendEmailPayload,
+	log *zerolog.Logger,
+) error {
 	log.Info().
 		Str("subject", payload.Request.Subject).
 		Strs("to", payload.Request.To).
@@ -122,7 +126,11 @@ func (h *EmailHandler) processSendEmail(ctx context.Context, payload *jobs.SendE
 }
 
 // processSendTemplatedEmail processes a templated email send request
-func (h *EmailHandler) processSendTemplatedEmail(ctx context.Context, payload *jobs.SendEmailPayload, log *zerolog.Logger) error {
+func (h *EmailHandler) processSendTemplatedEmail(
+	ctx context.Context,
+	payload *jobs.SendEmailPayload,
+	log *zerolog.Logger,
+) error {
 	if payload.TemplatedRequest == nil {
 		err := oops.In("email_handler").
 			Tags("operation", "validate_templated_request").

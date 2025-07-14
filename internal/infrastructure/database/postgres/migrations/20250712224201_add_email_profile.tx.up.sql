@@ -105,9 +105,6 @@ CREATE TABLE IF NOT EXISTS "email_profiles"(
     CONSTRAINT "pk_email_profiles" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
     CONSTRAINT "fk_email_profiles_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE,
     CONSTRAINT "fk_email_profiles_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON DELETE CASCADE,
-    -- Ensure valid email addresses
-    CONSTRAINT "chk_email_profiles_from_address" CHECK ("from_address" ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
-    CONSTRAINT "chk_email_profiles_reply_to" CHECK ("reply_to" IS NULL OR "reply_to" ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
     -- Provider-specific validations
     CONSTRAINT "chk_email_profiles_smtp_config" CHECK (CASE WHEN "provider_type" = 'SMTP' THEN
         "host" IS NOT NULL AND "port" IS NOT NULL AND ("auth_type" != 'APIKey' OR "encrypted_api_key" IS NOT NULL)

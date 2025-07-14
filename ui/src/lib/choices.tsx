@@ -1,4 +1,10 @@
 import {
+  AWSIcon,
+  GolangIcon,
+  MicrosoftIcon,
+  TwilioIcon,
+} from "@/components/brand-icons";
+import {
   AccessorialChargeMethod,
   BillingCycleType,
   BillingExceptionHandling,
@@ -24,6 +30,10 @@ import { ShipmentDocumentType } from "@/types/shipment";
 import { Visibility } from "@/types/table-configuration";
 import { Endorsement, PTOStatus, PTOType, WorkerType } from "@/types/worker";
 import { ConsolidationStatus } from "./schemas/consolidation-schema";
+import {
+  ProviderType,
+  type EmailProfileSchema,
+} from "./schemas/email-profile-schema";
 import { MoveStatus, type MoveSchema } from "./schemas/move-schema";
 import {
   RatingMethod,
@@ -743,3 +753,37 @@ export const notificationResourceChoices = [
     description: "Location",
   },
 ] satisfies ReadonlyArray<ChoiceProps<NotificationResources>>;
+
+export const providerTypeChoices = [
+  {
+    value: ProviderType.enum.SMTP,
+    label: "SMTP",
+    description:
+      "Standard SMTP protocol for direct email delivery with customizable server settings",
+    icon: <GolangIcon className="fill-foreground" />,
+  },
+  {
+    value: ProviderType.enum.SendGrid,
+    label: "SendGrid",
+    description:
+      "Cloud-based email delivery service by Twilio with advanced analytics and deliverability",
+    icon: <TwilioIcon />,
+    disabled: true,
+  },
+  {
+    value: ProviderType.enum.AWS_SES,
+    label: "AWS SES",
+    description:
+      "Amazon Simple Email Service for scalable email delivery with AWS integration",
+    icon: <AWSIcon className="fill-foreground" />,
+    disabled: true,
+  },
+  {
+    value: ProviderType.enum.Exchange,
+    label: "Microsoft Exchange",
+    description:
+      "Microsoft Exchange Server for enterprise email with Active Directory integration",
+    icon: <MicrosoftIcon />,
+    disabled: true,
+  },
+] satisfies ReadonlyArray<ChoiceProps<EmailProfileSchema["providerType"]>>;
