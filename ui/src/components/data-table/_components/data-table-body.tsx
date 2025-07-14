@@ -92,6 +92,9 @@ function DataTableRow<TData>({
             key={cell.id}
             role="cell"
             aria-label={`${cell.column.id} cell`}
+            style={{
+              minWidth: cell.column.getSize(),
+            }}
           >
             {flexRender(cell.column.columnDef.cell, cell.getContext())}
           </TableCell>
