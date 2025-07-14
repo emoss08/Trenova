@@ -76,6 +76,7 @@ export function InputField<T extends FieldValues>({
               type={type}
               readOnly={readOnly}
               disabled={disabled}
+              maxLength={maxLength}
               value={field.value ?? ""}
               onChange={(e) => {
                 if (showCharacterLimit) {
