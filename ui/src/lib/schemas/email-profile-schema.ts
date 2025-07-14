@@ -99,6 +99,10 @@ export const emailProfileSchema = z.object({
     .number()
     .min(1, { error: "Rate Limit Per Minute is required" })
     .default(60),
+  retryDelaySeconds: z
+    .number()
+    .min(1, { error: "Retry Delay Seconds is required" })
+    .default(5),
   rateLimitPerHour: z
     .number()
     .min(1, { error: "Rate Limit Per Hour is required" })
@@ -108,7 +112,7 @@ export const emailProfileSchema = z.object({
     .min(1, { error: "Rate Limit Per Day is required" })
     .default(10000),
   isDefault: z.boolean().default(false),
-  metadata: z.record(z.string(), z.any()).optional(),
+  metadata: z.record(z.string(), z.any()).nullish(),
 });
 
 export const templateSchema = z.object({
