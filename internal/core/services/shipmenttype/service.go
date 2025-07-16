@@ -3,6 +3,7 @@ package shipmenttype
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -29,6 +30,7 @@ type ServiceParams struct {
 	PermService  services.PermissionService
 	AuditService services.AuditService
 	Validator    *shipmenttypevalidator.Validator
+	EmailService services.EmailService
 }
 
 type Service struct {
@@ -37,6 +39,7 @@ type Service struct {
 	ps   services.PermissionService
 	as   services.AuditService
 	v    *shipmenttypevalidator.Validator
+	es   services.EmailService
 }
 
 func NewService(p ServiceParams) *Service {
@@ -50,6 +53,7 @@ func NewService(p ServiceParams) *Service {
 		ps:   p.PermService,
 		as:   p.AuditService,
 		v:    p.Validator,
+		es:   p.EmailService,
 	}
 }
 
@@ -214,6 +218,20 @@ func (s *Service) Create(
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log shipment type creation")
+	}
+
+	_, err = s.es.SendEmail(ctx, &services.SendEmailRequest{
+		OrganizationID: createdEntity.OrganizationID,
+		BusinessUnitID: createdEntity.BusinessUnitID,
+		UserID:         userID,
+		Subject:        "Shipment Type Created",
+		To:             []string{"admin@trenova.app"},
+		HTMLBody:       "Shipment Type Created",
+		TextBody:       "Shipment Type Created",
+		Priority:       email.PriorityHigh,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to send email")
 	}
 
 	return createdEntity, nil

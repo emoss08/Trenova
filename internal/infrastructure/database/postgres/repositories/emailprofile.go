@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
@@ -50,12 +51,101 @@ func NewEmailProfileRepository(p EmailProfileRepositoryParams) repositories.Emai
 	}
 }
 
+func (r *emailProfileRepository) filterQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListEmailProfileRequest,
+) *bun.SelectQuery {
+	qb := querybuilder.NewWithPostgresSearch(
+		q,
+		"ep",
+		repositories.EmailProfileFieldConfig,
+		(*email.Profile)(nil),
+	)
+
+	qb.ApplyTenantFilters(req.Filter.TenantOpts)
+
+	if req.Filter != nil {
+		qb.ApplyFilters(req.Filter.FieldFilters)
+
+		if len(req.Filter.Sort) > 0 {
+			qb.ApplySort(req.Filter.Sort)
+		}
+
+		if req.Filter.Query != "" {
+			qb.ApplyTextSearch(req.Filter.Query, []string{"name", "host", "description"})
+		}
+
+		q = qb.GetQuery()
+	}
+
+	if req.ExcludeInactive {
+		q = q.Where("ep.status = ?", domain.StatusActive)
+	}
+
+	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
+}
+
+// List retrieves a list of email profiles with pagination
+func (r *emailProfileRepository) List(
+	ctx context.Context,
+	req *repositories.ListEmailProfileRequest,
+) (*ports.ListResult[*email.Profile], error) {
+	dba, err := r.db.ReadDB(ctx)
+	if err != nil {
+		return nil, oops.
+			In("email_profile_repository").
+			Tags("operation", "list").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := r.l.With().
+		Str("operation", "List").
+		Str("orgID", req.Filter.TenantOpts.OrgID.String()).
+		Str("buID", req.Filter.TenantOpts.BuID.String()).
+		Logger()
+
+	profiles := make([]*email.Profile, 0)
+
+	q := dba.NewSelect().Model(&profiles)
+
+	q = r.filterQuery(q, req)
+
+	log.Info().Interface("req", req).Msg("req")
+
+	total, err := q.ScanAndCount(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to scan email profiles")
+		return nil, oops.
+			In("email_profile_repository").
+			Tags("operation", "list").
+			Time(time.Now()).
+			Wrapf(err, "failed to list email profiles")
+	}
+
+	// Decrypt sensitive fields for all profiles
+	for _, profile := range profiles {
+		if dErr := r.decryptSensitiveFields(profile); dErr != nil {
+			log.Error().
+				Err(dErr).
+				Str("profileID", profile.ID.String()).
+				Msg("failed to decrypt profile fields")
+			// Continue with other profiles rather than failing entirely
+		}
+	}
+
+	return &ports.ListResult[*email.Profile]{
+		Items: profiles,
+		Total: total,
+	}, nil
+}
+
 // Create creates a new email profile with encrypted credentials
 func (r *emailProfileRepository) Create(
 	ctx context.Context,
 	profile *email.Profile,
 ) (*email.Profile, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_profile_repository").
@@ -106,7 +196,7 @@ func (r *emailProfileRepository) Update(
 	ctx context.Context,
 	profile *email.Profile,
 ) (*email.Profile, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_profile_repository").
@@ -125,6 +215,14 @@ func (r *emailProfileRepository) Update(
 	if err = r.encryptSensitiveFields(profile); err != nil {
 		log.Error().Err(err).Msg("failed to encrypt sensitive fields")
 		return nil, err
+	}
+
+	// If this is marked as default, unset any existing default
+	if profile.IsDefault {
+		if err = r.unsetExistingDefault(ctx, dba, profile.OrganizationID); err != nil {
+			log.Error().Err(err).Msg("failed to unset existing default")
+			return nil, err
+		}
 	}
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
@@ -230,150 +328,12 @@ func (r *emailProfileRepository) Get(
 	return profile, nil
 }
 
-func (r *emailProfileRepository) filterQuery(
-	q *bun.SelectQuery,
-	req *repositories.ListEmailProfileRequest,
-) *bun.SelectQuery {
-	qb := querybuilder.NewWithPostgresSearch(
-		q,
-		"ep",
-		repositories.EmailProfileFieldConfig,
-		(*email.Profile)(nil),
-	)
-	qb.ApplyTenantFilters(req.Filter.TenantOpts)
-
-	if req.Filter != nil {
-		qb.ApplyFilters(req.Filter.FieldFilters)
-
-		if len(req.Filter.Sort) > 0 {
-			qb.ApplySort(req.Filter.Sort)
-		}
-
-		if req.Filter.Query != "" {
-			qb.ApplyTextSearch(req.Filter.Query, []string{"name", "from_address", "host"})
-		}
-
-		q = qb.GetQuery()
-	}
-
-	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
-}
-
-// List retrieves a list of email profiles with pagination
-func (r *emailProfileRepository) List(
-	ctx context.Context,
-	req *repositories.ListEmailProfileRequest,
-) (*ports.ListResult[*email.Profile], error) {
-	dba, err := r.db.DB(ctx)
-	if err != nil {
-		return nil, oops.
-			In("email_profile_repository").
-			Tags("operation", "list").
-			Time(time.Now()).
-			Wrapf(err, "get database connection")
-	}
-
-	log := r.l.With().
-		Str("operation", "List").
-		Str("orgID", req.Filter.TenantOpts.OrgID.String()).
-		Str("buID", req.Filter.TenantOpts.BuID.String()).
-		Logger()
-
-	profiles := make([]*email.Profile, 0)
-
-	q := dba.NewSelect().Model(&profiles)
-
-	q = r.filterQuery(q, req)
-
-	total, err := q.ScanAndCount(ctx)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to scan email profiles")
-		return nil, oops.
-			In("email_profile_repository").
-			Tags("operation", "list").
-			Time(time.Now()).
-			Wrapf(err, "failed to list email profiles")
-	}
-
-	// Decrypt sensitive fields for all profiles
-	for _, profile := range profiles {
-		if dErr := r.decryptSensitiveFields(profile); dErr != nil {
-			log.Error().
-				Err(dErr).
-				Str("profileID", profile.ID.String()).
-				Msg("failed to decrypt profile fields")
-			// Continue with other profiles rather than failing entirely
-		}
-	}
-
-	return &ports.ListResult[*email.Profile]{
-		Items: profiles,
-		Total: total,
-	}, nil
-}
-
-// Delete deletes an email profile
-func (r *emailProfileRepository) Delete(
-	ctx context.Context,
-	req repositories.DeleteEmailProfileRequest,
-) error {
-	dba, err := r.db.DB(ctx)
-	if err != nil {
-		return oops.
-			In("email_profile_repository").
-			Tags("operation", "delete").
-			Time(time.Now()).
-			Wrapf(err, "get database connection")
-	}
-
-	log := r.l.With().
-		Str("operation", "Delete").
-		Str("profileID", req.ProfileID.String()).
-		Logger()
-
-	result, err := dba.NewDelete().
-		Model((*email.Profile)(nil)).
-		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
-			return dq.
-				Where("ep.id = ?", req.ProfileID).
-				Where("ep.organization_id = ?", req.OrgID).
-				Where("ep.business_unit_id = ?", req.BuID)
-		}).
-		Exec(ctx)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to delete email profile")
-		return oops.
-			In("email_profile_repository").
-			Tags("operation", "delete").
-			Tags("profile_id", string(req.ProfileID)).
-			Time(time.Now()).
-			Wrapf(err, "failed to delete email profile")
-	}
-
-	rows, err := result.RowsAffected()
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get rows affected")
-		return oops.
-			In("email_profile_repository").
-			Tags("operation", "delete").
-			Time(time.Now()).
-			Wrapf(err, "failed to get rows affected")
-	}
-
-	if rows == 0 {
-		return errors.NewNotFoundError("Email profile not found")
-	}
-
-	log.Info().Msg("email profile deleted successfully")
-	return nil
-}
-
 // GetDefault retrieves the default email profile for an organization
 func (r *emailProfileRepository) GetDefault(
 	ctx context.Context,
 	orgID, buID pulid.ID,
 ) (*email.Profile, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_profile_repository").
@@ -396,13 +356,14 @@ func (r *emailProfileRepository) GetDefault(
 			return sq.
 				Where("ep.organization_id = ?", orgID).
 				Where("ep.business_unit_id = ?", buID).
+				Where("ep.status = ?", domain.StatusActive).
 				Where("ep.is_default = ?", true)
 		}).
 		Scan(ctx)
 	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			log.Debug().Msg("no default email profile found")
-			return nil, errors.NewNotFoundError("No default email profile configured")
+			return nil, errors.NewNotFoundError("No active default email profile configured")
 		}
 		log.Error().Err(err).Msg("failed to get default email profile")
 		return nil, oops.
@@ -516,8 +477,11 @@ func (r *emailProfileRepository) unsetExistingDefault(
 	_, err := dba.NewUpdate().
 		Model((*email.Profile)(nil)).
 		Set("is_default = ?", false).
-		Where("ep.organization_id = ?", orgID).
-		Where("ep.is_default = ?", true).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return uq.
+				Where("ep.organization_id = ?", orgID).
+				Where("ep.is_default = ?", true)
+		}).
 		Exec(ctx)
 
 	return err
@@ -533,9 +497,12 @@ func (r *emailProfileRepository) unsetExistingDefaultTx(
 	_, err := tx.NewUpdate().
 		Model((*email.Profile)(nil)).
 		Set("is_default = ?", false).
-		Where("ep.organization_id = ?", orgID).
-		Where("ep.is_default = ?", true).
-		Where("ep.id != ?", excludeID).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return uq.
+				Where("ep.organization_id = ?", orgID).
+				Where("ep.is_default = ?", true).
+				Where("ep.id != ?", excludeID)
+		}).
 		Exec(ctx)
 
 	return err

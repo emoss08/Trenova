@@ -57,7 +57,11 @@ type EmailProfileService interface {
 	) (*email.Profile, error)
 
 	// Update updates an existing email profile
-	Update(ctx context.Context, profile *email.Profile) (*email.Profile, error)
+	Update(
+		ctx context.Context,
+		profile *email.Profile,
+		userID pulid.ID,
+	) (*email.Profile, error)
 
 	// Get retrieves an email profile by ID
 	Get(ctx context.Context, req repositories.GetEmailProfileByIDRequest) (*email.Profile, error)
@@ -67,9 +71,6 @@ type EmailProfileService interface {
 		ctx context.Context,
 		req *repositories.ListEmailProfileRequest,
 	) (*ports.ListResult[*email.Profile], error)
-
-	// Delete deletes an email profile
-	Delete(ctx context.Context, req repositories.DeleteEmailProfileRequest) error
 
 	// SetDefault sets a profile as the default for the organization
 	SetDefault(ctx context.Context, req repositories.GetEmailProfileByIDRequest) error
