@@ -86,7 +86,7 @@ export function getColumns(): ColumnDef<EmailProfileSchema>[] {
         );
       },
       meta: {
-        apiField: "name",
+        apiField: "providerType",
         filterable: true,
         sortable: true,
         filterType: "text",
@@ -95,17 +95,17 @@ export function getColumns(): ColumnDef<EmailProfileSchema>[] {
     },
     {
       accessorKey: "isDefault",
-      header: "Default Profile?",
+      header: "Is Default Profile?",
       cell: ({ row }) => {
         const isDefault = row.original.isDefault;
         return <BooleanBadge value={isDefault} />;
       },
       meta: {
-        apiField: "name",
+        apiField: "isDefault",
         filterable: true,
         sortable: true,
-        filterType: "text",
-        defaultFilterOperator: "contains",
+        filterType: "boolean",
+        defaultFilterOperator: "eq",
       },
     },
   ];

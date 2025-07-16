@@ -8,6 +8,53 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
+// EmailProfileFieldConfig defines filterable and sortable fields for email profiles
+var EmailProfileFieldConfig = &ports.FieldConfiguration{
+	FilterableFields: map[string]bool{
+		"name":         true,
+		"status":       true,
+		"providerType": true,
+		"fromAddress":  true,
+		"host":         true,
+		"isDefault":    true,
+	},
+	SortableFields: map[string]bool{
+		"name":         true,
+		"status":       true,
+		"providerType": true,
+		"isDefault":    true,
+		"fromAddress":  true,
+		"createdAt":    true,
+		"updatedAt":    true,
+	},
+	FieldMap: map[string]string{
+		"name":         "name",
+		"status":       "status",
+		"providerType": "provider_type",
+		"fromAddress":  "from_address",
+		"host":         "host",
+		"isDefault":    "is_default",
+		"createdAt":    "created_at",
+		"updatedAt":    "updated_at",
+	},
+	EnumMap: map[string]bool{
+		"status":         true,
+		"providerType":   true,
+		"authType":       true,
+		"encryptionType": true,
+	},
+	NestedFields: map[string]ports.NestedFieldDefinition{},
+}
+
+func BuildEmailProfileListOptions(
+	filter *ports.QueryOptions,
+	additionalOpts *ListEmailProfileRequest,
+) *ListEmailProfileRequest {
+	return &ListEmailProfileRequest{
+		Filter: filter,
+	}
+}
+
 type GetEmailProfileByIDRequest struct {
 	OrgID      pulid.ID
 	BuID       pulid.ID
@@ -23,7 +70,8 @@ type DeleteEmailProfileRequest struct {
 }
 
 type ListEmailProfileRequest struct {
-	Filter *ports.QueryOptions `json:"filter" query:"filter"`
+	Filter          *ports.QueryOptions `json:"filter"          query:"filter"`
+	ExcludeInactive bool                `json:"excludeInactive" query:"excludeInactive"`
 }
 
 // EmailProfileRepository handles email profile persistence
@@ -42,9 +90,6 @@ type EmailProfileRepository interface {
 		ctx context.Context,
 		req *ListEmailProfileRequest,
 	) (*ports.ListResult[*email.Profile], error)
-
-	// Delete deletes an email profile
-	Delete(ctx context.Context, req DeleteEmailProfileRequest) error
 
 	// GetDefault retrieves the default email profile for an organization
 	GetDefault(ctx context.Context, orgID pulid.ID, buID pulid.ID) (*email.Profile, error)

@@ -131,13 +131,7 @@ func (s *Service) Get(
 		return nil, errors.NewAuthorizationError("You do not have permission to read this trailer")
 	}
 
-	entity, err := s.repo.GetByID(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get trailer")
-		return nil, err
-	}
-
-	return entity, nil
+	return s.repo.GetByID(ctx, opts)
 }
 
 func (s *Service) Create(

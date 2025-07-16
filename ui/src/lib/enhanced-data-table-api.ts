@@ -148,6 +148,7 @@ export function supportsEnhancedFiltering(endpoint: string): boolean {
     "/shipments",
     "/workers",
     "/consolidations",
+    "/email-profiles",
     // Add more as they're implemented
   ];
 
@@ -184,6 +185,10 @@ export function getDataTableEndpoint(
     consolidation_group: {
       legacy: "/consolidations/",
       enhanced: "/consolidations/",
+    },
+    email_profile: {
+      legacy: "/email-profiles/",
+      enhanced: "/email-profiles/",
     },
     // Add more resources as needed
   };

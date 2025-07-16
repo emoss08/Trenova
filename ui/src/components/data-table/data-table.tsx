@@ -294,9 +294,6 @@ export function DataTable<TData extends Record<string, any>>({
         return className;
       },
     },
-    debugTable: true,
-    debugHeaders: true,
-    debugColumns: true,
   });
 
   const selectedRow = useMemo(() => {

@@ -19,6 +19,17 @@ export default function EmailProfileTable() {
       TableModal={CreateEmailProfileModal}
       TableEditModal={EditEmailProfileModal}
       columns={columns}
+      config={{
+        enableFiltering: true,
+        enableSorting: true,
+        enableMultiSort: true,
+        maxFilters: 5,
+        maxSorts: 3,
+        searchDebounce: 300,
+        showFilterUI: true,
+        showSortUI: true,
+      }}
+      useEnhancedBackend={true}
     />
   );
 }

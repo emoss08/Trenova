@@ -468,6 +468,34 @@ function FilterValueInput({
     );
   }
 
+  if (filterType === "boolean") {
+    return (
+      <Select value={value || ""} onValueChange={onChange}>
+        <SelectTrigger className="w-[150px]">
+          <SelectValue placeholder="Select value..." />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem
+            color="#15803d"
+            value="true"
+            className="cursor-pointer"
+            title="True"
+          >
+            Yes
+          </SelectItem>
+          <SelectItem
+            color="#b91c1c"
+            value="false"
+            className="cursor-pointer"
+            title="False"
+          >
+            No
+          </SelectItem>
+        </SelectContent>
+      </Select>
+    );
+  }
+
   // Default text input
   return (
     <Input

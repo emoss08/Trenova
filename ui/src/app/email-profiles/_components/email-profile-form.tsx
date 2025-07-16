@@ -1,6 +1,7 @@
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
+import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { providerTypeChoices, statusChoices } from "@/lib/choices";
 import {
@@ -46,6 +47,15 @@ export function EmailProfileForm() {
             label="Name"
             placeholder="Name"
             description="Unique identifier for this email profile configuration"
+          />
+        </FormControl>
+        <FormControl cols="full">
+          <TextareaField
+            control={control}
+            name="description"
+            label="Description"
+            placeholder="Description"
+            description="Description of this email profile configuration"
           />
         </FormControl>
         <FormControl cols="full">
