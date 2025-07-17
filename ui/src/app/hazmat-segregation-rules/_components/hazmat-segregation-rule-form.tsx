@@ -13,25 +13,17 @@ import {
 } from "@/lib/choices";
 import { type HazmatSegregationRuleSchema } from "@/lib/schemas/hazmat-segregation-rule-schema";
 import { SegregationType } from "@/types/hazmat-segregation-rule";
-import { useEffect, useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 
 export function HazmatSegregationRuleForm() {
-  const { control, watch } = useFormContext<HazmatSegregationRuleSchema>();
-  const [showDistanceOptions, setShowDistanceOptions] =
-    useState<boolean>(false);
-  const [showExceptionNotes, setShowExceptionNotes] = useState<boolean>(false);
+  const { control } = useFormContext<HazmatSegregationRuleSchema>();
+  const [hasExceptions, segregationType] = useWatch({
+    control,
+    name: ["hasExceptions", "segregationType"],
+  });
 
-  const hasExceptions = watch("hasExceptions");
-  const segregationType = watch("segregationType");
-
-  useEffect(() => {
-    setShowDistanceOptions(segregationType === SegregationType.Distance);
-  }, [segregationType]);
-
-  useEffect(() => {
-    setShowExceptionNotes(Boolean(hasExceptions));
-  }, [hasExceptions]);
+  const showDistanceOptions = segregationType === SegregationType.Distance;
+  const showExceptionNotes = Boolean(hasExceptions);
 
   return (
     <FormGroup cols={2}>
