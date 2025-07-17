@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/jobs/scheduler"
 	"github.com/emoss08/trenova/internal/pkg/jobs/triggers"
 	"github.com/hibiken/asynq"
+	"github.com/rs/zerolog/log"
 	"go.uber.org/fx"
 )
 
@@ -85,24 +86,36 @@ func RegisterLifecycleHooks(p LifecycleParams) {
 		OnStart: func(context.Context) error {
 			// Start job service first
 			if err := p.JobService.Start(); err != nil {
+				log.Error().Err(err).Msg("failed to start job service")
 				return err
 			}
 
 			// Then start cron scheduler
 			if err := p.CronScheduler.Start(); err != nil {
+				log.Error().Err(err).Msg("failed to start cron scheduler")
 				return err
 			}
+
+			log.Info().Msg("job service and cron scheduler started")
 
 			return nil
 		},
 		OnStop: func(context.Context) error {
 			// Stop scheduler first
 			if err := p.CronScheduler.Stop(); err != nil {
+				log.Error().Err(err).Msg("failed to stop cron scheduler")
 				return err
 			}
 
 			// Then stop job service
-			return p.JobService.Shutdown()
+			if err := p.JobService.Shutdown(); err != nil {
+				log.Error().Err(err).Msg("failed to stop job service")
+				return err
+			}
+
+			log.Info().Msg("job service and cron scheduler stopped")
+
+			return nil
 		},
 	})
 }

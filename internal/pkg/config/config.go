@@ -48,6 +48,9 @@ type Config struct {
 
 	// AI is the AI configuration.
 	AI AIConfig `mapstructure:"ai"`
+
+	// CronScheduler is the cron scheduler configuration.
+	CronScheduler CronSchedulerConfig `mapstructure:"cronScheduler"`
 }
 
 type LogConfig struct {
@@ -589,4 +592,172 @@ type AIConfig struct {
 
 	// CacheTTL is the time-to-live for cached AI responses in seconds
 	CacheTTL int `mapstructure:"cacheTtl"`
+}
+
+type CronSchedulerConfig struct {
+	// Enabled determines whether the cron scheduler is active
+	Enabled bool `mapstructure:"enabled"`
+
+	// LogLevel sets the logging level for the scheduler (debug, info, warn, error)
+	LogLevel string `mapstructure:"logLevel"`
+
+	// TimeZone for cron schedules (e.g., "America/New_York")
+	TimeZone string `mapstructure:"timeZone"`
+
+	// GlobalRetryPolicy is the default retry policy for all jobs
+	GlobalRetryPolicy JobRetryPolicy `mapstructure:"globalRetryPolicy"`
+
+	// ShipmentJobs is the configuration for shipment jobs
+	ShipmentJobs ShipmentJobsConfig `mapstructure:"shipmentJobs"`
+
+	// PatternAnalysisJobs is the configuration for pattern analysis jobs
+	PatternAnalysisJobs PatternAnalysisJobsConfig `mapstructure:"patternAnalysisJobs"`
+
+	// EmailQueueJobs is the configuration for email queue jobs
+	EmailQueueJobs EmailQueueJobsConfig `mapstructure:"emailQueueJobs"`
+
+	// SystemJobs is the configuration for system maintenance jobs
+	SystemJobs SystemJobsConfig `mapstructure:"systemJobs"`
+
+	// ComplianceJobs is the configuration for compliance jobs
+	ComplianceJobs ComplianceJobsConfig `mapstructure:"complianceJobs"`
+}
+
+// JobRetryPolicy defines retry behavior for jobs
+type JobRetryPolicy struct {
+	// MaxRetries is the maximum number of retry attempts
+	MaxRetries int `mapstructure:"maxRetries"`
+
+	// RetryDelay is the initial delay between retries
+	RetryDelay time.Duration `mapstructure:"retryDelay"`
+
+	// MaxRetryDelay is the maximum delay between retries
+	MaxRetryDelay time.Duration `mapstructure:"maxRetryDelay"`
+
+	// RetryBackoffMultiplier is the exponential backoff multiplier
+	RetryBackoffMultiplier float64 `mapstructure:"retryBackoffMultiplier"`
+}
+
+// JobConfig is the base configuration for all job types
+type JobConfig struct {
+	// Enabled determines whether this job is active
+	Enabled bool `mapstructure:"enabled"`
+
+	// Schedule is the cron schedule expression
+	Schedule string `mapstructure:"schedule"`
+
+	// Timeout is the maximum duration for job execution
+	Timeout time.Duration `mapstructure:"timeout"`
+
+	// Queue is the queue name for this job
+	Queue string `mapstructure:"queue"`
+
+	// Priority sets the job priority (0-10, higher is more important)
+	Priority int `mapstructure:"priority"`
+
+	// Retention is how long to keep completed job records
+	Retention time.Duration `mapstructure:"retention"`
+
+	// UniqueKey prevents duplicate jobs within this duration
+	UniqueKey time.Duration `mapstructure:"uniqueKey"`
+
+	// RetryPolicy overrides the global retry policy for this job
+	RetryPolicy *JobRetryPolicy `mapstructure:"retryPolicy"`
+}
+
+type ShipmentJobsConfig struct {
+	// DelayShipment job configuration
+	DelayShipment JobConfig `mapstructure:"delayShipment"`
+
+	// StatusUpdate job configuration
+	StatusUpdate JobConfig `mapstructure:"statusUpdate"`
+
+	// DuplicateCheck job configuration
+	DuplicateCheck JobConfig `mapstructure:"duplicateCheck"`
+
+	// NotificationJob configuration
+	NotificationJob JobConfig `mapstructure:"notificationJob"`
+
+	// DelayThreshold is the time after which shipments are considered delayed
+	DelayThreshold time.Duration `mapstructure:"delayThreshold"`
+
+	// BatchSize for processing shipments
+	BatchSize int `mapstructure:"batchSize"`
+}
+
+type PatternAnalysisJobsConfig struct {
+	// DailyAnalysis job configuration
+	DailyAnalysis JobConfig `mapstructure:"dailyAnalysis"`
+
+	// WeeklyAnalysis job configuration
+	WeeklyAnalysis JobConfig `mapstructure:"weeklyAnalysis"`
+
+	// ExpireSuggestions job configuration
+	ExpireSuggestions JobConfig `mapstructure:"expireSuggestions"`
+
+	// MinFrequency is the minimum occurrence frequency for pattern detection
+	MinFrequency int64 `mapstructure:"minFrequency"`
+
+	// AnalysisLookbackDays is how many days of data to analyze
+	AnalysisLookbackDays int `mapstructure:"analysisLookbackDays"`
+
+	// SuggestionTTL is how long to keep pattern suggestions
+	SuggestionTTL time.Duration `mapstructure:"suggestionTtl"`
+
+	// MaxConcurrentAnalysis limits concurrent pattern analysis
+	MaxConcurrentAnalysis int `mapstructure:"maxConcurrentAnalysis"`
+}
+
+type EmailQueueJobsConfig struct {
+	// ProcessQueue job configuration
+	ProcessQueue JobConfig `mapstructure:"processQueue"`
+
+	// RetryFailed job configuration
+	RetryFailed JobConfig `mapstructure:"retryFailed"`
+
+	// CleanupOld job configuration
+	CleanupOld JobConfig `mapstructure:"cleanupOld"`
+
+	// BatchSize for processing emails
+	BatchSize int `mapstructure:"batchSize"`
+
+	// MaxSendRate is emails per minute
+	MaxSendRate int `mapstructure:"maxSendRate"`
+
+	// FailedRetentionDays is how long to keep failed email records
+	FailedRetentionDays int `mapstructure:"failedRetentionDays"`
+}
+
+type SystemJobsConfig struct {
+	// CleanupTempFiles job configuration
+	CleanupTempFiles JobConfig `mapstructure:"cleanupTempFiles"`
+
+	// GenerateReports job configuration
+	GenerateReports JobConfig `mapstructure:"generateReports"`
+
+	// DataBackup job configuration
+	DataBackup JobConfig `mapstructure:"dataBackup"`
+
+	// TempFileMaxAge is how old temp files must be before cleanup
+	TempFileMaxAge time.Duration `mapstructure:"tempFileMaxAge"`
+
+	// ReportFormats supported report formats
+	ReportFormats []string `mapstructure:"reportFormats"`
+
+	// BackupRetentionDays is how long to keep backups
+	BackupRetentionDays int `mapstructure:"backupRetentionDays"`
+}
+
+type ComplianceJobsConfig struct {
+	// ComplianceCheck job configuration
+	ComplianceCheck JobConfig `mapstructure:"complianceCheck"`
+
+	// HazmatExpiration job configuration
+	HazmatExpiration JobConfig `mapstructure:"hazmatExpiration"`
+
+	// ExpirationWarningDays is days before expiration to start warnings
+	ExpirationWarningDays int `mapstructure:"expirationWarningDays"`
+
+	// ComplianceCheckDepth is how thorough compliance checks should be
+	ComplianceCheckDepth string `mapstructure:"complianceCheckDepth"`
 }
