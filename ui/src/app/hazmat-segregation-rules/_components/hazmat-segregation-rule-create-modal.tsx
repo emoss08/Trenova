@@ -28,6 +28,13 @@ export function CreateHazmatSegregationRuleModal({
       classB: HazardousClassChoiceProps.HazardClass1And1,
       segregationType: SegregationType.Separated,
       minimumDistance: undefined,
+      distanceUnit: undefined,
+      hasExceptions: false,
+      exceptionNotes: undefined,
+      referenceCode: undefined,
+      regulationSource: undefined,
+      hazmatAId: undefined,
+      hazmatBId: undefined,
     },
   });
 
