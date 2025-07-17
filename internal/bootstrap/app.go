@@ -26,8 +26,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/statemachine"
 
 	"go.uber.org/fx"
-	"go.uber.org/fx/fxevent"
-	"go.uber.org/zap"
 )
 
 // Bootstrap initializes and starts the application
@@ -51,9 +49,10 @@ func Bootstrap() error {
 		streaming.Module,
 		api.Module,
 		jobs.Module,
-		fx.WithLogger(func() fxevent.Logger {
-			return &fxevent.ZapLogger{Logger: zap.NewExample()}
-		}),
+		// fx.WithLogger(func() fxevent.Logger {
+		// 	return &fxevent.ZapLogger{Logger: zap.NewExample()}
+		// }),
+		fx.NopLogger,
 	)
 
 	startCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)

@@ -1,8 +1,9 @@
 package scheduler
 
 import (
-	"time"
+	"fmt"
 
+	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
@@ -19,6 +20,7 @@ type CronSchedulerParams struct {
 	Logger     *logger.Logger
 	JobService jobs.JobServiceInterface
 	RedisOpt   asynq.RedisClientOpt
+	Config     *config.Manager
 }
 
 // CronScheduler manages scheduled recurring jobs
@@ -26,6 +28,7 @@ type CronScheduler struct {
 	logger     *zerolog.Logger
 	scheduler  *asynq.Scheduler
 	jobService jobs.JobServiceInterface
+	cfg        config.CronSchedulerConfig
 }
 
 // CronSchedulerInterface defines methods for managing scheduled jobs
@@ -33,7 +36,9 @@ type CronSchedulerInterface interface {
 	Start() error
 	Stop() error
 	SchedulePatternAnalysisJobs() error
-	ScheduleMaintenanceJobs() error
+	ScheduleShipmentJobs() error
+	ScheduleSystemJobs() error
+	ScheduleComplianceJobs() error
 	ScheduleEmailQueueJobs() error
 }
 
@@ -46,7 +51,7 @@ func NewCronScheduler(p CronSchedulerParams) CronSchedulerInterface {
 		Logger()
 
 	scheduler := asynq.NewScheduler(p.RedisOpt, &asynq.SchedulerOpts{
-		LogLevel: asynq.WarnLevel, // Reduce noise
+		LogLevel: asynq.DebugLevel, // Reduce noise
 		Logger:   &asynqLogger{logger: &log},
 	})
 
@@ -54,6 +59,7 @@ func NewCronScheduler(p CronSchedulerParams) CronSchedulerInterface {
 		logger:     &log,
 		scheduler:  scheduler,
 		jobService: p.JobService,
+		cfg:        p.Config.Cfg.CronScheduler,
 	}
 
 	return cs
@@ -61,32 +67,47 @@ func NewCronScheduler(p CronSchedulerParams) CronSchedulerInterface {
 
 // Start begins the cron scheduler
 func (cs *CronScheduler) Start() error {
-	cs.logger.Info().Msg("starting cron scheduler")
+	log := cs.logger.With().
+		Str("operation", "Start").
+		Logger()
+
+	// Check if scheduler is enabled
+	if !cs.cfg.Enabled {
+		log.Info().Msg("cron scheduler is disabled via configuration")
+		return nil
+	}
+
+	log.Info().Msg("starting cron scheduler")
 
 	// Schedule all recurring jobs
 	if err := cs.SchedulePatternAnalysisJobs(); err != nil {
-		cs.logger.Error().Err(err).Msg("failed to schedule pattern analysis jobs")
+		log.Error().Err(err).Msg("failed to schedule pattern analysis jobs")
 		return err
 	}
 
-	if err := cs.ScheduleDelayShipmentJobs(); err != nil {
-		cs.logger.Error().Err(err).Msg("failed to schedule delay shipment jobs")
+	if err := cs.ScheduleShipmentJobs(); err != nil {
+		log.Error().Err(err).Msg("failed to schedule shipment jobs")
 		return err
 	}
 
-	if err := cs.ScheduleMaintenanceJobs(); err != nil {
-		cs.logger.Error().Err(err).Msg("failed to schedule maintenance jobs")
+	if err := cs.ScheduleSystemJobs(); err != nil {
+		log.Error().Err(err).Msg("failed to schedule system jobs")
 		return err
 	}
 
 	if err := cs.ScheduleEmailQueueJobs(); err != nil {
-		cs.logger.Error().Err(err).Msg("failed to schedule email queue jobs")
+		log.Error().Err(err).Msg("failed to schedule email queue jobs")
+		return err
+	}
+
+	if err := cs.ScheduleComplianceJobs(); err != nil {
+		log.Error().Err(err).Msg("failed to schedule compliance jobs")
 		return err
 	}
 
 	// Start the scheduler
 	if err := cs.scheduler.Start(); err != nil {
-		cs.logger.Error().Err(err).Msg("failed to start scheduler")
+		log.Error().Err(err).Msg("failed to start scheduler")
 		return err
 	}
 
@@ -101,100 +122,112 @@ func (cs *CronScheduler) Stop() error {
 	return nil
 }
 
-func (cs *CronScheduler) ScheduleDelayShipmentJobs() error {
-	cs.logger.Info().Msg("scheduling delay shipment jobs")
+// ScheduleShipmentJobs schedules all shipment-related jobs
+func (cs *CronScheduler) ScheduleShipmentJobs() error {
+	log := cs.logger.With().
+		Str("operation", "ScheduleShipmentJobs").
+		Logger()
 
-	// Delay shipments every 3 minutes
-	delayTask := asynq.NewTask(
-		string(jobs.JobTypeDelayShipment),
-		cs.createDelayShipmentPayload(),
-	)
+	log.Info().Msg("scheduling shipment jobs")
 
-	entryID, err := cs.scheduler.Register("@every 1m", delayTask,
-		asynq.Queue(jobs.QueueShipment),
-		asynq.MaxRetry(2),
-		asynq.Retention(24*time.Hour),
-		asynq.Timeout(1*time.Minute), // * Timeout of 1 minute
-	)
-	if err != nil {
-		return err
+	// Schedule delay shipment job
+	if cs.cfg.ShipmentJobs.DelayShipment.Enabled {
+		if err := cs.scheduleJob(
+			jobs.JobTypeDelayShipment,
+			cs.cfg.ShipmentJobs.DelayShipment,
+			cs.createDelayShipmentPayload(),
+		); err != nil {
+			return fmt.Errorf("failed to schedule delay shipment job: %w", err)
+		}
 	}
-
-	cs.logger.Info().
-		Str("entry_id", entryID).
-		Str("schedule", "@every 3m (every 3 minutes)").
-		Msg("scheduled delay shipment job")
 
 	return nil
 }
 
 // SchedulePatternAnalysisJobs schedules recurring pattern analysis jobs
 func (cs *CronScheduler) SchedulePatternAnalysisJobs() error {
-	cs.logger.Info().Msg("scheduling pattern analysis jobs")
+	log := cs.logger.With().
+		Str("operation", "SchedulePatternAnalysisJobs").
+		Logger()
 
-	// Daily pattern analysis at 2 AM
-	dailyPatternTask := asynq.NewTask(
-		string(jobs.JobTypeAnalyzePatterns),
-		cs.createGlobalPatternAnalysisPayload(),
-		asynq.Retention(24*time.Hour),
-	)
+	log.Info().Msg("scheduling pattern analysis jobs")
 
-	entryID, err := cs.scheduler.Register("@every 24h", dailyPatternTask,
-		asynq.Queue(jobs.QueuePattern),
-	)
-	if err != nil {
-		return err
+	// Daily pattern analysis
+	if cs.cfg.PatternAnalysisJobs.DailyAnalysis.Enabled {
+		if err := cs.scheduleJob(
+			jobs.JobTypeAnalyzePatterns,
+			cs.cfg.PatternAnalysisJobs.DailyAnalysis,
+			cs.createGlobalPatternAnalysisPayload(),
+		); err != nil {
+			return fmt.Errorf("failed to schedule daily pattern analysis: %w", err)
+		}
 	}
 
-	cs.logger.Info().
-		Str("entry_id", entryID).
-		Str("schedule", "@every 24h (daily at 2 AM)").
-		Msg("scheduled daily pattern analysis")
-
-	// Weekly comprehensive analysis on Sundays at 1 AM
-	weeklyPatternTask := asynq.NewTask(
-		string(jobs.JobTypeAnalyzePatterns),
-		cs.createGlobalPatternAnalysisPayload(),
-	)
-
-	entryID, err = cs.scheduler.Register("0 1 * * 0", weeklyPatternTask,
-		asynq.Queue(jobs.QueuePattern),
-		asynq.MaxRetry(3),
-	)
-	if err != nil {
-		return err
+	// Weekly comprehensive analysis
+	if cs.cfg.PatternAnalysisJobs.WeeklyAnalysis.Enabled {
+		if err := cs.scheduleJob(
+			jobs.JobTypeAnalyzePatterns,
+			cs.cfg.PatternAnalysisJobs.WeeklyAnalysis,
+			cs.createGlobalPatternAnalysisPayload(),
+		); err != nil {
+			return fmt.Errorf("failed to schedule weekly pattern analysis: %w", err)
+		}
 	}
 
-	cs.logger.Info().
-		Str("entry_id", entryID).
-		Str("schedule", "0 1 * * 0 (weekly on Sunday at 1 AM)").
-		Msg("scheduled weekly comprehensive pattern analysis")
+	// Expire suggestions
+	if cs.cfg.PatternAnalysisJobs.ExpireSuggestions.Enabled {
+		if err := cs.scheduleJob(
+			jobs.JobTypeExpireOldSuggestions,
+			cs.cfg.PatternAnalysisJobs.ExpireSuggestions,
+			cs.createExpireSuggestionsPayload(),
+		); err != nil {
+			return fmt.Errorf("failed to schedule expire suggestions job: %w", err)
+		}
+	}
 
 	return nil
 }
 
-// ScheduleMaintenanceJobs schedules recurring maintenance jobs
-func (cs *CronScheduler) ScheduleMaintenanceJobs() error {
-	cs.logger.Info().Msg("scheduling maintenance jobs")
+// ScheduleSystemJobs schedules recurring system maintenance jobs
+func (cs *CronScheduler) ScheduleSystemJobs() error {
+	log := cs.logger.With().
+		Str("operation", "ScheduleSystemJobs").
+		Logger()
 
-	// Expire old suggestions every 6 hours
-	expireTask := asynq.NewTask(
-		string(jobs.JobTypeExpireOldSuggestions),
-		cs.createExpireSuggestionsPayload(),
-	)
+	log.Info().Msg("scheduling system jobs")
 
-	entryID, err := cs.scheduler.Register("0 */6 * * *", expireTask,
-		asynq.Queue(jobs.QueueSystem),
-		asynq.MaxRetry(2),
-	)
-	if err != nil {
-		return err
+	// Cleanup temp files
+	if cs.cfg.SystemJobs.CleanupTempFiles.Enabled {
+		if err := cs.scheduleJob(
+			jobs.JobTypeCleanupTempFiles,
+			cs.cfg.SystemJobs.CleanupTempFiles,
+			cs.createSystemJobPayload(),
+		); err != nil {
+			return fmt.Errorf("failed to schedule cleanup temp files job: %w", err)
+		}
 	}
 
-	cs.logger.Info().
-		Str("entry_id", entryID).
-		Str("schedule", "0 */6 * * * (every 6 hours)").
-		Msg("scheduled suggestion expiration job")
+	// Generate reports
+	if cs.cfg.SystemJobs.GenerateReports.Enabled {
+		if err := cs.scheduleJob(
+			jobs.JobTypeGenerateReports,
+			cs.cfg.SystemJobs.GenerateReports,
+			cs.createSystemJobPayload(),
+		); err != nil {
+			return fmt.Errorf("failed to schedule generate reports job: %w", err)
+		}
+	}
+
+	// Data backup
+	if cs.cfg.SystemJobs.DataBackup.Enabled {
+		if err := cs.scheduleJob(
+			jobs.JobTypeDataBackup,
+			cs.cfg.SystemJobs.DataBackup,
+			cs.createSystemJobPayload(),
+		); err != nil {
+			return fmt.Errorf("failed to schedule data backup job: %w", err)
+		}
+	}
 
 	return nil
 }
@@ -203,10 +236,10 @@ func (cs *CronScheduler) ScheduleMaintenanceJobs() error {
 func (cs *CronScheduler) createGlobalPatternAnalysisPayload() []byte {
 	payload := &jobs.PatternAnalysisPayload{
 		BasePayload: jobs.BasePayload{
-			JobID:     pulid.MustNew("job_").String(),
+			JobID:     cs.generateNewJobID(),
 			Timestamp: timeutils.NowUnix(),
 		},
-		MinFrequency:  3, // Conservative frequency for scheduled analysis
+		MinFrequency:  cs.cfg.PatternAnalysisJobs.MinFrequency,
 		TriggerReason: "scheduled",
 	}
 
@@ -217,7 +250,7 @@ func (cs *CronScheduler) createGlobalPatternAnalysisPayload() []byte {
 func (cs *CronScheduler) createDelayShipmentPayload() []byte {
 	payload := &jobs.DelayShipmentPayload{
 		BasePayload: jobs.BasePayload{
-			JobID:     pulid.MustNew("job_").String(),
+			JobID:     cs.generateNewJobID(),
 			Timestamp: timeutils.NowUnix(),
 		},
 	}
@@ -230,7 +263,7 @@ func (cs *CronScheduler) createDelayShipmentPayload() []byte {
 func (cs *CronScheduler) createExpireSuggestionsPayload() []byte {
 	payload := &jobs.ExpireSuggestionsPayload{
 		BasePayload: jobs.BasePayload{
-			JobID:     pulid.MustNew("job_").String(),
+			JobID:     cs.generateNewJobID(),
 			Timestamp: timeutils.NowUnix(),
 		},
 		BatchSize: 100,
@@ -242,28 +275,22 @@ func (cs *CronScheduler) createExpireSuggestionsPayload() []byte {
 
 // ScheduleEmailQueueJobs schedules recurring email queue processing jobs
 func (cs *CronScheduler) ScheduleEmailQueueJobs() error {
-	cs.logger.Info().Msg("scheduling email queue processing jobs")
+	log := cs.logger.With().
+		Str("operation", "ScheduleEmailQueueJobs").
+		Logger()
 
-	// Process email queue every 5 minutes
-	emailQueueTask := asynq.NewTask(
-		string(jobs.JobTypeProcessEmailQueue),
-		cs.createEmailQueuePayload(),
-		asynq.Retention(12*time.Hour),
-	)
+	log.Info().Msg("scheduling email queue jobs")
 
-	entryID, err := cs.scheduler.Register("@every 5m", emailQueueTask,
-		asynq.Queue(jobs.QueueEmail),
-		asynq.MaxRetry(3),
-		asynq.Timeout(5*time.Minute),
-	)
-	if err != nil {
-		return err
+	// Process email queue
+	if cs.cfg.EmailQueueJobs.ProcessQueue.Enabled {
+		if err := cs.scheduleJob(
+			jobs.JobTypeProcessEmailQueue,
+			cs.cfg.EmailQueueJobs.ProcessQueue,
+			cs.createEmailQueuePayload(),
+		); err != nil {
+			return fmt.Errorf("failed to schedule process email queue job: %w", err)
+		}
 	}
-
-	cs.logger.Info().
-		Str("entry_id", entryID).
-		Str("schedule", "@every 5m (every 5 minutes)").
-		Msg("scheduled email queue processing job")
 
 	return nil
 }
@@ -271,12 +298,129 @@ func (cs *CronScheduler) ScheduleEmailQueueJobs() error {
 // createEmailQueuePayload creates a payload for email queue processing
 func (cs *CronScheduler) createEmailQueuePayload() []byte {
 	payload := &jobs.BasePayload{
-		JobID:     pulid.MustNew("job_").String(),
+		JobID:     cs.generateNewJobID(),
 		Timestamp: timeutils.NowUnix(),
 	}
 
 	data, _ := jobs.MarshalPayload(payload)
 	return data
+}
+
+// createSystemJobPayload creates a payload for system jobs
+func (cs *CronScheduler) createSystemJobPayload() []byte {
+	payload := &jobs.BasePayload{
+		JobID:     cs.generateNewJobID(),
+		Timestamp: timeutils.NowUnix(),
+	}
+
+	data, _ := jobs.MarshalPayload(payload)
+	return data
+}
+
+// createComplianceJobPayload creates a payload for compliance jobs
+func (cs *CronScheduler) createComplianceJobPayload() []byte {
+	payload := &jobs.BasePayload{
+		JobID:     cs.generateNewJobID(),
+		Timestamp: timeutils.NowUnix(),
+	}
+
+	data, _ := jobs.MarshalPayload(payload)
+	return data
+}
+
+// ScheduleComplianceJobs schedules recurring compliance jobs
+func (cs *CronScheduler) ScheduleComplianceJobs() error {
+	log := cs.logger.With().
+		Str("operation", "ScheduleComplianceJobs").
+		Logger()
+
+	log.Info().Msg("scheduling compliance jobs")
+
+	// Compliance check
+	if cs.cfg.ComplianceJobs.ComplianceCheck.Enabled {
+		if err := cs.scheduleJob(
+			jobs.JobTypeComplianceCheck,
+			cs.cfg.ComplianceJobs.ComplianceCheck,
+			cs.createComplianceJobPayload(),
+		); err != nil {
+			return fmt.Errorf("failed to schedule compliance check job: %w", err)
+		}
+	}
+
+	// Hazmat expiration check
+	if cs.cfg.ComplianceJobs.HazmatExpiration.Enabled {
+		if err := cs.scheduleJob(
+			jobs.JobTypeHazmatExpirationCheck,
+			cs.cfg.ComplianceJobs.HazmatExpiration,
+			cs.createComplianceJobPayload(),
+		); err != nil {
+			return fmt.Errorf("failed to schedule hazmat expiration job: %w", err)
+		}
+	}
+
+	return nil
+}
+
+// scheduleJob is a helper method to schedule a single job with configuration
+func (cs *CronScheduler) scheduleJob(
+	jobType jobs.JobType,
+	cfg config.JobConfig,
+	payload []byte,
+) error {
+	// Build task options
+	opts := []asynq.Option{
+		asynq.Queue(cfg.Queue),
+	}
+
+	// Apply retention if specified
+	if cfg.Retention > 0 {
+		opts = append(opts, asynq.Retention(cfg.Retention))
+	}
+
+	// Apply timeout if specified
+	if cfg.Timeout > 0 {
+		opts = append(opts, asynq.Timeout(cfg.Timeout))
+	}
+
+	// Apply unique key if specified
+	if cfg.UniqueKey > 0 {
+		opts = append(opts, asynq.Unique(cfg.UniqueKey))
+	}
+
+	// Apply retry policy
+	retryPolicy := cs.cfg.GlobalRetryPolicy
+	if cfg.RetryPolicy != nil {
+		retryPolicy = *cfg.RetryPolicy
+	}
+
+	if retryPolicy.MaxRetries > 0 {
+		opts = append(opts, asynq.MaxRetry(retryPolicy.MaxRetries))
+	}
+
+	// Create task
+	task := asynq.NewTask(string(jobType), payload)
+
+	// Register with scheduler
+	entryID, err := cs.scheduler.Register(cfg.Schedule, task, opts...)
+	if err != nil {
+		return err
+	}
+
+	cs.logger.Info().
+		Str("job_type", string(jobType)).
+		Str("entry_id", entryID).
+		Str("schedule", cfg.Schedule).
+		Str("queue", cfg.Queue).
+		Dur("timeout", cfg.Timeout).
+		Dur("retention", cfg.Retention).
+		Int("max_retries", retryPolicy.MaxRetries).
+		Msg("scheduled job")
+
+	return nil
+}
+
+func (cs *CronScheduler) generateNewJobID() string {
+	return pulid.MustNew("job_").String()
 }
 
 // asynqLogger implements asynq.Logger interface for consistent logging
