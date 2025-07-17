@@ -78,7 +78,12 @@ export function SelectField<T extends FieldValues>({
             }}
             value={field.value || ""}
           >
-            <SelectTrigger>
+            <SelectTrigger
+              className={cn(
+                fieldState.invalid &&
+                  "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
+              )}
+            >
               <SelectValue
                 placeholder={placeholder}
                 color={selectedOption?.color}
