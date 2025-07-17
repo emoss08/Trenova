@@ -4,7 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/analytics/providers/billingclientprovider"
 	"github.com/emoss08/trenova/internal/core/services/analytics/providers/shipmentprovider"
-	"github.com/rs/zerolog/log"
+	"github.com/emoss08/trenova/internal/pkg/logger"
 	"go.uber.org/fx"
 )
 
@@ -16,10 +16,15 @@ type ProvidersParams struct {
 
 	// List all providers here with the group tag - they'll be automatically injected
 	Providers []services.AnalyticsPageProvider `group:"analytics_providers"`
+
+	Logger *logger.Logger
 }
 
 // RegisterProviders registers all analytics providers with the registry
 func RegisterProviders(p ProvidersParams) {
+	log := p.Logger.With().
+		Str("module", "analytics").
+		Logger()
 	// Auto-register all providers from the group
 	for _, provider := range p.Providers {
 		// Get the provider's page to use in logging
