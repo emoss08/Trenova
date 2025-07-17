@@ -12,7 +12,7 @@ export const decimalStringSchema = z
     z.number(),
     z.null(),
   ])
-  .nullable();
+  .nullish();
 
 /**
  * Helper to handle optional strings from Go backends
