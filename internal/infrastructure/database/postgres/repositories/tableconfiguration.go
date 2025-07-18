@@ -519,7 +519,7 @@ func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(
 	q := dba.NewSelect().Model(config).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("tc.resource = ?", resource).
-				Where("tc.user_id = ?", opts.UserID).
+				Where("tc.user_id = ?", opts.Base.UserID).
 				Where("tc.organization_id = ?", opts.Base.OrgID).
 				Where("tc.business_unit_id = ?", opts.Base.BuID)
 		})

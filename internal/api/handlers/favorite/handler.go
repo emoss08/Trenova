@@ -62,11 +62,6 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(60), // 60 toggles per minute
 	)...)
 
-	api.Get("/check/:pageURL/", rl.WithRateLimit(
-		[]fiber.Handler{h.checkFavorite},
-		middleware.PerSecond(20), // 20 checks per second
-	)...)
-
 	api.Post("/check/", rl.WithRateLimit(
 		[]fiber.Handler{h.checkFavoriteByPost},
 		middleware.PerSecond(20), // 20 checks per second
@@ -255,35 +250,6 @@ func (h *Handler) toggle(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusCreated).JSON(fiber.Map{
 		"action":   "added",
 		"favorite": result,
-	})
-}
-
-func (h *Handler) checkFavorite(c *fiber.Ctx) error {
-	reqCtx, err := appctx.WithRequestContext(c)
-	if err != nil {
-		return h.eh.HandleError(c, err)
-	}
-
-	pageURL := c.Params("pageURL")
-	if pageURL == "" {
-		return h.eh.HandleError(
-			c,
-			fiber.NewError(fiber.StatusBadRequest, "pageURL parameter is required"),
-		)
-	}
-
-	fav, err := h.fs.GetByURL(c.UserContext(), reqCtx.OrgID, reqCtx.BuID, reqCtx.UserID, pageURL)
-	if err != nil {
-		// If not found, return false
-		return c.Status(fiber.StatusOK).JSON(fiber.Map{
-			"isFavorite": false,
-			"favorite":   nil,
-		})
-	}
-
-	return c.Status(fiber.StatusOK).JSON(fiber.Map{
-		"isFavorite": true,
-		"favorite":   fav,
 	})
 }
 

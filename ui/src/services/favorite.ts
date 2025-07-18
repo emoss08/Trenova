@@ -51,13 +51,4 @@ export class FavoriteAPI {
     );
     return response.data;
   }
-
-  async isFavorite(pageUrl: string): Promise<boolean> {
-    try {
-      const result = await this.checkFavorite(pageUrl);
-      return result.isFavorite;
-    } catch {
-      return false;
-    }
-  }
 }
