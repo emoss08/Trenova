@@ -40,6 +40,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
   isInvalid,
   clearable = false,
   extraSearchParams,
+  popoutLink,
 }: BaseAutocompleteFieldProps<TOption, TForm>) {
   const [open, setOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<TOption | null>(null);
@@ -96,6 +97,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             value={value}
             noResultsMessage={noResultsMessage}
             extraSearchParams={extraSearchParams}
+            popoutLink={popoutLink}
           />
         </PopoverContent>
       </Popover>

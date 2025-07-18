@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   Command,
   CommandEmpty,
@@ -8,9 +9,11 @@ import {
 } from "@/components/ui/command";
 import { Icon } from "@/components/ui/icons";
 import { PulsatingDots } from "@/components/ui/pulsating-dots";
+import { popoutWindowManager } from "@/hooks/popout-window/popout-window";
 import { http } from "@/lib/http-client";
-import { cn } from "@/lib/utils";
+import { cn, toTitleCase } from "@/lib/utils";
 import type { LimitOffsetResponse } from "@/types/server";
+import { faGhost } from "@fortawesome/pro-duotone-svg-icons";
 import { faCheck } from "@fortawesome/pro-regular-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useDebounce } from "@uidotdev/usehooks";
@@ -38,6 +41,26 @@ async function fetchOptions<T>(
   return data;
 }
 
+function openPopoutWindow(
+  popoutLink: string,
+  event: React.MouseEvent<HTMLButtonElement>,
+) {
+  event.preventDefault();
+  event.stopPropagation();
+
+  popoutWindowManager.openWindow(
+    popoutLink,
+    {},
+    {
+      modalType: "create",
+      width: 800,
+      height: 800,
+      hideAside: true,
+      rememberPosition: true,
+    },
+  );
+}
+
 export function AutocompleteCommandContent<TOption>({
   open,
   link,
@@ -53,6 +76,7 @@ export function AutocompleteCommandContent<TOption>({
   onOptionChange,
   extraSearchParams,
   onChange,
+  popoutLink,
 }: {
   open: boolean;
   link: string;
@@ -68,6 +92,7 @@ export function AutocompleteCommandContent<TOption>({
   setSelectedOption: (option: TOption | null) => void;
   onOptionChange?: (option: TOption | null) => void;
   extraSearchParams?: Record<string, string | string[]>;
+  popoutLink?: string;
 }) {
   const queryClient = useQueryClient();
   const [options, setOptions] = useState<TOption[]>([]);
@@ -288,7 +313,7 @@ export function AutocompleteCommandContent<TOption>({
       <CommandList
         ref={commandListRef}
         onScroll={handleScrollEnd}
-        className="max-h-[200px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+        className="max-h-[250px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
       >
         {isError && (
           <div className="p-4 text-destructive text-center">
@@ -296,9 +321,27 @@ export function AutocompleteCommandContent<TOption>({
           </div>
         )}
         {!isLoading && options.length === 0 && (
-          <CommandEmpty>
-            {noResultsMessage ?? `No ${label?.toLowerCase()} found.`}
-          </CommandEmpty>
+          <div className="flex flex-col items-center p-4 justify-center size-full gap-2">
+            <div className="flex items-center justify-center p-4 rounded-full bg-blue-600/20 border border-blue-600/50">
+              <Icon icon={faGhost} className="size-10 text-blue-600" />
+            </div>
+
+            <CommandEmpty>
+              {noResultsMessage ?? `No ${toTitleCase(label ?? "")} found.`}
+            </CommandEmpty>
+            <span className="text-2xs text-muted-foreground text-center">
+              We can&apos;t find any {label?.toLowerCase()} in your
+              organization.
+            </span>
+            {popoutLink && (
+              <Button
+                size="sm"
+                onClick={(event) => openPopoutWindow(popoutLink, event)}
+              >
+                Add New
+              </Button>
+            )}
+          </div>
         )}
         <CommandGroup>
           {options.map((option) => (
