@@ -226,26 +226,27 @@ export function useWebSocket({
 
   // Connect/disconnect based on authentication and enabled state
   useEffect(() => {
-    if (enabled && isAuthenticated && user && org) {
+    let shouldConnect = enabled && isAuthenticated && user && org;
+    
+    if (shouldConnect) {
       connect();
-    } else {
+    } else if (!shouldConnect && webSocketService.getConnectionState().isConnected) {
       console.info("Disconnecting WebSocket", user);
-      disconnect();
+      webSocketService.disconnect();
+      subscriptionRef.current = null;
+      setSocket(null);
+      setSubscription(null);
+      setConnectionState("disconnected");
     }
-
-    return () => {
-      if (!enabled) {
-        disconnect();
-      }
-    };
-  }, [enabled, isAuthenticated, user, org, connect, disconnect]);
+  }, [enabled, isAuthenticated, user, org, connect, setSocket, setSubscription, setConnectionState]);
 
   // Cleanup on unmount
   useEffect(() => {
     return () => {
-      disconnect();
+      webSocketService.disconnect();
+      // Don't update state during unmount to avoid state update warnings
     };
-  }, [disconnect]);
+  }, []);
 
   const markAsRead = useCallback((notificationId: string) => {
     webSocketService.markNotificationAsRead(notificationId);
