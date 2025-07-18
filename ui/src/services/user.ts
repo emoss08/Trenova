@@ -1,4 +1,5 @@
 import { http } from "@/lib/http-client";
+import type { ChangePasswordSchema } from "@/lib/schemas/auth-schema";
 import type { UserSchema } from "@/lib/schemas/user-schema";
 
 export class UserAPI {
@@ -15,5 +16,9 @@ export class UserAPI {
     );
 
     return response.data;
+  }
+
+  async changePassword(request: ChangePasswordSchema) {
+    return http.post<UserSchema>("/users/change-password/", request);
   }
 }

@@ -170,6 +170,51 @@ func (ur *userRepository) FindByEmail(ctx context.Context, email string) (*user.
 	return u, nil
 }
 
+func (ur *userRepository) ChangePassword(
+	ctx context.Context,
+	req repositories.ChangePasswordRequest,
+) (*user.User, error) {
+	log := ur.l.With().
+		Str("operation", "ChangePassword").
+		Str("userID", req.UserID.String()).
+		Logger()
+
+	dba, err := ur.db.WriteDB(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get write database connection")
+		return nil, err
+	}
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		q := tx.NewUpdate().Model((*user.User)(nil)).
+			Set("password = ?", req.HashedPassword).
+			Set("must_change_password = ?", false).
+			Where("usr.id = ?", req.UserID)
+
+		if _, err = q.Exec(c); err != nil {
+			log.Error().Err(err).Msg("failed to change password")
+			return err
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		log.Error().Err(err).Msg("failed to change password")
+		return nil, err
+	}
+
+	u, err := ur.GetByID(ctx, repositories.GetUserByIDOptions{
+		UserID: req.UserID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get user by id")
+		return nil, err
+	}
+
+	return u, nil
+}
+
 // GetByID retrieves a user by their ID.
 //
 // Parameters:

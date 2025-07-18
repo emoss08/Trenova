@@ -46,6 +46,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(60), // 60 writes per minute
 	)...)
 
+	api.Post("/change-password/", rl.WithRateLimit(
+		[]fiber.Handler{h.changePassword},
+		middleware.PerMinute(60), // 60 writes per minute
+	)...)
+
 	api.Get("/select-options/", rl.WithRateLimit(
 		[]fiber.Handler{h.selectOptions},
 		middleware.PerMinute(120), // 120 reads per minute
@@ -209,6 +214,29 @@ func (h *Handler) update(c *fiber.Ctx) error {
 	}
 
 	entity, err := h.uh.Update(c.UserContext(), u, reqCtx.UserID)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity)
+}
+
+func (h *Handler) changePassword(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	var req repositories.ChangePasswordRequest
+	if err = c.BodyParser(&req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req.OrgID = reqCtx.OrgID
+	req.BuID = reqCtx.BuID
+	req.UserID = reqCtx.UserID
+
+	entity, err := h.uh.ChangePassword(c.UserContext(), req)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}

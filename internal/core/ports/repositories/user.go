@@ -21,6 +21,16 @@ type ListUserRequest struct {
 	IncludeRoles bool
 }
 
+type ChangePasswordRequest struct {
+	OrgID           pulid.ID `json:"orgId"`
+	BuID            pulid.ID `json:"buId"`
+	UserID          pulid.ID `json:"userId"`
+	CurrentPassword string   `json:"currentPassword"`
+	NewPassword     string   `json:"newPassword"`
+	ConfirmPassword string   `json:"confirmPassword"`
+	HashedPassword  string   `json:"-"`
+}
+
 type UserRepository interface {
 	List(
 		ctx context.Context,
@@ -33,4 +43,5 @@ type UserRepository interface {
 	Create(ctx context.Context, u *user.User) (*user.User, error)
 	Update(ctx context.Context, u *user.User) (*user.User, error)
 	SwitchOrganization(ctx context.Context, userID, newOrgID pulid.ID) (*user.User, error)
+	ChangePassword(ctx context.Context, req ChangePasswordRequest) (*user.User, error)
 }

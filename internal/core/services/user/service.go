@@ -172,6 +172,7 @@ func (s *Service) Create(
 	}
 
 	u.Password = hashed
+	u.MustChangePassword = true
 
 	createdEntity, err := s.repo.Create(ctx, u)
 	if err != nil {
@@ -303,6 +304,59 @@ func (s *Service) Update(
 	}
 
 	return updatedEntity, nil
+}
+
+func (s *Service) ChangePassword(
+	ctx context.Context,
+	req repositories.ChangePasswordRequest,
+) (*user.User, error) {
+	log := s.l.With().
+		Str("operation", "ChangePassword").
+		Str("userID", req.UserID.String()).
+		Logger()
+
+	currentUser, err := s.repo.GetByID(ctx, repositories.GetUserByIDOptions{
+		OrgID:        req.OrgID,
+		BuID:         req.BuID,
+		UserID:       req.UserID,
+		IncludeRoles: true,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get user")
+		return nil, err
+	}
+
+	if err = currentUser.VerifyPassword(req.CurrentPassword); err != nil {
+		return nil, errors.NewValidationError(
+			"currentPassword",
+			errors.ErrInvalid,
+			"Current password is incorrect",
+		)
+	}
+
+	if req.NewPassword != req.ConfirmPassword {
+		return nil, errors.NewValidationError(
+			"confirmPassword",
+			errors.ErrInvalid,
+			"New password and confirm password do not match",
+		)
+	}
+
+	hashedPassword, err := currentUser.GeneratePassword(req.NewPassword)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to generate password")
+		return nil, err
+	}
+
+	req.HashedPassword = hashedPassword
+
+	updatedUser, err := s.repo.ChangePassword(ctx, req)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to update user")
+		return nil, err
+	}
+
+	return updatedUser, nil
 }
 
 func (s *Service) SwitchOrganization(
