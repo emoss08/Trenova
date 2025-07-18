@@ -64,7 +64,35 @@ type Location struct {
 
 func (l *Location) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, l,
-		validation.Field(&l.Code, validation.Required.Error("Code is required")),
+		// * Code is required and must be within 1 and 10 characters.
+		validation.Field(&l.Code,
+			validation.Required.Error("Code is required"),
+			validation.Length(1, 10).Error("Code must be between 1 and 10 characters"),
+		),
+		// * Name is required and must be within 1 and 255 characters.
+		validation.Field(&l.Name,
+			validation.Required.Error("Name is required"),
+			validation.Length(1, 255).Error("Name must be between 1 and 255 characters"),
+		),
+		// * Address Line 1 is required and must be within 1 and 150 characters.
+		validation.Field(&l.AddressLine1,
+			validation.Required.Error("Address Line 1 is required"),
+			validation.Length(1, 150).Error("Address Line 1 must be between 1 and 150 characters"),
+		),
+		// * City is required and must be within 1 and 100 characters.
+		validation.Field(&l.City,
+			validation.Required.Error("City is required"),
+			validation.Length(1, 100).Error("City must be between 1 and 100 characters"),
+		),
+		// * State is required.
+		validation.Field(&l.StateID,
+			validation.Required.Error("State is required"),
+		),
+		// * Postal Code is required and must be a valid US or Canadian postal code.
+		validation.Field(&l.PostalCode,
+			validation.Required.Error("Postal Code is required"),
+			validation.By(domain.ValidatePostalCode),
+		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
