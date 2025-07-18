@@ -50,6 +50,10 @@ type TableConfigurationRepository interface {
 		ctx context.Context,
 		filters *TableConfigurationFilters,
 	) (*ListTableConfigurationResult, error)
+	ListPublicConfigurations(
+		ctx context.Context,
+		opts *TableConfigurationFilters,
+	) (*ports.ListResult[*tableconfiguration.Configuration], error)
 	Create(
 		ctx context.Context,
 		config *tableconfiguration.Configuration,

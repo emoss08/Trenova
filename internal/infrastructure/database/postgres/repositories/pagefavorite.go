@@ -40,7 +40,10 @@ func NewFavoriteRepository(p FavoriteRepository) repositories.FavoriteRepository
 	}
 }
 
-func (r *favoriteRepository) List(ctx context.Context) ([]*pagefavorite.PageFavorite, error) {
+func (r *favoriteRepository) List(
+	ctx context.Context,
+	opts repositories.ListFavoritesOptions,
+) ([]*pagefavorite.PageFavorite, error) {
 	dba, err := r.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
@@ -54,7 +57,14 @@ func (r *favoriteRepository) List(ctx context.Context) ([]*pagefavorite.PageFavo
 
 	entities := make([]*pagefavorite.PageFavorite, 0)
 
-	err = dba.NewSelect().Model(&entities).Scan(ctx)
+	err = dba.NewSelect().Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("pf.organization_id = ?", opts.OrgID).
+				Where("pf.business_unit_id = ?", opts.BuID).
+				Where("pf.user_id = ?", opts.UserID)
+		}).
+		Scan(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("scan favorites")
 		return nil, oops.In("page_favorite_repository").
@@ -196,11 +206,11 @@ func (r *favoriteRepository) Update(
 		Str("operation", "Update").
 		Logger()
 
-	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		_, err = tx.NewUpdate().
 			Model(f).
 			OmitZero().
-			Exec(ctx)
+			Exec(c)
 		if err != nil {
 			log.Error().Err(err).Msg("update favorite")
 			return oops.In("page_favorite_repository").
@@ -232,19 +242,16 @@ func (r *favoriteRepository) Delete(
 		Str("operation", "Delete").
 		Logger()
 
-	f := new(pagefavorite.PageFavorite)
-
-	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		query := tx.NewDelete().Model(f).
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		_, err := tx.NewDelete().
+			Model((*pagefavorite.PageFavorite)(nil)).
 			WhereGroup(" AND ", func(sq *bun.DeleteQuery) *bun.DeleteQuery {
 				return sq.
 					Where("pf.id = ?", opts.FavoriteID).
 					Where("pf.organization_id = ?", opts.OrgID).
 					Where("pf.business_unit_id = ?", opts.BuID).
 					Where("pf.user_id = ?", opts.UserID)
-			})
-
-		_, err = query.Exec(ctx)
+			}).Exec(c)
 		if err != nil {
 			log.Error().Err(err).Msg("delete favorite")
 			return oops.In("page_favorite_repository").

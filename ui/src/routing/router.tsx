@@ -351,16 +351,6 @@ const routes: RouteObject[] = [
             ],
           },
           {
-            path: "/permission-denied",
-            loader: protectedLoader,
-            async lazy() {
-              let { PermissionDenied } = await import(
-                "@/app/permission-denied/page"
-              );
-              return { Component: PermissionDenied };
-            },
-          },
-          {
             path: "/organization/",
             Component: AdminLayout,
             HydrateFallback: LoadingSkeleton,
@@ -537,6 +527,16 @@ const routes: RouteObject[] = [
             ],
           },
         ],
+      },
+      {
+        path: "/permission-denied",
+        loader: protectedLoader,
+        async lazy() {
+          let { PermissionDenied } = await import(
+            "@/app/permission-denied/page"
+          );
+          return { Component: PermissionDenied };
+        },
       },
       // Auth routes with AuthLayout
       {
