@@ -120,7 +120,7 @@ function FieldWrapperDescriptionInner({
 }
 
 type PasswordFieldWrapperProps = FieldWrapperProps & {
-  onPasswordReset: () => void;
+  onPasswordReset?: () => void;
 };
 
 // Also memoize PasswordFieldWrapper since it's derived from FieldWrapper
@@ -157,15 +157,17 @@ export const PasswordFieldWrapper = memo(
             >
               {label}
             </Label>
-            <Button
-              variant="link"
-              type="button"
-              size="noSize"
-              onClick={onPasswordReset}
-              className="ml-auto inline-block text-xs underline"
-            >
-              Forgot your password?
-            </Button>
+            {onPasswordReset && (
+              <Button
+                variant="link"
+                type="button"
+                size="noSize"
+                onClick={onPasswordReset}
+                className="ml-auto inline-block text-xs underline"
+              >
+                Forgot your password?
+              </Button>
+            )}
           </div>
         )}
         {children}

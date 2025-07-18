@@ -88,7 +88,7 @@ export function SensitiveInputField<T extends FieldValues>({
 }
 
 type PasswordFieldProps<T extends FieldValues> = InputFieldProps<T> & {
-  onPasswordReset: () => void;
+  onPasswordReset?: () => void;
 };
 
 export function PasswordField<T extends FieldValues>({
@@ -116,10 +116,6 @@ export function PasswordField<T extends FieldValues>({
     setShowPassword(!showPassword);
   };
 
-  const handlePasswordReset = () => {
-    onPasswordReset();
-  };
-
   return (
     <Controller<T>
       name={name}
@@ -132,7 +128,7 @@ export function PasswordField<T extends FieldValues>({
           required={!!rules?.required}
           error={fieldState.error?.message}
           className={className}
-          onPasswordReset={handlePasswordReset}
+          onPasswordReset={onPasswordReset}
         >
           <div className="relative">
             <Input
