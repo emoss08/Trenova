@@ -419,9 +419,11 @@ export function MultiSelectAutocomplete<T>({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full font-normal gap-2 cursor-auto rounded border-muted-foreground/20 bg-muted px-2 py-1.5 h-7 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
-              "justify-between [&_svg]:size-3.5 [&_svg]:shrink-0",
+              "w-full font-normal gap-2 cursor-auto rounded-md border-muted-foreground/20 bg-muted px-2 py-1.5 h-7",
+              "data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
+              "justify-between [&_svg]:size-3 [&_svg]:shrink-0 cursor-pointer hover:bg-muted",
               "transition-[border-color,box-shadow] duration-200 ease-in-out",
+              "whitespace-nowrap",
               disabled && "opacity-50 cursor-not-allowed",
               isInvalid &&
                 "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20 hover:border-red-500 hover:bg-red-500/20 data-[state=open]:border-red-500 data-[state=open]:bg-red-500/20 data-[state=open]:ring-red-500/20",
@@ -492,7 +494,7 @@ export function MultiSelectAutocomplete<T>({
                       >
                         <ChevronDownIcon
                           className={cn(
-                            "size-3 text-muted-foreground duration-200 ease-in-out transition-all cursor-pointer",
+                            "size-3 flex-shrink-0 ml-1 text-muted-foreground duration-200 ease-in-out transition-all cursor-pointer",
                             open && "transform -rotate-180",
                           )}
                         />
@@ -520,7 +522,7 @@ export function MultiSelectAutocomplete<T>({
                 >
                   <ChevronDownIcon
                     className={cn(
-                      "size-3 text-muted-foreground duration-200 ease-in-out transition-all cursor-pointer",
+                      "size-3 opacity-50 flex-shrink-0 ml-1 duration-200 ease-in-out transition-all cursor-pointer",
                       open && "transform -rotate-180",
                     )}
                   />
@@ -565,25 +567,26 @@ export function MultiSelectAutocomplete<T>({
                 </CommandEmpty>
               )}
               <CommandGroup>
-                <CommandItem
-                  key="select-all"
-                  onSelect={() => toggleSelectAll()}
-                  className="cursor-pointer"
-                >
-                  <div
-                    className={cn(
-                      "flex size-4 items-center justify-center rounded-sm border border-primary",
-                      selectedOptions.length === options.length &&
-                        options.length > 0
-                        ? "bg-primary text-primary-foreground"
-                        : "opacity-50 [&_svg]:invisible",
-                    )}
+                {options.length > 0 && (
+                  <CommandItem
+                    key="select-all"
+                    onSelect={() => toggleSelectAll()}
+                    className="cursor-pointer"
                   >
-                    <Icon icon={faCheck} className="size-2" />
-                  </div>
-                  <span>(Select All)</span>
-                </CommandItem>
-
+                    <div
+                      className={cn(
+                        "flex size-4 items-center justify-center rounded-sm border border-primary",
+                        selectedOptions.length === options.length &&
+                          options.length > 0
+                          ? "bg-primary text-primary-foreground"
+                          : "opacity-50 [&_svg]:invisible",
+                      )}
+                    >
+                      <Icon icon={faCheck} className="size-2" />
+                    </div>
+                    <span>(Select All)</span>
+                  </CommandItem>
+                )}
                 {options.map((option) => {
                   const optionValue = getOptionValue(option).toString();
                   const isSelected = selectedOptions.some(
