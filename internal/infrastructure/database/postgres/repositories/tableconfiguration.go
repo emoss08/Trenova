@@ -160,7 +160,8 @@ func (tcr *tableConfigurationRepository) filterUserConfigurations(
 	opts *repositories.ListUserConfigurationRequest,
 ) *bun.SelectQuery {
 	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return sq.Where("tc.user_id = ?", opts.Filter.TenantOpts.UserID).
+		return sq.
+			Where("tc.user_id = ?", opts.Filter.TenantOpts.UserID).
 			Where("tc.organization_id = ?", opts.Filter.TenantOpts.OrgID).
 			Where("tc.resource = ?", opts.Resource).
 			Where("tc.business_unit_id = ?", opts.Filter.TenantOpts.BuID)
@@ -482,6 +483,7 @@ func (tcr *tableConfigurationRepository) GetUserConfigurations(
 		Model(&configs).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("tc.resource = ?", resource).
+				Where("tc.user_id = ?", opts.UserID).
 				Where("tc.organization_id = ?", opts.Base.OrgID).
 				Where("tc.business_unit_id = ?", opts.Base.BuID)
 		})
@@ -517,6 +519,7 @@ func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(
 	q := dba.NewSelect().Model(config).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("tc.resource = ?", resource).
+				Where("tc.user_id = ?", opts.UserID).
 				Where("tc.organization_id = ?", opts.Base.OrgID).
 				Where("tc.business_unit_id = ?", opts.Base.BuID)
 		})
