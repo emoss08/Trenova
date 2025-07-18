@@ -84,6 +84,41 @@ func (s *Service) List(
 	return entities, nil
 }
 
+func (s *Service) ListPublicConfigurations(
+	ctx context.Context,
+	opts *repositories.TableConfigurationFilters,
+) (*ports.ListResult[*tcdomain.Configuration], error) {
+	log := s.l.With().Str("operation", "ListPublicConfigurations").Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         opts.Base.UserID,
+			Resource:       permission.ResourceTableConfiguration,
+			Action:         permission.ActionRead,
+			BusinessUnitID: opts.Base.BuID,
+			OrganizationID: opts.Base.OrgID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read table configurations",
+		)
+	}
+
+	entities, err := s.repo.ListPublicConfigurations(ctx, opts)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to list table configurations")
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (s *Service) Create(
 	ctx context.Context,
 	config *tcdomain.Configuration,
@@ -297,7 +332,8 @@ func (s *Service) ShareConfiguration(
 		Logger()
 
 	// Get existing configuration
-	existing, err := s.repo.GetByID(ctx, share.ConfigurationID,
+	existing, err := s.repo.GetByID(ctx,
+		share.ConfigurationID,
 		&repositories.TableConfigurationFilters{
 			Base: &ports.FilterQueryOptions{
 				OrgID: share.OrganizationID,
@@ -305,20 +341,22 @@ func (s *Service) ShareConfiguration(
 			},
 		})
 	if err != nil {
-		return eris.Wrap(err, "get existing configuration")
+		return err
 	}
 
 	// Check share permission
-	permResult, err := s.ps.HasPermission(ctx,
-		&services.PermissionCheck{
-			UserID:         userID,
-			Resource:       permission.ResourceTableConfiguration,
-			Action:         permission.ActionShare,
-			BusinessUnitID: existing.BusinessUnitID,
-			OrganizationID: existing.OrganizationID,
-			ResourceID:     existing.ID,
-			CustomData: map[string]any{
-				"userId": existing.UserID,
+	permResult, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         userID,
+				Resource:       permission.ResourceTableConfiguration,
+				Action:         permission.ActionShare,
+				BusinessUnitID: existing.BusinessUnitID,
+				OrganizationID: existing.OrganizationID,
+				// ResourceID:     existing.ID,
+				CustomData: map[string]any{
+					"userId": existing.UserID,
+				},
 			},
 		})
 	if err != nil {
@@ -330,7 +368,7 @@ func (s *Service) ShareConfiguration(
 
 	if err = s.repo.ShareConfiguration(ctx, share); err != nil {
 		log.Error().Err(err).Msg("failed to share configuration")
-		return eris.Wrap(err, "share configuration")
+		return err
 	}
 
 	return nil

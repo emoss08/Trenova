@@ -48,8 +48,18 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerSecond(3), // 3 writes per second
 	)...)
 
+	api.Post("/share", rl.WithRateLimit(
+		[]fiber.Handler{h.share},
+		middleware.PerSecond(3), // 3 writes per second
+	)...)
+
 	api.Get(":resource", rl.WithRateLimit(
 		[]fiber.Handler{h.getDefaultOrLatestConfiguration},
+		middleware.PerSecond(10), // 10 reads per second
+	)...)
+
+	api.Get("/public/:resource", rl.WithRateLimit(
+		[]fiber.Handler{h.listPublicConfigurations},
 		middleware.PerSecond(10), // 10 reads per second
 	)...)
 
@@ -81,8 +91,8 @@ func (h *Handler) list(c *fiber.Ctx) error {
 		&repositories.TableConfigurationFilters{
 			Base:           opts,
 			Search:         c.Query("search"),
-			IncludeShares:  c.Query("include_shares") == "true",
-			IncludeCreator: c.Query("include_creator") == "true",
+			IncludeShares:  c.QueryBool("include_shares", false),
+			IncludeCreator: c.QueryBool("include_creator", false),
 		})
 	if err != nil {
 		return h.eh.HandleError(c, err)
@@ -109,6 +119,36 @@ func (h *Handler) listUserConfigurations(c *fiber.Ctx) error {
 			&repositories.ListUserConfigurationRequest{
 				Resource: resource,
 				Filter:   filter,
+			},
+		)
+	}
+
+	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
+}
+
+func (h *Handler) listPublicConfigurations(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*tableconfigurationdomain.Configuration], error) {
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
+		resource := fc.Params("resource")
+
+		return h.ts.ListPublicConfigurations(
+			fc.UserContext(),
+			&repositories.TableConfigurationFilters{
+				Base: &ports.FilterQueryOptions{
+					OrgID:  reqCtx.OrgID,
+					BuID:   reqCtx.BuID,
+					UserID: reqCtx.UserID,
+				},
+				Resource: resource,
+				Search:   c.Query("search"),
 			},
 		)
 	}
@@ -204,6 +244,28 @@ func (h *Handler) delete(c *fiber.Ctx) error {
 		OrgID:    reqCtx.OrgID,
 		BuID:     reqCtx.BuID,
 	})
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
+func (h *Handler) share(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	share := new(tableconfigurationdomain.ConfigurationShare)
+	share.OrganizationID = reqCtx.OrgID
+	share.BusinessUnitID = reqCtx.BuID
+
+	if err = c.BodyParser(share); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	err = h.ts.ShareConfiguration(c.UserContext(), share, reqCtx.UserID)
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}

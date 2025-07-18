@@ -21,21 +21,21 @@ type QueueProcessor interface {
 }
 
 type queueProcessor struct {
-	l              *zerolog.Logger
-	sender         Sender
-	profileService services.EmailProfileService
-	queueService   services.EmailQueueService
-	logService     services.EmailLogService
+	l            *zerolog.Logger
+	sender       Sender
+	profileRepo  repositories.EmailProfileRepository
+	queueService services.EmailQueueService
+	logService   services.EmailLogService
 }
 
 type QueueProcessorParams struct {
 	fx.In
 
-	Logger         *logger.Logger
-	Sender         Sender
-	ProfileService services.EmailProfileService
-	QueueService   services.EmailQueueService
-	LogService     services.EmailLogService
+	Logger       *logger.Logger
+	Sender       Sender
+	ProfileRepo  repositories.EmailProfileRepository
+	QueueService services.EmailQueueService
+	LogService   services.EmailLogService
 }
 
 // NewQueueProcessor creates a new queue processor
@@ -45,11 +45,11 @@ func NewQueueProcessor(p QueueProcessorParams) QueueProcessor {
 		Logger()
 
 	return &queueProcessor{
-		l:              &log,
-		sender:         p.Sender,
-		profileService: p.ProfileService,
-		queueService:   p.QueueService,
-		logService:     p.LogService,
+		l:            &log,
+		sender:       p.Sender,
+		profileRepo:  p.ProfileRepo,
+		queueService: p.QueueService,
+		logService:   p.LogService,
 	}
 }
 
@@ -89,13 +89,11 @@ func (p *queueProcessor) ProcessQueue(ctx context.Context) error {
 
 // ProcessSingleItem processes a single queue item
 func (p *queueProcessor) ProcessSingleItem(ctx context.Context, queueItem *email.Queue) error {
-	// Update status to processing
 	if err := p.updateQueueStatus(ctx, queueItem, email.QueueStatusProcessing); err != nil {
 		return err
 	}
 
-	// Get the email profile
-	profile, err := p.profileService.Get(ctx, repositories.GetEmailProfileByIDRequest{
+	profile, err := p.profileRepo.Get(ctx, repositories.GetEmailProfileByIDRequest{
 		OrgID:      queueItem.OrganizationID,
 		BuID:       queueItem.BusinessUnitID,
 		ProfileID:  queueItem.ProfileID,
@@ -105,18 +103,15 @@ func (p *queueProcessor) ProcessSingleItem(ctx context.Context, queueItem *email
 		return p.handleFailure(ctx, queueItem, fmt.Errorf("failed to get email profile: %w", err))
 	}
 
-	// Send the email
 	messageID, err := p.sender.Send(ctx, profile, queueItem)
 	if err != nil {
 		return p.handleSendError(ctx, queueItem, err)
 	}
 
-	// Mark as sent
 	if err := p.queueService.MarkAsSent(ctx, queueItem.ID, messageID); err != nil {
 		p.l.Error().Err(err).Msg("failed to mark email as sent")
 	}
 
-	// Log the delivery
 	if err := p.logDelivery(ctx, queueItem, messageID); err != nil {
 		p.l.Error().Err(err).Msg("failed to log email delivery")
 	}

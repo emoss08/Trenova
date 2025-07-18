@@ -316,7 +316,7 @@ func (r *emailProfileRepository) Get(
 			Tags("operation", "get").
 			Tags("profile_id", req.ProfileID.String()).
 			Time(time.Now()).
-			Wrapf(err, "failed to get email profile")
+			Wrap(err)
 	}
 
 	// Decrypt sensitive fields

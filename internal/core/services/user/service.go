@@ -2,7 +2,9 @@ package user
 
 import (
 	"context"
+	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -13,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/internal/pkg/utils/stringutils"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
@@ -28,6 +31,7 @@ type ServiceParams struct {
 	AuditService services.AuditService
 	PermService  services.PermissionService
 	AuthService  *auth.Service
+	EmailService services.EmailService
 }
 
 type Service struct {
@@ -36,6 +40,7 @@ type Service struct {
 	ps   services.PermissionService
 	as   services.AuditService
 	auth *auth.Service
+	es   services.EmailService
 }
 
 func NewService(p ServiceParams) *Service {
@@ -49,6 +54,7 @@ func NewService(p ServiceParams) *Service {
 		ps:   p.PermService,
 		as:   p.AuditService,
 		auth: p.AuthService,
+		es:   p.EmailService,
 	}
 }
 
@@ -58,7 +64,6 @@ func (s *Service) SelectOptions(
 ) ([]*types.SelectOption, error) {
 	result, err := s.repo.List(ctx, repositories.ListUserRequest{
 		Filter: opts,
-		// IncludeRoles: true,
 	})
 	if err != nil {
 		return nil, eris.Wrap(err, "select users")
@@ -159,10 +164,58 @@ func (s *Service) Create(
 		return nil, errors.NewAuthorizationError("You do not have permission to create a user")
 	}
 
+	temporaryPassword := stringutils.GenerateSecurePassword(12)
+
+	hashed, err := u.GeneratePassword(temporaryPassword)
+	if err != nil {
+		return nil, err
+	}
+
+	u.Password = hashed
+
 	createdEntity, err := s.repo.Create(ctx, u)
 	if err != nil {
 		return nil, err
 	}
+
+	emailHTMLBody := fmt.Sprintf(`
+		<html>
+			<body>
+				<h2>Welcome to Trenova</h2>
+				<p>Your account has been created successfully.</p>
+				<p><strong>Email:</strong> %s</p>
+				<p><strong>Temporary Password:</strong> %s</p>
+				<p>Please log in and change your password immediately.</p>
+			</body>
+		</html>
+	`, u.EmailAddress, temporaryPassword)
+
+	emailTextBody := fmt.Sprintf(`
+Welcome to Trenova
+
+Your account has been created successfully.
+
+Email: %s
+Temporary Password: %s
+
+Please log in and change your password immediately.
+	`, u.EmailAddress, temporaryPassword)
+
+	_, err = s.es.SendEmail(ctx, &services.SendEmailRequest{
+		OrganizationID: createdEntity.CurrentOrganizationID,
+		BusinessUnitID: createdEntity.BusinessUnitID,
+		UserID:         userID,
+		Subject:        "Welcome to Trenova - Account Created",
+		To:             []string{u.EmailAddress},
+		HTMLBody:       emailHTMLBody,
+		TextBody:       emailTextBody,
+		Priority:       email.PriorityHigh,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to send email")
+		return nil, err
+	}
+
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceUser,
