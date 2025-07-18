@@ -47,31 +47,11 @@ func NewService(p ServiceParams) *Service {
 
 func (s *Service) List(
 	ctx context.Context,
-	orgID, buID, userID pulid.ID,
+	opts repositories.ListFavoritesOptions,
 ) ([]*pagefavorite.PageFavorite, error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceUser, // Users can manage their own favorites
-				Action:         permission.ActionRead,
-				BusinessUnitID: buID,
-				OrganizationID: orgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read favorites")
-	}
-
-	favorites, err := s.repo.List(ctx)
+	favorites, err := s.repo.List(ctx, opts)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list favorites")
 		return nil, err
@@ -88,26 +68,6 @@ func (s *Service) Get(
 		Str("operation", "GetByID").
 		Str("favoriteID", favoriteID.String()).
 		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceUser,
-				Action:         permission.ActionRead,
-				BusinessUnitID: buID,
-				OrganizationID: orgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read favorites")
-	}
 
 	entity, err := s.repo.GetByID(ctx, repositories.GetFavoriteByIDOptions{
 		OrgID:      orgID,
@@ -133,26 +93,6 @@ func (s *Service) GetByURL(
 		Str("pageURL", pageURL).
 		Logger()
 
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceUser,
-				Action:         permission.ActionRead,
-				BusinessUnitID: buID,
-				OrganizationID: orgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read favorites")
-	}
-
 	entity, err := s.repo.GetByURL(ctx, repositories.GetFavoriteByURLOptions{
 		OrgID:   orgID,
 		BuID:    buID,
@@ -173,26 +113,6 @@ func (s *Service) Create(
 	fav *pagefavorite.PageFavorite,
 ) (*pagefavorite.PageFavorite, error) {
 	log := s.l.With().Str("operation", "Create").Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceUser,
-				Action:         permission.ActionCreate,
-				BusinessUnitID: buID,
-				OrganizationID: orgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create favorites")
-	}
 
 	// Set the required IDs
 	fav.OrganizationID = orgID
@@ -257,26 +177,6 @@ func (s *Service) Update(
 		Str("favoriteID", favoriteID.String()).
 		Logger()
 
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceUser,
-				Action:         permission.ActionUpdate,
-				BusinessUnitID: buID,
-				OrganizationID: orgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to update favorites")
-	}
-
 	// Get the existing favorite for audit purposes
 	existing, err := s.repo.GetByID(ctx, repositories.GetFavoriteByIDOptions{
 		OrgID:      orgID,
@@ -334,26 +234,6 @@ func (s *Service) Delete(ctx context.Context, orgID, buID, userID, favoriteID pu
 		Str("operation", "Delete").
 		Str("favoriteID", favoriteID.String()).
 		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceUser,
-				Action:         permission.ActionDelete,
-				BusinessUnitID: buID,
-				OrganizationID: orgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return err
-	}
-
-	if !result.Allowed {
-		return errors.NewAuthorizationError("You do not have permission to delete favorites")
-	}
 
 	// Get the existing favorite for audit purposes
 	existing, err := s.repo.GetByID(ctx, repositories.GetFavoriteByIDOptions{

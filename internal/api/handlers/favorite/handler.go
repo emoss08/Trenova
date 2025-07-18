@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/pagefavorite"
 	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	favoriteservice "github.com/emoss08/trenova/internal/core/services/favorite"
 	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/validator"
@@ -105,7 +106,11 @@ func (h *Handler) list(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	favorites, err := h.fs.List(c.UserContext(), reqCtx.OrgID, reqCtx.BuID, reqCtx.UserID)
+	favorites, err := h.fs.List(c.UserContext(), repositories.ListFavoritesOptions{
+		OrgID:  reqCtx.OrgID,
+		BuID:   reqCtx.BuID,
+		UserID: reqCtx.UserID,
+	})
 	if err != nil {
 		return h.eh.HandleError(c, err)
 	}
