@@ -18,7 +18,7 @@ import {
   type CustomerSchema,
   customerSchema,
 } from "@/lib/schemas/customer-schema";
-import { BillingCycleType } from "@/types/billing";
+import { BillingCycleType, PaymentTerm } from "@/types/billing";
 import { Status } from "@/types/common";
 import { type TableSheetProps } from "@/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,6 +46,14 @@ export function CreateCustomerModal({ open, onOpenChange }: TableSheetProps) {
         billingProfile: {
           billingCycleType: BillingCycleType.Immediate,
           hasOverrides: false,
+          enforceCustomerBillingReq: false,
+          validateCustomerRates: false,
+          paymentTerm: PaymentTerm.Net30,
+          autoTransfer: false,
+          autoMarkReadyToBill: false,
+          autoBill: false,
+          specialInstructions: "",
+          documentTypes: [],
         },
         emailProfile: {
           subject: "",

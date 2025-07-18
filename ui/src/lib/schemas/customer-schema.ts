@@ -42,12 +42,12 @@ export const billingProfileSchema = z.object({
 
   // * Billing Profile Fields
   hasOverrides: z.boolean(),
-  enforceCustomerBillingReq: z.boolean(),
-  validateCustomerRates: z.boolean(),
-  paymentTerm: z.enum(PaymentTerm),
-  autoTransfer: z.boolean(),
-  autoMarkReadyToBill: z.boolean(),
-  autoBill: z.boolean(),
+  enforceCustomerBillingReq: z.boolean().default(false),
+  validateCustomerRates: z.boolean().default(false),
+  paymentTerm: z.enum(PaymentTerm).default(PaymentTerm.Net30),
+  autoTransfer: z.boolean().default(false),
+  autoMarkReadyToBill: z.boolean().default(false),
+  autoBill: z.boolean().default(false),
   specialInstructions: optionalStringSchema,
   documentTypes: z.array(documentTypeSchema).optional(),
 });
