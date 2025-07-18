@@ -5,6 +5,7 @@ import type { DocumentTypeSchema } from "@/lib/schemas/document-type-schema";
 import type { EquipmentManufacturerSchema } from "@/lib/schemas/equipment-manufacturer-schema";
 import type { EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
 import type { FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
+import type { FormulaTemplateSchema } from "@/lib/schemas/formula-template-schema";
 import type { HazardousMaterialSchema } from "@/lib/schemas/hazardous-material-schema";
 import type { LocationCategorySchema } from "@/lib/schemas/location-category-schema";
 import type { LocationSchema } from "@/lib/schemas/location-schema";
@@ -29,16 +30,15 @@ import type {
 import { MultiSelectAutocompleteField } from "../fields/async-multi-select";
 import { AutocompleteField } from "../fields/autocomplete";
 import { ColorOptionValue } from "../fields/select-components";
+import { ExpressionHighlight } from "../formula-templates/expression-highliter";
 import { PackingGroupBadge } from "../status-badge";
 import { LazyImage } from "./image";
-import type { FormulaTemplateSchema } from "@/lib/schemas/formula-template-schema";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "./tooltip";
-import { ExpressionHighlight } from "../formula-templates/expression-highliter";
 
 type BaseAutocompleteFieldProps<TOption, TForm extends FieldValues> = {
   control: Control<TForm>;
@@ -74,6 +74,7 @@ export function HazardousMaterialAutocompleteField<T extends FieldValues>({
       link="/hazardous-materials/"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => `${option.name}`}
+      placeholder="Select a hazardous material"
       renderOption={(option) => (
         <div className="flex flex-col gap-0.5 items-start size-full">
           <div className="flex flex-row items-center">
@@ -179,6 +180,7 @@ export function EquipmentTypeAutocompleteField<T extends FieldValues>({
   return (
     <AutocompleteField<EquipmentTypeSchema, T>
       link="/equipment-types/"
+      popoutLink="/equipment/configurations/equipment-types"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
         <ColorOptionValue color={option.color} value={option.code} />
@@ -203,6 +205,7 @@ export function EquipmentManufacturerAutocompleteField<T extends FieldValues>({
   return (
     <AutocompleteField<EquipmentManufacturerSchema, T>
       link="/equipment-manufacturers/"
+      popoutLink="/equipment/configurations/equipment-manufacturers"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.name}
       renderOption={(option) => option.name}
