@@ -16,6 +16,7 @@ import (
 
 var ErrAdminAccountAlreadyExists = eris.New("admin account already exists")
 var ErrSystemAccountAlreadyExists = eris.New("system account already exists")
+var ErrBasicAccountAlreadyExists = eris.New("basic account already exists")
 
 func LoadAdminAccount(
 	ctx context.Context,
@@ -155,6 +156,76 @@ func LoadSystemAccount(
 	}
 
 	return nil, ErrSystemAccountAlreadyExists
+}
+
+func LoadBasicAccount(
+	ctx context.Context,
+	db *bun.DB,
+	fixture *dbfixture.Fixture,
+) (*user.User, error) {
+	org := fixture.MustRow("Organization.trenova").(*organization.Organization)
+	org2 := fixture.MustRow("Organization.trenova_2").(*organization.Organization)
+	bu := fixture.MustRow("BusinessUnit.trenova").(*businessunit.BusinessUnit)
+
+	exists, err := db.NewSelect().
+		Model((*user.User)(nil)).
+		Where("email_address = ?", "basic@trenova.app").
+		Exists(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		usr := &user.User{
+			CurrentOrganizationID: org.ID,
+			CurrentOrganization:   org,
+			BusinessUnit:          bu,
+			BusinessUnitID:        bu.ID,
+			Status:                domain.StatusActive,
+			Username:              "basic",
+			EmailAddress:          "basic@trenova.app",
+			Timezone:              "America/New_York",
+			Name:                  "Basic User",
+		}
+
+		password, pErr := usr.GeneratePassword("password123")
+		if pErr != nil {
+			return nil, pErr
+		}
+
+		usr.Password = password
+
+		_, err = db.NewInsert().Model(usr).Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		uo := make([]*user.UserOrganization, 0, 2)
+
+		uo = append(uo, &user.UserOrganization{
+			UserID:         usr.ID,
+			OrganizationID: org.ID,
+		}, &user.UserOrganization{
+			UserID:         usr.ID,
+			OrganizationID: org2.ID,
+		})
+
+		_, err = db.NewInsert().Model(&uo).Exec(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		// Print out the basic account credentials
+		color.Magenta("-----------------------------")
+		color.Magenta("Basic account credentials:")
+		color.Magenta("Email: basic@trenova.app")
+		color.Magenta("Password: password123")
+		color.Magenta("-----------------------------")
+
+		return usr, nil
+	}
+
+	return nil, ErrBasicAccountAlreadyExists
 }
 
 // LoadFakeAccounts generates 50 fake accounts

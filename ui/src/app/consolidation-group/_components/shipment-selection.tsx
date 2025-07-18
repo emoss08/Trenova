@@ -42,8 +42,8 @@ export function ShipmentSelection({
       filters: [
         {
           field: "status",
-          operator: "eq",
-          value: ShipmentStatus.enum.New,
+          operator: "in",
+          value: [ShipmentStatus.enum.New, ShipmentStatus.enum.Delayed],
         },
         {
           field: "consolidationGroupId",

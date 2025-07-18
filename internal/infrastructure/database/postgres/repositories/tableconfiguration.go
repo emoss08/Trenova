@@ -117,6 +117,44 @@ func (tcr *tableConfigurationRepository) List(
 	}, nil
 }
 
+func (tcr *tableConfigurationRepository) ListPublicConfigurations(
+	ctx context.Context,
+	opts *repositories.TableConfigurationFilters,
+) (*ports.ListResult[*tableconfiguration.Configuration], error) {
+	dba, err := tcr.db.ReadDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	log := tcr.l.With().
+		Str("operation", "ListPublicConfigurations").
+		Str("userID", opts.Base.UserID.String()).
+		Logger()
+
+	configs := make([]*tableconfiguration.Configuration, 0)
+
+	q := dba.NewSelect().Model(&configs).
+		Relation("Creator").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("tc.visibility = ?", tableconfiguration.VisibilityPublic).
+				Where("tc.resource = ?", opts.Resource).
+				Where("tc.user_id != ?", opts.Base.UserID).
+				Where("tc.organization_id = ?", opts.Base.OrgID).
+				Where("tc.business_unit_id = ?", opts.Base.BuID)
+		})
+
+	count, err := q.ScanAndCount(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get public configurations")
+		return nil, eris.Wrap(err, "get public configurations")
+	}
+
+	return &ports.ListResult[*tableconfiguration.Configuration]{
+		Items: configs,
+		Total: count,
+	}, nil
+}
+
 func (tcr *tableConfigurationRepository) filterUserConfigurations(
 	q *bun.SelectQuery,
 	opts *repositories.ListUserConfigurationRequest,
@@ -542,20 +580,21 @@ func (tcr *tableConfigurationRepository) ShareConfiguration(
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// First verify the configuration exists and is shareable
 		config := new(tableconfiguration.Configuration)
 		err = tx.NewSelect().
 			Model(config).
 			WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-				return sq.Where("id = ?", share.ConfigurationID).
-					Where("visibility = ?", tableconfiguration.VisibilityShared)
+				return sq.Where("tc.id = ?", share.ConfigurationID).
+					Where("tc.visibility = ?", tableconfiguration.VisibilityShared).
+					Where("tc.organization_id = ?", share.OrganizationID).
+					Where("tc.business_unit_id = ?", share.BusinessUnitID)
 			}).
 			Scan(c)
 		if err != nil {
 			if eris.Is(err, sql.ErrNoRows) {
 				return errors.NewNotFoundError("Configuration not found or not shareable")
 			}
-			return eris.Wrap(err, "verify configuration")
+			return err
 		}
 
 		// Insert the share
@@ -564,13 +603,18 @@ func (tcr *tableConfigurationRepository) ShareConfiguration(
 			Exec(c)
 		if err != nil {
 			log.Error().Err(err).Msg("failed to create share")
-			return eris.Wrap(err, "create share")
+			return err
 		}
 
 		return nil
 	})
 	if err != nil {
-		return eris.Wrap(err, "share configuration")
+		return oops.In("table_configuration_repository").
+			Tags("share_configuration").
+			With("configID", share.ConfigurationID).
+			With("sharedWithID", share.SharedWithID).
+			Time(time.Now()).
+			Wrap(err)
 	}
 
 	return nil

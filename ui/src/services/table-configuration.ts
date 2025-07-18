@@ -30,6 +30,14 @@ export class TableConfigurationAPI {
     return data;
   }
 
+  async listPublicConfigurations(resource: Resource) {
+    const { data } = await http.get<
+      LimitOffsetResponse<TableConfigurationSchema>
+    >(`/table-configurations/public/${resource}`);
+
+    return data;
+  }
+
   /**
    * Create a new table configuration.
    */

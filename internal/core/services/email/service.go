@@ -22,7 +22,7 @@ type ServiceParams struct {
 	Sender            Sender
 	QueueProcessor    QueueProcessor
 	AttachmentHandler AttachmentHandler
-	ProfileService    services.EmailProfileService
+	ProfileRepo       repositories.EmailProfileRepository
 	TemplateService   services.EmailTemplateService
 	QueueService      services.EmailQueueService
 	LogService        services.EmailLogService
@@ -33,7 +33,7 @@ type Service struct {
 	sender            Sender
 	queueProcessor    QueueProcessor
 	attachmentHandler AttachmentHandler
-	profileService    services.EmailProfileService
+	profileRepo       repositories.EmailProfileRepository
 	templateService   services.EmailTemplateService
 	queueService      services.EmailQueueService
 	logService        services.EmailLogService
@@ -52,7 +52,7 @@ func NewService(p ServiceParams) services.EmailService {
 		sender:            p.Sender,
 		queueProcessor:    p.QueueProcessor,
 		attachmentHandler: p.AttachmentHandler,
-		profileService:    p.ProfileService,
+		profileRepo:       p.ProfileRepo,
 		templateService:   p.TemplateService,
 		queueService:      p.QueueService,
 		logService:        p.LogService,
@@ -244,14 +244,14 @@ func (s *Service) TestEmailProfile(
 		Str("profile_id", req.ProfileID.String()).
 		Logger()
 
-	profile, err := s.profileService.Get(ctx, req)
+	profile, err := s.profileRepo.Get(ctx, req)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get email profile")
 		return nil, oops.In("email_service").
 			Tags("operation", "get_profile_for_test").
 			Tags("profile_id", req.ProfileID.String()).
 			Time(time.Now()).
-			Wrapf(err, "failed to get email profile")
+			Wrap(err)
 	}
 
 	// Test the connection
@@ -439,10 +439,10 @@ func (s *Service) getProfileOrDefault(
 	req repositories.GetEmailProfileByIDRequest,
 ) (*email.Profile, error) {
 	if req.ProfileID != pulid.Nil {
-		return s.profileService.Get(ctx, req)
+		return s.profileRepo.Get(ctx, req)
 	}
 
-	return s.profileService.GetDefault(ctx, req)
+	return s.profileRepo.GetDefault(ctx, req.OrgID, req.BuID)
 }
 
 func (s *Service) createQueueEntry(

@@ -10,7 +10,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
+import { DataTablePermissionDeniedSkeleton } from "@/components/ui/permission-skeletons";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
+import { usePermissions } from "@/hooks/use-permissions";
 import { queries } from "@/lib/queries";
 import {
   organizationSchema,
@@ -19,8 +21,10 @@ import {
 import { TIMEZONES } from "@/lib/timezone/timezone";
 import { api } from "@/services/api";
 import { useUser } from "@/stores/user-store";
+import { Resource } from "@/types/audit-entry";
 import type { APIError } from "@/types/errors";
 import { OrganizationType } from "@/types/organization";
+import { Action } from "@/types/roles-permissions";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   useMutation,
@@ -42,6 +46,7 @@ export default function OrganizationForm() {
   const userOrg = useSuspenseQuery({
     ...queries.organization.getOrgById(user?.currentOrganizationId ?? ""),
   });
+  const { can } = usePermissions();
 
   const form = useForm({
     resolver: zodResolver(organizationSchema),
@@ -132,6 +137,15 @@ export default function OrganizationForm() {
     },
     [mutateAsync],
   );
+
+  if (!can(Resource.Organization, Action.Read)) {
+    return (
+      <DataTablePermissionDeniedSkeleton
+        resource={Resource.Organization}
+        action={Action.Read}
+      />
+    );
+  }
 
   return (
     <FormProvider {...form}>

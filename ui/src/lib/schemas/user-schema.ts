@@ -133,12 +133,8 @@ export const userSchema = z.object({
   emailAddress: z.email({ error: "Invalid email address" }),
   profilePicUrl: z.string().optional(),
   thumbnailUrl: z.string().optional(),
-  timezone: z.string().min(1, {
-    error: "Timezone is required",
-  }),
-  timeFormat: z.enum(TimeFormat, {
-    error: "Time format is required",
-  }),
+  timezone: z.string().min(1),
+  timeFormat: z.enum(TimeFormat),
   isLocked: z.boolean(),
   lastLoginAt: z.number().optional(),
   mustChangePassword: z.boolean(),

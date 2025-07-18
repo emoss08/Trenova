@@ -201,6 +201,11 @@ export const queries = createQueryKeyStore({
       queryFn: async () =>
         api.tableConfigurations.listUserConfigurations(resource),
     }),
+    listPublicConfigurations: (resource: Resource) => ({
+      queryKey: ["table-configurations", resource],
+      queryFn: async () =>
+        api.tableConfigurations.listPublicConfigurations(resource),
+    }),
     getDefaultOrLatestConfiguration: (resource: Resource) => ({
       queryKey: ["table-configurations", resource],
       queryFn: async () =>

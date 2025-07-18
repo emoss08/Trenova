@@ -21,6 +21,7 @@ import { faSearch } from "@fortawesome/pro-regular-svg-icons";
 import {
   faEllipsis,
   faPencil,
+  faShare,
   faTableColumns,
   faTrash,
 } from "@fortawesome/pro-solid-svg-icons";
@@ -30,6 +31,7 @@ import React, { memo, useState } from "react";
 import { toast } from "sonner";
 import { useDataTable } from "../../data-table-provider";
 import { TableConfigurationEditModal } from "./table-configuration-edit-modal";
+import { TableConfigurationShareModal } from "./table-configuration-share-modal";
 
 function TableConfigurationListInner({
   children,
@@ -51,7 +53,7 @@ const TableConfigurationListHeader = memo(
   }) {
     return (
       <div className="flex justify-center text-center items-center gap-1 text-muted-foreground text-2xs border-b border-border border-dashed pb-1">
-        Saved Configurations ({userConfigurations?.length})
+        My Configurations ({userConfigurations?.length})
       </div>
     );
   },
@@ -64,7 +66,7 @@ const TableConfigurationListHeader = memo(
   },
 );
 
-export function TableConfigurationList({
+export function UserTableConfigurationList({
   resource,
   open,
 }: {
@@ -77,6 +79,13 @@ export function TableConfigurationList({
       ...queries.tableConfiguration.listUserConfigurations(resource),
       enabled: open,
     });
+  const {
+    data: publicConfigurations,
+    isLoading: isLoadingPublicConfigurations,
+  } = useQuery({
+    ...queries.tableConfiguration.listPublicConfigurations(resource),
+    enabled: open,
+  });
 
   return (
     <TableConfigurationListInner>
@@ -98,6 +107,8 @@ export function TableConfigurationList({
       <TableConfigurationContent
         isLoadingUserConfigurations={isLoadingUserConfigurations}
         userConfigurations={userConfigurations?.results ?? []}
+        isLoadingPublicConfigurations={isLoadingPublicConfigurations}
+        publicConfigurations={publicConfigurations?.results ?? []}
       />
     </TableConfigurationListInner>
   );
@@ -106,34 +117,56 @@ export function TableConfigurationList({
 function TableConfigurationContent({
   isLoadingUserConfigurations,
   userConfigurations,
+  isLoadingPublicConfigurations,
+  publicConfigurations,
 }: {
   isLoadingUserConfigurations: boolean;
   userConfigurations: TableConfigurationSchema[];
+  isLoadingPublicConfigurations: boolean;
+  publicConfigurations: TableConfigurationSchema[];
 }) {
   return (
     <ScrollArea className="h-[150px] w-full pt-2">
-      {isLoadingUserConfigurations ? (
-        <div className="flex flex-col gap-1 text-center justify-center items-center p-2">
-          {Array.from({ length: 5 }).map((_, index) => (
-            <Skeleton key={index} className="w-full h-6" />
-          ))}
-        </div>
-      ) : (
-        <>
-          {userConfigurations.length === 0 && (
-            <div className="flex flex-col gap-1 text-center justify-center items-center p-2">
-              <p className="text-sm">No configurations found</p>
-              <p className="text-2xs text-muted-foreground">
-                Table Configurations allow you to save your current column
-                configuration for reuse.
+      <div className="flex flex-col gap-0.5">
+        {isLoadingUserConfigurations || isLoadingPublicConfigurations ? (
+          <div className="flex flex-col gap-1 text-center justify-center items-center p-2">
+            {Array.from({ length: 5 }).map((_, index) => (
+              <Skeleton key={index} className="w-full h-6" />
+            ))}
+          </div>
+        ) : (
+          <>
+            {userConfigurations.length === 0 && (
+              <div className="flex flex-col gap-1 text-center justify-center items-center p-2">
+                <p className="text-sm">No configurations found</p>
+                <p className="text-2xs text-muted-foreground">
+                  Table Configurations allow you to save your current column
+                  configuration for reuse.
+                </p>
+              </div>
+            )}
+          </>
+        )}
+        {userConfigurations?.map((config) => (
+          <TableConfigurationListItem key={config.id} config={config} />
+        ))}
+
+        {publicConfigurations?.length > 0 && (
+          <>
+            <div className="flex flex-col gap-1 text-left p-2 border-t border-border border-dashed pt-2">
+              <p className="text-xs text-muted-foreground">
+                Public Configurations ({publicConfigurations?.length})
               </p>
             </div>
-          )}
-        </>
-      )}
-      {userConfigurations?.map((config) => (
-        <TableConfigurationListItem key={config.id} config={config} />
-      ))}
+            {publicConfigurations?.map((config) => (
+              <PublicTableConfigurationListItem
+                key={config.id}
+                config={config}
+              />
+            ))}
+          </>
+        )}
+      </div>
     </ScrollArea>
   );
 }
@@ -147,6 +180,7 @@ function TableConfigurationListItem({
   const queryClient = useQueryClient();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [shareModalOpen, setShareModalOpen] = useState(false);
   const [, setSearchParams] = useQueryStates(searchParamsParser);
 
   const applyConfig = () => {
@@ -233,6 +267,12 @@ function TableConfigurationListItem({
                   onClick={() => setEditModalOpen(!editModalOpen)}
                 />
                 <DropdownMenuItem
+                  title="Share"
+                  description="Share the configuration with another user"
+                  onClick={() => setShareModalOpen(!shareModalOpen)}
+                  startContent={<Icon icon={faShare} className="size-3" />}
+                />
+                <DropdownMenuItem
                   title="Delete"
                   color="danger"
                   description="Delete the configuration"
@@ -250,6 +290,80 @@ function TableConfigurationListItem({
         open={editModalOpen}
         onOpenChange={setEditModalOpen}
       />
+      {shareModalOpen && (
+        <TableConfigurationShareModal
+          configId={config.id}
+          open={shareModalOpen}
+          onOpenChange={setShareModalOpen}
+        />
+      )}
+    </>
+  );
+}
+
+function PublicTableConfigurationListItem({
+  config,
+}: {
+  config: TableConfigurationSchema;
+}) {
+  const { table } = useDataTable();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [, setSearchParams] = useQueryStates(searchParamsParser);
+
+  const applyConfig = () => {
+    if (!table) return;
+
+    table.setColumnVisibility(config.tableConfig.columnVisibility);
+
+    // * Set the search params to the configuration filters and sort
+    setSearchParams({
+      filters: JSON.stringify(config.tableConfig.filters) as string,
+      sort: JSON.stringify(config.tableConfig.sort) as string,
+    });
+  };
+
+  return (
+    <>
+      <div className="group flex text-left items-center justify-between rounded-md py-0.5 px-2 w-full hover:bg-accent">
+        <div className="flex items-center gap-2">
+          <p className="text-xs w-[170px] truncate">{config.name}</p>
+        </div>
+        <div className="flex items-center justify-center gap-2">
+          <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
+            <DropdownMenuTrigger asChild>
+              <button
+                title={`${config.name} configuration options`}
+                aria-label={`${config.name} configuration options`}
+                aria-describedby={`${config.name} configuration options`}
+                type="button"
+                className={cn(
+                  "opacity-0 cursor-pointer group-hover:opacity-100 transition-opacity",
+                  dropdownOpen && "opacity-100",
+                )}
+              >
+                <Icon
+                  icon={faEllipsis}
+                  className="size-3 text-muted-foreground"
+                />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  title="Apply"
+                  description="Apply the configuration to the table"
+                  onClick={applyConfig}
+                  startContent={
+                    <Icon icon={faTableColumns} className="size-3" />
+                  }
+                />
+              </DropdownMenuGroup>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
+      </div>
     </>
   );
 }

@@ -74,6 +74,20 @@ export const tableConfigurationSchema = z.object({
   isDefault: z.boolean(),
 });
 
+export const shareConfigurationSchema = z.object({
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
+
+  shareType: z.string(),
+  shareWithId: optionalStringSchema,
+  configurationId: optionalStringSchema,
+});
+
+export type ShareConfigurationSchema = z.infer<typeof shareConfigurationSchema>;
 export type TableConfigurationSchema = z.infer<typeof tableConfigurationSchema>;
 export type FilterStateSchema = z.infer<typeof FilterStateSchema>;
 

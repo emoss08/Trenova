@@ -21,7 +21,7 @@ import type { VisibilityState } from "@tanstack/react-table";
 import { isValidElement, memo, useCallback, useMemo, useState } from "react";
 import { useDataTable } from "../data-table-provider";
 import { CreateTableConfigurationModal } from "./_configuration/table-configuration-create-modal";
-import { TableConfigurationList } from "./_configuration/table-configuration-list";
+import { UserTableConfigurationList } from "./_configuration/table-configuration-list";
 import { DataTableImportModal } from "./data-table-import-modal";
 
 export const DataTableCreateButton = memo(function DataTableCreateButton({
@@ -253,7 +253,7 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
                   side="left"
                   className="p-1 w-[250px]"
                 >
-                  <TableConfigurationList
+                  <UserTableConfigurationList
                     resource={resource}
                     open={showConfigurationList}
                   />
