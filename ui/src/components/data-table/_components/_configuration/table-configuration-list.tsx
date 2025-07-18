@@ -325,8 +325,11 @@ function PublicTableConfigurationListItem({
   return (
     <>
       <div className="group flex text-left items-center justify-between rounded-md py-0.5 px-2 w-full hover:bg-accent">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col items-start gap-0.5">
           <p className="text-xs w-[170px] truncate">{config.name}</p>
+          <p className="text-2xs text-muted-foreground">
+            Created by {config.creator?.name}
+          </p>
         </div>
         <div className="flex items-center justify-center gap-2">
           <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>

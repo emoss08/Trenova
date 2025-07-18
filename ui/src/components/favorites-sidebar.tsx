@@ -24,6 +24,7 @@ import {
   CollapsibleTrigger,
 } from "./ui/collapsible";
 import { Icon } from "./ui/icons";
+import { ScrollArea } from "./ui/scroll-area";
 
 export function FavoritesSidebar() {
   const location = useLocation();
@@ -99,8 +100,8 @@ export function FavoritesSidebar() {
     <SidebarGroup>
       <Collapsible open={showFavorites} onOpenChange={setShowFavorites}>
         <SidebarGroupLabel className="flex justify-between items-center select-none font-semibold uppercase">
-          <div className="flex items-center gap-0.5">
-            <Icon icon={faStar} className="mr-1" />
+          <div className="flex items-center justify-center gap-0.5">
+            <Icon icon={faStar} className="mr-1 mb-0.5" />
             Favorites
           </div>
           <CollapsibleTrigger asChild>
@@ -113,57 +114,59 @@ export function FavoritesSidebar() {
         <CollapsibleContent>
           <SidebarGroupContent>
             <SidebarMenu>
-              {favorites.map((favorite) => {
-                const favoritePath = extractPath(favorite.pageUrl);
-                const isActive = location.pathname === favoritePath;
+              <ScrollArea className="flex flex-col gap-4 overflow-y-auto max-h-[200px] p-3 border border-border bg-muted-foreground/5 rounded-md">
+                {favorites.map((favorite) => {
+                  const favoritePath = extractPath(favorite.pageUrl);
+                  const isActive = location.pathname === favoritePath;
 
-                return (
-                  <SidebarMenuItem key={favorite.id}>
-                    <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
-                      className="group pr-8"
-                    >
-                      <Link
-                        to={favoritePath}
-                        className="flex items-center gap-2 text-sm"
-                        title={favorite.description || favorite.pageTitle}
+                  return (
+                    <SidebarMenuItem key={favorite.id}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        className="group pr-8"
                       >
-                        {favorite.icon && (
-                          <Icon
-                            icon={favorite.icon as any}
-                            className="size-4"
-                          />
-                        )}
-                        <div className="flex flex-col gap-0.5 min-w-0 flex-1">
-                          <span className="truncate font-medium">
-                            {favorite.pageTitle}
-                          </span>
-                          {favorite.pageSection && (
-                            <span className="truncate text-xs text-muted-foreground">
-                              {favorite.pageSection}
-                            </span>
+                        <Link
+                          to={favoritePath}
+                          className="flex items-center gap-2 text-sm"
+                          title={favorite.description || favorite.pageTitle}
+                        >
+                          {favorite.icon && (
+                            <Icon
+                              icon={favorite.icon as any}
+                              className="size-4"
+                            />
                           )}
-                        </div>
-                      </Link>
-                    </SidebarMenuButton>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className={cn(
-                        "absolute right-1 top-1/2 -translate-y-1/2 size-6",
-                        "opacity-0 group-hover:opacity-100 transition-opacity",
-                        "hover:bg-destructive/10 hover:text-destructive",
-                      )}
-                      onClick={(e) => handleRemoveFavorite(e, favorite.id)}
-                      disabled={deleteFavorite.isPending}
-                      title="Remove from favorites"
-                    >
-                      <Icon icon={faTrash} className="size-3" />
-                    </Button>
-                  </SidebarMenuItem>
-                );
-              })}
+                          <div className="flex flex-col gap-0.5 min-w-0 flex-1">
+                            <span className="truncate font-medium">
+                              {favorite.pageTitle}
+                            </span>
+                            {favorite.pageSection && (
+                              <span className="truncate text-xs text-muted-foreground">
+                                {favorite.pageSection}
+                              </span>
+                            )}
+                          </div>
+                        </Link>
+                      </SidebarMenuButton>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className={cn(
+                          "absolute right-1 top-1/2 -translate-y-1/2 size-6",
+                          "opacity-0 group-hover:opacity-100 transition-opacity",
+                          "hover:bg-destructive/10 hover:text-destructive",
+                        )}
+                        onClick={(e) => handleRemoveFavorite(e, favorite.id)}
+                        disabled={deleteFavorite.isPending}
+                        title="Remove from favorites"
+                      >
+                        <Icon icon={faTrash} className="size-3" />
+                      </Button>
+                    </SidebarMenuItem>
+                  );
+                })}
+              </ScrollArea>
             </SidebarMenu>
           </SidebarGroupContent>
         </CollapsibleContent>

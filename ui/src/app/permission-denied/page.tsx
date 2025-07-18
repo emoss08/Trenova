@@ -11,7 +11,6 @@ export function PermissionDenied() {
   const [searchParams] = useSearchParams();
 
   const resource = searchParams.get("resource") as Resource | null;
-  const action = searchParams.get("action") || "read";
 
   return (
     <>
@@ -33,7 +32,7 @@ export function PermissionDenied() {
             <p className="text-lg text-muted-foreground">
               {resource ? (
                 <>
-                  You don&apos;t have permission to {action}{" "}
+                  You don&apos;t have permission to{" "}
                   <span className="font-bold underline decoration-blue-600 text-primary">
                     {formatResourceName(resource)}
                   </span>

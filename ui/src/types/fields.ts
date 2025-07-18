@@ -227,6 +227,8 @@ export interface BaseAutocompleteFieldProps<
   onOptionChange?: (option: TOption | null) => void;
   /** Extra search params to append to the query */
   extraSearchParams?: Record<string, string | string[]>;
+  /** Popout link to open in a new window */
+  popoutLink?: string;
 }
 
 export type AutocompleteFieldProps<TOption, TForm extends FieldValues> = Omit<

@@ -210,8 +210,11 @@ export function DataTable<TData extends Record<string, any>>({
 
     // * Check if there is no table configuration only after the query is done loading
     if (!tableConfig) {
+      console.info("No table configuration found.");
       return;
     }
+
+    console.info("Table configuration loaded", tableConfig);
 
     // * Set column visibility from table configuration
     if (tableConfig.tableConfig?.columnVisibility) {

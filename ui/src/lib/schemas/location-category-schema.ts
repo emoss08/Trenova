@@ -1,6 +1,7 @@
-import { FacilityType, LocationCategoryType } from "@/types/location-category";
+import { LocationCategoryType } from "@/types/location-category";
 import * as z from "zod/v4";
 import {
+  nullableStringSchema,
   optionalStringSchema,
   timestampSchema,
   versionSchema,
@@ -24,9 +25,7 @@ export const locationCategorySchema = z.object({
   type: z.enum(LocationCategoryType, {
     error: "Type is required",
   }),
-  facilityType: z.enum(FacilityType, {
-    error: "Facility type is required",
-  }),
+  facilityType: nullableStringSchema,
   hasSecureParking: z.boolean().default(false),
   requiresAppointment: z.boolean().default(false),
   allowsOvernight: z.boolean().default(false),

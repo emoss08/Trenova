@@ -7,6 +7,7 @@ import {
   timestampSchema,
   versionSchema,
 } from "./helpers";
+import { userSchema } from "./user-schema";
 
 export const LogicalOperatorSchema = z.enum(["and", "or"]);
 
@@ -57,6 +58,19 @@ const tableConfigSchema = z.object({
   joinOperator: optionalStringSchema,
 });
 
+export const shareConfigurationSchema = z.object({
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
+
+  shareType: z.string(),
+  shareWithId: optionalStringSchema,
+  configurationId: optionalStringSchema,
+});
+
 export const tableConfigurationSchema = z.object({
   id: optionalStringSchema,
   version: versionSchema,
@@ -72,19 +86,9 @@ export const tableConfigurationSchema = z.object({
   tableConfig: tableConfigSchema,
   visibility: z.enum(Visibility),
   isDefault: z.boolean(),
-});
 
-export const shareConfigurationSchema = z.object({
-  id: optionalStringSchema,
-  version: versionSchema,
-  createdAt: timestampSchema,
-  updatedAt: timestampSchema,
-  organizationId: optionalStringSchema,
-  businessUnitId: optionalStringSchema,
-
-  shareType: z.string(),
-  shareWithId: optionalStringSchema,
-  configurationId: optionalStringSchema,
+  creator: userSchema.nullish(),
+  shares: z.array(shareConfigurationSchema).nullish(),
 });
 
 export type ShareConfigurationSchema = z.infer<typeof shareConfigurationSchema>;
