@@ -1,8 +1,8 @@
 import {
-    faArrowUp,
-    faFingerprint,
-    faRefresh,
-    faSparkles,
+  faArrowUp,
+  faFingerprint,
+  faRefresh,
+  faSparkles,
 } from "@fortawesome/pro-regular-svg-icons";
 import { useEffect, useState } from "react";
 import { Button } from "./ui/button";
@@ -182,9 +182,9 @@ function AIAssistantField({
         <Button
           size="icon"
           onClick={onSend}
-          className="absolute right-1 top-1/2 h-6 w-6 -translate-y-1/2 bg-primary hover:bg-primary/90"
+          className="absolute right-1 top-1/2 size-5 -translate-y-1/2"
         >
-          <Icon icon={faArrowUp} className="size-3 text-primary-foreground" />
+          <Icon icon={faArrowUp} className="size-3 text-muted-foreground" />
         </Button>
       </div>
     </div>
@@ -243,7 +243,7 @@ function AIAssistantBody() {
   };
 
   return (
-    <div className="flex flex-col w-full h-full mt-10 max-h-[430px]">
+    <div className="flex flex-col size-full mt-10 max-h-[430px]">
       {messages.length === 0 ? (
         <AIAssistantHeader />
       ) : (
@@ -274,7 +274,7 @@ function AIAssistantBody() {
               )}
               {isLoading && <LoadingMessage />}
             </div>
-            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-sidebar to-transparent" />
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent" />
           </ScrollArea>
         </>
       )}

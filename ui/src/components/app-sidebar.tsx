@@ -1,4 +1,4 @@
-import React, { memo, useMemo } from "react";
+import React, { memo, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   Collapsible,
@@ -13,6 +13,7 @@ import {
   SidebarGroupContent,
   SidebarGroupLabel,
   SidebarHeader,
+  SidebarInput,
   SidebarMenu,
   SidebarMenuAction,
   SidebarMenuButton,
@@ -21,6 +22,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import { useDebounce } from "@/hooks/use-debounce";
 import { usePermissions } from "@/hooks/use-permissions";
 import { routes } from "@/lib/nav-links";
 import { cn } from "@/lib/utils";
@@ -28,12 +30,15 @@ import { useIsAuthenticated, useUser } from "@/stores/user-store";
 import { Resource } from "@/types/audit-entry";
 import { RouteInfo } from "@/types/nav-links";
 import { Action } from "@/types/roles-permissions";
+import { faSearch, faXmark } from "@fortawesome/pro-regular-svg-icons";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { Link, useLocation } from "react-router";
 import { FavoritesSidebar } from "./favorites-sidebar";
 import { NavUser } from "./nav-user";
 import { OrganizationSwitcher } from "./organization-switcher";
+import Highlight from "./ui/highlight";
 import { Icon } from "./ui/icons";
+import { Kbd, KbdKey } from "./ui/kibo-ui/kbd";
 import { Skeleton } from "./ui/skeleton";
 import { WorkflowPlaceholder } from "./workflow";
 
@@ -102,7 +107,53 @@ const filterRoutesByPermission = (
     .filter((route): route is RouteInfo => route !== null);
 };
 
-function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
+// Filter routes based on search query
+const filterRoutesBySearch = (
+  routes: RouteInfo[],
+  searchQuery: string,
+): RouteInfo[] => {
+  if (!searchQuery.trim()) return routes;
+
+  const query = searchQuery.toLowerCase().trim();
+  const queryWords = query.split(/\s+/);
+
+  return routes
+    .map((route) => {
+      // Check if current route matches all query words
+      const routeLabel = route.label.toLowerCase();
+      const routeMatches = queryWords.every((word) =>
+        routeLabel.includes(word),
+      );
+
+      // If route has children, filter them
+      if (route.tree) {
+        const filteredChildren = filterRoutesBySearch(route.tree, searchQuery);
+
+        // Include parent if it matches or has matching children
+        if (routeMatches || filteredChildren.length > 0) {
+          return {
+            ...route,
+            tree: filteredChildren,
+          };
+        }
+        return null;
+      }
+
+      // For leaf nodes, include if matches
+      return routeMatches ? route : null;
+    })
+    .filter((route): route is RouteInfo => route !== null);
+};
+
+function Tree({
+  item,
+  currentPath,
+  searchQuery,
+}: {
+  item: RouteInfo;
+  currentPath: string;
+  searchQuery?: string;
+}) {
   const isActive = isRouteActive(currentPath, item.link);
   const hasActive = hasActiveChild(currentPath, item);
   const [isOpen, setIsOpen] = React.useState(hasActive);
@@ -148,7 +199,13 @@ function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
                   className={isActive ? "text-sidebar-accent-foreground" : ""}
                 />
               )}
-              <span className="flex-1">{item.label}</span>
+              <span className="flex-1">
+                {searchQuery ? (
+                  <Highlight text={item.label} highlight={searchQuery} />
+                ) : (
+                  item.label
+                )}
+              </span>
             </Link>
           </SidebarMenuButton>
         </SidebarMenuItem>
@@ -166,7 +223,13 @@ function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
               onClick={(e) => handleNavigation(e, item.link)}
             >
               {item.icon && <Icon icon={item.icon} />}
-              <span>{item.label}</span>
+              <span>
+                {searchQuery ? (
+                  <Highlight text={item.label} highlight={searchQuery} />
+                ) : (
+                  item.label
+                )}
+              </span>
             </Link>
           </SidebarMenuButton>
           <CollapsibleTrigger asChild>
@@ -185,7 +248,11 @@ function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
               {item.tree.map((subItem) => (
                 <SidebarMenuSubItem key={subItem.key}>
                   {subItem.tree ? (
-                    <Tree item={subItem} currentPath={currentPath} />
+                    <Tree
+                      item={subItem}
+                      currentPath={currentPath}
+                      searchQuery={searchQuery}
+                    />
                   ) : (
                     <SidebarMenuSubButton
                       asChild
@@ -197,7 +264,16 @@ function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
                         className="flex items-center gap-2"
                       >
                         {subItem.icon && <Icon icon={subItem.icon} />}
-                        <span>{subItem.label}</span>
+                        <span>
+                          {searchQuery ? (
+                            <Highlight
+                              text={subItem.label}
+                              highlight={searchQuery}
+                            />
+                          ) : (
+                            subItem.label
+                          )}
+                        </span>
                       </Link>
                     </SidebarMenuSubButton>
                   )}
@@ -219,14 +295,36 @@ export const AppSidebar = memo(function AppSidebar({
   const { can } = usePermissions();
   const isAuthenticated = useIsAuthenticated();
   const user = useUser();
+  const [searchQuery, setSearchQuery] = useState("");
+  const searchInputRef = useRef<HTMLInputElement>(null);
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const filteredRoutes = useMemo(() => {
     if (!user) return [];
-    return filterRoutesByPermission(routes, can);
-  }, [can, user]);
+    const permissionFilteredRoutes = filterRoutesByPermission(routes, can);
+    return filterRoutesBySearch(permissionFilteredRoutes, debouncedSearchQuery);
+  }, [can, user, debouncedSearchQuery]);
 
   // Show loading state while user data is being fetched
   const isLoading = isAuthenticated && !user;
+
+  // Add keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + K to focus search
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      // Escape to clear search
+      if (e.key === "Escape" && searchQuery) {
+        setSearchQuery("");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [searchQuery]);
 
   // TODO(wolfred): Allow for the sidebar to be configurable by the user.
   return (
@@ -234,6 +332,37 @@ export const AppSidebar = memo(function AppSidebar({
       <SidebarHeader className="gap-4">
         <OrganizationSwitcher />
         <WorkflowPlaceholder />
+        <div className="relative">
+          <Icon
+            icon={faSearch}
+            className="absolute left-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
+          />
+          <SidebarInput
+            ref={searchInputRef}
+            placeholder="Search navigation..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full"
+            icon={
+              <Icon icon={faSearch} className="size-3 text-muted-foreground" />
+            }
+            rightElement={
+              <Kbd>
+                <KbdKey aria-label="Meta">⌘</KbdKey>
+                <KbdKey>K</KbdKey>
+              </Kbd>
+            }
+          />
+          {searchQuery && (
+            <button
+              onClick={() => setSearchQuery("")}
+              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+              aria-label="Clear search"
+            >
+              <Icon icon={faXmark} className="size-3" />
+            </button>
+          )}
+        </div>
       </SidebarHeader>
       <SidebarContent>
         <FavoritesSidebar />
@@ -249,10 +378,21 @@ export const AppSidebar = memo(function AppSidebar({
                   <Skeleton key={i} className="h-8 w-full" />
                 ))}
               </div>
+            ) : filteredRoutes.length === 0 && debouncedSearchQuery ? (
+              // Show no results message
+              <div className="px-2 py-8 text-center text-sm text-muted-foreground">
+                No navigation items found for &ldquo;{debouncedSearchQuery}
+                &rdquo;
+              </div>
             ) : (
               // Show navigation items once loaded
               filteredRoutes.map((item) => (
-                <Tree key={item.key} item={item} currentPath={currentPath} />
+                <Tree
+                  key={item.key}
+                  item={item}
+                  currentPath={currentPath}
+                  searchQuery={debouncedSearchQuery}
+                />
               ))
             )}
           </SidebarGroupContent>
