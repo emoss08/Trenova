@@ -139,6 +139,7 @@ func (r *favoriteRepository) GetByURL(
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.
 				Where("pf.page_url = ?", opts.PageURL).
+				Where("pf.user_id = ?", opts.UserID).
 				Where("pf.organization_id = ?", opts.OrgID).
 				Where("pf.business_unit_id = ?", opts.BuID)
 		})
