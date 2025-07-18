@@ -24,6 +24,7 @@ import {
 import { usePermissions } from "@/hooks/use-permissions";
 import { routes } from "@/lib/nav-links";
 import { cn } from "@/lib/utils";
+import { useIsAuthenticated, useUser } from "@/stores/user-store";
 import { Resource } from "@/types/audit-entry";
 import { RouteInfo } from "@/types/nav-links";
 import { Action } from "@/types/roles-permissions";
@@ -33,6 +34,7 @@ import { FavoritesSidebar } from "./favorites-sidebar";
 import { NavUser } from "./nav-user";
 import { OrganizationSwitcher } from "./organization-switcher";
 import { Icon } from "./ui/icons";
+import { Skeleton } from "./ui/skeleton";
 import { WorkflowPlaceholder } from "./workflow";
 
 // Helper function to check if a route is active
@@ -78,7 +80,7 @@ const filterRoutesByPermission = (
       // If route has children, filter them first
       if (route.tree) {
         const filteredChildren = filterRoutesByPermission(route.tree, can);
-        
+
         // If this is a grouping node (like ConfigurationFiles) and has accessible children, include it
         if (filteredChildren.length > 0) {
           return {
@@ -89,12 +91,12 @@ const filterRoutesByPermission = (
         // If no children are accessible, exclude this route
         return null;
       }
-      
+
       // For leaf nodes, check if user has permission
       if (can(route.key as Resource, "read" as Action)) {
         return route;
       }
-      
+
       return null;
     })
     .filter((route): route is RouteInfo => route !== null);
@@ -215,12 +217,16 @@ export const AppSidebar = memo(function AppSidebar({
   const location = useLocation();
   const currentPath = location.pathname;
   const { can } = usePermissions();
+  const isAuthenticated = useIsAuthenticated();
+  const user = useUser();
 
-  // Filter routes based on permissions
-  const filteredRoutes = useMemo(
-    () => filterRoutesByPermission(routes, can),
-    [can],
-  );
+  const filteredRoutes = useMemo(() => {
+    if (!user) return [];
+    return filterRoutesByPermission(routes, can);
+  }, [can, user]);
+
+  // Show loading state while user data is being fetched
+  const isLoading = isAuthenticated && !user;
 
   // TODO(wolfred): Allow for the sidebar to be configurable by the user.
   return (
@@ -236,9 +242,19 @@ export const AppSidebar = memo(function AppSidebar({
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            {filteredRoutes.map((item) => (
-              <Tree key={item.key} item={item} currentPath={currentPath} />
-            ))}
+            {isLoading ? (
+              // Show loading skeletons while permissions are loading
+              <div className="space-y-2">
+                {[...Array(5)].map((_, i) => (
+                  <Skeleton key={i} className="h-8 w-full" />
+                ))}
+              </div>
+            ) : (
+              // Show navigation items once loaded
+              filteredRoutes.map((item) => (
+                <Tree key={item.key} item={item} currentPath={currentPath} />
+              ))
+            )}
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>

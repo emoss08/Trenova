@@ -7,8 +7,8 @@ import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
 import { defineConfig, normalizePath, type PluginOption } from "vite";
 import { compression } from "vite-plugin-compression2";
-import { viteStaticCopy } from "vite-plugin-static-copy";
 import { VitePWA } from "vite-plugin-pwa";
+import { viteStaticCopy } from "vite-plugin-static-copy";
 
 // Define vendor chunks that should be bundled separately
 const vendorChunks = {
