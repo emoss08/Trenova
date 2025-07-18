@@ -1,5 +1,7 @@
 import { api } from "@/services/api";
 import { useAuthStore } from "@/stores/user-store";
+import type { Resource } from "@/types/audit-entry";
+import type { Action } from "@/types/roles-permissions";
 import { LoaderFunctionArgs, redirect } from "react-router";
 
 export async function checkAuthStatus() {
@@ -57,4 +59,31 @@ export async function protectedLoader({ request }: LoaderFunctionArgs) {
   }
 
   return null;
+}
+
+export function createPermissionLoader(
+  resource: Resource,
+  action: Action = "read" as Action,
+) {
+  return async (args: LoaderFunctionArgs) => {
+    // First check authentication
+    const authResult = await protectedLoader(args);
+    if (authResult) {
+      return authResult;
+    }
+
+    // Then check permissions
+    const { hasPermission } = useAuthStore.getState();
+
+    if (!hasPermission(resource, action)) {
+      // User is authenticated but doesn't have permission
+      const params = new URLSearchParams({
+        resource,
+        action,
+      });
+      return redirect(`/permission-denied?${params.toString()}`);
+    }
+
+    return null;
+  };
 }
