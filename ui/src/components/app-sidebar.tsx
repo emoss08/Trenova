@@ -1,4 +1,4 @@
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 
 import {
   Collapsible,
@@ -21,9 +21,12 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import { usePermissions } from "@/hooks/use-permissions";
 import { routes } from "@/lib/nav-links";
 import { cn } from "@/lib/utils";
+import { Resource } from "@/types/audit-entry";
 import { RouteInfo } from "@/types/nav-links";
+import { Action } from "@/types/roles-permissions";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { Link, useLocation } from "react-router";
 import { FavoritesSidebar } from "./favorites-sidebar";
@@ -65,6 +68,38 @@ const hasActiveChild = (currentPath: string, item: RouteInfo): boolean => {
   );
 };
 
+// Filter routes based on permissions
+const filterRoutesByPermission = (
+  routes: RouteInfo[],
+  can: (resource: Resource, action: Action) => boolean,
+): RouteInfo[] => {
+  return routes
+    .map((route) => {
+      // If route has children, filter them first
+      if (route.tree) {
+        const filteredChildren = filterRoutesByPermission(route.tree, can);
+        
+        // If this is a grouping node (like ConfigurationFiles) and has accessible children, include it
+        if (filteredChildren.length > 0) {
+          return {
+            ...route,
+            tree: filteredChildren,
+          };
+        }
+        // If no children are accessible, exclude this route
+        return null;
+      }
+      
+      // For leaf nodes, check if user has permission
+      if (can(route.key as Resource, "read" as Action)) {
+        return route;
+      }
+      
+      return null;
+    })
+    .filter((route): route is RouteInfo => route !== null);
+};
+
 function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
   const isActive = isRouteActive(currentPath, item.link);
   const hasActive = hasActiveChild(currentPath, item);
@@ -72,18 +107,21 @@ function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
 
   // Helper to handle navigation - prevent navigation if already on the same route
   const handleNavigation = React.useCallback(
-    (e: React.MouseEvent<HTMLAnchorElement>, targetPath: string | undefined) => {
+    (
+      e: React.MouseEvent<HTMLAnchorElement>,
+      targetPath: string | undefined,
+    ) => {
       if (!targetPath || targetPath === "#") return;
-      
+
       // If we're already on this route, prevent navigation to preserve query params
       if (isRouteActive(currentPath, targetPath)) {
         e.preventDefault();
         return;
       }
-      
+
       // Otherwise, allow normal navigation (clears query params for different tables)
     },
-    [currentPath]
+    [currentPath],
   );
 
   // Update open state when active state changes
@@ -98,7 +136,7 @@ function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
       <SidebarMenu>
         <SidebarMenuItem>
           <SidebarMenuButton asChild data-active={isActive} isActive={isActive}>
-            <Link 
+            <Link
               to={item.link || "#"}
               onClick={(e) => handleNavigation(e, item.link)}
             >
@@ -121,7 +159,7 @@ function Tree({ item, currentPath }: { item: RouteInfo; currentPath: string }) {
       <SidebarMenuItem className="items-center">
         <Collapsible open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
           <SidebarMenuButton className="cursor-default" asChild>
-            <Link 
+            <Link
               to={item.link || "#"}
               onClick={(e) => handleNavigation(e, item.link)}
             >
@@ -176,6 +214,13 @@ export const AppSidebar = memo(function AppSidebar({
 }: React.ComponentProps<typeof Sidebar>) {
   const location = useLocation();
   const currentPath = location.pathname;
+  const { can } = usePermissions();
+
+  // Filter routes based on permissions
+  const filteredRoutes = useMemo(
+    () => filterRoutesByPermission(routes, can),
+    [can],
+  );
 
   // TODO(wolfred): Allow for the sidebar to be configurable by the user.
   return (
@@ -191,7 +236,7 @@ export const AppSidebar = memo(function AppSidebar({
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
-            {routes.map((item) => (
+            {filteredRoutes.map((item) => (
               <Tree key={item.key} item={item} currentPath={currentPath} />
             ))}
           </SidebarGroupContent>

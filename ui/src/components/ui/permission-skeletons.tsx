@@ -3,6 +3,13 @@ import type { Resource } from "@/types/audit-entry";
 import type { Action } from "@/types/roles-permissions";
 import { Button } from "./button";
 
+export function formatResourceName(resource: string): string {
+  return resource
+    .split("_")
+    .map((word) => upperFirst(word.toLowerCase()))
+    .join(" ");
+}
+
 export function PermissionTextSkeleton({
   resource,
   action,
@@ -12,7 +19,7 @@ export function PermissionTextSkeleton({
 }) {
   return (
     <p className="text-xs text-destructive">
-      You do not have permissions to {action} {resource}s
+      You do not have permissions to {action} {formatResourceName(resource)}s
     </p>
   );
 }
@@ -31,12 +38,14 @@ export function DataTablePermissionDeniedSkeleton({
         <div className="flex flex-col gap-1">
           <p className="text-2xl font-medium text-foreground">Access Denied</p>
           <p className="text-base text-muted-foreground">
-            You don&apos;t have permission to {action} {upperFirst(resource)}.
+            You don&apos;t have permission to {action}{" "}
+            <b className="font-bold">{formatResourceName(resource)}</b>.
           </p>
         </div>
         <p className="text-sm text-muted-foreground max-w-md">
           To gain access, please contact your system administrator and request
-          the necessary permissions for the &quot;{upperFirst(resource)}&quot;
+          the necessary permissions for the&nbsp;
+          <b className="font-bold">{formatResourceName(resource)}&nbsp;</b>
           resource.
         </p>
         <Button size="sm">Request Access</Button>

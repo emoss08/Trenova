@@ -3,7 +3,12 @@ import { AdminLayout } from "@/components/admin-layout";
 import { RootErrorBoundary } from "@/components/error-boundary";
 import LoadingSkeleton from "@/components/loading";
 import { MainLayout } from "@/components/main-layout";
-import { authLoader, protectedLoader } from "@/lib/loaders";
+import {
+  authLoader,
+  createPermissionLoader,
+  protectedLoader,
+} from "@/lib/loaders";
+import { Resource } from "@/types/audit-entry";
 import { createBrowserRouter, RouteObject } from "react-router";
 
 const routes: RouteObject[] = [
@@ -34,6 +39,7 @@ const routes: RouteObject[] = [
             children: [
               {
                 path: "client",
+                loader: createPermissionLoader(Resource.BillingClient),
                 async lazy() {
                   let { BillingClient } = await import(
                     "@/app/billing-client/page"
@@ -47,6 +53,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "configurations/charge-types",
+                loader: createPermissionLoader(Resource.ChargeType),
                 async lazy() {
                   let { ChargeTypes } = await import("@/app/charge-types/page");
                   return { Component: ChargeTypes };
@@ -58,6 +65,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "configurations/customers",
+                loader: createPermissionLoader(Resource.Customer),
                 async lazy() {
                   let { Customers } = await import("@/app/customers/page");
                   return { Component: Customers };
@@ -65,6 +73,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "configurations/document-types",
+                loader: createPermissionLoader(Resource.DocumentType),
                 async lazy() {
                   let { DocumentTypes } = await import(
                     "@/app/document-types/page"
@@ -74,6 +83,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "configurations/accessorial-charges",
+                loader: createPermissionLoader(Resource.AccessorialCharge),
                 async lazy() {
                   let { AccessorialCharges } = await import(
                     "@/app/accessorial-charges/page"
@@ -93,6 +103,7 @@ const routes: RouteObject[] = [
             children: [
               {
                 path: "management",
+                loader: createPermissionLoader(Resource.Shipment),
                 async lazy() {
                   let { Shipment } = await import("@/app/shipment/page");
                   return { Component: Shipment };
@@ -104,6 +115,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "consolidation-groups",
+                loader: createPermissionLoader(Resource.Consolidation),
                 async lazy() {
                   let { ConsolidationGroup } = await import(
                     "@/app/consolidation-group/page"
@@ -124,6 +136,7 @@ const routes: RouteObject[] = [
                 children: [
                   {
                     path: "dedicated-lanes",
+                    loader: createPermissionLoader(Resource.DedicatedLane),
                     async lazy() {
                       let { DedicatedLane } = await import(
                         "@/app/dedicated-lane/page"
@@ -137,6 +150,7 @@ const routes: RouteObject[] = [
                   },
                   {
                     path: "shipment-types",
+                    loader: createPermissionLoader(Resource.ShipmentType),
                     async lazy() {
                       let { ShipmentTypes } = await import(
                         "@/app/shipment-types/page"
@@ -150,6 +164,7 @@ const routes: RouteObject[] = [
                   },
                   {
                     path: "service-types",
+                    loader: createPermissionLoader(Resource.ServiceType),
                     async lazy() {
                       let { ServiceTypes } = await import(
                         "@/app/service-types/page"
@@ -163,6 +178,7 @@ const routes: RouteObject[] = [
                   },
                   {
                     path: "hazardous-materials",
+                    loader: createPermissionLoader(Resource.HazardousMaterial),
                     async lazy() {
                       let { HazardousMaterials } = await import(
                         "@/app/hazardous-materials/page"
@@ -176,6 +192,7 @@ const routes: RouteObject[] = [
                   },
                   {
                     path: "commodities",
+                    loader: createPermissionLoader(Resource.Commodity),
                     async lazy() {
                       let { Commodities } = await import(
                         "@/app/commodities/page"
@@ -207,6 +224,7 @@ const routes: RouteObject[] = [
                 children: [
                   {
                     path: "workers",
+                    loader: createPermissionLoader(Resource.Worker),
                     async lazy() {
                       let { Workers } = await import("@/app/workers/page");
                       return { Component: Workers };
@@ -218,6 +236,7 @@ const routes: RouteObject[] = [
                   },
                   {
                     path: "fleet-codes",
+                    loader: createPermissionLoader(Resource.FleetCode),
                     async lazy() {
                       let { FleetCodes } = await import(
                         "@/app/fleet-codes/page"
@@ -231,6 +250,7 @@ const routes: RouteObject[] = [
                   },
                   {
                     path: "location-categories",
+                    loader: createPermissionLoader(Resource.LocationCategory),
                     async lazy() {
                       let { LocationCategories } = await import(
                         "@/app/location-categories/page"
@@ -244,6 +264,7 @@ const routes: RouteObject[] = [
                   },
                   {
                     path: "locations",
+                    loader: createPermissionLoader(Resource.Location),
                     async lazy() {
                       let { Locations } = await import("@/app/locations/page");
                       return { Component: Locations };
@@ -273,6 +294,7 @@ const routes: RouteObject[] = [
                 children: [
                   {
                     path: "equipment-types",
+                    loader: createPermissionLoader(Resource.EquipmentType),
                     async lazy() {
                       let { EquipmentTypes } = await import(
                         "@/app/equipment-types/page"
@@ -286,6 +308,9 @@ const routes: RouteObject[] = [
                   },
                   {
                     path: "equipment-manufacturers",
+                    loader: createPermissionLoader(
+                      Resource.EquipmentManufacturer,
+                    ),
                     async lazy() {
                       let { EquipmentManufacturers } = await import(
                         "@/app/equipment-manufacturers/page"
@@ -299,6 +324,7 @@ const routes: RouteObject[] = [
                   },
                   {
                     path: "tractors",
+                    loader: createPermissionLoader(Resource.Tractor),
                     async lazy() {
                       let { Tractor } = await import("@/app/tractor/page");
                       return { Component: Tractor };
@@ -310,6 +336,7 @@ const routes: RouteObject[] = [
                   },
                   {
                     path: "trailers",
+                    loader: createPermissionLoader(Resource.Trailer),
                     async lazy() {
                       let { Trailers } = await import("@/app/trailers/page");
                       return { Component: Trailers };
@@ -324,6 +351,16 @@ const routes: RouteObject[] = [
             ],
           },
           {
+            path: "/permission-denied",
+            loader: protectedLoader,
+            async lazy() {
+              let { PermissionDenied } = await import(
+                "@/app/permission-denied/page"
+              );
+              return { Component: PermissionDenied };
+            },
+          },
+          {
             path: "/organization/",
             Component: AdminLayout,
             HydrateFallback: LoadingSkeleton,
@@ -335,6 +372,7 @@ const routes: RouteObject[] = [
             children: [
               {
                 path: "settings",
+                loader: createPermissionLoader(Resource.Organization),
                 async lazy() {
                   let { OrganizationSettings } = await import(
                     "@/app/organization/page"
@@ -348,6 +386,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "shipment-controls",
+                loader: createPermissionLoader(Resource.ShipmentControl),
                 async lazy() {
                   let { ShipmentControl } = await import(
                     "@/app/shipment-control/page"
@@ -361,6 +400,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "consolidation-settings",
+                loader: createPermissionLoader(Resource.ConsolidationSettings),
                 async lazy() {
                   let { ConsolidationSetting } = await import(
                     "@/app/consolidation-setting/page"
@@ -374,6 +414,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "billing-controls",
+                loader: createPermissionLoader(Resource.BillingControl),
                 async lazy() {
                   let { BillingControl } = await import(
                     "@/app/billing-control/page"
@@ -387,6 +428,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "data-retention",
+                loader: createPermissionLoader(Resource.DataRetention),
                 async lazy() {
                   let { DataRetention } = await import(
                     "@/app/data-retention/page"
@@ -400,6 +442,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "resource-editor",
+                loader: createPermissionLoader(Resource.ResourceEditor),
                 async lazy() {
                   let { ResourceEditor } = await import(
                     "@/app/resource-editor/page"
@@ -413,6 +456,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "pattern-config",
+                loader: createPermissionLoader(Resource.PatternConfig),
                 async lazy() {
                   let { PatternConfig } = await import(
                     "@/app/pattern-config/page"
@@ -426,6 +470,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "integrations",
+                loader: createPermissionLoader(Resource.Integration),
                 async lazy() {
                   let { IntegrationsPage } = await import(
                     "@/app/integrations/page"
@@ -439,6 +484,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "users",
+                loader: createPermissionLoader(Resource.User),
                 async lazy() {
                   let { Users } = await import("@/app/users/page");
                   return { Component: Users };
@@ -450,6 +496,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "hazmat-segregation-rules",
+                loader: createPermissionLoader(Resource.HazmatSegregationRule),
                 async lazy() {
                   let { HazmatSegregationRules } = await import(
                     "@/app/hazmat-segregation-rules/page"
@@ -463,6 +510,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "audit-entries",
+                loader: createPermissionLoader(Resource.AuditEntry),
                 async lazy() {
                   let { AuditLogs } = await import("@/app/audit-logs/page");
                   return { Component: AuditLogs };
@@ -474,6 +522,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "email-profiles",
+                loader: createPermissionLoader(Resource.EmailProfile),
                 async lazy() {
                   let { EmailProfiles } = await import(
                     "@/app/email-profiles/page"
@@ -514,3 +563,4 @@ const routes: RouteObject[] = [
 const router = createBrowserRouter(routes);
 
 export { router, routes };
+
