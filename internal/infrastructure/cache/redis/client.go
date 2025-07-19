@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/telemetry"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/redis/go-redis/v9"
@@ -46,8 +47,9 @@ type Client struct {
 type ClientParams struct {
 	fx.In
 
-	Config *config.Manager
-	Logger *logger.Logger
+	Config           *config.Manager
+	Logger           *logger.Logger
+	TelemetryMetrics *telemetry.Metrics `name:"telemetryMetrics" optional:"true"`
 }
 
 // NewClient creates a new Redis client instance with the provided configuration and logger.
@@ -142,6 +144,13 @@ func NewClient(p ClientParams) (*Client, error) {
 		l:              &log,
 		errBuilder:     oops.With("redis_client").Tags("redis_client"),
 		circuitBreaker: circuitBreaker,
+	}
+
+	// Add telemetry instrumentation if available
+	if p.TelemetryMetrics != nil {
+		instrumentation := telemetry.NewCacheInstrumentation(p.Config.App().Name, p.TelemetryMetrics)
+		instrumentation.InstrumentRedis(redisClient)
+		log.Info().Msg("Redis telemetry instrumentation added")
 	}
 
 	return client, nil

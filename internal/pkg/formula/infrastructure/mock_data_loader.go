@@ -50,7 +50,11 @@ func (m *MockDataLoader) SetVariableContext(entityID string, ctx variables.Varia
 }
 
 // LoadEntity implements the DataLoader interface
-func (m *MockDataLoader) LoadEntity(ctx context.Context, schemaID string, entityID string) (any, error) {
+func (m *MockDataLoader) LoadEntity(
+	ctx context.Context,
+	schemaID string,
+	entityID string,
+) (any, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -90,14 +94,18 @@ func (m *MockDataLoader) LoadEntityWithRequirements(
 }
 
 // SetLoadEntityFunc sets a custom function for LoadEntity
-func (m *MockDataLoader) SetLoadEntityFunc(fn func(ctx context.Context, schemaID string, entityID string) (any, error)) {
+func (m *MockDataLoader) SetLoadEntityFunc(
+	fn func(ctx context.Context, schemaID string, entityID string) (any, error),
+) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.loadEntityFunc = fn
 }
 
 // SetLoadWithRequirementsFunc sets a custom function for LoadEntityWithRequirements
-func (m *MockDataLoader) SetLoadWithRequirementsFunc(fn func(ctx context.Context, schemaID string, entityID string, requirements *ports.DataRequirements) (any, error)) {
+func (m *MockDataLoader) SetLoadWithRequirementsFunc(
+	fn func(ctx context.Context, schemaID string, entityID string, requirements *ports.DataRequirements) (any, error),
+) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	m.loadWithReqsFunc = fn
@@ -127,9 +135,11 @@ func (m *MockDataLoader) SimulateError(err error) {
 	m.SetLoadEntityFunc(func(ctx context.Context, schemaID string, entityID string) (any, error) {
 		return nil, err
 	})
-	m.SetLoadWithRequirementsFunc(func(ctx context.Context, schemaID string, entityID string, requirements *ports.DataRequirements) (any, error) {
-		return nil, err
-	})
+	m.SetLoadWithRequirementsFunc(
+		func(ctx context.Context, schemaID string, entityID string, requirements *ports.DataRequirements) (any, error) {
+			return nil, err
+		},
+	)
 }
 
 // GetEntity retrieves a stored entity (for test verification)

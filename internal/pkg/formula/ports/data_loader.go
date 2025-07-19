@@ -14,7 +14,12 @@ type DataLoader interface {
 	LoadEntity(ctx context.Context, schemaID string, entityID string) (any, error)
 
 	// LoadEntityWithRequirements loads only the fields/relations needed
-	LoadEntityWithRequirements(ctx context.Context, schemaID string, entityID string, requirements *DataRequirements) (any, error)
+	LoadEntityWithRequirements(
+		ctx context.Context,
+		schemaID string,
+		entityID string,
+		requirements *DataRequirements,
+	) (any, error)
 }
 
 // DataRequirements specifies what data needs to be loaded

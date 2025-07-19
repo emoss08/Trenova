@@ -406,7 +406,11 @@ type trackingDataLoader struct {
 	requestedPreloads map[string]bool
 }
 
-func (t *trackingDataLoader) LoadEntity(ctx context.Context, schemaID string, entityID string) (any, error) {
+func (t *trackingDataLoader) LoadEntity(
+	ctx context.Context,
+	schemaID string,
+	entityID string,
+) (any, error) {
 	return t.inner.LoadEntity(ctx, schemaID, entityID)
 }
 

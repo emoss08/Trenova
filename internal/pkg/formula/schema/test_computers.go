@@ -8,7 +8,10 @@ import (
 func RegisterTestComputers(resolver *DefaultDataResolver) {
 	resolver.RegisterComputer("computeTemperatureDifferential", computeTemperatureDifferentialMap)
 	resolver.RegisterComputer("computeHasHazmat", computeHasHazmatMap)
-	resolver.RegisterComputer("computeRequiresTemperatureControl", computeRequiresTemperatureControlMap)
+	resolver.RegisterComputer(
+		"computeRequiresTemperatureControl",
+		computeRequiresTemperatureControlMap,
+	)
 	resolver.RegisterComputer("computeTotalCommodityWeight", computeTotalCommodityWeightMap)
 	resolver.RegisterComputer("computeIsExpedited", computeIsExpeditedMap)
 	resolver.RegisterComputer("computeIsSameDay", computeIsSameDayMap)
@@ -173,7 +176,8 @@ func computeIsExpeditedMap(entity any) (any, error) {
 		if desc, ok := serviceType["Description"].(string); ok {
 			// Check description for expedited keywords
 			expDesc := strings.ToLower(desc)
-			if strings.Contains(expDesc, "expedited") || strings.Contains(expDesc, "express") || strings.Contains(expDesc, "urgent") {
+			if strings.Contains(expDesc, "expedited") || strings.Contains(expDesc, "express") ||
+				strings.Contains(expDesc, "urgent") {
 				return true, nil
 			}
 		}
@@ -196,7 +200,8 @@ func computeIsExpeditedMap(entity any) (any, error) {
 		}
 		if desc, ok := shipmentType["Description"].(string); ok {
 			expDesc := strings.ToLower(desc)
-			if strings.Contains(expDesc, "expedited") || strings.Contains(expDesc, "express") || strings.Contains(expDesc, "urgent") {
+			if strings.Contains(expDesc, "expedited") || strings.Contains(expDesc, "express") ||
+				strings.Contains(expDesc, "urgent") {
 				return true, nil
 			}
 		}
@@ -229,7 +234,8 @@ func computeIsSameDayMap(entity any) (any, error) {
 		}
 		if desc, ok := serviceType["Description"].(string); ok {
 			sdDesc := strings.ToLower(desc)
-			if strings.Contains(sdDesc, "same day") || strings.Contains(sdDesc, "sameday") || strings.Contains(sdDesc, "today") {
+			if strings.Contains(sdDesc, "same day") || strings.Contains(sdDesc, "sameday") ||
+				strings.Contains(sdDesc, "today") {
 				return true, nil
 			}
 		}
@@ -252,7 +258,8 @@ func computeIsSameDayMap(entity any) (any, error) {
 		}
 		if desc, ok := shipmentType["Description"].(string); ok {
 			sdDesc := strings.ToLower(desc)
-			if strings.Contains(sdDesc, "same day") || strings.Contains(sdDesc, "sameday") || strings.Contains(sdDesc, "today") {
+			if strings.Contains(sdDesc, "same day") || strings.Contains(sdDesc, "sameday") ||
+				strings.Contains(sdDesc, "today") {
 				return true, nil
 			}
 		}
@@ -285,7 +292,8 @@ func computeIsNextDayMap(entity any) (any, error) {
 		}
 		if desc, ok := serviceType["Description"].(string); ok {
 			ndDesc := strings.ToLower(desc)
-			if strings.Contains(ndDesc, "next day") || strings.Contains(ndDesc, "nextday") || strings.Contains(ndDesc, "overnight") {
+			if strings.Contains(ndDesc, "next day") || strings.Contains(ndDesc, "nextday") ||
+				strings.Contains(ndDesc, "overnight") {
 				return true, nil
 			}
 		}
@@ -308,7 +316,8 @@ func computeIsNextDayMap(entity any) (any, error) {
 		}
 		if desc, ok := shipmentType["Description"].(string); ok {
 			ndDesc := strings.ToLower(desc)
-			if strings.Contains(ndDesc, "next day") || strings.Contains(ndDesc, "nextday") || strings.Contains(ndDesc, "overnight") {
+			if strings.Contains(ndDesc, "next day") || strings.Contains(ndDesc, "nextday") ||
+				strings.Contains(ndDesc, "overnight") {
 				return true, nil
 			}
 		}
