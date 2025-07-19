@@ -1,0 +1,68 @@
+# Mimir configuration for single-binary mode
+multitenancy_enabled: false
+
+server:
+  http_listen_port: 9009
+  grpc_listen_port: 9095
+  log_level: info
+
+common:
+  storage:
+    backend: filesystem
+    filesystem:
+      dir: /data/mimir
+
+blocks_storage:
+  backend: filesystem
+  filesystem:
+    dir: /data/mimir/blocks
+  tsdb:
+    dir: /data/mimir/tsdb
+    retention_period: 168h
+
+compactor:
+  data_dir: /data/mimir/compactor
+  sharding_ring:
+    kvstore:
+      store: inmemory
+
+distributor:
+  ring:
+    kvstore:
+      store: inmemory
+
+ingester:
+  ring:
+    kvstore:
+      store: inmemory
+    replication_factor: 1
+
+limits:
+  # Accept metrics up to 1 hour old
+  out_of_order_time_window: 1h
+  # Allow unlimited samples per metric
+  max_global_series_per_user: 0
+  max_global_series_per_metric: 0
+  # Increase ingestion limits
+  ingestion_rate: 50000
+  ingestion_burst_size: 100000
+  # Query limits
+  max_query_lookback: 0
+  max_partial_query_length: 0
+  max_query_parallelism: 32
+  max_fetched_series_per_query: 0
+  max_fetched_chunk_bytes_per_query: 0
+
+ruler_storage:
+  backend: filesystem
+  filesystem:
+    dir: /data/mimir/rules
+
+ruler:
+  enable_api: true
+  rule_path: /etc/mimir/rules
+  ring:
+    kvstore:
+      store: inmemory
+  evaluation_interval: 1m
+  poll_interval: 1m

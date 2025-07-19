@@ -3,7 +3,6 @@ package routes
 import (
 	"time"
 
-	"github.com/emoss08/trenova/internal/api/handlers"
 	"github.com/emoss08/trenova/internal/api/handlers/accessorialcharge"
 	"github.com/emoss08/trenova/internal/api/handlers/ai"
 	"github.com/emoss08/trenova/internal/api/handlers/analytics"
@@ -145,7 +144,6 @@ type RouterParams struct {
 	WebSocketHandler               *websocket.Handler
 	NotificationPreferenceHandler  *notificationpreference.Handler
 	NotificationHandler            *notification.Handler
-	MetricsHandler                 *handlers.MetricsHandler
 	ConsolidationSettingHandler    *consolidationsetting.Handler
 	EmailProfileHandler            *email.Handler
 }
@@ -177,8 +175,6 @@ func (r *Router) Setup() {
 
 	r.setupMiddleware()
 
-	r.app.Get("/metrics", r.p.MetricsHandler.GetMetrics())
-
 	r.app.Get("/health", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"status":    "healthy",
@@ -192,7 +188,9 @@ func (r *Router) Setup() {
 }
 
 // setupMiddleware configures the global middleware stack
+// Note: Telemetry middleware is added in server.NewServer before this
 func (r *Router) setupMiddleware() {
+	// Add standard middleware after telemetry middleware
 	r.app.Use(
 		favicon.New(),
 		compress.New(),
