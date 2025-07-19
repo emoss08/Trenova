@@ -34,7 +34,7 @@ const (
 	JobTypeDataBackup       JobType = "system:data_backup"
 
 	// Email Jobs
-	JobTypeSendEmail      JobType = "email:send"
+	JobTypeSendEmail         JobType = "email:send"
 	JobTypeProcessEmailQueue JobType = "email:process_queue"
 )
 
@@ -125,8 +125,8 @@ type SystemMaintenancePayload struct {
 // SendEmailPayload for email sending jobs
 type SendEmailPayload struct {
 	BasePayload
-	EmailType        string                             `json:"emailType"` // "regular" or "templated"
-	Request          *services.SendEmailRequest         `json:"request,omitempty"`
+	EmailType        string                              `json:"emailType"` // "regular" or "templated"
+	Request          *services.SendEmailRequest          `json:"request,omitempty"`
 	TemplatedRequest *services.SendTemplatedEmailRequest `json:"templatedRequest,omitempty"`
 }
 

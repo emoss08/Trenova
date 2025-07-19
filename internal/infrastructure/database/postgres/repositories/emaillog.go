@@ -272,4 +272,3 @@ func (r *emailLogRepository) List(
 		Total: total,
 	}, nil
 }
-

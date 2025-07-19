@@ -222,7 +222,11 @@ type DatabaseResolver struct {
 	baseResolver   *schema.DefaultDataResolver
 }
 
-func (r *DatabaseResolver) ResolveEntity(ctx context.Context, schemaDef *schema.SchemaDefinition, entityID string) (any, error) {
+func (r *DatabaseResolver) ResolveEntity(
+	ctx context.Context,
+	schemaDef *schema.SchemaDefinition,
+	entityID string,
+) (any, error) {
 	// This is what's missing!
 	// 1. Use schemaDef.DataSource.Table to know which table
 	// 2. Use schemaDef.DataSource.Preload for joins

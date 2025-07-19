@@ -68,7 +68,9 @@ func (s *FormulaEvaluationService) EvaluateFormula(
 }
 
 // analyzeFormulaRequirements determines what data is needed for the formula
-func (s *FormulaEvaluationService) analyzeFormulaRequirements(formula string) (*ports.DataRequirements, error) {
+func (s *FormulaEvaluationService) analyzeFormulaRequirements(
+	formula string,
+) (*ports.DataRequirements, error) {
 	requirements := &ports.DataRequirements{
 		Fields:         []string{},
 		Preloads:       []string{},

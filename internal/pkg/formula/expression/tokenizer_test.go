@@ -202,9 +202,13 @@ func TestTokenizer_Tokenize(t *testing.T) {
 			wantError: false,
 		},
 		{
-			name:      "invalid number",
-			input:     "123.456.789",
-			want:      []TokenType{TokenNumber, TokenNumber, TokenEOF}, // 123.456 and .789 are both valid numbers
+			name:  "invalid number",
+			input: "123.456.789",
+			want: []TokenType{
+				TokenNumber,
+				TokenNumber,
+				TokenEOF,
+			}, // 123.456 and .789 are both valid numbers
 			wantError: false,
 		},
 		{
