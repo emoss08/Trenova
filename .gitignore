@@ -12,3 +12,4 @@ backups/*
 config/development/*
 config/production/*
 summaries/*
+debug_connections.go
