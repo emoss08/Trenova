@@ -1,0 +1,406 @@
+# PostgreSQL Exporter Custom Queries Configuration
+# This file defines custom queries to collect detailed metrics from PostgreSQL,
+# including pg_stat_statements data for query performance analysis
+
+pg_stat_statements:
+  query: |
+    SELECT
+      pg_get_userbyid(userid) as user,
+      pg_database.datname as database,
+      query AS query_text,
+      calls,
+      total_exec_time / 1000.0 as total_time_seconds,
+      mean_exec_time / 1000.0 as mean_time_seconds,
+      min_exec_time / 1000.0 as min_time_seconds,
+      max_exec_time / 1000.0 as max_time_seconds,
+      stddev_exec_time / 1000.0 as stddev_time_seconds,
+      rows,
+      shared_blks_hit,
+      shared_blks_read,
+      shared_blks_dirtied,
+      shared_blks_written,
+      local_blks_hit,
+      local_blks_read,
+      local_blks_dirtied,
+      local_blks_written,
+      temp_blks_read,
+      temp_blks_written,
+      shared_blk_read_time / 1000.0 as blk_read_time_seconds,
+      shared_blk_write_time / 1000.0 as blk_write_time_seconds
+    FROM pg_stat_statements
+    JOIN pg_database ON pg_database.oid = pg_stat_statements.dbid
+    WHERE 
+      query NOT LIKE '%pg_stat_statements%'
+      AND query NOT LIKE '%COMMIT%'
+      AND query NOT LIKE '%BEGIN%'
+      AND query NOT LIKE '%ROLLBACK%'
+    ORDER BY total_exec_time DESC
+    LIMIT 100
+  metrics:
+    - user:
+        usage: "LABEL"
+        description: "Username"
+    - database:
+        usage: "LABEL"
+        description: "Database name"
+    - query_text:
+        usage: "LABEL"
+        description: "Query text"
+    - calls:
+        usage: "COUNTER"
+        description: "Number of times the query was executed"
+    - total_time_seconds:
+        usage: "COUNTER"
+        description: "Total time spent executing the query in seconds"
+    - mean_time_seconds:
+        usage: "GAUGE"
+        description: "Mean time spent executing the query in seconds"
+    - min_time_seconds:
+        usage: "GAUGE"
+        description: "Minimum time spent executing the query in seconds"
+    - max_time_seconds:
+        usage: "GAUGE"
+        description: "Maximum time spent executing the query in seconds"
+    - stddev_time_seconds:
+        usage: "GAUGE"
+        description: "Standard deviation of query execution time in seconds"
+    - rows:
+        usage: "COUNTER"
+        description: "Total number of rows retrieved or affected"
+    - shared_blks_hit:
+        usage: "COUNTER"
+        description: "Total number of shared block cache hits"
+    - shared_blks_read:
+        usage: "COUNTER"
+        description: "Total number of shared blocks read from disk"
+    - shared_blks_dirtied:
+        usage: "COUNTER"
+        description: "Total number of shared blocks dirtied"
+    - shared_blks_written:
+        usage: "COUNTER"
+        description: "Total number of shared blocks written"
+    - local_blks_hit:
+        usage: "COUNTER"
+        description: "Total number of local block cache hits"
+    - local_blks_read:
+        usage: "COUNTER"
+        description: "Total number of local blocks read from disk"
+    - local_blks_dirtied:
+        usage: "COUNTER"
+        description: "Total number of local blocks dirtied"
+    - local_blks_written:
+        usage: "COUNTER"
+        description: "Total number of local blocks written"
+    - temp_blks_read:
+        usage: "COUNTER"
+        description: "Total number of temp blocks read"
+    - temp_blks_written:
+        usage: "COUNTER"
+        description: "Total number of temp blocks written"
+    - blk_read_time_seconds:
+        usage: "COUNTER"
+        description: "Total time spent reading blocks in seconds"
+    - blk_write_time_seconds:
+        usage: "COUNTER"
+        description: "Total time spent writing blocks in seconds"
+
+pg_stat_statements_top_mean:
+  query: |
+    SELECT
+      pg_get_userbyid(userid) as user,
+      pg_database.datname as database,
+      query AS query_text,
+      calls,
+      mean_exec_time / 1000.0 as mean_time_seconds,
+      total_exec_time / 1000.0 as total_time_seconds
+    FROM pg_stat_statements
+    JOIN pg_database ON pg_database.oid = pg_stat_statements.dbid
+    WHERE 
+      query NOT LIKE '%pg_stat_statements%'
+      AND calls > 10
+    ORDER BY mean_exec_time DESC
+    LIMIT 20
+  metrics:
+    - user:
+        usage: "LABEL"
+        description: "Username"
+    - database:
+        usage: "LABEL"
+        description: "Database name"
+    - query_text:
+        usage: "LABEL"
+        description: "Query text"
+    - calls:
+        usage: "COUNTER"
+        description: "Number of times the query was executed"
+    - mean_time_seconds:
+        usage: "GAUGE"
+        description: "Mean time spent executing the query in seconds"
+    - total_time_seconds:
+        usage: "COUNTER"
+        description: "Total time spent executing the query in seconds"
+
+pg_stat_statements_top_total:
+  query: |
+    SELECT
+      pg_get_userbyid(userid) as user,
+      pg_database.datname as database,
+      query AS query_text,
+      calls,
+      total_exec_time / 1000.0 as total_time_seconds,
+      mean_exec_time / 1000.0 as mean_time_seconds,
+      (total_exec_time / 1000.0) / NULLIF(SUM(total_exec_time / 1000.0) OVER (), 0) * 100 as percentage_cpu
+    FROM pg_stat_statements
+    JOIN pg_database ON pg_database.oid = pg_stat_statements.dbid
+    WHERE 
+      query NOT LIKE '%pg_stat_statements%'
+    ORDER BY total_exec_time DESC
+    LIMIT 20
+  metrics:
+    - user:
+        usage: "LABEL"
+        description: "Username"
+    - database:
+        usage: "LABEL"
+        description: "Database name"
+    - query_text:
+        usage: "LABEL"
+        description: "Query text"
+    - calls:
+        usage: "COUNTER"
+        description: "Number of times the query was executed"
+    - total_time_seconds:
+        usage: "COUNTER"
+        description: "Total time spent executing the query in seconds"
+    - mean_time_seconds:
+        usage: "GAUGE"
+        description: "Mean time spent executing the query in seconds"
+    - percentage_cpu:
+        usage: "GAUGE"
+        description: "Percentage of total CPU time used by this query"
+
+pg_stat_database_extended:
+  query: |
+    SELECT
+      datname as database,
+      numbackends,
+      xact_commit,
+      xact_rollback,
+      blks_read,
+      blks_hit,
+      tup_returned,
+      tup_fetched,
+      tup_inserted,
+      tup_updated,
+      tup_deleted,
+      conflicts,
+      temp_files,
+      temp_bytes,
+      deadlocks,
+      blk_read_time / 1000.0 as blk_read_time_seconds,
+      blk_write_time / 1000.0 as blk_write_time_seconds,
+      CASE WHEN (blks_hit + blks_read) > 0 
+        THEN blks_hit::float / (blks_hit + blks_read) 
+        ELSE 0 
+      END as cache_hit_ratio
+    FROM pg_stat_database
+    WHERE datname NOT IN ('template0', 'template1')
+  metrics:
+    - database:
+        usage: "LABEL"
+        description: "Database name"
+    - numbackends:
+        usage: "GAUGE"
+        description: "Number of active connections"
+    - xact_commit:
+        usage: "COUNTER"
+        description: "Number of transactions committed"
+    - xact_rollback:
+        usage: "COUNTER"
+        description: "Number of transactions rolled back"
+    - blks_read:
+        usage: "COUNTER"
+        description: "Number of disk blocks read"
+    - blks_hit:
+        usage: "COUNTER"
+        description: "Number of buffer cache hits"
+    - tup_returned:
+        usage: "COUNTER"
+        description: "Number of rows returned by queries"
+    - tup_fetched:
+        usage: "COUNTER"
+        description: "Number of rows fetched by queries"
+    - tup_inserted:
+        usage: "COUNTER"
+        description: "Number of rows inserted"
+    - tup_updated:
+        usage: "COUNTER"
+        description: "Number of rows updated"
+    - tup_deleted:
+        usage: "COUNTER"
+        description: "Number of rows deleted"
+    - conflicts:
+        usage: "COUNTER"
+        description: "Number of queries canceled due to conflicts"
+    - temp_files:
+        usage: "COUNTER"
+        description: "Number of temporary files created"
+    - temp_bytes:
+        usage: "COUNTER"
+        description: "Total amount of data written to temporary files"
+    - deadlocks:
+        usage: "COUNTER"
+        description: "Number of deadlocks detected"
+    - blk_read_time_seconds:
+        usage: "COUNTER"
+        description: "Time spent reading data file blocks in seconds"
+    - blk_write_time_seconds:
+        usage: "COUNTER"
+        description: "Time spent writing data file blocks in seconds"
+    - cache_hit_ratio:
+        usage: "GAUGE"
+        description: "Buffer cache hit ratio"
+
+pg_locks:
+  query: |
+    SELECT
+      pg_database.datname as database,
+      locktype,
+      mode,
+      COUNT(*) as count
+    FROM pg_locks
+    LEFT JOIN pg_database ON pg_locks.database = pg_database.oid
+    GROUP BY pg_database.datname, locktype, mode
+  metrics:
+    - database:
+        usage: "LABEL"
+        description: "Database name"
+    - locktype:
+        usage: "LABEL"
+        description: "Type of lock"
+    - mode:
+        usage: "LABEL"
+        description: "Lock mode"
+    - count:
+        usage: "GAUGE"
+        description: "Number of locks"
+
+pg_stat_checkpointer:
+  query: |
+    SELECT
+      num_timed as checkpoints_timed,
+      num_requested as checkpoints_req,
+      write_time / 1000.0 as checkpoint_write_time_seconds,
+      sync_time / 1000.0 as checkpoint_sync_time_seconds,
+      buffers_written as buffers_checkpoint
+    FROM pg_stat_checkpointer
+  metrics:
+    - checkpoints_timed:
+        usage: "COUNTER"
+        description: "Number of scheduled checkpoints"
+    - checkpoints_req:
+        usage: "COUNTER"
+        description: "Number of requested checkpoints"
+    - checkpoint_write_time_seconds:
+        usage: "COUNTER"
+        description: "Time spent writing checkpoint files in seconds"
+    - checkpoint_sync_time_seconds:
+        usage: "COUNTER"
+        description: "Time spent synchronizing checkpoint files in seconds"
+    - buffers_checkpoint:
+        usage: "COUNTER"
+        description: "Number of buffers written during checkpoints"
+
+pg_stat_activity_active:
+  query: |
+    SELECT
+      datname as database,
+      state,
+      COUNT(*) as connections,
+      MAX(EXTRACT(EPOCH FROM (now() - query_start))) as max_query_duration_seconds,
+      AVG(EXTRACT(EPOCH FROM (now() - query_start))) as avg_query_duration_seconds
+    FROM pg_stat_activity
+    WHERE state IS NOT NULL
+    GROUP BY datname, state
+  metrics:
+    - database:
+        usage: "LABEL"
+        description: "Database name"
+    - state:
+        usage: "LABEL"
+        description: "Connection state"
+    - connections:
+        usage: "GAUGE"
+        description: "Number of connections in this state"
+    - max_query_duration_seconds:
+        usage: "GAUGE"
+        description: "Maximum query duration in seconds"
+    - avg_query_duration_seconds:
+        usage: "GAUGE"
+        description: "Average query duration in seconds"
+
+pg_table_stats:
+  query: |
+    SELECT
+      schemaname,
+      relname as tablename,
+      pg_table_size(schemaname||'.'||relname) as table_size_bytes,
+      n_live_tup as live_tuples,
+      n_dead_tup as dead_tuples,
+      n_tup_ins as tuples_inserted,
+      n_tup_upd as tuples_updated,
+      n_tup_del as tuples_deleted,
+      n_tup_hot_upd as tuples_hot_updated,
+      seq_scan,
+      seq_tup_read,
+      idx_scan,
+      idx_tup_fetch,
+      CASE WHEN (seq_scan + idx_scan) > 0 
+        THEN idx_scan::float / (seq_scan + idx_scan) 
+        ELSE 0 
+      END as index_usage_ratio
+    FROM pg_stat_user_tables
+    WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+  metrics:
+    - schemaname:
+        usage: "LABEL"
+        description: "Schema name"
+    - tablename:
+        usage: "LABEL"
+        description: "Table name"
+    - table_size_bytes:
+        usage: "GAUGE"
+        description: "Table size in bytes"
+    - live_tuples:
+        usage: "GAUGE"
+        description: "Estimated number of live rows"
+    - dead_tuples:
+        usage: "GAUGE"
+        description: "Estimated number of dead rows"
+    - tuples_inserted:
+        usage: "COUNTER"
+        description: "Number of rows inserted"
+    - tuples_updated:
+        usage: "COUNTER"
+        description: "Number of rows updated"
+    - tuples_deleted:
+        usage: "COUNTER"
+        description: "Number of rows deleted"
+    - tuples_hot_updated:
+        usage: "COUNTER"
+        description: "Number of rows HOT updated"
+    - seq_scan:
+        usage: "COUNTER"
+        description: "Number of sequential scans"
+    - seq_tup_read:
+        usage: "COUNTER"
+        description: "Number of live rows fetched by sequential scans"
+    - idx_scan:
+        usage: "COUNTER"
+        description: "Number of index scans"
+    - idx_tup_fetch:
+        usage: "COUNTER"
+        description: "Number of live rows fetched by index scans"
+    - index_usage_ratio:
+        usage: "GAUGE"
+        description: "Ratio of index scans to total scans"

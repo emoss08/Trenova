@@ -316,10 +316,10 @@ func (pr *permissionRepository) GetRolesAndPermissions(
 
 	// If cache hit for both, return early
 	if permErr == nil && rolesErr == nil && len(roles) > 0 {
-		log.Debug().
-			Int("roleCount", len(roles)).
-			Int("permissionCount", len(permissions)).
-			Msg("got roles and permissions from cache")
+		// log.Debug().
+		// 	Int("roleCount", len(roles)).
+		// 	Int("permissionCount", len(permissions)).
+		// 	Msg("got roles and permissions from cache")
 
 		return &permission.RolesAndPermissions{
 			Roles:       roles,

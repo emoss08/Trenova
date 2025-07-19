@@ -383,6 +383,11 @@ services:
     restart: always
     environment:
       DATA_SOURCE_NAME: "postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-trenova_go_db}?sslmode=disable"
+      PG_EXPORTER_EXTEND_QUERY_PATH: "/etc/postgres-exporter/queries.yaml"
+      PG_EXPORTER_DISABLE_DEFAULT_METRICS: "false"
+      PG_EXPORTER_DISABLE_SETTINGS_METRICS: "false"
+    volumes:
+      - ./config/postgres-exporter-queries.yaml:/etc/postgres-exporter/queries.yaml:ro
     ports:
       - "9187:9187"
     networks:
@@ -392,7 +397,7 @@ services:
     deploy:
       resources:
         limits:
-          memory: 128M
+          memory: 256M
 
 volumes:
   pg_data: {}

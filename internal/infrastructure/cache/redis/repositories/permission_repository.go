@@ -68,9 +68,9 @@ func (pc *permissionRepository) GetUserRoles(
 		return nil, eris.Wrapf(err, "failed to get roles for user %s", userID)
 	}
 
-	log.Debug().
-		Int("roleCount", len(roles)).
-		Msg("retrieved user roles from cache")
+	// log.Debug().
+	// 	Int("roleCount", len(roles)).
+	// 	Msg("retrieved user roles from cache")
 
 	return roles, nil
 }
@@ -118,10 +118,6 @@ func (pc *permissionRepository) GetUserPermissions(
 		}
 		return nil, eris.Wrapf(err, "failed to get permissions for user %s", userID)
 	}
-
-	log.Debug().
-		Int("permissionCount", len(permissions)).
-		Msg("retrieved user permissions from cache")
 
 	return permissions, nil
 }

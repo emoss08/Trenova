@@ -315,11 +315,11 @@ func (s *Service) HasAnyPermissions(
 		manageKey := fmt.Sprintf("%s:%s", check.Resource, permission.ActionManage)
 
 		// Log to see if the user has the permission and a specific key
-		s.l.Debug().
-			Str("user_id", check.UserID.String()).
-			Str("resource", string(check.Resource)).
-			Str("action", string(check.Action)).
-			Msg("permission check result")
+		// s.l.Debug().
+		// 	Str("user_id", check.UserID.String()).
+		// 	Str("resource", string(check.Resource)).
+		// 	Str("action", string(check.Action)).
+		// 	Msg("permission check result")
 
 		if results[specificKey] || results[manageKey] {
 			return services.PermissionCheckResult{
