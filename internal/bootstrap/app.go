@@ -22,6 +22,7 @@ import (
 	postgresRepos "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/encryption"
 	"github.com/emoss08/trenova/internal/infrastructure/jobs"
+	"github.com/emoss08/trenova/internal/infrastructure/telemetry"
 	"github.com/emoss08/trenova/internal/pkg/formula"
 	"github.com/emoss08/trenova/internal/pkg/statemachine"
 
@@ -31,8 +32,19 @@ import (
 // Bootstrap initializes and starts the application
 func Bootstrap() error {
 	app := fx.New(
-		infrastructure.Module,
+		// Config and Logger must come first
+		infrastructure.ConfigModule,
+		infrastructure.LoggerModule,
+		
+		// Telemetry needs to be loaded before database and cache
+		telemetry.Module,
+		
+		// Now load the rest of infrastructure
+		infrastructure.DatabaseModule,
+		infrastructure.StorageModule,
+		infrastructure.CacheModule,
 		infrastructure.BackupModule,
+		
 		redisRepos.Module,
 		statemachine.Module,
 		seqgen.Module,

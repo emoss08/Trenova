@@ -1,0 +1,185 @@
+groups:
+  - name: trenova_alerts
+    interval: 30s
+    rules:
+      # Service Health Alerts
+      - alert: ServiceDown
+        expr: up{job="trenova"} == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: trenova
+        annotations:
+          summary: "Trenova service is down"
+          description: "The Trenova service has been down for more than 5 minutes."
+
+      # HTTP Performance Alerts
+      - alert: HighErrorRate
+        expr: |
+          (sum(rate(trenova_http_errors_total[5m])) / sum(rate(trenova_http_requests_total[5m]))) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+          category: http
+        annotations:
+          summary: "High HTTP error rate detected"
+          description: "HTTP error rate is above 5% (current: {{ $value | humanizePercentage }})"
+
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(trenova_http_request_duration_seconds_bucket[5m])) by (le)) > 1
+        for: 5m
+        labels:
+          severity: warning
+          category: http
+        annotations:
+          summary: "High HTTP latency detected"
+          description: "95th percentile latency is above 1 second (current: {{ $value | humanize }}s)"
+
+      - alert: VeryHighLatency
+        expr: |
+          histogram_quantile(0.95, sum(rate(trenova_http_request_duration_seconds_bucket[5m])) by (le)) > 5
+        for: 5m
+        labels:
+          severity: critical
+          category: http
+        annotations:
+          summary: "Very high HTTP latency detected"
+          description: "95th percentile latency is above 5 seconds (current: {{ $value | humanize }}s)"
+
+      # Database Alerts
+      - alert: DatabaseConnectionPoolExhaustion
+        expr: |
+          (trenova_database_connections_active / trenova_database_pool_max_connections) > 0.9
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "Database connection pool is over 90% utilized ({{ $value | humanizePercentage }})"
+
+      - alert: DatabaseHighErrorRate
+        expr: |
+          sum(rate(trenova_database_errors_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "High database error rate"
+          description: "Database errors occurring at {{ $value | humanize }} errors/sec"
+
+      - alert: DatabaseSlowQueries
+        expr: |
+          histogram_quantile(0.95, sum(rate(trenova_database_operation_duration_seconds_bucket[5m])) by (le, operation)) > 1
+        for: 10m
+        labels:
+          severity: warning
+          category: database
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Database operation {{ $labels.operation }} P95 latency is {{ $value | humanize }}s"
+
+      # Cache Alerts
+      - alert: LowCacheHitRate
+        expr: |
+          sum(rate(trenova_cache_hits_total[5m])) / (sum(rate(trenova_cache_hits_total[5m])) + sum(rate(trenova_cache_misses_total[5m]))) < 0.8
+        for: 15m
+        labels:
+          severity: warning
+          category: cache
+        annotations:
+          summary: "Low cache hit rate"
+          description: "Cache hit rate is below 80% (current: {{ $value | humanizePercentage }})"
+
+      # Resource Alerts
+      - alert: HighMemoryUsage
+        expr: |
+          trenova_runtime_memory_alloc_bytes{type="heap_alloc"} > 1073741824
+        for: 10m
+        labels:
+          severity: warning
+          category: resources
+        annotations:
+          summary: "High memory usage detected"
+          description: "Heap memory usage is above 1GB (current: {{ $value | humanize1024 }}B)"
+
+      - alert: VeryHighMemoryUsage
+        expr: |
+          trenova_runtime_memory_alloc_bytes{type="heap_alloc"} > 2147483648
+        for: 5m
+        labels:
+          severity: critical
+          category: resources
+        annotations:
+          summary: "Very high memory usage detected"
+          description: "Heap memory usage is above 2GB (current: {{ $value | humanize1024 }}B)"
+
+      - alert: HighGoroutineCount
+        expr: |
+          go_goroutines{job="trenova"} > 5000
+        for: 10m
+        labels:
+          severity: warning
+          category: resources
+        annotations:
+          summary: "High number of goroutines"
+          description: "Goroutine count is above 5000 (current: {{ $value }})"
+
+      - alert: HighCPUUsage
+        expr: |
+          rate(process_cpu_seconds_total{job="trenova"}[5m]) * 100 > 80
+        for: 10m
+        labels:
+          severity: warning
+          category: resources
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is above 80% (current: {{ $value | humanize }}%)"
+
+      # Queue Alerts
+      - alert: QueueJobFailures
+        expr: |
+          sum(rate(trenova_queue_errors_total[5m])) by (job_type) > 0.1
+        for: 10m
+        labels:
+          severity: warning
+          category: queue
+        annotations:
+          summary: "High queue job failure rate"
+          description: "Queue job type {{ $labels.job_type }} failing at {{ $value | humanize }} errors/sec"
+
+      - alert: QueueJobBacklog
+        expr: |
+          trenova_queue_depth > 1000
+        for: 15m
+        labels:
+          severity: warning
+          category: queue
+        annotations:
+          summary: "Large queue backlog"
+          description: "Queue depth is above 1000 jobs (current: {{ $value }})"
+
+      # Business Logic Alerts
+      - alert: NoTrafficReceived
+        expr: |
+          sum(rate(trenova_http_requests_total[5m])) == 0
+        for: 10m
+        labels:
+          severity: warning
+          category: business
+        annotations:
+          summary: "No HTTP traffic received"
+          description: "No HTTP requests received in the last 10 minutes"
+
+      - alert: UnusualTrafficSpike
+        expr: |
+          sum(rate(trenova_http_requests_total[5m])) > 10 * sum(rate(trenova_http_requests_total[5m] offset 1h))
+        for: 5m
+        labels:
+          severity: info
+          category: business
+        annotations:
+          summary: "Unusual traffic spike detected"
+          description: "Traffic is 10x higher than 1 hour ago"

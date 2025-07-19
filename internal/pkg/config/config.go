@@ -51,6 +51,9 @@ type Config struct {
 
 	// CronScheduler is the cron scheduler configuration.
 	CronScheduler CronSchedulerConfig `mapstructure:"cronScheduler"`
+
+	// Telemetry is the telemetry configuration.
+	Telemetry TelemetryConfig `mapstructure:"telemetry"`
 }
 
 type LogConfig struct {
@@ -760,4 +763,82 @@ type ComplianceJobsConfig struct {
 
 	// ComplianceCheckDepth is how thorough compliance checks should be
 	ComplianceCheckDepth string `mapstructure:"complianceCheckDepth"`
+}
+
+// TelemetryConfig is the configuration for telemetry and observability
+type TelemetryConfig struct {
+	// Enabled determines whether telemetry is active
+	Enabled bool `mapstructure:"enabled"`
+
+	// MetricsEnabled determines whether metrics collection is active
+	MetricsEnabled bool `mapstructure:"metricsEnabled"`
+
+	// TracingEnabled determines whether distributed tracing is active
+	TracingEnabled bool `mapstructure:"tracingEnabled"`
+
+	// LoggingEnabled determines whether structured logging with telemetry is active
+	LoggingEnabled bool `mapstructure:"loggingEnabled"`
+
+	// ServiceName is the name of the service for telemetry
+	ServiceName string `mapstructure:"serviceName"`
+
+	// ServiceVersion is the version of the service
+	ServiceVersion string `mapstructure:"serviceVersion"`
+
+	// Environment is the deployment environment
+	Environment string `mapstructure:"environment"`
+
+	// MetricsPort is the port for exposing Prometheus metrics
+	MetricsPort int `mapstructure:"metricsPort"`
+
+	// MetricsPath is the path for exposing Prometheus metrics
+	MetricsPath string `mapstructure:"metricsPath"`
+
+	// OTLP is the OpenTelemetry Protocol configuration
+	OTLP OTLPConfig `mapstructure:"otlp"`
+
+	// Sampling is the trace sampling configuration
+	Sampling SamplingConfig `mapstructure:"sampling"`
+}
+
+// OTLPConfig is the configuration for OpenTelemetry Protocol
+type OTLPConfig struct {
+	// Endpoint is the OTLP endpoint (e.g., "localhost:4317")
+	Endpoint string `mapstructure:"endpoint"`
+
+	// Insecure determines whether to use insecure connection
+	Insecure bool `mapstructure:"insecure"`
+
+	// Headers are additional headers to send with OTLP requests
+	Headers map[string]string `mapstructure:"headers"`
+
+	// Timeout is the timeout for OTLP requests
+	Timeout time.Duration `mapstructure:"timeout"`
+
+	// RetryConfig is the retry configuration for OTLP
+	RetryConfig OTLPRetryConfig `mapstructure:"retry"`
+}
+
+// OTLPRetryConfig is the retry configuration for OTLP
+type OTLPRetryConfig struct {
+	// Enabled determines whether retries are enabled
+	Enabled bool `mapstructure:"enabled"`
+
+	// InitialInterval is the initial retry interval
+	InitialInterval time.Duration `mapstructure:"initialInterval"`
+
+	// MaxInterval is the maximum retry interval
+	MaxInterval time.Duration `mapstructure:"maxInterval"`
+
+	// MaxElapsedTime is the maximum elapsed time for retries
+	MaxElapsedTime time.Duration `mapstructure:"maxElapsedTime"`
+}
+
+// SamplingConfig is the configuration for trace sampling
+type SamplingConfig struct {
+	// Probability is the sampling probability (0.0 to 1.0)
+	Probability float64 `mapstructure:"probability"`
+
+	// ParentBased determines whether to use parent-based sampling
+	ParentBased bool `mapstructure:"parentBased"`
 }

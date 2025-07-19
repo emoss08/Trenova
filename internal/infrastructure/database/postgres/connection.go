@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports/db"
+	"github.com/emoss08/trenova/internal/infrastructure/telemetry"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/metrics"
@@ -30,9 +31,10 @@ import (
 type ConnectionParams struct {
 	fx.In
 
-	Config *config.Manager
-	Logger *logger.Logger
-	LC     fx.Lifecycle
+	Config            *config.Manager
+	Logger            *logger.Logger
+	LC                fx.Lifecycle
+	TelemetryMetrics  *telemetry.Metrics `name:"telemetryMetrics" optional:"true"`
 }
 
 var (
@@ -50,6 +52,7 @@ type connection struct {
 	connectionPool    *ConnectionPool
 	mu                sync.RWMutex
 	healthCheckCancel context.CancelFunc
+	telemetryMetrics  *telemetry.Metrics
 }
 
 type readReplica struct {
@@ -69,9 +72,15 @@ func NewConnection(p ConnectionParams) db.Connection {
 		Str("service", "connection").
 		Logger()
 
+	var telemetryMetrics *telemetry.Metrics
+	if p.TelemetryMetrics != nil {
+		telemetryMetrics = p.TelemetryMetrics
+	}
+
 	conn := &connection{
-		cfg: p.Config,
-		log: &log,
+		cfg:              p.Config,
+		log:              &log,
+		telemetryMetrics: telemetryMetrics,
 	}
 
 	p.LC.Append(fx.Hook{
@@ -162,6 +171,19 @@ func (c *connection) initializePrimaryIfNeeded(ctx context.Context) (*bun.DB, er
 
 	// Add metrics hook for all environments
 	bunDB.AddQueryHook(middleware.NewDatabaseQueryHook(c.log, "primary", true))
+
+	// Add telemetry instrumentation if available
+	if c.telemetryMetrics != nil {
+		appCfg := c.cfg.App()
+		if appCfg != nil {
+			_, err := telemetry.InstrumentDatabase(bunDB, appCfg.Name, c.telemetryMetrics)
+			if err != nil {
+				c.log.Error().Err(err).Msg("failed to instrument database for telemetry")
+			} else {
+				c.log.Info().Msg("Database telemetry instrumentation added")
+			}
+		}
+	}
 
 	bunDB.RegisterModel(registry.RegisterEntities()...)
 
@@ -476,6 +498,12 @@ func (c *connection) performHealthCheck(ctx context.Context) {
 }
 
 func (c *connection) monitorConnectionPoolStats(ctx context.Context) {
+	// Initial delay to ensure connection is fully initialized
+	time.Sleep(2 * time.Second)
+	
+	// Log initial stats
+	c.updatePoolStats()
+	
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 
@@ -496,6 +524,19 @@ func (c *connection) updatePoolStats() {
 	// Update primary connection stats
 	if c.sql != nil {
 		stats := c.sql.Stats()
+		
+		// Log detailed connection information
+		c.log.Info().
+			Int("max_open", stats.MaxOpenConnections).
+			Int("open", stats.OpenConnections).
+			Int("in_use", stats.InUse).
+			Int("idle", stats.Idle).
+			Int64("wait_count", stats.WaitCount).
+			Dur("wait_duration", stats.WaitDuration).
+			Int64("max_idle_closed", stats.MaxIdleClosed).
+			Int64("max_lifetime_closed", stats.MaxLifetimeClosed).
+			Msg("Database connection pool stats")
+		
 		metrics.UpdateConnectionPoolStats("primary",
 			intutils.SafeInt32(stats.MaxOpenConnections),
 			intutils.SafeInt32(stats.Idle),

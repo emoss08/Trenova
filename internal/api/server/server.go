@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/infrastructure/telemetry"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/gofiber/fiber/v2"
@@ -16,9 +17,10 @@ import (
 type Params struct {
 	fx.In
 
-	Lc     fx.Lifecycle
-	Config *config.Config
-	Logger *logger.Logger
+	Lc               fx.Lifecycle
+	Config           *config.Config
+	Logger           *logger.Logger
+	TelemetryMetrics *telemetry.Metrics `name:"telemetryMetrics" optional:"true"`
 }
 
 type Server struct {
@@ -28,6 +30,12 @@ type Server struct {
 }
 
 func NewServer(p Params) *Server {
+	p.Logger.Debug().
+		Bool("telemetry_enabled", p.Config.Telemetry.Enabled).
+		Bool("metrics_enabled", p.Config.Telemetry.MetricsEnabled).
+		Bool("has_metrics", p.TelemetryMetrics != nil).
+		Msg("Server initialization - checking telemetry")
+	
 	// Create Fiber app with configuration
 	app := fiber.New(fiber.Config{
 		AppName: fmt.Sprintf(
@@ -53,6 +61,25 @@ func NewServer(p Params) *Server {
 		PassLocalsToViews:     p.Config.Server.PassLocalsToViews,
 		ErrorHandler:          defaultErrorHandler(p.Logger),
 	})
+
+	// Add telemetry middleware if available
+	if p.TelemetryMetrics != nil {
+		// Create combined middleware with proper configuration
+		middleware := telemetry.NewCombinedMiddleware(
+			p.Config.Telemetry.ServiceName,
+			p.TelemetryMetrics,
+			p.Logger,
+		)
+		
+		// Apply all middleware in correct order
+		middleware.Apply(app)
+		
+		p.Logger.Info().Msg("Telemetry middleware added to HTTP server")
+	} else {
+		// At minimum, add recovery middleware for safety
+		app.Use(telemetry.NewRecoveryMiddleware(telemetry.DefaultRecoveryConfig(p.Logger)))
+		p.Logger.Debug().Msg("TelemetryMetrics is nil - only recovery middleware added")
+	}
 
 	server := &Server{
 		app: app,
