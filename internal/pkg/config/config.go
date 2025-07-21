@@ -555,18 +555,15 @@ type KafkaConfig struct {
 	SchemaRegistryURL string `mapstructure:"schemaRegistryURL"`
 }
 
-// StreamingConfig is the configuration for real-time streaming
+// StreamingConfig is the configuration for CDC-based real-time streaming
 type StreamingConfig struct {
-	// PollInterval is the interval between data fetches (fallback mode)
-	PollInterval time.Duration `mapstructure:"pollInterval"`
-
 	// MaxConnections is the maximum number of concurrent connections per stream
 	MaxConnections int `mapstructure:"maxConnections"`
 
-	// StreamTimeout is the maximum duration for a stream connection
+	// StreamTimeout is the maximum duration for a stream connection (0 for no timeout)
 	StreamTimeout time.Duration `mapstructure:"streamTimeout"`
 
-	// EnableHeartbeat enables periodic heartbeat messages
+	// EnableHeartbeat enables periodic heartbeat messages to keep connections alive
 	EnableHeartbeat bool `mapstructure:"enableHeartbeat"`
 
 	// HeartbeatInterval is the interval for sending heartbeat messages

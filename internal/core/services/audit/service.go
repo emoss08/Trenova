@@ -12,11 +12,9 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
@@ -358,34 +356,11 @@ func (s *service) GetByID(
 	return entity, nil
 }
 
-// LiveStream streams audit entries
-func (s *service) LiveStream(
-	c *fiber.Ctx,
-	dataFetcher func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*audit.Entry, error),
-	timestampExtractor func(entry *audit.Entry) int64,
-) error {
-	streamDataFetcher := func(ctx context.Context, reqCtx *appctx.RequestContext) (any, error) {
-		entries, err := dataFetcher(ctx, reqCtx)
-		if err != nil {
-			return nil, err
-		}
-
-		result := make([]any, len(entries))
-		for i, entry := range entries {
-			result[i] = entry
-		}
-
-		return result, nil
-	}
-
-	streamTimestampExtractor := func(item any) int64 {
-		if entry, ok := item.(*audit.Entry); ok {
-			return timestampExtractor(entry)
-		}
-		return timeutils.NowUnix()
-	}
-
-	return s.ss.StreamData(c, "audit", streamDataFetcher, streamTimestampExtractor)
+// LiveStream streams audit entries via CDC
+func (s *service) LiveStream(c *fiber.Ctx) error {
+	// CDC-based streaming only - audit entries will be streamed when created
+	s.logger.Info().Msg("Starting CDC-based live stream for audit entries")
+	return s.ss.StreamData(c, "audit")
 }
 
 // RegisterSensitiveFields registers sensitive fields for a resource

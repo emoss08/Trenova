@@ -1,8 +1,6 @@
 package shipment
 
 import (
-	"context"
-
 	"github.com/emoss08/trenova/internal/api/middleware"
 	shipmentdomain "github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -41,12 +39,12 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerSecond(5), // 5 reads per second
 	)...)
 
-	api.Get("/live", h.liveStream)
-
 	api.Post("/", rl.WithRateLimit(
 		[]fiber.Handler{h.create},
 		middleware.PerMinute(60), // 60 reads per minute
 	)...)
+
+	api.Get("/live", h.liveStream)
 
 	api.Post("/cancel/", rl.WithRateLimit(
 		[]fiber.Handler{h.cancel},
@@ -468,29 +466,6 @@ func (h *Handler) transferOwnership(c *fiber.Ctx) error {
 }
 
 func (h *Handler) liveStream(c *fiber.Ctx) error {
-	fetchFunc := func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*shipmentdomain.Shipment, error) {
-		result, err := h.ss.List(ctx, &repositories.ListShipmentOptions{
-			ShipmentOptions: repositories.ShipmentOptions{
-				ExpandShipmentDetails: false, // Keep it lightweight for streaming
-			},
-			Filter: &ports.QueryOptions{
-				TenantOpts: ports.TenantOptions{
-					BuID:   reqCtx.BuID,
-					OrgID:  reqCtx.OrgID,
-					UserID: reqCtx.UserID,
-				},
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		return result.Items, nil
-	}
-
-	timestampFunc := func(s *shipmentdomain.Shipment) int64 {
-		return s.CreatedAt
-	}
-
-	return h.ss.LiveStream(c, fetchFunc, timestampFunc)
+	// CDC-based streaming only - no polling
+	return h.ss.LiveStream(c)
 }

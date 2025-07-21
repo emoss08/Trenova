@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/gofiber/fiber/v2"
 	"github.com/stretchr/testify/mock"
 )
@@ -51,10 +50,8 @@ func (m *MockAuditService) GetByID(
 
 func (m *MockAuditService) LiveStream(
 	c *fiber.Ctx,
-	dataFetcher func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*audit.Entry, error),
-	timestampExtractor func(entry *audit.Entry) int64,
 ) error {
-	args := m.Called(c, dataFetcher, timestampExtractor)
+	args := m.Called(c)
 	return args.Error(0)
 }
 

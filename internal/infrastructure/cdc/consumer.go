@@ -9,11 +9,14 @@ import (
 	"regexp"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
+	"github.com/emoss08/trenova/internal/pkg/utils/cdcutils"
+	"github.com/emoss08/trenova/internal/pkg/utils/maputils"
 	"github.com/emoss08/trenova/pkg/types/cdctypes"
 	"github.com/linkedin/goavro/v2"
 	"github.com/riferrei/srclient"
@@ -23,6 +26,7 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/sourcegraph/conc"
 	"go.uber.org/fx"
+	"golang.org/x/sync/singleflight"
 )
 
 type KafkaConsumerParams struct {
@@ -39,12 +43,11 @@ type KafkaConsumerService struct {
 	ctx          context.Context
 	cancel       context.CancelFunc
 	wg           *conc.WaitGroup
-	running      bool
-	mu           sync.RWMutex
-	handlers     map[string]services.CDCEventHandler // * table -> handler mapping
+	running      atomic.Bool
+	handlers     sync.Map // * table -> handler mapping
 	schemaClient *srclient.SchemaRegistryClient
-	avroSchemas  map[string]*goavro.Codec // * subject -> codec mapping
-	schemasMu    sync.RWMutex
+	avroSchemas  sync.Map // * schema ID -> codec mapping
+	singleFlight singleflight.Group
 }
 
 // NewKafkaConsumerService initializes a new Kafka CDC consumer service with its dependencies.
@@ -70,10 +73,7 @@ func NewKafkaConsumerService(p KafkaConsumerParams) services.CDCService {
 		l:            &log,
 		config:       p.Config.Kafka(),
 		wg:           conc.NewWaitGroup(),
-		handlers:     make(map[string]services.CDCEventHandler),
 		schemaClient: schemaClient,
-		avroSchemas:  make(map[string]*goavro.Codec),
-		schemasMu:    sync.RWMutex{},
 	}
 }
 
@@ -85,10 +85,7 @@ func NewKafkaConsumerService(p KafkaConsumerParams) services.CDCService {
 //   - table: The database table name to handle events for.
 //   - handler: The handler implementation that will process events for this table.
 func (s *KafkaConsumerService) RegisterHandler(table string, handler services.CDCEventHandler) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	s.handlers[table] = handler
+	s.handlers.Store(table, handler)
 	s.l.Info().
 		Str("table", table).
 		Str("handler_type", fmt.Sprintf("%T", handler)).
@@ -105,10 +102,7 @@ func (s *KafkaConsumerService) RegisterHandler(table string, handler services.CD
 // Returns:
 //   - error: If the service fails to start or is already running.
 func (s *KafkaConsumerService) Start() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if s.running {
+	if s.running.Load() {
 		return cdctypes.ErrConsumerAlreadyRunning
 	}
 
@@ -149,32 +143,44 @@ func (s *KafkaConsumerService) Start() error {
 	s.l.Info().Strs("topics", topics).Msg("Subscribing to topics")
 
 	if len(topics) > 0 {
+		s.l.Info().Strs("topics", topics).Msg("Starting consumer for topics")
+
 		s.reader = kafka.NewReader(kafka.ReaderConfig{
 			Brokers:                s.config.Brokers,
-			Topic:                  topics[0], // For now, start with first topic
 			GroupID:                s.config.ConsumerGroupID,
+			GroupTopics:            topics, // Subscribe to all matching topics
 			StartOffset:            startOffset,
 			MinBytes:               1,
-			MaxBytes:               10e6, // 10MB
-			CommitInterval:         s.config.CommitInterval,
+			MaxBytes:               10e6,
+			CommitInterval:         1 * time.Second,
 			MaxWait:                1 * time.Second,
 			ReadBatchTimeout:       10 * time.Second,
-			QueueCapacity:          100,
+			QueueCapacity:          1000,
+			HeartbeatInterval:      3 * time.Second,
 			SessionTimeout:         30 * time.Second,
 			RebalanceTimeout:       30 * time.Second,
-			PartitionWatchInterval: 5 * time.Second,
-			ErrorLogger:            kafka.LoggerFunc(s.logKafkaError),
+			PartitionWatchInterval: 30 * time.Second,
+			MaxAttempts:            3,
+			Dialer: &kafka.Dialer{
+				Timeout:   30 * time.Second,
+				DualStack: true,
+				KeepAlive: 30 * time.Second,
+			},
+			ErrorLogger: kafka.LoggerFunc(s.logKafkaError),
 		})
 	}
 
-	s.running = true
+	s.running.Store(true)
 
-	// Start consumer goroutines for all topics
-	for _, topic := range topics {
-		s.wg.Go(func() {
-			s.consumeFromTopic(topic, startOffset)
-		})
-	}
+	// Start single consumer goroutine for all topics
+	s.wg.Go(func() {
+		s.consumeMessages()
+	})
+
+	// Start schema cache cleaner
+	s.wg.Go(func() {
+		s.cleanSchemaCache()
+	})
 
 	s.l.Info().Msg("Kafka consumer service started successfully")
 	return nil
@@ -187,10 +193,7 @@ func (s *KafkaConsumerService) Start() error {
 // Returns:
 //   - error: If there are issues during shutdown (logged but not returned).
 func (s *KafkaConsumerService) Stop() error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if !s.running {
+	if !s.running.Load() {
 		return nil
 	}
 
@@ -207,7 +210,7 @@ func (s *KafkaConsumerService) Stop() error {
 	}
 
 	s.wg.Wait()
-	s.running = false
+	s.running.Store(false)
 
 	s.l.Info().Msg("Kafka consumer service stopped")
 	return nil
@@ -219,52 +222,7 @@ func (s *KafkaConsumerService) Stop() error {
 // Returns:
 //   - bool: True if the service is currently running, false otherwise.
 func (s *KafkaConsumerService) IsRunning() bool {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-	return s.running
-}
-
-// GetMetrics returns runtime metrics and statistics about the CDC consumer service.
-// Includes configuration details, running status, and Kafka reader statistics.
-//
-// Returns:
-//   - map[string]any: Metrics data including config, status, and Kafka stats.
-func (s *KafkaConsumerService) GetMetrics() map[string]any {
-	s.mu.RLock()
-	defer s.mu.RUnlock()
-
-	metrics := map[string]any{
-		"running": s.running,
-		"config": map[string]any{
-			"brokers":           s.config.Brokers,
-			"consumer_group_id": s.config.ConsumerGroupID,
-			"topic_pattern":     s.config.TopicPattern,
-			"enabled":           s.config.Enabled,
-		},
-		"handlers_registered": len(s.handlers),
-		"schemas_cached":      len(s.avroSchemas),
-	}
-
-	if s.reader != nil {
-		stats := s.reader.Stats()
-		metrics["kafka_stats"] = map[string]any{
-			"messages":       stats.Messages,
-			"bytes":          stats.Bytes,
-			"rebalances":     stats.Rebalances,
-			"timeouts":       stats.Timeouts,
-			"errors":         stats.Errors,
-			"dials":          stats.Dials,
-			"fetches":        stats.Fetches,
-			"offset":         stats.Offset,
-			"lag":            stats.Lag,
-			"min_bytes":      stats.MinBytes,
-			"max_bytes":      stats.MaxBytes,
-			"queue_capacity": stats.QueueCapacity,
-			"queue_length":   stats.QueueLength,
-		}
-	}
-
-	return metrics
+	return s.running.Load()
 }
 
 // logKafkaError handles Kafka error logging in a structured way
@@ -373,26 +331,6 @@ func (s *KafkaConsumerService) getDefaultTopics() []string {
 	return []string{}
 }
 
-// newTopicReader creates and configures a new Kafka reader for a specific topic.
-func (s *KafkaConsumerService) newTopicReader(topic string, startOffset int64) *kafka.Reader {
-	return kafka.NewReader(kafka.ReaderConfig{
-		Brokers:                s.config.Brokers,
-		Topic:                  topic,
-		GroupID:                s.config.ConsumerGroupID,
-		StartOffset:            startOffset,
-		MinBytes:               1,
-		MaxBytes:               10e6,
-		CommitInterval:         s.config.CommitInterval,
-		MaxWait:                500 * time.Millisecond,
-		ReadBatchTimeout:       10 * time.Second,
-		QueueCapacity:          100,
-		SessionTimeout:         30 * time.Second,
-		RebalanceTimeout:       30 * time.Second,
-		PartitionWatchInterval: 5 * time.Second,
-		ErrorLogger:            kafka.LoggerFunc(s.logKafkaError),
-	})
-}
-
 // handleReadError centralizes error handling for Kafka message reads.
 // It implements an exponential backoff strategy for retriable errors.
 // Returns false if consumption should stop.
@@ -450,42 +388,6 @@ func (s *KafkaConsumerService) processAndLogMessage(message *kafka.Message) {
 	}
 }
 
-// consumeFromTopic continuously consumes and processes messages from a specific Kafka topic.
-// This method runs in its own goroutine and handles message reading, error handling,
-// and graceful shutdown when the context is cancelled.
-//
-// Parameters:
-//   - topic: The Kafka topic name to consume from.
-//   - startOffset: Starting offset position (FirstOffset or LastOffset).
-func (s *KafkaConsumerService) consumeFromTopic(topic string, startOffset int64) {
-	reader := s.newTopicReader(topic, startOffset)
-	defer reader.Close()
-
-	s.l.Info().Str("topic", topic).Msg("Started consuming from topic")
-
-	var backoff time.Duration
-
-	for {
-		select {
-		case <-s.ctx.Done():
-			s.l.Info().Str("topic", topic).Msg("Consumer context cancelled, stopping consumption")
-			return
-		default:
-			message, err := reader.ReadMessage(s.ctx)
-			if err != nil {
-				if !s.handleReadError(err, topic, &backoff) {
-					return
-				}
-				continue
-			}
-
-			// Reset backoff on successful read
-			backoff = 0
-			s.processAndLogMessage(&message)
-		}
-	}
-}
-
 // decodeAvroMessage decodes an Avro-encoded Kafka message.
 func (s *KafkaConsumerService) decodeAvroMessage(message *kafka.Message) (map[string]any, error) {
 	// ! Kafka Connect Avro messages have the format: [magic_byte][schema_id][avro_data]
@@ -509,25 +411,36 @@ func (s *KafkaConsumerService) decodeAvroMessage(message *kafka.Message) (map[st
 		message.Value[4],
 	)
 
-	// * Get schema from registry using schema ID
-	schema, err := s.schemaClient.GetSchema(schemaID)
-	if err != nil {
-		return nil, oops.
-			In("kafka_consumer").
-			With("schema_id", schemaID).
-			With("topic", message.Topic).
-			Time(time.Now()).
-			Wrapf(err, "failed to get schema by ID")
-	}
+	// * Try to get codec from cache
+	codecKey := fmt.Sprintf("schema-%d", schemaID)
+	codecInterface, ok := s.avroSchemas.Load(codecKey)
 
-	// * Create codec if not cached
-	codec, err := goavro.NewCodec(schema.Schema())
-	if err != nil {
-		return nil, oops.
-			In("kafka_consumer").
-			With("schema_id", schemaID).
-			Time(time.Now()).
-			Wrapf(err, "failed to create Avro codec")
+	var codec *goavro.Codec
+	if !ok {
+		// Get schema from registry
+		schema, err := s.schemaClient.GetSchema(schemaID)
+		if err != nil {
+			return nil, oops.
+				In("kafka_consumer").
+				With("schema_id", schemaID).
+				With("topic", message.Topic).
+				Time(time.Now()).
+				Wrapf(err, "failed to get schema by ID")
+		}
+
+		// Create and cache codec
+		codec, err = goavro.NewCodec(schema.Schema())
+		if err != nil {
+			return nil, oops.
+				In("kafka_consumer").
+				With("schema_id", schemaID).
+				Time(time.Now()).
+				Wrapf(err, "failed to create Avro codec")
+		}
+
+		s.avroSchemas.Store(codecKey, codec)
+	} else {
+		codec = codecInterface.(*goavro.Codec)
 	}
 
 	// * Decode the Avro data (skip first 5 bytes which are magic byte + schema ID)
@@ -564,15 +477,20 @@ func (s *KafkaConsumerService) decodeAvroMessage(message *kafka.Message) (map[st
 // Returns:
 //   - error: If message processing fails at any stage.
 func (s *KafkaConsumerService) processMessage(message *kafka.Message) error {
-	s.l.Debug().
-		Str("topic", message.Topic).
-		Int("partition", message.Partition).
-		Int64("offset", message.Offset).
-		Msg("Processing Kafka message")
+	log := s.l.With().
+		Str("operation", "processMessage").
+		Logger()
 
 	// * Decode Avro message
 	avroData, err := s.decodeAvroMessage(message)
 	if err != nil {
+		log.Error().
+			Err(err).
+			Str("topic", message.Topic).
+			Int("partition", message.Partition).
+			Int64("offset", message.Offset).
+			Msg("Failed to decode Avro message")
+
 		return oops.
 			In("kafka_consumer").
 			With("topic", message.Topic).
@@ -585,6 +503,13 @@ func (s *KafkaConsumerService) processMessage(message *kafka.Message) error {
 	// * Extract source information for table name
 	source, ok := avroData["source"].(map[string]any)
 	if !ok {
+		log.Error().
+			Err(err).
+			Str("topic", message.Topic).
+			Int("partition", message.Partition).
+			Int64("offset", message.Offset).
+			Msg("Failed to decode Avro message")
+
 		return oops.
 			In("kafka_consumer").
 			With("topic", message.Topic).
@@ -594,6 +519,13 @@ func (s *KafkaConsumerService) processMessage(message *kafka.Message) error {
 
 	tableName, ok := source["table"].(string)
 	if !ok {
+		log.Error().
+			Err(err).
+			Str("topic", message.Topic).
+			Int("partition", message.Partition).
+			Int64("offset", message.Offset).
+			Msg("Failed to decode Avro message")
+
 		return oops.
 			In("kafka_consumer").
 			With("topic", message.Topic).
@@ -602,13 +534,12 @@ func (s *KafkaConsumerService) processMessage(message *kafka.Message) error {
 	}
 
 	// * Check if we have a handler for this table
-	s.mu.RLock()
-	handler, exists := s.handlers[tableName]
-	s.mu.RUnlock()
+	handler, exists := s.handlers.Load(tableName)
 
 	if !exists {
 		s.l.Debug().
 			Str("table", tableName).
+			Str("topic", message.Topic).
 			Msg("No handler registered for table, skipping")
 		return nil
 	}
@@ -627,7 +558,7 @@ func (s *KafkaConsumerService) processMessage(message *kafka.Message) error {
 	}
 
 	// * Route to appropriate handler
-	if err = handler.HandleEvent(cdcEvent); err != nil {
+	if err = handler.(services.CDCEventHandler).HandleEvent(cdcEvent); err != nil {
 		return oops.
 			In("kafka_consumer").
 			With("topic", message.Topic).
@@ -644,102 +575,6 @@ func (s *KafkaConsumerService) processMessage(message *kafka.Message) error {
 		Msg("Successfully processed CDC event")
 
 	return nil
-}
-
-// New helper function to extract a string field from a map.
-func extractString(data map[string]any, key string) string {
-	val, _ := data[key].(string)
-	return val
-}
-
-// New helper to extract int64 from various possible Avro representations.
-func extractInt64(field any) int64 {
-	if field == nil {
-		return 0
-	}
-	switch v := field.(type) {
-	case int64:
-		return v
-	case float64:
-		return int64(v)
-	case int:
-		return int64(v)
-	case map[string]any:
-		// Handle {"long": value} format
-		if longVal, ok := v["long"]; ok {
-			switch lv := longVal.(type) {
-			case int64:
-				return lv
-			case float64:
-				return int64(lv)
-			}
-		}
-	}
-	return 0
-}
-
-// New helper to extract and build the CDCSource from the source map.
-func extractCDCSource(source map[string]any) cdctypes.CDCSource {
-	var isSnapshot bool
-	if snapshotField := source["snapshot"]; snapshotField != nil {
-		switch v := snapshotField.(type) {
-		case map[string]any:
-			if snapshotVal, sOk := v["string"].(string); sOk {
-				isSnapshot = snapshotVal != "false"
-			}
-		case string:
-			isSnapshot = v != "false"
-		}
-	}
-
-	return cdctypes.CDCSource{
-		Database:  extractString(source, "db"),
-		Schema:    extractString(source, "schema"),
-		Table:     extractString(source, "table"),
-		Connector: extractString(source, "connector"),
-		Version:   extractString(source, "version"),
-		Snapshot:  isSnapshot,
-	}
-}
-
-// New helper to normalize the Debezium operation codes.
-func normalizeOperation(op string) string {
-	switch op {
-	case "c":
-		return "create"
-	case "u":
-		return "update"
-	case "d":
-		return "delete"
-	case "r":
-		return "read"
-	default:
-		return op
-	}
-}
-
-// New helper to extract before/after state.
-func extractDataState(avroData map[string]any, key string) map[string]any {
-	var data map[string]any
-	if dataField := avroData[key]; dataField != nil {
-		if dataMap, ok := dataField.(map[string]any); ok {
-			data = cdctypes.ExtractValueField(dataMap)
-		}
-	}
-	for k, v := range data {
-		data[k] = cdctypes.ConvertAvroOptionalField(v)
-	}
-	return data
-}
-
-// New helper to extract the transaction ID from the Avro data.
-func extractTransactionID(avroData map[string]any) string {
-	if txData, ok := avroData["transaction"].(map[string]any); ok {
-		if txID, idOk := txData["id"].(string); idOk {
-			return txID
-		}
-	}
-	return ""
 }
 
 // convertAvroToCDCEvent transforms an Avro-decoded Debezium change event into our generic CDC event format.
@@ -764,14 +599,14 @@ func (s *KafkaConsumerService) convertAvroToCDCEvent(
 		return nil, eris.New("source field not found or not a map")
 	}
 
-	before := extractDataState(avroData, "before")
-	after := extractDataState(avroData, "after")
+	before := cdcutils.ExtractDataState(avroData, "before")
+	after := cdcutils.ExtractDataState(avroData, "after")
 
-	normalizedOp := normalizeOperation(op)
-	source := extractCDCSource(sourceMap)
-	transactionID := extractTransactionID(avroData)
-	timestamp := extractInt64(avroData["ts_ms"])
-	lsn := extractInt64(sourceMap["lsn"])
+	normalizedOp := cdcutils.NormalizeOperation(op)
+	source := cdcutils.ExtractCDCSource(sourceMap)
+	transactionID := cdcutils.ExtractTransactionID(avroData)
+	timestamp := maputils.ExtractInt64Field(avroData["ts_ms"])
+	lsn := maputils.ExtractInt64Field(sourceMap["lsn"])
 
 	return &cdctypes.CDCEvent{
 		Operation: normalizedOp,
@@ -786,4 +621,74 @@ func (s *KafkaConsumerService) convertAvroToCDCEvent(
 			LSN:           lsn,
 		},
 	}, nil
+}
+
+// consumeMessages reads messages from Kafka using the single reader for all topics
+func (s *KafkaConsumerService) consumeMessages() {
+	s.l.Info().Msg("Started message consumer")
+
+	var backoff time.Duration
+
+	for {
+		select {
+		case <-s.ctx.Done():
+			s.l.Info().Msg("Message consumer stopped")
+			return
+
+		default:
+			// Read message with proper timeout handling
+			message, err := s.reader.ReadMessage(s.ctx)
+			if err != nil {
+				if !s.handleReadError(err, "multi-topic", &backoff) {
+					return
+				}
+				continue
+			}
+
+			backoff = 0
+
+			// Process message
+			s.processAndLogMessage(&message)
+
+			// Note: ReadMessage automatically commits messages when using consumer groups
+		}
+	}
+}
+
+// cleanSchemaCache periodically cleans old schemas from the cache to prevent memory leaks
+func (s *KafkaConsumerService) cleanSchemaCache() {
+	ticker := time.NewTicker(5 * time.Minute)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-s.ctx.Done():
+			return
+
+		case <-ticker.C:
+			// Count schemas
+			count := 0
+			s.avroSchemas.Range(func(key, value any) bool {
+				count++
+				return true
+			})
+
+			// If we have too many schemas cached, remove some
+			if count > 100 {
+				removed := 0
+				s.avroSchemas.Range(func(key, value any) bool {
+					if removed < count-100 {
+						s.avroSchemas.Delete(key)
+						removed++
+					}
+					return removed < count-100
+				})
+
+				s.l.Debug().
+					Int("removed", removed).
+					Int("remaining", 100).
+					Msg("Cleaned schema cache")
+			}
+		}
+	}
 }
