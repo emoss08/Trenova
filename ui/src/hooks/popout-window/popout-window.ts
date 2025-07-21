@@ -84,6 +84,7 @@ interface PopoutWindowEvents {
   onFocus?: (windowId: string) => void;
   onBlur?: (windowId: string) => void;
   onStateChange?: (windowId: string, state: Partial<PopoutWindowState>) => void;
+  onWindowsChange?: (windowIds: string[]) => void;
 }
 
 type StoredWindowPosition = {
@@ -241,6 +242,9 @@ class PopoutWindowManager {
         setTimeout(() => this.saveWindowPosition(id), 100);
       }
 
+      // Notify about window change
+      this.notifyWindowsChange();
+
       return id;
     } catch (error) {
       console.error("[Trenova] Error opening window:", error);
@@ -268,6 +272,9 @@ class PopoutWindowManager {
         this.windows.delete(id);
         this.focusQueue = this.focusQueue.filter((wId) => wId !== id);
         this.events.onClose?.(id);
+        
+        // Notify about window change
+        this.notifyWindowsChange();
       }
     } catch (error) {
       console.error(`[Trenova] Error closing window ${id}:`, error);
@@ -373,6 +380,14 @@ class PopoutWindowManager {
    */
   hasOpenWindows(): boolean {
     return this.getActiveWindows().length > 0;
+  }
+
+  /**
+   * Notify subscribers about window changes
+   */
+  private notifyWindowsChange(): void {
+    const activeWindows = this.getActiveWindows();
+    this.events.onWindowsChange?.(activeWindows);
   }
 
   private processOptions(
@@ -644,6 +659,7 @@ class PopoutWindowManager {
 
   private cleanupStaleWindows(): void {
     const now = new Date();
+    let hasChanges = false;
     for (const [id, state] of this.windows.entries()) {
       if (
         state.window?.closed ||
@@ -651,7 +667,11 @@ class PopoutWindowManager {
           now.getTime() - state.lastActive.getTime() > STALE_WINDOW_TIMEOUT)
       ) {
         this.closeWindow(id);
+        hasChanges = true;
       }
+    }
+    if (hasChanges) {
+      this.notifyWindowsChange();
     }
   }
 
