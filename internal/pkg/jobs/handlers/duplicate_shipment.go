@@ -150,7 +150,7 @@ func (dsh *DuplicateShipmentHandler) ProcessTask( //nolint:funlen // we need to 
 		}
 	}
 
-	if _, err := task.ResultWriter().Write([]byte(fmt.Sprintf("copied %d shipments", len(shipments)))); err != nil {
+	if _, err := task.ResultWriter().Write(fmt.Appendf([]byte{}, "copied %d shipments", len(shipments))); err != nil {
 		log.Error().Err(err).Msg("failed to write result")
 		return oops.
 			In("duplicate_shipment_handler").

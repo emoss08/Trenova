@@ -12,12 +12,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	dedicatedlaneservice "github.com/emoss08/trenova/internal/core/services/dedicatedlane"
-	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/pkg/types"
@@ -763,34 +761,11 @@ func (s *Service) CalculateShipmentTotals(
 	return resp, nil
 }
 
-// LiveStream provides real-time streaming of shipment changes
-func (s *Service) LiveStream(
-	c *fiber.Ctx,
-	dataFetcher func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*shipment.Shipment, error),
-	timestampExtractor func(s *shipment.Shipment) int64,
-) error {
-	// Create data fetcher that returns any for the streaming service
-	streamDataFetcher := func(ctx context.Context, reqCtx *appctx.RequestContext) (any, error) {
-		shipments, err := dataFetcher(ctx, reqCtx)
-		if err != nil {
-			return nil, err
-		}
-
-		// Convert to []any for the streaming service
-		result := make([]any, len(shipments))
-		for i, shp := range shipments {
-			result[i] = shp
-		}
-		return result, nil
-	}
-
-	// Create timestamp extractor that works with any
-	streamTimestampExtractor := func(item any) int64 {
-		if shp, ok := item.(*shipment.Shipment); ok {
-			return timestampExtractor(shp)
-		}
-		return timeutils.NowUnix()
-	}
-
-	return s.ss.StreamData(c, "shipments", streamDataFetcher, streamTimestampExtractor)
+// LiveStream provides real-time streaming of shipment changes via CDC
+func (s *Service) LiveStream(c *fiber.Ctx) error {
+	// CDC-based streaming only - no polling
+	// The CDC handler will broadcast changes via BroadcastToStream when database changes occur
+	s.l.Info().Msg("Starting CDC-based live stream for shipments")
+	
+	return s.ss.StreamData(c, "shipments")
 }

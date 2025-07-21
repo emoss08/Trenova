@@ -15,9 +15,6 @@ type CDCService interface {
 	// IsRunning returns whether the CDC service is currently running
 	IsRunning() bool
 
-	// GetMetrics returns CDC service metrics
-	GetMetrics() map[string]any
-
 	// RegisterHandler registers a handler for a specific table
 	RegisterHandler(table string, handler CDCEventHandler)
 }

@@ -1,8 +1,6 @@
 package audit
 
 import (
-	"context"
-
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -126,24 +124,6 @@ func (h *Handler) get(c *fiber.Ctx) error {
 }
 
 func (h *Handler) liveStream(c *fiber.Ctx) error {
-	fetchFunc := func(ctx context.Context, reqCtx *appctx.RequestContext) ([]*audit.Entry, error) {
-		result, err := h.auditService.List(ctx, &ports.LimitOffsetQueryOptions{
-			TenantOpts: ports.TenantOptions{
-				BuID:   reqCtx.BuID,
-				OrgID:  reqCtx.OrgID,
-				UserID: reqCtx.UserID,
-			},
-		})
-		if err != nil {
-			return nil, err
-		}
-
-		return result.Items, nil
-	}
-
-	timestampFunc := func(entry *audit.Entry) int64 {
-		return entry.Timestamp
-	}
-
-	return h.auditService.LiveStream(c, fetchFunc, timestampFunc)
+	// CDC-based streaming only - no polling
+	return h.auditService.LiveStream(c)
 }

@@ -69,13 +69,8 @@ func NewService(p ServiceParams) services.StreamingService {
 	}
 }
 
-// StreamData implements the StreamingService interface
-func (s *Service) StreamData(
-	c *fiber.Ctx,
-	streamKey string,
-	dataFetcher services.DataFetcher,
-	timestampExtractor services.TimestampExtractor,
-) error {
+// StreamData implements the StreamingService interface for CDC-based streaming
+func (s *Service) StreamData(c *fiber.Ctx, streamKey string) error {
 	log := s.l.With().Str("operation", "stream_data").Logger()
 
 	reqCtx, err := appctx.WithRequestContext(c)
@@ -113,7 +108,7 @@ func (s *Service) StreamData(
 	}()
 
 	// Get or create stream manager with tenant-aware key
-	streamMgr := s.getOrCreateStreamManager(tenantStreamKey, dataFetcher, timestampExtractor)
+	streamMgr := s.getOrCreateStreamManager(tenantStreamKey)
 
 	// Check connection limits per stream
 	if streamMgr.getClientCount() >= s.config.MaxConnections {
@@ -140,6 +135,7 @@ func (s *Service) StreamData(
 	c.Set("Content-Type", "text/event-stream")
 	c.Set("Cache-Control", "no-cache")
 	c.Set("Connection", "keep-alive")
+	c.Set("Transfer-Encoding", "chunked")
 
 	c.Status(fiber.StatusOK).
 		Context().
@@ -163,7 +159,9 @@ func (s *Service) GetActiveStreams(streamKey string) int {
 
 // BroadcastToStream immediately broadcasts data to all clients of a specific stream
 func (s *Service) BroadcastToStream(streamKey string, orgID, buID string, data any) error {
-	log := s.l.With().Str("operation", "broadcast_to_stream").Logger()
+	log := s.l.With().
+		Str("operation", "BroadcastToStream").
+		Logger()
 
 	// Create tenant-aware stream key
 	tenantStreamKey := fmt.Sprintf("%s:%s:%s", streamKey, orgID, buID)
@@ -207,11 +205,7 @@ func (s *Service) Shutdown() error {
 }
 
 // getOrCreateStreamManager gets or creates a stream manager for the given key
-func (s *Service) getOrCreateStreamManager(
-	streamKey string,
-	dataFetcher services.DataFetcher,
-	timestampExtractor services.TimestampExtractor,
-) *StreamManager {
+func (s *Service) getOrCreateStreamManager(streamKey string) *StreamManager {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -220,23 +214,13 @@ func (s *Service) getOrCreateStreamManager(
 	}
 
 	streamMgr := &StreamManager{
-		clients:              make(map[string]*Client),
-		lastTimestamp:        time.Now().Unix(),
-		sentItems:            make(map[string]int64),
-		dataFetcher:          dataFetcher,
-		timestampFunc:        timestampExtractor,
-		config:               s.config,
-		maxConsecutiveErrors: 5,
-		backoffDuration:      s.config.PollInterval,
-		idleTimeout:          30 * time.Minute,
-		maxSentItems:         10000,
-		lastCleanup:          time.Now(),
-		lastDataChange:       time.Now(),
+		clients:        make(map[string]*Client),
+		config:         s.config,
+		idleTimeout:    30 * time.Minute,
+		lastDataChange: time.Now(),
 		metrics: StreamMetrics{
 			ActiveConnections: 0,
 			TotalConnections:  0,
-			DataFetchErrors:   0,
-			LastDataFetch:     0,
 		},
 	}
 
