@@ -3,7 +3,7 @@ import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryInvalidationListener } from "@/hooks/use-invalidate-query";
 import { useUser } from "@/stores/user-store";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Outlet } from "react-router";
 import { AppSidebar } from "./app-sidebar";
 import { Header } from "./header";
@@ -26,12 +26,6 @@ export function MainLayout() {
 
   useAuth();
   useQueryInvalidationListener();
-
-  useEffect(() => {
-    if (user?.mustChangePassword) {
-      setChangePasswordDialogOpen(true);
-    }
-  }, [user?.mustChangePassword]);
 
   return (
     <>

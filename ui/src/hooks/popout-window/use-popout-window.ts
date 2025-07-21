@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import {
-  getPopoutWindowManager,
-  PopoutWindowOptions,
-  type PopoutWindowEvents,
-} from "./popout-window";
+import { getPopoutWindowManager, PopoutWindowOptions } from "./popout-window";
 
 type UsePopoutWindowOptions = {
   onReady?: (windowId: string) => void;
@@ -23,23 +19,27 @@ export function usePopoutWindow(options?: UsePopoutWindowOptions) {
   // Setup event handlers
   useEffect(() => {
     const manager = managerRef.current;
-    
+
     if (options?.onReady) manager.on("onReady", options.onReady);
     if (options?.onClose) manager.on("onClose", options.onClose);
     if (options?.onError) manager.on("onError", options.onError);
     if (options?.onFocus) manager.on("onFocus", options.onFocus);
     if (options?.onBlur) manager.on("onBlur", options.onBlur);
-    if (options?.onStateChange) manager.on("onStateChange", options.onStateChange);
+    if (options?.onStateChange)
+      manager.on("onStateChange", options.onStateChange);
 
-    // Update active windows periodically
-    const updateActiveWindows = () => {
-      setActiveWindows(manager.getActiveWindows());
+    // Subscribe to window changes
+    const handleWindowsChange = (windowIds: string[]) => {
+      setActiveWindows(windowIds);
     };
-    updateActiveWindows();
-    const interval = setInterval(updateActiveWindows, 1000);
+
+    manager.on("onWindowsChange", handleWindowsChange);
+
+    // Get initial windows
+    setActiveWindows(manager.getActiveWindows());
 
     return () => {
-      clearInterval(interval);
+      // No cleanup needed - events are managed by the singleton
     };
   }, [options]);
 
@@ -149,7 +149,7 @@ export function usePopoutWindow(options?: UsePopoutWindowOptions) {
     popoutId,
     activeWindows,
     hasOpenWindows: activeWindows.length > 0,
-    
+
     // Actions
     openPopout,
     closePopout,
