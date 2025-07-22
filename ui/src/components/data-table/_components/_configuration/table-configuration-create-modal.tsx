@@ -33,6 +33,7 @@ type CreateTableConfigurationModalProps = TableSheetProps & {
   resource: Resource;
   visiblityState: VisibilityState;
   tableFilters: FilterStateSchema;
+  columnOrder?: string[];
 };
 
 export function CreateTableConfigurationModal({
@@ -41,6 +42,7 @@ export function CreateTableConfigurationModal({
   resource,
   visiblityState,
   tableFilters,
+  columnOrder,
 }: CreateTableConfigurationModalProps) {
   const { isPopout, closePopout } = usePopoutWindow();
   const queryClient = useQueryClient();
@@ -57,6 +59,7 @@ export function CreateTableConfigurationModal({
         columnVisibility: visiblityState,
         filters: tableFilters.filters,
         sort: tableFilters.sort,
+        columnOrder: columnOrder,
       },
     },
   });
@@ -104,6 +107,7 @@ export function CreateTableConfigurationModal({
           columnVisibility: visiblityState,
           filters: tableFilters.filters,
           sort: tableFilters.sort,
+          columnOrder: columnOrder,
         },
       });
 
@@ -153,10 +157,11 @@ export function CreateTableConfigurationModal({
           columnVisibility: visiblityState,
           filters: tableFilters.filters,
           sort: tableFilters.sort,
+          columnOrder: columnOrder,
         },
       });
     }
-  }, [isSubmitSuccessful, reset, open, resource, visiblityState, tableFilters]);
+  }, [isSubmitSuccessful, reset, open, resource, visiblityState, tableFilters, columnOrder]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

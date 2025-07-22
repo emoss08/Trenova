@@ -4,6 +4,11 @@ import { SwitchField } from "@/components/fields/switch-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
+import {
+  Sortable,
+  SortableDragHandle,
+  SortableItem,
+} from "@/components/ui/sortable";
 import { Switch } from "@/components/ui/switch";
 import { visibilityChoices } from "@/lib/choices";
 import {
@@ -11,6 +16,7 @@ import {
   getSortDirectionLabel,
 } from "@/lib/enhanced-data-table-utils";
 import { TableConfigurationSchema } from "@/lib/schemas/table-configuration-schema";
+import { GripVertical } from "lucide-react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 
 // Helper function to format column names for display
@@ -20,11 +26,17 @@ function formatColumnName(name: string) {
 }
 
 export function TableConfigurationForm() {
-  const { control, register } = useFormContext<TableConfigurationSchema>();
+  const { control, register, setValue } =
+    useFormContext<TableConfigurationSchema>();
 
   const columnVisibilityKeys = useWatch({
     control,
     name: "tableConfig.columnVisibility",
+  });
+
+  const columnOrder = useWatch({
+    control,
+    name: "tableConfig.columnOrder",
   });
 
   const filters = useWatch({
@@ -182,6 +194,51 @@ export function TableConfigurationForm() {
         ) : (
           <p className="text-sm text-center text-muted-foreground py-2">
             No sort to configure for this table.
+          </p>
+        )}
+      </div>
+      <div className="flex flex-col gap-3 bg-muted rounded-md p-2 border border-border border-dashed">
+        <h3 className="text-sm text-center font-medium border-b border-border border-dashed pb-2">
+          Column Order
+        </h3>
+        {columnOrder && columnOrder.length > 0 ? (
+          <Sortable
+            value={columnOrder.map((id) => ({ id }))}
+            onValueChange={(newOrder) =>
+              setValue(
+                "tableConfig.columnOrder",
+                newOrder.map((item) => item.id as string),
+              )
+            }
+            orientation="vertical"
+          >
+            <div className="flex flex-col gap-2">
+              {columnOrder.map((columnId) => (
+                <SortableItem key={columnId} value={columnId}>
+                  <div className="flex items-center gap-2 px-2 py-1.5 bg-background border border-border rounded hover:bg-accent transition-colors">
+                    <SortableDragHandle
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6 shrink-0"
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                      }}
+                    >
+                      <GripVertical className="h-3 w-3" />
+                    </SortableDragHandle>
+                    <span className="text-sm flex-1">
+                      {formatColumnName(columnId)}
+                    </span>
+                  </div>
+                </SortableItem>
+              ))}
+            </div>
+          </Sortable>
+        ) : (
+          <p className="text-sm text-center text-muted-foreground py-2">
+            No column order configured for this table.
           </p>
         )}
       </div>

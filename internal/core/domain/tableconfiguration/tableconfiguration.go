@@ -32,6 +32,7 @@ type TableConfig struct {
 	Sort             []ports.SortField   `json:"sort"`
 	PageSize         int                 `json:"pageSize"`
 	ColumnVisibility map[string]bool     `json:"columnVisibility"`
+	ColumnOrder      []string            `json:"columnOrder"`
 }
 
 type Configuration struct {
@@ -102,9 +103,6 @@ func (c *Configuration) DBValidate(ctx context.Context, _ bun.IDB) *errors.Multi
 	return nil
 }
 
-// TODO(Wolfred): Write uniqueness checks for the name and table identifier
-
-// Pagination Configuration
 func (c *Configuration) GetTableName() string {
 	return "table_configurations"
 }

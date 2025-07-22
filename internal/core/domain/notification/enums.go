@@ -25,6 +25,9 @@ const (
 	// EventSystemMaintenance is fired when system maintenance is scheduled
 	EventSystemMaintenance = EventType("system.maintenance.scheduled")
 
+	// EventConfigurationCopied is fired when a configuration is copied
+	EventConfigurationCopied = EventType("configuration.copied")
+
 	// EventSystemAlert is fired when a critical system alert occurs
 	EventSystemAlert = EventType("system.alert.critical")
 

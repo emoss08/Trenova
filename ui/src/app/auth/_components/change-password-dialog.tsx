@@ -22,9 +22,24 @@ export function ChangePasswordDialog({
 }: ChangePasswordDialogProps) {
   const { onOpenChange } = props;
 
+  console.info("mustChangePassword", mustChangePassword);
   return (
-    <Dialog {...props}>
-      <DialogContent withClose={false}>
+    <Dialog
+      {...props}
+      onOpenChange={mustChangePassword ? undefined : onOpenChange}
+    >
+      <DialogContent
+        withClose={false}
+        onPointerDownOutside={
+          mustChangePassword ? (e) => e.preventDefault() : undefined
+        }
+        onEscapeKeyDown={
+          mustChangePassword ? (e) => e.preventDefault() : undefined
+        }
+        onInteractOutside={
+          mustChangePassword ? (e) => e.preventDefault() : undefined
+        }
+      >
         <VisuallyHidden>
           <DialogHeader>
             <DialogTitle>Change Password</DialogTitle>

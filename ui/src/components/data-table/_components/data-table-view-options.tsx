@@ -251,7 +251,7 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
                   alignOffset={-10}
                   sideOffset={10}
                   side="left"
-                  className="p-1 w-[250px]"
+                  className="p-1 w-[250px] h-[300px]"
                 >
                   <UserTableConfigurationList
                     resource={resource}
@@ -276,6 +276,7 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
         resource={resource}
         tableFilters={table.getState().filters}
         visiblityState={comprehensiveVisibilityState}
+        columnOrder={table.getState().columnOrder}
       />
     </>
   );

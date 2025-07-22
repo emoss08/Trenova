@@ -21,8 +21,9 @@ import { SidebarInset, SidebarProvider } from "./ui/sidebar";
 export function MainLayout() {
   const { isPopout } = usePopoutWindow();
   const user = useUser();
-  const [changePasswordDialogOpen, setChangePasswordDialogOpen] =
-    useState(false);
+  const [changePasswordDialogOpen, setChangePasswordDialogOpen] = useState(
+    user?.mustChangePassword ?? false,
+  );
 
   useAuth();
   useQueryInvalidationListener();
@@ -46,7 +47,12 @@ export function MainLayout() {
         <ChangePasswordDialog
           mustChangePassword={user?.mustChangePassword ?? false}
           open={changePasswordDialogOpen}
-          onOpenChange={setChangePasswordDialogOpen}
+          onOpenChange={(open) => {
+            // Only allow closing if user doesn't have to change password
+            if (!user?.mustChangePassword || !open) {
+              setChangePasswordDialogOpen(open);
+            }
+          }}
         />
       )}
     </>

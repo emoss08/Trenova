@@ -56,6 +56,7 @@ const tableConfigSchema = z.object({
   sort: z.array(sortFieldSchema).optional(),
   filters: z.array(filterFieldSchema).optional(),
   joinOperator: optionalStringSchema,
+  columnOrder: z.array(z.string()).optional(),
 });
 
 export const shareConfigurationSchema = z.object({
@@ -91,6 +92,10 @@ export const tableConfigurationSchema = z.object({
   shares: z.array(shareConfigurationSchema).nullish(),
 });
 
+export const copyTableConfigurationSchema = z.object({
+  configID: z.string(),
+});
+
 export type ShareConfigurationSchema = z.infer<typeof shareConfigurationSchema>;
 export type TableConfigurationSchema = z.infer<typeof tableConfigurationSchema>;
 export type FilterStateSchema = z.infer<typeof FilterStateSchema>;
@@ -103,3 +108,6 @@ export type SortDirection = z.infer<typeof SortDirectionSchema>;
 export type FilterOperator = z.infer<typeof FilterOperatorSchema>;
 export type FieldFilter = z.infer<typeof filterFieldSchema>;
 export type SortField = z.infer<typeof sortFieldSchema>;
+export type CopyTableConfigurationSchema = z.infer<
+  typeof copyTableConfigurationSchema
+>;
