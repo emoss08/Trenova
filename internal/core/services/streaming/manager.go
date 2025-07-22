@@ -213,10 +213,6 @@ func (sm *StreamManager) ensureStreamRunning() {
 	sm.ctx, sm.cancel = context.WithCancel(context.Background())
 }
 
-
-
-
-
 // sendEventToClientAsync sends an event to a client asynchronously via queue
 func (sm *StreamManager) sendEventToClientAsync(client *Client, eventType string, data any) {
 	// Check if client is closed
@@ -259,7 +255,6 @@ func (sm *StreamManager) sendEventDirectly(client *Client, eventType string, dat
 	_, _ = client.Writer.WriteString(message)
 }
 
-
 // addClient adds a client to the stream manager
 func (sm *StreamManager) addClient(client *Client) {
 	sm.mu.Lock()
@@ -296,7 +291,6 @@ func (sm *StreamManager) getClientCount() int {
 	defer sm.mu.RUnlock()
 	return len(sm.clients)
 }
-
 
 // broadcastDataUpdate immediately broadcasts a data update to all connected clients
 func (sm *StreamManager) broadcastDataUpdate(data any) {

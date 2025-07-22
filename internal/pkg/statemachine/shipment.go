@@ -34,7 +34,7 @@ var validShipmentTransitions = map[shipment.Status]map[TransitionEvent]shipment.
 	},
 	shipment.StatusPartiallyAssigned: {
 		EventShipmentAssigned:  shipment.StatusAssigned,
-		EventShipmentInTransit: shipment.StatusInTransit, // Can go to InTransit if remaining moves start
+		EventShipmentInTransit: shipment.StatusInTransit, // * Can go to InTransit if remaining moves start
 		EventShipmentCanceled:  shipment.StatusCanceled,
 	},
 	shipment.StatusAssigned: {

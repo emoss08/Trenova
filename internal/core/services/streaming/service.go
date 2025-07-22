@@ -154,11 +154,12 @@ func (s *Service) GetActiveStreams(streamKey string) int {
 	if streamMgr, exists := s.streams[streamKey]; exists {
 		return streamMgr.getClientCount()
 	}
+
 	return 0
 }
 
 // BroadcastToStream immediately broadcasts data to all clients of a specific stream
-func (s *Service) BroadcastToStream(streamKey string, orgID, buID string, data any) error {
+func (s *Service) BroadcastToStream(streamKey, orgID, buID string, data any) error {
 	log := s.l.With().
 		Str("operation", "BroadcastToStream").
 		Logger()
