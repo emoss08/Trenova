@@ -20,6 +20,7 @@ import { type ColumnDef } from "@tanstack/react-table";
 export function getColumns(): ColumnDef<ShipmentSchema>[] {
   return [
     {
+      id: "status",
       accessorKey: "status",
       header: "Status",
       cell: ({ row }) => {
@@ -36,6 +37,7 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
       },
     },
     {
+      id: "proNumber",
       accessorKey: "proNumber",
       header: "Pro Number",
       cell: ({ row }) => {
@@ -51,6 +53,7 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
       },
     },
     {
+      id: "customer",
       accessorKey: "customer",
       header: "Customer",
       cell: ({ row }) => {

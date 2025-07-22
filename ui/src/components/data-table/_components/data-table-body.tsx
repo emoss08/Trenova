@@ -5,9 +5,14 @@ import { Switch } from "@/components/ui/switch";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { DataTableBodyProps } from "@/types/data-table";
+import {
+  SortableContext,
+  horizontalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import { faPlay } from "@fortawesome/pro-solid-svg-icons";
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
 import React from "react";
+import { DragAlongCell } from "./data-table-draggable";
 
 function LiveModeTableRow({
   columns,
@@ -62,12 +67,31 @@ function DataTableRow<TData>({
   // but we need it for the memo comparison
   // @ts-expect-error - This is a temporary solution to avoid the memo comparison
   columnVisibility,
+  enableDragging = false,
 }: {
   row: Row<TData>;
   selected?: boolean;
   columnVisibility: Record<string, boolean>;
   table: Table<TData>;
+  enableDragging?: boolean;
 }) {
+  const columnOrder = table.getState().columnOrder;
+
+  // Only log for first row to reduce noise
+  if (row.index === 0) {
+    console.log("[DataTableRow] Column order from table:", columnOrder);
+    console.log(
+      "[DataTableRow] Visible cells order:",
+      row.getVisibleCells().map((c) => c.column.id),
+    );
+    console.log(
+      "[DataTableRow] Should cells be reordered by TanStack?",
+      row
+        .getVisibleCells()
+        .map((c) => c.column.id)
+        .join(",") === columnOrder.join(","),
+    );
+  }
   return (
     <TableRow
       id={row.id}
@@ -85,57 +109,42 @@ function DataTableRow<TData>({
         table.options.meta?.getRowClassName?.(row),
       )}
     >
-      {row.getVisibleCells().map((cell) => {
-        return (
-          <TableCell
-            className="font-table"
-            key={cell.id}
-            role="cell"
-            aria-label={`${cell.column.id} cell`}
-            style={{
-              minWidth: cell.column.getSize(),
-            }}
-          >
-            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-          </TableCell>
-        );
-      })}
+      {enableDragging
+        ? row.getVisibleCells().map((cell) => (
+            <SortableContext
+              key={cell.id}
+              items={columnOrder}
+              strategy={horizontalListSortingStrategy}
+            >
+              <DragAlongCell key={cell.id} cell={cell} />
+            </SortableContext>
+          ))
+        : row.getVisibleCells().map((cell) => (
+            <TableCell
+              className="font-table"
+              key={cell.id}
+              role="cell"
+              aria-label={`${cell.column.id} cell`}
+              style={{
+                minWidth: cell.column.getSize(),
+              }}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </TableCell>
+          ))}
     </TableRow>
   );
 }
 
-const MemoizedRow = React.memo(DataTableRow, (prev, next) => {
-  // Check ID and selection state first (fast checks)
-  if (prev.row.id !== next.row.id || prev.selected !== next.selected) {
-    return false;
-  }
-
-  // Check for column visibility changes
-  const prevKeys = Object.keys(prev.columnVisibility);
-  const nextKeys = Object.keys(next.columnVisibility);
-
-  if (prevKeys.length !== nextKeys.length) {
-    return false;
-  }
-
-  for (const key of prevKeys) {
-    if (prev.columnVisibility[key] !== next.columnVisibility[key]) {
-      return false;
-    }
-  }
-
-  const prevOriginal = prev.row.original as Record<string, any>;
-  const nextOriginal = next.row.original as Record<string, any>;
-
-  // Compare updatedAt timestamps for data changes
-  return prevOriginal.updatedAt === nextOriginal.updatedAt;
-}) as typeof DataTableRow;
+// Temporarily disable memoization to debug column ordering issues
+const MemoizedRow = DataTableRow;
 
 export function DataTableBody<TData extends Record<string, any>>({
   table,
   columns,
   liveMode,
-}: DataTableBodyProps<TData>) {
+  enableDragging = false,
+}: DataTableBodyProps<TData> & { enableDragging?: boolean }) {
   return (
     <TableBody id="content" tabIndex={-1}>
       {liveMode?.enabled && (
@@ -150,6 +159,7 @@ export function DataTableBody<TData extends Record<string, any>>({
               selected={row.getIsSelected()}
               columnVisibility={table.getState().columnVisibility}
               table={table}
+              enableDragging={enableDragging}
             />
           );
         })
