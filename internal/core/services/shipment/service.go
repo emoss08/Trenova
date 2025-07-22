@@ -763,9 +763,7 @@ func (s *Service) CalculateShipmentTotals(
 
 // LiveStream provides real-time streaming of shipment changes via CDC
 func (s *Service) LiveStream(c *fiber.Ctx) error {
-	// CDC-based streaming only - no polling
-	// The CDC handler will broadcast changes via BroadcastToStream when database changes occur
 	s.l.Info().Msg("Starting CDC-based live stream for shipments")
-	
+
 	return s.ss.StreamData(c, "shipments")
 }
