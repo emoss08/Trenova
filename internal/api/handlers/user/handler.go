@@ -227,8 +227,8 @@ func (h *Handler) changePassword(c *fiber.Ctx) error {
 		return h.eh.HandleError(c, err)
 	}
 
-	var req repositories.ChangePasswordRequest
-	if err = c.BodyParser(&req); err != nil {
+	req := new(repositories.ChangePasswordRequest)
+	if err = c.BodyParser(req); err != nil {
 		return h.eh.HandleError(c, err)
 	}
 

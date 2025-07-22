@@ -43,6 +43,9 @@ type Service struct {
 	es   services.EmailService
 }
 
+// NewService creates a new user service
+//
+//nolint:gocritic // params are dependency injected
 func NewService(p ServiceParams) *Service {
 	log := p.Logger.With().
 		Str("service", "user").
@@ -308,7 +311,7 @@ func (s *Service) Update(
 
 func (s *Service) ChangePassword(
 	ctx context.Context,
-	req repositories.ChangePasswordRequest,
+	req *repositories.ChangePasswordRequest,
 ) (*user.User, error) {
 	log := s.l.With().
 		Str("operation", "ChangePassword").

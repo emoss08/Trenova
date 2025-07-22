@@ -172,7 +172,7 @@ func (ur *userRepository) FindByEmail(ctx context.Context, email string) (*user.
 
 func (ur *userRepository) ChangePassword(
 	ctx context.Context,
-	req repositories.ChangePasswordRequest,
+	req *repositories.ChangePasswordRequest,
 ) (*user.User, error) {
 	log := ur.l.With().
 		Str("operation", "ChangePassword").
@@ -198,7 +198,6 @@ func (ur *userRepository) ChangePassword(
 
 		return nil
 	})
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to change password")
 		return nil, err
@@ -378,7 +377,6 @@ func (ur *userRepository) Create(ctx context.Context, u *user.User) (*user.User,
 
 		return nil
 	})
-
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -681,10 +679,9 @@ func (ur *userRepository) SwitchOrganization(
 		Str("newOrgID", newOrgID.String()).
 		Logger()
 
-	var updatedUser *user.User
+	updatedUser := new(user.User)
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// * First, verify the user exists and has access to the organization
 		u := new(user.User)
 		if err = tx.NewSelect().
 			Model(u).
@@ -701,7 +698,6 @@ func (ur *userRepository) SwitchOrganization(
 			return eris.Wrap(err, "failed to get user")
 		}
 
-		// * Verify the user has access to the new organization
 		hasAccess := false
 		for _, org := range u.Organizations {
 			if org.ID == newOrgID {
@@ -718,7 +714,6 @@ func (ur *userRepository) SwitchOrganization(
 			)
 		}
 
-		// * Update the user's current organization
 		result, uErr := tx.NewUpdate().
 			Model((*user.User)(nil)).
 			Set("current_organization_id = ?", newOrgID).
@@ -731,7 +726,6 @@ func (ur *userRepository) SwitchOrganization(
 			return eris.Wrap(uErr, "failed to update user organization")
 		}
 
-		// * Check if the update was successful
 		rowsAffected, raErr := result.RowsAffected()
 		if raErr != nil {
 			return eris.Wrap(raErr, "failed to get rows affected")
@@ -745,7 +739,6 @@ func (ur *userRepository) SwitchOrganization(
 			)
 		}
 
-		// * Get the updated user with the new organization information
 		updatedUser = new(user.User)
 		if err = tx.NewSelect().
 			Model(updatedUser).
@@ -758,15 +751,10 @@ func (ur *userRepository) SwitchOrganization(
 
 		return nil
 	})
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to switch organization")
 		return nil, err
 	}
-
-	log.Info().
-		Str("previousOrgID", updatedUser.CurrentOrganizationID.String()).
-		Msg("successfully switched organization")
 
 	return updatedUser, nil
 }

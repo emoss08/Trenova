@@ -43,5 +43,5 @@ type UserRepository interface {
 	Create(ctx context.Context, u *user.User) (*user.User, error)
 	Update(ctx context.Context, u *user.User) (*user.User, error)
 	SwitchOrganization(ctx context.Context, userID, newOrgID pulid.ID) (*user.User, error)
-	ChangePassword(ctx context.Context, req ChangePasswordRequest) (*user.User, error)
+	ChangePassword(ctx context.Context, req *ChangePasswordRequest) (*user.User, error)
 }
