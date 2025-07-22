@@ -140,6 +140,46 @@ func (s *Service) SendJobCompletionNotification(
 	return s.SendNotification(ctx, notifReq)
 }
 
+func (s *Service) SendConfigurationCopiedNotification(
+	ctx context.Context,
+	req *services.ConfigurationCopiedNotificationRequest,
+) error {
+	s.l.Info().
+		Str("user_id", req.UserID.String()).
+		Str("organization_id", req.OrganizationID.String()).
+		Str("business_unit_id", req.BusinessUnitID.String()).
+		Str("config_id", req.ConfigID.String()).
+		Str("config_name", req.ConfigName).
+		Str("config_creator", req.ConfigCreator).
+		Str("config_copied_by", req.ConfigCopiedBy).
+		Msg("sending configuration copied notification")
+
+	notifReq := &services.SendNotificationRequest{
+		EventType: notification.EventConfigurationCopied,
+		Priority:  notification.PriorityLow,
+		Targeting: notification.Targeting{
+			Channel:        notification.ChannelUser,
+			OrganizationID: req.OrganizationID,
+			BusinessUnitID: &req.BusinessUnitID,
+			TargetUserID:   &req.UserID,
+		},
+		Title: "Configuration Copied",
+		Message: fmt.Sprintf(
+			"Configuration '%s' has been copied by %s",
+			req.ConfigName,
+			req.ConfigCopiedBy,
+		),
+		Data: map[string]any{
+			"configId":       req.ConfigID.String(),
+			"configName":     req.ConfigName,
+			"configCreator":  req.ConfigCreator,
+			"configCopiedBy": req.ConfigCopiedBy,
+		},
+	}
+
+	return s.SendNotification(ctx, notifReq)
+}
+
 func (s *Service) MarkAsRead(ctx context.Context, req repositories.MarkAsReadRequest) error {
 	s.l.Info().
 		Str("notification_id", req.NotificationID.String()).

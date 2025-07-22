@@ -27,6 +27,14 @@ type TableConfigurationFilters struct {
 	IncludeCreator bool
 }
 
+// CopyTableConfigurationRequest defines a request for copying a table configuration
+type CopyTableConfigurationRequest struct {
+	ConfigID pulid.ID
+	UserID   pulid.ID
+	OrgID    pulid.ID
+	BuID     pulid.ID
+}
+
 // ListUserConfigurationRequest defines a request for listing user configurations
 type ListUserConfigurationRequest struct {
 	Filter   *ports.LimitOffsetQueryOptions `query:"filter"`
@@ -74,6 +82,7 @@ type TableConfigurationRepository interface {
 		resource string,
 		opts *TableConfigurationFilters,
 	) (*tableconfiguration.Configuration, error)
+	Copy(ctx context.Context, req *CopyTableConfigurationRequest) error
 	ShareConfiguration(ctx context.Context, share *tableconfiguration.ConfigurationShare) error
 	RemoveShare(ctx context.Context, configID pulid.ID, sharedWithID pulid.ID) error
 }

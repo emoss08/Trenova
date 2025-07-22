@@ -16,6 +16,11 @@ type NotificationService interface {
 	// SendJobCompletionNotification sends a notification when a job completes
 	SendJobCompletionNotification(ctx context.Context, req *JobCompletionNotificationRequest) error
 
+	SendConfigurationCopiedNotification(
+		ctx context.Context,
+		req *ConfigurationCopiedNotificationRequest,
+	) error
+
 	// MarkAsRead marks a notification as read
 	MarkAsRead(ctx context.Context, req repositories.MarkAsReadRequest) error
 
@@ -62,4 +67,14 @@ type JobCompletionNotificationRequest struct {
 	Data            map[string]any               `json:"data,omitempty"`
 	RelatedEntities []notification.RelatedEntity `json:"relatedEntities,omitempty"`
 	Actions         []notification.Action        `json:"actions,omitempty"`
+}
+
+type ConfigurationCopiedNotificationRequest struct {
+	UserID         pulid.ID `json:"userId"`
+	OrganizationID pulid.ID `json:"organizationId"`
+	BusinessUnitID pulid.ID `json:"businessUnitId"`
+	ConfigID       pulid.ID `json:"configId"`
+	ConfigName     string   `json:"configName"`
+	ConfigCreator  string   `json:"configCreator"`
+	ConfigCopiedBy string   `json:"configCopiedBy"`
 }

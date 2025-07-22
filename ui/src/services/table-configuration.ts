@@ -1,5 +1,8 @@
 import { http } from "@/lib/http-client";
-import type { TableConfigurationSchema } from "@/lib/schemas/table-configuration-schema";
+import type {
+  CopyTableConfigurationSchema,
+  TableConfigurationSchema,
+} from "@/lib/schemas/table-configuration-schema";
 import type { Resource } from "@/types/audit-entry";
 import type { LimitOffsetResponse } from "@/types/server";
 
@@ -57,10 +60,14 @@ export class TableConfigurationAPI {
     return data;
   }
 
-  /**
-   * Delete a table configuration.
-   * @Note: This returns no content.
-   */
+  async copy(payload: CopyTableConfigurationSchema) {
+    const { data } = await http.post<TableConfigurationSchema>(
+      "/table-configurations/copy/",
+      payload,
+    );
+    return data;
+  }
+
   async delete(id: string) {
     await http.delete(`/table-configurations/${id}/`);
   }

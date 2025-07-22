@@ -23,17 +23,21 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Logger       *logger.Logger
-	Repo         repositories.TableConfigurationRepository
-	PermService  services.PermissionService
-	AuditService services.AuditService
+	Logger              *logger.Logger
+	Repo                repositories.TableConfigurationRepository
+	UserRepo            repositories.UserRepository
+	PermService         services.PermissionService
+	AuditService        services.AuditService
+	NotificationService services.NotificationService
 }
 
 type Service struct {
 	l    *zerolog.Logger
 	repo repositories.TableConfigurationRepository
+	ur   repositories.UserRepository
 	ps   services.PermissionService
 	as   services.AuditService
+	ns   services.NotificationService
 }
 
 func NewService(p ServiceParams) *Service {
@@ -46,6 +50,8 @@ func NewService(p ServiceParams) *Service {
 		ps:   p.PermService,
 		as:   p.AuditService,
 		l:    &log,
+		ns:   p.NotificationService,
+		ur:   p.UserRepo,
 	}
 }
 
@@ -195,6 +201,79 @@ func (s *Service) Create(
 	}
 
 	return createdEntity, nil
+}
+
+func (s *Service) Copy(
+	ctx context.Context,
+	req *repositories.CopyTableConfigurationRequest,
+) error {
+	log := s.l.With().
+		Str("operation", "Copy").
+		Str("configID", req.ConfigID.String()).
+		Logger()
+
+	result, err := s.ps.HasPermission(ctx, &services.PermissionCheck{
+		UserID:         req.UserID,
+		Resource:       permission.ResourceTableConfiguration,
+		Action:         permission.ActionRead,
+		BusinessUnitID: req.BuID,
+		OrganizationID: req.OrgID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check copy permission")
+		return err
+	}
+
+	if !result.Allowed {
+		return errors.NewAuthorizationError(
+			"You do not have permission to copy this configuration",
+		)
+	}
+
+	if err = s.repo.Copy(ctx, req); err != nil {
+		log.Error().Err(err).Msg("failed to copy configuration")
+		return err
+	}
+
+	existing, err := s.repo.GetByID(ctx, req.ConfigID, &repositories.TableConfigurationFilters{
+		Base: &ports.FilterQueryOptions{
+			OrgID: req.OrgID,
+			BuID:  req.BuID,
+		},
+		IncludeCreator: true,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get existing configuration")
+		return err
+	}
+
+	copiedBy, err := s.ur.GetByID(ctx, repositories.GetUserByIDOptions{
+		OrgID:  req.OrgID,
+		BuID:   req.BuID,
+		UserID: req.UserID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get copied by user")
+		return err
+	}
+
+	// * We might want to notify the original creator that their configuration has been copied
+	notificationReq := &services.ConfigurationCopiedNotificationRequest{
+		UserID:         existing.UserID,
+		OrganizationID: req.OrgID,
+		BusinessUnitID: req.BuID,
+		ConfigID:       req.ConfigID,
+		ConfigName:     existing.Name,
+		ConfigCreator:  existing.Creator.Name,
+		ConfigCopiedBy: copiedBy.Name,
+	}
+	if err = s.ns.SendConfigurationCopiedNotification(ctx, notificationReq); err != nil {
+		log.Error().Err(err).Msg("failed to send configuration copied notification")
+		// ! we will not return an error here because we want to continue the operation
+		// ! even if the notification fails
+	}
+
+	return nil
 }
 
 func (s *Service) Update(

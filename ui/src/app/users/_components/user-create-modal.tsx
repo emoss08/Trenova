@@ -7,6 +7,7 @@ import { TIMEZONES } from "@/lib/timezone/timezone";
 import { useUser } from "@/stores/user-store";
 import { Status } from "@/types/common";
 import type { TableSheetProps } from "@/types/data-table";
+import { TimeFormat } from "@/types/user";
 import { faInfoCircle, faXmark } from "@fortawesome/pro-regular-svg-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useLocalStorage } from "@uidotdev/usehooks";
@@ -27,13 +28,13 @@ export function CreateUserModal({ open, onOpenChange }: TableSheetProps) {
       mustChangePassword: true,
       timezone: TIMEZONES[0].value,
       isLocked: false,
-      id: undefined,
       thumbnailUrl: undefined,
+      timeFormat: TimeFormat.TimeFormat24Hour,
       profilePicUrl: undefined,
       version: undefined,
+      id: undefined,
       createdAt: undefined,
       updatedAt: undefined,
-      timeFormat: undefined,
       lastLoginAt: undefined,
       roles: [],
       organizations: [],

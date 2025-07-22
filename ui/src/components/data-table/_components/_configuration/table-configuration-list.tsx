@@ -17,7 +17,7 @@ import type { TableConfigurationSchema } from "@/lib/schemas/table-configuration
 import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
 import type { Resource } from "@/types/audit-entry";
-import { faSearch } from "@fortawesome/pro-regular-svg-icons";
+import { faCopy, faSearch } from "@fortawesome/pro-regular-svg-icons";
 import {
   faEllipsis,
   faPencil,
@@ -39,7 +39,7 @@ function TableConfigurationListInner({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-1 p-1 border border-border border-dashed rounded-md">
+    <div className="flex flex-col gap-1 p-1 size-full border border-border border-dashed rounded-md">
       {children}
     </div>
   );
@@ -126,7 +126,7 @@ function TableConfigurationContent({
   publicConfigurations: TableConfigurationSchema[];
 }) {
   return (
-    <ScrollArea className="h-[150px] w-full pt-2">
+    <ScrollArea className="h-[300px] w-full pt-2">
       <div className="flex flex-col gap-0.5">
         {isLoadingUserConfigurations || isLoadingPublicConfigurations ? (
           <div className="flex flex-col gap-1 text-center justify-center items-center p-2">
@@ -187,6 +187,11 @@ function TableConfigurationListItem({
     if (!table) return;
 
     table.setColumnVisibility(config.tableConfig.columnVisibility);
+
+    // * Set column order if available
+    if (config.tableConfig.columnOrder) {
+      table.setColumnOrder(config.tableConfig.columnOrder);
+    }
 
     // * Set the search params to the configuration filters and sort
     setSearchParams({
@@ -309,11 +314,17 @@ function PublicTableConfigurationListItem({
   const { table } = useDataTable();
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [, setSearchParams] = useQueryStates(searchParamsParser);
+  const queryClient = useQueryClient();
 
   const applyConfig = () => {
     if (!table) return;
 
     table.setColumnVisibility(config.tableConfig.columnVisibility);
+
+    // * Set column order if available
+    if (config.tableConfig.columnOrder) {
+      table.setColumnOrder(config.tableConfig.columnOrder);
+    }
 
     // * Set the search params to the configuration filters and sort
     setSearchParams({
@@ -321,6 +332,20 @@ function PublicTableConfigurationListItem({
       sort: JSON.stringify(config.tableConfig.sort) as string,
     });
   };
+
+  const { mutate: copyConfig, isPending: isCopyingConfig } = useMutation({
+    mutationFn: (configID: string) =>
+      api.tableConfigurations.copy({ configID }),
+    onSuccess: () => {
+      toast.success("Configuration copied");
+      queryClient.invalidateQueries({
+        queryKey: queries.tableConfiguration.listUserConfigurations._def,
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
 
   return (
     <>
@@ -361,6 +386,13 @@ function PublicTableConfigurationListItem({
                   startContent={
                     <Icon icon={faTableColumns} className="size-3" />
                   }
+                />
+                <DropdownMenuItem
+                  title="Copy"
+                  description="Copy the configuration to your own"
+                  onClick={() => copyConfig(config.id ?? "")}
+                  disabled={isCopyingConfig}
+                  startContent={<Icon icon={faCopy} className="size-3" />}
                 />
               </DropdownMenuGroup>
             </DropdownMenuContent>

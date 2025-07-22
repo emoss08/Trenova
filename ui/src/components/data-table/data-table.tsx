@@ -243,6 +243,11 @@ export function DataTable<TData extends Record<string, any>>({
       );
     }
 
+    // * Set column order from table configuration
+    if (tableConfig.tableConfig?.columnOrder) {
+      setColumnOrder(tableConfig.tableConfig.columnOrder);
+    }
+
     handleFilterChange({
       globalSearch: "",
       filters: tableConfig.tableConfig.filters || [],
@@ -250,7 +255,7 @@ export function DataTable<TData extends Record<string, any>>({
     });
 
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tableConfig, isTableConfigLoading, isError]);
+  }, [tableConfig, isTableConfigLoading, isError, setColumnOrder]);
 
   // Derive pagination state from URL
   const pagination = useMemo(

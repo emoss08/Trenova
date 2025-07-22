@@ -48,6 +48,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerSecond(3), // 3 writes per second
 	)...)
 
+	api.Post("/copy", rl.WithRateLimit(
+		[]fiber.Handler{h.copy},
+		middleware.PerSecond(3), // 3 writes per second
+	)...)
+
 	api.Post("/share", rl.WithRateLimit(
 		[]fiber.Handler{h.share},
 		middleware.PerSecond(3), // 3 writes per second
@@ -245,6 +250,28 @@ func (h *Handler) delete(c *fiber.Ctx) error {
 		BuID:     reqCtx.BuID,
 	})
 	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
+func (h *Handler) copy(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := new(repositories.CopyTableConfigurationRequest)
+	req.UserID = reqCtx.UserID
+	req.OrgID = reqCtx.OrgID
+	req.BuID = reqCtx.BuID
+
+	if err = c.BodyParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	if err = h.ts.Copy(c.UserContext(), req); err != nil {
 		return h.eh.HandleError(c, err)
 	}
 

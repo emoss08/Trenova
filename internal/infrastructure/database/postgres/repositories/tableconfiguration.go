@@ -117,6 +117,47 @@ func (tcr *tableConfigurationRepository) List(
 	}, nil
 }
 
+func (tcr *tableConfigurationRepository) Copy(
+	ctx context.Context,
+	req *repositories.CopyTableConfigurationRequest,
+) error {
+	log := tcr.l.With().
+		Str("operation", "Copy").
+		Str("configID", req.ConfigID.String()).
+		Str("userID", req.UserID.String()).
+		Str("orgID", req.OrgID.String()).
+		Str("buID", req.BuID.String()).
+		Logger()
+
+	config, err := tcr.GetByID(ctx, req.ConfigID, &repositories.TableConfigurationFilters{
+		Base: &ports.FilterQueryOptions{
+			BuID:  req.BuID,
+			OrgID: req.OrgID,
+		},
+		IncludeCreator: true,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get configuration")
+		return err
+	}
+	newConfig := config
+
+	// ! we need to remove the id and version from the new config
+	newConfig.ID = pulid.Nil
+	newConfig.Version = 0
+
+	newConfig.Name = fmt.Sprintf("%s (Copy)", config.Name)
+	newConfig.Description = fmt.Sprintf("Copy of %s by %s", config.Name, config.Creator.Name)
+	newConfig.UserID = req.UserID
+
+	if _, err = tcr.Create(ctx, newConfig); err != nil {
+		log.Error().Err(err).Msg("failed to create new configuration")
+		return err
+	}
+
+	return nil
+}
+
 func (tcr *tableConfigurationRepository) ListPublicConfigurations(
 	ctx context.Context,
 	opts *repositories.TableConfigurationFilters,
