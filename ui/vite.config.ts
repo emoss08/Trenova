@@ -93,17 +93,13 @@ const standardFontsDir = normalizePath(
   ),
 );
 
-const ReactCompilerConfig = {
-  /* ... */
-};
+// const ReactCompilerConfig = {
+//   /* ... */
+// };
 
 export default defineConfig({
   plugins: [
-    react({
-      babel: {
-        plugins: [["babel-plugin-react-compiler", ReactCompilerConfig]],
-      },
-    }),
+    react(),
     tailwindcss(),
     nodeResolve() as PluginOption,
     VitePWA({

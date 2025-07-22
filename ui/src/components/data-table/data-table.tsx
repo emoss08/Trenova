@@ -31,6 +31,18 @@ import type {
 } from "@/types/enhanced-data-table";
 import { Action } from "@/types/roles-permissions";
 import type { API_ENDPOINTS } from "@/types/server";
+import {
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  KeyboardSensor,
+  MouseSensor,
+  TouchSensor,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
+import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
+import { arrayMove } from "@dnd-kit/sortable";
 import { useQuery } from "@tanstack/react-query";
 import {
   getCoreRowModel,
@@ -53,7 +65,7 @@ import { toast } from "sonner";
 import { DataTablePermissionDeniedSkeleton } from "../ui/permission-skeletons";
 import { Table } from "../ui/table";
 import { DataTableBody } from "./_components/data-table-body";
-import { DataTableHeader } from "./_components/data-table-header";
+import { DataTableHeaderEnhanced } from "./_components/data-table-header-enhanced";
 import { DataTableOptions } from "./_components/data-table-options";
 import { PaginationInner } from "./_components/data-table-pagination";
 import { EnhancedDataTableFilters } from "./_components/enhanced-data-table-filters";
@@ -113,6 +125,34 @@ export function DataTable<TData extends Record<string, any>>({
   const [rowSelection, setRowSelection] = useState<RowSelectionState>(
     entityId ? { [entityId]: true } : {},
   );
+
+  // Log column IDs for debugging
+  useEffect(() => {
+    console.log(
+      "[DataTable] Column IDs:",
+      columns.map((c) => c.id),
+    );
+  }, [columns]);
+
+  // Initialize column order with column IDs
+  const defaultColumnOrder = useMemo(
+    () => columns.map((c) => c.id!).filter(Boolean),
+    [columns],
+  );
+  const [columnOrder, setColumnOrder] = useLocalStorage<string[]>(
+    `trenova-${resource.toLowerCase()}-column-order`,
+    defaultColumnOrder,
+  );
+
+  // Debug column order
+  useEffect(() => {
+    console.log("[DataTable] Column order:", columnOrder);
+    console.log(
+      "[DataTable] Available columns:",
+      columns.map((c) => ({ id: c.id, header: c.header })),
+    );
+  }, [columnOrder, columns]);
+
   const { can } = usePermissions();
   const [columnVisibility, setColumnVisibility] =
     useLocalStorage<VisibilityState>(
@@ -272,9 +312,14 @@ export function DataTable<TData extends Record<string, any>>({
       pagination,
       rowSelection,
       columnVisibility,
+      columnOrder,
       filters: filterState,
     },
     onColumnVisibilityChange: setColumnVisibility,
+    onColumnOrderChange: (newOrder) => {
+      console.log("[Table] onColumnOrderChange called with:", newOrder);
+      setColumnOrder(newOrder);
+    },
     enableMultiRowSelection: false,
     columnResizeMode: "onChange",
     manualPagination: true,
@@ -384,122 +429,156 @@ export function DataTable<TData extends Record<string, any>>({
 
   const isCreateModalOpen = Boolean(modalType === "create");
 
-  return (
-    <DataTableProvider
-      table={table}
-      columns={columns}
-      isLoading={dataQuery.isFetching || dataQuery.isLoading}
-      pagination={pagination}
-      rowSelection={rowSelection}
-      columnVisibility={columnVisibility}
-    >
-      {can(resource, Action.Read) ? (
-        <>
-          {includeOptions && (
-            <DataTableOptions>
-              <div className="flex flex-col w-full">
-                <div className="flex justify-between items-center">
-                  {(config.showFilterUI || config.showSortUI) && (
-                    <div className="flex flex-col lg:flex-row gap-2">
-                      <EnhancedDataTableSearch
-                        filterState={filterState}
-                        onFilterChange={handleFilterChange}
-                        placeholder={`Search ${name.toLowerCase()}...`}
-                      />
-                      {config.showFilterUI && (
-                        <div className="flex-1">
-                          <EnhancedDataTableFilters
-                            columns={columns}
-                            filterState={filterState}
-                            onFilterChange={handleFilterChange}
-                            config={config}
-                          />
-                        </div>
-                      )}
-                      {config.showSortUI && (
-                        <div className="w-full lg:w-auto">
-                          <EnhancedDataTableSort
-                            columns={columns}
-                            sortState={filterState.sort}
-                            onSortChange={(newSort) => {
-                              const newFilterState = {
-                                ...filterState,
-                                sort: newSort,
-                              };
-                              handleFilterChange(newFilterState);
-                            }}
-                            config={config}
-                          />
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <Suspense fallback={<div>Loading...</div>}>
-                    <DataTableActions
-                      name={name}
-                      resource={resource}
-                      exportModelName={exportModelName}
-                      extraActions={extraActions}
-                      handleCreateClick={handleCreateClick}
-                      liveModeConfig={liveMode}
-                      liveModeEnabled={liveModeEnabled}
-                      onLiveModeToggle={setLiveModeEnabled}
-                    />
-                  </Suspense>
-                </div>
-              </div>
-            </DataTableOptions>
-          )}
-          {liveMode && !autoRefreshEnabled && (
-            <LiveModeBanner
-              show={liveData.showNewItemsBanner}
-              newItemsCount={liveData.newItemsCount}
-              connected={liveData.connected}
-              onRefresh={liveData.refreshData}
-              onDismiss={liveData.dismissBanner}
-            />
-          )}
-          <Table>
-            {includeHeader && <DataTableHeader table={table} />}
-            <DataTableBody
-              table={table}
-              columns={columns}
-              liveMode={
-                liveMode && {
-                  enabled: liveModeEnabled,
-                  connected: liveData.connected,
-                  showToggle: liveMode.showToggle,
-                  onToggle: setLiveModeEnabled,
-                  autoRefresh: autoRefreshEnabled,
-                  onAutoRefreshToggle: setAutoRefreshEnabled,
-                }
-              }
-            />
-          </Table>
+  // DnD sensors
+  const sensors = useSensors(
+    useSensor(MouseSensor, {}),
+    useSensor(TouchSensor, {}),
+    useSensor(KeyboardSensor, {}),
+  );
 
-          <PaginationInner table={table} />
-          {TableModal && isCreateModalOpen && (
-            <TableModal
-              open={isCreateModalOpen}
-              onOpenChange={handleCreateModalClose}
-            />
-          )}
-          {TableEditModal && (
-            <TableEditModal
-              isLoading={dataQuery.isFetching || dataQuery.isLoading}
-              currentRecord={selectedRow?.original}
-              error={dataQuery.error}
-              apiEndpoint={apiEndpoint as API_ENDPOINTS}
-              queryKey={queryKey}
-            />
-          )}
-        </>
-      ) : (
-        <DataTablePermissionDeniedSkeleton
-          resource={resource}
-          action={Action.Read}
-        />
-      )}
-    </DataTableProvider>
+  // Handle column reordering
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    console.log("[DragEnd] Active:", active.id, "Over:", over?.id);
+
+    if (active && over && active.id !== over.id) {
+      setColumnOrder((currentOrder) => {
+        console.log("[DragEnd] Current order:", currentOrder);
+        const oldIndex = currentOrder.indexOf(active.id as string);
+        const newIndex = currentOrder.indexOf(over.id as string);
+        const newOrder = arrayMove(currentOrder, oldIndex, newIndex);
+        console.log("[DragEnd] New order:", newOrder);
+        return newOrder;
+      });
+    }
+  }
+
+  return (
+    <DndContext
+      collisionDetection={closestCenter}
+      modifiers={[restrictToHorizontalAxis]}
+      onDragEnd={handleDragEnd}
+      sensors={sensors}
+    >
+      <DataTableProvider
+        table={table}
+        columns={columns}
+        isLoading={dataQuery.isFetching || dataQuery.isLoading}
+        pagination={pagination}
+        rowSelection={rowSelection}
+        columnVisibility={columnVisibility}
+      >
+        {can(resource, Action.Read) ? (
+          <>
+            {includeOptions && (
+              <DataTableOptions>
+                <div className="flex flex-col w-full">
+                  <div className="flex justify-between items-center">
+                    {(config.showFilterUI || config.showSortUI) && (
+                      <div className="flex flex-col lg:flex-row gap-2">
+                        <EnhancedDataTableSearch
+                          filterState={filterState}
+                          onFilterChange={handleFilterChange}
+                          placeholder={`Search ${name.toLowerCase()}...`}
+                        />
+                        {config.showFilterUI && (
+                          <div className="flex-1">
+                            <EnhancedDataTableFilters
+                              columns={columns}
+                              filterState={filterState}
+                              onFilterChange={handleFilterChange}
+                              config={config}
+                            />
+                          </div>
+                        )}
+                        {config.showSortUI && (
+                          <div className="w-full lg:w-auto">
+                            <EnhancedDataTableSort
+                              columns={columns}
+                              sortState={filterState.sort}
+                              onSortChange={(newSort) => {
+                                const newFilterState = {
+                                  ...filterState,
+                                  sort: newSort,
+                                };
+                                handleFilterChange(newFilterState);
+                              }}
+                              config={config}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
+                    <Suspense fallback={<div>Loading...</div>}>
+                      <DataTableActions
+                        name={name}
+                        resource={resource}
+                        exportModelName={exportModelName}
+                        extraActions={extraActions}
+                        handleCreateClick={handleCreateClick}
+                        liveModeConfig={liveMode}
+                        liveModeEnabled={liveModeEnabled}
+                        onLiveModeToggle={setLiveModeEnabled}
+                      />
+                    </Suspense>
+                  </div>
+                </div>
+              </DataTableOptions>
+            )}
+            {liveMode && !autoRefreshEnabled && (
+              <LiveModeBanner
+                show={liveData.showNewItemsBanner}
+                newItemsCount={liveData.newItemsCount}
+                connected={liveData.connected}
+                onRefresh={liveData.refreshData}
+                onDismiss={liveData.dismissBanner}
+              />
+            )}
+            <Table>
+              {includeHeader && (
+                <DataTableHeaderEnhanced table={table} enableDragging={true} />
+              )}
+              <DataTableBody
+                table={table}
+                columns={columns}
+                liveMode={
+                  liveMode && {
+                    enabled: liveModeEnabled,
+                    connected: liveData.connected,
+                    showToggle: liveMode.showToggle,
+                    onToggle: setLiveModeEnabled,
+                    autoRefresh: autoRefreshEnabled,
+                    onAutoRefreshToggle: setAutoRefreshEnabled,
+                  }
+                }
+                enableDragging={true}
+              />
+            </Table>
+
+            <PaginationInner table={table} />
+            {TableModal && isCreateModalOpen && (
+              <TableModal
+                open={isCreateModalOpen}
+                onOpenChange={handleCreateModalClose}
+              />
+            )}
+            {TableEditModal && (
+              <TableEditModal
+                isLoading={dataQuery.isFetching || dataQuery.isLoading}
+                currentRecord={selectedRow?.original}
+                error={dataQuery.error}
+                apiEndpoint={apiEndpoint as API_ENDPOINTS}
+                queryKey={queryKey}
+              />
+            )}
+          </>
+        ) : (
+          <DataTablePermissionDeniedSkeleton
+            resource={resource}
+            action={Action.Read}
+          />
+        )}
+      </DataTableProvider>
+    </DndContext>
   );
 }
