@@ -11,7 +11,9 @@ import {
   useNotificationCleanup,
   useNotificationHistory,
 } from "@/hooks/use-notifications";
+import { useWebNotifications } from "@/hooks/use-web-notifications";
 import { useWebSocketStore } from "@/stores/websocket-store";
+import { faBellOn, faBellRing } from "@fortawesome/pro-duotone-svg-icons";
 import {
   faBell,
   faCheckDouble,
@@ -29,6 +31,8 @@ export function NotificationCenter() {
   const { data: history } = useNotificationHistory({ limit: 50 });
   const { markAsRead, markAllAsRead, dismiss, handleNotificationClick } =
     useNotificationActions();
+  const { isGranted, requestPermission, disableNotifications } =
+    useWebNotifications();
 
   useNotificationCleanup();
 
@@ -50,6 +54,15 @@ export function NotificationCenter() {
     },
     [handleNotificationClick],
   );
+
+  const handlePermissionChange = useCallback(() => {
+    if (isGranted) {
+      console.log("Disabling notifications");
+      disableNotifications();
+    } else {
+      requestPermission();
+    }
+  }, [isGranted, requestPermission, disableNotifications]);
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -79,6 +92,22 @@ export function NotificationCenter() {
         <div className="flex items-center justify-between px-4 py-2">
           <h3 className="font-semibold">Notifications</h3>
           <div className="flex items-center gap-2">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="secondary"
+                  size="icon"
+                  onClick={handlePermissionChange}
+                >
+                  <Icon icon={isGranted ? faBellOn : faBellRing} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isGranted
+                  ? "Disable notifications"
+                  : "Enable notifications to receive notifications"}
+              </TooltipContent>
+            </Tooltip>
             {unreadNotifications.length > 0 && (
               <Tooltip>
                 <TooltipTrigger asChild>
