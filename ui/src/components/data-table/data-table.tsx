@@ -65,7 +65,7 @@ import { toast } from "sonner";
 import { DataTablePermissionDeniedSkeleton } from "../ui/permission-skeletons";
 import { Table } from "../ui/table";
 import { DataTableBody } from "./_components/data-table-body";
-import { DataTableHeaderEnhanced } from "./_components/data-table-header-enhanced";
+import { DataTableHeader } from "./_components/data-table-header";
 import { DataTableOptions } from "./_components/data-table-options";
 import { PaginationInner } from "./_components/data-table-pagination";
 import { EnhancedDataTableFilters } from "./_components/enhanced-data-table-filters";
@@ -126,14 +126,6 @@ export function DataTable<TData extends Record<string, any>>({
     entityId ? { [entityId]: true } : {},
   );
 
-  // Log column IDs for debugging
-  useEffect(() => {
-    console.log(
-      "[DataTable] Column IDs:",
-      columns.map((c) => c.id),
-    );
-  }, [columns]);
-
   // Initialize column order with column IDs
   const defaultColumnOrder = useMemo(
     () => columns.map((c) => c.id!).filter(Boolean),
@@ -143,15 +135,6 @@ export function DataTable<TData extends Record<string, any>>({
     `trenova-${resource.toLowerCase()}-column-order`,
     defaultColumnOrder,
   );
-
-  // Debug column order
-  useEffect(() => {
-    console.log("[DataTable] Column order:", columnOrder);
-    console.log(
-      "[DataTable] Available columns:",
-      columns.map((c) => ({ id: c.id, header: c.header })),
-    );
-  }, [columnOrder, columns]);
 
   const { can } = usePermissions();
   const [columnVisibility, setColumnVisibility] =
@@ -250,18 +233,14 @@ export function DataTable<TData extends Record<string, any>>({
 
     // * Check if there is no table configuration only after the query is done loading
     if (!tableConfig) {
-      console.info("No table configuration found.");
       return;
     }
 
     // * Set column visibility from table configuration
     if (tableConfig.tableConfig?.columnVisibility) {
-      console.log("Setting column visibility from table configuration.");
       setColumnVisibility(
         tableConfig.tableConfig.columnVisibility as VisibilityState,
       );
-    } else {
-      console.log("No column visibility from table configuration.");
     }
 
     handleFilterChange({
@@ -316,10 +295,7 @@ export function DataTable<TData extends Record<string, any>>({
       filters: filterState,
     },
     onColumnVisibilityChange: setColumnVisibility,
-    onColumnOrderChange: (newOrder) => {
-      console.log("[Table] onColumnOrderChange called with:", newOrder);
-      setColumnOrder(newOrder);
-    },
+    onColumnOrderChange: setColumnOrder,
     enableMultiRowSelection: false,
     columnResizeMode: "onChange",
     manualPagination: true,
@@ -439,16 +415,11 @@ export function DataTable<TData extends Record<string, any>>({
   // Handle column reordering
   function handleDragEnd(event: DragEndEvent) {
     const { active, over } = event;
-    console.log("[DragEnd] Active:", active.id, "Over:", over?.id);
-
     if (active && over && active.id !== over.id) {
       setColumnOrder((currentOrder) => {
-        console.log("[DragEnd] Current order:", currentOrder);
         const oldIndex = currentOrder.indexOf(active.id as string);
         const newIndex = currentOrder.indexOf(over.id as string);
-        const newOrder = arrayMove(currentOrder, oldIndex, newIndex);
-        console.log("[DragEnd] New order:", newOrder);
-        return newOrder;
+        return arrayMove(currentOrder, oldIndex, newIndex);
       });
     }
   }
@@ -536,7 +507,7 @@ export function DataTable<TData extends Record<string, any>>({
             )}
             <Table>
               {includeHeader && (
-                <DataTableHeaderEnhanced table={table} enableDragging={true} />
+                <DataTableHeader table={table} enableDragging={true} />
               )}
               <DataTableBody
                 table={table}

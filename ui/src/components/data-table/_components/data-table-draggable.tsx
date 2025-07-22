@@ -38,6 +38,7 @@ export function DraggableTableHeader<TData>({
             ? "descending"
             : "none"
       }
+      className="group"
     >
       <div className="flex items-center gap-1">
         {header.isPlaceholder
@@ -46,7 +47,7 @@ export function DraggableTableHeader<TData>({
         <button
           {...attributes}
           {...listeners}
-          className="cursor-move p-0.5 hover:bg-muted rounded touch-none"
+          className="cursor-move p-0.5 hover:bg-muted rounded touch-none opacity-0 group-hover:opacity-100 transition-opacity"
         >
           <GripVertical className="h-3 w-3 text-muted-foreground" />
         </button>

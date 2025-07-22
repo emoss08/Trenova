@@ -11,7 +11,6 @@ import {
 } from "@dnd-kit/sortable";
 import { faPlay } from "@fortawesome/pro-solid-svg-icons";
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
-import React from "react";
 import { DragAlongCell } from "./data-table-draggable";
 
 function LiveModeTableRow({
@@ -76,22 +75,6 @@ function DataTableRow<TData>({
   enableDragging?: boolean;
 }) {
   const columnOrder = table.getState().columnOrder;
-
-  // Only log for first row to reduce noise
-  if (row.index === 0) {
-    console.log("[DataTableRow] Column order from table:", columnOrder);
-    console.log(
-      "[DataTableRow] Visible cells order:",
-      row.getVisibleCells().map((c) => c.column.id),
-    );
-    console.log(
-      "[DataTableRow] Should cells be reordered by TanStack?",
-      row
-        .getVisibleCells()
-        .map((c) => c.column.id)
-        .join(",") === columnOrder.join(","),
-    );
-  }
   return (
     <TableRow
       id={row.id}
@@ -136,9 +119,6 @@ function DataTableRow<TData>({
   );
 }
 
-// Temporarily disable memoization to debug column ordering issues
-const MemoizedRow = DataTableRow;
-
 export function DataTableBody<TData extends Record<string, any>>({
   table,
   columns,
@@ -153,7 +133,7 @@ export function DataTableBody<TData extends Record<string, any>>({
       {table.getRowModel().rows?.length ? (
         table.getRowModel().rows.map((row) => {
           return (
-            <MemoizedRow
+            <DataTableRow
               key={row.id}
               row={row}
               selected={row.getIsSelected()}
