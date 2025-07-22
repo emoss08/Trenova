@@ -244,7 +244,7 @@ func (r *favoriteRepository) Delete(
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		_, err := tx.NewDelete().
+		_, err = tx.NewDelete().
 			Model((*pagefavorite.PageFavorite)(nil)).
 			WhereGroup(" AND ", func(sq *bun.DeleteQuery) *bun.DeleteQuery {
 				return sq.

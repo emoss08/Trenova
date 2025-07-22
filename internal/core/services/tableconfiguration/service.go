@@ -40,6 +40,9 @@ type Service struct {
 	ns   services.NotificationService
 }
 
+// NewService creates a new table configuration service
+//
+//nolint:gocritic // Dependency injection
 func NewService(p ServiceParams) *Service {
 	log := p.Logger.With().
 		Str("service", "tableconfiguration").

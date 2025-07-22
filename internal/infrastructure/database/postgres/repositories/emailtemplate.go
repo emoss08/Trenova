@@ -261,12 +261,42 @@ func (r *emailTemplateRepository) GetBySlug(
 	return template, nil
 }
 
+func (r *emailTemplateRepository) filterQuery(
+	q *bun.SelectQuery,
+	filter *ports.QueryOptions,
+) *bun.SelectQuery {
+	// Apply filters using query builder
+	qb := querybuilder.NewWithPostgresSearch(
+		q,
+		"et",
+		repositories.EmailTemplateFieldConfig,
+		(*email.Template)(nil),
+	)
+	qb.ApplyTenantFilters(filter.TenantOpts)
+
+	if len(filter.FieldFilters) > 0 {
+		qb.ApplyFilters(filter.FieldFilters)
+	}
+
+	if len(filter.Sort) > 0 {
+		qb.ApplySort(filter.Sort)
+	}
+
+	if filter.Query != "" {
+		qb.ApplyTextSearch(filter.Query, []string{"name", "slug", "description"})
+	}
+
+	q = qb.GetQuery()
+
+	return q.Limit(filter.Limit).Offset(filter.Offset)
+}
+
 // List retrieves a list of email templates with pagination
 func (r *emailTemplateRepository) List(
 	ctx context.Context,
 	filter *ports.QueryOptions,
 ) (*ports.ListResult[*email.Template], error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_template_repository").
@@ -285,30 +315,7 @@ func (r *emailTemplateRepository) List(
 
 	q := dba.NewSelect().Model(&templates)
 
-	// Apply filters using query builder
-	qb := querybuilder.NewWithPostgresSearch(
-		q,
-		"et",
-		repositories.EmailTemplateFieldConfig,
-		(*email.Template)(nil),
-	)
-	qb.ApplyTenantFilters(filter.TenantOpts)
-
-	if filter != nil {
-		qb.ApplyFilters(filter.FieldFilters)
-
-		if len(filter.Sort) > 0 {
-			qb.ApplySort(filter.Sort)
-		}
-
-		if filter.Query != "" {
-			qb.ApplyTextSearch(filter.Query, []string{"name", "slug", "description"})
-		}
-
-		q = qb.GetQuery()
-	}
-
-	q = q.Limit(filter.Limit).Offset(filter.Offset)
+	q = r.filterQuery(q, filter)
 
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
