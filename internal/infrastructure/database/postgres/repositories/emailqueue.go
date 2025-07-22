@@ -16,6 +16,7 @@ import (
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/samber/oops"
+	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
 
@@ -146,7 +147,7 @@ func (r *emailQueueRepository) Update(
 
 // Get retrieves an email queue entry by ID
 func (r *emailQueueRepository) Get(ctx context.Context, id pulid.ID) (*email.Queue, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_queue_repository").
@@ -185,6 +186,40 @@ func (r *emailQueueRepository) Get(ctx context.Context, id pulid.ID) (*email.Que
 	return queue, nil
 }
 
+func (r *emailQueueRepository) filterQuery(
+	q *bun.SelectQuery,
+	filter *ports.QueryOptions,
+) *bun.SelectQuery {
+	// Apply filters using query builder
+	qb := querybuilder.NewWithPostgresSearch(
+		q,
+		"eq",
+		repositories.EmailQueueFieldConfig,
+		(*email.Queue)(nil),
+	)
+
+	qb.ApplyTenantFilters(filter.TenantOpts)
+
+	if len(filter.FieldFilters) > 0 {
+		qb.ApplyFilters(filter.FieldFilters)
+	}
+
+	if filter.Query != "" {
+		qb.ApplyTextSearch(filter.Query, []string{"to", "subject", "error_message"})
+	}
+
+	if len(filter.Sort) > 0 {
+		qb.ApplySort(filter.Sort)
+	}
+
+	q.Relation("Profile").
+		Relation("Template")
+
+	q = qb.GetQuery()
+
+	return q.Limit(filter.Limit).Offset(filter.Offset)
+}
+
 // List retrieves a list of email queue entries with pagination
 func (r *emailQueueRepository) List(
 	ctx context.Context,
@@ -207,34 +242,9 @@ func (r *emailQueueRepository) List(
 
 	queues := make([]*email.Queue, 0)
 
-	q := dba.NewSelect().Model(&queues).
-		Relation("Profile").
-		Relation("Template")
+	q := dba.NewSelect().Model(&queues)
 
-	// Apply filters using query builder
-	qb := querybuilder.NewWithPostgresSearch(
-		q,
-		"eq",
-		repositories.EmailQueueFieldConfig,
-		(*email.Queue)(nil),
-	)
-	qb.ApplyTenantFilters(filter.TenantOpts)
-
-	if filter != nil {
-		qb.ApplyFilters(filter.FieldFilters)
-
-		if len(filter.Sort) > 0 {
-			qb.ApplySort(filter.Sort)
-		}
-
-		if filter.Query != "" {
-			qb.ApplyTextSearch(filter.Query, []string{"to", "subject", "error_message"})
-		}
-
-		q = qb.GetQuery()
-	}
-
-	q = q.Limit(filter.Limit).Offset(filter.Offset)
+	q = r.filterQuery(q, filter)
 
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {

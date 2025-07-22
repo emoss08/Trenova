@@ -13,7 +13,6 @@ import (
 	"go.uber.org/fx"
 )
 
-// TODO(Wolfred): We should add caching to this. Since the hazmat expiration is expected to never change.
 type HazmatExpirationRepositoryParams struct {
 	fx.In
 
