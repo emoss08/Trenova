@@ -9,6 +9,7 @@ import type {
 import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import { toast } from "sonner";
+import { useWebNotifications } from "./use-web-notifications";
 
 export interface UseWebSocketOptions {
   enabled?: boolean;
@@ -23,6 +24,7 @@ export function useWebSocket({
 }: UseWebSocketOptions = {}) {
   const user = useUser();
   const isAuthenticated = useIsAuthenticated();
+  const { showNotification } = useWebNotifications();
   const userOrganization = useQuery({
     ...queries.organization.getOrgById(
       user?.currentOrganizationId ?? "",
@@ -83,6 +85,23 @@ export function useWebSocket({
       switch (message.type) {
         case "notification":
           addNotification(message.data);
+          showNotification({
+            title: message.data.title,
+            options: {
+              body: message.data.message,
+              icon: message.data.icon,
+            },
+            onClick: () => {
+              // * TODO(wolfred): we need to make a master event handler for this rather than hardcoding it here.
+              // We will not send notification for every event type, but we will have a master event handler for all of them.
+              if (
+                message.data.eventType === "job.shipment.duplicate_complete"
+              ) {
+                window.location.href = "/shipments/management/";
+              }
+            },
+          });
+
           break;
         case "entity_update_notification": {
           // Handle entity update notifications
@@ -226,11 +245,14 @@ export function useWebSocket({
 
   // Connect/disconnect based on authentication and enabled state
   useEffect(() => {
-    let shouldConnect = enabled && isAuthenticated && user && org;
-    
+    const shouldConnect = enabled && isAuthenticated && user && org;
+
     if (shouldConnect) {
       connect();
-    } else if (!shouldConnect && webSocketService.getConnectionState().isConnected) {
+    } else if (
+      !shouldConnect &&
+      webSocketService.getConnectionState().isConnected
+    ) {
       console.info("Disconnecting WebSocket", user);
       webSocketService.disconnect();
       subscriptionRef.current = null;
@@ -238,7 +260,16 @@ export function useWebSocket({
       setSubscription(null);
       setConnectionState("disconnected");
     }
-  }, [enabled, isAuthenticated, user, org, connect, setSocket, setSubscription, setConnectionState]);
+  }, [
+    enabled,
+    isAuthenticated,
+    user,
+    org,
+    connect,
+    setSocket,
+    setSubscription,
+    setConnectionState,
+  ]);
 
   // Cleanup on unmount
   useEffect(() => {

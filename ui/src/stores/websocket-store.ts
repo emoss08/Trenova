@@ -170,29 +170,3 @@ export const useWebSocketStore = create<WebSocketState & WebSocketActions>()(
     },
   ),
 );
-
-// Selectors for optimized re-renders
-export const useWebSocketConnection = () =>
-  useWebSocketStore((state) => ({
-    socket: state.socket,
-    isConnected: state.isConnected,
-    connectionState: state.connectionState,
-    reconnectAttempts: state.reconnectAttempts,
-    lastError: state.lastError,
-  }));
-
-export const useNotifications = () =>
-  useWebSocketStore((state) => ({
-    notifications: state.notifications,
-    unreadCount: state.unreadCount,
-  }));
-
-export const useWebSocketActions = () =>
-  useWebSocketStore((state) => ({
-    addNotification: state.addNotification,
-    markAsRead: state.markAsRead,
-    markAllAsRead: state.markAllAsRead,
-    dismissNotification: state.dismissNotification,
-    clearNotifications: state.clearNotifications,
-    removeExpiredNotifications: state.removeExpiredNotifications,
-  }));

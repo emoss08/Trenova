@@ -121,6 +121,7 @@ export class WebSocketService {
   }
 
   private handleMessage(message: WebSocketMessage): void {
+    console.info("Handling message", message);
     switch (message.type) {
       case "notification":
         this.handleNotification(message.data as NotificationMessage);

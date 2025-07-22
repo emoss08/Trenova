@@ -214,8 +214,6 @@ export function DataTable<TData extends Record<string, any>>({
       return;
     }
 
-    console.info("Table configuration loaded", tableConfig);
-
     // * Set column visibility from table configuration
     if (tableConfig.tableConfig?.columnVisibility) {
       console.log("Setting column visibility from table configuration.");
