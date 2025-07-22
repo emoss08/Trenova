@@ -168,10 +168,9 @@ func (nr *notificationRepository) buildUserNotificationsQuery(
 	req *repositories.GetUserNotificationsRequest,
 ) bun.QueryBuilder {
 	q.WhereGroup(" AND", func(sq bun.QueryBuilder) bun.QueryBuilder {
-		return sq.Where("notif.organization_id = ?", req.Filter.TenantOpts.OrgID).
-			WhereOr("notif.channel = ?", notification.ChannelGlobal).
-			WhereOr("notif.channel = ?", notification.ChannelUser).
-			WhereOr("notif.channel = ?", notification.ChannelRole).
+		return sq.
+			Where("notif.organization_id = ?", req.Filter.TenantOpts.OrgID).
+			Where("notif.business_unit_id = ?", req.Filter.TenantOpts.BuID).
 			Where("notif.target_user_id = ?", req.Filter.TenantOpts.UserID)
 	})
 
@@ -194,12 +193,12 @@ func (nr *notificationRepository) GetUserNotifications(
 		Str("operation", "GetUserNotifications").
 		Str("user_id", req.Filter.TenantOpts.UserID.String()).
 		Str("organization_id", req.Filter.TenantOpts.OrgID.String()).
-		Int("limit", req.Filter.Limit).
-		Int("offset", req.Filter.Offset).
 		Bool("unread_only", req.UnreadOnly).
 		Logger()
 
-	dba, err := nr.db.DB(ctx)
+	log.Info().Interface("req", req).Msg("Current request")
+
+	dba, err := nr.db.ReadDB(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection")
 		return nil, eris.Wrap(err, "get database connection")
