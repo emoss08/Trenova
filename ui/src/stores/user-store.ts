@@ -49,6 +49,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({
       user: null,
       isAuthenticated: false,
+      isInitialized: false,
       permissions: new Set<string>(),
     }),
   hasPermission: (resource: string, action: string) => {
