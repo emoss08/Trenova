@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
-	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
+	shipmentrepo "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories/shipment"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	cgValidator "github.com/emoss08/trenova/internal/pkg/validator/consolidationvalidator"
@@ -97,7 +97,7 @@ func TestConsolidationValidator_ValidateShipments(t *testing.T) {
 	// Create a real validation engine factory (not mock)
 	vef := framework.ProvideValidationEngineFactory()
 
-	shipmentRepo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
+	shipmentRepo := shipmentrepo.NewShipmentRepository(shipmentrepo.ShipmentRepositoryParams{
 		Logger: log,
 		DB:     ts.DB,
 	})
@@ -412,7 +412,7 @@ func TestConsolidationValidator_ValidateShipments_DirectCall(t *testing.T) {
 	log := testutils.NewTestLogger(t)
 	vef := framework.ProvideValidationEngineFactory()
 
-	shipmentRepo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
+	shipmentRepo := shipmentrepo.NewShipmentRepository(shipmentrepo.ShipmentRepositoryParams{
 		Logger: log,
 		DB:     ts.DB,
 	})

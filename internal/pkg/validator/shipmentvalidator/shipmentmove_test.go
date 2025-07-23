@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
+	shipmentrepo "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories/shipment"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/internal/pkg/validator/framework"
@@ -86,7 +87,7 @@ func TestMoveValidator(t *testing.T) {
 		ShipmentControlRepository: shipmentControlRepo,
 	})
 
-	shipmentRepo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
+	shipmentRepo := shipmentrepo.NewShipmentRepository(shipmentrepo.ShipmentRepositoryParams{
 		Logger: log,
 		DB:     ts.DB,
 	})

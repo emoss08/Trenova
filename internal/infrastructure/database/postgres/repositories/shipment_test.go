@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/calculator"
 	formulaservice "github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
+	shipmentrepo "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories/shipment"
 	"github.com/emoss08/trenova/internal/pkg/formula"
 	"github.com/emoss08/trenova/internal/pkg/formula/infrastructure"
 	"github.com/emoss08/trenova/internal/pkg/formula/schema"
@@ -1867,7 +1868,7 @@ func setupShipmentRepository(log *logger.Logger) repoports.ShipmentRepository {
 		},
 	)
 
-	return repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
+	return shipmentrepo.NewShipmentRepository(shipmentrepo.ShipmentRepositoryParams{
 		Logger:                      log,
 		DB:                          ts.DB,
 		ProNumberRepo:               proNumberRepo,
