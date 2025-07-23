@@ -146,6 +146,7 @@ func (tcr *tableConfigurationRepository) Copy(
 	newConfig.ID = pulid.Nil
 	newConfig.Version = 0
 
+	newConfig.Visibility = tableconfiguration.VisibilityPrivate
 	newConfig.Name = fmt.Sprintf("%s (Copy)", config.Name)
 	newConfig.Description = fmt.Sprintf("Copy of %s by %s", config.Name, config.Creator.Name)
 	newConfig.UserID = req.UserID
