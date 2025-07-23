@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -16,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
-	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -137,6 +135,7 @@ func (tcr *tableConfigurationRepository) Copy(
 
 	newConfig.Visibility = tableconfiguration.VisibilityPrivate
 	newConfig.Name = fmt.Sprintf("%s (Copy)", config.Name)
+	newConfig.IsDefault = false
 	newConfig.Description = fmt.Sprintf("Copy of %s by %s", config.Name, config.Creator.Name)
 	newConfig.UserID = req.UserID
 
@@ -167,9 +166,10 @@ func (tcr *tableConfigurationRepository) ListPublicConfigurations(
 			return cqb.
 				WhereVisibilityEQ(tableconfiguration.VisibilityPublic).
 				WhereResourceEQ(opts.Resource).
-				WhereUserIDEQ(opts.Base.UserID).
+				WhereUserIDNEQ(opts.Base.UserID).
 				WhereTenant(opts.Base.OrgID, opts.Base.BuID)
 		}).
+		LoadCreator().
 		AllWithCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get public configurations")
@@ -334,7 +334,9 @@ func (tcr *tableConfigurationRepository) Create(
 	}
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		if _, iErr := tx.NewInsert().Model(config).Returning("*").Exec(c); iErr != nil {
+		if _, iErr := tx.NewInsert().Model(config).
+			Returning("*").
+			Exec(c); iErr != nil {
 			log.Error().Err(iErr).Msg("failed to create configuration")
 			return iErr
 		}
@@ -539,28 +541,22 @@ func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(
 		Logger()
 
 	config := new(tableconfiguration.Configuration)
-	q := dba.NewSelect().Model(config).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("tc.resource = ?", resource).
-				Where("tc.user_id = ?", opts.Base.UserID).
-				Where("tc.organization_id = ?", opts.Base.OrgID).
-				Where("tc.business_unit_id = ?", opts.Base.BuID)
-		})
+	q := tableconfiguration.NewConfigurationQuery(dba).
+		Model(config).
+		WhereGroup(" AND ", func(cqb *tableconfiguration.ConfigurationQueryBuilder) *tableconfiguration.ConfigurationQueryBuilder {
+			return cqb.WhereResourceEQ(resource).
+				WhereUserIDEQ(opts.Base.UserID).
+				WhereTenant(opts.Base.OrgID, opts.Base.BuID)
+		}).
+		Query()
 
-	// * scan initially to see if there are any configurations that may not be default
 	err = q.Scan(ctx)
 	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			log.Info().Msg("no default configuration found, getting latest")
 		} else {
 			log.Error().Err(err).Msg("failed to get default or latest configuration")
-			return nil, oops.In("table_configuration_repository").
-				Tags("get_default_or_latest_configuration").
-				With("resource", resource).
-				With("orgID", opts.Base.OrgID).
-				With("buID", opts.Base.BuID).
-				Time(time.Now()).
-				Wrapf(err, "get default or latest configuration")
+			return nil, err
 		}
 	}
 
@@ -577,13 +573,7 @@ func (tcr *tableConfigurationRepository) GetDefaultOrLatestConfiguration(
 			log.Info().Msg("no default configuration found, getting latest")
 		} else {
 			log.Error().Err(err).Msg("failed to get default configuration")
-			return nil, oops.In("table_configuration_repository").
-				Tags("get_default_or_latest_configuration").
-				With("resource", resource).
-				With("orgID", opts.Base.OrgID).
-				With("buID", opts.Base.BuID).
-				Time(time.Now()).
-				Wrapf(err, "get default or latest configuration")
+			return nil, err
 		}
 	}
 
@@ -623,7 +613,6 @@ func (tcr *tableConfigurationRepository) ShareConfiguration(
 			return err
 		}
 
-		// Insert the share
 		_, err = tx.NewInsert().
 			Model(share).
 			Exec(c)
@@ -635,12 +624,7 @@ func (tcr *tableConfigurationRepository) ShareConfiguration(
 		return nil
 	})
 	if err != nil {
-		return oops.In("table_configuration_repository").
-			Tags("share_configuration").
-			With("configID", share.ConfigurationID).
-			With("sharedWithID", share.SharedWithID).
-			Time(time.Now()).
-			Wrap(err)
+		return err
 	}
 
 	return nil

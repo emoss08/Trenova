@@ -749,7 +749,7 @@ func (sr *shipmentRepository) UnCancel(
 	ctx context.Context,
 	req *repositories.UnCancelShipmentRequest,
 ) (*shipment.Shipment, error) {
-	dba, err := sr.db.WriteDB(ctx)
+	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("shipment_repository").
