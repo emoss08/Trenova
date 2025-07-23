@@ -28,7 +28,7 @@ server:
   passLocalsToViews: false
 
 logging:
-  level: debug
+  level: info
   samplingPeriod: 30s
   samplingInterval: 5000
   file:

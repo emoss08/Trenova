@@ -486,6 +486,7 @@ func (s *Service) UnCancel(
 		return nil, err
 	}
 
+	log.Info().Interface("original", original).Msg("original shipment before un-cancel")
 	if original.Status != shipment.StatusCanceled {
 		return nil, errors.NewBusinessError("Shipment is not canceled")
 	}

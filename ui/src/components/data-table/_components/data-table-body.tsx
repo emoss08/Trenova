@@ -12,6 +12,10 @@ import {
 import { faPlay } from "@fortawesome/pro-solid-svg-icons";
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
 import { DragAlongCell } from "./data-table-draggable";
+import {
+  DataTableContextMenu,
+  type ContextMenuAction,
+} from "./data-table-context-menu";
 
 function LiveModeTableRow({
   columns,
@@ -67,15 +71,17 @@ function DataTableRow<TData>({
   // @ts-expect-error - This is a temporary solution to avoid the memo comparison
   columnVisibility,
   enableDragging = false,
+  contextMenuActions,
 }: {
   row: Row<TData>;
   selected?: boolean;
   columnVisibility: Record<string, boolean>;
   table: Table<TData>;
   enableDragging?: boolean;
+  contextMenuActions?: ContextMenuAction<TData>[];
 }) {
   const columnOrder = table.getState().columnOrder;
-  return (
+  const tableRow = (
     <TableRow
       id={row.id}
       tabIndex={0}
@@ -89,7 +95,7 @@ function DataTableRow<TData>({
       }}
       className={cn(
         "-outline-offset-2 rounded-md outline-muted-foreground transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline",
-        table.options.meta?.getRowClassName?.(row),
+        table.options.meta?.getRowClassName?.(row.original),
       )}
     >
       {enableDragging
@@ -117,6 +123,16 @@ function DataTableRow<TData>({
           ))}
     </TableRow>
   );
+
+  if (contextMenuActions && contextMenuActions.length > 0) {
+    return (
+      <DataTableContextMenu row={row} actions={contextMenuActions}>
+        {tableRow}
+      </DataTableContextMenu>
+    );
+  }
+
+  return tableRow;
 }
 
 export function DataTableBody<TData extends Record<string, any>>({
@@ -124,7 +140,11 @@ export function DataTableBody<TData extends Record<string, any>>({
   columns,
   liveMode,
   enableDragging = false,
-}: DataTableBodyProps<TData> & { enableDragging?: boolean }) {
+  contextMenuActions,
+}: DataTableBodyProps<TData> & {
+  enableDragging?: boolean;
+  contextMenuActions?: ContextMenuAction<TData>[];
+}) {
   return (
     <TableBody id="content" tabIndex={-1}>
       {liveMode?.enabled && (
@@ -140,6 +160,7 @@ export function DataTableBody<TData extends Record<string, any>>({
               columnVisibility={table.getState().columnVisibility}
               table={table}
               enableDragging={enableDragging}
+              contextMenuActions={contextMenuActions}
             />
           );
         })

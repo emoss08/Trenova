@@ -3,6 +3,7 @@ import { createCommonColumns } from "@/components/data-table/_components/data-ta
 import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
 import { type LocationCategorySchema } from "@/lib/schemas/location-category-schema";
 import {
+  FacilityType,
   mapToFacilityType,
   mapToLocationCategoryType,
 } from "@/types/location-category";
@@ -34,7 +35,7 @@ export function getColumns(): ColumnDef<LocationCategorySchema>[] {
       cell: ({ row }) => (
         <p>
           {row.original.facilityType
-            ? mapToFacilityType(row.original.facilityType)
+            ? mapToFacilityType(row.original.facilityType as FacilityType)
             : ""}
         </p>
       ),

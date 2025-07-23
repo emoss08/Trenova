@@ -75,7 +75,6 @@ type ExtraAction = {
   key: string;
   // * Label to be displayed
   label: string;
-  // * Icon to be displayed before the label
   icon?: IconDefinition;
   // * Content to be displayed after the label
   endContent?: React.ReactNode;
@@ -83,6 +82,18 @@ type ExtraAction = {
   description?: string;
   onClick: () => void;
 };
+
+export interface ContextMenuAction<TData> {
+  id: string;
+  label: string | ((row: Row<TData>) => string);
+  shortcut?: string;
+  variant?: "default" | "destructive";
+  disabled?: boolean | ((row: Row<TData>) => boolean);
+  hidden?: boolean | ((row: Row<TData>) => boolean);
+  onClick?: (row: Row<TData>) => void; // Optional when subActions exist
+  separator?: "before" | "after";
+  subActions?: ContextMenuAction<TData>[];
+}
 
 type DataTableCreateButtonProps = {
   name: string;
@@ -170,6 +181,7 @@ type DataTableProps<TData extends Record<string, any>> = {
   extraActions?: ExtraAction[];
   getRowClassName?: (row: Row<TData>) => string;
   liveMode?: LiveModeTableConfig;
+  contextMenuActions?: ContextMenuAction<TData>[];
 };
 
 type DataTableBodyProps<TData extends Record<string, any>> = {

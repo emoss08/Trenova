@@ -149,9 +149,6 @@ export function useLiveDataTable({
   const isNewItem = useCallback(
     (itemId: string) => {
       const isNew = newItemIds.has(itemId);
-      if (isNew) {
-        console.log("✨ Item is highlighted:", itemId);
-      }
       return isNew;
     },
     [newItemIds],

@@ -71,7 +71,7 @@ export function TransferOwnershipDialog({
       broadcastQueryInvalidation({
         queryKey: ["shipment", "shipment-list", "stop", "assignment", "user"],
         options: {
-          correlationId: `update-shipment-${Date.now()}`,
+          correlationId: `transfer-shipment-ownership-${Date.now()}`,
         },
         config: {
           predicate: true,

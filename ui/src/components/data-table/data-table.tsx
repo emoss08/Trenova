@@ -119,6 +119,7 @@ export function DataTable<TData extends Record<string, any>>({
   defaultSort = [],
   onFilterChange,
   useEnhancedBackend = false,
+  contextMenuActions,
 }: EnhancedDataTableProps<TData>) {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { page, pageSize, entityId, modalType } = searchParams;
@@ -285,6 +286,21 @@ export function DataTable<TData extends Record<string, any>>({
     onNewData: liveMode?.options?.onNewData,
   });
 
+  // Memoize the getRowClassName function to prevent recursion
+  const memoizedGetRowClassName = useMemo(
+    () => (row: any) => {
+      let className = getRowClassName?.(row) || "";
+
+      // Add new item highlighting
+      if (liveMode && liveData.isNewItem?.(row.id)) {
+        className += " animate-new-item";
+      }
+
+      return className;
+    },
+    [getRowClassName, liveMode, liveData.isNewItem],
+  );
+
   const table = useReactTable({
     data: dataQuery.data?.results || [],
     columns: columns,
@@ -310,16 +326,7 @@ export function DataTable<TData extends Record<string, any>>({
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     meta: {
-      getRowClassName: (row: any) => {
-        let className = getRowClassName?.(row) || "";
-
-        // Add new item highlighting
-        if (liveMode && liveData.isNewItem?.(row.id)) {
-          className += " animate-new-item";
-        }
-
-        return className;
-      },
+      getRowClassName: memoizedGetRowClassName,
     },
   });
 
@@ -527,6 +534,7 @@ export function DataTable<TData extends Record<string, any>>({
                     onAutoRefreshToggle: setAutoRefreshEnabled,
                   }
                 }
+                contextMenuActions={contextMenuActions}
                 enableDragging={true}
               />
             </Table>

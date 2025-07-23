@@ -319,13 +319,7 @@ export function useLiveMode({
     if (!enabled) return;
 
     const handleVisibilityChange = () => {
-      if (document.hidden) {
-        console.log("🌙 Tab hidden, pausing live mode");
-        // Don't disconnect, but note the tab is hidden
-        // The browser will throttle EventSource in background tabs
-      } else {
-        console.log("☀️ Tab visible, resuming live mode");
-        // Check connection health when tab becomes visible
+      if (!document.hidden) {
         updateConnectionQuality();
       }
     };
