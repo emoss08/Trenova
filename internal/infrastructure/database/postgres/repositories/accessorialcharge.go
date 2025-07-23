@@ -96,9 +96,13 @@ func (ac *accessorialChargeRepository) List(
 	ctx context.Context,
 	opts *ports.LimitOffsetQueryOptions,
 ) (*ports.ListResult[*accessorialcharge.AccessorialCharge], error) {
-	dba, err := ac.db.DB(ctx)
+	dba, err := ac.db.ReadDB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("accessorial_charge_repository").
+			With("op", "List").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := ac.l.With().
@@ -115,7 +119,7 @@ func (ac *accessorialChargeRepository) List(
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to scan hazardous materials")
-		return nil, eris.Wrap(err, "scan hazardous materials")
+		return nil, err
 	}
 
 	return &ports.ListResult[*accessorialcharge.AccessorialCharge]{
@@ -138,9 +142,13 @@ func (ac *accessorialChargeRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetAccessorialChargeByIDRequest,
 ) (*accessorialcharge.AccessorialCharge, error) {
-	dba, err := ac.db.DB(ctx)
+	dba, err := ac.db.ReadDB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("accessorial_charge_repository").
+			With("op", "GetByID").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := ac.l.With().
@@ -165,7 +173,7 @@ func (ac *accessorialChargeRepository) GetByID(
 		}
 
 		log.Error().Err(err).Msg("failed to get accessorial charge")
-		return nil, eris.Wrap(err, "get accessorial charge")
+		return nil, err
 	}
 
 	return entity, nil
@@ -185,11 +193,11 @@ func (ac *accessorialChargeRepository) Create(
 	ctx context.Context,
 	acc *accessorialcharge.AccessorialCharge,
 ) (*accessorialcharge.AccessorialCharge, error) {
-	dba, err := ac.db.DB(ctx)
+	dba, err := ac.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("accessorial_charge_repository").
-			With("op", "create").
+			With("op", "Create").
 			Time(time.Now()).
 			Wrapf(err, "get database connection")
 	}
@@ -227,7 +235,11 @@ func (ac *accessorialChargeRepository) Update(
 ) (*accessorialcharge.AccessorialCharge, error) {
 	dba, err := ac.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("accessorial_charge_repository").
+			With("op", "Update").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := ac.l.With().
@@ -274,7 +286,7 @@ func (ac *accessorialChargeRepository) Update(
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update accessorial charge")
-		return nil, eris.Wrap(err, "update accessorial charge")
+		return nil, err
 	}
 
 	return acc, nil

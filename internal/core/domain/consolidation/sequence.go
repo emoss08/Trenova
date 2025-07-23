@@ -14,7 +14,7 @@ import (
 type ConsolidationSequence struct {
 	bun.BaseModel `bun:"table:consolidation_sequences,alias:cs"`
 
-	ID             pulid.ID `json:"id"             bun:",pk,type:VARCHAR(100),notnull"`
+	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 

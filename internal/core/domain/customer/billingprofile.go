@@ -23,7 +23,7 @@ var (
 type BillingProfile struct {
 	bun.BaseModel `bun:"table:customer_billing_profiles,alias:cbr" json:"-"`
 
-	ID                        pulid.ID            `json:"id"                        bun:",pk,type:VARCHAR(100),notnull"`
+	ID                        pulid.ID            `json:"id"                        bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID            pulid.ID            `json:"businessUnitId"            bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID            pulid.ID            `json:"organizationId"            bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 	CustomerID                pulid.ID            `json:"customerId"                bun:"customer_id,pk,notnull,type:VARCHAR(100)"`

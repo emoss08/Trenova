@@ -12,7 +12,7 @@ import (
 type Role struct {
 	bun.BaseModel `bun:"table:roles,alias:r" json:"-"`
 
-	ID          pulid.ID      `json:"id"                 bun:",pk,type:VARCHAR(100)"`
+	ID          pulid.ID      `json:"id"                 bun:"id,pk,type:VARCHAR(100)"`
 	Name        string        `json:"name"               bun:"name,type:VARCHAR(100),notnull"`
 	Description string        `json:"description"        bun:"description,type:TEXT"`
 	RoleType    RoleType      `json:"roleType"           bun:"role_type,type:role_type_enum,notnull"`

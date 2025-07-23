@@ -22,28 +22,28 @@ var (
 type HazardousMaterial struct {
 	bun.BaseModel `bun:"table:hazardous_materials,alias:hm" json:"-"`
 
-	ID                          pulid.ID       `bun:",pk,type:VARCHAR(100)"                                                                json:"id"`
-	BusinessUnitID              pulid.ID       `bun:"business_unit_id,notnull,type:VARCHAR(100),pk"                                        json:"businessUnitId"`
-	OrganizationID              pulid.ID       `bun:"organization_id,notnull,type:VARCHAR(100),pk"                                         json:"organizationId"`
-	Status                      domain.Status  `bun:"status,type:status,default:'Active'"                                                  json:"status"`
-	Code                        string         `bun:"code,notnull,type:VARCHAR(10)"                                                        json:"code"`
-	Name                        string         `bun:"name,notnull,type:VARCHAR(100)"                                                       json:"name"`
-	Description                 string         `bun:"description,type:TEXT,notnull"                                                        json:"description"`
-	Class                       HazardousClass `bun:"class,type:hazardous_class_enum,notnull"                                              json:"class"`
-	UNNumber                    string         `bun:"un_number,type:VARCHAR(4)"                                                            json:"unNumber"`
-	CASNumber                   string         `bun:"cas_number,type:VARCHAR(10)"                                                          json:"casNumber"`
-	PackingGroup                PackingGroup   `bun:"packing_group,type:packing_group_enum,notnull"                                        json:"packingGroup"`
-	ProperShippingName          string         `bun:"proper_shipping_name,type:TEXT"                                                       json:"properShippingName"`
-	HandlingInstructions        string         `bun:"handling_instructions,type:TEXT"                                                      json:"handlingInstructions"`
-	EmergencyContact            string         `bun:"emergency_contact,type:TEXT"                                                          json:"emergencyContact"`
-	EmergencyContactPhoneNumber string         `bun:"emergency_contact_phone_number,type:TEXT"                                             json:"emergencyContactPhoneNumber"`
-	SearchVector                string         `bun:"search_vector,type:TSVECTOR,scanonly"                                                 json:"-"`
-	Rank                        string         `bun:"rank,type:VARCHAR(100),scanonly"                                                      json:"-"`
-	PlacardRequired             bool           `bun:"placard_required,type:BOOLEAN,default:false"                                          json:"placardRequired"`
-	IsReportableQuantity        bool           `bun:"is_reportable_quantity,type:BOOLEAN,default:false"                                    json:"isReportableQuantity"`
-	Version                     int64          `bun:"version,type:BIGINT"                                                                  json:"version"`
-	CreatedAt                   int64          `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
-	UpdatedAt                   int64          `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
+	ID                          pulid.ID       `json:"id "                         bun:"id,pk,type:VARCHAR(100)"`
+	BusinessUnitID              pulid.ID       `json:"businessUnitId"              bun:"business_unit_id,notnull,type:VARCHAR(100),pk"`
+	OrganizationID              pulid.ID       `json:"organizationId"              bun:"organization_id,notnull,type:VARCHAR(100),pk"`
+	Status                      domain.Status  `json:"status"                      bun:"status,type:status,default:'Active'"`
+	Code                        string         `json:"code"                        bun:"code,notnull,type:VARCHAR(10)"`
+	Name                        string         `json:"name"                        bun:"name,notnull,type:VARCHAR(100)"`
+	Description                 string         `json:"description"                 bun:"description,type:TEXT,notnull"`
+	Class                       HazardousClass `json:"class"                       bun:"class,type:hazardous_class_enum,notnull"`
+	UNNumber                    string         `json:"unNumber"                    bun:"un_number,type:VARCHAR(4)"`
+	CASNumber                   string         `json:"casNumber"                   bun:"cas_number,type:VARCHAR(10)"`
+	PackingGroup                PackingGroup   `json:"packingGroup"                bun:"packing_group,type:packing_group_enum,notnull"`
+	ProperShippingName          string         `json:"properShippingName"          bun:"proper_shipping_name,type:TEXT"`
+	HandlingInstructions        string         `json:"handlingInstructions"        bun:"handling_instructions,type:TEXT"`
+	EmergencyContact            string         `json:"emergencyContact"            bun:"emergency_contact,type:TEXT"`
+	EmergencyContactPhoneNumber string         `json:"emergencyContactPhoneNumber" bun:"emergency_contact_phone_number,type:TEXT"`
+	SearchVector                string         `json:"-"                           bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank                        string         `json:"-"                           bun:"rank,type:VARCHAR(100),scanonly"`
+	PlacardRequired             bool           `json:"placardRequired"             bun:"placard_required,type:BOOLEAN,default:false"`
+	IsReportableQuantity        bool           `json:"isReportableQuantity"        bun:"is_reportable_quantity,type:BOOLEAN,default:false"`
+	Version                     int64          `json:"version"                     bun:"version,type:BIGINT"`
+	CreatedAt                   int64          `json:"createdAt"                   bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                   int64          `json:"updatedAt"                   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`

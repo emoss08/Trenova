@@ -17,7 +17,7 @@ var _ bun.BeforeAppendModelHook = (*BusinessUnit)(nil)
 type BusinessUnit struct {
 	bun.BaseModel `bun:"table:business_units,alias:bu" json:"-"`
 
-	ID                   pulid.ID       `json:"id"                   bun:",pk,type:VARCHAR(100)"`
+	ID                   pulid.ID       `json:"id"                   bun:"id,pk,type:VARCHAR(100)"`
 	StateID              pulid.ID       `json:"stateId"              bun:"state_id,type:VARCHAR(100)"`
 	ParentBusinessUnitID *pulid.ID      `json:"parentBusinessUnitId" bun:"parent_business_unit_id,type:VARCHAR(100),nullzero"`
 	Name                 string         `json:"name"                 bun:"name,type:VARCHAR(100),notnull"`

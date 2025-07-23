@@ -12,16 +12,13 @@ import (
 type Grant struct {
 	bun.BaseModel `bun:"table:permission_grants,alias:pg"`
 
-	// Primary Identifiers
-	ID             pulid.ID  `json:"id"                  bun:",pk,type:VARCHAR(100)"`
-	OrganizationID pulid.ID  `json:"organizationId"      bun:"organization_id,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID  `json:"businessUnitId"      bun:"business_unit_id,type:VARCHAR(100),notnull"`
-	UserID         pulid.ID  `json:"userId"              bun:"user_id,type:VARCHAR(100),notnull"`
-	PermissionID   pulid.ID  `json:"permissionId"        bun:"permission_id,type:VARCHAR(100),notnull"`
-	GrantedBy      pulid.ID  `json:"grantedBy"           bun:"granted_by,type:VARCHAR(100),notnull"`
-	RevokedBy      *pulid.ID `json:"revokedBy,omitempty" bun:"revoked_by,type:VARCHAR(100),nullzero"`
-
-	// Core fields
+	ID             pulid.ID                      `json:"id"                       bun:"id,pk,type:VARCHAR(100)"`
+	OrganizationID pulid.ID                      `json:"organizationId"           bun:"organization_id,type:VARCHAR(100),notnull"`
+	BusinessUnitID pulid.ID                      `json:"businessUnitId"           bun:"business_unit_id,type:VARCHAR(100),notnull"`
+	UserID         pulid.ID                      `json:"userId"                   bun:"user_id,type:VARCHAR(100),notnull"`
+	PermissionID   pulid.ID                      `json:"permissionId"             bun:"permission_id,type:VARCHAR(100),notnull"`
+	GrantedBy      pulid.ID                      `json:"grantedBy"                bun:"granted_by,type:VARCHAR(100),notnull"`
+	RevokedBy      *pulid.ID                     `json:"revokedBy,omitempty"      bun:"revoked_by,type:VARCHAR(100),nullzero"`
 	Status         permission.Status             `json:"status"                   bun:"status,type:permission_status_enum,notnull,default:'Active'"`
 	ExpiresAt      *int64                        `json:"expiresAt,omitempty"      bun:"expires_at,nullzero"`
 	RevokedAt      *int64                        `json:"revokedAt,omitempty"      bun:"revoked_at,nullzero"`

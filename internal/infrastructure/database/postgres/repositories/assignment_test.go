@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
+	shipmentrepo "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories/shipment"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/seqgen"
 	"github.com/emoss08/trenova/internal/pkg/seqgen/adapters"
@@ -60,7 +61,7 @@ func TestAssignmentRepository(t *testing.T) {
 		},
 	)
 
-	shipmentRepo := repositories.NewShipmentRepository(repositories.ShipmentRepositoryParams{
+	shipmentRepo := shipmentrepo.NewShipmentRepository(shipmentrepo.ShipmentRepositoryParams{
 		DB:                          ts.DB,
 		ProNumberRepo:               proNumberRepo,
 		ShipmentCommodityRepository: shipmentCommodityRepo,

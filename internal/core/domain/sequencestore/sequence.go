@@ -12,7 +12,7 @@ import (
 type Sequence struct {
 	bun.BaseModel `bun:"table:sequences,alias:seq"`
 
-	ID              pulid.ID     `bun:",pk,type:VARCHAR(100)"`
+	ID              pulid.ID     `bun:"id,pk,type:VARCHAR(100)"`
 	SequenceType    SequenceType `bun:"sequence_type,notnull"`
 	OrganizationID  pulid.ID     `bun:"organization_id,type:VARCHAR(100),notnull"`
 	BusinessUnitID  pulid.ID     `bun:"business_unit_id,type:VARCHAR(100)"`

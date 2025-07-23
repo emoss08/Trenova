@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/samber/oops"
@@ -92,22 +91,26 @@ func (emr *equipmentManufacturerRepository) addOptions(
 // Returns:
 //   - *bun.SelectQuery: The updated query with the necessary filters and pagination.
 func (emr *equipmentManufacturerRepository) filterQuery(
-	q *bun.SelectQuery,
+	b *equipmentmanufacturer.EquipmentManufacturerQueryBuilder,
 	opts repositories.ListEquipmentManufacturerOptions,
-) *bun.SelectQuery {
-	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
-		Query:      q,
-		TableAlias: "em",
-		Filter:     opts.Filter,
-	})
+) *equipmentmanufacturer.EquipmentManufacturerQueryBuilder {
+	b = b.WhereTenant(opts.Filter.TenantOpts.OrgID, opts.Filter.TenantOpts.BuID)
 
-	q = emr.addOptions(q, opts.FilterOptions)
+	if opts.FilterOptions.Status != "" {
+		status, err := domain.StatusFromString(opts.FilterOptions.Status)
+		if err != nil {
+			emr.l.Error().Msg("failed to convert status")
+			return b
+		}
 
-	if opts.Filter.Query != "" {
-		q = q.Where("em.name ILIKE ?", "%"+opts.Filter.Query+"%")
+		b = b.WhereStatusEQ(status)
 	}
 
-	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
+	if opts.Filter.Query != "" {
+		b = b.WhereNameHasPrefix(opts.Filter.Query)
+	}
+
+	return b.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
 
 // List retrieves a list of equipment manufacturers based on the provided options.
@@ -123,9 +126,9 @@ func (emr *equipmentManufacturerRepository) List(
 	ctx context.Context,
 	opts repositories.ListEquipmentManufacturerOptions,
 ) (*ports.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error) {
-	dba, err := emr.db.DB(ctx)
+	dba, err := emr.db.ReadDB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	log := emr.l.With().
@@ -134,12 +137,10 @@ func (emr *equipmentManufacturerRepository) List(
 		Str("userID", opts.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*equipmentmanufacturer.EquipmentManufacturer, 0)
+	b := equipmentmanufacturer.NewEquipmentManufacturerQuery(dba)
+	b = emr.filterQuery(b, opts)
 
-	q := dba.NewSelect().Model(&entities)
-	q = emr.filterQuery(q, opts)
-
-	total, err := q.ScanAndCount(ctx)
+	entities, total, err := b.AllWithCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to scan equipment manufacturers")
 		return nil, err
@@ -164,9 +165,9 @@ func (emr *equipmentManufacturerRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetEquipmentManufacturerByIDOptions,
 ) (*equipmentmanufacturer.EquipmentManufacturer, error) {
-	dba, err := emr.db.DB(ctx)
+	dba, err := emr.db.ReadDB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	log := emr.l.With().
@@ -174,17 +175,12 @@ func (emr *equipmentManufacturerRepository) GetByID(
 		Str("equipManuID", opts.ID.String()).
 		Logger()
 
-	entity := new(equipmentmanufacturer.EquipmentManufacturer)
-
-	query := dba.NewSelect().Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("em.id = ?", opts.ID).
-				Where("em.organization_id = ?", opts.OrgID).
-				Where("em.business_unit_id = ?", opts.BuID)
-		})
-
-	if err = query.Scan(ctx); err != nil {
+	entity, err := equipmentmanufacturer.NewEquipmentManufacturerQuery(dba).
+		WhereGroup(" AND ", func(emqb *equipmentmanufacturer.EquipmentManufacturerQueryBuilder) *equipmentmanufacturer.EquipmentManufacturerQueryBuilder {
+			return emqb.WhereIDEQ(opts.ID).WhereTenant(opts.OrgID, opts.BuID)
+		}).
+		First(ctx)
+	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			return nil, errors.NewNotFoundError(
 				"equipment manufacturer not found within your organization",
