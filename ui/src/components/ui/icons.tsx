@@ -1,4 +1,10 @@
 /**
+ * # Copyright 2023-2025 Eric Moss
+ * # Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * # Full license: https://github.com/emoss08/trenova/blob/main/LICENSE.md
+ */
+
+/**
  * Credits: Acorn1010 - https://gist.github.com/acorn1010/9f4621d3dfc33052ffd84f6c2a06d4d6.
  *
  * Permission was granted by the author to use this code. Please ask for permission before using this code.

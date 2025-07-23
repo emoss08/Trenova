@@ -1,3 +1,9 @@
+/**
+ * # Copyright 2023-2025 Eric Moss
+ * # Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * # Full license: https://github.com/emoss08/trenova/blob/main/LICENSE.md
+ */
+
 import { useShipments } from "@/app/shipment/queries/shipment";
 import { HoverCardTimestamp } from "@/components/data-table/_components/data-table-components";
 import { Button } from "@/components/ui/button";
