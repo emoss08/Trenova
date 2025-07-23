@@ -2,22 +2,16 @@ package repositories
 
 import (
 	"context"
-	"database/sql"
-	"fmt"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/pkg/errors"
+	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories/common"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/postgressearch"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
-	"github.com/rotisserie/eris"
-	"github.com/rs/zerolog"
-	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -35,8 +29,7 @@ type ShipmentTypeRepositoryParams struct {
 // and provides methods to manage shipment types, including CRUD operations,
 // status updates, and retrieval by ID.
 type shipmentTypeRepository struct {
-	db db.Connection
-	l  *zerolog.Logger
+	*common.BaseRepository
 }
 
 // NewShipmentTypeRepository initializes a new shipment type repository with its dependencies.
@@ -52,8 +45,12 @@ func NewShipmentTypeRepository(p ShipmentTypeRepositoryParams) repositories.Ship
 		Logger()
 
 	return &shipmentTypeRepository{
-		db: p.DB,
-		l:  &log,
+		BaseRepository: &common.BaseRepository{
+			DB:         p.DB,
+			Logger:     &log,
+			TableName:  "shipment_types",
+			EntityName: "Shipment Type",
+		},
 	}
 }
 
@@ -62,7 +59,7 @@ func NewShipmentTypeRepository(p ShipmentTypeRepositoryParams) repositories.Ship
 //
 // Parameters:
 //   - q: The base select query.
-//   - opts: LimitOffsetQueryOptions containing filter and pagination details.
+//   - req: ListShipmentTypeRequest containing filter and pagination details.
 //
 // Returns:
 //   - *bun.SelectQuery: The filtered and paginated query.
@@ -79,7 +76,7 @@ func (str *shipmentTypeRepository) filterQuery(
 	if req.Status != "" {
 		status, err := domain.StatusFromString(req.Status)
 		if err != nil {
-			str.l.Error().Err(err).Str("status", req.Status).Msg("invalid status")
+			str.Logger.Error().Err(err).Str("status", req.Status).Msg("invalid status")
 			return q
 		}
 
@@ -110,35 +107,29 @@ func (str *shipmentTypeRepository) List(
 	ctx context.Context,
 	req *repositories.ListShipmentTypeRequest,
 ) (*ports.ListResult[*shipmenttype.ShipmentType], error) {
-	dba, err := str.db.DB(ctx)
+	dba, log, err := str.SetupReadOnly(ctx, "List",
+		"buID", req.Filter.TenantOpts.BuID.String(),
+		"userID", req.Filter.TenantOpts.UserID.String(),
+	)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
-
-	log := str.l.With().
-		Str("operation", "List").
-		Str("buID", req.Filter.TenantOpts.BuID.String()).
-		Str("userID", req.Filter.TenantOpts.UserID.String()).
-		Logger()
 
 	entities := make([]*shipmenttype.ShipmentType, 0)
 
 	q := dba.NewSelect().Model(&entities)
 	q = str.filterQuery(q, req)
 
-	// * Order by status and created at
-	q.Order("st.status ASC", "st.code ASC", "st.created_at DESC")
+	// Order by status and created at
+	q = common.ApplyDefaultListOrdering(q, "st", "st.status ASC", "st.code ASC")
 
-	total, err := q.ScanAndCount(ctx)
+	result, err := common.ExecuteListQuery[*shipmenttype.ShipmentType](ctx, q)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to scan shipment types")
-		return nil, eris.Wrap(err, "scan shipment types")
+		return nil, err
 	}
 
-	return &ports.ListResult[*shipmenttype.ShipmentType]{
-		Items: entities,
-		Total: total,
-	}, nil
+	return result, nil
 }
 
 // GetByID retrieves a shipment type by its unique ID, including optional expanded details.
@@ -154,15 +145,12 @@ func (str *shipmentTypeRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetShipmentTypeByIDOptions,
 ) (*shipmenttype.ShipmentType, error) {
-	dba, err := str.db.DB(ctx)
+	dba, log, err := str.SetupReadOnly(ctx, "GetByID",
+		"shipmentTypeID", opts.ID.String(),
+	)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
-
-	log := str.l.With().
-		Str("operation", "GetByID").
-		Str("shipmentTypeID", opts.ID.String()).
-		Logger()
 
 	entity := new(shipmenttype.ShipmentType)
 
@@ -174,13 +162,8 @@ func (str *shipmentTypeRepository) GetByID(
 		})
 
 	if err = query.Scan(ctx); err != nil {
-		if eris.Is(err, sql.ErrNoRows) {
-			log.Error().Err(err).Msg("failed to get shipment type")
-			return nil, errors.NewNotFoundError("Shipment Type not found within your organization")
-		}
-
 		log.Error().Err(err).Msg("failed to get shipment type")
-		return nil, eris.Wrap(err, "get shipment type")
+		return nil, common.HandleNotFoundError(err, str.EntityName)
 	}
 
 	return entity, nil
@@ -199,19 +182,13 @@ func (str *shipmentTypeRepository) Create(
 	ctx context.Context,
 	st *shipmenttype.ShipmentType,
 ) (*shipmenttype.ShipmentType, error) {
-	dba, err := str.db.DB(ctx)
+	dba, log, err := str.SetupWriteOnly(ctx, "Create",
+		"orgID", st.OrganizationID.String(),
+		"buID", st.BusinessUnitID.String(),
+	)
 	if err != nil {
-		return nil, oops.In("shipment_type_repository").
-			With("op", "create").
-			Time(time.Now()).
-			Wrapf(err, "get database connection")
+		return nil, err
 	}
-
-	log := str.l.With().
-		Str("operation", "Create").
-		Str("orgID", st.OrganizationID.String()).
-		Str("buID", st.BusinessUnitID.String()).
-		Logger()
 
 	if _, err = dba.NewInsert().Model(st).Returning("*").Exec(ctx); err != nil {
 		log.Error().
@@ -237,63 +214,27 @@ func (str *shipmentTypeRepository) Update(
 	ctx context.Context,
 	st *shipmenttype.ShipmentType,
 ) (*shipmenttype.ShipmentType, error) {
-	dba, err := str.db.DB(ctx)
+	// Update needs read-write access for transactions with optimistic locking
+	_, log, err := str.SetupReadWrite(ctx, "Update",
+		"id", st.GetID(),
+		"version", st.Version,
+	)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
-	log := str.l.With().
-		Str("operation", "Update").
-		Str("id", st.GetID()).
-		Int64("version", st.Version).
-		Logger()
+	result, err := common.RunInTransactionWithResult(ctx, str.DB,
+		func(c context.Context, tx bun.Tx) (*shipmenttype.ShipmentType, error) {
+			if err := common.OptimisticUpdateWithAlias(c, tx, st, str.EntityName, "st"); err != nil {
+				return nil, err
+			}
+			return st, nil
+		})
 
-	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		ov := st.Version
-
-		st.Version++
-
-		results, rErr := tx.NewUpdate().
-			Model(st).
-			WherePK().
-			Where("st.version = ?", ov).
-			OmitZero().
-			Returning("*").
-			Exec(c)
-		if rErr != nil {
-			log.Error().
-				Err(rErr).
-				Interface("shipmentType", st).
-				Msg("failed to update shipment type")
-			return eris.Wrap(rErr, "update shipment type")
-		}
-
-		rows, roErr := results.RowsAffected()
-		if roErr != nil {
-			log.Error().
-				Err(roErr).
-				Interface("shipmentType", st).
-				Msg("failed to get rows affected")
-			return eris.Wrap(roErr, "get rows affected")
-		}
-
-		if rows == 0 {
-			return errors.NewValidationError(
-				"version",
-				errors.ErrVersionMismatch,
-				fmt.Sprintf(
-					"Version mismatch. The Shipment Type (%s) has either been updated or deleted since the last request.",
-					st.GetID(),
-				),
-			)
-		}
-
-		return nil
-	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update shipment type")
-		return nil, eris.Wrap(err, "update shipment type")
+		log.Error().Err(err).Interface("shipmentType", st).Msg("failed to update shipment type")
+		return nil, common.WrapDatabaseError(err, "update shipment type")
 	}
 
-	return st, nil
+	return result, nil
 }
