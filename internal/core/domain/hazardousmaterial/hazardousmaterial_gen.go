@@ -59,12 +59,20 @@ var HazardousMaterialQuery = struct {
 	Where struct {
 		IDEQ                                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ                             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                            func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                             func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn                          func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		CodeEQ                               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeNEQ                              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeIn                               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -100,6 +108,8 @@ var HazardousMaterialQuery = struct {
 		DescriptionHasSuffix                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ClassEQ                              func(q *bun.SelectQuery, v HazardousClass) *bun.SelectQuery
 		ClassNEQ                             func(q *bun.SelectQuery, v HazardousClass) *bun.SelectQuery
+		ClassIn                              func(q *bun.SelectQuery, v []HazardousClass) *bun.SelectQuery
+		ClassNotIn                           func(q *bun.SelectQuery, v []HazardousClass) *bun.SelectQuery
 		UNNumberEQ                           func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		UNNumberNEQ                          func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		UNNumberIn                           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -124,6 +134,8 @@ var HazardousMaterialQuery = struct {
 		CASNumberHasSuffix                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		PackingGroupEQ                       func(q *bun.SelectQuery, v PackingGroup) *bun.SelectQuery
 		PackingGroupNEQ                      func(q *bun.SelectQuery, v PackingGroup) *bun.SelectQuery
+		PackingGroupIn                       func(q *bun.SelectQuery, v []PackingGroup) *bun.SelectQuery
+		PackingGroupNotIn                    func(q *bun.SelectQuery, v []PackingGroup) *bun.SelectQuery
 		ProperShippingNameEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProperShippingNameNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProperShippingNameIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -192,8 +204,12 @@ var HazardousMaterialQuery = struct {
 		RankHasSuffix                        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		PlacardRequiredEQ                    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		PlacardRequiredNEQ                   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		PlacardRequiredIn                    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		PlacardRequiredNotIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		IsReportableQuantityEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsReportableQuantityNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsReportableQuantityIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsReportableQuantityNotIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ                            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ                           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn                            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -242,6 +258,11 @@ var HazardousMaterialQuery = struct {
 	FieldConfig  func() map[string]hazardousMaterialFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "hazardous_materials",
@@ -313,12 +334,20 @@ var HazardousMaterialQuery = struct {
 	Where: struct {
 		IDEQ                                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ                             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                            func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                             func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn                          func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		CodeEQ                               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeNEQ                              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeIn                               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -354,6 +383,8 @@ var HazardousMaterialQuery = struct {
 		DescriptionHasSuffix                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ClassEQ                              func(q *bun.SelectQuery, v HazardousClass) *bun.SelectQuery
 		ClassNEQ                             func(q *bun.SelectQuery, v HazardousClass) *bun.SelectQuery
+		ClassIn                              func(q *bun.SelectQuery, v []HazardousClass) *bun.SelectQuery
+		ClassNotIn                           func(q *bun.SelectQuery, v []HazardousClass) *bun.SelectQuery
 		UNNumberEQ                           func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		UNNumberNEQ                          func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		UNNumberIn                           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -378,6 +409,8 @@ var HazardousMaterialQuery = struct {
 		CASNumberHasSuffix                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		PackingGroupEQ                       func(q *bun.SelectQuery, v PackingGroup) *bun.SelectQuery
 		PackingGroupNEQ                      func(q *bun.SelectQuery, v PackingGroup) *bun.SelectQuery
+		PackingGroupIn                       func(q *bun.SelectQuery, v []PackingGroup) *bun.SelectQuery
+		PackingGroupNotIn                    func(q *bun.SelectQuery, v []PackingGroup) *bun.SelectQuery
 		ProperShippingNameEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProperShippingNameNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProperShippingNameIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -446,8 +479,12 @@ var HazardousMaterialQuery = struct {
 		RankHasSuffix                        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		PlacardRequiredEQ                    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		PlacardRequiredNEQ                   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		PlacardRequiredIn                    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		PlacardRequiredNotIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		IsReportableQuantityEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsReportableQuantityNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsReportableQuantityIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsReportableQuantityNotIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ                            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ                           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn                            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -480,11 +517,23 @@ var HazardousMaterialQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hm.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hm.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hm.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hm.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hm.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hm.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hm.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hm.organization_id"), v)
@@ -492,11 +541,23 @@ var HazardousMaterialQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hm.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hm.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hm.organization_id"), bun.In(v))
+		},
 		StatusEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hm.status"), v)
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hm.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hm.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hm.status"), bun.In(v))
 		},
 		CodeEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hm.code"), v)
@@ -603,6 +664,12 @@ var HazardousMaterialQuery = struct {
 		ClassNEQ: func(q *bun.SelectQuery, v HazardousClass) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hm.class"), v)
 		},
+		ClassIn: func(q *bun.SelectQuery, v []HazardousClass) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hm.class"), bun.In(v))
+		},
+		ClassNotIn: func(q *bun.SelectQuery, v []HazardousClass) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hm.class"), bun.In(v))
+		},
 		UNNumberEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hm.un_number"), v)
 		},
@@ -674,6 +741,12 @@ var HazardousMaterialQuery = struct {
 		},
 		PackingGroupNEQ: func(q *bun.SelectQuery, v PackingGroup) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hm.packing_group"), v)
+		},
+		PackingGroupIn: func(q *bun.SelectQuery, v []PackingGroup) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hm.packing_group"), bun.In(v))
+		},
+		PackingGroupNotIn: func(q *bun.SelectQuery, v []PackingGroup) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hm.packing_group"), bun.In(v))
 		},
 		ProperShippingNameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hm.proper_shipping_name"), v)
@@ -879,11 +952,23 @@ var HazardousMaterialQuery = struct {
 		PlacardRequiredNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hm.placard_required"), v)
 		},
+		PlacardRequiredIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hm.placard_required"), bun.In(v))
+		},
+		PlacardRequiredNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hm.placard_required"), bun.In(v))
+		},
 		IsReportableQuantityEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hm.is_reportable_quantity"), v)
 		},
 		IsReportableQuantityNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hm.is_reportable_quantity"), v)
+		},
+		IsReportableQuantityIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hm.is_reportable_quantity"), bun.In(v))
+		},
+		IsReportableQuantityNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hm.is_reportable_quantity"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hm.version"), v)
@@ -1442,6 +1527,14 @@ var HazardousMaterialQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // HazardousMaterialQueryBuilder provides a fluent interface for building queries
@@ -1486,6 +1579,18 @@ func (b *HazardousMaterialQueryBuilder) WhereIDNEQ(v pulid.ID) *HazardousMateria
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WhereIDIn(v []pulid.ID) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WhereIDNotIn(v []pulid.ID) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *HazardousMaterialQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *HazardousMaterialQueryBuilder {
 	b.query = HazardousMaterialQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1495,6 +1600,18 @@ func (b *HazardousMaterialQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *Hazar
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *HazardousMaterialQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *HazardousMaterialQueryBuilder {
 	b.query = HazardousMaterialQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1510,6 +1627,18 @@ func (b *HazardousMaterialQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *Haza
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *HazardousMaterialQueryBuilder) WhereStatusEQ(v domain.Status) *HazardousMaterialQueryBuilder {
 	b.query = HazardousMaterialQuery.Where.StatusEQ(b.query, v)
@@ -1519,6 +1648,18 @@ func (b *HazardousMaterialQueryBuilder) WhereStatusEQ(v domain.Status) *Hazardou
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *HazardousMaterialQueryBuilder) WhereStatusNEQ(v domain.Status) *HazardousMaterialQueryBuilder {
 	b.query = HazardousMaterialQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WhereStatusIn(v []domain.Status) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WhereStatusNotIn(v []domain.Status) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1660,6 +1801,18 @@ func (b *HazardousMaterialQueryBuilder) WhereClassNEQ(v HazardousClass) *Hazardo
 	return b
 }
 
+// WhereClassIn adds a WHERE class IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WhereClassIn(v []HazardousClass) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.ClassIn(b.query, v)
+	return b
+}
+
+// WhereClassNotIn adds a WHERE class NOT IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WhereClassNotIn(v []HazardousClass) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.ClassNotIn(b.query, v)
+	return b
+}
+
 // WhereUNNumberEQ adds a WHERE un_number = ? condition
 func (b *HazardousMaterialQueryBuilder) WhereUNNumberEQ(v string) *HazardousMaterialQueryBuilder {
 	b.query = HazardousMaterialQuery.Where.UNNumberEQ(b.query, v)
@@ -1753,6 +1906,18 @@ func (b *HazardousMaterialQueryBuilder) WherePackingGroupEQ(v PackingGroup) *Haz
 // WherePackingGroupNEQ adds a WHERE packing_group != ? condition
 func (b *HazardousMaterialQueryBuilder) WherePackingGroupNEQ(v PackingGroup) *HazardousMaterialQueryBuilder {
 	b.query = HazardousMaterialQuery.Where.PackingGroupNEQ(b.query, v)
+	return b
+}
+
+// WherePackingGroupIn adds a WHERE packing_group IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WherePackingGroupIn(v []PackingGroup) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.PackingGroupIn(b.query, v)
+	return b
+}
+
+// WherePackingGroupNotIn adds a WHERE packing_group NOT IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WherePackingGroupNotIn(v []PackingGroup) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.PackingGroupNotIn(b.query, v)
 	return b
 }
 
@@ -2020,6 +2185,18 @@ func (b *HazardousMaterialQueryBuilder) WherePlacardRequiredNEQ(v bool) *Hazardo
 	return b
 }
 
+// WherePlacardRequiredIn adds a WHERE placard_required IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WherePlacardRequiredIn(v []bool) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.PlacardRequiredIn(b.query, v)
+	return b
+}
+
+// WherePlacardRequiredNotIn adds a WHERE placard_required NOT IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WherePlacardRequiredNotIn(v []bool) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.PlacardRequiredNotIn(b.query, v)
+	return b
+}
+
 // WhereIsReportableQuantityEQ adds a WHERE is_reportable_quantity = ? condition
 func (b *HazardousMaterialQueryBuilder) WhereIsReportableQuantityEQ(v bool) *HazardousMaterialQueryBuilder {
 	b.query = HazardousMaterialQuery.Where.IsReportableQuantityEQ(b.query, v)
@@ -2029,6 +2206,18 @@ func (b *HazardousMaterialQueryBuilder) WhereIsReportableQuantityEQ(v bool) *Haz
 // WhereIsReportableQuantityNEQ adds a WHERE is_reportable_quantity != ? condition
 func (b *HazardousMaterialQueryBuilder) WhereIsReportableQuantityNEQ(v bool) *HazardousMaterialQueryBuilder {
 	b.query = HazardousMaterialQuery.Where.IsReportableQuantityNEQ(b.query, v)
+	return b
+}
+
+// WhereIsReportableQuantityIn adds a WHERE is_reportable_quantity IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WhereIsReportableQuantityIn(v []bool) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.IsReportableQuantityIn(b.query, v)
+	return b
+}
+
+// WhereIsReportableQuantityNotIn adds a WHERE is_reportable_quantity NOT IN (?) condition
+func (b *HazardousMaterialQueryBuilder) WhereIsReportableQuantityNotIn(v []bool) *HazardousMaterialQueryBuilder {
+	b.query = HazardousMaterialQuery.Where.IsReportableQuantityNotIn(b.query, v)
 	return b
 }
 
@@ -2276,4 +2465,25 @@ func (b *HazardousMaterialQueryBuilder) First(ctx context.Context) (*HazardousMa
 // HazardousMaterialBuild creates a chainable query builder
 func HazardousMaterialBuild(db bun.IDB) *HazardousMaterialQueryBuilder {
 	return NewHazardousMaterialQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *HazardousMaterialQueryBuilder) LoadBusinessUnit() *HazardousMaterialQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *HazardousMaterialQueryBuilder) LoadOrganization() *HazardousMaterialQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for HazardousMaterial
+func (b *HazardousMaterialQueryBuilder) LoadAllRelations() *HazardousMaterialQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
 }

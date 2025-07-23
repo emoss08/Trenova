@@ -45,10 +45,16 @@ var SequenceQuery = struct {
 	Where struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		YearEQ               func(q *bun.SelectQuery, v int16) *bun.SelectQuery
 		YearNEQ              func(q *bun.SelectQuery, v int16) *bun.SelectQuery
 		YearIn               func(q *bun.SelectQuery, v []int16) *bun.SelectQuery
@@ -119,6 +125,11 @@ var SequenceQuery = struct {
 	FieldConfig  func() map[string]sequenceFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "pro_number_sequences",
@@ -164,10 +175,16 @@ var SequenceQuery = struct {
 	Where: struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		YearEQ               func(q *bun.SelectQuery, v int16) *bun.SelectQuery
 		YearNEQ              func(q *bun.SelectQuery, v int16) *bun.SelectQuery
 		YearIn               func(q *bun.SelectQuery, v []int16) *bun.SelectQuery
@@ -224,17 +241,35 @@ var SequenceQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pns.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pns.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pns.id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pns.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pns.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pns.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pns.organization_id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pns.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pns.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pns.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pns.business_unit_id"), bun.In(v))
 		},
 		YearEQ: func(q *bun.SelectQuery, v int16) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pns.year"), v)
@@ -616,6 +651,14 @@ var SequenceQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // SequenceQueryBuilder provides a fluent interface for building queries
@@ -660,6 +703,18 @@ func (b *SequenceQueryBuilder) WhereIDNEQ(v pulid.ID) *SequenceQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *SequenceQueryBuilder) WhereIDIn(v []pulid.ID) *SequenceQueryBuilder {
+	b.query = SequenceQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *SequenceQueryBuilder) WhereIDNotIn(v []pulid.ID) *SequenceQueryBuilder {
+	b.query = SequenceQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *SequenceQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *SequenceQueryBuilder {
 	b.query = SequenceQuery.Where.OrganizationIDEQ(b.query, v)
@@ -672,6 +727,18 @@ func (b *SequenceQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *SequenceQuery
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *SequenceQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *SequenceQueryBuilder {
+	b.query = SequenceQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *SequenceQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *SequenceQueryBuilder {
+	b.query = SequenceQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *SequenceQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *SequenceQueryBuilder {
 	b.query = SequenceQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -681,6 +748,18 @@ func (b *SequenceQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *SequenceQueryB
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *SequenceQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *SequenceQueryBuilder {
 	b.query = SequenceQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *SequenceQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *SequenceQueryBuilder {
+	b.query = SequenceQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *SequenceQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *SequenceQueryBuilder {
+	b.query = SequenceQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1072,4 +1151,25 @@ func (b *SequenceQueryBuilder) First(ctx context.Context) (*Sequence, error) {
 // SequenceBuild creates a chainable query builder
 func SequenceBuild(db bun.IDB) *SequenceQueryBuilder {
 	return NewSequenceQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *SequenceQueryBuilder) LoadBusinessUnit() *SequenceQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *SequenceQueryBuilder) LoadOrganization() *SequenceQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Sequence
+func (b *SequenceQueryBuilder) LoadAllRelations() *SequenceQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
 }

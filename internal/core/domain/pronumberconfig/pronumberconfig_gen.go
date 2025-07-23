@@ -59,137 +59,165 @@ var ProNumberConfigQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		PrefixEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PrefixNotIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PrefixGT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixGTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixLT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixLTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixContains             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixHasPrefix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixHasSuffix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		IncludeYearEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeYearNEQ             func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		YearDigitsEQ               func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		YearDigitsNEQ              func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		YearDigitsIn               func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		YearDigitsNotIn            func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		YearDigitsGT               func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		YearDigitsGTE              func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		YearDigitsLT               func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		YearDigitsLTE              func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		IncludeMonthEQ             func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeMonthNEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		SequenceDigitsEQ           func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceDigitsNEQ          func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceDigitsIn           func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		SequenceDigitsNotIn        func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		SequenceDigitsGT           func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceDigitsGTE          func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceDigitsLT           func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceDigitsLTE          func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		IncludeLocationCodeEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeLocationCodeNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		LocationCodeEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		LocationCodeNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		LocationCodeGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		IncludeRandomDigitsEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeRandomDigitsNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		RandomDigitsCountEQ        func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RandomDigitsCountNEQ       func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RandomDigitsCountIn        func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		RandomDigitsCountNotIn     func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		RandomDigitsCountGT        func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RandomDigitsCountGTE       func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RandomDigitsCountLT        func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RandomDigitsCountLTE       func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		IncludeCheckDigitEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeCheckDigitNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeBusinessUnitCodeEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeBusinessUnitCodeNEQ func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		BusinessUnitCodeEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		BusinessUnitCodeNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		BusinessUnitCodeGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UseSeparatorsEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		UseSeparatorsNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		SeparatorCharEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SeparatorCharNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SeparatorCharGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		IncludeWeekNumberEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeWeekNumberNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeDayEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeDayNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowCustomFormatEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowCustomFormatNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		CustomFormatEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CustomFormatNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CustomFormatGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		IsActiveEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsActiveNEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		PrefixEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixNEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixIn                     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PrefixNotIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PrefixGT                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixGTE                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixLT                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixLTE                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixContains               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixHasPrefix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixHasSuffix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IncludeYearEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeYearNEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeYearIn                func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeYearNotIn             func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		YearDigitsEQ                 func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		YearDigitsNEQ                func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		YearDigitsIn                 func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		YearDigitsNotIn              func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		YearDigitsGT                 func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		YearDigitsGTE                func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		YearDigitsLT                 func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		YearDigitsLTE                func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		IncludeMonthEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeMonthNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeMonthIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeMonthNotIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		SequenceDigitsEQ             func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceDigitsNEQ            func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceDigitsIn             func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		SequenceDigitsNotIn          func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		SequenceDigitsGT             func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceDigitsGTE            func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceDigitsLT             func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceDigitsLTE            func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		IncludeLocationCodeEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeLocationCodeNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeLocationCodeIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeLocationCodeNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		LocationCodeEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		LocationCodeNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		LocationCodeGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IncludeRandomDigitsEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeRandomDigitsNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeRandomDigitsIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeRandomDigitsNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		RandomDigitsCountEQ          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RandomDigitsCountNEQ         func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RandomDigitsCountIn          func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		RandomDigitsCountNotIn       func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		RandomDigitsCountGT          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RandomDigitsCountGTE         func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RandomDigitsCountLT          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RandomDigitsCountLTE         func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		IncludeCheckDigitEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeCheckDigitNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeCheckDigitIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeCheckDigitNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeBusinessUnitCodeEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeBusinessUnitCodeNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeBusinessUnitCodeIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeBusinessUnitCodeNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		BusinessUnitCodeEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		BusinessUnitCodeNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		BusinessUnitCodeGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UseSeparatorsEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		UseSeparatorsNEQ             func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		UseSeparatorsIn              func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		UseSeparatorsNotIn           func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		SeparatorCharEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharNEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SeparatorCharNotIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SeparatorCharGT              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharGTE             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharLT              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharLTE             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharContains        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharHasPrefix       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharHasSuffix       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IncludeWeekNumberEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeWeekNumberNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeWeekNumberIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeWeekNumberNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeDayEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeDayNEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeDayIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeDayNotIn              func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowCustomFormatEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowCustomFormatNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowCustomFormatIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowCustomFormatNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		CustomFormatEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CustomFormatNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CustomFormatGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IsActiveEQ                   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveNEQ                  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveIn                   func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsActiveNotIn                func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -212,6 +240,11 @@ var ProNumberConfigQuery = struct {
 	FieldConfig  func() map[string]proNumberConfigFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "pro_number_configs",
@@ -287,138 +320,166 @@ var ProNumberConfigQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		PrefixEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PrefixNotIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PrefixGT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixGTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixLT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixLTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixContains             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixHasPrefix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PrefixHasSuffix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		IncludeYearEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeYearNEQ             func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		YearDigitsEQ               func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		YearDigitsNEQ              func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		YearDigitsIn               func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		YearDigitsNotIn            func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		YearDigitsGT               func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		YearDigitsGTE              func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		YearDigitsLT               func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		YearDigitsLTE              func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		IncludeMonthEQ             func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeMonthNEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		SequenceDigitsEQ           func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceDigitsNEQ          func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceDigitsIn           func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		SequenceDigitsNotIn        func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		SequenceDigitsGT           func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceDigitsGTE          func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceDigitsLT           func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceDigitsLTE          func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		IncludeLocationCodeEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeLocationCodeNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		LocationCodeEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		LocationCodeNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		LocationCodeGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LocationCodeHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		IncludeRandomDigitsEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeRandomDigitsNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		RandomDigitsCountEQ        func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RandomDigitsCountNEQ       func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RandomDigitsCountIn        func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		RandomDigitsCountNotIn     func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		RandomDigitsCountGT        func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RandomDigitsCountGTE       func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RandomDigitsCountLT        func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RandomDigitsCountLTE       func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		IncludeCheckDigitEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeCheckDigitNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeBusinessUnitCodeEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeBusinessUnitCodeNEQ func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		BusinessUnitCodeEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		BusinessUnitCodeNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		BusinessUnitCodeGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BusinessUnitCodeHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UseSeparatorsEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		UseSeparatorsNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		SeparatorCharEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SeparatorCharNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SeparatorCharGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SeparatorCharHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		IncludeWeekNumberEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeWeekNumberNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeDayEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IncludeDayNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowCustomFormatEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowCustomFormatNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		CustomFormatEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CustomFormatNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CustomFormatGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CustomFormatHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		IsActiveEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsActiveNEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		Tenant                     func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		PrefixEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixNEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixIn                     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PrefixNotIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PrefixGT                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixGTE                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixLT                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixLTE                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixContains               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixHasPrefix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PrefixHasSuffix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IncludeYearEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeYearNEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeYearIn                func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeYearNotIn             func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		YearDigitsEQ                 func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		YearDigitsNEQ                func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		YearDigitsIn                 func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		YearDigitsNotIn              func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		YearDigitsGT                 func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		YearDigitsGTE                func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		YearDigitsLT                 func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		YearDigitsLTE                func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		IncludeMonthEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeMonthNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeMonthIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeMonthNotIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		SequenceDigitsEQ             func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceDigitsNEQ            func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceDigitsIn             func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		SequenceDigitsNotIn          func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		SequenceDigitsGT             func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceDigitsGTE            func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceDigitsLT             func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceDigitsLTE            func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		IncludeLocationCodeEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeLocationCodeNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeLocationCodeIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeLocationCodeNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		LocationCodeEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		LocationCodeNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		LocationCodeGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LocationCodeHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IncludeRandomDigitsEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeRandomDigitsNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeRandomDigitsIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeRandomDigitsNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		RandomDigitsCountEQ          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RandomDigitsCountNEQ         func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RandomDigitsCountIn          func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		RandomDigitsCountNotIn       func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		RandomDigitsCountGT          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RandomDigitsCountGTE         func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RandomDigitsCountLT          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RandomDigitsCountLTE         func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		IncludeCheckDigitEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeCheckDigitNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeCheckDigitIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeCheckDigitNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeBusinessUnitCodeEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeBusinessUnitCodeNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeBusinessUnitCodeIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeBusinessUnitCodeNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		BusinessUnitCodeEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		BusinessUnitCodeNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		BusinessUnitCodeGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BusinessUnitCodeHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UseSeparatorsEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		UseSeparatorsNEQ             func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		UseSeparatorsIn              func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		UseSeparatorsNotIn           func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		SeparatorCharEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharNEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SeparatorCharNotIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SeparatorCharGT              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharGTE             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharLT              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharLTE             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharContains        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharHasPrefix       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SeparatorCharHasSuffix       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IncludeWeekNumberEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeWeekNumberNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeWeekNumberIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeWeekNumberNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeDayEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeDayNEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IncludeDayIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IncludeDayNotIn              func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowCustomFormatEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowCustomFormatNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowCustomFormatIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowCustomFormatNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		CustomFormatEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CustomFormatNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CustomFormatGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CustomFormatHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IsActiveEQ                   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveNEQ                  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveIn                   func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsActiveNotIn                func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		Tenant                       func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.id"), v)
@@ -426,17 +487,35 @@ var ProNumberConfigQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.organization_id"), bun.In(v))
 		},
 		PrefixEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.prefix"), v)
@@ -477,6 +556,12 @@ var ProNumberConfigQuery = struct {
 		IncludeYearNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.include_year"), v)
 		},
+		IncludeYearIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.include_year"), bun.In(v))
+		},
+		IncludeYearNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.include_year"), bun.In(v))
+		},
 		YearDigitsEQ: func(q *bun.SelectQuery, v int) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.year_digits"), v)
 		},
@@ -507,6 +592,12 @@ var ProNumberConfigQuery = struct {
 		IncludeMonthNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.include_month"), v)
 		},
+		IncludeMonthIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.include_month"), bun.In(v))
+		},
+		IncludeMonthNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.include_month"), bun.In(v))
+		},
 		SequenceDigitsEQ: func(q *bun.SelectQuery, v int) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.sequence_digits"), v)
 		},
@@ -536,6 +627,12 @@ var ProNumberConfigQuery = struct {
 		},
 		IncludeLocationCodeNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.include_location_code"), v)
+		},
+		IncludeLocationCodeIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.include_location_code"), bun.In(v))
+		},
+		IncludeLocationCodeNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.include_location_code"), bun.In(v))
 		},
 		LocationCodeEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.location_code"), v)
@@ -576,6 +673,12 @@ var ProNumberConfigQuery = struct {
 		IncludeRandomDigitsNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.include_random_digits"), v)
 		},
+		IncludeRandomDigitsIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.include_random_digits"), bun.In(v))
+		},
+		IncludeRandomDigitsNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.include_random_digits"), bun.In(v))
+		},
 		RandomDigitsCountEQ: func(q *bun.SelectQuery, v int) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.random_digits_count"), v)
 		},
@@ -606,11 +709,23 @@ var ProNumberConfigQuery = struct {
 		IncludeCheckDigitNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.include_check_digit"), v)
 		},
+		IncludeCheckDigitIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.include_check_digit"), bun.In(v))
+		},
+		IncludeCheckDigitNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.include_check_digit"), bun.In(v))
+		},
 		IncludeBusinessUnitCodeEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.include_business_unit_code"), v)
 		},
 		IncludeBusinessUnitCodeNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.include_business_unit_code"), v)
+		},
+		IncludeBusinessUnitCodeIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.include_business_unit_code"), bun.In(v))
+		},
+		IncludeBusinessUnitCodeNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.include_business_unit_code"), bun.In(v))
 		},
 		BusinessUnitCodeEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.business_unit_code"), v)
@@ -651,6 +766,12 @@ var ProNumberConfigQuery = struct {
 		UseSeparatorsNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.use_separators"), v)
 		},
+		UseSeparatorsIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.use_separators"), bun.In(v))
+		},
+		UseSeparatorsNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.use_separators"), bun.In(v))
+		},
 		SeparatorCharEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.separator_char"), v)
 		},
@@ -690,17 +811,35 @@ var ProNumberConfigQuery = struct {
 		IncludeWeekNumberNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.include_week_number"), v)
 		},
+		IncludeWeekNumberIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.include_week_number"), bun.In(v))
+		},
+		IncludeWeekNumberNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.include_week_number"), bun.In(v))
+		},
 		IncludeDayEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.include_day"), v)
 		},
 		IncludeDayNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.include_day"), v)
 		},
+		IncludeDayIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.include_day"), bun.In(v))
+		},
+		IncludeDayNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.include_day"), bun.In(v))
+		},
 		AllowCustomFormatEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.allow_custom_format"), v)
 		},
 		AllowCustomFormatNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.allow_custom_format"), v)
+		},
+		AllowCustomFormatIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.allow_custom_format"), bun.In(v))
+		},
+		AllowCustomFormatNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.allow_custom_format"), bun.In(v))
 		},
 		CustomFormatEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.custom_format"), v)
@@ -740,6 +879,12 @@ var ProNumberConfigQuery = struct {
 		},
 		IsActiveNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pnc.is_active"), v)
+		},
+		IsActiveIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pnc.is_active"), bun.In(v))
+		},
+		IsActiveNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pnc.is_active"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pnc.version"), v)
@@ -1337,6 +1482,14 @@ var ProNumberConfigQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // ProNumberConfigQueryBuilder provides a fluent interface for building queries
@@ -1381,6 +1534,18 @@ func (b *ProNumberConfigQueryBuilder) WhereIDNEQ(v pulid.ID) *ProNumberConfigQue
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIDIn(v []pulid.ID) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIDNotIn(v []pulid.ID) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *ProNumberConfigQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1393,6 +1558,18 @@ func (b *ProNumberConfigQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *ProNum
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *ProNumberConfigQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.OrganizationIDEQ(b.query, v)
@@ -1402,6 +1579,18 @@ func (b *ProNumberConfigQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *ProNumb
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *ProNumberConfigQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1456,6 +1645,18 @@ func (b *ProNumberConfigQueryBuilder) WhereIncludeYearEQ(v bool) *ProNumberConfi
 // WhereIncludeYearNEQ adds a WHERE include_year != ? condition
 func (b *ProNumberConfigQueryBuilder) WhereIncludeYearNEQ(v bool) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.IncludeYearNEQ(b.query, v)
+	return b
+}
+
+// WhereIncludeYearIn adds a WHERE include_year IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeYearIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeYearIn(b.query, v)
+	return b
+}
+
+// WhereIncludeYearNotIn adds a WHERE include_year NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeYearNotIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeYearNotIn(b.query, v)
 	return b
 }
 
@@ -1519,6 +1720,18 @@ func (b *ProNumberConfigQueryBuilder) WhereIncludeMonthNEQ(v bool) *ProNumberCon
 	return b
 }
 
+// WhereIncludeMonthIn adds a WHERE include_month IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeMonthIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeMonthIn(b.query, v)
+	return b
+}
+
+// WhereIncludeMonthNotIn adds a WHERE include_month NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeMonthNotIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeMonthNotIn(b.query, v)
+	return b
+}
+
 // WhereSequenceDigitsEQ adds a WHERE sequence_digits = ? condition
 func (b *ProNumberConfigQueryBuilder) WhereSequenceDigitsEQ(v int) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.SequenceDigitsEQ(b.query, v)
@@ -1579,6 +1792,18 @@ func (b *ProNumberConfigQueryBuilder) WhereIncludeLocationCodeNEQ(v bool) *ProNu
 	return b
 }
 
+// WhereIncludeLocationCodeIn adds a WHERE include_location_code IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeLocationCodeIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeLocationCodeIn(b.query, v)
+	return b
+}
+
+// WhereIncludeLocationCodeNotIn adds a WHERE include_location_code NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeLocationCodeNotIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeLocationCodeNotIn(b.query, v)
+	return b
+}
+
 // WhereLocationCodeEQ adds a WHERE location_code = ? condition
 func (b *ProNumberConfigQueryBuilder) WhereLocationCodeEQ(v string) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.LocationCodeEQ(b.query, v)
@@ -1630,6 +1855,18 @@ func (b *ProNumberConfigQueryBuilder) WhereIncludeRandomDigitsEQ(v bool) *ProNum
 // WhereIncludeRandomDigitsNEQ adds a WHERE include_random_digits != ? condition
 func (b *ProNumberConfigQueryBuilder) WhereIncludeRandomDigitsNEQ(v bool) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.IncludeRandomDigitsNEQ(b.query, v)
+	return b
+}
+
+// WhereIncludeRandomDigitsIn adds a WHERE include_random_digits IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeRandomDigitsIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeRandomDigitsIn(b.query, v)
+	return b
+}
+
+// WhereIncludeRandomDigitsNotIn adds a WHERE include_random_digits NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeRandomDigitsNotIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeRandomDigitsNotIn(b.query, v)
 	return b
 }
 
@@ -1693,6 +1930,18 @@ func (b *ProNumberConfigQueryBuilder) WhereIncludeCheckDigitNEQ(v bool) *ProNumb
 	return b
 }
 
+// WhereIncludeCheckDigitIn adds a WHERE include_check_digit IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeCheckDigitIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeCheckDigitIn(b.query, v)
+	return b
+}
+
+// WhereIncludeCheckDigitNotIn adds a WHERE include_check_digit NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeCheckDigitNotIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeCheckDigitNotIn(b.query, v)
+	return b
+}
+
 // WhereIncludeBusinessUnitCodeEQ adds a WHERE include_business_unit_code = ? condition
 func (b *ProNumberConfigQueryBuilder) WhereIncludeBusinessUnitCodeEQ(v bool) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.IncludeBusinessUnitCodeEQ(b.query, v)
@@ -1702,6 +1951,18 @@ func (b *ProNumberConfigQueryBuilder) WhereIncludeBusinessUnitCodeEQ(v bool) *Pr
 // WhereIncludeBusinessUnitCodeNEQ adds a WHERE include_business_unit_code != ? condition
 func (b *ProNumberConfigQueryBuilder) WhereIncludeBusinessUnitCodeNEQ(v bool) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.IncludeBusinessUnitCodeNEQ(b.query, v)
+	return b
+}
+
+// WhereIncludeBusinessUnitCodeIn adds a WHERE include_business_unit_code IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeBusinessUnitCodeIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeBusinessUnitCodeIn(b.query, v)
+	return b
+}
+
+// WhereIncludeBusinessUnitCodeNotIn adds a WHERE include_business_unit_code NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeBusinessUnitCodeNotIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeBusinessUnitCodeNotIn(b.query, v)
 	return b
 }
 
@@ -1759,6 +2020,18 @@ func (b *ProNumberConfigQueryBuilder) WhereUseSeparatorsNEQ(v bool) *ProNumberCo
 	return b
 }
 
+// WhereUseSeparatorsIn adds a WHERE use_separators IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereUseSeparatorsIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.UseSeparatorsIn(b.query, v)
+	return b
+}
+
+// WhereUseSeparatorsNotIn adds a WHERE use_separators NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereUseSeparatorsNotIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.UseSeparatorsNotIn(b.query, v)
+	return b
+}
+
 // WhereSeparatorCharEQ adds a WHERE separator_char = ? condition
 func (b *ProNumberConfigQueryBuilder) WhereSeparatorCharEQ(v string) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.SeparatorCharEQ(b.query, v)
@@ -1813,6 +2086,18 @@ func (b *ProNumberConfigQueryBuilder) WhereIncludeWeekNumberNEQ(v bool) *ProNumb
 	return b
 }
 
+// WhereIncludeWeekNumberIn adds a WHERE include_week_number IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeWeekNumberIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeWeekNumberIn(b.query, v)
+	return b
+}
+
+// WhereIncludeWeekNumberNotIn adds a WHERE include_week_number NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeWeekNumberNotIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeWeekNumberNotIn(b.query, v)
+	return b
+}
+
 // WhereIncludeDayEQ adds a WHERE include_day = ? condition
 func (b *ProNumberConfigQueryBuilder) WhereIncludeDayEQ(v bool) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.IncludeDayEQ(b.query, v)
@@ -1825,6 +2110,18 @@ func (b *ProNumberConfigQueryBuilder) WhereIncludeDayNEQ(v bool) *ProNumberConfi
 	return b
 }
 
+// WhereIncludeDayIn adds a WHERE include_day IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeDayIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeDayIn(b.query, v)
+	return b
+}
+
+// WhereIncludeDayNotIn adds a WHERE include_day NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIncludeDayNotIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IncludeDayNotIn(b.query, v)
+	return b
+}
+
 // WhereAllowCustomFormatEQ adds a WHERE allow_custom_format = ? condition
 func (b *ProNumberConfigQueryBuilder) WhereAllowCustomFormatEQ(v bool) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.AllowCustomFormatEQ(b.query, v)
@@ -1834,6 +2131,18 @@ func (b *ProNumberConfigQueryBuilder) WhereAllowCustomFormatEQ(v bool) *ProNumbe
 // WhereAllowCustomFormatNEQ adds a WHERE allow_custom_format != ? condition
 func (b *ProNumberConfigQueryBuilder) WhereAllowCustomFormatNEQ(v bool) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.AllowCustomFormatNEQ(b.query, v)
+	return b
+}
+
+// WhereAllowCustomFormatIn adds a WHERE allow_custom_format IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereAllowCustomFormatIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.AllowCustomFormatIn(b.query, v)
+	return b
+}
+
+// WhereAllowCustomFormatNotIn adds a WHERE allow_custom_format NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereAllowCustomFormatNotIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.AllowCustomFormatNotIn(b.query, v)
 	return b
 }
 
@@ -1888,6 +2197,18 @@ func (b *ProNumberConfigQueryBuilder) WhereIsActiveEQ(v bool) *ProNumberConfigQu
 // WhereIsActiveNEQ adds a WHERE is_active != ? condition
 func (b *ProNumberConfigQueryBuilder) WhereIsActiveNEQ(v bool) *ProNumberConfigQueryBuilder {
 	b.query = ProNumberConfigQuery.Where.IsActiveNEQ(b.query, v)
+	return b
+}
+
+// WhereIsActiveIn adds a WHERE is_active IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIsActiveIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IsActiveIn(b.query, v)
+	return b
+}
+
+// WhereIsActiveNotIn adds a WHERE is_active NOT IN (?) condition
+func (b *ProNumberConfigQueryBuilder) WhereIsActiveNotIn(v []bool) *ProNumberConfigQueryBuilder {
+	b.query = ProNumberConfigQuery.Where.IsActiveNotIn(b.query, v)
 	return b
 }
 
@@ -2135,4 +2456,25 @@ func (b *ProNumberConfigQueryBuilder) First(ctx context.Context) (*ProNumberConf
 // ProNumberConfigBuild creates a chainable query builder
 func ProNumberConfigBuild(db bun.IDB) *ProNumberConfigQueryBuilder {
 	return NewProNumberConfigQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *ProNumberConfigQueryBuilder) LoadBusinessUnit() *ProNumberConfigQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *ProNumberConfigQueryBuilder) LoadOrganization() *ProNumberConfigQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for ProNumberConfig
+func (b *ProNumberConfigQueryBuilder) LoadAllRelations() *ProNumberConfigQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
 }

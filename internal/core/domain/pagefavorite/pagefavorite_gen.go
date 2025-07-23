@@ -43,60 +43,68 @@ var PageFavoriteQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		PageURLEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PageURLNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PageURLGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PageTitleNotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PageTitleGT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleGTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleLT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleLTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleContains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleHasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		VersionEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn     func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn     func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		PageURLEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PageURLNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PageURLGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PageTitleNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PageTitleGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		VersionEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -119,6 +127,12 @@ var PageFavoriteQuery = struct {
 	FieldConfig  func() map[string]pageFavoriteFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+		User         string
+	}
 }{
 	// Table and alias constants
 	Table:    "page_favorites",
@@ -162,61 +176,69 @@ var PageFavoriteQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		PageURLEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PageURLNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PageURLGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageURLHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PageTitleNotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PageTitleGT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleGTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleLT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleLTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleContains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleHasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PageTitleHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		VersionEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn     func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn     func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		Tenant             func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		PageURLEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PageURLNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PageURLGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageURLHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PageTitleNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PageTitleGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PageTitleHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		VersionEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		Tenant              func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pf.id"), v)
@@ -224,11 +246,23 @@ var PageFavoriteQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pf.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pf.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pf.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pf.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pf.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pf.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pf.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pf.organization_id"), v)
@@ -236,11 +270,23 @@ var PageFavoriteQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pf.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pf.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pf.organization_id"), bun.In(v))
+		},
 		UserIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pf.user_id"), v)
 		},
 		UserIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pf.user_id"), v)
+		},
+		UserIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pf.user_id"), bun.In(v))
+		},
+		UserIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pf.user_id"), bun.In(v))
 		},
 		PageURLEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pf.page_url"), v)
@@ -616,6 +662,16 @@ var PageFavoriteQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+		User         string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+		User:         "User",
+	},
 }
 
 // PageFavoriteQueryBuilder provides a fluent interface for building queries
@@ -660,6 +716,18 @@ func (b *PageFavoriteQueryBuilder) WhereIDNEQ(v pulid.ID) *PageFavoriteQueryBuil
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *PageFavoriteQueryBuilder) WhereIDIn(v []pulid.ID) *PageFavoriteQueryBuilder {
+	b.query = PageFavoriteQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *PageFavoriteQueryBuilder) WhereIDNotIn(v []pulid.ID) *PageFavoriteQueryBuilder {
+	b.query = PageFavoriteQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *PageFavoriteQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *PageFavoriteQueryBuilder {
 	b.query = PageFavoriteQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -669,6 +737,18 @@ func (b *PageFavoriteQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *PageFavori
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *PageFavoriteQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *PageFavoriteQueryBuilder {
 	b.query = PageFavoriteQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *PageFavoriteQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *PageFavoriteQueryBuilder {
+	b.query = PageFavoriteQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *PageFavoriteQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *PageFavoriteQueryBuilder {
+	b.query = PageFavoriteQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -684,6 +764,18 @@ func (b *PageFavoriteQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *PageFavor
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *PageFavoriteQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *PageFavoriteQueryBuilder {
+	b.query = PageFavoriteQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *PageFavoriteQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *PageFavoriteQueryBuilder {
+	b.query = PageFavoriteQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereUserIDEQ adds a WHERE user_id = ? condition
 func (b *PageFavoriteQueryBuilder) WhereUserIDEQ(v pulid.ID) *PageFavoriteQueryBuilder {
 	b.query = PageFavoriteQuery.Where.UserIDEQ(b.query, v)
@@ -693,6 +785,18 @@ func (b *PageFavoriteQueryBuilder) WhereUserIDEQ(v pulid.ID) *PageFavoriteQueryB
 // WhereUserIDNEQ adds a WHERE user_id != ? condition
 func (b *PageFavoriteQueryBuilder) WhereUserIDNEQ(v pulid.ID) *PageFavoriteQueryBuilder {
 	b.query = PageFavoriteQuery.Where.UserIDNEQ(b.query, v)
+	return b
+}
+
+// WhereUserIDIn adds a WHERE user_id IN (?) condition
+func (b *PageFavoriteQueryBuilder) WhereUserIDIn(v []pulid.ID) *PageFavoriteQueryBuilder {
+	b.query = PageFavoriteQuery.Where.UserIDIn(b.query, v)
+	return b
+}
+
+// WhereUserIDNotIn adds a WHERE user_id NOT IN (?) condition
+func (b *PageFavoriteQueryBuilder) WhereUserIDNotIn(v []pulid.ID) *PageFavoriteQueryBuilder {
+	b.query = PageFavoriteQuery.Where.UserIDNotIn(b.query, v)
 	return b
 }
 
@@ -1024,4 +1128,32 @@ func (b *PageFavoriteQueryBuilder) First(ctx context.Context) (*PageFavorite, er
 // PageFavoriteBuild creates a chainable query builder
 func PageFavoriteBuild(db bun.IDB) *PageFavoriteQueryBuilder {
 	return NewPageFavoriteQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *PageFavoriteQueryBuilder) LoadBusinessUnit() *PageFavoriteQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *PageFavoriteQueryBuilder) LoadOrganization() *PageFavoriteQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadUser loads the User relationship
+func (b *PageFavoriteQueryBuilder) LoadUser() *PageFavoriteQueryBuilder {
+	b.query = b.query.Relation("User")
+	return b
+}
+
+// LoadAllRelations loads all relationships for PageFavorite
+func (b *PageFavoriteQueryBuilder) LoadAllRelations() *PageFavoriteQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadUser()
+	return b
 }

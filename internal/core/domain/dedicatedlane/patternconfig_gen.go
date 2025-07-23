@@ -48,74 +48,86 @@ var PatternConfigQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		EnabledEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		EnabledNEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		MinFrequencyEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		MinFrequencyNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		MinFrequencyIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		MinFrequencyNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		MinFrequencyGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		MinFrequencyGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		MinFrequencyLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		MinFrequencyLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		AnalysisWindowDaysEQ     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		AnalysisWindowDaysNEQ    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		AnalysisWindowDaysIn     func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		AnalysisWindowDaysNotIn  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		AnalysisWindowDaysGT     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		AnalysisWindowDaysGTE    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		AnalysisWindowDaysLT     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		AnalysisWindowDaysLTE    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		MinConfidenceScoreEQ     func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreNEQ    func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreIn     func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreNotIn  func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreGT     func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreGTE    func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreLT     func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreLTE    func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		SuggestionTTLDaysEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SuggestionTTLDaysNEQ     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SuggestionTTLDaysIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		SuggestionTTLDaysNotIn   func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		SuggestionTTLDaysGT      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SuggestionTTLDaysGTE     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SuggestionTTLDaysLT      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SuggestionTTLDaysLTE     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		RequireExactMatchEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		RequireExactMatchNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		WeightRecentShipmentsEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		WeightRecentShipmentsNEQ func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		EnabledEQ                  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		EnabledNEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		EnabledIn                  func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		EnabledNotIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		MinFrequencyEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		MinFrequencyNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		MinFrequencyIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		MinFrequencyNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		MinFrequencyGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		MinFrequencyGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		MinFrequencyLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		MinFrequencyLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		AnalysisWindowDaysEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		AnalysisWindowDaysNEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		AnalysisWindowDaysIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		AnalysisWindowDaysNotIn    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		AnalysisWindowDaysGT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		AnalysisWindowDaysGTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		AnalysisWindowDaysLT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		AnalysisWindowDaysLTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		MinConfidenceScoreEQ       func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreNEQ      func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreIn       func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreNotIn    func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreGT       func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreGTE      func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreLT       func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreLTE      func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		SuggestionTTLDaysEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SuggestionTTLDaysNEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SuggestionTTLDaysIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		SuggestionTTLDaysNotIn     func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		SuggestionTTLDaysGT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SuggestionTTLDaysGTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SuggestionTTLDaysLT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SuggestionTTLDaysLTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		RequireExactMatchEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		RequireExactMatchNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		RequireExactMatchIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		RequireExactMatchNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		WeightRecentShipmentsEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		WeightRecentShipmentsNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		WeightRecentShipmentsIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		WeightRecentShipmentsNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -138,6 +150,11 @@ var PatternConfigQuery = struct {
 	FieldConfig  func() map[string]patternConfigFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "pattern_configs",
@@ -189,75 +206,87 @@ var PatternConfigQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		EnabledEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		EnabledNEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		MinFrequencyEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		MinFrequencyNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		MinFrequencyIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		MinFrequencyNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		MinFrequencyGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		MinFrequencyGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		MinFrequencyLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		MinFrequencyLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		AnalysisWindowDaysEQ     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		AnalysisWindowDaysNEQ    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		AnalysisWindowDaysIn     func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		AnalysisWindowDaysNotIn  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		AnalysisWindowDaysGT     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		AnalysisWindowDaysGTE    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		AnalysisWindowDaysLT     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		AnalysisWindowDaysLTE    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		MinConfidenceScoreEQ     func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreNEQ    func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreIn     func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreNotIn  func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreGT     func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreGTE    func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreLT     func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		MinConfidenceScoreLTE    func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		SuggestionTTLDaysEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SuggestionTTLDaysNEQ     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SuggestionTTLDaysIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		SuggestionTTLDaysNotIn   func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		SuggestionTTLDaysGT      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SuggestionTTLDaysGTE     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SuggestionTTLDaysLT      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SuggestionTTLDaysLTE     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		RequireExactMatchEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		RequireExactMatchNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		WeightRecentShipmentsEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		WeightRecentShipmentsNEQ func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		Tenant                   func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		EnabledEQ                  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		EnabledNEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		EnabledIn                  func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		EnabledNotIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		MinFrequencyEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		MinFrequencyNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		MinFrequencyIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		MinFrequencyNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		MinFrequencyGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		MinFrequencyGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		MinFrequencyLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		MinFrequencyLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		AnalysisWindowDaysEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		AnalysisWindowDaysNEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		AnalysisWindowDaysIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		AnalysisWindowDaysNotIn    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		AnalysisWindowDaysGT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		AnalysisWindowDaysGTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		AnalysisWindowDaysLT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		AnalysisWindowDaysLTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		MinConfidenceScoreEQ       func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreNEQ      func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreIn       func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreNotIn    func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreGT       func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreGTE      func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreLT       func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		MinConfidenceScoreLTE      func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		SuggestionTTLDaysEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SuggestionTTLDaysNEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SuggestionTTLDaysIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		SuggestionTTLDaysNotIn     func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		SuggestionTTLDaysGT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SuggestionTTLDaysGTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SuggestionTTLDaysLT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SuggestionTTLDaysLTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		RequireExactMatchEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		RequireExactMatchNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		RequireExactMatchIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		RequireExactMatchNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		WeightRecentShipmentsEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		WeightRecentShipmentsNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		WeightRecentShipmentsIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		WeightRecentShipmentsNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		Tenant                     func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pc.id"), v)
@@ -265,11 +294,23 @@ var PatternConfigQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pc.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pc.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pc.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pc.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pc.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pc.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pc.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pc.organization_id"), v)
@@ -277,11 +318,23 @@ var PatternConfigQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pc.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pc.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pc.organization_id"), bun.In(v))
+		},
 		EnabledEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pc.enabled"), v)
 		},
 		EnabledNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pc.enabled"), v)
+		},
+		EnabledIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pc.enabled"), bun.In(v))
+		},
+		EnabledNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pc.enabled"), bun.In(v))
 		},
 		MinFrequencyEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pc.min_frequency"), v)
@@ -385,11 +438,23 @@ var PatternConfigQuery = struct {
 		RequireExactMatchNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pc.require_exact_match"), v)
 		},
+		RequireExactMatchIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pc.require_exact_match"), bun.In(v))
+		},
+		RequireExactMatchNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pc.require_exact_match"), bun.In(v))
+		},
 		WeightRecentShipmentsEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pc.weight_recent_shipments"), v)
 		},
 		WeightRecentShipmentsNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pc.weight_recent_shipments"), v)
+		},
+		WeightRecentShipmentsIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pc.weight_recent_shipments"), bun.In(v))
+		},
+		WeightRecentShipmentsNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pc.weight_recent_shipments"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pc.version"), v)
@@ -771,6 +836,14 @@ var PatternConfigQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // PatternConfigQueryBuilder provides a fluent interface for building queries
@@ -815,6 +888,18 @@ func (b *PatternConfigQueryBuilder) WhereIDNEQ(v pulid.ID) *PatternConfigQueryBu
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *PatternConfigQueryBuilder) WhereIDIn(v []pulid.ID) *PatternConfigQueryBuilder {
+	b.query = PatternConfigQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *PatternConfigQueryBuilder) WhereIDNotIn(v []pulid.ID) *PatternConfigQueryBuilder {
+	b.query = PatternConfigQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *PatternConfigQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *PatternConfigQueryBuilder {
 	b.query = PatternConfigQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -824,6 +909,18 @@ func (b *PatternConfigQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *PatternCo
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *PatternConfigQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *PatternConfigQueryBuilder {
 	b.query = PatternConfigQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *PatternConfigQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *PatternConfigQueryBuilder {
+	b.query = PatternConfigQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *PatternConfigQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *PatternConfigQueryBuilder {
+	b.query = PatternConfigQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -839,6 +936,18 @@ func (b *PatternConfigQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *PatternC
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *PatternConfigQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *PatternConfigQueryBuilder {
+	b.query = PatternConfigQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *PatternConfigQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *PatternConfigQueryBuilder {
+	b.query = PatternConfigQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereEnabledEQ adds a WHERE enabled = ? condition
 func (b *PatternConfigQueryBuilder) WhereEnabledEQ(v bool) *PatternConfigQueryBuilder {
 	b.query = PatternConfigQuery.Where.EnabledEQ(b.query, v)
@@ -848,6 +957,18 @@ func (b *PatternConfigQueryBuilder) WhereEnabledEQ(v bool) *PatternConfigQueryBu
 // WhereEnabledNEQ adds a WHERE enabled != ? condition
 func (b *PatternConfigQueryBuilder) WhereEnabledNEQ(v bool) *PatternConfigQueryBuilder {
 	b.query = PatternConfigQuery.Where.EnabledNEQ(b.query, v)
+	return b
+}
+
+// WhereEnabledIn adds a WHERE enabled IN (?) condition
+func (b *PatternConfigQueryBuilder) WhereEnabledIn(v []bool) *PatternConfigQueryBuilder {
+	b.query = PatternConfigQuery.Where.EnabledIn(b.query, v)
+	return b
+}
+
+// WhereEnabledNotIn adds a WHERE enabled NOT IN (?) condition
+func (b *PatternConfigQueryBuilder) WhereEnabledNotIn(v []bool) *PatternConfigQueryBuilder {
+	b.query = PatternConfigQuery.Where.EnabledNotIn(b.query, v)
 	return b
 }
 
@@ -1055,6 +1176,18 @@ func (b *PatternConfigQueryBuilder) WhereRequireExactMatchNEQ(v bool) *PatternCo
 	return b
 }
 
+// WhereRequireExactMatchIn adds a WHERE require_exact_match IN (?) condition
+func (b *PatternConfigQueryBuilder) WhereRequireExactMatchIn(v []bool) *PatternConfigQueryBuilder {
+	b.query = PatternConfigQuery.Where.RequireExactMatchIn(b.query, v)
+	return b
+}
+
+// WhereRequireExactMatchNotIn adds a WHERE require_exact_match NOT IN (?) condition
+func (b *PatternConfigQueryBuilder) WhereRequireExactMatchNotIn(v []bool) *PatternConfigQueryBuilder {
+	b.query = PatternConfigQuery.Where.RequireExactMatchNotIn(b.query, v)
+	return b
+}
+
 // WhereWeightRecentShipmentsEQ adds a WHERE weight_recent_shipments = ? condition
 func (b *PatternConfigQueryBuilder) WhereWeightRecentShipmentsEQ(v bool) *PatternConfigQueryBuilder {
 	b.query = PatternConfigQuery.Where.WeightRecentShipmentsEQ(b.query, v)
@@ -1064,6 +1197,18 @@ func (b *PatternConfigQueryBuilder) WhereWeightRecentShipmentsEQ(v bool) *Patter
 // WhereWeightRecentShipmentsNEQ adds a WHERE weight_recent_shipments != ? condition
 func (b *PatternConfigQueryBuilder) WhereWeightRecentShipmentsNEQ(v bool) *PatternConfigQueryBuilder {
 	b.query = PatternConfigQuery.Where.WeightRecentShipmentsNEQ(b.query, v)
+	return b
+}
+
+// WhereWeightRecentShipmentsIn adds a WHERE weight_recent_shipments IN (?) condition
+func (b *PatternConfigQueryBuilder) WhereWeightRecentShipmentsIn(v []bool) *PatternConfigQueryBuilder {
+	b.query = PatternConfigQuery.Where.WeightRecentShipmentsIn(b.query, v)
+	return b
+}
+
+// WhereWeightRecentShipmentsNotIn adds a WHERE weight_recent_shipments NOT IN (?) condition
+func (b *PatternConfigQueryBuilder) WhereWeightRecentShipmentsNotIn(v []bool) *PatternConfigQueryBuilder {
+	b.query = PatternConfigQuery.Where.WeightRecentShipmentsNotIn(b.query, v)
 	return b
 }
 
@@ -1311,4 +1456,25 @@ func (b *PatternConfigQueryBuilder) First(ctx context.Context) (*PatternConfig, 
 // PatternConfigBuild creates a chainable query builder
 func PatternConfigBuild(db bun.IDB) *PatternConfigQueryBuilder {
 	return NewPatternConfigQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *PatternConfigQueryBuilder) LoadBusinessUnit() *PatternConfigQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *PatternConfigQueryBuilder) LoadOrganization() *PatternConfigQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for PatternConfig
+func (b *PatternConfigQueryBuilder) LoadAllRelations() *PatternConfigQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
 }

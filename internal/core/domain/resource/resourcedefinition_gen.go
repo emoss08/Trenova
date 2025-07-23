@@ -46,73 +46,83 @@ var ResourceDefinitionQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ResourceTypeEQ        func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
-		ResourceTypeNEQ       func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
-		DisplayNameEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DisplayNameNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DisplayNameGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TableNameNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TableNameGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AllowCustomFieldsEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowCustomFieldsNEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowAutomationsEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowAutomationsNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowNotificationsEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowNotificationsNEQ func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ResourceTypeEQ          func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
+		ResourceTypeNEQ         func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
+		ResourceTypeIn          func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
+		ResourceTypeNotIn       func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
+		DisplayNameEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DisplayNameNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DisplayNameGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TableNameNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TableNameGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AllowCustomFieldsEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowCustomFieldsNEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowCustomFieldsIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowCustomFieldsNotIn  func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowAutomationsEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowAutomationsNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowAutomationsIn      func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowAutomationsNotIn   func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowNotificationsEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowNotificationsNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowNotificationsIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowNotificationsNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 	}
@@ -181,73 +191,83 @@ var ResourceDefinitionQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ResourceTypeEQ        func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
-		ResourceTypeNEQ       func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
-		DisplayNameEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DisplayNameNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DisplayNameGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DisplayNameHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TableNameNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TableNameGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TableNameHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AllowCustomFieldsEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowCustomFieldsNEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowAutomationsEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowAutomationsNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowNotificationsEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowNotificationsNEQ func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ResourceTypeEQ          func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
+		ResourceTypeNEQ         func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
+		ResourceTypeIn          func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
+		ResourceTypeNotIn       func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
+		DisplayNameEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DisplayNameNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DisplayNameGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DisplayNameHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TableNameNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TableNameGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TableNameHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AllowCustomFieldsEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowCustomFieldsNEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowCustomFieldsIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowCustomFieldsNotIn  func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowAutomationsEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowAutomationsNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowAutomationsIn      func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowAutomationsNotIn   func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowNotificationsEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowNotificationsNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowNotificationsIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowNotificationsNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rd.id"), v)
@@ -255,11 +275,23 @@ var ResourceDefinitionQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("rd.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("rd.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("rd.id"), bun.In(v))
+		},
 		ResourceTypeEQ: func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rd.resource_type"), v)
 		},
 		ResourceTypeNEQ: func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("rd.resource_type"), v)
+		},
+		ResourceTypeIn: func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("rd.resource_type"), bun.In(v))
+		},
+		ResourceTypeNotIn: func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("rd.resource_type"), bun.In(v))
 		},
 		DisplayNameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rd.display_name"), v)
@@ -366,17 +398,35 @@ var ResourceDefinitionQuery = struct {
 		AllowCustomFieldsNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("rd.allow_custom_fields"), v)
 		},
+		AllowCustomFieldsIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("rd.allow_custom_fields"), bun.In(v))
+		},
+		AllowCustomFieldsNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("rd.allow_custom_fields"), bun.In(v))
+		},
 		AllowAutomationsEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rd.allow_automations"), v)
 		},
 		AllowAutomationsNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("rd.allow_automations"), v)
 		},
+		AllowAutomationsIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("rd.allow_automations"), bun.In(v))
+		},
+		AllowAutomationsNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("rd.allow_automations"), bun.In(v))
+		},
 		AllowNotificationsEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rd.allow_notifications"), v)
 		},
 		AllowNotificationsNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("rd.allow_notifications"), v)
+		},
+		AllowNotificationsIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("rd.allow_notifications"), bun.In(v))
+		},
+		AllowNotificationsNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("rd.allow_notifications"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rd.version"), v)
@@ -761,6 +811,18 @@ func (b *ResourceDefinitionQueryBuilder) WhereIDNEQ(v pulid.ID) *ResourceDefinit
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *ResourceDefinitionQueryBuilder) WhereIDIn(v []pulid.ID) *ResourceDefinitionQueryBuilder {
+	b.query = ResourceDefinitionQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *ResourceDefinitionQueryBuilder) WhereIDNotIn(v []pulid.ID) *ResourceDefinitionQueryBuilder {
+	b.query = ResourceDefinitionQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereResourceTypeEQ adds a WHERE resource_type = ? condition
 func (b *ResourceDefinitionQueryBuilder) WhereResourceTypeEQ(v permission.Resource) *ResourceDefinitionQueryBuilder {
 	b.query = ResourceDefinitionQuery.Where.ResourceTypeEQ(b.query, v)
@@ -770,6 +832,18 @@ func (b *ResourceDefinitionQueryBuilder) WhereResourceTypeEQ(v permission.Resour
 // WhereResourceTypeNEQ adds a WHERE resource_type != ? condition
 func (b *ResourceDefinitionQueryBuilder) WhereResourceTypeNEQ(v permission.Resource) *ResourceDefinitionQueryBuilder {
 	b.query = ResourceDefinitionQuery.Where.ResourceTypeNEQ(b.query, v)
+	return b
+}
+
+// WhereResourceTypeIn adds a WHERE resource_type IN (?) condition
+func (b *ResourceDefinitionQueryBuilder) WhereResourceTypeIn(v []permission.Resource) *ResourceDefinitionQueryBuilder {
+	b.query = ResourceDefinitionQuery.Where.ResourceTypeIn(b.query, v)
+	return b
+}
+
+// WhereResourceTypeNotIn adds a WHERE resource_type NOT IN (?) condition
+func (b *ResourceDefinitionQueryBuilder) WhereResourceTypeNotIn(v []permission.Resource) *ResourceDefinitionQueryBuilder {
+	b.query = ResourceDefinitionQuery.Where.ResourceTypeNotIn(b.query, v)
 	return b
 }
 
@@ -911,6 +985,18 @@ func (b *ResourceDefinitionQueryBuilder) WhereAllowCustomFieldsNEQ(v bool) *Reso
 	return b
 }
 
+// WhereAllowCustomFieldsIn adds a WHERE allow_custom_fields IN (?) condition
+func (b *ResourceDefinitionQueryBuilder) WhereAllowCustomFieldsIn(v []bool) *ResourceDefinitionQueryBuilder {
+	b.query = ResourceDefinitionQuery.Where.AllowCustomFieldsIn(b.query, v)
+	return b
+}
+
+// WhereAllowCustomFieldsNotIn adds a WHERE allow_custom_fields NOT IN (?) condition
+func (b *ResourceDefinitionQueryBuilder) WhereAllowCustomFieldsNotIn(v []bool) *ResourceDefinitionQueryBuilder {
+	b.query = ResourceDefinitionQuery.Where.AllowCustomFieldsNotIn(b.query, v)
+	return b
+}
+
 // WhereAllowAutomationsEQ adds a WHERE allow_automations = ? condition
 func (b *ResourceDefinitionQueryBuilder) WhereAllowAutomationsEQ(v bool) *ResourceDefinitionQueryBuilder {
 	b.query = ResourceDefinitionQuery.Where.AllowAutomationsEQ(b.query, v)
@@ -923,6 +1009,18 @@ func (b *ResourceDefinitionQueryBuilder) WhereAllowAutomationsNEQ(v bool) *Resou
 	return b
 }
 
+// WhereAllowAutomationsIn adds a WHERE allow_automations IN (?) condition
+func (b *ResourceDefinitionQueryBuilder) WhereAllowAutomationsIn(v []bool) *ResourceDefinitionQueryBuilder {
+	b.query = ResourceDefinitionQuery.Where.AllowAutomationsIn(b.query, v)
+	return b
+}
+
+// WhereAllowAutomationsNotIn adds a WHERE allow_automations NOT IN (?) condition
+func (b *ResourceDefinitionQueryBuilder) WhereAllowAutomationsNotIn(v []bool) *ResourceDefinitionQueryBuilder {
+	b.query = ResourceDefinitionQuery.Where.AllowAutomationsNotIn(b.query, v)
+	return b
+}
+
 // WhereAllowNotificationsEQ adds a WHERE allow_notifications = ? condition
 func (b *ResourceDefinitionQueryBuilder) WhereAllowNotificationsEQ(v bool) *ResourceDefinitionQueryBuilder {
 	b.query = ResourceDefinitionQuery.Where.AllowNotificationsEQ(b.query, v)
@@ -932,6 +1030,18 @@ func (b *ResourceDefinitionQueryBuilder) WhereAllowNotificationsEQ(v bool) *Reso
 // WhereAllowNotificationsNEQ adds a WHERE allow_notifications != ? condition
 func (b *ResourceDefinitionQueryBuilder) WhereAllowNotificationsNEQ(v bool) *ResourceDefinitionQueryBuilder {
 	b.query = ResourceDefinitionQuery.Where.AllowNotificationsNEQ(b.query, v)
+	return b
+}
+
+// WhereAllowNotificationsIn adds a WHERE allow_notifications IN (?) condition
+func (b *ResourceDefinitionQueryBuilder) WhereAllowNotificationsIn(v []bool) *ResourceDefinitionQueryBuilder {
+	b.query = ResourceDefinitionQuery.Where.AllowNotificationsIn(b.query, v)
+	return b
+}
+
+// WhereAllowNotificationsNotIn adds a WHERE allow_notifications NOT IN (?) condition
+func (b *ResourceDefinitionQueryBuilder) WhereAllowNotificationsNotIn(v []bool) *ResourceDefinitionQueryBuilder {
+	b.query = ResourceDefinitionQuery.Where.AllowNotificationsNotIn(b.query, v)
 	return b
 }
 
@@ -1175,3 +1285,5 @@ func (b *ResourceDefinitionQueryBuilder) First(ctx context.Context) (*ResourceDe
 func ResourceDefinitionBuild(db bun.IDB) *ResourceDefinitionQueryBuilder {
 	return NewResourceDefinitionQuery(db)
 }
+
+// Relationship loading methods

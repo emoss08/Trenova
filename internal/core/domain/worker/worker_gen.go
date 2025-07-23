@@ -60,20 +60,34 @@ var WorkerQuery = struct {
 	Where struct {
 		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StateIDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		StateIDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		StateIDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StateIDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		FleetCodeIDEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		FleetCodeIDNEQ             func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		FleetCodeIDIn              func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		FleetCodeIDNotIn           func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		FleetCodeIDIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		FleetCodeIDIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ                   func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                  func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                   func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn                func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		TypeEQ                     func(q *bun.SelectQuery, v WorkerType) *bun.SelectQuery
 		TypeNEQ                    func(q *bun.SelectQuery, v WorkerType) *bun.SelectQuery
+		TypeIn                     func(q *bun.SelectQuery, v []WorkerType) *bun.SelectQuery
+		TypeNotIn                  func(q *bun.SelectQuery, v []WorkerType) *bun.SelectQuery
 		ProfilePicURLEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProfilePicURLNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProfilePicURLIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -164,8 +178,12 @@ var WorkerQuery = struct {
 		PostalCodeHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		GenderEQ                   func(q *bun.SelectQuery, v domain.Gender) *bun.SelectQuery
 		GenderNEQ                  func(q *bun.SelectQuery, v domain.Gender) *bun.SelectQuery
+		GenderIn                   func(q *bun.SelectQuery, v []domain.Gender) *bun.SelectQuery
+		GenderNotIn                func(q *bun.SelectQuery, v []domain.Gender) *bun.SelectQuery
 		CanBeAssignedEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		CanBeAssignedNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		CanBeAssignedIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		CanBeAssignedNotIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		AssignmentBlockedEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		AssignmentBlockedNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		AssignmentBlockedIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -246,6 +264,14 @@ var WorkerQuery = struct {
 	FieldConfig  func() map[string]workerFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+		State        string
+		Profile      string
+		PTO          string
+	}
 }{
 	// Table and alias constants
 	Table:    "workers",
@@ -319,20 +345,34 @@ var WorkerQuery = struct {
 	Where: struct {
 		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StateIDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		StateIDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		StateIDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StateIDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		FleetCodeIDEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		FleetCodeIDNEQ             func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		FleetCodeIDIn              func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		FleetCodeIDNotIn           func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		FleetCodeIDIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		FleetCodeIDIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ                   func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                  func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                   func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn                func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		TypeEQ                     func(q *bun.SelectQuery, v WorkerType) *bun.SelectQuery
 		TypeNEQ                    func(q *bun.SelectQuery, v WorkerType) *bun.SelectQuery
+		TypeIn                     func(q *bun.SelectQuery, v []WorkerType) *bun.SelectQuery
+		TypeNotIn                  func(q *bun.SelectQuery, v []WorkerType) *bun.SelectQuery
 		ProfilePicURLEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProfilePicURLNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProfilePicURLIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -423,8 +463,12 @@ var WorkerQuery = struct {
 		PostalCodeHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		GenderEQ                   func(q *bun.SelectQuery, v domain.Gender) *bun.SelectQuery
 		GenderNEQ                  func(q *bun.SelectQuery, v domain.Gender) *bun.SelectQuery
+		GenderIn                   func(q *bun.SelectQuery, v []domain.Gender) *bun.SelectQuery
+		GenderNotIn                func(q *bun.SelectQuery, v []domain.Gender) *bun.SelectQuery
 		CanBeAssignedEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		CanBeAssignedNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		CanBeAssignedIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		CanBeAssignedNotIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		AssignmentBlockedEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		AssignmentBlockedNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		AssignmentBlockedIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -490,11 +534,23 @@ var WorkerQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wrk.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wrk.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wrk.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wrk.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wrk.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wrk.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wrk.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wrk.organization_id"), v)
@@ -502,17 +558,35 @@ var WorkerQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wrk.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wrk.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wrk.organization_id"), bun.In(v))
+		},
 		StateIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wrk.state_id"), v)
 		},
 		StateIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wrk.state_id"), v)
 		},
+		StateIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wrk.state_id"), bun.In(v))
+		},
+		StateIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wrk.state_id"), bun.In(v))
+		},
 		FleetCodeIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wrk.fleet_code_id"), v)
 		},
 		FleetCodeIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wrk.fleet_code_id"), v)
+		},
+		FleetCodeIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wrk.fleet_code_id"), bun.In(v))
+		},
+		FleetCodeIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wrk.fleet_code_id"), bun.In(v))
 		},
 		FleetCodeIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("wrk.fleet_code_id"))
@@ -526,11 +600,23 @@ var WorkerQuery = struct {
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wrk.status"), v)
 		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wrk.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wrk.status"), bun.In(v))
+		},
 		TypeEQ: func(q *bun.SelectQuery, v WorkerType) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wrk.type"), v)
 		},
 		TypeNEQ: func(q *bun.SelectQuery, v WorkerType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wrk.type"), v)
+		},
+		TypeIn: func(q *bun.SelectQuery, v []WorkerType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wrk.type"), bun.In(v))
+		},
+		TypeNotIn: func(q *bun.SelectQuery, v []WorkerType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wrk.type"), bun.In(v))
 		},
 		ProfilePicURLEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wrk.profile_pic_url"), v)
@@ -802,11 +888,23 @@ var WorkerQuery = struct {
 		GenderNEQ: func(q *bun.SelectQuery, v domain.Gender) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wrk.gender"), v)
 		},
+		GenderIn: func(q *bun.SelectQuery, v []domain.Gender) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wrk.gender"), bun.In(v))
+		},
+		GenderNotIn: func(q *bun.SelectQuery, v []domain.Gender) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wrk.gender"), bun.In(v))
+		},
 		CanBeAssignedEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wrk.can_be_assigned"), v)
 		},
 		CanBeAssignedNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wrk.can_be_assigned"), v)
+		},
+		CanBeAssignedIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wrk.can_be_assigned"), bun.In(v))
+		},
+		CanBeAssignedNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wrk.can_be_assigned"), bun.In(v))
 		},
 		AssignmentBlockedEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wrk.assignment_blocked"), v)
@@ -1475,6 +1573,20 @@ var WorkerQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+		State        string
+		Profile      string
+		PTO          string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+		State:        "State",
+		Profile:      "Profile",
+		PTO:          "PTO",
+	},
 }
 
 // WorkerQueryBuilder provides a fluent interface for building queries
@@ -1519,6 +1631,18 @@ func (b *WorkerQueryBuilder) WhereIDNEQ(v pulid.ID) *WorkerQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *WorkerQueryBuilder) WhereIDIn(v []pulid.ID) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *WorkerQueryBuilder) WhereIDNotIn(v []pulid.ID) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *WorkerQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *WorkerQueryBuilder {
 	b.query = WorkerQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1528,6 +1652,18 @@ func (b *WorkerQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *WorkerQueryBuild
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *WorkerQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *WorkerQueryBuilder {
 	b.query = WorkerQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *WorkerQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *WorkerQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1543,6 +1679,18 @@ func (b *WorkerQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *WorkerQueryBuil
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *WorkerQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *WorkerQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStateIDEQ adds a WHERE state_id = ? condition
 func (b *WorkerQueryBuilder) WhereStateIDEQ(v pulid.ID) *WorkerQueryBuilder {
 	b.query = WorkerQuery.Where.StateIDEQ(b.query, v)
@@ -1552,6 +1700,18 @@ func (b *WorkerQueryBuilder) WhereStateIDEQ(v pulid.ID) *WorkerQueryBuilder {
 // WhereStateIDNEQ adds a WHERE state_id != ? condition
 func (b *WorkerQueryBuilder) WhereStateIDNEQ(v pulid.ID) *WorkerQueryBuilder {
 	b.query = WorkerQuery.Where.StateIDNEQ(b.query, v)
+	return b
+}
+
+// WhereStateIDIn adds a WHERE state_id IN (?) condition
+func (b *WorkerQueryBuilder) WhereStateIDIn(v []pulid.ID) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.StateIDIn(b.query, v)
+	return b
+}
+
+// WhereStateIDNotIn adds a WHERE state_id NOT IN (?) condition
+func (b *WorkerQueryBuilder) WhereStateIDNotIn(v []pulid.ID) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.StateIDNotIn(b.query, v)
 	return b
 }
 
@@ -1567,6 +1727,18 @@ func (b *WorkerQueryBuilder) WhereFleetCodeIDNEQ(v *pulid.ID) *WorkerQueryBuilde
 	return b
 }
 
+// WhereFleetCodeIDIn adds a WHERE fleet_code_id IN (?) condition
+func (b *WorkerQueryBuilder) WhereFleetCodeIDIn(v []*pulid.ID) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.FleetCodeIDIn(b.query, v)
+	return b
+}
+
+// WhereFleetCodeIDNotIn adds a WHERE fleet_code_id NOT IN (?) condition
+func (b *WorkerQueryBuilder) WhereFleetCodeIDNotIn(v []*pulid.ID) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.FleetCodeIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *WorkerQueryBuilder) WhereStatusEQ(v domain.Status) *WorkerQueryBuilder {
 	b.query = WorkerQuery.Where.StatusEQ(b.query, v)
@@ -1579,6 +1751,18 @@ func (b *WorkerQueryBuilder) WhereStatusNEQ(v domain.Status) *WorkerQueryBuilder
 	return b
 }
 
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *WorkerQueryBuilder) WhereStatusIn(v []domain.Status) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *WorkerQueryBuilder) WhereStatusNotIn(v []domain.Status) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.StatusNotIn(b.query, v)
+	return b
+}
+
 // WhereTypeEQ adds a WHERE type = ? condition
 func (b *WorkerQueryBuilder) WhereTypeEQ(v WorkerType) *WorkerQueryBuilder {
 	b.query = WorkerQuery.Where.TypeEQ(b.query, v)
@@ -1588,6 +1772,18 @@ func (b *WorkerQueryBuilder) WhereTypeEQ(v WorkerType) *WorkerQueryBuilder {
 // WhereTypeNEQ adds a WHERE type != ? condition
 func (b *WorkerQueryBuilder) WhereTypeNEQ(v WorkerType) *WorkerQueryBuilder {
 	b.query = WorkerQuery.Where.TypeNEQ(b.query, v)
+	return b
+}
+
+// WhereTypeIn adds a WHERE type IN (?) condition
+func (b *WorkerQueryBuilder) WhereTypeIn(v []WorkerType) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.TypeIn(b.query, v)
+	return b
+}
+
+// WhereTypeNotIn adds a WHERE type NOT IN (?) condition
+func (b *WorkerQueryBuilder) WhereTypeNotIn(v []WorkerType) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.TypeNotIn(b.query, v)
 	return b
 }
 
@@ -1939,6 +2135,18 @@ func (b *WorkerQueryBuilder) WhereGenderNEQ(v domain.Gender) *WorkerQueryBuilder
 	return b
 }
 
+// WhereGenderIn adds a WHERE gender IN (?) condition
+func (b *WorkerQueryBuilder) WhereGenderIn(v []domain.Gender) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.GenderIn(b.query, v)
+	return b
+}
+
+// WhereGenderNotIn adds a WHERE gender NOT IN (?) condition
+func (b *WorkerQueryBuilder) WhereGenderNotIn(v []domain.Gender) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.GenderNotIn(b.query, v)
+	return b
+}
+
 // WhereCanBeAssignedEQ adds a WHERE can_be_assigned = ? condition
 func (b *WorkerQueryBuilder) WhereCanBeAssignedEQ(v bool) *WorkerQueryBuilder {
 	b.query = WorkerQuery.Where.CanBeAssignedEQ(b.query, v)
@@ -1948,6 +2156,18 @@ func (b *WorkerQueryBuilder) WhereCanBeAssignedEQ(v bool) *WorkerQueryBuilder {
 // WhereCanBeAssignedNEQ adds a WHERE can_be_assigned != ? condition
 func (b *WorkerQueryBuilder) WhereCanBeAssignedNEQ(v bool) *WorkerQueryBuilder {
 	b.query = WorkerQuery.Where.CanBeAssignedNEQ(b.query, v)
+	return b
+}
+
+// WhereCanBeAssignedIn adds a WHERE can_be_assigned IN (?) condition
+func (b *WorkerQueryBuilder) WhereCanBeAssignedIn(v []bool) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.CanBeAssignedIn(b.query, v)
+	return b
+}
+
+// WhereCanBeAssignedNotIn adds a WHERE can_be_assigned NOT IN (?) condition
+func (b *WorkerQueryBuilder) WhereCanBeAssignedNotIn(v []bool) *WorkerQueryBuilder {
+	b.query = WorkerQuery.Where.CanBeAssignedNotIn(b.query, v)
 	return b
 }
 
@@ -2321,4 +2541,55 @@ func (b *WorkerQueryBuilder) First(ctx context.Context) (*Worker, error) {
 // WorkerBuild creates a chainable query builder
 func WorkerBuild(db bun.IDB) *WorkerQueryBuilder {
 	return NewWorkerQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *WorkerQueryBuilder) LoadBusinessUnit() *WorkerQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *WorkerQueryBuilder) LoadOrganization() *WorkerQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadState loads the State relationship
+func (b *WorkerQueryBuilder) LoadState() *WorkerQueryBuilder {
+	b.query = b.query.Relation("State")
+	return b
+}
+
+// LoadProfile loads the Profile relationship
+func (b *WorkerQueryBuilder) LoadProfile() *WorkerQueryBuilder {
+	b.query = b.query.Relation("Profile")
+	return b
+}
+
+// LoadPTO loads the PTO relationship
+func (b *WorkerQueryBuilder) LoadPTO(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *WorkerQueryBuilder {
+	if len(opts) > 0 {
+		b.query = b.query.Relation("PTO", func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		})
+	} else {
+		b.query = b.query.Relation("PTO")
+	}
+	return b
+}
+
+// LoadAllRelations loads all relationships for Worker
+func (b *WorkerQueryBuilder) LoadAllRelations() *WorkerQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadState()
+	b.LoadProfile()
+	b.LoadPTO()
+	return b
 }

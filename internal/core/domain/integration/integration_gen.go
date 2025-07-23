@@ -50,16 +50,26 @@ var IntegrationQuery = struct {
 	Where struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		EnabledByIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		EnabledByIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		EnabledByIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		EnabledByIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		EnabledByIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		EnabledByIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		TypeEQ               func(q *bun.SelectQuery, v Type) *bun.SelectQuery
 		TypeNEQ              func(q *bun.SelectQuery, v Type) *bun.SelectQuery
+		TypeIn               func(q *bun.SelectQuery, v []Type) *bun.SelectQuery
+		TypeNotIn            func(q *bun.SelectQuery, v []Type) *bun.SelectQuery
 		NameEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -95,10 +105,16 @@ var IntegrationQuery = struct {
 		BuiltByHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		EnabledEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		EnabledNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		EnabledIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		EnabledNotIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		CategoryEQ           func(q *bun.SelectQuery, v Category) *bun.SelectQuery
 		CategoryNEQ          func(q *bun.SelectQuery, v Category) *bun.SelectQuery
+		CategoryIn           func(q *bun.SelectQuery, v []Category) *bun.SelectQuery
+		CategoryNotIn        func(q *bun.SelectQuery, v []Category) *bun.SelectQuery
 		ConfigurationEQ      func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		ConfigurationNEQ     func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		ConfigurationIn      func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		ConfigurationNotIn   func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		VersionEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -145,6 +161,12 @@ var IntegrationQuery = struct {
 	FieldConfig  func() map[string]integrationFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+		EnabledBy    string
+	}
 }{
 	// Table and alias constants
 	Table:    "integrations",
@@ -200,16 +222,26 @@ var IntegrationQuery = struct {
 	Where: struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		EnabledByIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		EnabledByIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		EnabledByIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		EnabledByIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		EnabledByIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		EnabledByIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		TypeEQ               func(q *bun.SelectQuery, v Type) *bun.SelectQuery
 		TypeNEQ              func(q *bun.SelectQuery, v Type) *bun.SelectQuery
+		TypeIn               func(q *bun.SelectQuery, v []Type) *bun.SelectQuery
+		TypeNotIn            func(q *bun.SelectQuery, v []Type) *bun.SelectQuery
 		NameEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -245,10 +277,16 @@ var IntegrationQuery = struct {
 		BuiltByHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		EnabledEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		EnabledNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		EnabledIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		EnabledNotIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		CategoryEQ           func(q *bun.SelectQuery, v Category) *bun.SelectQuery
 		CategoryNEQ          func(q *bun.SelectQuery, v Category) *bun.SelectQuery
+		CategoryIn           func(q *bun.SelectQuery, v []Category) *bun.SelectQuery
+		CategoryNotIn        func(q *bun.SelectQuery, v []Category) *bun.SelectQuery
 		ConfigurationEQ      func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		ConfigurationNEQ     func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		ConfigurationIn      func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		ConfigurationNotIn   func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		VersionEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -281,11 +319,23 @@ var IntegrationQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("i.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("i.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("i.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("i.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("i.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("i.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("i.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("i.organization_id"), v)
@@ -293,11 +343,23 @@ var IntegrationQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("i.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("i.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("i.organization_id"), bun.In(v))
+		},
 		EnabledByIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("i.enabled_by_id"), v)
 		},
 		EnabledByIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("i.enabled_by_id"), v)
+		},
+		EnabledByIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("i.enabled_by_id"), bun.In(v))
+		},
+		EnabledByIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("i.enabled_by_id"), bun.In(v))
 		},
 		EnabledByIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("i.enabled_by_id"))
@@ -310,6 +372,12 @@ var IntegrationQuery = struct {
 		},
 		TypeNEQ: func(q *bun.SelectQuery, v Type) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("i.type"), v)
+		},
+		TypeIn: func(q *bun.SelectQuery, v []Type) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("i.type"), bun.In(v))
+		},
+		TypeNotIn: func(q *bun.SelectQuery, v []Type) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("i.type"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("i.name"), v)
@@ -416,17 +484,35 @@ var IntegrationQuery = struct {
 		EnabledNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("i.enabled"), v)
 		},
+		EnabledIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("i.enabled"), bun.In(v))
+		},
+		EnabledNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("i.enabled"), bun.In(v))
+		},
 		CategoryEQ: func(q *bun.SelectQuery, v Category) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("i.category"), v)
 		},
 		CategoryNEQ: func(q *bun.SelectQuery, v Category) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("i.category"), v)
 		},
+		CategoryIn: func(q *bun.SelectQuery, v []Category) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("i.category"), bun.In(v))
+		},
+		CategoryNotIn: func(q *bun.SelectQuery, v []Category) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("i.category"), bun.In(v))
+		},
 		ConfigurationEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("i.configuration"), v)
 		},
 		ConfigurationNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("i.configuration"), v)
+		},
+		ConfigurationIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("i.configuration"), bun.In(v))
+		},
+		ConfigurationNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("i.configuration"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("i.version"), v)
@@ -826,6 +912,16 @@ var IntegrationQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+		EnabledBy    string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+		EnabledBy:    "EnabledBy",
+	},
 }
 
 // IntegrationQueryBuilder provides a fluent interface for building queries
@@ -870,6 +966,18 @@ func (b *IntegrationQueryBuilder) WhereIDNEQ(v pulid.ID) *IntegrationQueryBuilde
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *IntegrationQueryBuilder) WhereIDIn(v []pulid.ID) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *IntegrationQueryBuilder) WhereIDNotIn(v []pulid.ID) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *IntegrationQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *IntegrationQueryBuilder {
 	b.query = IntegrationQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -879,6 +987,18 @@ func (b *IntegrationQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *Integration
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *IntegrationQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *IntegrationQueryBuilder {
 	b.query = IntegrationQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *IntegrationQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *IntegrationQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -894,6 +1014,18 @@ func (b *IntegrationQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *Integratio
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *IntegrationQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *IntegrationQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereEnabledByIDEQ adds a WHERE enabled_by_id = ? condition
 func (b *IntegrationQueryBuilder) WhereEnabledByIDEQ(v *pulid.ID) *IntegrationQueryBuilder {
 	b.query = IntegrationQuery.Where.EnabledByIDEQ(b.query, v)
@@ -906,6 +1038,18 @@ func (b *IntegrationQueryBuilder) WhereEnabledByIDNEQ(v *pulid.ID) *IntegrationQ
 	return b
 }
 
+// WhereEnabledByIDIn adds a WHERE enabled_by_id IN (?) condition
+func (b *IntegrationQueryBuilder) WhereEnabledByIDIn(v []*pulid.ID) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.EnabledByIDIn(b.query, v)
+	return b
+}
+
+// WhereEnabledByIDNotIn adds a WHERE enabled_by_id NOT IN (?) condition
+func (b *IntegrationQueryBuilder) WhereEnabledByIDNotIn(v []*pulid.ID) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.EnabledByIDNotIn(b.query, v)
+	return b
+}
+
 // WhereTypeEQ adds a WHERE type = ? condition
 func (b *IntegrationQueryBuilder) WhereTypeEQ(v Type) *IntegrationQueryBuilder {
 	b.query = IntegrationQuery.Where.TypeEQ(b.query, v)
@@ -915,6 +1059,18 @@ func (b *IntegrationQueryBuilder) WhereTypeEQ(v Type) *IntegrationQueryBuilder {
 // WhereTypeNEQ adds a WHERE type != ? condition
 func (b *IntegrationQueryBuilder) WhereTypeNEQ(v Type) *IntegrationQueryBuilder {
 	b.query = IntegrationQuery.Where.TypeNEQ(b.query, v)
+	return b
+}
+
+// WhereTypeIn adds a WHERE type IN (?) condition
+func (b *IntegrationQueryBuilder) WhereTypeIn(v []Type) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.TypeIn(b.query, v)
+	return b
+}
+
+// WhereTypeNotIn adds a WHERE type NOT IN (?) condition
+func (b *IntegrationQueryBuilder) WhereTypeNotIn(v []Type) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.TypeNotIn(b.query, v)
 	return b
 }
 
@@ -1056,6 +1212,18 @@ func (b *IntegrationQueryBuilder) WhereEnabledNEQ(v bool) *IntegrationQueryBuild
 	return b
 }
 
+// WhereEnabledIn adds a WHERE enabled IN (?) condition
+func (b *IntegrationQueryBuilder) WhereEnabledIn(v []bool) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.EnabledIn(b.query, v)
+	return b
+}
+
+// WhereEnabledNotIn adds a WHERE enabled NOT IN (?) condition
+func (b *IntegrationQueryBuilder) WhereEnabledNotIn(v []bool) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.EnabledNotIn(b.query, v)
+	return b
+}
+
 // WhereCategoryEQ adds a WHERE category = ? condition
 func (b *IntegrationQueryBuilder) WhereCategoryEQ(v Category) *IntegrationQueryBuilder {
 	b.query = IntegrationQuery.Where.CategoryEQ(b.query, v)
@@ -1068,6 +1236,18 @@ func (b *IntegrationQueryBuilder) WhereCategoryNEQ(v Category) *IntegrationQuery
 	return b
 }
 
+// WhereCategoryIn adds a WHERE category IN (?) condition
+func (b *IntegrationQueryBuilder) WhereCategoryIn(v []Category) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.CategoryIn(b.query, v)
+	return b
+}
+
+// WhereCategoryNotIn adds a WHERE category NOT IN (?) condition
+func (b *IntegrationQueryBuilder) WhereCategoryNotIn(v []Category) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.CategoryNotIn(b.query, v)
+	return b
+}
+
 // WhereConfigurationEQ adds a WHERE configuration = ? condition
 func (b *IntegrationQueryBuilder) WhereConfigurationEQ(v map[string]any) *IntegrationQueryBuilder {
 	b.query = IntegrationQuery.Where.ConfigurationEQ(b.query, v)
@@ -1077,6 +1257,18 @@ func (b *IntegrationQueryBuilder) WhereConfigurationEQ(v map[string]any) *Integr
 // WhereConfigurationNEQ adds a WHERE configuration != ? condition
 func (b *IntegrationQueryBuilder) WhereConfigurationNEQ(v map[string]any) *IntegrationQueryBuilder {
 	b.query = IntegrationQuery.Where.ConfigurationNEQ(b.query, v)
+	return b
+}
+
+// WhereConfigurationIn adds a WHERE configuration IN (?) condition
+func (b *IntegrationQueryBuilder) WhereConfigurationIn(v []map[string]any) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.ConfigurationIn(b.query, v)
+	return b
+}
+
+// WhereConfigurationNotIn adds a WHERE configuration NOT IN (?) condition
+func (b *IntegrationQueryBuilder) WhereConfigurationNotIn(v []map[string]any) *IntegrationQueryBuilder {
+	b.query = IntegrationQuery.Where.ConfigurationNotIn(b.query, v)
 	return b
 }
 
@@ -1324,4 +1516,32 @@ func (b *IntegrationQueryBuilder) First(ctx context.Context) (*Integration, erro
 // IntegrationBuild creates a chainable query builder
 func IntegrationBuild(db bun.IDB) *IntegrationQueryBuilder {
 	return NewIntegrationQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *IntegrationQueryBuilder) LoadBusinessUnit() *IntegrationQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *IntegrationQueryBuilder) LoadOrganization() *IntegrationQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadEnabledBy loads the EnabledBy relationship
+func (b *IntegrationQueryBuilder) LoadEnabledBy() *IntegrationQueryBuilder {
+	b.query = b.query.Relation("EnabledBy")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Integration
+func (b *IntegrationQueryBuilder) LoadAllRelations() *IntegrationQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadEnabledBy()
+	return b
 }

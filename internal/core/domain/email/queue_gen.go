@@ -56,110 +56,140 @@ var QueueQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ProfileIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ProfileIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		TemplateIDEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
-		TemplateIDNEQ         func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
-		TemplateIDIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
-		TemplateIDIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
-		ToAddressesEQ         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ToAddressesNEQ        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CCAddressesEQ         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CCAddressesNEQ        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		BCCAddressesEQ        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		BCCAddressesNEQ       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SubjectEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SubjectNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SubjectGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		HTMLBodyNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		HTMLBodyGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TextBodyNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TextBodyGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AttachmentsEQ         func(q *bun.SelectQuery, v []AttachmentMeta) *bun.SelectQuery
-		AttachmentsNEQ        func(q *bun.SelectQuery, v []AttachmentMeta) *bun.SelectQuery
-		PriorityEQ            func(q *bun.SelectQuery, v Priority) *bun.SelectQuery
-		PriorityNEQ           func(q *bun.SelectQuery, v Priority) *bun.SelectQuery
-		StatusEQ              func(q *bun.SelectQuery, v QueueStatus) *bun.SelectQuery
-		StatusNEQ             func(q *bun.SelectQuery, v QueueStatus) *bun.SelectQuery
-		ScheduledAtEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
-		ScheduledAtNEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
-		ScheduledAtIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
-		ScheduledAtIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
-		SentAtEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
-		SentAtNEQ             func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
-		SentAtIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
-		SentAtIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
-		ErrorMessageEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ErrorMessageNotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ErrorMessageGT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageGTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageLT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageLTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageContains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageHasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RetryCountEQ          func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RetryCountNEQ         func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RetryCountIn          func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		RetryCountNotIn       func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		RetryCountGT          func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RetryCountGTE         func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RetryCountLT          func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RetryCountLTE         func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		TemplateVariablesEQ   func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
-		TemplateVariablesNEQ  func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
-		MetadataEQ            func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
-		MetadataNEQ           func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
-		CreatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ProfileIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ProfileIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ProfileIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ProfileIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		TemplateIDEQ           func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TemplateIDNEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TemplateIDIn           func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TemplateIDNotIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TemplateIDIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
+		TemplateIDIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
+		ToAddressesEQ          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ToAddressesNEQ         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ToAddressesIn          func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		ToAddressesNotIn       func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		CCAddressesEQ          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CCAddressesNEQ         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CCAddressesIn          func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		CCAddressesNotIn       func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		BCCAddressesEQ         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		BCCAddressesNEQ        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		BCCAddressesIn         func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		BCCAddressesNotIn      func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		SubjectEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectNEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SubjectNotIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SubjectGT              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectGTE             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectLT              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectLTE             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectContains        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectHasPrefix       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectHasSuffix       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		HTMLBodyNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		HTMLBodyGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TextBodyNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TextBodyGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AttachmentsEQ          func(q *bun.SelectQuery, v []AttachmentMeta) *bun.SelectQuery
+		AttachmentsNEQ         func(q *bun.SelectQuery, v []AttachmentMeta) *bun.SelectQuery
+		AttachmentsIn          func(q *bun.SelectQuery, v [][]AttachmentMeta) *bun.SelectQuery
+		AttachmentsNotIn       func(q *bun.SelectQuery, v [][]AttachmentMeta) *bun.SelectQuery
+		PriorityEQ             func(q *bun.SelectQuery, v Priority) *bun.SelectQuery
+		PriorityNEQ            func(q *bun.SelectQuery, v Priority) *bun.SelectQuery
+		PriorityIn             func(q *bun.SelectQuery, v []Priority) *bun.SelectQuery
+		PriorityNotIn          func(q *bun.SelectQuery, v []Priority) *bun.SelectQuery
+		StatusEQ               func(q *bun.SelectQuery, v QueueStatus) *bun.SelectQuery
+		StatusNEQ              func(q *bun.SelectQuery, v QueueStatus) *bun.SelectQuery
+		StatusIn               func(q *bun.SelectQuery, v []QueueStatus) *bun.SelectQuery
+		StatusNotIn            func(q *bun.SelectQuery, v []QueueStatus) *bun.SelectQuery
+		ScheduledAtEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ScheduledAtNEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ScheduledAtIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ScheduledAtNotIn       func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ScheduledAtIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
+		ScheduledAtIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
+		SentAtEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		SentAtNEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		SentAtIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		SentAtNotIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		SentAtIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
+		SentAtIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
+		ErrorMessageEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ErrorMessageNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ErrorMessageGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RetryCountEQ           func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RetryCountNEQ          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RetryCountIn           func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		RetryCountNotIn        func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		RetryCountGT           func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RetryCountGTE          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RetryCountLT           func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RetryCountLTE          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		TemplateVariablesEQ    func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		TemplateVariablesNEQ   func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		TemplateVariablesIn    func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		TemplateVariablesNotIn func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataEQ             func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataNEQ            func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn             func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn          func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		CreatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -182,6 +212,13 @@ var QueueQuery = struct {
 	FieldConfig  func() map[string]queueFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+		Profile      string
+		Template     string
+	}
 }{
 	// Table and alias constants
 	Table:    "email_queues",
@@ -251,111 +288,141 @@ var QueueQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ProfileIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ProfileIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		TemplateIDEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
-		TemplateIDNEQ         func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
-		TemplateIDIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
-		TemplateIDIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
-		ToAddressesEQ         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ToAddressesNEQ        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CCAddressesEQ         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CCAddressesNEQ        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		BCCAddressesEQ        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		BCCAddressesNEQ       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SubjectEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SubjectNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SubjectGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SubjectHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		HTMLBodyNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		HTMLBodyGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HTMLBodyHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TextBodyNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TextBodyGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TextBodyHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AttachmentsEQ         func(q *bun.SelectQuery, v []AttachmentMeta) *bun.SelectQuery
-		AttachmentsNEQ        func(q *bun.SelectQuery, v []AttachmentMeta) *bun.SelectQuery
-		PriorityEQ            func(q *bun.SelectQuery, v Priority) *bun.SelectQuery
-		PriorityNEQ           func(q *bun.SelectQuery, v Priority) *bun.SelectQuery
-		StatusEQ              func(q *bun.SelectQuery, v QueueStatus) *bun.SelectQuery
-		StatusNEQ             func(q *bun.SelectQuery, v QueueStatus) *bun.SelectQuery
-		ScheduledAtEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
-		ScheduledAtNEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
-		ScheduledAtIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
-		ScheduledAtIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
-		SentAtEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
-		SentAtNEQ             func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
-		SentAtIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
-		SentAtIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
-		ErrorMessageEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ErrorMessageNotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ErrorMessageGT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageGTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageLT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageLTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageContains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageHasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ErrorMessageHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RetryCountEQ          func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RetryCountNEQ         func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RetryCountIn          func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		RetryCountNotIn       func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		RetryCountGT          func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RetryCountGTE         func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RetryCountLT          func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		RetryCountLTE         func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		TemplateVariablesEQ   func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
-		TemplateVariablesNEQ  func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
-		MetadataEQ            func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
-		MetadataNEQ           func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
-		CreatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		Tenant                func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ProfileIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ProfileIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ProfileIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ProfileIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		TemplateIDEQ           func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TemplateIDNEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TemplateIDIn           func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TemplateIDNotIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TemplateIDIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
+		TemplateIDIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
+		ToAddressesEQ          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ToAddressesNEQ         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ToAddressesIn          func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		ToAddressesNotIn       func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		CCAddressesEQ          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CCAddressesNEQ         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CCAddressesIn          func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		CCAddressesNotIn       func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		BCCAddressesEQ         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		BCCAddressesNEQ        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		BCCAddressesIn         func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		BCCAddressesNotIn      func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		SubjectEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectNEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SubjectNotIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SubjectGT              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectGTE             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectLT              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectLTE             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectContains        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectHasPrefix       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SubjectHasSuffix       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		HTMLBodyNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		HTMLBodyGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HTMLBodyHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TextBodyNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TextBodyGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TextBodyHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AttachmentsEQ          func(q *bun.SelectQuery, v []AttachmentMeta) *bun.SelectQuery
+		AttachmentsNEQ         func(q *bun.SelectQuery, v []AttachmentMeta) *bun.SelectQuery
+		AttachmentsIn          func(q *bun.SelectQuery, v [][]AttachmentMeta) *bun.SelectQuery
+		AttachmentsNotIn       func(q *bun.SelectQuery, v [][]AttachmentMeta) *bun.SelectQuery
+		PriorityEQ             func(q *bun.SelectQuery, v Priority) *bun.SelectQuery
+		PriorityNEQ            func(q *bun.SelectQuery, v Priority) *bun.SelectQuery
+		PriorityIn             func(q *bun.SelectQuery, v []Priority) *bun.SelectQuery
+		PriorityNotIn          func(q *bun.SelectQuery, v []Priority) *bun.SelectQuery
+		StatusEQ               func(q *bun.SelectQuery, v QueueStatus) *bun.SelectQuery
+		StatusNEQ              func(q *bun.SelectQuery, v QueueStatus) *bun.SelectQuery
+		StatusIn               func(q *bun.SelectQuery, v []QueueStatus) *bun.SelectQuery
+		StatusNotIn            func(q *bun.SelectQuery, v []QueueStatus) *bun.SelectQuery
+		ScheduledAtEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ScheduledAtNEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ScheduledAtIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ScheduledAtNotIn       func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ScheduledAtIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
+		ScheduledAtIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
+		SentAtEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		SentAtNEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		SentAtIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		SentAtNotIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		SentAtIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
+		SentAtIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
+		ErrorMessageEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ErrorMessageNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ErrorMessageGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ErrorMessageHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RetryCountEQ           func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RetryCountNEQ          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RetryCountIn           func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		RetryCountNotIn        func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		RetryCountGT           func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RetryCountGTE          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RetryCountLT           func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		RetryCountLTE          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		TemplateVariablesEQ    func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		TemplateVariablesNEQ   func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		TemplateVariablesIn    func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		TemplateVariablesNotIn func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataEQ             func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataNEQ            func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn             func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn          func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		CreatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		Tenant                 func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("eq.id"), v)
@@ -363,11 +430,23 @@ var QueueQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("eq.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.organization_id"), bun.In(v))
 		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("eq.business_unit_id"), v)
@@ -375,17 +454,35 @@ var QueueQuery = struct {
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.business_unit_id"), bun.In(v))
+		},
 		ProfileIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("eq.profile_id"), v)
 		},
 		ProfileIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.profile_id"), v)
 		},
+		ProfileIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.profile_id"), bun.In(v))
+		},
+		ProfileIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.profile_id"), bun.In(v))
+		},
 		TemplateIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("eq.template_id"), v)
 		},
 		TemplateIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.template_id"), v)
+		},
+		TemplateIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.template_id"), bun.In(v))
+		},
+		TemplateIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.template_id"), bun.In(v))
 		},
 		TemplateIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("eq.template_id"))
@@ -399,17 +496,35 @@ var QueueQuery = struct {
 		ToAddressesNEQ: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.to_addresses"), v)
 		},
+		ToAddressesIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.to_addresses"), bun.In(v))
+		},
+		ToAddressesNotIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.to_addresses"), bun.In(v))
+		},
 		CCAddressesEQ: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("eq.cc_addresses"), v)
 		},
 		CCAddressesNEQ: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.cc_addresses"), v)
 		},
+		CCAddressesIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.cc_addresses"), bun.In(v))
+		},
+		CCAddressesNotIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.cc_addresses"), bun.In(v))
+		},
 		BCCAddressesEQ: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("eq.bcc_addresses"), v)
 		},
 		BCCAddressesNEQ: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.bcc_addresses"), v)
+		},
+		BCCAddressesIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.bcc_addresses"), bun.In(v))
+		},
+		BCCAddressesNotIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.bcc_addresses"), bun.In(v))
 		},
 		SubjectEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("eq.subject"), v)
@@ -516,11 +631,23 @@ var QueueQuery = struct {
 		AttachmentsNEQ: func(q *bun.SelectQuery, v []AttachmentMeta) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.attachments"), v)
 		},
+		AttachmentsIn: func(q *bun.SelectQuery, v [][]AttachmentMeta) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.attachments"), bun.In(v))
+		},
+		AttachmentsNotIn: func(q *bun.SelectQuery, v [][]AttachmentMeta) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.attachments"), bun.In(v))
+		},
 		PriorityEQ: func(q *bun.SelectQuery, v Priority) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("eq.priority"), v)
 		},
 		PriorityNEQ: func(q *bun.SelectQuery, v Priority) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.priority"), v)
+		},
+		PriorityIn: func(q *bun.SelectQuery, v []Priority) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.priority"), bun.In(v))
+		},
+		PriorityNotIn: func(q *bun.SelectQuery, v []Priority) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.priority"), bun.In(v))
 		},
 		StatusEQ: func(q *bun.SelectQuery, v QueueStatus) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("eq.status"), v)
@@ -528,11 +655,23 @@ var QueueQuery = struct {
 		StatusNEQ: func(q *bun.SelectQuery, v QueueStatus) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.status"), v)
 		},
+		StatusIn: func(q *bun.SelectQuery, v []QueueStatus) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []QueueStatus) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.status"), bun.In(v))
+		},
 		ScheduledAtEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("eq.scheduled_at"), v)
 		},
 		ScheduledAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.scheduled_at"), v)
+		},
+		ScheduledAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.scheduled_at"), bun.In(v))
+		},
+		ScheduledAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.scheduled_at"), bun.In(v))
 		},
 		ScheduledAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("eq.scheduled_at"))
@@ -545,6 +684,12 @@ var QueueQuery = struct {
 		},
 		SentAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.sent_at"), v)
+		},
+		SentAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.sent_at"), bun.In(v))
+		},
+		SentAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.sent_at"), bun.In(v))
 		},
 		SentAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("eq.sent_at"))
@@ -615,11 +760,23 @@ var QueueQuery = struct {
 		TemplateVariablesNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.template_variables"), v)
 		},
+		TemplateVariablesIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.template_variables"), bun.In(v))
+		},
+		TemplateVariablesNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.template_variables"), bun.In(v))
+		},
 		MetadataEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("eq.metadata"), v)
 		},
 		MetadataNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("eq.metadata"), v)
+		},
+		MetadataIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("eq.metadata"), bun.In(v))
+		},
+		MetadataNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("eq.metadata"), bun.In(v))
 		},
 		CreatedAtEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("eq.created_at"), v)
@@ -1140,6 +1297,18 @@ var QueueQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+		Profile      string
+		Template     string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+		Profile:      "Profile",
+		Template:     "Template",
+	},
 }
 
 // QueueQueryBuilder provides a fluent interface for building queries
@@ -1184,6 +1353,18 @@ func (b *QueueQueryBuilder) WhereIDNEQ(v pulid.ID) *QueueQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *QueueQueryBuilder) WhereIDIn(v []pulid.ID) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereIDNotIn(v []pulid.ID) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *QueueQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.OrganizationIDEQ(b.query, v)
@@ -1193,6 +1374,18 @@ func (b *QueueQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *QueueQueryBuilder
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *QueueQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *QueueQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1208,6 +1401,18 @@ func (b *QueueQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *QueueQueryBuilde
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *QueueQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereProfileIDEQ adds a WHERE profile_id = ? condition
 func (b *QueueQueryBuilder) WhereProfileIDEQ(v pulid.ID) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.ProfileIDEQ(b.query, v)
@@ -1217,6 +1422,18 @@ func (b *QueueQueryBuilder) WhereProfileIDEQ(v pulid.ID) *QueueQueryBuilder {
 // WhereProfileIDNEQ adds a WHERE profile_id != ? condition
 func (b *QueueQueryBuilder) WhereProfileIDNEQ(v pulid.ID) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.ProfileIDNEQ(b.query, v)
+	return b
+}
+
+// WhereProfileIDIn adds a WHERE profile_id IN (?) condition
+func (b *QueueQueryBuilder) WhereProfileIDIn(v []pulid.ID) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.ProfileIDIn(b.query, v)
+	return b
+}
+
+// WhereProfileIDNotIn adds a WHERE profile_id NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereProfileIDNotIn(v []pulid.ID) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.ProfileIDNotIn(b.query, v)
 	return b
 }
 
@@ -1232,6 +1449,18 @@ func (b *QueueQueryBuilder) WhereTemplateIDNEQ(v *pulid.ID) *QueueQueryBuilder {
 	return b
 }
 
+// WhereTemplateIDIn adds a WHERE template_id IN (?) condition
+func (b *QueueQueryBuilder) WhereTemplateIDIn(v []*pulid.ID) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.TemplateIDIn(b.query, v)
+	return b
+}
+
+// WhereTemplateIDNotIn adds a WHERE template_id NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereTemplateIDNotIn(v []*pulid.ID) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.TemplateIDNotIn(b.query, v)
+	return b
+}
+
 // WhereToAddressesEQ adds a WHERE to_addresses = ? condition
 func (b *QueueQueryBuilder) WhereToAddressesEQ(v []string) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.ToAddressesEQ(b.query, v)
@@ -1241,6 +1470,18 @@ func (b *QueueQueryBuilder) WhereToAddressesEQ(v []string) *QueueQueryBuilder {
 // WhereToAddressesNEQ adds a WHERE to_addresses != ? condition
 func (b *QueueQueryBuilder) WhereToAddressesNEQ(v []string) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.ToAddressesNEQ(b.query, v)
+	return b
+}
+
+// WhereToAddressesIn adds a WHERE to_addresses IN (?) condition
+func (b *QueueQueryBuilder) WhereToAddressesIn(v [][]string) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.ToAddressesIn(b.query, v)
+	return b
+}
+
+// WhereToAddressesNotIn adds a WHERE to_addresses NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereToAddressesNotIn(v [][]string) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.ToAddressesNotIn(b.query, v)
 	return b
 }
 
@@ -1256,6 +1497,18 @@ func (b *QueueQueryBuilder) WhereCCAddressesNEQ(v []string) *QueueQueryBuilder {
 	return b
 }
 
+// WhereCCAddressesIn adds a WHERE cc_addresses IN (?) condition
+func (b *QueueQueryBuilder) WhereCCAddressesIn(v [][]string) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.CCAddressesIn(b.query, v)
+	return b
+}
+
+// WhereCCAddressesNotIn adds a WHERE cc_addresses NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereCCAddressesNotIn(v [][]string) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.CCAddressesNotIn(b.query, v)
+	return b
+}
+
 // WhereBCCAddressesEQ adds a WHERE bcc_addresses = ? condition
 func (b *QueueQueryBuilder) WhereBCCAddressesEQ(v []string) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.BCCAddressesEQ(b.query, v)
@@ -1265,6 +1518,18 @@ func (b *QueueQueryBuilder) WhereBCCAddressesEQ(v []string) *QueueQueryBuilder {
 // WhereBCCAddressesNEQ adds a WHERE bcc_addresses != ? condition
 func (b *QueueQueryBuilder) WhereBCCAddressesNEQ(v []string) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.BCCAddressesNEQ(b.query, v)
+	return b
+}
+
+// WhereBCCAddressesIn adds a WHERE bcc_addresses IN (?) condition
+func (b *QueueQueryBuilder) WhereBCCAddressesIn(v [][]string) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.BCCAddressesIn(b.query, v)
+	return b
+}
+
+// WhereBCCAddressesNotIn adds a WHERE bcc_addresses NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereBCCAddressesNotIn(v [][]string) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.BCCAddressesNotIn(b.query, v)
 	return b
 }
 
@@ -1406,6 +1671,18 @@ func (b *QueueQueryBuilder) WhereAttachmentsNEQ(v []AttachmentMeta) *QueueQueryB
 	return b
 }
 
+// WhereAttachmentsIn adds a WHERE attachments IN (?) condition
+func (b *QueueQueryBuilder) WhereAttachmentsIn(v [][]AttachmentMeta) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.AttachmentsIn(b.query, v)
+	return b
+}
+
+// WhereAttachmentsNotIn adds a WHERE attachments NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereAttachmentsNotIn(v [][]AttachmentMeta) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.AttachmentsNotIn(b.query, v)
+	return b
+}
+
 // WherePriorityEQ adds a WHERE priority = ? condition
 func (b *QueueQueryBuilder) WherePriorityEQ(v Priority) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.PriorityEQ(b.query, v)
@@ -1415,6 +1692,18 @@ func (b *QueueQueryBuilder) WherePriorityEQ(v Priority) *QueueQueryBuilder {
 // WherePriorityNEQ adds a WHERE priority != ? condition
 func (b *QueueQueryBuilder) WherePriorityNEQ(v Priority) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.PriorityNEQ(b.query, v)
+	return b
+}
+
+// WherePriorityIn adds a WHERE priority IN (?) condition
+func (b *QueueQueryBuilder) WherePriorityIn(v []Priority) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.PriorityIn(b.query, v)
+	return b
+}
+
+// WherePriorityNotIn adds a WHERE priority NOT IN (?) condition
+func (b *QueueQueryBuilder) WherePriorityNotIn(v []Priority) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.PriorityNotIn(b.query, v)
 	return b
 }
 
@@ -1430,6 +1719,18 @@ func (b *QueueQueryBuilder) WhereStatusNEQ(v QueueStatus) *QueueQueryBuilder {
 	return b
 }
 
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *QueueQueryBuilder) WhereStatusIn(v []QueueStatus) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereStatusNotIn(v []QueueStatus) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.StatusNotIn(b.query, v)
+	return b
+}
+
 // WhereScheduledAtEQ adds a WHERE scheduled_at = ? condition
 func (b *QueueQueryBuilder) WhereScheduledAtEQ(v *int64) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.ScheduledAtEQ(b.query, v)
@@ -1442,6 +1743,18 @@ func (b *QueueQueryBuilder) WhereScheduledAtNEQ(v *int64) *QueueQueryBuilder {
 	return b
 }
 
+// WhereScheduledAtIn adds a WHERE scheduled_at IN (?) condition
+func (b *QueueQueryBuilder) WhereScheduledAtIn(v []*int64) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.ScheduledAtIn(b.query, v)
+	return b
+}
+
+// WhereScheduledAtNotIn adds a WHERE scheduled_at NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereScheduledAtNotIn(v []*int64) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.ScheduledAtNotIn(b.query, v)
+	return b
+}
+
 // WhereSentAtEQ adds a WHERE sent_at = ? condition
 func (b *QueueQueryBuilder) WhereSentAtEQ(v *int64) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.SentAtEQ(b.query, v)
@@ -1451,6 +1764,18 @@ func (b *QueueQueryBuilder) WhereSentAtEQ(v *int64) *QueueQueryBuilder {
 // WhereSentAtNEQ adds a WHERE sent_at != ? condition
 func (b *QueueQueryBuilder) WhereSentAtNEQ(v *int64) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.SentAtNEQ(b.query, v)
+	return b
+}
+
+// WhereSentAtIn adds a WHERE sent_at IN (?) condition
+func (b *QueueQueryBuilder) WhereSentAtIn(v []*int64) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.SentAtIn(b.query, v)
+	return b
+}
+
+// WhereSentAtNotIn adds a WHERE sent_at NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereSentAtNotIn(v []*int64) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.SentAtNotIn(b.query, v)
 	return b
 }
 
@@ -1556,6 +1881,18 @@ func (b *QueueQueryBuilder) WhereTemplateVariablesNEQ(v map[string]any) *QueueQu
 	return b
 }
 
+// WhereTemplateVariablesIn adds a WHERE template_variables IN (?) condition
+func (b *QueueQueryBuilder) WhereTemplateVariablesIn(v []map[string]any) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.TemplateVariablesIn(b.query, v)
+	return b
+}
+
+// WhereTemplateVariablesNotIn adds a WHERE template_variables NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereTemplateVariablesNotIn(v []map[string]any) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.TemplateVariablesNotIn(b.query, v)
+	return b
+}
+
 // WhereMetadataEQ adds a WHERE metadata = ? condition
 func (b *QueueQueryBuilder) WhereMetadataEQ(v map[string]any) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.MetadataEQ(b.query, v)
@@ -1565,6 +1902,18 @@ func (b *QueueQueryBuilder) WhereMetadataEQ(v map[string]any) *QueueQueryBuilder
 // WhereMetadataNEQ adds a WHERE metadata != ? condition
 func (b *QueueQueryBuilder) WhereMetadataNEQ(v map[string]any) *QueueQueryBuilder {
 	b.query = QueueQuery.Where.MetadataNEQ(b.query, v)
+	return b
+}
+
+// WhereMetadataIn adds a WHERE metadata IN (?) condition
+func (b *QueueQueryBuilder) WhereMetadataIn(v []map[string]any) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.MetadataIn(b.query, v)
+	return b
+}
+
+// WhereMetadataNotIn adds a WHERE metadata NOT IN (?) condition
+func (b *QueueQueryBuilder) WhereMetadataNotIn(v []map[string]any) *QueueQueryBuilder {
+	b.query = QueueQuery.Where.MetadataNotIn(b.query, v)
 	return b
 }
 
@@ -1764,4 +2113,39 @@ func (b *QueueQueryBuilder) First(ctx context.Context) (*Queue, error) {
 // QueueBuild creates a chainable query builder
 func QueueBuild(db bun.IDB) *QueueQueryBuilder {
 	return NewQueueQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *QueueQueryBuilder) LoadBusinessUnit() *QueueQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *QueueQueryBuilder) LoadOrganization() *QueueQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadProfile loads the Profile relationship
+func (b *QueueQueryBuilder) LoadProfile() *QueueQueryBuilder {
+	b.query = b.query.Relation("Profile")
+	return b
+}
+
+// LoadTemplate loads the Template relationship
+func (b *QueueQueryBuilder) LoadTemplate() *QueueQueryBuilder {
+	b.query = b.query.Relation("Template")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Queue
+func (b *QueueQueryBuilder) LoadAllRelations() *QueueQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadProfile()
+	b.LoadTemplate()
+	return b
 }

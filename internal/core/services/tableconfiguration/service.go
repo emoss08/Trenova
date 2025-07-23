@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	tcdomain "github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -61,7 +62,7 @@ func NewService(p ServiceParams) *Service {
 func (s *Service) List(
 	ctx context.Context,
 	opts *repositories.TableConfigurationFilters,
-) (*repositories.ListTableConfigurationResult, error) {
+) (*ports.ListResult[*tableconfiguration.Configuration], error) {
 	log := s.l.With().Str("operation", "List").Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{

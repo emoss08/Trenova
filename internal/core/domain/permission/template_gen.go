@@ -44,6 +44,8 @@ var TemplateQuery = struct {
 	Where struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -68,10 +70,16 @@ var TemplateQuery = struct {
 		DescriptionHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		PermissionsEQ        func(q *bun.SelectQuery, v []Permission) *bun.SelectQuery
 		PermissionsNEQ       func(q *bun.SelectQuery, v []Permission) *bun.SelectQuery
+		PermissionsIn        func(q *bun.SelectQuery, v [][]Permission) *bun.SelectQuery
+		PermissionsNotIn     func(q *bun.SelectQuery, v [][]Permission) *bun.SelectQuery
 		FieldSettingsEQ      func(q *bun.SelectQuery, v []FieldPermission) *bun.SelectQuery
 		FieldSettingsNEQ     func(q *bun.SelectQuery, v []FieldPermission) *bun.SelectQuery
+		FieldSettingsIn      func(q *bun.SelectQuery, v [][]FieldPermission) *bun.SelectQuery
+		FieldSettingsNotIn   func(q *bun.SelectQuery, v [][]FieldPermission) *bun.SelectQuery
 		IsSystemEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsSystemNEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemIn           func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsSystemNotIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		CreatedAtEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -151,6 +159,8 @@ var TemplateQuery = struct {
 	Where: struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -175,10 +185,16 @@ var TemplateQuery = struct {
 		DescriptionHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		PermissionsEQ        func(q *bun.SelectQuery, v []Permission) *bun.SelectQuery
 		PermissionsNEQ       func(q *bun.SelectQuery, v []Permission) *bun.SelectQuery
+		PermissionsIn        func(q *bun.SelectQuery, v [][]Permission) *bun.SelectQuery
+		PermissionsNotIn     func(q *bun.SelectQuery, v [][]Permission) *bun.SelectQuery
 		FieldSettingsEQ      func(q *bun.SelectQuery, v []FieldPermission) *bun.SelectQuery
 		FieldSettingsNEQ     func(q *bun.SelectQuery, v []FieldPermission) *bun.SelectQuery
+		FieldSettingsIn      func(q *bun.SelectQuery, v [][]FieldPermission) *bun.SelectQuery
+		FieldSettingsNotIn   func(q *bun.SelectQuery, v [][]FieldPermission) *bun.SelectQuery
 		IsSystemEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsSystemNEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemIn           func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsSystemNotIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		CreatedAtEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -201,6 +217,12 @@ var TemplateQuery = struct {
 		},
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pt.id"), v)
+		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pt.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pt.id"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pt.name"), v)
@@ -274,17 +296,35 @@ var TemplateQuery = struct {
 		PermissionsNEQ: func(q *bun.SelectQuery, v []Permission) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pt.permissions"), v)
 		},
+		PermissionsIn: func(q *bun.SelectQuery, v [][]Permission) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pt.permissions"), bun.In(v))
+		},
+		PermissionsNotIn: func(q *bun.SelectQuery, v [][]Permission) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pt.permissions"), bun.In(v))
+		},
 		FieldSettingsEQ: func(q *bun.SelectQuery, v []FieldPermission) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pt.field_settings"), v)
 		},
 		FieldSettingsNEQ: func(q *bun.SelectQuery, v []FieldPermission) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pt.field_settings"), v)
 		},
+		FieldSettingsIn: func(q *bun.SelectQuery, v [][]FieldPermission) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pt.field_settings"), bun.In(v))
+		},
+		FieldSettingsNotIn: func(q *bun.SelectQuery, v [][]FieldPermission) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pt.field_settings"), bun.In(v))
+		},
 		IsSystemEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pt.is_system"), v)
 		},
 		IsSystemNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pt.is_system"), v)
+		},
+		IsSystemIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pt.is_system"), bun.In(v))
+		},
+		IsSystemNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pt.is_system"), bun.In(v))
 		},
 		CreatedAtEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pt.created_at"), v)
@@ -584,6 +624,18 @@ func (b *TemplateQueryBuilder) WhereIDNEQ(v pulid.ID) *TemplateQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *TemplateQueryBuilder) WhereIDIn(v []pulid.ID) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *TemplateQueryBuilder) WhereIDNotIn(v []pulid.ID) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereNameEQ adds a WHERE name = ? condition
 func (b *TemplateQueryBuilder) WhereNameEQ(v string) *TemplateQueryBuilder {
 	b.query = TemplateQuery.Where.NameEQ(b.query, v)
@@ -680,6 +732,18 @@ func (b *TemplateQueryBuilder) WherePermissionsNEQ(v []Permission) *TemplateQuer
 	return b
 }
 
+// WherePermissionsIn adds a WHERE permissions IN (?) condition
+func (b *TemplateQueryBuilder) WherePermissionsIn(v [][]Permission) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.PermissionsIn(b.query, v)
+	return b
+}
+
+// WherePermissionsNotIn adds a WHERE permissions NOT IN (?) condition
+func (b *TemplateQueryBuilder) WherePermissionsNotIn(v [][]Permission) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.PermissionsNotIn(b.query, v)
+	return b
+}
+
 // WhereFieldSettingsEQ adds a WHERE field_settings = ? condition
 func (b *TemplateQueryBuilder) WhereFieldSettingsEQ(v []FieldPermission) *TemplateQueryBuilder {
 	b.query = TemplateQuery.Where.FieldSettingsEQ(b.query, v)
@@ -692,6 +756,18 @@ func (b *TemplateQueryBuilder) WhereFieldSettingsNEQ(v []FieldPermission) *Templ
 	return b
 }
 
+// WhereFieldSettingsIn adds a WHERE field_settings IN (?) condition
+func (b *TemplateQueryBuilder) WhereFieldSettingsIn(v [][]FieldPermission) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.FieldSettingsIn(b.query, v)
+	return b
+}
+
+// WhereFieldSettingsNotIn adds a WHERE field_settings NOT IN (?) condition
+func (b *TemplateQueryBuilder) WhereFieldSettingsNotIn(v [][]FieldPermission) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.FieldSettingsNotIn(b.query, v)
+	return b
+}
+
 // WhereIsSystemEQ adds a WHERE is_system = ? condition
 func (b *TemplateQueryBuilder) WhereIsSystemEQ(v bool) *TemplateQueryBuilder {
 	b.query = TemplateQuery.Where.IsSystemEQ(b.query, v)
@@ -701,6 +777,18 @@ func (b *TemplateQueryBuilder) WhereIsSystemEQ(v bool) *TemplateQueryBuilder {
 // WhereIsSystemNEQ adds a WHERE is_system != ? condition
 func (b *TemplateQueryBuilder) WhereIsSystemNEQ(v bool) *TemplateQueryBuilder {
 	b.query = TemplateQuery.Where.IsSystemNEQ(b.query, v)
+	return b
+}
+
+// WhereIsSystemIn adds a WHERE is_system IN (?) condition
+func (b *TemplateQueryBuilder) WhereIsSystemIn(v []bool) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.IsSystemIn(b.query, v)
+	return b
+}
+
+// WhereIsSystemNotIn adds a WHERE is_system NOT IN (?) condition
+func (b *TemplateQueryBuilder) WhereIsSystemNotIn(v []bool) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.IsSystemNotIn(b.query, v)
 	return b
 }
 
@@ -896,3 +984,5 @@ func (b *TemplateQueryBuilder) First(ctx context.Context) (*Template, error) {
 func TemplateBuild(db bun.IDB) *TemplateQueryBuilder {
 	return NewTemplateQuery(db)
 }
+
+// Relationship loading methods

@@ -53,16 +53,28 @@ var QueueItemQuery = struct {
 	Where struct {
 		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ShipmentIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ShipmentIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ                   func(q *bun.SelectQuery, v Status) *bun.SelectQuery
 		StatusNEQ                  func(q *bun.SelectQuery, v Status) *bun.SelectQuery
+		StatusIn                   func(q *bun.SelectQuery, v []Status) *bun.SelectQuery
+		StatusNotIn                func(q *bun.SelectQuery, v []Status) *bun.SelectQuery
 		BillTypeEQ                 func(q *bun.SelectQuery, v Type) *bun.SelectQuery
 		BillTypeNEQ                func(q *bun.SelectQuery, v Type) *bun.SelectQuery
+		BillTypeIn                 func(q *bun.SelectQuery, v []Type) *bun.SelectQuery
+		BillTypeNotIn              func(q *bun.SelectQuery, v []Type) *bun.SelectQuery
 		ReviewNotesEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ReviewNotesNEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ReviewNotesIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -98,22 +110,32 @@ var QueueItemQuery = struct {
 		CancelReasonHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ReviewStartedAtEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ReviewStartedAtNEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ReviewStartedAtIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ReviewStartedAtNotIn       func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ReviewStartedAtIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		ReviewStartedAtIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		ReviewCompletedAtEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ReviewCompletedAtNEQ       func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ReviewCompletedAtIn        func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ReviewCompletedAtNotIn     func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ReviewCompletedAtIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ReviewCompletedAtIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledAtEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		CanceledAtNEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		CanceledAtIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		CanceledAtNotIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		CanceledAtIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledAtIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		AssignedBillerIDEQ         func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		AssignedBillerIDNEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		AssignedBillerIDIn         func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		AssignedBillerIDNotIn      func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		AssignedBillerIDIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		AssignedBillerIDIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledByIDEQ             func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		CanceledByIDNEQ            func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		CanceledByIDIn             func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		CanceledByIDNotIn          func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		CanceledByIDIsNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledByIDIsNotNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		VersionEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -163,6 +185,14 @@ var QueueItemQuery = struct {
 	FieldConfig  func() map[string]queueItemFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit   string
+		Organization   string
+		Shipment       string
+		AssignedBiller string
+		CancelledBy    string
+	}
 }{
 	// Table and alias constants
 	Table:    "billing_queue_items",
@@ -224,16 +254,28 @@ var QueueItemQuery = struct {
 	Where: struct {
 		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ShipmentIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ShipmentIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ                   func(q *bun.SelectQuery, v Status) *bun.SelectQuery
 		StatusNEQ                  func(q *bun.SelectQuery, v Status) *bun.SelectQuery
+		StatusIn                   func(q *bun.SelectQuery, v []Status) *bun.SelectQuery
+		StatusNotIn                func(q *bun.SelectQuery, v []Status) *bun.SelectQuery
 		BillTypeEQ                 func(q *bun.SelectQuery, v Type) *bun.SelectQuery
 		BillTypeNEQ                func(q *bun.SelectQuery, v Type) *bun.SelectQuery
+		BillTypeIn                 func(q *bun.SelectQuery, v []Type) *bun.SelectQuery
+		BillTypeNotIn              func(q *bun.SelectQuery, v []Type) *bun.SelectQuery
 		ReviewNotesEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ReviewNotesNEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ReviewNotesIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -269,22 +311,32 @@ var QueueItemQuery = struct {
 		CancelReasonHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ReviewStartedAtEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ReviewStartedAtNEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ReviewStartedAtIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ReviewStartedAtNotIn       func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ReviewStartedAtIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		ReviewStartedAtIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		ReviewCompletedAtEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ReviewCompletedAtNEQ       func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ReviewCompletedAtIn        func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ReviewCompletedAtNotIn     func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ReviewCompletedAtIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ReviewCompletedAtIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledAtEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		CanceledAtNEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		CanceledAtIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		CanceledAtNotIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		CanceledAtIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledAtIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		AssignedBillerIDEQ         func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		AssignedBillerIDNEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		AssignedBillerIDIn         func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		AssignedBillerIDNotIn      func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		AssignedBillerIDIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		AssignedBillerIDIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledByIDEQ             func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		CanceledByIDNEQ            func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		CanceledByIDIn             func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		CanceledByIDNotIn          func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		CanceledByIDIsNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledByIDIsNotNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		VersionEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -319,11 +371,23 @@ var QueueItemQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bqi.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bqi.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bqi.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("bqi.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bqi.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bqi.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bqi.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("bqi.organization_id"), v)
@@ -331,11 +395,23 @@ var QueueItemQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bqi.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bqi.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bqi.organization_id"), bun.In(v))
+		},
 		ShipmentIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("bqi.shipment_id"), v)
 		},
 		ShipmentIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bqi.shipment_id"), v)
+		},
+		ShipmentIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bqi.shipment_id"), bun.In(v))
+		},
+		ShipmentIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bqi.shipment_id"), bun.In(v))
 		},
 		StatusEQ: func(q *bun.SelectQuery, v Status) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("bqi.status"), v)
@@ -343,11 +419,23 @@ var QueueItemQuery = struct {
 		StatusNEQ: func(q *bun.SelectQuery, v Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bqi.status"), v)
 		},
+		StatusIn: func(q *bun.SelectQuery, v []Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bqi.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bqi.status"), bun.In(v))
+		},
 		BillTypeEQ: func(q *bun.SelectQuery, v Type) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("bqi.bill_type"), v)
 		},
 		BillTypeNEQ: func(q *bun.SelectQuery, v Type) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bqi.bill_type"), v)
+		},
+		BillTypeIn: func(q *bun.SelectQuery, v []Type) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bqi.bill_type"), bun.In(v))
+		},
+		BillTypeNotIn: func(q *bun.SelectQuery, v []Type) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bqi.bill_type"), bun.In(v))
 		},
 		ReviewNotesEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("bqi.review_notes"), v)
@@ -454,6 +542,12 @@ var QueueItemQuery = struct {
 		ReviewStartedAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bqi.review_started_at"), v)
 		},
+		ReviewStartedAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bqi.review_started_at"), bun.In(v))
+		},
+		ReviewStartedAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bqi.review_started_at"), bun.In(v))
+		},
 		ReviewStartedAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("bqi.review_started_at"))
 		},
@@ -465,6 +559,12 @@ var QueueItemQuery = struct {
 		},
 		ReviewCompletedAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bqi.review_completed_at"), v)
+		},
+		ReviewCompletedAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bqi.review_completed_at"), bun.In(v))
+		},
+		ReviewCompletedAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bqi.review_completed_at"), bun.In(v))
 		},
 		ReviewCompletedAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("bqi.review_completed_at"))
@@ -478,6 +578,12 @@ var QueueItemQuery = struct {
 		CanceledAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bqi.canceled_at"), v)
 		},
+		CanceledAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bqi.canceled_at"), bun.In(v))
+		},
+		CanceledAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bqi.canceled_at"), bun.In(v))
+		},
 		CanceledAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("bqi.canceled_at"))
 		},
@@ -490,6 +596,12 @@ var QueueItemQuery = struct {
 		AssignedBillerIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bqi.assigned_biller_id"), v)
 		},
+		AssignedBillerIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bqi.assigned_biller_id"), bun.In(v))
+		},
+		AssignedBillerIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bqi.assigned_biller_id"), bun.In(v))
+		},
 		AssignedBillerIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("bqi.assigned_biller_id"))
 		},
@@ -501,6 +613,12 @@ var QueueItemQuery = struct {
 		},
 		CanceledByIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bqi.canceled_by_id"), v)
+		},
+		CanceledByIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bqi.canceled_by_id"), bun.In(v))
+		},
+		CanceledByIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bqi.canceled_by_id"), bun.In(v))
 		},
 		CanceledByIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("bqi.canceled_by_id"))
@@ -968,6 +1086,20 @@ var QueueItemQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit   string
+		Organization   string
+		Shipment       string
+		AssignedBiller string
+		CancelledBy    string
+	}{
+		BusinessUnit:   "BusinessUnit",
+		Organization:   "Organization",
+		Shipment:       "Shipment",
+		AssignedBiller: "AssignedBiller",
+		CancelledBy:    "CancelledBy",
+	},
 }
 
 // QueueItemQueryBuilder provides a fluent interface for building queries
@@ -1012,6 +1144,18 @@ func (b *QueueItemQueryBuilder) WhereIDNEQ(v pulid.ID) *QueueItemQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *QueueItemQueryBuilder) WhereIDIn(v []pulid.ID) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *QueueItemQueryBuilder) WhereIDNotIn(v []pulid.ID) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *QueueItemQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *QueueItemQueryBuilder {
 	b.query = QueueItemQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1021,6 +1165,18 @@ func (b *QueueItemQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *QueueItemQuer
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *QueueItemQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *QueueItemQueryBuilder {
 	b.query = QueueItemQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *QueueItemQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *QueueItemQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1036,6 +1192,18 @@ func (b *QueueItemQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *QueueItemQue
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *QueueItemQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *QueueItemQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereShipmentIDEQ adds a WHERE shipment_id = ? condition
 func (b *QueueItemQueryBuilder) WhereShipmentIDEQ(v pulid.ID) *QueueItemQueryBuilder {
 	b.query = QueueItemQuery.Where.ShipmentIDEQ(b.query, v)
@@ -1045,6 +1213,18 @@ func (b *QueueItemQueryBuilder) WhereShipmentIDEQ(v pulid.ID) *QueueItemQueryBui
 // WhereShipmentIDNEQ adds a WHERE shipment_id != ? condition
 func (b *QueueItemQueryBuilder) WhereShipmentIDNEQ(v pulid.ID) *QueueItemQueryBuilder {
 	b.query = QueueItemQuery.Where.ShipmentIDNEQ(b.query, v)
+	return b
+}
+
+// WhereShipmentIDIn adds a WHERE shipment_id IN (?) condition
+func (b *QueueItemQueryBuilder) WhereShipmentIDIn(v []pulid.ID) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.ShipmentIDIn(b.query, v)
+	return b
+}
+
+// WhereShipmentIDNotIn adds a WHERE shipment_id NOT IN (?) condition
+func (b *QueueItemQueryBuilder) WhereShipmentIDNotIn(v []pulid.ID) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.ShipmentIDNotIn(b.query, v)
 	return b
 }
 
@@ -1060,6 +1240,18 @@ func (b *QueueItemQueryBuilder) WhereStatusNEQ(v Status) *QueueItemQueryBuilder 
 	return b
 }
 
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *QueueItemQueryBuilder) WhereStatusIn(v []Status) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *QueueItemQueryBuilder) WhereStatusNotIn(v []Status) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.StatusNotIn(b.query, v)
+	return b
+}
+
 // WhereBillTypeEQ adds a WHERE bill_type = ? condition
 func (b *QueueItemQueryBuilder) WhereBillTypeEQ(v Type) *QueueItemQueryBuilder {
 	b.query = QueueItemQuery.Where.BillTypeEQ(b.query, v)
@@ -1069,6 +1261,18 @@ func (b *QueueItemQueryBuilder) WhereBillTypeEQ(v Type) *QueueItemQueryBuilder {
 // WhereBillTypeNEQ adds a WHERE bill_type != ? condition
 func (b *QueueItemQueryBuilder) WhereBillTypeNEQ(v Type) *QueueItemQueryBuilder {
 	b.query = QueueItemQuery.Where.BillTypeNEQ(b.query, v)
+	return b
+}
+
+// WhereBillTypeIn adds a WHERE bill_type IN (?) condition
+func (b *QueueItemQueryBuilder) WhereBillTypeIn(v []Type) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.BillTypeIn(b.query, v)
+	return b
+}
+
+// WhereBillTypeNotIn adds a WHERE bill_type NOT IN (?) condition
+func (b *QueueItemQueryBuilder) WhereBillTypeNotIn(v []Type) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.BillTypeNotIn(b.query, v)
 	return b
 }
 
@@ -1210,6 +1414,18 @@ func (b *QueueItemQueryBuilder) WhereReviewStartedAtNEQ(v *int64) *QueueItemQuer
 	return b
 }
 
+// WhereReviewStartedAtIn adds a WHERE review_started_at IN (?) condition
+func (b *QueueItemQueryBuilder) WhereReviewStartedAtIn(v []*int64) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.ReviewStartedAtIn(b.query, v)
+	return b
+}
+
+// WhereReviewStartedAtNotIn adds a WHERE review_started_at NOT IN (?) condition
+func (b *QueueItemQueryBuilder) WhereReviewStartedAtNotIn(v []*int64) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.ReviewStartedAtNotIn(b.query, v)
+	return b
+}
+
 // WhereReviewCompletedAtEQ adds a WHERE review_completed_at = ? condition
 func (b *QueueItemQueryBuilder) WhereReviewCompletedAtEQ(v *int64) *QueueItemQueryBuilder {
 	b.query = QueueItemQuery.Where.ReviewCompletedAtEQ(b.query, v)
@@ -1219,6 +1435,18 @@ func (b *QueueItemQueryBuilder) WhereReviewCompletedAtEQ(v *int64) *QueueItemQue
 // WhereReviewCompletedAtNEQ adds a WHERE review_completed_at != ? condition
 func (b *QueueItemQueryBuilder) WhereReviewCompletedAtNEQ(v *int64) *QueueItemQueryBuilder {
 	b.query = QueueItemQuery.Where.ReviewCompletedAtNEQ(b.query, v)
+	return b
+}
+
+// WhereReviewCompletedAtIn adds a WHERE review_completed_at IN (?) condition
+func (b *QueueItemQueryBuilder) WhereReviewCompletedAtIn(v []*int64) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.ReviewCompletedAtIn(b.query, v)
+	return b
+}
+
+// WhereReviewCompletedAtNotIn adds a WHERE review_completed_at NOT IN (?) condition
+func (b *QueueItemQueryBuilder) WhereReviewCompletedAtNotIn(v []*int64) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.ReviewCompletedAtNotIn(b.query, v)
 	return b
 }
 
@@ -1234,6 +1462,18 @@ func (b *QueueItemQueryBuilder) WhereCanceledAtNEQ(v *int64) *QueueItemQueryBuil
 	return b
 }
 
+// WhereCanceledAtIn adds a WHERE canceled_at IN (?) condition
+func (b *QueueItemQueryBuilder) WhereCanceledAtIn(v []*int64) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.CanceledAtIn(b.query, v)
+	return b
+}
+
+// WhereCanceledAtNotIn adds a WHERE canceled_at NOT IN (?) condition
+func (b *QueueItemQueryBuilder) WhereCanceledAtNotIn(v []*int64) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.CanceledAtNotIn(b.query, v)
+	return b
+}
+
 // WhereAssignedBillerIDEQ adds a WHERE assigned_biller_id = ? condition
 func (b *QueueItemQueryBuilder) WhereAssignedBillerIDEQ(v *pulid.ID) *QueueItemQueryBuilder {
 	b.query = QueueItemQuery.Where.AssignedBillerIDEQ(b.query, v)
@@ -1246,6 +1486,18 @@ func (b *QueueItemQueryBuilder) WhereAssignedBillerIDNEQ(v *pulid.ID) *QueueItem
 	return b
 }
 
+// WhereAssignedBillerIDIn adds a WHERE assigned_biller_id IN (?) condition
+func (b *QueueItemQueryBuilder) WhereAssignedBillerIDIn(v []*pulid.ID) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.AssignedBillerIDIn(b.query, v)
+	return b
+}
+
+// WhereAssignedBillerIDNotIn adds a WHERE assigned_biller_id NOT IN (?) condition
+func (b *QueueItemQueryBuilder) WhereAssignedBillerIDNotIn(v []*pulid.ID) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.AssignedBillerIDNotIn(b.query, v)
+	return b
+}
+
 // WhereCanceledByIDEQ adds a WHERE canceled_by_id = ? condition
 func (b *QueueItemQueryBuilder) WhereCanceledByIDEQ(v *pulid.ID) *QueueItemQueryBuilder {
 	b.query = QueueItemQuery.Where.CanceledByIDEQ(b.query, v)
@@ -1255,6 +1507,18 @@ func (b *QueueItemQueryBuilder) WhereCanceledByIDEQ(v *pulid.ID) *QueueItemQuery
 // WhereCanceledByIDNEQ adds a WHERE canceled_by_id != ? condition
 func (b *QueueItemQueryBuilder) WhereCanceledByIDNEQ(v *pulid.ID) *QueueItemQueryBuilder {
 	b.query = QueueItemQuery.Where.CanceledByIDNEQ(b.query, v)
+	return b
+}
+
+// WhereCanceledByIDIn adds a WHERE canceled_by_id IN (?) condition
+func (b *QueueItemQueryBuilder) WhereCanceledByIDIn(v []*pulid.ID) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.CanceledByIDIn(b.query, v)
+	return b
+}
+
+// WhereCanceledByIDNotIn adds a WHERE canceled_by_id NOT IN (?) condition
+func (b *QueueItemQueryBuilder) WhereCanceledByIDNotIn(v []*pulid.ID) *QueueItemQueryBuilder {
+	b.query = QueueItemQuery.Where.CanceledByIDNotIn(b.query, v)
 	return b
 }
 
@@ -1502,4 +1766,46 @@ func (b *QueueItemQueryBuilder) First(ctx context.Context) (*QueueItem, error) {
 // QueueItemBuild creates a chainable query builder
 func QueueItemBuild(db bun.IDB) *QueueItemQueryBuilder {
 	return NewQueueItemQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *QueueItemQueryBuilder) LoadBusinessUnit() *QueueItemQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *QueueItemQueryBuilder) LoadOrganization() *QueueItemQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadShipment loads the Shipment relationship
+func (b *QueueItemQueryBuilder) LoadShipment() *QueueItemQueryBuilder {
+	b.query = b.query.Relation("Shipment")
+	return b
+}
+
+// LoadAssignedBiller loads the AssignedBiller relationship
+func (b *QueueItemQueryBuilder) LoadAssignedBiller() *QueueItemQueryBuilder {
+	b.query = b.query.Relation("AssignedBiller")
+	return b
+}
+
+// LoadCancelledBy loads the CancelledBy relationship
+func (b *QueueItemQueryBuilder) LoadCancelledBy() *QueueItemQueryBuilder {
+	b.query = b.query.Relation("CancelledBy")
+	return b
+}
+
+// LoadAllRelations loads all relationships for QueueItem
+func (b *QueueItemQueryBuilder) LoadAllRelations() *QueueItemQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadShipment()
+	b.LoadAssignedBiller()
+	b.LoadCancelledBy()
+	return b
 }

@@ -41,47 +41,53 @@ var PCMilerConfigurationQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		APIKeyEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		APIKeyNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		APIKeyGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		VersionEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		APIKeyEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		APIKeyNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		APIKeyGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		VersionEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -104,6 +110,11 @@ var PCMilerConfigurationQuery = struct {
 	FieldConfig  func() map[string]pCMilerConfigurationFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "pcmiler_configurations",
@@ -143,48 +154,54 @@ var PCMilerConfigurationQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		APIKeyEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		APIKeyNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		APIKeyGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		APIKeyHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		VersionEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		Tenant            func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		APIKeyEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		APIKeyNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		APIKeyGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		APIKeyHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		VersionEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		Tenant              func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pcm.id"), v)
@@ -192,17 +209,35 @@ var PCMilerConfigurationQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pcm.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pcm.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pcm.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pcm.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pcm.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pcm.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pcm.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pcm.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pcm.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pcm.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pcm.organization_id"), bun.In(v))
 		},
 		APIKeyEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pcm.api_key"), v)
@@ -509,6 +544,14 @@ var PCMilerConfigurationQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // PCMilerConfigurationQueryBuilder provides a fluent interface for building queries
@@ -553,6 +596,18 @@ func (b *PCMilerConfigurationQueryBuilder) WhereIDNEQ(v pulid.ID) *PCMilerConfig
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *PCMilerConfigurationQueryBuilder) WhereIDIn(v []pulid.ID) *PCMilerConfigurationQueryBuilder {
+	b.query = PCMilerConfigurationQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *PCMilerConfigurationQueryBuilder) WhereIDNotIn(v []pulid.ID) *PCMilerConfigurationQueryBuilder {
+	b.query = PCMilerConfigurationQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *PCMilerConfigurationQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *PCMilerConfigurationQueryBuilder {
 	b.query = PCMilerConfigurationQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -565,6 +620,18 @@ func (b *PCMilerConfigurationQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *P
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *PCMilerConfigurationQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *PCMilerConfigurationQueryBuilder {
+	b.query = PCMilerConfigurationQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *PCMilerConfigurationQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *PCMilerConfigurationQueryBuilder {
+	b.query = PCMilerConfigurationQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *PCMilerConfigurationQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *PCMilerConfigurationQueryBuilder {
 	b.query = PCMilerConfigurationQuery.Where.OrganizationIDEQ(b.query, v)
@@ -574,6 +641,18 @@ func (b *PCMilerConfigurationQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *PC
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *PCMilerConfigurationQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *PCMilerConfigurationQueryBuilder {
 	b.query = PCMilerConfigurationQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *PCMilerConfigurationQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *PCMilerConfigurationQueryBuilder {
+	b.query = PCMilerConfigurationQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *PCMilerConfigurationQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *PCMilerConfigurationQueryBuilder {
+	b.query = PCMilerConfigurationQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -863,4 +942,25 @@ func (b *PCMilerConfigurationQueryBuilder) First(ctx context.Context) (*PCMilerC
 // PCMilerConfigurationBuild creates a chainable query builder
 func PCMilerConfigurationBuild(db bun.IDB) *PCMilerConfigurationQueryBuilder {
 	return NewPCMilerConfigurationQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *PCMilerConfigurationQueryBuilder) LoadBusinessUnit() *PCMilerConfigurationQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *PCMilerConfigurationQueryBuilder) LoadOrganization() *PCMilerConfigurationQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for PCMilerConfiguration
+func (b *PCMilerConfigurationQueryBuilder) LoadAllRelations() *PCMilerConfigurationQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
 }

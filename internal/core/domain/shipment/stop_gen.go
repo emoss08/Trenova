@@ -54,18 +54,32 @@ var StopQuery = struct {
 	Where struct {
 		IDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ShipmentMoveIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ShipmentMoveIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentMoveIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentMoveIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		LocationIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		LocationIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		LocationIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		LocationIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ                 func(q *bun.SelectQuery, v StopStatus) *bun.SelectQuery
 		StatusNEQ                func(q *bun.SelectQuery, v StopStatus) *bun.SelectQuery
+		StatusIn                 func(q *bun.SelectQuery, v []StopStatus) *bun.SelectQuery
+		StatusNotIn              func(q *bun.SelectQuery, v []StopStatus) *bun.SelectQuery
 		TypeEQ                   func(q *bun.SelectQuery, v StopType) *bun.SelectQuery
 		TypeNEQ                  func(q *bun.SelectQuery, v StopType) *bun.SelectQuery
+		TypeIn                   func(q *bun.SelectQuery, v []StopType) *bun.SelectQuery
+		TypeNotIn                func(q *bun.SelectQuery, v []StopType) *bun.SelectQuery
 		AddressLineEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		AddressLineNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		AddressLineIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -87,18 +101,26 @@ var StopQuery = struct {
 		SequenceLTE              func(q *bun.SelectQuery, v int) *bun.SelectQuery
 		PiecesEQ                 func(q *bun.SelectQuery, v *int) *bun.SelectQuery
 		PiecesNEQ                func(q *bun.SelectQuery, v *int) *bun.SelectQuery
+		PiecesIn                 func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
+		PiecesNotIn              func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
 		PiecesIsNull             func(q *bun.SelectQuery) *bun.SelectQuery
 		PiecesIsNotNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		WeightEQ                 func(q *bun.SelectQuery, v *int) *bun.SelectQuery
 		WeightNEQ                func(q *bun.SelectQuery, v *int) *bun.SelectQuery
+		WeightIn                 func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
+		WeightNotIn              func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
 		WeightIsNull             func(q *bun.SelectQuery) *bun.SelectQuery
 		WeightIsNotNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualArrivalEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ActualArrivalNEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ActualArrivalIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ActualArrivalNotIn       func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ActualArrivalIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualArrivalIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualDepartureEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ActualDepartureNEQ       func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ActualDepartureIn        func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ActualDepartureNotIn     func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ActualDepartureIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualDepartureIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		PlannedArrivalEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -164,6 +186,13 @@ var StopQuery = struct {
 	FieldConfig  func() map[string]stopFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+		ShipmentMove string
+		Location     string
+	}
 }{
 	// Table and alias constants
 	Table:    "stops",
@@ -227,18 +256,32 @@ var StopQuery = struct {
 	Where: struct {
 		IDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ShipmentMoveIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ShipmentMoveIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentMoveIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentMoveIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		LocationIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		LocationIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		LocationIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		LocationIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ                 func(q *bun.SelectQuery, v StopStatus) *bun.SelectQuery
 		StatusNEQ                func(q *bun.SelectQuery, v StopStatus) *bun.SelectQuery
+		StatusIn                 func(q *bun.SelectQuery, v []StopStatus) *bun.SelectQuery
+		StatusNotIn              func(q *bun.SelectQuery, v []StopStatus) *bun.SelectQuery
 		TypeEQ                   func(q *bun.SelectQuery, v StopType) *bun.SelectQuery
 		TypeNEQ                  func(q *bun.SelectQuery, v StopType) *bun.SelectQuery
+		TypeIn                   func(q *bun.SelectQuery, v []StopType) *bun.SelectQuery
+		TypeNotIn                func(q *bun.SelectQuery, v []StopType) *bun.SelectQuery
 		AddressLineEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		AddressLineNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		AddressLineIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -260,18 +303,26 @@ var StopQuery = struct {
 		SequenceLTE              func(q *bun.SelectQuery, v int) *bun.SelectQuery
 		PiecesEQ                 func(q *bun.SelectQuery, v *int) *bun.SelectQuery
 		PiecesNEQ                func(q *bun.SelectQuery, v *int) *bun.SelectQuery
+		PiecesIn                 func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
+		PiecesNotIn              func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
 		PiecesIsNull             func(q *bun.SelectQuery) *bun.SelectQuery
 		PiecesIsNotNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		WeightEQ                 func(q *bun.SelectQuery, v *int) *bun.SelectQuery
 		WeightNEQ                func(q *bun.SelectQuery, v *int) *bun.SelectQuery
+		WeightIn                 func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
+		WeightNotIn              func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
 		WeightIsNull             func(q *bun.SelectQuery) *bun.SelectQuery
 		WeightIsNotNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualArrivalEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ActualArrivalNEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ActualArrivalIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ActualArrivalNotIn       func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ActualArrivalIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualArrivalIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualDepartureEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ActualDepartureNEQ       func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ActualDepartureIn        func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ActualDepartureNotIn     func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ActualDepartureIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualDepartureIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		PlannedArrivalEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -322,11 +373,23 @@ var StopQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("stp.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("stp.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("stp.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("stp.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("stp.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("stp.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("stp.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("stp.organization_id"), v)
@@ -334,11 +397,23 @@ var StopQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("stp.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("stp.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("stp.organization_id"), bun.In(v))
+		},
 		ShipmentMoveIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("stp.shipment_move_id"), v)
 		},
 		ShipmentMoveIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("stp.shipment_move_id"), v)
+		},
+		ShipmentMoveIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("stp.shipment_move_id"), bun.In(v))
+		},
+		ShipmentMoveIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("stp.shipment_move_id"), bun.In(v))
 		},
 		LocationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("stp.location_id"), v)
@@ -346,17 +421,35 @@ var StopQuery = struct {
 		LocationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("stp.location_id"), v)
 		},
+		LocationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("stp.location_id"), bun.In(v))
+		},
+		LocationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("stp.location_id"), bun.In(v))
+		},
 		StatusEQ: func(q *bun.SelectQuery, v StopStatus) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("stp.status"), v)
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v StopStatus) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("stp.status"), v)
 		},
+		StatusIn: func(q *bun.SelectQuery, v []StopStatus) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("stp.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []StopStatus) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("stp.status"), bun.In(v))
+		},
 		TypeEQ: func(q *bun.SelectQuery, v StopType) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("stp.type"), v)
 		},
 		TypeNEQ: func(q *bun.SelectQuery, v StopType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("stp.type"), v)
+		},
+		TypeIn: func(q *bun.SelectQuery, v []StopType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("stp.type"), bun.In(v))
+		},
+		TypeNotIn: func(q *bun.SelectQuery, v []StopType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("stp.type"), bun.In(v))
 		},
 		AddressLineEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("stp.address_line"), v)
@@ -421,6 +514,12 @@ var StopQuery = struct {
 		PiecesNEQ: func(q *bun.SelectQuery, v *int) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("stp.pieces"), v)
 		},
+		PiecesIn: func(q *bun.SelectQuery, v []*int) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("stp.pieces"), bun.In(v))
+		},
+		PiecesNotIn: func(q *bun.SelectQuery, v []*int) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("stp.pieces"), bun.In(v))
+		},
 		PiecesIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("stp.pieces"))
 		},
@@ -432,6 +531,12 @@ var StopQuery = struct {
 		},
 		WeightNEQ: func(q *bun.SelectQuery, v *int) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("stp.weight"), v)
+		},
+		WeightIn: func(q *bun.SelectQuery, v []*int) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("stp.weight"), bun.In(v))
+		},
+		WeightNotIn: func(q *bun.SelectQuery, v []*int) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("stp.weight"), bun.In(v))
 		},
 		WeightIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("stp.weight"))
@@ -445,6 +550,12 @@ var StopQuery = struct {
 		ActualArrivalNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("stp.actual_arrival"), v)
 		},
+		ActualArrivalIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("stp.actual_arrival"), bun.In(v))
+		},
+		ActualArrivalNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("stp.actual_arrival"), bun.In(v))
+		},
 		ActualArrivalIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("stp.actual_arrival"))
 		},
@@ -456,6 +567,12 @@ var StopQuery = struct {
 		},
 		ActualDepartureNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("stp.actual_departure"), v)
+		},
+		ActualDepartureIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("stp.actual_departure"), bun.In(v))
+		},
+		ActualDepartureNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("stp.actual_departure"), bun.In(v))
 		},
 		ActualDepartureIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("stp.actual_departure"))
@@ -989,6 +1106,18 @@ var StopQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+		ShipmentMove string
+		Location     string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+		ShipmentMove: "ShipmentMove",
+		Location:     "Location",
+	},
 }
 
 // StopQueryBuilder provides a fluent interface for building queries
@@ -1033,6 +1162,18 @@ func (b *StopQueryBuilder) WhereIDNEQ(v pulid.ID) *StopQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *StopQueryBuilder) WhereIDIn(v []pulid.ID) *StopQueryBuilder {
+	b.query = StopQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *StopQueryBuilder) WhereIDNotIn(v []pulid.ID) *StopQueryBuilder {
+	b.query = StopQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *StopQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *StopQueryBuilder {
 	b.query = StopQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1042,6 +1183,18 @@ func (b *StopQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *StopQueryBuilder {
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *StopQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *StopQueryBuilder {
 	b.query = StopQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *StopQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *StopQueryBuilder {
+	b.query = StopQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *StopQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *StopQueryBuilder {
+	b.query = StopQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1057,6 +1210,18 @@ func (b *StopQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *StopQueryBuilder 
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *StopQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *StopQueryBuilder {
+	b.query = StopQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *StopQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *StopQueryBuilder {
+	b.query = StopQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereShipmentMoveIDEQ adds a WHERE shipment_move_id = ? condition
 func (b *StopQueryBuilder) WhereShipmentMoveIDEQ(v pulid.ID) *StopQueryBuilder {
 	b.query = StopQuery.Where.ShipmentMoveIDEQ(b.query, v)
@@ -1066,6 +1231,18 @@ func (b *StopQueryBuilder) WhereShipmentMoveIDEQ(v pulid.ID) *StopQueryBuilder {
 // WhereShipmentMoveIDNEQ adds a WHERE shipment_move_id != ? condition
 func (b *StopQueryBuilder) WhereShipmentMoveIDNEQ(v pulid.ID) *StopQueryBuilder {
 	b.query = StopQuery.Where.ShipmentMoveIDNEQ(b.query, v)
+	return b
+}
+
+// WhereShipmentMoveIDIn adds a WHERE shipment_move_id IN (?) condition
+func (b *StopQueryBuilder) WhereShipmentMoveIDIn(v []pulid.ID) *StopQueryBuilder {
+	b.query = StopQuery.Where.ShipmentMoveIDIn(b.query, v)
+	return b
+}
+
+// WhereShipmentMoveIDNotIn adds a WHERE shipment_move_id NOT IN (?) condition
+func (b *StopQueryBuilder) WhereShipmentMoveIDNotIn(v []pulid.ID) *StopQueryBuilder {
+	b.query = StopQuery.Where.ShipmentMoveIDNotIn(b.query, v)
 	return b
 }
 
@@ -1081,6 +1258,18 @@ func (b *StopQueryBuilder) WhereLocationIDNEQ(v pulid.ID) *StopQueryBuilder {
 	return b
 }
 
+// WhereLocationIDIn adds a WHERE location_id IN (?) condition
+func (b *StopQueryBuilder) WhereLocationIDIn(v []pulid.ID) *StopQueryBuilder {
+	b.query = StopQuery.Where.LocationIDIn(b.query, v)
+	return b
+}
+
+// WhereLocationIDNotIn adds a WHERE location_id NOT IN (?) condition
+func (b *StopQueryBuilder) WhereLocationIDNotIn(v []pulid.ID) *StopQueryBuilder {
+	b.query = StopQuery.Where.LocationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *StopQueryBuilder) WhereStatusEQ(v StopStatus) *StopQueryBuilder {
 	b.query = StopQuery.Where.StatusEQ(b.query, v)
@@ -1093,6 +1282,18 @@ func (b *StopQueryBuilder) WhereStatusNEQ(v StopStatus) *StopQueryBuilder {
 	return b
 }
 
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *StopQueryBuilder) WhereStatusIn(v []StopStatus) *StopQueryBuilder {
+	b.query = StopQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *StopQueryBuilder) WhereStatusNotIn(v []StopStatus) *StopQueryBuilder {
+	b.query = StopQuery.Where.StatusNotIn(b.query, v)
+	return b
+}
+
 // WhereTypeEQ adds a WHERE type = ? condition
 func (b *StopQueryBuilder) WhereTypeEQ(v StopType) *StopQueryBuilder {
 	b.query = StopQuery.Where.TypeEQ(b.query, v)
@@ -1102,6 +1303,18 @@ func (b *StopQueryBuilder) WhereTypeEQ(v StopType) *StopQueryBuilder {
 // WhereTypeNEQ adds a WHERE type != ? condition
 func (b *StopQueryBuilder) WhereTypeNEQ(v StopType) *StopQueryBuilder {
 	b.query = StopQuery.Where.TypeNEQ(b.query, v)
+	return b
+}
+
+// WhereTypeIn adds a WHERE type IN (?) condition
+func (b *StopQueryBuilder) WhereTypeIn(v []StopType) *StopQueryBuilder {
+	b.query = StopQuery.Where.TypeIn(b.query, v)
+	return b
+}
+
+// WhereTypeNotIn adds a WHERE type NOT IN (?) condition
+func (b *StopQueryBuilder) WhereTypeNotIn(v []StopType) *StopQueryBuilder {
+	b.query = StopQuery.Where.TypeNotIn(b.query, v)
 	return b
 }
 
@@ -1207,6 +1420,18 @@ func (b *StopQueryBuilder) WherePiecesNEQ(v *int) *StopQueryBuilder {
 	return b
 }
 
+// WherePiecesIn adds a WHERE pieces IN (?) condition
+func (b *StopQueryBuilder) WherePiecesIn(v []*int) *StopQueryBuilder {
+	b.query = StopQuery.Where.PiecesIn(b.query, v)
+	return b
+}
+
+// WherePiecesNotIn adds a WHERE pieces NOT IN (?) condition
+func (b *StopQueryBuilder) WherePiecesNotIn(v []*int) *StopQueryBuilder {
+	b.query = StopQuery.Where.PiecesNotIn(b.query, v)
+	return b
+}
+
 // WhereWeightEQ adds a WHERE weight = ? condition
 func (b *StopQueryBuilder) WhereWeightEQ(v *int) *StopQueryBuilder {
 	b.query = StopQuery.Where.WeightEQ(b.query, v)
@@ -1216,6 +1441,18 @@ func (b *StopQueryBuilder) WhereWeightEQ(v *int) *StopQueryBuilder {
 // WhereWeightNEQ adds a WHERE weight != ? condition
 func (b *StopQueryBuilder) WhereWeightNEQ(v *int) *StopQueryBuilder {
 	b.query = StopQuery.Where.WeightNEQ(b.query, v)
+	return b
+}
+
+// WhereWeightIn adds a WHERE weight IN (?) condition
+func (b *StopQueryBuilder) WhereWeightIn(v []*int) *StopQueryBuilder {
+	b.query = StopQuery.Where.WeightIn(b.query, v)
+	return b
+}
+
+// WhereWeightNotIn adds a WHERE weight NOT IN (?) condition
+func (b *StopQueryBuilder) WhereWeightNotIn(v []*int) *StopQueryBuilder {
+	b.query = StopQuery.Where.WeightNotIn(b.query, v)
 	return b
 }
 
@@ -1231,6 +1468,18 @@ func (b *StopQueryBuilder) WhereActualArrivalNEQ(v *int64) *StopQueryBuilder {
 	return b
 }
 
+// WhereActualArrivalIn adds a WHERE actual_arrival IN (?) condition
+func (b *StopQueryBuilder) WhereActualArrivalIn(v []*int64) *StopQueryBuilder {
+	b.query = StopQuery.Where.ActualArrivalIn(b.query, v)
+	return b
+}
+
+// WhereActualArrivalNotIn adds a WHERE actual_arrival NOT IN (?) condition
+func (b *StopQueryBuilder) WhereActualArrivalNotIn(v []*int64) *StopQueryBuilder {
+	b.query = StopQuery.Where.ActualArrivalNotIn(b.query, v)
+	return b
+}
+
 // WhereActualDepartureEQ adds a WHERE actual_departure = ? condition
 func (b *StopQueryBuilder) WhereActualDepartureEQ(v *int64) *StopQueryBuilder {
 	b.query = StopQuery.Where.ActualDepartureEQ(b.query, v)
@@ -1240,6 +1489,18 @@ func (b *StopQueryBuilder) WhereActualDepartureEQ(v *int64) *StopQueryBuilder {
 // WhereActualDepartureNEQ adds a WHERE actual_departure != ? condition
 func (b *StopQueryBuilder) WhereActualDepartureNEQ(v *int64) *StopQueryBuilder {
 	b.query = StopQuery.Where.ActualDepartureNEQ(b.query, v)
+	return b
+}
+
+// WhereActualDepartureIn adds a WHERE actual_departure IN (?) condition
+func (b *StopQueryBuilder) WhereActualDepartureIn(v []*int64) *StopQueryBuilder {
+	b.query = StopQuery.Where.ActualDepartureIn(b.query, v)
+	return b
+}
+
+// WhereActualDepartureNotIn adds a WHERE actual_departure NOT IN (?) condition
+func (b *StopQueryBuilder) WhereActualDepartureNotIn(v []*int64) *StopQueryBuilder {
+	b.query = StopQuery.Where.ActualDepartureNotIn(b.query, v)
 	return b
 }
 
@@ -1583,4 +1844,172 @@ func (b *StopQueryBuilder) First(ctx context.Context) (*Stop, error) {
 // StopBuild creates a chainable query builder
 func StopBuild(db bun.IDB) *StopQueryBuilder {
 	return NewStopQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *StopQueryBuilder) LoadBusinessUnit() *StopQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *StopQueryBuilder) LoadOrganization() *StopQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadShipmentMove loads the ShipmentMove relationship
+func (b *StopQueryBuilder) LoadShipmentMove() *StopQueryBuilder {
+	b.query = b.query.Relation("ShipmentMove")
+	return b
+}
+
+// LoadLocation loads the Location relationship
+func (b *StopQueryBuilder) LoadLocation() *StopQueryBuilder {
+	b.query = b.query.Relation("Location")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Stop
+func (b *StopQueryBuilder) LoadAllRelations() *StopQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadShipmentMove()
+	b.LoadLocation()
+	return b
+}
+
+// StopRelationChain provides a fluent API for building nested relationship chains
+type StopRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewStopRelationChain creates a new relation chain builder
+func NewStopRelationChain() *StopRelationChain {
+	return &StopRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *StopRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *StopRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *StopRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *StopRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *StopQueryBuilder) WithBusinessUnit() *StopRelationChainBuilder {
+	chain := &StopRelationChainBuilder{
+		parent: b,
+		chain:  NewStopRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *StopQueryBuilder) WithOrganization() *StopRelationChainBuilder {
+	chain := &StopRelationChainBuilder{
+		parent: b,
+		chain:  NewStopRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithShipmentMove creates a relation chain starting with ShipmentMove
+func (b *StopQueryBuilder) WithShipmentMove() *StopRelationChainBuilder {
+	chain := &StopRelationChainBuilder{
+		parent: b,
+		chain:  NewStopRelationChain(),
+	}
+	chain.chain.Add("ShipmentMove")
+	return chain
+}
+
+// WithLocation creates a relation chain starting with Location
+func (b *StopQueryBuilder) WithLocation() *StopRelationChainBuilder {
+	chain := &StopRelationChainBuilder{
+		parent: b,
+		chain:  NewStopRelationChain(),
+	}
+	chain.chain.Add("Location")
+	return chain
+}
+
+// StopRelationChainBuilder provides fluent API for building nested relations
+type StopRelationChainBuilder struct {
+	parent *StopQueryBuilder
+	chain  *StopRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *StopRelationChainBuilder) Load() *StopQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *StopRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *StopRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *StopRelationChainBuilder) OrderBy(order string) *StopRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *StopRelationChainBuilder) Where(condition string, args ...interface{}) *StopRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

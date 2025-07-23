@@ -37,18 +37,22 @@ var UserOrganizationQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		UserIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CreatedAtEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UserIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CreatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 	}
@@ -68,6 +72,11 @@ var UserOrganizationQuery = struct {
 	FieldConfig  func() map[string]userOrganizationFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		User         string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "user_organizations",
@@ -99,18 +108,22 @@ var UserOrganizationQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		UserIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CreatedAtEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UserIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CreatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 	}{
 		UserIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("uo.user_id"), v)
@@ -118,11 +131,23 @@ var UserOrganizationQuery = struct {
 		UserIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("uo.user_id"), v)
 		},
+		UserIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("uo.user_id"), bun.In(v))
+		},
+		UserIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("uo.user_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("uo.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("uo.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("uo.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("uo.organization_id"), bun.In(v))
 		},
 		CreatedAtEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("uo.created_at"), v)
@@ -257,6 +282,14 @@ var UserOrganizationQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		User         string
+		Organization string
+	}{
+		User:         "User",
+		Organization: "Organization",
+	},
 }
 
 // UserOrganizationQueryBuilder provides a fluent interface for building queries
@@ -301,6 +334,18 @@ func (b *UserOrganizationQueryBuilder) WhereUserIDNEQ(v pulid.ID) *UserOrganizat
 	return b
 }
 
+// WhereUserIDIn adds a WHERE user_id IN (?) condition
+func (b *UserOrganizationQueryBuilder) WhereUserIDIn(v []pulid.ID) *UserOrganizationQueryBuilder {
+	b.query = UserOrganizationQuery.Where.UserIDIn(b.query, v)
+	return b
+}
+
+// WhereUserIDNotIn adds a WHERE user_id NOT IN (?) condition
+func (b *UserOrganizationQueryBuilder) WhereUserIDNotIn(v []pulid.ID) *UserOrganizationQueryBuilder {
+	b.query = UserOrganizationQuery.Where.UserIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *UserOrganizationQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *UserOrganizationQueryBuilder {
 	b.query = UserOrganizationQuery.Where.OrganizationIDEQ(b.query, v)
@@ -310,6 +355,18 @@ func (b *UserOrganizationQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *UserOr
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *UserOrganizationQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *UserOrganizationQueryBuilder {
 	b.query = UserOrganizationQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *UserOrganizationQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *UserOrganizationQueryBuilder {
+	b.query = UserOrganizationQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *UserOrganizationQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *UserOrganizationQueryBuilder {
+	b.query = UserOrganizationQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -456,4 +513,25 @@ func (b *UserOrganizationQueryBuilder) First(ctx context.Context) (*UserOrganiza
 // UserOrganizationBuild creates a chainable query builder
 func UserOrganizationBuild(db bun.IDB) *UserOrganizationQueryBuilder {
 	return NewUserOrganizationQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadUser loads the User relationship
+func (b *UserOrganizationQueryBuilder) LoadUser() *UserOrganizationQueryBuilder {
+	b.query = b.query.Relation("User")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *UserOrganizationQueryBuilder) LoadOrganization() *UserOrganizationQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for UserOrganization
+func (b *UserOrganizationQueryBuilder) LoadAllRelations() *UserOrganizationQueryBuilder {
+	b.LoadUser()
+	b.LoadOrganization()
+	return b
 }

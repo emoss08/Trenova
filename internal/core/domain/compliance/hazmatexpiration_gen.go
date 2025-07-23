@@ -42,8 +42,12 @@ var HazmatExpirationQuery = struct {
 	Where struct {
 		IDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StateIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		StateIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		StateIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StateIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		YearsEQ        func(q *bun.SelectQuery, v int8) *bun.SelectQuery
 		YearsNEQ       func(q *bun.SelectQuery, v int8) *bun.SelectQuery
 		YearsIn        func(q *bun.SelectQuery, v []int8) *bun.SelectQuery
@@ -97,6 +101,10 @@ var HazmatExpirationQuery = struct {
 	FieldConfig  func() map[string]hazmatExpirationFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		State string
+	}
 }{
 	// Table and alias constants
 	Table:    "hazmat_expirations",
@@ -136,8 +144,12 @@ var HazmatExpirationQuery = struct {
 	Where: struct {
 		IDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StateIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		StateIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		StateIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StateIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		YearsEQ        func(q *bun.SelectQuery, v int8) *bun.SelectQuery
 		YearsNEQ       func(q *bun.SelectQuery, v int8) *bun.SelectQuery
 		YearsIn        func(q *bun.SelectQuery, v []int8) *bun.SelectQuery
@@ -177,11 +189,23 @@ var HazmatExpirationQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("he.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("he.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("he.id"), bun.In(v))
+		},
 		StateIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("he.state_id"), v)
 		},
 		StateIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("he.state_id"), v)
+		},
+		StateIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("he.state_id"), bun.In(v))
+		},
+		StateIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("he.state_id"), bun.In(v))
 		},
 		YearsEQ: func(q *bun.SelectQuery, v int8) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("he.years"), v)
@@ -456,6 +480,12 @@ var HazmatExpirationQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		State string
+	}{
+		State: "State",
+	},
 }
 
 // HazmatExpirationQueryBuilder provides a fluent interface for building queries
@@ -500,6 +530,18 @@ func (b *HazmatExpirationQueryBuilder) WhereIDNEQ(v pulid.ID) *HazmatExpirationQ
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *HazmatExpirationQueryBuilder) WhereIDIn(v []pulid.ID) *HazmatExpirationQueryBuilder {
+	b.query = HazmatExpirationQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *HazmatExpirationQueryBuilder) WhereIDNotIn(v []pulid.ID) *HazmatExpirationQueryBuilder {
+	b.query = HazmatExpirationQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereStateIDEQ adds a WHERE state_id = ? condition
 func (b *HazmatExpirationQueryBuilder) WhereStateIDEQ(v pulid.ID) *HazmatExpirationQueryBuilder {
 	b.query = HazmatExpirationQuery.Where.StateIDEQ(b.query, v)
@@ -509,6 +551,18 @@ func (b *HazmatExpirationQueryBuilder) WhereStateIDEQ(v pulid.ID) *HazmatExpirat
 // WhereStateIDNEQ adds a WHERE state_id != ? condition
 func (b *HazmatExpirationQueryBuilder) WhereStateIDNEQ(v pulid.ID) *HazmatExpirationQueryBuilder {
 	b.query = HazmatExpirationQuery.Where.StateIDNEQ(b.query, v)
+	return b
+}
+
+// WhereStateIDIn adds a WHERE state_id IN (?) condition
+func (b *HazmatExpirationQueryBuilder) WhereStateIDIn(v []pulid.ID) *HazmatExpirationQueryBuilder {
+	b.query = HazmatExpirationQuery.Where.StateIDIn(b.query, v)
+	return b
+}
+
+// WhereStateIDNotIn adds a WHERE state_id NOT IN (?) condition
+func (b *HazmatExpirationQueryBuilder) WhereStateIDNotIn(v []pulid.ID) *HazmatExpirationQueryBuilder {
+	b.query = HazmatExpirationQuery.Where.StateIDNotIn(b.query, v)
 	return b
 }
 
@@ -799,4 +853,18 @@ func (b *HazmatExpirationQueryBuilder) First(ctx context.Context) (*HazmatExpira
 // HazmatExpirationBuild creates a chainable query builder
 func HazmatExpirationBuild(db bun.IDB) *HazmatExpirationQueryBuilder {
 	return NewHazmatExpirationQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadState loads the State relationship
+func (b *HazmatExpirationQueryBuilder) LoadState() *HazmatExpirationQueryBuilder {
+	b.query = b.query.Relation("State")
+	return b
+}
+
+// LoadAllRelations loads all relationships for HazmatExpiration
+func (b *HazmatExpirationQueryBuilder) LoadAllRelations() *HazmatExpirationQueryBuilder {
+	b.LoadState()
+	return b
 }

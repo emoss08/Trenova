@@ -56,99 +56,127 @@ var NotificationPreferenceQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ResourceEQ                func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
-		ResourceNEQ               func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
-		UpdateTypesEQ             func(q *bun.SelectQuery, v []UpdateType) *bun.SelectQuery
-		UpdateTypesNEQ            func(q *bun.SelectQuery, v []UpdateType) *bun.SelectQuery
-		NotifyOnAllUpdatesEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		NotifyOnAllUpdatesNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		NotifyOnlyOwnedRecordsEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		NotifyOnlyOwnedRecordsNEQ func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		ExcludedUserIDsEQ         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		ExcludedUserIDsNEQ        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		IncludedRoleIDsEQ         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		IncludedRoleIDsNEQ        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		PreferredChannelsEQ       func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery
-		PreferredChannelsNEQ      func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery
-		QuietHoursEnabledEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		QuietHoursEnabledNEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		QuietHoursStartEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		QuietHoursStartNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		QuietHoursStartGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		QuietHoursEndNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		QuietHoursEndGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TimezoneNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TimezoneGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BatchNotificationsEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		BatchNotificationsNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		BatchIntervalMinutesEQ    func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		BatchIntervalMinutesNEQ   func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		BatchIntervalMinutesIn    func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		BatchIntervalMinutesNotIn func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		BatchIntervalMinutesGT    func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		BatchIntervalMinutesGTE   func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		BatchIntervalMinutesLT    func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		BatchIntervalMinutesLTE   func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		IsActiveEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsActiveNEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDNEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ResourceEQ                  func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
+		ResourceNEQ                 func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
+		ResourceIn                  func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
+		ResourceNotIn               func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
+		UpdateTypesEQ               func(q *bun.SelectQuery, v []UpdateType) *bun.SelectQuery
+		UpdateTypesNEQ              func(q *bun.SelectQuery, v []UpdateType) *bun.SelectQuery
+		UpdateTypesIn               func(q *bun.SelectQuery, v [][]UpdateType) *bun.SelectQuery
+		UpdateTypesNotIn            func(q *bun.SelectQuery, v [][]UpdateType) *bun.SelectQuery
+		NotifyOnAllUpdatesEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		NotifyOnAllUpdatesNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		NotifyOnAllUpdatesIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		NotifyOnAllUpdatesNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		NotifyOnlyOwnedRecordsEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		NotifyOnlyOwnedRecordsNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		NotifyOnlyOwnedRecordsIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		NotifyOnlyOwnedRecordsNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		ExcludedUserIDsEQ           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ExcludedUserIDsNEQ          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ExcludedUserIDsIn           func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery
+		ExcludedUserIDsNotIn        func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery
+		IncludedRoleIDsEQ           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IncludedRoleIDsNEQ          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IncludedRoleIDsIn           func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery
+		IncludedRoleIDsNotIn        func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery
+		PreferredChannelsEQ         func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery
+		PreferredChannelsNEQ        func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery
+		PreferredChannelsIn         func(q *bun.SelectQuery, v [][]Channel) *bun.SelectQuery
+		PreferredChannelsNotIn      func(q *bun.SelectQuery, v [][]Channel) *bun.SelectQuery
+		QuietHoursEnabledEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		QuietHoursEnabledNEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		QuietHoursEnabledIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		QuietHoursEnabledNotIn      func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		QuietHoursStartEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		QuietHoursStartNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		QuietHoursStartGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		QuietHoursEndNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		QuietHoursEndGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TimezoneNotIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TimezoneGT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneGTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneLT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneLTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneContains            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneHasPrefix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneHasSuffix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BatchNotificationsEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		BatchNotificationsNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		BatchNotificationsIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		BatchNotificationsNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		BatchIntervalMinutesEQ      func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		BatchIntervalMinutesNEQ     func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		BatchIntervalMinutesIn      func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		BatchIntervalMinutesNotIn   func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		BatchIntervalMinutesGT      func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		BatchIntervalMinutesGTE     func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		BatchIntervalMinutesLT      func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		BatchIntervalMinutesLTE     func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		IsActiveEQ                  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveNEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveIn                  func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsActiveNotIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                   func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -238,100 +266,128 @@ var NotificationPreferenceQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ResourceEQ                func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
-		ResourceNEQ               func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
-		UpdateTypesEQ             func(q *bun.SelectQuery, v []UpdateType) *bun.SelectQuery
-		UpdateTypesNEQ            func(q *bun.SelectQuery, v []UpdateType) *bun.SelectQuery
-		NotifyOnAllUpdatesEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		NotifyOnAllUpdatesNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		NotifyOnlyOwnedRecordsEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		NotifyOnlyOwnedRecordsNEQ func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		ExcludedUserIDsEQ         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		ExcludedUserIDsNEQ        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		IncludedRoleIDsEQ         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		IncludedRoleIDsNEQ        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		PreferredChannelsEQ       func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery
-		PreferredChannelsNEQ      func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery
-		QuietHoursEnabledEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		QuietHoursEnabledNEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		QuietHoursStartEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		QuietHoursStartNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		QuietHoursStartGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursStartHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		QuietHoursEndNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		QuietHoursEndGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		QuietHoursEndHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TimezoneNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TimezoneGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		BatchNotificationsEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		BatchNotificationsNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		BatchIntervalMinutesEQ    func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		BatchIntervalMinutesNEQ   func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		BatchIntervalMinutesIn    func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		BatchIntervalMinutesNotIn func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		BatchIntervalMinutesGT    func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		BatchIntervalMinutesGTE   func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		BatchIntervalMinutesLT    func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		BatchIntervalMinutesLTE   func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		IsActiveEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsActiveNEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		Tenant                    func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDNEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ResourceEQ                  func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
+		ResourceNEQ                 func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
+		ResourceIn                  func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
+		ResourceNotIn               func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
+		UpdateTypesEQ               func(q *bun.SelectQuery, v []UpdateType) *bun.SelectQuery
+		UpdateTypesNEQ              func(q *bun.SelectQuery, v []UpdateType) *bun.SelectQuery
+		UpdateTypesIn               func(q *bun.SelectQuery, v [][]UpdateType) *bun.SelectQuery
+		UpdateTypesNotIn            func(q *bun.SelectQuery, v [][]UpdateType) *bun.SelectQuery
+		NotifyOnAllUpdatesEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		NotifyOnAllUpdatesNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		NotifyOnAllUpdatesIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		NotifyOnAllUpdatesNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		NotifyOnlyOwnedRecordsEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		NotifyOnlyOwnedRecordsNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		NotifyOnlyOwnedRecordsIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		NotifyOnlyOwnedRecordsNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		ExcludedUserIDsEQ           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ExcludedUserIDsNEQ          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ExcludedUserIDsIn           func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery
+		ExcludedUserIDsNotIn        func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery
+		IncludedRoleIDsEQ           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IncludedRoleIDsNEQ          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IncludedRoleIDsIn           func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery
+		IncludedRoleIDsNotIn        func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery
+		PreferredChannelsEQ         func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery
+		PreferredChannelsNEQ        func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery
+		PreferredChannelsIn         func(q *bun.SelectQuery, v [][]Channel) *bun.SelectQuery
+		PreferredChannelsNotIn      func(q *bun.SelectQuery, v [][]Channel) *bun.SelectQuery
+		QuietHoursEnabledEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		QuietHoursEnabledNEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		QuietHoursEnabledIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		QuietHoursEnabledNotIn      func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		QuietHoursStartEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		QuietHoursStartNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		QuietHoursStartGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursStartHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		QuietHoursEndNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		QuietHoursEndGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		QuietHoursEndHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TimezoneNotIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TimezoneGT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneGTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneLT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneLTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneContains            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneHasPrefix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneHasSuffix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		BatchNotificationsEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		BatchNotificationsNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		BatchNotificationsIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		BatchNotificationsNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		BatchIntervalMinutesEQ      func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		BatchIntervalMinutesNEQ     func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		BatchIntervalMinutesIn      func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		BatchIntervalMinutesNotIn   func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		BatchIntervalMinutesGT      func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		BatchIntervalMinutesGTE     func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		BatchIntervalMinutesLT      func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		BatchIntervalMinutesLTE     func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		IsActiveEQ                  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveNEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveIn                  func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsActiveNotIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                   func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		Tenant                      func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.id"), v)
@@ -339,11 +395,23 @@ var NotificationPreferenceQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.id"), bun.In(v))
+		},
 		UserIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.user_id"), v)
 		},
 		UserIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.user_id"), v)
+		},
+		UserIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.user_id"), bun.In(v))
+		},
+		UserIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.user_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.organization_id"), v)
@@ -351,11 +419,23 @@ var NotificationPreferenceQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.organization_id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.business_unit_id"), bun.In(v))
 		},
 		ResourceEQ: func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.resource"), v)
@@ -363,11 +443,23 @@ var NotificationPreferenceQuery = struct {
 		ResourceNEQ: func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.resource"), v)
 		},
+		ResourceIn: func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.resource"), bun.In(v))
+		},
+		ResourceNotIn: func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.resource"), bun.In(v))
+		},
 		UpdateTypesEQ: func(q *bun.SelectQuery, v []UpdateType) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.update_types"), v)
 		},
 		UpdateTypesNEQ: func(q *bun.SelectQuery, v []UpdateType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.update_types"), v)
+		},
+		UpdateTypesIn: func(q *bun.SelectQuery, v [][]UpdateType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.update_types"), bun.In(v))
+		},
+		UpdateTypesNotIn: func(q *bun.SelectQuery, v [][]UpdateType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.update_types"), bun.In(v))
 		},
 		NotifyOnAllUpdatesEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.notify_on_all_updates"), v)
@@ -375,11 +467,23 @@ var NotificationPreferenceQuery = struct {
 		NotifyOnAllUpdatesNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.notify_on_all_updates"), v)
 		},
+		NotifyOnAllUpdatesIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.notify_on_all_updates"), bun.In(v))
+		},
+		NotifyOnAllUpdatesNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.notify_on_all_updates"), bun.In(v))
+		},
 		NotifyOnlyOwnedRecordsEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.notify_only_owned_records"), v)
 		},
 		NotifyOnlyOwnedRecordsNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.notify_only_owned_records"), v)
+		},
+		NotifyOnlyOwnedRecordsIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.notify_only_owned_records"), bun.In(v))
+		},
+		NotifyOnlyOwnedRecordsNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.notify_only_owned_records"), bun.In(v))
 		},
 		ExcludedUserIDsEQ: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.excluded_user_ids"), v)
@@ -387,11 +491,23 @@ var NotificationPreferenceQuery = struct {
 		ExcludedUserIDsNEQ: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.excluded_user_ids"), v)
 		},
+		ExcludedUserIDsIn: func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.excluded_user_ids"), bun.In(v))
+		},
+		ExcludedUserIDsNotIn: func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.excluded_user_ids"), bun.In(v))
+		},
 		IncludedRoleIDsEQ: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.included_role_ids"), v)
 		},
 		IncludedRoleIDsNEQ: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.included_role_ids"), v)
+		},
+		IncludedRoleIDsIn: func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.included_role_ids"), bun.In(v))
+		},
+		IncludedRoleIDsNotIn: func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.included_role_ids"), bun.In(v))
 		},
 		PreferredChannelsEQ: func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.preferred_channels"), v)
@@ -399,11 +515,23 @@ var NotificationPreferenceQuery = struct {
 		PreferredChannelsNEQ: func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.preferred_channels"), v)
 		},
+		PreferredChannelsIn: func(q *bun.SelectQuery, v [][]Channel) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.preferred_channels"), bun.In(v))
+		},
+		PreferredChannelsNotIn: func(q *bun.SelectQuery, v [][]Channel) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.preferred_channels"), bun.In(v))
+		},
 		QuietHoursEnabledEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.quiet_hours_enabled"), v)
 		},
 		QuietHoursEnabledNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.quiet_hours_enabled"), v)
+		},
+		QuietHoursEnabledIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.quiet_hours_enabled"), bun.In(v))
+		},
+		QuietHoursEnabledNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.quiet_hours_enabled"), bun.In(v))
 		},
 		QuietHoursStartEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.quiet_hours_start"), v)
@@ -510,6 +638,12 @@ var NotificationPreferenceQuery = struct {
 		BatchNotificationsNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.batch_notifications"), v)
 		},
+		BatchNotificationsIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.batch_notifications"), bun.In(v))
+		},
+		BatchNotificationsNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.batch_notifications"), bun.In(v))
+		},
 		BatchIntervalMinutesEQ: func(q *bun.SelectQuery, v int) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.batch_interval_minutes"), v)
 		},
@@ -539,6 +673,12 @@ var NotificationPreferenceQuery = struct {
 		},
 		IsActiveNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("np.is_active"), v)
+		},
+		IsActiveIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("np.is_active"), bun.In(v))
+		},
+		IsActiveNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("np.is_active"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("np.version"), v)
@@ -1108,6 +1248,18 @@ func (b *NotificationPreferenceQueryBuilder) WhereIDNEQ(v pulid.ID) *Notificatio
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereIDIn(v []pulid.ID) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereIDNotIn(v []pulid.ID) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereUserIDEQ adds a WHERE user_id = ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereUserIDEQ(v pulid.ID) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.UserIDEQ(b.query, v)
@@ -1117,6 +1269,18 @@ func (b *NotificationPreferenceQueryBuilder) WhereUserIDEQ(v pulid.ID) *Notifica
 // WhereUserIDNEQ adds a WHERE user_id != ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereUserIDNEQ(v pulid.ID) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.UserIDNEQ(b.query, v)
+	return b
+}
+
+// WhereUserIDIn adds a WHERE user_id IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereUserIDIn(v []pulid.ID) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.UserIDIn(b.query, v)
+	return b
+}
+
+// WhereUserIDNotIn adds a WHERE user_id NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereUserIDNotIn(v []pulid.ID) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.UserIDNotIn(b.query, v)
 	return b
 }
 
@@ -1132,6 +1296,18 @@ func (b *NotificationPreferenceQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) 
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1141,6 +1317,18 @@ func (b *NotificationPreferenceQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1156,6 +1344,18 @@ func (b *NotificationPreferenceQueryBuilder) WhereResourceNEQ(v permission.Resou
 	return b
 }
 
+// WhereResourceIn adds a WHERE resource IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereResourceIn(v []permission.Resource) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.ResourceIn(b.query, v)
+	return b
+}
+
+// WhereResourceNotIn adds a WHERE resource NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereResourceNotIn(v []permission.Resource) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.ResourceNotIn(b.query, v)
+	return b
+}
+
 // WhereUpdateTypesEQ adds a WHERE update_types = ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereUpdateTypesEQ(v []UpdateType) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.UpdateTypesEQ(b.query, v)
@@ -1165,6 +1365,18 @@ func (b *NotificationPreferenceQueryBuilder) WhereUpdateTypesEQ(v []UpdateType) 
 // WhereUpdateTypesNEQ adds a WHERE update_types != ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereUpdateTypesNEQ(v []UpdateType) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.UpdateTypesNEQ(b.query, v)
+	return b
+}
+
+// WhereUpdateTypesIn adds a WHERE update_types IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereUpdateTypesIn(v [][]UpdateType) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.UpdateTypesIn(b.query, v)
+	return b
+}
+
+// WhereUpdateTypesNotIn adds a WHERE update_types NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereUpdateTypesNotIn(v [][]UpdateType) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.UpdateTypesNotIn(b.query, v)
 	return b
 }
 
@@ -1180,6 +1392,18 @@ func (b *NotificationPreferenceQueryBuilder) WhereNotifyOnAllUpdatesNEQ(v bool) 
 	return b
 }
 
+// WhereNotifyOnAllUpdatesIn adds a WHERE notify_on_all_updates IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereNotifyOnAllUpdatesIn(v []bool) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.NotifyOnAllUpdatesIn(b.query, v)
+	return b
+}
+
+// WhereNotifyOnAllUpdatesNotIn adds a WHERE notify_on_all_updates NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereNotifyOnAllUpdatesNotIn(v []bool) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.NotifyOnAllUpdatesNotIn(b.query, v)
+	return b
+}
+
 // WhereNotifyOnlyOwnedRecordsEQ adds a WHERE notify_only_owned_records = ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereNotifyOnlyOwnedRecordsEQ(v bool) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.NotifyOnlyOwnedRecordsEQ(b.query, v)
@@ -1189,6 +1413,18 @@ func (b *NotificationPreferenceQueryBuilder) WhereNotifyOnlyOwnedRecordsEQ(v boo
 // WhereNotifyOnlyOwnedRecordsNEQ adds a WHERE notify_only_owned_records != ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereNotifyOnlyOwnedRecordsNEQ(v bool) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.NotifyOnlyOwnedRecordsNEQ(b.query, v)
+	return b
+}
+
+// WhereNotifyOnlyOwnedRecordsIn adds a WHERE notify_only_owned_records IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereNotifyOnlyOwnedRecordsIn(v []bool) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.NotifyOnlyOwnedRecordsIn(b.query, v)
+	return b
+}
+
+// WhereNotifyOnlyOwnedRecordsNotIn adds a WHERE notify_only_owned_records NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereNotifyOnlyOwnedRecordsNotIn(v []bool) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.NotifyOnlyOwnedRecordsNotIn(b.query, v)
 	return b
 }
 
@@ -1204,6 +1440,18 @@ func (b *NotificationPreferenceQueryBuilder) WhereExcludedUserIDsNEQ(v []pulid.I
 	return b
 }
 
+// WhereExcludedUserIDsIn adds a WHERE excluded_user_ids IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereExcludedUserIDsIn(v [][]pulid.ID) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.ExcludedUserIDsIn(b.query, v)
+	return b
+}
+
+// WhereExcludedUserIDsNotIn adds a WHERE excluded_user_ids NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereExcludedUserIDsNotIn(v [][]pulid.ID) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.ExcludedUserIDsNotIn(b.query, v)
+	return b
+}
+
 // WhereIncludedRoleIDsEQ adds a WHERE included_role_ids = ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereIncludedRoleIDsEQ(v []pulid.ID) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.IncludedRoleIDsEQ(b.query, v)
@@ -1213,6 +1461,18 @@ func (b *NotificationPreferenceQueryBuilder) WhereIncludedRoleIDsEQ(v []pulid.ID
 // WhereIncludedRoleIDsNEQ adds a WHERE included_role_ids != ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereIncludedRoleIDsNEQ(v []pulid.ID) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.IncludedRoleIDsNEQ(b.query, v)
+	return b
+}
+
+// WhereIncludedRoleIDsIn adds a WHERE included_role_ids IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereIncludedRoleIDsIn(v [][]pulid.ID) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.IncludedRoleIDsIn(b.query, v)
+	return b
+}
+
+// WhereIncludedRoleIDsNotIn adds a WHERE included_role_ids NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereIncludedRoleIDsNotIn(v [][]pulid.ID) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.IncludedRoleIDsNotIn(b.query, v)
 	return b
 }
 
@@ -1228,6 +1488,18 @@ func (b *NotificationPreferenceQueryBuilder) WherePreferredChannelsNEQ(v []Chann
 	return b
 }
 
+// WherePreferredChannelsIn adds a WHERE preferred_channels IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WherePreferredChannelsIn(v [][]Channel) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.PreferredChannelsIn(b.query, v)
+	return b
+}
+
+// WherePreferredChannelsNotIn adds a WHERE preferred_channels NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WherePreferredChannelsNotIn(v [][]Channel) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.PreferredChannelsNotIn(b.query, v)
+	return b
+}
+
 // WhereQuietHoursEnabledEQ adds a WHERE quiet_hours_enabled = ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereQuietHoursEnabledEQ(v bool) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.QuietHoursEnabledEQ(b.query, v)
@@ -1237,6 +1509,18 @@ func (b *NotificationPreferenceQueryBuilder) WhereQuietHoursEnabledEQ(v bool) *N
 // WhereQuietHoursEnabledNEQ adds a WHERE quiet_hours_enabled != ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereQuietHoursEnabledNEQ(v bool) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.QuietHoursEnabledNEQ(b.query, v)
+	return b
+}
+
+// WhereQuietHoursEnabledIn adds a WHERE quiet_hours_enabled IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereQuietHoursEnabledIn(v []bool) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.QuietHoursEnabledIn(b.query, v)
+	return b
+}
+
+// WhereQuietHoursEnabledNotIn adds a WHERE quiet_hours_enabled NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereQuietHoursEnabledNotIn(v []bool) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.QuietHoursEnabledNotIn(b.query, v)
 	return b
 }
 
@@ -1378,6 +1662,18 @@ func (b *NotificationPreferenceQueryBuilder) WhereBatchNotificationsNEQ(v bool) 
 	return b
 }
 
+// WhereBatchNotificationsIn adds a WHERE batch_notifications IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereBatchNotificationsIn(v []bool) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.BatchNotificationsIn(b.query, v)
+	return b
+}
+
+// WhereBatchNotificationsNotIn adds a WHERE batch_notifications NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereBatchNotificationsNotIn(v []bool) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.BatchNotificationsNotIn(b.query, v)
+	return b
+}
+
 // WhereBatchIntervalMinutesEQ adds a WHERE batch_interval_minutes = ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereBatchIntervalMinutesEQ(v int) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.BatchIntervalMinutesEQ(b.query, v)
@@ -1435,6 +1731,18 @@ func (b *NotificationPreferenceQueryBuilder) WhereIsActiveEQ(v bool) *Notificati
 // WhereIsActiveNEQ adds a WHERE is_active != ? condition
 func (b *NotificationPreferenceQueryBuilder) WhereIsActiveNEQ(v bool) *NotificationPreferenceQueryBuilder {
 	b.query = NotificationPreferenceQuery.Where.IsActiveNEQ(b.query, v)
+	return b
+}
+
+// WhereIsActiveIn adds a WHERE is_active IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereIsActiveIn(v []bool) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.IsActiveIn(b.query, v)
+	return b
+}
+
+// WhereIsActiveNotIn adds a WHERE is_active NOT IN (?) condition
+func (b *NotificationPreferenceQueryBuilder) WhereIsActiveNotIn(v []bool) *NotificationPreferenceQueryBuilder {
+	b.query = NotificationPreferenceQuery.Where.IsActiveNotIn(b.query, v)
 	return b
 }
 
@@ -1683,3 +1991,5 @@ func (b *NotificationPreferenceQueryBuilder) First(ctx context.Context) (*Notifi
 func NotificationPreferenceBuild(db bun.IDB) *NotificationPreferenceQueryBuilder {
 	return NewNotificationPreferenceQuery(db)
 }
+
+// Relationship loading methods

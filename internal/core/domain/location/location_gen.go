@@ -57,162 +57,180 @@ var LocationQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		LocationCategoryIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		LocationCategoryIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		StateIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		StateIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
-		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
-		CodeEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CodeNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CodeGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1EQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1NEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1In        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		AddressLine1NotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		AddressLine1GT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1GTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1LT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1LTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1Contains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1HasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1HasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2EQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2NEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2In        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		AddressLine2NotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		AddressLine2GT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2GTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2LT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2LTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2Contains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2HasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2HasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CityNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CityGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PostalCodeNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PostalCodeGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LongitudeEQ           func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
-		LongitudeNEQ          func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
-		LongitudeIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
-		LongitudeIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
-		LatitudeEQ            func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
-		LatitudeNEQ           func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
-		LatitudeIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
-		LatitudeIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
-		PlaceIDEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PlaceIDNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PlaceIDGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		IsGeocodedEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsGeocodedNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SearchVectorEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SearchVectorNotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SearchVectorGT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorGTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorLT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorLTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorContains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorHasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		RankNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		RankGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IDEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		LocationCategoryIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		LocationCategoryIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		LocationCategoryIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		LocationCategoryIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StateIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		StateIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		StateIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StateIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StatusEQ                func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusNEQ               func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn             func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		CodeEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CodeNotIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CodeGT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeGTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeLT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeLTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeContains            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeHasPrefix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeHasSuffix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameNotIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameGT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameGTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameContains            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasPrefix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasSuffix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1EQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1NEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1In          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		AddressLine1NotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		AddressLine1GT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1GTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1LT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1LTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1Contains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1HasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1HasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2EQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2NEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2In          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		AddressLine2NotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		AddressLine2GT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2GTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2LT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2LTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2Contains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2HasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2HasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CityNotIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CityGT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityGTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityLT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityLTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityContains            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityHasPrefix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityHasSuffix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PostalCodeNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PostalCodeGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LongitudeEQ             func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		LongitudeNEQ            func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		LongitudeIn             func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		LongitudeNotIn          func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		LongitudeIsNull         func(q *bun.SelectQuery) *bun.SelectQuery
+		LongitudeIsNotNull      func(q *bun.SelectQuery) *bun.SelectQuery
+		LatitudeEQ              func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		LatitudeNEQ             func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		LatitudeIn              func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		LatitudeNotIn           func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		LatitudeIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
+		LatitudeIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
+		PlaceIDEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PlaceIDNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PlaceIDGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IsGeocodedEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsGeocodedNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsGeocodedIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsGeocodedNotIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SearchVectorEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SearchVectorNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SearchVectorGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		RankNotIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		RankGT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankGTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankLT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankLTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankContains            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankHasPrefix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankHasSuffix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -237,6 +255,13 @@ var LocationQuery = struct {
 	FieldConfig  func() map[string]locationFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit     string
+		Organization     string
+		State            string
+		LocationCategory string
+	}
 }{
 	// Table and alias constants
 	Table:    "locations",
@@ -306,163 +331,181 @@ var LocationQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		LocationCategoryIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		LocationCategoryIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		StateIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		StateIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
-		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
-		CodeEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CodeNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CodeGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1EQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1NEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1In        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		AddressLine1NotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		AddressLine1GT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1GTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1LT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1LTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1Contains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1HasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine1HasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2EQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2NEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2In        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		AddressLine2NotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		AddressLine2GT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2GTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2LT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2LTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2Contains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2HasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		AddressLine2HasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CityNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CityGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CityHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PostalCodeNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PostalCodeGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PostalCodeHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		LongitudeEQ           func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
-		LongitudeNEQ          func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
-		LongitudeIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
-		LongitudeIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
-		LatitudeEQ            func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
-		LatitudeNEQ           func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
-		LatitudeIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
-		LatitudeIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
-		PlaceIDEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PlaceIDNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PlaceIDGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PlaceIDHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		IsGeocodedEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsGeocodedNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SearchVectorEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SearchVectorNotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SearchVectorGT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorGTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorLT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorLTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorContains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorHasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		RankNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		RankGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		Tenant                func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		LocationCategoryIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		LocationCategoryIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		LocationCategoryIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		LocationCategoryIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StateIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		StateIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		StateIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StateIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StatusEQ                func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusNEQ               func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn             func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		CodeEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CodeNotIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CodeGT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeGTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeLT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeLTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeContains            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeHasPrefix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeHasSuffix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameNotIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameGT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameGTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameContains            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasPrefix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasSuffix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1EQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1NEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1In          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		AddressLine1NotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		AddressLine1GT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1GTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1LT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1LTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1Contains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1HasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine1HasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2EQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2NEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2In          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		AddressLine2NotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		AddressLine2GT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2GTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2LT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2LTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2Contains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2HasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		AddressLine2HasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CityNotIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CityGT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityGTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityLT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityLTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityContains            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityHasPrefix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CityHasSuffix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PostalCodeNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PostalCodeGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PostalCodeHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		LongitudeEQ             func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		LongitudeNEQ            func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		LongitudeIn             func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		LongitudeNotIn          func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		LongitudeIsNull         func(q *bun.SelectQuery) *bun.SelectQuery
+		LongitudeIsNotNull      func(q *bun.SelectQuery) *bun.SelectQuery
+		LatitudeEQ              func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		LatitudeNEQ             func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		LatitudeIn              func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		LatitudeNotIn           func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		LatitudeIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
+		LatitudeIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
+		PlaceIDEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PlaceIDNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PlaceIDGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PlaceIDHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IsGeocodedEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsGeocodedNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsGeocodedIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsGeocodedNotIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SearchVectorEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SearchVectorNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SearchVectorGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		RankNotIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		RankGT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankGTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankLT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankLTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankContains            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankHasPrefix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankHasSuffix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		Tenant                  func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("loc.id"), v)
@@ -470,11 +513,23 @@ var LocationQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("loc.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("loc.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("loc.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("loc.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("loc.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("loc.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("loc.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("loc.organization_id"), v)
@@ -482,11 +537,23 @@ var LocationQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("loc.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("loc.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("loc.organization_id"), bun.In(v))
+		},
 		LocationCategoryIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("loc.location_category_id"), v)
 		},
 		LocationCategoryIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("loc.location_category_id"), v)
+		},
+		LocationCategoryIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("loc.location_category_id"), bun.In(v))
+		},
+		LocationCategoryIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("loc.location_category_id"), bun.In(v))
 		},
 		StateIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("loc.state_id"), v)
@@ -494,11 +561,23 @@ var LocationQuery = struct {
 		StateIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("loc.state_id"), v)
 		},
+		StateIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("loc.state_id"), bun.In(v))
+		},
+		StateIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("loc.state_id"), bun.In(v))
+		},
 		StatusEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("loc.status"), v)
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("loc.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("loc.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("loc.status"), bun.In(v))
 		},
 		CodeEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("loc.code"), v)
@@ -737,6 +816,12 @@ var LocationQuery = struct {
 		LongitudeNEQ: func(q *bun.SelectQuery, v *float64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("loc.longitude"), v)
 		},
+		LongitudeIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("loc.longitude"), bun.In(v))
+		},
+		LongitudeNotIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("loc.longitude"), bun.In(v))
+		},
 		LongitudeIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("loc.longitude"))
 		},
@@ -748,6 +833,12 @@ var LocationQuery = struct {
 		},
 		LatitudeNEQ: func(q *bun.SelectQuery, v *float64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("loc.latitude"), v)
+		},
+		LatitudeIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("loc.latitude"), bun.In(v))
+		},
+		LatitudeNotIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("loc.latitude"), bun.In(v))
 		},
 		LatitudeIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("loc.latitude"))
@@ -793,6 +884,12 @@ var LocationQuery = struct {
 		},
 		IsGeocodedNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("loc.is_geocoded"), v)
+		},
+		IsGeocodedIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("loc.is_geocoded"), bun.In(v))
+		},
+		IsGeocodedNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("loc.is_geocoded"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("loc.version"), v)
@@ -1417,6 +1514,18 @@ var LocationQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit     string
+		Organization     string
+		State            string
+		LocationCategory string
+	}{
+		BusinessUnit:     "BusinessUnit",
+		Organization:     "Organization",
+		State:            "State",
+		LocationCategory: "LocationCategory",
+	},
 }
 
 // LocationQueryBuilder provides a fluent interface for building queries
@@ -1461,6 +1570,18 @@ func (b *LocationQueryBuilder) WhereIDNEQ(v pulid.ID) *LocationQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *LocationQueryBuilder) WhereIDIn(v []pulid.ID) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *LocationQueryBuilder) WhereIDNotIn(v []pulid.ID) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *LocationQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *LocationQueryBuilder {
 	b.query = LocationQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1470,6 +1591,18 @@ func (b *LocationQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *LocationQueryB
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *LocationQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *LocationQueryBuilder {
 	b.query = LocationQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *LocationQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *LocationQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1485,6 +1618,18 @@ func (b *LocationQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *LocationQuery
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *LocationQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *LocationQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereLocationCategoryIDEQ adds a WHERE location_category_id = ? condition
 func (b *LocationQueryBuilder) WhereLocationCategoryIDEQ(v pulid.ID) *LocationQueryBuilder {
 	b.query = LocationQuery.Where.LocationCategoryIDEQ(b.query, v)
@@ -1494,6 +1639,18 @@ func (b *LocationQueryBuilder) WhereLocationCategoryIDEQ(v pulid.ID) *LocationQu
 // WhereLocationCategoryIDNEQ adds a WHERE location_category_id != ? condition
 func (b *LocationQueryBuilder) WhereLocationCategoryIDNEQ(v pulid.ID) *LocationQueryBuilder {
 	b.query = LocationQuery.Where.LocationCategoryIDNEQ(b.query, v)
+	return b
+}
+
+// WhereLocationCategoryIDIn adds a WHERE location_category_id IN (?) condition
+func (b *LocationQueryBuilder) WhereLocationCategoryIDIn(v []pulid.ID) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.LocationCategoryIDIn(b.query, v)
+	return b
+}
+
+// WhereLocationCategoryIDNotIn adds a WHERE location_category_id NOT IN (?) condition
+func (b *LocationQueryBuilder) WhereLocationCategoryIDNotIn(v []pulid.ID) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.LocationCategoryIDNotIn(b.query, v)
 	return b
 }
 
@@ -1509,6 +1666,18 @@ func (b *LocationQueryBuilder) WhereStateIDNEQ(v pulid.ID) *LocationQueryBuilder
 	return b
 }
 
+// WhereStateIDIn adds a WHERE state_id IN (?) condition
+func (b *LocationQueryBuilder) WhereStateIDIn(v []pulid.ID) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.StateIDIn(b.query, v)
+	return b
+}
+
+// WhereStateIDNotIn adds a WHERE state_id NOT IN (?) condition
+func (b *LocationQueryBuilder) WhereStateIDNotIn(v []pulid.ID) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.StateIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *LocationQueryBuilder) WhereStatusEQ(v domain.Status) *LocationQueryBuilder {
 	b.query = LocationQuery.Where.StatusEQ(b.query, v)
@@ -1518,6 +1687,18 @@ func (b *LocationQueryBuilder) WhereStatusEQ(v domain.Status) *LocationQueryBuil
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *LocationQueryBuilder) WhereStatusNEQ(v domain.Status) *LocationQueryBuilder {
 	b.query = LocationQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *LocationQueryBuilder) WhereStatusIn(v []domain.Status) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *LocationQueryBuilder) WhereStatusNotIn(v []domain.Status) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1827,6 +2008,18 @@ func (b *LocationQueryBuilder) WhereLongitudeNEQ(v *float64) *LocationQueryBuild
 	return b
 }
 
+// WhereLongitudeIn adds a WHERE longitude IN (?) condition
+func (b *LocationQueryBuilder) WhereLongitudeIn(v []*float64) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.LongitudeIn(b.query, v)
+	return b
+}
+
+// WhereLongitudeNotIn adds a WHERE longitude NOT IN (?) condition
+func (b *LocationQueryBuilder) WhereLongitudeNotIn(v []*float64) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.LongitudeNotIn(b.query, v)
+	return b
+}
+
 // WhereLatitudeEQ adds a WHERE latitude = ? condition
 func (b *LocationQueryBuilder) WhereLatitudeEQ(v *float64) *LocationQueryBuilder {
 	b.query = LocationQuery.Where.LatitudeEQ(b.query, v)
@@ -1836,6 +2029,18 @@ func (b *LocationQueryBuilder) WhereLatitudeEQ(v *float64) *LocationQueryBuilder
 // WhereLatitudeNEQ adds a WHERE latitude != ? condition
 func (b *LocationQueryBuilder) WhereLatitudeNEQ(v *float64) *LocationQueryBuilder {
 	b.query = LocationQuery.Where.LatitudeNEQ(b.query, v)
+	return b
+}
+
+// WhereLatitudeIn adds a WHERE latitude IN (?) condition
+func (b *LocationQueryBuilder) WhereLatitudeIn(v []*float64) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.LatitudeIn(b.query, v)
+	return b
+}
+
+// WhereLatitudeNotIn adds a WHERE latitude NOT IN (?) condition
+func (b *LocationQueryBuilder) WhereLatitudeNotIn(v []*float64) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.LatitudeNotIn(b.query, v)
 	return b
 }
 
@@ -1890,6 +2095,18 @@ func (b *LocationQueryBuilder) WhereIsGeocodedEQ(v bool) *LocationQueryBuilder {
 // WhereIsGeocodedNEQ adds a WHERE is_geocoded != ? condition
 func (b *LocationQueryBuilder) WhereIsGeocodedNEQ(v bool) *LocationQueryBuilder {
 	b.query = LocationQuery.Where.IsGeocodedNEQ(b.query, v)
+	return b
+}
+
+// WhereIsGeocodedIn adds a WHERE is_geocoded IN (?) condition
+func (b *LocationQueryBuilder) WhereIsGeocodedIn(v []bool) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.IsGeocodedIn(b.query, v)
+	return b
+}
+
+// WhereIsGeocodedNotIn adds a WHERE is_geocoded NOT IN (?) condition
+func (b *LocationQueryBuilder) WhereIsGeocodedNotIn(v []bool) *LocationQueryBuilder {
+	b.query = LocationQuery.Where.IsGeocodedNotIn(b.query, v)
 	return b
 }
 
@@ -2221,4 +2438,39 @@ func (b *LocationQueryBuilder) First(ctx context.Context) (*Location, error) {
 // LocationBuild creates a chainable query builder
 func LocationBuild(db bun.IDB) *LocationQueryBuilder {
 	return NewLocationQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *LocationQueryBuilder) LoadBusinessUnit() *LocationQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *LocationQueryBuilder) LoadOrganization() *LocationQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadState loads the State relationship
+func (b *LocationQueryBuilder) LoadState() *LocationQueryBuilder {
+	b.query = b.query.Relation("State")
+	return b
+}
+
+// LoadLocationCategory loads the LocationCategory relationship
+func (b *LocationQueryBuilder) LoadLocationCategory() *LocationQueryBuilder {
+	b.query = b.query.Relation("LocationCategory")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Location
+func (b *LocationQueryBuilder) LoadAllRelations() *LocationQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadState()
+	b.LoadLocationCategory()
+	return b
 }

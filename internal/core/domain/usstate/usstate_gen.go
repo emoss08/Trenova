@@ -43,6 +43,8 @@ var UsStateQuery = struct {
 	Where struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -164,6 +166,8 @@ var UsStateQuery = struct {
 	Where: struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -230,6 +234,12 @@ var UsStateQuery = struct {
 		},
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ust.id"), v)
+		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ust.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ust.id"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ust.name"), v)
@@ -643,6 +653,18 @@ func (b *UsStateQueryBuilder) WhereIDNEQ(v pulid.ID) *UsStateQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *UsStateQueryBuilder) WhereIDIn(v []pulid.ID) *UsStateQueryBuilder {
+	b.query = UsStateQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *UsStateQueryBuilder) WhereIDNotIn(v []pulid.ID) *UsStateQueryBuilder {
+	b.query = UsStateQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereNameEQ adds a WHERE name = ? condition
 func (b *UsStateQueryBuilder) WhereNameEQ(v string) *UsStateQueryBuilder {
 	b.query = UsStateQuery.Where.NameEQ(b.query, v)
@@ -1003,3 +1025,5 @@ func (b *UsStateQueryBuilder) First(ctx context.Context) (*UsState, error) {
 func UsStateBuild(db bun.IDB) *UsStateQueryBuilder {
 	return NewUsStateQuery(db)
 }
+
+// Relationship loading methods

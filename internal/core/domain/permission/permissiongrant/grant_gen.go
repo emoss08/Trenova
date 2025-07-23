@@ -53,28 +53,48 @@ var GrantQuery = struct {
 	Where struct {
 		IDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		UserIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		UserIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		PermissionIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		PermissionIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		PermissionIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		PermissionIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		GrantedByEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		GrantedByNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		GrantedByIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		GrantedByNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		RevokedByEQ         func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		RevokedByNEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		RevokedByIn         func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		RevokedByNotIn      func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		RevokedByIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		RevokedByIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ            func(q *bun.SelectQuery, v permission.Status) *bun.SelectQuery
 		StatusNEQ           func(q *bun.SelectQuery, v permission.Status) *bun.SelectQuery
+		StatusIn            func(q *bun.SelectQuery, v []permission.Status) *bun.SelectQuery
+		StatusNotIn         func(q *bun.SelectQuery, v []permission.Status) *bun.SelectQuery
 		ExpiresAtEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ExpiresAtNEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ExpiresAtIn         func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ExpiresAtNotIn      func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ExpiresAtIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		ExpiresAtIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		RevokedAtEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		RevokedAtNEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		RevokedAtIn         func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		RevokedAtNotIn      func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		RevokedAtIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		RevokedAtIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		CreatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -98,14 +118,22 @@ var GrantQuery = struct {
 		ReasonHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		FieldOverridesEQ    func(q *bun.SelectQuery, v []*permission.FieldPermission) *bun.SelectQuery
 		FieldOverridesNEQ   func(q *bun.SelectQuery, v []*permission.FieldPermission) *bun.SelectQuery
+		FieldOverridesIn    func(q *bun.SelectQuery, v [][]*permission.FieldPermission) *bun.SelectQuery
+		FieldOverridesNotIn func(q *bun.SelectQuery, v [][]*permission.FieldPermission) *bun.SelectQuery
 		ConditionsEQ        func(q *bun.SelectQuery, v []*permission.Condition) *bun.SelectQuery
 		ConditionsNEQ       func(q *bun.SelectQuery, v []*permission.Condition) *bun.SelectQuery
+		ConditionsIn        func(q *bun.SelectQuery, v [][]*permission.Condition) *bun.SelectQuery
+		ConditionsNotIn     func(q *bun.SelectQuery, v [][]*permission.Condition) *bun.SelectQuery
 		ResourceIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ResourceIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ResourceIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ResourceIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ResourceIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ResourceIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		AuditTrailEQ        func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		AuditTrailNEQ       func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		AuditTrailIn        func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		AuditTrailNotIn     func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -127,6 +155,13 @@ var GrantQuery = struct {
 	FieldConfig  func() map[string]grantFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		User       string
+		Permission string
+		Grantor    string
+		Revoker    string
+	}
 }{
 	// Table and alias constants
 	Table:    "permission_grants",
@@ -186,28 +221,48 @@ var GrantQuery = struct {
 	Where: struct {
 		IDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		UserIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		UserIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		PermissionIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		PermissionIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		PermissionIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		PermissionIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		GrantedByEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		GrantedByNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		GrantedByIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		GrantedByNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		RevokedByEQ         func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		RevokedByNEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		RevokedByIn         func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		RevokedByNotIn      func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		RevokedByIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		RevokedByIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ            func(q *bun.SelectQuery, v permission.Status) *bun.SelectQuery
 		StatusNEQ           func(q *bun.SelectQuery, v permission.Status) *bun.SelectQuery
+		StatusIn            func(q *bun.SelectQuery, v []permission.Status) *bun.SelectQuery
+		StatusNotIn         func(q *bun.SelectQuery, v []permission.Status) *bun.SelectQuery
 		ExpiresAtEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ExpiresAtNEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ExpiresAtIn         func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ExpiresAtNotIn      func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ExpiresAtIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		ExpiresAtIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		RevokedAtEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		RevokedAtNEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		RevokedAtIn         func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		RevokedAtNotIn      func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		RevokedAtIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		RevokedAtIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		CreatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -231,14 +286,22 @@ var GrantQuery = struct {
 		ReasonHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		FieldOverridesEQ    func(q *bun.SelectQuery, v []*permission.FieldPermission) *bun.SelectQuery
 		FieldOverridesNEQ   func(q *bun.SelectQuery, v []*permission.FieldPermission) *bun.SelectQuery
+		FieldOverridesIn    func(q *bun.SelectQuery, v [][]*permission.FieldPermission) *bun.SelectQuery
+		FieldOverridesNotIn func(q *bun.SelectQuery, v [][]*permission.FieldPermission) *bun.SelectQuery
 		ConditionsEQ        func(q *bun.SelectQuery, v []*permission.Condition) *bun.SelectQuery
 		ConditionsNEQ       func(q *bun.SelectQuery, v []*permission.Condition) *bun.SelectQuery
+		ConditionsIn        func(q *bun.SelectQuery, v [][]*permission.Condition) *bun.SelectQuery
+		ConditionsNotIn     func(q *bun.SelectQuery, v [][]*permission.Condition) *bun.SelectQuery
 		ResourceIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ResourceIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ResourceIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ResourceIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ResourceIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ResourceIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		AuditTrailEQ        func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		AuditTrailNEQ       func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		AuditTrailIn        func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		AuditTrailNotIn     func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		Tenant              func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
@@ -247,11 +310,23 @@ var GrantQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pg.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.organization_id"), bun.In(v))
 		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pg.business_unit_id"), v)
@@ -259,11 +334,23 @@ var GrantQuery = struct {
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.business_unit_id"), bun.In(v))
+		},
 		UserIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pg.user_id"), v)
 		},
 		UserIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.user_id"), v)
+		},
+		UserIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.user_id"), bun.In(v))
+		},
+		UserIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.user_id"), bun.In(v))
 		},
 		PermissionIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pg.permission_id"), v)
@@ -271,17 +358,35 @@ var GrantQuery = struct {
 		PermissionIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.permission_id"), v)
 		},
+		PermissionIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.permission_id"), bun.In(v))
+		},
+		PermissionIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.permission_id"), bun.In(v))
+		},
 		GrantedByEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pg.granted_by"), v)
 		},
 		GrantedByNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.granted_by"), v)
 		},
+		GrantedByIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.granted_by"), bun.In(v))
+		},
+		GrantedByNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.granted_by"), bun.In(v))
+		},
 		RevokedByEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pg.revoked_by"), v)
 		},
 		RevokedByNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.revoked_by"), v)
+		},
+		RevokedByIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.revoked_by"), bun.In(v))
+		},
+		RevokedByNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.revoked_by"), bun.In(v))
 		},
 		RevokedByIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("pg.revoked_by"))
@@ -295,11 +400,23 @@ var GrantQuery = struct {
 		StatusNEQ: func(q *bun.SelectQuery, v permission.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.status"), v)
 		},
+		StatusIn: func(q *bun.SelectQuery, v []permission.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []permission.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.status"), bun.In(v))
+		},
 		ExpiresAtEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pg.expires_at"), v)
 		},
 		ExpiresAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.expires_at"), v)
+		},
+		ExpiresAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.expires_at"), bun.In(v))
+		},
+		ExpiresAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.expires_at"), bun.In(v))
 		},
 		ExpiresAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("pg.expires_at"))
@@ -312,6 +429,12 @@ var GrantQuery = struct {
 		},
 		RevokedAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.revoked_at"), v)
+		},
+		RevokedAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.revoked_at"), bun.In(v))
+		},
+		RevokedAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.revoked_at"), bun.In(v))
 		},
 		RevokedAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("pg.revoked_at"))
@@ -382,17 +505,35 @@ var GrantQuery = struct {
 		FieldOverridesNEQ: func(q *bun.SelectQuery, v []*permission.FieldPermission) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.field_overrides"), v)
 		},
+		FieldOverridesIn: func(q *bun.SelectQuery, v [][]*permission.FieldPermission) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.field_overrides"), bun.In(v))
+		},
+		FieldOverridesNotIn: func(q *bun.SelectQuery, v [][]*permission.FieldPermission) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.field_overrides"), bun.In(v))
+		},
 		ConditionsEQ: func(q *bun.SelectQuery, v []*permission.Condition) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pg.conditions"), v)
 		},
 		ConditionsNEQ: func(q *bun.SelectQuery, v []*permission.Condition) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.conditions"), v)
 		},
+		ConditionsIn: func(q *bun.SelectQuery, v [][]*permission.Condition) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.conditions"), bun.In(v))
+		},
+		ConditionsNotIn: func(q *bun.SelectQuery, v [][]*permission.Condition) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.conditions"), bun.In(v))
+		},
 		ResourceIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pg.resource_id"), v)
 		},
 		ResourceIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.resource_id"), v)
+		},
+		ResourceIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.resource_id"), bun.In(v))
+		},
+		ResourceIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.resource_id"), bun.In(v))
 		},
 		ResourceIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("pg.resource_id"))
@@ -405,6 +546,12 @@ var GrantQuery = struct {
 		},
 		AuditTrailNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pg.audit_trail"), v)
+		},
+		AuditTrailIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pg.audit_trail"), bun.In(v))
+		},
+		AuditTrailNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pg.audit_trail"), bun.In(v))
 		},
 		Tenant: func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery {
 			return q.
@@ -762,6 +909,18 @@ var GrantQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		User       string
+		Permission string
+		Grantor    string
+		Revoker    string
+	}{
+		User:       "User",
+		Permission: "Permission",
+		Grantor:    "Grantor",
+		Revoker:    "Revoker",
+	},
 }
 
 // GrantQueryBuilder provides a fluent interface for building queries
@@ -806,6 +965,18 @@ func (b *GrantQueryBuilder) WhereIDNEQ(v pulid.ID) *GrantQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *GrantQueryBuilder) WhereIDIn(v []pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *GrantQueryBuilder) WhereIDNotIn(v []pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *GrantQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.OrganizationIDEQ(b.query, v)
@@ -815,6 +986,18 @@ func (b *GrantQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *GrantQueryBuilder
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *GrantQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *GrantQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *GrantQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -830,6 +1013,18 @@ func (b *GrantQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *GrantQueryBuilde
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *GrantQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *GrantQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereUserIDEQ adds a WHERE user_id = ? condition
 func (b *GrantQueryBuilder) WhereUserIDEQ(v pulid.ID) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.UserIDEQ(b.query, v)
@@ -839,6 +1034,18 @@ func (b *GrantQueryBuilder) WhereUserIDEQ(v pulid.ID) *GrantQueryBuilder {
 // WhereUserIDNEQ adds a WHERE user_id != ? condition
 func (b *GrantQueryBuilder) WhereUserIDNEQ(v pulid.ID) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.UserIDNEQ(b.query, v)
+	return b
+}
+
+// WhereUserIDIn adds a WHERE user_id IN (?) condition
+func (b *GrantQueryBuilder) WhereUserIDIn(v []pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.UserIDIn(b.query, v)
+	return b
+}
+
+// WhereUserIDNotIn adds a WHERE user_id NOT IN (?) condition
+func (b *GrantQueryBuilder) WhereUserIDNotIn(v []pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.UserIDNotIn(b.query, v)
 	return b
 }
 
@@ -854,6 +1061,18 @@ func (b *GrantQueryBuilder) WherePermissionIDNEQ(v pulid.ID) *GrantQueryBuilder 
 	return b
 }
 
+// WherePermissionIDIn adds a WHERE permission_id IN (?) condition
+func (b *GrantQueryBuilder) WherePermissionIDIn(v []pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.PermissionIDIn(b.query, v)
+	return b
+}
+
+// WherePermissionIDNotIn adds a WHERE permission_id NOT IN (?) condition
+func (b *GrantQueryBuilder) WherePermissionIDNotIn(v []pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.PermissionIDNotIn(b.query, v)
+	return b
+}
+
 // WhereGrantedByEQ adds a WHERE granted_by = ? condition
 func (b *GrantQueryBuilder) WhereGrantedByEQ(v pulid.ID) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.GrantedByEQ(b.query, v)
@@ -863,6 +1082,18 @@ func (b *GrantQueryBuilder) WhereGrantedByEQ(v pulid.ID) *GrantQueryBuilder {
 // WhereGrantedByNEQ adds a WHERE granted_by != ? condition
 func (b *GrantQueryBuilder) WhereGrantedByNEQ(v pulid.ID) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.GrantedByNEQ(b.query, v)
+	return b
+}
+
+// WhereGrantedByIn adds a WHERE granted_by IN (?) condition
+func (b *GrantQueryBuilder) WhereGrantedByIn(v []pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.GrantedByIn(b.query, v)
+	return b
+}
+
+// WhereGrantedByNotIn adds a WHERE granted_by NOT IN (?) condition
+func (b *GrantQueryBuilder) WhereGrantedByNotIn(v []pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.GrantedByNotIn(b.query, v)
 	return b
 }
 
@@ -878,6 +1109,18 @@ func (b *GrantQueryBuilder) WhereRevokedByNEQ(v *pulid.ID) *GrantQueryBuilder {
 	return b
 }
 
+// WhereRevokedByIn adds a WHERE revoked_by IN (?) condition
+func (b *GrantQueryBuilder) WhereRevokedByIn(v []*pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.RevokedByIn(b.query, v)
+	return b
+}
+
+// WhereRevokedByNotIn adds a WHERE revoked_by NOT IN (?) condition
+func (b *GrantQueryBuilder) WhereRevokedByNotIn(v []*pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.RevokedByNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *GrantQueryBuilder) WhereStatusEQ(v permission.Status) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.StatusEQ(b.query, v)
@@ -887,6 +1130,18 @@ func (b *GrantQueryBuilder) WhereStatusEQ(v permission.Status) *GrantQueryBuilde
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *GrantQueryBuilder) WhereStatusNEQ(v permission.Status) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *GrantQueryBuilder) WhereStatusIn(v []permission.Status) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *GrantQueryBuilder) WhereStatusNotIn(v []permission.Status) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -902,6 +1157,18 @@ func (b *GrantQueryBuilder) WhereExpiresAtNEQ(v *int64) *GrantQueryBuilder {
 	return b
 }
 
+// WhereExpiresAtIn adds a WHERE expires_at IN (?) condition
+func (b *GrantQueryBuilder) WhereExpiresAtIn(v []*int64) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.ExpiresAtIn(b.query, v)
+	return b
+}
+
+// WhereExpiresAtNotIn adds a WHERE expires_at NOT IN (?) condition
+func (b *GrantQueryBuilder) WhereExpiresAtNotIn(v []*int64) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.ExpiresAtNotIn(b.query, v)
+	return b
+}
+
 // WhereRevokedAtEQ adds a WHERE revoked_at = ? condition
 func (b *GrantQueryBuilder) WhereRevokedAtEQ(v *int64) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.RevokedAtEQ(b.query, v)
@@ -911,6 +1178,18 @@ func (b *GrantQueryBuilder) WhereRevokedAtEQ(v *int64) *GrantQueryBuilder {
 // WhereRevokedAtNEQ adds a WHERE revoked_at != ? condition
 func (b *GrantQueryBuilder) WhereRevokedAtNEQ(v *int64) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.RevokedAtNEQ(b.query, v)
+	return b
+}
+
+// WhereRevokedAtIn adds a WHERE revoked_at IN (?) condition
+func (b *GrantQueryBuilder) WhereRevokedAtIn(v []*int64) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.RevokedAtIn(b.query, v)
+	return b
+}
+
+// WhereRevokedAtNotIn adds a WHERE revoked_at NOT IN (?) condition
+func (b *GrantQueryBuilder) WhereRevokedAtNotIn(v []*int64) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.RevokedAtNotIn(b.query, v)
 	return b
 }
 
@@ -1016,6 +1295,18 @@ func (b *GrantQueryBuilder) WhereFieldOverridesNEQ(v []*permission.FieldPermissi
 	return b
 }
 
+// WhereFieldOverridesIn adds a WHERE field_overrides IN (?) condition
+func (b *GrantQueryBuilder) WhereFieldOverridesIn(v [][]*permission.FieldPermission) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.FieldOverridesIn(b.query, v)
+	return b
+}
+
+// WhereFieldOverridesNotIn adds a WHERE field_overrides NOT IN (?) condition
+func (b *GrantQueryBuilder) WhereFieldOverridesNotIn(v [][]*permission.FieldPermission) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.FieldOverridesNotIn(b.query, v)
+	return b
+}
+
 // WhereConditionsEQ adds a WHERE conditions = ? condition
 func (b *GrantQueryBuilder) WhereConditionsEQ(v []*permission.Condition) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.ConditionsEQ(b.query, v)
@@ -1025,6 +1316,18 @@ func (b *GrantQueryBuilder) WhereConditionsEQ(v []*permission.Condition) *GrantQ
 // WhereConditionsNEQ adds a WHERE conditions != ? condition
 func (b *GrantQueryBuilder) WhereConditionsNEQ(v []*permission.Condition) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.ConditionsNEQ(b.query, v)
+	return b
+}
+
+// WhereConditionsIn adds a WHERE conditions IN (?) condition
+func (b *GrantQueryBuilder) WhereConditionsIn(v [][]*permission.Condition) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.ConditionsIn(b.query, v)
+	return b
+}
+
+// WhereConditionsNotIn adds a WHERE conditions NOT IN (?) condition
+func (b *GrantQueryBuilder) WhereConditionsNotIn(v [][]*permission.Condition) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.ConditionsNotIn(b.query, v)
 	return b
 }
 
@@ -1040,6 +1343,18 @@ func (b *GrantQueryBuilder) WhereResourceIDNEQ(v *pulid.ID) *GrantQueryBuilder {
 	return b
 }
 
+// WhereResourceIDIn adds a WHERE resource_id IN (?) condition
+func (b *GrantQueryBuilder) WhereResourceIDIn(v []*pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.ResourceIDIn(b.query, v)
+	return b
+}
+
+// WhereResourceIDNotIn adds a WHERE resource_id NOT IN (?) condition
+func (b *GrantQueryBuilder) WhereResourceIDNotIn(v []*pulid.ID) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.ResourceIDNotIn(b.query, v)
+	return b
+}
+
 // WhereAuditTrailEQ adds a WHERE audit_trail = ? condition
 func (b *GrantQueryBuilder) WhereAuditTrailEQ(v map[string]any) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.AuditTrailEQ(b.query, v)
@@ -1049,6 +1364,18 @@ func (b *GrantQueryBuilder) WhereAuditTrailEQ(v map[string]any) *GrantQueryBuild
 // WhereAuditTrailNEQ adds a WHERE audit_trail != ? condition
 func (b *GrantQueryBuilder) WhereAuditTrailNEQ(v map[string]any) *GrantQueryBuilder {
 	b.query = GrantQuery.Where.AuditTrailNEQ(b.query, v)
+	return b
+}
+
+// WhereAuditTrailIn adds a WHERE audit_trail IN (?) condition
+func (b *GrantQueryBuilder) WhereAuditTrailIn(v []map[string]any) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.AuditTrailIn(b.query, v)
+	return b
+}
+
+// WhereAuditTrailNotIn adds a WHERE audit_trail NOT IN (?) condition
+func (b *GrantQueryBuilder) WhereAuditTrailNotIn(v []map[string]any) *GrantQueryBuilder {
+	b.query = GrantQuery.Where.AuditTrailNotIn(b.query, v)
 	return b
 }
 
@@ -1152,4 +1479,39 @@ func (b *GrantQueryBuilder) First(ctx context.Context) (*Grant, error) {
 // GrantBuild creates a chainable query builder
 func GrantBuild(db bun.IDB) *GrantQueryBuilder {
 	return NewGrantQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadUser loads the User relationship
+func (b *GrantQueryBuilder) LoadUser() *GrantQueryBuilder {
+	b.query = b.query.Relation("User")
+	return b
+}
+
+// LoadPermission loads the Permission relationship
+func (b *GrantQueryBuilder) LoadPermission() *GrantQueryBuilder {
+	b.query = b.query.Relation("Permission")
+	return b
+}
+
+// LoadGrantor loads the Grantor relationship
+func (b *GrantQueryBuilder) LoadGrantor() *GrantQueryBuilder {
+	b.query = b.query.Relation("Grantor")
+	return b
+}
+
+// LoadRevoker loads the Revoker relationship
+func (b *GrantQueryBuilder) LoadRevoker() *GrantQueryBuilder {
+	b.query = b.query.Relation("Revoker")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Grant
+func (b *GrantQueryBuilder) LoadAllRelations() *GrantQueryBuilder {
+	b.LoadUser()
+	b.LoadPermission()
+	b.LoadGrantor()
+	b.LoadRevoker()
+	return b
 }

@@ -63,16 +63,28 @@ var NotificationQuery = struct {
 	Where struct {
 		IDEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		EventTypeEQ             func(q *bun.SelectQuery, v EventType) *bun.SelectQuery
 		EventTypeNEQ            func(q *bun.SelectQuery, v EventType) *bun.SelectQuery
+		EventTypeIn             func(q *bun.SelectQuery, v []EventType) *bun.SelectQuery
+		EventTypeNotIn          func(q *bun.SelectQuery, v []EventType) *bun.SelectQuery
 		PriorityEQ              func(q *bun.SelectQuery, v Priority) *bun.SelectQuery
 		PriorityNEQ             func(q *bun.SelectQuery, v Priority) *bun.SelectQuery
+		PriorityIn              func(q *bun.SelectQuery, v []Priority) *bun.SelectQuery
+		PriorityNotIn           func(q *bun.SelectQuery, v []Priority) *bun.SelectQuery
 		ChannelEQ               func(q *bun.SelectQuery, v Channel) *bun.SelectQuery
 		ChannelNEQ              func(q *bun.SelectQuery, v Channel) *bun.SelectQuery
+		ChannelIn               func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery
+		ChannelNotIn            func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery
 		DeliveryStatusEQ        func(q *bun.SelectQuery, v DeliveryStatus) *bun.SelectQuery
 		DeliveryStatusNEQ       func(q *bun.SelectQuery, v DeliveryStatus) *bun.SelectQuery
+		DeliveryStatusIn        func(q *bun.SelectQuery, v []DeliveryStatus) *bun.SelectQuery
+		DeliveryStatusNotIn     func(q *bun.SelectQuery, v []DeliveryStatus) *bun.SelectQuery
 		TitleEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		TitleNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		TitleIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -108,12 +120,20 @@ var NotificationQuery = struct {
 		SourceHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DataEQ                  func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		DataNEQ                 func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		DataIn                  func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		DataNotIn               func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		TagsEQ                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
 		TagsNEQ                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TagsIn                  func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		TagsNotIn               func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
 		RelatedEntitiesEQ       func(q *bun.SelectQuery, v []RelatedEntity) *bun.SelectQuery
 		RelatedEntitiesNEQ      func(q *bun.SelectQuery, v []RelatedEntity) *bun.SelectQuery
+		RelatedEntitiesIn       func(q *bun.SelectQuery, v [][]RelatedEntity) *bun.SelectQuery
+		RelatedEntitiesNotIn    func(q *bun.SelectQuery, v [][]RelatedEntity) *bun.SelectQuery
 		ActionsEQ               func(q *bun.SelectQuery, v []Action) *bun.SelectQuery
 		ActionsNEQ              func(q *bun.SelectQuery, v []Action) *bun.SelectQuery
+		ActionsIn               func(q *bun.SelectQuery, v [][]Action) *bun.SelectQuery
+		ActionsNotIn            func(q *bun.SelectQuery, v [][]Action) *bun.SelectQuery
 		CreatedAtEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -156,18 +176,26 @@ var NotificationQuery = struct {
 		VersionLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		ExpiresAtEQ             func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ExpiresAtNEQ            func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ExpiresAtIn             func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ExpiresAtNotIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ExpiresAtIsNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		ExpiresAtIsNotNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		DeliveredAtEQ           func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		DeliveredAtNEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		DeliveredAtIn           func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		DeliveredAtNotIn        func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		DeliveredAtIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		DeliveredAtIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ReadAtEQ                func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ReadAtNEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ReadAtIn                func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ReadAtNotIn             func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ReadAtIsNull            func(q *bun.SelectQuery) *bun.SelectQuery
 		ReadAtIsNotNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		DismissedAtEQ           func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		DismissedAtNEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		DismissedAtIn           func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		DismissedAtNotIn        func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		DismissedAtIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		DismissedAtIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		JobIDEQ                 func(q *bun.SelectQuery, v *string) *bun.SelectQuery
@@ -198,14 +226,20 @@ var NotificationQuery = struct {
 		CorrelationIDIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		BusinessUnitIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		BusinessUnitIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		BusinessUnitIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		TargetUserIDEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TargetUserIDNEQ         func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TargetUserIDIn          func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TargetUserIDNotIn       func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TargetUserIDIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		TargetUserIDIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		TargetRoleIDEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TargetRoleIDNEQ         func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TargetRoleIDIn          func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TargetRoleIDNotIn       func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TargetRoleIDIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		TargetRoleIDIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 
@@ -311,16 +345,28 @@ var NotificationQuery = struct {
 	Where: struct {
 		IDEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		EventTypeEQ             func(q *bun.SelectQuery, v EventType) *bun.SelectQuery
 		EventTypeNEQ            func(q *bun.SelectQuery, v EventType) *bun.SelectQuery
+		EventTypeIn             func(q *bun.SelectQuery, v []EventType) *bun.SelectQuery
+		EventTypeNotIn          func(q *bun.SelectQuery, v []EventType) *bun.SelectQuery
 		PriorityEQ              func(q *bun.SelectQuery, v Priority) *bun.SelectQuery
 		PriorityNEQ             func(q *bun.SelectQuery, v Priority) *bun.SelectQuery
+		PriorityIn              func(q *bun.SelectQuery, v []Priority) *bun.SelectQuery
+		PriorityNotIn           func(q *bun.SelectQuery, v []Priority) *bun.SelectQuery
 		ChannelEQ               func(q *bun.SelectQuery, v Channel) *bun.SelectQuery
 		ChannelNEQ              func(q *bun.SelectQuery, v Channel) *bun.SelectQuery
+		ChannelIn               func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery
+		ChannelNotIn            func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery
 		DeliveryStatusEQ        func(q *bun.SelectQuery, v DeliveryStatus) *bun.SelectQuery
 		DeliveryStatusNEQ       func(q *bun.SelectQuery, v DeliveryStatus) *bun.SelectQuery
+		DeliveryStatusIn        func(q *bun.SelectQuery, v []DeliveryStatus) *bun.SelectQuery
+		DeliveryStatusNotIn     func(q *bun.SelectQuery, v []DeliveryStatus) *bun.SelectQuery
 		TitleEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		TitleNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		TitleIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -356,12 +402,20 @@ var NotificationQuery = struct {
 		SourceHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DataEQ                  func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		DataNEQ                 func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		DataIn                  func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		DataNotIn               func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		TagsEQ                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
 		TagsNEQ                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TagsIn                  func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		TagsNotIn               func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
 		RelatedEntitiesEQ       func(q *bun.SelectQuery, v []RelatedEntity) *bun.SelectQuery
 		RelatedEntitiesNEQ      func(q *bun.SelectQuery, v []RelatedEntity) *bun.SelectQuery
+		RelatedEntitiesIn       func(q *bun.SelectQuery, v [][]RelatedEntity) *bun.SelectQuery
+		RelatedEntitiesNotIn    func(q *bun.SelectQuery, v [][]RelatedEntity) *bun.SelectQuery
 		ActionsEQ               func(q *bun.SelectQuery, v []Action) *bun.SelectQuery
 		ActionsNEQ              func(q *bun.SelectQuery, v []Action) *bun.SelectQuery
+		ActionsIn               func(q *bun.SelectQuery, v [][]Action) *bun.SelectQuery
+		ActionsNotIn            func(q *bun.SelectQuery, v [][]Action) *bun.SelectQuery
 		CreatedAtEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -404,18 +458,26 @@ var NotificationQuery = struct {
 		VersionLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		ExpiresAtEQ             func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ExpiresAtNEQ            func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ExpiresAtIn             func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ExpiresAtNotIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ExpiresAtIsNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		ExpiresAtIsNotNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		DeliveredAtEQ           func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		DeliveredAtNEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		DeliveredAtIn           func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		DeliveredAtNotIn        func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		DeliveredAtIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		DeliveredAtIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ReadAtEQ                func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ReadAtNEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ReadAtIn                func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ReadAtNotIn             func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ReadAtIsNull            func(q *bun.SelectQuery) *bun.SelectQuery
 		ReadAtIsNotNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		DismissedAtEQ           func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		DismissedAtNEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		DismissedAtIn           func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		DismissedAtNotIn        func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		DismissedAtIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		DismissedAtIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		JobIDEQ                 func(q *bun.SelectQuery, v *string) *bun.SelectQuery
@@ -446,14 +508,20 @@ var NotificationQuery = struct {
 		CorrelationIDIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		BusinessUnitIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		BusinessUnitIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		BusinessUnitIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		TargetUserIDEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TargetUserIDNEQ         func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TargetUserIDIn          func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TargetUserIDNotIn       func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TargetUserIDIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		TargetUserIDIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		TargetRoleIDEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TargetRoleIDNEQ         func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TargetRoleIDIn          func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TargetRoleIDNotIn       func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TargetRoleIDIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		TargetRoleIDIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		Tenant                  func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -464,11 +532,23 @@ var NotificationQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("notif.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.organization_id"), bun.In(v))
 		},
 		EventTypeEQ: func(q *bun.SelectQuery, v EventType) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("notif.event_type"), v)
@@ -476,11 +556,23 @@ var NotificationQuery = struct {
 		EventTypeNEQ: func(q *bun.SelectQuery, v EventType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.event_type"), v)
 		},
+		EventTypeIn: func(q *bun.SelectQuery, v []EventType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.event_type"), bun.In(v))
+		},
+		EventTypeNotIn: func(q *bun.SelectQuery, v []EventType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.event_type"), bun.In(v))
+		},
 		PriorityEQ: func(q *bun.SelectQuery, v Priority) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("notif.priority"), v)
 		},
 		PriorityNEQ: func(q *bun.SelectQuery, v Priority) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.priority"), v)
+		},
+		PriorityIn: func(q *bun.SelectQuery, v []Priority) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.priority"), bun.In(v))
+		},
+		PriorityNotIn: func(q *bun.SelectQuery, v []Priority) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.priority"), bun.In(v))
 		},
 		ChannelEQ: func(q *bun.SelectQuery, v Channel) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("notif.channel"), v)
@@ -488,11 +580,23 @@ var NotificationQuery = struct {
 		ChannelNEQ: func(q *bun.SelectQuery, v Channel) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.channel"), v)
 		},
+		ChannelIn: func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.channel"), bun.In(v))
+		},
+		ChannelNotIn: func(q *bun.SelectQuery, v []Channel) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.channel"), bun.In(v))
+		},
 		DeliveryStatusEQ: func(q *bun.SelectQuery, v DeliveryStatus) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("notif.delivery_status"), v)
 		},
 		DeliveryStatusNEQ: func(q *bun.SelectQuery, v DeliveryStatus) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.delivery_status"), v)
+		},
+		DeliveryStatusIn: func(q *bun.SelectQuery, v []DeliveryStatus) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.delivery_status"), bun.In(v))
+		},
+		DeliveryStatusNotIn: func(q *bun.SelectQuery, v []DeliveryStatus) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.delivery_status"), bun.In(v))
 		},
 		TitleEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("notif.title"), v)
@@ -599,11 +703,23 @@ var NotificationQuery = struct {
 		DataNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.data"), v)
 		},
+		DataIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.data"), bun.In(v))
+		},
+		DataNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.data"), bun.In(v))
+		},
 		TagsEQ: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("notif.tags"), v)
 		},
 		TagsNEQ: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.tags"), v)
+		},
+		TagsIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.tags"), bun.In(v))
+		},
+		TagsNotIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.tags"), bun.In(v))
 		},
 		RelatedEntitiesEQ: func(q *bun.SelectQuery, v []RelatedEntity) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("notif.related_entities"), v)
@@ -611,11 +727,23 @@ var NotificationQuery = struct {
 		RelatedEntitiesNEQ: func(q *bun.SelectQuery, v []RelatedEntity) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.related_entities"), v)
 		},
+		RelatedEntitiesIn: func(q *bun.SelectQuery, v [][]RelatedEntity) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.related_entities"), bun.In(v))
+		},
+		RelatedEntitiesNotIn: func(q *bun.SelectQuery, v [][]RelatedEntity) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.related_entities"), bun.In(v))
+		},
 		ActionsEQ: func(q *bun.SelectQuery, v []Action) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("notif.actions"), v)
 		},
 		ActionsNEQ: func(q *bun.SelectQuery, v []Action) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.actions"), v)
+		},
+		ActionsIn: func(q *bun.SelectQuery, v [][]Action) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.actions"), bun.In(v))
+		},
+		ActionsNotIn: func(q *bun.SelectQuery, v [][]Action) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.actions"), bun.In(v))
 		},
 		CreatedAtEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("notif.created_at"), v)
@@ -743,6 +871,12 @@ var NotificationQuery = struct {
 		ExpiresAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.expires_at"), v)
 		},
+		ExpiresAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.expires_at"), bun.In(v))
+		},
+		ExpiresAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.expires_at"), bun.In(v))
+		},
 		ExpiresAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("notif.expires_at"))
 		},
@@ -754,6 +888,12 @@ var NotificationQuery = struct {
 		},
 		DeliveredAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.delivered_at"), v)
+		},
+		DeliveredAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.delivered_at"), bun.In(v))
+		},
+		DeliveredAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.delivered_at"), bun.In(v))
 		},
 		DeliveredAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("notif.delivered_at"))
@@ -767,6 +907,12 @@ var NotificationQuery = struct {
 		ReadAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.read_at"), v)
 		},
+		ReadAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.read_at"), bun.In(v))
+		},
+		ReadAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.read_at"), bun.In(v))
+		},
 		ReadAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("notif.read_at"))
 		},
@@ -778,6 +924,12 @@ var NotificationQuery = struct {
 		},
 		DismissedAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.dismissed_at"), v)
+		},
+		DismissedAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.dismissed_at"), bun.In(v))
+		},
+		DismissedAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.dismissed_at"), bun.In(v))
 		},
 		DismissedAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("notif.dismissed_at"))
@@ -869,6 +1021,12 @@ var NotificationQuery = struct {
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.business_unit_id"), bun.In(v))
+		},
 		BusinessUnitIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("notif.business_unit_id"))
 		},
@@ -881,6 +1039,12 @@ var NotificationQuery = struct {
 		TargetUserIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.target_user_id"), v)
 		},
+		TargetUserIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.target_user_id"), bun.In(v))
+		},
+		TargetUserIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.target_user_id"), bun.In(v))
+		},
 		TargetUserIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("notif.target_user_id"))
 		},
@@ -892,6 +1056,12 @@ var NotificationQuery = struct {
 		},
 		TargetRoleIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("notif.target_role_id"), v)
+		},
+		TargetRoleIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("notif.target_role_id"), bun.In(v))
+		},
+		TargetRoleIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("notif.target_role_id"), bun.In(v))
 		},
 		TargetRoleIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("notif.target_role_id"))
@@ -1503,6 +1673,18 @@ func (b *NotificationQueryBuilder) WhereIDNEQ(v pulid.ID) *NotificationQueryBuil
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *NotificationQueryBuilder) WhereIDIn(v []pulid.ID) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereIDNotIn(v []pulid.ID) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *NotificationQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.OrganizationIDEQ(b.query, v)
@@ -1512,6 +1694,18 @@ func (b *NotificationQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *Notificati
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *NotificationQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *NotificationQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1527,6 +1721,18 @@ func (b *NotificationQueryBuilder) WhereEventTypeNEQ(v EventType) *NotificationQ
 	return b
 }
 
+// WhereEventTypeIn adds a WHERE event_type IN (?) condition
+func (b *NotificationQueryBuilder) WhereEventTypeIn(v []EventType) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.EventTypeIn(b.query, v)
+	return b
+}
+
+// WhereEventTypeNotIn adds a WHERE event_type NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereEventTypeNotIn(v []EventType) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.EventTypeNotIn(b.query, v)
+	return b
+}
+
 // WherePriorityEQ adds a WHERE priority = ? condition
 func (b *NotificationQueryBuilder) WherePriorityEQ(v Priority) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.PriorityEQ(b.query, v)
@@ -1536,6 +1742,18 @@ func (b *NotificationQueryBuilder) WherePriorityEQ(v Priority) *NotificationQuer
 // WherePriorityNEQ adds a WHERE priority != ? condition
 func (b *NotificationQueryBuilder) WherePriorityNEQ(v Priority) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.PriorityNEQ(b.query, v)
+	return b
+}
+
+// WherePriorityIn adds a WHERE priority IN (?) condition
+func (b *NotificationQueryBuilder) WherePriorityIn(v []Priority) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.PriorityIn(b.query, v)
+	return b
+}
+
+// WherePriorityNotIn adds a WHERE priority NOT IN (?) condition
+func (b *NotificationQueryBuilder) WherePriorityNotIn(v []Priority) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.PriorityNotIn(b.query, v)
 	return b
 }
 
@@ -1551,6 +1769,18 @@ func (b *NotificationQueryBuilder) WhereChannelNEQ(v Channel) *NotificationQuery
 	return b
 }
 
+// WhereChannelIn adds a WHERE channel IN (?) condition
+func (b *NotificationQueryBuilder) WhereChannelIn(v []Channel) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.ChannelIn(b.query, v)
+	return b
+}
+
+// WhereChannelNotIn adds a WHERE channel NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereChannelNotIn(v []Channel) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.ChannelNotIn(b.query, v)
+	return b
+}
+
 // WhereDeliveryStatusEQ adds a WHERE delivery_status = ? condition
 func (b *NotificationQueryBuilder) WhereDeliveryStatusEQ(v DeliveryStatus) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.DeliveryStatusEQ(b.query, v)
@@ -1560,6 +1790,18 @@ func (b *NotificationQueryBuilder) WhereDeliveryStatusEQ(v DeliveryStatus) *Noti
 // WhereDeliveryStatusNEQ adds a WHERE delivery_status != ? condition
 func (b *NotificationQueryBuilder) WhereDeliveryStatusNEQ(v DeliveryStatus) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.DeliveryStatusNEQ(b.query, v)
+	return b
+}
+
+// WhereDeliveryStatusIn adds a WHERE delivery_status IN (?) condition
+func (b *NotificationQueryBuilder) WhereDeliveryStatusIn(v []DeliveryStatus) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.DeliveryStatusIn(b.query, v)
+	return b
+}
+
+// WhereDeliveryStatusNotIn adds a WHERE delivery_status NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereDeliveryStatusNotIn(v []DeliveryStatus) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.DeliveryStatusNotIn(b.query, v)
 	return b
 }
 
@@ -1701,6 +1943,18 @@ func (b *NotificationQueryBuilder) WhereDataNEQ(v map[string]any) *NotificationQ
 	return b
 }
 
+// WhereDataIn adds a WHERE data IN (?) condition
+func (b *NotificationQueryBuilder) WhereDataIn(v []map[string]any) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.DataIn(b.query, v)
+	return b
+}
+
+// WhereDataNotIn adds a WHERE data NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereDataNotIn(v []map[string]any) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.DataNotIn(b.query, v)
+	return b
+}
+
 // WhereTagsEQ adds a WHERE tags = ? condition
 func (b *NotificationQueryBuilder) WhereTagsEQ(v []string) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.TagsEQ(b.query, v)
@@ -1710,6 +1964,18 @@ func (b *NotificationQueryBuilder) WhereTagsEQ(v []string) *NotificationQueryBui
 // WhereTagsNEQ adds a WHERE tags != ? condition
 func (b *NotificationQueryBuilder) WhereTagsNEQ(v []string) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.TagsNEQ(b.query, v)
+	return b
+}
+
+// WhereTagsIn adds a WHERE tags IN (?) condition
+func (b *NotificationQueryBuilder) WhereTagsIn(v [][]string) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.TagsIn(b.query, v)
+	return b
+}
+
+// WhereTagsNotIn adds a WHERE tags NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereTagsNotIn(v [][]string) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.TagsNotIn(b.query, v)
 	return b
 }
 
@@ -1725,6 +1991,18 @@ func (b *NotificationQueryBuilder) WhereRelatedEntitiesNEQ(v []RelatedEntity) *N
 	return b
 }
 
+// WhereRelatedEntitiesIn adds a WHERE related_entities IN (?) condition
+func (b *NotificationQueryBuilder) WhereRelatedEntitiesIn(v [][]RelatedEntity) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.RelatedEntitiesIn(b.query, v)
+	return b
+}
+
+// WhereRelatedEntitiesNotIn adds a WHERE related_entities NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereRelatedEntitiesNotIn(v [][]RelatedEntity) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.RelatedEntitiesNotIn(b.query, v)
+	return b
+}
+
 // WhereActionsEQ adds a WHERE actions = ? condition
 func (b *NotificationQueryBuilder) WhereActionsEQ(v []Action) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.ActionsEQ(b.query, v)
@@ -1734,6 +2012,18 @@ func (b *NotificationQueryBuilder) WhereActionsEQ(v []Action) *NotificationQuery
 // WhereActionsNEQ adds a WHERE actions != ? condition
 func (b *NotificationQueryBuilder) WhereActionsNEQ(v []Action) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.ActionsNEQ(b.query, v)
+	return b
+}
+
+// WhereActionsIn adds a WHERE actions IN (?) condition
+func (b *NotificationQueryBuilder) WhereActionsIn(v [][]Action) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.ActionsIn(b.query, v)
+	return b
+}
+
+// WhereActionsNotIn adds a WHERE actions NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereActionsNotIn(v [][]Action) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.ActionsNotIn(b.query, v)
 	return b
 }
 
@@ -1989,6 +2279,18 @@ func (b *NotificationQueryBuilder) WhereExpiresAtNEQ(v *int64) *NotificationQuer
 	return b
 }
 
+// WhereExpiresAtIn adds a WHERE expires_at IN (?) condition
+func (b *NotificationQueryBuilder) WhereExpiresAtIn(v []*int64) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.ExpiresAtIn(b.query, v)
+	return b
+}
+
+// WhereExpiresAtNotIn adds a WHERE expires_at NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereExpiresAtNotIn(v []*int64) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.ExpiresAtNotIn(b.query, v)
+	return b
+}
+
 // WhereDeliveredAtEQ adds a WHERE delivered_at = ? condition
 func (b *NotificationQueryBuilder) WhereDeliveredAtEQ(v *int64) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.DeliveredAtEQ(b.query, v)
@@ -1998,6 +2300,18 @@ func (b *NotificationQueryBuilder) WhereDeliveredAtEQ(v *int64) *NotificationQue
 // WhereDeliveredAtNEQ adds a WHERE delivered_at != ? condition
 func (b *NotificationQueryBuilder) WhereDeliveredAtNEQ(v *int64) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.DeliveredAtNEQ(b.query, v)
+	return b
+}
+
+// WhereDeliveredAtIn adds a WHERE delivered_at IN (?) condition
+func (b *NotificationQueryBuilder) WhereDeliveredAtIn(v []*int64) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.DeliveredAtIn(b.query, v)
+	return b
+}
+
+// WhereDeliveredAtNotIn adds a WHERE delivered_at NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereDeliveredAtNotIn(v []*int64) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.DeliveredAtNotIn(b.query, v)
 	return b
 }
 
@@ -2013,6 +2327,18 @@ func (b *NotificationQueryBuilder) WhereReadAtNEQ(v *int64) *NotificationQueryBu
 	return b
 }
 
+// WhereReadAtIn adds a WHERE read_at IN (?) condition
+func (b *NotificationQueryBuilder) WhereReadAtIn(v []*int64) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.ReadAtIn(b.query, v)
+	return b
+}
+
+// WhereReadAtNotIn adds a WHERE read_at NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereReadAtNotIn(v []*int64) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.ReadAtNotIn(b.query, v)
+	return b
+}
+
 // WhereDismissedAtEQ adds a WHERE dismissed_at = ? condition
 func (b *NotificationQueryBuilder) WhereDismissedAtEQ(v *int64) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.DismissedAtEQ(b.query, v)
@@ -2022,6 +2348,18 @@ func (b *NotificationQueryBuilder) WhereDismissedAtEQ(v *int64) *NotificationQue
 // WhereDismissedAtNEQ adds a WHERE dismissed_at != ? condition
 func (b *NotificationQueryBuilder) WhereDismissedAtNEQ(v *int64) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.DismissedAtNEQ(b.query, v)
+	return b
+}
+
+// WhereDismissedAtIn adds a WHERE dismissed_at IN (?) condition
+func (b *NotificationQueryBuilder) WhereDismissedAtIn(v []*int64) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.DismissedAtIn(b.query, v)
+	return b
+}
+
+// WhereDismissedAtNotIn adds a WHERE dismissed_at NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereDismissedAtNotIn(v []*int64) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.DismissedAtNotIn(b.query, v)
 	return b
 }
 
@@ -2085,6 +2423,18 @@ func (b *NotificationQueryBuilder) WhereBusinessUnitIDNEQ(v *pulid.ID) *Notifica
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *NotificationQueryBuilder) WhereBusinessUnitIDIn(v []*pulid.ID) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereBusinessUnitIDNotIn(v []*pulid.ID) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereTargetUserIDEQ adds a WHERE target_user_id = ? condition
 func (b *NotificationQueryBuilder) WhereTargetUserIDEQ(v *pulid.ID) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.TargetUserIDEQ(b.query, v)
@@ -2097,6 +2447,18 @@ func (b *NotificationQueryBuilder) WhereTargetUserIDNEQ(v *pulid.ID) *Notificati
 	return b
 }
 
+// WhereTargetUserIDIn adds a WHERE target_user_id IN (?) condition
+func (b *NotificationQueryBuilder) WhereTargetUserIDIn(v []*pulid.ID) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.TargetUserIDIn(b.query, v)
+	return b
+}
+
+// WhereTargetUserIDNotIn adds a WHERE target_user_id NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereTargetUserIDNotIn(v []*pulid.ID) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.TargetUserIDNotIn(b.query, v)
+	return b
+}
+
 // WhereTargetRoleIDEQ adds a WHERE target_role_id = ? condition
 func (b *NotificationQueryBuilder) WhereTargetRoleIDEQ(v *pulid.ID) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.TargetRoleIDEQ(b.query, v)
@@ -2106,6 +2468,18 @@ func (b *NotificationQueryBuilder) WhereTargetRoleIDEQ(v *pulid.ID) *Notificatio
 // WhereTargetRoleIDNEQ adds a WHERE target_role_id != ? condition
 func (b *NotificationQueryBuilder) WhereTargetRoleIDNEQ(v *pulid.ID) *NotificationQueryBuilder {
 	b.query = NotificationQuery.Where.TargetRoleIDNEQ(b.query, v)
+	return b
+}
+
+// WhereTargetRoleIDIn adds a WHERE target_role_id IN (?) condition
+func (b *NotificationQueryBuilder) WhereTargetRoleIDIn(v []*pulid.ID) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.TargetRoleIDIn(b.query, v)
+	return b
+}
+
+// WhereTargetRoleIDNotIn adds a WHERE target_role_id NOT IN (?) condition
+func (b *NotificationQueryBuilder) WhereTargetRoleIDNotIn(v []*pulid.ID) *NotificationQueryBuilder {
+	b.query = NotificationQuery.Where.TargetRoleIDNotIn(b.query, v)
 	return b
 }
 
@@ -2210,3 +2584,5 @@ func (b *NotificationQueryBuilder) First(ctx context.Context) (*Notification, er
 func NotificationBuild(db bun.IDB) *NotificationQueryBuilder {
 	return NewNotificationQuery(db)
 }
+
+// Relationship loading methods

@@ -50,12 +50,20 @@ var EquipmentTypeQuery = struct {
 	Where struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn           func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		CodeEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -80,6 +88,8 @@ var EquipmentTypeQuery = struct {
 		DescriptionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ClassEQ               func(q *bun.SelectQuery, v Class) *bun.SelectQuery
 		ClassNEQ              func(q *bun.SelectQuery, v Class) *bun.SelectQuery
+		ClassIn               func(q *bun.SelectQuery, v []Class) *bun.SelectQuery
+		ClassNotIn            func(q *bun.SelectQuery, v []Class) *bun.SelectQuery
 		ColorEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ColorNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ColorIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -161,6 +171,11 @@ var EquipmentTypeQuery = struct {
 	FieldConfig  func() map[string]equipmentTypeFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "equipment_types",
@@ -214,12 +229,20 @@ var EquipmentTypeQuery = struct {
 	Where: struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn           func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		CodeEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -244,6 +267,8 @@ var EquipmentTypeQuery = struct {
 		DescriptionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ClassEQ               func(q *bun.SelectQuery, v Class) *bun.SelectQuery
 		ClassNEQ              func(q *bun.SelectQuery, v Class) *bun.SelectQuery
+		ClassIn               func(q *bun.SelectQuery, v []Class) *bun.SelectQuery
+		ClassNotIn            func(q *bun.SelectQuery, v []Class) *bun.SelectQuery
 		ColorEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ColorNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ColorIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -309,11 +334,23 @@ var EquipmentTypeQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.organization_id"), v)
@@ -321,11 +358,23 @@ var EquipmentTypeQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.organization_id"), bun.In(v))
+		},
 		StatusEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.status"), v)
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.status"), bun.In(v))
 		},
 		CodeEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.code"), v)
@@ -398,6 +447,12 @@ var EquipmentTypeQuery = struct {
 		},
 		ClassNEQ: func(q *bun.SelectQuery, v Class) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.class"), v)
+		},
+		ClassIn: func(q *bun.SelectQuery, v []Class) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.class"), bun.In(v))
+		},
+		ClassNotIn: func(q *bun.SelectQuery, v []Class) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.class"), bun.In(v))
 		},
 		ColorEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.color"), v)
@@ -893,6 +948,14 @@ var EquipmentTypeQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // EquipmentTypeQueryBuilder provides a fluent interface for building queries
@@ -937,6 +1000,18 @@ func (b *EquipmentTypeQueryBuilder) WhereIDNEQ(v pulid.ID) *EquipmentTypeQueryBu
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *EquipmentTypeQueryBuilder) WhereIDIn(v []pulid.ID) *EquipmentTypeQueryBuilder {
+	b.query = EquipmentTypeQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *EquipmentTypeQueryBuilder) WhereIDNotIn(v []pulid.ID) *EquipmentTypeQueryBuilder {
+	b.query = EquipmentTypeQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *EquipmentTypeQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *EquipmentTypeQueryBuilder {
 	b.query = EquipmentTypeQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -946,6 +1021,18 @@ func (b *EquipmentTypeQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *Equipment
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *EquipmentTypeQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *EquipmentTypeQueryBuilder {
 	b.query = EquipmentTypeQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *EquipmentTypeQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *EquipmentTypeQueryBuilder {
+	b.query = EquipmentTypeQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *EquipmentTypeQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *EquipmentTypeQueryBuilder {
+	b.query = EquipmentTypeQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -961,6 +1048,18 @@ func (b *EquipmentTypeQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *Equipmen
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *EquipmentTypeQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *EquipmentTypeQueryBuilder {
+	b.query = EquipmentTypeQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *EquipmentTypeQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *EquipmentTypeQueryBuilder {
+	b.query = EquipmentTypeQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *EquipmentTypeQueryBuilder) WhereStatusEQ(v domain.Status) *EquipmentTypeQueryBuilder {
 	b.query = EquipmentTypeQuery.Where.StatusEQ(b.query, v)
@@ -970,6 +1069,18 @@ func (b *EquipmentTypeQueryBuilder) WhereStatusEQ(v domain.Status) *EquipmentTyp
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *EquipmentTypeQueryBuilder) WhereStatusNEQ(v domain.Status) *EquipmentTypeQueryBuilder {
 	b.query = EquipmentTypeQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *EquipmentTypeQueryBuilder) WhereStatusIn(v []domain.Status) *EquipmentTypeQueryBuilder {
+	b.query = EquipmentTypeQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *EquipmentTypeQueryBuilder) WhereStatusNotIn(v []domain.Status) *EquipmentTypeQueryBuilder {
+	b.query = EquipmentTypeQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1066,6 +1177,18 @@ func (b *EquipmentTypeQueryBuilder) WhereClassEQ(v Class) *EquipmentTypeQueryBui
 // WhereClassNEQ adds a WHERE class != ? condition
 func (b *EquipmentTypeQueryBuilder) WhereClassNEQ(v Class) *EquipmentTypeQueryBuilder {
 	b.query = EquipmentTypeQuery.Where.ClassNEQ(b.query, v)
+	return b
+}
+
+// WhereClassIn adds a WHERE class IN (?) condition
+func (b *EquipmentTypeQueryBuilder) WhereClassIn(v []Class) *EquipmentTypeQueryBuilder {
+	b.query = EquipmentTypeQuery.Where.ClassIn(b.query, v)
+	return b
+}
+
+// WhereClassNotIn adds a WHERE class NOT IN (?) condition
+func (b *EquipmentTypeQueryBuilder) WhereClassNotIn(v []Class) *EquipmentTypeQueryBuilder {
+	b.query = EquipmentTypeQuery.Where.ClassNotIn(b.query, v)
 	return b
 }
 
@@ -1439,4 +1562,25 @@ func (b *EquipmentTypeQueryBuilder) First(ctx context.Context) (*EquipmentType, 
 // EquipmentTypeBuild creates a chainable query builder
 func EquipmentTypeBuild(db bun.IDB) *EquipmentTypeQueryBuilder {
 	return NewEquipmentTypeQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *EquipmentTypeQueryBuilder) LoadBusinessUnit() *EquipmentTypeQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *EquipmentTypeQueryBuilder) LoadOrganization() *EquipmentTypeQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for EquipmentType
+func (b *EquipmentTypeQueryBuilder) LoadAllRelations() *EquipmentTypeQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
 }

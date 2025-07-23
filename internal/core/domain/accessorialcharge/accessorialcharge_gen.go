@@ -52,12 +52,20 @@ var AccessorialChargeQuery = struct {
 	Where struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn           func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		CodeEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -104,6 +112,8 @@ var AccessorialChargeQuery = struct {
 		RankHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		MethodEQ              func(q *bun.SelectQuery, v Method) *bun.SelectQuery
 		MethodNEQ             func(q *bun.SelectQuery, v Method) *bun.SelectQuery
+		MethodIn              func(q *bun.SelectQuery, v []Method) *bun.SelectQuery
+		MethodNotIn           func(q *bun.SelectQuery, v []Method) *bun.SelectQuery
 		AmountEQ              func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
 		AmountNEQ             func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
 		AmountIn              func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
@@ -168,6 +178,11 @@ var AccessorialChargeQuery = struct {
 	FieldConfig  func() map[string]accessorialChargeFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "accessorial_charges",
@@ -223,12 +238,20 @@ var AccessorialChargeQuery = struct {
 	Where: struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn           func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		CodeEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -275,6 +298,8 @@ var AccessorialChargeQuery = struct {
 		RankHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		MethodEQ              func(q *bun.SelectQuery, v Method) *bun.SelectQuery
 		MethodNEQ             func(q *bun.SelectQuery, v Method) *bun.SelectQuery
+		MethodIn              func(q *bun.SelectQuery, v []Method) *bun.SelectQuery
+		MethodNotIn           func(q *bun.SelectQuery, v []Method) *bun.SelectQuery
 		AmountEQ              func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
 		AmountNEQ             func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
 		AmountIn              func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
@@ -323,11 +348,23 @@ var AccessorialChargeQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("acc.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("acc.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("acc.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("acc.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("acc.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("acc.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("acc.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("acc.organization_id"), v)
@@ -335,11 +372,23 @@ var AccessorialChargeQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("acc.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("acc.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("acc.organization_id"), bun.In(v))
+		},
 		StatusEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("acc.status"), v)
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("acc.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("acc.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("acc.status"), bun.In(v))
 		},
 		CodeEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("acc.code"), v)
@@ -478,6 +527,12 @@ var AccessorialChargeQuery = struct {
 		},
 		MethodNEQ: func(q *bun.SelectQuery, v Method) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("acc.method"), v)
+		},
+		MethodIn: func(q *bun.SelectQuery, v []Method) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("acc.method"), bun.In(v))
+		},
+		MethodNotIn: func(q *bun.SelectQuery, v []Method) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("acc.method"), bun.In(v))
 		},
 		AmountEQ: func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("acc.amount"), v)
@@ -940,6 +995,14 @@ var AccessorialChargeQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // AccessorialChargeQueryBuilder provides a fluent interface for building queries
@@ -984,6 +1047,18 @@ func (b *AccessorialChargeQueryBuilder) WhereIDNEQ(v pulid.ID) *AccessorialCharg
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *AccessorialChargeQueryBuilder) WhereIDIn(v []pulid.ID) *AccessorialChargeQueryBuilder {
+	b.query = AccessorialChargeQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *AccessorialChargeQueryBuilder) WhereIDNotIn(v []pulid.ID) *AccessorialChargeQueryBuilder {
+	b.query = AccessorialChargeQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *AccessorialChargeQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *AccessorialChargeQueryBuilder {
 	b.query = AccessorialChargeQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -993,6 +1068,18 @@ func (b *AccessorialChargeQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *Acces
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *AccessorialChargeQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *AccessorialChargeQueryBuilder {
 	b.query = AccessorialChargeQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *AccessorialChargeQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *AccessorialChargeQueryBuilder {
+	b.query = AccessorialChargeQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *AccessorialChargeQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *AccessorialChargeQueryBuilder {
+	b.query = AccessorialChargeQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1008,6 +1095,18 @@ func (b *AccessorialChargeQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *Acce
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *AccessorialChargeQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *AccessorialChargeQueryBuilder {
+	b.query = AccessorialChargeQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *AccessorialChargeQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *AccessorialChargeQueryBuilder {
+	b.query = AccessorialChargeQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *AccessorialChargeQueryBuilder) WhereStatusEQ(v domain.Status) *AccessorialChargeQueryBuilder {
 	b.query = AccessorialChargeQuery.Where.StatusEQ(b.query, v)
@@ -1017,6 +1116,18 @@ func (b *AccessorialChargeQueryBuilder) WhereStatusEQ(v domain.Status) *Accessor
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *AccessorialChargeQueryBuilder) WhereStatusNEQ(v domain.Status) *AccessorialChargeQueryBuilder {
 	b.query = AccessorialChargeQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *AccessorialChargeQueryBuilder) WhereStatusIn(v []domain.Status) *AccessorialChargeQueryBuilder {
+	b.query = AccessorialChargeQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *AccessorialChargeQueryBuilder) WhereStatusNotIn(v []domain.Status) *AccessorialChargeQueryBuilder {
+	b.query = AccessorialChargeQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1197,6 +1308,18 @@ func (b *AccessorialChargeQueryBuilder) WhereMethodEQ(v Method) *AccessorialChar
 // WhereMethodNEQ adds a WHERE method != ? condition
 func (b *AccessorialChargeQueryBuilder) WhereMethodNEQ(v Method) *AccessorialChargeQueryBuilder {
 	b.query = AccessorialChargeQuery.Where.MethodNEQ(b.query, v)
+	return b
+}
+
+// WhereMethodIn adds a WHERE method IN (?) condition
+func (b *AccessorialChargeQueryBuilder) WhereMethodIn(v []Method) *AccessorialChargeQueryBuilder {
+	b.query = AccessorialChargeQuery.Where.MethodIn(b.query, v)
+	return b
+}
+
+// WhereMethodNotIn adds a WHERE method NOT IN (?) condition
+func (b *AccessorialChargeQueryBuilder) WhereMethodNotIn(v []Method) *AccessorialChargeQueryBuilder {
+	b.query = AccessorialChargeQuery.Where.MethodNotIn(b.query, v)
 	return b
 }
 
@@ -1540,4 +1663,25 @@ func (b *AccessorialChargeQueryBuilder) First(ctx context.Context) (*Accessorial
 // AccessorialChargeBuild creates a chainable query builder
 func AccessorialChargeBuild(db bun.IDB) *AccessorialChargeQueryBuilder {
 	return NewAccessorialChargeQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *AccessorialChargeQueryBuilder) LoadBusinessUnit() *AccessorialChargeQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *AccessorialChargeQueryBuilder) LoadOrganization() *AccessorialChargeQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for AccessorialCharge
+func (b *AccessorialChargeQueryBuilder) LoadAllRelations() *AccessorialChargeQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
 }

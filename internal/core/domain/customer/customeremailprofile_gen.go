@@ -49,12 +49,20 @@ var CustomerEmailProfileQuery = struct {
 	Where struct {
 		IDEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		CustomerIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		CustomerIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CustomerIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CustomerIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		SubjectEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SubjectNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SubjectIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -112,6 +120,8 @@ var CustomerEmailProfileQuery = struct {
 		AttachmentNameHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ReadReceiptEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		ReadReceiptNEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		ReadReceiptIn           func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		ReadReceiptNotIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -158,6 +168,11 @@ var CustomerEmailProfileQuery = struct {
 	FieldConfig  func() map[string]customerEmailProfileFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "customer_email_profiles",
@@ -211,12 +226,20 @@ var CustomerEmailProfileQuery = struct {
 	Where: struct {
 		IDEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		CustomerIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		CustomerIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CustomerIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CustomerIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		SubjectEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SubjectNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SubjectIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -274,6 +297,8 @@ var CustomerEmailProfileQuery = struct {
 		AttachmentNameHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ReadReceiptEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		ReadReceiptNEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		ReadReceiptIn           func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		ReadReceiptNotIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -306,11 +331,23 @@ var CustomerEmailProfileQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cem.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cem.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cem.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cem.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cem.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cem.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cem.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cem.organization_id"), v)
@@ -318,11 +355,23 @@ var CustomerEmailProfileQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cem.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cem.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cem.organization_id"), bun.In(v))
+		},
 		CustomerIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cem.customer_id"), v)
 		},
 		CustomerIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cem.customer_id"), v)
+		},
+		CustomerIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cem.customer_id"), bun.In(v))
+		},
+		CustomerIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cem.customer_id"), bun.In(v))
 		},
 		SubjectEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cem.subject"), v)
@@ -494,6 +543,12 @@ var CustomerEmailProfileQuery = struct {
 		},
 		ReadReceiptNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cem.read_receipt"), v)
+		},
+		ReadReceiptIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cem.read_receipt"), bun.In(v))
+		},
+		ReadReceiptNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cem.read_receipt"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cem.version"), v)
@@ -875,6 +930,14 @@ var CustomerEmailProfileQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // CustomerEmailProfileQueryBuilder provides a fluent interface for building queries
@@ -919,6 +982,18 @@ func (b *CustomerEmailProfileQueryBuilder) WhereIDNEQ(v pulid.ID) *CustomerEmail
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *CustomerEmailProfileQueryBuilder) WhereIDIn(v []pulid.ID) *CustomerEmailProfileQueryBuilder {
+	b.query = CustomerEmailProfileQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *CustomerEmailProfileQueryBuilder) WhereIDNotIn(v []pulid.ID) *CustomerEmailProfileQueryBuilder {
+	b.query = CustomerEmailProfileQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *CustomerEmailProfileQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *CustomerEmailProfileQueryBuilder {
 	b.query = CustomerEmailProfileQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -928,6 +1003,18 @@ func (b *CustomerEmailProfileQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *Cu
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *CustomerEmailProfileQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *CustomerEmailProfileQueryBuilder {
 	b.query = CustomerEmailProfileQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *CustomerEmailProfileQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *CustomerEmailProfileQueryBuilder {
+	b.query = CustomerEmailProfileQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *CustomerEmailProfileQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *CustomerEmailProfileQueryBuilder {
+	b.query = CustomerEmailProfileQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -943,6 +1030,18 @@ func (b *CustomerEmailProfileQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *C
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *CustomerEmailProfileQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *CustomerEmailProfileQueryBuilder {
+	b.query = CustomerEmailProfileQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *CustomerEmailProfileQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *CustomerEmailProfileQueryBuilder {
+	b.query = CustomerEmailProfileQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereCustomerIDEQ adds a WHERE customer_id = ? condition
 func (b *CustomerEmailProfileQueryBuilder) WhereCustomerIDEQ(v pulid.ID) *CustomerEmailProfileQueryBuilder {
 	b.query = CustomerEmailProfileQuery.Where.CustomerIDEQ(b.query, v)
@@ -952,6 +1051,18 @@ func (b *CustomerEmailProfileQueryBuilder) WhereCustomerIDEQ(v pulid.ID) *Custom
 // WhereCustomerIDNEQ adds a WHERE customer_id != ? condition
 func (b *CustomerEmailProfileQueryBuilder) WhereCustomerIDNEQ(v pulid.ID) *CustomerEmailProfileQueryBuilder {
 	b.query = CustomerEmailProfileQuery.Where.CustomerIDNEQ(b.query, v)
+	return b
+}
+
+// WhereCustomerIDIn adds a WHERE customer_id IN (?) condition
+func (b *CustomerEmailProfileQueryBuilder) WhereCustomerIDIn(v []pulid.ID) *CustomerEmailProfileQueryBuilder {
+	b.query = CustomerEmailProfileQuery.Where.CustomerIDIn(b.query, v)
+	return b
+}
+
+// WhereCustomerIDNotIn adds a WHERE customer_id NOT IN (?) condition
+func (b *CustomerEmailProfileQueryBuilder) WhereCustomerIDNotIn(v []pulid.ID) *CustomerEmailProfileQueryBuilder {
+	b.query = CustomerEmailProfileQuery.Where.CustomerIDNotIn(b.query, v)
 	return b
 }
 
@@ -1174,6 +1285,18 @@ func (b *CustomerEmailProfileQueryBuilder) WhereReadReceiptEQ(v bool) *CustomerE
 // WhereReadReceiptNEQ adds a WHERE read_receipt != ? condition
 func (b *CustomerEmailProfileQueryBuilder) WhereReadReceiptNEQ(v bool) *CustomerEmailProfileQueryBuilder {
 	b.query = CustomerEmailProfileQuery.Where.ReadReceiptNEQ(b.query, v)
+	return b
+}
+
+// WhereReadReceiptIn adds a WHERE read_receipt IN (?) condition
+func (b *CustomerEmailProfileQueryBuilder) WhereReadReceiptIn(v []bool) *CustomerEmailProfileQueryBuilder {
+	b.query = CustomerEmailProfileQuery.Where.ReadReceiptIn(b.query, v)
+	return b
+}
+
+// WhereReadReceiptNotIn adds a WHERE read_receipt NOT IN (?) condition
+func (b *CustomerEmailProfileQueryBuilder) WhereReadReceiptNotIn(v []bool) *CustomerEmailProfileQueryBuilder {
+	b.query = CustomerEmailProfileQuery.Where.ReadReceiptNotIn(b.query, v)
 	return b
 }
 
@@ -1421,4 +1544,25 @@ func (b *CustomerEmailProfileQueryBuilder) First(ctx context.Context) (*Customer
 // CustomerEmailProfileBuild creates a chainable query builder
 func CustomerEmailProfileBuild(db bun.IDB) *CustomerEmailProfileQueryBuilder {
 	return NewCustomerEmailProfileQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *CustomerEmailProfileQueryBuilder) LoadBusinessUnit() *CustomerEmailProfileQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *CustomerEmailProfileQueryBuilder) LoadOrganization() *CustomerEmailProfileQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for CustomerEmailProfile
+func (b *CustomerEmailProfileQueryBuilder) LoadAllRelations() *CustomerEmailProfileQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
 }

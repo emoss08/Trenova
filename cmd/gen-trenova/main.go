@@ -20,7 +20,6 @@ import (
 var (
 	typeNames  = flag.String("type", "", "comma-separated list of type names")
 	output     = flag.String("output", "", "output file name; default srcdir/<type>_gen.go")
-	genType    = flag.String("gen", "fields", "what to generate: fields, repository, test, all")
 	domainPath = flag.String("domain-path", "", "path to domain folder to scan all entities")
 	outputDir  = flag.String(
 		"output-dir",
@@ -65,7 +64,15 @@ func main() {
 
 func parsePackage(dir string) (*ast.Package, error) {
 	fset := token.NewFileSet()
-	packages, err := parser.ParseDir(fset, dir, nil, parser.ParseComments)
+	// Filter function to exclude test files and generated files
+	filter := func(info os.FileInfo) bool {
+		name := info.Name()
+		return strings.HasSuffix(name, ".go") && 
+			!strings.HasSuffix(name, "_test.go") && 
+			!strings.HasSuffix(name, "_gen.go")
+	}
+	
+	packages, err := parser.ParseDir(fset, dir, filter, parser.ParseComments)
 	if err != nil {
 		return nil, err
 	}
@@ -128,6 +135,19 @@ type fieldInfo struct {
 	Filterable bool
 }
 
+type relationInfo struct {
+	Name         string // Field name in Go struct
+	Type         string // "belongs-to" or "has-many"
+	GoType       string // Full Go type (e.g. "*customer.Customer" or "[]*ShipmentMove")
+	RelatedType  string // The related type name (e.g. "Customer" or "ShipmentMove")
+	RelatedPkg   string // Package of related type if external (e.g. "customer")
+	JoinField    string // Join field from bun tag (e.g. "customer_id=id")
+	LocalField   string // Local field name (e.g. "customer_id")
+	ForeignField string // Foreign field name (e.g. "id")
+	IsSlice      bool   // True for has-many relations
+	IsPointer    bool   // True if the field is a pointer
+}
+
 type metadata struct {
 	PackageName string
 	TypeName    string
@@ -136,6 +156,7 @@ type metadata struct {
 	TableAlias  string
 	IDPrefix    string
 	Fields      []fieldInfo
+	Relations   []relationInfo
 	HasVersion  bool
 	HasStatus   bool
 	Imports     map[string]string // package alias -> import path
@@ -143,8 +164,9 @@ type metadata struct {
 
 func extractMetadata(structType *ast.StructType) metadata {
 	meta := metadata{
-		Fields:  []fieldInfo{},
-		Imports: make(map[string]string),
+		Fields:    []fieldInfo{},
+		Relations: []relationInfo{},
+		Imports:   make(map[string]string),
 	}
 
 	for _, field := range structType.Fields.List {
@@ -180,6 +202,43 @@ func extractMetadata(structType *ast.StructType) metadata {
 
 		// Process regular fields
 		for _, name := range field.Names {
+			// Check if this is a relationship field
+			if relType, hasRel := bunTags["rel"]; hasRel {
+				relInfo := relationInfo{
+					Name:      name.Name,
+					Type:      relType,
+					GoType:    extractGoType(field.Type),
+					JoinField: bunTags["join"],
+					IsSlice:   strings.HasPrefix(extractGoType(field.Type), "[]"),
+					IsPointer: strings.HasPrefix(strings.TrimPrefix(extractGoType(field.Type), "[]"), "*"),
+				}
+
+				// Parse join field (e.g., "customer_id=id")
+				if relInfo.JoinField != "" {
+					parts := strings.Split(relInfo.JoinField, "=")
+					if len(parts) == 2 {
+						relInfo.LocalField = parts[0]
+						relInfo.ForeignField = parts[1]
+					}
+				}
+
+				// Extract related type and package
+				goType := relInfo.GoType
+				goType = strings.TrimPrefix(goType, "[]")
+				goType = strings.TrimPrefix(goType, "*")
+
+				if strings.Contains(goType, ".") {
+					parts := strings.Split(goType, ".")
+					relInfo.RelatedPkg = parts[0]
+					relInfo.RelatedType = parts[1]
+				} else {
+					relInfo.RelatedType = goType
+				}
+
+				meta.Relations = append(meta.Relations, relInfo)
+				continue
+			}
+
 			info := fieldInfo{
 				Name:     name.Name,
 				DBName:   bunTags["column"],
@@ -391,7 +450,9 @@ func parseBunTag(tag string) map[string]string {
 	for _, part := range parts {
 		if strings.Contains(part, ":") {
 			kv := strings.SplitN(part, ":", 2)
-			result[kv[0]] = kv[1]
+			key := strings.TrimSpace(kv[0])
+			value := strings.TrimSpace(kv[1])
+			result[key] = value
 		}
 	}
 
@@ -506,7 +567,7 @@ func generateCode(outputFile, packageName, typeName string, meta metadata) error
 	}
 
 	// Write to file
-	return os.WriteFile(outputFile, formatted, 0644)
+	return os.WriteFile(outputFile, formatted, 0o644)
 }
 
 // scanAndGenerate scans the domain folder and generates for all entities
@@ -527,15 +588,39 @@ func scanAndGenerate(domainPath string) error {
 		domainsByDir[dir] = append(domainsByDir[dir], d)
 	}
 
-	// Generate for each domain
+	// Process directories sequentially to avoid CPU overload
 	for dir, domains := range domainsByDir {
+		fmt.Printf("Processing package in %s (%d entities)\n", dir, len(domains))
+		
+		// Parse package once for all types in this directory
 		pkg, err := parsePackage(dir)
 		if err != nil {
-			return fmt.Errorf("parsing package %s: %w", dir, err)
+			log.Printf("Warning: failed to parse package %s: %v", dir, err)
+			continue
 		}
 
+		// Extract all type information at once to avoid repeated AST traversal
+		typeMap := make(map[string]*ast.StructType)
+		for _, file := range pkg.Files {
+			ast.Inspect(file, func(n ast.Node) bool {
+				if typeSpec, ok := n.(*ast.TypeSpec); ok {
+					if structType, ok := typeSpec.Type.(*ast.StructType); ok {
+						typeMap[typeSpec.Name.Name] = structType
+					}
+				}
+				return true
+			})
+		}
+
+		// Generate for each domain type
 		for _, domain := range domains {
-			fmt.Printf("Generating for %s.%s\n", domain.PackageName, domain.TypeName)
+			structType, found := typeMap[domain.TypeName]
+			if !found {
+				log.Printf("Warning: type %s not found in parsed AST", domain.TypeName)
+				continue
+			}
+			
+			fmt.Printf("  Generating for %s.%s\n", domain.PackageName, domain.TypeName)
 
 			// Determine output file
 			outputFile := filepath.Join(dir, strings.ToLower(domain.TypeName)+"_gen.go")
@@ -549,8 +634,12 @@ func scanAndGenerate(domainPath string) error {
 				)
 			}
 
-			// Generate for this type
-			if err := generateForTypeInPackage(pkg, domain.TypeName, outputFile); err != nil {
+			// Generate directly with the struct type
+			metadata := extractMetadata(structType)
+			metadata.PackageName = domain.PackageName
+			metadata.TypeName = domain.TypeName
+			
+			if err := generateCode(outputFile, domain.PackageName, domain.TypeName, metadata); err != nil {
 				log.Printf("Warning: failed to generate for %s: %v", domain.TypeName, err)
 				continue
 			}

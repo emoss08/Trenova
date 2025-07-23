@@ -41,26 +41,38 @@ var ConfigurationShareQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ConfigurationIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ConfigurationIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		SharedWithIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		SharedWithIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ShareTypeEQ        func(q *bun.SelectQuery, v ShareType) *bun.SelectQuery
-		ShareTypeNEQ       func(q *bun.SelectQuery, v ShareType) *bun.SelectQuery
-		CreatedAtEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn     func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ConfigurationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ConfigurationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ConfigurationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ConfigurationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		SharedWithIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		SharedWithIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		SharedWithIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		SharedWithIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShareTypeEQ          func(q *bun.SelectQuery, v ShareType) *bun.SelectQuery
+		ShareTypeNEQ         func(q *bun.SelectQuery, v ShareType) *bun.SelectQuery
+		ShareTypeIn          func(q *bun.SelectQuery, v []ShareType) *bun.SelectQuery
+		ShareTypeNotIn       func(q *bun.SelectQuery, v []ShareType) *bun.SelectQuery
+		CreatedAtEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -81,6 +93,13 @@ var ConfigurationShareQuery = struct {
 	FieldConfig  func() map[string]configurationShareFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		ShareWithUser string
+		Configuration string
+		BusinessUnit  string
+		Organization  string
+	}
 }{
 	// Table and alias constants
 	Table:    "table_configuration_shares",
@@ -120,27 +139,39 @@ var ConfigurationShareQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ConfigurationIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ConfigurationIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		SharedWithIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		SharedWithIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ShareTypeEQ        func(q *bun.SelectQuery, v ShareType) *bun.SelectQuery
-		ShareTypeNEQ       func(q *bun.SelectQuery, v ShareType) *bun.SelectQuery
-		CreatedAtEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn     func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		Tenant             func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ConfigurationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ConfigurationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ConfigurationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ConfigurationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		SharedWithIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		SharedWithIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		SharedWithIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		SharedWithIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShareTypeEQ          func(q *bun.SelectQuery, v ShareType) *bun.SelectQuery
+		ShareTypeNEQ         func(q *bun.SelectQuery, v ShareType) *bun.SelectQuery
+		ShareTypeIn          func(q *bun.SelectQuery, v []ShareType) *bun.SelectQuery
+		ShareTypeNotIn       func(q *bun.SelectQuery, v []ShareType) *bun.SelectQuery
+		CreatedAtEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		Tenant               func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tcs.id"), v)
@@ -148,11 +179,23 @@ var ConfigurationShareQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tcs.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tcs.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tcs.id"), bun.In(v))
+		},
 		ConfigurationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tcs.configuration_id"), v)
 		},
 		ConfigurationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tcs.configuration_id"), v)
+		},
+		ConfigurationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tcs.configuration_id"), bun.In(v))
+		},
+		ConfigurationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tcs.configuration_id"), bun.In(v))
 		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tcs.business_unit_id"), v)
@@ -160,11 +203,23 @@ var ConfigurationShareQuery = struct {
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tcs.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tcs.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tcs.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tcs.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tcs.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tcs.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tcs.organization_id"), bun.In(v))
 		},
 		SharedWithIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tcs.shared_with_id"), v)
@@ -172,11 +227,23 @@ var ConfigurationShareQuery = struct {
 		SharedWithIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tcs.shared_with_id"), v)
 		},
+		SharedWithIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tcs.shared_with_id"), bun.In(v))
+		},
+		SharedWithIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tcs.shared_with_id"), bun.In(v))
+		},
 		ShareTypeEQ: func(q *bun.SelectQuery, v ShareType) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tcs.share_type"), v)
 		},
 		ShareTypeNEQ: func(q *bun.SelectQuery, v ShareType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tcs.share_type"), v)
+		},
+		ShareTypeIn: func(q *bun.SelectQuery, v []ShareType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tcs.share_type"), bun.In(v))
+		},
+		ShareTypeNotIn: func(q *bun.SelectQuery, v []ShareType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tcs.share_type"), bun.In(v))
 		},
 		CreatedAtEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tcs.created_at"), v)
@@ -388,6 +455,18 @@ var ConfigurationShareQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		ShareWithUser string
+		Configuration string
+		BusinessUnit  string
+		Organization  string
+	}{
+		ShareWithUser: "ShareWithUser",
+		Configuration: "Configuration",
+		BusinessUnit:  "BusinessUnit",
+		Organization:  "Organization",
+	},
 }
 
 // ConfigurationShareQueryBuilder provides a fluent interface for building queries
@@ -432,6 +511,18 @@ func (b *ConfigurationShareQueryBuilder) WhereIDNEQ(v pulid.ID) *ConfigurationSh
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *ConfigurationShareQueryBuilder) WhereIDIn(v []pulid.ID) *ConfigurationShareQueryBuilder {
+	b.query = ConfigurationShareQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *ConfigurationShareQueryBuilder) WhereIDNotIn(v []pulid.ID) *ConfigurationShareQueryBuilder {
+	b.query = ConfigurationShareQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereConfigurationIDEQ adds a WHERE configuration_id = ? condition
 func (b *ConfigurationShareQueryBuilder) WhereConfigurationIDEQ(v pulid.ID) *ConfigurationShareQueryBuilder {
 	b.query = ConfigurationShareQuery.Where.ConfigurationIDEQ(b.query, v)
@@ -441,6 +532,18 @@ func (b *ConfigurationShareQueryBuilder) WhereConfigurationIDEQ(v pulid.ID) *Con
 // WhereConfigurationIDNEQ adds a WHERE configuration_id != ? condition
 func (b *ConfigurationShareQueryBuilder) WhereConfigurationIDNEQ(v pulid.ID) *ConfigurationShareQueryBuilder {
 	b.query = ConfigurationShareQuery.Where.ConfigurationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereConfigurationIDIn adds a WHERE configuration_id IN (?) condition
+func (b *ConfigurationShareQueryBuilder) WhereConfigurationIDIn(v []pulid.ID) *ConfigurationShareQueryBuilder {
+	b.query = ConfigurationShareQuery.Where.ConfigurationIDIn(b.query, v)
+	return b
+}
+
+// WhereConfigurationIDNotIn adds a WHERE configuration_id NOT IN (?) condition
+func (b *ConfigurationShareQueryBuilder) WhereConfigurationIDNotIn(v []pulid.ID) *ConfigurationShareQueryBuilder {
+	b.query = ConfigurationShareQuery.Where.ConfigurationIDNotIn(b.query, v)
 	return b
 }
 
@@ -456,6 +559,18 @@ func (b *ConfigurationShareQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *Con
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *ConfigurationShareQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *ConfigurationShareQueryBuilder {
+	b.query = ConfigurationShareQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *ConfigurationShareQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *ConfigurationShareQueryBuilder {
+	b.query = ConfigurationShareQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *ConfigurationShareQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *ConfigurationShareQueryBuilder {
 	b.query = ConfigurationShareQuery.Where.OrganizationIDEQ(b.query, v)
@@ -465,6 +580,18 @@ func (b *ConfigurationShareQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *Conf
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *ConfigurationShareQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *ConfigurationShareQueryBuilder {
 	b.query = ConfigurationShareQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *ConfigurationShareQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *ConfigurationShareQueryBuilder {
+	b.query = ConfigurationShareQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *ConfigurationShareQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *ConfigurationShareQueryBuilder {
+	b.query = ConfigurationShareQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -480,6 +607,18 @@ func (b *ConfigurationShareQueryBuilder) WhereSharedWithIDNEQ(v pulid.ID) *Confi
 	return b
 }
 
+// WhereSharedWithIDIn adds a WHERE shared_with_id IN (?) condition
+func (b *ConfigurationShareQueryBuilder) WhereSharedWithIDIn(v []pulid.ID) *ConfigurationShareQueryBuilder {
+	b.query = ConfigurationShareQuery.Where.SharedWithIDIn(b.query, v)
+	return b
+}
+
+// WhereSharedWithIDNotIn adds a WHERE shared_with_id NOT IN (?) condition
+func (b *ConfigurationShareQueryBuilder) WhereSharedWithIDNotIn(v []pulid.ID) *ConfigurationShareQueryBuilder {
+	b.query = ConfigurationShareQuery.Where.SharedWithIDNotIn(b.query, v)
+	return b
+}
+
 // WhereShareTypeEQ adds a WHERE share_type = ? condition
 func (b *ConfigurationShareQueryBuilder) WhereShareTypeEQ(v ShareType) *ConfigurationShareQueryBuilder {
 	b.query = ConfigurationShareQuery.Where.ShareTypeEQ(b.query, v)
@@ -489,6 +628,18 @@ func (b *ConfigurationShareQueryBuilder) WhereShareTypeEQ(v ShareType) *Configur
 // WhereShareTypeNEQ adds a WHERE share_type != ? condition
 func (b *ConfigurationShareQueryBuilder) WhereShareTypeNEQ(v ShareType) *ConfigurationShareQueryBuilder {
 	b.query = ConfigurationShareQuery.Where.ShareTypeNEQ(b.query, v)
+	return b
+}
+
+// WhereShareTypeIn adds a WHERE share_type IN (?) condition
+func (b *ConfigurationShareQueryBuilder) WhereShareTypeIn(v []ShareType) *ConfigurationShareQueryBuilder {
+	b.query = ConfigurationShareQuery.Where.ShareTypeIn(b.query, v)
+	return b
+}
+
+// WhereShareTypeNotIn adds a WHERE share_type NOT IN (?) condition
+func (b *ConfigurationShareQueryBuilder) WhereShareTypeNotIn(v []ShareType) *ConfigurationShareQueryBuilder {
+	b.query = ConfigurationShareQuery.Where.ShareTypeNotIn(b.query, v)
 	return b
 }
 
@@ -640,4 +791,39 @@ func (b *ConfigurationShareQueryBuilder) First(ctx context.Context) (*Configurat
 // ConfigurationShareBuild creates a chainable query builder
 func ConfigurationShareBuild(db bun.IDB) *ConfigurationShareQueryBuilder {
 	return NewConfigurationShareQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadShareWithUser loads the ShareWithUser relationship
+func (b *ConfigurationShareQueryBuilder) LoadShareWithUser() *ConfigurationShareQueryBuilder {
+	b.query = b.query.Relation("ShareWithUser")
+	return b
+}
+
+// LoadConfiguration loads the Configuration relationship
+func (b *ConfigurationShareQueryBuilder) LoadConfiguration() *ConfigurationShareQueryBuilder {
+	b.query = b.query.Relation("Configuration")
+	return b
+}
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *ConfigurationShareQueryBuilder) LoadBusinessUnit() *ConfigurationShareQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *ConfigurationShareQueryBuilder) LoadOrganization() *ConfigurationShareQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for ConfigurationShare
+func (b *ConfigurationShareQueryBuilder) LoadAllRelations() *ConfigurationShareQueryBuilder {
+	b.LoadShareWithUser()
+	b.LoadConfiguration()
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
 }

@@ -46,84 +46,94 @@ var DocumentTypeQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CodeEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeNEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeIn                    func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CodeNotIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CodeGT                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeGTE                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeLT                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeLTE                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeContains              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeHasPrefix             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeHasSuffix             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameNEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameIn                    func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameNotIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameGT                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameGTE                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLT                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLTE                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameContains              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasPrefix             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasSuffix             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ColorNotIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ColorGT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorGTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorLT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorLTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorContains             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorHasPrefix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorHasSuffix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DocumentClassificationEQ  func(q *bun.SelectQuery, v DocumentClassification) *bun.SelectQuery
-		DocumentClassificationNEQ func(q *bun.SelectQuery, v DocumentClassification) *bun.SelectQuery
-		DocumentCategoryEQ        func(q *bun.SelectQuery, v DocumentCategory) *bun.SelectQuery
-		DocumentCategoryNEQ       func(q *bun.SelectQuery, v DocumentCategory) *bun.SelectQuery
-		VersionEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CodeEQ                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeNEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeIn                      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CodeNotIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CodeGT                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeGTE                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeLT                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeLTE                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeContains                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeHasPrefix               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeHasSuffix               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameEQ                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameNEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameIn                      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameNotIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameGT                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameGTE                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLT                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLTE                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameContains                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasPrefix               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasSuffix               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorNEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorIn                     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ColorNotIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ColorGT                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorGTE                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorLT                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorLTE                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorContains               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorHasPrefix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorHasSuffix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DocumentClassificationEQ    func(q *bun.SelectQuery, v DocumentClassification) *bun.SelectQuery
+		DocumentClassificationNEQ   func(q *bun.SelectQuery, v DocumentClassification) *bun.SelectQuery
+		DocumentClassificationIn    func(q *bun.SelectQuery, v []DocumentClassification) *bun.SelectQuery
+		DocumentClassificationNotIn func(q *bun.SelectQuery, v []DocumentClassification) *bun.SelectQuery
+		DocumentCategoryEQ          func(q *bun.SelectQuery, v DocumentCategory) *bun.SelectQuery
+		DocumentCategoryNEQ         func(q *bun.SelectQuery, v DocumentCategory) *bun.SelectQuery
+		DocumentCategoryIn          func(q *bun.SelectQuery, v []DocumentCategory) *bun.SelectQuery
+		DocumentCategoryNotIn       func(q *bun.SelectQuery, v []DocumentCategory) *bun.SelectQuery
+		VersionEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                   func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -196,85 +206,95 @@ var DocumentTypeQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CodeEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeNEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeIn                    func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CodeNotIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CodeGT                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeGTE                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeLT                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeLTE                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeContains              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeHasPrefix             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		CodeHasSuffix             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameNEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameIn                    func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameNotIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameGT                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameGTE                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLT                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLTE                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameContains              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasPrefix             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasSuffix             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ColorNotIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ColorGT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorGTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorLT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorLTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorContains             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorHasPrefix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorHasSuffix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DocumentClassificationEQ  func(q *bun.SelectQuery, v DocumentClassification) *bun.SelectQuery
-		DocumentClassificationNEQ func(q *bun.SelectQuery, v DocumentClassification) *bun.SelectQuery
-		DocumentCategoryEQ        func(q *bun.SelectQuery, v DocumentCategory) *bun.SelectQuery
-		DocumentCategoryNEQ       func(q *bun.SelectQuery, v DocumentCategory) *bun.SelectQuery
-		VersionEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		Tenant                    func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CodeEQ                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeNEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeIn                      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CodeNotIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CodeGT                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeGTE                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeLT                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeLTE                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeContains                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeHasPrefix               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CodeHasSuffix               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameEQ                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameNEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameIn                      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameNotIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameGT                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameGTE                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLT                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLTE                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameContains                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasPrefix               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasSuffix               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorNEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorIn                     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ColorNotIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ColorGT                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorGTE                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorLT                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorLTE                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorContains               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorHasPrefix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorHasSuffix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DocumentClassificationEQ    func(q *bun.SelectQuery, v DocumentClassification) *bun.SelectQuery
+		DocumentClassificationNEQ   func(q *bun.SelectQuery, v DocumentClassification) *bun.SelectQuery
+		DocumentClassificationIn    func(q *bun.SelectQuery, v []DocumentClassification) *bun.SelectQuery
+		DocumentClassificationNotIn func(q *bun.SelectQuery, v []DocumentClassification) *bun.SelectQuery
+		DocumentCategoryEQ          func(q *bun.SelectQuery, v DocumentCategory) *bun.SelectQuery
+		DocumentCategoryNEQ         func(q *bun.SelectQuery, v DocumentCategory) *bun.SelectQuery
+		DocumentCategoryIn          func(q *bun.SelectQuery, v []DocumentCategory) *bun.SelectQuery
+		DocumentCategoryNotIn       func(q *bun.SelectQuery, v []DocumentCategory) *bun.SelectQuery
+		VersionEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                   func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		Tenant                      func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dt.id"), v)
@@ -282,17 +302,35 @@ var DocumentTypeQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dt.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dt.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dt.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dt.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dt.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dt.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dt.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dt.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dt.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dt.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dt.organization_id"), bun.In(v))
 		},
 		CodeEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dt.code"), v)
@@ -432,11 +470,23 @@ var DocumentTypeQuery = struct {
 		DocumentClassificationNEQ: func(q *bun.SelectQuery, v DocumentClassification) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dt.document_classification"), v)
 		},
+		DocumentClassificationIn: func(q *bun.SelectQuery, v []DocumentClassification) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dt.document_classification"), bun.In(v))
+		},
+		DocumentClassificationNotIn: func(q *bun.SelectQuery, v []DocumentClassification) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dt.document_classification"), bun.In(v))
+		},
 		DocumentCategoryEQ: func(q *bun.SelectQuery, v DocumentCategory) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dt.document_category"), v)
 		},
 		DocumentCategoryNEQ: func(q *bun.SelectQuery, v DocumentCategory) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dt.document_category"), v)
+		},
+		DocumentCategoryIn: func(q *bun.SelectQuery, v []DocumentCategory) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dt.document_category"), bun.In(v))
+		},
+		DocumentCategoryNotIn: func(q *bun.SelectQuery, v []DocumentCategory) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dt.document_category"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dt.version"), v)
@@ -851,6 +901,18 @@ func (b *DocumentTypeQueryBuilder) WhereIDNEQ(v pulid.ID) *DocumentTypeQueryBuil
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *DocumentTypeQueryBuilder) WhereIDIn(v []pulid.ID) *DocumentTypeQueryBuilder {
+	b.query = DocumentTypeQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *DocumentTypeQueryBuilder) WhereIDNotIn(v []pulid.ID) *DocumentTypeQueryBuilder {
+	b.query = DocumentTypeQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *DocumentTypeQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *DocumentTypeQueryBuilder {
 	b.query = DocumentTypeQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -863,6 +925,18 @@ func (b *DocumentTypeQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *DocumentT
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *DocumentTypeQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *DocumentTypeQueryBuilder {
+	b.query = DocumentTypeQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *DocumentTypeQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *DocumentTypeQueryBuilder {
+	b.query = DocumentTypeQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *DocumentTypeQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *DocumentTypeQueryBuilder {
 	b.query = DocumentTypeQuery.Where.OrganizationIDEQ(b.query, v)
@@ -872,6 +946,18 @@ func (b *DocumentTypeQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *DocumentTy
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *DocumentTypeQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *DocumentTypeQueryBuilder {
 	b.query = DocumentTypeQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *DocumentTypeQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *DocumentTypeQueryBuilder {
+	b.query = DocumentTypeQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *DocumentTypeQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *DocumentTypeQueryBuilder {
+	b.query = DocumentTypeQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1055,6 +1141,18 @@ func (b *DocumentTypeQueryBuilder) WhereDocumentClassificationNEQ(v DocumentClas
 	return b
 }
 
+// WhereDocumentClassificationIn adds a WHERE document_classification IN (?) condition
+func (b *DocumentTypeQueryBuilder) WhereDocumentClassificationIn(v []DocumentClassification) *DocumentTypeQueryBuilder {
+	b.query = DocumentTypeQuery.Where.DocumentClassificationIn(b.query, v)
+	return b
+}
+
+// WhereDocumentClassificationNotIn adds a WHERE document_classification NOT IN (?) condition
+func (b *DocumentTypeQueryBuilder) WhereDocumentClassificationNotIn(v []DocumentClassification) *DocumentTypeQueryBuilder {
+	b.query = DocumentTypeQuery.Where.DocumentClassificationNotIn(b.query, v)
+	return b
+}
+
 // WhereDocumentCategoryEQ adds a WHERE document_category = ? condition
 func (b *DocumentTypeQueryBuilder) WhereDocumentCategoryEQ(v DocumentCategory) *DocumentTypeQueryBuilder {
 	b.query = DocumentTypeQuery.Where.DocumentCategoryEQ(b.query, v)
@@ -1064,6 +1162,18 @@ func (b *DocumentTypeQueryBuilder) WhereDocumentCategoryEQ(v DocumentCategory) *
 // WhereDocumentCategoryNEQ adds a WHERE document_category != ? condition
 func (b *DocumentTypeQueryBuilder) WhereDocumentCategoryNEQ(v DocumentCategory) *DocumentTypeQueryBuilder {
 	b.query = DocumentTypeQuery.Where.DocumentCategoryNEQ(b.query, v)
+	return b
+}
+
+// WhereDocumentCategoryIn adds a WHERE document_category IN (?) condition
+func (b *DocumentTypeQueryBuilder) WhereDocumentCategoryIn(v []DocumentCategory) *DocumentTypeQueryBuilder {
+	b.query = DocumentTypeQuery.Where.DocumentCategoryIn(b.query, v)
+	return b
+}
+
+// WhereDocumentCategoryNotIn adds a WHERE document_category NOT IN (?) condition
+func (b *DocumentTypeQueryBuilder) WhereDocumentCategoryNotIn(v []DocumentCategory) *DocumentTypeQueryBuilder {
+	b.query = DocumentTypeQuery.Where.DocumentCategoryNotIn(b.query, v)
 	return b
 }
 
@@ -1312,3 +1422,5 @@ func (b *DocumentTypeQueryBuilder) First(ctx context.Context) (*DocumentType, er
 func DocumentTypeBuild(db bun.IDB) *DocumentTypeQueryBuilder {
 	return NewDocumentTypeQuery(db)
 }
+
+// Relationship loading methods

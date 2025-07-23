@@ -131,9 +131,11 @@ var {{.TypeName}}Query = struct {
 		{{.Name}}IsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		{{- end}}
 	{{- else}}
-		{{- /* Default for other types */}}
+		{{- /* Default for other types - includes custom enums */}}
 		{{.Name}}EQ           func(q *bun.SelectQuery, v {{.GoType}}) *bun.SelectQuery
 		{{.Name}}NEQ          func(q *bun.SelectQuery, v {{.GoType}}) *bun.SelectQuery
+		{{.Name}}In           func(q *bun.SelectQuery, v []{{.GoType}}) *bun.SelectQuery
+		{{.Name}}NotIn        func(q *bun.SelectQuery, v []{{.GoType}}) *bun.SelectQuery
 		{{- if or (hasPrefix .GoType "*") (hasPrefix .GoType "sql.")}}
 		{{.Name}}IsNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		{{.Name}}IsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
@@ -177,6 +179,15 @@ var {{.TypeName}}Query = struct {
 	FieldConfig  func() map[string]{{.LowerName}}FieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+
+{{- if .Relations}}
+	// Relationship helpers
+	Relations struct {
+{{- range .Relations}}
+		{{.Name}} string
+{{- end}}
+	}
+{{- end}}
 }{
 	// Table and alias constants
 	Table:    "{{.TableName}}",
@@ -293,9 +304,11 @@ var {{.TypeName}}Query = struct {
 		{{.Name}}IsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		{{- end}}
 	{{- else}}
-		{{- /* Default for other types */}}
+		{{- /* Default for other types - includes custom enums */}}
 		{{.Name}}EQ           func(q *bun.SelectQuery, v {{.GoType}}) *bun.SelectQuery
 		{{.Name}}NEQ          func(q *bun.SelectQuery, v {{.GoType}}) *bun.SelectQuery
+		{{.Name}}In           func(q *bun.SelectQuery, v []{{.GoType}}) *bun.SelectQuery
+		{{.Name}}NotIn        func(q *bun.SelectQuery, v []{{.GoType}}) *bun.SelectQuery
 		{{- if or (hasPrefix .GoType "*") (hasPrefix .GoType "sql.")}}
 		{{.Name}}IsNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		{{.Name}}IsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
@@ -517,12 +530,18 @@ var {{.TypeName}}Query = struct {
 		},
 		{{- end}}
 	{{- else}}
-		{{- /* Default for other types */}}
+		{{- /* Default for other types - includes custom enums */}}
 		{{.Name}}EQ: func(q *bun.SelectQuery, v {{.GoType}}) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("{{$.TableAlias}}.{{.DBName}}"), v)
 		},
 		{{.Name}}NEQ: func(q *bun.SelectQuery, v {{.GoType}}) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("{{$.TableAlias}}.{{.DBName}}"), v)
+		},
+		{{.Name}}In: func(q *bun.SelectQuery, v []{{.GoType}}) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("{{$.TableAlias}}.{{.DBName}}"), bun.In(v))
+		},
+		{{.Name}}NotIn: func(q *bun.SelectQuery, v []{{.GoType}}) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("{{$.TableAlias}}.{{.DBName}}"), bun.In(v))
 		},
 		{{- if or (hasPrefix .GoType "*") (hasPrefix .GoType "sql.")}}
 		{{.Name}}IsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
@@ -685,6 +704,18 @@ var {{.TypeName}}Query = struct {
 		}
 		return false
 	},
+{{- if .Relations}}
+	// Relationship helpers
+	Relations: struct {
+{{- range .Relations}}
+		{{.Name}} string
+{{- end}}
+	}{
+{{- range .Relations}}
+		{{.Name}}: "{{.Name}}",
+{{- end}}
+	},
+{{- end}}
 }
 
 // {{.TypeName}}QueryBuilder provides a fluent interface for building queries
@@ -848,6 +879,18 @@ func (b *{{$.TypeName}}QueryBuilder) Where{{.Name}}NEQ(v {{.GoType}}) *{{$.TypeN
 	b.query = {{$.TypeName}}Query.Where.{{.Name}}NEQ(b.query, v)
 	return b
 }
+
+// Where{{.Name}}In adds a WHERE {{.DBName}} IN (?) condition
+func (b *{{$.TypeName}}QueryBuilder) Where{{.Name}}In(v []{{.GoType}}) *{{$.TypeName}}QueryBuilder {
+	b.query = {{$.TypeName}}Query.Where.{{.Name}}In(b.query, v)
+	return b
+}
+
+// Where{{.Name}}NotIn adds a WHERE {{.DBName}} NOT IN (?) condition
+func (b *{{$.TypeName}}QueryBuilder) Where{{.Name}}NotIn(v []{{.GoType}}) *{{$.TypeName}}QueryBuilder {
+	b.query = {{$.TypeName}}Query.Where.{{.Name}}NotIn(b.query, v)
+	return b
+}
 {{- end}}
 {{- end}}
 {{- end}}
@@ -955,5 +998,149 @@ func (b *{{.TypeName}}QueryBuilder) First(ctx context.Context) (*{{.TypeName}}, 
 // {{.TypeName}}Build creates a chainable query builder
 func {{.TypeName}}Build(db bun.IDB) *{{.TypeName}}QueryBuilder {
 	return New{{.TypeName}}Query(db)
+}
+
+// Relationship loading methods
+{{- range .Relations}}
+
+// Load{{.Name}} loads the {{.Name}} relationship
+func (b *{{$.TypeName}}QueryBuilder) Load{{.Name}}({{- if eq .Type "has-many"}}opts ...func(*bun.SelectQuery) *bun.SelectQuery{{- end}}) *{{$.TypeName}}QueryBuilder {
+{{- if eq .Type "has-many"}}
+	if len(opts) > 0 {
+		b.query = b.query.Relation("{{.Name}}", func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		})
+	} else {
+		b.query = b.query.Relation("{{.Name}}")
+	}
+{{- else}}
+	b.query = b.query.Relation("{{.Name}}")
+{{- end}}
+	return b
+}
+{{- end}}
+
+{{- if .Relations}}
+
+// LoadAllRelations loads all relationships for {{.TypeName}}
+func (b *{{.TypeName}}QueryBuilder) LoadAllRelations() *{{.TypeName}}QueryBuilder {
+{{- range .Relations}}
+	b.Load{{.Name}}()
+{{- end}}
+	return b
+}
+{{- end}}
+
+// {{.TypeName}}RelationChain provides a fluent API for building nested relationship chains
+type {{.TypeName}}RelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// New{{.TypeName}}RelationChain creates a new relation chain builder
+func New{{.TypeName}}RelationChain() *{{.TypeName}}RelationChain {
+	return &{{.TypeName}}RelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *{{.TypeName}}RelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *{{.TypeName}}RelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *{{.TypeName}}RelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *{{.TypeName}}RelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+{{- range .Relations}}
+
+// With{{.Name}} creates a relation chain starting with {{.Name}}
+func (b *{{$.TypeName}}QueryBuilder) With{{.Name}}({{- if eq .Type "has-many"}}opts ...func(*bun.SelectQuery) *bun.SelectQuery{{- end}}) *{{$.TypeName}}RelationChainBuilder {
+	chain := &{{$.TypeName}}RelationChainBuilder{
+		parent: b,
+		chain:  New{{$.TypeName}}RelationChain(),
+	}
+{{- if eq .Type "has-many"}}
+	chain.chain.Add("{{.Name}}", opts...)
+{{- else}}
+	chain.chain.Add("{{.Name}}")
+{{- end}}
+	return chain
+}
+{{- end}}
+
+// {{.TypeName}}RelationChainBuilder provides fluent API for building nested relations
+type {{.TypeName}}RelationChainBuilder struct {
+	parent *{{.TypeName}}QueryBuilder
+	chain  *{{.TypeName}}RelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *{{.TypeName}}RelationChainBuilder) Load() *{{.TypeName}}QueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *{{.TypeName}}RelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *{{.TypeName}}RelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *{{.TypeName}}RelationChainBuilder) OrderBy(order string) *{{.TypeName}}RelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *{{.TypeName}}RelationChainBuilder) Where(condition string, args ...interface{}) *{{.TypeName}}RelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }
 `

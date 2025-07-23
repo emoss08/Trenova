@@ -48,26 +48,44 @@ var AssignmentQuery = struct {
 	Where struct {
 		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ShipmentMoveIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ShipmentMoveIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentMoveIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentMoveIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		PrimaryWorkerIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		PrimaryWorkerIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		PrimaryWorkerIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		PrimaryWorkerIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		TractorIDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		TractorIDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		TractorIDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		TractorIDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		TrailerIDEQ                func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TrailerIDNEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TrailerIDIn                func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TrailerIDNotIn             func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TrailerIDIsNull            func(q *bun.SelectQuery) *bun.SelectQuery
 		TrailerIDIsNotNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		SecondaryWorkerIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		SecondaryWorkerIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		SecondaryWorkerIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		SecondaryWorkerIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		SecondaryWorkerIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		SecondaryWorkerIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ                   func(q *bun.SelectQuery, v AssignmentStatus) *bun.SelectQuery
 		StatusNEQ                  func(q *bun.SelectQuery, v AssignmentStatus) *bun.SelectQuery
+		StatusIn                   func(q *bun.SelectQuery, v []AssignmentStatus) *bun.SelectQuery
+		StatusNotIn                func(q *bun.SelectQuery, v []AssignmentStatus) *bun.SelectQuery
 		VersionEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -115,6 +133,14 @@ var AssignmentQuery = struct {
 	FieldConfig  func() map[string]assignmentFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		Tractor         string
+		Trailer         string
+		PrimaryWorker   string
+		SecondaryWorker string
+		ShipmentMove    string
+	}
 }{
 	// Table and alias constants
 	Table:    "assignments",
@@ -166,26 +192,44 @@ var AssignmentQuery = struct {
 	Where: struct {
 		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ShipmentMoveIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ShipmentMoveIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentMoveIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentMoveIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		PrimaryWorkerIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		PrimaryWorkerIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		PrimaryWorkerIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		PrimaryWorkerIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		TractorIDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		TractorIDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		TractorIDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		TractorIDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		TrailerIDEQ                func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TrailerIDNEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TrailerIDIn                func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TrailerIDNotIn             func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TrailerIDIsNull            func(q *bun.SelectQuery) *bun.SelectQuery
 		TrailerIDIsNotNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		SecondaryWorkerIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		SecondaryWorkerIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		SecondaryWorkerIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		SecondaryWorkerIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		SecondaryWorkerIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		SecondaryWorkerIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ                   func(q *bun.SelectQuery, v AssignmentStatus) *bun.SelectQuery
 		StatusNEQ                  func(q *bun.SelectQuery, v AssignmentStatus) *bun.SelectQuery
+		StatusIn                   func(q *bun.SelectQuery, v []AssignmentStatus) *bun.SelectQuery
+		StatusNotIn                func(q *bun.SelectQuery, v []AssignmentStatus) *bun.SelectQuery
 		VersionEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -218,11 +262,23 @@ var AssignmentQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("a.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("a.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("a.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("a.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("a.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("a.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("a.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("a.organization_id"), v)
@@ -230,11 +286,23 @@ var AssignmentQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("a.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("a.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("a.organization_id"), bun.In(v))
+		},
 		ShipmentMoveIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("a.shipment_move_id"), v)
 		},
 		ShipmentMoveIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("a.shipment_move_id"), v)
+		},
+		ShipmentMoveIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("a.shipment_move_id"), bun.In(v))
+		},
+		ShipmentMoveIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("a.shipment_move_id"), bun.In(v))
 		},
 		PrimaryWorkerIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("a.primary_worker_id"), v)
@@ -242,17 +310,35 @@ var AssignmentQuery = struct {
 		PrimaryWorkerIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("a.primary_worker_id"), v)
 		},
+		PrimaryWorkerIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("a.primary_worker_id"), bun.In(v))
+		},
+		PrimaryWorkerIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("a.primary_worker_id"), bun.In(v))
+		},
 		TractorIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("a.tractor_id"), v)
 		},
 		TractorIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("a.tractor_id"), v)
 		},
+		TractorIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("a.tractor_id"), bun.In(v))
+		},
+		TractorIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("a.tractor_id"), bun.In(v))
+		},
 		TrailerIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("a.trailer_id"), v)
 		},
 		TrailerIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("a.trailer_id"), v)
+		},
+		TrailerIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("a.trailer_id"), bun.In(v))
+		},
+		TrailerIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("a.trailer_id"), bun.In(v))
 		},
 		TrailerIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("a.trailer_id"))
@@ -266,6 +352,12 @@ var AssignmentQuery = struct {
 		SecondaryWorkerIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("a.secondary_worker_id"), v)
 		},
+		SecondaryWorkerIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("a.secondary_worker_id"), bun.In(v))
+		},
+		SecondaryWorkerIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("a.secondary_worker_id"), bun.In(v))
+		},
 		SecondaryWorkerIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("a.secondary_worker_id"))
 		},
@@ -277,6 +369,12 @@ var AssignmentQuery = struct {
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v AssignmentStatus) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("a.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []AssignmentStatus) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("a.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []AssignmentStatus) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("a.status"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("a.version"), v)
@@ -648,6 +746,20 @@ var AssignmentQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		Tractor         string
+		Trailer         string
+		PrimaryWorker   string
+		SecondaryWorker string
+		ShipmentMove    string
+	}{
+		Tractor:         "Tractor",
+		Trailer:         "Trailer",
+		PrimaryWorker:   "PrimaryWorker",
+		SecondaryWorker: "SecondaryWorker",
+		ShipmentMove:    "ShipmentMove",
+	},
 }
 
 // AssignmentQueryBuilder provides a fluent interface for building queries
@@ -692,6 +804,18 @@ func (b *AssignmentQueryBuilder) WhereIDNEQ(v pulid.ID) *AssignmentQueryBuilder 
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *AssignmentQueryBuilder) WhereIDIn(v []pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *AssignmentQueryBuilder) WhereIDNotIn(v []pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *AssignmentQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *AssignmentQueryBuilder {
 	b.query = AssignmentQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -701,6 +825,18 @@ func (b *AssignmentQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *AssignmentQu
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *AssignmentQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *AssignmentQueryBuilder {
 	b.query = AssignmentQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *AssignmentQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *AssignmentQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -716,6 +852,18 @@ func (b *AssignmentQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *AssignmentQ
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *AssignmentQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *AssignmentQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereShipmentMoveIDEQ adds a WHERE shipment_move_id = ? condition
 func (b *AssignmentQueryBuilder) WhereShipmentMoveIDEQ(v pulid.ID) *AssignmentQueryBuilder {
 	b.query = AssignmentQuery.Where.ShipmentMoveIDEQ(b.query, v)
@@ -725,6 +873,18 @@ func (b *AssignmentQueryBuilder) WhereShipmentMoveIDEQ(v pulid.ID) *AssignmentQu
 // WhereShipmentMoveIDNEQ adds a WHERE shipment_move_id != ? condition
 func (b *AssignmentQueryBuilder) WhereShipmentMoveIDNEQ(v pulid.ID) *AssignmentQueryBuilder {
 	b.query = AssignmentQuery.Where.ShipmentMoveIDNEQ(b.query, v)
+	return b
+}
+
+// WhereShipmentMoveIDIn adds a WHERE shipment_move_id IN (?) condition
+func (b *AssignmentQueryBuilder) WhereShipmentMoveIDIn(v []pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.ShipmentMoveIDIn(b.query, v)
+	return b
+}
+
+// WhereShipmentMoveIDNotIn adds a WHERE shipment_move_id NOT IN (?) condition
+func (b *AssignmentQueryBuilder) WhereShipmentMoveIDNotIn(v []pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.ShipmentMoveIDNotIn(b.query, v)
 	return b
 }
 
@@ -740,6 +900,18 @@ func (b *AssignmentQueryBuilder) WherePrimaryWorkerIDNEQ(v pulid.ID) *Assignment
 	return b
 }
 
+// WherePrimaryWorkerIDIn adds a WHERE primary_worker_id IN (?) condition
+func (b *AssignmentQueryBuilder) WherePrimaryWorkerIDIn(v []pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.PrimaryWorkerIDIn(b.query, v)
+	return b
+}
+
+// WherePrimaryWorkerIDNotIn adds a WHERE primary_worker_id NOT IN (?) condition
+func (b *AssignmentQueryBuilder) WherePrimaryWorkerIDNotIn(v []pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.PrimaryWorkerIDNotIn(b.query, v)
+	return b
+}
+
 // WhereTractorIDEQ adds a WHERE tractor_id = ? condition
 func (b *AssignmentQueryBuilder) WhereTractorIDEQ(v pulid.ID) *AssignmentQueryBuilder {
 	b.query = AssignmentQuery.Where.TractorIDEQ(b.query, v)
@@ -749,6 +921,18 @@ func (b *AssignmentQueryBuilder) WhereTractorIDEQ(v pulid.ID) *AssignmentQueryBu
 // WhereTractorIDNEQ adds a WHERE tractor_id != ? condition
 func (b *AssignmentQueryBuilder) WhereTractorIDNEQ(v pulid.ID) *AssignmentQueryBuilder {
 	b.query = AssignmentQuery.Where.TractorIDNEQ(b.query, v)
+	return b
+}
+
+// WhereTractorIDIn adds a WHERE tractor_id IN (?) condition
+func (b *AssignmentQueryBuilder) WhereTractorIDIn(v []pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.TractorIDIn(b.query, v)
+	return b
+}
+
+// WhereTractorIDNotIn adds a WHERE tractor_id NOT IN (?) condition
+func (b *AssignmentQueryBuilder) WhereTractorIDNotIn(v []pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.TractorIDNotIn(b.query, v)
 	return b
 }
 
@@ -764,6 +948,18 @@ func (b *AssignmentQueryBuilder) WhereTrailerIDNEQ(v *pulid.ID) *AssignmentQuery
 	return b
 }
 
+// WhereTrailerIDIn adds a WHERE trailer_id IN (?) condition
+func (b *AssignmentQueryBuilder) WhereTrailerIDIn(v []*pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.TrailerIDIn(b.query, v)
+	return b
+}
+
+// WhereTrailerIDNotIn adds a WHERE trailer_id NOT IN (?) condition
+func (b *AssignmentQueryBuilder) WhereTrailerIDNotIn(v []*pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.TrailerIDNotIn(b.query, v)
+	return b
+}
+
 // WhereSecondaryWorkerIDEQ adds a WHERE secondary_worker_id = ? condition
 func (b *AssignmentQueryBuilder) WhereSecondaryWorkerIDEQ(v *pulid.ID) *AssignmentQueryBuilder {
 	b.query = AssignmentQuery.Where.SecondaryWorkerIDEQ(b.query, v)
@@ -776,6 +972,18 @@ func (b *AssignmentQueryBuilder) WhereSecondaryWorkerIDNEQ(v *pulid.ID) *Assignm
 	return b
 }
 
+// WhereSecondaryWorkerIDIn adds a WHERE secondary_worker_id IN (?) condition
+func (b *AssignmentQueryBuilder) WhereSecondaryWorkerIDIn(v []*pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.SecondaryWorkerIDIn(b.query, v)
+	return b
+}
+
+// WhereSecondaryWorkerIDNotIn adds a WHERE secondary_worker_id NOT IN (?) condition
+func (b *AssignmentQueryBuilder) WhereSecondaryWorkerIDNotIn(v []*pulid.ID) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.SecondaryWorkerIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *AssignmentQueryBuilder) WhereStatusEQ(v AssignmentStatus) *AssignmentQueryBuilder {
 	b.query = AssignmentQuery.Where.StatusEQ(b.query, v)
@@ -785,6 +993,18 @@ func (b *AssignmentQueryBuilder) WhereStatusEQ(v AssignmentStatus) *AssignmentQu
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *AssignmentQueryBuilder) WhereStatusNEQ(v AssignmentStatus) *AssignmentQueryBuilder {
 	b.query = AssignmentQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *AssignmentQueryBuilder) WhereStatusIn(v []AssignmentStatus) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *AssignmentQueryBuilder) WhereStatusNotIn(v []AssignmentStatus) *AssignmentQueryBuilder {
+	b.query = AssignmentQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1032,4 +1252,189 @@ func (b *AssignmentQueryBuilder) First(ctx context.Context) (*Assignment, error)
 // AssignmentBuild creates a chainable query builder
 func AssignmentBuild(db bun.IDB) *AssignmentQueryBuilder {
 	return NewAssignmentQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadTractor loads the Tractor relationship
+func (b *AssignmentQueryBuilder) LoadTractor() *AssignmentQueryBuilder {
+	b.query = b.query.Relation("Tractor")
+	return b
+}
+
+// LoadTrailer loads the Trailer relationship
+func (b *AssignmentQueryBuilder) LoadTrailer() *AssignmentQueryBuilder {
+	b.query = b.query.Relation("Trailer")
+	return b
+}
+
+// LoadPrimaryWorker loads the PrimaryWorker relationship
+func (b *AssignmentQueryBuilder) LoadPrimaryWorker() *AssignmentQueryBuilder {
+	b.query = b.query.Relation("PrimaryWorker")
+	return b
+}
+
+// LoadSecondaryWorker loads the SecondaryWorker relationship
+func (b *AssignmentQueryBuilder) LoadSecondaryWorker() *AssignmentQueryBuilder {
+	b.query = b.query.Relation("SecondaryWorker")
+	return b
+}
+
+// LoadShipmentMove loads the ShipmentMove relationship
+func (b *AssignmentQueryBuilder) LoadShipmentMove() *AssignmentQueryBuilder {
+	b.query = b.query.Relation("ShipmentMove")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Assignment
+func (b *AssignmentQueryBuilder) LoadAllRelations() *AssignmentQueryBuilder {
+	b.LoadTractor()
+	b.LoadTrailer()
+	b.LoadPrimaryWorker()
+	b.LoadSecondaryWorker()
+	b.LoadShipmentMove()
+	return b
+}
+
+// AssignmentRelationChain provides a fluent API for building nested relationship chains
+type AssignmentRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewAssignmentRelationChain creates a new relation chain builder
+func NewAssignmentRelationChain() *AssignmentRelationChain {
+	return &AssignmentRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *AssignmentRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *AssignmentRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *AssignmentRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *AssignmentRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithTractor creates a relation chain starting with Tractor
+func (b *AssignmentQueryBuilder) WithTractor() *AssignmentRelationChainBuilder {
+	chain := &AssignmentRelationChainBuilder{
+		parent: b,
+		chain:  NewAssignmentRelationChain(),
+	}
+	chain.chain.Add("Tractor")
+	return chain
+}
+
+// WithTrailer creates a relation chain starting with Trailer
+func (b *AssignmentQueryBuilder) WithTrailer() *AssignmentRelationChainBuilder {
+	chain := &AssignmentRelationChainBuilder{
+		parent: b,
+		chain:  NewAssignmentRelationChain(),
+	}
+	chain.chain.Add("Trailer")
+	return chain
+}
+
+// WithPrimaryWorker creates a relation chain starting with PrimaryWorker
+func (b *AssignmentQueryBuilder) WithPrimaryWorker() *AssignmentRelationChainBuilder {
+	chain := &AssignmentRelationChainBuilder{
+		parent: b,
+		chain:  NewAssignmentRelationChain(),
+	}
+	chain.chain.Add("PrimaryWorker")
+	return chain
+}
+
+// WithSecondaryWorker creates a relation chain starting with SecondaryWorker
+func (b *AssignmentQueryBuilder) WithSecondaryWorker() *AssignmentRelationChainBuilder {
+	chain := &AssignmentRelationChainBuilder{
+		parent: b,
+		chain:  NewAssignmentRelationChain(),
+	}
+	chain.chain.Add("SecondaryWorker")
+	return chain
+}
+
+// WithShipmentMove creates a relation chain starting with ShipmentMove
+func (b *AssignmentQueryBuilder) WithShipmentMove() *AssignmentRelationChainBuilder {
+	chain := &AssignmentRelationChainBuilder{
+		parent: b,
+		chain:  NewAssignmentRelationChain(),
+	}
+	chain.chain.Add("ShipmentMove")
+	return chain
+}
+
+// AssignmentRelationChainBuilder provides fluent API for building nested relations
+type AssignmentRelationChainBuilder struct {
+	parent *AssignmentQueryBuilder
+	chain  *AssignmentRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *AssignmentRelationChainBuilder) Load() *AssignmentQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *AssignmentRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *AssignmentRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *AssignmentRelationChainBuilder) OrderBy(order string) *AssignmentRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *AssignmentRelationChainBuilder) Where(condition string, args ...interface{}) *AssignmentRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

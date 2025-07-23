@@ -57,10 +57,16 @@ var TemplateQuery = struct {
 	Where struct {
 		IDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -96,12 +102,20 @@ var TemplateQuery = struct {
 		DescriptionHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CategoryEQ               func(q *bun.SelectQuery, v TemplateCategory) *bun.SelectQuery
 		CategoryNEQ              func(q *bun.SelectQuery, v TemplateCategory) *bun.SelectQuery
+		CategoryIn               func(q *bun.SelectQuery, v []TemplateCategory) *bun.SelectQuery
+		CategoryNotIn            func(q *bun.SelectQuery, v []TemplateCategory) *bun.SelectQuery
 		IsSystemEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsSystemNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsSystemNotIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		IsActiveEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsActiveNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsActiveNotIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		StatusEQ                 func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                 func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		SubjectTemplateEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SubjectTemplateNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SubjectTemplateIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -137,8 +151,12 @@ var TemplateQuery = struct {
 		TextTemplateHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		VariablesSchemaEQ        func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		VariablesSchemaNEQ       func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		VariablesSchemaIn        func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		VariablesSchemaNotIn     func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		MetadataEQ               func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		MetadataNEQ              func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn               func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn            func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		SearchVectorEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SearchVectorNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SearchVectorIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -208,6 +226,11 @@ var TemplateQuery = struct {
 	FieldConfig  func() map[string]templateFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "email_templates",
@@ -275,10 +298,16 @@ var TemplateQuery = struct {
 	Where: struct {
 		IDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -314,12 +343,20 @@ var TemplateQuery = struct {
 		DescriptionHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CategoryEQ               func(q *bun.SelectQuery, v TemplateCategory) *bun.SelectQuery
 		CategoryNEQ              func(q *bun.SelectQuery, v TemplateCategory) *bun.SelectQuery
+		CategoryIn               func(q *bun.SelectQuery, v []TemplateCategory) *bun.SelectQuery
+		CategoryNotIn            func(q *bun.SelectQuery, v []TemplateCategory) *bun.SelectQuery
 		IsSystemEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsSystemNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsSystemNotIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		IsActiveEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsActiveNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsActiveNotIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		StatusEQ                 func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                 func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		SubjectTemplateEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SubjectTemplateNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SubjectTemplateIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -355,8 +392,12 @@ var TemplateQuery = struct {
 		TextTemplateHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		VariablesSchemaEQ        func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		VariablesSchemaNEQ       func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		VariablesSchemaIn        func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		VariablesSchemaNotIn     func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		MetadataEQ               func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		MetadataNEQ              func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn               func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn            func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		SearchVectorEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SearchVectorNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SearchVectorIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -411,17 +452,35 @@ var TemplateQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.organization_id"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.name"), v)
@@ -528,11 +587,23 @@ var TemplateQuery = struct {
 		CategoryNEQ: func(q *bun.SelectQuery, v TemplateCategory) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.category"), v)
 		},
+		CategoryIn: func(q *bun.SelectQuery, v []TemplateCategory) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.category"), bun.In(v))
+		},
+		CategoryNotIn: func(q *bun.SelectQuery, v []TemplateCategory) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.category"), bun.In(v))
+		},
 		IsSystemEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.is_system"), v)
 		},
 		IsSystemNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.is_system"), v)
+		},
+		IsSystemIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.is_system"), bun.In(v))
+		},
+		IsSystemNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.is_system"), bun.In(v))
 		},
 		IsActiveEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.is_active"), v)
@@ -540,11 +611,23 @@ var TemplateQuery = struct {
 		IsActiveNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.is_active"), v)
 		},
+		IsActiveIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.is_active"), bun.In(v))
+		},
+		IsActiveNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.is_active"), bun.In(v))
+		},
 		StatusEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.status"), v)
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.status"), bun.In(v))
 		},
 		SubjectTemplateEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.subject_template"), v)
@@ -651,11 +734,23 @@ var TemplateQuery = struct {
 		VariablesSchemaNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.variables_schema"), v)
 		},
+		VariablesSchemaIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.variables_schema"), bun.In(v))
+		},
+		VariablesSchemaNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.variables_schema"), bun.In(v))
+		},
 		MetadataEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.metadata"), v)
 		},
 		MetadataNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("et.metadata"), v)
+		},
+		MetadataIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("et.metadata"), bun.In(v))
+		},
+		MetadataNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("et.metadata"), bun.In(v))
 		},
 		SearchVectorEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("et.search_vector"), v)
@@ -1237,6 +1332,14 @@ var TemplateQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // TemplateQueryBuilder provides a fluent interface for building queries
@@ -1281,6 +1384,18 @@ func (b *TemplateQueryBuilder) WhereIDNEQ(v pulid.ID) *TemplateQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *TemplateQueryBuilder) WhereIDIn(v []pulid.ID) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *TemplateQueryBuilder) WhereIDNotIn(v []pulid.ID) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *TemplateQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *TemplateQueryBuilder {
 	b.query = TemplateQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1293,6 +1408,18 @@ func (b *TemplateQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *TemplateQuery
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *TemplateQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *TemplateQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *TemplateQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *TemplateQueryBuilder {
 	b.query = TemplateQuery.Where.OrganizationIDEQ(b.query, v)
@@ -1302,6 +1429,18 @@ func (b *TemplateQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *TemplateQueryB
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *TemplateQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *TemplateQueryBuilder {
 	b.query = TemplateQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *TemplateQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *TemplateQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1443,6 +1582,18 @@ func (b *TemplateQueryBuilder) WhereCategoryNEQ(v TemplateCategory) *TemplateQue
 	return b
 }
 
+// WhereCategoryIn adds a WHERE category IN (?) condition
+func (b *TemplateQueryBuilder) WhereCategoryIn(v []TemplateCategory) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.CategoryIn(b.query, v)
+	return b
+}
+
+// WhereCategoryNotIn adds a WHERE category NOT IN (?) condition
+func (b *TemplateQueryBuilder) WhereCategoryNotIn(v []TemplateCategory) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.CategoryNotIn(b.query, v)
+	return b
+}
+
 // WhereIsSystemEQ adds a WHERE is_system = ? condition
 func (b *TemplateQueryBuilder) WhereIsSystemEQ(v bool) *TemplateQueryBuilder {
 	b.query = TemplateQuery.Where.IsSystemEQ(b.query, v)
@@ -1452,6 +1603,18 @@ func (b *TemplateQueryBuilder) WhereIsSystemEQ(v bool) *TemplateQueryBuilder {
 // WhereIsSystemNEQ adds a WHERE is_system != ? condition
 func (b *TemplateQueryBuilder) WhereIsSystemNEQ(v bool) *TemplateQueryBuilder {
 	b.query = TemplateQuery.Where.IsSystemNEQ(b.query, v)
+	return b
+}
+
+// WhereIsSystemIn adds a WHERE is_system IN (?) condition
+func (b *TemplateQueryBuilder) WhereIsSystemIn(v []bool) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.IsSystemIn(b.query, v)
+	return b
+}
+
+// WhereIsSystemNotIn adds a WHERE is_system NOT IN (?) condition
+func (b *TemplateQueryBuilder) WhereIsSystemNotIn(v []bool) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.IsSystemNotIn(b.query, v)
 	return b
 }
 
@@ -1467,6 +1630,18 @@ func (b *TemplateQueryBuilder) WhereIsActiveNEQ(v bool) *TemplateQueryBuilder {
 	return b
 }
 
+// WhereIsActiveIn adds a WHERE is_active IN (?) condition
+func (b *TemplateQueryBuilder) WhereIsActiveIn(v []bool) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.IsActiveIn(b.query, v)
+	return b
+}
+
+// WhereIsActiveNotIn adds a WHERE is_active NOT IN (?) condition
+func (b *TemplateQueryBuilder) WhereIsActiveNotIn(v []bool) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.IsActiveNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *TemplateQueryBuilder) WhereStatusEQ(v domain.Status) *TemplateQueryBuilder {
 	b.query = TemplateQuery.Where.StatusEQ(b.query, v)
@@ -1476,6 +1651,18 @@ func (b *TemplateQueryBuilder) WhereStatusEQ(v domain.Status) *TemplateQueryBuil
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *TemplateQueryBuilder) WhereStatusNEQ(v domain.Status) *TemplateQueryBuilder {
 	b.query = TemplateQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *TemplateQueryBuilder) WhereStatusIn(v []domain.Status) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *TemplateQueryBuilder) WhereStatusNotIn(v []domain.Status) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1617,6 +1804,18 @@ func (b *TemplateQueryBuilder) WhereVariablesSchemaNEQ(v map[string]any) *Templa
 	return b
 }
 
+// WhereVariablesSchemaIn adds a WHERE variables_schema IN (?) condition
+func (b *TemplateQueryBuilder) WhereVariablesSchemaIn(v []map[string]any) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.VariablesSchemaIn(b.query, v)
+	return b
+}
+
+// WhereVariablesSchemaNotIn adds a WHERE variables_schema NOT IN (?) condition
+func (b *TemplateQueryBuilder) WhereVariablesSchemaNotIn(v []map[string]any) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.VariablesSchemaNotIn(b.query, v)
+	return b
+}
+
 // WhereMetadataEQ adds a WHERE metadata = ? condition
 func (b *TemplateQueryBuilder) WhereMetadataEQ(v map[string]any) *TemplateQueryBuilder {
 	b.query = TemplateQuery.Where.MetadataEQ(b.query, v)
@@ -1626,6 +1825,18 @@ func (b *TemplateQueryBuilder) WhereMetadataEQ(v map[string]any) *TemplateQueryB
 // WhereMetadataNEQ adds a WHERE metadata != ? condition
 func (b *TemplateQueryBuilder) WhereMetadataNEQ(v map[string]any) *TemplateQueryBuilder {
 	b.query = TemplateQuery.Where.MetadataNEQ(b.query, v)
+	return b
+}
+
+// WhereMetadataIn adds a WHERE metadata IN (?) condition
+func (b *TemplateQueryBuilder) WhereMetadataIn(v []map[string]any) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.MetadataIn(b.query, v)
+	return b
+}
+
+// WhereMetadataNotIn adds a WHERE metadata NOT IN (?) condition
+func (b *TemplateQueryBuilder) WhereMetadataNotIn(v []map[string]any) *TemplateQueryBuilder {
+	b.query = TemplateQuery.Where.MetadataNotIn(b.query, v)
 	return b
 }
 
@@ -1957,4 +2168,25 @@ func (b *TemplateQueryBuilder) First(ctx context.Context) (*Template, error) {
 // TemplateBuild creates a chainable query builder
 func TemplateBuild(db bun.IDB) *TemplateQueryBuilder {
 	return NewTemplateQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *TemplateQueryBuilder) LoadBusinessUnit() *TemplateQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *TemplateQueryBuilder) LoadOrganization() *TemplateQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Template
+func (b *TemplateQueryBuilder) LoadAllRelations() *TemplateQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
 }

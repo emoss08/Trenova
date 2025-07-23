@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/postgressearch"
-	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/samber/oops"
@@ -62,15 +61,12 @@ func NewAccessorialChargeRepository(
 // Returns:
 //   - *bun.SelectQuery: The filtered and paginated query.
 func (ac *accessorialChargeRepository) filterQuery(
-	q *bun.SelectQuery,
+	b *accessorialcharge.AccessorialChargeQueryBuilder,
 	opts *ports.LimitOffsetQueryOptions,
-) *bun.SelectQuery {
-	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
-		Query:      q,
-		TableAlias: "acc",
-		Filter:     opts,
-	})
+) *accessorialcharge.AccessorialChargeQueryBuilder {
+	b = b.WhereTenant(opts.TenantOpts.OrgID, opts.TenantOpts.BuID)
 
+	q := b.Query()
 	if opts.Query != "" {
 		q = postgressearch.BuildSearchQuery(
 			q,
@@ -79,7 +75,7 @@ func (ac *accessorialChargeRepository) filterQuery(
 		)
 	}
 
-	return q.Limit(opts.Limit).Offset(opts.Offset)
+	return b.Limit(opts.Limit).Offset(opts.Offset)
 }
 
 // List retrieves accessorial charges based on filtering and pagination options.
@@ -111,14 +107,12 @@ func (ac *accessorialChargeRepository) List(
 		Str("userID", opts.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*accessorialcharge.AccessorialCharge, 0)
+	b := accessorialcharge.NewAccessorialChargeQuery(dba)
+	b = ac.filterQuery(b, opts)
 
-	q := dba.NewSelect().Model(&entities)
-	q = ac.filterQuery(q, opts)
-
-	total, err := q.ScanAndCount(ctx)
+	entities, total, err := b.AllWithCount(ctx)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to scan hazardous materials")
+		log.Error().Err(err).Msg("failed to list accessorial charges")
 		return nil, err
 	}
 
@@ -144,11 +138,7 @@ func (ac *accessorialChargeRepository) GetByID(
 ) (*accessorialcharge.AccessorialCharge, error) {
 	dba, err := ac.db.ReadDB(ctx)
 	if err != nil {
-		return nil, oops.
-			In("accessorial_charge_repository").
-			With("op", "GetByID").
-			Time(time.Now()).
-			Wrapf(err, "get database connection")
+		return nil, err
 	}
 
 	log := ac.l.With().
@@ -156,16 +146,13 @@ func (ac *accessorialChargeRepository) GetByID(
 		Str("accessorialChargeID", opts.ID.String()).
 		Logger()
 
-	entity := new(accessorialcharge.AccessorialCharge)
-
-	query := dba.NewSelect().Model(entity).
-		WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
-			return q.Where("acc.id = ?", opts.ID).
-				Where("acc.organization_id = ?", opts.OrgID).
-				Where("acc.business_unit_id = ?", opts.BuID)
-		})
-
-	if err = query.Scan(ctx); err != nil {
+	entity, err := accessorialcharge.NewAccessorialChargeQuery(dba).
+		WhereGroup(" AND ", func(acqb *accessorialcharge.AccessorialChargeQueryBuilder) *accessorialcharge.AccessorialChargeQueryBuilder {
+			return acqb.WhereIDEQ(opts.ID).
+				WhereTenant(opts.OrgID, opts.BuID)
+		}).
+		First(ctx)
+	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			return nil, errors.NewNotFoundError(
 				"Accessorial Charge not found within your organization",
@@ -208,7 +195,9 @@ func (ac *accessorialChargeRepository) Create(
 		Str("buID", acc.BusinessUnitID.String()).
 		Logger()
 
-	if _, err = dba.NewInsert().Model(acc).Returning("*").Exec(ctx); err != nil {
+	if _, err = dba.NewInsert().Model(acc).
+		Returning("*").
+		Exec(ctx); err != nil {
 		log.Error().
 			Err(err).
 			Interface("accessorial_charge", acc).

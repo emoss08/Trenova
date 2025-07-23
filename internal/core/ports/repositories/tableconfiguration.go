@@ -8,11 +8,6 @@ import (
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
 
-type ListTableConfigurationResult struct {
-	Configurations []*tableconfiguration.Configuration
-	Total          int
-}
-
 // TableConfigurationFilters defines filters for querying configurations
 type TableConfigurationFilters struct {
 	Base       *ports.FilterQueryOptions
@@ -57,7 +52,7 @@ type TableConfigurationRepository interface {
 	List(
 		ctx context.Context,
 		filters *TableConfigurationFilters,
-	) (*ListTableConfigurationResult, error)
+	) (*ports.ListResult[*tableconfiguration.Configuration], error)
 	ListPublicConfigurations(
 		ctx context.Context,
 		opts *TableConfigurationFilters,

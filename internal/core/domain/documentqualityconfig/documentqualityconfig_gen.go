@@ -55,12 +55,20 @@ var DocumentQualityConfigQuery = struct {
 	Where struct {
 		IDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		IsActiveEQ             func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsActiveNEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveIn             func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsActiveNotIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		MinWordCountEQ         func(q *bun.SelectQuery, v int) *bun.SelectQuery
 		MinWordCountNEQ        func(q *bun.SelectQuery, v int) *bun.SelectQuery
 		MinWordCountIn         func(q *bun.SelectQuery, v []int) *bun.SelectQuery
@@ -143,8 +151,12 @@ var DocumentQualityConfigQuery = struct {
 		MinTextDensityLTE      func(q *bun.SelectQuery, v float64) *bun.SelectQuery
 		ModelIDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ModelIDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ModelIDIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ModelIDNotIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		AllowTrainingEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		AllowTrainingNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowTrainingIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowTrainingNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -191,6 +203,10 @@ var DocumentQualityConfigQuery = struct {
 	FieldConfig  func() map[string]documentQualityConfigFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		Model string
+	}
 }{
 	// Table and alias constants
 	Table:    "document_quality_configs",
@@ -256,12 +272,20 @@ var DocumentQualityConfigQuery = struct {
 	Where: struct {
 		IDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		IsActiveEQ             func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsActiveNEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveIn             func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsActiveNotIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		MinWordCountEQ         func(q *bun.SelectQuery, v int) *bun.SelectQuery
 		MinWordCountNEQ        func(q *bun.SelectQuery, v int) *bun.SelectQuery
 		MinWordCountIn         func(q *bun.SelectQuery, v []int) *bun.SelectQuery
@@ -344,8 +368,12 @@ var DocumentQualityConfigQuery = struct {
 		MinTextDensityLTE      func(q *bun.SelectQuery, v float64) *bun.SelectQuery
 		ModelIDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ModelIDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ModelIDIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ModelIDNotIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		AllowTrainingEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		AllowTrainingNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowTrainingIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowTrainingNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -378,11 +406,23 @@ var DocumentQualityConfigQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dqc.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dqc.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dqc.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dqc.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dqc.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dqc.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dqc.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dqc.organization_id"), v)
@@ -390,11 +430,23 @@ var DocumentQualityConfigQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dqc.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dqc.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dqc.organization_id"), bun.In(v))
+		},
 		IsActiveEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dqc.is_active"), v)
 		},
 		IsActiveNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dqc.is_active"), v)
+		},
+		IsActiveIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dqc.is_active"), bun.In(v))
+		},
+		IsActiveNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dqc.is_active"), bun.In(v))
 		},
 		MinWordCountEQ: func(q *bun.SelectQuery, v int) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dqc.min_word_count"), v)
@@ -642,11 +694,23 @@ var DocumentQualityConfigQuery = struct {
 		ModelIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dqc.model_id"), v)
 		},
+		ModelIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dqc.model_id"), bun.In(v))
+		},
+		ModelIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dqc.model_id"), bun.In(v))
+		},
 		AllowTrainingEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dqc.allow_training"), v)
 		},
 		AllowTrainingNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dqc.allow_training"), v)
+		},
+		AllowTrainingIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dqc.allow_training"), bun.In(v))
+		},
+		AllowTrainingNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dqc.allow_training"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dqc.version"), v)
@@ -1136,6 +1200,12 @@ var DocumentQualityConfigQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		Model string
+	}{
+		Model: "Model",
+	},
 }
 
 // DocumentQualityConfigQueryBuilder provides a fluent interface for building queries
@@ -1180,6 +1250,18 @@ func (b *DocumentQualityConfigQueryBuilder) WhereIDNEQ(v pulid.ID) *DocumentQual
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *DocumentQualityConfigQueryBuilder) WhereIDIn(v []pulid.ID) *DocumentQualityConfigQueryBuilder {
+	b.query = DocumentQualityConfigQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *DocumentQualityConfigQueryBuilder) WhereIDNotIn(v []pulid.ID) *DocumentQualityConfigQueryBuilder {
+	b.query = DocumentQualityConfigQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *DocumentQualityConfigQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *DocumentQualityConfigQueryBuilder {
 	b.query = DocumentQualityConfigQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1189,6 +1271,18 @@ func (b *DocumentQualityConfigQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *D
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *DocumentQualityConfigQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *DocumentQualityConfigQueryBuilder {
 	b.query = DocumentQualityConfigQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *DocumentQualityConfigQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *DocumentQualityConfigQueryBuilder {
+	b.query = DocumentQualityConfigQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *DocumentQualityConfigQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *DocumentQualityConfigQueryBuilder {
+	b.query = DocumentQualityConfigQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1204,6 +1298,18 @@ func (b *DocumentQualityConfigQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *DocumentQualityConfigQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *DocumentQualityConfigQueryBuilder {
+	b.query = DocumentQualityConfigQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *DocumentQualityConfigQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *DocumentQualityConfigQueryBuilder {
+	b.query = DocumentQualityConfigQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereIsActiveEQ adds a WHERE is_active = ? condition
 func (b *DocumentQualityConfigQueryBuilder) WhereIsActiveEQ(v bool) *DocumentQualityConfigQueryBuilder {
 	b.query = DocumentQualityConfigQuery.Where.IsActiveEQ(b.query, v)
@@ -1213,6 +1319,18 @@ func (b *DocumentQualityConfigQueryBuilder) WhereIsActiveEQ(v bool) *DocumentQua
 // WhereIsActiveNEQ adds a WHERE is_active != ? condition
 func (b *DocumentQualityConfigQueryBuilder) WhereIsActiveNEQ(v bool) *DocumentQualityConfigQueryBuilder {
 	b.query = DocumentQualityConfigQuery.Where.IsActiveNEQ(b.query, v)
+	return b
+}
+
+// WhereIsActiveIn adds a WHERE is_active IN (?) condition
+func (b *DocumentQualityConfigQueryBuilder) WhereIsActiveIn(v []bool) *DocumentQualityConfigQueryBuilder {
+	b.query = DocumentQualityConfigQuery.Where.IsActiveIn(b.query, v)
+	return b
+}
+
+// WhereIsActiveNotIn adds a WHERE is_active NOT IN (?) condition
+func (b *DocumentQualityConfigQueryBuilder) WhereIsActiveNotIn(v []bool) *DocumentQualityConfigQueryBuilder {
+	b.query = DocumentQualityConfigQuery.Where.IsActiveNotIn(b.query, v)
 	return b
 }
 
@@ -1708,6 +1826,18 @@ func (b *DocumentQualityConfigQueryBuilder) WhereModelIDNEQ(v pulid.ID) *Documen
 	return b
 }
 
+// WhereModelIDIn adds a WHERE model_id IN (?) condition
+func (b *DocumentQualityConfigQueryBuilder) WhereModelIDIn(v []pulid.ID) *DocumentQualityConfigQueryBuilder {
+	b.query = DocumentQualityConfigQuery.Where.ModelIDIn(b.query, v)
+	return b
+}
+
+// WhereModelIDNotIn adds a WHERE model_id NOT IN (?) condition
+func (b *DocumentQualityConfigQueryBuilder) WhereModelIDNotIn(v []pulid.ID) *DocumentQualityConfigQueryBuilder {
+	b.query = DocumentQualityConfigQuery.Where.ModelIDNotIn(b.query, v)
+	return b
+}
+
 // WhereAllowTrainingEQ adds a WHERE allow_training = ? condition
 func (b *DocumentQualityConfigQueryBuilder) WhereAllowTrainingEQ(v bool) *DocumentQualityConfigQueryBuilder {
 	b.query = DocumentQualityConfigQuery.Where.AllowTrainingEQ(b.query, v)
@@ -1717,6 +1847,18 @@ func (b *DocumentQualityConfigQueryBuilder) WhereAllowTrainingEQ(v bool) *Docume
 // WhereAllowTrainingNEQ adds a WHERE allow_training != ? condition
 func (b *DocumentQualityConfigQueryBuilder) WhereAllowTrainingNEQ(v bool) *DocumentQualityConfigQueryBuilder {
 	b.query = DocumentQualityConfigQuery.Where.AllowTrainingNEQ(b.query, v)
+	return b
+}
+
+// WhereAllowTrainingIn adds a WHERE allow_training IN (?) condition
+func (b *DocumentQualityConfigQueryBuilder) WhereAllowTrainingIn(v []bool) *DocumentQualityConfigQueryBuilder {
+	b.query = DocumentQualityConfigQuery.Where.AllowTrainingIn(b.query, v)
+	return b
+}
+
+// WhereAllowTrainingNotIn adds a WHERE allow_training NOT IN (?) condition
+func (b *DocumentQualityConfigQueryBuilder) WhereAllowTrainingNotIn(v []bool) *DocumentQualityConfigQueryBuilder {
+	b.query = DocumentQualityConfigQuery.Where.AllowTrainingNotIn(b.query, v)
 	return b
 }
 
@@ -1964,4 +2106,18 @@ func (b *DocumentQualityConfigQueryBuilder) First(ctx context.Context) (*Documen
 // DocumentQualityConfigBuild creates a chainable query builder
 func DocumentQualityConfigBuild(db bun.IDB) *DocumentQualityConfigQueryBuilder {
 	return NewDocumentQualityConfigQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadModel loads the Model relationship
+func (b *DocumentQualityConfigQueryBuilder) LoadModel() *DocumentQualityConfigQueryBuilder {
+	b.query = b.query.Relation("Model")
+	return b
+}
+
+// LoadAllRelations loads all relationships for DocumentQualityConfig
+func (b *DocumentQualityConfigQueryBuilder) LoadAllRelations() *DocumentQualityConfigQueryBuilder {
+	b.LoadModel()
+	return b
 }

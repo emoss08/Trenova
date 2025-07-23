@@ -48,79 +48,95 @@ var ReportMetadataQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		VisualizationTypeEQ   func(q *bun.SelectQuery, v VisualizationType) *bun.SelectQuery
-		VisualizationTypeNEQ  func(q *bun.SelectQuery, v VisualizationType) *bun.SelectQuery
-		TagsEQ                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TagsNEQ               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CreatedByEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CreatedByNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IsSystemDefinedEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsSystemDefinedNEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsScheduledEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsScheduledNEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		ScheduleCronEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ScheduleCronNotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ScheduleCronGT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronGTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronLT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronLTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronContains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronHasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		VersionEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		NameEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameNotIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameGT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameGTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameContains           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasPrefix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		VisualizationTypeEQ    func(q *bun.SelectQuery, v VisualizationType) *bun.SelectQuery
+		VisualizationTypeNEQ   func(q *bun.SelectQuery, v VisualizationType) *bun.SelectQuery
+		VisualizationTypeIn    func(q *bun.SelectQuery, v []VisualizationType) *bun.SelectQuery
+		VisualizationTypeNotIn func(q *bun.SelectQuery, v []VisualizationType) *bun.SelectQuery
+		TagsEQ                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TagsNEQ                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TagsIn                 func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		TagsNotIn              func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		CreatedByEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CreatedByNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CreatedByIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CreatedByNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IsSystemDefinedEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemDefinedNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemDefinedIn      func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsSystemDefinedNotIn   func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsScheduledEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsScheduledNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsScheduledIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsScheduledNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		ScheduleCronEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ScheduleCronNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ScheduleCronGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		VersionEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -143,6 +159,11 @@ var ReportMetadataQuery = struct {
 	FieldConfig  func() map[string]reportMetadataFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "report_metadata",
@@ -196,80 +217,96 @@ var ReportMetadataQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		VisualizationTypeEQ   func(q *bun.SelectQuery, v VisualizationType) *bun.SelectQuery
-		VisualizationTypeNEQ  func(q *bun.SelectQuery, v VisualizationType) *bun.SelectQuery
-		TagsEQ                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TagsNEQ               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		CreatedByEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CreatedByNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IsSystemDefinedEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsSystemDefinedNEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsScheduledEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsScheduledNEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		ScheduleCronEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ScheduleCronNotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ScheduleCronGT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronGTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronLT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronLTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronContains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronHasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ScheduleCronHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		VersionEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		Tenant                func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		NameEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameNotIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameGT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameGTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameContains           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasPrefix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		VisualizationTypeEQ    func(q *bun.SelectQuery, v VisualizationType) *bun.SelectQuery
+		VisualizationTypeNEQ   func(q *bun.SelectQuery, v VisualizationType) *bun.SelectQuery
+		VisualizationTypeIn    func(q *bun.SelectQuery, v []VisualizationType) *bun.SelectQuery
+		VisualizationTypeNotIn func(q *bun.SelectQuery, v []VisualizationType) *bun.SelectQuery
+		TagsEQ                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TagsNEQ                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TagsIn                 func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		TagsNotIn              func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		CreatedByEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CreatedByNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CreatedByIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CreatedByNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IsSystemDefinedEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemDefinedNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemDefinedIn      func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsSystemDefinedNotIn   func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsScheduledEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsScheduledNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsScheduledIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsScheduledNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		ScheduleCronEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ScheduleCronNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ScheduleCronGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ScheduleCronHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		VersionEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		Tenant                 func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rpt.id"), v)
@@ -277,17 +314,35 @@ var ReportMetadataQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("rpt.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("rpt.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("rpt.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rpt.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("rpt.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("rpt.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("rpt.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rpt.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("rpt.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("rpt.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("rpt.organization_id"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rpt.name"), v)
@@ -361,11 +416,23 @@ var ReportMetadataQuery = struct {
 		VisualizationTypeNEQ: func(q *bun.SelectQuery, v VisualizationType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("rpt.visualization_type"), v)
 		},
+		VisualizationTypeIn: func(q *bun.SelectQuery, v []VisualizationType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("rpt.visualization_type"), bun.In(v))
+		},
+		VisualizationTypeNotIn: func(q *bun.SelectQuery, v []VisualizationType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("rpt.visualization_type"), bun.In(v))
+		},
 		TagsEQ: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rpt.tags"), v)
 		},
 		TagsNEQ: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("rpt.tags"), v)
+		},
+		TagsIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("rpt.tags"), bun.In(v))
+		},
+		TagsNotIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("rpt.tags"), bun.In(v))
 		},
 		CreatedByEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rpt.created_by"), v)
@@ -373,17 +440,35 @@ var ReportMetadataQuery = struct {
 		CreatedByNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("rpt.created_by"), v)
 		},
+		CreatedByIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("rpt.created_by"), bun.In(v))
+		},
+		CreatedByNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("rpt.created_by"), bun.In(v))
+		},
 		IsSystemDefinedEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rpt.is_system_defined"), v)
 		},
 		IsSystemDefinedNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("rpt.is_system_defined"), v)
 		},
+		IsSystemDefinedIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("rpt.is_system_defined"), bun.In(v))
+		},
+		IsSystemDefinedNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("rpt.is_system_defined"), bun.In(v))
+		},
 		IsScheduledEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rpt.is_scheduled"), v)
 		},
 		IsScheduledNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("rpt.is_scheduled"), v)
+		},
+		IsScheduledIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("rpt.is_scheduled"), bun.In(v))
+		},
+		IsScheduledNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("rpt.is_scheduled"), bun.In(v))
 		},
 		ScheduleCronEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("rpt.schedule_cron"), v)
@@ -816,6 +901,14 @@ var ReportMetadataQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // ReportMetadataQueryBuilder provides a fluent interface for building queries
@@ -860,6 +953,18 @@ func (b *ReportMetadataQueryBuilder) WhereIDNEQ(v pulid.ID) *ReportMetadataQuery
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereIDIn(v []pulid.ID) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereIDNotIn(v []pulid.ID) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *ReportMetadataQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ReportMetadataQueryBuilder {
 	b.query = ReportMetadataQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -872,6 +977,18 @@ func (b *ReportMetadataQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *ReportM
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *ReportMetadataQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *ReportMetadataQueryBuilder {
 	b.query = ReportMetadataQuery.Where.OrganizationIDEQ(b.query, v)
@@ -881,6 +998,18 @@ func (b *ReportMetadataQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *ReportMe
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *ReportMetadataQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *ReportMetadataQueryBuilder {
 	b.query = ReportMetadataQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -980,6 +1109,18 @@ func (b *ReportMetadataQueryBuilder) WhereVisualizationTypeNEQ(v VisualizationTy
 	return b
 }
 
+// WhereVisualizationTypeIn adds a WHERE visualization_type IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereVisualizationTypeIn(v []VisualizationType) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.VisualizationTypeIn(b.query, v)
+	return b
+}
+
+// WhereVisualizationTypeNotIn adds a WHERE visualization_type NOT IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereVisualizationTypeNotIn(v []VisualizationType) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.VisualizationTypeNotIn(b.query, v)
+	return b
+}
+
 // WhereTagsEQ adds a WHERE tags = ? condition
 func (b *ReportMetadataQueryBuilder) WhereTagsEQ(v []string) *ReportMetadataQueryBuilder {
 	b.query = ReportMetadataQuery.Where.TagsEQ(b.query, v)
@@ -989,6 +1130,18 @@ func (b *ReportMetadataQueryBuilder) WhereTagsEQ(v []string) *ReportMetadataQuer
 // WhereTagsNEQ adds a WHERE tags != ? condition
 func (b *ReportMetadataQueryBuilder) WhereTagsNEQ(v []string) *ReportMetadataQueryBuilder {
 	b.query = ReportMetadataQuery.Where.TagsNEQ(b.query, v)
+	return b
+}
+
+// WhereTagsIn adds a WHERE tags IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereTagsIn(v [][]string) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.TagsIn(b.query, v)
+	return b
+}
+
+// WhereTagsNotIn adds a WHERE tags NOT IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereTagsNotIn(v [][]string) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.TagsNotIn(b.query, v)
 	return b
 }
 
@@ -1004,6 +1157,18 @@ func (b *ReportMetadataQueryBuilder) WhereCreatedByNEQ(v pulid.ID) *ReportMetada
 	return b
 }
 
+// WhereCreatedByIn adds a WHERE created_by IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereCreatedByIn(v []pulid.ID) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.CreatedByIn(b.query, v)
+	return b
+}
+
+// WhereCreatedByNotIn adds a WHERE created_by NOT IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereCreatedByNotIn(v []pulid.ID) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.CreatedByNotIn(b.query, v)
+	return b
+}
+
 // WhereIsSystemDefinedEQ adds a WHERE is_system_defined = ? condition
 func (b *ReportMetadataQueryBuilder) WhereIsSystemDefinedEQ(v bool) *ReportMetadataQueryBuilder {
 	b.query = ReportMetadataQuery.Where.IsSystemDefinedEQ(b.query, v)
@@ -1016,6 +1181,18 @@ func (b *ReportMetadataQueryBuilder) WhereIsSystemDefinedNEQ(v bool) *ReportMeta
 	return b
 }
 
+// WhereIsSystemDefinedIn adds a WHERE is_system_defined IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereIsSystemDefinedIn(v []bool) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.IsSystemDefinedIn(b.query, v)
+	return b
+}
+
+// WhereIsSystemDefinedNotIn adds a WHERE is_system_defined NOT IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereIsSystemDefinedNotIn(v []bool) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.IsSystemDefinedNotIn(b.query, v)
+	return b
+}
+
 // WhereIsScheduledEQ adds a WHERE is_scheduled = ? condition
 func (b *ReportMetadataQueryBuilder) WhereIsScheduledEQ(v bool) *ReportMetadataQueryBuilder {
 	b.query = ReportMetadataQuery.Where.IsScheduledEQ(b.query, v)
@@ -1025,6 +1202,18 @@ func (b *ReportMetadataQueryBuilder) WhereIsScheduledEQ(v bool) *ReportMetadataQ
 // WhereIsScheduledNEQ adds a WHERE is_scheduled != ? condition
 func (b *ReportMetadataQueryBuilder) WhereIsScheduledNEQ(v bool) *ReportMetadataQueryBuilder {
 	b.query = ReportMetadataQuery.Where.IsScheduledNEQ(b.query, v)
+	return b
+}
+
+// WhereIsScheduledIn adds a WHERE is_scheduled IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereIsScheduledIn(v []bool) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.IsScheduledIn(b.query, v)
+	return b
+}
+
+// WhereIsScheduledNotIn adds a WHERE is_scheduled NOT IN (?) condition
+func (b *ReportMetadataQueryBuilder) WhereIsScheduledNotIn(v []bool) *ReportMetadataQueryBuilder {
+	b.query = ReportMetadataQuery.Where.IsScheduledNotIn(b.query, v)
 	return b
 }
 
@@ -1314,4 +1503,25 @@ func (b *ReportMetadataQueryBuilder) First(ctx context.Context) (*ReportMetadata
 // ReportMetadataBuild creates a chainable query builder
 func ReportMetadataBuild(db bun.IDB) *ReportMetadataQueryBuilder {
 	return NewReportMetadataQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *ReportMetadataQueryBuilder) LoadBusinessUnit() *ReportMetadataQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *ReportMetadataQueryBuilder) LoadOrganization() *ReportMetadataQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for ReportMetadata
+func (b *ReportMetadataQueryBuilder) LoadAllRelations() *ReportMetadataQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
 }

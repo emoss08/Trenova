@@ -60,20 +60,32 @@ var HazmatSegregationRuleQuery = struct {
 	Where struct {
 		IDEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		HazmatAIDEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		HazmatAIDNEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		HazmatAIDIn               func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		HazmatAIDNotIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		HazmatAIDIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		HazmatAIDIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		HazmatBIDEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		HazmatBIDNEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		HazmatBIDIn               func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		HazmatBIDNotIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		HazmatBIDIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		HazmatBIDIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ                  func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                 func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                  func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn               func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		NameEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                    func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -98,12 +110,20 @@ var HazmatSegregationRuleQuery = struct {
 		DescriptionHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ClassAEQ                  func(q *bun.SelectQuery, v hazardousmaterial.HazardousClass) *bun.SelectQuery
 		ClassANEQ                 func(q *bun.SelectQuery, v hazardousmaterial.HazardousClass) *bun.SelectQuery
+		ClassAIn                  func(q *bun.SelectQuery, v []hazardousmaterial.HazardousClass) *bun.SelectQuery
+		ClassANotIn               func(q *bun.SelectQuery, v []hazardousmaterial.HazardousClass) *bun.SelectQuery
 		ClassBEQ                  func(q *bun.SelectQuery, v hazardousmaterial.HazardousClass) *bun.SelectQuery
 		ClassBNEQ                 func(q *bun.SelectQuery, v hazardousmaterial.HazardousClass) *bun.SelectQuery
+		ClassBIn                  func(q *bun.SelectQuery, v []hazardousmaterial.HazardousClass) *bun.SelectQuery
+		ClassBNotIn               func(q *bun.SelectQuery, v []hazardousmaterial.HazardousClass) *bun.SelectQuery
 		SegregationTypeEQ         func(q *bun.SelectQuery, v SegregationType) *bun.SelectQuery
 		SegregationTypeNEQ        func(q *bun.SelectQuery, v SegregationType) *bun.SelectQuery
+		SegregationTypeIn         func(q *bun.SelectQuery, v []SegregationType) *bun.SelectQuery
+		SegregationTypeNotIn      func(q *bun.SelectQuery, v []SegregationType) *bun.SelectQuery
 		MinimumDistanceEQ         func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
 		MinimumDistanceNEQ        func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		MinimumDistanceIn         func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		MinimumDistanceNotIn      func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
 		MinimumDistanceIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		MinimumDistanceIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		DistanceUnitEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
@@ -119,6 +139,8 @@ var HazmatSegregationRuleQuery = struct {
 		DistanceUnitHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		HasExceptionsEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		HasExceptionsNEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasExceptionsIn           func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		HasExceptionsNotIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		ExceptionNotesEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ExceptionNotesNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ExceptionNotesIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -221,6 +243,13 @@ var HazmatSegregationRuleQuery = struct {
 	FieldConfig  func() map[string]hazmatSegregationRuleFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit    string
+		Organization    string
+		HazmatAMaterial string
+		HazmatBMaterial string
+	}
 }{
 	// Table and alias constants
 	Table:    "hazmat_segregation_rules",
@@ -292,20 +321,32 @@ var HazmatSegregationRuleQuery = struct {
 	Where: struct {
 		IDEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		HazmatAIDEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		HazmatAIDNEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		HazmatAIDIn               func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		HazmatAIDNotIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		HazmatAIDIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		HazmatAIDIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		HazmatBIDEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		HazmatBIDNEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		HazmatBIDIn               func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		HazmatBIDNotIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		HazmatBIDIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		HazmatBIDIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ                  func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                 func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                  func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn               func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		NameEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                    func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -330,12 +371,20 @@ var HazmatSegregationRuleQuery = struct {
 		DescriptionHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ClassAEQ                  func(q *bun.SelectQuery, v hazardousmaterial.HazardousClass) *bun.SelectQuery
 		ClassANEQ                 func(q *bun.SelectQuery, v hazardousmaterial.HazardousClass) *bun.SelectQuery
+		ClassAIn                  func(q *bun.SelectQuery, v []hazardousmaterial.HazardousClass) *bun.SelectQuery
+		ClassANotIn               func(q *bun.SelectQuery, v []hazardousmaterial.HazardousClass) *bun.SelectQuery
 		ClassBEQ                  func(q *bun.SelectQuery, v hazardousmaterial.HazardousClass) *bun.SelectQuery
 		ClassBNEQ                 func(q *bun.SelectQuery, v hazardousmaterial.HazardousClass) *bun.SelectQuery
+		ClassBIn                  func(q *bun.SelectQuery, v []hazardousmaterial.HazardousClass) *bun.SelectQuery
+		ClassBNotIn               func(q *bun.SelectQuery, v []hazardousmaterial.HazardousClass) *bun.SelectQuery
 		SegregationTypeEQ         func(q *bun.SelectQuery, v SegregationType) *bun.SelectQuery
 		SegregationTypeNEQ        func(q *bun.SelectQuery, v SegregationType) *bun.SelectQuery
+		SegregationTypeIn         func(q *bun.SelectQuery, v []SegregationType) *bun.SelectQuery
+		SegregationTypeNotIn      func(q *bun.SelectQuery, v []SegregationType) *bun.SelectQuery
 		MinimumDistanceEQ         func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
 		MinimumDistanceNEQ        func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		MinimumDistanceIn         func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		MinimumDistanceNotIn      func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
 		MinimumDistanceIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		MinimumDistanceIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		DistanceUnitEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
@@ -351,6 +400,8 @@ var HazmatSegregationRuleQuery = struct {
 		DistanceUnitHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		HasExceptionsEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		HasExceptionsNEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasExceptionsIn           func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		HasExceptionsNotIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		ExceptionNotesEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ExceptionNotesNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ExceptionNotesIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -438,11 +489,23 @@ var HazmatSegregationRuleQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hsr.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hsr.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hsr.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hsr.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hsr.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hsr.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hsr.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hsr.organization_id"), v)
@@ -450,11 +513,23 @@ var HazmatSegregationRuleQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hsr.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hsr.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hsr.organization_id"), bun.In(v))
+		},
 		HazmatAIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hsr.hazmat_a_id"), v)
 		},
 		HazmatAIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hsr.hazmat_a_id"), v)
+		},
+		HazmatAIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hsr.hazmat_a_id"), bun.In(v))
+		},
+		HazmatAIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hsr.hazmat_a_id"), bun.In(v))
 		},
 		HazmatAIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("hsr.hazmat_a_id"))
@@ -468,6 +543,12 @@ var HazmatSegregationRuleQuery = struct {
 		HazmatBIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hsr.hazmat_b_id"), v)
 		},
+		HazmatBIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hsr.hazmat_b_id"), bun.In(v))
+		},
+		HazmatBIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hsr.hazmat_b_id"), bun.In(v))
+		},
 		HazmatBIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("hsr.hazmat_b_id"))
 		},
@@ -479,6 +560,12 @@ var HazmatSegregationRuleQuery = struct {
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hsr.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hsr.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hsr.status"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hsr.name"), v)
@@ -552,11 +639,23 @@ var HazmatSegregationRuleQuery = struct {
 		ClassANEQ: func(q *bun.SelectQuery, v hazardousmaterial.HazardousClass) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hsr.class_a"), v)
 		},
+		ClassAIn: func(q *bun.SelectQuery, v []hazardousmaterial.HazardousClass) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hsr.class_a"), bun.In(v))
+		},
+		ClassANotIn: func(q *bun.SelectQuery, v []hazardousmaterial.HazardousClass) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hsr.class_a"), bun.In(v))
+		},
 		ClassBEQ: func(q *bun.SelectQuery, v hazardousmaterial.HazardousClass) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hsr.class_b"), v)
 		},
 		ClassBNEQ: func(q *bun.SelectQuery, v hazardousmaterial.HazardousClass) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hsr.class_b"), v)
+		},
+		ClassBIn: func(q *bun.SelectQuery, v []hazardousmaterial.HazardousClass) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hsr.class_b"), bun.In(v))
+		},
+		ClassBNotIn: func(q *bun.SelectQuery, v []hazardousmaterial.HazardousClass) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hsr.class_b"), bun.In(v))
 		},
 		SegregationTypeEQ: func(q *bun.SelectQuery, v SegregationType) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hsr.segregation_type"), v)
@@ -564,11 +663,23 @@ var HazmatSegregationRuleQuery = struct {
 		SegregationTypeNEQ: func(q *bun.SelectQuery, v SegregationType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hsr.segregation_type"), v)
 		},
+		SegregationTypeIn: func(q *bun.SelectQuery, v []SegregationType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hsr.segregation_type"), bun.In(v))
+		},
+		SegregationTypeNotIn: func(q *bun.SelectQuery, v []SegregationType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hsr.segregation_type"), bun.In(v))
+		},
 		MinimumDistanceEQ: func(q *bun.SelectQuery, v *float64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hsr.minimum_distance"), v)
 		},
 		MinimumDistanceNEQ: func(q *bun.SelectQuery, v *float64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hsr.minimum_distance"), v)
+		},
+		MinimumDistanceIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hsr.minimum_distance"), bun.In(v))
+		},
+		MinimumDistanceNotIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hsr.minimum_distance"), bun.In(v))
 		},
 		MinimumDistanceIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("hsr.minimum_distance"))
@@ -614,6 +725,12 @@ var HazmatSegregationRuleQuery = struct {
 		},
 		HasExceptionsNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("hsr.has_exceptions"), v)
+		},
+		HasExceptionsIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("hsr.has_exceptions"), bun.In(v))
+		},
+		HasExceptionsNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("hsr.has_exceptions"), bun.In(v))
 		},
 		ExceptionNotesEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("hsr.exception_notes"), v)
@@ -1330,6 +1447,18 @@ var HazmatSegregationRuleQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit    string
+		Organization    string
+		HazmatAMaterial string
+		HazmatBMaterial string
+	}{
+		BusinessUnit:    "BusinessUnit",
+		Organization:    "Organization",
+		HazmatAMaterial: "HazmatAMaterial",
+		HazmatBMaterial: "HazmatBMaterial",
+	},
 }
 
 // HazmatSegregationRuleQueryBuilder provides a fluent interface for building queries
@@ -1374,6 +1503,18 @@ func (b *HazmatSegregationRuleQueryBuilder) WhereIDNEQ(v pulid.ID) *HazmatSegreg
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereIDIn(v []pulid.ID) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereIDNotIn(v []pulid.ID) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *HazmatSegregationRuleQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *HazmatSegregationRuleQueryBuilder {
 	b.query = HazmatSegregationRuleQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1383,6 +1524,18 @@ func (b *HazmatSegregationRuleQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *H
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *HazmatSegregationRuleQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *HazmatSegregationRuleQueryBuilder {
 	b.query = HazmatSegregationRuleQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1398,6 +1551,18 @@ func (b *HazmatSegregationRuleQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereHazmatAIDEQ adds a WHERE hazmat_a_id = ? condition
 func (b *HazmatSegregationRuleQueryBuilder) WhereHazmatAIDEQ(v *pulid.ID) *HazmatSegregationRuleQueryBuilder {
 	b.query = HazmatSegregationRuleQuery.Where.HazmatAIDEQ(b.query, v)
@@ -1407,6 +1572,18 @@ func (b *HazmatSegregationRuleQueryBuilder) WhereHazmatAIDEQ(v *pulid.ID) *Hazma
 // WhereHazmatAIDNEQ adds a WHERE hazmat_a_id != ? condition
 func (b *HazmatSegregationRuleQueryBuilder) WhereHazmatAIDNEQ(v *pulid.ID) *HazmatSegregationRuleQueryBuilder {
 	b.query = HazmatSegregationRuleQuery.Where.HazmatAIDNEQ(b.query, v)
+	return b
+}
+
+// WhereHazmatAIDIn adds a WHERE hazmat_a_id IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereHazmatAIDIn(v []*pulid.ID) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.HazmatAIDIn(b.query, v)
+	return b
+}
+
+// WhereHazmatAIDNotIn adds a WHERE hazmat_a_id NOT IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereHazmatAIDNotIn(v []*pulid.ID) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.HazmatAIDNotIn(b.query, v)
 	return b
 }
 
@@ -1422,6 +1599,18 @@ func (b *HazmatSegregationRuleQueryBuilder) WhereHazmatBIDNEQ(v *pulid.ID) *Hazm
 	return b
 }
 
+// WhereHazmatBIDIn adds a WHERE hazmat_b_id IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereHazmatBIDIn(v []*pulid.ID) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.HazmatBIDIn(b.query, v)
+	return b
+}
+
+// WhereHazmatBIDNotIn adds a WHERE hazmat_b_id NOT IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereHazmatBIDNotIn(v []*pulid.ID) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.HazmatBIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *HazmatSegregationRuleQueryBuilder) WhereStatusEQ(v domain.Status) *HazmatSegregationRuleQueryBuilder {
 	b.query = HazmatSegregationRuleQuery.Where.StatusEQ(b.query, v)
@@ -1431,6 +1620,18 @@ func (b *HazmatSegregationRuleQueryBuilder) WhereStatusEQ(v domain.Status) *Hazm
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *HazmatSegregationRuleQueryBuilder) WhereStatusNEQ(v domain.Status) *HazmatSegregationRuleQueryBuilder {
 	b.query = HazmatSegregationRuleQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereStatusIn(v []domain.Status) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereStatusNotIn(v []domain.Status) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1530,6 +1731,18 @@ func (b *HazmatSegregationRuleQueryBuilder) WhereClassANEQ(v hazardousmaterial.H
 	return b
 }
 
+// WhereClassAIn adds a WHERE class_a IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereClassAIn(v []hazardousmaterial.HazardousClass) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.ClassAIn(b.query, v)
+	return b
+}
+
+// WhereClassANotIn adds a WHERE class_a NOT IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereClassANotIn(v []hazardousmaterial.HazardousClass) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.ClassANotIn(b.query, v)
+	return b
+}
+
 // WhereClassBEQ adds a WHERE class_b = ? condition
 func (b *HazmatSegregationRuleQueryBuilder) WhereClassBEQ(v hazardousmaterial.HazardousClass) *HazmatSegregationRuleQueryBuilder {
 	b.query = HazmatSegregationRuleQuery.Where.ClassBEQ(b.query, v)
@@ -1539,6 +1752,18 @@ func (b *HazmatSegregationRuleQueryBuilder) WhereClassBEQ(v hazardousmaterial.Ha
 // WhereClassBNEQ adds a WHERE class_b != ? condition
 func (b *HazmatSegregationRuleQueryBuilder) WhereClassBNEQ(v hazardousmaterial.HazardousClass) *HazmatSegregationRuleQueryBuilder {
 	b.query = HazmatSegregationRuleQuery.Where.ClassBNEQ(b.query, v)
+	return b
+}
+
+// WhereClassBIn adds a WHERE class_b IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereClassBIn(v []hazardousmaterial.HazardousClass) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.ClassBIn(b.query, v)
+	return b
+}
+
+// WhereClassBNotIn adds a WHERE class_b NOT IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereClassBNotIn(v []hazardousmaterial.HazardousClass) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.ClassBNotIn(b.query, v)
 	return b
 }
 
@@ -1554,6 +1779,18 @@ func (b *HazmatSegregationRuleQueryBuilder) WhereSegregationTypeNEQ(v Segregatio
 	return b
 }
 
+// WhereSegregationTypeIn adds a WHERE segregation_type IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereSegregationTypeIn(v []SegregationType) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.SegregationTypeIn(b.query, v)
+	return b
+}
+
+// WhereSegregationTypeNotIn adds a WHERE segregation_type NOT IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereSegregationTypeNotIn(v []SegregationType) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.SegregationTypeNotIn(b.query, v)
+	return b
+}
+
 // WhereMinimumDistanceEQ adds a WHERE minimum_distance = ? condition
 func (b *HazmatSegregationRuleQueryBuilder) WhereMinimumDistanceEQ(v *float64) *HazmatSegregationRuleQueryBuilder {
 	b.query = HazmatSegregationRuleQuery.Where.MinimumDistanceEQ(b.query, v)
@@ -1563,6 +1800,18 @@ func (b *HazmatSegregationRuleQueryBuilder) WhereMinimumDistanceEQ(v *float64) *
 // WhereMinimumDistanceNEQ adds a WHERE minimum_distance != ? condition
 func (b *HazmatSegregationRuleQueryBuilder) WhereMinimumDistanceNEQ(v *float64) *HazmatSegregationRuleQueryBuilder {
 	b.query = HazmatSegregationRuleQuery.Where.MinimumDistanceNEQ(b.query, v)
+	return b
+}
+
+// WhereMinimumDistanceIn adds a WHERE minimum_distance IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereMinimumDistanceIn(v []*float64) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.MinimumDistanceIn(b.query, v)
+	return b
+}
+
+// WhereMinimumDistanceNotIn adds a WHERE minimum_distance NOT IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereMinimumDistanceNotIn(v []*float64) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.MinimumDistanceNotIn(b.query, v)
 	return b
 }
 
@@ -1617,6 +1866,18 @@ func (b *HazmatSegregationRuleQueryBuilder) WhereHasExceptionsEQ(v bool) *Hazmat
 // WhereHasExceptionsNEQ adds a WHERE has_exceptions != ? condition
 func (b *HazmatSegregationRuleQueryBuilder) WhereHasExceptionsNEQ(v bool) *HazmatSegregationRuleQueryBuilder {
 	b.query = HazmatSegregationRuleQuery.Where.HasExceptionsNEQ(b.query, v)
+	return b
+}
+
+// WhereHasExceptionsIn adds a WHERE has_exceptions IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereHasExceptionsIn(v []bool) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.HasExceptionsIn(b.query, v)
+	return b
+}
+
+// WhereHasExceptionsNotIn adds a WHERE has_exceptions NOT IN (?) condition
+func (b *HazmatSegregationRuleQueryBuilder) WhereHasExceptionsNotIn(v []bool) *HazmatSegregationRuleQueryBuilder {
+	b.query = HazmatSegregationRuleQuery.Where.HasExceptionsNotIn(b.query, v)
 	return b
 }
 
@@ -2074,4 +2335,39 @@ func (b *HazmatSegregationRuleQueryBuilder) First(ctx context.Context) (*HazmatS
 // HazmatSegregationRuleBuild creates a chainable query builder
 func HazmatSegregationRuleBuild(db bun.IDB) *HazmatSegregationRuleQueryBuilder {
 	return NewHazmatSegregationRuleQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *HazmatSegregationRuleQueryBuilder) LoadBusinessUnit() *HazmatSegregationRuleQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *HazmatSegregationRuleQueryBuilder) LoadOrganization() *HazmatSegregationRuleQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadHazmatAMaterial loads the HazmatAMaterial relationship
+func (b *HazmatSegregationRuleQueryBuilder) LoadHazmatAMaterial() *HazmatSegregationRuleQueryBuilder {
+	b.query = b.query.Relation("HazmatAMaterial")
+	return b
+}
+
+// LoadHazmatBMaterial loads the HazmatBMaterial relationship
+func (b *HazmatSegregationRuleQueryBuilder) LoadHazmatBMaterial() *HazmatSegregationRuleQueryBuilder {
+	b.query = b.query.Relation("HazmatBMaterial")
+	return b
+}
+
+// LoadAllRelations loads all relationships for HazmatSegregationRule
+func (b *HazmatSegregationRuleQueryBuilder) LoadAllRelations() *HazmatSegregationRuleQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadHazmatAMaterial()
+	b.LoadHazmatBMaterial()
+	return b
 }

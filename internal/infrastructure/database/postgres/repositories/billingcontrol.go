@@ -63,13 +63,13 @@ func NewBillingControlRepository(
 // Returns:
 //   - *billing.BillingControl: The billing control entity.
 //   - error: If any database operation fails.
-func (r billingControlRepository) GetByOrgID(
+func (r *billingControlRepository) GetByOrgID(
 	ctx context.Context,
 	orgID pulid.ID,
 ) (*billing.BillingControl, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	log := r.l.With().
@@ -77,20 +77,20 @@ func (r billingControlRepository) GetByOrgID(
 		Str("orgID", orgID.String()).
 		Logger()
 
-	entity := new(billing.BillingControl)
-
-	query := dba.NewSelect().Model(entity).Where("bc.organization_id = ?", orgID)
-
-	if err = query.Scan(ctx); err != nil {
+	entity, err := billing.NewBillingControlQuery(dba).
+		WhereOrganizationIDEQ(orgID).
+		First(ctx)
+	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			log.Error().Msg("billing control not found within your organization")
+
 			return nil, errors.NewNotFoundError(
 				"Billing control not found within your organization",
 			)
 		}
 
 		log.Error().Err(err).Msg("failed to get billing control")
-		return nil, eris.Wrap(err, "get billing control")
+		return nil, err
 	}
 
 	return entity, nil
@@ -105,13 +105,13 @@ func (r billingControlRepository) GetByOrgID(
 // Returns:
 //   - *billing.BillingControl: The updated billing control entity.
 //   - error: If any database operation fails.
-func (r billingControlRepository) Update(
+func (r *billingControlRepository) Update(
 	ctx context.Context,
 	bc *billing.BillingControl,
 ) (*billing.BillingControl, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	log := r.l.With().
