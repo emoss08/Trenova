@@ -56,32 +56,6 @@ func NewEquipmentManufacturerRepository(
 	}
 }
 
-// addOptions expands the query with related entities based on EquipmentManufacturerFilterOptions.
-// This allows eager loading of related data like equipment type and fleet code.
-//
-// Parameters:
-//   - q: The base select query.
-//   - opts: EquipmentManufacturerFilterOptions containing filter options.
-//
-// Returns:
-//   - *bun.SelectQuery: The updated query with the necessary relations.
-func (emr *equipmentManufacturerRepository) addOptions(
-	q *bun.SelectQuery,
-	opts repositories.EquipmentManufacturerFilterOptions,
-) *bun.SelectQuery {
-	if opts.Status != "" {
-		status, err := domain.StatusFromString(opts.Status)
-		if err != nil {
-			emr.l.Error().Err(err).Msg("failed to convert status to equipment status")
-			return q
-		}
-
-		q = q.Where("em.status = ?", status)
-	}
-
-	return q
-}
-
 // filterQuery builds a query to filter equipment manufacturers based on the provided options.
 //
 // Parameters:
@@ -177,7 +151,9 @@ func (emr *equipmentManufacturerRepository) GetByID(
 
 	entity, err := equipmentmanufacturer.NewEquipmentManufacturerQuery(dba).
 		WhereGroup(" AND ", func(emqb *equipmentmanufacturer.EquipmentManufacturerQueryBuilder) *equipmentmanufacturer.EquipmentManufacturerQueryBuilder {
-			return emqb.WhereIDEQ(opts.ID).WhereTenant(opts.OrgID, opts.BuID)
+			return emqb.
+				WhereIDEQ(opts.ID).
+				WhereTenant(opts.OrgID, opts.BuID)
 		}).
 		First(ctx)
 	if err != nil {
@@ -207,7 +183,7 @@ func (emr *equipmentManufacturerRepository) Create(
 	ctx context.Context,
 	em *equipmentmanufacturer.EquipmentManufacturer,
 ) (*equipmentmanufacturer.EquipmentManufacturer, error) {
-	dba, err := emr.db.DB(ctx)
+	dba, err := emr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("equipment_manufacturer_repository").
@@ -248,7 +224,7 @@ func (emr *equipmentManufacturerRepository) Update(
 	ctx context.Context,
 	em *equipmentmanufacturer.EquipmentManufacturer,
 ) (*equipmentmanufacturer.EquipmentManufacturer, error) {
-	dba, err := emr.db.DB(ctx)
+	dba, err := emr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
