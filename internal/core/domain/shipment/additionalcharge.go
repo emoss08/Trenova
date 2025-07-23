@@ -24,7 +24,7 @@ var (
 type AdditionalCharge struct {
 	bun.BaseModel `bun:"table:additional_charges,alias:ac" json:"-"`
 
-	ID                  pulid.ID                 `json:"id"                  bun:",pk,type:VARCHAR(100),notnull"`
+	ID                  pulid.ID                 `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID      pulid.ID                 `json:"businessUnitId"      bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
 	OrganizationID      pulid.ID                 `json:"organizationId"      bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 	ShipmentID          pulid.ID                 `json:"shipmentId"          bun:"shipment_id,type:VARCHAR(100),notnull"`

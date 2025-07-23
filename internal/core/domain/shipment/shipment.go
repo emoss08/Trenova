@@ -1,5 +1,7 @@
 package shipment
 
+//go:generate go run github.com/emoss08/trenova/cmd/gen-trenova -type=Shipment
+
 import (
 	"context"
 

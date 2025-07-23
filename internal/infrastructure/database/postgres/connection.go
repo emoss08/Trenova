@@ -31,10 +31,10 @@ import (
 type ConnectionParams struct {
 	fx.In
 
-	Config            *config.Manager
-	Logger            *logger.Logger
-	LC                fx.Lifecycle
-	TelemetryMetrics  *telemetry.Metrics `name:"telemetryMetrics" optional:"true"`
+	Config           *config.Manager
+	Logger           *logger.Logger
+	LC               fx.Lifecycle
+	TelemetryMetrics *telemetry.Metrics `name:"telemetryMetrics" optional:"true"`
 }
 
 var (
@@ -500,10 +500,10 @@ func (c *connection) performHealthCheck(ctx context.Context) {
 func (c *connection) monitorConnectionPoolStats(ctx context.Context) {
 	// Initial delay to ensure connection is fully initialized
 	time.Sleep(2 * time.Second)
-	
+
 	// Log initial stats
 	c.updatePoolStats()
-	
+
 	ticker := time.NewTicker(15 * time.Second)
 	defer ticker.Stop()
 
@@ -524,7 +524,7 @@ func (c *connection) updatePoolStats() {
 	// Update primary connection stats
 	if c.sql != nil {
 		stats := c.sql.Stats()
-		
+
 		// Log detailed connection information
 		c.log.Info().
 			Int("max_open", stats.MaxOpenConnections).
@@ -536,7 +536,7 @@ func (c *connection) updatePoolStats() {
 			Int64("max_idle_closed", stats.MaxIdleClosed).
 			Int64("max_lifetime_closed", stats.MaxLifetimeClosed).
 			Msg("Database connection pool stats")
-		
+
 		metrics.UpdateConnectionPoolStats("primary",
 			intutils.SafeInt32(stats.MaxOpenConnections),
 			intutils.SafeInt32(stats.Idle),

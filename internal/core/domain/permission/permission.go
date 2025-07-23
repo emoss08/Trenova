@@ -11,7 +11,7 @@ import (
 type Permission struct {
 	bun.BaseModel `bun:"table:permissions,alias:perm"`
 
-	ID               pulid.ID           `json:"id"                         bun:",pk,type:VARCHAR(100)"`
+	ID               pulid.ID           `json:"id"                         bun:"id,pk,type:VARCHAR(100)"`
 	Resource         Resource           `json:"resource"                   bun:"resource,type:VARCHAR(50),notnull"`
 	Action           Action             `json:"action"                     bun:"action,type:action_enum,notnull"`
 	Scope            Scope              `json:"scope"                      bun:"scope,type:scope_enum,notnull"`

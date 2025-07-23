@@ -24,12 +24,9 @@ var (
 type LocationCategory struct {
 	bun.BaseModel `bun:"table:location_categories,alias:lc" json:"-"`
 
-	// Primary identifiers
-	ID             pulid.ID `bun:",pk,type:VARCHAR(100),notnull"                 json:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,pk,notnull,type:VARCHAR(100)" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,pk,notnull,type:VARCHAR(100)"  json:"organizationId"`
-
-	// Core Fields
+	ID                  pulid.ID     `json:"id"                  bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID      pulid.ID     `json:"businessUnitId"      bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
+	OrganizationID      pulid.ID     `json:"organizationId"      bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
 	Name                string       `json:"name"                bun:"name,type:VARCHAR(100),notnull"`
 	Description         string       `json:"description"         bun:"description,type:VARCHAR(255)"`
 	Type                Category     `json:"type"                bun:"type,type:location_category_type,notnull"`
@@ -39,13 +36,11 @@ type LocationCategory struct {
 	RequiresAppointment bool         `json:"requiresAppointment" bun:"requires_appointment,type:BOOLEAN,default:false"`
 	AllowsOvernight     bool         `json:"allowsOvernight"     bun:"allows_overnight,type:BOOLEAN,default:false"`
 	HasRestroom         bool         `json:"hasRestroom"         bun:"has_restroom,type:BOOLEAN,default:false"`
-
-	// Metadata
-	Version      int64  `bun:"version,type:BIGINT"                                                                  json:"version"`
-	CreatedAt    int64  `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
-	UpdatedAt    int64  `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
-	SearchVector string `bun:"search_vector,type:TSVECTOR,scanonly"                                                 json:"-"`
-	Rank         string `bun:"rank,type:VARCHAR(100),scanonly"                                                      json:"-"`
+	Version             int64        `json:"version"             bun:"version,type:BIGINT"`
+	CreatedAt           int64        `json:"createdAt"           bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt           int64        `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	SearchVector        string       `json:"-"                   bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank                string       `json:"-"                   bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`

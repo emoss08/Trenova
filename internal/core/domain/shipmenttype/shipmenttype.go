@@ -1,5 +1,7 @@
 package shipmenttype
 
+//go:generate go run github.com/emoss08/trenova/cmd/gen-trenova -type=ShipmentType
+
 import (
 	"context"
 
@@ -25,23 +27,18 @@ var (
 type ShipmentType struct {
 	bun.BaseModel `bun:"table:shipment_types,alias:st" json:"-"`
 
-	// Primary identifiers
-	ID             pulid.ID `bun:"id,type:VARCHAR(100),pk,notnull"               json:"id"`
-	BusinessUnitID pulid.ID `bun:"business_unit_id,type:VARCHAR(100),pk,notnull" json:"businessUnitId"`
-	OrganizationID pulid.ID `bun:"organization_id,type:VARCHAR(100),pk,notnull"  json:"organizationId"`
-
-	// Core Fields
-	Status      domain.Status `json:"status"      bun:"status,type:status_enum,notnull,default:'Active'"`
-	Code        string        `json:"code"        bun:"code,type:VARCHAR(10),notnull"`
-	Description string        `json:"description" bun:"description,type:TEXT,nullzero"`
-	Color       string        `json:"color"       bun:"color,type:VARCHAR(10)"`
-
-	// Metadata
-	Version      int64  `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt    int64  `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt    int64  `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	SearchVector string `json:"-"         bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank         string `json:"-"         bun:"rank,type:VARCHAR(100),scanonly"`
+	ID             pulid.ID      `bun:"id,type:VARCHAR(100),pk,notnull"                                                      json:"id"`
+	BusinessUnitID pulid.ID      `bun:"business_unit_id,type:VARCHAR(100),pk,notnull"                                        json:"businessUnitId"`
+	OrganizationID pulid.ID      `bun:"organization_id,type:VARCHAR(100),pk,notnull"                                         json:"organizationId"`
+	Status         domain.Status `bun:"status,type:status_enum,notnull,default:'Active'"                                     json:"status"`
+	Code           string        `bun:"code,type:VARCHAR(10),notnull"                                                        json:"code"`
+	Description    string        `bun:"description,type:TEXT,nullzero"                                                       json:"description"`
+	Color          string        `bun:"color,type:VARCHAR(10)"                                                               json:"color"`
+	SearchVector   string        `bun:"search_vector,type:TSVECTOR,scanonly"                                                 json:"-"`
+	Rank           string        `bun:"rank,type:VARCHAR(100),scanonly"                                                      json:"-"`
+	Version        int64         `bun:"version,type:BIGINT"                                                                  json:"version"`
+	CreatedAt      int64         `bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"createdAt"`
+	UpdatedAt      int64         `bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint" json:"updatedAt"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
@@ -75,6 +72,14 @@ func (st *ShipmentType) GetID() string {
 
 func (st *ShipmentType) GetTableName() string {
 	return "shipment_types"
+}
+
+func (st *ShipmentType) GetVersion() int64 {
+	return st.Version
+}
+
+func (st *ShipmentType) IncrementVersion() {
+	st.Version++
 }
 
 func (st *ShipmentType) BeforeAppendModel(_ context.Context, query bun.Query) error {

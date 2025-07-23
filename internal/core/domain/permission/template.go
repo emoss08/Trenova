@@ -10,7 +10,7 @@ import (
 type Template struct {
 	bun.BaseModel `bun:"table:permission_templates,alias:pt"`
 
-	ID            pulid.ID          `json:"id"            bun:",pk,type:VARCHAR(100)"`
+	ID            pulid.ID          `json:"id"            bun:"id,pk,type:VARCHAR(100)"`
 	Name          string            `json:"name"          bun:"name,type:VARCHAR(100),notnull"`
 	Description   string            `json:"description"   bun:"description,type:TEXT"`
 	Permissions   []Permission      `json:"permissions"   bun:"permissions,type:JSONB"`

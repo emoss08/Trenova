@@ -18,7 +18,7 @@ import (
 type BillingControl struct {
 	bun.BaseModel `json:"-" bun:"table:billing_controls,alias:bc"`
 
-	ID                            pulid.ID          `json:"id"                            bun:",pk,type:VARCHAR(100),notnull"`
+	ID                            pulid.ID          `json:"id"                            bun:"id,pk,type:VARCHAR(100),notnull"`
 	BusinessUnitID                pulid.ID          `json:"businessUnitId"                bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	OrganizationID                pulid.ID          `json:"organizationId"                bun:"organization_id,type:VARCHAR(100),pk,notnull"`
 	InvoiceNumberPrefix           string            `json:"invoiceNumberPrefix"           bun:"invoice_number_prefix,type:VARCHAR(10),notnull,default:'INV-'"`

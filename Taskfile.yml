@@ -48,6 +48,18 @@ tasks:
   update-go-deps:
     cmd: go get -u ./... && go mod tidy
     desc: Update Go dependencies
+  generate:
+    desc: Generate code for all entities with go:generate directives
+    cmd: go generate ./...
+  gen:
+    desc: Alias for generate
+    deps: [generate]
+  gen-all:
+    desc: Generate code for all domain entities (scans domain folder)
+    cmd: go run ./cmd/gen-trenova -domain-path=./internal/core/domain
+  gen-all-separate:
+    desc: Generate code for all domain entities in separate directory
+    cmd: go run ./cmd/gen-trenova -domain-path=./internal/core/domain -output-dir=./internal/generated/domain
   fix:
     cmd: goimports -w ./.. && go mod tidy
     desc: Fix the code with goimports

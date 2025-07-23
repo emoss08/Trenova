@@ -69,7 +69,7 @@ func (str *shipmentTypeRepository) filterQuery(
 ) *bun.SelectQuery {
 	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
 		Query:      q,
-		TableAlias: "st",
+		TableAlias: shipmenttype.ShipmentTypeQuery.Alias,
 		Filter:     req.Filter,
 	})
 
@@ -80,7 +80,7 @@ func (str *shipmentTypeRepository) filterQuery(
 			return q
 		}
 
-		q = q.Where("st.status = ?", status)
+		q = shipmenttype.ShipmentTypeQuery.Where.StatusEQ(q, status)
 	}
 
 	if req.Filter.Query != "" {
@@ -121,7 +121,10 @@ func (str *shipmentTypeRepository) List(
 	q = str.filterQuery(q, req)
 
 	// Order by status and created at
-	q = common.ApplyDefaultListOrdering(q, "st", "st.status ASC", "st.code ASC")
+	q = common.ApplyDefaultListOrdering(
+		q,
+		shipmenttype.ShipmentTypeQuery.Alias,
+		shipmenttype.ShipmentTypeQuery.OrderBy.Default()...)
 
 	result, err := common.ExecuteListQuery[*shipmenttype.ShipmentType](ctx, q)
 	if err != nil {
@@ -152,16 +155,12 @@ func (str *shipmentTypeRepository) GetByID(
 		return nil, err
 	}
 
-	entity := new(shipmenttype.ShipmentType)
+	entity, err := shipmenttype.NewShipmentTypeQuery(dba).
+		WhereIDEQ(opts.ID).
+		WhereTenant(opts.OrgID, opts.BuID).
+		One(ctx)
 
-	query := dba.NewSelect().Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("st.id = ?", opts.ID).
-				Where("st.organization_id = ?", opts.OrgID).
-				Where("st.business_unit_id = ?", opts.BuID)
-		})
-
-	if err = query.Scan(ctx); err != nil {
+	if err != nil {
 		log.Error().Err(err).Msg("failed to get shipment type")
 		return nil, common.HandleNotFoundError(err, str.EntityName)
 	}
@@ -225,7 +224,7 @@ func (str *shipmentTypeRepository) Update(
 
 	result, err := common.RunInTransactionWithResult(ctx, str.DB,
 		func(c context.Context, tx bun.Tx) (*shipmenttype.ShipmentType, error) {
-			if err := common.OptimisticUpdateWithAlias(c, tx, st, str.EntityName, "st"); err != nil {
+			if err := common.OptimisticUpdateWithAlias(c, tx, st, str.EntityName, shipmenttype.ShipmentTypeQuery.Alias); err != nil {
 				return nil, err
 			}
 			return st, nil

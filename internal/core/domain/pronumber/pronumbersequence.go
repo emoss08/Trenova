@@ -14,15 +14,15 @@ import (
 type Sequence struct {
 	bun.BaseModel `bun:"table:pro_number_sequences,alias:pns"`
 
-	ID              pulid.ID `bun:",pk,type:VARCHAR(100)"                     json:"id"`
-	OrganizationID  pulid.ID `bun:"organization_id,type:VARCHAR(100),notnull" json:"organizationId"`
-	BusinessUnitID  pulid.ID `bun:"business_unit_id,type:VARCHAR(100)"        json:"businessUnitId"`
-	Year            int16    `bun:"year,notnull"                              json:"year"`
-	Month           int16    `bun:"month,notnull"                             json:"month"`
-	CurrentSequence int64    `bun:"current_sequence,notnull"                  json:"currentSequence"`
-	Version         int64    `bun:"version,type:BIGINT"                       json:"version"`
-	CreatedAt       int64    `bun:"created_at,notnull"                        json:"createdAt"`
-	UpdatedAt       int64    `bun:"updated_at,notnull"                        json:"updatedAt"`
+	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100)"`
+	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,type:VARCHAR(100),notnull"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,type:VARCHAR(100)"`
+	Year            int16    `json:"year"            bun:"year,notnull"`
+	Month           int16    `json:"month"           bun:"month,notnull"`
+	CurrentSequence int64    `json:"currentSequence" bun:"current_sequence,notnull"`
+	Version         int64    `json:"version"         bun:"version,type:BIGINT"`
+	CreatedAt       int64    `json:"createdAt"       bun:"created_at,notnull"`
+	UpdatedAt       int64    `json:"updatedAt"       bun:"updated_at,notnull"`
 
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"businessUnit,omitempty"`
