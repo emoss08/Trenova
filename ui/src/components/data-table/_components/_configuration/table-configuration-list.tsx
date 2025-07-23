@@ -126,7 +126,7 @@ function TableConfigurationContent({
   publicConfigurations: TableConfigurationSchema[];
 }) {
   return (
-    <ScrollArea className="h-[300px] w-full pt-2">
+    <ScrollArea className="h-[220px] w-full pt-2">
       <div className="flex flex-col gap-0.5">
         {isLoadingUserConfigurations || isLoadingPublicConfigurations ? (
           <div className="flex flex-col gap-1 text-center justify-center items-center p-2">
