@@ -1,7 +1,3 @@
-<!--
-Copyright 2023-2025 Eric Moss
-Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
-Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md-->
 <div align="center">
   <img src="./assets/logo.webp" alt="Trenova Logo" width="200">
   <h1 align="center"><b>Trenova Suite</b></h1>
