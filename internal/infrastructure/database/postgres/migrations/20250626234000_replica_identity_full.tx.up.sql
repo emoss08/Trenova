@@ -1,6 +1,7 @@
--- # Copyright 2023-2025 Eric Moss
--- # Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
--- # Full license: https://github.com/emoss08/trenova/blob/main/LICENSE.md
+--
+-- Copyright 2023-2025 Eric Moss
+-- Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+-- Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md--
 
 -- Set REPLICA IDENTITY FULL for all user tables to enable full row capture in CDC
 -- This ensures that UPDATE and DELETE events include all column values in the 'before' state

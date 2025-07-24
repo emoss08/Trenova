@@ -1,3 +1,7 @@
+<!--
+Copyright 2023-2025 Eric Moss
+Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md-->
 # Expression Syntax Guide
 
 This guide covers the complete syntax for formula expressions in the Trenova system. The expression engine provides a safe, sandboxed environment for evaluating mathematical and logical expressions with support for variables, functions, and complex business logic.
