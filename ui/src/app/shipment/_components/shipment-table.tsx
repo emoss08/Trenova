@@ -99,7 +99,8 @@ export default function ShipmentTable() {
             });
           });
         },
-        hidden: (row) => row.original.status === "Completed",
+        hidden: (row) =>
+          row?.original?.status === ShipmentStatus.enum.Completed,
       },
     ],
     [setSearchParams, setShipmentMenuParams],

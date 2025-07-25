@@ -28,6 +28,9 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
       id: "status",
       accessorKey: "status",
       header: "Status",
+      size: 120,
+      minSize: 100,
+      maxSize: 150,
       cell: ({ row }) => {
         const { status } = row.original;
         return <ShipmentStatusBadge status={status} />;
@@ -45,6 +48,9 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
       id: "proNumber",
       accessorKey: "proNumber",
       header: "Pro Number",
+      size: 140,
+      minSize: 120,
+      maxSize: 180,
       cell: ({ row }) => {
         const proNumber = row.original.proNumber;
         return <p>{proNumber}</p>;
@@ -61,6 +67,9 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
       id: "customer",
       accessorKey: "customer",
       header: "Customer",
+      size: 200,
+      minSize: 150,
+      maxSize: 300,
       cell: ({ row }) => {
         const { customer } = row.original;
 
@@ -93,6 +102,9 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
       id: "originLocation",
       accessorKey: "originLocation",
       header: "Origin Location",
+      size: 220,
+      minSize: 180,
+      maxSize: 300,
       cell: ({ row }) => {
         const { customer } = row.original;
 
@@ -136,6 +148,9 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
       id: "originPlannedArrival",
       accessorKey: "originPickup",
       header: "Origin Date",
+      size: 150,
+      minSize: 130,
+      maxSize: 180,
       cell: ({ row }) => {
         const shipment = row.original;
         const originStop = getOriginStopInfo(shipment);
@@ -152,6 +167,9 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
       id: "destinationLocation",
       accessorKey: "destinationLocation",
       header: "Destination Location",
+      size: 220,
+      minSize: 180,
+      maxSize: 300,
       cell: ({ row }) => {
         const { customer } = row.original;
 
@@ -195,6 +213,9 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
       id: "destinationPlannedArrival",
       accessorKey: "destinationPickup",
       header: "Destination Date",
+      size: 150,
+      minSize: 130,
+      maxSize: 180,
       cell: ({ row }) => {
         const shipment = row.original;
         const destinationStop = getDestinationStopInfo(shipment);
