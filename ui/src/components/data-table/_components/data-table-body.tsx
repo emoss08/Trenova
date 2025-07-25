@@ -10,13 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { DataTableBodyProps } from "@/types/data-table";
-import {
-  SortableContext,
-  horizontalListSortingStrategy,
-} from "@dnd-kit/sortable";
 import { faPlay } from "@fortawesome/pro-solid-svg-icons";
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
-import { DragAlongCell } from "./data-table-draggable";
 import {
   DataTableContextMenu,
   type ContextMenuAction,
@@ -75,17 +70,14 @@ function DataTableRow<TData>({
   // but we need it for the memo comparison
   // @ts-expect-error - This is a temporary solution to avoid the memo comparison
   columnVisibility,
-  enableDragging = false,
   contextMenuActions,
 }: {
   row: Row<TData>;
   selected?: boolean;
   columnVisibility: Record<string, boolean>;
   table: Table<TData>;
-  enableDragging?: boolean;
   contextMenuActions?: ContextMenuAction<TData>[];
 }) {
-  const columnOrder = table.getState().columnOrder;
   const tableRow = (
     <TableRow
       id={row.id}
@@ -100,32 +92,23 @@ function DataTableRow<TData>({
       }}
       className={cn(
         "-outline-offset-2 rounded-md outline-muted-foreground transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline",
-        table.options.meta?.getRowClassName?.(row.original),
+        table.options.meta?.getRowClassName?.(row),
       )}
     >
-      {enableDragging
-        ? row.getVisibleCells().map((cell) => (
-            <SortableContext
-              key={cell.id}
-              items={columnOrder}
-              strategy={horizontalListSortingStrategy}
-            >
-              <DragAlongCell key={cell.id} cell={cell} />
-            </SortableContext>
-          ))
-        : row.getVisibleCells().map((cell) => (
-            <TableCell
-              className="font-table"
-              key={cell.id}
-              role="cell"
-              aria-label={`${cell.column.id} cell`}
-              style={{
-                minWidth: cell.column.getSize(),
-              }}
-            >
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </TableCell>
-          ))}
+      {row.getVisibleCells().map((cell) => (
+        <TableCell
+          className="font-table truncate"
+          key={cell.id}
+          role="cell"
+          aria-label={`${cell.column.id} cell`}
+          style={{
+            width: `var(--col-${cell.column.id.replace(".", "-")}-size)`,
+            maxWidth: `var(--col-${cell.column.id.replace(".", "-")}-size)`,
+          }}
+        >
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </TableCell>
+      ))}
     </TableRow>
   );
 
@@ -144,10 +127,8 @@ export function DataTableBody<TData extends Record<string, any>>({
   table,
   columns,
   liveMode,
-  enableDragging = false,
   contextMenuActions,
 }: DataTableBodyProps<TData> & {
-  enableDragging?: boolean;
   contextMenuActions?: ContextMenuAction<TData>[];
 }) {
   return (
@@ -164,7 +145,6 @@ export function DataTableBody<TData extends Record<string, any>>({
               selected={row.getIsSelected()}
               columnVisibility={table.getState().columnVisibility}
               table={table}
-              enableDragging={enableDragging}
               contextMenuActions={contextMenuActions}
             />
           );

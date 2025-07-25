@@ -27,7 +27,7 @@ export function DraggableTableHeader<TData>({
     transform: CSS.Translate.toString(transform),
     transition: "width transform 0.2s ease-in-out",
     whiteSpace: "nowrap",
-    width: header.column.getSize(),
+    width: `var(--header-${header.id.replace(".", "-")}-size)`,
     zIndex: isDragging ? 1 : 0,
   };
 
@@ -43,7 +43,7 @@ export function DraggableTableHeader<TData>({
             ? "descending"
             : "none"
       }
-      className="group"
+      className="group relative select-none truncate"
     >
       <div className="flex items-center gap-1">
         {header.isPlaceholder
@@ -52,11 +52,21 @@ export function DraggableTableHeader<TData>({
         <button
           {...attributes}
           {...listeners}
-          className="cursor-move p-0.5 hover:bg-muted rounded touch-none opacity-0 group-hover:opacity-100 transition-opacity"
+          className="cursor-move p-0.5 hover:bg-muted rounded touch-none opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
+          aria-label={`Reorder ${header.column.columnDef.header} column`}
+          tabIndex={0}
         >
-          <GripVertical className="h-3 w-3 text-muted-foreground" />
+          <GripVertical className="h-3 w-3 text-muted-foreground hover:text-foreground transition-colors" />
         </button>
       </div>
+      {header.column.getCanResize() && (
+        <div
+          onDoubleClick={() => header.column.resetSize()}
+          onMouseDown={header.getResizeHandler()}
+          onTouchStart={header.getResizeHandler()}
+          className="absolute -right-2 top-0 z-10 flex h-full w-4 cursor-col-resize touch-none justify-center user-select-none before:absolute before:inset-y-0 before:w-px before:translate-x-px before:bg-border"
+        />
+      )}
     </TableHead>
   );
 }
@@ -71,12 +81,13 @@ export function DragAlongCell<TData>({ cell }: { cell: Cell<TData, unknown> }) {
     position: "relative",
     transform: CSS.Translate.toString(transform),
     transition: "width transform 0.2s ease-in-out",
-    width: cell.column.getSize(),
+    width: `var(--col-${cell.column.id.replace(".", "-")}-size)`,
+    maxWidth: `var(--col-${cell.column.id.replace(".", "-")}-size)`,
     zIndex: isDragging ? 1 : 0,
   };
 
   return (
-    <TableCell style={style} ref={setNodeRef} className="font-table">
+    <TableCell style={style} ref={setNodeRef} className="font-table truncate">
       {flexRender(cell.column.columnDef.cell, cell.getContext())}
     </TableCell>
   );

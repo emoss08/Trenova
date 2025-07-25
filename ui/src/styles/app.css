@@ -279,4 +279,12 @@ Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md*/
     .dark .animate-new-item {
         animation: new-item-flash-dark 3s ease-in-out;
     }
+
+    .cursor-col-resize {
+        cursor: col-resize;
+    }
+
+    .user-select-none {
+        user-select: none;
+    }
 }

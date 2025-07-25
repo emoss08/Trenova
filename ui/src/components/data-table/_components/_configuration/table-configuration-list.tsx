@@ -96,7 +96,7 @@ export function UserTableConfigurationList({
 
   // * Exclude public configurations that the user is the owner of
   const filteredPublicConfigurations =
-    publicConfigurations?.results.filter(
+    publicConfigurations?.results?.filter(
       (config) => config.creator?.id !== user?.id,
     ) ?? [];
 
@@ -105,8 +105,7 @@ export function UserTableConfigurationList({
       <TableConfigurationListHeader
         userConfigurations={userConfigurations?.results ?? []}
       />
-      {userConfigurations?.results &&
-        userConfigurations?.results?.length > 0 && (
+      {(userConfigurations?.results?.length ?? 0) > 0 && (
           <Input
             icon={
               <Icon icon={faSearch} className="size-3 text-muted-foreground" />

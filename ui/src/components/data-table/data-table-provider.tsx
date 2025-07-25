@@ -18,6 +18,7 @@ interface DataTableStateContextType {
   rowSelection: RowSelectionState;
   pagination: PaginationState;
   columnVisibility: VisibilityState;
+  columnOrder?: string[];
 }
 
 interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
@@ -47,6 +48,7 @@ export function DataTableProvider<TData, TValue>({
       pagination: props.pagination ?? { pageIndex: 0, pageSize: 10 },
       rowSelection: props.rowSelection ?? {},
       columnVisibility: props.columnVisibility ?? {},
+      columnOrder: props.columnOrder,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -56,6 +58,7 @@ export function DataTableProvider<TData, TValue>({
       props.columns,
       props.rowSelection,
       props.columnVisibility,
+      props.columnOrder,
     ],
   );
 

@@ -5,73 +5,50 @@
 
 "use no memo";
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import {
-  SortableContext,
-  horizontalListSortingStrategy,
-} from "@dnd-kit/sortable";
 import { flexRender, type Table } from "@tanstack/react-table";
-import { DraggableTableHeader } from "./data-table-draggable";
 
 export function DataTableHeader<TData>({
   table,
-  enableDragging = false,
 }: {
   table: Table<TData>;
-  enableDragging?: boolean;
 }) {
-  const columnOrder = table.getState().columnOrder;
-
-  if (!enableDragging) {
-    return (
-      <TableHeader>
-        {table.getHeaderGroups().map((headerGroup) => (
-          <TableRow key={headerGroup.id}>
-            {headerGroup.headers.map((header) => {
-              return (
-                <TableHead
-                  key={header.id}
-                  aria-sort={
-                    header.column.getIsSorted() === "asc"
-                      ? "ascending"
-                      : header.column.getIsSorted() === "desc"
-                        ? "descending"
-                        : "none"
-                  }
-                >
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(
-                        header.column.columnDef.header,
-                        header.getContext(),
-                      )}
-                  {header.column.getCanResize() && (
-                    <div
-                      onDoubleClick={() => header.column.resetSize()}
-                      onMouseDown={header.getResizeHandler()}
-                      onTouchStart={header.getResizeHandler()}
-                    />
-                  )}
-                </TableHead>
-              );
-            })}
-          </TableRow>
-        ))}
-      </TableHeader>
-    );
-  }
-
   return (
     <TableHeader>
       {table.getHeaderGroups().map((headerGroup) => (
         <TableRow key={headerGroup.id}>
-          <SortableContext
-            items={columnOrder}
-            strategy={horizontalListSortingStrategy}
-          >
-            {headerGroup.headers.map((header) => (
-              <DraggableTableHeader key={header.id} header={header} />
-            ))}
-          </SortableContext>
+          {headerGroup.headers.map((header) => {
+            return (
+              <TableHead
+                key={header.id}
+                className="relative select-none truncate"
+                style={{
+                  width: `var(--header-${header.id.replace(".", "-")}-size)`,
+                }}
+                aria-sort={
+                  header.column.getIsSorted() === "asc"
+                    ? "ascending"
+                    : header.column.getIsSorted() === "desc"
+                      ? "descending"
+                      : "none"
+                }
+              >
+                {header.isPlaceholder
+                  ? null
+                  : flexRender(
+                      header.column.columnDef.header,
+                      header.getContext(),
+                    )}
+                {header.column.getCanResize() && (
+                  <div
+                    onDoubleClick={() => header.column.resetSize()}
+                    onMouseDown={header.getResizeHandler()}
+                    onTouchStart={header.getResizeHandler()}
+                    className="absolute -right-2 top-0 z-10 flex h-full w-4 cursor-col-resize touch-none justify-center user-select-none before:absolute before:inset-y-0 before:w-px before:translate-x-px before:bg-border"
+                  />
+                )}
+              </TableHead>
+            );
+          })}
         </TableRow>
       ))}
     </TableHeader>
