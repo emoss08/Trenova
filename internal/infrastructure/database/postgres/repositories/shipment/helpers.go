@@ -29,6 +29,7 @@ const (
 	EntityTypeStop             EntityType = "stops"
 	EntityTypeCommodity        EntityType = "commodities"
 	EntityTypeAdditionalCharge EntityType = "additional_charges"
+	EntityTypeComment          EntityType = "comments"
 )
 
 // shipmentBulkData holds all entities for bulk insertion
@@ -38,6 +39,7 @@ type shipmentBulkData struct {
 	stops             []*shipment.Stop
 	commodities       []*shipment.ShipmentCommodity
 	additionalCharges []*shipment.AdditionalCharge
+	comments          []*shipment.ShipmentComment
 }
 
 // validateShipmentForCreation performs validation checks before creating a shipment
@@ -98,7 +100,6 @@ func (sr *shipmentRepository) createShipmentWithRelations(
 	shp *shipment.Shipment,
 	log *zerolog.Logger,
 ) error {
-	// Insert the shipment
 	if _, err := tx.NewInsert().Model(shp).Returning("*").Exec(ctx); err != nil {
 		log.Error().
 			Err(err).
@@ -107,7 +108,6 @@ func (sr *shipmentRepository) createShipmentWithRelations(
 		return err
 	}
 
-	// Handle related entities
 	if err := sr.shipmentCommodityRepository.HandleCommodityOperations(ctx, tx, shp, true); err != nil {
 		log.Error().Err(err).Msg("failed to handle commodity operations")
 		return err
@@ -120,6 +120,11 @@ func (sr *shipmentRepository) createShipmentWithRelations(
 
 	if err := sr.additionalChargeRepository.HandleAdditionalChargeOperations(ctx, tx, shp, true); err != nil {
 		log.Error().Err(err).Msg("failed to handle additional charge operations")
+		return err
+	}
+
+	if err := sr.shipmentCommentRepository.HandleCommentOperations(ctx, tx, shp, true); err != nil {
+		log.Error().Err(err).Msg("failed to handle comment operations")
 		return err
 	}
 
@@ -136,7 +141,6 @@ func (sr *shipmentRepository) updateShipmentWithRelations(
 	ov := shp.Version
 	shp.Version++
 
-	// Update the shipment with optimistic locking
 	results, err := tx.NewUpdate().
 		Model(shp).
 		WherePK().
@@ -171,7 +175,6 @@ func (sr *shipmentRepository) updateShipmentWithRelations(
 		)
 	}
 
-	// Handle related entities
 	if err = sr.shipmentCommodityRepository.HandleCommodityOperations(ctx, tx, shp, false); err != nil {
 		log.Error().Err(err).Msg("failed to handle commodity operations")
 		return err
@@ -184,6 +187,11 @@ func (sr *shipmentRepository) updateShipmentWithRelations(
 
 	if err = sr.additionalChargeRepository.HandleAdditionalChargeOperations(ctx, tx, shp, false); err != nil {
 		log.Error().Err(err).Msg("failed to handle additional charge operations")
+		return err
+	}
+
+	if err = sr.shipmentCommentRepository.HandleCommentOperations(ctx, tx, shp, false); err != nil {
+		log.Error().Err(err).Msg("failed to handle comment operations")
 		return err
 	}
 
@@ -202,10 +210,10 @@ func (sr *shipmentRepository) prepareBulkShipmentData(
 		stops:             make([]*shipment.Stop, 0),
 		commodities:       make([]*shipment.ShipmentCommodity, 0),
 		additionalCharges: make([]*shipment.AdditionalCharge, 0),
+		comments:          make([]*shipment.ShipmentComment, 0),
 	}
 
 	for i := range req.Count {
-		// Duplicate the shipment fields
 		newShipment, err := sr.duplicateShipmentFields(ctx, originalShipment)
 		if err != nil {
 			return nil, oops.In("shipment_repository").
@@ -216,7 +224,6 @@ func (sr *shipmentRepository) prepareBulkShipmentData(
 
 		data.shipments = append(data.shipments, newShipment)
 
-		// Prepare moves and stops
 		moves, stops := sr.prepareMovesAndStops(
 			originalShipment,
 			newShipment,
@@ -225,16 +232,19 @@ func (sr *shipmentRepository) prepareBulkShipmentData(
 		data.moves = append(data.moves, moves...)
 		data.stops = append(data.stops, stops...)
 
-		// Prepare commodities if requested
 		if req.IncludeCommodities {
 			commodities := sr.prepareCommodities(originalShipment, newShipment)
 			data.commodities = append(data.commodities, commodities...)
 		}
 
-		// Prepare additional charges if requested
 		if req.IncludeAdditionalCharges {
 			additionalCharges := sr.prepareAdditionalCharges(originalShipment, newShipment)
 			data.additionalCharges = append(data.additionalCharges, additionalCharges...)
+		}
+
+		if req.IncludeComments {
+			comments := sr.prepareShipmentComments(originalShipment, newShipment)
+			data.comments = append(data.comments, comments...)
 		}
 	}
 
@@ -248,35 +258,36 @@ func (sr *shipmentRepository) bulkInsertShipmentData(
 	data *shipmentBulkData,
 	log *zerolog.Logger,
 ) error {
-	// Insert shipments
 	if err := sr.insertEntities(ctx, tx, log, EntityTypeShipment, &data.shipments); err != nil {
 		return err
 	}
 
-	// Insert moves
 	if len(data.moves) > 0 {
 		if err := sr.insertEntities(ctx, tx, log, EntityTypeMove, &data.moves); err != nil {
 			return err
 		}
 	}
 
-	// Insert stops
 	if len(data.stops) > 0 {
 		if err := sr.insertEntities(ctx, tx, log, EntityTypeStop, &data.stops); err != nil {
 			return err
 		}
 	}
 
-	// Insert commodities
 	if len(data.commodities) > 0 {
 		if err := sr.insertEntities(ctx, tx, log, EntityTypeCommodity, &data.commodities); err != nil {
 			return err
 		}
 	}
 
-	// Insert additional charges
 	if len(data.additionalCharges) > 0 {
 		if err := sr.insertEntities(ctx, tx, log, EntityTypeAdditionalCharge, &data.additionalCharges); err != nil {
+			return err
+		}
+	}
+
+	if len(data.comments) > 0 {
+		if err := sr.insertEntities(ctx, tx, log, EntityTypeComment, &data.comments); err != nil {
 			return err
 		}
 	}
@@ -383,7 +394,6 @@ func (sr *shipmentRepository) bulkUnCancelShipmentComponents(
 	moveIDs []pulid.ID,
 	updateAppointments bool,
 ) error {
-	// Update moves to New status
 	if _, err := tx.NewUpdate().
 		Model((*shipment.ShipmentMove)(nil)).
 		OmitZero().
@@ -395,7 +405,6 @@ func (sr *shipmentRepository) bulkUnCancelShipmentComponents(
 			Wrapf(err, "failed to un-cancel moves")
 	}
 
-	// Update assignments to New status
 	if _, err := tx.NewUpdate().
 		Model((*shipment.Assignment)(nil)).
 		OmitZero().
@@ -407,7 +416,6 @@ func (sr *shipmentRepository) bulkUnCancelShipmentComponents(
 			Wrapf(err, "failed to un-cancel assignments")
 	}
 
-	// Update stops to New status
 	stpQuery := tx.NewUpdate().
 		Model((*shipment.Stop)(nil)).
 		Set("status = ?", shipment.StopStatusNew).

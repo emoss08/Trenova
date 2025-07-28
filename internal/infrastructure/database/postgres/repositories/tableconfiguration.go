@@ -264,9 +264,11 @@ func (tcr *tableConfigurationRepository) GetByID(
 
 	b := tableconfiguration.NewConfigurationQuery(dba)
 	b = b.WhereGroup(
-		"AND ",
+		" AND ",
 		func(cqb *tableconfiguration.ConfigurationQueryBuilder) *tableconfiguration.ConfigurationQueryBuilder {
-			return cqb.WhereIDEQ(id).WhereTenant(opts.Base.OrgID, opts.Base.BuID)
+			return cqb.
+				WhereIDEQ(id).
+				WhereTenant(opts.Base.OrgID, opts.Base.BuID)
 		},
 	)
 

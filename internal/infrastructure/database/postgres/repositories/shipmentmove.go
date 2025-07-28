@@ -752,9 +752,7 @@ func (sr *shipmentMoveRepository) prepareMovesData(
 		}
 	}
 
-	// Categorize moves for different operations
 	sr.categorizeMoves(shp, data, isCreate)
-
 	return data, nil
 }
 

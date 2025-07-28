@@ -38,6 +38,7 @@ type ShipmentRepositoryParams struct {
 	Logger                      *logger.Logger
 	ShipmentMoveRepository      repositories.ShipmentMoveRepository
 	ShipmentCommodityRepository repositories.ShipmentCommodityRepository
+	ShipmentCommentRepository   repositories.ShipmentCommentRepository
 	AdditionalChargeRepository  repositories.AdditionalChargeRepository
 	ProNumberRepo               repositories.ProNumberRepository
 	Calculator                  *calculator.ShipmentCalculator
@@ -51,6 +52,7 @@ type shipmentRepository struct {
 	l                           *zerolog.Logger
 	shipmentMoveRepository      repositories.ShipmentMoveRepository
 	shipmentCommodityRepository repositories.ShipmentCommodityRepository
+	shipmentCommentRepository   repositories.ShipmentCommentRepository
 	additionalChargeRepository  repositories.AdditionalChargeRepository
 	proNumberRepo               repositories.ProNumberRepository
 	calc                        *calculator.ShipmentCalculator
@@ -75,6 +77,7 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 		l:                           &log,
 		shipmentCommodityRepository: p.ShipmentCommodityRepository,
 		additionalChargeRepository:  p.AdditionalChargeRepository,
+		shipmentCommentRepository:   p.ShipmentCommentRepository,
 		shipmentMoveRepository:      p.ShipmentMoveRepository,
 		proNumberRepo:               p.ProNumberRepo,
 		calc:                        p.Calculator,
@@ -986,6 +989,27 @@ func (sr *shipmentRepository) prepareCommodities(
 	}
 
 	return commodities
+}
+
+func (sr *shipmentRepository) prepareShipmentComments(
+	original, newShipment *shipment.Shipment,
+) []*shipment.ShipmentComment {
+	comments := make([]*shipment.ShipmentComment, 0, len(original.Comments))
+
+	for _, comment := range original.Comments {
+		newComment := &shipment.ShipmentComment{
+			ID:             pulid.MustNew("sc_"),
+			BusinessUnitID: original.BusinessUnitID,
+			OrganizationID: original.OrganizationID,
+			ShipmentID:     newShipment.ID,
+			Comment:        comment.Comment,
+			IsHighPriority: comment.IsHighPriority,
+		}
+
+		comments = append(comments, newComment)
+	}
+
+	return comments
 }
 
 func (sr *shipmentRepository) prepareAdditionalCharges(

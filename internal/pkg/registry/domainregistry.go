@@ -86,6 +86,7 @@ func RegisterEntities() []any {
 		&shipment.Stop{},
 		&shipment.AdditionalCharge{},
 		&shipment.ShipmentCommodity{},
+		&shipment.ShipmentComment{},
 		&shipment.ShipmentMove{},
 		&shipment.Shipment{},
 		&pcmilerconfiguration.PCMilerConfiguration{},
