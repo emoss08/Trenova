@@ -123,11 +123,6 @@ func (sr *shipmentRepository) createShipmentWithRelations(
 		return err
 	}
 
-	if err := sr.shipmentCommentRepository.HandleCommentOperations(ctx, tx, shp, true); err != nil {
-		log.Error().Err(err).Msg("failed to handle comment operations")
-		return err
-	}
-
 	return nil
 }
 
@@ -187,11 +182,6 @@ func (sr *shipmentRepository) updateShipmentWithRelations(
 
 	if err = sr.additionalChargeRepository.HandleAdditionalChargeOperations(ctx, tx, shp, false); err != nil {
 		log.Error().Err(err).Msg("failed to handle additional charge operations")
-		return err
-	}
-
-	if err = sr.shipmentCommentRepository.HandleCommentOperations(ctx, tx, shp, false); err != nil {
-		log.Error().Err(err).Msg("failed to handle comment operations")
 		return err
 	}
 

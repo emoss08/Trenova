@@ -9,16 +9,16 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// shipmentCommodityFieldConfig provides field configuration for ShipmentCommodity
-type shipmentCommodityFieldConfig struct {
+// shipmentCommentFieldConfig provides field configuration for ShipmentComment
+type shipmentCommentFieldConfig struct {
 	Name       string
 	Column     string
 	Sortable   bool
 	Filterable bool
 }
 
-// ShipmentCommodityQuery provides type-safe query helpers and constants
-var ShipmentCommodityQuery = struct {
+// ShipmentCommentQuery provides type-safe query helpers and constants
+var ShipmentCommentQuery = struct {
 	// Table and alias constants
 	Table    string
 	Alias    string
@@ -30,9 +30,9 @@ var ShipmentCommodityQuery = struct {
 		BusinessUnitID string
 		OrganizationID string
 		ShipmentID     string
-		CommodityID    string
-		Weight         string
-		Pieces         string
+		UserID         string
+		Comment        string
+		IsHighPriority string
 		Version        string
 		CreatedAt      string
 		UpdatedAt      string
@@ -60,26 +60,25 @@ var ShipmentCommodityQuery = struct {
 		ShipmentIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ShipmentIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ShipmentIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		CommodityIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CommodityIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CommodityIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		CommodityIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		WeightEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		WeightNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		WeightIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		WeightNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		WeightGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		WeightGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		WeightLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		WeightLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		PiecesEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		PiecesNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		PiecesIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		PiecesNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		PiecesGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		PiecesGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		PiecesLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		PiecesLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UserIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CommentEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CommentNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CommentGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IsHighPriorityEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsHighPriorityNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsHighPriorityIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsHighPriorityNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -123,19 +122,20 @@ var ShipmentCommodityQuery = struct {
 	}
 
 	// Field configuration
-	FieldConfig  func() map[string]shipmentCommodityFieldConfig
+	FieldConfig  func() map[string]shipmentCommentFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
 	// Relationship helpers
 	Relations struct {
-		Shipment     string
-		Commodity    string
-		BusinessUnit string
-		Organization string
+		Shipment       string
+		BusinessUnit   string
+		Organization   string
+		User           string
+		MentionedUsers string
 	}
 }{
 	// Table and alias constants
-	Table:    "shipment_commodities",
+	Table:    "shipment_comments",
 	Alias:    "sc",
 	IDPrefix: "sc_",
 
@@ -145,9 +145,9 @@ var ShipmentCommodityQuery = struct {
 		BusinessUnitID string
 		OrganizationID string
 		ShipmentID     string
-		CommodityID    string
-		Weight         string
-		Pieces         string
+		UserID         string
+		Comment        string
+		IsHighPriority string
 		Version        string
 		CreatedAt      string
 		UpdatedAt      string
@@ -156,9 +156,9 @@ var ShipmentCommodityQuery = struct {
 		BusinessUnitID: "business_unit_id",
 		OrganizationID: "organization_id",
 		ShipmentID:     "shipment_id",
-		CommodityID:    "commodity_id",
-		Weight:         "weight",
-		Pieces:         "pieces",
+		UserID:         "user_id",
+		Comment:        "comment",
+		IsHighPriority: "is_high_priority",
 		Version:        "version",
 		CreatedAt:      "created_at",
 		UpdatedAt:      "updated_at",
@@ -194,26 +194,25 @@ var ShipmentCommodityQuery = struct {
 		ShipmentIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ShipmentIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ShipmentIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		CommodityIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CommodityIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CommodityIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		CommodityIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		WeightEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		WeightNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		WeightIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		WeightNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		WeightGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		WeightGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		WeightLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		WeightLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		PiecesEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		PiecesNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		PiecesIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		PiecesNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		PiecesGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		PiecesGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		PiecesLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		PiecesLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UserIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CommentEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CommentNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		CommentGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		CommentHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IsHighPriorityEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsHighPriorityNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsHighPriorityIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsHighPriorityNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -288,65 +287,62 @@ var ShipmentCommodityQuery = struct {
 		ShipmentIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
 			return q.Where("? NOT IN (?)", bun.Ident("sc.shipment_id"), bun.In(v))
 		},
-		CommodityIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
-			return q.Where("? = ?", bun.Ident("sc.commodity_id"), v)
+		UserIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
+			return q.Where("? = ?", bun.Ident("sc.user_id"), v)
 		},
-		CommodityIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
-			return q.Where("? != ?", bun.Ident("sc.commodity_id"), v)
+		UserIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
+			return q.Where("? != ?", bun.Ident("sc.user_id"), v)
 		},
-		CommodityIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
-			return q.Where("? IN (?)", bun.Ident("sc.commodity_id"), bun.In(v))
+		UserIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sc.user_id"), bun.In(v))
 		},
-		CommodityIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
-			return q.Where("? NOT IN (?)", bun.Ident("sc.commodity_id"), bun.In(v))
+		UserIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sc.user_id"), bun.In(v))
 		},
-		WeightEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
-			return q.Where("? = ?", bun.Ident("sc.weight"), v)
+		CommentEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
+			return q.Where("? = ?", bun.Ident("sc.comment"), v)
 		},
-		WeightNEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
-			return q.Where("? != ?", bun.Ident("sc.weight"), v)
+		CommentNEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
+			return q.Where("? != ?", bun.Ident("sc.comment"), v)
 		},
-		WeightIn: func(q *bun.SelectQuery, v []int64) *bun.SelectQuery {
-			return q.Where("? IN (?)", bun.Ident("sc.weight"), bun.In(v))
+		CommentIn: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sc.comment"), bun.In(v))
 		},
-		WeightNotIn: func(q *bun.SelectQuery, v []int64) *bun.SelectQuery {
-			return q.Where("? NOT IN (?)", bun.Ident("sc.weight"), bun.In(v))
+		CommentNotIn: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sc.comment"), bun.In(v))
 		},
-		WeightGT: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
-			return q.Where("? > ?", bun.Ident("sc.weight"), v)
+		CommentGT: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
+			return q.Where("? > ?", bun.Ident("sc.comment"), v)
 		},
-		WeightGTE: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
-			return q.Where("? >= ?", bun.Ident("sc.weight"), v)
+		CommentGTE: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
+			return q.Where("? >= ?", bun.Ident("sc.comment"), v)
 		},
-		WeightLT: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
-			return q.Where("? < ?", bun.Ident("sc.weight"), v)
+		CommentLT: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
+			return q.Where("? < ?", bun.Ident("sc.comment"), v)
 		},
-		WeightLTE: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
-			return q.Where("? <= ?", bun.Ident("sc.weight"), v)
+		CommentLTE: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
+			return q.Where("? <= ?", bun.Ident("sc.comment"), v)
 		},
-		PiecesEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
-			return q.Where("? = ?", bun.Ident("sc.pieces"), v)
+		CommentContains: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
+			return q.Where("? ILIKE ?", bun.Ident("sc.comment"), "%"+v+"%")
 		},
-		PiecesNEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
-			return q.Where("? != ?", bun.Ident("sc.pieces"), v)
+		CommentHasPrefix: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
+			return q.Where("? ILIKE ?", bun.Ident("sc.comment"), v+"%")
 		},
-		PiecesIn: func(q *bun.SelectQuery, v []int64) *bun.SelectQuery {
-			return q.Where("? IN (?)", bun.Ident("sc.pieces"), bun.In(v))
+		CommentHasSuffix: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
+			return q.Where("? ILIKE ?", bun.Ident("sc.comment"), "%"+v)
 		},
-		PiecesNotIn: func(q *bun.SelectQuery, v []int64) *bun.SelectQuery {
-			return q.Where("? NOT IN (?)", bun.Ident("sc.pieces"), bun.In(v))
+		IsHighPriorityEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
+			return q.Where("? = ?", bun.Ident("sc.is_high_priority"), v)
 		},
-		PiecesGT: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
-			return q.Where("? > ?", bun.Ident("sc.pieces"), v)
+		IsHighPriorityNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
+			return q.Where("? != ?", bun.Ident("sc.is_high_priority"), v)
 		},
-		PiecesGTE: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
-			return q.Where("? >= ?", bun.Ident("sc.pieces"), v)
+		IsHighPriorityIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sc.is_high_priority"), bun.In(v))
 		},
-		PiecesLT: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
-			return q.Where("? < ?", bun.Ident("sc.pieces"), v)
-		},
-		PiecesLTE: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
-			return q.Where("? <= ?", bun.Ident("sc.pieces"), v)
+		IsHighPriorityNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sc.is_high_priority"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sc.version"), v)
@@ -474,8 +470,8 @@ var ShipmentCommodityQuery = struct {
 	},
 
 	// Field configuration
-	FieldConfig: func() map[string]shipmentCommodityFieldConfig {
-		return map[string]shipmentCommodityFieldConfig{
+	FieldConfig: func() map[string]shipmentCommentFieldConfig {
+		return map[string]shipmentCommentFieldConfig{
 			"id": {
 				Name:       "id",
 				Column:     "sc.id",
@@ -500,21 +496,21 @@ var ShipmentCommodityQuery = struct {
 				Sortable:   false,
 				Filterable: true,
 			},
-			"commodity_id": {
-				Name:       "commodity_id",
-				Column:     "sc.commodity_id",
+			"user_id": {
+				Name:       "user_id",
+				Column:     "sc.user_id",
 				Sortable:   false,
 				Filterable: true,
 			},
-			"weight": {
-				Name:       "weight",
-				Column:     "sc.weight",
+			"comment": {
+				Name:       "comment",
+				Column:     "sc.comment",
 				Sortable:   false,
 				Filterable: false,
 			},
-			"pieces": {
-				Name:       "pieces",
-				Column:     "sc.pieces",
+			"is_high_priority": {
+				Name:       "is_high_priority",
+				Column:     "sc.is_high_priority",
 				Sortable:   false,
 				Filterable: false,
 			},
@@ -539,7 +535,7 @@ var ShipmentCommodityQuery = struct {
 		}
 	},
 	IsSortable: func(field string) bool {
-		configs := map[string]shipmentCommodityFieldConfig{
+		configs := map[string]shipmentCommentFieldConfig{
 			"id": {
 				Name:       "id",
 				Column:     "sc.id",
@@ -564,21 +560,21 @@ var ShipmentCommodityQuery = struct {
 				Sortable:   false,
 				Filterable: true,
 			},
-			"commodity_id": {
-				Name:       "commodity_id",
-				Column:     "sc.commodity_id",
+			"user_id": {
+				Name:       "user_id",
+				Column:     "sc.user_id",
 				Sortable:   false,
 				Filterable: true,
 			},
-			"weight": {
-				Name:       "weight",
-				Column:     "sc.weight",
+			"comment": {
+				Name:       "comment",
+				Column:     "sc.comment",
 				Sortable:   false,
 				Filterable: false,
 			},
-			"pieces": {
-				Name:       "pieces",
-				Column:     "sc.pieces",
+			"is_high_priority": {
+				Name:       "is_high_priority",
+				Column:     "sc.is_high_priority",
 				Sortable:   false,
 				Filterable: false,
 			},
@@ -607,7 +603,7 @@ var ShipmentCommodityQuery = struct {
 		return false
 	},
 	IsFilterable: func(field string) bool {
-		configs := map[string]shipmentCommodityFieldConfig{
+		configs := map[string]shipmentCommentFieldConfig{
 			"id": {
 				Name:       "id",
 				Column:     "sc.id",
@@ -632,21 +628,21 @@ var ShipmentCommodityQuery = struct {
 				Sortable:   false,
 				Filterable: true,
 			},
-			"commodity_id": {
-				Name:       "commodity_id",
-				Column:     "sc.commodity_id",
+			"user_id": {
+				Name:       "user_id",
+				Column:     "sc.user_id",
 				Sortable:   false,
 				Filterable: true,
 			},
-			"weight": {
-				Name:       "weight",
-				Column:     "sc.weight",
+			"comment": {
+				Name:       "comment",
+				Column:     "sc.comment",
 				Sortable:   false,
 				Filterable: false,
 			},
-			"pieces": {
-				Name:       "pieces",
-				Column:     "sc.pieces",
+			"is_high_priority": {
+				Name:       "is_high_priority",
+				Column:     "sc.is_high_priority",
 				Sortable:   false,
 				Filterable: false,
 			},
@@ -676,42 +672,44 @@ var ShipmentCommodityQuery = struct {
 	},
 	// Relationship helpers
 	Relations: struct {
-		Shipment     string
-		Commodity    string
-		BusinessUnit string
-		Organization string
+		Shipment       string
+		BusinessUnit   string
+		Organization   string
+		User           string
+		MentionedUsers string
 	}{
-		Shipment:     "Shipment",
-		Commodity:    "Commodity",
-		BusinessUnit: "BusinessUnit",
-		Organization: "Organization",
+		Shipment:       "Shipment",
+		BusinessUnit:   "BusinessUnit",
+		Organization:   "Organization",
+		User:           "User",
+		MentionedUsers: "MentionedUsers",
 	},
 }
 
-// ShipmentCommodityQueryBuilder provides a fluent interface for building queries
-type ShipmentCommodityQueryBuilder struct {
+// ShipmentCommentQueryBuilder provides a fluent interface for building queries
+type ShipmentCommentQueryBuilder struct {
 	query *bun.SelectQuery
 }
 
-// NewShipmentCommodityQuery creates a new query builder
-func NewShipmentCommodityQuery(db bun.IDB) *ShipmentCommodityQueryBuilder {
-	return &ShipmentCommodityQueryBuilder{
-		query: db.NewSelect().Model((*ShipmentCommodity)(nil)),
+// NewShipmentCommentQuery creates a new query builder
+func NewShipmentCommentQuery(db bun.IDB) *ShipmentCommentQueryBuilder {
+	return &ShipmentCommentQueryBuilder{
+		query: db.NewSelect().Model((*ShipmentComment)(nil)),
 	}
 }
 
 // FromQuery creates a query builder from an existing query
-func ShipmentCommodityFromQuery(q *bun.SelectQuery) *ShipmentCommodityQueryBuilder {
-	return &ShipmentCommodityQueryBuilder{query: q}
+func ShipmentCommentFromQuery(q *bun.SelectQuery) *ShipmentCommentQueryBuilder {
+	return &ShipmentCommentQueryBuilder{query: q}
 }
 
 // Query returns the underlying bun.SelectQuery
-func (b *ShipmentCommodityQueryBuilder) Query() *bun.SelectQuery {
+func (b *ShipmentCommentQueryBuilder) Query() *bun.SelectQuery {
 	return b.query
 }
 
 // Model sets the model for the query
-func (b *ShipmentCommodityQueryBuilder) Model(model interface{}) *ShipmentCommodityQueryBuilder {
+func (b *ShipmentCommentQueryBuilder) Model(model interface{}) *ShipmentCommentQueryBuilder {
 	b.query = b.query.Model(model)
 	return b
 }
@@ -719,377 +717,347 @@ func (b *ShipmentCommodityQueryBuilder) Model(model interface{}) *ShipmentCommod
 // Field predicates
 
 // WhereIDEQ adds a WHERE id = ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereIDEQ(v pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.IDEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereIDEQ(v pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.IDEQ(b.query, v)
 	return b
 }
 
 // WhereIDNEQ adds a WHERE id != ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereIDNEQ(v pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.IDNEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereIDNEQ(v pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.IDNEQ(b.query, v)
 	return b
 }
 
 // WhereIDIn adds a WHERE id IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereIDIn(v []pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.IDIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereIDIn(v []pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.IDIn(b.query, v)
 	return b
 }
 
 // WhereIDNotIn adds a WHERE id NOT IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereIDNotIn(v []pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.IDNotIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereIDNotIn(v []pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.IDNotIn(b.query, v)
 	return b
 }
 
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.BusinessUnitIDEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.BusinessUnitIDEQ(b.query, v)
 	return b
 }
 
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.BusinessUnitIDNEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.BusinessUnitIDNEQ(b.query, v)
 	return b
 }
 
 // WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.BusinessUnitIDIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.BusinessUnitIDIn(b.query, v)
 	return b
 }
 
 // WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.BusinessUnitIDNotIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.OrganizationIDEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.OrganizationIDEQ(b.query, v)
 	return b
 }
 
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.OrganizationIDNEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.OrganizationIDNEQ(b.query, v)
 	return b
 }
 
 // WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.OrganizationIDIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.OrganizationIDIn(b.query, v)
 	return b
 }
 
 // WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.OrganizationIDNotIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
 // WhereShipmentIDEQ adds a WHERE shipment_id = ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereShipmentIDEQ(v pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.ShipmentIDEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereShipmentIDEQ(v pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.ShipmentIDEQ(b.query, v)
 	return b
 }
 
 // WhereShipmentIDNEQ adds a WHERE shipment_id != ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereShipmentIDNEQ(v pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.ShipmentIDNEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereShipmentIDNEQ(v pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.ShipmentIDNEQ(b.query, v)
 	return b
 }
 
 // WhereShipmentIDIn adds a WHERE shipment_id IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereShipmentIDIn(v []pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.ShipmentIDIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereShipmentIDIn(v []pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.ShipmentIDIn(b.query, v)
 	return b
 }
 
 // WhereShipmentIDNotIn adds a WHERE shipment_id NOT IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereShipmentIDNotIn(v []pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.ShipmentIDNotIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereShipmentIDNotIn(v []pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.ShipmentIDNotIn(b.query, v)
 	return b
 }
 
-// WhereCommodityIDEQ adds a WHERE commodity_id = ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereCommodityIDEQ(v pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.CommodityIDEQ(b.query, v)
+// WhereUserIDEQ adds a WHERE user_id = ? condition
+func (b *ShipmentCommentQueryBuilder) WhereUserIDEQ(v pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.UserIDEQ(b.query, v)
 	return b
 }
 
-// WhereCommodityIDNEQ adds a WHERE commodity_id != ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereCommodityIDNEQ(v pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.CommodityIDNEQ(b.query, v)
+// WhereUserIDNEQ adds a WHERE user_id != ? condition
+func (b *ShipmentCommentQueryBuilder) WhereUserIDNEQ(v pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.UserIDNEQ(b.query, v)
 	return b
 }
 
-// WhereCommodityIDIn adds a WHERE commodity_id IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereCommodityIDIn(v []pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.CommodityIDIn(b.query, v)
+// WhereUserIDIn adds a WHERE user_id IN (?) condition
+func (b *ShipmentCommentQueryBuilder) WhereUserIDIn(v []pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.UserIDIn(b.query, v)
 	return b
 }
 
-// WhereCommodityIDNotIn adds a WHERE commodity_id NOT IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereCommodityIDNotIn(v []pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.CommodityIDNotIn(b.query, v)
+// WhereUserIDNotIn adds a WHERE user_id NOT IN (?) condition
+func (b *ShipmentCommentQueryBuilder) WhereUserIDNotIn(v []pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.UserIDNotIn(b.query, v)
 	return b
 }
 
-// WhereWeightEQ adds a WHERE weight = ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereWeightEQ(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.WeightEQ(b.query, v)
+// WhereCommentEQ adds a WHERE comment = ? condition
+func (b *ShipmentCommentQueryBuilder) WhereCommentEQ(v string) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CommentEQ(b.query, v)
 	return b
 }
 
-// WhereWeightNEQ adds a WHERE weight != ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereWeightNEQ(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.WeightNEQ(b.query, v)
+// WhereCommentNEQ adds a WHERE comment != ? condition
+func (b *ShipmentCommentQueryBuilder) WhereCommentNEQ(v string) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CommentNEQ(b.query, v)
 	return b
 }
 
-// WhereWeightGT adds a WHERE weight > ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereWeightGT(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.WeightGT(b.query, v)
+// WhereCommentIn adds a WHERE comment IN (?) condition
+func (b *ShipmentCommentQueryBuilder) WhereCommentIn(v []string) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CommentIn(b.query, v)
 	return b
 }
 
-// WhereWeightGTE adds a WHERE weight >= ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereWeightGTE(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.WeightGTE(b.query, v)
+// WhereCommentNotIn adds a WHERE comment NOT IN (?) condition
+func (b *ShipmentCommentQueryBuilder) WhereCommentNotIn(v []string) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CommentNotIn(b.query, v)
 	return b
 }
 
-// WhereWeightLT adds a WHERE weight < ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereWeightLT(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.WeightLT(b.query, v)
+// WhereCommentContains adds a WHERE comment LIKE ? condition
+func (b *ShipmentCommentQueryBuilder) WhereCommentContains(v string) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CommentContains(b.query, v)
 	return b
 }
 
-// WhereWeightLTE adds a WHERE weight <= ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereWeightLTE(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.WeightLTE(b.query, v)
+// WhereCommentHasPrefix adds a WHERE comment LIKE ? condition
+func (b *ShipmentCommentQueryBuilder) WhereCommentHasPrefix(v string) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CommentHasPrefix(b.query, v)
 	return b
 }
 
-// WhereWeightIn adds a WHERE weight IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereWeightIn(v []int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.WeightIn(b.query, v)
+// WhereCommentHasSuffix adds a WHERE comment LIKE ? condition
+func (b *ShipmentCommentQueryBuilder) WhereCommentHasSuffix(v string) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CommentHasSuffix(b.query, v)
 	return b
 }
 
-// WhereWeightNotIn adds a WHERE weight NOT IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereWeightNotIn(v []int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.WeightNotIn(b.query, v)
+// WhereIsHighPriorityEQ adds a WHERE is_high_priority = ? condition
+func (b *ShipmentCommentQueryBuilder) WhereIsHighPriorityEQ(v bool) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.IsHighPriorityEQ(b.query, v)
 	return b
 }
 
-// WherePiecesEQ adds a WHERE pieces = ? condition
-func (b *ShipmentCommodityQueryBuilder) WherePiecesEQ(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.PiecesEQ(b.query, v)
+// WhereIsHighPriorityNEQ adds a WHERE is_high_priority != ? condition
+func (b *ShipmentCommentQueryBuilder) WhereIsHighPriorityNEQ(v bool) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.IsHighPriorityNEQ(b.query, v)
 	return b
 }
 
-// WherePiecesNEQ adds a WHERE pieces != ? condition
-func (b *ShipmentCommodityQueryBuilder) WherePiecesNEQ(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.PiecesNEQ(b.query, v)
+// WhereIsHighPriorityIn adds a WHERE is_high_priority IN (?) condition
+func (b *ShipmentCommentQueryBuilder) WhereIsHighPriorityIn(v []bool) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.IsHighPriorityIn(b.query, v)
 	return b
 }
 
-// WherePiecesGT adds a WHERE pieces > ? condition
-func (b *ShipmentCommodityQueryBuilder) WherePiecesGT(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.PiecesGT(b.query, v)
-	return b
-}
-
-// WherePiecesGTE adds a WHERE pieces >= ? condition
-func (b *ShipmentCommodityQueryBuilder) WherePiecesGTE(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.PiecesGTE(b.query, v)
-	return b
-}
-
-// WherePiecesLT adds a WHERE pieces < ? condition
-func (b *ShipmentCommodityQueryBuilder) WherePiecesLT(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.PiecesLT(b.query, v)
-	return b
-}
-
-// WherePiecesLTE adds a WHERE pieces <= ? condition
-func (b *ShipmentCommodityQueryBuilder) WherePiecesLTE(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.PiecesLTE(b.query, v)
-	return b
-}
-
-// WherePiecesIn adds a WHERE pieces IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WherePiecesIn(v []int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.PiecesIn(b.query, v)
-	return b
-}
-
-// WherePiecesNotIn adds a WHERE pieces NOT IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WherePiecesNotIn(v []int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.PiecesNotIn(b.query, v)
+// WhereIsHighPriorityNotIn adds a WHERE is_high_priority NOT IN (?) condition
+func (b *ShipmentCommentQueryBuilder) WhereIsHighPriorityNotIn(v []bool) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.IsHighPriorityNotIn(b.query, v)
 	return b
 }
 
 // WhereVersionEQ adds a WHERE version = ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereVersionEQ(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.VersionEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereVersionEQ(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.VersionEQ(b.query, v)
 	return b
 }
 
 // WhereVersionNEQ adds a WHERE version != ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereVersionNEQ(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.VersionNEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereVersionNEQ(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.VersionNEQ(b.query, v)
 	return b
 }
 
 // WhereVersionGT adds a WHERE version > ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereVersionGT(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.VersionGT(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereVersionGT(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.VersionGT(b.query, v)
 	return b
 }
 
 // WhereVersionGTE adds a WHERE version >= ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereVersionGTE(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.VersionGTE(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereVersionGTE(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.VersionGTE(b.query, v)
 	return b
 }
 
 // WhereVersionLT adds a WHERE version < ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereVersionLT(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.VersionLT(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereVersionLT(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.VersionLT(b.query, v)
 	return b
 }
 
 // WhereVersionLTE adds a WHERE version <= ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereVersionLTE(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.VersionLTE(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereVersionLTE(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.VersionLTE(b.query, v)
 	return b
 }
 
 // WhereVersionIn adds a WHERE version IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereVersionIn(v []int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.VersionIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereVersionIn(v []int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.VersionIn(b.query, v)
 	return b
 }
 
 // WhereVersionNotIn adds a WHERE version NOT IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereVersionNotIn(v []int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.VersionNotIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereVersionNotIn(v []int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.VersionNotIn(b.query, v)
 	return b
 }
 
 // WhereCreatedAtEQ adds a WHERE created_at = ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereCreatedAtEQ(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.CreatedAtEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereCreatedAtEQ(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CreatedAtEQ(b.query, v)
 	return b
 }
 
 // WhereCreatedAtNEQ adds a WHERE created_at != ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereCreatedAtNEQ(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.CreatedAtNEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereCreatedAtNEQ(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CreatedAtNEQ(b.query, v)
 	return b
 }
 
 // WhereCreatedAtGT adds a WHERE created_at > ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereCreatedAtGT(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.CreatedAtGT(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereCreatedAtGT(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CreatedAtGT(b.query, v)
 	return b
 }
 
 // WhereCreatedAtGTE adds a WHERE created_at >= ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereCreatedAtGTE(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.CreatedAtGTE(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereCreatedAtGTE(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CreatedAtGTE(b.query, v)
 	return b
 }
 
 // WhereCreatedAtLT adds a WHERE created_at < ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereCreatedAtLT(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.CreatedAtLT(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereCreatedAtLT(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CreatedAtLT(b.query, v)
 	return b
 }
 
 // WhereCreatedAtLTE adds a WHERE created_at <= ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereCreatedAtLTE(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.CreatedAtLTE(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereCreatedAtLTE(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CreatedAtLTE(b.query, v)
 	return b
 }
 
 // WhereCreatedAtIn adds a WHERE created_at IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereCreatedAtIn(v []int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.CreatedAtIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereCreatedAtIn(v []int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CreatedAtIn(b.query, v)
 	return b
 }
 
 // WhereCreatedAtNotIn adds a WHERE created_at NOT IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereCreatedAtNotIn(v []int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.CreatedAtNotIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereCreatedAtNotIn(v []int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.CreatedAtNotIn(b.query, v)
 	return b
 }
 
 // WhereUpdatedAtEQ adds a WHERE updated_at = ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereUpdatedAtEQ(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.UpdatedAtEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereUpdatedAtEQ(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.UpdatedAtEQ(b.query, v)
 	return b
 }
 
 // WhereUpdatedAtNEQ adds a WHERE updated_at != ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereUpdatedAtNEQ(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.UpdatedAtNEQ(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereUpdatedAtNEQ(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.UpdatedAtNEQ(b.query, v)
 	return b
 }
 
 // WhereUpdatedAtGT adds a WHERE updated_at > ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereUpdatedAtGT(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.UpdatedAtGT(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereUpdatedAtGT(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.UpdatedAtGT(b.query, v)
 	return b
 }
 
 // WhereUpdatedAtGTE adds a WHERE updated_at >= ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereUpdatedAtGTE(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.UpdatedAtGTE(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereUpdatedAtGTE(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.UpdatedAtGTE(b.query, v)
 	return b
 }
 
 // WhereUpdatedAtLT adds a WHERE updated_at < ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereUpdatedAtLT(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.UpdatedAtLT(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereUpdatedAtLT(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.UpdatedAtLT(b.query, v)
 	return b
 }
 
 // WhereUpdatedAtLTE adds a WHERE updated_at <= ? condition
-func (b *ShipmentCommodityQueryBuilder) WhereUpdatedAtLTE(v int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.UpdatedAtLTE(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereUpdatedAtLTE(v int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.UpdatedAtLTE(b.query, v)
 	return b
 }
 
 // WhereUpdatedAtIn adds a WHERE updated_at IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereUpdatedAtIn(v []int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.UpdatedAtIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereUpdatedAtIn(v []int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.UpdatedAtIn(b.query, v)
 	return b
 }
 
 // WhereUpdatedAtNotIn adds a WHERE updated_at NOT IN (?) condition
-func (b *ShipmentCommodityQueryBuilder) WhereUpdatedAtNotIn(v []int64) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.UpdatedAtNotIn(b.query, v)
+func (b *ShipmentCommentQueryBuilder) WhereUpdatedAtNotIn(v []int64) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.UpdatedAtNotIn(b.query, v)
 	return b
 }
 
 // Common helper methods
 // WhereTenant adds WHERE conditions for both organization and business unit
-func (b *ShipmentCommodityQueryBuilder) WhereTenant(orgID, buID pulid.ID) *ShipmentCommodityQueryBuilder {
-	b.query = ShipmentCommodityQuery.Where.Tenant(b.query, orgID, buID)
+func (b *ShipmentCommentQueryBuilder) WhereTenant(orgID, buID pulid.ID) *ShipmentCommentQueryBuilder {
+	b.query = ShipmentCommentQuery.Where.Tenant(b.query, orgID, buID)
 	return b
 }
 
 // WhereGroup adds a WHERE clause with grouped conditions
-func (b *ShipmentCommodityQueryBuilder) WhereGroup(sep string, fn func(*ShipmentCommodityQueryBuilder) *ShipmentCommodityQueryBuilder) *ShipmentCommodityQueryBuilder {
+func (b *ShipmentCommentQueryBuilder) WhereGroup(sep string, fn func(*ShipmentCommentQueryBuilder) *ShipmentCommentQueryBuilder) *ShipmentCommentQueryBuilder {
 	b.query = b.query.WhereGroup(sep, func(q *bun.SelectQuery) *bun.SelectQuery {
 		// Create a temporary builder with the subquery
-		tmpBuilder := &ShipmentCommodityQueryBuilder{query: q}
+		tmpBuilder := &ShipmentCommentQueryBuilder{query: q}
 		// Apply the user's conditions
 		result := fn(tmpBuilder)
 		// Return the modified query
@@ -1099,138 +1067,154 @@ func (b *ShipmentCommodityQueryBuilder) WhereGroup(sep string, fn func(*Shipment
 }
 
 // Where adds a custom WHERE condition
-func (b *ShipmentCommodityQueryBuilder) Where(query string, args ...interface{}) *ShipmentCommodityQueryBuilder {
+func (b *ShipmentCommentQueryBuilder) Where(query string, args ...interface{}) *ShipmentCommentQueryBuilder {
 	b.query = b.query.Where(query, args...)
 	return b
 }
 
 // OrderBy adds an ORDER BY clause
-func (b *ShipmentCommodityQueryBuilder) OrderBy(column string, desc ...bool) *ShipmentCommodityQueryBuilder {
+func (b *ShipmentCommentQueryBuilder) OrderBy(column string, desc ...bool) *ShipmentCommentQueryBuilder {
 	descending := false
 	if len(desc) > 0 {
 		descending = desc[0]
 	}
-	b.query = b.query.Order(ShipmentCommodityQuery.OrderBy.Field(column, descending))
+	b.query = b.query.Order(ShipmentCommentQuery.OrderBy.Field(column, descending))
 	return b
 }
 
 // Limit sets the query limit
-func (b *ShipmentCommodityQueryBuilder) Limit(n int) *ShipmentCommodityQueryBuilder {
+func (b *ShipmentCommentQueryBuilder) Limit(n int) *ShipmentCommentQueryBuilder {
 	b.query = b.query.Limit(n)
 	return b
 }
 
 // Offset sets the query offset
-func (b *ShipmentCommodityQueryBuilder) Offset(n int) *ShipmentCommodityQueryBuilder {
+func (b *ShipmentCommentQueryBuilder) Offset(n int) *ShipmentCommentQueryBuilder {
 	b.query = b.query.Offset(n)
 	return b
 }
 
 // Count returns the count of matching records
-func (b *ShipmentCommodityQueryBuilder) Count(ctx context.Context) (int, error) {
+func (b *ShipmentCommentQueryBuilder) Count(ctx context.Context) (int, error) {
 	return b.query.Count(ctx)
 }
 
 // Exists checks if any matching records exist
-func (b *ShipmentCommodityQueryBuilder) Exists(ctx context.Context) (bool, error) {
+func (b *ShipmentCommentQueryBuilder) Exists(ctx context.Context) (bool, error) {
 	return b.query.Exists(ctx)
 }
 
 // Scan executes the query and scans the result
-func (b *ShipmentCommodityQueryBuilder) Scan(ctx context.Context, dest ...interface{}) error {
+func (b *ShipmentCommentQueryBuilder) Scan(ctx context.Context, dest ...interface{}) error {
 	return b.query.Scan(ctx, dest...)
 }
 
 // ScanAndCount executes the query and scans the result
-func (b *ShipmentCommodityQueryBuilder) ScanAndCount(ctx context.Context, dest ...interface{}) (int, error) {
+func (b *ShipmentCommentQueryBuilder) ScanAndCount(ctx context.Context, dest ...interface{}) (int, error) {
 	return b.query.ScanAndCount(ctx, dest...)
 }
 
 // All executes the query and returns all results
-func (b *ShipmentCommodityQueryBuilder) All(ctx context.Context) ([]*ShipmentCommodity, error) {
-	var entities []*ShipmentCommodity
+func (b *ShipmentCommentQueryBuilder) All(ctx context.Context) ([]*ShipmentComment, error) {
+	var entities []*ShipmentComment
 	err := b.query.Scan(ctx, &entities)
 	return entities, err
 }
 
 // AllWithCount executes the query and returns all results with total count
-func (b *ShipmentCommodityQueryBuilder) AllWithCount(ctx context.Context) ([]*ShipmentCommodity, int, error) {
-	var entities []*ShipmentCommodity
+func (b *ShipmentCommentQueryBuilder) AllWithCount(ctx context.Context) ([]*ShipmentComment, int, error) {
+	var entities []*ShipmentComment
 	count, err := b.query.ScanAndCount(ctx, &entities)
 	return entities, count, err
 }
 
 // One executes the query and returns a single result
-func (b *ShipmentCommodityQueryBuilder) One(ctx context.Context) (*ShipmentCommodity, error) {
-	entity := new(ShipmentCommodity)
+func (b *ShipmentCommentQueryBuilder) One(ctx context.Context) (*ShipmentComment, error) {
+	entity := new(ShipmentComment)
 	err := b.query.Limit(1).Scan(ctx, entity)
 	return entity, err
 }
 
 // First executes the query and returns the first result
 // Unlike One, it doesn't add a LIMIT clause
-func (b *ShipmentCommodityQueryBuilder) First(ctx context.Context) (*ShipmentCommodity, error) {
-	entity := new(ShipmentCommodity)
+func (b *ShipmentCommentQueryBuilder) First(ctx context.Context) (*ShipmentComment, error) {
+	entity := new(ShipmentComment)
 	err := b.query.Scan(ctx, entity)
 	return entity, err
 }
 
-// ShipmentCommodityBuild creates a chainable query builder
-func ShipmentCommodityBuild(db bun.IDB) *ShipmentCommodityQueryBuilder {
-	return NewShipmentCommodityQuery(db)
+// ShipmentCommentBuild creates a chainable query builder
+func ShipmentCommentBuild(db bun.IDB) *ShipmentCommentQueryBuilder {
+	return NewShipmentCommentQuery(db)
 }
 
 // Relationship loading methods
 
 // LoadShipment loads the Shipment relationship
-func (b *ShipmentCommodityQueryBuilder) LoadShipment() *ShipmentCommodityQueryBuilder {
+func (b *ShipmentCommentQueryBuilder) LoadShipment() *ShipmentCommentQueryBuilder {
 	b.query = b.query.Relation("Shipment")
 	return b
 }
 
-// LoadCommodity loads the Commodity relationship
-func (b *ShipmentCommodityQueryBuilder) LoadCommodity() *ShipmentCommodityQueryBuilder {
-	b.query = b.query.Relation("Commodity")
-	return b
-}
-
 // LoadBusinessUnit loads the BusinessUnit relationship
-func (b *ShipmentCommodityQueryBuilder) LoadBusinessUnit() *ShipmentCommodityQueryBuilder {
+func (b *ShipmentCommentQueryBuilder) LoadBusinessUnit() *ShipmentCommentQueryBuilder {
 	b.query = b.query.Relation("BusinessUnit")
 	return b
 }
 
 // LoadOrganization loads the Organization relationship
-func (b *ShipmentCommodityQueryBuilder) LoadOrganization() *ShipmentCommodityQueryBuilder {
+func (b *ShipmentCommentQueryBuilder) LoadOrganization() *ShipmentCommentQueryBuilder {
 	b.query = b.query.Relation("Organization")
 	return b
 }
 
-// LoadAllRelations loads all relationships for ShipmentCommodity
-func (b *ShipmentCommodityQueryBuilder) LoadAllRelations() *ShipmentCommodityQueryBuilder {
-	b.LoadShipment()
-	b.LoadCommodity()
-	b.LoadBusinessUnit()
-	b.LoadOrganization()
+// LoadUser loads the User relationship
+func (b *ShipmentCommentQueryBuilder) LoadUser() *ShipmentCommentQueryBuilder {
+	b.query = b.query.Relation("User")
 	return b
 }
 
-// ShipmentCommodityRelationChain provides a fluent API for building nested relationship chains
-type ShipmentCommodityRelationChain struct {
+// LoadMentionedUsers loads the MentionedUsers relationship
+func (b *ShipmentCommentQueryBuilder) LoadMentionedUsers(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentCommentQueryBuilder {
+	if len(opts) > 0 {
+		b.query = b.query.Relation("MentionedUsers", func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		})
+	} else {
+		b.query = b.query.Relation("MentionedUsers")
+	}
+	return b
+}
+
+// LoadAllRelations loads all relationships for ShipmentComment
+func (b *ShipmentCommentQueryBuilder) LoadAllRelations() *ShipmentCommentQueryBuilder {
+	b.LoadShipment()
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadUser()
+	b.LoadMentionedUsers()
+	return b
+}
+
+// ShipmentCommentRelationChain provides a fluent API for building nested relationship chains
+type ShipmentCommentRelationChain struct {
 	relations []string
 	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
 }
 
-// NewShipmentCommodityRelationChain creates a new relation chain builder
-func NewShipmentCommodityRelationChain() *ShipmentCommodityRelationChain {
-	return &ShipmentCommodityRelationChain{
+// NewShipmentCommentRelationChain creates a new relation chain builder
+func NewShipmentCommentRelationChain() *ShipmentCommentRelationChain {
+	return &ShipmentCommentRelationChain{
 		relations: []string{},
 		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
 	}
 }
 
 // Add adds a relation to the chain with optional configuration
-func (rc *ShipmentCommodityRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentCommodityRelationChain {
+func (rc *ShipmentCommentRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentCommentRelationChain {
 	rc.relations = append(rc.relations, relation)
 	if len(opts) > 0 {
 		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
@@ -1244,12 +1228,12 @@ func (rc *ShipmentCommodityRelationChain) Add(relation string, opts ...func(*bun
 }
 
 // Build builds the relation chain
-func (rc *ShipmentCommodityRelationChain) Build() []string {
+func (rc *ShipmentCommentRelationChain) Build() []string {
 	return rc.relations
 }
 
 // Apply applies the relation chain to a query
-func (rc *ShipmentCommodityRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+func (rc *ShipmentCommentRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
 	for _, rel := range rc.relations {
 		if opt, ok := rc.options[rel]; ok {
 			q = q.Relation(rel, opt)
@@ -1261,65 +1245,75 @@ func (rc *ShipmentCommodityRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQ
 }
 
 // WithShipment creates a relation chain starting with Shipment
-func (b *ShipmentCommodityQueryBuilder) WithShipment() *ShipmentCommodityRelationChainBuilder {
-	chain := &ShipmentCommodityRelationChainBuilder{
+func (b *ShipmentCommentQueryBuilder) WithShipment() *ShipmentCommentRelationChainBuilder {
+	chain := &ShipmentCommentRelationChainBuilder{
 		parent: b,
-		chain:  NewShipmentCommodityRelationChain(),
+		chain:  NewShipmentCommentRelationChain(),
 	}
 	chain.chain.Add("Shipment")
 	return chain
 }
 
-// WithCommodity creates a relation chain starting with Commodity
-func (b *ShipmentCommodityQueryBuilder) WithCommodity() *ShipmentCommodityRelationChainBuilder {
-	chain := &ShipmentCommodityRelationChainBuilder{
-		parent: b,
-		chain:  NewShipmentCommodityRelationChain(),
-	}
-	chain.chain.Add("Commodity")
-	return chain
-}
-
 // WithBusinessUnit creates a relation chain starting with BusinessUnit
-func (b *ShipmentCommodityQueryBuilder) WithBusinessUnit() *ShipmentCommodityRelationChainBuilder {
-	chain := &ShipmentCommodityRelationChainBuilder{
+func (b *ShipmentCommentQueryBuilder) WithBusinessUnit() *ShipmentCommentRelationChainBuilder {
+	chain := &ShipmentCommentRelationChainBuilder{
 		parent: b,
-		chain:  NewShipmentCommodityRelationChain(),
+		chain:  NewShipmentCommentRelationChain(),
 	}
 	chain.chain.Add("BusinessUnit")
 	return chain
 }
 
 // WithOrganization creates a relation chain starting with Organization
-func (b *ShipmentCommodityQueryBuilder) WithOrganization() *ShipmentCommodityRelationChainBuilder {
-	chain := &ShipmentCommodityRelationChainBuilder{
+func (b *ShipmentCommentQueryBuilder) WithOrganization() *ShipmentCommentRelationChainBuilder {
+	chain := &ShipmentCommentRelationChainBuilder{
 		parent: b,
-		chain:  NewShipmentCommodityRelationChain(),
+		chain:  NewShipmentCommentRelationChain(),
 	}
 	chain.chain.Add("Organization")
 	return chain
 }
 
-// ShipmentCommodityRelationChainBuilder provides fluent API for building nested relations
-type ShipmentCommodityRelationChainBuilder struct {
-	parent *ShipmentCommodityQueryBuilder
-	chain  *ShipmentCommodityRelationChain
+// WithUser creates a relation chain starting with User
+func (b *ShipmentCommentQueryBuilder) WithUser() *ShipmentCommentRelationChainBuilder {
+	chain := &ShipmentCommentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentCommentRelationChain(),
+	}
+	chain.chain.Add("User")
+	return chain
+}
+
+// WithMentionedUsers creates a relation chain starting with MentionedUsers
+func (b *ShipmentCommentQueryBuilder) WithMentionedUsers(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentCommentRelationChainBuilder {
+	chain := &ShipmentCommentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentCommentRelationChain(),
+	}
+	chain.chain.Add("MentionedUsers", opts...)
+	return chain
+}
+
+// ShipmentCommentRelationChainBuilder provides fluent API for building nested relations
+type ShipmentCommentRelationChainBuilder struct {
+	parent *ShipmentCommentQueryBuilder
+	chain  *ShipmentCommentRelationChain
 }
 
 // Load applies the relation chain and returns to the parent builder
-func (rb *ShipmentCommodityRelationChainBuilder) Load() *ShipmentCommodityQueryBuilder {
+func (rb *ShipmentCommentRelationChainBuilder) Load() *ShipmentCommentQueryBuilder {
 	rb.parent.query = rb.chain.Apply(rb.parent.query)
 	return rb.parent
 }
 
 // ThenLoad adds another relation to the chain
-func (rb *ShipmentCommodityRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentCommodityRelationChainBuilder {
+func (rb *ShipmentCommentRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentCommentRelationChainBuilder {
 	rb.chain.Add(relation, opts...)
 	return rb
 }
 
 // OrderBy adds ordering to the current relation in the chain
-func (rb *ShipmentCommodityRelationChainBuilder) OrderBy(order string) *ShipmentCommodityRelationChainBuilder {
+func (rb *ShipmentCommentRelationChainBuilder) OrderBy(order string) *ShipmentCommentRelationChainBuilder {
 	if len(rb.chain.relations) > 0 {
 		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
 		currentOpt := rb.chain.options[lastRel]
@@ -1334,7 +1328,7 @@ func (rb *ShipmentCommodityRelationChainBuilder) OrderBy(order string) *Shipment
 }
 
 // Where adds a where condition to the current relation in the chain
-func (rb *ShipmentCommodityRelationChainBuilder) Where(condition string, args ...interface{}) *ShipmentCommodityRelationChainBuilder {
+func (rb *ShipmentCommentRelationChainBuilder) Where(condition string, args ...interface{}) *ShipmentCommentRelationChainBuilder {
 	if len(rb.chain.relations) > 0 {
 		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
 		currentOpt := rb.chain.options[lastRel]

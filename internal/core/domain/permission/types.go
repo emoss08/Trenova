@@ -77,6 +77,9 @@ const (
 	ResourceShipment = Resource(
 		"shipment",
 	) // Represents resources for managing shipments.
+	ResourceShipmentComment = Resource(
+		"shipment_comment",
+	) // Represents resources for managing shipment comments.
 	ResourceAIClassification = Resource(
 		"ai_classification",
 	) // Represents resources for managing AI classifications.
@@ -451,6 +454,10 @@ var (
 		ResourceTrailer: append(
 			BaseActions,
 			append(AssignableActions, FieldActions...)...,
+		),
+		ResourceShipmentComment: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
 		),
 		ResourceShipment: append(
 			append(BaseActions, WorkflowActions...),

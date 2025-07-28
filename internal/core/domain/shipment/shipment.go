@@ -5,8 +5,6 @@
 
 package shipment
 
-//go:generate go run github.com/emoss08/trenova/cmd/gen-trenova -type=Shipment
-
 import (
 	"context"
 
@@ -85,6 +83,7 @@ type Shipment struct {
 	Owner             *user.User                       `json:"owner,omitempty"            bun:"rel:belongs-to,join:owner_id=id"`
 	FormulaTemplate   *formulatemplate.FormulaTemplate `json:"formulaTemplate,omitempty"  bun:"rel:belongs-to,join:formula_template_id=id"`
 	Moves             []*ShipmentMove                  `json:"moves,omitempty"            bun:"rel:has-many,join:id=shipment_id"`
+	Comments          []*ShipmentComment               `json:"comments,omitempty"         bun:"rel:has-many,join:id=shipment_id"`
 	Commodities       []*ShipmentCommodity             `json:"commodities,omitempty"      bun:"rel:has-many,join:id=shipment_id"`
 	AdditionalCharges []*AdditionalCharge              `json:"additionalCharges,omitzero" bun:"rel:has-many,join:id=shipment_id"`
 }

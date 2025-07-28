@@ -21,7 +21,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator/tractorvalidator"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/pkg/types/pulid"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )
@@ -30,10 +29,10 @@ type ServiceParams struct {
 	fx.In
 
 	Logger       *logger.Logger
+	Validator    *tractorvalidator.Validator
 	Repo         repositories.TractorRepository
 	PermService  services.PermissionService
 	AuditService services.AuditService
-	Validator    *tractorvalidator.Validator
 }
 
 type Service struct {
@@ -96,24 +95,15 @@ func (s *Service) List(
 		},
 	)
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check permissions")
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
 	}
 
 	if !result.Allowed {
 		return nil, errors.NewAuthorizationError("You do not have permission to read tractors")
 	}
 
-	entities, err := s.repo.List(ctx, req)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to list tractors")
-		return nil, err
-	}
-
-	return &ports.ListResult[*tractor.Tractor]{
-		Items: entities.Items,
-		Total: entities.Total,
-	}, nil
+	return s.repo.List(ctx, req)
 }
 
 func (s *Service) Get(

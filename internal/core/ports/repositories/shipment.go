@@ -236,6 +236,9 @@ type DuplicateShipmentRequest struct {
 
 	// Optional parameter to include additional charges in the new shipment
 	IncludeAdditionalCharges bool `json:"includeAdditionalCharges" query:"includeAdditionalCharges" default:"false"`
+
+	// Optional parameter to include comments in the new shipment
+	IncludeComments bool `json:"includeComments" query:"includeComments" default:"false"`
 }
 
 func (dr *DuplicateShipmentRequest) Validate(ctx context.Context) *errors.MultiError {
