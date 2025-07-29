@@ -1332,7 +1332,6 @@
       canceled_by_id: "{{ $.User.test_user.ID }}"
       cancel_reason: "Test"
 
-
 - model: ShipmentMove
   rows:
     # Shipment 1 Moves

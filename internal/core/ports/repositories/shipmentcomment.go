@@ -36,4 +36,8 @@ type ShipmentCommentRepository interface {
 		ctx context.Context,
 		req GetCommentsByShipmentIDRequest,
 	) (*ports.ListResult[*shipment.ShipmentComment], error)
+	Create(
+		ctx context.Context,
+		comment *shipment.ShipmentComment,
+	) (*shipment.ShipmentComment, error)
 }

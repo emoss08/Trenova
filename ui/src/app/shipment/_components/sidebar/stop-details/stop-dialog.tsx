@@ -166,8 +166,6 @@ export function StopDialog({
         // Set form errors on the local form
         const errors = validationResult.error.issues;
 
-        console.log("stop dialog validation errors", errors);
-
         errors.forEach((error) => {
           const fieldPath = `stop.${error.path.join(".")}` as any;
           localForm.setError(fieldPath, {

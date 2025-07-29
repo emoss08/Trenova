@@ -25,6 +25,7 @@ const ShipmentMovesDetails = lazy(() => import("./move/move-details"));
 const ShipmentServiceDetails = lazy(
   () => import("./service-details/shipment-service-details"),
 );
+const ShipmentCommentDetails = lazy(() => import("./comment/comment-details"));
 
 type ShipmentDetailsProps = {
   selectedShipment?: ShipmentSchema | null;
@@ -40,6 +41,14 @@ export function ShipmentForm({ isLoading, ...props }: ShipmentDetailsProps) {
   return (
     <Suspense fallback={<ShipmentDetailsSkeleton />}>
       <ShipmentFormBody {...props}>
+        <div className="flex flex-col gap-2 bg-amber-500/20 text-amber-500 p-2 rounded-md border border-amber-500">
+          <h3 className="text-sm font-medium">High Priority Comment</h3>
+          <p className="text-sm">
+            This is a high priority shipment. Please ensure that this shipment
+            is processed as soon as possible. This is a high priority shipment.
+            Please ensure that this shipment is processed as soon as possible.
+          </p>
+        </div>
         <ShipmentSections />
       </ShipmentFormBody>
     </Suspense>
@@ -55,6 +64,7 @@ const ShipmentSections = memo(() => {
       <ShipmentGeneralInformation />
       <ShipmentCommodityDetails />
       <ShipmentMovesDetails />
+      <ShipmentCommentDetails />
     </>
   );
 });

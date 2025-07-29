@@ -15,6 +15,7 @@ import type { ShipmentQueryParams } from "@/types/shipment";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 import type { AccessorialChargeSchema } from "./schemas/accessorial-charge-schema";
 import type { PatternConfigSchema } from "./schemas/pattern-config-schema";
+import { ShipmentSchema } from "./schemas/shipment-schema";
 import type { TableConfigurationSchema } from "./schemas/table-configuration-schema";
 
 export const queries = createQueryKeyStore({
@@ -140,7 +141,10 @@ export const queries = createQueryKeyStore({
       queryKey: ["shipment/list", params],
       queryFn: async () => api.shipments.getShipments(params),
     }),
-    getShipment: (shipmentId: string, enabled: boolean = true) => ({
+    getShipment: (
+      shipmentId: ShipmentSchema["id"],
+      enabled: boolean = true,
+    ) => ({
       queryKey: ["shipment", shipmentId],
       queryFn: async () => {
         return await api.shipments.getShipmentByID(shipmentId, true);
@@ -150,6 +154,14 @@ export const queries = createQueryKeyStore({
     getPreviousRates: (values: GetPreviousRatesRequest) => ({
       queryKey: ["shipment/previous-rates", values],
       queryFn: async () => api.shipments.getPreviousRates(values),
+    }),
+    listComments: (
+      shipmentId: ShipmentSchema["id"],
+      enabled: boolean = true,
+    ) => ({
+      queryKey: ["shipment/comments", shipmentId],
+      queryFn: async () => api.shipments.listComments(shipmentId),
+      enabled,
     }),
   },
   customer: {

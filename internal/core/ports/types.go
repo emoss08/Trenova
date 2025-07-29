@@ -27,20 +27,11 @@ type TenantOptions struct {
 
 // FilterQueryOptions is a struct that contains the options for a filter query
 type FilterQueryOptions struct {
-	// ID of the business unit
-	BuID pulid.ID
-
-	// ID of the organization
-	OrgID pulid.ID
-
-	// ID of the user making the request
-	UserID pulid.ID
-
-	// Pagination options
+	BuID           pulid.ID
+	OrgID          pulid.ID
+	UserID         pulid.ID
 	PaginationOpts cursorpagination.Query
-
-	// Query string
-	Query string
+	Query          string
 }
 
 // LimitOffsetQueryOptions is a struct that contains the options for a limit/offset pagination

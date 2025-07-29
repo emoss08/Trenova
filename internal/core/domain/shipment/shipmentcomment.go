@@ -7,6 +7,7 @@ package shipment
 
 import (
 	"context"
+	"regexp"
 
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
@@ -17,23 +18,25 @@ import (
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
-	"regexp"
 )
 
 // ShipmentCommentMention tracks users mentioned in a comment
 type ShipmentCommentMention struct {
 	bun.BaseModel `bun:"table:shipment_comment_mentions,alias:scm" json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	CommentID      pulid.ID `json:"commentId"      bun:"comment_id,notnull,type:VARCHAR(100)"`
+	ID              pulid.ID `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
+	CommentID       pulid.ID `json:"commentId"       bun:"comment_id,notnull,type:VARCHAR(100)"`
+	ShipmentID      pulid.ID `json:"shipmentId"      bun:"shipment_id,notnull,type:VARCHAR(100)"`
 	MentionedUserID pulid.ID `json:"mentionedUserId" bun:"mentioned_user_id,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,notnull,type:VARCHAR(100)"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	OrganizationID  pulid.ID `json:"organizationId"  bun:"organization_id,notnull,type:VARCHAR(100)"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"  bun:"business_unit_id,notnull,type:VARCHAR(100)"`
+	CreatedAt       int64    `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	Comment       *ShipmentComment           `json:"-" bun:"rel:belongs-to,join:comment_id=id"`
 	MentionedUser *user.User                 `json:"mentionedUser" bun:"rel:belongs-to,join:mentioned_user_id=id"`
-	Organization  *organization.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
+	Comment       *ShipmentComment           `json:"-"             bun:"rel:belongs-to,join:comment_id=id"`
+	Organization  *organization.Organization `json:"-"             bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit  *businessunit.BusinessUnit `json:"-"             bun:"rel:belongs-to,join:business_unit_id=id"`
 }
 
 type ShipmentComment struct {
@@ -51,11 +54,11 @@ type ShipmentComment struct {
 	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	Shipment       *Shipment                     `json:"-" bun:"rel:belongs-to,join:shipment_id=id"`
-	BusinessUnit   *businessunit.BusinessUnit    `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization   *organization.Organization    `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
-	User           *user.User                    `json:"user" bun:"rel:belongs-to,join:user_id=id"`
-	MentionedUsers []*ShipmentCommentMention     `json:"mentionedUsers" bun:"rel:has-many,join:id=comment_id"`
+	Shipment       *Shipment                  `json:"-"              bun:"rel:belongs-to,join:shipment_id=id"`
+	BusinessUnit   *businessunit.BusinessUnit `json:"-"              bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization   *organization.Organization `json:"-"              bun:"rel:belongs-to,join:organization_id=id"`
+	User           *user.User                 `json:"user"           bun:"rel:belongs-to,join:user_id=id"`
+	MentionedUsers []*ShipmentCommentMention  `json:"mentionedUsers" bun:"rel:has-many,join:id=comment_id"`
 }
 
 func (sc *ShipmentComment) Validate(ctx context.Context, multiErr *errors.MultiError) {
@@ -99,10 +102,10 @@ func (sc *ShipmentComment) BeforeAppendModel(_ context.Context, query bun.Query)
 func (sc *ShipmentComment) ExtractMentions() []string {
 	mentionRegex := regexp.MustCompile(`@(\w+)`)
 	matches := mentionRegex.FindAllStringSubmatch(sc.Comment, -1)
-	
+
 	mentions := make([]string, 0, len(matches))
 	seen := make(map[string]bool)
-	
+
 	for _, match := range matches {
 		if len(match) > 1 {
 			username := match[1]
@@ -112,7 +115,7 @@ func (sc *ShipmentComment) ExtractMentions() []string {
 			}
 		}
 	}
-	
+
 	return mentions
 }
 

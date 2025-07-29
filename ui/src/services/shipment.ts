@@ -5,6 +5,7 @@
 
 import { http } from "@/lib/http-client";
 import type { ShipmentUncancelSchema } from "@/lib/schemas/shipment-cancellation-schema";
+import { ShipmentCommentSchema } from "@/lib/schemas/shipment-comment-schema";
 import type { ShipmentDuplicateSchema } from "@/lib/schemas/shipment-duplicate-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { LimitOffsetResponse, type ListResult } from "@/types/server";
@@ -128,6 +129,26 @@ export class ShipmentAPI {
     const response = await http.post<ListResult<ShipmentSchema>>(
       `/shipments/previous-rates/`,
       values,
+    );
+
+    return response.data;
+  }
+
+  async addComment(
+    shipmentId: ShipmentSchema["id"],
+    values: ShipmentCommentSchema,
+  ) {
+    const response = await http.post<ShipmentCommentSchema>(
+      `/shipments/${shipmentId}/comments/`,
+      values,
+    );
+
+    return response.data;
+  }
+
+  async listComments(shipmentId: ShipmentSchema["id"]) {
+    const response = await http.get<LimitOffsetResponse<ShipmentCommentSchema>>(
+      `/shipments/${shipmentId}/comments/`,
     );
 
     return response.data;

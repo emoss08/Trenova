@@ -41,9 +41,11 @@ CREATE TABLE IF NOT EXISTS "shipment_comment_mentions"(
     "comment_id" varchar(100) NOT NULL,
     "mentioned_user_id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
+    "business_unit_id" varchar(100) NOT NULL,
+    "shipment_id" varchar(100) NOT NULL,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
     CONSTRAINT "pk_shipment_comment_mentions" PRIMARY KEY ("id"),
-    CONSTRAINT "fk_shipment_comment_mentions_comment" FOREIGN KEY ("comment_id") REFERENCES "shipment_comments"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_shipment_comment_mentions_comment" FOREIGN KEY ("comment_id", "business_unit_id", "organization_id", "shipment_id") REFERENCES "shipment_comments"("id", "business_unit_id", "organization_id", "shipment_id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_shipment_comment_mentions_user" FOREIGN KEY ("mentioned_user_id") REFERENCES "users"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_shipment_comment_mentions_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "uk_shipment_comment_mentions_comment_user" UNIQUE ("comment_id", "mentioned_user_id")

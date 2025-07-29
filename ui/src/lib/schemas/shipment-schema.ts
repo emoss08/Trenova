@@ -7,6 +7,7 @@ import * as z from "zod/v4";
 import { additionalChargeSchema } from "./additional-charge-schema";
 import { customerSchema } from "./customer-schema";
 import { equipmentTypeSchema } from "./equipment-type-schema";
+import { formulaTemplateSchema } from "./formula-template-schema";
 import {
   decimalStringSchema,
   nullableIntegerSchema,
@@ -17,10 +18,10 @@ import {
 } from "./helpers";
 import { moveSchema } from "./move-schema";
 import { serviceTypeSchema } from "./service-type-schema";
+import { shipmentCommentSchema } from "./shipment-comment-schema";
 import { shipmentCommoditySchema } from "./shipment-commodity-schema";
 import { shipmentTypeSchema } from "./shipment-type-schema";
 import { userSchema } from "./user-schema";
-import { formulaTemplateSchema } from "./formula-template-schema";
 
 export const ShipmentStatus = z.enum([
   "New",
@@ -113,6 +114,7 @@ export const shipmentSchema = z
     moves: z.array(moveSchema),
     commodities: z.array(shipmentCommoditySchema).nullish(),
     additionalCharges: z.array(additionalChargeSchema).nullish(),
+    comments: z.array(shipmentCommentSchema).nullish(),
   })
   .refine(
     (data) => {

@@ -120,9 +120,10 @@ export function ShipmentEditSheet({
     setError,
     reset,
     handleSubmit,
-    formState: { isSubmitting },
+    formState: { errors, isSubmitting },
   } = form;
 
+  console.info(errors);
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: ShipmentSchema) => {
       const response = await http.put<ShipmentSchema>(

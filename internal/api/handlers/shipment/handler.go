@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/shipment"
+	"github.com/emoss08/trenova/internal/core/services/shipmentcomment"
 	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
@@ -24,17 +25,23 @@ import (
 type HandlerParams struct {
 	fx.In
 
-	ShipmentService *shipment.Service
-	ErrorHandler    *validator.ErrorHandler
+	ShipmentService        *shipment.Service
+	ShipmentCommentService *shipmentcomment.Service
+	ErrorHandler           *validator.ErrorHandler
 }
 
 type Handler struct {
 	ss *shipment.Service
+	sc *shipmentcomment.Service
 	eh *validator.ErrorHandler
 }
 
 func NewHandler(p HandlerParams) *Handler {
-	return &Handler{ss: p.ShipmentService, eh: p.ErrorHandler}
+	return &Handler{
+		ss: p.ShipmentService,
+		sc: p.ShipmentCommentService,
+		eh: p.ErrorHandler,
+	}
 }
 
 func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
@@ -89,6 +96,16 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api.Put("/:shipmentID/mark-ready-to-bill/", rl.WithRateLimit(
 		[]fiber.Handler{h.markReadyToBill},
 		middleware.PerMinute(5), // 5 writes per minute
+	)...)
+
+	api.Get("/:shipmentID/comments/", rl.WithRateLimit(
+		[]fiber.Handler{h.listComments},
+		middleware.PerMinute(60), // 60 reads per minute
+	)...)
+
+	api.Post("/:shipmentID/comments/", rl.WithRateLimit(
+		[]fiber.Handler{h.addComment},
+		middleware.PerMinute(60), // 60 writes per minute
 	)...)
 
 	api.Post("/duplicate/", rl.WithRateLimit(
@@ -468,6 +485,60 @@ func (h *Handler) transferOwnership(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(newEntity)
+}
+
+func (h *Handler) addComment(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	shipmentID, err := pulid.MustParse(c.Params("shipmentID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := new(shipmentdomain.ShipmentComment)
+	if err = c.BodyParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req.ShipmentID = shipmentID
+	req.OrganizationID = reqCtx.OrgID
+	req.BusinessUnitID = reqCtx.BuID
+	req.UserID = reqCtx.UserID
+
+	newEntity, err := h.sc.Create(c.UserContext(), req)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(newEntity)
+}
+
+func (h *Handler) listComments(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	shipmentID, err := pulid.MustParse(c.Params("shipmentID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	handler := func(fc *fiber.Ctx, filter *ports.QueryOptions) (*ports.ListResult[*shipmentdomain.ShipmentComment], error) {
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
+		return h.sc.ListByShipmentID(fc.UserContext(), repositories.GetCommentsByShipmentIDRequest{
+			Filter:     filter,
+			ShipmentID: shipmentID,
+		})
+	}
+
+	return limitoffsetpagination.HandleEnhancedPaginatedRequest(c, h.eh, reqCtx, handler)
 }
 
 func (h *Handler) liveStream(c *fiber.Ctx) error {

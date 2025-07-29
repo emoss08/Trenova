@@ -107,6 +107,9 @@ func (scr *shipmentCommentRepository) ListByShipmentID(
 				Where("sc.organization_id = ?", req.Filter.TenantOpts.OrgID).
 				Where("sc.business_unit_id = ?", req.Filter.TenantOpts.BuID)
 		}).
+		Relation("User").
+		Relation("MentionedUsers").
+		Relation("MentionedUsers.MentionedUser").
 		ScanAndCount(ctx)
 	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
@@ -146,6 +149,23 @@ func (scr *shipmentCommentRepository) Create(
 		Exec(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to create shipment comment")
 		return nil, err
+	}
+
+	// * Loop over possible mentioned users and create a mention for each
+	if len(comment.MentionedUsers) > 0 {
+		for _, mentionedUser := range comment.MentionedUsers {
+			mentionedUser.CommentID = comment.ID
+			mentionedUser.BusinessUnitID = comment.BusinessUnitID
+			mentionedUser.OrganizationID = comment.OrganizationID
+			mentionedUser.ShipmentID = comment.ShipmentID
+
+			if _, err := dba.NewInsert().Model(mentionedUser).Exec(ctx); err != nil {
+				log.Error().Err(err).Msg("failed to insert shipment comment mention")
+				return nil, err
+			}
+
+			comment.MentionedUsers = append(comment.MentionedUsers, mentionedUser)
+		}
 	}
 
 	return comment, nil

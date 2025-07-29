@@ -4,8 +4,8 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 import { Sparkles } from "lucide-react";
+import { motion } from "motion/react";
 
 interface RecommendedBadgeProps {
   text?: string;

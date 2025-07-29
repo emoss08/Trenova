@@ -6,6 +6,7 @@
 import { http } from "@/lib/http-client";
 import type { ChangePasswordSchema } from "@/lib/schemas/auth-schema";
 import type { UserSchema } from "@/lib/schemas/user-schema";
+import { LimitOffsetResponse } from "@/types/server";
 
 export class UserAPI {
   async getUserById(userId: UserSchema["id"]) {
@@ -25,5 +26,16 @@ export class UserAPI {
 
   async changePassword(request: ChangePasswordSchema) {
     return http.post<UserSchema>("/users/change-password/", request);
+  }
+
+  async searchUsers(query: string) {
+    const response = await http.get<LimitOffsetResponse<UserSchema>>("/users/", {
+      params: {
+        query,
+        limit: "10",
+      },
+    });
+
+    return response.data;
   }
 }
