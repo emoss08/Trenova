@@ -110,6 +110,7 @@ func (scr *shipmentCommentRepository) ListByShipmentID(
 		Relation("User").
 		Relation("MentionedUsers").
 		Relation("MentionedUsers.MentionedUser").
+		Order("sc.created_at ASC").
 		ScanAndCount(ctx)
 	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
@@ -158,6 +159,7 @@ func (scr *shipmentCommentRepository) Create(
 			mentionedUser.BusinessUnitID = comment.BusinessUnitID
 			mentionedUser.OrganizationID = comment.OrganizationID
 			mentionedUser.ShipmentID = comment.ShipmentID
+			mentionedUser.MentionedUserID = comment.UserID
 
 			if _, err := dba.NewInsert().Model(mentionedUser).Exec(ctx); err != nil {
 				log.Error().Err(err).Msg("failed to insert shipment comment mention")

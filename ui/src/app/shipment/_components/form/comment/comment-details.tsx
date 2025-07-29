@@ -7,18 +7,16 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queries } from "@/lib/queries";
-import { ShipmentCommentSchema } from "@/lib/schemas/shipment-comment-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { UserSchema } from "@/lib/schemas/user-schema";
 import { api } from "@/services/api";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { AlertCircleIcon } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 import { CommentForm } from "./comment-form";
 import { CommentRow } from "./comment-row";
 
 export default function ShipmentCommentDetails() {
-  const queryClient = useQueryClient();
   const { getValues } = useFormContext<ShipmentSchema>();
   const shipmentId = getValues("id");
 
@@ -30,44 +28,6 @@ export default function ShipmentCommentDetails() {
     error,
   } = useQuery({
     ...queries.shipment.listComments(shipmentId || "", !!shipmentId),
-  });
-
-  // Add comment mutation
-  const addCommentMutation = useMutation({
-    mutationFn: async ({
-      comment,
-      isHighPriority = false,
-      mentionedUserIds = [],
-    }: {
-      comment: string;
-      isHighPriority?: boolean;
-      mentionedUserIds?: string[];
-    }) => {
-      if (!shipmentId) throw new Error("Shipment ID is required");
-
-      const payload: Partial<ShipmentCommentSchema> = {
-        comment,
-        isHighPriority,
-        // Create the mentionedUsers array with the proper structure
-        mentionedUsers: mentionedUserIds.map((userId) => ({
-          mentionedUserId: userId,
-        })),
-      };
-
-      return api.shipments.addComment(
-        shipmentId,
-        payload as ShipmentCommentSchema,
-      );
-    },
-    onSuccess: () => {
-      // Invalidate and refetch comments
-      queryClient.invalidateQueries({
-        queryKey: queries.shipment.listComments(shipmentId || "").queryKey,
-      });
-    },
-    onError: (error) => {
-      console.error("Failed to add comment:", error);
-    },
   });
 
   // Search users function
@@ -83,17 +43,6 @@ export default function ShipmentCommentDetails() {
       console.error("Failed to search users:", error);
       return [];
     }
-  };
-
-  const handleCommentSubmit = async (
-    comment: string,
-    mentionedUserIds: string[],
-  ) => {
-    await addCommentMutation.mutateAsync({
-      comment,
-      isHighPriority: false,
-      mentionedUserIds,
-    });
   };
 
   // Loading state
@@ -157,11 +106,7 @@ export default function ShipmentCommentDetails() {
         </ScrollArea>
       )}
 
-      <CommentForm
-        onSubmit={handleCommentSubmit}
-        searchUsers={searchUsers}
-        disabled={addCommentMutation.isPending}
-      />
+      <CommentForm searchUsers={searchUsers} shipmentId={shipmentId} />
     </div>
   );
 }
