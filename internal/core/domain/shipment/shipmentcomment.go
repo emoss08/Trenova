@@ -48,7 +48,7 @@ type ShipmentComment struct {
 	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,pk,notnull,type:VARCHAR(100)"`
 	UserID         pulid.ID `json:"userId"         bun:"user_id,pk,notnull,type:VARCHAR(100)"`
 	Comment        string   `json:"comment"        bun:"comment,type:TEXT,notnull"`
-	IsHighPriority bool     `json:"isHighPriority" bun:"is_high_priority,type:BOOLEAN,notnull,default:false"`
+	CommentType    string   `json:"commentType"    bun:"comment_type,type:VARCHAR(100)"`
 	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
 	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

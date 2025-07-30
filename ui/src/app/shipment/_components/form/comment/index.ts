@@ -5,5 +5,6 @@
 
 export { default as ShipmentCommentDetails } from "./comment-details";
 export { CommentForm } from "./comment-form";
-export { CommentRow } from "./comment-row";
 export { MentionTextarea } from "./mention-textarea";
+export { COMMENT_TYPES } from "./utils";
+

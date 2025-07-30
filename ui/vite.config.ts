@@ -10,6 +10,8 @@ import react from "@vitejs/plugin-react";
 import { createRequire } from "node:module";
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
+import tsconfigPaths from "vite-tsconfig-paths";
+
 import { defineConfig, normalizePath, type PluginOption } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { VitePWA } from "vite-plugin-pwa";
@@ -109,6 +111,7 @@ export default defineConfig({
         plugins: [["babel-plugin-react-compiler", ReactCompilerConfig]],
       },
     }),
+    tsconfigPaths(),
     tailwindcss(),
     nodeResolve() as PluginOption,
     VitePWA({

@@ -202,7 +202,6 @@ export function useLiveMode({
       };
 
       const handleNewEntry = (event: MessageEvent) => {
-        console.log("📨 New entry received:", event.data);
         lastEventTime.current = new Date();
         updateConnectionQuality();
         try {

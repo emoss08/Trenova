@@ -4,7 +4,6 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { LazyComponent } from "@/components/error-boundary";
-import { ScrollArea, ScrollAreaShadow } from "@/components/ui/scroll-area";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { lazy } from "react";
 
@@ -22,16 +21,13 @@ export function ShipmentFormContent({
       <LazyComponent>
         <ShipmentDetailsHeader selectedShipment={selectedShipment} />
       </LazyComponent>
-      <ScrollArea className="flex flex-col overflow-y-auto max-h-[calc(100vh-8.5rem)]">
-        <ShipmentScrollAreaInner>{children}</ShipmentScrollAreaInner>
-        <ScrollAreaShadow />
-      </ScrollArea>
+      <ShipmentScrollAreaInner>{children}</ShipmentScrollAreaInner>
     </ShipmentScrollAreaOuter>
   );
 }
 
 function ShipmentScrollAreaInner({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-col gap-4 p-4 pb-16">{children}</div>;
+  return <div className="flex flex-col gap-4">{children}</div>;
 }
 
 function ShipmentScrollAreaOuter({ children }: { children: React.ReactNode }) {

@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS "shipment_comments"(
     "shipment_id" varchar(100) NOT NULL,
     "user_id" varchar(100) NOT NULL,
     "comment" text NOT NULL,
-    "is_high_priority" boolean NOT NULL DEFAULT FALSE,
+    "comment_type" varchar(100),
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,

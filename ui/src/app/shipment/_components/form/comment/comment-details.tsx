@@ -13,14 +13,13 @@ import { api } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircleIcon } from "lucide-react";
 import { useFormContext } from "react-hook-form";
+import { CommentContent } from "./_components/comment-content";
 import { CommentForm } from "./comment-form";
-import { CommentRow } from "./comment-row";
 
 export default function ShipmentCommentDetails() {
   const { getValues } = useFormContext<ShipmentSchema>();
   const shipmentId = getValues("id");
 
-  // Fetch comments from API
   const {
     data: commentsData,
     isLoading,
@@ -30,7 +29,6 @@ export default function ShipmentCommentDetails() {
     ...queries.shipment.listComments(shipmentId || "", !!shipmentId),
   });
 
-  // Search users function
   const searchUsers = async (query: string): Promise<UserSchema[]> => {
     try {
       if (!query || query.length < 2) {
@@ -45,7 +43,6 @@ export default function ShipmentCommentDetails() {
     }
   };
 
-  // Loading state
   if (isLoading) {
     return (
       <div className="flex flex-col gap-4">
@@ -65,7 +62,6 @@ export default function ShipmentCommentDetails() {
     );
   }
 
-  // Error state
   if (isError) {
     return (
       <div className="flex flex-col gap-4">
@@ -84,25 +80,20 @@ export default function ShipmentCommentDetails() {
   const comments = commentsData?.results || [];
 
   return (
-    <div className="flex flex-col gap-4">
-      <h3 className="text-sm font-medium">Comments</h3>
-
+    <div className="flex flex-col gap-4 pb-16">
       {comments.length === 0 ? (
         <div className="text-center py-8 text-sm text-muted-foreground">
           No comments yet. Be the first to add one!
         </div>
       ) : (
         <ScrollArea className="flex flex-col overflow-y-auto max-h-[calc(100vh-14rem)]">
-          <div className="pr-4">
-            {comments.map((comment, index) => (
-              <CommentRow
-                key={comment.id || index}
-                index={index}
-                shipmentComment={comment}
-                isLast={index === comments.length - 1}
-              />
-            ))}
-          </div>
+          {comments.map((comment, index) => (
+            <CommentContent
+              key={comment.id || index}
+              shipmentComment={comment}
+              isLast={index === comments.length - 1}
+            />
+          ))}
         </ScrollArea>
       )}
 

@@ -1003,7 +1003,7 @@ func (sr *shipmentRepository) prepareShipmentComments(
 			OrganizationID: original.OrganizationID,
 			ShipmentID:     newShipment.ID,
 			Comment:        comment.Comment,
-			IsHighPriority: comment.IsHighPriority,
+			CommentType:    comment.CommentType,
 		}
 
 		comments = append(comments, newComment)

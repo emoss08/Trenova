@@ -29,11 +29,7 @@ function ShipmentDetailsHeaderInner({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="flex flex-col px-4 pb-2 border-b border-bg-sidebar-border">
-      {children}
-    </div>
-  );
+  return <div className="flex flex-col px-4 pb-2">{children}</div>;
 }
 
 function ShipmentDetailsHeaderTitle({

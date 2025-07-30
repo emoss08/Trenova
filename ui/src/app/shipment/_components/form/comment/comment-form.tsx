@@ -16,10 +16,11 @@ import { UserSchema } from "@/lib/schemas/user-schema";
 import { api } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { MentionTextarea } from "./mention-textarea";
+import { CommentType } from "./utils";
 
 interface CommentFormProps {
   searchUsers: (query: string) => Promise<UserSchema[]>;
@@ -28,12 +29,14 @@ interface CommentFormProps {
 
 export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
   const queryClient = useQueryClient();
+  const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
+  const [commentType, setCommentType] = useState<CommentType | null>(null);
 
   const form = useForm({
     resolver: zodResolver(shipmentCommentSchema),
     defaultValues: {
       comment: "",
-      isHighPriority: false,
+      commentType: null,
     },
   });
 
@@ -61,6 +64,8 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
       });
 
       reset();
+      setMentionedUserIds([]);
+      setCommentType(null);
     },
   });
 
@@ -70,21 +75,29 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
   const onSubmit = useCallback(
     async (values: ShipmentCommentSchema) => {
       try {
-        await mutateAsync(values);
+        const payload = {
+          ...values,
+          mentionedUsers: mentionedUserIds.map((userId) => ({
+            mentionedUserId: userId,
+          })),
+          commentType: commentType,
+        };
+        await mutateAsync(payload);
       } catch (error) {
         console.error("Failed to submit comment:", error);
       }
     },
-    [mutateAsync],
+    [mutateAsync, mentionedUserIds, commentType],
   );
 
   const handleCancel = () => {
     reset();
+    setMentionedUserIds([]);
   };
 
   return (
     <FormProvider {...form}>
-      <Form onSubmit={handleSubmit(onSubmit)}>
+      <Form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
         <FormGroup cols={1}>
           <FormControl>
             <Controller
@@ -94,6 +107,8 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
                 <MentionTextarea
                   value={field.value}
                   onChange={field.onChange}
+                  onMentionedUsersChange={setMentionedUserIds}
+                  onCommentTypeChange={setCommentType}
                   searchUsers={searchUsers}
                   placeholder="Add a comment... Use @ to mention users"
                   disabled={isSubmitting}

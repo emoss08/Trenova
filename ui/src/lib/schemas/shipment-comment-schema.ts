@@ -11,6 +11,8 @@ import {
 } from "./helpers";
 import { userSchema } from "./user-schema";
 
+export const CommentType = z.enum(["hot", "billing", "dispatch"]);
+
 export const shipmentCommentMentionSchema = z.object({
   id: optionalStringSchema,
   version: versionSchema,
@@ -34,7 +36,7 @@ export const shipmentCommentSchema = z.object({
   comment: z.string().min(1, {
     error: "Comment is required",
   }),
-  isHighPriority: z.boolean().default(false),
+  commentType: CommentType.nullish(),
 
   // Relationships
   user: userSchema.nullish(),
