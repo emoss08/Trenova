@@ -80,6 +80,9 @@ const (
 	ResourceShipmentComment = Resource(
 		"shipment_comment",
 	) // Represents resources for managing shipment comments.
+	ResourceBillingClient = Resource(
+		"billing_client",
+	)
 	ResourceAIClassification = Resource(
 		"ai_classification",
 	) // Represents resources for managing AI classifications.
@@ -383,6 +386,11 @@ var (
 		),
 		ResourcePermission: {
 			ActionRead,
+			ActionManage,
+		},
+		ResourceBillingClient: {
+			ActionRead,
+			ActionApprove,
 			ActionManage,
 		},
 		ResourceBusinessUnit: append(
