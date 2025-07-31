@@ -50,10 +50,7 @@ export default function ShipmentDocumentTable({
         }}
         queryKey="shipment-document-list"
         exportModelName="shipment-document"
-        //   TableModal={ShipmentCreateSheet}
-        //   TableEditModal={ShipmentEditSheet}
         columns={columns}
-        // includeHeader={false}
         includeOptions={false}
         resource={Resource.Document}
       />

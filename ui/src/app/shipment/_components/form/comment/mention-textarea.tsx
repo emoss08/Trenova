@@ -26,10 +26,11 @@ import {
   useRef,
   useState,
 } from "react";
-import { COMMENT_TYPES, CommentType } from "./utils";
+import { COMMENT_TYPES, CommentType, getCommentTypeClassName } from "./utils";
 
 interface MentionTextareaProps {
   value?: string;
+  isReply?: boolean;
   onChange?: (value: string) => void;
   onMentionedUsersChange?: (userIds: string[]) => void;
   onCommentTypeChange?: (type: CommentType | null) => void;
@@ -57,9 +58,10 @@ export const MentionTextarea = forwardRef<
       onMentionedUsersChange,
       onCommentTypeChange,
       searchUsers,
-      placeholder = "Add a comment... Use @ to mention users, / for comment types",
+      placeholder,
       disabled = false,
       isInvalid,
+      isReply,
       className,
       rows = 3,
     },
@@ -81,6 +83,12 @@ export const MentionTextarea = forwardRef<
     const [mentionedUsers, setMentionedUsers] = useState<Map<string, string>>(
       new Map(),
     );
+
+    const effectivePlaceholder =
+      placeholder ||
+      (isReply
+        ? "Write a reply... Use @ to mention users"
+        : "Add a comment... Use @ to mention users, / for comment types");
 
     useImperativeHandle(ref, () => ({
       focus: () => editorRef.current?.focus(),
@@ -550,18 +558,21 @@ export const MentionTextarea = forwardRef<
                 onPaste={handlePaste}
                 role="textbox"
                 aria-multiline="true"
-                aria-label={placeholder}
+                aria-label={effectivePlaceholder}
                 className={cn(
-                  "block w-full rounded-md border border-muted-foreground/20 bg-muted px-3 py-2 text-sm",
-                  "min-h-[80px] max-h-[300px] overflow-y-auto",
+                  "block w-full rounded-md border text-sm",
+                  "overflow-y-auto",
                   "shadow-xs",
                   "focus-visible:outline-hidden focus-visible:ring-1 focus-visible:ring-ring",
-                  "focus-visible:border-blue-600 focus-visible:ring-4 focus-visible:ring-blue-600/20",
                   "transition-[border-color,box-shadow] duration-200 ease-in-out",
                   "disabled:cursor-not-allowed disabled:opacity-50",
                   "whitespace-pre-wrap break-words",
+                  mentionedUsers.size > 0
+                    ? "border-blue-600/30 bg-blue-600/10 px-2.5 py-1.5 min-h-[60px] max-h-[200px] focus-visible:border-blue-500 focus-visible:ring-2 focus-visible:ring-blue-500/20"
+                    : "border-muted-foreground/20 bg-muted px-3 py-2 min-h-[80px] max-h-[300px] focus-visible:border-blue-600 focus-visible:ring-4 focus-visible:ring-blue-600/20",
                   isInvalid &&
                     "border-red-500 bg-red-500/20 ring-0 ring-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
+                  getCommentTypeClassName(selectedCommentType),
                   className,
                 )}
                 style={{ minHeight }}
@@ -569,7 +580,7 @@ export const MentionTextarea = forwardRef<
               />
               {isEmpty && !disabled && (
                 <div className="pointer-events-none absolute inset-0 px-3 py-2 text-sm text-muted-foreground">
-                  {placeholder}
+                  {effectivePlaceholder}
                 </div>
               )}
             </div>

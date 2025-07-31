@@ -8,8 +8,8 @@ import { ShipmentCommentSchema } from "@/lib/schemas/shipment-comment-schema";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { useCallback, useMemo } from "react";
-import { COMMENT_TYPES } from "../utils";
 import { UserHoverCard } from "./user-hover-card";
+import { COMMENT_TYPES } from "./utils";
 
 export function CommentContent({
   shipmentComment,
@@ -87,7 +87,7 @@ export function CommentContent({
   return (
     <div
       className={cn(
-        "group relative flex gap-3 py-4",
+        "group relative flex gap-3 py-4 shrink-0",
         !isLast && "border-b border-border/50",
       )}
     >
@@ -99,13 +99,15 @@ export function CommentContent({
         />
       </div>
       <div className="flex-1 space-y-1">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">
-            {shipmentComment.user?.name || "Unknown User"}
-          </span>
-          <span className="text-xs text-muted-foreground">{timeAgo}</span>
+        <div className="flex items-center gap-2 justify-between">
+          <div className="flex flex-row items-center gap-2">
+            <span className="text-sm font-medium">
+              {shipmentComment.user?.name || "Unknown User"}
+            </span>
+            <span className="bg-muted-foreground/60 rounded-full size-1 text-xs" />
+            <span className="text-xs text-muted-foreground">{timeAgo}</span>
+          </div>
         </div>
-
         <div className="text-sm text-foreground">
           <p className="break-words">
             {renderContent(shipmentComment.comment)}

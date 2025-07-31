@@ -25,9 +25,14 @@ import { CommentType } from "./utils";
 interface CommentFormProps {
   searchUsers: (query: string) => Promise<UserSchema[]>;
   shipmentId: ShipmentSchema["id"];
+  isReply?: boolean;
 }
 
-export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
+export function CommentForm({
+  searchUsers,
+  shipmentId,
+  isReply,
+}: CommentFormProps) {
   const queryClient = useQueryClient();
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
   const [commentType, setCommentType] = useState<CommentType | null>(null);
@@ -105,12 +110,12 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
               control={control}
               render={({ field, fieldState }) => (
                 <MentionTextarea
+                  isReply={isReply}
                   value={field.value}
                   onChange={field.onChange}
                   onMentionedUsersChange={setMentionedUserIds}
                   onCommentTypeChange={setCommentType}
                   searchUsers={searchUsers}
-                  placeholder="Add a comment... Use @ to mention users"
                   disabled={isSubmitting}
                   isInvalid={!!fieldState.error}
                 />

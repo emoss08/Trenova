@@ -201,7 +201,7 @@ function ShipmentCard({ shipment }: { shipment: ShipmentSchema }) {
             <div className="flex items-center border-t border-border pt-4">
               <h3 className="text-xl font-medium">Documents</h3>
             </div>
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-2 overflow-y-auto max-h-[350px]">
               {documents?.results?.map((document) => (
                 <div
                   key={document.id}

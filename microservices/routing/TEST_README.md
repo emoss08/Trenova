@@ -9,6 +9,7 @@ This document describes the test suite for the routing microservice.
 ## Test Coverage
 
 ### Graph Algorithms (`internal/graph/`)
+
 - **A* Algorithm Tests** (`astar_test.go`)
   - Basic pathfinding
   - Same start/end node handling
@@ -34,11 +35,13 @@ This document describes the test suite for the routing microservice.
 ## Running Tests
 
 ### Quick Test (excludes packages with C dependencies)
+
 ```bash
 make test
 ```
 
 ### All Tests (requires zlib development headers)
+
 ```bash
 # Install dependencies first:
 # Ubuntu/Debian: sudo apt-get install zlib1g-dev pkg-config
@@ -48,6 +51,7 @@ make test-all
 ```
 
 ### Specific Test Suites
+
 ```bash
 # Graph algorithms only
 make test-graph
@@ -57,6 +61,7 @@ make test-coverage
 ```
 
 ### Performance Tests
+
 ```bash
 # Run including performance benchmarks
 go test -v ./internal/graph/... -run="Performance"
@@ -68,6 +73,7 @@ go test -v ./internal/graph/... -short
 ## Test Data
 
 Tests use synthetic graph data:
+
 - Small 3x3 grid for basic functionality
 - Larger grids (50x50, 100x100) for performance testing
 - Linear graphs for specific algorithm behavior

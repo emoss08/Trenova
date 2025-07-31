@@ -13,7 +13,7 @@ import { api } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircleIcon } from "lucide-react";
 import { useFormContext } from "react-hook-form";
-import { CommentContent } from "./_components/comment-content";
+import { CommentContent } from "./comment-content";
 import { CommentForm } from "./comment-form";
 
 export default function ShipmentCommentDetails() {
@@ -26,7 +26,7 @@ export default function ShipmentCommentDetails() {
     isError,
     error,
   } = useQuery({
-    ...queries.shipment.listComments(shipmentId || "", !!shipmentId),
+    ...queries.shipment.listComments(shipmentId),
   });
 
   const searchUsers = async (query: string): Promise<UserSchema[]> => {

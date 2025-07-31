@@ -42,16 +42,17 @@ type ShipmentCommentMention struct {
 type ShipmentComment struct {
 	bun.BaseModel `bun:"table:shipment_comments,alias:sc" json:"-"`
 
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	ShipmentID     pulid.ID `json:"shipmentId"     bun:"shipment_id,pk,notnull,type:VARCHAR(100)"`
-	UserID         pulid.ID `json:"userId"         bun:"user_id,pk,notnull,type:VARCHAR(100)"`
-	Comment        string   `json:"comment"        bun:"comment,type:TEXT,notnull"`
-	CommentType    string   `json:"commentType"    bun:"comment_type,type:VARCHAR(100)"`
-	Version        int64    `json:"version"        bun:"version,type:BIGINT"`
-	CreatedAt      int64    `json:"createdAt"      bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID              pulid.ID  `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID  pulid.ID  `json:"businessUnitId"  bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
+	OrganizationID  pulid.ID  `json:"organizationId"  bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ShipmentID      pulid.ID  `json:"shipmentId"      bun:"shipment_id,pk,notnull,type:VARCHAR(100)"`
+	UserID          pulid.ID  `json:"userId"          bun:"user_id,pk,notnull,type:VARCHAR(100)"`
+	ParentCommentID *pulid.ID `json:"parentCommentId" bun:"parent_comment_id,type:VARCHAR(100)"`
+	Comment         string    `json:"comment"         bun:"comment,type:TEXT,notnull"`
+	CommentType     string    `json:"commentType"     bun:"comment_type,type:VARCHAR(100)"`
+	Version         int64     `json:"version"         bun:"version,type:BIGINT"`
+	CreatedAt       int64     `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt       int64     `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	Shipment       *Shipment                  `json:"-"              bun:"rel:belongs-to,join:shipment_id=id"`
@@ -59,11 +60,19 @@ type ShipmentComment struct {
 	Organization   *organization.Organization `json:"-"              bun:"rel:belongs-to,join:organization_id=id"`
 	User           *user.User                 `json:"user"           bun:"rel:belongs-to,join:user_id=id"`
 	MentionedUsers []*ShipmentCommentMention  `json:"mentionedUsers" bun:"rel:has-many,join:id=comment_id"`
+	ParentComment  *ShipmentComment           `json:"parentComment"  bun:"rel:belongs-to,join:parent_comment_id=id"`
+	Replies        []*ShipmentComment         `json:"replies"        bun:"rel:has-many,join:id=parent_comment_id"`
 }
 
 func (sc *ShipmentComment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, sc,
 		validation.Field(&sc.Comment, validation.Required.Error("Comment is required")),
+		validation.Field(&sc.ParentCommentID, validation.By(func(value any) error {
+			if sc.ParentCommentID != nil && sc.ParentComment != nil && sc.ParentComment.ParentCommentID != nil {
+				return validation.NewError("validation_parent_comment", "Replies to replies are not allowed")
+			}
+			return nil
+		})),
 	)
 	if err != nil {
 		var validationErrs validation.Errors

@@ -5,6 +5,7 @@
 
 import * as z from "zod/v4";
 import {
+  nullableStringSchema,
   optionalStringSchema,
   timestampSchema,
   versionSchema,
@@ -32,7 +33,7 @@ export const shipmentCommentSchema = z.object({
   businessUnitId: optionalStringSchema,
   userId: optionalStringSchema,
   shipmentId: optionalStringSchema,
-
+  parentCommentId: nullableStringSchema,
   comment: z.string().min(1, {
     error: "Comment is required",
   }),
@@ -41,6 +42,12 @@ export const shipmentCommentSchema = z.object({
   // Relationships
   user: userSchema.nullish(),
   mentionedUsers: shipmentCommentMentionSchema.array().nullish(),
+  get parentComment() {
+    return shipmentCommentSchema.nullish();
+  },
+  get replies() {
+    return z.array(shipmentCommentSchema).nullish();
+  },
 });
 
 export type ShipmentCommentSchema = z.infer<typeof shipmentCommentSchema>;

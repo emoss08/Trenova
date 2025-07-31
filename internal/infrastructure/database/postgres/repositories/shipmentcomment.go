@@ -110,6 +110,7 @@ func (scr *shipmentCommentRepository) ListByShipmentID(
 		Relation("User").
 		Relation("MentionedUsers").
 		Relation("MentionedUsers.MentionedUser").
+		Relation("Replies").
 		Order("sc.created_at ASC").
 		ScanAndCount(ctx)
 	if err != nil {
