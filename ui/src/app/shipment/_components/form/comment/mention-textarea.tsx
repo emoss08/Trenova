@@ -692,3 +692,7 @@ export const MentionTextarea = forwardRef<
 );
 
 MentionTextarea.displayName = "MentionTextarea";
+
+// Re-export the new TiptapEditor as MentionTextarea for gradual migration
+export { TiptapEditor } from "./tiptap-editor";
+export type { TiptapEditorRef } from "./tiptap-editor";

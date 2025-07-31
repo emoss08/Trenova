@@ -19,8 +19,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { MentionTextarea } from "./mention-textarea";
-import { CommentType } from "./utils";
+import { TiptapEditor } from "./mention-textarea";
+import { type CommentType } from "./utils";
 
 interface CommentFormProps {
   searchUsers: (query: string) => Promise<UserSchema[]>;
@@ -102,20 +102,24 @@ export function CommentForm({
 
   return (
     <FormProvider {...form}>
-      <Form className="flex flex-col gap-2" onSubmit={handleSubmit(onSubmit)}>
+      <Form
+        className="flex flex-col px-2 gap-2"
+        onSubmit={handleSubmit(onSubmit)}
+      >
         <FormGroup cols={1}>
           <FormControl>
             <Controller
               name="comment"
               control={control}
               render={({ field, fieldState }) => (
-                <MentionTextarea
+                <TiptapEditor
                   isReply={isReply}
                   value={field.value}
                   onChange={field.onChange}
                   onMentionedUsersChange={setMentionedUserIds}
                   onCommentTypeChange={setCommentType}
                   searchUsers={searchUsers}
+                  placeholder="Add a comment... Use @ to mention users, / for comment types"
                   disabled={isSubmitting}
                   isInvalid={!!fieldState.error}
                 />
