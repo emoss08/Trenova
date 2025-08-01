@@ -27,7 +27,7 @@ var (
 type HazardousMaterial struct {
 	bun.BaseModel `bun:"table:hazardous_materials,alias:hm" json:"-"`
 
-	ID                          pulid.ID       `json:"id "                         bun:"id,pk,type:VARCHAR(100)"`
+	ID                          pulid.ID       `json:"id"                          bun:"id,pk,type:VARCHAR(100)"`
 	BusinessUnitID              pulid.ID       `json:"businessUnitId"              bun:"business_unit_id,notnull,type:VARCHAR(100),pk"`
 	OrganizationID              pulid.ID       `json:"organizationId"              bun:"organization_id,notnull,type:VARCHAR(100),pk"`
 	Status                      domain.Status  `json:"status"                      bun:"status,type:status,default:'Active'"`
