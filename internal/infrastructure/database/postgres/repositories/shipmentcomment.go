@@ -62,23 +62,28 @@ func (scr *shipmentCommentRepository) GetByID(
 		Str("buID", req.BuID.String()).
 		Logger()
 
-	entity, err := shipment.NewShipmentCommentQuery(dba).
-		WhereGroup(" AND ", func(scqb *shipment.ShipmentCommentQueryBuilder) *shipment.ShipmentCommentQueryBuilder {
-			return scqb.
-				WhereIDEQ(req.CommentID).
-				WhereTenant(req.OrgID, req.BuID)
+	comment := new(shipment.ShipmentComment)
+
+	if err := dba.NewSelect().Model(comment).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("sc.id = ?", req.CommentID).
+				Where("sc.organization_id = ?", req.OrgID).
+				Where("sc.business_unit_id = ?", req.BuID)
 		}).
-		First(ctx)
-	if err != nil {
+		Scan(ctx); err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			return nil, errors.NewNotFoundError("Shipment Comment not found")
+			log.Error().Err(err).Msg("failed to get shipment comment")
+			return nil, errors.NewNotFoundError(
+				"Shipment Comment not found within your organization",
+			)
 		}
 
 		log.Error().Err(err).Msg("failed to get shipment comment")
 		return nil, err
 	}
 
-	return entity, nil
+	return comment, nil
 }
 
 func (scr *shipmentCommentRepository) ListByShipmentID(
@@ -110,7 +115,6 @@ func (scr *shipmentCommentRepository) ListByShipmentID(
 		Relation("User").
 		Relation("MentionedUsers").
 		Relation("MentionedUsers.MentionedUser").
-		Relation("Replies").
 		Order("sc.created_at ASC").
 		ScanAndCount(ctx)
 	if err != nil {
@@ -171,4 +175,118 @@ func (scr *shipmentCommentRepository) Create(
 	}
 
 	return comment, nil
+}
+
+func (scr *shipmentCommentRepository) Update(
+	ctx context.Context,
+	comment *shipment.ShipmentComment,
+) (*shipment.ShipmentComment, error) {
+	dba, err := scr.db.WriteDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	log := scr.l.With().
+		Str("operation", "Update").
+		Str("orgID", comment.OrganizationID.String()).
+		Str("buID", comment.BusinessUnitID.String()).
+		Logger()
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		ov := comment.Version
+
+		comment.Version++
+
+		_, err := tx.NewUpdate().Model(comment).
+			WherePK().
+			OmitZero().
+			Where("sc.version = ?", ov).
+			Returning("*").
+			Exec(c)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to update shipment comment")
+			return err
+		}
+
+		// rows, roErr := results.RowsAffected()
+		// if roErr != nil {
+		// 	log.Error().Err(roErr).Msg("failed to get rows affected")
+		// 	return roErr
+		// }
+
+		// if rows == 0 {
+		// 	return errors.NewValidationError(
+		// 		"version",
+		// 		errors.ErrVersionMismatch,
+		// 		fmt.Sprintf(
+		// 			"Version mismatch. The Shipment Comment (%s) has either been updated or deleted since the last request.",
+		// 			comment.GetID(),
+		// 		),
+		// 	)
+		// }
+
+		// Delete existing mentions for this comment
+		if _, err := tx.NewDelete().
+			Model((*shipment.ShipmentCommentMention)(nil)).
+			Where("comment_id = ?", comment.ID).
+			Exec(c); err != nil {
+			log.Error().Err(err).Msg("failed to delete existing shipment comment mentions")
+			return err
+		}
+
+		// Add new mentions if any
+		if len(comment.MentionedUsers) > 0 {
+			for _, mentionedUser := range comment.MentionedUsers {
+				mentionedUser.CommentID = comment.ID
+				mentionedUser.BusinessUnitID = comment.BusinessUnitID
+				mentionedUser.OrganizationID = comment.OrganizationID
+				mentionedUser.ShipmentID = comment.ShipmentID
+
+				if _, err := tx.NewInsert().Model(mentionedUser).Exec(c); err != nil {
+					log.Error().Err(err).Msg("failed to insert shipment comment mention")
+					return err
+				}
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return comment, nil
+}
+
+func (scr *shipmentCommentRepository) Delete(
+	ctx context.Context,
+	req repositories.DeleteCommentRequest,
+) error {
+	dba, err := scr.db.WriteDB(ctx)
+	if err != nil {
+		return err
+	}
+
+	log := scr.l.With().
+		Str("operation", "Delete").
+		Str("orgID", req.OrgID.String()).
+		Str("buID", req.BuID.String()).
+		Logger()
+
+	if _, err = dba.NewDelete().
+		Model((*shipment.ShipmentComment)(nil)).
+		WhereGroup(" AND ", func(sq *bun.DeleteQuery) *bun.DeleteQuery {
+			return sq.
+				Where("sc.id = ?", req.CommentID).
+				Where("sc.organization_id = ?", req.OrgID).
+				Where("sc.business_unit_id = ?", req.BuID).
+				Where("sc.shipment_id = ?", req.ShipmentID).
+				Where("sc.user_id = ?", req.UserID)
+		}).
+		Exec(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to delete shipment comment")
+		return err
+	}
+
+	return nil
 }

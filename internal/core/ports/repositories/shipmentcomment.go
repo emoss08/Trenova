@@ -30,8 +30,19 @@ type HandleCommentDeletionsRequest struct {
 	CommentToDelete    []*shipment.ShipmentComment
 }
 
+type DeleteCommentRequest struct {
+	ShipmentID pulid.ID `json:"shipmentId"     query:"shipmentId"`
+	CommentID  pulid.ID `json:"commentId"      query:"commentId"`
+	OrgID      pulid.ID `json:"organizationId" query:"organizationId"`
+	BuID       pulid.ID `json:"businessUnitId" query:"businessUnitId"`
+	UserID     pulid.ID `json:"userId"         query:"userId"`
+}
+
 type ShipmentCommentRepository interface {
-	GetByID(ctx context.Context, req GetCommentByIDRequest) (*shipment.ShipmentComment, error)
+	GetByID(
+		ctx context.Context,
+		req GetCommentByIDRequest,
+	) (*shipment.ShipmentComment, error)
 	ListByShipmentID(
 		ctx context.Context,
 		req GetCommentsByShipmentIDRequest,
@@ -40,4 +51,12 @@ type ShipmentCommentRepository interface {
 		ctx context.Context,
 		comment *shipment.ShipmentComment,
 	) (*shipment.ShipmentComment, error)
+	Update(
+		ctx context.Context,
+		comment *shipment.ShipmentComment,
+	) (*shipment.ShipmentComment, error)
+	Delete(
+		ctx context.Context,
+		req DeleteCommentRequest,
+	) error
 }

@@ -8,9 +8,9 @@ CREATE TABLE IF NOT EXISTS "shipment_comments"(
     "organization_id" varchar(100) NOT NULL,
     "shipment_id" varchar(100) NOT NULL,
     "user_id" varchar(100) NOT NULL,
-    "parent_comment_id" varchar(100),
     "comment" text NOT NULL,
     "comment_type" varchar(100),
+    "metadata" jsonb DEFAULT '{}' ::jsonb,
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS "shipment_comments"(
     CONSTRAINT "fk_shipment_comments_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_shipment_comments_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_shipment_comments_shipment" FOREIGN KEY ("shipment_id", "business_unit_id", "organization_id") REFERENCES "shipments"("id", "business_unit_id", "organization_id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    CONSTRAINT "fk_shipment_comments_parent" FOREIGN KEY ("parent_comment_id", "business_unit_id", "organization_id", "shipment_id") REFERENCES "shipment_comments"("id", "business_unit_id", "organization_id", "shipment_id") ON UPDATE NO ACTION ON DELETE CASCADE
 );
 
 --bun:split
@@ -34,9 +33,9 @@ CREATE INDEX "idx_shipment_comments_org_bu_user" ON "shipment_comments"("organiz
 
 CREATE INDEX "idx_shipment_comments_created_updated" ON "shipment_comments"("created_at", "updated_at");
 
-CREATE INDEX "idx_shipment_comments_parent" ON "shipment_comments"("parent_comment_id") WHERE "parent_comment_id" IS NOT NULL;
+CREATE INDEX "idx_shipment_comments_metadata" ON "shipment_comments" USING gin("metadata");
 
-COMMENT ON TABLE "shipment_comments" IS 'Stores comments for shipments with support for single-level replies';
+COMMENT ON TABLE "shipment_comments" IS 'Stores comments for shipments';
 
 --bun:split
 -- Create shipment comment mentions table

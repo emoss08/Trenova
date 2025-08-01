@@ -153,4 +153,23 @@ export class ShipmentAPI {
 
     return response.data;
   }
+
+  async updateComment(
+    commentId: ShipmentCommentSchema["id"],
+    values: ShipmentCommentSchema,
+  ) {
+    const response = await http.put<ShipmentCommentSchema>(
+      `/shipments/${values.shipmentId}/comments/${commentId}/`,
+      values,
+    );
+
+    return response.data;
+  }
+
+  async deleteComment(
+    shipmentId: ShipmentSchema["id"],
+    commentId: ShipmentCommentSchema["id"],
+  ) {
+    await http.delete(`/shipments/${shipmentId}/comments/${commentId}/`);
+  }
 }

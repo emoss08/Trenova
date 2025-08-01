@@ -3,13 +3,26 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Icon } from "@/components/ui/icons";
 import { LazyImage } from "@/components/ui/image";
+import { queries } from "@/lib/queries";
 import { ShipmentCommentSchema } from "@/lib/schemas/shipment-comment-schema";
 import { cn } from "@/lib/utils";
+import { api } from "@/services/api";
+import { useCommentEditStore } from "@/stores/comment-edit-store";
+import { useUser } from "@/stores/user-store";
+import { faEllipsis } from "@fortawesome/pro-solid-svg-icons";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { formatDistanceToNow } from "date-fns";
-import { useCallback, useMemo } from "react";
-import { UserHoverCard } from "./user-hover-card";
-import { COMMENT_TYPES } from "./utils";
+import { toast } from "sonner";
+import { CommentJsonRenderer } from "./comment-json-renderer";
 
 export function CommentContent({
   shipmentComment,
@@ -18,72 +31,56 @@ export function CommentContent({
   shipmentComment: ShipmentCommentSchema;
   isLast: boolean;
 }) {
+  const user = useUser();
+  const queryClient = useQueryClient();
+  const { setEditingComment } = useCommentEditStore();
   const timeAgo = shipmentComment.createdAt
     ? formatDistanceToNow(new Date(shipmentComment.createdAt * 1000), {
         addSuffix: true,
       })
     : "Unknown time";
 
-  const usernameToUserIdMap = useMemo(() => {
-    const map = new Map<string, string>();
-    if (shipmentComment.mentionedUsers) {
-      shipmentComment.mentionedUsers.forEach((mention) => {
-        const username = mention.mentionedUser?.username;
-        const userId = mention.mentionedUserId;
-        if (username && userId) {
-          map.set(username.toLowerCase(), userId);
-        }
-      });
-    }
-    return map;
-  }, [shipmentComment.mentionedUsers]);
+  const isOwner = user?.id === shipmentComment.userId;
 
-  const renderContent = useCallback(
-    (text: string) => {
-      let slashCommandElement = null;
-      let remainingText = text;
-
-      for (const type of COMMENT_TYPES) {
-        const regex = new RegExp(`^/${type.label}(\\s|$)`, "i");
-        const match = text.match(regex);
-        if (match) {
-          slashCommandElement = (
-            <span
-              className={cn(
-                "inline-flex items-center px-2 py-0.5 rounded-sm font-medium text-xs mr-1",
-                type.className,
-              )}
-            >
-              <span>{type.label}</span>
-            </span>
-          );
-          remainingText = text.slice(match[0].length);
-          break;
-        }
-      }
-
-      const mentionRegex = /@(\w+)/g;
-      const parts = remainingText.split(mentionRegex);
-
-      const renderedParts = parts.map((part, idx) => {
-        if (idx % 2 === 0) {
-          return <span key={idx}>{part}</span>;
-        } else {
-          const userId = usernameToUserIdMap.get(part.toLowerCase());
-
-          return <UserHoverCard key={idx} userId={userId} username={part} />;
-        }
-      });
-
-      return (
-        <>
-          {slashCommandElement}
-          {renderedParts}
-        </>
+  const { mutateAsync: deleteComment, isPending: isDeleting } = useMutation({
+    mutationFn: async () => {
+      await api.shipments.deleteComment(
+        shipmentComment.shipmentId,
+        shipmentComment.id,
       );
+
+      queryClient.invalidateQueries({
+        queryKey: queries.shipment.listComments(shipmentComment.shipmentId)
+          .queryKey,
+      });
     },
-    [usernameToUserIdMap],
-  );
+    onSuccess: () => {
+      toast.success("Comment deleted successfully");
+    },
+    onError: (error) => {
+      toast.error("Failed to delete comment");
+      console.error(error);
+    },
+  });
+
+  const handleDelete = () => {
+    if (!isOwner) {
+      toast.error("You do not have permission to delete this comment");
+      return;
+    }
+
+    deleteComment();
+  };
+
+  const handleEdit = () => {
+    if (!isOwner) {
+      toast.error("You do not have permission to edit this comment");
+      return;
+    }
+
+    setEditingComment(shipmentComment);
+  };
+
   return (
     <div
       className={cn(
@@ -98,7 +95,7 @@ export function CommentContent({
           className="size-6 rounded-full"
         />
       </div>
-      <div className="flex-1 space-y-1">
+      <div className="flex-1 space-y-1 flex flex-col">
         <div className="flex items-center gap-2 justify-between">
           <div className="flex flex-row items-center gap-2">
             <span className="text-sm font-medium">
@@ -107,11 +104,35 @@ export function CommentContent({
             <span className="bg-muted-foreground/60 rounded-full size-1 text-xs" />
             <span className="text-xs text-muted-foreground">{timeAgo}</span>
           </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <div className="flex items-center gap-2 invisible group-hover:visible mr-2">
+                <Button variant="ghost" size="xs">
+                  <Icon icon={faEllipsis} />
+                </Button>
+              </div>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem
+                title="Edit"
+                disabled={!isOwner || isDeleting}
+                onClick={handleEdit}
+              />
+              <DropdownMenuItem
+                color="danger"
+                title="Delete"
+                disabled={!isOwner || isDeleting}
+                onClick={handleDelete}
+              />
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         <div className="text-sm text-foreground">
-          <p className="break-words">
-            {renderContent(shipmentComment.comment)}
-          </p>
+          {shipmentComment.metadata?.editorContent && (
+            <CommentJsonRenderer
+              content={shipmentComment.metadata.editorContent}
+            />
+          )}
         </div>
       </div>
     </div>

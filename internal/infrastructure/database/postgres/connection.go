@@ -106,7 +106,6 @@ func NewConnection(p ConnectionParams) db.Connection {
 }
 
 func (c *connection) DB(ctx context.Context) (*bun.DB, error) {
-	// * For backward compatibility, DB() returns the write connection
 	return c.WriteDB(ctx)
 }
 
@@ -115,7 +114,6 @@ func (c *connection) WriteDB(ctx context.Context) (*bun.DB, error) {
 }
 
 func (c *connection) initializePrimaryIfNeeded(ctx context.Context) (*bun.DB, error) {
-	// Fast path: check with read lock first
 	c.mu.RLock()
 	if c.db != nil {
 		defer c.mu.RUnlock()
@@ -126,7 +124,6 @@ func (c *connection) initializePrimaryIfNeeded(ctx context.Context) (*bun.DB, er
 	c.mu.Lock()
 	defer c.mu.Unlock()
 
-	// Double-check after acquiring write lock
 	if c.db != nil {
 		return c.db, nil
 	}
@@ -146,7 +143,6 @@ func (c *connection) initializePrimaryIfNeeded(ctx context.Context) (*bun.DB, er
 		return nil, ErrDBConfigNil
 	}
 
-	// Parse the database connection string
 	cfg, err := pgxpool.ParseConfig(dsn)
 	if err != nil {
 		return nil, eris.Wrap(err, "failed to parse database config")
@@ -154,7 +150,6 @@ func (c *connection) initializePrimaryIfNeeded(ctx context.Context) (*bun.DB, er
 
 	cfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 
-	// Setup connection pool
 	pool, err := pgxpool.NewWithConfig(ctx, cfg)
 	if err != nil {
 		return nil, eris.Wrap(err, "failed to create database pool")
@@ -166,7 +161,6 @@ func (c *connection) initializePrimaryIfNeeded(ctx context.Context) (*bun.DB, er
 
 	bunDB := bun.NewDB(sqldb, pgdialect.New(), bun.WithDiscardUnknownColumns())
 
-	// Add query hooks for debugging and metrics
 	if appCfg.Environment == "development" && dbCfg.Debug {
 		bunDB.AddQueryHook(bundebug.NewQueryHook(
 			bundebug.WithVerbose(true),
@@ -174,10 +168,8 @@ func (c *connection) initializePrimaryIfNeeded(ctx context.Context) (*bun.DB, er
 		))
 	}
 
-	// Add metrics hook for all environments
 	bunDB.AddQueryHook(middleware.NewDatabaseQueryHook(c.log, "primary", true))
 
-	// Add telemetry instrumentation if available
 	if c.telemetryMetrics != nil {
 		appCfg := c.cfg.App()
 		if appCfg != nil {
@@ -192,13 +184,11 @@ func (c *connection) initializePrimaryIfNeeded(ctx context.Context) (*bun.DB, er
 
 	bunDB.RegisterModel(registry.RegisterEntities()...)
 
-	// Configure connection pool settings
 	sqldb.SetConnMaxIdleTime(time.Duration(dbCfg.ConnMaxIdleTime) * time.Second)
 	sqldb.SetMaxOpenConns(dbCfg.MaxConnections)
 	sqldb.SetMaxIdleConns(dbCfg.MaxIdleConns)
 	sqldb.SetConnMaxLifetime(time.Duration(dbCfg.ConnMaxLifetime) * time.Second)
 
-	// Verify connection
 	if err = bunDB.PingContext(ctx); err != nil {
 		metrics.RecordConnectionAttempt("primary", false)
 		return nil, eris.Wrap(err, "failed to ping database")
@@ -209,13 +199,10 @@ func (c *connection) initializePrimaryIfNeeded(ctx context.Context) (*bun.DB, er
 	c.db = bunDB
 	c.log.Info().Msg("🚀 Established connection to primary Postgres database!")
 
-	// Start monitoring connection pool stats
 	go c.monitorConnectionPoolStats(ctx)
 
-	// * Initialize connection pool
 	c.connectionPool = NewConnectionPool(c.db, c.log)
 
-	// * Initialize read replicas if configured
 	if dbCfg.EnableReadWriteSeparation && len(dbCfg.ReadReplicas) > 0 {
 		if err = c.initializeReadReplicas(ctx); err != nil {
 			c.log.Error().
@@ -230,7 +217,6 @@ func (c *connection) initializePrimaryIfNeeded(ctx context.Context) (*bun.DB, er
 func (c *connection) ReadDB(ctx context.Context) (*bun.DB, error) {
 	start := time.Now()
 
-	// * Ensure primary connection is initialized first
 	if _, err := c.initializePrimaryIfNeeded(ctx); err != nil {
 		return nil, err
 	}
@@ -273,12 +259,10 @@ func (c *connection) Close() error {
 
 	c.log.Info().Msg("closing PostgreSQL database connection")
 
-	// Cancel health check monitoring
 	if c.healthCheckCancel != nil {
 		c.healthCheckCancel()
 	}
 
-	// First, we'll mark everything as nil after we're done to prevent any lingering references
 	defer func() {
 		c.db = nil
 		c.sql = nil
@@ -287,18 +271,14 @@ func (c *connection) Close() error {
 		c.log.Info().Msg("PostgreSQL database connection resources cleared")
 	}()
 
-	// Use a very short timeout for the whole close operation
 	closeCtx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 	defer cancel()
 
-	// Create a channel to signal completion
 	done := make(chan struct{})
 
-	// Do all closing operations in a goroutine
 	go func() {
 		defer close(done)
 
-		// Close the database connection first
 		if c.db != nil {
 			c.log.Debug().Msg("closing database connection")
 			if err := c.db.Close(); err != nil {
@@ -308,14 +288,12 @@ func (c *connection) Close() error {
 			}
 		}
 
-		// Then close the connection pool
 		if c.pool != nil {
 			c.log.Debug().Msg("closing connection pool")
 			c.pool.Close()
 			c.log.Debug().Msg("connection pool closed")
 		}
 
-		// * Close connection pool (handles replicas)
 		if c.connectionPool != nil {
 			c.log.Debug().Msg("closing connection pool manager")
 			if err := c.connectionPool.Close(); err != nil {
@@ -324,7 +302,6 @@ func (c *connection) Close() error {
 		}
 	}()
 
-	// Wait for completion or timeout
 	select {
 	case <-done:
 		c.log.Info().Msg("PostgreSQL database connection closed successfully")
@@ -358,7 +335,6 @@ func (c *connection) initializeReadReplicas( //nolint:funlen // we need to keep 
 
 		start := time.Now()
 
-		// * Build DSN for replica
 		hostPort := net.JoinHostPort(replicaCfg.Host, strconv.Itoa(replicaCfg.Port))
 		dsn := fmt.Sprintf("postgres://%s:%s@%s/%s?sslmode=%s",
 			dbCfg.Username,
@@ -368,7 +344,6 @@ func (c *connection) initializeReadReplicas( //nolint:funlen // we need to keep 
 			dbCfg.SSLMode,
 		)
 
-		// Parse the database connection string
 		cfg, err := pgxpool.ParseConfig(dsn)
 		if err != nil {
 			c.log.Error().
@@ -380,7 +355,6 @@ func (c *connection) initializeReadReplicas( //nolint:funlen // we need to keep 
 
 		cfg.ConnConfig.DefaultQueryExecMode = pgx.QueryExecModeSimpleProtocol
 
-		// Setup connection pool
 		pool, err := pgxpool.NewWithConfig(ctx, cfg)
 		if err != nil {
 			c.log.Error().
@@ -393,7 +367,6 @@ func (c *connection) initializeReadReplicas( //nolint:funlen // we need to keep 
 		sqldb := stdlib.OpenDBFromPool(pool)
 		bunDB := bun.NewDB(sqldb, pgdialect.New(), bun.WithDiscardUnknownColumns())
 
-		// Add query hooks
 		if appCfg.Environment == "development" && dbCfg.Debug {
 			bunDB.AddQueryHook(bundebug.NewQueryHook(
 				bundebug.WithVerbose(true),
@@ -401,12 +374,10 @@ func (c *connection) initializeReadReplicas( //nolint:funlen // we need to keep 
 			))
 		}
 
-		// Add metrics hook for replica
 		bunDB.AddQueryHook(middleware.NewDatabaseQueryHook(c.log, replicaCfg.Name, true))
 
 		bunDB.RegisterModel(registry.RegisterEntities()...)
 
-		// Configure connection pool settings
 		maxConns := replicaCfg.MaxConnections
 		if maxConns == 0 {
 			maxConns = dbCfg.MaxConnections
@@ -421,7 +392,6 @@ func (c *connection) initializeReadReplicas( //nolint:funlen // we need to keep 
 		sqldb.SetMaxIdleConns(maxIdleConns)
 		sqldb.SetConnMaxLifetime(time.Duration(dbCfg.ConnMaxLifetime) * time.Second)
 
-		// Verify connection
 		if err = bunDB.PingContext(ctx); err != nil {
 			c.log.Error().Err(err).Str("replica", replicaCfg.Name).Msg("failed to ping replica")
 			pool.Close()
@@ -459,7 +429,6 @@ func (c *connection) initializeReadReplicas( //nolint:funlen // we need to keep 
 		return eris.New("no read replicas could be initialized")
 	}
 
-	// * Start health check goroutine with proper cancellation
 	ctx, cancel := context.WithCancel(context.Background())
 	c.healthCheckCancel = cancel
 	go c.monitorReplicaHealth(ctx)
@@ -471,7 +440,6 @@ func (c *connection) monitorReplicaHealth(ctx context.Context) {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
 
-	// * Initial health check
 	c.performHealthCheck(ctx)
 
 	for {
@@ -498,15 +466,12 @@ func (c *connection) performHealthCheck(ctx context.Context) {
 	lagThreshold := time.Duration(dbCfg.ReplicaLagThreshold) * time.Second
 	pool.HealthCheck(ctx, lagThreshold)
 
-	// * Update pool statistics
 	pool.GetPoolStats()
 }
 
 func (c *connection) monitorConnectionPoolStats(ctx context.Context) {
-	// Initial delay to ensure connection is fully initialized
 	time.Sleep(2 * time.Second)
 
-	// Log initial stats
 	c.updatePoolStats()
 
 	ticker := time.NewTicker(15 * time.Second)
@@ -526,11 +491,9 @@ func (c *connection) updatePoolStats() {
 	c.mu.RLock()
 	defer c.mu.RUnlock()
 
-	// Update primary connection stats
 	if c.sql != nil {
 		stats := c.sql.Stats()
 
-		// Log detailed connection information
 		c.log.Info().
 			Int("max_open", stats.MaxOpenConnections).
 			Int("open", stats.OpenConnections).
@@ -548,7 +511,6 @@ func (c *connection) updatePoolStats() {
 			intutils.SafeInt32(stats.InUse))
 	}
 
-	// Update connection pool stats if available
 	if c.connectionPool != nil {
 		c.connectionPool.GetPoolStats()
 	}

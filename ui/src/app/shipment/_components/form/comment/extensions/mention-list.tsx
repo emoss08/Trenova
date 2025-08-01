@@ -79,22 +79,57 @@ export function MentionFloatingMenu({
         const mentionStart = $from.start() + (mentionMatch.index || 0);
         const mentionEnd = from;
 
-        editor
+        // Check if there's already a space before the @ symbol
+        const charBeforeMention =
+          mentionMatch.index && mentionMatch.index > 0
+            ? beforeCursor[mentionMatch.index - 1]
+            : "";
+        const needsSpaceBefore =
+          charBeforeMention &&
+          charBeforeMention !== " " &&
+          charBeforeMention !== "\n";
+
+        const content = [];
+
+        // Add space before mention if needed
+        if (needsSpaceBefore) {
+          content.push({
+            type: "text",
+            text: " ",
+          });
+        }
+
+        // Add the mention
+        content.push({
+          type: "mention",
+          attrs: {
+            id: user.id,
+            label: user.username,
+          },
+        });
+
+        // Add space after mention
+        content.push({
+          type: "text",
+          text: " ",
+        });
+
+        const chain = editor
           .chain()
           .focus()
           .deleteRange({
             from: mentionStart,
             to: mentionEnd,
           })
-          .insertContent({
-            type: "mention",
-            attrs: {
-              id: user.id,
-              label: user.username,
-            },
-          })
-          .insertContent(" ")
-          .run();
+          .insertContent(content);
+
+        chain.run();
+
+        // Force cursor to the end after a small delay
+        setTimeout(() => {
+          const { to } = editor.state.selection;
+          editor.commands.setTextSelection(to);
+        }, 0);
 
         // Track mentioned users
         if (onMentionedUsersChange) {
@@ -196,6 +231,15 @@ export function MentionFloatingMenu({
   return (
     <FloatingMenu
       editor={editor}
+      className="z-50"
+      options={{
+        strategy: "fixed",
+        placement: "top-start",
+        offset: 10,
+        flip: true,
+        shift: true,
+        arrow: false,
+      }}
       shouldShow={({ state }) => {
         if (!editor) return false;
 

@@ -43,6 +43,8 @@ async function fetchOptions<T>(
     },
   });
 
+  console.info("Fetched options", data);
+
   return data;
 }
 
@@ -74,6 +76,7 @@ export function AutocompleteCommandContent<TOption>({
   getOptionValue,
   renderOption,
   setSelectedOption,
+  selectedOption,
   value,
   setOpen,
   noResultsMessage,
@@ -82,6 +85,7 @@ export function AutocompleteCommandContent<TOption>({
   extraSearchParams,
   onChange,
   popoutLink,
+  onClear,
 }: {
   open: boolean;
   link: string;
@@ -95,9 +99,11 @@ export function AutocompleteCommandContent<TOption>({
   getOptionValue: (option: TOption) => string | number;
   renderOption: (option: TOption) => React.ReactNode;
   setSelectedOption: (option: TOption | null) => void;
+  selectedOption: TOption | null;
   onOptionChange?: (option: TOption | null) => void;
   extraSearchParams?: Record<string, string | string[]>;
   popoutLink?: string;
+  onClear?: () => void;
 }) {
   const queryClient = useQueryClient();
   const [options, setOptions] = useState<TOption[]>([]);
@@ -107,14 +113,15 @@ export function AutocompleteCommandContent<TOption>({
   const [page, setPage] = useState(1);
   const commandListRef = useRef<HTMLDivElement>(null);
 
+
   // * Animation frame reference for smooth scrolling
   const animationRef = useRef<number | null>(null);
   // * Target scroll position for smooth scrolling
   const targetScrollRef = useRef<number | null>(null);
 
-  const { isLoading, isError } = useQuery({
+  const { isLoading, isError, data } = useQuery({
     queryKey: [
-      "autocomplete",
+      "autocomplete-search",
       link,
       debouncedSearchTerm,
       page,
@@ -127,18 +134,12 @@ export function AutocompleteCommandContent<TOption>({
         page,
         extraSearchParams,
       );
-
-      // * Update options state
-      setOptions((prev) =>
-        page === 1 ? response.results : [...prev, ...response.results],
-      );
-      setHasMore(!!response.next);
-
+      console.info("Fetching options", response);
       return response;
     },
     placeholderData: () => {
       return queryClient.getQueryData([
-        "autocomplete",
+        "autocomplete-search",
         link,
         debouncedSearchTerm,
         page,
@@ -146,15 +147,55 @@ export function AutocompleteCommandContent<TOption>({
       ]);
     },
     enabled: open,
-    staleTime: 0,
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
+    staleTime: 2 * 60 * 1000, // Cache search results for 2 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: 1,
   });
+
+  // Update options when query data changes
+  useEffect(() => {
+    if (data) {
+      if (page === 1) {
+        setOptions(data.results);
+      } else {
+        setOptions((prev) => [...prev, ...data.results]);
+      }
+      setHasMore(!!data.next);
+    }
+  }, [data, page]);
 
   // * Reset the page when the search term changes
   useEffect(() => {
     setPage(1);
   }, [debouncedSearchTerm]);
+
+  // * Ensure selected option is in the options list when popover opens
+  useEffect(() => {
+    if (value && selectedOption && open) {
+      setOptions((prevOptions) => {
+        const optionExists = prevOptions.some(
+          (opt) => getOptionValue(opt).toString() === value,
+        );
+        if (!optionExists) {
+          // Add selected option to the beginning of the list
+          return [selectedOption, ...prevOptions];
+        }
+        return prevOptions;
+      });
+    }
+  }, [value, selectedOption, open, getOptionValue]);
+
+  // * Handle popover open/close
+  useEffect(() => {
+    if (!open) {
+      // When closing, reset search and pagination but keep options
+      setSearchTerm("");
+      setPage(1);
+      // Don't clear options to prevent flashing
+    }
+  }, [open]);
 
   const handleScrollEnd = useCallback(
     (e: React.UIEvent<HTMLDivElement>) => {
@@ -219,15 +260,23 @@ export function AutocompleteCommandContent<TOption>({
 
   const handleSelect = useCallback(
     (currentValue: string) => {
-      const newValue = clearable && currentValue === value ? "" : currentValue;
-      const selectedOpt = options.find(
-        (opt) => getOptionValue(opt).toString() === currentValue,
-      );
+      const isClearing = clearable && currentValue === value;
+      const newValue = isClearing ? "" : currentValue;
+      const selectedOpt = isClearing
+        ? null
+        : options.find(
+            (opt) => getOptionValue(opt).toString() === currentValue,
+          );
 
+// Update the selected option in parent component
       setSelectedOption(selectedOpt || null);
       onChange(newValue);
       if (onOptionChange) {
         onOptionChange(selectedOpt || null);
+      }
+      // If clearing and onClear callback exists, call it
+      if (isClearing && onClear) {
+        onClear();
       }
       setOpen(false);
     },
@@ -240,6 +289,7 @@ export function AutocompleteCommandContent<TOption>({
       getOptionValue,
       setSelectedOption,
       setOpen,
+      onClear,
     ],
   );
 
@@ -325,7 +375,7 @@ export function AutocompleteCommandContent<TOption>({
             Failed to fetch options
           </div>
         )}
-        {!isLoading && options.length === 0 && (
+        {!isLoading && data && options.length === 0 && (
           <div className="flex flex-col items-center p-4 justify-center size-full gap-2">
             <div className="flex items-center justify-center p-4 rounded-full bg-blue-600/20 border border-blue-600/50">
               <Icon icon={faGhost} className="size-10 text-blue-600" />
@@ -359,7 +409,12 @@ export function AutocompleteCommandContent<TOption>({
               value={value}
             />
           ))}
-          {isLoading && (
+          {isLoading && options.length === 0 && (
+            <div className="p-8 flex justify-center">
+              <PulsatingDots size={1} color="foreground" />
+            </div>
+          )}
+          {isLoading && options.length > 0 && (
             <div className="p-2 flex justify-center">
               <PulsatingDots size={1} color="foreground" />
             </div>
@@ -388,6 +443,9 @@ export function AutocompleteCommandOption<TOption>({
   handleSelect: (value: string) => void;
   value: string;
 }) {
+  const optionValue = getOptionValue(option).toString();
+  const isSelected = value === optionValue;
+
   return (
     <CommandItem
       className="[&_svg]:size-3 cursor-pointer"
@@ -401,9 +459,7 @@ export function AutocompleteCommandOption<TOption>({
         className={cn(
           "size-3",
           "absolute right-2 top-1/2 -translate-y-1/2",
-          value === getOptionValue(option).toString()
-            ? "opacity-100"
-            : "opacity-0",
+          isSelected ? "opacity-100" : "opacity-0",
         )}
       />
     </CommandItem>

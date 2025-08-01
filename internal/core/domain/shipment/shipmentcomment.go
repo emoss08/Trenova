@@ -7,7 +7,6 @@ package shipment
 
 import (
 	"context"
-	"regexp"
 
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
@@ -42,17 +41,19 @@ type ShipmentCommentMention struct {
 type ShipmentComment struct {
 	bun.BaseModel `bun:"table:shipment_comments,alias:sc" json:"-"`
 
-	ID              pulid.ID  `json:"id"              bun:"id,pk,type:VARCHAR(100),notnull"`
-	BusinessUnitID  pulid.ID  `json:"businessUnitId"  bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
-	OrganizationID  pulid.ID  `json:"organizationId"  bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
-	ShipmentID      pulid.ID  `json:"shipmentId"      bun:"shipment_id,pk,notnull,type:VARCHAR(100)"`
-	UserID          pulid.ID  `json:"userId"          bun:"user_id,pk,notnull,type:VARCHAR(100)"`
-	ParentCommentID *pulid.ID `json:"parentCommentId" bun:"parent_comment_id,type:VARCHAR(100)"`
-	Comment         string    `json:"comment"         bun:"comment,type:TEXT,notnull"`
-	CommentType     string    `json:"commentType"     bun:"comment_type,type:VARCHAR(100)"`
-	Version         int64     `json:"version"         bun:"version,type:BIGINT"`
-	CreatedAt       int64     `json:"createdAt"       bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt       int64     `json:"updatedAt"       bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID `json:"id"                 bun:"id,pk,type:VARCHAR(100),notnull"`
+	BusinessUnitID pulid.ID `json:"businessUnitId"     bun:"business_unit_id,pk,notnull,type:VARCHAR(100)"`
+	OrganizationID pulid.ID `json:"organizationId"     bun:"organization_id,pk,notnull,type:VARCHAR(100)"`
+	ShipmentID     pulid.ID `json:"shipmentId"         bun:"shipment_id,pk,notnull,type:VARCHAR(100)"`
+	UserID         pulid.ID `json:"userId"             bun:"user_id,pk,notnull,type:VARCHAR(100)"`
+	// NOTE: comment is primarily used for text search.
+	Comment     string `json:"comment"            bun:"comment,type:TEXT,notnull"`
+	CommentType string `json:"commentType"        bun:"comment_type,type:VARCHAR(100)"`
+	// NOTE: metadata is rendered on the frontend
+	Metadata  map[string]any `json:"metadata,omitempty" bun:"metadata,type:JSONB,default:'{}'::jsonb"`
+	Version   int64          `json:"version"            bun:"version,type:BIGINT"`
+	CreatedAt int64          `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt int64          `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
 	Shipment       *Shipment                  `json:"-"              bun:"rel:belongs-to,join:shipment_id=id"`
@@ -60,19 +61,12 @@ type ShipmentComment struct {
 	Organization   *organization.Organization `json:"-"              bun:"rel:belongs-to,join:organization_id=id"`
 	User           *user.User                 `json:"user"           bun:"rel:belongs-to,join:user_id=id"`
 	MentionedUsers []*ShipmentCommentMention  `json:"mentionedUsers" bun:"rel:has-many,join:id=comment_id"`
-	ParentComment  *ShipmentComment           `json:"parentComment"  bun:"rel:belongs-to,join:parent_comment_id=id"`
-	Replies        []*ShipmentComment         `json:"replies"        bun:"rel:has-many,join:id=parent_comment_id"`
 }
 
 func (sc *ShipmentComment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, sc,
 		validation.Field(&sc.Comment, validation.Required.Error("Comment is required")),
-		validation.Field(&sc.ParentCommentID, validation.By(func(value any) error {
-			if sc.ParentCommentID != nil && sc.ParentComment != nil && sc.ParentComment.ParentCommentID != nil {
-				return validation.NewError("validation_parent_comment", "Replies to replies are not allowed")
-			}
-			return nil
-		})),
+		validation.Field(&sc.Metadata, validation.Required.Error("Metadata is required")),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
@@ -105,27 +99,6 @@ func (sc *ShipmentComment) BeforeAppendModel(_ context.Context, query bun.Query)
 	}
 
 	return nil
-}
-
-// ExtractMentions extracts all @username mentions from the comment text
-func (sc *ShipmentComment) ExtractMentions() []string {
-	mentionRegex := regexp.MustCompile(`@(\w+)`)
-	matches := mentionRegex.FindAllStringSubmatch(sc.Comment, -1)
-
-	mentions := make([]string, 0, len(matches))
-	seen := make(map[string]bool)
-
-	for _, match := range matches {
-		if len(match) > 1 {
-			username := match[1]
-			if !seen[username] {
-				mentions = append(mentions, username)
-				seen[username] = true
-			}
-		}
-	}
-
-	return mentions
 }
 
 // BeforeAppendModel for ShipmentCommentMention

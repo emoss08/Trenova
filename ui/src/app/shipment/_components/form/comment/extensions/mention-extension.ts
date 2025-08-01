@@ -6,7 +6,9 @@
 import { mergeAttributes } from "@tiptap/core";
 import Mention from "@tiptap/extension-mention";
 
-export const CustomMention = Mention.configure({
+export const CustomMention = Mention.extend({
+  atom: true,
+}).configure({
   HTMLAttributes: {
     class: "mention",
   },

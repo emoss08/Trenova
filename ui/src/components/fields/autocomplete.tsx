@@ -8,11 +8,13 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { http } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
 import {
   AutocompleteFieldProps,
   BaseAutocompleteFieldProps,
 } from "@/types/fields";
+import { useQuery } from "@tanstack/react-query";
 import { useCallback, useEffect, useState } from "react";
 import { Controller, FieldValues } from "react-hook-form";
 import { AutocompleteCommandContent } from "./autocompete/autocomplete-content";
@@ -50,16 +52,39 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
   const [open, setOpen] = useState(false);
   const [selectedOption, setSelectedOption] = useState<TOption | null>(null);
 
-  const handleClear = useCallback(() => {
-    onChange("");
-    setSelectedOption(null);
-  }, [onChange]);
+  const { data: fetchedOption } = useQuery({
+    queryKey: ["autocomplete-option", link, value],
+    queryFn: async () => {
+      if (!value) return null;
+      const url = link.endsWith("/") ? `${link}${value}/` : `${link}/${value}/`;
+      const { data } = await http.get<TOption>(url);
+      return data;
+    },
+    enabled: !!value && !selectedOption,
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    retry: 1,
+  });
 
+  // Update selectedOption when we fetch an option or when value changes
   useEffect(() => {
-    if (selectedOption && value !== getOptionValue(selectedOption)) {
+    if (!value) {
       setSelectedOption(null);
+    } else if (fetchedOption && !selectedOption) {
+      setSelectedOption(fetchedOption);
     }
-  }, [value, selectedOption, getOptionValue]);
+  }, [value, fetchedOption, selectedOption]);
+
+  const handleClear = useCallback(() => {
+    setSelectedOption(null);
+    onChange("");
+    // Trigger onOptionChange with null to notify parent components
+    if (onOptionChange) {
+      onOptionChange(null);
+    }
+  }, [onChange, onOptionChange]);
 
   return (
     <div className="relative">
@@ -76,8 +101,6 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             getDisplayValue={getDisplayValue}
             placeholder={placeholder}
             handleClear={handleClear}
-            setSelectedOption={setSelectedOption}
-            link={link}
           />
         </PopoverTrigger>
         <PopoverContent
@@ -96,6 +119,7 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             renderOption={renderOption}
             setOpen={setOpen}
             setSelectedOption={setSelectedOption}
+            selectedOption={selectedOption}
             onOptionChange={onOptionChange}
             onChange={onChange}
             clearable={clearable}
@@ -103,6 +127,13 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             noResultsMessage={noResultsMessage}
             extraSearchParams={extraSearchParams}
             popoutLink={popoutLink}
+            // Pass the setSelectedOption function to ensure state sync
+            onClear={() => {
+              setSelectedOption(null);
+              if (onOptionChange) {
+                onOptionChange(null);
+              }
+            }}
           />
         </PopoverContent>
       </Popover>

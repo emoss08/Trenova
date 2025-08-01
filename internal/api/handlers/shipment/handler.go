@@ -108,6 +108,16 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(60), // 60 writes per minute
 	)...)
 
+	api.Put("/:shipmentID/comments/:commentID/", rl.WithRateLimit(
+		[]fiber.Handler{h.updateComment},
+		middleware.PerMinute(60), // 60 writes per minute
+	)...)
+
+	api.Delete("/:shipmentID/comments/:commentID/", rl.WithRateLimit(
+		[]fiber.Handler{h.deleteComment},
+		middleware.PerMinute(60), // 60 writes per minute
+	)...)
+
 	api.Post("/duplicate/", rl.WithRateLimit(
 		[]fiber.Handler{h.duplicate},
 		middleware.PerMinute(60), // 60 writes per minute
@@ -539,6 +549,70 @@ func (h *Handler) listComments(c *fiber.Ctx) error {
 	}
 
 	return limitoffsetpagination.HandleEnhancedPaginatedRequest(c, h.eh, reqCtx, handler)
+}
+
+func (h *Handler) updateComment(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	commentID, err := pulid.MustParse(c.Params("commentID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	shipmentID, err := pulid.MustParse(c.Params("shipmentID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := new(shipmentdomain.ShipmentComment)
+	if err = c.BodyParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req.ID = commentID
+	req.ShipmentID = shipmentID
+	req.OrganizationID = reqCtx.OrgID
+	req.BusinessUnitID = reqCtx.BuID
+	req.UserID = reqCtx.UserID
+
+	newEntity, err := h.sc.Update(c.UserContext(), req, reqCtx.UserID)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(newEntity)
+}
+
+func (h *Handler) deleteComment(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	commentID, err := pulid.MustParse(c.Params("commentID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	shipmentID, err := pulid.MustParse(c.Params("shipmentID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	if err = h.sc.Delete(c.UserContext(), repositories.DeleteCommentRequest{
+		CommentID:  commentID,
+		ShipmentID: shipmentID,
+		OrgID:      reqCtx.OrgID,
+		BuID:       reqCtx.BuID,
+		UserID:     reqCtx.UserID,
+	}); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }
 
 func (h *Handler) liveStream(c *fiber.Ctx) error {
