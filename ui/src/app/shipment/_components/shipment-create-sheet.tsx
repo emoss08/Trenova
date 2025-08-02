@@ -17,6 +17,7 @@ import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
+import { useUrlFragment } from "@/hooks/use-url-fragment";
 import { MoveStatus } from "@/lib/schemas/move-schema";
 import {
   RatingMethod,
@@ -38,6 +39,7 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { isPopout, closePopout } = usePopoutWindow();
+  const { clearFragment } = useUrlFragment();
 
   // TODO(Wolfred): Add placeholder data
   const form = useForm({
@@ -126,7 +128,9 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
   const handleClose = useCallback(() => {
     onOpenChange(false);
     reset();
-  }, [onOpenChange, reset]);
+    // Clear URL fragment when closing
+    clearFragment();
+  }, [onOpenChange, reset, clearFragment]);
 
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: ShipmentSchema) => {
@@ -183,7 +187,16 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
   }, [open, isSubmitting, handleSubmit, onSubmit]);
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet
+      open={open}
+      onOpenChange={(newOpen) => {
+        if (!newOpen) {
+          // Clear URL fragment when closing
+          clearFragment();
+        }
+        onOpenChange(newOpen);
+      }}
+    >
       <SheetContent
         className="w-[500px] sm:max-w-[540px] p-0"
         withClose={false}
