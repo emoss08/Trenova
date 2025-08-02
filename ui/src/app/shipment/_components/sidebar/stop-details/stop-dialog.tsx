@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icons";
 import { STOP_DIALOG_NOTICE_KEY } from "@/constants/env";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import {
   stopSchema,
@@ -24,7 +25,6 @@ import {
 } from "@/lib/schemas/stop-schema";
 import { type TableSheetProps } from "@/types/data-table";
 import { faInfoCircle, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { memo, useCallback, useEffect, useState } from "react";
 import {
   FormProvider,

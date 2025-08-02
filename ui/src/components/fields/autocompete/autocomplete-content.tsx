@@ -15,13 +15,13 @@ import {
 import { Icon } from "@/components/ui/icons";
 import { PulsatingDots } from "@/components/ui/pulsating-dots";
 import { popoutWindowManager } from "@/hooks/popout-window/popout-window";
+import { useDebounce } from "@/hooks/use-debounce";
 import { http } from "@/lib/http-client";
 import { cn, toTitleCase } from "@/lib/utils";
 import type { LimitOffsetResponse } from "@/types/server";
 import { faGhost } from "@fortawesome/pro-duotone-svg-icons";
 import { faCheck } from "@fortawesome/pro-regular-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useDebounce } from "@uidotdev/usehooks";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -112,7 +112,6 @@ export function AutocompleteCommandContent<TOption>({
   const [hasMore, setHasMore] = useState(false);
   const [page, setPage] = useState(1);
   const commandListRef = useRef<HTMLDivElement>(null);
-
 
   // * Animation frame reference for smooth scrolling
   const animationRef = useRef<number | null>(null);
@@ -268,7 +267,7 @@ export function AutocompleteCommandContent<TOption>({
             (opt) => getOptionValue(opt).toString() === currentValue,
           );
 
-// Update the selected option in parent component
+      // Update the selected option in parent component
       setSelectedOption(selectedOpt || null);
       onChange(newValue);
       if (onOptionChange) {

@@ -16,13 +16,13 @@ import { Icon } from "@/components/ui/icons";
 import { LazyImage } from "@/components/ui/image";
 import { Separator } from "@/components/ui/separator";
 import { GOOGLE_MAPS_NOTICE_KEY } from "@/constants/env";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { statusChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { type CustomerSchema } from "@/lib/schemas/customer-schema";
 import { IntegrationType } from "@/types/integration";
 import { faLightbulbOn, faXmark } from "@fortawesome/pro-regular-svg-icons";
 import { useQuery } from "@tanstack/react-query";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { useFormContext } from "react-hook-form";
 
 export default function CustomerForm() {

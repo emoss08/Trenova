@@ -5,7 +5,7 @@
 
 // Credit: https://github.com/openstatusHQ/data-table-filters/blob/main/src/providers/controls.tsx#L11
 
-import { useLocalStorage } from "@uidotdev/usehooks";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { createContext, useContext } from "react";
 
 interface ControlsContextType {

@@ -4,7 +4,7 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
+import { motion } from "motion/react";
 import React, { useMemo, type JSX } from "react";
 
 interface TextShimmerProps {

@@ -14,13 +14,13 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { SHOW_FAVORITES_KEY } from "@/constants/env";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
 import { faStar, faTrash } from "@fortawesome/pro-regular-svg-icons";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { Link, useLocation } from "react-router";
 import { toast } from "sonner";
 import {
