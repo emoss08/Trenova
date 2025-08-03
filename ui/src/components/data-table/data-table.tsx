@@ -56,6 +56,7 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
+import LetterGlitch from "../ui/letter-glitch";
 import { DataTablePermissionDeniedSkeleton } from "../ui/permission-skeletons";
 import { Table } from "../ui/table";
 import { DataTableBody } from "./_components/data-table-body";
@@ -519,24 +520,46 @@ export function DataTable<TData extends Record<string, any>>({
                 onDismiss={liveData.dismissBanner}
               />
             )}
-            <Table>
-              {includeHeader && <DataTableHeader table={table} />}
-              <DataTableBody
-                table={table}
-                columns={columns}
-                liveMode={
-                  liveMode && {
-                    enabled: liveModeEnabled,
-                    connected: liveData.connected,
-                    showToggle: liveMode.showToggle,
-                    onToggle: setLiveModeEnabled,
-                    autoRefresh: autoRefreshEnabled,
-                    onAutoRefreshToggle: setAutoRefreshEnabled,
+            {!dataQuery.isLoading && dataQuery.data?.count === 0 ? (
+              <div className="flex flex-col items-center justify-center max-h-[300px] border border-border rounded-md p-0.5 overflow-hidden">
+                <div className="relative size-full">
+                  <LetterGlitch
+                    glitchColors={["#9c9c9c", "#696969", "#424242"]}
+                    glitchSpeed={50}
+                    centerVignette={false}
+                    outerVignette={true}
+                    smooth={true}
+                  />
+                  <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center pointer-events-none">
+                    <p className="text-sm/none px-1 py-0.5 text-center font-medium uppercase select-none font-table dark:text-neutral-900 bg-amber-300 text-amber-950 dark:bg-amber-400">
+                      No data available
+                    </p>
+                    <p className="text-sm/none px-1 py-0.5 text-center font-medium uppercase select-none font-table dark:text-neutral-900 bg-neutral-900 text-white dark:bg-neutral-500">
+                      Try adjusting your filters or search query
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Table>
+                {includeHeader && <DataTableHeader table={table} />}
+                <DataTableBody
+                  table={table}
+                  columns={columns}
+                  liveMode={
+                    liveMode && {
+                      enabled: liveModeEnabled,
+                      connected: liveData.connected,
+                      showToggle: liveMode.showToggle,
+                      onToggle: setLiveModeEnabled,
+                      autoRefresh: autoRefreshEnabled,
+                      onAutoRefreshToggle: setAutoRefreshEnabled,
+                    }
                   }
-                }
-                contextMenuActions={contextMenuActions}
-              />
-            </Table>
+                  contextMenuActions={contextMenuActions}
+                />
+              </Table>
+            )}
 
             <PaginationInner table={table} />
             {TableModal && isCreateModalOpen && (
