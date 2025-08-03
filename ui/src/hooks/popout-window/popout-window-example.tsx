@@ -16,23 +16,7 @@ export function PopoutWindowExample() {
     closeAllPopouts,
     focusPopout,
     sendMessage,
-  } = usePopoutWindow({
-    onReady: (windowId) => {
-      console.log(`Popout window ${windowId} is ready`);
-    },
-    onClose: (windowId) => {
-      console.log(`Popout window ${windowId} was closed`);
-    },
-    onError: (error, windowId) => {
-      console.error(`Error in popout window ${windowId}:`, error);
-    },
-    onFocus: (windowId) => {
-      console.log(`Popout window ${windowId} gained focus`);
-    },
-    onBlur: (windowId) => {
-      console.log(`Popout window ${windowId} lost focus`);
-    },
-  });
+  } = usePopoutWindow();
 
   // If we're in a popout window, show different content
   if (isPopout) {
@@ -48,19 +32,23 @@ export function PopoutWindowExample() {
   return (
     <div className="space-y-4">
       <h2>Popout Window Manager Example</h2>
-      
+
       <div className="flex gap-2">
         <Button
           onClick={() => {
             // Open a create modal
-            openPopout("/equipment/configurations/equipment-manufacturers", {
-              modalType: "create",
-            }, {
-              width: 800,
-              height: 600,
-              title: "Create Equipment Manufacturer",
-              rememberPosition: true,
-            });
+            openPopout(
+              "/equipment/configurations/equipment-manufacturers",
+              {
+                modalType: "create",
+              },
+              {
+                width: 800,
+                height: 600,
+                title: "Create Equipment Manufacturer",
+                rememberPosition: true,
+              },
+            );
           }}
         >
           Open Create Modal
@@ -69,14 +57,18 @@ export function PopoutWindowExample() {
         <Button
           onClick={() => {
             // Open an edit modal
-            openPopout("/equipment/configurations/equipment-manufacturers/123", {
-              modalType: "edit",
-            }, {
-              width: 900,
-              height: 700,
-              title: "Edit Equipment Manufacturer",
-              rememberPosition: true,
-            });
+            openPopout(
+              "/equipment/configurations/equipment-manufacturers/123",
+              {
+                modalType: "edit",
+              },
+              {
+                width: 900,
+                height: 700,
+                title: "Edit Equipment Manufacturer",
+                rememberPosition: true,
+              },
+            );
           }}
         >
           Open Edit Modal
@@ -85,13 +77,17 @@ export function PopoutWindowExample() {
         <Button
           onClick={() => {
             // Open a full-screen popout
-            openPopout("/shipments", {}, {
-              width: 1400,
-              height: 900,
-              title: "Shipments",
-              hideAside: true,
-              rememberPosition: true,
-            });
+            openPopout(
+              "/shipments",
+              {},
+              {
+                width: 1400,
+                height: 900,
+                title: "Shipments",
+                hideAside: true,
+                rememberPosition: true,
+              },
+            );
           }}
         >
           Open Shipments
@@ -106,15 +102,14 @@ export function PopoutWindowExample() {
               <div key={windowId} className="flex justify-between items-center">
                 <span className="text-sm">{windowId}</span>
                 <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => focusPopout(windowId)}
-                  >
+                  <Button size="sm" onClick={() => focusPopout(windowId)}>
                     Focus
                   </Button>
                   <Button
                     size="sm"
-                    onClick={() => sendMessage(windowId, "test-message", { hello: "world" })}
+                    onClick={() =>
+                      sendMessage(windowId, "test-message", { hello: "world" })
+                    }
                   >
                     Send Message
                   </Button>

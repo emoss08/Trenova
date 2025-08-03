@@ -21,12 +21,6 @@ export function EditDedicatedLaneModal({
     defaultValues: currentRecord,
   });
 
-  const {
-    formState: { errors },
-  } = form;
-
-  console.log("errors", errors);
-
   return (
     <FormEditModal
       currentRecord={currentRecord}

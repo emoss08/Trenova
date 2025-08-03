@@ -14,8 +14,8 @@ import {
   UseFieldArrayUpdate,
   type FieldArrayWithId,
 } from "react-hook-form";
-import { AssignmentDetails } from "../move-assignment-details";
 import { MoveActions } from "./move-actions";
+import { AssignmentDetails } from "./move-assignment-details";
 import { MoveInformationHeader } from "./move-header";
 import { MoveList } from "./move-list";
 

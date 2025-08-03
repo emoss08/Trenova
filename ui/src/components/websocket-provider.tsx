@@ -1,15 +1,14 @@
+/* eslint-disable react-refresh/only-export-components */
 /*
  * Copyright 2023-2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-import { APP_ENV } from "@/constants/env";
-
 import { useWebSocket } from "@/hooks/use-websocket";
 
 import { useIsAuthenticated } from "@/stores/user-store";
 
-import { createContext, useContext, useEffect, type ReactNode } from "react";
+import { createContext, useContext, type ReactNode } from "react";
 
 interface WebSocketContextValue {
   isConnected: boolean;
@@ -47,25 +46,7 @@ export function WebSocketProvider({ children }: WebSocketProviderProps) {
   const { connect, disconnect, markAsRead, markAsDismissed, connectionState } =
     useWebSocket({
       enabled: isAuthenticated,
-
-      onMessage: (message) => {
-        if (APP_ENV === "development" || APP_ENV === "local") {
-          console.log("📨 WebSocket message received:", message);
-        }
-      },
-
-      onError: (error) => {
-        console.error("❌ WebSocket error:", error);
-      },
     });
-
-  // Debug connection state changes
-
-  useEffect(() => {
-    if (APP_ENV === "development") {
-      console.log("🔌 WebSocket connection state:", connectionState);
-    }
-  }, [connectionState]);
 
   const contextValue: WebSocketContextValue = {
     isConnected: connectionState.isConnected,

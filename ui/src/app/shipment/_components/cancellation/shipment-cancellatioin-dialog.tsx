@@ -112,10 +112,10 @@ export function ShipmentCancellationDialog({
   );
 
   useEffect(() => {
-    console.info("Resetting form after successful submission");
-    reset();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isSubmitSuccessful]);
+    if (isSubmitSuccessful) {
+      reset();
+    }
+  }, [isSubmitSuccessful, reset]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -99,7 +99,6 @@ func (dsh *DuplicateShipmentHandler) ProcessTask( //nolint:funlen // we need to 
 	if err != nil {
 		log.Error().Err(err).Msg("failed to duplicate shipment")
 
-		// Send failure notification
 		notificationReq := &services.JobCompletionNotificationRequest{
 			JobID:          task.ResultWriter().TaskID(),
 			JobType:        "duplicate_shipment",
@@ -127,7 +126,6 @@ func (dsh *DuplicateShipmentHandler) ProcessTask( //nolint:funlen // we need to 
 	}
 
 	for _, shipment := range shipments {
-		// Log the update if the insert was successful
 		err = dsh.as.LogAction(
 			&services.LogActionParams{
 				Resource:       permission.ResourceShipment,

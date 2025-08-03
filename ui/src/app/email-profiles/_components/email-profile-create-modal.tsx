@@ -48,12 +48,6 @@ export function CreateEmailProfileModal({
     },
   });
 
-  const {
-    formState: { errors },
-  } = form;
-
-  console.info("email profile errors", errors);
-
   return (
     <FormCreateModal
       open={open}

@@ -96,11 +96,7 @@ export const LiveModePresets = {
   /**
    * Custom setup with logging
    */
-  withLogging: (endpoint: string) =>
-    setupLiveMode(endpoint, {
-      onNewData: (data) => console.log("Live mode new data:", data),
-      onError: (error) => console.error("Live mode error:", error),
-    }),
+  withLogging: (endpoint: string) => setupLiveMode(endpoint),
 } as const;
 
 /**
@@ -171,8 +167,6 @@ export function getEnvironmentLiveMode(
         options: {
           ...baseConfig.options,
           pollInterval: 1000, // Faster updates in dev
-          onNewData: (data) => console.log("[DEV] New live data:", data),
-          onError: (error) => console.error("[DEV] Live mode error:", error),
         },
       };
 

@@ -63,7 +63,9 @@ export function useWebNotifications() {
   const [isEnabled, setIsEnabled] = useState(() => {
     if (typeof window === "undefined") return false;
     const stored = localStorage.getItem(PERMISSION_STORAGE_KEY);
-    return stored === "granted" && permission === "granted";
+    // Check if explicitly disabled or not granted
+    if (stored === "disabled") return false;
+    return stored === "granted" && Notification.permission === "granted";
   });
 
   // Refs for managing notifications and rate limiting
@@ -116,6 +118,28 @@ export function useWebNotifications() {
       return false;
     }
   }, [isSupported]);
+
+  // Enable notifications
+  const enableNotifications = useCallback(async (): Promise<boolean> => {
+    if (!isSupported) {
+      console.warn("[WebNotifications] Browser does not support notifications");
+      return false;
+    }
+
+    // Check if we have browser permission
+    if (Notification.permission === "granted") {
+      setIsEnabled(true);
+      localStorage.setItem(PERMISSION_STORAGE_KEY, "granted");
+      return true;
+    } else if (Notification.permission === "default") {
+      // Need to request permission
+      return requestPermission();
+    } else {
+      // Permission is denied at browser level
+      console.warn("[WebNotifications] Permission denied by browser");
+      return false;
+    }
+  }, [isSupported, requestPermission]);
 
   // Disable notifications
   const disableNotifications = useCallback(() => {
@@ -201,9 +225,6 @@ export function useWebNotifications() {
 
       // Don't show if document is visible (user is actively using the app)
       if (isDocumentVisible()) {
-        console.log(
-          "[WebNotifications] Document is visible, skipping notification",
-        );
         return null;
       }
 
@@ -328,8 +349,9 @@ export function useWebNotifications() {
 
     // Actions
     requestPermission,
-    showNotification,
+    enableNotifications,
     disableNotifications,
+    showNotification,
     clearAll,
     clearNotification,
     testNotification,

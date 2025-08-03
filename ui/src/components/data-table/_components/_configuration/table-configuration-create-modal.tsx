@@ -127,7 +127,6 @@ export function CreateTableConfigurationModal({
   const onSubmit = useCallback(
     async (values: TableConfigurationSchema) => {
       await mutateAsync(values);
-      console.log("Values", values);
     },
     [mutateAsync],
   );
@@ -166,7 +165,15 @@ export function CreateTableConfigurationModal({
         },
       });
     }
-  }, [isSubmitSuccessful, reset, open, resource, visiblityState, tableFilters, columnOrder]);
+  }, [
+    isSubmitSuccessful,
+    reset,
+    open,
+    resource,
+    visiblityState,
+    tableFilters,
+    columnOrder,
+  ]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

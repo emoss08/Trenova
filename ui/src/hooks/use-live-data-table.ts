@@ -44,8 +44,6 @@ export function useLiveDataTable({
     const events = pendingEventsRef.current;
     if (events.length === 0) return;
 
-    console.log(`📦 Processing batch of ${events.length} events`);
-
     // Clear pending events
     pendingEventsRef.current = [];
 
@@ -91,7 +89,6 @@ export function useLiveDataTable({
 
       // Debounce the query invalidation
       debounceTimeoutRef.current = setTimeout(() => {
-        console.log("🔄 Invalidating queries after debounce");
         queryClient.invalidateQueries({
           queryKey: [queryKey],
           type: "active",

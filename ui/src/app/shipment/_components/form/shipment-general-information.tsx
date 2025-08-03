@@ -6,12 +6,12 @@
 import { InputField } from "@/components/fields/input-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { handleMutationError } from "@/hooks/use-api-mutation";
+import useDebouncedEffect from "@/hooks/use-debounce-effect";
 import { queries } from "@/lib/queries";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { api } from "@/services/api";
 import { APIError } from "@/types/errors";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { useDebouncedEffect } from "@wojtekmaj/react-hooks";
 import { useFormContext, useWatch } from "react-hook-form";
 
 export default function ShipmentGeneralInformation() {

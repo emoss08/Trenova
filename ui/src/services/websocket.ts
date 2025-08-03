@@ -69,11 +69,9 @@ export class WebSocketService {
           maxReconnectionDelay: this.config.reconnectInterval * 4,
           maxRetries: this.config.maxReconnectAttempts,
           connectionTimeout: 4000,
-          debug: import.meta.env.DEV,
         });
 
         this.socket.addEventListener("open", () => {
-          console.log("WebSocket connected");
           this.onConnectionChange?.(true);
           this.startHeartbeat();
           resolve();
@@ -88,8 +86,7 @@ export class WebSocketService {
           }
         });
 
-        this.socket.addEventListener("close", (event) => {
-          console.log("WebSocket disconnected:", event.code, event.reason);
+        this.socket.addEventListener("close", () => {
           this.cleanup();
           this.onConnectionChange?.(false);
         });
@@ -126,7 +123,6 @@ export class WebSocketService {
   }
 
   private handleMessage(message: WebSocketMessage): void {
-    console.info("Handling message", message);
     switch (message.type) {
       case "notification":
         this.handleNotification(message.data as NotificationMessage);

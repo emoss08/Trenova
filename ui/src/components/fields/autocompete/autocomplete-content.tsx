@@ -43,8 +43,6 @@ async function fetchOptions<T>(
     },
   });
 
-  console.info("Fetched options", data);
-
   return data;
 }
 
@@ -133,7 +131,6 @@ export function AutocompleteCommandContent<TOption>({
         page,
         extraSearchParams,
       );
-      console.info("Fetching options", response);
       return response;
     },
     placeholderData: () => {

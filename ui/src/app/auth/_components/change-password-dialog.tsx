@@ -27,7 +27,6 @@ export function ChangePasswordDialog({
 }: ChangePasswordDialogProps) {
   const { onOpenChange } = props;
 
-  console.info("mustChangePassword", mustChangePassword);
   return (
     <Dialog
       {...props}

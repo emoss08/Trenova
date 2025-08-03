@@ -432,10 +432,8 @@ function ConsolidationSettings() {
 
   useEffect(() => {
     if (allowInvoiceConsolidation) {
-      console.log("allowInvoiceConsolidation", allowInvoiceConsolidation);
       setShowConsolidationOptions(true);
     } else {
-      console.log("allowInvoiceConsolidation", allowInvoiceConsolidation);
       setShowConsolidationOptions(false);
     }
   }, [allowInvoiceConsolidation]);

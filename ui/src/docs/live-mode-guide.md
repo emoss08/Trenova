@@ -13,11 +13,13 @@ Live mode allows tables to receive real-time updates from the server using Serve
 ## Architecture
 
 ### Backend (Go)
+
 - SSE endpoint that streams real-time updates
 - Polling-based approach for simplicity and reliability
 - JSON-formatted event messages
 
 ### Frontend (React)
+
 - Custom hooks for SSE connection management
 - Integration with TanStack Query for data management
 - Reusable banner component for notifications
@@ -202,17 +204,20 @@ The SSE implementation supports these event types:
 ## Features
 
 ### Automatic Reconnection
+
 - Exponential backoff strategy
 - Maximum retry attempts limit
 - Connection state tracking
 
 ### User Experience
+
 - Non-intrusive banner notification
 - Manual refresh control
 - Connection status indicator
 - Dismiss without refreshing
 
 ### Performance
+
 - Efficient polling strategy
 - Query result caching
 - Minimal bandwidth usage
@@ -230,16 +235,19 @@ To test live mode:
 ## Troubleshooting
 
 ### Connection Issues
+
 - Check browser console for SSE errors
 - Verify endpoint is accessible
 - Check for CORS configuration
 
 ### Performance Issues
+
 - Reduce polling interval if needed
 - Limit query result size
 - Monitor server resource usage
 
 ### Data Sync Issues
+
 - Verify timestamp handling in backend
 - Check query filtering logic
 - Ensure proper timezone handling

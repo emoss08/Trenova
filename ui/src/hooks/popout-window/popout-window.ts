@@ -277,7 +277,7 @@ class PopoutWindowManager {
         this.windows.delete(id);
         this.focusQueue = this.focusQueue.filter((wId) => wId !== id);
         this.events.onClose?.(id);
-        
+
         // Notify about window change
         this.notifyWindowsChange();
       }
@@ -490,7 +490,6 @@ class PopoutWindowManager {
     const searchParams = new URLSearchParams(queryParams);
     const fullPath = `${path}?${searchParams.toString()}`;
 
-    console.log("fullPath", fullPath);
     return fullPath;
   }
 

@@ -36,7 +36,7 @@ export function NotificationCenter() {
   const { data: history } = useNotificationHistory({ limit: 50 });
   const { markAsRead, markAllAsRead, dismiss, handleNotificationClick } =
     useNotificationActions();
-  const { isGranted, requestPermission, disableNotifications } =
+  const { isEnabled, enableNotifications, disableNotifications } =
     useWebNotifications();
 
   useNotificationCleanup();
@@ -60,14 +60,13 @@ export function NotificationCenter() {
     [handleNotificationClick],
   );
 
-  const handlePermissionChange = useCallback(() => {
-    if (isGranted) {
-      console.log("Disabling notifications");
+  const handlePermissionChange = useCallback(async () => {
+    if (isEnabled) {
       disableNotifications();
     } else {
-      requestPermission();
+      await enableNotifications();
     }
-  }, [isGranted, requestPermission, disableNotifications]);
+  }, [isEnabled, enableNotifications, disableNotifications]);
 
   return (
     <Popover open={isOpen} onOpenChange={setIsOpen}>
@@ -104,13 +103,11 @@ export function NotificationCenter() {
                   size="icon"
                   onClick={handlePermissionChange}
                 >
-                  <Icon icon={isGranted ? faBellOn : faBellRing} />
+                  <Icon icon={isEnabled ? faBellOn : faBellRing} />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {isGranted
-                  ? "Disable notifications"
-                  : "Enable notifications to receive notifications"}
+                {isEnabled ? "Disable notifications" : "Enable notifications"}
               </TooltipContent>
             </Tooltip>
             {unreadNotifications.length > 0 && (

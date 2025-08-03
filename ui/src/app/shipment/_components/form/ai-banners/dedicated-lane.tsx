@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 /*
  * Copyright 2023-2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
@@ -94,5 +95,3 @@ export const DedicatedLaneBanner = memo(() => {
     </div>
   );
 });
-
-DedicatedLaneBanner.displayName = "DedicatedLaneBanner";
