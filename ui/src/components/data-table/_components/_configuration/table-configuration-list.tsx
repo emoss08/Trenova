@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,6 +21,7 @@ import { queries } from "@/lib/queries";
 import type { TableConfigurationSchema } from "@/lib/schemas/table-configuration-schema";
 import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
+import { useUser } from "@/stores/user-store";
 import type { Resource } from "@/types/audit-entry";
 import { faCopy, faSearch } from "@fortawesome/pro-regular-svg-icons";
 import {
@@ -73,6 +79,7 @@ export function UserTableConfigurationList({
   resource: Resource;
   open: boolean;
 }) {
+  const user = useUser();
   const [searchQuery, setSearchQuery] = useState<string>("");
   const { data: userConfigurations, isLoading: isLoadingUserConfigurations } =
     useQuery({
@@ -87,13 +94,18 @@ export function UserTableConfigurationList({
     enabled: open,
   });
 
+  // * Exclude public configurations that the user is the owner of
+  const filteredPublicConfigurations =
+    publicConfigurations?.results?.filter(
+      (config) => config.creator?.id !== user?.id,
+    ) ?? [];
+
   return (
     <TableConfigurationListInner>
       <TableConfigurationListHeader
         userConfigurations={userConfigurations?.results ?? []}
       />
-      {userConfigurations?.results &&
-        userConfigurations?.results?.length > 0 && (
+      {(userConfigurations?.results?.length ?? 0) > 0 && (
           <Input
             icon={
               <Icon icon={faSearch} className="size-3 text-muted-foreground" />
@@ -108,7 +120,7 @@ export function UserTableConfigurationList({
         isLoadingUserConfigurations={isLoadingUserConfigurations}
         userConfigurations={userConfigurations?.results ?? []}
         isLoadingPublicConfigurations={isLoadingPublicConfigurations}
-        publicConfigurations={publicConfigurations?.results ?? []}
+        publicConfigurations={filteredPublicConfigurations}
       />
     </TableConfigurationListInner>
   );
@@ -135,17 +147,15 @@ function TableConfigurationContent({
             ))}
           </div>
         ) : (
-          <>
-            {userConfigurations.length === 0 && (
-              <div className="flex flex-col gap-1 text-center justify-center items-center p-2">
-                <p className="text-sm">No configurations found</p>
-                <p className="text-2xs text-muted-foreground">
-                  Table Configurations allow you to save your current column
-                  configuration for reuse.
-                </p>
-              </div>
-            )}
-          </>
+          userConfigurations.length == 0 && (
+            <div className="flex flex-col gap-1 text-center justify-center items-center p-2">
+              <p className="text-sm">No configurations found</p>
+              <p className="text-2xs text-muted-foreground">
+                Table Configurations allow you to save your current column
+                configuration for reuse.
+              </p>
+            </div>
+          )
         )}
         {userConfigurations?.map((config) => (
           <TableConfigurationListItem key={config.id} config={config} />

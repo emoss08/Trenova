@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 package redis
 
 import (
@@ -71,12 +76,6 @@ func NewClient(p ClientParams) (*Client, error) {
 	log.Info().
 		Str("addr", cfg.Addr).
 		Int("db", cfg.DB).
-		Bool("has_password", cfg.Password != "").
-		Dur("conn_timeout", cfg.ConnTimeout).
-		Dur("read_timeout", cfg.ReadTimeout).
-		Dur("write_timeout", cfg.WriteTimeout).
-		Int("pool_size", cfg.PoolSize).
-		Int("min_idle_conns", cfg.MinIdleConns).
 		Msg("initializing redis client with config")
 
 	opts := &redis.Options{
@@ -148,7 +147,10 @@ func NewClient(p ClientParams) (*Client, error) {
 
 	// Add telemetry instrumentation if available
 	if p.TelemetryMetrics != nil {
-		instrumentation := telemetry.NewCacheInstrumentation(p.Config.App().Name, p.TelemetryMetrics)
+		instrumentation := telemetry.NewCacheInstrumentation(
+			p.Config.App().Name,
+			p.TelemetryMetrics,
+		)
 		instrumentation.InstrumentRedis(redisClient)
 		log.Info().Msg("Redis telemetry instrumentation added")
 	}

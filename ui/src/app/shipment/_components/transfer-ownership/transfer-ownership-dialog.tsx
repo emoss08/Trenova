@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { UserAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
@@ -71,7 +76,7 @@ export function TransferOwnershipDialog({
       broadcastQueryInvalidation({
         queryKey: ["shipment", "shipment-list", "stop", "assignment", "user"],
         options: {
-          correlationId: `update-shipment-${Date.now()}`,
+          correlationId: `transfer-shipment-ownership-${Date.now()}`,
         },
         config: {
           predicate: true,

@@ -50,54 +50,78 @@ var BillingProfileQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CustomerIDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CustomerIDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BillingCycleTypeEQ           func(q *bun.SelectQuery, v BillingCycleType) *bun.SelectQuery
-		BillingCycleTypeNEQ          func(q *bun.SelectQuery, v BillingCycleType) *bun.SelectQuery
-		PaymentTermEQ                func(q *bun.SelectQuery, v billing.PaymentTerm) *bun.SelectQuery
-		PaymentTermNEQ               func(q *bun.SelectQuery, v billing.PaymentTerm) *bun.SelectQuery
-		HasOverridesEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		HasOverridesNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		EnforceCustomerBillingReqEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		EnforceCustomerBillingReqNEQ func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		ValidateCustomerRatesEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		ValidateCustomerRatesNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AutoTransferEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AutoTransferNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AutoMarkReadyToBillEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AutoMarkReadyToBillNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AutoBillEQ                   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AutoBillNEQ                  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn                    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CustomerIDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CustomerIDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CustomerIDIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CustomerIDNotIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BillingCycleTypeEQ             func(q *bun.SelectQuery, v BillingCycleType) *bun.SelectQuery
+		BillingCycleTypeNEQ            func(q *bun.SelectQuery, v BillingCycleType) *bun.SelectQuery
+		BillingCycleTypeIn             func(q *bun.SelectQuery, v []BillingCycleType) *bun.SelectQuery
+		BillingCycleTypeNotIn          func(q *bun.SelectQuery, v []BillingCycleType) *bun.SelectQuery
+		PaymentTermEQ                  func(q *bun.SelectQuery, v billing.PaymentTerm) *bun.SelectQuery
+		PaymentTermNEQ                 func(q *bun.SelectQuery, v billing.PaymentTerm) *bun.SelectQuery
+		PaymentTermIn                  func(q *bun.SelectQuery, v []billing.PaymentTerm) *bun.SelectQuery
+		PaymentTermNotIn               func(q *bun.SelectQuery, v []billing.PaymentTerm) *bun.SelectQuery
+		HasOverridesEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasOverridesNEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasOverridesIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		HasOverridesNotIn              func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		EnforceCustomerBillingReqEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		EnforceCustomerBillingReqNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		EnforceCustomerBillingReqIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		EnforceCustomerBillingReqNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		ValidateCustomerRatesEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		ValidateCustomerRatesNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		ValidateCustomerRatesIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		ValidateCustomerRatesNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoTransferEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoTransferNEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoTransferIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoTransferNotIn              func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoMarkReadyToBillEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoMarkReadyToBillNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoMarkReadyToBillIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoMarkReadyToBillNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoBillEQ                     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoBillNEQ                    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoBillIn                     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoBillNotIn                  func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ                      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ                     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn                   func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE                     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE                     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn                    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn                    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -120,6 +144,11 @@ var BillingProfileQuery = struct {
 	FieldConfig  func() map[string]billingProfileFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "customer_billing_profiles",
@@ -175,55 +204,79 @@ var BillingProfileQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CustomerIDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CustomerIDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BillingCycleTypeEQ           func(q *bun.SelectQuery, v BillingCycleType) *bun.SelectQuery
-		BillingCycleTypeNEQ          func(q *bun.SelectQuery, v BillingCycleType) *bun.SelectQuery
-		PaymentTermEQ                func(q *bun.SelectQuery, v billing.PaymentTerm) *bun.SelectQuery
-		PaymentTermNEQ               func(q *bun.SelectQuery, v billing.PaymentTerm) *bun.SelectQuery
-		HasOverridesEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		HasOverridesNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		EnforceCustomerBillingReqEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		EnforceCustomerBillingReqNEQ func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		ValidateCustomerRatesEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		ValidateCustomerRatesNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AutoTransferEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AutoTransferNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AutoMarkReadyToBillEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AutoMarkReadyToBillNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AutoBillEQ                   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AutoBillNEQ                  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn                    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		Tenant                       func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CustomerIDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CustomerIDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CustomerIDIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CustomerIDNotIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BillingCycleTypeEQ             func(q *bun.SelectQuery, v BillingCycleType) *bun.SelectQuery
+		BillingCycleTypeNEQ            func(q *bun.SelectQuery, v BillingCycleType) *bun.SelectQuery
+		BillingCycleTypeIn             func(q *bun.SelectQuery, v []BillingCycleType) *bun.SelectQuery
+		BillingCycleTypeNotIn          func(q *bun.SelectQuery, v []BillingCycleType) *bun.SelectQuery
+		PaymentTermEQ                  func(q *bun.SelectQuery, v billing.PaymentTerm) *bun.SelectQuery
+		PaymentTermNEQ                 func(q *bun.SelectQuery, v billing.PaymentTerm) *bun.SelectQuery
+		PaymentTermIn                  func(q *bun.SelectQuery, v []billing.PaymentTerm) *bun.SelectQuery
+		PaymentTermNotIn               func(q *bun.SelectQuery, v []billing.PaymentTerm) *bun.SelectQuery
+		HasOverridesEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasOverridesNEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasOverridesIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		HasOverridesNotIn              func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		EnforceCustomerBillingReqEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		EnforceCustomerBillingReqNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		EnforceCustomerBillingReqIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		EnforceCustomerBillingReqNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		ValidateCustomerRatesEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		ValidateCustomerRatesNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		ValidateCustomerRatesIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		ValidateCustomerRatesNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoTransferEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoTransferNEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoTransferIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoTransferNotIn              func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoMarkReadyToBillEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoMarkReadyToBillNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoMarkReadyToBillIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoMarkReadyToBillNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoBillEQ                     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoBillNEQ                    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoBillIn                     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoBillNotIn                  func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ                      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ                     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn                   func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE                     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE                     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn                    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn                    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn                 func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		Tenant                         func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cbr.id"), v)
@@ -231,11 +284,23 @@ var BillingProfileQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cbr.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cbr.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cbr.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cbr.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cbr.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cbr.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cbr.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cbr.organization_id"), v)
@@ -243,11 +308,23 @@ var BillingProfileQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cbr.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cbr.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cbr.organization_id"), bun.In(v))
+		},
 		CustomerIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cbr.customer_id"), v)
 		},
 		CustomerIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cbr.customer_id"), v)
+		},
+		CustomerIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cbr.customer_id"), bun.In(v))
+		},
+		CustomerIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cbr.customer_id"), bun.In(v))
 		},
 		BillingCycleTypeEQ: func(q *bun.SelectQuery, v BillingCycleType) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cbr.billing_cycle_type"), v)
@@ -255,11 +332,23 @@ var BillingProfileQuery = struct {
 		BillingCycleTypeNEQ: func(q *bun.SelectQuery, v BillingCycleType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cbr.billing_cycle_type"), v)
 		},
+		BillingCycleTypeIn: func(q *bun.SelectQuery, v []BillingCycleType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cbr.billing_cycle_type"), bun.In(v))
+		},
+		BillingCycleTypeNotIn: func(q *bun.SelectQuery, v []BillingCycleType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cbr.billing_cycle_type"), bun.In(v))
+		},
 		PaymentTermEQ: func(q *bun.SelectQuery, v billing.PaymentTerm) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cbr.payment_term"), v)
 		},
 		PaymentTermNEQ: func(q *bun.SelectQuery, v billing.PaymentTerm) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cbr.payment_term"), v)
+		},
+		PaymentTermIn: func(q *bun.SelectQuery, v []billing.PaymentTerm) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cbr.payment_term"), bun.In(v))
+		},
+		PaymentTermNotIn: func(q *bun.SelectQuery, v []billing.PaymentTerm) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cbr.payment_term"), bun.In(v))
 		},
 		HasOverridesEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cbr.has_overrides"), v)
@@ -267,11 +356,23 @@ var BillingProfileQuery = struct {
 		HasOverridesNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cbr.has_overrides"), v)
 		},
+		HasOverridesIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cbr.has_overrides"), bun.In(v))
+		},
+		HasOverridesNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cbr.has_overrides"), bun.In(v))
+		},
 		EnforceCustomerBillingReqEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cbr.enforce_customer_billing_req"), v)
 		},
 		EnforceCustomerBillingReqNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cbr.enforce_customer_billing_req"), v)
+		},
+		EnforceCustomerBillingReqIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cbr.enforce_customer_billing_req"), bun.In(v))
+		},
+		EnforceCustomerBillingReqNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cbr.enforce_customer_billing_req"), bun.In(v))
 		},
 		ValidateCustomerRatesEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cbr.validate_customer_rates"), v)
@@ -279,11 +380,23 @@ var BillingProfileQuery = struct {
 		ValidateCustomerRatesNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cbr.validate_customer_rates"), v)
 		},
+		ValidateCustomerRatesIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cbr.validate_customer_rates"), bun.In(v))
+		},
+		ValidateCustomerRatesNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cbr.validate_customer_rates"), bun.In(v))
+		},
 		AutoTransferEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cbr.auto_transfer"), v)
 		},
 		AutoTransferNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cbr.auto_transfer"), v)
+		},
+		AutoTransferIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cbr.auto_transfer"), bun.In(v))
+		},
+		AutoTransferNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cbr.auto_transfer"), bun.In(v))
 		},
 		AutoMarkReadyToBillEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cbr.auto_mark_ready_to_bill"), v)
@@ -291,11 +404,23 @@ var BillingProfileQuery = struct {
 		AutoMarkReadyToBillNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cbr.auto_mark_ready_to_bill"), v)
 		},
+		AutoMarkReadyToBillIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cbr.auto_mark_ready_to_bill"), bun.In(v))
+		},
+		AutoMarkReadyToBillNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cbr.auto_mark_ready_to_bill"), bun.In(v))
+		},
 		AutoBillEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cbr.auto_bill"), v)
 		},
 		AutoBillNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cbr.auto_bill"), v)
+		},
+		AutoBillIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cbr.auto_bill"), bun.In(v))
+		},
+		AutoBillNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cbr.auto_bill"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cbr.version"), v)
@@ -713,6 +838,14 @@ var BillingProfileQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // BillingProfileQueryBuilder provides a fluent interface for building queries
@@ -757,6 +890,18 @@ func (b *BillingProfileQueryBuilder) WhereIDNEQ(v pulid.ID) *BillingProfileQuery
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereIDIn(v []pulid.ID) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereIDNotIn(v []pulid.ID) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *BillingProfileQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *BillingProfileQueryBuilder {
 	b.query = BillingProfileQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -766,6 +911,18 @@ func (b *BillingProfileQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *BillingP
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *BillingProfileQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *BillingProfileQueryBuilder {
 	b.query = BillingProfileQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -781,6 +938,18 @@ func (b *BillingProfileQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *Billing
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereCustomerIDEQ adds a WHERE customer_id = ? condition
 func (b *BillingProfileQueryBuilder) WhereCustomerIDEQ(v pulid.ID) *BillingProfileQueryBuilder {
 	b.query = BillingProfileQuery.Where.CustomerIDEQ(b.query, v)
@@ -790,6 +959,18 @@ func (b *BillingProfileQueryBuilder) WhereCustomerIDEQ(v pulid.ID) *BillingProfi
 // WhereCustomerIDNEQ adds a WHERE customer_id != ? condition
 func (b *BillingProfileQueryBuilder) WhereCustomerIDNEQ(v pulid.ID) *BillingProfileQueryBuilder {
 	b.query = BillingProfileQuery.Where.CustomerIDNEQ(b.query, v)
+	return b
+}
+
+// WhereCustomerIDIn adds a WHERE customer_id IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereCustomerIDIn(v []pulid.ID) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.CustomerIDIn(b.query, v)
+	return b
+}
+
+// WhereCustomerIDNotIn adds a WHERE customer_id NOT IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereCustomerIDNotIn(v []pulid.ID) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.CustomerIDNotIn(b.query, v)
 	return b
 }
 
@@ -805,6 +986,18 @@ func (b *BillingProfileQueryBuilder) WhereBillingCycleTypeNEQ(v BillingCycleType
 	return b
 }
 
+// WhereBillingCycleTypeIn adds a WHERE billing_cycle_type IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereBillingCycleTypeIn(v []BillingCycleType) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.BillingCycleTypeIn(b.query, v)
+	return b
+}
+
+// WhereBillingCycleTypeNotIn adds a WHERE billing_cycle_type NOT IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereBillingCycleTypeNotIn(v []BillingCycleType) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.BillingCycleTypeNotIn(b.query, v)
+	return b
+}
+
 // WherePaymentTermEQ adds a WHERE payment_term = ? condition
 func (b *BillingProfileQueryBuilder) WherePaymentTermEQ(v billing.PaymentTerm) *BillingProfileQueryBuilder {
 	b.query = BillingProfileQuery.Where.PaymentTermEQ(b.query, v)
@@ -814,6 +1007,18 @@ func (b *BillingProfileQueryBuilder) WherePaymentTermEQ(v billing.PaymentTerm) *
 // WherePaymentTermNEQ adds a WHERE payment_term != ? condition
 func (b *BillingProfileQueryBuilder) WherePaymentTermNEQ(v billing.PaymentTerm) *BillingProfileQueryBuilder {
 	b.query = BillingProfileQuery.Where.PaymentTermNEQ(b.query, v)
+	return b
+}
+
+// WherePaymentTermIn adds a WHERE payment_term IN (?) condition
+func (b *BillingProfileQueryBuilder) WherePaymentTermIn(v []billing.PaymentTerm) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.PaymentTermIn(b.query, v)
+	return b
+}
+
+// WherePaymentTermNotIn adds a WHERE payment_term NOT IN (?) condition
+func (b *BillingProfileQueryBuilder) WherePaymentTermNotIn(v []billing.PaymentTerm) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.PaymentTermNotIn(b.query, v)
 	return b
 }
 
@@ -829,6 +1034,18 @@ func (b *BillingProfileQueryBuilder) WhereHasOverridesNEQ(v bool) *BillingProfil
 	return b
 }
 
+// WhereHasOverridesIn adds a WHERE has_overrides IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereHasOverridesIn(v []bool) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.HasOverridesIn(b.query, v)
+	return b
+}
+
+// WhereHasOverridesNotIn adds a WHERE has_overrides NOT IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereHasOverridesNotIn(v []bool) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.HasOverridesNotIn(b.query, v)
+	return b
+}
+
 // WhereEnforceCustomerBillingReqEQ adds a WHERE enforce_customer_billing_req = ? condition
 func (b *BillingProfileQueryBuilder) WhereEnforceCustomerBillingReqEQ(v bool) *BillingProfileQueryBuilder {
 	b.query = BillingProfileQuery.Where.EnforceCustomerBillingReqEQ(b.query, v)
@@ -838,6 +1055,18 @@ func (b *BillingProfileQueryBuilder) WhereEnforceCustomerBillingReqEQ(v bool) *B
 // WhereEnforceCustomerBillingReqNEQ adds a WHERE enforce_customer_billing_req != ? condition
 func (b *BillingProfileQueryBuilder) WhereEnforceCustomerBillingReqNEQ(v bool) *BillingProfileQueryBuilder {
 	b.query = BillingProfileQuery.Where.EnforceCustomerBillingReqNEQ(b.query, v)
+	return b
+}
+
+// WhereEnforceCustomerBillingReqIn adds a WHERE enforce_customer_billing_req IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereEnforceCustomerBillingReqIn(v []bool) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.EnforceCustomerBillingReqIn(b.query, v)
+	return b
+}
+
+// WhereEnforceCustomerBillingReqNotIn adds a WHERE enforce_customer_billing_req NOT IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereEnforceCustomerBillingReqNotIn(v []bool) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.EnforceCustomerBillingReqNotIn(b.query, v)
 	return b
 }
 
@@ -853,6 +1082,18 @@ func (b *BillingProfileQueryBuilder) WhereValidateCustomerRatesNEQ(v bool) *Bill
 	return b
 }
 
+// WhereValidateCustomerRatesIn adds a WHERE validate_customer_rates IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereValidateCustomerRatesIn(v []bool) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.ValidateCustomerRatesIn(b.query, v)
+	return b
+}
+
+// WhereValidateCustomerRatesNotIn adds a WHERE validate_customer_rates NOT IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereValidateCustomerRatesNotIn(v []bool) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.ValidateCustomerRatesNotIn(b.query, v)
+	return b
+}
+
 // WhereAutoTransferEQ adds a WHERE auto_transfer = ? condition
 func (b *BillingProfileQueryBuilder) WhereAutoTransferEQ(v bool) *BillingProfileQueryBuilder {
 	b.query = BillingProfileQuery.Where.AutoTransferEQ(b.query, v)
@@ -862,6 +1103,18 @@ func (b *BillingProfileQueryBuilder) WhereAutoTransferEQ(v bool) *BillingProfile
 // WhereAutoTransferNEQ adds a WHERE auto_transfer != ? condition
 func (b *BillingProfileQueryBuilder) WhereAutoTransferNEQ(v bool) *BillingProfileQueryBuilder {
 	b.query = BillingProfileQuery.Where.AutoTransferNEQ(b.query, v)
+	return b
+}
+
+// WhereAutoTransferIn adds a WHERE auto_transfer IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereAutoTransferIn(v []bool) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.AutoTransferIn(b.query, v)
+	return b
+}
+
+// WhereAutoTransferNotIn adds a WHERE auto_transfer NOT IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereAutoTransferNotIn(v []bool) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.AutoTransferNotIn(b.query, v)
 	return b
 }
 
@@ -877,6 +1130,18 @@ func (b *BillingProfileQueryBuilder) WhereAutoMarkReadyToBillNEQ(v bool) *Billin
 	return b
 }
 
+// WhereAutoMarkReadyToBillIn adds a WHERE auto_mark_ready_to_bill IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereAutoMarkReadyToBillIn(v []bool) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.AutoMarkReadyToBillIn(b.query, v)
+	return b
+}
+
+// WhereAutoMarkReadyToBillNotIn adds a WHERE auto_mark_ready_to_bill NOT IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereAutoMarkReadyToBillNotIn(v []bool) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.AutoMarkReadyToBillNotIn(b.query, v)
+	return b
+}
+
 // WhereAutoBillEQ adds a WHERE auto_bill = ? condition
 func (b *BillingProfileQueryBuilder) WhereAutoBillEQ(v bool) *BillingProfileQueryBuilder {
 	b.query = BillingProfileQuery.Where.AutoBillEQ(b.query, v)
@@ -886,6 +1151,18 @@ func (b *BillingProfileQueryBuilder) WhereAutoBillEQ(v bool) *BillingProfileQuer
 // WhereAutoBillNEQ adds a WHERE auto_bill != ? condition
 func (b *BillingProfileQueryBuilder) WhereAutoBillNEQ(v bool) *BillingProfileQueryBuilder {
 	b.query = BillingProfileQuery.Where.AutoBillNEQ(b.query, v)
+	return b
+}
+
+// WhereAutoBillIn adds a WHERE auto_bill IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereAutoBillIn(v []bool) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.AutoBillIn(b.query, v)
+	return b
+}
+
+// WhereAutoBillNotIn adds a WHERE auto_bill NOT IN (?) condition
+func (b *BillingProfileQueryBuilder) WhereAutoBillNotIn(v []bool) *BillingProfileQueryBuilder {
+	b.query = BillingProfileQuery.Where.AutoBillNotIn(b.query, v)
 	return b
 }
 
@@ -1133,4 +1410,138 @@ func (b *BillingProfileQueryBuilder) First(ctx context.Context) (*BillingProfile
 // BillingProfileBuild creates a chainable query builder
 func BillingProfileBuild(db bun.IDB) *BillingProfileQueryBuilder {
 	return NewBillingProfileQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *BillingProfileQueryBuilder) LoadBusinessUnit() *BillingProfileQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *BillingProfileQueryBuilder) LoadOrganization() *BillingProfileQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for BillingProfile
+func (b *BillingProfileQueryBuilder) LoadAllRelations() *BillingProfileQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
+}
+
+// BillingProfileRelationChain provides a fluent API for building nested relationship chains
+type BillingProfileRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewBillingProfileRelationChain creates a new relation chain builder
+func NewBillingProfileRelationChain() *BillingProfileRelationChain {
+	return &BillingProfileRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *BillingProfileRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *BillingProfileRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *BillingProfileRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *BillingProfileRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *BillingProfileQueryBuilder) WithBusinessUnit() *BillingProfileRelationChainBuilder {
+	chain := &BillingProfileRelationChainBuilder{
+		parent: b,
+		chain:  NewBillingProfileRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *BillingProfileQueryBuilder) WithOrganization() *BillingProfileRelationChainBuilder {
+	chain := &BillingProfileRelationChainBuilder{
+		parent: b,
+		chain:  NewBillingProfileRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// BillingProfileRelationChainBuilder provides fluent API for building nested relations
+type BillingProfileRelationChainBuilder struct {
+	parent *BillingProfileQueryBuilder
+	chain  *BillingProfileRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *BillingProfileRelationChainBuilder) Load() *BillingProfileQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *BillingProfileRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *BillingProfileRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *BillingProfileRelationChainBuilder) OrderBy(order string) *BillingProfileRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *BillingProfileRelationChainBuilder) Where(condition string, args ...interface{}) *BillingProfileRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

@@ -1,4 +1,9 @@
-import { API_URL } from "@/constants/env";
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
+import { API_URL, APP_ENV } from "@/constants/env";
 import { APIError } from "@/types/errors";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
@@ -211,10 +216,12 @@ class HttpClient {
       return await this.executeWithRetry(async () => {
         const requestUrl = this.buildUrl(endpoint, params);
 
-        console.debug(
-          `%c[Trenova] Facilitating HTTP ${method} Request: ${requestUrl}`,
-          "color: #34ebe5; font-weight: bold",
-        );
+        if (APP_ENV === "development") {
+          console.debug(
+            `%c[Trenova] Facilitating HTTP ${method} Request: ${requestUrl}`,
+            "color: #34ebe5; font-weight: bold",
+          );
+        }
 
         // If we have an onProgress callback and it's an upload operation, use ReadableStream
         if (

@@ -38,14 +38,22 @@ var BillingProfileDocumentTypeQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BillingProfileIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BillingProfileIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		DocumentTypeIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		DocumentTypeIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BillingProfileIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BillingProfileIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BillingProfileIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BillingProfileIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		DocumentTypeIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		DocumentTypeIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		DocumentTypeIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		DocumentTypeIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -65,6 +73,11 @@ var BillingProfileDocumentTypeQuery = struct {
 	FieldConfig  func() map[string]billingProfileDocumentTypeFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BillingProfile string
+		DocumentType   string
+	}
 }{
 	// Table and alias constants
 	Table:    "customer_billing_profile_document_types",
@@ -98,15 +111,23 @@ var BillingProfileDocumentTypeQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BillingProfileIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BillingProfileIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		DocumentTypeIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		DocumentTypeIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		Tenant              func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BillingProfileIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BillingProfileIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BillingProfileIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BillingProfileIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		DocumentTypeIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		DocumentTypeIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		DocumentTypeIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		DocumentTypeIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		Tenant                func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("bpdt.organization_id"), v)
@@ -114,11 +135,23 @@ var BillingProfileDocumentTypeQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bpdt.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bpdt.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bpdt.organization_id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("bpdt.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bpdt.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bpdt.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bpdt.business_unit_id"), bun.In(v))
 		},
 		BillingProfileIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("bpdt.billing_profile_id"), v)
@@ -126,11 +159,23 @@ var BillingProfileDocumentTypeQuery = struct {
 		BillingProfileIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bpdt.billing_profile_id"), v)
 		},
+		BillingProfileIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bpdt.billing_profile_id"), bun.In(v))
+		},
+		BillingProfileIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bpdt.billing_profile_id"), bun.In(v))
+		},
 		DocumentTypeIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("bpdt.document_type_id"), v)
 		},
 		DocumentTypeIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bpdt.document_type_id"), v)
+		},
+		DocumentTypeIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bpdt.document_type_id"), bun.In(v))
+		},
+		DocumentTypeIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bpdt.document_type_id"), bun.In(v))
 		},
 		Tenant: func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery {
 			return q.
@@ -257,6 +302,14 @@ var BillingProfileDocumentTypeQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BillingProfile string
+		DocumentType   string
+	}{
+		BillingProfile: "BillingProfile",
+		DocumentType:   "DocumentType",
+	},
 }
 
 // BillingProfileDocumentTypeQueryBuilder provides a fluent interface for building queries
@@ -301,6 +354,18 @@ func (b *BillingProfileDocumentTypeQueryBuilder) WhereOrganizationIDNEQ(v pulid.
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *BillingProfileDocumentTypeQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *BillingProfileDocumentTypeQueryBuilder {
+	b.query = BillingProfileDocumentTypeQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *BillingProfileDocumentTypeQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *BillingProfileDocumentTypeQueryBuilder {
+	b.query = BillingProfileDocumentTypeQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *BillingProfileDocumentTypeQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *BillingProfileDocumentTypeQueryBuilder {
 	b.query = BillingProfileDocumentTypeQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -310,6 +375,18 @@ func (b *BillingProfileDocumentTypeQueryBuilder) WhereBusinessUnitIDEQ(v pulid.I
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *BillingProfileDocumentTypeQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *BillingProfileDocumentTypeQueryBuilder {
 	b.query = BillingProfileDocumentTypeQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *BillingProfileDocumentTypeQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *BillingProfileDocumentTypeQueryBuilder {
+	b.query = BillingProfileDocumentTypeQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *BillingProfileDocumentTypeQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *BillingProfileDocumentTypeQueryBuilder {
+	b.query = BillingProfileDocumentTypeQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -325,6 +402,18 @@ func (b *BillingProfileDocumentTypeQueryBuilder) WhereBillingProfileIDNEQ(v puli
 	return b
 }
 
+// WhereBillingProfileIDIn adds a WHERE billing_profile_id IN (?) condition
+func (b *BillingProfileDocumentTypeQueryBuilder) WhereBillingProfileIDIn(v []pulid.ID) *BillingProfileDocumentTypeQueryBuilder {
+	b.query = BillingProfileDocumentTypeQuery.Where.BillingProfileIDIn(b.query, v)
+	return b
+}
+
+// WhereBillingProfileIDNotIn adds a WHERE billing_profile_id NOT IN (?) condition
+func (b *BillingProfileDocumentTypeQueryBuilder) WhereBillingProfileIDNotIn(v []pulid.ID) *BillingProfileDocumentTypeQueryBuilder {
+	b.query = BillingProfileDocumentTypeQuery.Where.BillingProfileIDNotIn(b.query, v)
+	return b
+}
+
 // WhereDocumentTypeIDEQ adds a WHERE document_type_id = ? condition
 func (b *BillingProfileDocumentTypeQueryBuilder) WhereDocumentTypeIDEQ(v pulid.ID) *BillingProfileDocumentTypeQueryBuilder {
 	b.query = BillingProfileDocumentTypeQuery.Where.DocumentTypeIDEQ(b.query, v)
@@ -334,6 +423,18 @@ func (b *BillingProfileDocumentTypeQueryBuilder) WhereDocumentTypeIDEQ(v pulid.I
 // WhereDocumentTypeIDNEQ adds a WHERE document_type_id != ? condition
 func (b *BillingProfileDocumentTypeQueryBuilder) WhereDocumentTypeIDNEQ(v pulid.ID) *BillingProfileDocumentTypeQueryBuilder {
 	b.query = BillingProfileDocumentTypeQuery.Where.DocumentTypeIDNEQ(b.query, v)
+	return b
+}
+
+// WhereDocumentTypeIDIn adds a WHERE document_type_id IN (?) condition
+func (b *BillingProfileDocumentTypeQueryBuilder) WhereDocumentTypeIDIn(v []pulid.ID) *BillingProfileDocumentTypeQueryBuilder {
+	b.query = BillingProfileDocumentTypeQuery.Where.DocumentTypeIDIn(b.query, v)
+	return b
+}
+
+// WhereDocumentTypeIDNotIn adds a WHERE document_type_id NOT IN (?) condition
+func (b *BillingProfileDocumentTypeQueryBuilder) WhereDocumentTypeIDNotIn(v []pulid.ID) *BillingProfileDocumentTypeQueryBuilder {
+	b.query = BillingProfileDocumentTypeQuery.Where.DocumentTypeIDNotIn(b.query, v)
 	return b
 }
 
@@ -437,4 +538,138 @@ func (b *BillingProfileDocumentTypeQueryBuilder) First(ctx context.Context) (*Bi
 // BillingProfileDocumentTypeBuild creates a chainable query builder
 func BillingProfileDocumentTypeBuild(db bun.IDB) *BillingProfileDocumentTypeQueryBuilder {
 	return NewBillingProfileDocumentTypeQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBillingProfile loads the BillingProfile relationship
+func (b *BillingProfileDocumentTypeQueryBuilder) LoadBillingProfile() *BillingProfileDocumentTypeQueryBuilder {
+	b.query = b.query.Relation("BillingProfile")
+	return b
+}
+
+// LoadDocumentType loads the DocumentType relationship
+func (b *BillingProfileDocumentTypeQueryBuilder) LoadDocumentType() *BillingProfileDocumentTypeQueryBuilder {
+	b.query = b.query.Relation("DocumentType")
+	return b
+}
+
+// LoadAllRelations loads all relationships for BillingProfileDocumentType
+func (b *BillingProfileDocumentTypeQueryBuilder) LoadAllRelations() *BillingProfileDocumentTypeQueryBuilder {
+	b.LoadBillingProfile()
+	b.LoadDocumentType()
+	return b
+}
+
+// BillingProfileDocumentTypeRelationChain provides a fluent API for building nested relationship chains
+type BillingProfileDocumentTypeRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewBillingProfileDocumentTypeRelationChain creates a new relation chain builder
+func NewBillingProfileDocumentTypeRelationChain() *BillingProfileDocumentTypeRelationChain {
+	return &BillingProfileDocumentTypeRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *BillingProfileDocumentTypeRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *BillingProfileDocumentTypeRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *BillingProfileDocumentTypeRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *BillingProfileDocumentTypeRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBillingProfile creates a relation chain starting with BillingProfile
+func (b *BillingProfileDocumentTypeQueryBuilder) WithBillingProfile() *BillingProfileDocumentTypeRelationChainBuilder {
+	chain := &BillingProfileDocumentTypeRelationChainBuilder{
+		parent: b,
+		chain:  NewBillingProfileDocumentTypeRelationChain(),
+	}
+	chain.chain.Add("BillingProfile")
+	return chain
+}
+
+// WithDocumentType creates a relation chain starting with DocumentType
+func (b *BillingProfileDocumentTypeQueryBuilder) WithDocumentType() *BillingProfileDocumentTypeRelationChainBuilder {
+	chain := &BillingProfileDocumentTypeRelationChainBuilder{
+		parent: b,
+		chain:  NewBillingProfileDocumentTypeRelationChain(),
+	}
+	chain.chain.Add("DocumentType")
+	return chain
+}
+
+// BillingProfileDocumentTypeRelationChainBuilder provides fluent API for building nested relations
+type BillingProfileDocumentTypeRelationChainBuilder struct {
+	parent *BillingProfileDocumentTypeQueryBuilder
+	chain  *BillingProfileDocumentTypeRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *BillingProfileDocumentTypeRelationChainBuilder) Load() *BillingProfileDocumentTypeQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *BillingProfileDocumentTypeRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *BillingProfileDocumentTypeRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *BillingProfileDocumentTypeRelationChainBuilder) OrderBy(order string) *BillingProfileDocumentTypeRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *BillingProfileDocumentTypeRelationChainBuilder) Where(condition string, args ...interface{}) *BillingProfileDocumentTypeRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

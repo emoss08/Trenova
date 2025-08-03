@@ -54,16 +54,26 @@ var FleetCodeQuery = struct {
 	Where struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ManagerIDEQ           func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ManagerIDNEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ManagerIDIn           func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ManagerIDNotIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ManagerIDIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		ManagerIDIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn           func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -196,6 +206,12 @@ var FleetCodeQuery = struct {
 	FieldConfig  func() map[string]fleetCodeFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+		Manager      string
+	}
 }{
 	// Table and alias constants
 	Table:    "fleet_codes",
@@ -255,16 +271,26 @@ var FleetCodeQuery = struct {
 	Where: struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ManagerIDEQ           func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ManagerIDNEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ManagerIDIn           func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ManagerIDNotIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ManagerIDIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		ManagerIDIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn           func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -382,11 +408,23 @@ var FleetCodeQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("fc.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("fc.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("fc.id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("fc.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("fc.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("fc.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("fc.organization_id"), bun.In(v))
 		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("fc.business_unit_id"), v)
@@ -394,11 +432,23 @@ var FleetCodeQuery = struct {
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("fc.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("fc.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("fc.business_unit_id"), bun.In(v))
+		},
 		ManagerIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("fc.manager_id"), v)
 		},
 		ManagerIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("fc.manager_id"), v)
+		},
+		ManagerIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("fc.manager_id"), bun.In(v))
+		},
+		ManagerIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("fc.manager_id"), bun.In(v))
 		},
 		ManagerIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("fc.manager_id"))
@@ -411,6 +461,12 @@ var FleetCodeQuery = struct {
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("fc.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("fc.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("fc.status"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("fc.name"), v)
@@ -1109,6 +1165,16 @@ var FleetCodeQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+		Manager      string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+		Manager:      "Manager",
+	},
 }
 
 // FleetCodeQueryBuilder provides a fluent interface for building queries
@@ -1153,6 +1219,18 @@ func (b *FleetCodeQueryBuilder) WhereIDNEQ(v pulid.ID) *FleetCodeQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *FleetCodeQueryBuilder) WhereIDIn(v []pulid.ID) *FleetCodeQueryBuilder {
+	b.query = FleetCodeQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *FleetCodeQueryBuilder) WhereIDNotIn(v []pulid.ID) *FleetCodeQueryBuilder {
+	b.query = FleetCodeQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *FleetCodeQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *FleetCodeQueryBuilder {
 	b.query = FleetCodeQuery.Where.OrganizationIDEQ(b.query, v)
@@ -1162,6 +1240,18 @@ func (b *FleetCodeQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *FleetCodeQuer
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *FleetCodeQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *FleetCodeQueryBuilder {
 	b.query = FleetCodeQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *FleetCodeQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *FleetCodeQueryBuilder {
+	b.query = FleetCodeQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *FleetCodeQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *FleetCodeQueryBuilder {
+	b.query = FleetCodeQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1177,6 +1267,18 @@ func (b *FleetCodeQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *FleetCodeQue
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *FleetCodeQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *FleetCodeQueryBuilder {
+	b.query = FleetCodeQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *FleetCodeQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *FleetCodeQueryBuilder {
+	b.query = FleetCodeQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereManagerIDEQ adds a WHERE manager_id = ? condition
 func (b *FleetCodeQueryBuilder) WhereManagerIDEQ(v *pulid.ID) *FleetCodeQueryBuilder {
 	b.query = FleetCodeQuery.Where.ManagerIDEQ(b.query, v)
@@ -1189,6 +1291,18 @@ func (b *FleetCodeQueryBuilder) WhereManagerIDNEQ(v *pulid.ID) *FleetCodeQueryBu
 	return b
 }
 
+// WhereManagerIDIn adds a WHERE manager_id IN (?) condition
+func (b *FleetCodeQueryBuilder) WhereManagerIDIn(v []*pulid.ID) *FleetCodeQueryBuilder {
+	b.query = FleetCodeQuery.Where.ManagerIDIn(b.query, v)
+	return b
+}
+
+// WhereManagerIDNotIn adds a WHERE manager_id NOT IN (?) condition
+func (b *FleetCodeQueryBuilder) WhereManagerIDNotIn(v []*pulid.ID) *FleetCodeQueryBuilder {
+	b.query = FleetCodeQuery.Where.ManagerIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *FleetCodeQueryBuilder) WhereStatusEQ(v domain.Status) *FleetCodeQueryBuilder {
 	b.query = FleetCodeQuery.Where.StatusEQ(b.query, v)
@@ -1198,6 +1312,18 @@ func (b *FleetCodeQueryBuilder) WhereStatusEQ(v domain.Status) *FleetCodeQueryBu
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *FleetCodeQueryBuilder) WhereStatusNEQ(v domain.Status) *FleetCodeQueryBuilder {
 	b.query = FleetCodeQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *FleetCodeQueryBuilder) WhereStatusIn(v []domain.Status) *FleetCodeQueryBuilder {
+	b.query = FleetCodeQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *FleetCodeQueryBuilder) WhereStatusNotIn(v []domain.Status) *FleetCodeQueryBuilder {
+	b.query = FleetCodeQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1799,4 +1925,155 @@ func (b *FleetCodeQueryBuilder) First(ctx context.Context) (*FleetCode, error) {
 // FleetCodeBuild creates a chainable query builder
 func FleetCodeBuild(db bun.IDB) *FleetCodeQueryBuilder {
 	return NewFleetCodeQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *FleetCodeQueryBuilder) LoadBusinessUnit() *FleetCodeQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *FleetCodeQueryBuilder) LoadOrganization() *FleetCodeQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadManager loads the Manager relationship
+func (b *FleetCodeQueryBuilder) LoadManager() *FleetCodeQueryBuilder {
+	b.query = b.query.Relation("Manager")
+	return b
+}
+
+// LoadAllRelations loads all relationships for FleetCode
+func (b *FleetCodeQueryBuilder) LoadAllRelations() *FleetCodeQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadManager()
+	return b
+}
+
+// FleetCodeRelationChain provides a fluent API for building nested relationship chains
+type FleetCodeRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewFleetCodeRelationChain creates a new relation chain builder
+func NewFleetCodeRelationChain() *FleetCodeRelationChain {
+	return &FleetCodeRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *FleetCodeRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *FleetCodeRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *FleetCodeRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *FleetCodeRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *FleetCodeQueryBuilder) WithBusinessUnit() *FleetCodeRelationChainBuilder {
+	chain := &FleetCodeRelationChainBuilder{
+		parent: b,
+		chain:  NewFleetCodeRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *FleetCodeQueryBuilder) WithOrganization() *FleetCodeRelationChainBuilder {
+	chain := &FleetCodeRelationChainBuilder{
+		parent: b,
+		chain:  NewFleetCodeRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithManager creates a relation chain starting with Manager
+func (b *FleetCodeQueryBuilder) WithManager() *FleetCodeRelationChainBuilder {
+	chain := &FleetCodeRelationChainBuilder{
+		parent: b,
+		chain:  NewFleetCodeRelationChain(),
+	}
+	chain.chain.Add("Manager")
+	return chain
+}
+
+// FleetCodeRelationChainBuilder provides fluent API for building nested relations
+type FleetCodeRelationChainBuilder struct {
+	parent *FleetCodeQueryBuilder
+	chain  *FleetCodeRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *FleetCodeRelationChainBuilder) Load() *FleetCodeQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *FleetCodeRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *FleetCodeRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *FleetCodeRelationChainBuilder) OrderBy(order string) *FleetCodeRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *FleetCodeRelationChainBuilder) Where(condition string, args ...interface{}) *FleetCodeRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

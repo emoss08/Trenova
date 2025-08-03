@@ -55,10 +55,16 @@ var OrganizationQuery = struct {
 	Where struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StateIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		StateIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		StateIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StateIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -105,6 +111,8 @@ var OrganizationQuery = struct {
 		LogoURLHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		OrgTypeEQ             func(q *bun.SelectQuery, v Type) *bun.SelectQuery
 		OrgTypeNEQ            func(q *bun.SelectQuery, v Type) *bun.SelectQuery
+		OrgTypeIn             func(q *bun.SelectQuery, v []Type) *bun.SelectQuery
+		OrgTypeNotIn          func(q *bun.SelectQuery, v []Type) *bun.SelectQuery
 		BucketNameEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		BucketNameNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		BucketNameIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -184,6 +192,8 @@ var OrganizationQuery = struct {
 		TaxIDHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		MetadataEQ            func(q *bun.SelectQuery, v *Metadata) *bun.SelectQuery
 		MetadataNEQ           func(q *bun.SelectQuery, v *Metadata) *bun.SelectQuery
+		MetadataIn            func(q *bun.SelectQuery, v []*Metadata) *bun.SelectQuery
+		MetadataNotIn         func(q *bun.SelectQuery, v []*Metadata) *bun.SelectQuery
 		MetadataIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		MetadataIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		VersionEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -231,6 +241,12 @@ var OrganizationQuery = struct {
 	FieldConfig  func() map[string]organizationFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit          string
+		State                 string
+		DocumentQualityConfig string
+	}
 }{
 	// Table and alias constants
 	Table:    "organizations",
@@ -296,10 +312,16 @@ var OrganizationQuery = struct {
 	Where: struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StateIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		StateIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		StateIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StateIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -346,6 +368,8 @@ var OrganizationQuery = struct {
 		LogoURLHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		OrgTypeEQ             func(q *bun.SelectQuery, v Type) *bun.SelectQuery
 		OrgTypeNEQ            func(q *bun.SelectQuery, v Type) *bun.SelectQuery
+		OrgTypeIn             func(q *bun.SelectQuery, v []Type) *bun.SelectQuery
+		OrgTypeNotIn          func(q *bun.SelectQuery, v []Type) *bun.SelectQuery
 		BucketNameEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		BucketNameNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		BucketNameIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -425,6 +449,8 @@ var OrganizationQuery = struct {
 		TaxIDHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		MetadataEQ            func(q *bun.SelectQuery, v *Metadata) *bun.SelectQuery
 		MetadataNEQ           func(q *bun.SelectQuery, v *Metadata) *bun.SelectQuery
+		MetadataIn            func(q *bun.SelectQuery, v []*Metadata) *bun.SelectQuery
+		MetadataNotIn         func(q *bun.SelectQuery, v []*Metadata) *bun.SelectQuery
 		MetadataIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		MetadataIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		VersionEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -458,17 +484,35 @@ var OrganizationQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("org.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("org.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("org.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("org.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("org.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("org.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("org.business_unit_id"), bun.In(v))
+		},
 		StateIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("org.state_id"), v)
 		},
 		StateIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("org.state_id"), v)
+		},
+		StateIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("org.state_id"), bun.In(v))
+		},
+		StateIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("org.state_id"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("org.name"), v)
@@ -607,6 +651,12 @@ var OrganizationQuery = struct {
 		},
 		OrgTypeNEQ: func(q *bun.SelectQuery, v Type) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("org.org_type"), v)
+		},
+		OrgTypeIn: func(q *bun.SelectQuery, v []Type) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("org.org_type"), bun.In(v))
+		},
+		OrgTypeNotIn: func(q *bun.SelectQuery, v []Type) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("org.org_type"), bun.In(v))
 		},
 		BucketNameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("org.bucket_name"), v)
@@ -844,6 +894,12 @@ var OrganizationQuery = struct {
 		},
 		MetadataNEQ: func(q *bun.SelectQuery, v *Metadata) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("org.metadata"), v)
+		},
+		MetadataIn: func(q *bun.SelectQuery, v []*Metadata) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("org.metadata"), bun.In(v))
+		},
+		MetadataNotIn: func(q *bun.SelectQuery, v []*Metadata) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("org.metadata"), bun.In(v))
 		},
 		MetadataIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("org.metadata"))
@@ -1334,6 +1390,16 @@ var OrganizationQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit          string
+		State                 string
+		DocumentQualityConfig string
+	}{
+		BusinessUnit:          "BusinessUnit",
+		State:                 "State",
+		DocumentQualityConfig: "DocumentQualityConfig",
+	},
 }
 
 // OrganizationQueryBuilder provides a fluent interface for building queries
@@ -1378,6 +1444,18 @@ func (b *OrganizationQueryBuilder) WhereIDNEQ(v pulid.ID) *OrganizationQueryBuil
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *OrganizationQueryBuilder) WhereIDIn(v []pulid.ID) *OrganizationQueryBuilder {
+	b.query = OrganizationQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *OrganizationQueryBuilder) WhereIDNotIn(v []pulid.ID) *OrganizationQueryBuilder {
+	b.query = OrganizationQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *OrganizationQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *OrganizationQueryBuilder {
 	b.query = OrganizationQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1390,6 +1468,18 @@ func (b *OrganizationQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *Organizat
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *OrganizationQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *OrganizationQueryBuilder {
+	b.query = OrganizationQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *OrganizationQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *OrganizationQueryBuilder {
+	b.query = OrganizationQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStateIDEQ adds a WHERE state_id = ? condition
 func (b *OrganizationQueryBuilder) WhereStateIDEQ(v pulid.ID) *OrganizationQueryBuilder {
 	b.query = OrganizationQuery.Where.StateIDEQ(b.query, v)
@@ -1399,6 +1489,18 @@ func (b *OrganizationQueryBuilder) WhereStateIDEQ(v pulid.ID) *OrganizationQuery
 // WhereStateIDNEQ adds a WHERE state_id != ? condition
 func (b *OrganizationQueryBuilder) WhereStateIDNEQ(v pulid.ID) *OrganizationQueryBuilder {
 	b.query = OrganizationQuery.Where.StateIDNEQ(b.query, v)
+	return b
+}
+
+// WhereStateIDIn adds a WHERE state_id IN (?) condition
+func (b *OrganizationQueryBuilder) WhereStateIDIn(v []pulid.ID) *OrganizationQueryBuilder {
+	b.query = OrganizationQuery.Where.StateIDIn(b.query, v)
+	return b
+}
+
+// WhereStateIDNotIn adds a WHERE state_id NOT IN (?) condition
+func (b *OrganizationQueryBuilder) WhereStateIDNotIn(v []pulid.ID) *OrganizationQueryBuilder {
+	b.query = OrganizationQuery.Where.StateIDNotIn(b.query, v)
 	return b
 }
 
@@ -1579,6 +1681,18 @@ func (b *OrganizationQueryBuilder) WhereOrgTypeEQ(v Type) *OrganizationQueryBuil
 // WhereOrgTypeNEQ adds a WHERE org_type != ? condition
 func (b *OrganizationQueryBuilder) WhereOrgTypeNEQ(v Type) *OrganizationQueryBuilder {
 	b.query = OrganizationQuery.Where.OrgTypeNEQ(b.query, v)
+	return b
+}
+
+// WhereOrgTypeIn adds a WHERE org_type IN (?) condition
+func (b *OrganizationQueryBuilder) WhereOrgTypeIn(v []Type) *OrganizationQueryBuilder {
+	b.query = OrganizationQuery.Where.OrgTypeIn(b.query, v)
+	return b
+}
+
+// WhereOrgTypeNotIn adds a WHERE org_type NOT IN (?) condition
+func (b *OrganizationQueryBuilder) WhereOrgTypeNotIn(v []Type) *OrganizationQueryBuilder {
+	b.query = OrganizationQuery.Where.OrgTypeNotIn(b.query, v)
 	return b
 }
 
@@ -1888,6 +2002,18 @@ func (b *OrganizationQueryBuilder) WhereMetadataNEQ(v *Metadata) *OrganizationQu
 	return b
 }
 
+// WhereMetadataIn adds a WHERE metadata IN (?) condition
+func (b *OrganizationQueryBuilder) WhereMetadataIn(v []*Metadata) *OrganizationQueryBuilder {
+	b.query = OrganizationQuery.Where.MetadataIn(b.query, v)
+	return b
+}
+
+// WhereMetadataNotIn adds a WHERE metadata NOT IN (?) condition
+func (b *OrganizationQueryBuilder) WhereMetadataNotIn(v []*Metadata) *OrganizationQueryBuilder {
+	b.query = OrganizationQuery.Where.MetadataNotIn(b.query, v)
+	return b
+}
+
 // WhereVersionEQ adds a WHERE version = ? condition
 func (b *OrganizationQueryBuilder) WhereVersionEQ(v int64) *OrganizationQueryBuilder {
 	b.query = OrganizationQuery.Where.VersionEQ(b.query, v)
@@ -2127,4 +2253,155 @@ func (b *OrganizationQueryBuilder) First(ctx context.Context) (*Organization, er
 // OrganizationBuild creates a chainable query builder
 func OrganizationBuild(db bun.IDB) *OrganizationQueryBuilder {
 	return NewOrganizationQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *OrganizationQueryBuilder) LoadBusinessUnit() *OrganizationQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadState loads the State relationship
+func (b *OrganizationQueryBuilder) LoadState() *OrganizationQueryBuilder {
+	b.query = b.query.Relation("State")
+	return b
+}
+
+// LoadDocumentQualityConfig loads the DocumentQualityConfig relationship
+func (b *OrganizationQueryBuilder) LoadDocumentQualityConfig() *OrganizationQueryBuilder {
+	b.query = b.query.Relation("DocumentQualityConfig")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Organization
+func (b *OrganizationQueryBuilder) LoadAllRelations() *OrganizationQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadState()
+	b.LoadDocumentQualityConfig()
+	return b
+}
+
+// OrganizationRelationChain provides a fluent API for building nested relationship chains
+type OrganizationRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewOrganizationRelationChain creates a new relation chain builder
+func NewOrganizationRelationChain() *OrganizationRelationChain {
+	return &OrganizationRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *OrganizationRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *OrganizationRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *OrganizationRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *OrganizationRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *OrganizationQueryBuilder) WithBusinessUnit() *OrganizationRelationChainBuilder {
+	chain := &OrganizationRelationChainBuilder{
+		parent: b,
+		chain:  NewOrganizationRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithState creates a relation chain starting with State
+func (b *OrganizationQueryBuilder) WithState() *OrganizationRelationChainBuilder {
+	chain := &OrganizationRelationChainBuilder{
+		parent: b,
+		chain:  NewOrganizationRelationChain(),
+	}
+	chain.chain.Add("State")
+	return chain
+}
+
+// WithDocumentQualityConfig creates a relation chain starting with DocumentQualityConfig
+func (b *OrganizationQueryBuilder) WithDocumentQualityConfig() *OrganizationRelationChainBuilder {
+	chain := &OrganizationRelationChainBuilder{
+		parent: b,
+		chain:  NewOrganizationRelationChain(),
+	}
+	chain.chain.Add("DocumentQualityConfig")
+	return chain
+}
+
+// OrganizationRelationChainBuilder provides fluent API for building nested relations
+type OrganizationRelationChainBuilder struct {
+	parent *OrganizationQueryBuilder
+	chain  *OrganizationRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *OrganizationRelationChainBuilder) Load() *OrganizationQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *OrganizationRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *OrganizationRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *OrganizationRelationChainBuilder) OrderBy(order string) *OrganizationRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *OrganizationRelationChainBuilder) Where(condition string, args ...interface{}) *OrganizationRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

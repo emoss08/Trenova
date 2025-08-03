@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   DialogBody,
@@ -122,7 +127,6 @@ export function CreateTableConfigurationModal({
   const onSubmit = useCallback(
     async (values: TableConfigurationSchema) => {
       await mutateAsync(values);
-      console.log("Values", values);
     },
     [mutateAsync],
   );
@@ -161,7 +165,15 @@ export function CreateTableConfigurationModal({
         },
       });
     }
-  }, [isSubmitSuccessful, reset, open, resource, visiblityState, tableFilters, columnOrder]);
+  }, [
+    isSubmitSuccessful,
+    reset,
+    open,
+    resource,
+    visiblityState,
+    tableFilters,
+    columnOrder,
+  ]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

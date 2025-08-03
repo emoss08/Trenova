@@ -49,20 +49,34 @@ var WorkerPTOQuery = struct {
 	Where struct {
 		IDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		WorkerIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		WorkerIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		WorkerIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		WorkerIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ApproverIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ApproverIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ApproverIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ApproverIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ApproverIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ApproverIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ            func(q *bun.SelectQuery, v PTOStatus) *bun.SelectQuery
 		StatusNEQ           func(q *bun.SelectQuery, v PTOStatus) *bun.SelectQuery
+		StatusIn            func(q *bun.SelectQuery, v []PTOStatus) *bun.SelectQuery
+		StatusNotIn         func(q *bun.SelectQuery, v []PTOStatus) *bun.SelectQuery
 		TypeEQ              func(q *bun.SelectQuery, v PTOType) *bun.SelectQuery
 		TypeNEQ             func(q *bun.SelectQuery, v PTOType) *bun.SelectQuery
+		TypeIn              func(q *bun.SelectQuery, v []PTOType) *bun.SelectQuery
+		TypeNotIn           func(q *bun.SelectQuery, v []PTOType) *bun.SelectQuery
 		StartDateEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		StartDateNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		StartDateIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -137,6 +151,13 @@ var WorkerPTOQuery = struct {
 	FieldConfig  func() map[string]workerPTOFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+		Worker       string
+		Approver     string
+	}
 }{
 	// Table and alias constants
 	Table:    "worker_pto",
@@ -190,20 +211,34 @@ var WorkerPTOQuery = struct {
 	Where: struct {
 		IDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		WorkerIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		WorkerIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		WorkerIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		WorkerIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ApproverIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ApproverIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ApproverIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ApproverIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ApproverIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ApproverIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ            func(q *bun.SelectQuery, v PTOStatus) *bun.SelectQuery
 		StatusNEQ           func(q *bun.SelectQuery, v PTOStatus) *bun.SelectQuery
+		StatusIn            func(q *bun.SelectQuery, v []PTOStatus) *bun.SelectQuery
+		StatusNotIn         func(q *bun.SelectQuery, v []PTOStatus) *bun.SelectQuery
 		TypeEQ              func(q *bun.SelectQuery, v PTOType) *bun.SelectQuery
 		TypeNEQ             func(q *bun.SelectQuery, v PTOType) *bun.SelectQuery
+		TypeIn              func(q *bun.SelectQuery, v []PTOType) *bun.SelectQuery
+		TypeNotIn           func(q *bun.SelectQuery, v []PTOType) *bun.SelectQuery
 		StartDateEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		StartDateNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		StartDateIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -263,11 +298,23 @@ var WorkerPTOQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wpto.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wpto.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wpto.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wpto.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wpto.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wpto.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wpto.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wpto.organization_id"), v)
@@ -275,17 +322,35 @@ var WorkerPTOQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wpto.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wpto.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wpto.organization_id"), bun.In(v))
+		},
 		WorkerIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wpto.worker_id"), v)
 		},
 		WorkerIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wpto.worker_id"), v)
 		},
+		WorkerIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wpto.worker_id"), bun.In(v))
+		},
+		WorkerIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wpto.worker_id"), bun.In(v))
+		},
 		ApproverIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wpto.approver_id"), v)
 		},
 		ApproverIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wpto.approver_id"), v)
+		},
+		ApproverIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wpto.approver_id"), bun.In(v))
+		},
+		ApproverIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wpto.approver_id"), bun.In(v))
 		},
 		ApproverIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("wpto.approver_id"))
@@ -299,11 +364,23 @@ var WorkerPTOQuery = struct {
 		StatusNEQ: func(q *bun.SelectQuery, v PTOStatus) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wpto.status"), v)
 		},
+		StatusIn: func(q *bun.SelectQuery, v []PTOStatus) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wpto.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []PTOStatus) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wpto.status"), bun.In(v))
+		},
 		TypeEQ: func(q *bun.SelectQuery, v PTOType) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wpto.type"), v)
 		},
 		TypeNEQ: func(q *bun.SelectQuery, v PTOType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wpto.type"), v)
+		},
+		TypeIn: func(q *bun.SelectQuery, v []PTOType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wpto.type"), bun.In(v))
+		},
+		TypeNotIn: func(q *bun.SelectQuery, v []PTOType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wpto.type"), bun.In(v))
 		},
 		StartDateEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wpto.start_date"), v)
@@ -774,6 +851,18 @@ var WorkerPTOQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+		Worker       string
+		Approver     string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+		Worker:       "Worker",
+		Approver:     "Approver",
+	},
 }
 
 // WorkerPTOQueryBuilder provides a fluent interface for building queries
@@ -818,6 +907,18 @@ func (b *WorkerPTOQueryBuilder) WhereIDNEQ(v pulid.ID) *WorkerPTOQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereIDIn(v []pulid.ID) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereIDNotIn(v []pulid.ID) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *WorkerPTOQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *WorkerPTOQueryBuilder {
 	b.query = WorkerPTOQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -827,6 +928,18 @@ func (b *WorkerPTOQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *WorkerPTOQuer
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *WorkerPTOQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *WorkerPTOQueryBuilder {
 	b.query = WorkerPTOQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -842,6 +955,18 @@ func (b *WorkerPTOQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *WorkerPTOQue
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereWorkerIDEQ adds a WHERE worker_id = ? condition
 func (b *WorkerPTOQueryBuilder) WhereWorkerIDEQ(v pulid.ID) *WorkerPTOQueryBuilder {
 	b.query = WorkerPTOQuery.Where.WorkerIDEQ(b.query, v)
@@ -851,6 +976,18 @@ func (b *WorkerPTOQueryBuilder) WhereWorkerIDEQ(v pulid.ID) *WorkerPTOQueryBuild
 // WhereWorkerIDNEQ adds a WHERE worker_id != ? condition
 func (b *WorkerPTOQueryBuilder) WhereWorkerIDNEQ(v pulid.ID) *WorkerPTOQueryBuilder {
 	b.query = WorkerPTOQuery.Where.WorkerIDNEQ(b.query, v)
+	return b
+}
+
+// WhereWorkerIDIn adds a WHERE worker_id IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereWorkerIDIn(v []pulid.ID) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.WorkerIDIn(b.query, v)
+	return b
+}
+
+// WhereWorkerIDNotIn adds a WHERE worker_id NOT IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereWorkerIDNotIn(v []pulid.ID) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.WorkerIDNotIn(b.query, v)
 	return b
 }
 
@@ -866,6 +1003,18 @@ func (b *WorkerPTOQueryBuilder) WhereApproverIDNEQ(v *pulid.ID) *WorkerPTOQueryB
 	return b
 }
 
+// WhereApproverIDIn adds a WHERE approver_id IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereApproverIDIn(v []*pulid.ID) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.ApproverIDIn(b.query, v)
+	return b
+}
+
+// WhereApproverIDNotIn adds a WHERE approver_id NOT IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereApproverIDNotIn(v []*pulid.ID) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.ApproverIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *WorkerPTOQueryBuilder) WhereStatusEQ(v PTOStatus) *WorkerPTOQueryBuilder {
 	b.query = WorkerPTOQuery.Where.StatusEQ(b.query, v)
@@ -878,6 +1027,18 @@ func (b *WorkerPTOQueryBuilder) WhereStatusNEQ(v PTOStatus) *WorkerPTOQueryBuild
 	return b
 }
 
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereStatusIn(v []PTOStatus) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereStatusNotIn(v []PTOStatus) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.StatusNotIn(b.query, v)
+	return b
+}
+
 // WhereTypeEQ adds a WHERE type = ? condition
 func (b *WorkerPTOQueryBuilder) WhereTypeEQ(v PTOType) *WorkerPTOQueryBuilder {
 	b.query = WorkerPTOQuery.Where.TypeEQ(b.query, v)
@@ -887,6 +1048,18 @@ func (b *WorkerPTOQueryBuilder) WhereTypeEQ(v PTOType) *WorkerPTOQueryBuilder {
 // WhereTypeNEQ adds a WHERE type != ? condition
 func (b *WorkerPTOQueryBuilder) WhereTypeNEQ(v PTOType) *WorkerPTOQueryBuilder {
 	b.query = WorkerPTOQuery.Where.TypeNEQ(b.query, v)
+	return b
+}
+
+// WhereTypeIn adds a WHERE type IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereTypeIn(v []PTOType) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.TypeIn(b.query, v)
+	return b
+}
+
+// WhereTypeNotIn adds a WHERE type NOT IN (?) condition
+func (b *WorkerPTOQueryBuilder) WhereTypeNotIn(v []PTOType) *WorkerPTOQueryBuilder {
+	b.query = WorkerPTOQuery.Where.TypeNotIn(b.query, v)
 	return b
 }
 
@@ -1272,4 +1445,172 @@ func (b *WorkerPTOQueryBuilder) First(ctx context.Context) (*WorkerPTO, error) {
 // WorkerPTOBuild creates a chainable query builder
 func WorkerPTOBuild(db bun.IDB) *WorkerPTOQueryBuilder {
 	return NewWorkerPTOQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *WorkerPTOQueryBuilder) LoadBusinessUnit() *WorkerPTOQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *WorkerPTOQueryBuilder) LoadOrganization() *WorkerPTOQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadWorker loads the Worker relationship
+func (b *WorkerPTOQueryBuilder) LoadWorker() *WorkerPTOQueryBuilder {
+	b.query = b.query.Relation("Worker")
+	return b
+}
+
+// LoadApprover loads the Approver relationship
+func (b *WorkerPTOQueryBuilder) LoadApprover() *WorkerPTOQueryBuilder {
+	b.query = b.query.Relation("Approver")
+	return b
+}
+
+// LoadAllRelations loads all relationships for WorkerPTO
+func (b *WorkerPTOQueryBuilder) LoadAllRelations() *WorkerPTOQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadWorker()
+	b.LoadApprover()
+	return b
+}
+
+// WorkerPTORelationChain provides a fluent API for building nested relationship chains
+type WorkerPTORelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewWorkerPTORelationChain creates a new relation chain builder
+func NewWorkerPTORelationChain() *WorkerPTORelationChain {
+	return &WorkerPTORelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *WorkerPTORelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *WorkerPTORelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *WorkerPTORelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *WorkerPTORelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *WorkerPTOQueryBuilder) WithBusinessUnit() *WorkerPTORelationChainBuilder {
+	chain := &WorkerPTORelationChainBuilder{
+		parent: b,
+		chain:  NewWorkerPTORelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *WorkerPTOQueryBuilder) WithOrganization() *WorkerPTORelationChainBuilder {
+	chain := &WorkerPTORelationChainBuilder{
+		parent: b,
+		chain:  NewWorkerPTORelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithWorker creates a relation chain starting with Worker
+func (b *WorkerPTOQueryBuilder) WithWorker() *WorkerPTORelationChainBuilder {
+	chain := &WorkerPTORelationChainBuilder{
+		parent: b,
+		chain:  NewWorkerPTORelationChain(),
+	}
+	chain.chain.Add("Worker")
+	return chain
+}
+
+// WithApprover creates a relation chain starting with Approver
+func (b *WorkerPTOQueryBuilder) WithApprover() *WorkerPTORelationChainBuilder {
+	chain := &WorkerPTORelationChainBuilder{
+		parent: b,
+		chain:  NewWorkerPTORelationChain(),
+	}
+	chain.chain.Add("Approver")
+	return chain
+}
+
+// WorkerPTORelationChainBuilder provides fluent API for building nested relations
+type WorkerPTORelationChainBuilder struct {
+	parent *WorkerPTOQueryBuilder
+	chain  *WorkerPTORelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *WorkerPTORelationChainBuilder) Load() *WorkerPTOQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *WorkerPTORelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *WorkerPTORelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *WorkerPTORelationChainBuilder) OrderBy(order string) *WorkerPTORelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *WorkerPTORelationChainBuilder) Where(condition string, args ...interface{}) *WorkerPTORelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

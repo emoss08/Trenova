@@ -1,3 +1,8 @@
+##
+## Copyright 2023-2025 Eric Moss
+## Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+## Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md##
+
 # PostgreSQL Exporter Custom Queries Configuration
 # This file defines custom queries to collect detailed metrics from PostgreSQL,
 # including pg_stat_statements data for query performance analysis

@@ -45,54 +45,68 @@ var ShipmentMoveQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ShipmentIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ShipmentIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		StatusEQ          func(q *bun.SelectQuery, v MoveStatus) *bun.SelectQuery
-		StatusNEQ         func(q *bun.SelectQuery, v MoveStatus) *bun.SelectQuery
-		LoadedEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		LoadedNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		SequenceEQ        func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceNEQ       func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceIn        func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		SequenceNotIn     func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		SequenceGT        func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceGTE       func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceLT        func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceLTE       func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		DistanceEQ        func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
-		DistanceNEQ       func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
-		DistanceIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
-		DistanceIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
-		VersionEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentIDEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StatusEQ            func(q *bun.SelectQuery, v MoveStatus) *bun.SelectQuery
+		StatusNEQ           func(q *bun.SelectQuery, v MoveStatus) *bun.SelectQuery
+		StatusIn            func(q *bun.SelectQuery, v []MoveStatus) *bun.SelectQuery
+		StatusNotIn         func(q *bun.SelectQuery, v []MoveStatus) *bun.SelectQuery
+		LoadedEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		LoadedNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		LoadedIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		LoadedNotIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		SequenceEQ          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceNEQ         func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceIn          func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		SequenceNotIn       func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		SequenceGT          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceGTE         func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceLT          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceLTE         func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		DistanceEQ          func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		DistanceNEQ         func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		DistanceIn          func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		DistanceNotIn       func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		DistanceIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
+		DistanceIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
+		VersionEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -116,6 +130,14 @@ var ShipmentMoveQuery = struct {
 	FieldConfig  func() map[string]shipmentMoveFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+		Shipment     string
+		Assignment   string
+		Stops        string
+	}
 }{
 	// Table and alias constants
 	Table:    "shipment_moves",
@@ -163,55 +185,69 @@ var ShipmentMoveQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ShipmentIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ShipmentIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		StatusEQ          func(q *bun.SelectQuery, v MoveStatus) *bun.SelectQuery
-		StatusNEQ         func(q *bun.SelectQuery, v MoveStatus) *bun.SelectQuery
-		LoadedEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		LoadedNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		SequenceEQ        func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceNEQ       func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceIn        func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		SequenceNotIn     func(q *bun.SelectQuery, v []int) *bun.SelectQuery
-		SequenceGT        func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceGTE       func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceLT        func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		SequenceLTE       func(q *bun.SelectQuery, v int) *bun.SelectQuery
-		DistanceEQ        func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
-		DistanceNEQ       func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
-		DistanceIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
-		DistanceIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
-		VersionEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT       func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE      func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		Tenant            func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentIDEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentIDNEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentIDIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentIDNotIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StatusEQ            func(q *bun.SelectQuery, v MoveStatus) *bun.SelectQuery
+		StatusNEQ           func(q *bun.SelectQuery, v MoveStatus) *bun.SelectQuery
+		StatusIn            func(q *bun.SelectQuery, v []MoveStatus) *bun.SelectQuery
+		StatusNotIn         func(q *bun.SelectQuery, v []MoveStatus) *bun.SelectQuery
+		LoadedEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		LoadedNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		LoadedIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		LoadedNotIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		SequenceEQ          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceNEQ         func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceIn          func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		SequenceNotIn       func(q *bun.SelectQuery, v []int) *bun.SelectQuery
+		SequenceGT          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceGTE         func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceLT          func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		SequenceLTE         func(q *bun.SelectQuery, v int) *bun.SelectQuery
+		DistanceEQ          func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		DistanceNEQ         func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		DistanceIn          func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		DistanceNotIn       func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		DistanceIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
+		DistanceIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
+		VersionEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn      func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE        func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		Tenant              func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sm.id"), v)
@@ -219,11 +255,23 @@ var ShipmentMoveQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sm.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sm.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sm.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sm.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sm.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sm.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sm.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sm.organization_id"), v)
@@ -231,11 +279,23 @@ var ShipmentMoveQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sm.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sm.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sm.organization_id"), bun.In(v))
+		},
 		ShipmentIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sm.shipment_id"), v)
 		},
 		ShipmentIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sm.shipment_id"), v)
+		},
+		ShipmentIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sm.shipment_id"), bun.In(v))
+		},
+		ShipmentIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sm.shipment_id"), bun.In(v))
 		},
 		StatusEQ: func(q *bun.SelectQuery, v MoveStatus) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sm.status"), v)
@@ -243,11 +303,23 @@ var ShipmentMoveQuery = struct {
 		StatusNEQ: func(q *bun.SelectQuery, v MoveStatus) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sm.status"), v)
 		},
+		StatusIn: func(q *bun.SelectQuery, v []MoveStatus) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sm.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []MoveStatus) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sm.status"), bun.In(v))
+		},
 		LoadedEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sm.loaded"), v)
 		},
 		LoadedNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sm.loaded"), v)
+		},
+		LoadedIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sm.loaded"), bun.In(v))
+		},
+		LoadedNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sm.loaded"), bun.In(v))
 		},
 		SequenceEQ: func(q *bun.SelectQuery, v int) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sm.sequence"), v)
@@ -278,6 +350,12 @@ var ShipmentMoveQuery = struct {
 		},
 		DistanceNEQ: func(q *bun.SelectQuery, v *float64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sm.distance"), v)
+		},
+		DistanceIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sm.distance"), bun.In(v))
+		},
+		DistanceNotIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sm.distance"), bun.In(v))
 		},
 		DistanceIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sm.distance"))
@@ -637,6 +715,20 @@ var ShipmentMoveQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+		Shipment     string
+		Assignment   string
+		Stops        string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+		Shipment:     "Shipment",
+		Assignment:   "Assignment",
+		Stops:        "Stops",
+	},
 }
 
 // ShipmentMoveQueryBuilder provides a fluent interface for building queries
@@ -681,6 +773,18 @@ func (b *ShipmentMoveQueryBuilder) WhereIDNEQ(v pulid.ID) *ShipmentMoveQueryBuil
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereIDIn(v []pulid.ID) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereIDNotIn(v []pulid.ID) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *ShipmentMoveQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ShipmentMoveQueryBuilder {
 	b.query = ShipmentMoveQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -690,6 +794,18 @@ func (b *ShipmentMoveQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ShipmentMo
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *ShipmentMoveQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *ShipmentMoveQueryBuilder {
 	b.query = ShipmentMoveQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -705,6 +821,18 @@ func (b *ShipmentMoveQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *ShipmentM
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereShipmentIDEQ adds a WHERE shipment_id = ? condition
 func (b *ShipmentMoveQueryBuilder) WhereShipmentIDEQ(v pulid.ID) *ShipmentMoveQueryBuilder {
 	b.query = ShipmentMoveQuery.Where.ShipmentIDEQ(b.query, v)
@@ -714,6 +842,18 @@ func (b *ShipmentMoveQueryBuilder) WhereShipmentIDEQ(v pulid.ID) *ShipmentMoveQu
 // WhereShipmentIDNEQ adds a WHERE shipment_id != ? condition
 func (b *ShipmentMoveQueryBuilder) WhereShipmentIDNEQ(v pulid.ID) *ShipmentMoveQueryBuilder {
 	b.query = ShipmentMoveQuery.Where.ShipmentIDNEQ(b.query, v)
+	return b
+}
+
+// WhereShipmentIDIn adds a WHERE shipment_id IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereShipmentIDIn(v []pulid.ID) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.ShipmentIDIn(b.query, v)
+	return b
+}
+
+// WhereShipmentIDNotIn adds a WHERE shipment_id NOT IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereShipmentIDNotIn(v []pulid.ID) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.ShipmentIDNotIn(b.query, v)
 	return b
 }
 
@@ -729,6 +869,18 @@ func (b *ShipmentMoveQueryBuilder) WhereStatusNEQ(v MoveStatus) *ShipmentMoveQue
 	return b
 }
 
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereStatusIn(v []MoveStatus) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereStatusNotIn(v []MoveStatus) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.StatusNotIn(b.query, v)
+	return b
+}
+
 // WhereLoadedEQ adds a WHERE loaded = ? condition
 func (b *ShipmentMoveQueryBuilder) WhereLoadedEQ(v bool) *ShipmentMoveQueryBuilder {
 	b.query = ShipmentMoveQuery.Where.LoadedEQ(b.query, v)
@@ -738,6 +890,18 @@ func (b *ShipmentMoveQueryBuilder) WhereLoadedEQ(v bool) *ShipmentMoveQueryBuild
 // WhereLoadedNEQ adds a WHERE loaded != ? condition
 func (b *ShipmentMoveQueryBuilder) WhereLoadedNEQ(v bool) *ShipmentMoveQueryBuilder {
 	b.query = ShipmentMoveQuery.Where.LoadedNEQ(b.query, v)
+	return b
+}
+
+// WhereLoadedIn adds a WHERE loaded IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereLoadedIn(v []bool) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.LoadedIn(b.query, v)
+	return b
+}
+
+// WhereLoadedNotIn adds a WHERE loaded NOT IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereLoadedNotIn(v []bool) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.LoadedNotIn(b.query, v)
 	return b
 }
 
@@ -798,6 +962,18 @@ func (b *ShipmentMoveQueryBuilder) WhereDistanceEQ(v *float64) *ShipmentMoveQuer
 // WhereDistanceNEQ adds a WHERE distance != ? condition
 func (b *ShipmentMoveQueryBuilder) WhereDistanceNEQ(v *float64) *ShipmentMoveQueryBuilder {
 	b.query = ShipmentMoveQuery.Where.DistanceNEQ(b.query, v)
+	return b
+}
+
+// WhereDistanceIn adds a WHERE distance IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereDistanceIn(v []*float64) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.DistanceIn(b.query, v)
+	return b
+}
+
+// WhereDistanceNotIn adds a WHERE distance NOT IN (?) condition
+func (b *ShipmentMoveQueryBuilder) WhereDistanceNotIn(v []*float64) *ShipmentMoveQueryBuilder {
+	b.query = ShipmentMoveQuery.Where.DistanceNotIn(b.query, v)
 	return b
 }
 
@@ -1045,4 +1221,198 @@ func (b *ShipmentMoveQueryBuilder) First(ctx context.Context) (*ShipmentMove, er
 // ShipmentMoveBuild creates a chainable query builder
 func ShipmentMoveBuild(db bun.IDB) *ShipmentMoveQueryBuilder {
 	return NewShipmentMoveQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *ShipmentMoveQueryBuilder) LoadBusinessUnit() *ShipmentMoveQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *ShipmentMoveQueryBuilder) LoadOrganization() *ShipmentMoveQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadShipment loads the Shipment relationship
+func (b *ShipmentMoveQueryBuilder) LoadShipment() *ShipmentMoveQueryBuilder {
+	b.query = b.query.Relation("Shipment")
+	return b
+}
+
+// LoadAssignment loads the Assignment relationship
+func (b *ShipmentMoveQueryBuilder) LoadAssignment() *ShipmentMoveQueryBuilder {
+	b.query = b.query.Relation("Assignment")
+	return b
+}
+
+// LoadStops loads the Stops relationship
+func (b *ShipmentMoveQueryBuilder) LoadStops(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentMoveQueryBuilder {
+	if len(opts) > 0 {
+		b.query = b.query.Relation("Stops", func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		})
+	} else {
+		b.query = b.query.Relation("Stops")
+	}
+	return b
+}
+
+// LoadAllRelations loads all relationships for ShipmentMove
+func (b *ShipmentMoveQueryBuilder) LoadAllRelations() *ShipmentMoveQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadShipment()
+	b.LoadAssignment()
+	b.LoadStops()
+	return b
+}
+
+// ShipmentMoveRelationChain provides a fluent API for building nested relationship chains
+type ShipmentMoveRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewShipmentMoveRelationChain creates a new relation chain builder
+func NewShipmentMoveRelationChain() *ShipmentMoveRelationChain {
+	return &ShipmentMoveRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *ShipmentMoveRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentMoveRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *ShipmentMoveRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *ShipmentMoveRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *ShipmentMoveQueryBuilder) WithBusinessUnit() *ShipmentMoveRelationChainBuilder {
+	chain := &ShipmentMoveRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentMoveRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *ShipmentMoveQueryBuilder) WithOrganization() *ShipmentMoveRelationChainBuilder {
+	chain := &ShipmentMoveRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentMoveRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithShipment creates a relation chain starting with Shipment
+func (b *ShipmentMoveQueryBuilder) WithShipment() *ShipmentMoveRelationChainBuilder {
+	chain := &ShipmentMoveRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentMoveRelationChain(),
+	}
+	chain.chain.Add("Shipment")
+	return chain
+}
+
+// WithAssignment creates a relation chain starting with Assignment
+func (b *ShipmentMoveQueryBuilder) WithAssignment() *ShipmentMoveRelationChainBuilder {
+	chain := &ShipmentMoveRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentMoveRelationChain(),
+	}
+	chain.chain.Add("Assignment")
+	return chain
+}
+
+// WithStops creates a relation chain starting with Stops
+func (b *ShipmentMoveQueryBuilder) WithStops(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentMoveRelationChainBuilder {
+	chain := &ShipmentMoveRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentMoveRelationChain(),
+	}
+	chain.chain.Add("Stops", opts...)
+	return chain
+}
+
+// ShipmentMoveRelationChainBuilder provides fluent API for building nested relations
+type ShipmentMoveRelationChainBuilder struct {
+	parent *ShipmentMoveQueryBuilder
+	chain  *ShipmentMoveRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *ShipmentMoveRelationChainBuilder) Load() *ShipmentMoveQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *ShipmentMoveRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentMoveRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *ShipmentMoveRelationChainBuilder) OrderBy(order string) *ShipmentMoveRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *ShipmentMoveRelationChainBuilder) Where(condition string, args ...interface{}) *ShipmentMoveRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

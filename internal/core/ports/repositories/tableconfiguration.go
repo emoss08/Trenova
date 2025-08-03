@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 package repositories
 
 import (
@@ -7,11 +12,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 )
-
-type ListTableConfigurationResult struct {
-	Configurations []*tableconfiguration.Configuration
-	Total          int
-}
 
 // TableConfigurationFilters defines filters for querying configurations
 type TableConfigurationFilters struct {
@@ -57,7 +57,7 @@ type TableConfigurationRepository interface {
 	List(
 		ctx context.Context,
 		filters *TableConfigurationFilters,
-	) (*ListTableConfigurationResult, error)
+	) (*ports.ListResult[*tableconfiguration.Configuration], error)
 	ListPublicConfigurations(
 		ctx context.Context,
 		opts *TableConfigurationFilters,

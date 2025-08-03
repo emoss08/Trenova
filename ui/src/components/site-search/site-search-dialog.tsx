@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { SidebarGroup, SidebarGroupContent } from "@/components/ui/sidebar";
 import { commandRoutes, quickActions } from "@/config/site-search";
 import { SITE_SEARCH_RECENT_SEARCHES_KEY } from "@/constants/env";

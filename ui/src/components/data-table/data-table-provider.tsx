@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 /* eslint-disable react-refresh/only-export-components */
 import { ControlsProvider } from "@/app/providers/controls";
 import type {
@@ -13,6 +18,7 @@ interface DataTableStateContextType {
   rowSelection: RowSelectionState;
   pagination: PaginationState;
   columnVisibility: VisibilityState;
+  columnOrder?: string[];
 }
 
 interface DataTableBaseContextType<TData = unknown, TValue = unknown> {
@@ -42,6 +48,7 @@ export function DataTableProvider<TData, TValue>({
       pagination: props.pagination ?? { pageIndex: 0, pageSize: 10 },
       rowSelection: props.rowSelection ?? {},
       columnVisibility: props.columnVisibility ?? {},
+      columnOrder: props.columnOrder,
     }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [
@@ -51,6 +58,7 @@ export function DataTableProvider<TData, TValue>({
       props.columns,
       props.rowSelection,
       props.columnVisibility,
+      props.columnOrder,
     ],
   );
 

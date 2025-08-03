@@ -48,12 +48,20 @@ var EquipmentManufacturerQuery = struct {
 	Where struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn           func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -145,6 +153,11 @@ var EquipmentManufacturerQuery = struct {
 	FieldConfig  func() map[string]equipmentManufacturerFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "equipment_manufacturers",
@@ -194,12 +207,20 @@ var EquipmentManufacturerQuery = struct {
 	Where: struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn           func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -276,11 +297,23 @@ var EquipmentManufacturerQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("em.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("em.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("em.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("em.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("em.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("em.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("em.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("em.organization_id"), v)
@@ -288,11 +321,23 @@ var EquipmentManufacturerQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("em.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("em.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("em.organization_id"), bun.In(v))
+		},
 		StatusEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("em.status"), v)
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("em.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("em.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("em.status"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("em.name"), v)
@@ -778,6 +823,14 @@ var EquipmentManufacturerQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // EquipmentManufacturerQueryBuilder provides a fluent interface for building queries
@@ -822,6 +875,18 @@ func (b *EquipmentManufacturerQueryBuilder) WhereIDNEQ(v pulid.ID) *EquipmentMan
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *EquipmentManufacturerQueryBuilder) WhereIDIn(v []pulid.ID) *EquipmentManufacturerQueryBuilder {
+	b.query = EquipmentManufacturerQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *EquipmentManufacturerQueryBuilder) WhereIDNotIn(v []pulid.ID) *EquipmentManufacturerQueryBuilder {
+	b.query = EquipmentManufacturerQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *EquipmentManufacturerQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *EquipmentManufacturerQueryBuilder {
 	b.query = EquipmentManufacturerQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -831,6 +896,18 @@ func (b *EquipmentManufacturerQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *E
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *EquipmentManufacturerQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *EquipmentManufacturerQueryBuilder {
 	b.query = EquipmentManufacturerQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *EquipmentManufacturerQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *EquipmentManufacturerQueryBuilder {
+	b.query = EquipmentManufacturerQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *EquipmentManufacturerQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *EquipmentManufacturerQueryBuilder {
+	b.query = EquipmentManufacturerQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -846,6 +923,18 @@ func (b *EquipmentManufacturerQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *EquipmentManufacturerQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *EquipmentManufacturerQueryBuilder {
+	b.query = EquipmentManufacturerQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *EquipmentManufacturerQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *EquipmentManufacturerQueryBuilder {
+	b.query = EquipmentManufacturerQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *EquipmentManufacturerQueryBuilder) WhereStatusEQ(v domain.Status) *EquipmentManufacturerQueryBuilder {
 	b.query = EquipmentManufacturerQuery.Where.StatusEQ(b.query, v)
@@ -855,6 +944,18 @@ func (b *EquipmentManufacturerQueryBuilder) WhereStatusEQ(v domain.Status) *Equi
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *EquipmentManufacturerQueryBuilder) WhereStatusNEQ(v domain.Status) *EquipmentManufacturerQueryBuilder {
 	b.query = EquipmentManufacturerQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *EquipmentManufacturerQueryBuilder) WhereStatusIn(v []domain.Status) *EquipmentManufacturerQueryBuilder {
+	b.query = EquipmentManufacturerQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *EquipmentManufacturerQueryBuilder) WhereStatusNotIn(v []domain.Status) *EquipmentManufacturerQueryBuilder {
+	b.query = EquipmentManufacturerQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1270,4 +1371,138 @@ func (b *EquipmentManufacturerQueryBuilder) First(ctx context.Context) (*Equipme
 // EquipmentManufacturerBuild creates a chainable query builder
 func EquipmentManufacturerBuild(db bun.IDB) *EquipmentManufacturerQueryBuilder {
 	return NewEquipmentManufacturerQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *EquipmentManufacturerQueryBuilder) LoadBusinessUnit() *EquipmentManufacturerQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *EquipmentManufacturerQueryBuilder) LoadOrganization() *EquipmentManufacturerQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for EquipmentManufacturer
+func (b *EquipmentManufacturerQueryBuilder) LoadAllRelations() *EquipmentManufacturerQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
+}
+
+// EquipmentManufacturerRelationChain provides a fluent API for building nested relationship chains
+type EquipmentManufacturerRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewEquipmentManufacturerRelationChain creates a new relation chain builder
+func NewEquipmentManufacturerRelationChain() *EquipmentManufacturerRelationChain {
+	return &EquipmentManufacturerRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *EquipmentManufacturerRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *EquipmentManufacturerRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *EquipmentManufacturerRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *EquipmentManufacturerRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *EquipmentManufacturerQueryBuilder) WithBusinessUnit() *EquipmentManufacturerRelationChainBuilder {
+	chain := &EquipmentManufacturerRelationChainBuilder{
+		parent: b,
+		chain:  NewEquipmentManufacturerRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *EquipmentManufacturerQueryBuilder) WithOrganization() *EquipmentManufacturerRelationChainBuilder {
+	chain := &EquipmentManufacturerRelationChainBuilder{
+		parent: b,
+		chain:  NewEquipmentManufacturerRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// EquipmentManufacturerRelationChainBuilder provides fluent API for building nested relations
+type EquipmentManufacturerRelationChainBuilder struct {
+	parent *EquipmentManufacturerQueryBuilder
+	chain  *EquipmentManufacturerRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *EquipmentManufacturerRelationChainBuilder) Load() *EquipmentManufacturerQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *EquipmentManufacturerRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *EquipmentManufacturerRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *EquipmentManufacturerRelationChainBuilder) OrderBy(order string) *EquipmentManufacturerRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *EquipmentManufacturerRelationChainBuilder) Where(condition string, args ...interface{}) *EquipmentManufacturerRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

@@ -62,10 +62,16 @@ var DocumentQuery = struct {
 	Where struct {
 		IDEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		FileNameEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		FileNameNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		FileNameIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -131,26 +137,44 @@ var DocumentQuery = struct {
 		StoragePathHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DocumentTypeIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		DocumentTypeIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		DocumentTypeIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		DocumentTypeIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ                    func(q *bun.SelectQuery, v Status) *bun.SelectQuery
 		StatusNEQ                   func(q *bun.SelectQuery, v Status) *bun.SelectQuery
+		StatusIn                    func(q *bun.SelectQuery, v []Status) *bun.SelectQuery
+		StatusNotIn                 func(q *bun.SelectQuery, v []Status) *bun.SelectQuery
 		ResourceIDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ResourceIDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ResourceIDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ResourceIDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ResourceTypeEQ              func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
 		ResourceTypeNEQ             func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
+		ResourceTypeIn              func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
+		ResourceTypeNotIn           func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
 		ExpirationDateEQ            func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ExpirationDateNEQ           func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ExpirationDateIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ExpirationDateNotIn         func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ExpirationDateIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		ExpirationDateIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		TagsEQ                      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
 		TagsNEQ                     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TagsIn                      func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		TagsNotIn                   func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
 		UploadedByIDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		UploadedByIDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UploadedByIDIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UploadedByIDNotIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ApprovedByIDEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ApprovedByIDNEQ             func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ApprovedByIDIn              func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ApprovedByIDNotIn           func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ApprovedByIDIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		ApprovedByIDIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		ApprovedAtEQ                func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ApprovedAtNEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ApprovedAtIn                func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ApprovedAtNotIn             func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ApprovedAtIsNull            func(q *bun.SelectQuery) *bun.SelectQuery
 		ApprovedAtIsNotNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		VersionEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -244,6 +268,14 @@ var DocumentQuery = struct {
 	FieldConfig  func() map[string]documentFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+		DT           string
+		UploadedBy   string
+		ApprovedBy   string
+	}
 }{
 	// Table and alias constants
 	Table:    "documents",
@@ -321,10 +353,16 @@ var DocumentQuery = struct {
 	Where: struct {
 		IDEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		FileNameEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		FileNameNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		FileNameIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -390,26 +428,44 @@ var DocumentQuery = struct {
 		StoragePathHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DocumentTypeIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		DocumentTypeIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		DocumentTypeIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		DocumentTypeIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ                    func(q *bun.SelectQuery, v Status) *bun.SelectQuery
 		StatusNEQ                   func(q *bun.SelectQuery, v Status) *bun.SelectQuery
+		StatusIn                    func(q *bun.SelectQuery, v []Status) *bun.SelectQuery
+		StatusNotIn                 func(q *bun.SelectQuery, v []Status) *bun.SelectQuery
 		ResourceIDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ResourceIDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ResourceIDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ResourceIDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ResourceTypeEQ              func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
 		ResourceTypeNEQ             func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
+		ResourceTypeIn              func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
+		ResourceTypeNotIn           func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
 		ExpirationDateEQ            func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ExpirationDateNEQ           func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ExpirationDateIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ExpirationDateNotIn         func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ExpirationDateIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		ExpirationDateIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		TagsEQ                      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
 		TagsNEQ                     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TagsIn                      func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		TagsNotIn                   func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
 		UploadedByIDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		UploadedByIDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UploadedByIDIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UploadedByIDNotIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ApprovedByIDEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ApprovedByIDNEQ             func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ApprovedByIDIn              func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ApprovedByIDNotIn           func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ApprovedByIDIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		ApprovedByIDIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		ApprovedAtEQ                func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ApprovedAtNEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ApprovedAtIn                func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ApprovedAtNotIn             func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ApprovedAtIsNull            func(q *bun.SelectQuery) *bun.SelectQuery
 		ApprovedAtIsNotNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		VersionEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -488,17 +544,35 @@ var DocumentQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("doc.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("doc.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("doc.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("doc.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("doc.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("doc.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("doc.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("doc.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("doc.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("doc.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("doc.organization_id"), bun.In(v))
 		},
 		FileNameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("doc.file_name"), v)
@@ -695,11 +769,23 @@ var DocumentQuery = struct {
 		DocumentTypeIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("doc.document_type_id"), v)
 		},
+		DocumentTypeIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("doc.document_type_id"), bun.In(v))
+		},
+		DocumentTypeIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("doc.document_type_id"), bun.In(v))
+		},
 		StatusEQ: func(q *bun.SelectQuery, v Status) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("doc.status"), v)
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("doc.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("doc.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("doc.status"), bun.In(v))
 		},
 		ResourceIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("doc.resource_id"), v)
@@ -707,17 +793,35 @@ var DocumentQuery = struct {
 		ResourceIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("doc.resource_id"), v)
 		},
+		ResourceIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("doc.resource_id"), bun.In(v))
+		},
+		ResourceIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("doc.resource_id"), bun.In(v))
+		},
 		ResourceTypeEQ: func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("doc.resource_type"), v)
 		},
 		ResourceTypeNEQ: func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("doc.resource_type"), v)
 		},
+		ResourceTypeIn: func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("doc.resource_type"), bun.In(v))
+		},
+		ResourceTypeNotIn: func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("doc.resource_type"), bun.In(v))
+		},
 		ExpirationDateEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("doc.expiration_date"), v)
 		},
 		ExpirationDateNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("doc.expiration_date"), v)
+		},
+		ExpirationDateIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("doc.expiration_date"), bun.In(v))
+		},
+		ExpirationDateNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("doc.expiration_date"), bun.In(v))
 		},
 		ExpirationDateIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("doc.expiration_date"))
@@ -731,17 +835,35 @@ var DocumentQuery = struct {
 		TagsNEQ: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("doc.tags"), v)
 		},
+		TagsIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("doc.tags"), bun.In(v))
+		},
+		TagsNotIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("doc.tags"), bun.In(v))
+		},
 		UploadedByIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("doc.uploaded_by_id"), v)
 		},
 		UploadedByIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("doc.uploaded_by_id"), v)
 		},
+		UploadedByIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("doc.uploaded_by_id"), bun.In(v))
+		},
+		UploadedByIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("doc.uploaded_by_id"), bun.In(v))
+		},
 		ApprovedByIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("doc.approved_by_id"), v)
 		},
 		ApprovedByIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("doc.approved_by_id"), v)
+		},
+		ApprovedByIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("doc.approved_by_id"), bun.In(v))
+		},
+		ApprovedByIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("doc.approved_by_id"), bun.In(v))
 		},
 		ApprovedByIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("doc.approved_by_id"))
@@ -754,6 +876,12 @@ var DocumentQuery = struct {
 		},
 		ApprovedAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("doc.approved_at"), v)
+		},
+		ApprovedAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("doc.approved_at"), bun.In(v))
+		},
+		ApprovedAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("doc.approved_at"), bun.In(v))
 		},
 		ApprovedAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("doc.approved_at"))
@@ -1497,6 +1625,20 @@ var DocumentQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+		DT           string
+		UploadedBy   string
+		ApprovedBy   string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+		DT:           "DT",
+		UploadedBy:   "UploadedBy",
+		ApprovedBy:   "ApprovedBy",
+	},
 }
 
 // DocumentQueryBuilder provides a fluent interface for building queries
@@ -1541,6 +1683,18 @@ func (b *DocumentQueryBuilder) WhereIDNEQ(v pulid.ID) *DocumentQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *DocumentQueryBuilder) WhereIDIn(v []pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *DocumentQueryBuilder) WhereIDNotIn(v []pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *DocumentQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *DocumentQueryBuilder {
 	b.query = DocumentQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1553,6 +1707,18 @@ func (b *DocumentQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *DocumentQuery
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *DocumentQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *DocumentQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *DocumentQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *DocumentQueryBuilder {
 	b.query = DocumentQuery.Where.OrganizationIDEQ(b.query, v)
@@ -1562,6 +1728,18 @@ func (b *DocumentQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *DocumentQueryB
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *DocumentQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *DocumentQueryBuilder {
 	b.query = DocumentQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *DocumentQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *DocumentQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1835,6 +2013,18 @@ func (b *DocumentQueryBuilder) WhereDocumentTypeIDNEQ(v pulid.ID) *DocumentQuery
 	return b
 }
 
+// WhereDocumentTypeIDIn adds a WHERE document_type_id IN (?) condition
+func (b *DocumentQueryBuilder) WhereDocumentTypeIDIn(v []pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.DocumentTypeIDIn(b.query, v)
+	return b
+}
+
+// WhereDocumentTypeIDNotIn adds a WHERE document_type_id NOT IN (?) condition
+func (b *DocumentQueryBuilder) WhereDocumentTypeIDNotIn(v []pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.DocumentTypeIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *DocumentQueryBuilder) WhereStatusEQ(v Status) *DocumentQueryBuilder {
 	b.query = DocumentQuery.Where.StatusEQ(b.query, v)
@@ -1844,6 +2034,18 @@ func (b *DocumentQueryBuilder) WhereStatusEQ(v Status) *DocumentQueryBuilder {
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *DocumentQueryBuilder) WhereStatusNEQ(v Status) *DocumentQueryBuilder {
 	b.query = DocumentQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *DocumentQueryBuilder) WhereStatusIn(v []Status) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *DocumentQueryBuilder) WhereStatusNotIn(v []Status) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1859,6 +2061,18 @@ func (b *DocumentQueryBuilder) WhereResourceIDNEQ(v pulid.ID) *DocumentQueryBuil
 	return b
 }
 
+// WhereResourceIDIn adds a WHERE resource_id IN (?) condition
+func (b *DocumentQueryBuilder) WhereResourceIDIn(v []pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.ResourceIDIn(b.query, v)
+	return b
+}
+
+// WhereResourceIDNotIn adds a WHERE resource_id NOT IN (?) condition
+func (b *DocumentQueryBuilder) WhereResourceIDNotIn(v []pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.ResourceIDNotIn(b.query, v)
+	return b
+}
+
 // WhereResourceTypeEQ adds a WHERE resource_type = ? condition
 func (b *DocumentQueryBuilder) WhereResourceTypeEQ(v permission.Resource) *DocumentQueryBuilder {
 	b.query = DocumentQuery.Where.ResourceTypeEQ(b.query, v)
@@ -1868,6 +2082,18 @@ func (b *DocumentQueryBuilder) WhereResourceTypeEQ(v permission.Resource) *Docum
 // WhereResourceTypeNEQ adds a WHERE resource_type != ? condition
 func (b *DocumentQueryBuilder) WhereResourceTypeNEQ(v permission.Resource) *DocumentQueryBuilder {
 	b.query = DocumentQuery.Where.ResourceTypeNEQ(b.query, v)
+	return b
+}
+
+// WhereResourceTypeIn adds a WHERE resource_type IN (?) condition
+func (b *DocumentQueryBuilder) WhereResourceTypeIn(v []permission.Resource) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.ResourceTypeIn(b.query, v)
+	return b
+}
+
+// WhereResourceTypeNotIn adds a WHERE resource_type NOT IN (?) condition
+func (b *DocumentQueryBuilder) WhereResourceTypeNotIn(v []permission.Resource) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.ResourceTypeNotIn(b.query, v)
 	return b
 }
 
@@ -1883,6 +2109,18 @@ func (b *DocumentQueryBuilder) WhereExpirationDateNEQ(v *int64) *DocumentQueryBu
 	return b
 }
 
+// WhereExpirationDateIn adds a WHERE expiration_date IN (?) condition
+func (b *DocumentQueryBuilder) WhereExpirationDateIn(v []*int64) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.ExpirationDateIn(b.query, v)
+	return b
+}
+
+// WhereExpirationDateNotIn adds a WHERE expiration_date NOT IN (?) condition
+func (b *DocumentQueryBuilder) WhereExpirationDateNotIn(v []*int64) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.ExpirationDateNotIn(b.query, v)
+	return b
+}
+
 // WhereTagsEQ adds a WHERE tags = ? condition
 func (b *DocumentQueryBuilder) WhereTagsEQ(v []string) *DocumentQueryBuilder {
 	b.query = DocumentQuery.Where.TagsEQ(b.query, v)
@@ -1892,6 +2130,18 @@ func (b *DocumentQueryBuilder) WhereTagsEQ(v []string) *DocumentQueryBuilder {
 // WhereTagsNEQ adds a WHERE tags != ? condition
 func (b *DocumentQueryBuilder) WhereTagsNEQ(v []string) *DocumentQueryBuilder {
 	b.query = DocumentQuery.Where.TagsNEQ(b.query, v)
+	return b
+}
+
+// WhereTagsIn adds a WHERE tags IN (?) condition
+func (b *DocumentQueryBuilder) WhereTagsIn(v [][]string) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.TagsIn(b.query, v)
+	return b
+}
+
+// WhereTagsNotIn adds a WHERE tags NOT IN (?) condition
+func (b *DocumentQueryBuilder) WhereTagsNotIn(v [][]string) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.TagsNotIn(b.query, v)
 	return b
 }
 
@@ -1907,6 +2157,18 @@ func (b *DocumentQueryBuilder) WhereUploadedByIDNEQ(v pulid.ID) *DocumentQueryBu
 	return b
 }
 
+// WhereUploadedByIDIn adds a WHERE uploaded_by_id IN (?) condition
+func (b *DocumentQueryBuilder) WhereUploadedByIDIn(v []pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.UploadedByIDIn(b.query, v)
+	return b
+}
+
+// WhereUploadedByIDNotIn adds a WHERE uploaded_by_id NOT IN (?) condition
+func (b *DocumentQueryBuilder) WhereUploadedByIDNotIn(v []pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.UploadedByIDNotIn(b.query, v)
+	return b
+}
+
 // WhereApprovedByIDEQ adds a WHERE approved_by_id = ? condition
 func (b *DocumentQueryBuilder) WhereApprovedByIDEQ(v *pulid.ID) *DocumentQueryBuilder {
 	b.query = DocumentQuery.Where.ApprovedByIDEQ(b.query, v)
@@ -1919,6 +2181,18 @@ func (b *DocumentQueryBuilder) WhereApprovedByIDNEQ(v *pulid.ID) *DocumentQueryB
 	return b
 }
 
+// WhereApprovedByIDIn adds a WHERE approved_by_id IN (?) condition
+func (b *DocumentQueryBuilder) WhereApprovedByIDIn(v []*pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.ApprovedByIDIn(b.query, v)
+	return b
+}
+
+// WhereApprovedByIDNotIn adds a WHERE approved_by_id NOT IN (?) condition
+func (b *DocumentQueryBuilder) WhereApprovedByIDNotIn(v []*pulid.ID) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.ApprovedByIDNotIn(b.query, v)
+	return b
+}
+
 // WhereApprovedAtEQ adds a WHERE approved_at = ? condition
 func (b *DocumentQueryBuilder) WhereApprovedAtEQ(v *int64) *DocumentQueryBuilder {
 	b.query = DocumentQuery.Where.ApprovedAtEQ(b.query, v)
@@ -1928,6 +2202,18 @@ func (b *DocumentQueryBuilder) WhereApprovedAtEQ(v *int64) *DocumentQueryBuilder
 // WhereApprovedAtNEQ adds a WHERE approved_at != ? condition
 func (b *DocumentQueryBuilder) WhereApprovedAtNEQ(v *int64) *DocumentQueryBuilder {
 	b.query = DocumentQuery.Where.ApprovedAtNEQ(b.query, v)
+	return b
+}
+
+// WhereApprovedAtIn adds a WHERE approved_at IN (?) condition
+func (b *DocumentQueryBuilder) WhereApprovedAtIn(v []*int64) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.ApprovedAtIn(b.query, v)
+	return b
+}
+
+// WhereApprovedAtNotIn adds a WHERE approved_at NOT IN (?) condition
+func (b *DocumentQueryBuilder) WhereApprovedAtNotIn(v []*int64) *DocumentQueryBuilder {
+	b.query = DocumentQuery.Where.ApprovedAtNotIn(b.query, v)
 	return b
 }
 
@@ -2343,4 +2629,189 @@ func (b *DocumentQueryBuilder) First(ctx context.Context) (*Document, error) {
 // DocumentBuild creates a chainable query builder
 func DocumentBuild(db bun.IDB) *DocumentQueryBuilder {
 	return NewDocumentQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *DocumentQueryBuilder) LoadBusinessUnit() *DocumentQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *DocumentQueryBuilder) LoadOrganization() *DocumentQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadDT loads the DT relationship
+func (b *DocumentQueryBuilder) LoadDT() *DocumentQueryBuilder {
+	b.query = b.query.Relation("DT")
+	return b
+}
+
+// LoadUploadedBy loads the UploadedBy relationship
+func (b *DocumentQueryBuilder) LoadUploadedBy() *DocumentQueryBuilder {
+	b.query = b.query.Relation("UploadedBy")
+	return b
+}
+
+// LoadApprovedBy loads the ApprovedBy relationship
+func (b *DocumentQueryBuilder) LoadApprovedBy() *DocumentQueryBuilder {
+	b.query = b.query.Relation("ApprovedBy")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Document
+func (b *DocumentQueryBuilder) LoadAllRelations() *DocumentQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadDT()
+	b.LoadUploadedBy()
+	b.LoadApprovedBy()
+	return b
+}
+
+// DocumentRelationChain provides a fluent API for building nested relationship chains
+type DocumentRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewDocumentRelationChain creates a new relation chain builder
+func NewDocumentRelationChain() *DocumentRelationChain {
+	return &DocumentRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *DocumentRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *DocumentRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *DocumentRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *DocumentRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *DocumentQueryBuilder) WithBusinessUnit() *DocumentRelationChainBuilder {
+	chain := &DocumentRelationChainBuilder{
+		parent: b,
+		chain:  NewDocumentRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *DocumentQueryBuilder) WithOrganization() *DocumentRelationChainBuilder {
+	chain := &DocumentRelationChainBuilder{
+		parent: b,
+		chain:  NewDocumentRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithDT creates a relation chain starting with DT
+func (b *DocumentQueryBuilder) WithDT() *DocumentRelationChainBuilder {
+	chain := &DocumentRelationChainBuilder{
+		parent: b,
+		chain:  NewDocumentRelationChain(),
+	}
+	chain.chain.Add("DT")
+	return chain
+}
+
+// WithUploadedBy creates a relation chain starting with UploadedBy
+func (b *DocumentQueryBuilder) WithUploadedBy() *DocumentRelationChainBuilder {
+	chain := &DocumentRelationChainBuilder{
+		parent: b,
+		chain:  NewDocumentRelationChain(),
+	}
+	chain.chain.Add("UploadedBy")
+	return chain
+}
+
+// WithApprovedBy creates a relation chain starting with ApprovedBy
+func (b *DocumentQueryBuilder) WithApprovedBy() *DocumentRelationChainBuilder {
+	chain := &DocumentRelationChainBuilder{
+		parent: b,
+		chain:  NewDocumentRelationChain(),
+	}
+	chain.chain.Add("ApprovedBy")
+	return chain
+}
+
+// DocumentRelationChainBuilder provides fluent API for building nested relations
+type DocumentRelationChainBuilder struct {
+	parent *DocumentQueryBuilder
+	chain  *DocumentRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *DocumentRelationChainBuilder) Load() *DocumentQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *DocumentRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *DocumentRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *DocumentRelationChainBuilder) OrderBy(order string) *DocumentRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *DocumentRelationChainBuilder) Where(condition string, args ...interface{}) *DocumentRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

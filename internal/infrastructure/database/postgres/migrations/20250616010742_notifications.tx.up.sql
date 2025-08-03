@@ -1,53 +1,46 @@
+--
+-- Copyright 2023-2025 Eric Moss
+-- Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+-- Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md--
+
 CREATE TABLE IF NOT EXISTS "notifications"(
-    -- Primary identifiers
     "id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
-    -- Optional targeting
     "business_unit_id" varchar(100),
     "target_user_id" varchar(100),
     "target_role_id" varchar(100),
-    -- Notification metadata
     "event_type" varchar(100) NOT NULL,
     "priority" varchar(20) NOT NULL DEFAULT 'medium',
     "channel" varchar(20) NOT NULL DEFAULT 'global',
-    -- Content
     "title" varchar(255) NOT NULL,
     "message" text NOT NULL,
     "data" jsonb,
     "related_entities" jsonb,
     "actions" jsonb,
-    -- Delivery & Lifecycle
     "expires_at" bigint,
     "delivered_at" bigint,
     "read_at" bigint,
     "dismissed_at" bigint,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
-    -- Retry & Tracking
     "delivery_status" varchar(20) NOT NULL DEFAULT 'pending',
     "retry_count" int NOT NULL DEFAULT 0,
     "max_retries" int NOT NULL DEFAULT 3,
-    -- Metadata
     "source" varchar(100) NOT NULL,
     "job_id" varchar(255),
     "correlation_id" varchar(255),
     "tags" text[],
-    -- Version for optimistic locking
     "version" bigint NOT NULL DEFAULT 0,
-    -- Constraints
     PRIMARY KEY ("id"),
     CONSTRAINT "fk_notifications_organization_id" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE,
     CONSTRAINT "fk_notifications_business_unit_id" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON DELETE CASCADE,
     CONSTRAINT "fk_notifications_target_user_id" FOREIGN KEY ("target_user_id") REFERENCES "users"("id") ON DELETE CASCADE,
     CONSTRAINT "fk_notifications_target_role_id" FOREIGN KEY ("target_role_id", "business_unit_id", "organization_id") REFERENCES "roles"("id", "business_unit_id", "organization_id") ON DELETE CASCADE,
-    -- Check constraints for enums
     CONSTRAINT "chk_notifications_priority" CHECK ("priority" IN ('critical', 'high', 'medium', 'low')),
     CONSTRAINT "chk_notifications_channel" CHECK ("channel" IN ('global', 'user', 'role')),
     CONSTRAINT "chk_notifications_delivery_status" CHECK ("delivery_status" IN ('pending', 'delivered', 'failed', 'expired')),
-    -- Business logic constraints
     CONSTRAINT "chk_notifications_retry_count" CHECK ("retry_count" >= 0 AND "retry_count" <= "max_retries"),
     CONSTRAINT "chk_notifications_max_retries" CHECK ("max_retries" >= 0 AND "max_retries" <= 10),
-    -- Channel-specific targeting constraints
     CONSTRAINT "chk_notifications_user_channel" CHECK (("channel" = 'user' AND "target_user_id" IS NOT NULL) OR ("channel" != 'user')),
     CONSTRAINT "chk_notifications_role_channel" CHECK (("channel" = 'role' AND "target_role_id" IS NOT NULL AND "business_unit_id" IS NOT NULL) OR ("channel" != 'role'))
 );

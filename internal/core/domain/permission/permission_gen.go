@@ -46,51 +46,69 @@ var PermissionQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ResourceEQ           func(q *bun.SelectQuery, v Resource) *bun.SelectQuery
-		ResourceNEQ          func(q *bun.SelectQuery, v Resource) *bun.SelectQuery
-		ActionEQ             func(q *bun.SelectQuery, v Action) *bun.SelectQuery
-		ActionNEQ            func(q *bun.SelectQuery, v Action) *bun.SelectQuery
-		ScopeEQ              func(q *bun.SelectQuery, v Scope) *bun.SelectQuery
-		ScopeNEQ             func(q *bun.SelectQuery, v Scope) *bun.SelectQuery
-		DescriptionEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionNotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionGT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionGTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionContains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		IsSystemLevelEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsSystemLevelNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		FieldPermissionsEQ   func(q *bun.SelectQuery, v []*FieldPermission) *bun.SelectQuery
-		FieldPermissionsNEQ  func(q *bun.SelectQuery, v []*FieldPermission) *bun.SelectQuery
-		ConditionsEQ         func(q *bun.SelectQuery, v []*Condition) *bun.SelectQuery
-		ConditionsNEQ        func(q *bun.SelectQuery, v []*Condition) *bun.SelectQuery
-		DependenciesEQ       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		DependenciesNEQ      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		CustomSettingsEQ     func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
-		CustomSettingsNEQ    func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
-		CreatedAtEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ResourceEQ            func(q *bun.SelectQuery, v Resource) *bun.SelectQuery
+		ResourceNEQ           func(q *bun.SelectQuery, v Resource) *bun.SelectQuery
+		ResourceIn            func(q *bun.SelectQuery, v []Resource) *bun.SelectQuery
+		ResourceNotIn         func(q *bun.SelectQuery, v []Resource) *bun.SelectQuery
+		ActionEQ              func(q *bun.SelectQuery, v Action) *bun.SelectQuery
+		ActionNEQ             func(q *bun.SelectQuery, v Action) *bun.SelectQuery
+		ActionIn              func(q *bun.SelectQuery, v []Action) *bun.SelectQuery
+		ActionNotIn           func(q *bun.SelectQuery, v []Action) *bun.SelectQuery
+		ScopeEQ               func(q *bun.SelectQuery, v Scope) *bun.SelectQuery
+		ScopeNEQ              func(q *bun.SelectQuery, v Scope) *bun.SelectQuery
+		ScopeIn               func(q *bun.SelectQuery, v []Scope) *bun.SelectQuery
+		ScopeNotIn            func(q *bun.SelectQuery, v []Scope) *bun.SelectQuery
+		DescriptionEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IsSystemLevelEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemLevelNEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemLevelIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsSystemLevelNotIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		FieldPermissionsEQ    func(q *bun.SelectQuery, v []*FieldPermission) *bun.SelectQuery
+		FieldPermissionsNEQ   func(q *bun.SelectQuery, v []*FieldPermission) *bun.SelectQuery
+		FieldPermissionsIn    func(q *bun.SelectQuery, v [][]*FieldPermission) *bun.SelectQuery
+		FieldPermissionsNotIn func(q *bun.SelectQuery, v [][]*FieldPermission) *bun.SelectQuery
+		ConditionsEQ          func(q *bun.SelectQuery, v []*Condition) *bun.SelectQuery
+		ConditionsNEQ         func(q *bun.SelectQuery, v []*Condition) *bun.SelectQuery
+		ConditionsIn          func(q *bun.SelectQuery, v [][]*Condition) *bun.SelectQuery
+		ConditionsNotIn       func(q *bun.SelectQuery, v [][]*Condition) *bun.SelectQuery
+		DependenciesEQ        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		DependenciesNEQ       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		DependenciesIn        func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery
+		DependenciesNotIn     func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery
+		CustomSettingsEQ      func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		CustomSettingsNEQ     func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		CustomSettingsIn      func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		CustomSettingsNotIn   func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		CreatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 	}
@@ -160,51 +178,69 @@ var PermissionQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ResourceEQ           func(q *bun.SelectQuery, v Resource) *bun.SelectQuery
-		ResourceNEQ          func(q *bun.SelectQuery, v Resource) *bun.SelectQuery
-		ActionEQ             func(q *bun.SelectQuery, v Action) *bun.SelectQuery
-		ActionNEQ            func(q *bun.SelectQuery, v Action) *bun.SelectQuery
-		ScopeEQ              func(q *bun.SelectQuery, v Scope) *bun.SelectQuery
-		ScopeNEQ             func(q *bun.SelectQuery, v Scope) *bun.SelectQuery
-		DescriptionEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionNotIn     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionGT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionGTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLT        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLTE       func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionContains  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasPrefix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		IsSystemLevelEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsSystemLevelNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		FieldPermissionsEQ   func(q *bun.SelectQuery, v []*FieldPermission) *bun.SelectQuery
-		FieldPermissionsNEQ  func(q *bun.SelectQuery, v []*FieldPermission) *bun.SelectQuery
-		ConditionsEQ         func(q *bun.SelectQuery, v []*Condition) *bun.SelectQuery
-		ConditionsNEQ        func(q *bun.SelectQuery, v []*Condition) *bun.SelectQuery
-		DependenciesEQ       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		DependenciesNEQ      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
-		CustomSettingsEQ     func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
-		CustomSettingsNEQ    func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
-		CreatedAtEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn       func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ResourceEQ            func(q *bun.SelectQuery, v Resource) *bun.SelectQuery
+		ResourceNEQ           func(q *bun.SelectQuery, v Resource) *bun.SelectQuery
+		ResourceIn            func(q *bun.SelectQuery, v []Resource) *bun.SelectQuery
+		ResourceNotIn         func(q *bun.SelectQuery, v []Resource) *bun.SelectQuery
+		ActionEQ              func(q *bun.SelectQuery, v Action) *bun.SelectQuery
+		ActionNEQ             func(q *bun.SelectQuery, v Action) *bun.SelectQuery
+		ActionIn              func(q *bun.SelectQuery, v []Action) *bun.SelectQuery
+		ActionNotIn           func(q *bun.SelectQuery, v []Action) *bun.SelectQuery
+		ScopeEQ               func(q *bun.SelectQuery, v Scope) *bun.SelectQuery
+		ScopeNEQ              func(q *bun.SelectQuery, v Scope) *bun.SelectQuery
+		ScopeIn               func(q *bun.SelectQuery, v []Scope) *bun.SelectQuery
+		ScopeNotIn            func(q *bun.SelectQuery, v []Scope) *bun.SelectQuery
+		DescriptionEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IsSystemLevelEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemLevelNEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemLevelIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsSystemLevelNotIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		FieldPermissionsEQ    func(q *bun.SelectQuery, v []*FieldPermission) *bun.SelectQuery
+		FieldPermissionsNEQ   func(q *bun.SelectQuery, v []*FieldPermission) *bun.SelectQuery
+		FieldPermissionsIn    func(q *bun.SelectQuery, v [][]*FieldPermission) *bun.SelectQuery
+		FieldPermissionsNotIn func(q *bun.SelectQuery, v [][]*FieldPermission) *bun.SelectQuery
+		ConditionsEQ          func(q *bun.SelectQuery, v []*Condition) *bun.SelectQuery
+		ConditionsNEQ         func(q *bun.SelectQuery, v []*Condition) *bun.SelectQuery
+		ConditionsIn          func(q *bun.SelectQuery, v [][]*Condition) *bun.SelectQuery
+		ConditionsNotIn       func(q *bun.SelectQuery, v [][]*Condition) *bun.SelectQuery
+		DependenciesEQ        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		DependenciesNEQ       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		DependenciesIn        func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery
+		DependenciesNotIn     func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery
+		CustomSettingsEQ      func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		CustomSettingsNEQ     func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		CustomSettingsIn      func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		CustomSettingsNotIn   func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		CreatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn        func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("perm.id"), v)
@@ -212,11 +248,23 @@ var PermissionQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("perm.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("perm.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("perm.id"), bun.In(v))
+		},
 		ResourceEQ: func(q *bun.SelectQuery, v Resource) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("perm.resource"), v)
 		},
 		ResourceNEQ: func(q *bun.SelectQuery, v Resource) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("perm.resource"), v)
+		},
+		ResourceIn: func(q *bun.SelectQuery, v []Resource) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("perm.resource"), bun.In(v))
+		},
+		ResourceNotIn: func(q *bun.SelectQuery, v []Resource) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("perm.resource"), bun.In(v))
 		},
 		ActionEQ: func(q *bun.SelectQuery, v Action) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("perm.action"), v)
@@ -224,11 +272,23 @@ var PermissionQuery = struct {
 		ActionNEQ: func(q *bun.SelectQuery, v Action) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("perm.action"), v)
 		},
+		ActionIn: func(q *bun.SelectQuery, v []Action) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("perm.action"), bun.In(v))
+		},
+		ActionNotIn: func(q *bun.SelectQuery, v []Action) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("perm.action"), bun.In(v))
+		},
 		ScopeEQ: func(q *bun.SelectQuery, v Scope) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("perm.scope"), v)
 		},
 		ScopeNEQ: func(q *bun.SelectQuery, v Scope) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("perm.scope"), v)
+		},
+		ScopeIn: func(q *bun.SelectQuery, v []Scope) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("perm.scope"), bun.In(v))
+		},
+		ScopeNotIn: func(q *bun.SelectQuery, v []Scope) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("perm.scope"), bun.In(v))
 		},
 		DescriptionEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("perm.description"), v)
@@ -269,11 +329,23 @@ var PermissionQuery = struct {
 		IsSystemLevelNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("perm.is_system_level"), v)
 		},
+		IsSystemLevelIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("perm.is_system_level"), bun.In(v))
+		},
+		IsSystemLevelNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("perm.is_system_level"), bun.In(v))
+		},
 		FieldPermissionsEQ: func(q *bun.SelectQuery, v []*FieldPermission) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("perm.field_permissions"), v)
 		},
 		FieldPermissionsNEQ: func(q *bun.SelectQuery, v []*FieldPermission) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("perm.field_permissions"), v)
+		},
+		FieldPermissionsIn: func(q *bun.SelectQuery, v [][]*FieldPermission) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("perm.field_permissions"), bun.In(v))
+		},
+		FieldPermissionsNotIn: func(q *bun.SelectQuery, v [][]*FieldPermission) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("perm.field_permissions"), bun.In(v))
 		},
 		ConditionsEQ: func(q *bun.SelectQuery, v []*Condition) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("perm.conditions"), v)
@@ -281,17 +353,35 @@ var PermissionQuery = struct {
 		ConditionsNEQ: func(q *bun.SelectQuery, v []*Condition) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("perm.conditions"), v)
 		},
+		ConditionsIn: func(q *bun.SelectQuery, v [][]*Condition) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("perm.conditions"), bun.In(v))
+		},
+		ConditionsNotIn: func(q *bun.SelectQuery, v [][]*Condition) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("perm.conditions"), bun.In(v))
+		},
 		DependenciesEQ: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("perm.dependencies"), v)
 		},
 		DependenciesNEQ: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("perm.dependencies"), v)
 		},
+		DependenciesIn: func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("perm.dependencies"), bun.In(v))
+		},
+		DependenciesNotIn: func(q *bun.SelectQuery, v [][]pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("perm.dependencies"), bun.In(v))
+		},
 		CustomSettingsEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("perm.custom_settings"), v)
 		},
 		CustomSettingsNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("perm.custom_settings"), v)
+		},
+		CustomSettingsIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("perm.custom_settings"), bun.In(v))
+		},
+		CustomSettingsNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("perm.custom_settings"), bun.In(v))
 		},
 		CreatedAtEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("perm.created_at"), v)
@@ -663,6 +753,18 @@ func (b *PermissionQueryBuilder) WhereIDNEQ(v pulid.ID) *PermissionQueryBuilder 
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *PermissionQueryBuilder) WhereIDIn(v []pulid.ID) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *PermissionQueryBuilder) WhereIDNotIn(v []pulid.ID) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereResourceEQ adds a WHERE resource = ? condition
 func (b *PermissionQueryBuilder) WhereResourceEQ(v Resource) *PermissionQueryBuilder {
 	b.query = PermissionQuery.Where.ResourceEQ(b.query, v)
@@ -672,6 +774,18 @@ func (b *PermissionQueryBuilder) WhereResourceEQ(v Resource) *PermissionQueryBui
 // WhereResourceNEQ adds a WHERE resource != ? condition
 func (b *PermissionQueryBuilder) WhereResourceNEQ(v Resource) *PermissionQueryBuilder {
 	b.query = PermissionQuery.Where.ResourceNEQ(b.query, v)
+	return b
+}
+
+// WhereResourceIn adds a WHERE resource IN (?) condition
+func (b *PermissionQueryBuilder) WhereResourceIn(v []Resource) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.ResourceIn(b.query, v)
+	return b
+}
+
+// WhereResourceNotIn adds a WHERE resource NOT IN (?) condition
+func (b *PermissionQueryBuilder) WhereResourceNotIn(v []Resource) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.ResourceNotIn(b.query, v)
 	return b
 }
 
@@ -687,6 +801,18 @@ func (b *PermissionQueryBuilder) WhereActionNEQ(v Action) *PermissionQueryBuilde
 	return b
 }
 
+// WhereActionIn adds a WHERE action IN (?) condition
+func (b *PermissionQueryBuilder) WhereActionIn(v []Action) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.ActionIn(b.query, v)
+	return b
+}
+
+// WhereActionNotIn adds a WHERE action NOT IN (?) condition
+func (b *PermissionQueryBuilder) WhereActionNotIn(v []Action) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.ActionNotIn(b.query, v)
+	return b
+}
+
 // WhereScopeEQ adds a WHERE scope = ? condition
 func (b *PermissionQueryBuilder) WhereScopeEQ(v Scope) *PermissionQueryBuilder {
 	b.query = PermissionQuery.Where.ScopeEQ(b.query, v)
@@ -696,6 +822,18 @@ func (b *PermissionQueryBuilder) WhereScopeEQ(v Scope) *PermissionQueryBuilder {
 // WhereScopeNEQ adds a WHERE scope != ? condition
 func (b *PermissionQueryBuilder) WhereScopeNEQ(v Scope) *PermissionQueryBuilder {
 	b.query = PermissionQuery.Where.ScopeNEQ(b.query, v)
+	return b
+}
+
+// WhereScopeIn adds a WHERE scope IN (?) condition
+func (b *PermissionQueryBuilder) WhereScopeIn(v []Scope) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.ScopeIn(b.query, v)
+	return b
+}
+
+// WhereScopeNotIn adds a WHERE scope NOT IN (?) condition
+func (b *PermissionQueryBuilder) WhereScopeNotIn(v []Scope) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.ScopeNotIn(b.query, v)
 	return b
 }
 
@@ -753,6 +891,18 @@ func (b *PermissionQueryBuilder) WhereIsSystemLevelNEQ(v bool) *PermissionQueryB
 	return b
 }
 
+// WhereIsSystemLevelIn adds a WHERE is_system_level IN (?) condition
+func (b *PermissionQueryBuilder) WhereIsSystemLevelIn(v []bool) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.IsSystemLevelIn(b.query, v)
+	return b
+}
+
+// WhereIsSystemLevelNotIn adds a WHERE is_system_level NOT IN (?) condition
+func (b *PermissionQueryBuilder) WhereIsSystemLevelNotIn(v []bool) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.IsSystemLevelNotIn(b.query, v)
+	return b
+}
+
 // WhereFieldPermissionsEQ adds a WHERE field_permissions = ? condition
 func (b *PermissionQueryBuilder) WhereFieldPermissionsEQ(v []*FieldPermission) *PermissionQueryBuilder {
 	b.query = PermissionQuery.Where.FieldPermissionsEQ(b.query, v)
@@ -762,6 +912,18 @@ func (b *PermissionQueryBuilder) WhereFieldPermissionsEQ(v []*FieldPermission) *
 // WhereFieldPermissionsNEQ adds a WHERE field_permissions != ? condition
 func (b *PermissionQueryBuilder) WhereFieldPermissionsNEQ(v []*FieldPermission) *PermissionQueryBuilder {
 	b.query = PermissionQuery.Where.FieldPermissionsNEQ(b.query, v)
+	return b
+}
+
+// WhereFieldPermissionsIn adds a WHERE field_permissions IN (?) condition
+func (b *PermissionQueryBuilder) WhereFieldPermissionsIn(v [][]*FieldPermission) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.FieldPermissionsIn(b.query, v)
+	return b
+}
+
+// WhereFieldPermissionsNotIn adds a WHERE field_permissions NOT IN (?) condition
+func (b *PermissionQueryBuilder) WhereFieldPermissionsNotIn(v [][]*FieldPermission) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.FieldPermissionsNotIn(b.query, v)
 	return b
 }
 
@@ -777,6 +939,18 @@ func (b *PermissionQueryBuilder) WhereConditionsNEQ(v []*Condition) *PermissionQ
 	return b
 }
 
+// WhereConditionsIn adds a WHERE conditions IN (?) condition
+func (b *PermissionQueryBuilder) WhereConditionsIn(v [][]*Condition) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.ConditionsIn(b.query, v)
+	return b
+}
+
+// WhereConditionsNotIn adds a WHERE conditions NOT IN (?) condition
+func (b *PermissionQueryBuilder) WhereConditionsNotIn(v [][]*Condition) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.ConditionsNotIn(b.query, v)
+	return b
+}
+
 // WhereDependenciesEQ adds a WHERE dependencies = ? condition
 func (b *PermissionQueryBuilder) WhereDependenciesEQ(v []pulid.ID) *PermissionQueryBuilder {
 	b.query = PermissionQuery.Where.DependenciesEQ(b.query, v)
@@ -789,6 +963,18 @@ func (b *PermissionQueryBuilder) WhereDependenciesNEQ(v []pulid.ID) *PermissionQ
 	return b
 }
 
+// WhereDependenciesIn adds a WHERE dependencies IN (?) condition
+func (b *PermissionQueryBuilder) WhereDependenciesIn(v [][]pulid.ID) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.DependenciesIn(b.query, v)
+	return b
+}
+
+// WhereDependenciesNotIn adds a WHERE dependencies NOT IN (?) condition
+func (b *PermissionQueryBuilder) WhereDependenciesNotIn(v [][]pulid.ID) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.DependenciesNotIn(b.query, v)
+	return b
+}
+
 // WhereCustomSettingsEQ adds a WHERE custom_settings = ? condition
 func (b *PermissionQueryBuilder) WhereCustomSettingsEQ(v map[string]any) *PermissionQueryBuilder {
 	b.query = PermissionQuery.Where.CustomSettingsEQ(b.query, v)
@@ -798,6 +984,18 @@ func (b *PermissionQueryBuilder) WhereCustomSettingsEQ(v map[string]any) *Permis
 // WhereCustomSettingsNEQ adds a WHERE custom_settings != ? condition
 func (b *PermissionQueryBuilder) WhereCustomSettingsNEQ(v map[string]any) *PermissionQueryBuilder {
 	b.query = PermissionQuery.Where.CustomSettingsNEQ(b.query, v)
+	return b
+}
+
+// WhereCustomSettingsIn adds a WHERE custom_settings IN (?) condition
+func (b *PermissionQueryBuilder) WhereCustomSettingsIn(v []map[string]any) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.CustomSettingsIn(b.query, v)
+	return b
+}
+
+// WhereCustomSettingsNotIn adds a WHERE custom_settings NOT IN (?) condition
+func (b *PermissionQueryBuilder) WhereCustomSettingsNotIn(v []map[string]any) *PermissionQueryBuilder {
+	b.query = PermissionQuery.Where.CustomSettingsNotIn(b.query, v)
 	return b
 }
 
@@ -992,4 +1190,99 @@ func (b *PermissionQueryBuilder) First(ctx context.Context) (*Permission, error)
 // PermissionBuild creates a chainable query builder
 func PermissionBuild(db bun.IDB) *PermissionQueryBuilder {
 	return NewPermissionQuery(db)
+}
+
+// Relationship loading methods
+
+// PermissionRelationChain provides a fluent API for building nested relationship chains
+type PermissionRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewPermissionRelationChain creates a new relation chain builder
+func NewPermissionRelationChain() *PermissionRelationChain {
+	return &PermissionRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *PermissionRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *PermissionRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *PermissionRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *PermissionRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// PermissionRelationChainBuilder provides fluent API for building nested relations
+type PermissionRelationChainBuilder struct {
+	parent *PermissionQueryBuilder
+	chain  *PermissionRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *PermissionRelationChainBuilder) Load() *PermissionQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *PermissionRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *PermissionRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *PermissionRelationChainBuilder) OrderBy(order string) *PermissionRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *PermissionRelationChainBuilder) Where(condition string, args ...interface{}) *PermissionRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

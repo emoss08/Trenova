@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 // @ts-expect-error // Module does not give types
 import tailwindcss from "@tailwindcss/vite";
@@ -5,6 +10,8 @@ import react from "@vitejs/plugin-react";
 import { createRequire } from "node:module";
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
+import tsconfigPaths from "vite-tsconfig-paths";
+
 import { defineConfig, normalizePath, type PluginOption } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { VitePWA } from "vite-plugin-pwa";
@@ -104,6 +111,7 @@ export default defineConfig({
         plugins: [["babel-plugin-react-compiler", ReactCompilerConfig]],
       },
     }),
+    tsconfigPaths(),
     tailwindcss(),
     nodeResolve() as PluginOption,
     VitePWA({

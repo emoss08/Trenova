@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { FormSaveDock } from "@/components/form";
@@ -24,6 +29,7 @@ import { EditTableSheetProps } from "@/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
+import { useUrlFragment } from "@/hooks/use-url-fragment";
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -39,6 +45,7 @@ export function ShipmentEditSheet({
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { isPopout, closePopout } = usePopoutWindow();
   const initialLoadRef = useRef(false);
+  const { clearFragment } = useUrlFragment();
 
   const previousRecordIdRef = useRef<string | number | null>(null);
   const selectedRowKey = Object.keys(rowSelection)[0];
@@ -231,6 +238,9 @@ export function ShipmentEditSheet({
               : null;
 
             table.resetRowSelection();
+
+            // Clear URL fragment when closing
+            clearFragment();
 
             setTimeout(() => el?.focus(), 0);
           }

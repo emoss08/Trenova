@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 "use no memo";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
@@ -9,8 +14,12 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { Switch } from "@/components/ui/switch";
-import { toSentenceCase, toTitleCase } from "@/lib/utils";
+import {
+  Sortable,
+  SortableDragHandle,
+  SortableItem,
+} from "@/components/ui/sortable";
+import { cn, toSentenceCase, toTitleCase } from "@/lib/utils";
 import { useTableStore } from "@/stores/table-store";
 import type { Resource } from "@/types/audit-entry";
 import { DataTableCreateButtonProps } from "@/types/data-table";
@@ -18,7 +27,14 @@ import { faPlus, faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { faColumns } from "@fortawesome/pro-solid-svg-icons";
 import { ChevronDownIcon, PlusIcon, UploadIcon } from "@radix-ui/react-icons";
 import type { VisibilityState } from "@tanstack/react-table";
-import { isValidElement, memo, useCallback, useMemo, useState } from "react";
+import { Check, GripVertical } from "lucide-react";
+import {
+  isValidElement,
+  memo,
+  useCallback,
+  useMemo,
+  useState,
+} from "react";
 import { useDataTable } from "../data-table-provider";
 import { CreateTableConfigurationModal } from "./_configuration/table-configuration-create-modal";
 import { UserTableConfigurationList } from "./_configuration/table-configuration-list";
@@ -131,7 +147,27 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
   const [showConfigurationList, setShowConfigurationList] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [drag, setDrag] = useState(false);
   const { table } = useDataTable();
+
+  const columnOrder = table.getState().columnOrder;
+
+  // Get all hideable columns sorted by column order
+  const sortedColumns = useMemo(() => {
+    const allColumns = table.getAllColumns();
+    const hideableColumns = allColumns.filter(
+      (column) =>
+        typeof column.accessorFn !== "undefined" && column.getCanHide(),
+    );
+
+    const sorted = hideableColumns.sort((a, b) => {
+      const indexA = columnOrder.indexOf(a.id);
+      const indexB = columnOrder.indexOf(b.id);
+      return indexA - indexB;
+    });
+
+    return sorted;
+  }, [columnOrder, table]);
 
   // Get all hideable columns
   const hideableColumns = useMemo(
@@ -142,24 +178,6 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
           (column) =>
             typeof column.accessorFn !== "undefined" && column.getCanHide(),
         ),
-    [table],
-  );
-
-  // Filter columns based on search query
-  const filteredColumns = useMemo(
-    () =>
-      hideableColumns.filter((column) =>
-        toSentenceCase(column.id)
-          .toLowerCase()
-          .includes(searchQuery.toLowerCase()),
-      ),
-    [hideableColumns, searchQuery],
-  );
-
-  const handleToggleVisibility = useCallback(
-    (columnId: string, isVisible: boolean) => {
-      table.getColumn(columnId)?.toggleVisibility(!isVisible);
-    },
     [table],
   );
 
@@ -204,32 +222,73 @@ export function DataTableViewOptions({ resource }: { resource: Resource }) {
               className="h-7 text-sm bg-background"
             />
             <div className="my-3 border-dashed border-t border-border" />
-            <div className="flex flex-col gap-3">
-              {filteredColumns.length > 0 ? (
-                filteredColumns.map((column) => {
-                  const isVisible = column.getIsVisible();
-                  return (
-                    <div
-                      key={column.id}
-                      className="flex items-center justify-between"
-                    >
-                      <Label htmlFor={column.id} className="flex-grow text-xs">
-                        {toTitleCase(column.id)}
-                      </Label>
-                      <Switch
-                        id={column.id}
-                        checked={isVisible}
-                        size="sm"
-                        onCheckedChange={() =>
-                          handleToggleVisibility(column.id, isVisible)
-                        }
-                        title={`Toggle ${toTitleCase(column.id)} column`}
-                        aria-describedby={`Toggle ${toTitleCase(column.id)} column`}
-                        aria-label={`Toggle ${toTitleCase(column.id)} column`}
-                      />
-                    </div>
-                  );
-                })
+            <div className="flex flex-col">
+              {sortedColumns.length > 0 ? (
+                <Sortable
+                  value={sortedColumns.map((c) => ({ id: c.id }))}
+                  onValueChange={(items) => {
+                    const newOrder = items.map((c) => c.id);
+                    table.setColumnOrder(newOrder);
+                  }}
+                  overlay={
+                    <div className="h-8 w-full rounded-md bg-muted/60" />
+                  }
+                  onDragStart={() => setDrag(true)}
+                  onDragEnd={() => setDrag(false)}
+                  onDragCancel={() => setDrag(false)}
+                >
+                  {sortedColumns
+                    .filter((column) =>
+                      searchQuery
+                        ? toSentenceCase(column.id)
+                            .toLowerCase()
+                            .includes(searchQuery.toLowerCase())
+                        : true,
+                    )
+                    .map((column) => (
+                      <SortableItem key={column.id} value={column.id} asChild>
+                        <div className="flex items-center justify-between gap-2 px-2 py-1.5 rounded hover:bg-muted/50">
+                          <div className="flex items-center gap-2 flex-1">
+                            <div
+                              className={cn(
+                                "flex h-4 w-4 items-center justify-center rounded-sm border border-primary",
+                                column.getIsVisible()
+                                  ? "bg-primary text-primary-foreground"
+                                  : "opacity-50 [&_svg]:invisible",
+                              )}
+                              onClick={() =>
+                                column.toggleVisibility(!column.getIsVisible())
+                              }
+                            >
+                              <Check className={cn("h-4 w-4")} />
+                            </div>
+                            <Label
+                              htmlFor={column.id}
+                              className="flex-1 text-xs cursor-pointer"
+                              onClick={() =>
+                                column.toggleVisibility(!column.getIsVisible())
+                              }
+                            >
+                              {toTitleCase(column.id)}
+                            </Label>
+                          </div>
+                          {!searchQuery && (
+                            <SortableDragHandle
+                              variant="ghost"
+                              size="icon"
+                              className="size-6 text-muted-foreground hover:text-foreground"
+                              disabled={drag}
+                            >
+                              <GripVertical
+                                className="size-3"
+                                aria-hidden="true"
+                              />
+                            </SortableDragHandle>
+                          )}
+                        </div>
+                      </SortableItem>
+                    ))}
+                </Sortable>
               ) : (
                 <p className="p-2 text-sm text-muted-foreground">
                   No columns found

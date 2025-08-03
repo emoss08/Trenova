@@ -1,10 +1,12 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { Button } from "@/components/ui/button";
-import { PulsatingDots } from "@/components/ui/pulsating-dots";
-import { http } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, Cross2Icon } from "@radix-ui/react-icons";
-import { useQuery } from "@tanstack/react-query";
-import type React from "react";
+import React from "react";
 
 type AutocompleteTriggerProps<TOption> = {
   open: boolean;
@@ -17,19 +19,7 @@ type AutocompleteTriggerProps<TOption> = {
   placeholder: string;
   handleClear: () => void;
   isInvalid?: boolean;
-  setSelectedOption: (option: TOption | null) => void;
-  link: string;
 } & React.ComponentProps<"button">;
-
-async function fetchOptionById<T>(
-  link: string,
-  id: string | number,
-): Promise<T> {
-  const url = link.endsWith("/") ? `${link}${id}/` : `${link}/${id}/`;
-
-  const { data } = await http.get<T>(url);
-  return data;
-}
 
 export function AutocompleteTrigger<TOption>({
   open,
@@ -42,27 +32,8 @@ export function AutocompleteTrigger<TOption>({
   getDisplayValue,
   placeholder,
   handleClear,
-  setSelectedOption,
-  link,
   ...props
 }: AutocompleteTriggerProps<TOption>) {
-  const { isLoading, isError } = useQuery({
-    queryKey: ["autocomplete-item", link, value],
-    queryFn: async () => {
-      const option = await fetchOptionById<TOption>(link, value);
-
-      // * Set the selected option
-      setSelectedOption(option);
-
-      return option;
-    },
-    enabled: !!value && !selectedOption,
-    retry: 1,
-    staleTime: 0, // Always consider data stale
-    refetchOnMount: "always",
-    refetchOnWindowFocus: true,
-  });
-
   return (
     <Button
       type="button"
@@ -84,14 +55,13 @@ export function AutocompleteTrigger<TOption>({
       <AutocompleteInputInner
         selectedOption={selectedOption}
         getDisplayValue={getDisplayValue}
-        isInvalid={isInvalid || isError}
+        isInvalid={isInvalid}
         placeholder={placeholder}
       />
       <AutocompleteInputActions
         clearable={clearable}
         value={value}
         handleClear={handleClear}
-        loading={isLoading}
         open={open}
       />
     </Button>
@@ -122,13 +92,11 @@ export function AutocompleteInputActions({
   clearable,
   value,
   handleClear,
-  loading,
   open,
 }: {
   clearable: boolean;
   value: string;
   handleClear: () => void;
-  loading: boolean;
   open: boolean;
 }) {
   return (
@@ -137,6 +105,7 @@ export function AutocompleteInputActions({
         <span
           onClick={(e) => {
             e.stopPropagation();
+            e.preventDefault();
             handleClear();
           }}
           className="[&>svg]:size-3 size-5 rounded-md flex items-center justify-center hover:bg-muted-foreground/30 text-muted-foreground hover:text-foreground transition-colors duration-200 ease-in-out cursor-pointer"
@@ -145,18 +114,12 @@ export function AutocompleteInputActions({
           <Cross2Icon className="size-4" />
         </span>
       )}
-      {loading ? (
-        <div className="mr-1">
-          <PulsatingDots size={1} color="foreground" />
-        </div>
-      ) : (
-        <ChevronDownIcon
-          className={cn(
-            "opacity-50 size-7 duration-200 ease-in-out transition-all",
-            open && "-rotate-180",
-          )}
-        />
-      )}
+      <ChevronDownIcon
+        className={cn(
+          "opacity-50 size-7 duration-200 ease-in-out transition-all",
+          open && "-rotate-180",
+        )}
+      />
     </div>
   );
 }

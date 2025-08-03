@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { APP_ENV } from "@/constants/env";
 import { v4 as uuidv4 } from "uuid";
 
@@ -272,7 +277,7 @@ class PopoutWindowManager {
         this.windows.delete(id);
         this.focusQueue = this.focusQueue.filter((wId) => wId !== id);
         this.events.onClose?.(id);
-        
+
         // Notify about window change
         this.notifyWindowsChange();
       }
@@ -485,7 +490,6 @@ class PopoutWindowManager {
     const searchParams = new URLSearchParams(queryParams);
     const fullPath = `${path}?${searchParams.toString()}`;
 
-    console.log("fullPath", fullPath);
     return fullPath;
   }
 

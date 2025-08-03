@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 "use no memo";
 import googleLogo from "@/assets/brand-icons/google-ar21.svg";
 import { InputField } from "@/components/fields/input-field";
@@ -234,7 +239,7 @@ export function AddressField({
                       {apiKeyError ? (
                         <LocationSearchError error={apiKeyError} />
                       ) : (
-                        <div className="text-center text-sm text-muted-foreground flex flex-col gap-1">
+                        <div className="flex flex-col gap-1 min-h-[100px] justify-center text-center text-sm text-muted-foreground">
                           <span>No locations found.</span>
                           <span>Please try a different search.</span>
                         </div>

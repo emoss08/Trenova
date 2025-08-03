@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 package shipment
 
 import (
@@ -33,6 +38,7 @@ type ShipmentRepositoryParams struct {
 	Logger                      *logger.Logger
 	ShipmentMoveRepository      repositories.ShipmentMoveRepository
 	ShipmentCommodityRepository repositories.ShipmentCommodityRepository
+	ShipmentCommentRepository   repositories.ShipmentCommentRepository
 	AdditionalChargeRepository  repositories.AdditionalChargeRepository
 	ProNumberRepo               repositories.ProNumberRepository
 	Calculator                  *calculator.ShipmentCalculator
@@ -46,6 +52,7 @@ type shipmentRepository struct {
 	l                           *zerolog.Logger
 	shipmentMoveRepository      repositories.ShipmentMoveRepository
 	shipmentCommodityRepository repositories.ShipmentCommodityRepository
+	shipmentCommentRepository   repositories.ShipmentCommentRepository
 	additionalChargeRepository  repositories.AdditionalChargeRepository
 	proNumberRepo               repositories.ProNumberRepository
 	calc                        *calculator.ShipmentCalculator
@@ -70,6 +77,7 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 		l:                           &log,
 		shipmentCommodityRepository: p.ShipmentCommodityRepository,
 		additionalChargeRepository:  p.AdditionalChargeRepository,
+		shipmentCommentRepository:   p.ShipmentCommentRepository,
 		shipmentMoveRepository:      p.ShipmentMoveRepository,
 		proNumberRepo:               p.ProNumberRepo,
 		calc:                        p.Calculator,
@@ -749,7 +757,7 @@ func (sr *shipmentRepository) UnCancel(
 	ctx context.Context,
 	req *repositories.UnCancelShipmentRequest,
 ) (*shipment.Shipment, error) {
-	dba, err := sr.db.WriteDB(ctx)
+	dba, err := sr.db.DB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("shipment_repository").
@@ -981,6 +989,27 @@ func (sr *shipmentRepository) prepareCommodities(
 	}
 
 	return commodities
+}
+
+func (sr *shipmentRepository) prepareShipmentComments(
+	original, newShipment *shipment.Shipment,
+) []*shipment.ShipmentComment {
+	comments := make([]*shipment.ShipmentComment, 0, len(original.Comments))
+
+	for _, comment := range original.Comments {
+		newComment := &shipment.ShipmentComment{
+			ID:             pulid.MustNew("sc_"),
+			BusinessUnitID: original.BusinessUnitID,
+			OrganizationID: original.OrganizationID,
+			ShipmentID:     newShipment.ID,
+			Comment:        comment.Comment,
+			CommentType:    comment.CommentType,
+		}
+
+		comments = append(comments, newComment)
+	}
+
+	return comments
 }
 
 func (sr *shipmentRepository) prepareAdditionalCharges(
