@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import type {
   DndContextProps,
   DraggableSyntheticListeners,
@@ -35,6 +40,7 @@ import * as React from "react";
 import { Button, type ButtonProps } from "@/components/ui/button";
 import { composeRefs } from "@/lib/compose-refs";
 import { cn } from "@/lib/utils";
+import { createPortal } from "react-dom";
 
 const orientationConfig = {
   vertical: {
@@ -124,6 +130,9 @@ interface SortableProps<TData extends { id: UniqueIdentifier }>
 function Sortable<TData extends { id: UniqueIdentifier }>({
   value,
   onValueChange,
+  onDragStart,
+  onDragEnd,
+  onDragCancel,
   collisionDetection = closestCenter,
   modifiers,
   strategy,
@@ -146,8 +155,12 @@ function Sortable<TData extends { id: UniqueIdentifier }>({
     <DndContext
       modifiers={modifiers ?? config.modifiers}
       sensors={sensors}
-      onDragStart={({ active }) => setActiveId(active.id)}
-      onDragEnd={({ active, over }) => {
+      onDragStart={(event) => {
+        setActiveId(event.active.id);
+        onDragStart?.(event);
+      }}
+      onDragEnd={(event) => {
+        const { active, over } = event;
         if (over && active.id !== over?.id) {
           const activeIndex = value.findIndex((item) => item.id === active.id);
           const overIndex = value.findIndex((item) => item.id === over.id);
@@ -159,17 +172,25 @@ function Sortable<TData extends { id: UniqueIdentifier }>({
           }
         }
         setActiveId(null);
+        onDragEnd?.(event);
       }}
-      onDragCancel={() => setActiveId(null)}
+      onDragCancel={(event) => {
+        setActiveId(null);
+        onDragCancel?.(event);
+      }}
       collisionDetection={collisionDetection}
       {...props}
     >
       <SortableContext items={value} strategy={strategy ?? config.strategy}>
         {children}
       </SortableContext>
-      {overlay ? (
-        <SortableOverlay activeId={activeId}>{overlay}</SortableOverlay>
-      ) : null}
+      {overlay
+        ? // https://docs.dndkit.com/api-documentation/draggable/drag-overlay#portals
+          createPortal(
+            <SortableOverlay activeId={activeId}>{overlay}</SortableOverlay>,
+            document.body,
+          )
+        : null}
     </DndContext>
   );
 }

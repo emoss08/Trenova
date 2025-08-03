@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 package notification
 
 import (
@@ -145,13 +150,7 @@ func (s *Service) SendConfigurationCopiedNotification(
 	req *services.ConfigurationCopiedNotificationRequest,
 ) error {
 	s.l.Info().
-		Str("user_id", req.UserID.String()).
-		Str("organization_id", req.OrganizationID.String()).
-		Str("business_unit_id", req.BusinessUnitID.String()).
-		Str("config_id", req.ConfigID.String()).
-		Str("config_name", req.ConfigName).
-		Str("config_creator", req.ConfigCreator).
-		Str("config_copied_by", req.ConfigCopiedBy).
+		Interface("req", req).
 		Msg("sending configuration copied notification")
 
 	notifReq := &services.SendNotificationRequest{
@@ -178,6 +177,75 @@ func (s *Service) SendConfigurationCopiedNotification(
 	}
 
 	return s.SendNotification(ctx, notifReq)
+}
+
+func (s *Service) SendCommentNotification(
+	ctx context.Context,
+	req *services.ShipmentCommentNotificationRequest,
+) error {
+	s.l.Info().
+		Interface("req", req).
+		Msg("sending comment notification")
+
+	notifReq := &services.SendNotificationRequest{
+		EventType: notification.EventShipmentComment,
+		Priority:  notification.PriorityLow,
+		Targeting: notification.Targeting{
+			Channel:        notification.ChannelUser,
+			OrganizationID: req.OrganizationID,
+			BusinessUnitID: &req.BusinessUnitID,
+			TargetUserID:   &req.MentionedUserID,
+		},
+		Title: "You've been mentioned in a comment",
+		Message: fmt.Sprintf(
+			"%s mentioned you in a comment",
+			req.OwnerName,
+		),
+		Data: map[string]any{
+			"commentId": req.CommentID.String(),
+			"ownerName": req.OwnerName,
+		},
+	}
+
+	return s.SendNotification(ctx, notifReq)
+}
+
+func (s *Service) SendBulkCommentNotifications(
+	ctx context.Context,
+	reqs []*services.ShipmentCommentNotificationRequest,
+) error {
+	if len(reqs) == 0 {
+		return nil
+	}
+
+	s.l.Info().
+		Int("count", len(reqs)).
+		Msg("sending bulk comment notifications")
+
+	// Send notifications concurrently for better performance
+	errChan := make(chan error, len(reqs))
+	for _, req := range reqs {
+		go func(r *services.ShipmentCommentNotificationRequest) {
+			errChan <- s.SendCommentNotification(ctx, r)
+		}(req)
+	}
+
+	// Collect errors
+	var firstErr error
+	for range len(reqs) {
+		if err := <-errChan; err != nil && firstErr == nil {
+			firstErr = err
+		}
+	}
+
+	if firstErr != nil {
+		s.l.Error().
+			Err(firstErr).
+			Int("totalRequests", len(reqs)).
+			Msg("failed to send some comment notifications")
+	}
+
+	return firstErr
 }
 
 func (s *Service) MarkAsRead(ctx context.Context, req repositories.MarkAsReadRequest) error {

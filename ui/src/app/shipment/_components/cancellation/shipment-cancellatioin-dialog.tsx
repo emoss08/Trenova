@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
@@ -21,7 +26,7 @@ import { useUser } from "@/stores/user-store";
 import { APIError } from "@/types/errors";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { FormProvider, type Path, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ShipmentCancellationForm } from "./shipment-cancellation-form";
@@ -52,7 +57,7 @@ export function ShipmentCancellationDialog({
 
   const {
     setError,
-    formState: { isSubmitting },
+    formState: { isSubmitting, isSubmitSuccessful },
     handleSubmit,
     reset,
   } = form;
@@ -66,22 +71,20 @@ export function ShipmentCancellationDialog({
       toast.success("Shipment cancelled successfully", {
         description: `The shipment has been cancelled`,
       });
-      onOpenChange(false);
-      reset();
-
-      table.resetRowSelection();
-
       // Invalidate the query to refresh the table
       broadcastQueryInvalidation({
-        queryKey: ["assignment-list", "shipment"],
+        queryKey: ["assignment-list", "shipment", "shipment-list"],
         options: {
-          correlationId: `create-shipment-move-assignment-${Date.now()}`,
+          correlationId: `cancel-shipment-${Date.now()}`,
         },
         config: {
           predicate: true,
           refetchType: "all",
         },
       });
+
+      onOpenChange(false);
+      table.resetRowSelection();
     },
     onError: (error: APIError) => {
       if (error.isValidationError()) {
@@ -107,6 +110,12 @@ export function ShipmentCancellationDialog({
     },
     [mutateAsync],
   );
+
+  useEffect(() => {
+    if (isSubmitSuccessful) {
+      reset();
+    }
+  }, [isSubmitSuccessful, reset]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

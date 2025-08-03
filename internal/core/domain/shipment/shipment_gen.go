@@ -70,42 +70,68 @@ var ShipmentQuery = struct {
 	Where struct {
 		IDEQ                          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ServiceTypeIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ServiceTypeIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ServiceTypeIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ServiceTypeIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ShipmentTypeIDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ShipmentTypeIDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentTypeIDIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentTypeIDNotIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		CustomerIDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		CustomerIDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CustomerIDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CustomerIDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		TractorTypeIDEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TractorTypeIDNEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TractorTypeIDIn               func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TractorTypeIDNotIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TractorTypeIDIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		TractorTypeIDIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		TrailerTypeIDEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TrailerTypeIDNEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TrailerTypeIDIn               func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TrailerTypeIDNotIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TrailerTypeIDIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		TrailerTypeIDIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		OwnerIDEQ                     func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		OwnerIDNEQ                    func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		OwnerIDIn                     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		OwnerIDNotIn                  func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		OwnerIDIsNull                 func(q *bun.SelectQuery) *bun.SelectQuery
 		OwnerIDIsNotNull              func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledByIDEQ                func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		CanceledByIDNEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		CanceledByIDIn                func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		CanceledByIDNotIn             func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		CanceledByIDIsNull            func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledByIDIsNotNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		FormulaTemplateIDEQ           func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		FormulaTemplateIDNEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		FormulaTemplateIDIn           func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		FormulaTemplateIDNotIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		FormulaTemplateIDIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		FormulaTemplateIDIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ConsolidationGroupIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ConsolidationGroupIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ConsolidationGroupIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ConsolidationGroupIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ConsolidationGroupIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ConsolidationGroupIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ                      func(q *bun.SelectQuery, v Status) *bun.SelectQuery
 		StatusNEQ                     func(q *bun.SelectQuery, v Status) *bun.SelectQuery
+		StatusIn                      func(q *bun.SelectQuery, v []Status) *bun.SelectQuery
+		StatusNotIn                   func(q *bun.SelectQuery, v []Status) *bun.SelectQuery
 		ProNumberEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProNumberNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProNumberIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -163,6 +189,8 @@ var ShipmentQuery = struct {
 		RankHasSuffix                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		RatingMethodEQ                func(q *bun.SelectQuery, v RatingMethod) *bun.SelectQuery
 		RatingMethodNEQ               func(q *bun.SelectQuery, v RatingMethod) *bun.SelectQuery
+		RatingMethodIn                func(q *bun.SelectQuery, v []RatingMethod) *bun.SelectQuery
+		RatingMethodNotIn             func(q *bun.SelectQuery, v []RatingMethod) *bun.SelectQuery
 		OtherChargeAmountEQ           func(q *bun.SelectQuery, v decimal.NullDecimal) *bun.SelectQuery
 		OtherChargeAmountNEQ          func(q *bun.SelectQuery, v decimal.NullDecimal) *bun.SelectQuery
 		OtherChargeAmountIn           func(q *bun.SelectQuery, v []decimal.NullDecimal) *bun.SelectQuery
@@ -195,30 +223,44 @@ var ShipmentQuery = struct {
 		TotalChargeAmountIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		PiecesEQ                      func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		PiecesNEQ                     func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		PiecesIn                      func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		PiecesNotIn                   func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		PiecesIsNull                  func(q *bun.SelectQuery) *bun.SelectQuery
 		PiecesIsNotNull               func(q *bun.SelectQuery) *bun.SelectQuery
 		WeightEQ                      func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		WeightNEQ                     func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		WeightIn                      func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		WeightNotIn                   func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		WeightIsNull                  func(q *bun.SelectQuery) *bun.SelectQuery
 		WeightIsNotNull               func(q *bun.SelectQuery) *bun.SelectQuery
 		TemperatureMinEQ              func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
 		TemperatureMinNEQ             func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
+		TemperatureMinIn              func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
+		TemperatureMinNotIn           func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
 		TemperatureMinIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		TemperatureMinIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		TemperatureMaxEQ              func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
 		TemperatureMaxNEQ             func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
+		TemperatureMaxIn              func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
+		TemperatureMaxNotIn           func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
 		TemperatureMaxIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		TemperatureMaxIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualDeliveryDateEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ActualDeliveryDateNEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ActualDeliveryDateIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ActualDeliveryDateNotIn       func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ActualDeliveryDateIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualDeliveryDateIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualShipDateEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ActualShipDateNEQ             func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ActualShipDateIn              func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ActualShipDateNotIn           func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ActualShipDateIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualShipDateIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledAtEQ                  func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		CanceledAtNEQ                 func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		CanceledAtIn                  func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		CanceledAtNotIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		CanceledAtIsNull              func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledAtIsNotNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		RatingUnitEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -276,6 +318,23 @@ var ShipmentQuery = struct {
 	FieldConfig  func() map[string]shipmentFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit      string
+		Organization      string
+		ShipmentType      string
+		ServiceType       string
+		Customer          string
+		TractorType       string
+		TrailerType       string
+		CanceledBy        string
+		Owner             string
+		FormulaTemplate   string
+		Moves             string
+		Comments          string
+		Commodities       string
+		AdditionalCharges string
+	}
 }{
 	// Table and alias constants
 	Table:    "shipments",
@@ -369,42 +428,68 @@ var ShipmentQuery = struct {
 	Where: struct {
 		IDEQ                          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ServiceTypeIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ServiceTypeIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ServiceTypeIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ServiceTypeIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ShipmentTypeIDEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ShipmentTypeIDNEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentTypeIDIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentTypeIDNotIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		CustomerIDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		CustomerIDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CustomerIDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CustomerIDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		TractorTypeIDEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TractorTypeIDNEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TractorTypeIDIn               func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TractorTypeIDNotIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TractorTypeIDIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		TractorTypeIDIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		TrailerTypeIDEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TrailerTypeIDNEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TrailerTypeIDIn               func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TrailerTypeIDNotIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TrailerTypeIDIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		TrailerTypeIDIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		OwnerIDEQ                     func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		OwnerIDNEQ                    func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		OwnerIDIn                     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		OwnerIDNotIn                  func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		OwnerIDIsNull                 func(q *bun.SelectQuery) *bun.SelectQuery
 		OwnerIDIsNotNull              func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledByIDEQ                func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		CanceledByIDNEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		CanceledByIDIn                func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		CanceledByIDNotIn             func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		CanceledByIDIsNull            func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledByIDIsNotNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		FormulaTemplateIDEQ           func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		FormulaTemplateIDNEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		FormulaTemplateIDIn           func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		FormulaTemplateIDNotIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		FormulaTemplateIDIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		FormulaTemplateIDIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ConsolidationGroupIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ConsolidationGroupIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ConsolidationGroupIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ConsolidationGroupIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ConsolidationGroupIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ConsolidationGroupIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ                      func(q *bun.SelectQuery, v Status) *bun.SelectQuery
 		StatusNEQ                     func(q *bun.SelectQuery, v Status) *bun.SelectQuery
+		StatusIn                      func(q *bun.SelectQuery, v []Status) *bun.SelectQuery
+		StatusNotIn                   func(q *bun.SelectQuery, v []Status) *bun.SelectQuery
 		ProNumberEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProNumberNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProNumberIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -462,6 +547,8 @@ var ShipmentQuery = struct {
 		RankHasSuffix                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		RatingMethodEQ                func(q *bun.SelectQuery, v RatingMethod) *bun.SelectQuery
 		RatingMethodNEQ               func(q *bun.SelectQuery, v RatingMethod) *bun.SelectQuery
+		RatingMethodIn                func(q *bun.SelectQuery, v []RatingMethod) *bun.SelectQuery
+		RatingMethodNotIn             func(q *bun.SelectQuery, v []RatingMethod) *bun.SelectQuery
 		OtherChargeAmountEQ           func(q *bun.SelectQuery, v decimal.NullDecimal) *bun.SelectQuery
 		OtherChargeAmountNEQ          func(q *bun.SelectQuery, v decimal.NullDecimal) *bun.SelectQuery
 		OtherChargeAmountIn           func(q *bun.SelectQuery, v []decimal.NullDecimal) *bun.SelectQuery
@@ -494,30 +581,44 @@ var ShipmentQuery = struct {
 		TotalChargeAmountIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		PiecesEQ                      func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		PiecesNEQ                     func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		PiecesIn                      func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		PiecesNotIn                   func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		PiecesIsNull                  func(q *bun.SelectQuery) *bun.SelectQuery
 		PiecesIsNotNull               func(q *bun.SelectQuery) *bun.SelectQuery
 		WeightEQ                      func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		WeightNEQ                     func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		WeightIn                      func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		WeightNotIn                   func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		WeightIsNull                  func(q *bun.SelectQuery) *bun.SelectQuery
 		WeightIsNotNull               func(q *bun.SelectQuery) *bun.SelectQuery
 		TemperatureMinEQ              func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
 		TemperatureMinNEQ             func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
+		TemperatureMinIn              func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
+		TemperatureMinNotIn           func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
 		TemperatureMinIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		TemperatureMinIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		TemperatureMaxEQ              func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
 		TemperatureMaxNEQ             func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
+		TemperatureMaxIn              func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
+		TemperatureMaxNotIn           func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
 		TemperatureMaxIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		TemperatureMaxIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualDeliveryDateEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ActualDeliveryDateNEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ActualDeliveryDateIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ActualDeliveryDateNotIn       func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ActualDeliveryDateIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualDeliveryDateIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualShipDateEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ActualShipDateNEQ             func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ActualShipDateIn              func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ActualShipDateNotIn           func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ActualShipDateIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		ActualShipDateIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledAtEQ                  func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		CanceledAtNEQ                 func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		CanceledAtIn                  func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		CanceledAtNotIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		CanceledAtIsNull              func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledAtIsNotNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		RatingUnitEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -560,11 +661,23 @@ var ShipmentQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sp.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sp.organization_id"), v)
@@ -572,11 +685,23 @@ var ShipmentQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.organization_id"), bun.In(v))
+		},
 		ServiceTypeIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sp.service_type_id"), v)
 		},
 		ServiceTypeIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.service_type_id"), v)
+		},
+		ServiceTypeIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.service_type_id"), bun.In(v))
+		},
+		ServiceTypeIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.service_type_id"), bun.In(v))
 		},
 		ShipmentTypeIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sp.shipment_type_id"), v)
@@ -584,17 +709,35 @@ var ShipmentQuery = struct {
 		ShipmentTypeIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.shipment_type_id"), v)
 		},
+		ShipmentTypeIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.shipment_type_id"), bun.In(v))
+		},
+		ShipmentTypeIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.shipment_type_id"), bun.In(v))
+		},
 		CustomerIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sp.customer_id"), v)
 		},
 		CustomerIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.customer_id"), v)
 		},
+		CustomerIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.customer_id"), bun.In(v))
+		},
+		CustomerIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.customer_id"), bun.In(v))
+		},
 		TractorTypeIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sp.tractor_type_id"), v)
 		},
 		TractorTypeIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.tractor_type_id"), v)
+		},
+		TractorTypeIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.tractor_type_id"), bun.In(v))
+		},
+		TractorTypeIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.tractor_type_id"), bun.In(v))
 		},
 		TractorTypeIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sp.tractor_type_id"))
@@ -608,6 +751,12 @@ var ShipmentQuery = struct {
 		TrailerTypeIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.trailer_type_id"), v)
 		},
+		TrailerTypeIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.trailer_type_id"), bun.In(v))
+		},
+		TrailerTypeIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.trailer_type_id"), bun.In(v))
+		},
 		TrailerTypeIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sp.trailer_type_id"))
 		},
@@ -619,6 +768,12 @@ var ShipmentQuery = struct {
 		},
 		OwnerIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.owner_id"), v)
+		},
+		OwnerIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.owner_id"), bun.In(v))
+		},
+		OwnerIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.owner_id"), bun.In(v))
 		},
 		OwnerIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sp.owner_id"))
@@ -632,6 +787,12 @@ var ShipmentQuery = struct {
 		CanceledByIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.canceled_by_id"), v)
 		},
+		CanceledByIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.canceled_by_id"), bun.In(v))
+		},
+		CanceledByIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.canceled_by_id"), bun.In(v))
+		},
 		CanceledByIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sp.canceled_by_id"))
 		},
@@ -643,6 +804,12 @@ var ShipmentQuery = struct {
 		},
 		FormulaTemplateIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.formula_template_id"), v)
+		},
+		FormulaTemplateIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.formula_template_id"), bun.In(v))
+		},
+		FormulaTemplateIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.formula_template_id"), bun.In(v))
 		},
 		FormulaTemplateIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sp.formula_template_id"))
@@ -656,6 +823,12 @@ var ShipmentQuery = struct {
 		ConsolidationGroupIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.consolidation_group_id"), v)
 		},
+		ConsolidationGroupIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.consolidation_group_id"), bun.In(v))
+		},
+		ConsolidationGroupIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.consolidation_group_id"), bun.In(v))
+		},
 		ConsolidationGroupIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sp.consolidation_group_id"))
 		},
@@ -667,6 +840,12 @@ var ShipmentQuery = struct {
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.status"), bun.In(v))
 		},
 		ProNumberEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sp.pro_number"), v)
@@ -839,6 +1018,12 @@ var ShipmentQuery = struct {
 		RatingMethodNEQ: func(q *bun.SelectQuery, v RatingMethod) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.rating_method"), v)
 		},
+		RatingMethodIn: func(q *bun.SelectQuery, v []RatingMethod) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.rating_method"), bun.In(v))
+		},
+		RatingMethodNotIn: func(q *bun.SelectQuery, v []RatingMethod) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.rating_method"), bun.In(v))
+		},
 		OtherChargeAmountEQ: func(q *bun.SelectQuery, v decimal.NullDecimal) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("sp.other_charge_amount"), v)
 		},
@@ -935,6 +1120,12 @@ var ShipmentQuery = struct {
 		PiecesNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.pieces"), v)
 		},
+		PiecesIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.pieces"), bun.In(v))
+		},
+		PiecesNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.pieces"), bun.In(v))
+		},
 		PiecesIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sp.pieces"))
 		},
@@ -946,6 +1137,12 @@ var ShipmentQuery = struct {
 		},
 		WeightNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.weight"), v)
+		},
+		WeightIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.weight"), bun.In(v))
+		},
+		WeightNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.weight"), bun.In(v))
 		},
 		WeightIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sp.weight"))
@@ -959,6 +1156,12 @@ var ShipmentQuery = struct {
 		TemperatureMinNEQ: func(q *bun.SelectQuery, v *int16) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.temperature_min"), v)
 		},
+		TemperatureMinIn: func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.temperature_min"), bun.In(v))
+		},
+		TemperatureMinNotIn: func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.temperature_min"), bun.In(v))
+		},
 		TemperatureMinIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sp.temperature_min"))
 		},
@@ -970,6 +1173,12 @@ var ShipmentQuery = struct {
 		},
 		TemperatureMaxNEQ: func(q *bun.SelectQuery, v *int16) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.temperature_max"), v)
+		},
+		TemperatureMaxIn: func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.temperature_max"), bun.In(v))
+		},
+		TemperatureMaxNotIn: func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.temperature_max"), bun.In(v))
 		},
 		TemperatureMaxIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sp.temperature_max"))
@@ -983,6 +1192,12 @@ var ShipmentQuery = struct {
 		ActualDeliveryDateNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.actual_delivery_date"), v)
 		},
+		ActualDeliveryDateIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.actual_delivery_date"), bun.In(v))
+		},
+		ActualDeliveryDateNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.actual_delivery_date"), bun.In(v))
+		},
 		ActualDeliveryDateIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sp.actual_delivery_date"))
 		},
@@ -995,6 +1210,12 @@ var ShipmentQuery = struct {
 		ActualShipDateNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.actual_ship_date"), v)
 		},
+		ActualShipDateIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.actual_ship_date"), bun.In(v))
+		},
+		ActualShipDateNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.actual_ship_date"), bun.In(v))
+		},
 		ActualShipDateIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sp.actual_ship_date"))
 		},
@@ -1006,6 +1227,12 @@ var ShipmentQuery = struct {
 		},
 		CanceledAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("sp.canceled_at"), v)
+		},
+		CanceledAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("sp.canceled_at"), bun.In(v))
+		},
+		CanceledAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("sp.canceled_at"), bun.In(v))
 		},
 		CanceledAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("sp.canceled_at"))
@@ -1785,6 +2012,38 @@ var ShipmentQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit      string
+		Organization      string
+		ShipmentType      string
+		ServiceType       string
+		Customer          string
+		TractorType       string
+		TrailerType       string
+		CanceledBy        string
+		Owner             string
+		FormulaTemplate   string
+		Moves             string
+		Comments          string
+		Commodities       string
+		AdditionalCharges string
+	}{
+		BusinessUnit:      "BusinessUnit",
+		Organization:      "Organization",
+		ShipmentType:      "ShipmentType",
+		ServiceType:       "ServiceType",
+		Customer:          "Customer",
+		TractorType:       "TractorType",
+		TrailerType:       "TrailerType",
+		CanceledBy:        "CanceledBy",
+		Owner:             "Owner",
+		FormulaTemplate:   "FormulaTemplate",
+		Moves:             "Moves",
+		Comments:          "Comments",
+		Commodities:       "Commodities",
+		AdditionalCharges: "AdditionalCharges",
+	},
 }
 
 // ShipmentQueryBuilder provides a fluent interface for building queries
@@ -1829,6 +2088,18 @@ func (b *ShipmentQueryBuilder) WhereIDNEQ(v pulid.ID) *ShipmentQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *ShipmentQueryBuilder) WhereIDIn(v []pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereIDNotIn(v []pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *ShipmentQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1838,6 +2109,18 @@ func (b *ShipmentQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ShipmentQueryB
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *ShipmentQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *ShipmentQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1853,6 +2136,18 @@ func (b *ShipmentQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *ShipmentQuery
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *ShipmentQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereServiceTypeIDEQ adds a WHERE service_type_id = ? condition
 func (b *ShipmentQueryBuilder) WhereServiceTypeIDEQ(v pulid.ID) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.ServiceTypeIDEQ(b.query, v)
@@ -1862,6 +2157,18 @@ func (b *ShipmentQueryBuilder) WhereServiceTypeIDEQ(v pulid.ID) *ShipmentQueryBu
 // WhereServiceTypeIDNEQ adds a WHERE service_type_id != ? condition
 func (b *ShipmentQueryBuilder) WhereServiceTypeIDNEQ(v pulid.ID) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.ServiceTypeIDNEQ(b.query, v)
+	return b
+}
+
+// WhereServiceTypeIDIn adds a WHERE service_type_id IN (?) condition
+func (b *ShipmentQueryBuilder) WhereServiceTypeIDIn(v []pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.ServiceTypeIDIn(b.query, v)
+	return b
+}
+
+// WhereServiceTypeIDNotIn adds a WHERE service_type_id NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereServiceTypeIDNotIn(v []pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.ServiceTypeIDNotIn(b.query, v)
 	return b
 }
 
@@ -1877,6 +2184,18 @@ func (b *ShipmentQueryBuilder) WhereShipmentTypeIDNEQ(v pulid.ID) *ShipmentQuery
 	return b
 }
 
+// WhereShipmentTypeIDIn adds a WHERE shipment_type_id IN (?) condition
+func (b *ShipmentQueryBuilder) WhereShipmentTypeIDIn(v []pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.ShipmentTypeIDIn(b.query, v)
+	return b
+}
+
+// WhereShipmentTypeIDNotIn adds a WHERE shipment_type_id NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereShipmentTypeIDNotIn(v []pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.ShipmentTypeIDNotIn(b.query, v)
+	return b
+}
+
 // WhereCustomerIDEQ adds a WHERE customer_id = ? condition
 func (b *ShipmentQueryBuilder) WhereCustomerIDEQ(v pulid.ID) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.CustomerIDEQ(b.query, v)
@@ -1886,6 +2205,18 @@ func (b *ShipmentQueryBuilder) WhereCustomerIDEQ(v pulid.ID) *ShipmentQueryBuild
 // WhereCustomerIDNEQ adds a WHERE customer_id != ? condition
 func (b *ShipmentQueryBuilder) WhereCustomerIDNEQ(v pulid.ID) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.CustomerIDNEQ(b.query, v)
+	return b
+}
+
+// WhereCustomerIDIn adds a WHERE customer_id IN (?) condition
+func (b *ShipmentQueryBuilder) WhereCustomerIDIn(v []pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.CustomerIDIn(b.query, v)
+	return b
+}
+
+// WhereCustomerIDNotIn adds a WHERE customer_id NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereCustomerIDNotIn(v []pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.CustomerIDNotIn(b.query, v)
 	return b
 }
 
@@ -1901,6 +2232,18 @@ func (b *ShipmentQueryBuilder) WhereTractorTypeIDNEQ(v *pulid.ID) *ShipmentQuery
 	return b
 }
 
+// WhereTractorTypeIDIn adds a WHERE tractor_type_id IN (?) condition
+func (b *ShipmentQueryBuilder) WhereTractorTypeIDIn(v []*pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.TractorTypeIDIn(b.query, v)
+	return b
+}
+
+// WhereTractorTypeIDNotIn adds a WHERE tractor_type_id NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereTractorTypeIDNotIn(v []*pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.TractorTypeIDNotIn(b.query, v)
+	return b
+}
+
 // WhereTrailerTypeIDEQ adds a WHERE trailer_type_id = ? condition
 func (b *ShipmentQueryBuilder) WhereTrailerTypeIDEQ(v *pulid.ID) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.TrailerTypeIDEQ(b.query, v)
@@ -1910,6 +2253,18 @@ func (b *ShipmentQueryBuilder) WhereTrailerTypeIDEQ(v *pulid.ID) *ShipmentQueryB
 // WhereTrailerTypeIDNEQ adds a WHERE trailer_type_id != ? condition
 func (b *ShipmentQueryBuilder) WhereTrailerTypeIDNEQ(v *pulid.ID) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.TrailerTypeIDNEQ(b.query, v)
+	return b
+}
+
+// WhereTrailerTypeIDIn adds a WHERE trailer_type_id IN (?) condition
+func (b *ShipmentQueryBuilder) WhereTrailerTypeIDIn(v []*pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.TrailerTypeIDIn(b.query, v)
+	return b
+}
+
+// WhereTrailerTypeIDNotIn adds a WHERE trailer_type_id NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereTrailerTypeIDNotIn(v []*pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.TrailerTypeIDNotIn(b.query, v)
 	return b
 }
 
@@ -1925,6 +2280,18 @@ func (b *ShipmentQueryBuilder) WhereOwnerIDNEQ(v *pulid.ID) *ShipmentQueryBuilde
 	return b
 }
 
+// WhereOwnerIDIn adds a WHERE owner_id IN (?) condition
+func (b *ShipmentQueryBuilder) WhereOwnerIDIn(v []*pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.OwnerIDIn(b.query, v)
+	return b
+}
+
+// WhereOwnerIDNotIn adds a WHERE owner_id NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereOwnerIDNotIn(v []*pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.OwnerIDNotIn(b.query, v)
+	return b
+}
+
 // WhereCanceledByIDEQ adds a WHERE canceled_by_id = ? condition
 func (b *ShipmentQueryBuilder) WhereCanceledByIDEQ(v *pulid.ID) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.CanceledByIDEQ(b.query, v)
@@ -1934,6 +2301,18 @@ func (b *ShipmentQueryBuilder) WhereCanceledByIDEQ(v *pulid.ID) *ShipmentQueryBu
 // WhereCanceledByIDNEQ adds a WHERE canceled_by_id != ? condition
 func (b *ShipmentQueryBuilder) WhereCanceledByIDNEQ(v *pulid.ID) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.CanceledByIDNEQ(b.query, v)
+	return b
+}
+
+// WhereCanceledByIDIn adds a WHERE canceled_by_id IN (?) condition
+func (b *ShipmentQueryBuilder) WhereCanceledByIDIn(v []*pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.CanceledByIDIn(b.query, v)
+	return b
+}
+
+// WhereCanceledByIDNotIn adds a WHERE canceled_by_id NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereCanceledByIDNotIn(v []*pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.CanceledByIDNotIn(b.query, v)
 	return b
 }
 
@@ -1949,6 +2328,18 @@ func (b *ShipmentQueryBuilder) WhereFormulaTemplateIDNEQ(v *pulid.ID) *ShipmentQ
 	return b
 }
 
+// WhereFormulaTemplateIDIn adds a WHERE formula_template_id IN (?) condition
+func (b *ShipmentQueryBuilder) WhereFormulaTemplateIDIn(v []*pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.FormulaTemplateIDIn(b.query, v)
+	return b
+}
+
+// WhereFormulaTemplateIDNotIn adds a WHERE formula_template_id NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereFormulaTemplateIDNotIn(v []*pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.FormulaTemplateIDNotIn(b.query, v)
+	return b
+}
+
 // WhereConsolidationGroupIDEQ adds a WHERE consolidation_group_id = ? condition
 func (b *ShipmentQueryBuilder) WhereConsolidationGroupIDEQ(v *pulid.ID) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.ConsolidationGroupIDEQ(b.query, v)
@@ -1961,6 +2352,18 @@ func (b *ShipmentQueryBuilder) WhereConsolidationGroupIDNEQ(v *pulid.ID) *Shipme
 	return b
 }
 
+// WhereConsolidationGroupIDIn adds a WHERE consolidation_group_id IN (?) condition
+func (b *ShipmentQueryBuilder) WhereConsolidationGroupIDIn(v []*pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.ConsolidationGroupIDIn(b.query, v)
+	return b
+}
+
+// WhereConsolidationGroupIDNotIn adds a WHERE consolidation_group_id NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereConsolidationGroupIDNotIn(v []*pulid.ID) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.ConsolidationGroupIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *ShipmentQueryBuilder) WhereStatusEQ(v Status) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.StatusEQ(b.query, v)
@@ -1970,6 +2373,18 @@ func (b *ShipmentQueryBuilder) WhereStatusEQ(v Status) *ShipmentQueryBuilder {
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *ShipmentQueryBuilder) WhereStatusNEQ(v Status) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *ShipmentQueryBuilder) WhereStatusIn(v []Status) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereStatusNotIn(v []Status) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -2195,6 +2610,18 @@ func (b *ShipmentQueryBuilder) WhereRatingMethodNEQ(v RatingMethod) *ShipmentQue
 	return b
 }
 
+// WhereRatingMethodIn adds a WHERE rating_method IN (?) condition
+func (b *ShipmentQueryBuilder) WhereRatingMethodIn(v []RatingMethod) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.RatingMethodIn(b.query, v)
+	return b
+}
+
+// WhereRatingMethodNotIn adds a WHERE rating_method NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereRatingMethodNotIn(v []RatingMethod) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.RatingMethodNotIn(b.query, v)
+	return b
+}
+
 // WhereOtherChargeAmountEQ adds a WHERE other_charge_amount = ? condition
 func (b *ShipmentQueryBuilder) WhereOtherChargeAmountEQ(v decimal.NullDecimal) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.OtherChargeAmountEQ(b.query, v)
@@ -2351,6 +2778,18 @@ func (b *ShipmentQueryBuilder) WherePiecesNEQ(v *int64) *ShipmentQueryBuilder {
 	return b
 }
 
+// WherePiecesIn adds a WHERE pieces IN (?) condition
+func (b *ShipmentQueryBuilder) WherePiecesIn(v []*int64) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.PiecesIn(b.query, v)
+	return b
+}
+
+// WherePiecesNotIn adds a WHERE pieces NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WherePiecesNotIn(v []*int64) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.PiecesNotIn(b.query, v)
+	return b
+}
+
 // WhereWeightEQ adds a WHERE weight = ? condition
 func (b *ShipmentQueryBuilder) WhereWeightEQ(v *int64) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.WeightEQ(b.query, v)
@@ -2360,6 +2799,18 @@ func (b *ShipmentQueryBuilder) WhereWeightEQ(v *int64) *ShipmentQueryBuilder {
 // WhereWeightNEQ adds a WHERE weight != ? condition
 func (b *ShipmentQueryBuilder) WhereWeightNEQ(v *int64) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.WeightNEQ(b.query, v)
+	return b
+}
+
+// WhereWeightIn adds a WHERE weight IN (?) condition
+func (b *ShipmentQueryBuilder) WhereWeightIn(v []*int64) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.WeightIn(b.query, v)
+	return b
+}
+
+// WhereWeightNotIn adds a WHERE weight NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereWeightNotIn(v []*int64) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.WeightNotIn(b.query, v)
 	return b
 }
 
@@ -2375,6 +2826,18 @@ func (b *ShipmentQueryBuilder) WhereTemperatureMinNEQ(v *int16) *ShipmentQueryBu
 	return b
 }
 
+// WhereTemperatureMinIn adds a WHERE temperature_min IN (?) condition
+func (b *ShipmentQueryBuilder) WhereTemperatureMinIn(v []*int16) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.TemperatureMinIn(b.query, v)
+	return b
+}
+
+// WhereTemperatureMinNotIn adds a WHERE temperature_min NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereTemperatureMinNotIn(v []*int16) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.TemperatureMinNotIn(b.query, v)
+	return b
+}
+
 // WhereTemperatureMaxEQ adds a WHERE temperature_max = ? condition
 func (b *ShipmentQueryBuilder) WhereTemperatureMaxEQ(v *int16) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.TemperatureMaxEQ(b.query, v)
@@ -2384,6 +2847,18 @@ func (b *ShipmentQueryBuilder) WhereTemperatureMaxEQ(v *int16) *ShipmentQueryBui
 // WhereTemperatureMaxNEQ adds a WHERE temperature_max != ? condition
 func (b *ShipmentQueryBuilder) WhereTemperatureMaxNEQ(v *int16) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.TemperatureMaxNEQ(b.query, v)
+	return b
+}
+
+// WhereTemperatureMaxIn adds a WHERE temperature_max IN (?) condition
+func (b *ShipmentQueryBuilder) WhereTemperatureMaxIn(v []*int16) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.TemperatureMaxIn(b.query, v)
+	return b
+}
+
+// WhereTemperatureMaxNotIn adds a WHERE temperature_max NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereTemperatureMaxNotIn(v []*int16) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.TemperatureMaxNotIn(b.query, v)
 	return b
 }
 
@@ -2399,6 +2874,18 @@ func (b *ShipmentQueryBuilder) WhereActualDeliveryDateNEQ(v *int64) *ShipmentQue
 	return b
 }
 
+// WhereActualDeliveryDateIn adds a WHERE actual_delivery_date IN (?) condition
+func (b *ShipmentQueryBuilder) WhereActualDeliveryDateIn(v []*int64) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.ActualDeliveryDateIn(b.query, v)
+	return b
+}
+
+// WhereActualDeliveryDateNotIn adds a WHERE actual_delivery_date NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereActualDeliveryDateNotIn(v []*int64) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.ActualDeliveryDateNotIn(b.query, v)
+	return b
+}
+
 // WhereActualShipDateEQ adds a WHERE actual_ship_date = ? condition
 func (b *ShipmentQueryBuilder) WhereActualShipDateEQ(v *int64) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.ActualShipDateEQ(b.query, v)
@@ -2411,6 +2898,18 @@ func (b *ShipmentQueryBuilder) WhereActualShipDateNEQ(v *int64) *ShipmentQueryBu
 	return b
 }
 
+// WhereActualShipDateIn adds a WHERE actual_ship_date IN (?) condition
+func (b *ShipmentQueryBuilder) WhereActualShipDateIn(v []*int64) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.ActualShipDateIn(b.query, v)
+	return b
+}
+
+// WhereActualShipDateNotIn adds a WHERE actual_ship_date NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereActualShipDateNotIn(v []*int64) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.ActualShipDateNotIn(b.query, v)
+	return b
+}
+
 // WhereCanceledAtEQ adds a WHERE canceled_at = ? condition
 func (b *ShipmentQueryBuilder) WhereCanceledAtEQ(v *int64) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.CanceledAtEQ(b.query, v)
@@ -2420,6 +2919,18 @@ func (b *ShipmentQueryBuilder) WhereCanceledAtEQ(v *int64) *ShipmentQueryBuilder
 // WhereCanceledAtNEQ adds a WHERE canceled_at != ? condition
 func (b *ShipmentQueryBuilder) WhereCanceledAtNEQ(v *int64) *ShipmentQueryBuilder {
 	b.query = ShipmentQuery.Where.CanceledAtNEQ(b.query, v)
+	return b
+}
+
+// WhereCanceledAtIn adds a WHERE canceled_at IN (?) condition
+func (b *ShipmentQueryBuilder) WhereCanceledAtIn(v []*int64) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.CanceledAtIn(b.query, v)
+	return b
+}
+
+// WhereCanceledAtNotIn adds a WHERE canceled_at NOT IN (?) condition
+func (b *ShipmentQueryBuilder) WhereCanceledAtNotIn(v []*int64) *ShipmentQueryBuilder {
+	b.query = ShipmentQuery.Where.CanceledAtNotIn(b.query, v)
 	return b
 }
 
@@ -2715,4 +3226,378 @@ func (b *ShipmentQueryBuilder) First(ctx context.Context) (*Shipment, error) {
 // ShipmentBuild creates a chainable query builder
 func ShipmentBuild(db bun.IDB) *ShipmentQueryBuilder {
 	return NewShipmentQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *ShipmentQueryBuilder) LoadBusinessUnit() *ShipmentQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *ShipmentQueryBuilder) LoadOrganization() *ShipmentQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadShipmentType loads the ShipmentType relationship
+func (b *ShipmentQueryBuilder) LoadShipmentType() *ShipmentQueryBuilder {
+	b.query = b.query.Relation("ShipmentType")
+	return b
+}
+
+// LoadServiceType loads the ServiceType relationship
+func (b *ShipmentQueryBuilder) LoadServiceType() *ShipmentQueryBuilder {
+	b.query = b.query.Relation("ServiceType")
+	return b
+}
+
+// LoadCustomer loads the Customer relationship
+func (b *ShipmentQueryBuilder) LoadCustomer() *ShipmentQueryBuilder {
+	b.query = b.query.Relation("Customer")
+	return b
+}
+
+// LoadTractorType loads the TractorType relationship
+func (b *ShipmentQueryBuilder) LoadTractorType() *ShipmentQueryBuilder {
+	b.query = b.query.Relation("TractorType")
+	return b
+}
+
+// LoadTrailerType loads the TrailerType relationship
+func (b *ShipmentQueryBuilder) LoadTrailerType() *ShipmentQueryBuilder {
+	b.query = b.query.Relation("TrailerType")
+	return b
+}
+
+// LoadCanceledBy loads the CanceledBy relationship
+func (b *ShipmentQueryBuilder) LoadCanceledBy() *ShipmentQueryBuilder {
+	b.query = b.query.Relation("CanceledBy")
+	return b
+}
+
+// LoadOwner loads the Owner relationship
+func (b *ShipmentQueryBuilder) LoadOwner() *ShipmentQueryBuilder {
+	b.query = b.query.Relation("Owner")
+	return b
+}
+
+// LoadFormulaTemplate loads the FormulaTemplate relationship
+func (b *ShipmentQueryBuilder) LoadFormulaTemplate() *ShipmentQueryBuilder {
+	b.query = b.query.Relation("FormulaTemplate")
+	return b
+}
+
+// LoadMoves loads the Moves relationship
+func (b *ShipmentQueryBuilder) LoadMoves(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentQueryBuilder {
+	if len(opts) > 0 {
+		b.query = b.query.Relation("Moves", func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		})
+	} else {
+		b.query = b.query.Relation("Moves")
+	}
+	return b
+}
+
+// LoadComments loads the Comments relationship
+func (b *ShipmentQueryBuilder) LoadComments(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentQueryBuilder {
+	if len(opts) > 0 {
+		b.query = b.query.Relation("Comments", func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		})
+	} else {
+		b.query = b.query.Relation("Comments")
+	}
+	return b
+}
+
+// LoadCommodities loads the Commodities relationship
+func (b *ShipmentQueryBuilder) LoadCommodities(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentQueryBuilder {
+	if len(opts) > 0 {
+		b.query = b.query.Relation("Commodities", func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		})
+	} else {
+		b.query = b.query.Relation("Commodities")
+	}
+	return b
+}
+
+// LoadAdditionalCharges loads the AdditionalCharges relationship
+func (b *ShipmentQueryBuilder) LoadAdditionalCharges(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentQueryBuilder {
+	if len(opts) > 0 {
+		b.query = b.query.Relation("AdditionalCharges", func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		})
+	} else {
+		b.query = b.query.Relation("AdditionalCharges")
+	}
+	return b
+}
+
+// LoadAllRelations loads all relationships for Shipment
+func (b *ShipmentQueryBuilder) LoadAllRelations() *ShipmentQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadShipmentType()
+	b.LoadServiceType()
+	b.LoadCustomer()
+	b.LoadTractorType()
+	b.LoadTrailerType()
+	b.LoadCanceledBy()
+	b.LoadOwner()
+	b.LoadFormulaTemplate()
+	b.LoadMoves()
+	b.LoadComments()
+	b.LoadCommodities()
+	b.LoadAdditionalCharges()
+	return b
+}
+
+// ShipmentRelationChain provides a fluent API for building nested relationship chains
+type ShipmentRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewShipmentRelationChain creates a new relation chain builder
+func NewShipmentRelationChain() *ShipmentRelationChain {
+	return &ShipmentRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *ShipmentRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *ShipmentRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *ShipmentRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *ShipmentQueryBuilder) WithBusinessUnit() *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *ShipmentQueryBuilder) WithOrganization() *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithShipmentType creates a relation chain starting with ShipmentType
+func (b *ShipmentQueryBuilder) WithShipmentType() *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("ShipmentType")
+	return chain
+}
+
+// WithServiceType creates a relation chain starting with ServiceType
+func (b *ShipmentQueryBuilder) WithServiceType() *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("ServiceType")
+	return chain
+}
+
+// WithCustomer creates a relation chain starting with Customer
+func (b *ShipmentQueryBuilder) WithCustomer() *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("Customer")
+	return chain
+}
+
+// WithTractorType creates a relation chain starting with TractorType
+func (b *ShipmentQueryBuilder) WithTractorType() *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("TractorType")
+	return chain
+}
+
+// WithTrailerType creates a relation chain starting with TrailerType
+func (b *ShipmentQueryBuilder) WithTrailerType() *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("TrailerType")
+	return chain
+}
+
+// WithCanceledBy creates a relation chain starting with CanceledBy
+func (b *ShipmentQueryBuilder) WithCanceledBy() *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("CanceledBy")
+	return chain
+}
+
+// WithOwner creates a relation chain starting with Owner
+func (b *ShipmentQueryBuilder) WithOwner() *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("Owner")
+	return chain
+}
+
+// WithFormulaTemplate creates a relation chain starting with FormulaTemplate
+func (b *ShipmentQueryBuilder) WithFormulaTemplate() *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("FormulaTemplate")
+	return chain
+}
+
+// WithMoves creates a relation chain starting with Moves
+func (b *ShipmentQueryBuilder) WithMoves(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("Moves", opts...)
+	return chain
+}
+
+// WithComments creates a relation chain starting with Comments
+func (b *ShipmentQueryBuilder) WithComments(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("Comments", opts...)
+	return chain
+}
+
+// WithCommodities creates a relation chain starting with Commodities
+func (b *ShipmentQueryBuilder) WithCommodities(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("Commodities", opts...)
+	return chain
+}
+
+// WithAdditionalCharges creates a relation chain starting with AdditionalCharges
+func (b *ShipmentQueryBuilder) WithAdditionalCharges(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentRelationChainBuilder {
+	chain := &ShipmentRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentRelationChain(),
+	}
+	chain.chain.Add("AdditionalCharges", opts...)
+	return chain
+}
+
+// ShipmentRelationChainBuilder provides fluent API for building nested relations
+type ShipmentRelationChainBuilder struct {
+	parent *ShipmentQueryBuilder
+	chain  *ShipmentRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *ShipmentRelationChainBuilder) Load() *ShipmentQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *ShipmentRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *ShipmentRelationChainBuilder) OrderBy(order string) *ShipmentRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *ShipmentRelationChainBuilder) Where(condition string, args ...interface{}) *ShipmentRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

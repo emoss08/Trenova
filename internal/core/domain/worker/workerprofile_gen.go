@@ -59,14 +59,24 @@ var WorkerProfileQuery = struct {
 	Where struct {
 		IDEQ                            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		WorkerIDEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		WorkerIDNEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		WorkerIDIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		WorkerIDNotIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		LicenseStateIDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		LicenseStateIDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		LicenseStateIDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		LicenseStateIDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		DOBEQ                           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		DOBNEQ                          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		DOBIn                           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -88,6 +98,8 @@ var WorkerProfileQuery = struct {
 		LicenseNumberHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		EndorsementEQ                   func(q *bun.SelectQuery, v EndorsementType) *bun.SelectQuery
 		EndorsementNEQ                  func(q *bun.SelectQuery, v EndorsementType) *bun.SelectQuery
+		EndorsementIn                   func(q *bun.SelectQuery, v []EndorsementType) *bun.SelectQuery
+		EndorsementNotIn                func(q *bun.SelectQuery, v []EndorsementType) *bun.SelectQuery
 		HazmatExpiryEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		HazmatExpiryNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		HazmatExpiryIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -114,20 +126,30 @@ var WorkerProfileQuery = struct {
 		HireDateLTE                     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		TerminationDateEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		TerminationDateNEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		TerminationDateIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		TerminationDateNotIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		TerminationDateIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		TerminationDateIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		PhysicalDueDateEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		PhysicalDueDateNEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		PhysicalDueDateIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		PhysicalDueDateNotIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		PhysicalDueDateIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		PhysicalDueDateIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		MVRDueDateEQ                    func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		MVRDueDateNEQ                   func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		MVRDueDateIn                    func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		MVRDueDateNotIn                 func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		MVRDueDateIsNull                func(q *bun.SelectQuery) *bun.SelectQuery
 		MVRDueDateIsNotNull             func(q *bun.SelectQuery) *bun.SelectQuery
 		ComplianceStatusEQ              func(q *bun.SelectQuery, v ComplianceStatus) *bun.SelectQuery
 		ComplianceStatusNEQ             func(q *bun.SelectQuery, v ComplianceStatus) *bun.SelectQuery
+		ComplianceStatusIn              func(q *bun.SelectQuery, v []ComplianceStatus) *bun.SelectQuery
+		ComplianceStatusNotIn           func(q *bun.SelectQuery, v []ComplianceStatus) *bun.SelectQuery
 		IsQualifiedEQ                   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsQualifiedNEQ                  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsQualifiedIn                   func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsQualifiedNotIn                func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		DisqualificationReasonEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DisqualificationReasonNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DisqualificationReasonIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -209,6 +231,12 @@ var WorkerProfileQuery = struct {
 	FieldConfig  func() map[string]workerProfileFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+		LicenseState string
+	}
 }{
 	// Table and alias constants
 	Table:    "worker_profiles",
@@ -282,14 +310,24 @@ var WorkerProfileQuery = struct {
 	Where: struct {
 		IDEQ                            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		WorkerIDEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		WorkerIDNEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		WorkerIDIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		WorkerIDNotIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		LicenseStateIDEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		LicenseStateIDNEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		LicenseStateIDIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		LicenseStateIDNotIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		DOBEQ                           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		DOBNEQ                          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		DOBIn                           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -311,6 +349,8 @@ var WorkerProfileQuery = struct {
 		LicenseNumberHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		EndorsementEQ                   func(q *bun.SelectQuery, v EndorsementType) *bun.SelectQuery
 		EndorsementNEQ                  func(q *bun.SelectQuery, v EndorsementType) *bun.SelectQuery
+		EndorsementIn                   func(q *bun.SelectQuery, v []EndorsementType) *bun.SelectQuery
+		EndorsementNotIn                func(q *bun.SelectQuery, v []EndorsementType) *bun.SelectQuery
 		HazmatExpiryEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		HazmatExpiryNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		HazmatExpiryIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -337,20 +377,30 @@ var WorkerProfileQuery = struct {
 		HireDateLTE                     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		TerminationDateEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		TerminationDateNEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		TerminationDateIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		TerminationDateNotIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		TerminationDateIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		TerminationDateIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		PhysicalDueDateEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		PhysicalDueDateNEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		PhysicalDueDateIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		PhysicalDueDateNotIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		PhysicalDueDateIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		PhysicalDueDateIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		MVRDueDateEQ                    func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		MVRDueDateNEQ                   func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		MVRDueDateIn                    func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		MVRDueDateNotIn                 func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		MVRDueDateIsNull                func(q *bun.SelectQuery) *bun.SelectQuery
 		MVRDueDateIsNotNull             func(q *bun.SelectQuery) *bun.SelectQuery
 		ComplianceStatusEQ              func(q *bun.SelectQuery, v ComplianceStatus) *bun.SelectQuery
 		ComplianceStatusNEQ             func(q *bun.SelectQuery, v ComplianceStatus) *bun.SelectQuery
+		ComplianceStatusIn              func(q *bun.SelectQuery, v []ComplianceStatus) *bun.SelectQuery
+		ComplianceStatusNotIn           func(q *bun.SelectQuery, v []ComplianceStatus) *bun.SelectQuery
 		IsQualifiedEQ                   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsQualifiedNEQ                  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsQualifiedIn                   func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsQualifiedNotIn                func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		DisqualificationReasonEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DisqualificationReasonNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DisqualificationReasonIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -418,11 +468,23 @@ var WorkerProfileQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wp.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wp.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wp.id"), bun.In(v))
+		},
 		WorkerIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wp.worker_id"), v)
 		},
 		WorkerIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wp.worker_id"), v)
+		},
+		WorkerIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wp.worker_id"), bun.In(v))
+		},
+		WorkerIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wp.worker_id"), bun.In(v))
 		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wp.business_unit_id"), v)
@@ -430,17 +492,35 @@ var WorkerProfileQuery = struct {
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wp.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wp.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wp.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wp.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wp.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wp.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wp.organization_id"), bun.In(v))
+		},
 		LicenseStateIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wp.license_state_id"), v)
 		},
 		LicenseStateIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wp.license_state_id"), v)
+		},
+		LicenseStateIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wp.license_state_id"), bun.In(v))
+		},
+		LicenseStateIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wp.license_state_id"), bun.In(v))
 		},
 		DOBEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wp.dob"), v)
@@ -504,6 +584,12 @@ var WorkerProfileQuery = struct {
 		},
 		EndorsementNEQ: func(q *bun.SelectQuery, v EndorsementType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wp.endorsement"), v)
+		},
+		EndorsementIn: func(q *bun.SelectQuery, v []EndorsementType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wp.endorsement"), bun.In(v))
+		},
+		EndorsementNotIn: func(q *bun.SelectQuery, v []EndorsementType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wp.endorsement"), bun.In(v))
 		},
 		HazmatExpiryEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wp.hazmat_expiry"), v)
@@ -583,6 +669,12 @@ var WorkerProfileQuery = struct {
 		TerminationDateNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wp.termination_date"), v)
 		},
+		TerminationDateIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wp.termination_date"), bun.In(v))
+		},
+		TerminationDateNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wp.termination_date"), bun.In(v))
+		},
 		TerminationDateIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("wp.termination_date"))
 		},
@@ -594,6 +686,12 @@ var WorkerProfileQuery = struct {
 		},
 		PhysicalDueDateNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wp.physical_due_date"), v)
+		},
+		PhysicalDueDateIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wp.physical_due_date"), bun.In(v))
+		},
+		PhysicalDueDateNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wp.physical_due_date"), bun.In(v))
 		},
 		PhysicalDueDateIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("wp.physical_due_date"))
@@ -607,6 +705,12 @@ var WorkerProfileQuery = struct {
 		MVRDueDateNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wp.mvr_due_date"), v)
 		},
+		MVRDueDateIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wp.mvr_due_date"), bun.In(v))
+		},
+		MVRDueDateNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wp.mvr_due_date"), bun.In(v))
+		},
 		MVRDueDateIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("wp.mvr_due_date"))
 		},
@@ -619,11 +723,23 @@ var WorkerProfileQuery = struct {
 		ComplianceStatusNEQ: func(q *bun.SelectQuery, v ComplianceStatus) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wp.compliance_status"), v)
 		},
+		ComplianceStatusIn: func(q *bun.SelectQuery, v []ComplianceStatus) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wp.compliance_status"), bun.In(v))
+		},
+		ComplianceStatusNotIn: func(q *bun.SelectQuery, v []ComplianceStatus) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wp.compliance_status"), bun.In(v))
+		},
 		IsQualifiedEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wp.is_qualified"), v)
 		},
 		IsQualifiedNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("wp.is_qualified"), v)
+		},
+		IsQualifiedIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("wp.is_qualified"), bun.In(v))
+		},
+		IsQualifiedNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("wp.is_qualified"), bun.In(v))
 		},
 		DisqualificationReasonEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("wp.disqualification_reason"), v)
@@ -1290,6 +1406,16 @@ var WorkerProfileQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+		LicenseState string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+		LicenseState: "LicenseState",
+	},
 }
 
 // WorkerProfileQueryBuilder provides a fluent interface for building queries
@@ -1334,6 +1460,18 @@ func (b *WorkerProfileQueryBuilder) WhereIDNEQ(v pulid.ID) *WorkerProfileQueryBu
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereIDIn(v []pulid.ID) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereIDNotIn(v []pulid.ID) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereWorkerIDEQ adds a WHERE worker_id = ? condition
 func (b *WorkerProfileQueryBuilder) WhereWorkerIDEQ(v pulid.ID) *WorkerProfileQueryBuilder {
 	b.query = WorkerProfileQuery.Where.WorkerIDEQ(b.query, v)
@@ -1343,6 +1481,18 @@ func (b *WorkerProfileQueryBuilder) WhereWorkerIDEQ(v pulid.ID) *WorkerProfileQu
 // WhereWorkerIDNEQ adds a WHERE worker_id != ? condition
 func (b *WorkerProfileQueryBuilder) WhereWorkerIDNEQ(v pulid.ID) *WorkerProfileQueryBuilder {
 	b.query = WorkerProfileQuery.Where.WorkerIDNEQ(b.query, v)
+	return b
+}
+
+// WhereWorkerIDIn adds a WHERE worker_id IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereWorkerIDIn(v []pulid.ID) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.WorkerIDIn(b.query, v)
+	return b
+}
+
+// WhereWorkerIDNotIn adds a WHERE worker_id NOT IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereWorkerIDNotIn(v []pulid.ID) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.WorkerIDNotIn(b.query, v)
 	return b
 }
 
@@ -1358,6 +1508,18 @@ func (b *WorkerProfileQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *WorkerPr
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *WorkerProfileQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *WorkerProfileQueryBuilder {
 	b.query = WorkerProfileQuery.Where.OrganizationIDEQ(b.query, v)
@@ -1370,6 +1532,18 @@ func (b *WorkerProfileQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *WorkerPr
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereLicenseStateIDEQ adds a WHERE license_state_id = ? condition
 func (b *WorkerProfileQueryBuilder) WhereLicenseStateIDEQ(v pulid.ID) *WorkerProfileQueryBuilder {
 	b.query = WorkerProfileQuery.Where.LicenseStateIDEQ(b.query, v)
@@ -1379,6 +1553,18 @@ func (b *WorkerProfileQueryBuilder) WhereLicenseStateIDEQ(v pulid.ID) *WorkerPro
 // WhereLicenseStateIDNEQ adds a WHERE license_state_id != ? condition
 func (b *WorkerProfileQueryBuilder) WhereLicenseStateIDNEQ(v pulid.ID) *WorkerProfileQueryBuilder {
 	b.query = WorkerProfileQuery.Where.LicenseStateIDNEQ(b.query, v)
+	return b
+}
+
+// WhereLicenseStateIDIn adds a WHERE license_state_id IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereLicenseStateIDIn(v []pulid.ID) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.LicenseStateIDIn(b.query, v)
+	return b
+}
+
+// WhereLicenseStateIDNotIn adds a WHERE license_state_id NOT IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereLicenseStateIDNotIn(v []pulid.ID) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.LicenseStateIDNotIn(b.query, v)
 	return b
 }
 
@@ -1481,6 +1667,18 @@ func (b *WorkerProfileQueryBuilder) WhereEndorsementEQ(v EndorsementType) *Worke
 // WhereEndorsementNEQ adds a WHERE endorsement != ? condition
 func (b *WorkerProfileQueryBuilder) WhereEndorsementNEQ(v EndorsementType) *WorkerProfileQueryBuilder {
 	b.query = WorkerProfileQuery.Where.EndorsementNEQ(b.query, v)
+	return b
+}
+
+// WhereEndorsementIn adds a WHERE endorsement IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereEndorsementIn(v []EndorsementType) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.EndorsementIn(b.query, v)
+	return b
+}
+
+// WhereEndorsementNotIn adds a WHERE endorsement NOT IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereEndorsementNotIn(v []EndorsementType) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.EndorsementNotIn(b.query, v)
 	return b
 }
 
@@ -1640,6 +1838,18 @@ func (b *WorkerProfileQueryBuilder) WhereTerminationDateNEQ(v *int64) *WorkerPro
 	return b
 }
 
+// WhereTerminationDateIn adds a WHERE termination_date IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereTerminationDateIn(v []*int64) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.TerminationDateIn(b.query, v)
+	return b
+}
+
+// WhereTerminationDateNotIn adds a WHERE termination_date NOT IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereTerminationDateNotIn(v []*int64) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.TerminationDateNotIn(b.query, v)
+	return b
+}
+
 // WherePhysicalDueDateEQ adds a WHERE physical_due_date = ? condition
 func (b *WorkerProfileQueryBuilder) WherePhysicalDueDateEQ(v *int64) *WorkerProfileQueryBuilder {
 	b.query = WorkerProfileQuery.Where.PhysicalDueDateEQ(b.query, v)
@@ -1649,6 +1859,18 @@ func (b *WorkerProfileQueryBuilder) WherePhysicalDueDateEQ(v *int64) *WorkerProf
 // WherePhysicalDueDateNEQ adds a WHERE physical_due_date != ? condition
 func (b *WorkerProfileQueryBuilder) WherePhysicalDueDateNEQ(v *int64) *WorkerProfileQueryBuilder {
 	b.query = WorkerProfileQuery.Where.PhysicalDueDateNEQ(b.query, v)
+	return b
+}
+
+// WherePhysicalDueDateIn adds a WHERE physical_due_date IN (?) condition
+func (b *WorkerProfileQueryBuilder) WherePhysicalDueDateIn(v []*int64) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.PhysicalDueDateIn(b.query, v)
+	return b
+}
+
+// WherePhysicalDueDateNotIn adds a WHERE physical_due_date NOT IN (?) condition
+func (b *WorkerProfileQueryBuilder) WherePhysicalDueDateNotIn(v []*int64) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.PhysicalDueDateNotIn(b.query, v)
 	return b
 }
 
@@ -1664,6 +1886,18 @@ func (b *WorkerProfileQueryBuilder) WhereMVRDueDateNEQ(v *int64) *WorkerProfileQ
 	return b
 }
 
+// WhereMVRDueDateIn adds a WHERE mvr_due_date IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereMVRDueDateIn(v []*int64) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.MVRDueDateIn(b.query, v)
+	return b
+}
+
+// WhereMVRDueDateNotIn adds a WHERE mvr_due_date NOT IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereMVRDueDateNotIn(v []*int64) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.MVRDueDateNotIn(b.query, v)
+	return b
+}
+
 // WhereComplianceStatusEQ adds a WHERE compliance_status = ? condition
 func (b *WorkerProfileQueryBuilder) WhereComplianceStatusEQ(v ComplianceStatus) *WorkerProfileQueryBuilder {
 	b.query = WorkerProfileQuery.Where.ComplianceStatusEQ(b.query, v)
@@ -1676,6 +1910,18 @@ func (b *WorkerProfileQueryBuilder) WhereComplianceStatusNEQ(v ComplianceStatus)
 	return b
 }
 
+// WhereComplianceStatusIn adds a WHERE compliance_status IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereComplianceStatusIn(v []ComplianceStatus) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.ComplianceStatusIn(b.query, v)
+	return b
+}
+
+// WhereComplianceStatusNotIn adds a WHERE compliance_status NOT IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereComplianceStatusNotIn(v []ComplianceStatus) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.ComplianceStatusNotIn(b.query, v)
+	return b
+}
+
 // WhereIsQualifiedEQ adds a WHERE is_qualified = ? condition
 func (b *WorkerProfileQueryBuilder) WhereIsQualifiedEQ(v bool) *WorkerProfileQueryBuilder {
 	b.query = WorkerProfileQuery.Where.IsQualifiedEQ(b.query, v)
@@ -1685,6 +1931,18 @@ func (b *WorkerProfileQueryBuilder) WhereIsQualifiedEQ(v bool) *WorkerProfileQue
 // WhereIsQualifiedNEQ adds a WHERE is_qualified != ? condition
 func (b *WorkerProfileQueryBuilder) WhereIsQualifiedNEQ(v bool) *WorkerProfileQueryBuilder {
 	b.query = WorkerProfileQuery.Where.IsQualifiedNEQ(b.query, v)
+	return b
+}
+
+// WhereIsQualifiedIn adds a WHERE is_qualified IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereIsQualifiedIn(v []bool) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.IsQualifiedIn(b.query, v)
+	return b
+}
+
+// WhereIsQualifiedNotIn adds a WHERE is_qualified NOT IN (?) condition
+func (b *WorkerProfileQueryBuilder) WhereIsQualifiedNotIn(v []bool) *WorkerProfileQueryBuilder {
+	b.query = WorkerProfileQuery.Where.IsQualifiedNotIn(b.query, v)
 	return b
 }
 
@@ -2118,4 +2376,155 @@ func (b *WorkerProfileQueryBuilder) First(ctx context.Context) (*WorkerProfile, 
 // WorkerProfileBuild creates a chainable query builder
 func WorkerProfileBuild(db bun.IDB) *WorkerProfileQueryBuilder {
 	return NewWorkerProfileQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *WorkerProfileQueryBuilder) LoadBusinessUnit() *WorkerProfileQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *WorkerProfileQueryBuilder) LoadOrganization() *WorkerProfileQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadLicenseState loads the LicenseState relationship
+func (b *WorkerProfileQueryBuilder) LoadLicenseState() *WorkerProfileQueryBuilder {
+	b.query = b.query.Relation("LicenseState")
+	return b
+}
+
+// LoadAllRelations loads all relationships for WorkerProfile
+func (b *WorkerProfileQueryBuilder) LoadAllRelations() *WorkerProfileQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadLicenseState()
+	return b
+}
+
+// WorkerProfileRelationChain provides a fluent API for building nested relationship chains
+type WorkerProfileRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewWorkerProfileRelationChain creates a new relation chain builder
+func NewWorkerProfileRelationChain() *WorkerProfileRelationChain {
+	return &WorkerProfileRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *WorkerProfileRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *WorkerProfileRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *WorkerProfileRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *WorkerProfileRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *WorkerProfileQueryBuilder) WithBusinessUnit() *WorkerProfileRelationChainBuilder {
+	chain := &WorkerProfileRelationChainBuilder{
+		parent: b,
+		chain:  NewWorkerProfileRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *WorkerProfileQueryBuilder) WithOrganization() *WorkerProfileRelationChainBuilder {
+	chain := &WorkerProfileRelationChainBuilder{
+		parent: b,
+		chain:  NewWorkerProfileRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithLicenseState creates a relation chain starting with LicenseState
+func (b *WorkerProfileQueryBuilder) WithLicenseState() *WorkerProfileRelationChainBuilder {
+	chain := &WorkerProfileRelationChainBuilder{
+		parent: b,
+		chain:  NewWorkerProfileRelationChain(),
+	}
+	chain.chain.Add("LicenseState")
+	return chain
+}
+
+// WorkerProfileRelationChainBuilder provides fluent API for building nested relations
+type WorkerProfileRelationChainBuilder struct {
+	parent *WorkerProfileQueryBuilder
+	chain  *WorkerProfileRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *WorkerProfileRelationChainBuilder) Load() *WorkerProfileQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *WorkerProfileRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *WorkerProfileRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *WorkerProfileRelationChainBuilder) OrderBy(order string) *WorkerProfileRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *WorkerProfileRelationChainBuilder) Where(condition string, args ...interface{}) *WorkerProfileRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

@@ -51,6 +51,8 @@ var RoleQuery = struct {
 	Where struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -75,8 +77,12 @@ var RoleQuery = struct {
 		DescriptionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		RoleTypeEQ            func(q *bun.SelectQuery, v RoleType) *bun.SelectQuery
 		RoleTypeNEQ           func(q *bun.SelectQuery, v RoleType) *bun.SelectQuery
+		RoleTypeIn            func(q *bun.SelectQuery, v []RoleType) *bun.SelectQuery
+		RoleTypeNotIn         func(q *bun.SelectQuery, v []RoleType) *bun.SelectQuery
 		IsSystemEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsSystemNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsSystemNotIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		PriorityEQ            func(q *bun.SelectQuery, v int) *bun.SelectQuery
 		PriorityNEQ           func(q *bun.SelectQuery, v int) *bun.SelectQuery
 		PriorityIn            func(q *bun.SelectQuery, v []int) *bun.SelectQuery
@@ -87,8 +93,12 @@ var RoleQuery = struct {
 		PriorityLTE           func(q *bun.SelectQuery, v int) *bun.SelectQuery
 		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn           func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		ExpiresAtEQ           func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ExpiresAtNEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ExpiresAtIn           func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ExpiresAtNotIn        func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ExpiresAtIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		ExpiresAtIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		CreatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -109,14 +119,22 @@ var RoleQuery = struct {
 		UpdatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ParentRoleIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ParentRoleIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ParentRoleIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ParentRoleIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ParentRoleIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ParentRoleIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		MetadataEQ            func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		MetadataNEQ           func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn            func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn         func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -139,6 +157,11 @@ var RoleQuery = struct {
 	FieldConfig  func() map[string]roleFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		ParentRole string
+		ChildRoles string
+	}
 }{
 	// Table and alias constants
 	Table:    "roles",
@@ -194,6 +217,8 @@ var RoleQuery = struct {
 	Where: struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -218,8 +243,12 @@ var RoleQuery = struct {
 		DescriptionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		RoleTypeEQ            func(q *bun.SelectQuery, v RoleType) *bun.SelectQuery
 		RoleTypeNEQ           func(q *bun.SelectQuery, v RoleType) *bun.SelectQuery
+		RoleTypeIn            func(q *bun.SelectQuery, v []RoleType) *bun.SelectQuery
+		RoleTypeNotIn         func(q *bun.SelectQuery, v []RoleType) *bun.SelectQuery
 		IsSystemEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsSystemNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsSystemIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsSystemNotIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		PriorityEQ            func(q *bun.SelectQuery, v int) *bun.SelectQuery
 		PriorityNEQ           func(q *bun.SelectQuery, v int) *bun.SelectQuery
 		PriorityIn            func(q *bun.SelectQuery, v []int) *bun.SelectQuery
@@ -230,8 +259,12 @@ var RoleQuery = struct {
 		PriorityLTE           func(q *bun.SelectQuery, v int) *bun.SelectQuery
 		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn           func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		ExpiresAtEQ           func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ExpiresAtNEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ExpiresAtIn           func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ExpiresAtNotIn        func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ExpiresAtIsNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		ExpiresAtIsNotNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		CreatedAtEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -252,14 +285,22 @@ var RoleQuery = struct {
 		UpdatedAtLTE          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ParentRoleIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ParentRoleIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ParentRoleIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ParentRoleIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ParentRoleIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ParentRoleIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		MetadataEQ            func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		MetadataNEQ           func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn            func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn         func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		Tenant                func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
@@ -267,6 +308,12 @@ var RoleQuery = struct {
 		},
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("r.id"), v)
+		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("r.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("r.id"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("r.name"), v)
@@ -340,11 +387,23 @@ var RoleQuery = struct {
 		RoleTypeNEQ: func(q *bun.SelectQuery, v RoleType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("r.role_type"), v)
 		},
+		RoleTypeIn: func(q *bun.SelectQuery, v []RoleType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("r.role_type"), bun.In(v))
+		},
+		RoleTypeNotIn: func(q *bun.SelectQuery, v []RoleType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("r.role_type"), bun.In(v))
+		},
 		IsSystemEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("r.is_system"), v)
 		},
 		IsSystemNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("r.is_system"), v)
+		},
+		IsSystemIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("r.is_system"), bun.In(v))
+		},
+		IsSystemNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("r.is_system"), bun.In(v))
 		},
 		PriorityEQ: func(q *bun.SelectQuery, v int) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("r.priority"), v)
@@ -376,11 +435,23 @@ var RoleQuery = struct {
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("r.status"), v)
 		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("r.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("r.status"), bun.In(v))
+		},
 		ExpiresAtEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("r.expires_at"), v)
 		},
 		ExpiresAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("r.expires_at"), v)
+		},
+		ExpiresAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("r.expires_at"), bun.In(v))
+		},
+		ExpiresAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("r.expires_at"), bun.In(v))
 		},
 		ExpiresAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("r.expires_at"))
@@ -442,17 +513,35 @@ var RoleQuery = struct {
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("r.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("r.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("r.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("r.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("r.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("r.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("r.organization_id"), bun.In(v))
+		},
 		ParentRoleIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("r.parent_role_id"), v)
 		},
 		ParentRoleIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("r.parent_role_id"), v)
+		},
+		ParentRoleIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("r.parent_role_id"), bun.In(v))
+		},
+		ParentRoleIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("r.parent_role_id"), bun.In(v))
 		},
 		ParentRoleIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("r.parent_role_id"))
@@ -465,6 +554,12 @@ var RoleQuery = struct {
 		},
 		MetadataNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("r.metadata"), v)
+		},
+		MetadataIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("r.metadata"), bun.In(v))
+		},
+		MetadataNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("r.metadata"), bun.In(v))
 		},
 		Tenant: func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery {
 			return q.
@@ -793,6 +888,14 @@ var RoleQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		ParentRole string
+		ChildRoles string
+	}{
+		ParentRole: "ParentRole",
+		ChildRoles: "ChildRoles",
+	},
 }
 
 // RoleQueryBuilder provides a fluent interface for building queries
@@ -834,6 +937,18 @@ func (b *RoleQueryBuilder) WhereIDEQ(v pulid.ID) *RoleQueryBuilder {
 // WhereIDNEQ adds a WHERE id != ? condition
 func (b *RoleQueryBuilder) WhereIDNEQ(v pulid.ID) *RoleQueryBuilder {
 	b.query = RoleQuery.Where.IDNEQ(b.query, v)
+	return b
+}
+
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *RoleQueryBuilder) WhereIDIn(v []pulid.ID) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *RoleQueryBuilder) WhereIDNotIn(v []pulid.ID) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.IDNotIn(b.query, v)
 	return b
 }
 
@@ -933,6 +1048,18 @@ func (b *RoleQueryBuilder) WhereRoleTypeNEQ(v RoleType) *RoleQueryBuilder {
 	return b
 }
 
+// WhereRoleTypeIn adds a WHERE role_type IN (?) condition
+func (b *RoleQueryBuilder) WhereRoleTypeIn(v []RoleType) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.RoleTypeIn(b.query, v)
+	return b
+}
+
+// WhereRoleTypeNotIn adds a WHERE role_type NOT IN (?) condition
+func (b *RoleQueryBuilder) WhereRoleTypeNotIn(v []RoleType) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.RoleTypeNotIn(b.query, v)
+	return b
+}
+
 // WhereIsSystemEQ adds a WHERE is_system = ? condition
 func (b *RoleQueryBuilder) WhereIsSystemEQ(v bool) *RoleQueryBuilder {
 	b.query = RoleQuery.Where.IsSystemEQ(b.query, v)
@@ -942,6 +1069,18 @@ func (b *RoleQueryBuilder) WhereIsSystemEQ(v bool) *RoleQueryBuilder {
 // WhereIsSystemNEQ adds a WHERE is_system != ? condition
 func (b *RoleQueryBuilder) WhereIsSystemNEQ(v bool) *RoleQueryBuilder {
 	b.query = RoleQuery.Where.IsSystemNEQ(b.query, v)
+	return b
+}
+
+// WhereIsSystemIn adds a WHERE is_system IN (?) condition
+func (b *RoleQueryBuilder) WhereIsSystemIn(v []bool) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.IsSystemIn(b.query, v)
+	return b
+}
+
+// WhereIsSystemNotIn adds a WHERE is_system NOT IN (?) condition
+func (b *RoleQueryBuilder) WhereIsSystemNotIn(v []bool) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.IsSystemNotIn(b.query, v)
 	return b
 }
 
@@ -1005,6 +1144,18 @@ func (b *RoleQueryBuilder) WhereStatusNEQ(v domain.Status) *RoleQueryBuilder {
 	return b
 }
 
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *RoleQueryBuilder) WhereStatusIn(v []domain.Status) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *RoleQueryBuilder) WhereStatusNotIn(v []domain.Status) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.StatusNotIn(b.query, v)
+	return b
+}
+
 // WhereExpiresAtEQ adds a WHERE expires_at = ? condition
 func (b *RoleQueryBuilder) WhereExpiresAtEQ(v *int64) *RoleQueryBuilder {
 	b.query = RoleQuery.Where.ExpiresAtEQ(b.query, v)
@@ -1014,6 +1165,18 @@ func (b *RoleQueryBuilder) WhereExpiresAtEQ(v *int64) *RoleQueryBuilder {
 // WhereExpiresAtNEQ adds a WHERE expires_at != ? condition
 func (b *RoleQueryBuilder) WhereExpiresAtNEQ(v *int64) *RoleQueryBuilder {
 	b.query = RoleQuery.Where.ExpiresAtNEQ(b.query, v)
+	return b
+}
+
+// WhereExpiresAtIn adds a WHERE expires_at IN (?) condition
+func (b *RoleQueryBuilder) WhereExpiresAtIn(v []*int64) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.ExpiresAtIn(b.query, v)
+	return b
+}
+
+// WhereExpiresAtNotIn adds a WHERE expires_at NOT IN (?) condition
+func (b *RoleQueryBuilder) WhereExpiresAtNotIn(v []*int64) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.ExpiresAtNotIn(b.query, v)
 	return b
 }
 
@@ -1125,6 +1288,18 @@ func (b *RoleQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *RoleQueryBuilder 
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *RoleQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *RoleQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *RoleQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *RoleQueryBuilder {
 	b.query = RoleQuery.Where.OrganizationIDEQ(b.query, v)
@@ -1134,6 +1309,18 @@ func (b *RoleQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *RoleQueryBuilder {
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *RoleQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *RoleQueryBuilder {
 	b.query = RoleQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *RoleQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *RoleQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1149,6 +1336,18 @@ func (b *RoleQueryBuilder) WhereParentRoleIDNEQ(v *pulid.ID) *RoleQueryBuilder {
 	return b
 }
 
+// WhereParentRoleIDIn adds a WHERE parent_role_id IN (?) condition
+func (b *RoleQueryBuilder) WhereParentRoleIDIn(v []*pulid.ID) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.ParentRoleIDIn(b.query, v)
+	return b
+}
+
+// WhereParentRoleIDNotIn adds a WHERE parent_role_id NOT IN (?) condition
+func (b *RoleQueryBuilder) WhereParentRoleIDNotIn(v []*pulid.ID) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.ParentRoleIDNotIn(b.query, v)
+	return b
+}
+
 // WhereMetadataEQ adds a WHERE metadata = ? condition
 func (b *RoleQueryBuilder) WhereMetadataEQ(v map[string]any) *RoleQueryBuilder {
 	b.query = RoleQuery.Where.MetadataEQ(b.query, v)
@@ -1158,6 +1357,18 @@ func (b *RoleQueryBuilder) WhereMetadataEQ(v map[string]any) *RoleQueryBuilder {
 // WhereMetadataNEQ adds a WHERE metadata != ? condition
 func (b *RoleQueryBuilder) WhereMetadataNEQ(v map[string]any) *RoleQueryBuilder {
 	b.query = RoleQuery.Where.MetadataNEQ(b.query, v)
+	return b
+}
+
+// WhereMetadataIn adds a WHERE metadata IN (?) condition
+func (b *RoleQueryBuilder) WhereMetadataIn(v []map[string]any) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.MetadataIn(b.query, v)
+	return b
+}
+
+// WhereMetadataNotIn adds a WHERE metadata NOT IN (?) condition
+func (b *RoleQueryBuilder) WhereMetadataNotIn(v []map[string]any) *RoleQueryBuilder {
+	b.query = RoleQuery.Where.MetadataNotIn(b.query, v)
 	return b
 }
 
@@ -1261,4 +1472,147 @@ func (b *RoleQueryBuilder) First(ctx context.Context) (*Role, error) {
 // RoleBuild creates a chainable query builder
 func RoleBuild(db bun.IDB) *RoleQueryBuilder {
 	return NewRoleQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadParentRole loads the ParentRole relationship
+func (b *RoleQueryBuilder) LoadParentRole() *RoleQueryBuilder {
+	b.query = b.query.Relation("ParentRole")
+	return b
+}
+
+// LoadChildRoles loads the ChildRoles relationship
+func (b *RoleQueryBuilder) LoadChildRoles(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *RoleQueryBuilder {
+	if len(opts) > 0 {
+		b.query = b.query.Relation("ChildRoles", func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		})
+	} else {
+		b.query = b.query.Relation("ChildRoles")
+	}
+	return b
+}
+
+// LoadAllRelations loads all relationships for Role
+func (b *RoleQueryBuilder) LoadAllRelations() *RoleQueryBuilder {
+	b.LoadParentRole()
+	b.LoadChildRoles()
+	return b
+}
+
+// RoleRelationChain provides a fluent API for building nested relationship chains
+type RoleRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewRoleRelationChain creates a new relation chain builder
+func NewRoleRelationChain() *RoleRelationChain {
+	return &RoleRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *RoleRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *RoleRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *RoleRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *RoleRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithParentRole creates a relation chain starting with ParentRole
+func (b *RoleQueryBuilder) WithParentRole() *RoleRelationChainBuilder {
+	chain := &RoleRelationChainBuilder{
+		parent: b,
+		chain:  NewRoleRelationChain(),
+	}
+	chain.chain.Add("ParentRole")
+	return chain
+}
+
+// WithChildRoles creates a relation chain starting with ChildRoles
+func (b *RoleQueryBuilder) WithChildRoles(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *RoleRelationChainBuilder {
+	chain := &RoleRelationChainBuilder{
+		parent: b,
+		chain:  NewRoleRelationChain(),
+	}
+	chain.chain.Add("ChildRoles", opts...)
+	return chain
+}
+
+// RoleRelationChainBuilder provides fluent API for building nested relations
+type RoleRelationChainBuilder struct {
+	parent *RoleQueryBuilder
+	chain  *RoleRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *RoleRelationChainBuilder) Load() *RoleQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *RoleRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *RoleRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *RoleRelationChainBuilder) OrderBy(order string) *RoleRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *RoleRelationChainBuilder) Where(condition string, args ...interface{}) *RoleRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

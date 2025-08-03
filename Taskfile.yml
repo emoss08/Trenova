@@ -124,3 +124,6 @@ tasks:
   kafka-setup:
     cmd: bash scripts/kafka/setup-debezium-connector.sh
     desc: Setup Debezium connector for Kafka
+  add-license:
+    cmd: addlicense -c "Eric Moss" -f short-license.txt -ignore "**/.idea/**" -ignore "**/.vscode/**" -ignore "**/node_modules/**" -ignore "**/dist/**" -ignore "**/build/**" -ignore "**/*.min.js" .
+    desc: Add license to the code

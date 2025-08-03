@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 package repositories
 
 import (
@@ -14,7 +19,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/postgressearch"
-	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/samber/oops"
@@ -52,30 +56,26 @@ func NewEquipmentTypeRepository(
 }
 
 func (fcr *equipmentTypeRepository) filterQuery(
-	q *bun.SelectQuery,
+	b *equipmenttype.EquipmentTypeQueryBuilder,
 	req *repositories.ListEquipmentTypeRequest,
-) *bun.SelectQuery {
-	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
-		Query:      q,
-		TableAlias: "et",
-		Filter:     req.Filter,
-	})
+) *equipmenttype.EquipmentTypeQueryBuilder {
+	b = b.WhereTenant(req.Filter.TenantOpts.OrgID, req.Filter.TenantOpts.BuID)
 
-	fcr.l.Info().Int("classes", len(req.Classes)).Msg("filtering equipment types")
-	// * If the class is provided, add a filter to the query
 	if len(req.Classes) > 0 {
 		// Filter out any empty strings
-		var validClasses []string
+		var validClasses []equipmenttype.Class
 		for _, class := range req.Classes {
 			if class != "" {
-				validClasses = append(validClasses, class)
+				validClasses = append(validClasses, equipmenttype.Class(class))
 			}
 		}
 
 		if len(validClasses) > 0 {
-			q = q.Where("et.class IN (?)", bun.In(validClasses))
+			b = b.WhereClassIn(validClasses)
 		}
 	}
+
+	q := b.Query() // * Get a Select Query for the postgres query builder
 
 	if req.Filter.Query != "" {
 		q = postgressearch.BuildSearchQuery(
@@ -85,17 +85,20 @@ func (fcr *equipmentTypeRepository) filterQuery(
 		)
 	}
 
-	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
+	return b.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
 }
 
 func (fcr *equipmentTypeRepository) List(
 	ctx context.Context,
 	req *repositories.ListEquipmentTypeRequest,
 ) (*ports.ListResult[*equipmenttype.EquipmentType], error) {
-	// * List is a read operation - use read connection
 	dba, err := fcr.dbSelect.Read(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("equipment_type_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := fcr.l.With().
@@ -104,19 +107,17 @@ func (fcr *equipmentTypeRepository) List(
 		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	ets := make([]*equipmenttype.EquipmentType, 0)
+	b := equipmenttype.NewEquipmentTypeQuery(dba)
+	b = fcr.filterQuery(b, req)
 
-	q := dba.NewSelect().Model(&ets)
-	q = fcr.filterQuery(q, req)
-
-	total, err := q.ScanAndCount(ctx)
+	entities, total, err := b.AllWithCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to scan equipment types")
-		return nil, eris.Wrap(err, "scan equipment types")
+		return nil, err
 	}
 
 	return &ports.ListResult[*equipmenttype.EquipmentType]{
-		Items: ets,
+		Items: entities,
 		Total: total,
 	}, nil
 }
@@ -125,10 +126,13 @@ func (fcr *equipmentTypeRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetEquipmentTypeByIDOptions,
 ) (*equipmenttype.EquipmentType, error) {
-	// * GetByID is a read operation - use read connection
 	dba, err := fcr.dbSelect.Read(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("equipment_type_repository").
+			With("op", "create").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := fcr.l.With().
@@ -136,28 +140,28 @@ func (fcr *equipmentTypeRepository) GetByID(
 		Str("equipTypeID", opts.ID.String()).
 		Logger()
 
-	fc := new(equipmenttype.EquipmentType)
-
-	query := dba.NewSelect().Model(fc).
-		Where("et.id = ? AND et.organization_id = ? AND et.business_unit_id = ?", opts.ID, opts.OrgID, opts.BuID)
-
-	if err = query.Scan(ctx); err != nil {
+	entity, err := equipmenttype.NewEquipmentTypeQuery(dba).
+		WhereGroup(" AND ", func(etqb *equipmenttype.EquipmentTypeQueryBuilder) *equipmenttype.EquipmentTypeQueryBuilder {
+			return etqb.WhereIDEQ(opts.ID).
+				WhereTenant(opts.OrgID, opts.BuID)
+		}).
+		First(ctx)
+	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
-			return nil, errors.NewNotFoundError("equipment type not found within your organization")
+			return nil, errors.NewNotFoundError("Equipment Type not found within your organization")
 		}
 
 		log.Error().Err(err).Msg("failed to get equipment type")
-		return nil, eris.Wrap(err, "get equipment type")
+		return nil, err
 	}
 
-	return fc, nil
+	return entity, nil
 }
 
 func (fcr *equipmentTypeRepository) Create(
 	ctx context.Context,
 	et *equipmenttype.EquipmentType,
 ) (*equipmenttype.EquipmentType, error) {
-	// * Create is a write operation - use write connection
 	dba, err := fcr.dbSelect.Write(ctx)
 	if err != nil {
 		return nil, oops.
@@ -214,7 +218,7 @@ func (fcr *equipmentTypeRepository) Update(
 				Err(rErr).
 				Interface("equipmentType", et).
 				Msg("failed to update equipment type")
-			return eris.Wrap(rErr, "update equipment type")
+			return rErr
 		}
 
 		rows, roErr := results.RowsAffected()
@@ -223,7 +227,7 @@ func (fcr *equipmentTypeRepository) Update(
 				Err(roErr).
 				Interface("equipmentType", et).
 				Msg("failed to get rows affected")
-			return eris.Wrap(roErr, "get rows affected")
+			return roErr
 		}
 
 		if rows == 0 {
@@ -241,7 +245,10 @@ func (fcr *equipmentTypeRepository) Update(
 	})
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update equipment type")
-		return nil, eris.Wrap(err, "update equipment type")
+		return nil, oops.In("equipment_type_repository").
+			With("op", "update").
+			Time(time.Now()).
+			Wrapf(err, "update equipment type")
 	}
 
 	return et, nil

@@ -56,12 +56,20 @@ var EntryQuery = struct {
 	Where struct {
 		IDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		UserIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		UserIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		TimestampEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		TimestampNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		TimestampIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -72,16 +80,28 @@ var EntryQuery = struct {
 		TimestampLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		ChangesEQ              func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		ChangesNEQ             func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		ChangesIn              func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		ChangesNotIn           func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		PreviousStateEQ        func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		PreviousStateNEQ       func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		PreviousStateIn        func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		PreviousStateNotIn     func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		CurrentStateEQ         func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		CurrentStateNEQ        func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		CurrentStateIn         func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		CurrentStateNotIn      func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		MetadataEQ             func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		MetadataNEQ            func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn             func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn          func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		ResourceEQ             func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
 		ResourceNEQ            func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
+		ResourceIn             func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
+		ResourceNotIn          func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
 		ActionEQ               func(q *bun.SelectQuery, v permission.Action) *bun.SelectQuery
 		ActionNEQ              func(q *bun.SelectQuery, v permission.Action) *bun.SelectQuery
+		ActionIn               func(q *bun.SelectQuery, v []permission.Action) *bun.SelectQuery
+		ActionNotIn            func(q *bun.SelectQuery, v []permission.Action) *bun.SelectQuery
 		ResourceIDEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ResourceIDNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ResourceIDIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -150,8 +170,12 @@ var EntryQuery = struct {
 		CategoryHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SensitiveDataEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		SensitiveDataNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		SensitiveDataIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		SensitiveDataNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		CriticalEQ             func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		CriticalNEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		CriticalIn             func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		CriticalNotIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -171,6 +195,12 @@ var EntryQuery = struct {
 	FieldConfig  func() map[string]entryFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		User         string
+		Organization string
+		BusinessUnit string
+	}
 }{
 	// Table and alias constants
 	Table:    "audit_entries",
@@ -236,12 +266,20 @@ var EntryQuery = struct {
 	Where: struct {
 		IDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		UserIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		UserIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		TimestampEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		TimestampNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		TimestampIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -252,16 +290,28 @@ var EntryQuery = struct {
 		TimestampLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		ChangesEQ              func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		ChangesNEQ             func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		ChangesIn              func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		ChangesNotIn           func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		PreviousStateEQ        func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		PreviousStateNEQ       func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		PreviousStateIn        func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		PreviousStateNotIn     func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		CurrentStateEQ         func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		CurrentStateNEQ        func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		CurrentStateIn         func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		CurrentStateNotIn      func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		MetadataEQ             func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		MetadataNEQ            func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn             func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn          func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		ResourceEQ             func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
 		ResourceNEQ            func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery
+		ResourceIn             func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
+		ResourceNotIn          func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery
 		ActionEQ               func(q *bun.SelectQuery, v permission.Action) *bun.SelectQuery
 		ActionNEQ              func(q *bun.SelectQuery, v permission.Action) *bun.SelectQuery
+		ActionIn               func(q *bun.SelectQuery, v []permission.Action) *bun.SelectQuery
+		ActionNotIn            func(q *bun.SelectQuery, v []permission.Action) *bun.SelectQuery
 		ResourceIDEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ResourceIDNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ResourceIDIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -330,8 +380,12 @@ var EntryQuery = struct {
 		CategoryHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		SensitiveDataEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		SensitiveDataNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		SensitiveDataIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		SensitiveDataNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		CriticalEQ             func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		CriticalNEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		CriticalIn             func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		CriticalNotIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		Tenant                 func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
@@ -340,11 +394,23 @@ var EntryQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ae.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ae.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ae.id"), bun.In(v))
+		},
 		UserIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ae.user_id"), v)
 		},
 		UserIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ae.user_id"), v)
+		},
+		UserIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ae.user_id"), bun.In(v))
+		},
+		UserIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ae.user_id"), bun.In(v))
 		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ae.business_unit_id"), v)
@@ -352,11 +418,23 @@ var EntryQuery = struct {
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ae.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ae.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ae.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ae.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ae.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ae.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ae.organization_id"), bun.In(v))
 		},
 		TimestampEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ae.timestamp"), v)
@@ -388,11 +466,23 @@ var EntryQuery = struct {
 		ChangesNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ae.changes"), v)
 		},
+		ChangesIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ae.changes"), bun.In(v))
+		},
+		ChangesNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ae.changes"), bun.In(v))
+		},
 		PreviousStateEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ae.previous_state"), v)
 		},
 		PreviousStateNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ae.previous_state"), v)
+		},
+		PreviousStateIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ae.previous_state"), bun.In(v))
+		},
+		PreviousStateNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ae.previous_state"), bun.In(v))
 		},
 		CurrentStateEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ae.current_state"), v)
@@ -400,11 +490,23 @@ var EntryQuery = struct {
 		CurrentStateNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ae.current_state"), v)
 		},
+		CurrentStateIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ae.current_state"), bun.In(v))
+		},
+		CurrentStateNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ae.current_state"), bun.In(v))
+		},
 		MetadataEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ae.metadata"), v)
 		},
 		MetadataNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ae.metadata"), v)
+		},
+		MetadataIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ae.metadata"), bun.In(v))
+		},
+		MetadataNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ae.metadata"), bun.In(v))
 		},
 		ResourceEQ: func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ae.resource"), v)
@@ -412,11 +514,23 @@ var EntryQuery = struct {
 		ResourceNEQ: func(q *bun.SelectQuery, v permission.Resource) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ae.resource"), v)
 		},
+		ResourceIn: func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ae.resource"), bun.In(v))
+		},
+		ResourceNotIn: func(q *bun.SelectQuery, v []permission.Resource) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ae.resource"), bun.In(v))
+		},
 		ActionEQ: func(q *bun.SelectQuery, v permission.Action) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ae.action"), v)
 		},
 		ActionNEQ: func(q *bun.SelectQuery, v permission.Action) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ae.action"), v)
+		},
+		ActionIn: func(q *bun.SelectQuery, v []permission.Action) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ae.action"), bun.In(v))
+		},
+		ActionNotIn: func(q *bun.SelectQuery, v []permission.Action) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ae.action"), bun.In(v))
 		},
 		ResourceIDEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ae.resource_id"), v)
@@ -622,11 +736,23 @@ var EntryQuery = struct {
 		SensitiveDataNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ae.sensitive_data"), v)
 		},
+		SensitiveDataIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ae.sensitive_data"), bun.In(v))
+		},
+		SensitiveDataNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ae.sensitive_data"), bun.In(v))
+		},
 		CriticalEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ae.critical"), v)
 		},
 		CriticalNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ae.critical"), v)
+		},
+		CriticalIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ae.critical"), bun.In(v))
+		},
+		CriticalNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ae.critical"), bun.In(v))
 		},
 		Tenant: func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery {
 			return q.
@@ -1023,6 +1149,16 @@ var EntryQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		User         string
+		Organization string
+		BusinessUnit string
+	}{
+		User:         "User",
+		Organization: "Organization",
+		BusinessUnit: "BusinessUnit",
+	},
 }
 
 // EntryQueryBuilder provides a fluent interface for building queries
@@ -1067,6 +1203,18 @@ func (b *EntryQueryBuilder) WhereIDNEQ(v pulid.ID) *EntryQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *EntryQueryBuilder) WhereIDIn(v []pulid.ID) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *EntryQueryBuilder) WhereIDNotIn(v []pulid.ID) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereUserIDEQ adds a WHERE user_id = ? condition
 func (b *EntryQueryBuilder) WhereUserIDEQ(v pulid.ID) *EntryQueryBuilder {
 	b.query = EntryQuery.Where.UserIDEQ(b.query, v)
@@ -1076,6 +1224,18 @@ func (b *EntryQueryBuilder) WhereUserIDEQ(v pulid.ID) *EntryQueryBuilder {
 // WhereUserIDNEQ adds a WHERE user_id != ? condition
 func (b *EntryQueryBuilder) WhereUserIDNEQ(v pulid.ID) *EntryQueryBuilder {
 	b.query = EntryQuery.Where.UserIDNEQ(b.query, v)
+	return b
+}
+
+// WhereUserIDIn adds a WHERE user_id IN (?) condition
+func (b *EntryQueryBuilder) WhereUserIDIn(v []pulid.ID) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.UserIDIn(b.query, v)
+	return b
+}
+
+// WhereUserIDNotIn adds a WHERE user_id NOT IN (?) condition
+func (b *EntryQueryBuilder) WhereUserIDNotIn(v []pulid.ID) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.UserIDNotIn(b.query, v)
 	return b
 }
 
@@ -1091,6 +1251,18 @@ func (b *EntryQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *EntryQueryBuilde
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *EntryQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *EntryQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *EntryQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *EntryQueryBuilder {
 	b.query = EntryQuery.Where.OrganizationIDEQ(b.query, v)
@@ -1100,6 +1272,18 @@ func (b *EntryQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *EntryQueryBuilder
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *EntryQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *EntryQueryBuilder {
 	b.query = EntryQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *EntryQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *EntryQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1163,6 +1347,18 @@ func (b *EntryQueryBuilder) WhereChangesNEQ(v map[string]any) *EntryQueryBuilder
 	return b
 }
 
+// WhereChangesIn adds a WHERE changes IN (?) condition
+func (b *EntryQueryBuilder) WhereChangesIn(v []map[string]any) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.ChangesIn(b.query, v)
+	return b
+}
+
+// WhereChangesNotIn adds a WHERE changes NOT IN (?) condition
+func (b *EntryQueryBuilder) WhereChangesNotIn(v []map[string]any) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.ChangesNotIn(b.query, v)
+	return b
+}
+
 // WherePreviousStateEQ adds a WHERE previous_state = ? condition
 func (b *EntryQueryBuilder) WherePreviousStateEQ(v map[string]any) *EntryQueryBuilder {
 	b.query = EntryQuery.Where.PreviousStateEQ(b.query, v)
@@ -1172,6 +1368,18 @@ func (b *EntryQueryBuilder) WherePreviousStateEQ(v map[string]any) *EntryQueryBu
 // WherePreviousStateNEQ adds a WHERE previous_state != ? condition
 func (b *EntryQueryBuilder) WherePreviousStateNEQ(v map[string]any) *EntryQueryBuilder {
 	b.query = EntryQuery.Where.PreviousStateNEQ(b.query, v)
+	return b
+}
+
+// WherePreviousStateIn adds a WHERE previous_state IN (?) condition
+func (b *EntryQueryBuilder) WherePreviousStateIn(v []map[string]any) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.PreviousStateIn(b.query, v)
+	return b
+}
+
+// WherePreviousStateNotIn adds a WHERE previous_state NOT IN (?) condition
+func (b *EntryQueryBuilder) WherePreviousStateNotIn(v []map[string]any) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.PreviousStateNotIn(b.query, v)
 	return b
 }
 
@@ -1187,6 +1395,18 @@ func (b *EntryQueryBuilder) WhereCurrentStateNEQ(v map[string]any) *EntryQueryBu
 	return b
 }
 
+// WhereCurrentStateIn adds a WHERE current_state IN (?) condition
+func (b *EntryQueryBuilder) WhereCurrentStateIn(v []map[string]any) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.CurrentStateIn(b.query, v)
+	return b
+}
+
+// WhereCurrentStateNotIn adds a WHERE current_state NOT IN (?) condition
+func (b *EntryQueryBuilder) WhereCurrentStateNotIn(v []map[string]any) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.CurrentStateNotIn(b.query, v)
+	return b
+}
+
 // WhereMetadataEQ adds a WHERE metadata = ? condition
 func (b *EntryQueryBuilder) WhereMetadataEQ(v map[string]any) *EntryQueryBuilder {
 	b.query = EntryQuery.Where.MetadataEQ(b.query, v)
@@ -1196,6 +1416,18 @@ func (b *EntryQueryBuilder) WhereMetadataEQ(v map[string]any) *EntryQueryBuilder
 // WhereMetadataNEQ adds a WHERE metadata != ? condition
 func (b *EntryQueryBuilder) WhereMetadataNEQ(v map[string]any) *EntryQueryBuilder {
 	b.query = EntryQuery.Where.MetadataNEQ(b.query, v)
+	return b
+}
+
+// WhereMetadataIn adds a WHERE metadata IN (?) condition
+func (b *EntryQueryBuilder) WhereMetadataIn(v []map[string]any) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.MetadataIn(b.query, v)
+	return b
+}
+
+// WhereMetadataNotIn adds a WHERE metadata NOT IN (?) condition
+func (b *EntryQueryBuilder) WhereMetadataNotIn(v []map[string]any) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.MetadataNotIn(b.query, v)
 	return b
 }
 
@@ -1211,6 +1443,18 @@ func (b *EntryQueryBuilder) WhereResourceNEQ(v permission.Resource) *EntryQueryB
 	return b
 }
 
+// WhereResourceIn adds a WHERE resource IN (?) condition
+func (b *EntryQueryBuilder) WhereResourceIn(v []permission.Resource) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.ResourceIn(b.query, v)
+	return b
+}
+
+// WhereResourceNotIn adds a WHERE resource NOT IN (?) condition
+func (b *EntryQueryBuilder) WhereResourceNotIn(v []permission.Resource) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.ResourceNotIn(b.query, v)
+	return b
+}
+
 // WhereActionEQ adds a WHERE action = ? condition
 func (b *EntryQueryBuilder) WhereActionEQ(v permission.Action) *EntryQueryBuilder {
 	b.query = EntryQuery.Where.ActionEQ(b.query, v)
@@ -1220,6 +1464,18 @@ func (b *EntryQueryBuilder) WhereActionEQ(v permission.Action) *EntryQueryBuilde
 // WhereActionNEQ adds a WHERE action != ? condition
 func (b *EntryQueryBuilder) WhereActionNEQ(v permission.Action) *EntryQueryBuilder {
 	b.query = EntryQuery.Where.ActionNEQ(b.query, v)
+	return b
+}
+
+// WhereActionIn adds a WHERE action IN (?) condition
+func (b *EntryQueryBuilder) WhereActionIn(v []permission.Action) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.ActionIn(b.query, v)
+	return b
+}
+
+// WhereActionNotIn adds a WHERE action NOT IN (?) condition
+func (b *EntryQueryBuilder) WhereActionNotIn(v []permission.Action) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.ActionNotIn(b.query, v)
 	return b
 }
 
@@ -1487,6 +1743,18 @@ func (b *EntryQueryBuilder) WhereSensitiveDataNEQ(v bool) *EntryQueryBuilder {
 	return b
 }
 
+// WhereSensitiveDataIn adds a WHERE sensitive_data IN (?) condition
+func (b *EntryQueryBuilder) WhereSensitiveDataIn(v []bool) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.SensitiveDataIn(b.query, v)
+	return b
+}
+
+// WhereSensitiveDataNotIn adds a WHERE sensitive_data NOT IN (?) condition
+func (b *EntryQueryBuilder) WhereSensitiveDataNotIn(v []bool) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.SensitiveDataNotIn(b.query, v)
+	return b
+}
+
 // WhereCriticalEQ adds a WHERE critical = ? condition
 func (b *EntryQueryBuilder) WhereCriticalEQ(v bool) *EntryQueryBuilder {
 	b.query = EntryQuery.Where.CriticalEQ(b.query, v)
@@ -1496,6 +1764,18 @@ func (b *EntryQueryBuilder) WhereCriticalEQ(v bool) *EntryQueryBuilder {
 // WhereCriticalNEQ adds a WHERE critical != ? condition
 func (b *EntryQueryBuilder) WhereCriticalNEQ(v bool) *EntryQueryBuilder {
 	b.query = EntryQuery.Where.CriticalNEQ(b.query, v)
+	return b
+}
+
+// WhereCriticalIn adds a WHERE critical IN (?) condition
+func (b *EntryQueryBuilder) WhereCriticalIn(v []bool) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.CriticalIn(b.query, v)
+	return b
+}
+
+// WhereCriticalNotIn adds a WHERE critical NOT IN (?) condition
+func (b *EntryQueryBuilder) WhereCriticalNotIn(v []bool) *EntryQueryBuilder {
+	b.query = EntryQuery.Where.CriticalNotIn(b.query, v)
 	return b
 }
 
@@ -1599,4 +1879,155 @@ func (b *EntryQueryBuilder) First(ctx context.Context) (*Entry, error) {
 // EntryBuild creates a chainable query builder
 func EntryBuild(db bun.IDB) *EntryQueryBuilder {
 	return NewEntryQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadUser loads the User relationship
+func (b *EntryQueryBuilder) LoadUser() *EntryQueryBuilder {
+	b.query = b.query.Relation("User")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *EntryQueryBuilder) LoadOrganization() *EntryQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *EntryQueryBuilder) LoadBusinessUnit() *EntryQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Entry
+func (b *EntryQueryBuilder) LoadAllRelations() *EntryQueryBuilder {
+	b.LoadUser()
+	b.LoadOrganization()
+	b.LoadBusinessUnit()
+	return b
+}
+
+// EntryRelationChain provides a fluent API for building nested relationship chains
+type EntryRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewEntryRelationChain creates a new relation chain builder
+func NewEntryRelationChain() *EntryRelationChain {
+	return &EntryRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *EntryRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *EntryRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *EntryRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *EntryRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithUser creates a relation chain starting with User
+func (b *EntryQueryBuilder) WithUser() *EntryRelationChainBuilder {
+	chain := &EntryRelationChainBuilder{
+		parent: b,
+		chain:  NewEntryRelationChain(),
+	}
+	chain.chain.Add("User")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *EntryQueryBuilder) WithOrganization() *EntryRelationChainBuilder {
+	chain := &EntryRelationChainBuilder{
+		parent: b,
+		chain:  NewEntryRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *EntryQueryBuilder) WithBusinessUnit() *EntryRelationChainBuilder {
+	chain := &EntryRelationChainBuilder{
+		parent: b,
+		chain:  NewEntryRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// EntryRelationChainBuilder provides fluent API for building nested relations
+type EntryRelationChainBuilder struct {
+	parent *EntryQueryBuilder
+	chain  *EntryRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *EntryRelationChainBuilder) Load() *EntryQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *EntryRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *EntryRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *EntryRelationChainBuilder) OrderBy(order string) *EntryRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *EntryRelationChainBuilder) Where(condition string, args ...interface{}) *EntryRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

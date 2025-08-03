@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
@@ -10,6 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Icon } from "@/components/ui/icons";
 import { STOP_DIALOG_NOTICE_KEY } from "@/constants/env";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import {
   stopSchema,
@@ -19,7 +25,6 @@ import {
 } from "@/lib/schemas/stop-schema";
 import { type TableSheetProps } from "@/types/data-table";
 import { faInfoCircle, faXmark } from "@fortawesome/pro-solid-svg-icons";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { memo, useCallback, useEffect, useState } from "react";
 import {
   FormProvider,
@@ -160,8 +165,6 @@ export function StopDialog({
       if (!validationResult.success) {
         // Set form errors on the local form
         const errors = validationResult.error.issues;
-
-        console.log("stop dialog validation errors", errors);
 
         errors.forEach((error) => {
           const fieldPath = `stop.${error.path.join(".")}` as any;

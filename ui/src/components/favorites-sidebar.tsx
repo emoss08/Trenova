@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { Button } from "@/components/ui/button";
 import {
   SidebarGroup,
@@ -9,13 +14,13 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { SHOW_FAVORITES_KEY } from "@/constants/env";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
 import { faStar, faTrash } from "@fortawesome/pro-regular-svg-icons";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { Link, useLocation } from "react-router";
 import { toast } from "sonner";
 import {

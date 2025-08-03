@@ -1,8 +1,14 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { Button } from "@/components/ui/button";
 import { FormCreateModal } from "@/components/ui/form-create-modal";
 import { Icon } from "@/components/ui/icons";
 import { ExternalLink } from "@/components/ui/link";
 import { HAZMAT_SEGREGATION_RULE_NOTICE_KEY } from "@/constants/env";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { hazmatSegregationRuleSchema } from "@/lib/schemas/hazmat-segregation-rule-schema";
 import { Status } from "@/types/common";
 import { type TableSheetProps } from "@/types/data-table";
@@ -10,7 +16,6 @@ import { HazardousClassChoiceProps } from "@/types/hazardous-material";
 import { SegregationType } from "@/types/hazmat-segregation-rule";
 import { faInfoCircle, faXmark } from "@fortawesome/pro-regular-svg-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { useForm } from "react-hook-form";
 import { HazmatSegregationRuleForm } from "./hazmat-segregation-rule-form";
 

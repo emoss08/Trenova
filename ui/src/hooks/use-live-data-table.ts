@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useLiveMode } from "./use-live-mode";
@@ -38,8 +43,6 @@ export function useLiveDataTable({
   const processBatchedEvents = useCallback(() => {
     const events = pendingEventsRef.current;
     if (events.length === 0) return;
-
-    console.log(`📦 Processing batch of ${events.length} events`);
 
     // Clear pending events
     pendingEventsRef.current = [];
@@ -86,7 +89,6 @@ export function useLiveDataTable({
 
       // Debounce the query invalidation
       debounceTimeoutRef.current = setTimeout(() => {
-        console.log("🔄 Invalidating queries after debounce");
         queryClient.invalidateQueries({
           queryKey: [queryKey],
           type: "active",
@@ -149,9 +151,6 @@ export function useLiveDataTable({
   const isNewItem = useCallback(
     (itemId: string) => {
       const isNew = newItemIds.has(itemId);
-      if (isNew) {
-        console.log("✨ Item is highlighted:", itemId);
-      }
       return isNew;
     },
     [newItemIds],

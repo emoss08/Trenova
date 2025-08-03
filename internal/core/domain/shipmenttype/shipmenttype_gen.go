@@ -49,12 +49,20 @@ var ShipmentTypeQuery = struct {
 	Where struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn           func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		CodeEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -158,6 +166,11 @@ var ShipmentTypeQuery = struct {
 	FieldConfig  func() map[string]shipmentTypeFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "shipment_types",
@@ -209,12 +222,20 @@ var ShipmentTypeQuery = struct {
 	Where: struct {
 		IDEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StatusEQ              func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ             func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn              func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn           func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		CodeEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -302,11 +323,23 @@ var ShipmentTypeQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("st.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("st.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("st.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("st.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("st.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("st.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("st.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("st.organization_id"), v)
@@ -314,11 +347,23 @@ var ShipmentTypeQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("st.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("st.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("st.organization_id"), bun.In(v))
+		},
 		StatusEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("st.status"), v)
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("st.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("st.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("st.status"), bun.In(v))
 		},
 		CodeEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("st.code"), v)
@@ -862,6 +907,14 @@ var ShipmentTypeQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // ShipmentTypeQueryBuilder provides a fluent interface for building queries
@@ -906,6 +959,18 @@ func (b *ShipmentTypeQueryBuilder) WhereIDNEQ(v pulid.ID) *ShipmentTypeQueryBuil
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *ShipmentTypeQueryBuilder) WhereIDIn(v []pulid.ID) *ShipmentTypeQueryBuilder {
+	b.query = ShipmentTypeQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *ShipmentTypeQueryBuilder) WhereIDNotIn(v []pulid.ID) *ShipmentTypeQueryBuilder {
+	b.query = ShipmentTypeQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *ShipmentTypeQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ShipmentTypeQueryBuilder {
 	b.query = ShipmentTypeQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -915,6 +980,18 @@ func (b *ShipmentTypeQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ShipmentTy
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *ShipmentTypeQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *ShipmentTypeQueryBuilder {
 	b.query = ShipmentTypeQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *ShipmentTypeQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *ShipmentTypeQueryBuilder {
+	b.query = ShipmentTypeQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *ShipmentTypeQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *ShipmentTypeQueryBuilder {
+	b.query = ShipmentTypeQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -930,6 +1007,18 @@ func (b *ShipmentTypeQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *ShipmentT
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *ShipmentTypeQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *ShipmentTypeQueryBuilder {
+	b.query = ShipmentTypeQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *ShipmentTypeQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *ShipmentTypeQueryBuilder {
+	b.query = ShipmentTypeQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *ShipmentTypeQueryBuilder) WhereStatusEQ(v domain.Status) *ShipmentTypeQueryBuilder {
 	b.query = ShipmentTypeQuery.Where.StatusEQ(b.query, v)
@@ -939,6 +1028,18 @@ func (b *ShipmentTypeQueryBuilder) WhereStatusEQ(v domain.Status) *ShipmentTypeQ
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *ShipmentTypeQueryBuilder) WhereStatusNEQ(v domain.Status) *ShipmentTypeQueryBuilder {
 	b.query = ShipmentTypeQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *ShipmentTypeQueryBuilder) WhereStatusIn(v []domain.Status) *ShipmentTypeQueryBuilder {
+	b.query = ShipmentTypeQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *ShipmentTypeQueryBuilder) WhereStatusNotIn(v []domain.Status) *ShipmentTypeQueryBuilder {
+	b.query = ShipmentTypeQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1396,4 +1497,138 @@ func (b *ShipmentTypeQueryBuilder) First(ctx context.Context) (*ShipmentType, er
 // ShipmentTypeBuild creates a chainable query builder
 func ShipmentTypeBuild(db bun.IDB) *ShipmentTypeQueryBuilder {
 	return NewShipmentTypeQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *ShipmentTypeQueryBuilder) LoadBusinessUnit() *ShipmentTypeQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *ShipmentTypeQueryBuilder) LoadOrganization() *ShipmentTypeQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for ShipmentType
+func (b *ShipmentTypeQueryBuilder) LoadAllRelations() *ShipmentTypeQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
+}
+
+// ShipmentTypeRelationChain provides a fluent API for building nested relationship chains
+type ShipmentTypeRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewShipmentTypeRelationChain creates a new relation chain builder
+func NewShipmentTypeRelationChain() *ShipmentTypeRelationChain {
+	return &ShipmentTypeRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *ShipmentTypeRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentTypeRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *ShipmentTypeRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *ShipmentTypeRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *ShipmentTypeQueryBuilder) WithBusinessUnit() *ShipmentTypeRelationChainBuilder {
+	chain := &ShipmentTypeRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentTypeRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *ShipmentTypeQueryBuilder) WithOrganization() *ShipmentTypeRelationChainBuilder {
+	chain := &ShipmentTypeRelationChainBuilder{
+		parent: b,
+		chain:  NewShipmentTypeRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// ShipmentTypeRelationChainBuilder provides fluent API for building nested relations
+type ShipmentTypeRelationChainBuilder struct {
+	parent *ShipmentTypeQueryBuilder
+	chain  *ShipmentTypeRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *ShipmentTypeRelationChainBuilder) Load() *ShipmentTypeQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *ShipmentTypeRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ShipmentTypeRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *ShipmentTypeRelationChainBuilder) OrderBy(order string) *ShipmentTypeRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *ShipmentTypeRelationChainBuilder) Where(condition string, args ...interface{}) *ShipmentTypeRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

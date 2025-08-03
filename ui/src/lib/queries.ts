@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { api } from "@/services/api";
 import type { GetDedicatedLaneByShipmentRequest } from "@/services/dedicated-lane";
 import type { GetPreviousRatesRequest } from "@/services/shipment";
@@ -10,6 +15,7 @@ import type { ShipmentQueryParams } from "@/types/shipment";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 import type { AccessorialChargeSchema } from "./schemas/accessorial-charge-schema";
 import type { PatternConfigSchema } from "./schemas/pattern-config-schema";
+import { ShipmentSchema } from "./schemas/shipment-schema";
 import type { TableConfigurationSchema } from "./schemas/table-configuration-schema";
 
 export const queries = createQueryKeyStore({
@@ -135,7 +141,10 @@ export const queries = createQueryKeyStore({
       queryKey: ["shipment/list", params],
       queryFn: async () => api.shipments.getShipments(params),
     }),
-    getShipment: (shipmentId: string, enabled: boolean = true) => ({
+    getShipment: (
+      shipmentId: ShipmentSchema["id"],
+      enabled: boolean = true,
+    ) => ({
       queryKey: ["shipment", shipmentId],
       queryFn: async () => {
         return await api.shipments.getShipmentByID(shipmentId, true);
@@ -145,6 +154,22 @@ export const queries = createQueryKeyStore({
     getPreviousRates: (values: GetPreviousRatesRequest) => ({
       queryKey: ["shipment/previous-rates", values],
       queryFn: async () => api.shipments.getPreviousRates(values),
+    }),
+    listComments: (
+      shipmentId: ShipmentSchema["id"],
+      enabled: boolean = true,
+    ) => ({
+      queryKey: ["shipment/comments", shipmentId],
+      queryFn: async () => api.shipments.listComments(shipmentId),
+      enabled,
+    }),
+    getCommentCount: (
+      shipmentId: ShipmentSchema["id"],
+      enabled: boolean = true,
+    ) => ({
+      queryKey: ["shipment/comments/count", shipmentId],
+      queryFn: async () => api.shipments.getCommentCount(shipmentId),
+      enabled,
     }),
   },
   customer: {

@@ -1,17 +1,31 @@
-import React, { useEffect } from "react";
+import { useEffect } from "react";
 
-export function useResizeObserver(
-  ref: React.RefObject<HTMLElement>,
-  callback: (entry: ResizeObserverEntry) => void,
-) {
+/**
+ * Observes a given element using ResizeObserver.
+ *
+ * @param {Element} [element] Element to attach ResizeObserver to
+ * @param {ResizeObserverOptions} [options] ResizeObserver options. WARNING! If you define the
+ *   object in component body, make sure to memoize it.
+ * @param {ResizeObserverCallback} observerCallback ResizeObserver callback. WARNING! If you define
+ *   the function in component body, make sure to memoize it.
+ * @returns {void}
+ */
+export default function useResizeObserver(
+  element: Element | null,
+  options: ResizeObserverOptions | undefined,
+  observerCallback: ResizeObserverCallback,
+): void {
   useEffect(() => {
-    if (!ref.current) return;
+    if (!element || !("ResizeObserver" in window)) {
+      return undefined;
+    }
 
-    const observer = new ResizeObserver((entries) => {
-      callback(entries[0]);
-    });
+    const observer = new ResizeObserver(observerCallback);
 
-    observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, [ref, callback]);
+    observer.observe(element, options);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [element, options, observerCallback]);
 }

@@ -45,10 +45,16 @@ var ConsolidationSequenceQuery = struct {
 	Where struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		YearEQ               func(q *bun.SelectQuery, v int16) *bun.SelectQuery
 		YearNEQ              func(q *bun.SelectQuery, v int16) *bun.SelectQuery
 		YearIn               func(q *bun.SelectQuery, v []int16) *bun.SelectQuery
@@ -164,10 +170,16 @@ var ConsolidationSequenceQuery = struct {
 	Where: struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		YearEQ               func(q *bun.SelectQuery, v int16) *bun.SelectQuery
 		YearNEQ              func(q *bun.SelectQuery, v int16) *bun.SelectQuery
 		YearIn               func(q *bun.SelectQuery, v []int16) *bun.SelectQuery
@@ -224,17 +236,35 @@ var ConsolidationSequenceQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cs.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cs.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cs.id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cs.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cs.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cs.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cs.organization_id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cs.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cs.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cs.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cs.business_unit_id"), bun.In(v))
 		},
 		YearEQ: func(q *bun.SelectQuery, v int16) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cs.year"), v)
@@ -660,6 +690,18 @@ func (b *ConsolidationSequenceQueryBuilder) WhereIDNEQ(v pulid.ID) *Consolidatio
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *ConsolidationSequenceQueryBuilder) WhereIDIn(v []pulid.ID) *ConsolidationSequenceQueryBuilder {
+	b.query = ConsolidationSequenceQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *ConsolidationSequenceQueryBuilder) WhereIDNotIn(v []pulid.ID) *ConsolidationSequenceQueryBuilder {
+	b.query = ConsolidationSequenceQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *ConsolidationSequenceQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *ConsolidationSequenceQueryBuilder {
 	b.query = ConsolidationSequenceQuery.Where.OrganizationIDEQ(b.query, v)
@@ -672,6 +714,18 @@ func (b *ConsolidationSequenceQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *ConsolidationSequenceQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *ConsolidationSequenceQueryBuilder {
+	b.query = ConsolidationSequenceQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *ConsolidationSequenceQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *ConsolidationSequenceQueryBuilder {
+	b.query = ConsolidationSequenceQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *ConsolidationSequenceQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ConsolidationSequenceQueryBuilder {
 	b.query = ConsolidationSequenceQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -681,6 +735,18 @@ func (b *ConsolidationSequenceQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *C
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *ConsolidationSequenceQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *ConsolidationSequenceQueryBuilder {
 	b.query = ConsolidationSequenceQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *ConsolidationSequenceQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *ConsolidationSequenceQueryBuilder {
+	b.query = ConsolidationSequenceQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *ConsolidationSequenceQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *ConsolidationSequenceQueryBuilder {
+	b.query = ConsolidationSequenceQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1072,4 +1138,99 @@ func (b *ConsolidationSequenceQueryBuilder) First(ctx context.Context) (*Consoli
 // ConsolidationSequenceBuild creates a chainable query builder
 func ConsolidationSequenceBuild(db bun.IDB) *ConsolidationSequenceQueryBuilder {
 	return NewConsolidationSequenceQuery(db)
+}
+
+// Relationship loading methods
+
+// ConsolidationSequenceRelationChain provides a fluent API for building nested relationship chains
+type ConsolidationSequenceRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewConsolidationSequenceRelationChain creates a new relation chain builder
+func NewConsolidationSequenceRelationChain() *ConsolidationSequenceRelationChain {
+	return &ConsolidationSequenceRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *ConsolidationSequenceRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ConsolidationSequenceRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *ConsolidationSequenceRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *ConsolidationSequenceRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// ConsolidationSequenceRelationChainBuilder provides fluent API for building nested relations
+type ConsolidationSequenceRelationChainBuilder struct {
+	parent *ConsolidationSequenceQueryBuilder
+	chain  *ConsolidationSequenceRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *ConsolidationSequenceRelationChainBuilder) Load() *ConsolidationSequenceQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *ConsolidationSequenceRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ConsolidationSequenceRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *ConsolidationSequenceRelationChainBuilder) OrderBy(order string) *ConsolidationSequenceRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *ConsolidationSequenceRelationChainBuilder) Where(condition string, args ...interface{}) *ConsolidationSequenceRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 package services
 
 import (
@@ -19,6 +24,14 @@ type NotificationService interface {
 	SendConfigurationCopiedNotification(
 		ctx context.Context,
 		req *ConfigurationCopiedNotificationRequest,
+	) error
+
+	SendCommentNotification(ctx context.Context, req *ShipmentCommentNotificationRequest) error
+
+	// SendBulkCommentNotifications sends multiple comment notifications
+	SendBulkCommentNotifications(
+		ctx context.Context,
+		reqs []*ShipmentCommentNotificationRequest,
 	) error
 
 	// MarkAsRead marks a notification as read
@@ -77,4 +90,12 @@ type ConfigurationCopiedNotificationRequest struct {
 	ConfigName     string   `json:"configName"`
 	ConfigCreator  string   `json:"configCreator"`
 	ConfigCopiedBy string   `json:"configCopiedBy"`
+}
+
+type ShipmentCommentNotificationRequest struct {
+	OrganizationID  pulid.ID `json:"organizationId"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"`
+	CommentID       pulid.ID `json:"commentId"`
+	OwnerName       string   `json:"ownerName"`
+	MentionedUserID pulid.ID `json:"mentionedUserId"`
 }

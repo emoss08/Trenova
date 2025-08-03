@@ -57,32 +57,50 @@ var CommodityQuery = struct {
 	Where struct {
 		IDEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		HazardousMaterialIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		HazardousMaterialIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		HazardousMaterialIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		HazardousMaterialIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		HazardousMaterialIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		HazardousMaterialIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		MinTemperatureEQ             func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
 		MinTemperatureNEQ            func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
+		MinTemperatureIn             func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
+		MinTemperatureNotIn          func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
 		MinTemperatureIsNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		MinTemperatureIsNotNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		MaxTemperatureEQ             func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
 		MaxTemperatureNEQ            func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
+		MaxTemperatureIn             func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
+		MaxTemperatureNotIn          func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
 		MaxTemperatureIsNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		MaxTemperatureIsNotNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		WeightPerUnitEQ              func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
 		WeightPerUnitNEQ             func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		WeightPerUnitIn              func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		WeightPerUnitNotIn           func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
 		WeightPerUnitIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		WeightPerUnitIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		LinearFeetPerUnitEQ          func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
 		LinearFeetPerUnitNEQ         func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		LinearFeetPerUnitIn          func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		LinearFeetPerUnitNotIn       func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
 		LinearFeetPerUnitIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		LinearFeetPerUnitIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ                     func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                    func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                     func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn                  func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		FreightClassEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		FreightClassNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		FreightClassIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -151,8 +169,12 @@ var CommodityQuery = struct {
 		RankHasSuffix                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		StackableEQ                  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		StackableNEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		StackableIn                  func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		StackableNotIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		FragileEQ                    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		FragileNEQ                   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		FragileIn                    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		FragileNotIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn                    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -200,6 +222,12 @@ var CommodityQuery = struct {
 	FieldConfig  func() map[string]commodityFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit      string
+		Organization      string
+		HazardousMaterial string
+	}
 }{
 	// Table and alias constants
 	Table:    "commodities",
@@ -267,32 +295,50 @@ var CommodityQuery = struct {
 	Where: struct {
 		IDEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		HazardousMaterialIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		HazardousMaterialIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		HazardousMaterialIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		HazardousMaterialIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		HazardousMaterialIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		HazardousMaterialIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		MinTemperatureEQ             func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
 		MinTemperatureNEQ            func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
+		MinTemperatureIn             func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
+		MinTemperatureNotIn          func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
 		MinTemperatureIsNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		MinTemperatureIsNotNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		MaxTemperatureEQ             func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
 		MaxTemperatureNEQ            func(q *bun.SelectQuery, v *int16) *bun.SelectQuery
+		MaxTemperatureIn             func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
+		MaxTemperatureNotIn          func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery
 		MaxTemperatureIsNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		MaxTemperatureIsNotNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		WeightPerUnitEQ              func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
 		WeightPerUnitNEQ             func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		WeightPerUnitIn              func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		WeightPerUnitNotIn           func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
 		WeightPerUnitIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		WeightPerUnitIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		LinearFeetPerUnitEQ          func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
 		LinearFeetPerUnitNEQ         func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		LinearFeetPerUnitIn          func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		LinearFeetPerUnitNotIn       func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
 		LinearFeetPerUnitIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		LinearFeetPerUnitIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ                     func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                    func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                     func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn                  func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		FreightClassEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		FreightClassNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		FreightClassIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -361,8 +407,12 @@ var CommodityQuery = struct {
 		RankHasSuffix                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		StackableEQ                  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		StackableNEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		StackableIn                  func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		StackableNotIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		FragileEQ                    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		FragileNEQ                   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		FragileIn                    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		FragileNotIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ                   func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn                    func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -395,11 +445,23 @@ var CommodityQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("com.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("com.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("com.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("com.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("com.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("com.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("com.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("com.organization_id"), v)
@@ -407,11 +469,23 @@ var CommodityQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("com.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("com.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("com.organization_id"), bun.In(v))
+		},
 		HazardousMaterialIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("com.hazardous_material_id"), v)
 		},
 		HazardousMaterialIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("com.hazardous_material_id"), v)
+		},
+		HazardousMaterialIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("com.hazardous_material_id"), bun.In(v))
+		},
+		HazardousMaterialIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("com.hazardous_material_id"), bun.In(v))
 		},
 		HazardousMaterialIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("com.hazardous_material_id"))
@@ -425,6 +499,12 @@ var CommodityQuery = struct {
 		MinTemperatureNEQ: func(q *bun.SelectQuery, v *int16) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("com.min_temperature"), v)
 		},
+		MinTemperatureIn: func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("com.min_temperature"), bun.In(v))
+		},
+		MinTemperatureNotIn: func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("com.min_temperature"), bun.In(v))
+		},
 		MinTemperatureIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("com.min_temperature"))
 		},
@@ -436,6 +516,12 @@ var CommodityQuery = struct {
 		},
 		MaxTemperatureNEQ: func(q *bun.SelectQuery, v *int16) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("com.max_temperature"), v)
+		},
+		MaxTemperatureIn: func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("com.max_temperature"), bun.In(v))
+		},
+		MaxTemperatureNotIn: func(q *bun.SelectQuery, v []*int16) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("com.max_temperature"), bun.In(v))
 		},
 		MaxTemperatureIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("com.max_temperature"))
@@ -449,6 +535,12 @@ var CommodityQuery = struct {
 		WeightPerUnitNEQ: func(q *bun.SelectQuery, v *float64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("com.weight_per_unit"), v)
 		},
+		WeightPerUnitIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("com.weight_per_unit"), bun.In(v))
+		},
+		WeightPerUnitNotIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("com.weight_per_unit"), bun.In(v))
+		},
 		WeightPerUnitIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("com.weight_per_unit"))
 		},
@@ -461,6 +553,12 @@ var CommodityQuery = struct {
 		LinearFeetPerUnitNEQ: func(q *bun.SelectQuery, v *float64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("com.linear_feet_per_unit"), v)
 		},
+		LinearFeetPerUnitIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("com.linear_feet_per_unit"), bun.In(v))
+		},
+		LinearFeetPerUnitNotIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("com.linear_feet_per_unit"), bun.In(v))
+		},
 		LinearFeetPerUnitIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("com.linear_feet_per_unit"))
 		},
@@ -472,6 +570,12 @@ var CommodityQuery = struct {
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("com.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("com.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("com.status"), bun.In(v))
 		},
 		FreightClassEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("com.freight_class"), v)
@@ -677,11 +781,23 @@ var CommodityQuery = struct {
 		StackableNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("com.stackable"), v)
 		},
+		StackableIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("com.stackable"), bun.In(v))
+		},
+		StackableNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("com.stackable"), bun.In(v))
+		},
 		FragileEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("com.fragile"), v)
 		},
 		FragileNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("com.fragile"), v)
+		},
+		FragileIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("com.fragile"), bun.In(v))
+		},
+		FragileNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("com.fragile"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("com.version"), v)
@@ -1197,6 +1313,16 @@ var CommodityQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit      string
+		Organization      string
+		HazardousMaterial string
+	}{
+		BusinessUnit:      "BusinessUnit",
+		Organization:      "Organization",
+		HazardousMaterial: "HazardousMaterial",
+	},
 }
 
 // CommodityQueryBuilder provides a fluent interface for building queries
@@ -1241,6 +1367,18 @@ func (b *CommodityQueryBuilder) WhereIDNEQ(v pulid.ID) *CommodityQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *CommodityQueryBuilder) WhereIDIn(v []pulid.ID) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *CommodityQueryBuilder) WhereIDNotIn(v []pulid.ID) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *CommodityQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *CommodityQueryBuilder {
 	b.query = CommodityQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1250,6 +1388,18 @@ func (b *CommodityQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *CommodityQuer
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *CommodityQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *CommodityQueryBuilder {
 	b.query = CommodityQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *CommodityQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *CommodityQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1265,6 +1415,18 @@ func (b *CommodityQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *CommodityQue
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *CommodityQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *CommodityQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereHazardousMaterialIDEQ adds a WHERE hazardous_material_id = ? condition
 func (b *CommodityQueryBuilder) WhereHazardousMaterialIDEQ(v *pulid.ID) *CommodityQueryBuilder {
 	b.query = CommodityQuery.Where.HazardousMaterialIDEQ(b.query, v)
@@ -1274,6 +1436,18 @@ func (b *CommodityQueryBuilder) WhereHazardousMaterialIDEQ(v *pulid.ID) *Commodi
 // WhereHazardousMaterialIDNEQ adds a WHERE hazardous_material_id != ? condition
 func (b *CommodityQueryBuilder) WhereHazardousMaterialIDNEQ(v *pulid.ID) *CommodityQueryBuilder {
 	b.query = CommodityQuery.Where.HazardousMaterialIDNEQ(b.query, v)
+	return b
+}
+
+// WhereHazardousMaterialIDIn adds a WHERE hazardous_material_id IN (?) condition
+func (b *CommodityQueryBuilder) WhereHazardousMaterialIDIn(v []*pulid.ID) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.HazardousMaterialIDIn(b.query, v)
+	return b
+}
+
+// WhereHazardousMaterialIDNotIn adds a WHERE hazardous_material_id NOT IN (?) condition
+func (b *CommodityQueryBuilder) WhereHazardousMaterialIDNotIn(v []*pulid.ID) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.HazardousMaterialIDNotIn(b.query, v)
 	return b
 }
 
@@ -1289,6 +1463,18 @@ func (b *CommodityQueryBuilder) WhereMinTemperatureNEQ(v *int16) *CommodityQuery
 	return b
 }
 
+// WhereMinTemperatureIn adds a WHERE min_temperature IN (?) condition
+func (b *CommodityQueryBuilder) WhereMinTemperatureIn(v []*int16) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.MinTemperatureIn(b.query, v)
+	return b
+}
+
+// WhereMinTemperatureNotIn adds a WHERE min_temperature NOT IN (?) condition
+func (b *CommodityQueryBuilder) WhereMinTemperatureNotIn(v []*int16) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.MinTemperatureNotIn(b.query, v)
+	return b
+}
+
 // WhereMaxTemperatureEQ adds a WHERE max_temperature = ? condition
 func (b *CommodityQueryBuilder) WhereMaxTemperatureEQ(v *int16) *CommodityQueryBuilder {
 	b.query = CommodityQuery.Where.MaxTemperatureEQ(b.query, v)
@@ -1298,6 +1484,18 @@ func (b *CommodityQueryBuilder) WhereMaxTemperatureEQ(v *int16) *CommodityQueryB
 // WhereMaxTemperatureNEQ adds a WHERE max_temperature != ? condition
 func (b *CommodityQueryBuilder) WhereMaxTemperatureNEQ(v *int16) *CommodityQueryBuilder {
 	b.query = CommodityQuery.Where.MaxTemperatureNEQ(b.query, v)
+	return b
+}
+
+// WhereMaxTemperatureIn adds a WHERE max_temperature IN (?) condition
+func (b *CommodityQueryBuilder) WhereMaxTemperatureIn(v []*int16) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.MaxTemperatureIn(b.query, v)
+	return b
+}
+
+// WhereMaxTemperatureNotIn adds a WHERE max_temperature NOT IN (?) condition
+func (b *CommodityQueryBuilder) WhereMaxTemperatureNotIn(v []*int16) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.MaxTemperatureNotIn(b.query, v)
 	return b
 }
 
@@ -1313,6 +1511,18 @@ func (b *CommodityQueryBuilder) WhereWeightPerUnitNEQ(v *float64) *CommodityQuer
 	return b
 }
 
+// WhereWeightPerUnitIn adds a WHERE weight_per_unit IN (?) condition
+func (b *CommodityQueryBuilder) WhereWeightPerUnitIn(v []*float64) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.WeightPerUnitIn(b.query, v)
+	return b
+}
+
+// WhereWeightPerUnitNotIn adds a WHERE weight_per_unit NOT IN (?) condition
+func (b *CommodityQueryBuilder) WhereWeightPerUnitNotIn(v []*float64) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.WeightPerUnitNotIn(b.query, v)
+	return b
+}
+
 // WhereLinearFeetPerUnitEQ adds a WHERE linear_feet_per_unit = ? condition
 func (b *CommodityQueryBuilder) WhereLinearFeetPerUnitEQ(v *float64) *CommodityQueryBuilder {
 	b.query = CommodityQuery.Where.LinearFeetPerUnitEQ(b.query, v)
@@ -1325,6 +1535,18 @@ func (b *CommodityQueryBuilder) WhereLinearFeetPerUnitNEQ(v *float64) *Commodity
 	return b
 }
 
+// WhereLinearFeetPerUnitIn adds a WHERE linear_feet_per_unit IN (?) condition
+func (b *CommodityQueryBuilder) WhereLinearFeetPerUnitIn(v []*float64) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.LinearFeetPerUnitIn(b.query, v)
+	return b
+}
+
+// WhereLinearFeetPerUnitNotIn adds a WHERE linear_feet_per_unit NOT IN (?) condition
+func (b *CommodityQueryBuilder) WhereLinearFeetPerUnitNotIn(v []*float64) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.LinearFeetPerUnitNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *CommodityQueryBuilder) WhereStatusEQ(v domain.Status) *CommodityQueryBuilder {
 	b.query = CommodityQuery.Where.StatusEQ(b.query, v)
@@ -1334,6 +1556,18 @@ func (b *CommodityQueryBuilder) WhereStatusEQ(v domain.Status) *CommodityQueryBu
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *CommodityQueryBuilder) WhereStatusNEQ(v domain.Status) *CommodityQueryBuilder {
 	b.query = CommodityQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *CommodityQueryBuilder) WhereStatusIn(v []domain.Status) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *CommodityQueryBuilder) WhereStatusNotIn(v []domain.Status) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1601,6 +1835,18 @@ func (b *CommodityQueryBuilder) WhereStackableNEQ(v bool) *CommodityQueryBuilder
 	return b
 }
 
+// WhereStackableIn adds a WHERE stackable IN (?) condition
+func (b *CommodityQueryBuilder) WhereStackableIn(v []bool) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.StackableIn(b.query, v)
+	return b
+}
+
+// WhereStackableNotIn adds a WHERE stackable NOT IN (?) condition
+func (b *CommodityQueryBuilder) WhereStackableNotIn(v []bool) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.StackableNotIn(b.query, v)
+	return b
+}
+
 // WhereFragileEQ adds a WHERE fragile = ? condition
 func (b *CommodityQueryBuilder) WhereFragileEQ(v bool) *CommodityQueryBuilder {
 	b.query = CommodityQuery.Where.FragileEQ(b.query, v)
@@ -1610,6 +1856,18 @@ func (b *CommodityQueryBuilder) WhereFragileEQ(v bool) *CommodityQueryBuilder {
 // WhereFragileNEQ adds a WHERE fragile != ? condition
 func (b *CommodityQueryBuilder) WhereFragileNEQ(v bool) *CommodityQueryBuilder {
 	b.query = CommodityQuery.Where.FragileNEQ(b.query, v)
+	return b
+}
+
+// WhereFragileIn adds a WHERE fragile IN (?) condition
+func (b *CommodityQueryBuilder) WhereFragileIn(v []bool) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.FragileIn(b.query, v)
+	return b
+}
+
+// WhereFragileNotIn adds a WHERE fragile NOT IN (?) condition
+func (b *CommodityQueryBuilder) WhereFragileNotIn(v []bool) *CommodityQueryBuilder {
+	b.query = CommodityQuery.Where.FragileNotIn(b.query, v)
 	return b
 }
 
@@ -1857,4 +2115,155 @@ func (b *CommodityQueryBuilder) First(ctx context.Context) (*Commodity, error) {
 // CommodityBuild creates a chainable query builder
 func CommodityBuild(db bun.IDB) *CommodityQueryBuilder {
 	return NewCommodityQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *CommodityQueryBuilder) LoadBusinessUnit() *CommodityQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *CommodityQueryBuilder) LoadOrganization() *CommodityQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadHazardousMaterial loads the HazardousMaterial relationship
+func (b *CommodityQueryBuilder) LoadHazardousMaterial() *CommodityQueryBuilder {
+	b.query = b.query.Relation("HazardousMaterial")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Commodity
+func (b *CommodityQueryBuilder) LoadAllRelations() *CommodityQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadHazardousMaterial()
+	return b
+}
+
+// CommodityRelationChain provides a fluent API for building nested relationship chains
+type CommodityRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewCommodityRelationChain creates a new relation chain builder
+func NewCommodityRelationChain() *CommodityRelationChain {
+	return &CommodityRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *CommodityRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *CommodityRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *CommodityRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *CommodityRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *CommodityQueryBuilder) WithBusinessUnit() *CommodityRelationChainBuilder {
+	chain := &CommodityRelationChainBuilder{
+		parent: b,
+		chain:  NewCommodityRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *CommodityQueryBuilder) WithOrganization() *CommodityRelationChainBuilder {
+	chain := &CommodityRelationChainBuilder{
+		parent: b,
+		chain:  NewCommodityRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithHazardousMaterial creates a relation chain starting with HazardousMaterial
+func (b *CommodityQueryBuilder) WithHazardousMaterial() *CommodityRelationChainBuilder {
+	chain := &CommodityRelationChainBuilder{
+		parent: b,
+		chain:  NewCommodityRelationChain(),
+	}
+	chain.chain.Add("HazardousMaterial")
+	return chain
+}
+
+// CommodityRelationChainBuilder provides fluent API for building nested relations
+type CommodityRelationChainBuilder struct {
+	parent *CommodityQueryBuilder
+	chain  *CommodityRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *CommodityRelationChainBuilder) Load() *CommodityQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *CommodityRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *CommodityRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *CommodityRelationChainBuilder) OrderBy(order string) *CommodityRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *CommodityRelationChainBuilder) Where(condition string, args ...interface{}) *CommodityRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

@@ -51,103 +51,121 @@ var LocationCategoryQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		NameEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameNotIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameGT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameGTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameContains           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasPrefix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TypeEQ                 func(q *bun.SelectQuery, v Category) *bun.SelectQuery
-		TypeNEQ                func(q *bun.SelectQuery, v Category) *bun.SelectQuery
-		FacilityTypeEQ         func(q *bun.SelectQuery, v FacilityType) *bun.SelectQuery
-		FacilityTypeNEQ        func(q *bun.SelectQuery, v FacilityType) *bun.SelectQuery
-		ColorEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ColorNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ColorGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HasSecureParkingEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		HasSecureParkingNEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		RequiresAppointmentEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		RequiresAppointmentNEQ func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowsOvernightEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowsOvernightNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		HasRestroomEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		HasRestroomNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SearchVectorEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SearchVectorNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SearchVectorGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		RankNotIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		RankGT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankGTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankLT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankLTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankContains           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankHasPrefix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		IDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		NameEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameNotIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameGT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameGTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameContains             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasPrefix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasSuffix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TypeEQ                   func(q *bun.SelectQuery, v Category) *bun.SelectQuery
+		TypeNEQ                  func(q *bun.SelectQuery, v Category) *bun.SelectQuery
+		TypeIn                   func(q *bun.SelectQuery, v []Category) *bun.SelectQuery
+		TypeNotIn                func(q *bun.SelectQuery, v []Category) *bun.SelectQuery
+		FacilityTypeEQ           func(q *bun.SelectQuery, v FacilityType) *bun.SelectQuery
+		FacilityTypeNEQ          func(q *bun.SelectQuery, v FacilityType) *bun.SelectQuery
+		FacilityTypeIn           func(q *bun.SelectQuery, v []FacilityType) *bun.SelectQuery
+		FacilityTypeNotIn        func(q *bun.SelectQuery, v []FacilityType) *bun.SelectQuery
+		ColorEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ColorNotIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ColorGT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorGTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorLT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorLTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorContains            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorHasPrefix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorHasSuffix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HasSecureParkingEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasSecureParkingNEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasSecureParkingIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		HasSecureParkingNotIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		RequiresAppointmentEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		RequiresAppointmentNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		RequiresAppointmentIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		RequiresAppointmentNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowsOvernightEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowsOvernightNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowsOvernightIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowsOvernightNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		HasRestroomEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasRestroomNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasRestroomIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		HasRestroomNotIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SearchVectorEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SearchVectorNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SearchVectorGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		RankNotIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		RankGT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankGTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankLT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankLTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankContains             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankHasPrefix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankHasSuffix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -170,6 +188,11 @@ var LocationCategoryQuery = struct {
 	FieldConfig  func() map[string]locationCategoryFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "location_categories",
@@ -229,104 +252,122 @@ var LocationCategoryQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		NameEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameNotIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameGT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameGTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameContains           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasPrefix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		DescriptionGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		DescriptionHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TypeEQ                 func(q *bun.SelectQuery, v Category) *bun.SelectQuery
-		TypeNEQ                func(q *bun.SelectQuery, v Category) *bun.SelectQuery
-		FacilityTypeEQ         func(q *bun.SelectQuery, v FacilityType) *bun.SelectQuery
-		FacilityTypeNEQ        func(q *bun.SelectQuery, v FacilityType) *bun.SelectQuery
-		ColorEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorNEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ColorNotIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ColorGT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorGTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorLT                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorLTE               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorContains          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorHasPrefix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ColorHasSuffix         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		HasSecureParkingEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		HasSecureParkingNEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		RequiresAppointmentEQ  func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		RequiresAppointmentNEQ func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowsOvernightEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		AllowsOvernightNEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		HasRestroomEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		HasRestroomNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		VersionEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		SearchVectorEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SearchVectorNotIn      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		SearchVectorGT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorGTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorLT         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorLTE        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorContains   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorHasPrefix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		SearchVectorHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		RankNotIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		RankGT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankGTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankLT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankLTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankContains           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankHasPrefix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		RankHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		Tenant                 func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		NameEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameNotIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameGT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameGTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameContains             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasPrefix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasSuffix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		DescriptionGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		DescriptionHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TypeEQ                   func(q *bun.SelectQuery, v Category) *bun.SelectQuery
+		TypeNEQ                  func(q *bun.SelectQuery, v Category) *bun.SelectQuery
+		TypeIn                   func(q *bun.SelectQuery, v []Category) *bun.SelectQuery
+		TypeNotIn                func(q *bun.SelectQuery, v []Category) *bun.SelectQuery
+		FacilityTypeEQ           func(q *bun.SelectQuery, v FacilityType) *bun.SelectQuery
+		FacilityTypeNEQ          func(q *bun.SelectQuery, v FacilityType) *bun.SelectQuery
+		FacilityTypeIn           func(q *bun.SelectQuery, v []FacilityType) *bun.SelectQuery
+		FacilityTypeNotIn        func(q *bun.SelectQuery, v []FacilityType) *bun.SelectQuery
+		ColorEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorNEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ColorNotIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ColorGT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorGTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorLT                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorLTE                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorContains            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorHasPrefix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ColorHasSuffix           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		HasSecureParkingEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasSecureParkingNEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasSecureParkingIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		HasSecureParkingNotIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		RequiresAppointmentEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		RequiresAppointmentNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		RequiresAppointmentIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		RequiresAppointmentNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowsOvernightEQ        func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowsOvernightNEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AllowsOvernightIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AllowsOvernightNotIn     func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		HasRestroomEQ            func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasRestroomNEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		HasRestroomIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		HasRestroomNotIn         func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		VersionEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		SearchVectorEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SearchVectorNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		SearchVectorGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		SearchVectorHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		RankNotIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		RankGT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankGTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankLT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankLTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankContains             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankHasPrefix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		RankHasSuffix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		Tenant                   func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("lc.id"), v)
@@ -334,17 +375,35 @@ var LocationCategoryQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("lc.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("lc.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("lc.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("lc.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("lc.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("lc.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("lc.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("lc.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("lc.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("lc.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("lc.organization_id"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("lc.name"), v)
@@ -418,11 +477,23 @@ var LocationCategoryQuery = struct {
 		TypeNEQ: func(q *bun.SelectQuery, v Category) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("lc.type"), v)
 		},
+		TypeIn: func(q *bun.SelectQuery, v []Category) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("lc.type"), bun.In(v))
+		},
+		TypeNotIn: func(q *bun.SelectQuery, v []Category) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("lc.type"), bun.In(v))
+		},
 		FacilityTypeEQ: func(q *bun.SelectQuery, v FacilityType) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("lc.facility_type"), v)
 		},
 		FacilityTypeNEQ: func(q *bun.SelectQuery, v FacilityType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("lc.facility_type"), v)
+		},
+		FacilityTypeIn: func(q *bun.SelectQuery, v []FacilityType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("lc.facility_type"), bun.In(v))
+		},
+		FacilityTypeNotIn: func(q *bun.SelectQuery, v []FacilityType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("lc.facility_type"), bun.In(v))
 		},
 		ColorEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("lc.color"), v)
@@ -463,11 +534,23 @@ var LocationCategoryQuery = struct {
 		HasSecureParkingNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("lc.has_secure_parking"), v)
 		},
+		HasSecureParkingIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("lc.has_secure_parking"), bun.In(v))
+		},
+		HasSecureParkingNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("lc.has_secure_parking"), bun.In(v))
+		},
 		RequiresAppointmentEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("lc.requires_appointment"), v)
 		},
 		RequiresAppointmentNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("lc.requires_appointment"), v)
+		},
+		RequiresAppointmentIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("lc.requires_appointment"), bun.In(v))
+		},
+		RequiresAppointmentNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("lc.requires_appointment"), bun.In(v))
 		},
 		AllowsOvernightEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("lc.allows_overnight"), v)
@@ -475,11 +558,23 @@ var LocationCategoryQuery = struct {
 		AllowsOvernightNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("lc.allows_overnight"), v)
 		},
+		AllowsOvernightIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("lc.allows_overnight"), bun.In(v))
+		},
+		AllowsOvernightNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("lc.allows_overnight"), bun.In(v))
+		},
 		HasRestroomEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("lc.has_restroom"), v)
 		},
 		HasRestroomNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("lc.has_restroom"), v)
+		},
+		HasRestroomIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("lc.has_restroom"), bun.In(v))
+		},
+		HasRestroomNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("lc.has_restroom"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("lc.version"), v)
@@ -999,6 +1094,14 @@ var LocationCategoryQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // LocationCategoryQueryBuilder provides a fluent interface for building queries
@@ -1043,6 +1146,18 @@ func (b *LocationCategoryQueryBuilder) WhereIDNEQ(v pulid.ID) *LocationCategoryQ
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereIDIn(v []pulid.ID) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereIDNotIn(v []pulid.ID) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *LocationCategoryQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *LocationCategoryQueryBuilder {
 	b.query = LocationCategoryQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1055,6 +1170,18 @@ func (b *LocationCategoryQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *Locat
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *LocationCategoryQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *LocationCategoryQueryBuilder {
 	b.query = LocationCategoryQuery.Where.OrganizationIDEQ(b.query, v)
@@ -1064,6 +1191,18 @@ func (b *LocationCategoryQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *Locati
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *LocationCategoryQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *LocationCategoryQueryBuilder {
 	b.query = LocationCategoryQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1163,6 +1302,18 @@ func (b *LocationCategoryQueryBuilder) WhereTypeNEQ(v Category) *LocationCategor
 	return b
 }
 
+// WhereTypeIn adds a WHERE type IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereTypeIn(v []Category) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.TypeIn(b.query, v)
+	return b
+}
+
+// WhereTypeNotIn adds a WHERE type NOT IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereTypeNotIn(v []Category) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.TypeNotIn(b.query, v)
+	return b
+}
+
 // WhereFacilityTypeEQ adds a WHERE facility_type = ? condition
 func (b *LocationCategoryQueryBuilder) WhereFacilityTypeEQ(v FacilityType) *LocationCategoryQueryBuilder {
 	b.query = LocationCategoryQuery.Where.FacilityTypeEQ(b.query, v)
@@ -1172,6 +1323,18 @@ func (b *LocationCategoryQueryBuilder) WhereFacilityTypeEQ(v FacilityType) *Loca
 // WhereFacilityTypeNEQ adds a WHERE facility_type != ? condition
 func (b *LocationCategoryQueryBuilder) WhereFacilityTypeNEQ(v FacilityType) *LocationCategoryQueryBuilder {
 	b.query = LocationCategoryQuery.Where.FacilityTypeNEQ(b.query, v)
+	return b
+}
+
+// WhereFacilityTypeIn adds a WHERE facility_type IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereFacilityTypeIn(v []FacilityType) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.FacilityTypeIn(b.query, v)
+	return b
+}
+
+// WhereFacilityTypeNotIn adds a WHERE facility_type NOT IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereFacilityTypeNotIn(v []FacilityType) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.FacilityTypeNotIn(b.query, v)
 	return b
 }
 
@@ -1229,6 +1392,18 @@ func (b *LocationCategoryQueryBuilder) WhereHasSecureParkingNEQ(v bool) *Locatio
 	return b
 }
 
+// WhereHasSecureParkingIn adds a WHERE has_secure_parking IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereHasSecureParkingIn(v []bool) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.HasSecureParkingIn(b.query, v)
+	return b
+}
+
+// WhereHasSecureParkingNotIn adds a WHERE has_secure_parking NOT IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereHasSecureParkingNotIn(v []bool) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.HasSecureParkingNotIn(b.query, v)
+	return b
+}
+
 // WhereRequiresAppointmentEQ adds a WHERE requires_appointment = ? condition
 func (b *LocationCategoryQueryBuilder) WhereRequiresAppointmentEQ(v bool) *LocationCategoryQueryBuilder {
 	b.query = LocationCategoryQuery.Where.RequiresAppointmentEQ(b.query, v)
@@ -1238,6 +1413,18 @@ func (b *LocationCategoryQueryBuilder) WhereRequiresAppointmentEQ(v bool) *Locat
 // WhereRequiresAppointmentNEQ adds a WHERE requires_appointment != ? condition
 func (b *LocationCategoryQueryBuilder) WhereRequiresAppointmentNEQ(v bool) *LocationCategoryQueryBuilder {
 	b.query = LocationCategoryQuery.Where.RequiresAppointmentNEQ(b.query, v)
+	return b
+}
+
+// WhereRequiresAppointmentIn adds a WHERE requires_appointment IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereRequiresAppointmentIn(v []bool) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.RequiresAppointmentIn(b.query, v)
+	return b
+}
+
+// WhereRequiresAppointmentNotIn adds a WHERE requires_appointment NOT IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereRequiresAppointmentNotIn(v []bool) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.RequiresAppointmentNotIn(b.query, v)
 	return b
 }
 
@@ -1253,6 +1440,18 @@ func (b *LocationCategoryQueryBuilder) WhereAllowsOvernightNEQ(v bool) *Location
 	return b
 }
 
+// WhereAllowsOvernightIn adds a WHERE allows_overnight IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereAllowsOvernightIn(v []bool) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.AllowsOvernightIn(b.query, v)
+	return b
+}
+
+// WhereAllowsOvernightNotIn adds a WHERE allows_overnight NOT IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereAllowsOvernightNotIn(v []bool) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.AllowsOvernightNotIn(b.query, v)
+	return b
+}
+
 // WhereHasRestroomEQ adds a WHERE has_restroom = ? condition
 func (b *LocationCategoryQueryBuilder) WhereHasRestroomEQ(v bool) *LocationCategoryQueryBuilder {
 	b.query = LocationCategoryQuery.Where.HasRestroomEQ(b.query, v)
@@ -1262,6 +1461,18 @@ func (b *LocationCategoryQueryBuilder) WhereHasRestroomEQ(v bool) *LocationCateg
 // WhereHasRestroomNEQ adds a WHERE has_restroom != ? condition
 func (b *LocationCategoryQueryBuilder) WhereHasRestroomNEQ(v bool) *LocationCategoryQueryBuilder {
 	b.query = LocationCategoryQuery.Where.HasRestroomNEQ(b.query, v)
+	return b
+}
+
+// WhereHasRestroomIn adds a WHERE has_restroom IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereHasRestroomIn(v []bool) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.HasRestroomIn(b.query, v)
+	return b
+}
+
+// WhereHasRestroomNotIn adds a WHERE has_restroom NOT IN (?) condition
+func (b *LocationCategoryQueryBuilder) WhereHasRestroomNotIn(v []bool) *LocationCategoryQueryBuilder {
+	b.query = LocationCategoryQuery.Where.HasRestroomNotIn(b.query, v)
 	return b
 }
 
@@ -1593,4 +1804,138 @@ func (b *LocationCategoryQueryBuilder) First(ctx context.Context) (*LocationCate
 // LocationCategoryBuild creates a chainable query builder
 func LocationCategoryBuild(db bun.IDB) *LocationCategoryQueryBuilder {
 	return NewLocationCategoryQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *LocationCategoryQueryBuilder) LoadBusinessUnit() *LocationCategoryQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *LocationCategoryQueryBuilder) LoadOrganization() *LocationCategoryQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for LocationCategory
+func (b *LocationCategoryQueryBuilder) LoadAllRelations() *LocationCategoryQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
+}
+
+// LocationCategoryRelationChain provides a fluent API for building nested relationship chains
+type LocationCategoryRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewLocationCategoryRelationChain creates a new relation chain builder
+func NewLocationCategoryRelationChain() *LocationCategoryRelationChain {
+	return &LocationCategoryRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *LocationCategoryRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *LocationCategoryRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *LocationCategoryRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *LocationCategoryRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *LocationCategoryQueryBuilder) WithBusinessUnit() *LocationCategoryRelationChainBuilder {
+	chain := &LocationCategoryRelationChainBuilder{
+		parent: b,
+		chain:  NewLocationCategoryRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *LocationCategoryQueryBuilder) WithOrganization() *LocationCategoryRelationChainBuilder {
+	chain := &LocationCategoryRelationChainBuilder{
+		parent: b,
+		chain:  NewLocationCategoryRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// LocationCategoryRelationChainBuilder provides fluent API for building nested relations
+type LocationCategoryRelationChainBuilder struct {
+	parent *LocationCategoryQueryBuilder
+	chain  *LocationCategoryRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *LocationCategoryRelationChainBuilder) Load() *LocationCategoryQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *LocationCategoryRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *LocationCategoryRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *LocationCategoryRelationChainBuilder) OrderBy(order string) *LocationCategoryRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *LocationCategoryRelationChainBuilder) Where(condition string, args ...interface{}) *LocationCategoryRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

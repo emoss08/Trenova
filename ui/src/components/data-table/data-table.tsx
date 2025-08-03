@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 /**
  * ACKNOWLEDGMENTS
  *
@@ -16,6 +21,7 @@
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
 import { useLiveDataTable } from "@/hooks/use-live-data-table";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { usePermissions } from "@/hooks/use-permissions";
 import {
   convertFilterStateToAPIParams,
@@ -31,27 +37,15 @@ import type {
 } from "@/types/enhanced-data-table";
 import { Action } from "@/types/roles-permissions";
 import type { API_ENDPOINTS } from "@/types/server";
-import {
-  closestCenter,
-  DndContext,
-  type DragEndEvent,
-  KeyboardSensor,
-  MouseSensor,
-  TouchSensor,
-  useSensor,
-  useSensors,
-} from "@dnd-kit/core";
-import { restrictToHorizontalAxis } from "@dnd-kit/modifiers";
-import { arrayMove } from "@dnd-kit/sortable";
 import { useQuery } from "@tanstack/react-query";
 import {
   getCoreRowModel,
   getPaginationRowModel,
+  Row,
   RowSelectionState,
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
-import { useLocalStorage } from "@uidotdev/usehooks";
 import { useQueryStates } from "nuqs";
 import {
   lazy,
@@ -62,6 +56,7 @@ import {
   useState,
 } from "react";
 import { toast } from "sonner";
+import LetterGlitch from "../ui/letter-glitch";
 import { DataTablePermissionDeniedSkeleton } from "../ui/permission-skeletons";
 import { Table } from "../ui/table";
 import { DataTableBody } from "./_components/data-table-body";
@@ -119,6 +114,7 @@ export function DataTable<TData extends Record<string, any>>({
   defaultSort = [],
   onFilterChange,
   useEnhancedBackend = false,
+  contextMenuActions,
 }: EnhancedDataTableProps<TData>) {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { page, pageSize, entityId, modalType } = searchParams;
@@ -126,14 +122,10 @@ export function DataTable<TData extends Record<string, any>>({
     entityId ? { [entityId]: true } : {},
   );
 
-  // Initialize column order with column IDs
-  const defaultColumnOrder = useMemo(
-    () => columns.map((c) => c.id!).filter(Boolean),
-    [columns],
-  );
+  // Initialize column order with empty array like infinite table
   const [columnOrder, setColumnOrder] = useLocalStorage<string[]>(
     `trenova-${resource.toLowerCase()}-column-order`,
-    defaultColumnOrder,
+    [],
   );
 
   const { can } = usePermissions();
@@ -310,11 +302,11 @@ export function DataTable<TData extends Record<string, any>>({
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     meta: {
-      getRowClassName: (row: any) => {
+      getRowClassName: (row: Row<TData>) => {
         let className = getRowClassName?.(row) || "";
 
         // Add new item highlighting
-        if (liveMode && liveData.isNewItem?.(row.id)) {
+        if (liveModeEnabled && liveData.isNewItem?.(row.id)) {
           className += " animate-new-item";
         }
 
@@ -322,6 +314,30 @@ export function DataTable<TData extends Record<string, any>>({
       },
     },
   });
+
+  /**
+   * Calculate column sizes as CSS variables for performance optimization
+   * This approach from infinite table prevents expensive column.getSize() calls on every render
+   */
+  const tableState = table.getState();
+  const columnSizeVars = useMemo(() => {
+    const headers = table.getFlatHeaders();
+    const colSizes: { [key: string]: string } = {};
+    for (let i = 0; i < headers.length; i++) {
+      const header = headers[i]!;
+      // Replace "." with "-" to avoid invalid CSS variable names
+      colSizes[`--header-${header.id.replace(".", "-")}-size`] =
+        `${header.getSize()}px`;
+      colSizes[`--col-${header.column.id.replace(".", "-")}-size`] =
+        `${header.column.getSize()}px`;
+    }
+    return colSizes;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    tableState.columnSizingInfo,
+    tableState.columnSizing,
+    tableState.columnVisibility,
+  ]);
 
   const selectedRow = useMemo(() => {
     if (
@@ -347,7 +363,7 @@ export function DataTable<TData extends Record<string, any>>({
       setRowSelection({ [entityId]: true });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entityId]); // Remove rowSelection from deps to prevent infinite loop
+  }, [entityId]);
 
   // Handle row selection changes (when user clicks on table rows)
   useEffect(() => {
@@ -410,45 +426,39 @@ export function DataTable<TData extends Record<string, any>>({
 
   const isCreateModalOpen = Boolean(modalType === "create");
 
-  // DnD sensors
-  const sensors = useSensors(
-    useSensor(MouseSensor, {}),
-    useSensor(TouchSensor, {}),
-    useSensor(KeyboardSensor, {}),
-  );
+  // Keyboard shortcut to reset column visibility and order (like infinite table)
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "u" && (e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        setColumnOrder([]);
+        setColumnVisibility({});
+      }
+    };
 
-  // Handle column reordering
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event;
-    if (active && over && active.id !== over.id) {
-      setColumnOrder((currentOrder) => {
-        const oldIndex = currentOrder.indexOf(active.id as string);
-        const newIndex = currentOrder.indexOf(over.id as string);
-        return arrayMove(currentOrder, oldIndex, newIndex);
-      });
-    }
-  }
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [setColumnOrder, setColumnVisibility]);
 
   return (
-    <DndContext
-      collisionDetection={closestCenter}
-      modifiers={[restrictToHorizontalAxis]}
-      onDragEnd={handleDragEnd}
-      sensors={sensors}
+    <DataTableProvider
+      table={table}
+      columns={columns}
+      isLoading={dataQuery.isFetching || dataQuery.isLoading}
+      pagination={pagination}
+      rowSelection={rowSelection}
+      columnVisibility={columnVisibility}
+      columnOrder={columnOrder}
     >
-      <DataTableProvider
-        table={table}
-        columns={columns}
-        isLoading={dataQuery.isFetching || dataQuery.isLoading}
-        pagination={pagination}
-        rowSelection={rowSelection}
-        columnVisibility={columnVisibility}
+      <div
+        className="flex flex-col gap-2 size-full"
+        style={columnSizeVars as React.CSSProperties}
       >
         {can(resource, Action.Read) ? (
           <>
             {includeOptions && (
               <DataTableOptions>
-                <div className="flex flex-col w-full">
+                <div className="flex flex-col size-full">
                   <div className="flex justify-between items-center">
                     {(config.showFilterUI || config.showSortUI) && (
                       <div className="flex flex-col lg:flex-row gap-2">
@@ -510,26 +520,46 @@ export function DataTable<TData extends Record<string, any>>({
                 onDismiss={liveData.dismissBanner}
               />
             )}
-            <Table>
-              {includeHeader && (
-                <DataTableHeader table={table} enableDragging={true} />
-              )}
-              <DataTableBody
-                table={table}
-                columns={columns}
-                liveMode={
-                  liveMode && {
-                    enabled: liveModeEnabled,
-                    connected: liveData.connected,
-                    showToggle: liveMode.showToggle,
-                    onToggle: setLiveModeEnabled,
-                    autoRefresh: autoRefreshEnabled,
-                    onAutoRefreshToggle: setAutoRefreshEnabled,
+            {!dataQuery.isLoading && dataQuery.data?.count === 0 ? (
+              <div className="flex flex-col items-center justify-center max-h-[300px] border border-border rounded-md p-0.5 overflow-hidden">
+                <div className="relative size-full">
+                  <LetterGlitch
+                    glitchColors={["#9c9c9c", "#696969", "#424242"]}
+                    glitchSpeed={50}
+                    centerVignette={false}
+                    outerVignette={true}
+                    smooth={true}
+                  />
+                  <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center pointer-events-none">
+                    <p className="text-sm/none px-1 py-0.5 text-center font-medium uppercase select-none font-table dark:text-neutral-900 bg-amber-300 text-amber-950 dark:bg-amber-400">
+                      No data available
+                    </p>
+                    <p className="text-sm/none px-1 py-0.5 text-center font-medium uppercase select-none font-table dark:text-neutral-900 bg-neutral-900 text-white dark:bg-neutral-500">
+                      Try adjusting your filters or search query
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <Table>
+                {includeHeader && <DataTableHeader table={table} />}
+                <DataTableBody
+                  table={table}
+                  columns={columns}
+                  liveMode={
+                    liveMode && {
+                      enabled: liveModeEnabled,
+                      connected: liveData.connected,
+                      showToggle: liveMode.showToggle,
+                      onToggle: setLiveModeEnabled,
+                      autoRefresh: autoRefreshEnabled,
+                      onAutoRefreshToggle: setAutoRefreshEnabled,
+                    }
                   }
-                }
-                enableDragging={true}
-              />
-            </Table>
+                  contextMenuActions={contextMenuActions}
+                />
+              </Table>
+            )}
 
             <PaginationInner table={table} />
             {TableModal && isCreateModalOpen && (
@@ -554,7 +584,7 @@ export function DataTable<TData extends Record<string, any>>({
             action={Action.Read}
           />
         )}
-      </DataTableProvider>
-    </DndContext>
+      </div>
+    </DataTableProvider>
   );
 }

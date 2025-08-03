@@ -53,12 +53,20 @@ var DocumentQualityFeedbackQuery = struct {
 	Where struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		UserIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		UserIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		DocumentURLEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DocumentURLNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DocumentURLIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -72,6 +80,8 @@ var DocumentQualityFeedbackQuery = struct {
 		DocumentURLHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		FeedbackTypeEQ       func(q *bun.SelectQuery, v FeedbackType) *bun.SelectQuery
 		FeedbackTypeNEQ      func(q *bun.SelectQuery, v FeedbackType) *bun.SelectQuery
+		FeedbackTypeIn       func(q *bun.SelectQuery, v []FeedbackType) *bun.SelectQuery
+		FeedbackTypeNotIn    func(q *bun.SelectQuery, v []FeedbackType) *bun.SelectQuery
 		CommentEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CommentNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CommentIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -117,8 +127,12 @@ var DocumentQualityFeedbackQuery = struct {
 		TextDensityLTE       func(q *bun.SelectQuery, v float64) *bun.SelectQuery
 		UsedForTrainingEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		UsedForTrainingNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		UsedForTrainingIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		UsedForTrainingNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		TrainedAtEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		TrainedAtNEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		TrainedAtIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		TrainedAtNotIn       func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		TrainedAtIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		TrainedAtIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		WordCountEQ          func(q *bun.SelectQuery, v int) *bun.SelectQuery
@@ -175,6 +189,12 @@ var DocumentQualityFeedbackQuery = struct {
 	FieldConfig  func() map[string]documentQualityFeedbackFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		Organization string
+		BusinessUnit string
+		User         string
+	}
 }{
 	// Table and alias constants
 	Table:    "document_quality_feedback",
@@ -236,12 +256,20 @@ var DocumentQualityFeedbackQuery = struct {
 	Where: struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		UserIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		UserIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		DocumentURLEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DocumentURLNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DocumentURLIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -255,6 +283,8 @@ var DocumentQualityFeedbackQuery = struct {
 		DocumentURLHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		FeedbackTypeEQ       func(q *bun.SelectQuery, v FeedbackType) *bun.SelectQuery
 		FeedbackTypeNEQ      func(q *bun.SelectQuery, v FeedbackType) *bun.SelectQuery
+		FeedbackTypeIn       func(q *bun.SelectQuery, v []FeedbackType) *bun.SelectQuery
+		FeedbackTypeNotIn    func(q *bun.SelectQuery, v []FeedbackType) *bun.SelectQuery
 		CommentEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CommentNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CommentIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -300,8 +330,12 @@ var DocumentQualityFeedbackQuery = struct {
 		TextDensityLTE       func(q *bun.SelectQuery, v float64) *bun.SelectQuery
 		UsedForTrainingEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		UsedForTrainingNEQ   func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		UsedForTrainingIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		UsedForTrainingNotIn func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		TrainedAtEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		TrainedAtNEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		TrainedAtIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		TrainedAtNotIn       func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		TrainedAtIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		TrainedAtIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		WordCountEQ          func(q *bun.SelectQuery, v int) *bun.SelectQuery
@@ -344,11 +378,23 @@ var DocumentQualityFeedbackQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dqf.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dqf.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dqf.id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dqf.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dqf.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dqf.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dqf.organization_id"), bun.In(v))
 		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dqf.business_unit_id"), v)
@@ -356,11 +402,23 @@ var DocumentQualityFeedbackQuery = struct {
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dqf.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dqf.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dqf.business_unit_id"), bun.In(v))
+		},
 		UserIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dqf.user_id"), v)
 		},
 		UserIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dqf.user_id"), v)
+		},
+		UserIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dqf.user_id"), bun.In(v))
+		},
+		UserIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dqf.user_id"), bun.In(v))
 		},
 		DocumentURLEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dqf.document_url"), v)
@@ -400,6 +458,12 @@ var DocumentQualityFeedbackQuery = struct {
 		},
 		FeedbackTypeNEQ: func(q *bun.SelectQuery, v FeedbackType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dqf.feedback_type"), v)
+		},
+		FeedbackTypeIn: func(q *bun.SelectQuery, v []FeedbackType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dqf.feedback_type"), bun.In(v))
+		},
+		FeedbackTypeNotIn: func(q *bun.SelectQuery, v []FeedbackType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dqf.feedback_type"), bun.In(v))
 		},
 		CommentEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dqf.comment"), v)
@@ -536,11 +600,23 @@ var DocumentQualityFeedbackQuery = struct {
 		UsedForTrainingNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dqf.used_for_training"), v)
 		},
+		UsedForTrainingIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dqf.used_for_training"), bun.In(v))
+		},
+		UsedForTrainingNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dqf.used_for_training"), bun.In(v))
+		},
 		TrainedAtEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dqf.trained_at"), v)
 		},
 		TrainedAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dqf.trained_at"), v)
+		},
+		TrainedAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dqf.trained_at"), bun.In(v))
+		},
+		TrainedAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dqf.trained_at"), bun.In(v))
 		},
 		TrainedAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("dqf.trained_at"))
@@ -1024,6 +1100,16 @@ var DocumentQualityFeedbackQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		Organization string
+		BusinessUnit string
+		User         string
+	}{
+		Organization: "Organization",
+		BusinessUnit: "BusinessUnit",
+		User:         "User",
+	},
 }
 
 // DocumentQualityFeedbackQueryBuilder provides a fluent interface for building queries
@@ -1068,6 +1154,18 @@ func (b *DocumentQualityFeedbackQueryBuilder) WhereIDNEQ(v pulid.ID) *DocumentQu
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereIDIn(v []pulid.ID) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereIDNotIn(v []pulid.ID) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *DocumentQualityFeedbackQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *DocumentQualityFeedbackQueryBuilder {
 	b.query = DocumentQualityFeedbackQuery.Where.OrganizationIDEQ(b.query, v)
@@ -1077,6 +1175,18 @@ func (b *DocumentQualityFeedbackQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) 
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *DocumentQualityFeedbackQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *DocumentQualityFeedbackQueryBuilder {
 	b.query = DocumentQualityFeedbackQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1092,6 +1202,18 @@ func (b *DocumentQualityFeedbackQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID)
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereUserIDEQ adds a WHERE user_id = ? condition
 func (b *DocumentQualityFeedbackQueryBuilder) WhereUserIDEQ(v pulid.ID) *DocumentQualityFeedbackQueryBuilder {
 	b.query = DocumentQualityFeedbackQuery.Where.UserIDEQ(b.query, v)
@@ -1101,6 +1223,18 @@ func (b *DocumentQualityFeedbackQueryBuilder) WhereUserIDEQ(v pulid.ID) *Documen
 // WhereUserIDNEQ adds a WHERE user_id != ? condition
 func (b *DocumentQualityFeedbackQueryBuilder) WhereUserIDNEQ(v pulid.ID) *DocumentQualityFeedbackQueryBuilder {
 	b.query = DocumentQualityFeedbackQuery.Where.UserIDNEQ(b.query, v)
+	return b
+}
+
+// WhereUserIDIn adds a WHERE user_id IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereUserIDIn(v []pulid.ID) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.UserIDIn(b.query, v)
+	return b
+}
+
+// WhereUserIDNotIn adds a WHERE user_id NOT IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereUserIDNotIn(v []pulid.ID) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.UserIDNotIn(b.query, v)
 	return b
 }
 
@@ -1155,6 +1289,18 @@ func (b *DocumentQualityFeedbackQueryBuilder) WhereFeedbackTypeEQ(v FeedbackType
 // WhereFeedbackTypeNEQ adds a WHERE feedback_type != ? condition
 func (b *DocumentQualityFeedbackQueryBuilder) WhereFeedbackTypeNEQ(v FeedbackType) *DocumentQualityFeedbackQueryBuilder {
 	b.query = DocumentQualityFeedbackQuery.Where.FeedbackTypeNEQ(b.query, v)
+	return b
+}
+
+// WhereFeedbackTypeIn adds a WHERE feedback_type IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereFeedbackTypeIn(v []FeedbackType) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.FeedbackTypeIn(b.query, v)
+	return b
+}
+
+// WhereFeedbackTypeNotIn adds a WHERE feedback_type NOT IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereFeedbackTypeNotIn(v []FeedbackType) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.FeedbackTypeNotIn(b.query, v)
 	return b
 }
 
@@ -1404,6 +1550,18 @@ func (b *DocumentQualityFeedbackQueryBuilder) WhereUsedForTrainingNEQ(v bool) *D
 	return b
 }
 
+// WhereUsedForTrainingIn adds a WHERE used_for_training IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereUsedForTrainingIn(v []bool) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.UsedForTrainingIn(b.query, v)
+	return b
+}
+
+// WhereUsedForTrainingNotIn adds a WHERE used_for_training NOT IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereUsedForTrainingNotIn(v []bool) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.UsedForTrainingNotIn(b.query, v)
+	return b
+}
+
 // WhereTrainedAtEQ adds a WHERE trained_at = ? condition
 func (b *DocumentQualityFeedbackQueryBuilder) WhereTrainedAtEQ(v *int64) *DocumentQualityFeedbackQueryBuilder {
 	b.query = DocumentQualityFeedbackQuery.Where.TrainedAtEQ(b.query, v)
@@ -1413,6 +1571,18 @@ func (b *DocumentQualityFeedbackQueryBuilder) WhereTrainedAtEQ(v *int64) *Docume
 // WhereTrainedAtNEQ adds a WHERE trained_at != ? condition
 func (b *DocumentQualityFeedbackQueryBuilder) WhereTrainedAtNEQ(v *int64) *DocumentQualityFeedbackQueryBuilder {
 	b.query = DocumentQualityFeedbackQuery.Where.TrainedAtNEQ(b.query, v)
+	return b
+}
+
+// WhereTrainedAtIn adds a WHERE trained_at IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereTrainedAtIn(v []*int64) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.TrainedAtIn(b.query, v)
+	return b
+}
+
+// WhereTrainedAtNotIn adds a WHERE trained_at NOT IN (?) condition
+func (b *DocumentQualityFeedbackQueryBuilder) WhereTrainedAtNotIn(v []*int64) *DocumentQualityFeedbackQueryBuilder {
+	b.query = DocumentQualityFeedbackQuery.Where.TrainedAtNotIn(b.query, v)
 	return b
 }
 
@@ -1708,4 +1878,155 @@ func (b *DocumentQualityFeedbackQueryBuilder) First(ctx context.Context) (*Docum
 // DocumentQualityFeedbackBuild creates a chainable query builder
 func DocumentQualityFeedbackBuild(db bun.IDB) *DocumentQualityFeedbackQueryBuilder {
 	return NewDocumentQualityFeedbackQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadOrganization loads the Organization relationship
+func (b *DocumentQualityFeedbackQueryBuilder) LoadOrganization() *DocumentQualityFeedbackQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *DocumentQualityFeedbackQueryBuilder) LoadBusinessUnit() *DocumentQualityFeedbackQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadUser loads the User relationship
+func (b *DocumentQualityFeedbackQueryBuilder) LoadUser() *DocumentQualityFeedbackQueryBuilder {
+	b.query = b.query.Relation("User")
+	return b
+}
+
+// LoadAllRelations loads all relationships for DocumentQualityFeedback
+func (b *DocumentQualityFeedbackQueryBuilder) LoadAllRelations() *DocumentQualityFeedbackQueryBuilder {
+	b.LoadOrganization()
+	b.LoadBusinessUnit()
+	b.LoadUser()
+	return b
+}
+
+// DocumentQualityFeedbackRelationChain provides a fluent API for building nested relationship chains
+type DocumentQualityFeedbackRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewDocumentQualityFeedbackRelationChain creates a new relation chain builder
+func NewDocumentQualityFeedbackRelationChain() *DocumentQualityFeedbackRelationChain {
+	return &DocumentQualityFeedbackRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *DocumentQualityFeedbackRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *DocumentQualityFeedbackRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *DocumentQualityFeedbackRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *DocumentQualityFeedbackRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *DocumentQualityFeedbackQueryBuilder) WithOrganization() *DocumentQualityFeedbackRelationChainBuilder {
+	chain := &DocumentQualityFeedbackRelationChainBuilder{
+		parent: b,
+		chain:  NewDocumentQualityFeedbackRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *DocumentQualityFeedbackQueryBuilder) WithBusinessUnit() *DocumentQualityFeedbackRelationChainBuilder {
+	chain := &DocumentQualityFeedbackRelationChainBuilder{
+		parent: b,
+		chain:  NewDocumentQualityFeedbackRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithUser creates a relation chain starting with User
+func (b *DocumentQualityFeedbackQueryBuilder) WithUser() *DocumentQualityFeedbackRelationChainBuilder {
+	chain := &DocumentQualityFeedbackRelationChainBuilder{
+		parent: b,
+		chain:  NewDocumentQualityFeedbackRelationChain(),
+	}
+	chain.chain.Add("User")
+	return chain
+}
+
+// DocumentQualityFeedbackRelationChainBuilder provides fluent API for building nested relations
+type DocumentQualityFeedbackRelationChainBuilder struct {
+	parent *DocumentQualityFeedbackQueryBuilder
+	chain  *DocumentQualityFeedbackRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *DocumentQualityFeedbackRelationChainBuilder) Load() *DocumentQualityFeedbackQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *DocumentQualityFeedbackRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *DocumentQualityFeedbackRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *DocumentQualityFeedbackRelationChainBuilder) OrderBy(order string) *DocumentQualityFeedbackRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *DocumentQualityFeedbackRelationChainBuilder) Where(condition string, args ...interface{}) *DocumentQualityFeedbackRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

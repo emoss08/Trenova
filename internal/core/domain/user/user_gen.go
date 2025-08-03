@@ -53,125 +53,141 @@ var UserQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CurrentOrganizationIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CurrentOrganizationIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		StatusEQ                 func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
-		StatusNEQ                func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
-		NameEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameNotIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameGT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameGTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameContains             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasPrefix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasSuffix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		UsernameNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		UsernameGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PasswordNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PasswordGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		EmailAddressNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		EmailAddressGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ProfilePicURLNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ProfilePicURLGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ThumbnailURLNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ThumbnailURLGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TimezoneNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TimezoneGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimeFormatEQ             func(q *bun.SelectQuery, v TimeFormat) *bun.SelectQuery
-		TimeFormatNEQ            func(q *bun.SelectQuery, v TimeFormat) *bun.SelectQuery
-		IsLockedEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsLockedNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		MustChangePasswordEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		MustChangePasswordNEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		LastLoginAtEQ            func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
-		LastLoginAtNEQ           func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
-		LastLoginAtIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
-		LastLoginAtIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
-		VersionEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CurrentOrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CurrentOrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CurrentOrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CurrentOrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StatusEQ                   func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusNEQ                  func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                   func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn                func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		NameEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameNEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameIn                     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameNotIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameGT                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameGTE                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLT                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLTE                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameContains               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasPrefix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasSuffix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		UsernameNotIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		UsernameGT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameGTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameLT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameLTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameContains           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameHasPrefix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PasswordNotIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PasswordGT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordGTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordLT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordLTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordContains           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordHasPrefix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		EmailAddressNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		EmailAddressGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ProfilePicURLNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ProfilePicURLGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ThumbnailURLNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ThumbnailURLGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TimezoneNotIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TimezoneGT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneGTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneLT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneLTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneContains           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneHasPrefix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimeFormatEQ               func(q *bun.SelectQuery, v TimeFormat) *bun.SelectQuery
+		TimeFormatNEQ              func(q *bun.SelectQuery, v TimeFormat) *bun.SelectQuery
+		TimeFormatIn               func(q *bun.SelectQuery, v []TimeFormat) *bun.SelectQuery
+		TimeFormatNotIn            func(q *bun.SelectQuery, v []TimeFormat) *bun.SelectQuery
+		IsLockedEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsLockedNEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsLockedIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsLockedNotIn              func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		MustChangePasswordEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		MustChangePasswordNEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		MustChangePasswordIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		MustChangePasswordNotIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		LastLoginAtEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		LastLoginAtNEQ             func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		LastLoginAtIn              func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		LastLoginAtNotIn           func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		LastLoginAtIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
+		LastLoginAtIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
+		VersionEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 	}
@@ -194,6 +210,11 @@ var UserQuery = struct {
 	FieldConfig  func() map[string]userFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit        string
+		CurrentOrganization string
+	}
 }{
 	// Table and alias constants
 	Table:    "users",
@@ -255,125 +276,141 @@ var UserQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CurrentOrganizationIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		CurrentOrganizationIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		StatusEQ                 func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
-		StatusNEQ                func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
-		NameEQ                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameNEQ                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameIn                   func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameNotIn                func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		NameGT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameGTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLT                   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameLTE                  func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameContains             func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasPrefix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		NameHasSuffix            func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		UsernameNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		UsernameGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		UsernameHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PasswordNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		PasswordGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		PasswordHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		EmailAddressNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		EmailAddressGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		EmailAddressHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLNEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ProfilePicURLNotIn       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ProfilePicURLGT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLGTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLLT          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLLTE         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLContains    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLHasPrefix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ProfilePicURLHasSuffix   func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLNEQ          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLIn           func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ThumbnailURLNotIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		ThumbnailURLGT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLGTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLLT           func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLLTE          func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLContains     func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLHasPrefix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		ThumbnailURLHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TimezoneNotIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
-		TimezoneGT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneGTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneLT               func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneLTE              func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneContains         func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneHasPrefix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimezoneHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
-		TimeFormatEQ             func(q *bun.SelectQuery, v TimeFormat) *bun.SelectQuery
-		TimeFormatNEQ            func(q *bun.SelectQuery, v TimeFormat) *bun.SelectQuery
-		IsLockedEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		IsLockedNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		MustChangePasswordEQ     func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		MustChangePasswordNEQ    func(q *bun.SelectQuery, v bool) *bun.SelectQuery
-		LastLoginAtEQ            func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
-		LastLoginAtNEQ           func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
-		LastLoginAtIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
-		LastLoginAtIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
-		VersionEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CurrentOrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CurrentOrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CurrentOrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CurrentOrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StatusEQ                   func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusNEQ                  func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                   func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn                func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		NameEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameNEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameIn                     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameNotIn                  func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		NameGT                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameGTE                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLT                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameLTE                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameContains               func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasPrefix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		NameHasSuffix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		UsernameNotIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		UsernameGT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameGTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameLT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameLTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameContains           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameHasPrefix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		UsernameHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PasswordNotIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		PasswordGT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordGTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordLT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordLTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordContains           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordHasPrefix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		PasswordHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		EmailAddressNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		EmailAddressGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		EmailAddressHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLNEQ           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLIn            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ProfilePicURLNotIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ProfilePicURLGT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLGTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLLT            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLLTE           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLContains      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLHasPrefix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ProfilePicURLHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLEQ             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLNEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLIn             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ThumbnailURLNotIn          func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ThumbnailURLGT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLGTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLLT             func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLLTE            func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLContains       func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLHasPrefix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		ThumbnailURLHasSuffix      func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneEQ                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneNEQ                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneIn                 func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TimezoneNotIn              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TimezoneGT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneGTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneLT                 func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneLTE                func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneContains           func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneHasPrefix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimezoneHasSuffix          func(q *bun.SelectQuery, v string) *bun.SelectQuery
+		TimeFormatEQ               func(q *bun.SelectQuery, v TimeFormat) *bun.SelectQuery
+		TimeFormatNEQ              func(q *bun.SelectQuery, v TimeFormat) *bun.SelectQuery
+		TimeFormatIn               func(q *bun.SelectQuery, v []TimeFormat) *bun.SelectQuery
+		TimeFormatNotIn            func(q *bun.SelectQuery, v []TimeFormat) *bun.SelectQuery
+		IsLockedEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsLockedNEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsLockedIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsLockedNotIn              func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		MustChangePasswordEQ       func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		MustChangePasswordNEQ      func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		MustChangePasswordIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		MustChangePasswordNotIn    func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		LastLoginAtEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		LastLoginAtNEQ             func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		LastLoginAtIn              func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		LastLoginAtNotIn           func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		LastLoginAtIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
+		LastLoginAtIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
+		VersionEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("usr.id"), v)
@@ -381,11 +418,23 @@ var UserQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("usr.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("usr.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("usr.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("usr.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("usr.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("usr.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("usr.business_unit_id"), bun.In(v))
 		},
 		CurrentOrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("usr.current_organization_id"), v)
@@ -393,11 +442,23 @@ var UserQuery = struct {
 		CurrentOrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("usr.current_organization_id"), v)
 		},
+		CurrentOrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("usr.current_organization_id"), bun.In(v))
+		},
+		CurrentOrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("usr.current_organization_id"), bun.In(v))
+		},
 		StatusEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("usr.status"), v)
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("usr.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("usr.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("usr.status"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("usr.name"), v)
@@ -636,11 +697,23 @@ var UserQuery = struct {
 		TimeFormatNEQ: func(q *bun.SelectQuery, v TimeFormat) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("usr.time_format"), v)
 		},
+		TimeFormatIn: func(q *bun.SelectQuery, v []TimeFormat) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("usr.time_format"), bun.In(v))
+		},
+		TimeFormatNotIn: func(q *bun.SelectQuery, v []TimeFormat) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("usr.time_format"), bun.In(v))
+		},
 		IsLockedEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("usr.is_locked"), v)
 		},
 		IsLockedNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("usr.is_locked"), v)
+		},
+		IsLockedIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("usr.is_locked"), bun.In(v))
+		},
+		IsLockedNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("usr.is_locked"), bun.In(v))
 		},
 		MustChangePasswordEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("usr.must_change_password"), v)
@@ -648,11 +721,23 @@ var UserQuery = struct {
 		MustChangePasswordNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("usr.must_change_password"), v)
 		},
+		MustChangePasswordIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("usr.must_change_password"), bun.In(v))
+		},
+		MustChangePasswordNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("usr.must_change_password"), bun.In(v))
+		},
 		LastLoginAtEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("usr.last_login_at"), v)
 		},
 		LastLoginAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("usr.last_login_at"), v)
+		},
+		LastLoginAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("usr.last_login_at"), bun.In(v))
+		},
+		LastLoginAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("usr.last_login_at"), bun.In(v))
 		},
 		LastLoginAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("usr.last_login_at"))
@@ -1133,6 +1218,14 @@ var UserQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit        string
+		CurrentOrganization string
+	}{
+		BusinessUnit:        "BusinessUnit",
+		CurrentOrganization: "CurrentOrganization",
+	},
 }
 
 // UserQueryBuilder provides a fluent interface for building queries
@@ -1177,6 +1270,18 @@ func (b *UserQueryBuilder) WhereIDNEQ(v pulid.ID) *UserQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *UserQueryBuilder) WhereIDIn(v []pulid.ID) *UserQueryBuilder {
+	b.query = UserQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *UserQueryBuilder) WhereIDNotIn(v []pulid.ID) *UserQueryBuilder {
+	b.query = UserQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *UserQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *UserQueryBuilder {
 	b.query = UserQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1186,6 +1291,18 @@ func (b *UserQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *UserQueryBuilder {
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *UserQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *UserQueryBuilder {
 	b.query = UserQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *UserQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *UserQueryBuilder {
+	b.query = UserQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *UserQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *UserQueryBuilder {
+	b.query = UserQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1201,6 +1318,18 @@ func (b *UserQueryBuilder) WhereCurrentOrganizationIDNEQ(v pulid.ID) *UserQueryB
 	return b
 }
 
+// WhereCurrentOrganizationIDIn adds a WHERE current_organization_id IN (?) condition
+func (b *UserQueryBuilder) WhereCurrentOrganizationIDIn(v []pulid.ID) *UserQueryBuilder {
+	b.query = UserQuery.Where.CurrentOrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereCurrentOrganizationIDNotIn adds a WHERE current_organization_id NOT IN (?) condition
+func (b *UserQueryBuilder) WhereCurrentOrganizationIDNotIn(v []pulid.ID) *UserQueryBuilder {
+	b.query = UserQuery.Where.CurrentOrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *UserQueryBuilder) WhereStatusEQ(v domain.Status) *UserQueryBuilder {
 	b.query = UserQuery.Where.StatusEQ(b.query, v)
@@ -1210,6 +1339,18 @@ func (b *UserQueryBuilder) WhereStatusEQ(v domain.Status) *UserQueryBuilder {
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *UserQueryBuilder) WhereStatusNEQ(v domain.Status) *UserQueryBuilder {
 	b.query = UserQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *UserQueryBuilder) WhereStatusIn(v []domain.Status) *UserQueryBuilder {
+	b.query = UserQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *UserQueryBuilder) WhereStatusNotIn(v []domain.Status) *UserQueryBuilder {
+	b.query = UserQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1519,6 +1660,18 @@ func (b *UserQueryBuilder) WhereTimeFormatNEQ(v TimeFormat) *UserQueryBuilder {
 	return b
 }
 
+// WhereTimeFormatIn adds a WHERE time_format IN (?) condition
+func (b *UserQueryBuilder) WhereTimeFormatIn(v []TimeFormat) *UserQueryBuilder {
+	b.query = UserQuery.Where.TimeFormatIn(b.query, v)
+	return b
+}
+
+// WhereTimeFormatNotIn adds a WHERE time_format NOT IN (?) condition
+func (b *UserQueryBuilder) WhereTimeFormatNotIn(v []TimeFormat) *UserQueryBuilder {
+	b.query = UserQuery.Where.TimeFormatNotIn(b.query, v)
+	return b
+}
+
 // WhereIsLockedEQ adds a WHERE is_locked = ? condition
 func (b *UserQueryBuilder) WhereIsLockedEQ(v bool) *UserQueryBuilder {
 	b.query = UserQuery.Where.IsLockedEQ(b.query, v)
@@ -1528,6 +1681,18 @@ func (b *UserQueryBuilder) WhereIsLockedEQ(v bool) *UserQueryBuilder {
 // WhereIsLockedNEQ adds a WHERE is_locked != ? condition
 func (b *UserQueryBuilder) WhereIsLockedNEQ(v bool) *UserQueryBuilder {
 	b.query = UserQuery.Where.IsLockedNEQ(b.query, v)
+	return b
+}
+
+// WhereIsLockedIn adds a WHERE is_locked IN (?) condition
+func (b *UserQueryBuilder) WhereIsLockedIn(v []bool) *UserQueryBuilder {
+	b.query = UserQuery.Where.IsLockedIn(b.query, v)
+	return b
+}
+
+// WhereIsLockedNotIn adds a WHERE is_locked NOT IN (?) condition
+func (b *UserQueryBuilder) WhereIsLockedNotIn(v []bool) *UserQueryBuilder {
+	b.query = UserQuery.Where.IsLockedNotIn(b.query, v)
 	return b
 }
 
@@ -1543,6 +1708,18 @@ func (b *UserQueryBuilder) WhereMustChangePasswordNEQ(v bool) *UserQueryBuilder 
 	return b
 }
 
+// WhereMustChangePasswordIn adds a WHERE must_change_password IN (?) condition
+func (b *UserQueryBuilder) WhereMustChangePasswordIn(v []bool) *UserQueryBuilder {
+	b.query = UserQuery.Where.MustChangePasswordIn(b.query, v)
+	return b
+}
+
+// WhereMustChangePasswordNotIn adds a WHERE must_change_password NOT IN (?) condition
+func (b *UserQueryBuilder) WhereMustChangePasswordNotIn(v []bool) *UserQueryBuilder {
+	b.query = UserQuery.Where.MustChangePasswordNotIn(b.query, v)
+	return b
+}
+
 // WhereLastLoginAtEQ adds a WHERE last_login_at = ? condition
 func (b *UserQueryBuilder) WhereLastLoginAtEQ(v *int64) *UserQueryBuilder {
 	b.query = UserQuery.Where.LastLoginAtEQ(b.query, v)
@@ -1552,6 +1729,18 @@ func (b *UserQueryBuilder) WhereLastLoginAtEQ(v *int64) *UserQueryBuilder {
 // WhereLastLoginAtNEQ adds a WHERE last_login_at != ? condition
 func (b *UserQueryBuilder) WhereLastLoginAtNEQ(v *int64) *UserQueryBuilder {
 	b.query = UserQuery.Where.LastLoginAtNEQ(b.query, v)
+	return b
+}
+
+// WhereLastLoginAtIn adds a WHERE last_login_at IN (?) condition
+func (b *UserQueryBuilder) WhereLastLoginAtIn(v []*int64) *UserQueryBuilder {
+	b.query = UserQuery.Where.LastLoginAtIn(b.query, v)
+	return b
+}
+
+// WhereLastLoginAtNotIn adds a WHERE last_login_at NOT IN (?) condition
+func (b *UserQueryBuilder) WhereLastLoginAtNotIn(v []*int64) *UserQueryBuilder {
+	b.query = UserQuery.Where.LastLoginAtNotIn(b.query, v)
 	return b
 }
 
@@ -1794,4 +1983,138 @@ func (b *UserQueryBuilder) First(ctx context.Context) (*User, error) {
 // UserBuild creates a chainable query builder
 func UserBuild(db bun.IDB) *UserQueryBuilder {
 	return NewUserQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *UserQueryBuilder) LoadBusinessUnit() *UserQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadCurrentOrganization loads the CurrentOrganization relationship
+func (b *UserQueryBuilder) LoadCurrentOrganization() *UserQueryBuilder {
+	b.query = b.query.Relation("CurrentOrganization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for User
+func (b *UserQueryBuilder) LoadAllRelations() *UserQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadCurrentOrganization()
+	return b
+}
+
+// UserRelationChain provides a fluent API for building nested relationship chains
+type UserRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewUserRelationChain creates a new relation chain builder
+func NewUserRelationChain() *UserRelationChain {
+	return &UserRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *UserRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *UserRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *UserRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *UserRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *UserQueryBuilder) WithBusinessUnit() *UserRelationChainBuilder {
+	chain := &UserRelationChainBuilder{
+		parent: b,
+		chain:  NewUserRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithCurrentOrganization creates a relation chain starting with CurrentOrganization
+func (b *UserQueryBuilder) WithCurrentOrganization() *UserRelationChainBuilder {
+	chain := &UserRelationChainBuilder{
+		parent: b,
+		chain:  NewUserRelationChain(),
+	}
+	chain.chain.Add("CurrentOrganization")
+	return chain
+}
+
+// UserRelationChainBuilder provides fluent API for building nested relations
+type UserRelationChainBuilder struct {
+	parent *UserQueryBuilder
+	chain  *UserRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *UserRelationChainBuilder) Load() *UserQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *UserRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *UserRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *UserRelationChainBuilder) OrderBy(order string) *UserRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *UserRelationChainBuilder) Where(condition string, args ...interface{}) *UserRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

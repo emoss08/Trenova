@@ -49,12 +49,20 @@ var ConfigurationQuery = struct {
 	Where struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		UserIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		UserIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -90,10 +98,16 @@ var ConfigurationQuery = struct {
 		ResourceHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		TableConfigEQ        func(q *bun.SelectQuery, v TableConfig) *bun.SelectQuery
 		TableConfigNEQ       func(q *bun.SelectQuery, v TableConfig) *bun.SelectQuery
+		TableConfigIn        func(q *bun.SelectQuery, v []TableConfig) *bun.SelectQuery
+		TableConfigNotIn     func(q *bun.SelectQuery, v []TableConfig) *bun.SelectQuery
 		VisibilityEQ         func(q *bun.SelectQuery, v Visibility) *bun.SelectQuery
 		VisibilityNEQ        func(q *bun.SelectQuery, v Visibility) *bun.SelectQuery
+		VisibilityIn         func(q *bun.SelectQuery, v []Visibility) *bun.SelectQuery
+		VisibilityNotIn      func(q *bun.SelectQuery, v []Visibility) *bun.SelectQuery
 		IsDefaultEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsDefaultNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsDefaultIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsDefaultNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -140,6 +154,13 @@ var ConfigurationQuery = struct {
 	FieldConfig  func() map[string]configurationFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+		Creator      string
+		Shares       string
+	}
 }{
 	// Table and alias constants
 	Table:    "table_configurations",
@@ -193,12 +214,20 @@ var ConfigurationQuery = struct {
 	Where: struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		UserIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		UserIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -234,10 +263,16 @@ var ConfigurationQuery = struct {
 		ResourceHasSuffix    func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		TableConfigEQ        func(q *bun.SelectQuery, v TableConfig) *bun.SelectQuery
 		TableConfigNEQ       func(q *bun.SelectQuery, v TableConfig) *bun.SelectQuery
+		TableConfigIn        func(q *bun.SelectQuery, v []TableConfig) *bun.SelectQuery
+		TableConfigNotIn     func(q *bun.SelectQuery, v []TableConfig) *bun.SelectQuery
 		VisibilityEQ         func(q *bun.SelectQuery, v Visibility) *bun.SelectQuery
 		VisibilityNEQ        func(q *bun.SelectQuery, v Visibility) *bun.SelectQuery
+		VisibilityIn         func(q *bun.SelectQuery, v []Visibility) *bun.SelectQuery
+		VisibilityNotIn      func(q *bun.SelectQuery, v []Visibility) *bun.SelectQuery
 		IsDefaultEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsDefaultNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsDefaultIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsDefaultNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -270,11 +305,23 @@ var ConfigurationQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tc.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tc.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tc.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tc.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tc.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tc.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tc.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tc.organization_id"), v)
@@ -282,11 +329,23 @@ var ConfigurationQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tc.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tc.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tc.organization_id"), bun.In(v))
+		},
 		UserIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tc.user_id"), v)
 		},
 		UserIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tc.user_id"), v)
+		},
+		UserIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tc.user_id"), bun.In(v))
+		},
+		UserIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tc.user_id"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tc.name"), v)
@@ -393,17 +452,35 @@ var ConfigurationQuery = struct {
 		TableConfigNEQ: func(q *bun.SelectQuery, v TableConfig) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tc.table_config"), v)
 		},
+		TableConfigIn: func(q *bun.SelectQuery, v []TableConfig) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tc.table_config"), bun.In(v))
+		},
+		TableConfigNotIn: func(q *bun.SelectQuery, v []TableConfig) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tc.table_config"), bun.In(v))
+		},
 		VisibilityEQ: func(q *bun.SelectQuery, v Visibility) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tc.visibility"), v)
 		},
 		VisibilityNEQ: func(q *bun.SelectQuery, v Visibility) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tc.visibility"), v)
 		},
+		VisibilityIn: func(q *bun.SelectQuery, v []Visibility) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tc.visibility"), bun.In(v))
+		},
+		VisibilityNotIn: func(q *bun.SelectQuery, v []Visibility) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tc.visibility"), bun.In(v))
+		},
 		IsDefaultEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tc.is_default"), v)
 		},
 		IsDefaultNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tc.is_default"), v)
+		},
+		IsDefaultIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tc.is_default"), bun.In(v))
+		},
+		IsDefaultNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tc.is_default"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tc.version"), v)
@@ -785,6 +862,18 @@ var ConfigurationQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+		Creator      string
+		Shares       string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+		Creator:      "Creator",
+		Shares:       "Shares",
+	},
 }
 
 // ConfigurationQueryBuilder provides a fluent interface for building queries
@@ -829,6 +918,18 @@ func (b *ConfigurationQueryBuilder) WhereIDNEQ(v pulid.ID) *ConfigurationQueryBu
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereIDIn(v []pulid.ID) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereIDNotIn(v []pulid.ID) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *ConfigurationQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ConfigurationQueryBuilder {
 	b.query = ConfigurationQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -838,6 +939,18 @@ func (b *ConfigurationQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *Configura
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *ConfigurationQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *ConfigurationQueryBuilder {
 	b.query = ConfigurationQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -853,6 +966,18 @@ func (b *ConfigurationQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *Configur
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereUserIDEQ adds a WHERE user_id = ? condition
 func (b *ConfigurationQueryBuilder) WhereUserIDEQ(v pulid.ID) *ConfigurationQueryBuilder {
 	b.query = ConfigurationQuery.Where.UserIDEQ(b.query, v)
@@ -862,6 +987,18 @@ func (b *ConfigurationQueryBuilder) WhereUserIDEQ(v pulid.ID) *ConfigurationQuer
 // WhereUserIDNEQ adds a WHERE user_id != ? condition
 func (b *ConfigurationQueryBuilder) WhereUserIDNEQ(v pulid.ID) *ConfigurationQueryBuilder {
 	b.query = ConfigurationQuery.Where.UserIDNEQ(b.query, v)
+	return b
+}
+
+// WhereUserIDIn adds a WHERE user_id IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereUserIDIn(v []pulid.ID) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.UserIDIn(b.query, v)
+	return b
+}
+
+// WhereUserIDNotIn adds a WHERE user_id NOT IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereUserIDNotIn(v []pulid.ID) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.UserIDNotIn(b.query, v)
 	return b
 }
 
@@ -1003,6 +1140,18 @@ func (b *ConfigurationQueryBuilder) WhereTableConfigNEQ(v TableConfig) *Configur
 	return b
 }
 
+// WhereTableConfigIn adds a WHERE table_config IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereTableConfigIn(v []TableConfig) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.TableConfigIn(b.query, v)
+	return b
+}
+
+// WhereTableConfigNotIn adds a WHERE table_config NOT IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereTableConfigNotIn(v []TableConfig) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.TableConfigNotIn(b.query, v)
+	return b
+}
+
 // WhereVisibilityEQ adds a WHERE visibility = ? condition
 func (b *ConfigurationQueryBuilder) WhereVisibilityEQ(v Visibility) *ConfigurationQueryBuilder {
 	b.query = ConfigurationQuery.Where.VisibilityEQ(b.query, v)
@@ -1015,6 +1164,18 @@ func (b *ConfigurationQueryBuilder) WhereVisibilityNEQ(v Visibility) *Configurat
 	return b
 }
 
+// WhereVisibilityIn adds a WHERE visibility IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereVisibilityIn(v []Visibility) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.VisibilityIn(b.query, v)
+	return b
+}
+
+// WhereVisibilityNotIn adds a WHERE visibility NOT IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereVisibilityNotIn(v []Visibility) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.VisibilityNotIn(b.query, v)
+	return b
+}
+
 // WhereIsDefaultEQ adds a WHERE is_default = ? condition
 func (b *ConfigurationQueryBuilder) WhereIsDefaultEQ(v bool) *ConfigurationQueryBuilder {
 	b.query = ConfigurationQuery.Where.IsDefaultEQ(b.query, v)
@@ -1024,6 +1185,18 @@ func (b *ConfigurationQueryBuilder) WhereIsDefaultEQ(v bool) *ConfigurationQuery
 // WhereIsDefaultNEQ adds a WHERE is_default != ? condition
 func (b *ConfigurationQueryBuilder) WhereIsDefaultNEQ(v bool) *ConfigurationQueryBuilder {
 	b.query = ConfigurationQuery.Where.IsDefaultNEQ(b.query, v)
+	return b
+}
+
+// WhereIsDefaultIn adds a WHERE is_default IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereIsDefaultIn(v []bool) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.IsDefaultIn(b.query, v)
+	return b
+}
+
+// WhereIsDefaultNotIn adds a WHERE is_default NOT IN (?) condition
+func (b *ConfigurationQueryBuilder) WhereIsDefaultNotIn(v []bool) *ConfigurationQueryBuilder {
+	b.query = ConfigurationQuery.Where.IsDefaultNotIn(b.query, v)
 	return b
 }
 
@@ -1271,4 +1444,181 @@ func (b *ConfigurationQueryBuilder) First(ctx context.Context) (*Configuration, 
 // ConfigurationBuild creates a chainable query builder
 func ConfigurationBuild(db bun.IDB) *ConfigurationQueryBuilder {
 	return NewConfigurationQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *ConfigurationQueryBuilder) LoadBusinessUnit() *ConfigurationQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *ConfigurationQueryBuilder) LoadOrganization() *ConfigurationQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadCreator loads the Creator relationship
+func (b *ConfigurationQueryBuilder) LoadCreator() *ConfigurationQueryBuilder {
+	b.query = b.query.Relation("Creator")
+	return b
+}
+
+// LoadShares loads the Shares relationship
+func (b *ConfigurationQueryBuilder) LoadShares(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ConfigurationQueryBuilder {
+	if len(opts) > 0 {
+		b.query = b.query.Relation("Shares", func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		})
+	} else {
+		b.query = b.query.Relation("Shares")
+	}
+	return b
+}
+
+// LoadAllRelations loads all relationships for Configuration
+func (b *ConfigurationQueryBuilder) LoadAllRelations() *ConfigurationQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadCreator()
+	b.LoadShares()
+	return b
+}
+
+// ConfigurationRelationChain provides a fluent API for building nested relationship chains
+type ConfigurationRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewConfigurationRelationChain creates a new relation chain builder
+func NewConfigurationRelationChain() *ConfigurationRelationChain {
+	return &ConfigurationRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *ConfigurationRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ConfigurationRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *ConfigurationRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *ConfigurationRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *ConfigurationQueryBuilder) WithBusinessUnit() *ConfigurationRelationChainBuilder {
+	chain := &ConfigurationRelationChainBuilder{
+		parent: b,
+		chain:  NewConfigurationRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *ConfigurationQueryBuilder) WithOrganization() *ConfigurationRelationChainBuilder {
+	chain := &ConfigurationRelationChainBuilder{
+		parent: b,
+		chain:  NewConfigurationRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithCreator creates a relation chain starting with Creator
+func (b *ConfigurationQueryBuilder) WithCreator() *ConfigurationRelationChainBuilder {
+	chain := &ConfigurationRelationChainBuilder{
+		parent: b,
+		chain:  NewConfigurationRelationChain(),
+	}
+	chain.chain.Add("Creator")
+	return chain
+}
+
+// WithShares creates a relation chain starting with Shares
+func (b *ConfigurationQueryBuilder) WithShares(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ConfigurationRelationChainBuilder {
+	chain := &ConfigurationRelationChainBuilder{
+		parent: b,
+		chain:  NewConfigurationRelationChain(),
+	}
+	chain.chain.Add("Shares", opts...)
+	return chain
+}
+
+// ConfigurationRelationChainBuilder provides fluent API for building nested relations
+type ConfigurationRelationChainBuilder struct {
+	parent *ConfigurationQueryBuilder
+	chain  *ConfigurationRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *ConfigurationRelationChainBuilder) Load() *ConfigurationQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *ConfigurationRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ConfigurationRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *ConfigurationRelationChainBuilder) OrderBy(order string) *ConfigurationRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *ConfigurationRelationChainBuilder) Where(condition string, args ...interface{}) *ConfigurationRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

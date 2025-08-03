@@ -69,10 +69,16 @@ var ProfileQuery = struct {
 	Where struct {
 		IDEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -97,12 +103,20 @@ var ProfileQuery = struct {
 		DescriptionHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		StatusEQ                    func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                   func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                    func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn                 func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		ProviderTypeEQ              func(q *bun.SelectQuery, v ProviderType) *bun.SelectQuery
 		ProviderTypeNEQ             func(q *bun.SelectQuery, v ProviderType) *bun.SelectQuery
+		ProviderTypeIn              func(q *bun.SelectQuery, v []ProviderType) *bun.SelectQuery
+		ProviderTypeNotIn           func(q *bun.SelectQuery, v []ProviderType) *bun.SelectQuery
 		AuthTypeEQ                  func(q *bun.SelectQuery, v AuthType) *bun.SelectQuery
 		AuthTypeNEQ                 func(q *bun.SelectQuery, v AuthType) *bun.SelectQuery
+		AuthTypeIn                  func(q *bun.SelectQuery, v []AuthType) *bun.SelectQuery
+		AuthTypeNotIn               func(q *bun.SelectQuery, v []AuthType) *bun.SelectQuery
 		EncryptionTypeEQ            func(q *bun.SelectQuery, v EncryptionType) *bun.SelectQuery
 		EncryptionTypeNEQ           func(q *bun.SelectQuery, v EncryptionType) *bun.SelectQuery
+		EncryptionTypeIn            func(q *bun.SelectQuery, v []EncryptionType) *bun.SelectQuery
+		EncryptionTypeNotIn         func(q *bun.SelectQuery, v []EncryptionType) *bun.SelectQuery
 		HostEQ                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		HostNEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		HostIn                      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -303,8 +317,12 @@ var ProfileQuery = struct {
 		UpdatedAtLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		MetadataEQ                  func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		MetadataNEQ                 func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn                  func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn               func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		IsDefaultEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsDefaultNEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsDefaultIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsDefaultNotIn              func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -328,6 +346,11 @@ var ProfileQuery = struct {
 	FieldConfig  func() map[string]profileFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "email_profiles",
@@ -419,10 +442,16 @@ var ProfileQuery = struct {
 	Where: struct {
 		IDEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -447,12 +476,20 @@ var ProfileQuery = struct {
 		DescriptionHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		StatusEQ                    func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                   func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                    func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn                 func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		ProviderTypeEQ              func(q *bun.SelectQuery, v ProviderType) *bun.SelectQuery
 		ProviderTypeNEQ             func(q *bun.SelectQuery, v ProviderType) *bun.SelectQuery
+		ProviderTypeIn              func(q *bun.SelectQuery, v []ProviderType) *bun.SelectQuery
+		ProviderTypeNotIn           func(q *bun.SelectQuery, v []ProviderType) *bun.SelectQuery
 		AuthTypeEQ                  func(q *bun.SelectQuery, v AuthType) *bun.SelectQuery
 		AuthTypeNEQ                 func(q *bun.SelectQuery, v AuthType) *bun.SelectQuery
+		AuthTypeIn                  func(q *bun.SelectQuery, v []AuthType) *bun.SelectQuery
+		AuthTypeNotIn               func(q *bun.SelectQuery, v []AuthType) *bun.SelectQuery
 		EncryptionTypeEQ            func(q *bun.SelectQuery, v EncryptionType) *bun.SelectQuery
 		EncryptionTypeNEQ           func(q *bun.SelectQuery, v EncryptionType) *bun.SelectQuery
+		EncryptionTypeIn            func(q *bun.SelectQuery, v []EncryptionType) *bun.SelectQuery
+		EncryptionTypeNotIn         func(q *bun.SelectQuery, v []EncryptionType) *bun.SelectQuery
 		HostEQ                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		HostNEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		HostIn                      func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -653,8 +690,12 @@ var ProfileQuery = struct {
 		UpdatedAtLTE                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		MetadataEQ                  func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		MetadataNEQ                 func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn                  func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn               func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		IsDefaultEQ                 func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsDefaultNEQ                func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsDefaultIn                 func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsDefaultNotIn              func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		Tenant                      func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
@@ -663,17 +704,35 @@ var ProfileQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ep.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ep.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ep.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ep.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ep.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ep.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ep.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ep.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ep.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ep.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ep.organization_id"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ep.name"), v)
@@ -747,11 +806,23 @@ var ProfileQuery = struct {
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ep.status"), v)
 		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ep.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ep.status"), bun.In(v))
+		},
 		ProviderTypeEQ: func(q *bun.SelectQuery, v ProviderType) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ep.provider_type"), v)
 		},
 		ProviderTypeNEQ: func(q *bun.SelectQuery, v ProviderType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ep.provider_type"), v)
+		},
+		ProviderTypeIn: func(q *bun.SelectQuery, v []ProviderType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ep.provider_type"), bun.In(v))
+		},
+		ProviderTypeNotIn: func(q *bun.SelectQuery, v []ProviderType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ep.provider_type"), bun.In(v))
 		},
 		AuthTypeEQ: func(q *bun.SelectQuery, v AuthType) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ep.auth_type"), v)
@@ -759,11 +830,23 @@ var ProfileQuery = struct {
 		AuthTypeNEQ: func(q *bun.SelectQuery, v AuthType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ep.auth_type"), v)
 		},
+		AuthTypeIn: func(q *bun.SelectQuery, v []AuthType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ep.auth_type"), bun.In(v))
+		},
+		AuthTypeNotIn: func(q *bun.SelectQuery, v []AuthType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ep.auth_type"), bun.In(v))
+		},
 		EncryptionTypeEQ: func(q *bun.SelectQuery, v EncryptionType) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ep.encryption_type"), v)
 		},
 		EncryptionTypeNEQ: func(q *bun.SelectQuery, v EncryptionType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ep.encryption_type"), v)
+		},
+		EncryptionTypeIn: func(q *bun.SelectQuery, v []EncryptionType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ep.encryption_type"), bun.In(v))
+		},
+		EncryptionTypeNotIn: func(q *bun.SelectQuery, v []EncryptionType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ep.encryption_type"), bun.In(v))
 		},
 		HostEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ep.host"), v)
@@ -1365,11 +1448,23 @@ var ProfileQuery = struct {
 		MetadataNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ep.metadata"), v)
 		},
+		MetadataIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ep.metadata"), bun.In(v))
+		},
+		MetadataNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ep.metadata"), bun.In(v))
+		},
 		IsDefaultEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ep.is_default"), v)
 		},
 		IsDefaultNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ep.is_default"), v)
+		},
+		IsDefaultIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ep.is_default"), bun.In(v))
+		},
+		IsDefaultNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ep.is_default"), bun.In(v))
 		},
 		Tenant: func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery {
 			return q.
@@ -2029,6 +2124,14 @@ var ProfileQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // ProfileQueryBuilder provides a fluent interface for building queries
@@ -2073,6 +2176,18 @@ func (b *ProfileQueryBuilder) WhereIDNEQ(v pulid.ID) *ProfileQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *ProfileQueryBuilder) WhereIDIn(v []pulid.ID) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *ProfileQueryBuilder) WhereIDNotIn(v []pulid.ID) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *ProfileQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ProfileQueryBuilder {
 	b.query = ProfileQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -2085,6 +2200,18 @@ func (b *ProfileQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *ProfileQueryBu
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *ProfileQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *ProfileQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *ProfileQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *ProfileQueryBuilder {
 	b.query = ProfileQuery.Where.OrganizationIDEQ(b.query, v)
@@ -2094,6 +2221,18 @@ func (b *ProfileQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *ProfileQueryBui
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *ProfileQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *ProfileQueryBuilder {
 	b.query = ProfileQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *ProfileQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *ProfileQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -2193,6 +2332,18 @@ func (b *ProfileQueryBuilder) WhereStatusNEQ(v domain.Status) *ProfileQueryBuild
 	return b
 }
 
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *ProfileQueryBuilder) WhereStatusIn(v []domain.Status) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *ProfileQueryBuilder) WhereStatusNotIn(v []domain.Status) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.StatusNotIn(b.query, v)
+	return b
+}
+
 // WhereProviderTypeEQ adds a WHERE provider_type = ? condition
 func (b *ProfileQueryBuilder) WhereProviderTypeEQ(v ProviderType) *ProfileQueryBuilder {
 	b.query = ProfileQuery.Where.ProviderTypeEQ(b.query, v)
@@ -2202,6 +2353,18 @@ func (b *ProfileQueryBuilder) WhereProviderTypeEQ(v ProviderType) *ProfileQueryB
 // WhereProviderTypeNEQ adds a WHERE provider_type != ? condition
 func (b *ProfileQueryBuilder) WhereProviderTypeNEQ(v ProviderType) *ProfileQueryBuilder {
 	b.query = ProfileQuery.Where.ProviderTypeNEQ(b.query, v)
+	return b
+}
+
+// WhereProviderTypeIn adds a WHERE provider_type IN (?) condition
+func (b *ProfileQueryBuilder) WhereProviderTypeIn(v []ProviderType) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.ProviderTypeIn(b.query, v)
+	return b
+}
+
+// WhereProviderTypeNotIn adds a WHERE provider_type NOT IN (?) condition
+func (b *ProfileQueryBuilder) WhereProviderTypeNotIn(v []ProviderType) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.ProviderTypeNotIn(b.query, v)
 	return b
 }
 
@@ -2217,6 +2380,18 @@ func (b *ProfileQueryBuilder) WhereAuthTypeNEQ(v AuthType) *ProfileQueryBuilder 
 	return b
 }
 
+// WhereAuthTypeIn adds a WHERE auth_type IN (?) condition
+func (b *ProfileQueryBuilder) WhereAuthTypeIn(v []AuthType) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.AuthTypeIn(b.query, v)
+	return b
+}
+
+// WhereAuthTypeNotIn adds a WHERE auth_type NOT IN (?) condition
+func (b *ProfileQueryBuilder) WhereAuthTypeNotIn(v []AuthType) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.AuthTypeNotIn(b.query, v)
+	return b
+}
+
 // WhereEncryptionTypeEQ adds a WHERE encryption_type = ? condition
 func (b *ProfileQueryBuilder) WhereEncryptionTypeEQ(v EncryptionType) *ProfileQueryBuilder {
 	b.query = ProfileQuery.Where.EncryptionTypeEQ(b.query, v)
@@ -2226,6 +2401,18 @@ func (b *ProfileQueryBuilder) WhereEncryptionTypeEQ(v EncryptionType) *ProfileQu
 // WhereEncryptionTypeNEQ adds a WHERE encryption_type != ? condition
 func (b *ProfileQueryBuilder) WhereEncryptionTypeNEQ(v EncryptionType) *ProfileQueryBuilder {
 	b.query = ProfileQuery.Where.EncryptionTypeNEQ(b.query, v)
+	return b
+}
+
+// WhereEncryptionTypeIn adds a WHERE encryption_type IN (?) condition
+func (b *ProfileQueryBuilder) WhereEncryptionTypeIn(v []EncryptionType) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.EncryptionTypeIn(b.query, v)
+	return b
+}
+
+// WhereEncryptionTypeNotIn adds a WHERE encryption_type NOT IN (?) condition
+func (b *ProfileQueryBuilder) WhereEncryptionTypeNotIn(v []EncryptionType) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.EncryptionTypeNotIn(b.query, v)
 	return b
 }
 
@@ -3189,6 +3376,18 @@ func (b *ProfileQueryBuilder) WhereMetadataNEQ(v map[string]any) *ProfileQueryBu
 	return b
 }
 
+// WhereMetadataIn adds a WHERE metadata IN (?) condition
+func (b *ProfileQueryBuilder) WhereMetadataIn(v []map[string]any) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.MetadataIn(b.query, v)
+	return b
+}
+
+// WhereMetadataNotIn adds a WHERE metadata NOT IN (?) condition
+func (b *ProfileQueryBuilder) WhereMetadataNotIn(v []map[string]any) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.MetadataNotIn(b.query, v)
+	return b
+}
+
 // WhereIsDefaultEQ adds a WHERE is_default = ? condition
 func (b *ProfileQueryBuilder) WhereIsDefaultEQ(v bool) *ProfileQueryBuilder {
 	b.query = ProfileQuery.Where.IsDefaultEQ(b.query, v)
@@ -3198,6 +3397,18 @@ func (b *ProfileQueryBuilder) WhereIsDefaultEQ(v bool) *ProfileQueryBuilder {
 // WhereIsDefaultNEQ adds a WHERE is_default != ? condition
 func (b *ProfileQueryBuilder) WhereIsDefaultNEQ(v bool) *ProfileQueryBuilder {
 	b.query = ProfileQuery.Where.IsDefaultNEQ(b.query, v)
+	return b
+}
+
+// WhereIsDefaultIn adds a WHERE is_default IN (?) condition
+func (b *ProfileQueryBuilder) WhereIsDefaultIn(v []bool) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.IsDefaultIn(b.query, v)
+	return b
+}
+
+// WhereIsDefaultNotIn adds a WHERE is_default NOT IN (?) condition
+func (b *ProfileQueryBuilder) WhereIsDefaultNotIn(v []bool) *ProfileQueryBuilder {
+	b.query = ProfileQuery.Where.IsDefaultNotIn(b.query, v)
 	return b
 }
 
@@ -3301,4 +3512,138 @@ func (b *ProfileQueryBuilder) First(ctx context.Context) (*Profile, error) {
 // ProfileBuild creates a chainable query builder
 func ProfileBuild(db bun.IDB) *ProfileQueryBuilder {
 	return NewProfileQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *ProfileQueryBuilder) LoadBusinessUnit() *ProfileQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *ProfileQueryBuilder) LoadOrganization() *ProfileQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Profile
+func (b *ProfileQueryBuilder) LoadAllRelations() *ProfileQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
+}
+
+// ProfileRelationChain provides a fluent API for building nested relationship chains
+type ProfileRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewProfileRelationChain creates a new relation chain builder
+func NewProfileRelationChain() *ProfileRelationChain {
+	return &ProfileRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *ProfileRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ProfileRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *ProfileRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *ProfileRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *ProfileQueryBuilder) WithBusinessUnit() *ProfileRelationChainBuilder {
+	chain := &ProfileRelationChainBuilder{
+		parent: b,
+		chain:  NewProfileRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *ProfileQueryBuilder) WithOrganization() *ProfileRelationChainBuilder {
+	chain := &ProfileRelationChainBuilder{
+		parent: b,
+		chain:  NewProfileRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// ProfileRelationChainBuilder provides fluent API for building nested relations
+type ProfileRelationChainBuilder struct {
+	parent *ProfileQueryBuilder
+	chain  *ProfileRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *ProfileRelationChainBuilder) Load() *ProfileQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *ProfileRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ProfileRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *ProfileRelationChainBuilder) OrderBy(order string) *ProfileRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *ProfileRelationChainBuilder) Where(condition string, args ...interface{}) *ProfileRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

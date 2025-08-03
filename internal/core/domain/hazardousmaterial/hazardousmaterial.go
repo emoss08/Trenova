@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 package hazardousmaterial
 
 import (
@@ -22,7 +27,7 @@ var (
 type HazardousMaterial struct {
 	bun.BaseModel `bun:"table:hazardous_materials,alias:hm" json:"-"`
 
-	ID                          pulid.ID       `json:"id "                         bun:"id,pk,type:VARCHAR(100)"`
+	ID                          pulid.ID       `json:"id"                          bun:"id,pk,type:VARCHAR(100)"`
 	BusinessUnitID              pulid.ID       `json:"businessUnitId"              bun:"business_unit_id,notnull,type:VARCHAR(100),pk"`
 	OrganizationID              pulid.ID       `json:"organizationId"              bun:"organization_id,notnull,type:VARCHAR(100),pk"`
 	Status                      domain.Status  `json:"status"                      bun:"status,type:status,default:'Active'"`

@@ -48,10 +48,16 @@ var ConsolidationSettingsQuery = struct {
 	Where struct {
 		IDEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		MaxPickupDistanceEQ       func(q *bun.SelectQuery, v float64) *bun.SelectQuery
 		MaxPickupDistanceNEQ      func(q *bun.SelectQuery, v float64) *bun.SelectQuery
 		MaxPickupDistanceIn       func(q *bun.SelectQuery, v []float64) *bun.SelectQuery
@@ -146,6 +152,11 @@ var ConsolidationSettingsQuery = struct {
 	FieldConfig  func() map[string]consolidationSettingsFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "consolidation_settings",
@@ -197,10 +208,16 @@ var ConsolidationSettingsQuery = struct {
 	Where: struct {
 		IDEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		MaxPickupDistanceEQ       func(q *bun.SelectQuery, v float64) *bun.SelectQuery
 		MaxPickupDistanceNEQ      func(q *bun.SelectQuery, v float64) *bun.SelectQuery
 		MaxPickupDistanceIn       func(q *bun.SelectQuery, v []float64) *bun.SelectQuery
@@ -281,17 +298,35 @@ var ConsolidationSettingsQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cs.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cs.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cs.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cs.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cs.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cs.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cs.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cs.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cs.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cs.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cs.organization_id"), bun.In(v))
 		},
 		MaxPickupDistanceEQ: func(q *bun.SelectQuery, v float64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cs.max_pickup_distance"), v)
@@ -799,6 +834,14 @@ var ConsolidationSettingsQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // ConsolidationSettingsQueryBuilder provides a fluent interface for building queries
@@ -843,6 +886,18 @@ func (b *ConsolidationSettingsQueryBuilder) WhereIDNEQ(v pulid.ID) *Consolidatio
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *ConsolidationSettingsQueryBuilder) WhereIDIn(v []pulid.ID) *ConsolidationSettingsQueryBuilder {
+	b.query = ConsolidationSettingsQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *ConsolidationSettingsQueryBuilder) WhereIDNotIn(v []pulid.ID) *ConsolidationSettingsQueryBuilder {
+	b.query = ConsolidationSettingsQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *ConsolidationSettingsQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ConsolidationSettingsQueryBuilder {
 	b.query = ConsolidationSettingsQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -855,6 +910,18 @@ func (b *ConsolidationSettingsQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *ConsolidationSettingsQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *ConsolidationSettingsQueryBuilder {
+	b.query = ConsolidationSettingsQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *ConsolidationSettingsQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *ConsolidationSettingsQueryBuilder {
+	b.query = ConsolidationSettingsQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *ConsolidationSettingsQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *ConsolidationSettingsQueryBuilder {
 	b.query = ConsolidationSettingsQuery.Where.OrganizationIDEQ(b.query, v)
@@ -864,6 +931,18 @@ func (b *ConsolidationSettingsQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *C
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *ConsolidationSettingsQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *ConsolidationSettingsQueryBuilder {
 	b.query = ConsolidationSettingsQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *ConsolidationSettingsQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *ConsolidationSettingsQueryBuilder {
+	b.query = ConsolidationSettingsQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *ConsolidationSettingsQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *ConsolidationSettingsQueryBuilder {
+	b.query = ConsolidationSettingsQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1399,4 +1478,138 @@ func (b *ConsolidationSettingsQueryBuilder) First(ctx context.Context) (*Consoli
 // ConsolidationSettingsBuild creates a chainable query builder
 func ConsolidationSettingsBuild(db bun.IDB) *ConsolidationSettingsQueryBuilder {
 	return NewConsolidationSettingsQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *ConsolidationSettingsQueryBuilder) LoadBusinessUnit() *ConsolidationSettingsQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *ConsolidationSettingsQueryBuilder) LoadOrganization() *ConsolidationSettingsQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for ConsolidationSettings
+func (b *ConsolidationSettingsQueryBuilder) LoadAllRelations() *ConsolidationSettingsQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
+}
+
+// ConsolidationSettingsRelationChain provides a fluent API for building nested relationship chains
+type ConsolidationSettingsRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewConsolidationSettingsRelationChain creates a new relation chain builder
+func NewConsolidationSettingsRelationChain() *ConsolidationSettingsRelationChain {
+	return &ConsolidationSettingsRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *ConsolidationSettingsRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ConsolidationSettingsRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *ConsolidationSettingsRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *ConsolidationSettingsRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *ConsolidationSettingsQueryBuilder) WithBusinessUnit() *ConsolidationSettingsRelationChainBuilder {
+	chain := &ConsolidationSettingsRelationChainBuilder{
+		parent: b,
+		chain:  NewConsolidationSettingsRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *ConsolidationSettingsQueryBuilder) WithOrganization() *ConsolidationSettingsRelationChainBuilder {
+	chain := &ConsolidationSettingsRelationChainBuilder{
+		parent: b,
+		chain:  NewConsolidationSettingsRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// ConsolidationSettingsRelationChainBuilder provides fluent API for building nested relations
+type ConsolidationSettingsRelationChainBuilder struct {
+	parent *ConsolidationSettingsQueryBuilder
+	chain  *ConsolidationSettingsRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *ConsolidationSettingsRelationChainBuilder) Load() *ConsolidationSettingsQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *ConsolidationSettingsRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ConsolidationSettingsRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *ConsolidationSettingsRelationChainBuilder) OrderBy(order string) *ConsolidationSettingsRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *ConsolidationSettingsRelationChainBuilder) Where(condition string, args ...interface{}) *ConsolidationSettingsRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

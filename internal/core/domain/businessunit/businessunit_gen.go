@@ -56,10 +56,16 @@ var BusinessUnitQuery = struct {
 	Where struct {
 		IDEQ                          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StateIDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		StateIDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		StateIDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StateIDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ParentBusinessUnitIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ParentBusinessUnitIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ParentBusinessUnitIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ParentBusinessUnitIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ParentBusinessUnitIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ParentBusinessUnitIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		NameEQ                        func(q *bun.SelectQuery, v string) *bun.SelectQuery
@@ -207,6 +213,8 @@ var BusinessUnitQuery = struct {
 		TaxIDHasSuffix                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		MetadataEQ                    func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		MetadataNEQ                   func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn                    func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn                 func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		VersionEQ                     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn                     func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -253,6 +261,11 @@ var BusinessUnitQuery = struct {
 	FieldConfig  func() map[string]businessUnitFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		ParentBusinessUnit string
+		State              string
+	}
 }{
 	// Table and alias constants
 	Table:    "business_units",
@@ -320,10 +333,16 @@ var BusinessUnitQuery = struct {
 	Where: struct {
 		IDEQ                          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		StateIDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		StateIDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		StateIDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		StateIDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ParentBusinessUnitIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		ParentBusinessUnitIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		ParentBusinessUnitIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		ParentBusinessUnitIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		ParentBusinessUnitIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		ParentBusinessUnitIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		NameEQ                        func(q *bun.SelectQuery, v string) *bun.SelectQuery
@@ -471,6 +490,8 @@ var BusinessUnitQuery = struct {
 		TaxIDHasSuffix                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		MetadataEQ                    func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		MetadataNEQ                   func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn                    func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn                 func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		VersionEQ                     func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn                     func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -502,17 +523,35 @@ var BusinessUnitQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bu.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bu.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bu.id"), bun.In(v))
+		},
 		StateIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("bu.state_id"), v)
 		},
 		StateIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bu.state_id"), v)
 		},
+		StateIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bu.state_id"), bun.In(v))
+		},
+		StateIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bu.state_id"), bun.In(v))
+		},
 		ParentBusinessUnitIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("bu.parent_business_unit_id"), v)
 		},
 		ParentBusinessUnitIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bu.parent_business_unit_id"), v)
+		},
+		ParentBusinessUnitIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bu.parent_business_unit_id"), bun.In(v))
+		},
+		ParentBusinessUnitIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bu.parent_business_unit_id"), bun.In(v))
 		},
 		ParentBusinessUnitIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("bu.parent_business_unit_id"))
@@ -954,6 +993,12 @@ var BusinessUnitQuery = struct {
 		},
 		MetadataNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("bu.metadata"), v)
+		},
+		MetadataIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("bu.metadata"), bun.In(v))
+		},
+		MetadataNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("bu.metadata"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("bu.version"), v)
@@ -1463,6 +1508,14 @@ var BusinessUnitQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		ParentBusinessUnit string
+		State              string
+	}{
+		ParentBusinessUnit: "ParentBusinessUnit",
+		State:              "State",
+	},
 }
 
 // BusinessUnitQueryBuilder provides a fluent interface for building queries
@@ -1507,6 +1560,18 @@ func (b *BusinessUnitQueryBuilder) WhereIDNEQ(v pulid.ID) *BusinessUnitQueryBuil
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *BusinessUnitQueryBuilder) WhereIDIn(v []pulid.ID) *BusinessUnitQueryBuilder {
+	b.query = BusinessUnitQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *BusinessUnitQueryBuilder) WhereIDNotIn(v []pulid.ID) *BusinessUnitQueryBuilder {
+	b.query = BusinessUnitQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereStateIDEQ adds a WHERE state_id = ? condition
 func (b *BusinessUnitQueryBuilder) WhereStateIDEQ(v pulid.ID) *BusinessUnitQueryBuilder {
 	b.query = BusinessUnitQuery.Where.StateIDEQ(b.query, v)
@@ -1519,6 +1584,18 @@ func (b *BusinessUnitQueryBuilder) WhereStateIDNEQ(v pulid.ID) *BusinessUnitQuer
 	return b
 }
 
+// WhereStateIDIn adds a WHERE state_id IN (?) condition
+func (b *BusinessUnitQueryBuilder) WhereStateIDIn(v []pulid.ID) *BusinessUnitQueryBuilder {
+	b.query = BusinessUnitQuery.Where.StateIDIn(b.query, v)
+	return b
+}
+
+// WhereStateIDNotIn adds a WHERE state_id NOT IN (?) condition
+func (b *BusinessUnitQueryBuilder) WhereStateIDNotIn(v []pulid.ID) *BusinessUnitQueryBuilder {
+	b.query = BusinessUnitQuery.Where.StateIDNotIn(b.query, v)
+	return b
+}
+
 // WhereParentBusinessUnitIDEQ adds a WHERE parent_business_unit_id = ? condition
 func (b *BusinessUnitQueryBuilder) WhereParentBusinessUnitIDEQ(v *pulid.ID) *BusinessUnitQueryBuilder {
 	b.query = BusinessUnitQuery.Where.ParentBusinessUnitIDEQ(b.query, v)
@@ -1528,6 +1605,18 @@ func (b *BusinessUnitQueryBuilder) WhereParentBusinessUnitIDEQ(v *pulid.ID) *Bus
 // WhereParentBusinessUnitIDNEQ adds a WHERE parent_business_unit_id != ? condition
 func (b *BusinessUnitQueryBuilder) WhereParentBusinessUnitIDNEQ(v *pulid.ID) *BusinessUnitQueryBuilder {
 	b.query = BusinessUnitQuery.Where.ParentBusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereParentBusinessUnitIDIn adds a WHERE parent_business_unit_id IN (?) condition
+func (b *BusinessUnitQueryBuilder) WhereParentBusinessUnitIDIn(v []*pulid.ID) *BusinessUnitQueryBuilder {
+	b.query = BusinessUnitQuery.Where.ParentBusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereParentBusinessUnitIDNotIn adds a WHERE parent_business_unit_id NOT IN (?) condition
+func (b *BusinessUnitQueryBuilder) WhereParentBusinessUnitIDNotIn(v []*pulid.ID) *BusinessUnitQueryBuilder {
+	b.query = BusinessUnitQuery.Where.ParentBusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -2089,6 +2178,18 @@ func (b *BusinessUnitQueryBuilder) WhereMetadataNEQ(v map[string]any) *BusinessU
 	return b
 }
 
+// WhereMetadataIn adds a WHERE metadata IN (?) condition
+func (b *BusinessUnitQueryBuilder) WhereMetadataIn(v []map[string]any) *BusinessUnitQueryBuilder {
+	b.query = BusinessUnitQuery.Where.MetadataIn(b.query, v)
+	return b
+}
+
+// WhereMetadataNotIn adds a WHERE metadata NOT IN (?) condition
+func (b *BusinessUnitQueryBuilder) WhereMetadataNotIn(v []map[string]any) *BusinessUnitQueryBuilder {
+	b.query = BusinessUnitQuery.Where.MetadataNotIn(b.query, v)
+	return b
+}
+
 // WhereVersionEQ adds a WHERE version = ? condition
 func (b *BusinessUnitQueryBuilder) WhereVersionEQ(v int64) *BusinessUnitQueryBuilder {
 	b.query = BusinessUnitQuery.Where.VersionEQ(b.query, v)
@@ -2328,4 +2429,138 @@ func (b *BusinessUnitQueryBuilder) First(ctx context.Context) (*BusinessUnit, er
 // BusinessUnitBuild creates a chainable query builder
 func BusinessUnitBuild(db bun.IDB) *BusinessUnitQueryBuilder {
 	return NewBusinessUnitQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadParentBusinessUnit loads the ParentBusinessUnit relationship
+func (b *BusinessUnitQueryBuilder) LoadParentBusinessUnit() *BusinessUnitQueryBuilder {
+	b.query = b.query.Relation("ParentBusinessUnit")
+	return b
+}
+
+// LoadState loads the State relationship
+func (b *BusinessUnitQueryBuilder) LoadState() *BusinessUnitQueryBuilder {
+	b.query = b.query.Relation("State")
+	return b
+}
+
+// LoadAllRelations loads all relationships for BusinessUnit
+func (b *BusinessUnitQueryBuilder) LoadAllRelations() *BusinessUnitQueryBuilder {
+	b.LoadParentBusinessUnit()
+	b.LoadState()
+	return b
+}
+
+// BusinessUnitRelationChain provides a fluent API for building nested relationship chains
+type BusinessUnitRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewBusinessUnitRelationChain creates a new relation chain builder
+func NewBusinessUnitRelationChain() *BusinessUnitRelationChain {
+	return &BusinessUnitRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *BusinessUnitRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *BusinessUnitRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *BusinessUnitRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *BusinessUnitRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithParentBusinessUnit creates a relation chain starting with ParentBusinessUnit
+func (b *BusinessUnitQueryBuilder) WithParentBusinessUnit() *BusinessUnitRelationChainBuilder {
+	chain := &BusinessUnitRelationChainBuilder{
+		parent: b,
+		chain:  NewBusinessUnitRelationChain(),
+	}
+	chain.chain.Add("ParentBusinessUnit")
+	return chain
+}
+
+// WithState creates a relation chain starting with State
+func (b *BusinessUnitQueryBuilder) WithState() *BusinessUnitRelationChainBuilder {
+	chain := &BusinessUnitRelationChainBuilder{
+		parent: b,
+		chain:  NewBusinessUnitRelationChain(),
+	}
+	chain.chain.Add("State")
+	return chain
+}
+
+// BusinessUnitRelationChainBuilder provides fluent API for building nested relations
+type BusinessUnitRelationChainBuilder struct {
+	parent *BusinessUnitQueryBuilder
+	chain  *BusinessUnitRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *BusinessUnitRelationChainBuilder) Load() *BusinessUnitQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *BusinessUnitRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *BusinessUnitRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *BusinessUnitRelationChainBuilder) OrderBy(order string) *BusinessUnitRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *BusinessUnitRelationChainBuilder) Where(condition string, args ...interface{}) *BusinessUnitRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

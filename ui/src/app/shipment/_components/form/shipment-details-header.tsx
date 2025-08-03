@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { ShipmentStatusBadge } from "@/components/status-badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatToUserTimezone } from "@/lib/date";
@@ -24,11 +29,7 @@ function ShipmentDetailsHeaderInner({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <div className="flex flex-col px-4 pb-2 border-b border-bg-sidebar-border">
-      {children}
-    </div>
-  );
+  return <div className="flex flex-col px-4 pb-2">{children}</div>;
 }
 
 function ShipmentDetailsHeaderTitle({

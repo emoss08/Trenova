@@ -55,10 +55,16 @@ var DedicatedLaneQuery = struct {
 	Where struct {
 		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -72,34 +78,56 @@ var DedicatedLaneQuery = struct {
 		NameHasSuffix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		StatusEQ                   func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                  func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                   func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn                func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		CustomerIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		CustomerIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CustomerIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CustomerIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OriginLocationIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OriginLocationIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OriginLocationIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OriginLocationIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		DestinationLocationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		DestinationLocationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		DestinationLocationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		DestinationLocationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ServiceTypeIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ServiceTypeIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ServiceTypeIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ServiceTypeIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ShipmentTypeIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ShipmentTypeIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentTypeIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentTypeIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		PrimaryWorkerIDEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		PrimaryWorkerIDNEQ         func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		PrimaryWorkerIDIn          func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		PrimaryWorkerIDNotIn       func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		PrimaryWorkerIDIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		PrimaryWorkerIDIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		SecondaryWorkerIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		SecondaryWorkerIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		SecondaryWorkerIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		SecondaryWorkerIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		SecondaryWorkerIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		SecondaryWorkerIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		TrailerTypeIDEQ            func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TrailerTypeIDNEQ           func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TrailerTypeIDIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TrailerTypeIDNotIn         func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TrailerTypeIDIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		TrailerTypeIDIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		TractorTypeIDEQ            func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TractorTypeIDNEQ           func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TractorTypeIDIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TractorTypeIDNotIn         func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TractorTypeIDIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		TractorTypeIDIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		AutoAssignEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		AutoAssignNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoAssignIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoAssignNotIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -147,6 +175,20 @@ var DedicatedLaneQuery = struct {
 	FieldConfig  func() map[string]dedicatedLaneFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit        string
+		Organization        string
+		ShipmentType        string
+		ServiceType         string
+		Customer            string
+		TractorType         string
+		TrailerType         string
+		OriginLocation      string
+		DestinationLocation string
+		PrimaryWorker       string
+		SecondaryWorker     string
+	}
 }{
 	// Table and alias constants
 	Table:    "dedicated_lanes",
@@ -210,10 +252,16 @@ var DedicatedLaneQuery = struct {
 	Where: struct {
 		IDEQ                       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ                     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ                    func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn                     func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -227,34 +275,56 @@ var DedicatedLaneQuery = struct {
 		NameHasSuffix              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		StatusEQ                   func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
 		StatusNEQ                  func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery
+		StatusIn                   func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
+		StatusNotIn                func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery
 		CustomerIDEQ               func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		CustomerIDNEQ              func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		CustomerIDIn               func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		CustomerIDNotIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OriginLocationIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OriginLocationIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OriginLocationIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OriginLocationIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		DestinationLocationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		DestinationLocationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		DestinationLocationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		DestinationLocationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ServiceTypeIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ServiceTypeIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ServiceTypeIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ServiceTypeIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ShipmentTypeIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		ShipmentTypeIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentTypeIDIn           func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentTypeIDNotIn        func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		PrimaryWorkerIDEQ          func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		PrimaryWorkerIDNEQ         func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		PrimaryWorkerIDIn          func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		PrimaryWorkerIDNotIn       func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		PrimaryWorkerIDIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		PrimaryWorkerIDIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		SecondaryWorkerIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		SecondaryWorkerIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		SecondaryWorkerIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		SecondaryWorkerIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		SecondaryWorkerIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		SecondaryWorkerIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		TrailerTypeIDEQ            func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TrailerTypeIDNEQ           func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TrailerTypeIDIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TrailerTypeIDNotIn         func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TrailerTypeIDIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		TrailerTypeIDIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		TractorTypeIDEQ            func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		TractorTypeIDNEQ           func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		TractorTypeIDIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		TractorTypeIDNotIn         func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		TractorTypeIDIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		TractorTypeIDIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		AutoAssignEQ               func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		AutoAssignNEQ              func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		AutoAssignIn               func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		AutoAssignNotIn            func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ                  func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ                 func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn                  func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -287,17 +357,35 @@ var DedicatedLaneQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dl.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dl.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.organization_id"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dl.name"), v)
@@ -338,11 +426,23 @@ var DedicatedLaneQuery = struct {
 		StatusNEQ: func(q *bun.SelectQuery, v domain.Status) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.status"), v)
 		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.Status) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.status"), bun.In(v))
+		},
 		CustomerIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dl.customer_id"), v)
 		},
 		CustomerIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.customer_id"), v)
+		},
+		CustomerIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.customer_id"), bun.In(v))
+		},
+		CustomerIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.customer_id"), bun.In(v))
 		},
 		OriginLocationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dl.origin_location_id"), v)
@@ -350,11 +450,23 @@ var DedicatedLaneQuery = struct {
 		OriginLocationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.origin_location_id"), v)
 		},
+		OriginLocationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.origin_location_id"), bun.In(v))
+		},
+		OriginLocationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.origin_location_id"), bun.In(v))
+		},
 		DestinationLocationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dl.destination_location_id"), v)
 		},
 		DestinationLocationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.destination_location_id"), v)
+		},
+		DestinationLocationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.destination_location_id"), bun.In(v))
+		},
+		DestinationLocationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.destination_location_id"), bun.In(v))
 		},
 		ServiceTypeIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dl.service_type_id"), v)
@@ -362,17 +474,35 @@ var DedicatedLaneQuery = struct {
 		ServiceTypeIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.service_type_id"), v)
 		},
+		ServiceTypeIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.service_type_id"), bun.In(v))
+		},
+		ServiceTypeIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.service_type_id"), bun.In(v))
+		},
 		ShipmentTypeIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dl.shipment_type_id"), v)
 		},
 		ShipmentTypeIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.shipment_type_id"), v)
 		},
+		ShipmentTypeIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.shipment_type_id"), bun.In(v))
+		},
+		ShipmentTypeIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.shipment_type_id"), bun.In(v))
+		},
 		PrimaryWorkerIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dl.primary_worker_id"), v)
 		},
 		PrimaryWorkerIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.primary_worker_id"), v)
+		},
+		PrimaryWorkerIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.primary_worker_id"), bun.In(v))
+		},
+		PrimaryWorkerIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.primary_worker_id"), bun.In(v))
 		},
 		PrimaryWorkerIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("dl.primary_worker_id"))
@@ -386,6 +516,12 @@ var DedicatedLaneQuery = struct {
 		SecondaryWorkerIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.secondary_worker_id"), v)
 		},
+		SecondaryWorkerIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.secondary_worker_id"), bun.In(v))
+		},
+		SecondaryWorkerIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.secondary_worker_id"), bun.In(v))
+		},
 		SecondaryWorkerIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("dl.secondary_worker_id"))
 		},
@@ -397,6 +533,12 @@ var DedicatedLaneQuery = struct {
 		},
 		TrailerTypeIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.trailer_type_id"), v)
+		},
+		TrailerTypeIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.trailer_type_id"), bun.In(v))
+		},
+		TrailerTypeIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.trailer_type_id"), bun.In(v))
 		},
 		TrailerTypeIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("dl.trailer_type_id"))
@@ -410,6 +552,12 @@ var DedicatedLaneQuery = struct {
 		TractorTypeIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.tractor_type_id"), v)
 		},
+		TractorTypeIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.tractor_type_id"), bun.In(v))
+		},
+		TractorTypeIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.tractor_type_id"), bun.In(v))
+		},
 		TractorTypeIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("dl.tractor_type_id"))
 		},
@@ -421,6 +569,12 @@ var DedicatedLaneQuery = struct {
 		},
 		AutoAssignNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("dl.auto_assign"), v)
+		},
+		AutoAssignIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("dl.auto_assign"), bun.In(v))
+		},
+		AutoAssignNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("dl.auto_assign"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("dl.version"), v)
@@ -900,6 +1054,32 @@ var DedicatedLaneQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit        string
+		Organization        string
+		ShipmentType        string
+		ServiceType         string
+		Customer            string
+		TractorType         string
+		TrailerType         string
+		OriginLocation      string
+		DestinationLocation string
+		PrimaryWorker       string
+		SecondaryWorker     string
+	}{
+		BusinessUnit:        "BusinessUnit",
+		Organization:        "Organization",
+		ShipmentType:        "ShipmentType",
+		ServiceType:         "ServiceType",
+		Customer:            "Customer",
+		TractorType:         "TractorType",
+		TrailerType:         "TrailerType",
+		OriginLocation:      "OriginLocation",
+		DestinationLocation: "DestinationLocation",
+		PrimaryWorker:       "PrimaryWorker",
+		SecondaryWorker:     "SecondaryWorker",
+	},
 }
 
 // DedicatedLaneQueryBuilder provides a fluent interface for building queries
@@ -944,6 +1124,18 @@ func (b *DedicatedLaneQueryBuilder) WhereIDNEQ(v pulid.ID) *DedicatedLaneQueryBu
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereIDIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereIDNotIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *DedicatedLaneQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -956,6 +1148,18 @@ func (b *DedicatedLaneQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *Dedicate
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *DedicatedLaneQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.OrganizationIDEQ(b.query, v)
@@ -965,6 +1169,18 @@ func (b *DedicatedLaneQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *Dedicated
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *DedicatedLaneQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1022,6 +1238,18 @@ func (b *DedicatedLaneQueryBuilder) WhereStatusNEQ(v domain.Status) *DedicatedLa
 	return b
 }
 
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereStatusIn(v []domain.Status) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereStatusNotIn(v []domain.Status) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.StatusNotIn(b.query, v)
+	return b
+}
+
 // WhereCustomerIDEQ adds a WHERE customer_id = ? condition
 func (b *DedicatedLaneQueryBuilder) WhereCustomerIDEQ(v pulid.ID) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.CustomerIDEQ(b.query, v)
@@ -1031,6 +1259,18 @@ func (b *DedicatedLaneQueryBuilder) WhereCustomerIDEQ(v pulid.ID) *DedicatedLane
 // WhereCustomerIDNEQ adds a WHERE customer_id != ? condition
 func (b *DedicatedLaneQueryBuilder) WhereCustomerIDNEQ(v pulid.ID) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.CustomerIDNEQ(b.query, v)
+	return b
+}
+
+// WhereCustomerIDIn adds a WHERE customer_id IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereCustomerIDIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.CustomerIDIn(b.query, v)
+	return b
+}
+
+// WhereCustomerIDNotIn adds a WHERE customer_id NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereCustomerIDNotIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.CustomerIDNotIn(b.query, v)
 	return b
 }
 
@@ -1046,6 +1286,18 @@ func (b *DedicatedLaneQueryBuilder) WhereOriginLocationIDNEQ(v pulid.ID) *Dedica
 	return b
 }
 
+// WhereOriginLocationIDIn adds a WHERE origin_location_id IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereOriginLocationIDIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.OriginLocationIDIn(b.query, v)
+	return b
+}
+
+// WhereOriginLocationIDNotIn adds a WHERE origin_location_id NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereOriginLocationIDNotIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.OriginLocationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereDestinationLocationIDEQ adds a WHERE destination_location_id = ? condition
 func (b *DedicatedLaneQueryBuilder) WhereDestinationLocationIDEQ(v pulid.ID) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.DestinationLocationIDEQ(b.query, v)
@@ -1055,6 +1307,18 @@ func (b *DedicatedLaneQueryBuilder) WhereDestinationLocationIDEQ(v pulid.ID) *De
 // WhereDestinationLocationIDNEQ adds a WHERE destination_location_id != ? condition
 func (b *DedicatedLaneQueryBuilder) WhereDestinationLocationIDNEQ(v pulid.ID) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.DestinationLocationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereDestinationLocationIDIn adds a WHERE destination_location_id IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereDestinationLocationIDIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.DestinationLocationIDIn(b.query, v)
+	return b
+}
+
+// WhereDestinationLocationIDNotIn adds a WHERE destination_location_id NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereDestinationLocationIDNotIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.DestinationLocationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1070,6 +1334,18 @@ func (b *DedicatedLaneQueryBuilder) WhereServiceTypeIDNEQ(v pulid.ID) *Dedicated
 	return b
 }
 
+// WhereServiceTypeIDIn adds a WHERE service_type_id IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereServiceTypeIDIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.ServiceTypeIDIn(b.query, v)
+	return b
+}
+
+// WhereServiceTypeIDNotIn adds a WHERE service_type_id NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereServiceTypeIDNotIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.ServiceTypeIDNotIn(b.query, v)
+	return b
+}
+
 // WhereShipmentTypeIDEQ adds a WHERE shipment_type_id = ? condition
 func (b *DedicatedLaneQueryBuilder) WhereShipmentTypeIDEQ(v pulid.ID) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.ShipmentTypeIDEQ(b.query, v)
@@ -1079,6 +1355,18 @@ func (b *DedicatedLaneQueryBuilder) WhereShipmentTypeIDEQ(v pulid.ID) *Dedicated
 // WhereShipmentTypeIDNEQ adds a WHERE shipment_type_id != ? condition
 func (b *DedicatedLaneQueryBuilder) WhereShipmentTypeIDNEQ(v pulid.ID) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.ShipmentTypeIDNEQ(b.query, v)
+	return b
+}
+
+// WhereShipmentTypeIDIn adds a WHERE shipment_type_id IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereShipmentTypeIDIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.ShipmentTypeIDIn(b.query, v)
+	return b
+}
+
+// WhereShipmentTypeIDNotIn adds a WHERE shipment_type_id NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereShipmentTypeIDNotIn(v []pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.ShipmentTypeIDNotIn(b.query, v)
 	return b
 }
 
@@ -1094,6 +1382,18 @@ func (b *DedicatedLaneQueryBuilder) WherePrimaryWorkerIDNEQ(v *pulid.ID) *Dedica
 	return b
 }
 
+// WherePrimaryWorkerIDIn adds a WHERE primary_worker_id IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WherePrimaryWorkerIDIn(v []*pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.PrimaryWorkerIDIn(b.query, v)
+	return b
+}
+
+// WherePrimaryWorkerIDNotIn adds a WHERE primary_worker_id NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WherePrimaryWorkerIDNotIn(v []*pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.PrimaryWorkerIDNotIn(b.query, v)
+	return b
+}
+
 // WhereSecondaryWorkerIDEQ adds a WHERE secondary_worker_id = ? condition
 func (b *DedicatedLaneQueryBuilder) WhereSecondaryWorkerIDEQ(v *pulid.ID) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.SecondaryWorkerIDEQ(b.query, v)
@@ -1103,6 +1403,18 @@ func (b *DedicatedLaneQueryBuilder) WhereSecondaryWorkerIDEQ(v *pulid.ID) *Dedic
 // WhereSecondaryWorkerIDNEQ adds a WHERE secondary_worker_id != ? condition
 func (b *DedicatedLaneQueryBuilder) WhereSecondaryWorkerIDNEQ(v *pulid.ID) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.SecondaryWorkerIDNEQ(b.query, v)
+	return b
+}
+
+// WhereSecondaryWorkerIDIn adds a WHERE secondary_worker_id IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereSecondaryWorkerIDIn(v []*pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.SecondaryWorkerIDIn(b.query, v)
+	return b
+}
+
+// WhereSecondaryWorkerIDNotIn adds a WHERE secondary_worker_id NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereSecondaryWorkerIDNotIn(v []*pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.SecondaryWorkerIDNotIn(b.query, v)
 	return b
 }
 
@@ -1118,6 +1430,18 @@ func (b *DedicatedLaneQueryBuilder) WhereTrailerTypeIDNEQ(v *pulid.ID) *Dedicate
 	return b
 }
 
+// WhereTrailerTypeIDIn adds a WHERE trailer_type_id IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereTrailerTypeIDIn(v []*pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.TrailerTypeIDIn(b.query, v)
+	return b
+}
+
+// WhereTrailerTypeIDNotIn adds a WHERE trailer_type_id NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereTrailerTypeIDNotIn(v []*pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.TrailerTypeIDNotIn(b.query, v)
+	return b
+}
+
 // WhereTractorTypeIDEQ adds a WHERE tractor_type_id = ? condition
 func (b *DedicatedLaneQueryBuilder) WhereTractorTypeIDEQ(v *pulid.ID) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.TractorTypeIDEQ(b.query, v)
@@ -1130,6 +1454,18 @@ func (b *DedicatedLaneQueryBuilder) WhereTractorTypeIDNEQ(v *pulid.ID) *Dedicate
 	return b
 }
 
+// WhereTractorTypeIDIn adds a WHERE tractor_type_id IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereTractorTypeIDIn(v []*pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.TractorTypeIDIn(b.query, v)
+	return b
+}
+
+// WhereTractorTypeIDNotIn adds a WHERE tractor_type_id NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereTractorTypeIDNotIn(v []*pulid.ID) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.TractorTypeIDNotIn(b.query, v)
+	return b
+}
+
 // WhereAutoAssignEQ adds a WHERE auto_assign = ? condition
 func (b *DedicatedLaneQueryBuilder) WhereAutoAssignEQ(v bool) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.AutoAssignEQ(b.query, v)
@@ -1139,6 +1475,18 @@ func (b *DedicatedLaneQueryBuilder) WhereAutoAssignEQ(v bool) *DedicatedLaneQuer
 // WhereAutoAssignNEQ adds a WHERE auto_assign != ? condition
 func (b *DedicatedLaneQueryBuilder) WhereAutoAssignNEQ(v bool) *DedicatedLaneQueryBuilder {
 	b.query = DedicatedLaneQuery.Where.AutoAssignNEQ(b.query, v)
+	return b
+}
+
+// WhereAutoAssignIn adds a WHERE auto_assign IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereAutoAssignIn(v []bool) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.AutoAssignIn(b.query, v)
+	return b
+}
+
+// WhereAutoAssignNotIn adds a WHERE auto_assign NOT IN (?) condition
+func (b *DedicatedLaneQueryBuilder) WhereAutoAssignNotIn(v []bool) *DedicatedLaneQueryBuilder {
+	b.query = DedicatedLaneQuery.Where.AutoAssignNotIn(b.query, v)
 	return b
 }
 
@@ -1386,4 +1734,291 @@ func (b *DedicatedLaneQueryBuilder) First(ctx context.Context) (*DedicatedLane, 
 // DedicatedLaneBuild creates a chainable query builder
 func DedicatedLaneBuild(db bun.IDB) *DedicatedLaneQueryBuilder {
 	return NewDedicatedLaneQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *DedicatedLaneQueryBuilder) LoadBusinessUnit() *DedicatedLaneQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *DedicatedLaneQueryBuilder) LoadOrganization() *DedicatedLaneQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadShipmentType loads the ShipmentType relationship
+func (b *DedicatedLaneQueryBuilder) LoadShipmentType() *DedicatedLaneQueryBuilder {
+	b.query = b.query.Relation("ShipmentType")
+	return b
+}
+
+// LoadServiceType loads the ServiceType relationship
+func (b *DedicatedLaneQueryBuilder) LoadServiceType() *DedicatedLaneQueryBuilder {
+	b.query = b.query.Relation("ServiceType")
+	return b
+}
+
+// LoadCustomer loads the Customer relationship
+func (b *DedicatedLaneQueryBuilder) LoadCustomer() *DedicatedLaneQueryBuilder {
+	b.query = b.query.Relation("Customer")
+	return b
+}
+
+// LoadTractorType loads the TractorType relationship
+func (b *DedicatedLaneQueryBuilder) LoadTractorType() *DedicatedLaneQueryBuilder {
+	b.query = b.query.Relation("TractorType")
+	return b
+}
+
+// LoadTrailerType loads the TrailerType relationship
+func (b *DedicatedLaneQueryBuilder) LoadTrailerType() *DedicatedLaneQueryBuilder {
+	b.query = b.query.Relation("TrailerType")
+	return b
+}
+
+// LoadOriginLocation loads the OriginLocation relationship
+func (b *DedicatedLaneQueryBuilder) LoadOriginLocation() *DedicatedLaneQueryBuilder {
+	b.query = b.query.Relation("OriginLocation")
+	return b
+}
+
+// LoadDestinationLocation loads the DestinationLocation relationship
+func (b *DedicatedLaneQueryBuilder) LoadDestinationLocation() *DedicatedLaneQueryBuilder {
+	b.query = b.query.Relation("DestinationLocation")
+	return b
+}
+
+// LoadPrimaryWorker loads the PrimaryWorker relationship
+func (b *DedicatedLaneQueryBuilder) LoadPrimaryWorker() *DedicatedLaneQueryBuilder {
+	b.query = b.query.Relation("PrimaryWorker")
+	return b
+}
+
+// LoadSecondaryWorker loads the SecondaryWorker relationship
+func (b *DedicatedLaneQueryBuilder) LoadSecondaryWorker() *DedicatedLaneQueryBuilder {
+	b.query = b.query.Relation("SecondaryWorker")
+	return b
+}
+
+// LoadAllRelations loads all relationships for DedicatedLane
+func (b *DedicatedLaneQueryBuilder) LoadAllRelations() *DedicatedLaneQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadShipmentType()
+	b.LoadServiceType()
+	b.LoadCustomer()
+	b.LoadTractorType()
+	b.LoadTrailerType()
+	b.LoadOriginLocation()
+	b.LoadDestinationLocation()
+	b.LoadPrimaryWorker()
+	b.LoadSecondaryWorker()
+	return b
+}
+
+// DedicatedLaneRelationChain provides a fluent API for building nested relationship chains
+type DedicatedLaneRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewDedicatedLaneRelationChain creates a new relation chain builder
+func NewDedicatedLaneRelationChain() *DedicatedLaneRelationChain {
+	return &DedicatedLaneRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *DedicatedLaneRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *DedicatedLaneRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *DedicatedLaneRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *DedicatedLaneRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *DedicatedLaneQueryBuilder) WithBusinessUnit() *DedicatedLaneRelationChainBuilder {
+	chain := &DedicatedLaneRelationChainBuilder{
+		parent: b,
+		chain:  NewDedicatedLaneRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *DedicatedLaneQueryBuilder) WithOrganization() *DedicatedLaneRelationChainBuilder {
+	chain := &DedicatedLaneRelationChainBuilder{
+		parent: b,
+		chain:  NewDedicatedLaneRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithShipmentType creates a relation chain starting with ShipmentType
+func (b *DedicatedLaneQueryBuilder) WithShipmentType() *DedicatedLaneRelationChainBuilder {
+	chain := &DedicatedLaneRelationChainBuilder{
+		parent: b,
+		chain:  NewDedicatedLaneRelationChain(),
+	}
+	chain.chain.Add("ShipmentType")
+	return chain
+}
+
+// WithServiceType creates a relation chain starting with ServiceType
+func (b *DedicatedLaneQueryBuilder) WithServiceType() *DedicatedLaneRelationChainBuilder {
+	chain := &DedicatedLaneRelationChainBuilder{
+		parent: b,
+		chain:  NewDedicatedLaneRelationChain(),
+	}
+	chain.chain.Add("ServiceType")
+	return chain
+}
+
+// WithCustomer creates a relation chain starting with Customer
+func (b *DedicatedLaneQueryBuilder) WithCustomer() *DedicatedLaneRelationChainBuilder {
+	chain := &DedicatedLaneRelationChainBuilder{
+		parent: b,
+		chain:  NewDedicatedLaneRelationChain(),
+	}
+	chain.chain.Add("Customer")
+	return chain
+}
+
+// WithTractorType creates a relation chain starting with TractorType
+func (b *DedicatedLaneQueryBuilder) WithTractorType() *DedicatedLaneRelationChainBuilder {
+	chain := &DedicatedLaneRelationChainBuilder{
+		parent: b,
+		chain:  NewDedicatedLaneRelationChain(),
+	}
+	chain.chain.Add("TractorType")
+	return chain
+}
+
+// WithTrailerType creates a relation chain starting with TrailerType
+func (b *DedicatedLaneQueryBuilder) WithTrailerType() *DedicatedLaneRelationChainBuilder {
+	chain := &DedicatedLaneRelationChainBuilder{
+		parent: b,
+		chain:  NewDedicatedLaneRelationChain(),
+	}
+	chain.chain.Add("TrailerType")
+	return chain
+}
+
+// WithOriginLocation creates a relation chain starting with OriginLocation
+func (b *DedicatedLaneQueryBuilder) WithOriginLocation() *DedicatedLaneRelationChainBuilder {
+	chain := &DedicatedLaneRelationChainBuilder{
+		parent: b,
+		chain:  NewDedicatedLaneRelationChain(),
+	}
+	chain.chain.Add("OriginLocation")
+	return chain
+}
+
+// WithDestinationLocation creates a relation chain starting with DestinationLocation
+func (b *DedicatedLaneQueryBuilder) WithDestinationLocation() *DedicatedLaneRelationChainBuilder {
+	chain := &DedicatedLaneRelationChainBuilder{
+		parent: b,
+		chain:  NewDedicatedLaneRelationChain(),
+	}
+	chain.chain.Add("DestinationLocation")
+	return chain
+}
+
+// WithPrimaryWorker creates a relation chain starting with PrimaryWorker
+func (b *DedicatedLaneQueryBuilder) WithPrimaryWorker() *DedicatedLaneRelationChainBuilder {
+	chain := &DedicatedLaneRelationChainBuilder{
+		parent: b,
+		chain:  NewDedicatedLaneRelationChain(),
+	}
+	chain.chain.Add("PrimaryWorker")
+	return chain
+}
+
+// WithSecondaryWorker creates a relation chain starting with SecondaryWorker
+func (b *DedicatedLaneQueryBuilder) WithSecondaryWorker() *DedicatedLaneRelationChainBuilder {
+	chain := &DedicatedLaneRelationChainBuilder{
+		parent: b,
+		chain:  NewDedicatedLaneRelationChain(),
+	}
+	chain.chain.Add("SecondaryWorker")
+	return chain
+}
+
+// DedicatedLaneRelationChainBuilder provides fluent API for building nested relations
+type DedicatedLaneRelationChainBuilder struct {
+	parent *DedicatedLaneQueryBuilder
+	chain  *DedicatedLaneRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *DedicatedLaneRelationChainBuilder) Load() *DedicatedLaneQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *DedicatedLaneRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *DedicatedLaneRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *DedicatedLaneRelationChainBuilder) OrderBy(order string) *DedicatedLaneRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *DedicatedLaneRelationChainBuilder) Where(condition string, args ...interface{}) *DedicatedLaneRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

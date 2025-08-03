@@ -47,58 +47,70 @@ var AdditionalChargeQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		IDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ShipmentIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ShipmentIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		AccessorialChargeIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		AccessorialChargeIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		MethodEQ               func(q *bun.SelectQuery, v accessorialcharge.Method) *bun.SelectQuery
-		MethodNEQ              func(q *bun.SelectQuery, v accessorialcharge.Method) *bun.SelectQuery
-		AmountEQ               func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		AmountNEQ              func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		AmountIn               func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
-		AmountNotIn            func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
-		AmountGT               func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		AmountGTE              func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		AmountLT               func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		AmountLTE              func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		UnitEQ                 func(q *bun.SelectQuery, v int16) *bun.SelectQuery
-		UnitNEQ                func(q *bun.SelectQuery, v int16) *bun.SelectQuery
-		UnitIn                 func(q *bun.SelectQuery, v []int16) *bun.SelectQuery
-		UnitNotIn              func(q *bun.SelectQuery, v []int16) *bun.SelectQuery
-		UnitGT                 func(q *bun.SelectQuery, v int16) *bun.SelectQuery
-		UnitGTE                func(q *bun.SelectQuery, v int16) *bun.SelectQuery
-		UnitLT                 func(q *bun.SelectQuery, v int16) *bun.SelectQuery
-		UnitLTE                func(q *bun.SelectQuery, v int16) *bun.SelectQuery
-		VersionEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		IDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		AccessorialChargeIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		AccessorialChargeIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		AccessorialChargeIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		AccessorialChargeIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		MethodEQ                 func(q *bun.SelectQuery, v accessorialcharge.Method) *bun.SelectQuery
+		MethodNEQ                func(q *bun.SelectQuery, v accessorialcharge.Method) *bun.SelectQuery
+		MethodIn                 func(q *bun.SelectQuery, v []accessorialcharge.Method) *bun.SelectQuery
+		MethodNotIn              func(q *bun.SelectQuery, v []accessorialcharge.Method) *bun.SelectQuery
+		AmountEQ                 func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		AmountNEQ                func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		AmountIn                 func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
+		AmountNotIn              func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
+		AmountGT                 func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		AmountGTE                func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		AmountLT                 func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		AmountLTE                func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		UnitEQ                   func(q *bun.SelectQuery, v int16) *bun.SelectQuery
+		UnitNEQ                  func(q *bun.SelectQuery, v int16) *bun.SelectQuery
+		UnitIn                   func(q *bun.SelectQuery, v []int16) *bun.SelectQuery
+		UnitNotIn                func(q *bun.SelectQuery, v []int16) *bun.SelectQuery
+		UnitGT                   func(q *bun.SelectQuery, v int16) *bun.SelectQuery
+		UnitGTE                  func(q *bun.SelectQuery, v int16) *bun.SelectQuery
+		UnitLT                   func(q *bun.SelectQuery, v int16) *bun.SelectQuery
+		UnitLTE                  func(q *bun.SelectQuery, v int16) *bun.SelectQuery
+		VersionEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -121,6 +133,13 @@ var AdditionalChargeQuery = struct {
 	FieldConfig  func() map[string]additionalChargeFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit      string
+		Organization      string
+		Shipment          string
+		AccessorialCharge string
+	}
 }{
 	// Table and alias constants
 	Table:    "additional_charges",
@@ -168,59 +187,71 @@ var AdditionalChargeQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		IDEQ                   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		IDNEQ                  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ       func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ShipmentIDEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		ShipmentIDNEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		AccessorialChargeIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		AccessorialChargeIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		MethodEQ               func(q *bun.SelectQuery, v accessorialcharge.Method) *bun.SelectQuery
-		MethodNEQ              func(q *bun.SelectQuery, v accessorialcharge.Method) *bun.SelectQuery
-		AmountEQ               func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		AmountNEQ              func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		AmountIn               func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
-		AmountNotIn            func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
-		AmountGT               func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		AmountGTE              func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		AmountLT               func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		AmountLTE              func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
-		UnitEQ                 func(q *bun.SelectQuery, v int16) *bun.SelectQuery
-		UnitNEQ                func(q *bun.SelectQuery, v int16) *bun.SelectQuery
-		UnitIn                 func(q *bun.SelectQuery, v []int16) *bun.SelectQuery
-		UnitNotIn              func(q *bun.SelectQuery, v []int16) *bun.SelectQuery
-		UnitGT                 func(q *bun.SelectQuery, v int16) *bun.SelectQuery
-		UnitGTE                func(q *bun.SelectQuery, v int16) *bun.SelectQuery
-		UnitLT                 func(q *bun.SelectQuery, v int16) *bun.SelectQuery
-		UnitLTE                func(q *bun.SelectQuery, v int16) *bun.SelectQuery
-		VersionEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		VersionGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		VersionLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		CreatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		CreatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtNotIn         func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
-		UpdatedAtGT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtGTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLT            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		UpdatedAtLTE           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
-		Tenant                 func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		IDEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDNEQ                    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		ShipmentIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		ShipmentIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		AccessorialChargeIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		AccessorialChargeIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		AccessorialChargeIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		AccessorialChargeIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		MethodEQ                 func(q *bun.SelectQuery, v accessorialcharge.Method) *bun.SelectQuery
+		MethodNEQ                func(q *bun.SelectQuery, v accessorialcharge.Method) *bun.SelectQuery
+		MethodIn                 func(q *bun.SelectQuery, v []accessorialcharge.Method) *bun.SelectQuery
+		MethodNotIn              func(q *bun.SelectQuery, v []accessorialcharge.Method) *bun.SelectQuery
+		AmountEQ                 func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		AmountNEQ                func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		AmountIn                 func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
+		AmountNotIn              func(q *bun.SelectQuery, v []decimal.Decimal) *bun.SelectQuery
+		AmountGT                 func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		AmountGTE                func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		AmountLT                 func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		AmountLTE                func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery
+		UnitEQ                   func(q *bun.SelectQuery, v int16) *bun.SelectQuery
+		UnitNEQ                  func(q *bun.SelectQuery, v int16) *bun.SelectQuery
+		UnitIn                   func(q *bun.SelectQuery, v []int16) *bun.SelectQuery
+		UnitNotIn                func(q *bun.SelectQuery, v []int16) *bun.SelectQuery
+		UnitGT                   func(q *bun.SelectQuery, v int16) *bun.SelectQuery
+		UnitGTE                  func(q *bun.SelectQuery, v int16) *bun.SelectQuery
+		UnitLT                   func(q *bun.SelectQuery, v int16) *bun.SelectQuery
+		UnitLTE                  func(q *bun.SelectQuery, v int16) *bun.SelectQuery
+		VersionEQ                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionNEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionIn                func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionNotIn             func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		VersionGT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionGTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLT                func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		VersionLTE               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		CreatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		CreatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtNEQ             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtIn              func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtNotIn           func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
+		UpdatedAtGT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtGTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLT              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		UpdatedAtLTE             func(q *bun.SelectQuery, v int64) *bun.SelectQuery
+		Tenant                   func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		IDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ac.id"), v)
@@ -228,11 +259,23 @@ var AdditionalChargeQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ac.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ac.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ac.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ac.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ac.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ac.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ac.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ac.organization_id"), v)
@@ -240,11 +283,23 @@ var AdditionalChargeQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ac.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ac.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ac.organization_id"), bun.In(v))
+		},
 		ShipmentIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ac.shipment_id"), v)
 		},
 		ShipmentIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ac.shipment_id"), v)
+		},
+		ShipmentIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ac.shipment_id"), bun.In(v))
+		},
+		ShipmentIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ac.shipment_id"), bun.In(v))
 		},
 		AccessorialChargeIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ac.accessorial_charge_id"), v)
@@ -252,11 +307,23 @@ var AdditionalChargeQuery = struct {
 		AccessorialChargeIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ac.accessorial_charge_id"), v)
 		},
+		AccessorialChargeIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ac.accessorial_charge_id"), bun.In(v))
+		},
+		AccessorialChargeIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ac.accessorial_charge_id"), bun.In(v))
+		},
 		MethodEQ: func(q *bun.SelectQuery, v accessorialcharge.Method) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ac.method"), v)
 		},
 		MethodNEQ: func(q *bun.SelectQuery, v accessorialcharge.Method) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ac.method"), v)
+		},
+		MethodIn: func(q *bun.SelectQuery, v []accessorialcharge.Method) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ac.method"), bun.In(v))
+		},
+		MethodNotIn: func(q *bun.SelectQuery, v []accessorialcharge.Method) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ac.method"), bun.In(v))
 		},
 		AmountEQ: func(q *bun.SelectQuery, v decimal.Decimal) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ac.amount"), v)
@@ -650,6 +717,18 @@ var AdditionalChargeQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit      string
+		Organization      string
+		Shipment          string
+		AccessorialCharge string
+	}{
+		BusinessUnit:      "BusinessUnit",
+		Organization:      "Organization",
+		Shipment:          "Shipment",
+		AccessorialCharge: "AccessorialCharge",
+	},
 }
 
 // AdditionalChargeQueryBuilder provides a fluent interface for building queries
@@ -694,6 +773,18 @@ func (b *AdditionalChargeQueryBuilder) WhereIDNEQ(v pulid.ID) *AdditionalChargeQ
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *AdditionalChargeQueryBuilder) WhereIDIn(v []pulid.ID) *AdditionalChargeQueryBuilder {
+	b.query = AdditionalChargeQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *AdditionalChargeQueryBuilder) WhereIDNotIn(v []pulid.ID) *AdditionalChargeQueryBuilder {
+	b.query = AdditionalChargeQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *AdditionalChargeQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *AdditionalChargeQueryBuilder {
 	b.query = AdditionalChargeQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -703,6 +794,18 @@ func (b *AdditionalChargeQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *Additi
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *AdditionalChargeQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *AdditionalChargeQueryBuilder {
 	b.query = AdditionalChargeQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *AdditionalChargeQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *AdditionalChargeQueryBuilder {
+	b.query = AdditionalChargeQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *AdditionalChargeQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *AdditionalChargeQueryBuilder {
+	b.query = AdditionalChargeQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -718,6 +821,18 @@ func (b *AdditionalChargeQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *Addit
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *AdditionalChargeQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *AdditionalChargeQueryBuilder {
+	b.query = AdditionalChargeQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *AdditionalChargeQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *AdditionalChargeQueryBuilder {
+	b.query = AdditionalChargeQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereShipmentIDEQ adds a WHERE shipment_id = ? condition
 func (b *AdditionalChargeQueryBuilder) WhereShipmentIDEQ(v pulid.ID) *AdditionalChargeQueryBuilder {
 	b.query = AdditionalChargeQuery.Where.ShipmentIDEQ(b.query, v)
@@ -727,6 +842,18 @@ func (b *AdditionalChargeQueryBuilder) WhereShipmentIDEQ(v pulid.ID) *Additional
 // WhereShipmentIDNEQ adds a WHERE shipment_id != ? condition
 func (b *AdditionalChargeQueryBuilder) WhereShipmentIDNEQ(v pulid.ID) *AdditionalChargeQueryBuilder {
 	b.query = AdditionalChargeQuery.Where.ShipmentIDNEQ(b.query, v)
+	return b
+}
+
+// WhereShipmentIDIn adds a WHERE shipment_id IN (?) condition
+func (b *AdditionalChargeQueryBuilder) WhereShipmentIDIn(v []pulid.ID) *AdditionalChargeQueryBuilder {
+	b.query = AdditionalChargeQuery.Where.ShipmentIDIn(b.query, v)
+	return b
+}
+
+// WhereShipmentIDNotIn adds a WHERE shipment_id NOT IN (?) condition
+func (b *AdditionalChargeQueryBuilder) WhereShipmentIDNotIn(v []pulid.ID) *AdditionalChargeQueryBuilder {
+	b.query = AdditionalChargeQuery.Where.ShipmentIDNotIn(b.query, v)
 	return b
 }
 
@@ -742,6 +869,18 @@ func (b *AdditionalChargeQueryBuilder) WhereAccessorialChargeIDNEQ(v pulid.ID) *
 	return b
 }
 
+// WhereAccessorialChargeIDIn adds a WHERE accessorial_charge_id IN (?) condition
+func (b *AdditionalChargeQueryBuilder) WhereAccessorialChargeIDIn(v []pulid.ID) *AdditionalChargeQueryBuilder {
+	b.query = AdditionalChargeQuery.Where.AccessorialChargeIDIn(b.query, v)
+	return b
+}
+
+// WhereAccessorialChargeIDNotIn adds a WHERE accessorial_charge_id NOT IN (?) condition
+func (b *AdditionalChargeQueryBuilder) WhereAccessorialChargeIDNotIn(v []pulid.ID) *AdditionalChargeQueryBuilder {
+	b.query = AdditionalChargeQuery.Where.AccessorialChargeIDNotIn(b.query, v)
+	return b
+}
+
 // WhereMethodEQ adds a WHERE method = ? condition
 func (b *AdditionalChargeQueryBuilder) WhereMethodEQ(v accessorialcharge.Method) *AdditionalChargeQueryBuilder {
 	b.query = AdditionalChargeQuery.Where.MethodEQ(b.query, v)
@@ -751,6 +890,18 @@ func (b *AdditionalChargeQueryBuilder) WhereMethodEQ(v accessorialcharge.Method)
 // WhereMethodNEQ adds a WHERE method != ? condition
 func (b *AdditionalChargeQueryBuilder) WhereMethodNEQ(v accessorialcharge.Method) *AdditionalChargeQueryBuilder {
 	b.query = AdditionalChargeQuery.Where.MethodNEQ(b.query, v)
+	return b
+}
+
+// WhereMethodIn adds a WHERE method IN (?) condition
+func (b *AdditionalChargeQueryBuilder) WhereMethodIn(v []accessorialcharge.Method) *AdditionalChargeQueryBuilder {
+	b.query = AdditionalChargeQuery.Where.MethodIn(b.query, v)
+	return b
+}
+
+// WhereMethodNotIn adds a WHERE method NOT IN (?) condition
+func (b *AdditionalChargeQueryBuilder) WhereMethodNotIn(v []accessorialcharge.Method) *AdditionalChargeQueryBuilder {
+	b.query = AdditionalChargeQuery.Where.MethodNotIn(b.query, v)
 	return b
 }
 
@@ -1094,4 +1245,172 @@ func (b *AdditionalChargeQueryBuilder) First(ctx context.Context) (*AdditionalCh
 // AdditionalChargeBuild creates a chainable query builder
 func AdditionalChargeBuild(db bun.IDB) *AdditionalChargeQueryBuilder {
 	return NewAdditionalChargeQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *AdditionalChargeQueryBuilder) LoadBusinessUnit() *AdditionalChargeQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *AdditionalChargeQueryBuilder) LoadOrganization() *AdditionalChargeQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadShipment loads the Shipment relationship
+func (b *AdditionalChargeQueryBuilder) LoadShipment() *AdditionalChargeQueryBuilder {
+	b.query = b.query.Relation("Shipment")
+	return b
+}
+
+// LoadAccessorialCharge loads the AccessorialCharge relationship
+func (b *AdditionalChargeQueryBuilder) LoadAccessorialCharge() *AdditionalChargeQueryBuilder {
+	b.query = b.query.Relation("AccessorialCharge")
+	return b
+}
+
+// LoadAllRelations loads all relationships for AdditionalCharge
+func (b *AdditionalChargeQueryBuilder) LoadAllRelations() *AdditionalChargeQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadShipment()
+	b.LoadAccessorialCharge()
+	return b
+}
+
+// AdditionalChargeRelationChain provides a fluent API for building nested relationship chains
+type AdditionalChargeRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewAdditionalChargeRelationChain creates a new relation chain builder
+func NewAdditionalChargeRelationChain() *AdditionalChargeRelationChain {
+	return &AdditionalChargeRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *AdditionalChargeRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *AdditionalChargeRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *AdditionalChargeRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *AdditionalChargeRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *AdditionalChargeQueryBuilder) WithBusinessUnit() *AdditionalChargeRelationChainBuilder {
+	chain := &AdditionalChargeRelationChainBuilder{
+		parent: b,
+		chain:  NewAdditionalChargeRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *AdditionalChargeQueryBuilder) WithOrganization() *AdditionalChargeRelationChainBuilder {
+	chain := &AdditionalChargeRelationChainBuilder{
+		parent: b,
+		chain:  NewAdditionalChargeRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithShipment creates a relation chain starting with Shipment
+func (b *AdditionalChargeQueryBuilder) WithShipment() *AdditionalChargeRelationChainBuilder {
+	chain := &AdditionalChargeRelationChainBuilder{
+		parent: b,
+		chain:  NewAdditionalChargeRelationChain(),
+	}
+	chain.chain.Add("Shipment")
+	return chain
+}
+
+// WithAccessorialCharge creates a relation chain starting with AccessorialCharge
+func (b *AdditionalChargeQueryBuilder) WithAccessorialCharge() *AdditionalChargeRelationChainBuilder {
+	chain := &AdditionalChargeRelationChainBuilder{
+		parent: b,
+		chain:  NewAdditionalChargeRelationChain(),
+	}
+	chain.chain.Add("AccessorialCharge")
+	return chain
+}
+
+// AdditionalChargeRelationChainBuilder provides fluent API for building nested relations
+type AdditionalChargeRelationChainBuilder struct {
+	parent *AdditionalChargeQueryBuilder
+	chain  *AdditionalChargeRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *AdditionalChargeRelationChainBuilder) Load() *AdditionalChargeQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *AdditionalChargeRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *AdditionalChargeRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *AdditionalChargeRelationChainBuilder) OrderBy(order string) *AdditionalChargeRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *AdditionalChargeRelationChainBuilder) Where(condition string, args ...interface{}) *AdditionalChargeRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

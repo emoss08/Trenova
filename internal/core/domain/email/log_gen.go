@@ -56,12 +56,20 @@ var LogQuery = struct {
 	Where struct {
 		IDEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		QueueIDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		QueueIDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		QueueIDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		QueueIDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		MessageIDEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		MessageIDNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		MessageIDIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -75,6 +83,8 @@ var LogQuery = struct {
 		MessageIDHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		StatusEQ                  func(q *bun.SelectQuery, v LogStatus) *bun.SelectQuery
 		StatusNEQ                 func(q *bun.SelectQuery, v LogStatus) *bun.SelectQuery
+		StatusIn                  func(q *bun.SelectQuery, v []LogStatus) *bun.SelectQuery
+		StatusNotIn               func(q *bun.SelectQuery, v []LogStatus) *bun.SelectQuery
 		ProviderResponseEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProviderResponseNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProviderResponseIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -88,26 +98,38 @@ var LogQuery = struct {
 		ProviderResponseHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		OpenedAtEQ                func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		OpenedAtNEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		OpenedAtIn                func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		OpenedAtNotIn             func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		OpenedAtIsNull            func(q *bun.SelectQuery) *bun.SelectQuery
 		OpenedAtIsNotNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		ClickedAtEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ClickedAtNEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ClickedAtIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ClickedAtNotIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ClickedAtIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		ClickedAtIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		BouncedAtEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		BouncedAtNEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		BouncedAtIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		BouncedAtNotIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		BouncedAtIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		BouncedAtIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		ComplainedAtEQ            func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ComplainedAtNEQ           func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ComplainedAtIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ComplainedAtNotIn         func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ComplainedAtIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		ComplainedAtIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		UnsubscribedAtEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		UnsubscribedAtNEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		UnsubscribedAtIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		UnsubscribedAtNotIn       func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		UnsubscribedAtIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		UnsubscribedAtIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		BounceTypeEQ              func(q *bun.SelectQuery, v *BounceType) *bun.SelectQuery
 		BounceTypeNEQ             func(q *bun.SelectQuery, v *BounceType) *bun.SelectQuery
+		BounceTypeIn              func(q *bun.SelectQuery, v []*BounceType) *bun.SelectQuery
+		BounceTypeNotIn           func(q *bun.SelectQuery, v []*BounceType) *bun.SelectQuery
 		BounceTypeIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		BounceTypeIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		BounceReasonEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
@@ -123,6 +145,8 @@ var LogQuery = struct {
 		BounceReasonHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		WebhookEventsEQ           func(q *bun.SelectQuery, v []WebhookEvent) *bun.SelectQuery
 		WebhookEventsNEQ          func(q *bun.SelectQuery, v []WebhookEvent) *bun.SelectQuery
+		WebhookEventsIn           func(q *bun.SelectQuery, v [][]WebhookEvent) *bun.SelectQuery
+		WebhookEventsNotIn        func(q *bun.SelectQuery, v [][]WebhookEvent) *bun.SelectQuery
 		UserAgentEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		UserAgentNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		UserAgentIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -147,8 +171,12 @@ var LogQuery = struct {
 		IPAddressHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ClickedURLsEQ             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
 		ClickedURLsNEQ            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ClickedURLsIn             func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		ClickedURLsNotIn          func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
 		MetadataEQ                func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		MetadataNEQ               func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn                func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn             func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		CreatedAtEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -178,6 +206,12 @@ var LogQuery = struct {
 	FieldConfig  func() map[string]logFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+		Queue        string
+	}
 }{
 	// Table and alias constants
 	Table:    "email_logs",
@@ -245,12 +279,20 @@ var LogQuery = struct {
 	Where: struct {
 		IDEQ                      func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                   func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn       func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		QueueIDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		QueueIDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		QueueIDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		QueueIDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		MessageIDEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		MessageIDNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		MessageIDIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -264,6 +306,8 @@ var LogQuery = struct {
 		MessageIDHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		StatusEQ                  func(q *bun.SelectQuery, v LogStatus) *bun.SelectQuery
 		StatusNEQ                 func(q *bun.SelectQuery, v LogStatus) *bun.SelectQuery
+		StatusIn                  func(q *bun.SelectQuery, v []LogStatus) *bun.SelectQuery
+		StatusNotIn               func(q *bun.SelectQuery, v []LogStatus) *bun.SelectQuery
 		ProviderResponseEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProviderResponseNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ProviderResponseIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -277,26 +321,38 @@ var LogQuery = struct {
 		ProviderResponseHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		OpenedAtEQ                func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		OpenedAtNEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		OpenedAtIn                func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		OpenedAtNotIn             func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		OpenedAtIsNull            func(q *bun.SelectQuery) *bun.SelectQuery
 		OpenedAtIsNotNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		ClickedAtEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ClickedAtNEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ClickedAtIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ClickedAtNotIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ClickedAtIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		ClickedAtIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		BouncedAtEQ               func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		BouncedAtNEQ              func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		BouncedAtIn               func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		BouncedAtNotIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		BouncedAtIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		BouncedAtIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		ComplainedAtEQ            func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		ComplainedAtNEQ           func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		ComplainedAtIn            func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		ComplainedAtNotIn         func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		ComplainedAtIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		ComplainedAtIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		UnsubscribedAtEQ          func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		UnsubscribedAtNEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		UnsubscribedAtIn          func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		UnsubscribedAtNotIn       func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		UnsubscribedAtIsNull      func(q *bun.SelectQuery) *bun.SelectQuery
 		UnsubscribedAtIsNotNull   func(q *bun.SelectQuery) *bun.SelectQuery
 		BounceTypeEQ              func(q *bun.SelectQuery, v *BounceType) *bun.SelectQuery
 		BounceTypeNEQ             func(q *bun.SelectQuery, v *BounceType) *bun.SelectQuery
+		BounceTypeIn              func(q *bun.SelectQuery, v []*BounceType) *bun.SelectQuery
+		BounceTypeNotIn           func(q *bun.SelectQuery, v []*BounceType) *bun.SelectQuery
 		BounceTypeIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		BounceTypeIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		BounceReasonEQ            func(q *bun.SelectQuery, v string) *bun.SelectQuery
@@ -312,6 +368,8 @@ var LogQuery = struct {
 		BounceReasonHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		WebhookEventsEQ           func(q *bun.SelectQuery, v []WebhookEvent) *bun.SelectQuery
 		WebhookEventsNEQ          func(q *bun.SelectQuery, v []WebhookEvent) *bun.SelectQuery
+		WebhookEventsIn           func(q *bun.SelectQuery, v [][]WebhookEvent) *bun.SelectQuery
+		WebhookEventsNotIn        func(q *bun.SelectQuery, v [][]WebhookEvent) *bun.SelectQuery
 		UserAgentEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		UserAgentNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		UserAgentIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -336,8 +394,12 @@ var LogQuery = struct {
 		IPAddressHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ClickedURLsEQ             func(q *bun.SelectQuery, v []string) *bun.SelectQuery
 		ClickedURLsNEQ            func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		ClickedURLsIn             func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		ClickedURLsNotIn          func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
 		MetadataEQ                func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		MetadataNEQ               func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		MetadataIn                func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		MetadataNotIn             func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		CreatedAtEQ               func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtNEQ              func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtIn               func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -354,11 +416,23 @@ var LogQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("el.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.organization_id"), bun.In(v))
 		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("el.business_unit_id"), v)
@@ -366,11 +440,23 @@ var LogQuery = struct {
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.business_unit_id"), bun.In(v))
+		},
 		QueueIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("el.queue_id"), v)
 		},
 		QueueIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.queue_id"), v)
+		},
+		QueueIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.queue_id"), bun.In(v))
+		},
+		QueueIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.queue_id"), bun.In(v))
 		},
 		MessageIDEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("el.message_id"), v)
@@ -411,6 +497,12 @@ var LogQuery = struct {
 		StatusNEQ: func(q *bun.SelectQuery, v LogStatus) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.status"), v)
 		},
+		StatusIn: func(q *bun.SelectQuery, v []LogStatus) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []LogStatus) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.status"), bun.In(v))
+		},
 		ProviderResponseEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("el.provider_response"), v)
 		},
@@ -450,6 +542,12 @@ var LogQuery = struct {
 		OpenedAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.opened_at"), v)
 		},
+		OpenedAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.opened_at"), bun.In(v))
+		},
+		OpenedAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.opened_at"), bun.In(v))
+		},
 		OpenedAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("el.opened_at"))
 		},
@@ -461,6 +559,12 @@ var LogQuery = struct {
 		},
 		ClickedAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.clicked_at"), v)
+		},
+		ClickedAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.clicked_at"), bun.In(v))
+		},
+		ClickedAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.clicked_at"), bun.In(v))
 		},
 		ClickedAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("el.clicked_at"))
@@ -474,6 +578,12 @@ var LogQuery = struct {
 		BouncedAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.bounced_at"), v)
 		},
+		BouncedAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.bounced_at"), bun.In(v))
+		},
+		BouncedAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.bounced_at"), bun.In(v))
+		},
 		BouncedAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("el.bounced_at"))
 		},
@@ -485,6 +595,12 @@ var LogQuery = struct {
 		},
 		ComplainedAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.complained_at"), v)
+		},
+		ComplainedAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.complained_at"), bun.In(v))
+		},
+		ComplainedAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.complained_at"), bun.In(v))
 		},
 		ComplainedAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("el.complained_at"))
@@ -498,6 +614,12 @@ var LogQuery = struct {
 		UnsubscribedAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.unsubscribed_at"), v)
 		},
+		UnsubscribedAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.unsubscribed_at"), bun.In(v))
+		},
+		UnsubscribedAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.unsubscribed_at"), bun.In(v))
+		},
 		UnsubscribedAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("el.unsubscribed_at"))
 		},
@@ -509,6 +631,12 @@ var LogQuery = struct {
 		},
 		BounceTypeNEQ: func(q *bun.SelectQuery, v *BounceType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.bounce_type"), v)
+		},
+		BounceTypeIn: func(q *bun.SelectQuery, v []*BounceType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.bounce_type"), bun.In(v))
+		},
+		BounceTypeNotIn: func(q *bun.SelectQuery, v []*BounceType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.bounce_type"), bun.In(v))
 		},
 		BounceTypeIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("el.bounce_type"))
@@ -554,6 +682,12 @@ var LogQuery = struct {
 		},
 		WebhookEventsNEQ: func(q *bun.SelectQuery, v []WebhookEvent) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.webhook_events"), v)
+		},
+		WebhookEventsIn: func(q *bun.SelectQuery, v [][]WebhookEvent) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.webhook_events"), bun.In(v))
+		},
+		WebhookEventsNotIn: func(q *bun.SelectQuery, v [][]WebhookEvent) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.webhook_events"), bun.In(v))
 		},
 		UserAgentEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("el.user_agent"), v)
@@ -627,11 +761,23 @@ var LogQuery = struct {
 		ClickedURLsNEQ: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.clicked_urls"), v)
 		},
+		ClickedURLsIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.clicked_urls"), bun.In(v))
+		},
+		ClickedURLsNotIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.clicked_urls"), bun.In(v))
+		},
 		MetadataEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("el.metadata"), v)
 		},
 		MetadataNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("el.metadata"), v)
+		},
+		MetadataIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("el.metadata"), bun.In(v))
+		},
+		MetadataNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("el.metadata"), bun.In(v))
 		},
 		CreatedAtEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("el.created_at"), v)
@@ -1085,6 +1231,16 @@ var LogQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+		Queue        string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+		Queue:        "Queue",
+	},
 }
 
 // LogQueryBuilder provides a fluent interface for building queries
@@ -1129,6 +1285,18 @@ func (b *LogQueryBuilder) WhereIDNEQ(v pulid.ID) *LogQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *LogQueryBuilder) WhereIDIn(v []pulid.ID) *LogQueryBuilder {
+	b.query = LogQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *LogQueryBuilder) WhereIDNotIn(v []pulid.ID) *LogQueryBuilder {
+	b.query = LogQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *LogQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *LogQueryBuilder {
 	b.query = LogQuery.Where.OrganizationIDEQ(b.query, v)
@@ -1138,6 +1306,18 @@ func (b *LogQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *LogQueryBuilder {
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *LogQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *LogQueryBuilder {
 	b.query = LogQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *LogQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *LogQueryBuilder {
+	b.query = LogQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *LogQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *LogQueryBuilder {
+	b.query = LogQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1153,6 +1333,18 @@ func (b *LogQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *LogQueryBuilder {
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *LogQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *LogQueryBuilder {
+	b.query = LogQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *LogQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *LogQueryBuilder {
+	b.query = LogQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereQueueIDEQ adds a WHERE queue_id = ? condition
 func (b *LogQueryBuilder) WhereQueueIDEQ(v pulid.ID) *LogQueryBuilder {
 	b.query = LogQuery.Where.QueueIDEQ(b.query, v)
@@ -1162,6 +1354,18 @@ func (b *LogQueryBuilder) WhereQueueIDEQ(v pulid.ID) *LogQueryBuilder {
 // WhereQueueIDNEQ adds a WHERE queue_id != ? condition
 func (b *LogQueryBuilder) WhereQueueIDNEQ(v pulid.ID) *LogQueryBuilder {
 	b.query = LogQuery.Where.QueueIDNEQ(b.query, v)
+	return b
+}
+
+// WhereQueueIDIn adds a WHERE queue_id IN (?) condition
+func (b *LogQueryBuilder) WhereQueueIDIn(v []pulid.ID) *LogQueryBuilder {
+	b.query = LogQuery.Where.QueueIDIn(b.query, v)
+	return b
+}
+
+// WhereQueueIDNotIn adds a WHERE queue_id NOT IN (?) condition
+func (b *LogQueryBuilder) WhereQueueIDNotIn(v []pulid.ID) *LogQueryBuilder {
+	b.query = LogQuery.Where.QueueIDNotIn(b.query, v)
 	return b
 }
 
@@ -1219,6 +1423,18 @@ func (b *LogQueryBuilder) WhereStatusNEQ(v LogStatus) *LogQueryBuilder {
 	return b
 }
 
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *LogQueryBuilder) WhereStatusIn(v []LogStatus) *LogQueryBuilder {
+	b.query = LogQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *LogQueryBuilder) WhereStatusNotIn(v []LogStatus) *LogQueryBuilder {
+	b.query = LogQuery.Where.StatusNotIn(b.query, v)
+	return b
+}
+
 // WhereProviderResponseEQ adds a WHERE provider_response = ? condition
 func (b *LogQueryBuilder) WhereProviderResponseEQ(v string) *LogQueryBuilder {
 	b.query = LogQuery.Where.ProviderResponseEQ(b.query, v)
@@ -1273,6 +1489,18 @@ func (b *LogQueryBuilder) WhereOpenedAtNEQ(v *int64) *LogQueryBuilder {
 	return b
 }
 
+// WhereOpenedAtIn adds a WHERE opened_at IN (?) condition
+func (b *LogQueryBuilder) WhereOpenedAtIn(v []*int64) *LogQueryBuilder {
+	b.query = LogQuery.Where.OpenedAtIn(b.query, v)
+	return b
+}
+
+// WhereOpenedAtNotIn adds a WHERE opened_at NOT IN (?) condition
+func (b *LogQueryBuilder) WhereOpenedAtNotIn(v []*int64) *LogQueryBuilder {
+	b.query = LogQuery.Where.OpenedAtNotIn(b.query, v)
+	return b
+}
+
 // WhereClickedAtEQ adds a WHERE clicked_at = ? condition
 func (b *LogQueryBuilder) WhereClickedAtEQ(v *int64) *LogQueryBuilder {
 	b.query = LogQuery.Where.ClickedAtEQ(b.query, v)
@@ -1282,6 +1510,18 @@ func (b *LogQueryBuilder) WhereClickedAtEQ(v *int64) *LogQueryBuilder {
 // WhereClickedAtNEQ adds a WHERE clicked_at != ? condition
 func (b *LogQueryBuilder) WhereClickedAtNEQ(v *int64) *LogQueryBuilder {
 	b.query = LogQuery.Where.ClickedAtNEQ(b.query, v)
+	return b
+}
+
+// WhereClickedAtIn adds a WHERE clicked_at IN (?) condition
+func (b *LogQueryBuilder) WhereClickedAtIn(v []*int64) *LogQueryBuilder {
+	b.query = LogQuery.Where.ClickedAtIn(b.query, v)
+	return b
+}
+
+// WhereClickedAtNotIn adds a WHERE clicked_at NOT IN (?) condition
+func (b *LogQueryBuilder) WhereClickedAtNotIn(v []*int64) *LogQueryBuilder {
+	b.query = LogQuery.Where.ClickedAtNotIn(b.query, v)
 	return b
 }
 
@@ -1297,6 +1537,18 @@ func (b *LogQueryBuilder) WhereBouncedAtNEQ(v *int64) *LogQueryBuilder {
 	return b
 }
 
+// WhereBouncedAtIn adds a WHERE bounced_at IN (?) condition
+func (b *LogQueryBuilder) WhereBouncedAtIn(v []*int64) *LogQueryBuilder {
+	b.query = LogQuery.Where.BouncedAtIn(b.query, v)
+	return b
+}
+
+// WhereBouncedAtNotIn adds a WHERE bounced_at NOT IN (?) condition
+func (b *LogQueryBuilder) WhereBouncedAtNotIn(v []*int64) *LogQueryBuilder {
+	b.query = LogQuery.Where.BouncedAtNotIn(b.query, v)
+	return b
+}
+
 // WhereComplainedAtEQ adds a WHERE complained_at = ? condition
 func (b *LogQueryBuilder) WhereComplainedAtEQ(v *int64) *LogQueryBuilder {
 	b.query = LogQuery.Where.ComplainedAtEQ(b.query, v)
@@ -1306,6 +1558,18 @@ func (b *LogQueryBuilder) WhereComplainedAtEQ(v *int64) *LogQueryBuilder {
 // WhereComplainedAtNEQ adds a WHERE complained_at != ? condition
 func (b *LogQueryBuilder) WhereComplainedAtNEQ(v *int64) *LogQueryBuilder {
 	b.query = LogQuery.Where.ComplainedAtNEQ(b.query, v)
+	return b
+}
+
+// WhereComplainedAtIn adds a WHERE complained_at IN (?) condition
+func (b *LogQueryBuilder) WhereComplainedAtIn(v []*int64) *LogQueryBuilder {
+	b.query = LogQuery.Where.ComplainedAtIn(b.query, v)
+	return b
+}
+
+// WhereComplainedAtNotIn adds a WHERE complained_at NOT IN (?) condition
+func (b *LogQueryBuilder) WhereComplainedAtNotIn(v []*int64) *LogQueryBuilder {
+	b.query = LogQuery.Where.ComplainedAtNotIn(b.query, v)
 	return b
 }
 
@@ -1321,6 +1585,18 @@ func (b *LogQueryBuilder) WhereUnsubscribedAtNEQ(v *int64) *LogQueryBuilder {
 	return b
 }
 
+// WhereUnsubscribedAtIn adds a WHERE unsubscribed_at IN (?) condition
+func (b *LogQueryBuilder) WhereUnsubscribedAtIn(v []*int64) *LogQueryBuilder {
+	b.query = LogQuery.Where.UnsubscribedAtIn(b.query, v)
+	return b
+}
+
+// WhereUnsubscribedAtNotIn adds a WHERE unsubscribed_at NOT IN (?) condition
+func (b *LogQueryBuilder) WhereUnsubscribedAtNotIn(v []*int64) *LogQueryBuilder {
+	b.query = LogQuery.Where.UnsubscribedAtNotIn(b.query, v)
+	return b
+}
+
 // WhereBounceTypeEQ adds a WHERE bounce_type = ? condition
 func (b *LogQueryBuilder) WhereBounceTypeEQ(v *BounceType) *LogQueryBuilder {
 	b.query = LogQuery.Where.BounceTypeEQ(b.query, v)
@@ -1330,6 +1606,18 @@ func (b *LogQueryBuilder) WhereBounceTypeEQ(v *BounceType) *LogQueryBuilder {
 // WhereBounceTypeNEQ adds a WHERE bounce_type != ? condition
 func (b *LogQueryBuilder) WhereBounceTypeNEQ(v *BounceType) *LogQueryBuilder {
 	b.query = LogQuery.Where.BounceTypeNEQ(b.query, v)
+	return b
+}
+
+// WhereBounceTypeIn adds a WHERE bounce_type IN (?) condition
+func (b *LogQueryBuilder) WhereBounceTypeIn(v []*BounceType) *LogQueryBuilder {
+	b.query = LogQuery.Where.BounceTypeIn(b.query, v)
+	return b
+}
+
+// WhereBounceTypeNotIn adds a WHERE bounce_type NOT IN (?) condition
+func (b *LogQueryBuilder) WhereBounceTypeNotIn(v []*BounceType) *LogQueryBuilder {
+	b.query = LogQuery.Where.BounceTypeNotIn(b.query, v)
 	return b
 }
 
@@ -1384,6 +1672,18 @@ func (b *LogQueryBuilder) WhereWebhookEventsEQ(v []WebhookEvent) *LogQueryBuilde
 // WhereWebhookEventsNEQ adds a WHERE webhook_events != ? condition
 func (b *LogQueryBuilder) WhereWebhookEventsNEQ(v []WebhookEvent) *LogQueryBuilder {
 	b.query = LogQuery.Where.WebhookEventsNEQ(b.query, v)
+	return b
+}
+
+// WhereWebhookEventsIn adds a WHERE webhook_events IN (?) condition
+func (b *LogQueryBuilder) WhereWebhookEventsIn(v [][]WebhookEvent) *LogQueryBuilder {
+	b.query = LogQuery.Where.WebhookEventsIn(b.query, v)
+	return b
+}
+
+// WhereWebhookEventsNotIn adds a WHERE webhook_events NOT IN (?) condition
+func (b *LogQueryBuilder) WhereWebhookEventsNotIn(v [][]WebhookEvent) *LogQueryBuilder {
+	b.query = LogQuery.Where.WebhookEventsNotIn(b.query, v)
 	return b
 }
 
@@ -1483,6 +1783,18 @@ func (b *LogQueryBuilder) WhereClickedURLsNEQ(v []string) *LogQueryBuilder {
 	return b
 }
 
+// WhereClickedURLsIn adds a WHERE clicked_urls IN (?) condition
+func (b *LogQueryBuilder) WhereClickedURLsIn(v [][]string) *LogQueryBuilder {
+	b.query = LogQuery.Where.ClickedURLsIn(b.query, v)
+	return b
+}
+
+// WhereClickedURLsNotIn adds a WHERE clicked_urls NOT IN (?) condition
+func (b *LogQueryBuilder) WhereClickedURLsNotIn(v [][]string) *LogQueryBuilder {
+	b.query = LogQuery.Where.ClickedURLsNotIn(b.query, v)
+	return b
+}
+
 // WhereMetadataEQ adds a WHERE metadata = ? condition
 func (b *LogQueryBuilder) WhereMetadataEQ(v map[string]any) *LogQueryBuilder {
 	b.query = LogQuery.Where.MetadataEQ(b.query, v)
@@ -1492,6 +1804,18 @@ func (b *LogQueryBuilder) WhereMetadataEQ(v map[string]any) *LogQueryBuilder {
 // WhereMetadataNEQ adds a WHERE metadata != ? condition
 func (b *LogQueryBuilder) WhereMetadataNEQ(v map[string]any) *LogQueryBuilder {
 	b.query = LogQuery.Where.MetadataNEQ(b.query, v)
+	return b
+}
+
+// WhereMetadataIn adds a WHERE metadata IN (?) condition
+func (b *LogQueryBuilder) WhereMetadataIn(v []map[string]any) *LogQueryBuilder {
+	b.query = LogQuery.Where.MetadataIn(b.query, v)
+	return b
+}
+
+// WhereMetadataNotIn adds a WHERE metadata NOT IN (?) condition
+func (b *LogQueryBuilder) WhereMetadataNotIn(v []map[string]any) *LogQueryBuilder {
+	b.query = LogQuery.Where.MetadataNotIn(b.query, v)
 	return b
 }
 
@@ -1643,4 +1967,155 @@ func (b *LogQueryBuilder) First(ctx context.Context) (*Log, error) {
 // LogBuild creates a chainable query builder
 func LogBuild(db bun.IDB) *LogQueryBuilder {
 	return NewLogQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *LogQueryBuilder) LoadBusinessUnit() *LogQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *LogQueryBuilder) LoadOrganization() *LogQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadQueue loads the Queue relationship
+func (b *LogQueryBuilder) LoadQueue() *LogQueryBuilder {
+	b.query = b.query.Relation("Queue")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Log
+func (b *LogQueryBuilder) LoadAllRelations() *LogQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadQueue()
+	return b
+}
+
+// LogRelationChain provides a fluent API for building nested relationship chains
+type LogRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewLogRelationChain creates a new relation chain builder
+func NewLogRelationChain() *LogRelationChain {
+	return &LogRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *LogRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *LogRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *LogRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *LogRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *LogQueryBuilder) WithBusinessUnit() *LogRelationChainBuilder {
+	chain := &LogRelationChainBuilder{
+		parent: b,
+		chain:  NewLogRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *LogQueryBuilder) WithOrganization() *LogRelationChainBuilder {
+	chain := &LogRelationChainBuilder{
+		parent: b,
+		chain:  NewLogRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithQueue creates a relation chain starting with Queue
+func (b *LogQueryBuilder) WithQueue() *LogRelationChainBuilder {
+	chain := &LogRelationChainBuilder{
+		parent: b,
+		chain:  NewLogRelationChain(),
+	}
+	chain.chain.Add("Queue")
+	return chain
+}
+
+// LogRelationChainBuilder provides fluent API for building nested relations
+type LogRelationChainBuilder struct {
+	parent *LogQueryBuilder
+	chain  *LogRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *LogRelationChainBuilder) Load() *LogQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *LogRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *LogRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *LogRelationChainBuilder) OrderBy(order string) *LogRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *LogRelationChainBuilder) Where(condition string, args ...interface{}) *LogRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

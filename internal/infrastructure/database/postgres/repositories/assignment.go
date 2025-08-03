@@ -1,9 +1,15 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 package repositories
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -11,11 +17,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"github.com/samber/oops"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 )
@@ -57,16 +63,11 @@ func NewAssignmentRepository(p AssignmentRepositoryParams) repositories.Assignme
 //   - req: ListAssignmentsRequest containing filter and pagination details.
 
 func (ar *assignmentRepository) filterQuery(
-	q *bun.SelectQuery,
+	b *shipment.AssignmentQueryBuilder,
 	req repositories.ListAssignmentsRequest,
-) *bun.SelectQuery {
-	q = queryfilters.TenantFilterQuery(&queryfilters.TenantFilterQueryOptions{
-		Query:      q,
-		TableAlias: "a",
-		Filter:     req.Filter,
-	})
-
-	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
+) *shipment.AssignmentQueryBuilder {
+	b = b.WhereTenant(req.Filter.TenantOpts.OrgID, req.Filter.TenantOpts.BuID)
+	return b.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
 }
 
 // List retrieves a list of assignments based on the list assignment request
@@ -82,9 +83,13 @@ func (ar *assignmentRepository) List(
 	ctx context.Context,
 	req repositories.ListAssignmentsRequest,
 ) (*ports.ListResult[*shipment.Assignment], error) {
-	dba, err := ar.db.DB(ctx)
+	dba, err := ar.db.ReadDB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("assignment_repository").
+			With("op", "List").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := ar.l.With().
@@ -93,12 +98,10 @@ func (ar *assignmentRepository) List(
 		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*shipment.Assignment, 0)
+	b := shipment.NewAssignmentQuery(dba)
+	b = ar.filterQuery(b, req)
 
-	q := dba.NewSelect().Model(&entities)
-	q = ar.filterQuery(q, req)
-
-	total, err := q.ScanAndCount(ctx, &entities)
+	entities, total, err := b.AllWithCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to scan and count assignments")
 		return nil, err
@@ -124,9 +127,13 @@ func (ar *assignmentRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetAssignmentByIDOptions,
 ) (*shipment.Assignment, error) {
-	dba, err := ar.db.DB(ctx)
+	dba, err := ar.db.ReadDB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, oops.
+			In("assignment_repository").
+			With("op", "GetByID").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
 	}
 
 	log := ar.l.With().
@@ -134,19 +141,17 @@ func (ar *assignmentRepository) GetByID(
 		Str("assignmentID", opts.ID.String()).
 		Logger()
 
-	entity := new(shipment.Assignment)
-
-	err = dba.NewSelect().Model(entity).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("a.id = ?", opts.ID).
-				Where("a.organization_id = ?", opts.OrgID).
-				Where("a.business_unit_id = ?", opts.BuID)
+	entity, err := shipment.NewAssignmentQuery(dba).
+		WhereGroup(" AND ", func(aqb *shipment.AssignmentQueryBuilder) *shipment.AssignmentQueryBuilder {
+			return aqb.WhereIDEQ(opts.ID).
+				WhereTenant(opts.OrgID, opts.BuID)
 		}).
-		Scan(ctx)
+		First(ctx)
 	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			return nil, errors.NewNotFoundError("Assignment not found within your organization")
 		}
+
 		log.Error().Err(err).Msg("failed to get assignment by ID")
 		return nil, err
 	}
@@ -169,7 +174,7 @@ func (ar *assignmentRepository) BulkAssign(
 	ctx context.Context,
 	req *repositories.AssignmentRequest,
 ) ([]*shipment.Assignment, error) {
-	dba, err := ar.db.DB(ctx)
+	dba, err := ar.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -276,7 +281,7 @@ func (ar *assignmentRepository) SingleAssign(
 	ctx context.Context,
 	a *shipment.Assignment,
 ) (*shipment.Assignment, error) {
-	dba, err := ar.db.DB(ctx)
+	dba, err := ar.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -419,7 +424,7 @@ func (ar *assignmentRepository) Reassign(
 	ctx context.Context,
 	a *shipment.Assignment,
 ) (*shipment.Assignment, error) {
-	dba, err := ar.db.DB(ctx)
+	dba, err := ar.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -445,7 +450,6 @@ func (ar *assignmentRepository) processReassignment(
 	tx bun.Tx,
 	a *shipment.Assignment,
 ) error {
-	// Get the current version for comparison
 	current := new(shipment.Assignment)
 	err := tx.NewSelect().
 		Model(current).

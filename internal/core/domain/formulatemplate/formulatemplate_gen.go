@@ -56,10 +56,16 @@ var FormulaTemplateQuery = struct {
 	Where struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -84,6 +90,8 @@ var FormulaTemplateQuery = struct {
 		DescriptionHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CategoryEQ           func(q *bun.SelectQuery, v Category) *bun.SelectQuery
 		CategoryNEQ          func(q *bun.SelectQuery, v Category) *bun.SelectQuery
+		CategoryIn           func(q *bun.SelectQuery, v []Category) *bun.SelectQuery
+		CategoryNotIn        func(q *bun.SelectQuery, v []Category) *bun.SelectQuery
 		ExpressionEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ExpressionNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ExpressionIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -97,20 +105,34 @@ var FormulaTemplateQuery = struct {
 		ExpressionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		VariablesEQ          func(q *bun.SelectQuery, v []TemplateVariable) *bun.SelectQuery
 		VariablesNEQ         func(q *bun.SelectQuery, v []TemplateVariable) *bun.SelectQuery
+		VariablesIn          func(q *bun.SelectQuery, v [][]TemplateVariable) *bun.SelectQuery
+		VariablesNotIn       func(q *bun.SelectQuery, v [][]TemplateVariable) *bun.SelectQuery
 		ParametersEQ         func(q *bun.SelectQuery, v []TemplateParameter) *bun.SelectQuery
 		ParametersNEQ        func(q *bun.SelectQuery, v []TemplateParameter) *bun.SelectQuery
+		ParametersIn         func(q *bun.SelectQuery, v [][]TemplateParameter) *bun.SelectQuery
+		ParametersNotIn      func(q *bun.SelectQuery, v [][]TemplateParameter) *bun.SelectQuery
 		TagsEQ               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
 		TagsNEQ              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TagsIn               func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		TagsNotIn            func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
 		ExamplesEQ           func(q *bun.SelectQuery, v []TemplateExample) *bun.SelectQuery
 		ExamplesNEQ          func(q *bun.SelectQuery, v []TemplateExample) *bun.SelectQuery
+		ExamplesIn           func(q *bun.SelectQuery, v [][]TemplateExample) *bun.SelectQuery
+		ExamplesNotIn        func(q *bun.SelectQuery, v [][]TemplateExample) *bun.SelectQuery
 		RequirementsEQ       func(q *bun.SelectQuery, v []TemplateRequirement) *bun.SelectQuery
 		RequirementsNEQ      func(q *bun.SelectQuery, v []TemplateRequirement) *bun.SelectQuery
+		RequirementsIn       func(q *bun.SelectQuery, v [][]TemplateRequirement) *bun.SelectQuery
+		RequirementsNotIn    func(q *bun.SelectQuery, v [][]TemplateRequirement) *bun.SelectQuery
 		MinRateEQ            func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
 		MinRateNEQ           func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		MinRateIn            func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		MinRateNotIn         func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
 		MinRateIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		MinRateIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		MaxRateEQ            func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
 		MaxRateNEQ           func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		MaxRateIn            func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		MaxRateNotIn         func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
 		MaxRateIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		MaxRateIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		OutputUnitEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
@@ -126,8 +148,12 @@ var FormulaTemplateQuery = struct {
 		OutputUnitHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		IsActiveEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsActiveNEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveIn           func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsActiveNotIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		IsDefaultEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsDefaultNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsDefaultIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsDefaultNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -174,6 +200,11 @@ var FormulaTemplateQuery = struct {
 	FieldConfig  func() map[string]formulaTemplateFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit string
+		Organization string
+	}
 }{
 	// Table and alias constants
 	Table:    "formula_templates",
@@ -241,10 +272,16 @@ var FormulaTemplateQuery = struct {
 	Where: struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ     func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn     func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn  func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -269,6 +306,8 @@ var FormulaTemplateQuery = struct {
 		DescriptionHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CategoryEQ           func(q *bun.SelectQuery, v Category) *bun.SelectQuery
 		CategoryNEQ          func(q *bun.SelectQuery, v Category) *bun.SelectQuery
+		CategoryIn           func(q *bun.SelectQuery, v []Category) *bun.SelectQuery
+		CategoryNotIn        func(q *bun.SelectQuery, v []Category) *bun.SelectQuery
 		ExpressionEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ExpressionNEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ExpressionIn         func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -282,20 +321,34 @@ var FormulaTemplateQuery = struct {
 		ExpressionHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		VariablesEQ          func(q *bun.SelectQuery, v []TemplateVariable) *bun.SelectQuery
 		VariablesNEQ         func(q *bun.SelectQuery, v []TemplateVariable) *bun.SelectQuery
+		VariablesIn          func(q *bun.SelectQuery, v [][]TemplateVariable) *bun.SelectQuery
+		VariablesNotIn       func(q *bun.SelectQuery, v [][]TemplateVariable) *bun.SelectQuery
 		ParametersEQ         func(q *bun.SelectQuery, v []TemplateParameter) *bun.SelectQuery
 		ParametersNEQ        func(q *bun.SelectQuery, v []TemplateParameter) *bun.SelectQuery
+		ParametersIn         func(q *bun.SelectQuery, v [][]TemplateParameter) *bun.SelectQuery
+		ParametersNotIn      func(q *bun.SelectQuery, v [][]TemplateParameter) *bun.SelectQuery
 		TagsEQ               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
 		TagsNEQ              func(q *bun.SelectQuery, v []string) *bun.SelectQuery
+		TagsIn               func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
+		TagsNotIn            func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery
 		ExamplesEQ           func(q *bun.SelectQuery, v []TemplateExample) *bun.SelectQuery
 		ExamplesNEQ          func(q *bun.SelectQuery, v []TemplateExample) *bun.SelectQuery
+		ExamplesIn           func(q *bun.SelectQuery, v [][]TemplateExample) *bun.SelectQuery
+		ExamplesNotIn        func(q *bun.SelectQuery, v [][]TemplateExample) *bun.SelectQuery
 		RequirementsEQ       func(q *bun.SelectQuery, v []TemplateRequirement) *bun.SelectQuery
 		RequirementsNEQ      func(q *bun.SelectQuery, v []TemplateRequirement) *bun.SelectQuery
+		RequirementsIn       func(q *bun.SelectQuery, v [][]TemplateRequirement) *bun.SelectQuery
+		RequirementsNotIn    func(q *bun.SelectQuery, v [][]TemplateRequirement) *bun.SelectQuery
 		MinRateEQ            func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
 		MinRateNEQ           func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		MinRateIn            func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		MinRateNotIn         func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
 		MinRateIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		MinRateIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		MaxRateEQ            func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
 		MaxRateNEQ           func(q *bun.SelectQuery, v *float64) *bun.SelectQuery
+		MaxRateIn            func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
+		MaxRateNotIn         func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery
 		MaxRateIsNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		MaxRateIsNotNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		OutputUnitEQ         func(q *bun.SelectQuery, v string) *bun.SelectQuery
@@ -311,8 +364,12 @@ var FormulaTemplateQuery = struct {
 		OutputUnitHasSuffix  func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		IsActiveEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsActiveNEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveIn           func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsActiveNotIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		IsDefaultEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsDefaultNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsDefaultIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsDefaultNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		VersionEQ            func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionNEQ           func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		VersionIn            func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -345,17 +402,35 @@ var FormulaTemplateQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ft.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ft.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ft.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ft.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ft.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ft.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ft.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ft.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ft.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ft.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ft.organization_id"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ft.name"), v)
@@ -429,6 +504,12 @@ var FormulaTemplateQuery = struct {
 		CategoryNEQ: func(q *bun.SelectQuery, v Category) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ft.category"), v)
 		},
+		CategoryIn: func(q *bun.SelectQuery, v []Category) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ft.category"), bun.In(v))
+		},
+		CategoryNotIn: func(q *bun.SelectQuery, v []Category) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ft.category"), bun.In(v))
+		},
 		ExpressionEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ft.expression"), v)
 		},
@@ -468,11 +549,23 @@ var FormulaTemplateQuery = struct {
 		VariablesNEQ: func(q *bun.SelectQuery, v []TemplateVariable) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ft.variables"), v)
 		},
+		VariablesIn: func(q *bun.SelectQuery, v [][]TemplateVariable) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ft.variables"), bun.In(v))
+		},
+		VariablesNotIn: func(q *bun.SelectQuery, v [][]TemplateVariable) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ft.variables"), bun.In(v))
+		},
 		ParametersEQ: func(q *bun.SelectQuery, v []TemplateParameter) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ft.parameters"), v)
 		},
 		ParametersNEQ: func(q *bun.SelectQuery, v []TemplateParameter) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ft.parameters"), v)
+		},
+		ParametersIn: func(q *bun.SelectQuery, v [][]TemplateParameter) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ft.parameters"), bun.In(v))
+		},
+		ParametersNotIn: func(q *bun.SelectQuery, v [][]TemplateParameter) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ft.parameters"), bun.In(v))
 		},
 		TagsEQ: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ft.tags"), v)
@@ -480,11 +573,23 @@ var FormulaTemplateQuery = struct {
 		TagsNEQ: func(q *bun.SelectQuery, v []string) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ft.tags"), v)
 		},
+		TagsIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ft.tags"), bun.In(v))
+		},
+		TagsNotIn: func(q *bun.SelectQuery, v [][]string) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ft.tags"), bun.In(v))
+		},
 		ExamplesEQ: func(q *bun.SelectQuery, v []TemplateExample) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ft.examples"), v)
 		},
 		ExamplesNEQ: func(q *bun.SelectQuery, v []TemplateExample) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ft.examples"), v)
+		},
+		ExamplesIn: func(q *bun.SelectQuery, v [][]TemplateExample) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ft.examples"), bun.In(v))
+		},
+		ExamplesNotIn: func(q *bun.SelectQuery, v [][]TemplateExample) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ft.examples"), bun.In(v))
 		},
 		RequirementsEQ: func(q *bun.SelectQuery, v []TemplateRequirement) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ft.requirements"), v)
@@ -492,11 +597,23 @@ var FormulaTemplateQuery = struct {
 		RequirementsNEQ: func(q *bun.SelectQuery, v []TemplateRequirement) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ft.requirements"), v)
 		},
+		RequirementsIn: func(q *bun.SelectQuery, v [][]TemplateRequirement) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ft.requirements"), bun.In(v))
+		},
+		RequirementsNotIn: func(q *bun.SelectQuery, v [][]TemplateRequirement) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ft.requirements"), bun.In(v))
+		},
 		MinRateEQ: func(q *bun.SelectQuery, v *float64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ft.min_rate"), v)
 		},
 		MinRateNEQ: func(q *bun.SelectQuery, v *float64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ft.min_rate"), v)
+		},
+		MinRateIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ft.min_rate"), bun.In(v))
+		},
+		MinRateNotIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ft.min_rate"), bun.In(v))
 		},
 		MinRateIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("ft.min_rate"))
@@ -509,6 +626,12 @@ var FormulaTemplateQuery = struct {
 		},
 		MaxRateNEQ: func(q *bun.SelectQuery, v *float64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ft.max_rate"), v)
+		},
+		MaxRateIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ft.max_rate"), bun.In(v))
+		},
+		MaxRateNotIn: func(q *bun.SelectQuery, v []*float64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ft.max_rate"), bun.In(v))
 		},
 		MaxRateIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("ft.max_rate"))
@@ -555,11 +678,23 @@ var FormulaTemplateQuery = struct {
 		IsActiveNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ft.is_active"), v)
 		},
+		IsActiveIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ft.is_active"), bun.In(v))
+		},
+		IsActiveNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ft.is_active"), bun.In(v))
+		},
 		IsDefaultEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ft.is_default"), v)
 		},
 		IsDefaultNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ft.is_default"), v)
+		},
+		IsDefaultIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ft.is_default"), bun.In(v))
+		},
+		IsDefaultNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ft.is_default"), bun.In(v))
 		},
 		VersionEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ft.version"), v)
@@ -1067,6 +1202,14 @@ var FormulaTemplateQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit string
+		Organization string
+	}{
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+	},
 }
 
 // FormulaTemplateQueryBuilder provides a fluent interface for building queries
@@ -1111,6 +1254,18 @@ func (b *FormulaTemplateQueryBuilder) WhereIDNEQ(v pulid.ID) *FormulaTemplateQue
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereIDIn(v []pulid.ID) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereIDNotIn(v []pulid.ID) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *FormulaTemplateQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *FormulaTemplateQueryBuilder {
 	b.query = FormulaTemplateQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1123,6 +1278,18 @@ func (b *FormulaTemplateQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *Formul
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *FormulaTemplateQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *FormulaTemplateQueryBuilder {
 	b.query = FormulaTemplateQuery.Where.OrganizationIDEQ(b.query, v)
@@ -1132,6 +1299,18 @@ func (b *FormulaTemplateQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *Formula
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *FormulaTemplateQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *FormulaTemplateQueryBuilder {
 	b.query = FormulaTemplateQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -1231,6 +1410,18 @@ func (b *FormulaTemplateQueryBuilder) WhereCategoryNEQ(v Category) *FormulaTempl
 	return b
 }
 
+// WhereCategoryIn adds a WHERE category IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereCategoryIn(v []Category) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.CategoryIn(b.query, v)
+	return b
+}
+
+// WhereCategoryNotIn adds a WHERE category NOT IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereCategoryNotIn(v []Category) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.CategoryNotIn(b.query, v)
+	return b
+}
+
 // WhereExpressionEQ adds a WHERE expression = ? condition
 func (b *FormulaTemplateQueryBuilder) WhereExpressionEQ(v string) *FormulaTemplateQueryBuilder {
 	b.query = FormulaTemplateQuery.Where.ExpressionEQ(b.query, v)
@@ -1285,6 +1476,18 @@ func (b *FormulaTemplateQueryBuilder) WhereVariablesNEQ(v []TemplateVariable) *F
 	return b
 }
 
+// WhereVariablesIn adds a WHERE variables IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereVariablesIn(v [][]TemplateVariable) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.VariablesIn(b.query, v)
+	return b
+}
+
+// WhereVariablesNotIn adds a WHERE variables NOT IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereVariablesNotIn(v [][]TemplateVariable) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.VariablesNotIn(b.query, v)
+	return b
+}
+
 // WhereParametersEQ adds a WHERE parameters = ? condition
 func (b *FormulaTemplateQueryBuilder) WhereParametersEQ(v []TemplateParameter) *FormulaTemplateQueryBuilder {
 	b.query = FormulaTemplateQuery.Where.ParametersEQ(b.query, v)
@@ -1294,6 +1497,18 @@ func (b *FormulaTemplateQueryBuilder) WhereParametersEQ(v []TemplateParameter) *
 // WhereParametersNEQ adds a WHERE parameters != ? condition
 func (b *FormulaTemplateQueryBuilder) WhereParametersNEQ(v []TemplateParameter) *FormulaTemplateQueryBuilder {
 	b.query = FormulaTemplateQuery.Where.ParametersNEQ(b.query, v)
+	return b
+}
+
+// WhereParametersIn adds a WHERE parameters IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereParametersIn(v [][]TemplateParameter) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.ParametersIn(b.query, v)
+	return b
+}
+
+// WhereParametersNotIn adds a WHERE parameters NOT IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereParametersNotIn(v [][]TemplateParameter) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.ParametersNotIn(b.query, v)
 	return b
 }
 
@@ -1309,6 +1524,18 @@ func (b *FormulaTemplateQueryBuilder) WhereTagsNEQ(v []string) *FormulaTemplateQ
 	return b
 }
 
+// WhereTagsIn adds a WHERE tags IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereTagsIn(v [][]string) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.TagsIn(b.query, v)
+	return b
+}
+
+// WhereTagsNotIn adds a WHERE tags NOT IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereTagsNotIn(v [][]string) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.TagsNotIn(b.query, v)
+	return b
+}
+
 // WhereExamplesEQ adds a WHERE examples = ? condition
 func (b *FormulaTemplateQueryBuilder) WhereExamplesEQ(v []TemplateExample) *FormulaTemplateQueryBuilder {
 	b.query = FormulaTemplateQuery.Where.ExamplesEQ(b.query, v)
@@ -1318,6 +1545,18 @@ func (b *FormulaTemplateQueryBuilder) WhereExamplesEQ(v []TemplateExample) *Form
 // WhereExamplesNEQ adds a WHERE examples != ? condition
 func (b *FormulaTemplateQueryBuilder) WhereExamplesNEQ(v []TemplateExample) *FormulaTemplateQueryBuilder {
 	b.query = FormulaTemplateQuery.Where.ExamplesNEQ(b.query, v)
+	return b
+}
+
+// WhereExamplesIn adds a WHERE examples IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereExamplesIn(v [][]TemplateExample) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.ExamplesIn(b.query, v)
+	return b
+}
+
+// WhereExamplesNotIn adds a WHERE examples NOT IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereExamplesNotIn(v [][]TemplateExample) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.ExamplesNotIn(b.query, v)
 	return b
 }
 
@@ -1333,6 +1572,18 @@ func (b *FormulaTemplateQueryBuilder) WhereRequirementsNEQ(v []TemplateRequireme
 	return b
 }
 
+// WhereRequirementsIn adds a WHERE requirements IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereRequirementsIn(v [][]TemplateRequirement) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.RequirementsIn(b.query, v)
+	return b
+}
+
+// WhereRequirementsNotIn adds a WHERE requirements NOT IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereRequirementsNotIn(v [][]TemplateRequirement) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.RequirementsNotIn(b.query, v)
+	return b
+}
+
 // WhereMinRateEQ adds a WHERE min_rate = ? condition
 func (b *FormulaTemplateQueryBuilder) WhereMinRateEQ(v *float64) *FormulaTemplateQueryBuilder {
 	b.query = FormulaTemplateQuery.Where.MinRateEQ(b.query, v)
@@ -1345,6 +1596,18 @@ func (b *FormulaTemplateQueryBuilder) WhereMinRateNEQ(v *float64) *FormulaTempla
 	return b
 }
 
+// WhereMinRateIn adds a WHERE min_rate IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereMinRateIn(v []*float64) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.MinRateIn(b.query, v)
+	return b
+}
+
+// WhereMinRateNotIn adds a WHERE min_rate NOT IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereMinRateNotIn(v []*float64) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.MinRateNotIn(b.query, v)
+	return b
+}
+
 // WhereMaxRateEQ adds a WHERE max_rate = ? condition
 func (b *FormulaTemplateQueryBuilder) WhereMaxRateEQ(v *float64) *FormulaTemplateQueryBuilder {
 	b.query = FormulaTemplateQuery.Where.MaxRateEQ(b.query, v)
@@ -1354,6 +1617,18 @@ func (b *FormulaTemplateQueryBuilder) WhereMaxRateEQ(v *float64) *FormulaTemplat
 // WhereMaxRateNEQ adds a WHERE max_rate != ? condition
 func (b *FormulaTemplateQueryBuilder) WhereMaxRateNEQ(v *float64) *FormulaTemplateQueryBuilder {
 	b.query = FormulaTemplateQuery.Where.MaxRateNEQ(b.query, v)
+	return b
+}
+
+// WhereMaxRateIn adds a WHERE max_rate IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereMaxRateIn(v []*float64) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.MaxRateIn(b.query, v)
+	return b
+}
+
+// WhereMaxRateNotIn adds a WHERE max_rate NOT IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereMaxRateNotIn(v []*float64) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.MaxRateNotIn(b.query, v)
 	return b
 }
 
@@ -1411,6 +1686,18 @@ func (b *FormulaTemplateQueryBuilder) WhereIsActiveNEQ(v bool) *FormulaTemplateQ
 	return b
 }
 
+// WhereIsActiveIn adds a WHERE is_active IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereIsActiveIn(v []bool) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.IsActiveIn(b.query, v)
+	return b
+}
+
+// WhereIsActiveNotIn adds a WHERE is_active NOT IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereIsActiveNotIn(v []bool) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.IsActiveNotIn(b.query, v)
+	return b
+}
+
 // WhereIsDefaultEQ adds a WHERE is_default = ? condition
 func (b *FormulaTemplateQueryBuilder) WhereIsDefaultEQ(v bool) *FormulaTemplateQueryBuilder {
 	b.query = FormulaTemplateQuery.Where.IsDefaultEQ(b.query, v)
@@ -1420,6 +1707,18 @@ func (b *FormulaTemplateQueryBuilder) WhereIsDefaultEQ(v bool) *FormulaTemplateQ
 // WhereIsDefaultNEQ adds a WHERE is_default != ? condition
 func (b *FormulaTemplateQueryBuilder) WhereIsDefaultNEQ(v bool) *FormulaTemplateQueryBuilder {
 	b.query = FormulaTemplateQuery.Where.IsDefaultNEQ(b.query, v)
+	return b
+}
+
+// WhereIsDefaultIn adds a WHERE is_default IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereIsDefaultIn(v []bool) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.IsDefaultIn(b.query, v)
+	return b
+}
+
+// WhereIsDefaultNotIn adds a WHERE is_default NOT IN (?) condition
+func (b *FormulaTemplateQueryBuilder) WhereIsDefaultNotIn(v []bool) *FormulaTemplateQueryBuilder {
+	b.query = FormulaTemplateQuery.Where.IsDefaultNotIn(b.query, v)
 	return b
 }
 
@@ -1667,4 +1966,138 @@ func (b *FormulaTemplateQueryBuilder) First(ctx context.Context) (*FormulaTempla
 // FormulaTemplateBuild creates a chainable query builder
 func FormulaTemplateBuild(db bun.IDB) *FormulaTemplateQueryBuilder {
 	return NewFormulaTemplateQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *FormulaTemplateQueryBuilder) LoadBusinessUnit() *FormulaTemplateQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *FormulaTemplateQueryBuilder) LoadOrganization() *FormulaTemplateQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadAllRelations loads all relationships for FormulaTemplate
+func (b *FormulaTemplateQueryBuilder) LoadAllRelations() *FormulaTemplateQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	return b
+}
+
+// FormulaTemplateRelationChain provides a fluent API for building nested relationship chains
+type FormulaTemplateRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewFormulaTemplateRelationChain creates a new relation chain builder
+func NewFormulaTemplateRelationChain() *FormulaTemplateRelationChain {
+	return &FormulaTemplateRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *FormulaTemplateRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *FormulaTemplateRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *FormulaTemplateRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *FormulaTemplateRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *FormulaTemplateQueryBuilder) WithBusinessUnit() *FormulaTemplateRelationChainBuilder {
+	chain := &FormulaTemplateRelationChainBuilder{
+		parent: b,
+		chain:  NewFormulaTemplateRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *FormulaTemplateQueryBuilder) WithOrganization() *FormulaTemplateRelationChainBuilder {
+	chain := &FormulaTemplateRelationChainBuilder{
+		parent: b,
+		chain:  NewFormulaTemplateRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// FormulaTemplateRelationChainBuilder provides fluent API for building nested relations
+type FormulaTemplateRelationChainBuilder struct {
+	parent *FormulaTemplateQueryBuilder
+	chain  *FormulaTemplateRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *FormulaTemplateRelationChainBuilder) Load() *FormulaTemplateQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *FormulaTemplateRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *FormulaTemplateRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *FormulaTemplateRelationChainBuilder) OrderBy(order string) *FormulaTemplateRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *FormulaTemplateRelationChainBuilder) Where(condition string, args ...interface{}) *FormulaTemplateRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

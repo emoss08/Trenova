@@ -60,24 +60,40 @@ var TrailerQuery = struct {
 	Where struct {
 		IDEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		EquipmentTypeIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		EquipmentTypeIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		EquipmentTypeIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		EquipmentTypeIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		EquipmentManufacturerIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		EquipmentManufacturerIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		EquipmentManufacturerIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		EquipmentManufacturerIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		FleetCodeIDEQ                func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		FleetCodeIDNEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		FleetCodeIDIn                func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		FleetCodeIDNotIn             func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		FleetCodeIDIsNull            func(q *bun.SelectQuery) *bun.SelectQuery
 		FleetCodeIDIsNotNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		RegistrationStateIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		RegistrationStateIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		RegistrationStateIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		RegistrationStateIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		RegistrationStateIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		RegistrationStateIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ                     func(q *bun.SelectQuery, v domain.EquipmentStatus) *bun.SelectQuery
 		StatusNEQ                    func(q *bun.SelectQuery, v domain.EquipmentStatus) *bun.SelectQuery
+		StatusIn                     func(q *bun.SelectQuery, v []domain.EquipmentStatus) *bun.SelectQuery
+		StatusNotIn                  func(q *bun.SelectQuery, v []domain.EquipmentStatus) *bun.SelectQuery
 		CodeEQ                       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeNEQ                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeIn                       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -168,18 +184,26 @@ var TrailerQuery = struct {
 		RankHasSuffix                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		YearEQ                       func(q *bun.SelectQuery, v *int) *bun.SelectQuery
 		YearNEQ                      func(q *bun.SelectQuery, v *int) *bun.SelectQuery
+		YearIn                       func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
+		YearNotIn                    func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
 		YearIsNull                   func(q *bun.SelectQuery) *bun.SelectQuery
 		YearIsNotNull                func(q *bun.SelectQuery) *bun.SelectQuery
 		MaxLoadWeightEQ              func(q *bun.SelectQuery, v *int) *bun.SelectQuery
 		MaxLoadWeightNEQ             func(q *bun.SelectQuery, v *int) *bun.SelectQuery
+		MaxLoadWeightIn              func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
+		MaxLoadWeightNotIn           func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
 		MaxLoadWeightIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		MaxLoadWeightIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		LastInspectionDateEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		LastInspectionDateNEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		LastInspectionDateIn         func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		LastInspectionDateNotIn      func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		LastInspectionDateIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		LastInspectionDateIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		RegistrationExpiryEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		RegistrationExpiryNEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		RegistrationExpiryIn         func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		RegistrationExpiryNotIn      func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		RegistrationExpiryIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		RegistrationExpiryIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		VersionEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -230,6 +254,15 @@ var TrailerQuery = struct {
 	FieldConfig  func() map[string]trailerFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		BusinessUnit          string
+		Organization          string
+		EquipmentType         string
+		EquipmentManufacturer string
+		RegistrationState     string
+		FleetCode             string
+	}
 }{
 	// Table and alias constants
 	Table:    "trailers",
@@ -303,24 +336,40 @@ var TrailerQuery = struct {
 	Where: struct {
 		IDEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		EquipmentTypeIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		EquipmentTypeIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		EquipmentTypeIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		EquipmentTypeIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		EquipmentManufacturerIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		EquipmentManufacturerIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		EquipmentManufacturerIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		EquipmentManufacturerIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		FleetCodeIDEQ                func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		FleetCodeIDNEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		FleetCodeIDIn                func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		FleetCodeIDNotIn             func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		FleetCodeIDIsNull            func(q *bun.SelectQuery) *bun.SelectQuery
 		FleetCodeIDIsNotNull         func(q *bun.SelectQuery) *bun.SelectQuery
 		RegistrationStateIDEQ        func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		RegistrationStateIDNEQ       func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		RegistrationStateIDIn        func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		RegistrationStateIDNotIn     func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		RegistrationStateIDIsNull    func(q *bun.SelectQuery) *bun.SelectQuery
 		RegistrationStateIDIsNotNull func(q *bun.SelectQuery) *bun.SelectQuery
 		StatusEQ                     func(q *bun.SelectQuery, v domain.EquipmentStatus) *bun.SelectQuery
 		StatusNEQ                    func(q *bun.SelectQuery, v domain.EquipmentStatus) *bun.SelectQuery
+		StatusIn                     func(q *bun.SelectQuery, v []domain.EquipmentStatus) *bun.SelectQuery
+		StatusNotIn                  func(q *bun.SelectQuery, v []domain.EquipmentStatus) *bun.SelectQuery
 		CodeEQ                       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeNEQ                      func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CodeIn                       func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -411,18 +460,26 @@ var TrailerQuery = struct {
 		RankHasSuffix                func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		YearEQ                       func(q *bun.SelectQuery, v *int) *bun.SelectQuery
 		YearNEQ                      func(q *bun.SelectQuery, v *int) *bun.SelectQuery
+		YearIn                       func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
+		YearNotIn                    func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
 		YearIsNull                   func(q *bun.SelectQuery) *bun.SelectQuery
 		YearIsNotNull                func(q *bun.SelectQuery) *bun.SelectQuery
 		MaxLoadWeightEQ              func(q *bun.SelectQuery, v *int) *bun.SelectQuery
 		MaxLoadWeightNEQ             func(q *bun.SelectQuery, v *int) *bun.SelectQuery
+		MaxLoadWeightIn              func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
+		MaxLoadWeightNotIn           func(q *bun.SelectQuery, v []*int) *bun.SelectQuery
 		MaxLoadWeightIsNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		MaxLoadWeightIsNotNull       func(q *bun.SelectQuery) *bun.SelectQuery
 		LastInspectionDateEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		LastInspectionDateNEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		LastInspectionDateIn         func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		LastInspectionDateNotIn      func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		LastInspectionDateIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		LastInspectionDateIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		RegistrationExpiryEQ         func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		RegistrationExpiryNEQ        func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		RegistrationExpiryIn         func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		RegistrationExpiryNotIn      func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		RegistrationExpiryIsNull     func(q *bun.SelectQuery) *bun.SelectQuery
 		RegistrationExpiryIsNotNull  func(q *bun.SelectQuery) *bun.SelectQuery
 		VersionEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -457,11 +514,23 @@ var TrailerQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tr.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tr.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tr.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tr.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tr.business_unit_id"), v)
+		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tr.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tr.business_unit_id"), bun.In(v))
 		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tr.organization_id"), v)
@@ -469,11 +538,23 @@ var TrailerQuery = struct {
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tr.organization_id"), v)
 		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tr.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tr.organization_id"), bun.In(v))
+		},
 		EquipmentTypeIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tr.equipment_type_id"), v)
 		},
 		EquipmentTypeIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tr.equipment_type_id"), v)
+		},
+		EquipmentTypeIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tr.equipment_type_id"), bun.In(v))
+		},
+		EquipmentTypeIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tr.equipment_type_id"), bun.In(v))
 		},
 		EquipmentManufacturerIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tr.equipment_manufacturer_id"), v)
@@ -481,11 +562,23 @@ var TrailerQuery = struct {
 		EquipmentManufacturerIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tr.equipment_manufacturer_id"), v)
 		},
+		EquipmentManufacturerIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tr.equipment_manufacturer_id"), bun.In(v))
+		},
+		EquipmentManufacturerIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tr.equipment_manufacturer_id"), bun.In(v))
+		},
 		FleetCodeIDEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tr.fleet_code_id"), v)
 		},
 		FleetCodeIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tr.fleet_code_id"), v)
+		},
+		FleetCodeIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tr.fleet_code_id"), bun.In(v))
+		},
+		FleetCodeIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tr.fleet_code_id"), bun.In(v))
 		},
 		FleetCodeIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("tr.fleet_code_id"))
@@ -499,6 +592,12 @@ var TrailerQuery = struct {
 		RegistrationStateIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tr.registration_state_id"), v)
 		},
+		RegistrationStateIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tr.registration_state_id"), bun.In(v))
+		},
+		RegistrationStateIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tr.registration_state_id"), bun.In(v))
+		},
 		RegistrationStateIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("tr.registration_state_id"))
 		},
@@ -510,6 +609,12 @@ var TrailerQuery = struct {
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v domain.EquipmentStatus) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tr.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []domain.EquipmentStatus) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tr.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []domain.EquipmentStatus) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tr.status"), bun.In(v))
 		},
 		CodeEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("tr.code"), v)
@@ -781,6 +886,12 @@ var TrailerQuery = struct {
 		YearNEQ: func(q *bun.SelectQuery, v *int) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tr.year"), v)
 		},
+		YearIn: func(q *bun.SelectQuery, v []*int) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tr.year"), bun.In(v))
+		},
+		YearNotIn: func(q *bun.SelectQuery, v []*int) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tr.year"), bun.In(v))
+		},
 		YearIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("tr.year"))
 		},
@@ -792,6 +903,12 @@ var TrailerQuery = struct {
 		},
 		MaxLoadWeightNEQ: func(q *bun.SelectQuery, v *int) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tr.max_load_weight"), v)
+		},
+		MaxLoadWeightIn: func(q *bun.SelectQuery, v []*int) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tr.max_load_weight"), bun.In(v))
+		},
+		MaxLoadWeightNotIn: func(q *bun.SelectQuery, v []*int) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tr.max_load_weight"), bun.In(v))
 		},
 		MaxLoadWeightIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("tr.max_load_weight"))
@@ -805,6 +922,12 @@ var TrailerQuery = struct {
 		LastInspectionDateNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tr.last_inspection_date"), v)
 		},
+		LastInspectionDateIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tr.last_inspection_date"), bun.In(v))
+		},
+		LastInspectionDateNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tr.last_inspection_date"), bun.In(v))
+		},
 		LastInspectionDateIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("tr.last_inspection_date"))
 		},
@@ -816,6 +939,12 @@ var TrailerQuery = struct {
 		},
 		RegistrationExpiryNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("tr.registration_expiry"), v)
+		},
+		RegistrationExpiryIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("tr.registration_expiry"), bun.In(v))
+		},
+		RegistrationExpiryNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("tr.registration_expiry"), bun.In(v))
 		},
 		RegistrationExpiryIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("tr.registration_expiry"))
@@ -1398,6 +1527,22 @@ var TrailerQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		BusinessUnit          string
+		Organization          string
+		EquipmentType         string
+		EquipmentManufacturer string
+		RegistrationState     string
+		FleetCode             string
+	}{
+		BusinessUnit:          "BusinessUnit",
+		Organization:          "Organization",
+		EquipmentType:         "EquipmentType",
+		EquipmentManufacturer: "EquipmentManufacturer",
+		RegistrationState:     "RegistrationState",
+		FleetCode:             "FleetCode",
+	},
 }
 
 // TrailerQueryBuilder provides a fluent interface for building queries
@@ -1442,6 +1587,18 @@ func (b *TrailerQueryBuilder) WhereIDNEQ(v pulid.ID) *TrailerQueryBuilder {
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *TrailerQueryBuilder) WhereIDIn(v []pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *TrailerQueryBuilder) WhereIDNotIn(v []pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *TrailerQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *TrailerQueryBuilder {
 	b.query = TrailerQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -1451,6 +1608,18 @@ func (b *TrailerQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *TrailerQueryBui
 // WhereBusinessUnitIDNEQ adds a WHERE business_unit_id != ? condition
 func (b *TrailerQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *TrailerQueryBuilder {
 	b.query = TrailerQuery.Where.BusinessUnitIDNEQ(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *TrailerQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *TrailerQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.BusinessUnitIDNotIn(b.query, v)
 	return b
 }
 
@@ -1466,6 +1635,18 @@ func (b *TrailerQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *TrailerQueryBu
 	return b
 }
 
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *TrailerQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *TrailerQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.OrganizationIDNotIn(b.query, v)
+	return b
+}
+
 // WhereEquipmentTypeIDEQ adds a WHERE equipment_type_id = ? condition
 func (b *TrailerQueryBuilder) WhereEquipmentTypeIDEQ(v pulid.ID) *TrailerQueryBuilder {
 	b.query = TrailerQuery.Where.EquipmentTypeIDEQ(b.query, v)
@@ -1475,6 +1656,18 @@ func (b *TrailerQueryBuilder) WhereEquipmentTypeIDEQ(v pulid.ID) *TrailerQueryBu
 // WhereEquipmentTypeIDNEQ adds a WHERE equipment_type_id != ? condition
 func (b *TrailerQueryBuilder) WhereEquipmentTypeIDNEQ(v pulid.ID) *TrailerQueryBuilder {
 	b.query = TrailerQuery.Where.EquipmentTypeIDNEQ(b.query, v)
+	return b
+}
+
+// WhereEquipmentTypeIDIn adds a WHERE equipment_type_id IN (?) condition
+func (b *TrailerQueryBuilder) WhereEquipmentTypeIDIn(v []pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.EquipmentTypeIDIn(b.query, v)
+	return b
+}
+
+// WhereEquipmentTypeIDNotIn adds a WHERE equipment_type_id NOT IN (?) condition
+func (b *TrailerQueryBuilder) WhereEquipmentTypeIDNotIn(v []pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.EquipmentTypeIDNotIn(b.query, v)
 	return b
 }
 
@@ -1490,6 +1683,18 @@ func (b *TrailerQueryBuilder) WhereEquipmentManufacturerIDNEQ(v pulid.ID) *Trail
 	return b
 }
 
+// WhereEquipmentManufacturerIDIn adds a WHERE equipment_manufacturer_id IN (?) condition
+func (b *TrailerQueryBuilder) WhereEquipmentManufacturerIDIn(v []pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.EquipmentManufacturerIDIn(b.query, v)
+	return b
+}
+
+// WhereEquipmentManufacturerIDNotIn adds a WHERE equipment_manufacturer_id NOT IN (?) condition
+func (b *TrailerQueryBuilder) WhereEquipmentManufacturerIDNotIn(v []pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.EquipmentManufacturerIDNotIn(b.query, v)
+	return b
+}
+
 // WhereFleetCodeIDEQ adds a WHERE fleet_code_id = ? condition
 func (b *TrailerQueryBuilder) WhereFleetCodeIDEQ(v *pulid.ID) *TrailerQueryBuilder {
 	b.query = TrailerQuery.Where.FleetCodeIDEQ(b.query, v)
@@ -1499,6 +1704,18 @@ func (b *TrailerQueryBuilder) WhereFleetCodeIDEQ(v *pulid.ID) *TrailerQueryBuild
 // WhereFleetCodeIDNEQ adds a WHERE fleet_code_id != ? condition
 func (b *TrailerQueryBuilder) WhereFleetCodeIDNEQ(v *pulid.ID) *TrailerQueryBuilder {
 	b.query = TrailerQuery.Where.FleetCodeIDNEQ(b.query, v)
+	return b
+}
+
+// WhereFleetCodeIDIn adds a WHERE fleet_code_id IN (?) condition
+func (b *TrailerQueryBuilder) WhereFleetCodeIDIn(v []*pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.FleetCodeIDIn(b.query, v)
+	return b
+}
+
+// WhereFleetCodeIDNotIn adds a WHERE fleet_code_id NOT IN (?) condition
+func (b *TrailerQueryBuilder) WhereFleetCodeIDNotIn(v []*pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.FleetCodeIDNotIn(b.query, v)
 	return b
 }
 
@@ -1514,6 +1731,18 @@ func (b *TrailerQueryBuilder) WhereRegistrationStateIDNEQ(v *pulid.ID) *TrailerQ
 	return b
 }
 
+// WhereRegistrationStateIDIn adds a WHERE registration_state_id IN (?) condition
+func (b *TrailerQueryBuilder) WhereRegistrationStateIDIn(v []*pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.RegistrationStateIDIn(b.query, v)
+	return b
+}
+
+// WhereRegistrationStateIDNotIn adds a WHERE registration_state_id NOT IN (?) condition
+func (b *TrailerQueryBuilder) WhereRegistrationStateIDNotIn(v []*pulid.ID) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.RegistrationStateIDNotIn(b.query, v)
+	return b
+}
+
 // WhereStatusEQ adds a WHERE status = ? condition
 func (b *TrailerQueryBuilder) WhereStatusEQ(v domain.EquipmentStatus) *TrailerQueryBuilder {
 	b.query = TrailerQuery.Where.StatusEQ(b.query, v)
@@ -1523,6 +1752,18 @@ func (b *TrailerQueryBuilder) WhereStatusEQ(v domain.EquipmentStatus) *TrailerQu
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *TrailerQueryBuilder) WhereStatusNEQ(v domain.EquipmentStatus) *TrailerQueryBuilder {
 	b.query = TrailerQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *TrailerQueryBuilder) WhereStatusIn(v []domain.EquipmentStatus) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *TrailerQueryBuilder) WhereStatusNotIn(v []domain.EquipmentStatus) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1874,6 +2115,18 @@ func (b *TrailerQueryBuilder) WhereYearNEQ(v *int) *TrailerQueryBuilder {
 	return b
 }
 
+// WhereYearIn adds a WHERE year IN (?) condition
+func (b *TrailerQueryBuilder) WhereYearIn(v []*int) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.YearIn(b.query, v)
+	return b
+}
+
+// WhereYearNotIn adds a WHERE year NOT IN (?) condition
+func (b *TrailerQueryBuilder) WhereYearNotIn(v []*int) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.YearNotIn(b.query, v)
+	return b
+}
+
 // WhereMaxLoadWeightEQ adds a WHERE max_load_weight = ? condition
 func (b *TrailerQueryBuilder) WhereMaxLoadWeightEQ(v *int) *TrailerQueryBuilder {
 	b.query = TrailerQuery.Where.MaxLoadWeightEQ(b.query, v)
@@ -1883,6 +2136,18 @@ func (b *TrailerQueryBuilder) WhereMaxLoadWeightEQ(v *int) *TrailerQueryBuilder 
 // WhereMaxLoadWeightNEQ adds a WHERE max_load_weight != ? condition
 func (b *TrailerQueryBuilder) WhereMaxLoadWeightNEQ(v *int) *TrailerQueryBuilder {
 	b.query = TrailerQuery.Where.MaxLoadWeightNEQ(b.query, v)
+	return b
+}
+
+// WhereMaxLoadWeightIn adds a WHERE max_load_weight IN (?) condition
+func (b *TrailerQueryBuilder) WhereMaxLoadWeightIn(v []*int) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.MaxLoadWeightIn(b.query, v)
+	return b
+}
+
+// WhereMaxLoadWeightNotIn adds a WHERE max_load_weight NOT IN (?) condition
+func (b *TrailerQueryBuilder) WhereMaxLoadWeightNotIn(v []*int) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.MaxLoadWeightNotIn(b.query, v)
 	return b
 }
 
@@ -1898,6 +2163,18 @@ func (b *TrailerQueryBuilder) WhereLastInspectionDateNEQ(v *int64) *TrailerQuery
 	return b
 }
 
+// WhereLastInspectionDateIn adds a WHERE last_inspection_date IN (?) condition
+func (b *TrailerQueryBuilder) WhereLastInspectionDateIn(v []*int64) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.LastInspectionDateIn(b.query, v)
+	return b
+}
+
+// WhereLastInspectionDateNotIn adds a WHERE last_inspection_date NOT IN (?) condition
+func (b *TrailerQueryBuilder) WhereLastInspectionDateNotIn(v []*int64) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.LastInspectionDateNotIn(b.query, v)
+	return b
+}
+
 // WhereRegistrationExpiryEQ adds a WHERE registration_expiry = ? condition
 func (b *TrailerQueryBuilder) WhereRegistrationExpiryEQ(v *int64) *TrailerQueryBuilder {
 	b.query = TrailerQuery.Where.RegistrationExpiryEQ(b.query, v)
@@ -1907,6 +2184,18 @@ func (b *TrailerQueryBuilder) WhereRegistrationExpiryEQ(v *int64) *TrailerQueryB
 // WhereRegistrationExpiryNEQ adds a WHERE registration_expiry != ? condition
 func (b *TrailerQueryBuilder) WhereRegistrationExpiryNEQ(v *int64) *TrailerQueryBuilder {
 	b.query = TrailerQuery.Where.RegistrationExpiryNEQ(b.query, v)
+	return b
+}
+
+// WhereRegistrationExpiryIn adds a WHERE registration_expiry IN (?) condition
+func (b *TrailerQueryBuilder) WhereRegistrationExpiryIn(v []*int64) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.RegistrationExpiryIn(b.query, v)
+	return b
+}
+
+// WhereRegistrationExpiryNotIn adds a WHERE registration_expiry NOT IN (?) condition
+func (b *TrailerQueryBuilder) WhereRegistrationExpiryNotIn(v []*int64) *TrailerQueryBuilder {
+	b.query = TrailerQuery.Where.RegistrationExpiryNotIn(b.query, v)
 	return b
 }
 
@@ -2154,4 +2443,206 @@ func (b *TrailerQueryBuilder) First(ctx context.Context) (*Trailer, error) {
 // TrailerBuild creates a chainable query builder
 func TrailerBuild(db bun.IDB) *TrailerQueryBuilder {
 	return NewTrailerQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *TrailerQueryBuilder) LoadBusinessUnit() *TrailerQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *TrailerQueryBuilder) LoadOrganization() *TrailerQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadEquipmentType loads the EquipmentType relationship
+func (b *TrailerQueryBuilder) LoadEquipmentType() *TrailerQueryBuilder {
+	b.query = b.query.Relation("EquipmentType")
+	return b
+}
+
+// LoadEquipmentManufacturer loads the EquipmentManufacturer relationship
+func (b *TrailerQueryBuilder) LoadEquipmentManufacturer() *TrailerQueryBuilder {
+	b.query = b.query.Relation("EquipmentManufacturer")
+	return b
+}
+
+// LoadRegistrationState loads the RegistrationState relationship
+func (b *TrailerQueryBuilder) LoadRegistrationState() *TrailerQueryBuilder {
+	b.query = b.query.Relation("RegistrationState")
+	return b
+}
+
+// LoadFleetCode loads the FleetCode relationship
+func (b *TrailerQueryBuilder) LoadFleetCode() *TrailerQueryBuilder {
+	b.query = b.query.Relation("FleetCode")
+	return b
+}
+
+// LoadAllRelations loads all relationships for Trailer
+func (b *TrailerQueryBuilder) LoadAllRelations() *TrailerQueryBuilder {
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadEquipmentType()
+	b.LoadEquipmentManufacturer()
+	b.LoadRegistrationState()
+	b.LoadFleetCode()
+	return b
+}
+
+// TrailerRelationChain provides a fluent API for building nested relationship chains
+type TrailerRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewTrailerRelationChain creates a new relation chain builder
+func NewTrailerRelationChain() *TrailerRelationChain {
+	return &TrailerRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *TrailerRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *TrailerRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *TrailerRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *TrailerRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *TrailerQueryBuilder) WithBusinessUnit() *TrailerRelationChainBuilder {
+	chain := &TrailerRelationChainBuilder{
+		parent: b,
+		chain:  NewTrailerRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *TrailerQueryBuilder) WithOrganization() *TrailerRelationChainBuilder {
+	chain := &TrailerRelationChainBuilder{
+		parent: b,
+		chain:  NewTrailerRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithEquipmentType creates a relation chain starting with EquipmentType
+func (b *TrailerQueryBuilder) WithEquipmentType() *TrailerRelationChainBuilder {
+	chain := &TrailerRelationChainBuilder{
+		parent: b,
+		chain:  NewTrailerRelationChain(),
+	}
+	chain.chain.Add("EquipmentType")
+	return chain
+}
+
+// WithEquipmentManufacturer creates a relation chain starting with EquipmentManufacturer
+func (b *TrailerQueryBuilder) WithEquipmentManufacturer() *TrailerRelationChainBuilder {
+	chain := &TrailerRelationChainBuilder{
+		parent: b,
+		chain:  NewTrailerRelationChain(),
+	}
+	chain.chain.Add("EquipmentManufacturer")
+	return chain
+}
+
+// WithRegistrationState creates a relation chain starting with RegistrationState
+func (b *TrailerQueryBuilder) WithRegistrationState() *TrailerRelationChainBuilder {
+	chain := &TrailerRelationChainBuilder{
+		parent: b,
+		chain:  NewTrailerRelationChain(),
+	}
+	chain.chain.Add("RegistrationState")
+	return chain
+}
+
+// WithFleetCode creates a relation chain starting with FleetCode
+func (b *TrailerQueryBuilder) WithFleetCode() *TrailerRelationChainBuilder {
+	chain := &TrailerRelationChainBuilder{
+		parent: b,
+		chain:  NewTrailerRelationChain(),
+	}
+	chain.chain.Add("FleetCode")
+	return chain
+}
+
+// TrailerRelationChainBuilder provides fluent API for building nested relations
+type TrailerRelationChainBuilder struct {
+	parent *TrailerQueryBuilder
+	chain  *TrailerRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *TrailerRelationChainBuilder) Load() *TrailerQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *TrailerRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *TrailerRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *TrailerRelationChainBuilder) OrderBy(order string) *TrailerRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *TrailerRelationChainBuilder) Where(condition string, args ...interface{}) *TrailerRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

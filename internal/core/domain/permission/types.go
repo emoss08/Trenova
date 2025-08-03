@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 package permission
 
 import (
@@ -72,6 +77,12 @@ const (
 	ResourceShipment = Resource(
 		"shipment",
 	) // Represents resources for managing shipments.
+	ResourceShipmentComment = Resource(
+		"shipment_comment",
+	) // Represents resources for managing shipment comments.
+	ResourceBillingClient = Resource(
+		"billing_client",
+	)
 	ResourceAIClassification = Resource(
 		"ai_classification",
 	) // Represents resources for managing AI classifications.
@@ -377,6 +388,11 @@ var (
 			ActionRead,
 			ActionManage,
 		},
+		ResourceBillingClient: {
+			ActionRead,
+			ActionApprove,
+			ActionManage,
+		},
 		ResourceBusinessUnit: append(
 			BaseActions,
 			ActionConfigure,
@@ -446,6 +462,10 @@ var (
 		ResourceTrailer: append(
 			BaseActions,
 			append(AssignableActions, FieldActions...)...,
+		),
+		ResourceShipmentComment: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
 		),
 		ResourceShipment: append(
 			append(BaseActions, WorkflowActions...),

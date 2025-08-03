@@ -1,3 +1,7 @@
+<!--
+Copyright 2023-2025 Eric Moss
+Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md-->
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -137,3 +141,7 @@ The system manages transportation logistics including:
 
 - Do not put in a placeholder note for implementation. If something needs to be done, implement the actual feature or functionality directly
 - Avoid comments like "//! Note: In a real implementation, you'd sort by Priority field" - instead, actually implement the sorting functionality
+
+## Development Warnings
+
+- Never run npm run dev

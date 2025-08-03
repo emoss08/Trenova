@@ -38,14 +38,22 @@ var UserRoleQuery = struct {
 
 	// WHERE clause helpers
 	Where struct {
-		BusinessUnitIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		RoleIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		RoleIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		RoleIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		RoleIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		RoleIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		RoleIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 
 		// Tenant helpers if both fields exist
 		Tenant func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
@@ -65,6 +73,11 @@ var UserRoleQuery = struct {
 	FieldConfig  func() map[string]userRoleFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		User string
+		Role string
+	}
 }{
 	// Table and alias constants
 	Table:    "user_roles",
@@ -98,15 +111,23 @@ var UserRoleQuery = struct {
 
 	// WHERE clause helpers
 	Where: struct {
-		BusinessUnitIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		BusinessUnitIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDEQ  func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		OrganizationIDNEQ func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		UserIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		RoleIDEQ          func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		RoleIDNEQ         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
-		Tenant            func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
+		BusinessUnitIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDEQ    func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDNEQ   func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn    func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		UserIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		UserIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		RoleIDEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		RoleIDNEQ           func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		RoleIDIn            func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		RoleIDNotIn         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		Tenant              func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery
 	}{
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ur.business_unit_id"), v)
@@ -114,11 +135,23 @@ var UserRoleQuery = struct {
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ur.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ur.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ur.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ur.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ur.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ur.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ur.organization_id"), bun.In(v))
 		},
 		UserIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ur.user_id"), v)
@@ -126,11 +159,23 @@ var UserRoleQuery = struct {
 		UserIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ur.user_id"), v)
 		},
+		UserIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ur.user_id"), bun.In(v))
+		},
+		UserIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ur.user_id"), bun.In(v))
+		},
 		RoleIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("ur.role_id"), v)
 		},
 		RoleIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("ur.role_id"), v)
+		},
+		RoleIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("ur.role_id"), bun.In(v))
+		},
+		RoleIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("ur.role_id"), bun.In(v))
 		},
 		Tenant: func(q *bun.SelectQuery, orgID, buID pulid.ID) *bun.SelectQuery {
 			return q.
@@ -257,6 +302,14 @@ var UserRoleQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		User string
+		Role string
+	}{
+		User: "User",
+		Role: "Role",
+	},
 }
 
 // UserRoleQueryBuilder provides a fluent interface for building queries
@@ -301,6 +354,18 @@ func (b *UserRoleQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *UserRoleQuery
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *UserRoleQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *UserRoleQueryBuilder {
+	b.query = UserRoleQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *UserRoleQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *UserRoleQueryBuilder {
+	b.query = UserRoleQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *UserRoleQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *UserRoleQueryBuilder {
 	b.query = UserRoleQuery.Where.OrganizationIDEQ(b.query, v)
@@ -310,6 +375,18 @@ func (b *UserRoleQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *UserRoleQueryB
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *UserRoleQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *UserRoleQueryBuilder {
 	b.query = UserRoleQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *UserRoleQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *UserRoleQueryBuilder {
+	b.query = UserRoleQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *UserRoleQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *UserRoleQueryBuilder {
+	b.query = UserRoleQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -325,6 +402,18 @@ func (b *UserRoleQueryBuilder) WhereUserIDNEQ(v pulid.ID) *UserRoleQueryBuilder 
 	return b
 }
 
+// WhereUserIDIn adds a WHERE user_id IN (?) condition
+func (b *UserRoleQueryBuilder) WhereUserIDIn(v []pulid.ID) *UserRoleQueryBuilder {
+	b.query = UserRoleQuery.Where.UserIDIn(b.query, v)
+	return b
+}
+
+// WhereUserIDNotIn adds a WHERE user_id NOT IN (?) condition
+func (b *UserRoleQueryBuilder) WhereUserIDNotIn(v []pulid.ID) *UserRoleQueryBuilder {
+	b.query = UserRoleQuery.Where.UserIDNotIn(b.query, v)
+	return b
+}
+
 // WhereRoleIDEQ adds a WHERE role_id = ? condition
 func (b *UserRoleQueryBuilder) WhereRoleIDEQ(v pulid.ID) *UserRoleQueryBuilder {
 	b.query = UserRoleQuery.Where.RoleIDEQ(b.query, v)
@@ -334,6 +423,18 @@ func (b *UserRoleQueryBuilder) WhereRoleIDEQ(v pulid.ID) *UserRoleQueryBuilder {
 // WhereRoleIDNEQ adds a WHERE role_id != ? condition
 func (b *UserRoleQueryBuilder) WhereRoleIDNEQ(v pulid.ID) *UserRoleQueryBuilder {
 	b.query = UserRoleQuery.Where.RoleIDNEQ(b.query, v)
+	return b
+}
+
+// WhereRoleIDIn adds a WHERE role_id IN (?) condition
+func (b *UserRoleQueryBuilder) WhereRoleIDIn(v []pulid.ID) *UserRoleQueryBuilder {
+	b.query = UserRoleQuery.Where.RoleIDIn(b.query, v)
+	return b
+}
+
+// WhereRoleIDNotIn adds a WHERE role_id NOT IN (?) condition
+func (b *UserRoleQueryBuilder) WhereRoleIDNotIn(v []pulid.ID) *UserRoleQueryBuilder {
+	b.query = UserRoleQuery.Where.RoleIDNotIn(b.query, v)
 	return b
 }
 
@@ -437,4 +538,138 @@ func (b *UserRoleQueryBuilder) First(ctx context.Context) (*UserRole, error) {
 // UserRoleBuild creates a chainable query builder
 func UserRoleBuild(db bun.IDB) *UserRoleQueryBuilder {
 	return NewUserRoleQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadUser loads the User relationship
+func (b *UserRoleQueryBuilder) LoadUser() *UserRoleQueryBuilder {
+	b.query = b.query.Relation("User")
+	return b
+}
+
+// LoadRole loads the Role relationship
+func (b *UserRoleQueryBuilder) LoadRole() *UserRoleQueryBuilder {
+	b.query = b.query.Relation("Role")
+	return b
+}
+
+// LoadAllRelations loads all relationships for UserRole
+func (b *UserRoleQueryBuilder) LoadAllRelations() *UserRoleQueryBuilder {
+	b.LoadUser()
+	b.LoadRole()
+	return b
+}
+
+// UserRoleRelationChain provides a fluent API for building nested relationship chains
+type UserRoleRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewUserRoleRelationChain creates a new relation chain builder
+func NewUserRoleRelationChain() *UserRoleRelationChain {
+	return &UserRoleRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *UserRoleRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *UserRoleRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *UserRoleRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *UserRoleRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithUser creates a relation chain starting with User
+func (b *UserRoleQueryBuilder) WithUser() *UserRoleRelationChainBuilder {
+	chain := &UserRoleRelationChainBuilder{
+		parent: b,
+		chain:  NewUserRoleRelationChain(),
+	}
+	chain.chain.Add("User")
+	return chain
+}
+
+// WithRole creates a relation chain starting with Role
+func (b *UserRoleQueryBuilder) WithRole() *UserRoleRelationChainBuilder {
+	chain := &UserRoleRelationChainBuilder{
+		parent: b,
+		chain:  NewUserRoleRelationChain(),
+	}
+	chain.chain.Add("Role")
+	return chain
+}
+
+// UserRoleRelationChainBuilder provides fluent API for building nested relations
+type UserRoleRelationChainBuilder struct {
+	parent *UserRoleQueryBuilder
+	chain  *UserRoleRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *UserRoleRelationChainBuilder) Load() *UserRoleQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *UserRoleRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *UserRoleRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *UserRoleRelationChainBuilder) OrderBy(order string) *UserRoleRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *UserRoleRelationChainBuilder) Where(condition string, args ...interface{}) *UserRoleRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

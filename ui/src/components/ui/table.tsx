@@ -1,25 +1,39 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import * as React from "react";
 
 import { cn } from "@/lib/utils";
 
 interface TableProps extends React.ComponentProps<"table"> {
   containerClassName?: string;
+  onScroll?: React.UIEventHandler<HTMLDivElement>;
 }
 
-function Table({ containerClassName, className, ...props }: TableProps) {
-  return (
-    <div data-slot="table-container" className={containerClassName}>
-      <table
-        data-slot="table"
-        className={cn(
-          "-my-1 w-full caption-bottom border-separate border-spacing-y-1 text-xs max-md:flex max-md:w-full max-md:flex-col max-md:py-2",
-          className,
-        )}
-        {...props}
-      />
-    </div>
-  );
-}
+const Table = React.forwardRef<HTMLTableElement, TableProps>(
+  ({ containerClassName, className, onScroll, ...props }, ref) => {
+    return (
+      <div
+        data-slot="table-container"
+        className={cn("size-full", containerClassName)}
+        onScroll={onScroll}
+      >
+        <table
+          ref={ref}
+          data-slot="table"
+          className={cn(
+            "-my-1 w-full caption-bottom border-separate border-spacing-y-1 text-xs max-md:flex max-md:w-full max-md:flex-col max-md:py-2",
+            className,
+          )}
+          {...props}
+        />
+      </div>
+    );
+  },
+);
+Table.displayName = "Table";
 
 function TableHeader({ className, ...props }: React.ComponentProps<"thead">) {
   return (

@@ -47,10 +47,16 @@ var ConsolidationGroupQuery = struct {
 	Where struct {
 		IDEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ConsolidationNumberEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ConsolidationNumberNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ConsolidationNumberIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -64,6 +70,8 @@ var ConsolidationGroupQuery = struct {
 		ConsolidationNumberHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		StatusEQ                     func(q *bun.SelectQuery, v GroupStatus) *bun.SelectQuery
 		StatusNEQ                    func(q *bun.SelectQuery, v GroupStatus) *bun.SelectQuery
+		StatusIn                     func(q *bun.SelectQuery, v []GroupStatus) *bun.SelectQuery
+		StatusNotIn                  func(q *bun.SelectQuery, v []GroupStatus) *bun.SelectQuery
 		CancelReasonEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CancelReasonNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CancelReasonIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -77,10 +85,14 @@ var ConsolidationGroupQuery = struct {
 		CancelReasonHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CanceledByIDEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		CanceledByIDNEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		CanceledByIDIn               func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		CanceledByIDNotIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		CanceledByIDIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledByIDIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledAtEQ                 func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		CanceledAtNEQ                func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		CanceledAtIn                 func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		CanceledAtNotIn              func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		CanceledAtIsNull             func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledAtIsNotNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		VersionEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -130,6 +142,13 @@ var ConsolidationGroupQuery = struct {
 	FieldConfig  func() map[string]consolidationGroupFieldConfig
 	IsSortable   func(field string) bool
 	IsFilterable func(field string) bool
+	// Relationship helpers
+	Relations struct {
+		Shipments    string
+		BusinessUnit string
+		Organization string
+		CanceledBy   string
+	}
 }{
 	// Table and alias constants
 	Table:    "consolidation_groups",
@@ -179,10 +198,16 @@ var ConsolidationGroupQuery = struct {
 	Where: struct {
 		IDEQ                         func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                        func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                         func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn                      func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		BusinessUnitIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		BusinessUnitIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		BusinessUnitIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		BusinessUnitIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		OrganizationIDEQ             func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		OrganizationIDNEQ            func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		OrganizationIDIn             func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		OrganizationIDNotIn          func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		ConsolidationNumberEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ConsolidationNumberNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		ConsolidationNumberIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -196,6 +221,8 @@ var ConsolidationGroupQuery = struct {
 		ConsolidationNumberHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		StatusEQ                     func(q *bun.SelectQuery, v GroupStatus) *bun.SelectQuery
 		StatusNEQ                    func(q *bun.SelectQuery, v GroupStatus) *bun.SelectQuery
+		StatusIn                     func(q *bun.SelectQuery, v []GroupStatus) *bun.SelectQuery
+		StatusNotIn                  func(q *bun.SelectQuery, v []GroupStatus) *bun.SelectQuery
 		CancelReasonEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CancelReasonNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CancelReasonIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -209,10 +236,14 @@ var ConsolidationGroupQuery = struct {
 		CancelReasonHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		CanceledByIDEQ               func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
 		CanceledByIDNEQ              func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery
+		CanceledByIDIn               func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
+		CanceledByIDNotIn            func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery
 		CanceledByIDIsNull           func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledByIDIsNotNull        func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledAtEQ                 func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
 		CanceledAtNEQ                func(q *bun.SelectQuery, v *int64) *bun.SelectQuery
+		CanceledAtIn                 func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
+		CanceledAtNotIn              func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery
 		CanceledAtIsNull             func(q *bun.SelectQuery) *bun.SelectQuery
 		CanceledAtIsNotNull          func(q *bun.SelectQuery) *bun.SelectQuery
 		VersionEQ                    func(q *bun.SelectQuery, v int64) *bun.SelectQuery
@@ -247,17 +278,35 @@ var ConsolidationGroupQuery = struct {
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cg.id"), v)
 		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cg.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cg.id"), bun.In(v))
+		},
 		BusinessUnitIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cg.business_unit_id"), v)
 		},
 		BusinessUnitIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cg.business_unit_id"), v)
 		},
+		BusinessUnitIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cg.business_unit_id"), bun.In(v))
+		},
+		BusinessUnitIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cg.business_unit_id"), bun.In(v))
+		},
 		OrganizationIDEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cg.organization_id"), v)
 		},
 		OrganizationIDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cg.organization_id"), v)
+		},
+		OrganizationIDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cg.organization_id"), bun.In(v))
+		},
+		OrganizationIDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cg.organization_id"), bun.In(v))
 		},
 		ConsolidationNumberEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cg.consolidation_number"), v)
@@ -298,6 +347,12 @@ var ConsolidationGroupQuery = struct {
 		StatusNEQ: func(q *bun.SelectQuery, v GroupStatus) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cg.status"), v)
 		},
+		StatusIn: func(q *bun.SelectQuery, v []GroupStatus) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cg.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []GroupStatus) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cg.status"), bun.In(v))
+		},
 		CancelReasonEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("cg.cancel_reason"), v)
 		},
@@ -337,6 +392,12 @@ var ConsolidationGroupQuery = struct {
 		CanceledByIDNEQ: func(q *bun.SelectQuery, v *pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cg.canceled_by_id"), v)
 		},
+		CanceledByIDIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cg.canceled_by_id"), bun.In(v))
+		},
+		CanceledByIDNotIn: func(q *bun.SelectQuery, v []*pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cg.canceled_by_id"), bun.In(v))
+		},
 		CanceledByIDIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("cg.canceled_by_id"))
 		},
@@ -348,6 +409,12 @@ var ConsolidationGroupQuery = struct {
 		},
 		CanceledAtNEQ: func(q *bun.SelectQuery, v *int64) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("cg.canceled_at"), v)
+		},
+		CanceledAtIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("cg.canceled_at"), bun.In(v))
+		},
+		CanceledAtNotIn: func(q *bun.SelectQuery, v []*int64) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("cg.canceled_at"), bun.In(v))
 		},
 		CanceledAtIsNull: func(q *bun.SelectQuery) *bun.SelectQuery {
 			return q.Where("? IS NULL", bun.Ident("cg.canceled_at"))
@@ -707,6 +774,18 @@ var ConsolidationGroupQuery = struct {
 		}
 		return false
 	},
+	// Relationship helpers
+	Relations: struct {
+		Shipments    string
+		BusinessUnit string
+		Organization string
+		CanceledBy   string
+	}{
+		Shipments:    "Shipments",
+		BusinessUnit: "BusinessUnit",
+		Organization: "Organization",
+		CanceledBy:   "CanceledBy",
+	},
 }
 
 // ConsolidationGroupQueryBuilder provides a fluent interface for building queries
@@ -751,6 +830,18 @@ func (b *ConsolidationGroupQueryBuilder) WhereIDNEQ(v pulid.ID) *ConsolidationGr
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *ConsolidationGroupQueryBuilder) WhereIDIn(v []pulid.ID) *ConsolidationGroupQueryBuilder {
+	b.query = ConsolidationGroupQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *ConsolidationGroupQueryBuilder) WhereIDNotIn(v []pulid.ID) *ConsolidationGroupQueryBuilder {
+	b.query = ConsolidationGroupQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereBusinessUnitIDEQ adds a WHERE business_unit_id = ? condition
 func (b *ConsolidationGroupQueryBuilder) WhereBusinessUnitIDEQ(v pulid.ID) *ConsolidationGroupQueryBuilder {
 	b.query = ConsolidationGroupQuery.Where.BusinessUnitIDEQ(b.query, v)
@@ -763,6 +854,18 @@ func (b *ConsolidationGroupQueryBuilder) WhereBusinessUnitIDNEQ(v pulid.ID) *Con
 	return b
 }
 
+// WhereBusinessUnitIDIn adds a WHERE business_unit_id IN (?) condition
+func (b *ConsolidationGroupQueryBuilder) WhereBusinessUnitIDIn(v []pulid.ID) *ConsolidationGroupQueryBuilder {
+	b.query = ConsolidationGroupQuery.Where.BusinessUnitIDIn(b.query, v)
+	return b
+}
+
+// WhereBusinessUnitIDNotIn adds a WHERE business_unit_id NOT IN (?) condition
+func (b *ConsolidationGroupQueryBuilder) WhereBusinessUnitIDNotIn(v []pulid.ID) *ConsolidationGroupQueryBuilder {
+	b.query = ConsolidationGroupQuery.Where.BusinessUnitIDNotIn(b.query, v)
+	return b
+}
+
 // WhereOrganizationIDEQ adds a WHERE organization_id = ? condition
 func (b *ConsolidationGroupQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *ConsolidationGroupQueryBuilder {
 	b.query = ConsolidationGroupQuery.Where.OrganizationIDEQ(b.query, v)
@@ -772,6 +875,18 @@ func (b *ConsolidationGroupQueryBuilder) WhereOrganizationIDEQ(v pulid.ID) *Cons
 // WhereOrganizationIDNEQ adds a WHERE organization_id != ? condition
 func (b *ConsolidationGroupQueryBuilder) WhereOrganizationIDNEQ(v pulid.ID) *ConsolidationGroupQueryBuilder {
 	b.query = ConsolidationGroupQuery.Where.OrganizationIDNEQ(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDIn adds a WHERE organization_id IN (?) condition
+func (b *ConsolidationGroupQueryBuilder) WhereOrganizationIDIn(v []pulid.ID) *ConsolidationGroupQueryBuilder {
+	b.query = ConsolidationGroupQuery.Where.OrganizationIDIn(b.query, v)
+	return b
+}
+
+// WhereOrganizationIDNotIn adds a WHERE organization_id NOT IN (?) condition
+func (b *ConsolidationGroupQueryBuilder) WhereOrganizationIDNotIn(v []pulid.ID) *ConsolidationGroupQueryBuilder {
+	b.query = ConsolidationGroupQuery.Where.OrganizationIDNotIn(b.query, v)
 	return b
 }
 
@@ -829,6 +944,18 @@ func (b *ConsolidationGroupQueryBuilder) WhereStatusNEQ(v GroupStatus) *Consolid
 	return b
 }
 
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *ConsolidationGroupQueryBuilder) WhereStatusIn(v []GroupStatus) *ConsolidationGroupQueryBuilder {
+	b.query = ConsolidationGroupQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *ConsolidationGroupQueryBuilder) WhereStatusNotIn(v []GroupStatus) *ConsolidationGroupQueryBuilder {
+	b.query = ConsolidationGroupQuery.Where.StatusNotIn(b.query, v)
+	return b
+}
+
 // WhereCancelReasonEQ adds a WHERE cancel_reason = ? condition
 func (b *ConsolidationGroupQueryBuilder) WhereCancelReasonEQ(v string) *ConsolidationGroupQueryBuilder {
 	b.query = ConsolidationGroupQuery.Where.CancelReasonEQ(b.query, v)
@@ -883,6 +1010,18 @@ func (b *ConsolidationGroupQueryBuilder) WhereCanceledByIDNEQ(v *pulid.ID) *Cons
 	return b
 }
 
+// WhereCanceledByIDIn adds a WHERE canceled_by_id IN (?) condition
+func (b *ConsolidationGroupQueryBuilder) WhereCanceledByIDIn(v []*pulid.ID) *ConsolidationGroupQueryBuilder {
+	b.query = ConsolidationGroupQuery.Where.CanceledByIDIn(b.query, v)
+	return b
+}
+
+// WhereCanceledByIDNotIn adds a WHERE canceled_by_id NOT IN (?) condition
+func (b *ConsolidationGroupQueryBuilder) WhereCanceledByIDNotIn(v []*pulid.ID) *ConsolidationGroupQueryBuilder {
+	b.query = ConsolidationGroupQuery.Where.CanceledByIDNotIn(b.query, v)
+	return b
+}
+
 // WhereCanceledAtEQ adds a WHERE canceled_at = ? condition
 func (b *ConsolidationGroupQueryBuilder) WhereCanceledAtEQ(v *int64) *ConsolidationGroupQueryBuilder {
 	b.query = ConsolidationGroupQuery.Where.CanceledAtEQ(b.query, v)
@@ -892,6 +1031,18 @@ func (b *ConsolidationGroupQueryBuilder) WhereCanceledAtEQ(v *int64) *Consolidat
 // WhereCanceledAtNEQ adds a WHERE canceled_at != ? condition
 func (b *ConsolidationGroupQueryBuilder) WhereCanceledAtNEQ(v *int64) *ConsolidationGroupQueryBuilder {
 	b.query = ConsolidationGroupQuery.Where.CanceledAtNEQ(b.query, v)
+	return b
+}
+
+// WhereCanceledAtIn adds a WHERE canceled_at IN (?) condition
+func (b *ConsolidationGroupQueryBuilder) WhereCanceledAtIn(v []*int64) *ConsolidationGroupQueryBuilder {
+	b.query = ConsolidationGroupQuery.Where.CanceledAtIn(b.query, v)
+	return b
+}
+
+// WhereCanceledAtNotIn adds a WHERE canceled_at NOT IN (?) condition
+func (b *ConsolidationGroupQueryBuilder) WhereCanceledAtNotIn(v []*int64) *ConsolidationGroupQueryBuilder {
+	b.query = ConsolidationGroupQuery.Where.CanceledAtNotIn(b.query, v)
 	return b
 }
 
@@ -1139,4 +1290,181 @@ func (b *ConsolidationGroupQueryBuilder) First(ctx context.Context) (*Consolidat
 // ConsolidationGroupBuild creates a chainable query builder
 func ConsolidationGroupBuild(db bun.IDB) *ConsolidationGroupQueryBuilder {
 	return NewConsolidationGroupQuery(db)
+}
+
+// Relationship loading methods
+
+// LoadShipments loads the Shipments relationship
+func (b *ConsolidationGroupQueryBuilder) LoadShipments(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ConsolidationGroupQueryBuilder {
+	if len(opts) > 0 {
+		b.query = b.query.Relation("Shipments", func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		})
+	} else {
+		b.query = b.query.Relation("Shipments")
+	}
+	return b
+}
+
+// LoadBusinessUnit loads the BusinessUnit relationship
+func (b *ConsolidationGroupQueryBuilder) LoadBusinessUnit() *ConsolidationGroupQueryBuilder {
+	b.query = b.query.Relation("BusinessUnit")
+	return b
+}
+
+// LoadOrganization loads the Organization relationship
+func (b *ConsolidationGroupQueryBuilder) LoadOrganization() *ConsolidationGroupQueryBuilder {
+	b.query = b.query.Relation("Organization")
+	return b
+}
+
+// LoadCanceledBy loads the CanceledBy relationship
+func (b *ConsolidationGroupQueryBuilder) LoadCanceledBy() *ConsolidationGroupQueryBuilder {
+	b.query = b.query.Relation("CanceledBy")
+	return b
+}
+
+// LoadAllRelations loads all relationships for ConsolidationGroup
+func (b *ConsolidationGroupQueryBuilder) LoadAllRelations() *ConsolidationGroupQueryBuilder {
+	b.LoadShipments()
+	b.LoadBusinessUnit()
+	b.LoadOrganization()
+	b.LoadCanceledBy()
+	return b
+}
+
+// ConsolidationGroupRelationChain provides a fluent API for building nested relationship chains
+type ConsolidationGroupRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewConsolidationGroupRelationChain creates a new relation chain builder
+func NewConsolidationGroupRelationChain() *ConsolidationGroupRelationChain {
+	return &ConsolidationGroupRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *ConsolidationGroupRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ConsolidationGroupRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *ConsolidationGroupRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *ConsolidationGroupRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// WithShipments creates a relation chain starting with Shipments
+func (b *ConsolidationGroupQueryBuilder) WithShipments(opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ConsolidationGroupRelationChainBuilder {
+	chain := &ConsolidationGroupRelationChainBuilder{
+		parent: b,
+		chain:  NewConsolidationGroupRelationChain(),
+	}
+	chain.chain.Add("Shipments", opts...)
+	return chain
+}
+
+// WithBusinessUnit creates a relation chain starting with BusinessUnit
+func (b *ConsolidationGroupQueryBuilder) WithBusinessUnit() *ConsolidationGroupRelationChainBuilder {
+	chain := &ConsolidationGroupRelationChainBuilder{
+		parent: b,
+		chain:  NewConsolidationGroupRelationChain(),
+	}
+	chain.chain.Add("BusinessUnit")
+	return chain
+}
+
+// WithOrganization creates a relation chain starting with Organization
+func (b *ConsolidationGroupQueryBuilder) WithOrganization() *ConsolidationGroupRelationChainBuilder {
+	chain := &ConsolidationGroupRelationChainBuilder{
+		parent: b,
+		chain:  NewConsolidationGroupRelationChain(),
+	}
+	chain.chain.Add("Organization")
+	return chain
+}
+
+// WithCanceledBy creates a relation chain starting with CanceledBy
+func (b *ConsolidationGroupQueryBuilder) WithCanceledBy() *ConsolidationGroupRelationChainBuilder {
+	chain := &ConsolidationGroupRelationChainBuilder{
+		parent: b,
+		chain:  NewConsolidationGroupRelationChain(),
+	}
+	chain.chain.Add("CanceledBy")
+	return chain
+}
+
+// ConsolidationGroupRelationChainBuilder provides fluent API for building nested relations
+type ConsolidationGroupRelationChainBuilder struct {
+	parent *ConsolidationGroupQueryBuilder
+	chain  *ConsolidationGroupRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *ConsolidationGroupRelationChainBuilder) Load() *ConsolidationGroupQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *ConsolidationGroupRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *ConsolidationGroupRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *ConsolidationGroupRelationChainBuilder) OrderBy(order string) *ConsolidationGroupRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *ConsolidationGroupRelationChainBuilder) Where(condition string, args ...interface{}) *ConsolidationGroupRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

@@ -49,6 +49,8 @@ var PretrainedModelQuery = struct {
 	Where struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -73,6 +75,8 @@ var PretrainedModelQuery = struct {
 		VersionHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		TypeEQ               func(q *bun.SelectQuery, v ModelType) *bun.SelectQuery
 		TypeNEQ              func(q *bun.SelectQuery, v ModelType) *bun.SelectQuery
+		TypeIn               func(q *bun.SelectQuery, v []ModelType) *bun.SelectQuery
+		TypeNotIn            func(q *bun.SelectQuery, v []ModelType) *bun.SelectQuery
 		DescriptionEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DescriptionNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DescriptionIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -86,6 +90,8 @@ var PretrainedModelQuery = struct {
 		DescriptionHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		StatusEQ             func(q *bun.SelectQuery, v ModelStatus) *bun.SelectQuery
 		StatusNEQ            func(q *bun.SelectQuery, v ModelStatus) *bun.SelectQuery
+		StatusIn             func(q *bun.SelectQuery, v []ModelStatus) *bun.SelectQuery
+		StatusNotIn          func(q *bun.SelectQuery, v []ModelStatus) *bun.SelectQuery
 		PathEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		PathNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		PathIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -99,8 +105,12 @@ var PretrainedModelQuery = struct {
 		PathHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		IsDefaultEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsDefaultNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsDefaultIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsDefaultNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		IsActiveEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsActiveNEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveIn           func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsActiveNotIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		TrainedAtEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		TrainedAtNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		TrainedAtIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -111,6 +121,8 @@ var PretrainedModelQuery = struct {
 		TrainedAtLTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		TrainingMetricsEQ    func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		TrainingMetricsNEQ   func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		TrainingMetricsIn    func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		TrainingMetricsNotIn func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		CreatedAtEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -202,6 +214,8 @@ var PretrainedModelQuery = struct {
 	Where: struct {
 		IDEQ                 func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
 		IDNEQ                func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery
+		IDIn                 func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
+		IDNotIn              func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery
 		NameEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		NameIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -226,6 +240,8 @@ var PretrainedModelQuery = struct {
 		VersionHasSuffix     func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		TypeEQ               func(q *bun.SelectQuery, v ModelType) *bun.SelectQuery
 		TypeNEQ              func(q *bun.SelectQuery, v ModelType) *bun.SelectQuery
+		TypeIn               func(q *bun.SelectQuery, v []ModelType) *bun.SelectQuery
+		TypeNotIn            func(q *bun.SelectQuery, v []ModelType) *bun.SelectQuery
 		DescriptionEQ        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DescriptionNEQ       func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		DescriptionIn        func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -239,6 +255,8 @@ var PretrainedModelQuery = struct {
 		DescriptionHasSuffix func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		StatusEQ             func(q *bun.SelectQuery, v ModelStatus) *bun.SelectQuery
 		StatusNEQ            func(q *bun.SelectQuery, v ModelStatus) *bun.SelectQuery
+		StatusIn             func(q *bun.SelectQuery, v []ModelStatus) *bun.SelectQuery
+		StatusNotIn          func(q *bun.SelectQuery, v []ModelStatus) *bun.SelectQuery
 		PathEQ               func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		PathNEQ              func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		PathIn               func(q *bun.SelectQuery, v []string) *bun.SelectQuery
@@ -252,8 +270,12 @@ var PretrainedModelQuery = struct {
 		PathHasSuffix        func(q *bun.SelectQuery, v string) *bun.SelectQuery
 		IsDefaultEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsDefaultNEQ         func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsDefaultIn          func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsDefaultNotIn       func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		IsActiveEQ           func(q *bun.SelectQuery, v bool) *bun.SelectQuery
 		IsActiveNEQ          func(q *bun.SelectQuery, v bool) *bun.SelectQuery
+		IsActiveIn           func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
+		IsActiveNotIn        func(q *bun.SelectQuery, v []bool) *bun.SelectQuery
 		TrainedAtEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		TrainedAtNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		TrainedAtIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -264,6 +286,8 @@ var PretrainedModelQuery = struct {
 		TrainedAtLTE         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		TrainingMetricsEQ    func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
 		TrainingMetricsNEQ   func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery
+		TrainingMetricsIn    func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
+		TrainingMetricsNotIn func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery
 		CreatedAtEQ          func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtNEQ         func(q *bun.SelectQuery, v int64) *bun.SelectQuery
 		CreatedAtIn          func(q *bun.SelectQuery, v []int64) *bun.SelectQuery
@@ -286,6 +310,12 @@ var PretrainedModelQuery = struct {
 		},
 		IDNEQ: func(q *bun.SelectQuery, v pulid.ID) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pm.id"), v)
+		},
+		IDIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pm.id"), bun.In(v))
+		},
+		IDNotIn: func(q *bun.SelectQuery, v []pulid.ID) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pm.id"), bun.In(v))
 		},
 		NameEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pm.name"), v)
@@ -359,6 +389,12 @@ var PretrainedModelQuery = struct {
 		TypeNEQ: func(q *bun.SelectQuery, v ModelType) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pm.type"), v)
 		},
+		TypeIn: func(q *bun.SelectQuery, v []ModelType) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pm.type"), bun.In(v))
+		},
+		TypeNotIn: func(q *bun.SelectQuery, v []ModelType) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pm.type"), bun.In(v))
+		},
 		DescriptionEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pm.description"), v)
 		},
@@ -397,6 +433,12 @@ var PretrainedModelQuery = struct {
 		},
 		StatusNEQ: func(q *bun.SelectQuery, v ModelStatus) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pm.status"), v)
+		},
+		StatusIn: func(q *bun.SelectQuery, v []ModelStatus) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pm.status"), bun.In(v))
+		},
+		StatusNotIn: func(q *bun.SelectQuery, v []ModelStatus) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pm.status"), bun.In(v))
 		},
 		PathEQ: func(q *bun.SelectQuery, v string) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pm.path"), v)
@@ -437,11 +479,23 @@ var PretrainedModelQuery = struct {
 		IsDefaultNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pm.is_default"), v)
 		},
+		IsDefaultIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pm.is_default"), bun.In(v))
+		},
+		IsDefaultNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pm.is_default"), bun.In(v))
+		},
 		IsActiveEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pm.is_active"), v)
 		},
 		IsActiveNEQ: func(q *bun.SelectQuery, v bool) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pm.is_active"), v)
+		},
+		IsActiveIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pm.is_active"), bun.In(v))
+		},
+		IsActiveNotIn: func(q *bun.SelectQuery, v []bool) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pm.is_active"), bun.In(v))
 		},
 		TrainedAtEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pm.trained_at"), v)
@@ -472,6 +526,12 @@ var PretrainedModelQuery = struct {
 		},
 		TrainingMetricsNEQ: func(q *bun.SelectQuery, v map[string]any) *bun.SelectQuery {
 			return q.Where("? != ?", bun.Ident("pm.training_metrics"), v)
+		},
+		TrainingMetricsIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? IN (?)", bun.Ident("pm.training_metrics"), bun.In(v))
+		},
+		TrainingMetricsNotIn: func(q *bun.SelectQuery, v []map[string]any) *bun.SelectQuery {
+			return q.Where("? NOT IN (?)", bun.Ident("pm.training_metrics"), bun.In(v))
 		},
 		CreatedAtEQ: func(q *bun.SelectQuery, v int64) *bun.SelectQuery {
 			return q.Where("? = ?", bun.Ident("pm.created_at"), v)
@@ -876,6 +936,18 @@ func (b *PretrainedModelQueryBuilder) WhereIDNEQ(v pulid.ID) *PretrainedModelQue
 	return b
 }
 
+// WhereIDIn adds a WHERE id IN (?) condition
+func (b *PretrainedModelQueryBuilder) WhereIDIn(v []pulid.ID) *PretrainedModelQueryBuilder {
+	b.query = PretrainedModelQuery.Where.IDIn(b.query, v)
+	return b
+}
+
+// WhereIDNotIn adds a WHERE id NOT IN (?) condition
+func (b *PretrainedModelQueryBuilder) WhereIDNotIn(v []pulid.ID) *PretrainedModelQueryBuilder {
+	b.query = PretrainedModelQuery.Where.IDNotIn(b.query, v)
+	return b
+}
+
 // WhereNameEQ adds a WHERE name = ? condition
 func (b *PretrainedModelQueryBuilder) WhereNameEQ(v string) *PretrainedModelQueryBuilder {
 	b.query = PretrainedModelQuery.Where.NameEQ(b.query, v)
@@ -972,6 +1044,18 @@ func (b *PretrainedModelQueryBuilder) WhereTypeNEQ(v ModelType) *PretrainedModel
 	return b
 }
 
+// WhereTypeIn adds a WHERE type IN (?) condition
+func (b *PretrainedModelQueryBuilder) WhereTypeIn(v []ModelType) *PretrainedModelQueryBuilder {
+	b.query = PretrainedModelQuery.Where.TypeIn(b.query, v)
+	return b
+}
+
+// WhereTypeNotIn adds a WHERE type NOT IN (?) condition
+func (b *PretrainedModelQueryBuilder) WhereTypeNotIn(v []ModelType) *PretrainedModelQueryBuilder {
+	b.query = PretrainedModelQuery.Where.TypeNotIn(b.query, v)
+	return b
+}
+
 // WhereDescriptionEQ adds a WHERE description = ? condition
 func (b *PretrainedModelQueryBuilder) WhereDescriptionEQ(v string) *PretrainedModelQueryBuilder {
 	b.query = PretrainedModelQuery.Where.DescriptionEQ(b.query, v)
@@ -1023,6 +1107,18 @@ func (b *PretrainedModelQueryBuilder) WhereStatusEQ(v ModelStatus) *PretrainedMo
 // WhereStatusNEQ adds a WHERE status != ? condition
 func (b *PretrainedModelQueryBuilder) WhereStatusNEQ(v ModelStatus) *PretrainedModelQueryBuilder {
 	b.query = PretrainedModelQuery.Where.StatusNEQ(b.query, v)
+	return b
+}
+
+// WhereStatusIn adds a WHERE status IN (?) condition
+func (b *PretrainedModelQueryBuilder) WhereStatusIn(v []ModelStatus) *PretrainedModelQueryBuilder {
+	b.query = PretrainedModelQuery.Where.StatusIn(b.query, v)
+	return b
+}
+
+// WhereStatusNotIn adds a WHERE status NOT IN (?) condition
+func (b *PretrainedModelQueryBuilder) WhereStatusNotIn(v []ModelStatus) *PretrainedModelQueryBuilder {
+	b.query = PretrainedModelQuery.Where.StatusNotIn(b.query, v)
 	return b
 }
 
@@ -1080,6 +1176,18 @@ func (b *PretrainedModelQueryBuilder) WhereIsDefaultNEQ(v bool) *PretrainedModel
 	return b
 }
 
+// WhereIsDefaultIn adds a WHERE is_default IN (?) condition
+func (b *PretrainedModelQueryBuilder) WhereIsDefaultIn(v []bool) *PretrainedModelQueryBuilder {
+	b.query = PretrainedModelQuery.Where.IsDefaultIn(b.query, v)
+	return b
+}
+
+// WhereIsDefaultNotIn adds a WHERE is_default NOT IN (?) condition
+func (b *PretrainedModelQueryBuilder) WhereIsDefaultNotIn(v []bool) *PretrainedModelQueryBuilder {
+	b.query = PretrainedModelQuery.Where.IsDefaultNotIn(b.query, v)
+	return b
+}
+
 // WhereIsActiveEQ adds a WHERE is_active = ? condition
 func (b *PretrainedModelQueryBuilder) WhereIsActiveEQ(v bool) *PretrainedModelQueryBuilder {
 	b.query = PretrainedModelQuery.Where.IsActiveEQ(b.query, v)
@@ -1089,6 +1197,18 @@ func (b *PretrainedModelQueryBuilder) WhereIsActiveEQ(v bool) *PretrainedModelQu
 // WhereIsActiveNEQ adds a WHERE is_active != ? condition
 func (b *PretrainedModelQueryBuilder) WhereIsActiveNEQ(v bool) *PretrainedModelQueryBuilder {
 	b.query = PretrainedModelQuery.Where.IsActiveNEQ(b.query, v)
+	return b
+}
+
+// WhereIsActiveIn adds a WHERE is_active IN (?) condition
+func (b *PretrainedModelQueryBuilder) WhereIsActiveIn(v []bool) *PretrainedModelQueryBuilder {
+	b.query = PretrainedModelQuery.Where.IsActiveIn(b.query, v)
+	return b
+}
+
+// WhereIsActiveNotIn adds a WHERE is_active NOT IN (?) condition
+func (b *PretrainedModelQueryBuilder) WhereIsActiveNotIn(v []bool) *PretrainedModelQueryBuilder {
+	b.query = PretrainedModelQuery.Where.IsActiveNotIn(b.query, v)
 	return b
 }
 
@@ -1149,6 +1269,18 @@ func (b *PretrainedModelQueryBuilder) WhereTrainingMetricsEQ(v map[string]any) *
 // WhereTrainingMetricsNEQ adds a WHERE training_metrics != ? condition
 func (b *PretrainedModelQueryBuilder) WhereTrainingMetricsNEQ(v map[string]any) *PretrainedModelQueryBuilder {
 	b.query = PretrainedModelQuery.Where.TrainingMetricsNEQ(b.query, v)
+	return b
+}
+
+// WhereTrainingMetricsIn adds a WHERE training_metrics IN (?) condition
+func (b *PretrainedModelQueryBuilder) WhereTrainingMetricsIn(v []map[string]any) *PretrainedModelQueryBuilder {
+	b.query = PretrainedModelQuery.Where.TrainingMetricsIn(b.query, v)
+	return b
+}
+
+// WhereTrainingMetricsNotIn adds a WHERE training_metrics NOT IN (?) condition
+func (b *PretrainedModelQueryBuilder) WhereTrainingMetricsNotIn(v []map[string]any) *PretrainedModelQueryBuilder {
+	b.query = PretrainedModelQuery.Where.TrainingMetricsNotIn(b.query, v)
 	return b
 }
 
@@ -1343,4 +1475,99 @@ func (b *PretrainedModelQueryBuilder) First(ctx context.Context) (*PretrainedMod
 // PretrainedModelBuild creates a chainable query builder
 func PretrainedModelBuild(db bun.IDB) *PretrainedModelQueryBuilder {
 	return NewPretrainedModelQuery(db)
+}
+
+// Relationship loading methods
+
+// PretrainedModelRelationChain provides a fluent API for building nested relationship chains
+type PretrainedModelRelationChain struct {
+	relations []string
+	options   map[string]func(*bun.SelectQuery) *bun.SelectQuery
+}
+
+// NewPretrainedModelRelationChain creates a new relation chain builder
+func NewPretrainedModelRelationChain() *PretrainedModelRelationChain {
+	return &PretrainedModelRelationChain{
+		relations: []string{},
+		options:   make(map[string]func(*bun.SelectQuery) *bun.SelectQuery),
+	}
+}
+
+// Add adds a relation to the chain with optional configuration
+func (rc *PretrainedModelRelationChain) Add(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *PretrainedModelRelationChain {
+	rc.relations = append(rc.relations, relation)
+	if len(opts) > 0 {
+		rc.options[relation] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			for _, opt := range opts {
+				q = opt(q)
+			}
+			return q
+		}
+	}
+	return rc
+}
+
+// Build builds the relation chain
+func (rc *PretrainedModelRelationChain) Build() []string {
+	return rc.relations
+}
+
+// Apply applies the relation chain to a query
+func (rc *PretrainedModelRelationChain) Apply(q *bun.SelectQuery) *bun.SelectQuery {
+	for _, rel := range rc.relations {
+		if opt, ok := rc.options[rel]; ok {
+			q = q.Relation(rel, opt)
+		} else {
+			q = q.Relation(rel)
+		}
+	}
+	return q
+}
+
+// PretrainedModelRelationChainBuilder provides fluent API for building nested relations
+type PretrainedModelRelationChainBuilder struct {
+	parent *PretrainedModelQueryBuilder
+	chain  *PretrainedModelRelationChain
+}
+
+// Load applies the relation chain and returns to the parent builder
+func (rb *PretrainedModelRelationChainBuilder) Load() *PretrainedModelQueryBuilder {
+	rb.parent.query = rb.chain.Apply(rb.parent.query)
+	return rb.parent
+}
+
+// ThenLoad adds another relation to the chain
+func (rb *PretrainedModelRelationChainBuilder) ThenLoad(relation string, opts ...func(*bun.SelectQuery) *bun.SelectQuery) *PretrainedModelRelationChainBuilder {
+	rb.chain.Add(relation, opts...)
+	return rb
+}
+
+// OrderBy adds ordering to the current relation in the chain
+func (rb *PretrainedModelRelationChainBuilder) OrderBy(order string) *PretrainedModelRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Order(order)
+		}
+	}
+	return rb
+}
+
+// Where adds a where condition to the current relation in the chain
+func (rb *PretrainedModelRelationChainBuilder) Where(condition string, args ...interface{}) *PretrainedModelRelationChainBuilder {
+	if len(rb.chain.relations) > 0 {
+		lastRel := rb.chain.relations[len(rb.chain.relations)-1]
+		currentOpt := rb.chain.options[lastRel]
+		rb.chain.options[lastRel] = func(q *bun.SelectQuery) *bun.SelectQuery {
+			if currentOpt != nil {
+				q = currentOpt(q)
+			}
+			return q.Where(condition, args...)
+		}
+	}
+	return rb
 }

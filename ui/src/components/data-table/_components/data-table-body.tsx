@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use no memo";
 import { Icon } from "@/components/ui/icons";
@@ -5,13 +10,12 @@ import { Switch } from "@/components/ui/switch";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { DataTableBodyProps } from "@/types/data-table";
-import {
-  SortableContext,
-  horizontalListSortingStrategy,
-} from "@dnd-kit/sortable";
 import { faPlay } from "@fortawesome/pro-solid-svg-icons";
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
-import { DragAlongCell } from "./data-table-draggable";
+import {
+  DataTableContextMenu,
+  type ContextMenuAction,
+} from "./data-table-context-menu";
 
 function LiveModeTableRow({
   columns,
@@ -66,16 +70,15 @@ function DataTableRow<TData>({
   // but we need it for the memo comparison
   // @ts-expect-error - This is a temporary solution to avoid the memo comparison
   columnVisibility,
-  enableDragging = false,
+  contextMenuActions,
 }: {
   row: Row<TData>;
   selected?: boolean;
   columnVisibility: Record<string, boolean>;
   table: Table<TData>;
-  enableDragging?: boolean;
+  contextMenuActions?: ContextMenuAction<TData>[];
 }) {
-  const columnOrder = table.getState().columnOrder;
-  return (
+  const tableRow = (
     <TableRow
       id={row.id}
       tabIndex={0}
@@ -92,39 +95,42 @@ function DataTableRow<TData>({
         table.options.meta?.getRowClassName?.(row),
       )}
     >
-      {enableDragging
-        ? row.getVisibleCells().map((cell) => (
-            <SortableContext
-              key={cell.id}
-              items={columnOrder}
-              strategy={horizontalListSortingStrategy}
-            >
-              <DragAlongCell key={cell.id} cell={cell} />
-            </SortableContext>
-          ))
-        : row.getVisibleCells().map((cell) => (
-            <TableCell
-              className="font-table"
-              key={cell.id}
-              role="cell"
-              aria-label={`${cell.column.id} cell`}
-              style={{
-                minWidth: cell.column.getSize(),
-              }}
-            >
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
-            </TableCell>
-          ))}
+      {row.getVisibleCells().map((cell) => (
+        <TableCell
+          className="font-table truncate"
+          key={cell.id}
+          role="cell"
+          aria-label={`${cell.column.id} cell`}
+          style={{
+            width: `var(--col-${cell.column.id.replace(".", "-")}-size)`,
+            maxWidth: `var(--col-${cell.column.id.replace(".", "-")}-size)`,
+          }}
+        >
+          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+        </TableCell>
+      ))}
     </TableRow>
   );
+
+  if (contextMenuActions && contextMenuActions.length > 0) {
+    return (
+      <DataTableContextMenu row={row} actions={contextMenuActions}>
+        {tableRow}
+      </DataTableContextMenu>
+    );
+  }
+
+  return tableRow;
 }
 
 export function DataTableBody<TData extends Record<string, any>>({
   table,
   columns,
   liveMode,
-  enableDragging = false,
-}: DataTableBodyProps<TData> & { enableDragging?: boolean }) {
+  contextMenuActions,
+}: DataTableBodyProps<TData> & {
+  contextMenuActions?: ContextMenuAction<TData>[];
+}) {
   return (
     <TableBody id="content" tabIndex={-1}>
       {liveMode?.enabled && (
@@ -139,7 +145,7 @@ export function DataTableBody<TData extends Record<string, any>>({
               selected={row.getIsSelected()}
               columnVisibility={table.getState().columnVisibility}
               table={table}
-              enableDragging={enableDragging}
+              contextMenuActions={contextMenuActions}
             />
           );
         })

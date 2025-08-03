@@ -1,3 +1,9 @@
+/* eslint-disable react/display-name */
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { queries } from "@/lib/queries";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { ShipmentLocations } from "@/lib/shipment/utils";
@@ -89,5 +95,3 @@ export const DedicatedLaneBanner = memo(() => {
     </div>
   );
 });
-
-DedicatedLaneBanner.displayName = "DedicatedLaneBanner";

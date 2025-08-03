@@ -1,5 +1,11 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { http } from "@/lib/http-client";
 import type { ShipmentUncancelSchema } from "@/lib/schemas/shipment-cancellation-schema";
+import { ShipmentCommentSchema } from "@/lib/schemas/shipment-comment-schema";
 import type { ShipmentDuplicateSchema } from "@/lib/schemas/shipment-duplicate-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { LimitOffsetResponse, type ListResult } from "@/types/server";
@@ -123,6 +129,53 @@ export class ShipmentAPI {
     const response = await http.post<ListResult<ShipmentSchema>>(
       `/shipments/previous-rates/`,
       values,
+    );
+
+    return response.data;
+  }
+
+  async addComment(
+    shipmentId: ShipmentSchema["id"],
+    values: ShipmentCommentSchema,
+  ) {
+    const response = await http.post<ShipmentCommentSchema>(
+      `/shipments/${shipmentId}/comments/`,
+      values,
+    );
+
+    return response.data;
+  }
+
+  async listComments(shipmentId: ShipmentSchema["id"]) {
+    const response = await http.get<LimitOffsetResponse<ShipmentCommentSchema>>(
+      `/shipments/${shipmentId}/comments/`,
+    );
+
+    return response.data;
+  }
+
+  async updateComment(
+    commentId: ShipmentCommentSchema["id"],
+    values: ShipmentCommentSchema,
+  ) {
+    const response = await http.put<ShipmentCommentSchema>(
+      `/shipments/${values.shipmentId}/comments/${commentId}/`,
+      values,
+    );
+
+    return response.data;
+  }
+
+  async deleteComment(
+    shipmentId: ShipmentSchema["id"],
+    commentId: ShipmentCommentSchema["id"],
+  ) {
+    await http.delete(`/shipments/${shipmentId}/comments/${commentId}/`);
+  }
+
+  async getCommentCount(shipmentId: ShipmentSchema["id"]) {
+    const response = await http.get<{ count: number }>(
+      `/shipments/${shipmentId}/comments/count/`,
     );
 
     return response.data;

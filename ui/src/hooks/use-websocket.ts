@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { queries } from "@/lib/queries";
 import { webSocketService } from "@/services/websocket";
 import { useIsAuthenticated, useUser } from "@/stores/user-store";
@@ -70,7 +75,6 @@ export function useWebSocket({
       if (message.type === "notification" && message.data?.id) {
         const messageId = message.data.id;
         if (processedMessagesRef.current.has(messageId)) {
-          console.log("Skipping duplicate notification:", messageId);
           return;
         }
         processedMessagesRef.current.add(messageId);
@@ -127,7 +131,6 @@ export function useWebSocket({
           break;
         }
         case "connection_confirmed":
-          console.log("✅ WebSocket connection confirmed");
           setConnectionState("connected");
           resetReconnectAttempts();
           break;
@@ -136,12 +139,13 @@ export function useWebSocket({
           setLastError(message.data?.message || "Server error");
           break;
         default:
-          console.log("📨 WebSocket message:", message.type, message.data);
+          break;
       }
 
       onMessage?.(message);
     },
     [
+      showNotification,
       addNotification,
       setConnectionState,
       resetReconnectAttempts,
@@ -176,9 +180,6 @@ export function useWebSocket({
 
     const subscription = createSubscription();
     if (!subscription) {
-      console.log(
-        "🚫 WebSocket connection skipped: missing user/organization data",
-      );
       return;
     }
 
@@ -201,7 +202,6 @@ export function useWebSocket({
         onError: handleError,
       });
 
-      console.log("🔗 Connecting WebSocket with subscription:", subscription);
       await webSocketService.connect(subscription);
 
       subscriptionRef.current = subscription;
@@ -211,8 +211,6 @@ export function useWebSocket({
           : null,
       );
       setSubscription(subscription);
-
-      console.log("✅ WebSocket connected successfully");
     } catch (error) {
       console.error("❌ WebSocket connection failed:", error);
       setConnectionState("disconnected");
@@ -235,7 +233,6 @@ export function useWebSocket({
   ]);
 
   const disconnect = useCallback(() => {
-    console.log("🔌 Disconnecting WebSocket");
     webSocketService.disconnect();
     subscriptionRef.current = null;
     setSocket(null);
@@ -253,7 +250,6 @@ export function useWebSocket({
       !shouldConnect &&
       webSocketService.getConnectionState().isConnected
     ) {
-      console.info("Disconnecting WebSocket", user);
       webSocketService.disconnect();
       subscriptionRef.current = null;
       setSocket(null);
