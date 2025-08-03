@@ -260,6 +260,61 @@ func (ur *userRepository) GetByID(
 	return u, nil
 }
 
+func (ur *userRepository) GetNameByID(ctx context.Context, userID pulid.ID) (string, error) {
+	dba, err := ur.db.ReadDB(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	u := new(user.User)
+	q := dba.NewSelect().Model(u).Where("usr.id = ?", userID)
+	if err = q.Scan(ctx); err != nil {
+		return "", err
+	}
+
+	return u.Name, nil
+}
+
+// GetByIDs retrieves multiple users by their IDs in a single query.
+//
+// Parameters:
+//   - ctx: The context for the operation.
+//   - opts: GetUsersByIDsOptions containing user IDs and tenant information.
+//
+// Returns:
+//   - []*user.User: The users found with the given IDs.
+//   - error: An error if the operation fails.
+func (ur *userRepository) GetByIDs(
+	ctx context.Context,
+	opts repositories.GetUsersByIDsOptions,
+) ([]*user.User, error) {
+	if len(opts.UserIDs) == 0 {
+		return []*user.User{}, nil
+	}
+
+	dba, err := ur.db.DB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	users := make([]*user.User, 0, len(opts.UserIDs))
+
+	q := dba.NewSelect().Model(&users).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("usr.id IN (?)", bun.In(opts.UserIDs)).
+				Where("usr.current_organization_id = ?", opts.OrgID).
+				Where("usr.business_unit_id = ?", opts.BuID)
+		})
+
+	if err = q.Scan(ctx); err != nil {
+		ur.l.Error().Err(err).Msg("failed to get users by IDs")
+		return nil, eris.Wrap(err, "failed to get users by IDs")
+	}
+
+	return users, nil
+}
+
 // loadUserRolesAndPermissions loads the roles and permissions for a user
 //
 // Parameters:

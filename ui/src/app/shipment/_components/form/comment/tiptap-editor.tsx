@@ -59,7 +59,7 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
     },
     ref,
   ) => {
-    const { isEditMode, clearEditMode, setEditingComment } =
+    const { isEditMode, clearEditMode, setEditingComment, editingComment } =
       useCommentEditStore();
     const effectivePlaceholder =
       placeholder ||
@@ -142,6 +142,13 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         editor.commands.setContent(value);
       }
     }, [value, editor]);
+
+    // Load JSON content when editing
+    useEffect(() => {
+      if (editor && isEditMode && editingComment?.metadata?.editorContent) {
+        editor.commands.setContent(editingComment.metadata.editorContent);
+      }
+    }, [editor, isEditMode, editingComment]);
 
     const handleContainerClick = () => {
       if (editor && !editor.isFocused) {

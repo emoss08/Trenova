@@ -33,6 +33,9 @@ const (
 	// EventConfigurationCopied is fired when a configuration is copied
 	EventConfigurationCopied = EventType("configuration.copied")
 
+	// EventShipmentComment is fired when a shipment comment is created
+	EventShipmentComment = EventType("shipment.comment.created")
+
 	// EventSystemAlert is fired when a critical system alert occurs
 	EventSystemAlert = EventType("system.alert.critical")
 

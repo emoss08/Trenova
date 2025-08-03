@@ -8,6 +8,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -44,46 +45,6 @@ func NewShipmentCommentRepository(
 		db: p.DB,
 		l:  &log,
 	}
-}
-
-func (scr *shipmentCommentRepository) GetByID(
-	ctx context.Context,
-	req repositories.GetCommentByIDRequest,
-) (*shipment.ShipmentComment, error) {
-	dba, err := scr.db.ReadDB(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	log := scr.l.With().
-		Str("operation", "GetByID").
-		Str("commentID", req.CommentID.String()).
-		Str("orgID", req.OrgID.String()).
-		Str("buID", req.BuID.String()).
-		Logger()
-
-	comment := new(shipment.ShipmentComment)
-
-	if err := dba.NewSelect().Model(comment).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("sc.id = ?", req.CommentID).
-				Where("sc.organization_id = ?", req.OrgID).
-				Where("sc.business_unit_id = ?", req.BuID)
-		}).
-		Scan(ctx); err != nil {
-		if eris.Is(err, sql.ErrNoRows) {
-			log.Error().Err(err).Msg("failed to get shipment comment")
-			return nil, errors.NewNotFoundError(
-				"Shipment Comment not found within your organization",
-			)
-		}
-
-		log.Error().Err(err).Msg("failed to get shipment comment")
-		return nil, err
-	}
-
-	return comment, nil
 }
 
 func (scr *shipmentCommentRepository) ListByShipmentID(
@@ -135,6 +96,78 @@ func (scr *shipmentCommentRepository) ListByShipmentID(
 	}, nil
 }
 
+func (scr *shipmentCommentRepository) GetByID(
+	ctx context.Context,
+	req repositories.GetCommentByIDRequest,
+) (*shipment.ShipmentComment, error) {
+	dba, err := scr.db.ReadDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	log := scr.l.With().
+		Str("operation", "GetByID").
+		Str("commentID", req.CommentID.String()).
+		Str("orgID", req.OrgID.String()).
+		Str("buID", req.BuID.String()).
+		Logger()
+
+	comment := new(shipment.ShipmentComment)
+
+	if err := dba.NewSelect().Model(comment).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("sc.id = ?", req.CommentID).
+				Where("sc.organization_id = ?", req.OrgID).
+				Where("sc.business_unit_id = ?", req.BuID)
+		}).
+		Scan(ctx); err != nil {
+		if eris.Is(err, sql.ErrNoRows) {
+			log.Error().Err(err).Msg("failed to get shipment comment")
+			return nil, errors.NewNotFoundError(
+				"Shipment Comment not found within your organization",
+			)
+		}
+
+		log.Error().Err(err).Msg("failed to get shipment comment")
+		return nil, err
+	}
+
+	return comment, nil
+}
+
+func (scr *shipmentCommentRepository) GetCountByShipmentID(
+	ctx context.Context,
+	req repositories.GetShipmentCommentCountRequest,
+) (int, error) {
+	dba, err := scr.db.ReadDB(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	log := scr.l.With().
+		Str("operation", "GetCountByShipmentID").
+		Str("shipmentID", req.ShipmentID.String()).
+		Str("orgID", req.OrgID.String()).
+		Str("buID", req.BuID.String()).
+		Logger()
+
+	count, err := dba.NewSelect().Model((*shipment.ShipmentComment)(nil)).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("sc.shipment_id = ?", req.ShipmentID).
+				Where("sc.organization_id = ?", req.OrgID).
+				Where("sc.business_unit_id = ?", req.BuID)
+		}).
+		Count(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get shipment comment count")
+		return 0, err
+	}
+
+	return count, nil
+}
+
 func (scr *shipmentCommentRepository) Create(
 	ctx context.Context,
 	comment *shipment.ShipmentComment,
@@ -165,16 +198,29 @@ func (scr *shipmentCommentRepository) Create(
 			mentionedUser.OrganizationID = comment.OrganizationID
 			mentionedUser.ShipmentID = comment.ShipmentID
 
-			if _, err := dba.NewInsert().Model(mentionedUser).Exec(ctx); err != nil {
+			if _, err := dba.NewInsert().Model(mentionedUser).
+				Returning("*").
+				Exec(ctx); err != nil {
 				log.Error().Err(err).Msg("failed to insert shipment comment mention")
 				return nil, err
 			}
-
-			comment.MentionedUsers = append(comment.MentionedUsers, mentionedUser)
 		}
 	}
 
-	return comment, nil
+	// Fetch the complete comment with relations
+	createdComment := new(shipment.ShipmentComment)
+	if err = dba.NewSelect().
+		Model(createdComment).
+		Where("sc.id = ?", comment.ID).
+		Relation("User").
+		Relation("MentionedUsers").
+		Relation("MentionedUsers.MentionedUser").
+		Scan(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to fetch created comment with relations")
+		return nil, err
+	}
+
+	return createdComment, nil
 }
 
 func (scr *shipmentCommentRepository) Update(
@@ -193,14 +239,24 @@ func (scr *shipmentCommentRepository) Update(
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		ov := comment.Version
-
 		comment.Version++
 
-		_, err := tx.NewUpdate().Model(comment).
-			WherePK().
-			OmitZero().
-			Where("sc.version = ?", ov).
+		res, err := tx.NewUpdate().Model(comment).
+			With("_data", tx.NewValues(comment)).
+			TableExpr("_data").
+			Set("shipment_id = _data.shipment_id").
+			Set("user_id = _data.user_id").
+			Set("comment = _data.comment").
+			Set("comment_type = _data.comment_type").
+			Set("metadata = _data.metadata").
+			Set("version = _data.version + 1").
+			WhereGroup(" AND ", func(sq *bun.UpdateQuery) *bun.UpdateQuery {
+				return sq.
+					Where("sc.id = _data.id").
+					Where("sc.version = _data.version - 1").
+					Where("sc.organization_id = _data.organization_id").
+					Where("sc.business_unit_id = _data.business_unit_id")
+			}).
 			Returning("*").
 			Exec(c)
 		if err != nil {
@@ -208,22 +264,22 @@ func (scr *shipmentCommentRepository) Update(
 			return err
 		}
 
-		// rows, roErr := results.RowsAffected()
-		// if roErr != nil {
-		// 	log.Error().Err(roErr).Msg("failed to get rows affected")
-		// 	return roErr
-		// }
+		rows, roErr := res.RowsAffected()
+		if roErr != nil {
+			log.Error().Err(roErr).Msg("failed to get rows affected")
+			return roErr
+		}
 
-		// if rows == 0 {
-		// 	return errors.NewValidationError(
-		// 		"version",
-		// 		errors.ErrVersionMismatch,
-		// 		fmt.Sprintf(
-		// 			"Version mismatch. The Shipment Comment (%s) has either been updated or deleted since the last request.",
-		// 			comment.GetID(),
-		// 		),
-		// 	)
-		// }
+		if rows == 0 {
+			return errors.NewValidationError(
+				"version",
+				errors.ErrVersionMismatch,
+				fmt.Sprintf(
+					"Version mismatch. The Shipment Comment (%s) has either been updated or deleted since the last request.",
+					comment.GetID(),
+				),
+			)
+		}
 
 		// Delete existing mentions for this comment
 		if _, err := tx.NewDelete().

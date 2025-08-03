@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { LazyImage } from "@/components/ui/image";
+import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { queries } from "@/lib/queries";
 import { ShipmentCommentSchema } from "@/lib/schemas/shipment-comment-schema";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,26 @@ export function CommentContent({
       queryClient.invalidateQueries({
         queryKey: queries.shipment.listComments(shipmentComment.shipmentId)
           .queryKey,
+      });
+
+      queryClient.invalidateQueries({
+        queryKey: queries.shipment.getCommentCount(shipmentComment.shipmentId)
+          .queryKey,
+      });
+
+      broadcastQueryInvalidation({
+        queryKey: [
+          ...queries.shipment.getCommentCount(shipmentComment.shipmentId)
+            .queryKey,
+          ...queries.shipment.listComments(shipmentComment.shipmentId).queryKey,
+        ] as unknown as string[],
+        options: {
+          correlationId: `update-shipment-comment-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
       });
     },
     onSuccess: () => {

@@ -98,6 +98,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(5), // 5 writes per minute
 	)...)
 
+	api.Get("/:shipmentID/comments/count/", rl.WithRateLimit(
+		[]fiber.Handler{h.getCommentCount},
+		middleware.PerMinute(120), // 120 reads per minute
+	)...)
+
 	api.Get("/:shipmentID/comments/", rl.WithRateLimit(
 		[]fiber.Handler{h.listComments},
 		middleware.PerMinute(60), // 60 reads per minute
@@ -497,6 +502,35 @@ func (h *Handler) transferOwnership(c *fiber.Ctx) error {
 	return c.Status(fiber.StatusOK).JSON(newEntity)
 }
 
+func (h *Handler) getCommentCount(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	shipmentID, err := pulid.MustParse(c.Params("shipmentID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	count, err := h.sc.GetCountByShipmentID(
+		c.UserContext(),
+		repositories.GetShipmentCommentCountRequest{
+			ShipmentID: shipmentID,
+			OrgID:      reqCtx.OrgID,
+			BuID:       reqCtx.BuID,
+		},
+		reqCtx.UserID,
+	)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{
+		"count": count,
+	})
+}
+
 func (h *Handler) addComment(c *fiber.Ctx) error {
 	reqCtx, err := appctx.WithRequestContext(c)
 	if err != nil {
@@ -616,6 +650,5 @@ func (h *Handler) deleteComment(c *fiber.Ctx) error {
 }
 
 func (h *Handler) liveStream(c *fiber.Ctx) error {
-	// CDC-based streaming only - no polling
 	return h.ss.LiveStream(c)
 }

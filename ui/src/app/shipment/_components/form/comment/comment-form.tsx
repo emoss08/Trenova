@@ -6,6 +6,7 @@
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
+import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { queries } from "@/lib/queries";
 import {
   ShipmentCommentSchema,
@@ -101,6 +102,24 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
         queryKey: queries.shipment.listComments(shipmentId).queryKey,
       });
 
+      queryClient.invalidateQueries({
+        queryKey: queries.shipment.getCommentCount(shipmentId).queryKey,
+      });
+
+      broadcastQueryInvalidation({
+        queryKey: [
+          ...queries.shipment.getCommentCount(shipmentId).queryKey,
+          ...queries.shipment.listComments(shipmentId).queryKey,
+        ] as unknown as string[],
+        options: {
+          correlationId: `update-shipment-comment-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
+
       if (isEditMode) {
         clearEditMode();
       }
@@ -138,12 +157,14 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
             mentionedUserId: userId,
           })),
           commentType: commentType,
+          version: editingComment?.version,
           shipmentId: editingComment?.shipmentId,
           metadata: {
             editorContent: commentJson,
             version: "1.0", // Version the schema for future compatibility
           },
         };
+
         await mutateAsync(payload);
       } catch (error) {
         console.error("Failed to submit comment:", error);
@@ -166,22 +187,11 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
       setMentionedUserIds([]);
       setCommentType(null);
       setCommentJson(null);
-      console.log("isEditMode", isEditMode);
-      // Clear edit mode after successful submission
       if (isEditMode) {
         clearEditMode();
       }
     }
   }, [isSubmitSuccessful, reset, isEditMode, clearEditMode]);
-
-  // Clear edit mode and reset form when shipment changes
-  useEffect(() => {
-    clearEditMode();
-    reset();
-    setMentionedUserIds([]);
-    setCommentType(null);
-    setCommentJson(null);
-  }, [shipmentId, clearEditMode, reset]);
 
   return (
     <FormProvider {...form}>

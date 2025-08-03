@@ -19,6 +19,12 @@ type GetCommentByIDRequest struct {
 	BuID      pulid.ID `json:"businessUnitId" query:"businessUnitId"`
 }
 
+type GetShipmentCommentCountRequest struct {
+	ShipmentID pulid.ID `json:"shipmentId"     query:"shipmentId"`
+	OrgID      pulid.ID `json:"organizationId" query:"organizationId"`
+	BuID       pulid.ID `json:"businessUnitId" query:"businessUnitId"`
+}
+
 type GetCommentsByShipmentIDRequest struct {
 	Filter     *ports.QueryOptions
 	ShipmentID pulid.ID `json:"shipmentId" query:"shipmentId"`
@@ -47,6 +53,7 @@ type ShipmentCommentRepository interface {
 		ctx context.Context,
 		req GetCommentsByShipmentIDRequest,
 	) (*ports.ListResult[*shipment.ShipmentComment], error)
+	GetCountByShipmentID(ctx context.Context, req GetShipmentCommentCountRequest) (int, error)
 	Create(
 		ctx context.Context,
 		comment *shipment.ShipmentComment,

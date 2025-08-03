@@ -172,4 +172,12 @@ export class ShipmentAPI {
   ) {
     await http.delete(`/shipments/${shipmentId}/comments/${commentId}/`);
   }
+
+  async getCommentCount(shipmentId: ShipmentSchema["id"]) {
+    const response = await http.get<{ count: number }>(
+      `/shipments/${shipmentId}/comments/count/`,
+    );
+
+    return response.data;
+  }
 }

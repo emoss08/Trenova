@@ -3,7 +3,6 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-/* eslint-disable react/display-name */
 import { Badge } from "@/components/ui/badge";
 import {
   ScrollArea,
@@ -11,9 +10,12 @@ import {
   ScrollBar,
 } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useUrlFragment } from "@/hooks/use-url-fragment";
+import { queries } from "@/lib/queries";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
+import { useQuery } from "@tanstack/react-query";
 import { HouseIcon, MessageCircleIcon, PanelsTopLeftIcon } from "lucide-react";
-import { lazy, memo, Suspense } from "react";
+import { lazy, Suspense, useCallback, useEffect, useState } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentFormContent } from "./shipment-form-body";
@@ -41,23 +43,55 @@ type ShipmentDetailsProps = {
   isError?: boolean;
 };
 
-export function ShipmentForm({ isLoading, ...props }: ShipmentDetailsProps) {
+export function ShipmentForm({
+  selectedShipment,
+  isLoading,
+  isError,
+}: ShipmentDetailsProps) {
   if (isLoading) {
     return <ShipmentDetailsSkeleton />;
   }
 
   return (
     <Suspense fallback={<ShipmentDetailsSkeleton />}>
-      <ShipmentFormBody {...props}>
-        <ShipmentSections />
+      <ShipmentFormBody selectedShipment={selectedShipment} isError={isError}>
+        <ShipmentSectionTabs shipmentId={selectedShipment?.id} />
       </ShipmentFormBody>
     </Suspense>
   );
 }
 
-const ShipmentSections = memo(() => {
+function ShipmentSectionTabs({
+  shipmentId,
+}: {
+  shipmentId: ShipmentSchema["id"];
+}) {
+  const { fragment, setFragment } = useUrlFragment();
+
+  const { data: commentCount } = useQuery({
+    ...queries.shipment.getCommentCount(shipmentId),
+  });
+
+  const [activeTab, setActiveTab] = useState(() => {
+    return fragment === "comments" ? "comments" : "general-information";
+  });
+
+  useEffect(() => {
+    const validTab =
+      fragment === "comments" ? "comments" : "general-information";
+    setActiveTab(validTab);
+  }, [fragment]);
+
+  const handleTabChange = useCallback(
+    (value: string) => {
+      setActiveTab(value);
+      setFragment(value);
+    },
+    [setFragment],
+  );
+
   return (
-    <Tabs defaultValue="general-information">
+    <Tabs value={activeTab} onValueChange={handleTabChange}>
       <ScrollArea className="w-full">
         <TabsList className="text-foreground mb-3 h-auto gap-2 px-2 rounded-none border-b bg-transparent py-1 w-full justify-start overflow-x-auto">
           <TabsTrigger
@@ -86,7 +120,7 @@ const ShipmentSections = memo(() => {
               className="bg-primary/15 ms-1.5 min-w-5"
               variant="secondary"
             >
-              3
+              {commentCount?.count ?? 0}
             </Badge>
           </TabsTrigger>
           <TabsTrigger
@@ -128,7 +162,7 @@ const ShipmentSections = memo(() => {
       </ScrollArea>
     </Tabs>
   );
-});
+}
 
 export function ShipmentFormBody({
   selectedShipment,

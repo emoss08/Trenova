@@ -26,6 +26,14 @@ type NotificationService interface {
 		req *ConfigurationCopiedNotificationRequest,
 	) error
 
+	SendCommentNotification(ctx context.Context, req *ShipmentCommentNotificationRequest) error
+
+	// SendBulkCommentNotifications sends multiple comment notifications
+	SendBulkCommentNotifications(
+		ctx context.Context,
+		reqs []*ShipmentCommentNotificationRequest,
+	) error
+
 	// MarkAsRead marks a notification as read
 	MarkAsRead(ctx context.Context, req repositories.MarkAsReadRequest) error
 
@@ -82,4 +90,12 @@ type ConfigurationCopiedNotificationRequest struct {
 	ConfigName     string   `json:"configName"`
 	ConfigCreator  string   `json:"configCreator"`
 	ConfigCopiedBy string   `json:"configCopiedBy"`
+}
+
+type ShipmentCommentNotificationRequest struct {
+	OrganizationID  pulid.ID `json:"organizationId"`
+	BusinessUnitID  pulid.ID `json:"businessUnitId"`
+	CommentID       pulid.ID `json:"commentId"`
+	OwnerName       string   `json:"ownerName"`
+	MentionedUserID pulid.ID `json:"mentionedUserId"`
 }
