@@ -69,16 +69,16 @@ function HazmatSegregationRuleNotice() {
   };
 
   return noticeVisible ? (
-    <div className="bg-muted px-4 py-3 text-foreground">
+    <div className="bg-amber-600/20 px-4 py-3 text-foreground ">
       <div className="flex gap-2">
         <div className="flex grow gap-3">
           <Icon
             icon={faInfoCircle}
-            className="mt-0.5 shrink-0 text-foreground"
+            className="mt-0.5 shrink-0 text-amber-600"
             aria-hidden="true"
           />
           <div className="flex grow flex-col justify-between gap-2 md:flex-row">
-            <span className="text-sm">
+            <span className="text-sm text-amber-600">
               This notice is provided to emphasize the importance of segregating
               hazardous materials in accordance with federal regulations. For
               details on proper handling and safety, please consult the official{" "}
@@ -90,8 +90,8 @@ function HazmatSegregationRuleNotice() {
           </div>
         </div>
         <Button
-          variant="secondary"
-          className="group -my-1.5 -me-2 size-8 shrink-0 p-0 hover:bg-transparent"
+          variant="ghost"
+          className="group -my-1.5 -me-2 size-8 shrink-0 p-0 bg-amber-600/20 hover:bg-amber-600/30"
           onClick={handleClose}
           aria-label="Close banner"
         >
