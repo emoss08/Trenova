@@ -1,16 +1,10 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-package jobs
+package services
 
 import (
 	"context"
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/types/pulid"
 	"github.com/hibiken/asynq"
 )
@@ -69,7 +63,7 @@ type JobHandler interface {
 }
 
 // BasePayload contains common fields for all job payloads
-type BasePayload struct {
+type JobBasePayload struct {
 	JobID          string         `json:"jobId"`
 	OrganizationID pulid.ID       `json:"organizationId"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId"`
@@ -80,27 +74,27 @@ type BasePayload struct {
 
 // PatternAnalysisPayload for dedicated lane pattern analysis jobs
 type PatternAnalysisPayload struct {
-	BasePayload
+	JobBasePayload
 	MinFrequency  int64  `json:"minFrequency"`
 	TriggerReason string `json:"triggerReason"` // "shipment_created", "scheduled", "manual"
 }
 
 // ExpireSuggestionsPayload for expiring old suggestions
 type ExpireSuggestionsPayload struct {
-	BasePayload
+	JobBasePayload
 	BatchSize int `json:"batchSize"`
 }
 
 // ShipmentStatusUpdatePayload for shipment status change notifications
 type ShipmentStatusUpdatePayload struct {
-	BasePayload
+	JobBasePayload
 	ShipmentID pulid.ID `json:"shipmentId"`
 	OldStatus  string   `json:"oldStatus"`
 	NewStatus  string   `json:"newStatus"`
 }
 
 type DuplicateShipmentPayload struct {
-	BasePayload
+	JobBasePayload
 	ShipmentID               pulid.ID `json:"shipmentId"`
 	Count                    int      `json:"count"`
 	OverrideDates            bool     `json:"overrideDates"`
@@ -109,12 +103,12 @@ type DuplicateShipmentPayload struct {
 }
 
 type DelayShipmentPayload struct {
-	BasePayload
+	JobBasePayload
 }
 
 // ComplianceCheckPayload for compliance verification jobs
 type ComplianceCheckPayload struct {
-	BasePayload
+	JobBasePayload
 	WorkerID   *pulid.ID `json:"workerId,omitempty"`
 	ShipmentID *pulid.ID `json:"shipmentId,omitempty"`
 	CheckType  string    `json:"checkType"` // "license", "medical", "hazmat", "all"
@@ -122,17 +116,17 @@ type ComplianceCheckPayload struct {
 
 // SystemMaintenancePayload for system maintenance jobs
 type SystemMaintenancePayload struct {
-	BasePayload
+	JobBasePayload
 	TaskType   string            `json:"taskType"`
 	Parameters map[string]string `json:"parameters,omitempty"`
 }
 
 // SendEmailPayload for email sending jobs
 type SendEmailPayload struct {
-	BasePayload
-	EmailType        string                              `json:"emailType"` // "regular" or "templated"
-	Request          *services.SendEmailRequest          `json:"request,omitempty"`
-	TemplatedRequest *services.SendTemplatedEmailRequest `json:"templatedRequest,omitempty"`
+	JobBasePayload
+	EmailType        string                     `json:"emailType"` // "regular" or "templated"
+	Request          *SendEmailRequest          `json:"request,omitempty"`
+	TemplatedRequest *SendTemplatedEmailRequest `json:"templatedRequest,omitempty"`
 }
 
 // JobOptions defines options for job scheduling
@@ -198,4 +192,69 @@ func MarshalPayload(payload any) ([]byte, error) {
 
 func UnmarshalPayload(data []byte, payload any) error {
 	return sonic.Unmarshal(data, payload)
+}
+
+// JobServiceInterface defines the contract for the job service
+type JobService interface {
+	// Job Scheduling
+	Enqueue(
+		jobType JobType,
+		payload any,
+		opts *JobOptions,
+	) (*asynq.TaskInfo, error)
+	EnqueueIn(
+		jobType JobType,
+		payload any,
+		delay time.Duration,
+		opts *JobOptions,
+	) (*asynq.TaskInfo, error)
+	EnqueueAt(
+		jobType JobType,
+		payload any,
+		processAt time.Time,
+		opts *JobOptions,
+	) (*asynq.TaskInfo, error)
+
+	// Dedicated Lane Pattern Analysis Jobs
+	SchedulePatternAnalysis(
+		payload *PatternAnalysisPayload,
+		opts *JobOptions,
+	) (*asynq.TaskInfo, error)
+	ScheduleDelayShipmentJobs(
+		payload *DelayShipmentPayload,
+		opts *JobOptions,
+	) (*asynq.TaskInfo, error)
+	ScheduleExpireSuggestions(
+		payload *ExpireSuggestionsPayload,
+		opts *JobOptions,
+	) (*asynq.TaskInfo, error)
+
+	// System Jobs
+	ScheduleComplianceCheck(
+		payload *ComplianceCheckPayload,
+		opts *JobOptions,
+	) (*asynq.TaskInfo, error)
+	ScheduleShipmentStatusUpdate(
+		payload *ShipmentStatusUpdatePayload,
+		opts *JobOptions,
+	) (*asynq.TaskInfo, error)
+
+	// Email Jobs
+	ScheduleSendEmail(
+		payload *SendEmailPayload,
+		opts *JobOptions,
+	) (*asynq.TaskInfo, error)
+
+	// Job Management
+	CancelJob(jobID string) error
+	GetJobInfo(queue string, jobID string) (*asynq.TaskInfo, error)
+
+	// Worker Management
+	Start() error
+	Shutdown() error
+	RegisterHandler(handler JobHandler)
+
+	// Health Monitoring
+	IsHealthy() bool
+	GetStats() JobServiceStats
 }

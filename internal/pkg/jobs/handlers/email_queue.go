@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
@@ -33,7 +32,7 @@ type EmailQueueHandlerParams struct {
 }
 
 // NewEmailQueueHandler creates a new email queue handler
-func NewEmailQueueHandler(p EmailQueueHandlerParams) jobs.JobHandler {
+func NewEmailQueueHandler(p EmailQueueHandlerParams) services.JobHandler {
 	log := p.Logger.With().
 		Str("handler", "email_queue").
 		Logger()
@@ -45,8 +44,8 @@ func NewEmailQueueHandler(p EmailQueueHandlerParams) jobs.JobHandler {
 }
 
 // JobType returns the job type this handler processes
-func (h *EmailQueueHandler) JobType() jobs.JobType {
-	return jobs.JobTypeProcessEmailQueue
+func (h *EmailQueueHandler) JobType() services.JobType {
+	return services.JobTypeProcessEmailQueue
 }
 
 // ProcessTask processes an email queue job

@@ -8,6 +8,7 @@ package jobs
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/jobs/handlers"
@@ -31,32 +32,32 @@ var Module = fx.Module(
 		// Job Handlers
 		fx.Annotate(
 			handlers.NewPatternAnalysisHandler,
-			fx.As(new(jobs.JobHandler)),
+			fx.As(new(services.JobHandler)),
 			fx.ResultTags(`group:"job_handlers"`),
 		),
 		fx.Annotate(
 			handlers.NewExpireSuggestionsHandler,
-			fx.As(new(jobs.JobHandler)),
+			fx.As(new(services.JobHandler)),
 			fx.ResultTags(`group:"job_handlers"`),
 		),
 		fx.Annotate(
 			handlers.NewDuplicateShipmentHandler,
-			fx.As(new(jobs.JobHandler)),
+			fx.As(new(services.JobHandler)),
 			fx.ResultTags(`group:"job_handlers"`),
 		),
 		fx.Annotate(
 			handlers.NewDelayShipmentHandler,
-			fx.As(new(jobs.JobHandler)),
+			fx.As(new(services.JobHandler)),
 			fx.ResultTags(`group:"job_handlers"`),
 		),
 		fx.Annotate(
 			handlers.NewEmailHandler,
-			fx.As(new(jobs.JobHandler)),
+			fx.As(new(services.JobHandler)),
 			fx.ResultTags(`group:"job_handlers"`),
 		),
 		fx.Annotate(
 			handlers.NewEmailQueueHandler,
-			fx.As(new(jobs.JobHandler)),
+			fx.As(new(services.JobHandler)),
 			fx.ResultTags(`group:"job_handlers"`),
 		),
 	),
@@ -81,7 +82,7 @@ type LifecycleParams struct {
 	fx.In
 
 	Lifecycle     fx.Lifecycle
-	JobService    jobs.JobServiceInterface
+	JobService    services.JobService
 	CronScheduler scheduler.CronSchedulerInterface
 }
 

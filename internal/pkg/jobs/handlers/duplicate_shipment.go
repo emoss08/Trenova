@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
@@ -38,7 +37,7 @@ type DuplicateShipmentHandler struct {
 	notificationService services.NotificationService
 }
 
-func NewDuplicateShipmentHandler(p DuplicateShipmentHandlerParams) jobs.JobHandler {
+func NewDuplicateShipmentHandler(p DuplicateShipmentHandlerParams) services.JobHandler {
 	log := p.Logger.With().
 		Str("handler", "duplicate_shipment").
 		Logger()
@@ -51,8 +50,8 @@ func NewDuplicateShipmentHandler(p DuplicateShipmentHandlerParams) jobs.JobHandl
 	}
 }
 
-func (dsh *DuplicateShipmentHandler) JobType() jobs.JobType {
-	return jobs.JobTypeDuplicateShipment
+func (dsh *DuplicateShipmentHandler) JobType() services.JobType {
+	return services.JobTypeDuplicateShipment
 }
 
 func (dsh *DuplicateShipmentHandler) ProcessTask( //nolint:funlen // we need to keep this function long
@@ -69,8 +68,8 @@ func (dsh *DuplicateShipmentHandler) ProcessTask( //nolint:funlen // we need to 
 
 	log.Info().Msg("starting duplicate shipment job")
 
-	var payload jobs.DuplicateShipmentPayload
-	if err := jobs.UnmarshalPayload(task.Payload(), &payload); err != nil {
+	var payload services.DuplicateShipmentPayload
+	if err := services.UnmarshalPayload(task.Payload(), &payload); err != nil {
 		log.Error().Err(err).Msg("failed to unmarshal payload")
 		return oops.
 			In("duplicate_shipment_handler").

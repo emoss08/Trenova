@@ -8,8 +8,8 @@ package scheduler
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/config"
-	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -23,7 +23,7 @@ type CronSchedulerParams struct {
 	fx.In
 
 	Logger     *logger.Logger
-	JobService jobs.JobServiceInterface
+	JobService services.JobService
 	RedisOpt   asynq.RedisClientOpt
 	Config     *config.Manager
 }
@@ -32,7 +32,7 @@ type CronSchedulerParams struct {
 type CronScheduler struct {
 	logger     *zerolog.Logger
 	scheduler  *asynq.Scheduler
-	jobService jobs.JobServiceInterface
+	jobService services.JobService
 	cfg        config.CronSchedulerConfig
 }
 
@@ -138,7 +138,7 @@ func (cs *CronScheduler) ScheduleShipmentJobs() error {
 	// Schedule delay shipment job
 	if cs.cfg.ShipmentJobs.DelayShipment.Enabled {
 		if err := cs.scheduleJob(
-			jobs.JobTypeDelayShipment,
+			services.JobTypeDelayShipment,
 			cs.cfg.ShipmentJobs.DelayShipment,
 			cs.createDelayShipmentPayload(),
 		); err != nil {
@@ -160,7 +160,7 @@ func (cs *CronScheduler) SchedulePatternAnalysisJobs() error {
 	// Daily pattern analysis
 	if cs.cfg.PatternAnalysisJobs.DailyAnalysis.Enabled {
 		if err := cs.scheduleJob(
-			jobs.JobTypeAnalyzePatterns,
+			services.JobTypeAnalyzePatterns,
 			cs.cfg.PatternAnalysisJobs.DailyAnalysis,
 			cs.createGlobalPatternAnalysisPayload(),
 		); err != nil {
@@ -171,7 +171,7 @@ func (cs *CronScheduler) SchedulePatternAnalysisJobs() error {
 	// Weekly comprehensive analysis
 	if cs.cfg.PatternAnalysisJobs.WeeklyAnalysis.Enabled {
 		if err := cs.scheduleJob(
-			jobs.JobTypeAnalyzePatterns,
+			services.JobTypeAnalyzePatterns,
 			cs.cfg.PatternAnalysisJobs.WeeklyAnalysis,
 			cs.createGlobalPatternAnalysisPayload(),
 		); err != nil {
@@ -182,7 +182,7 @@ func (cs *CronScheduler) SchedulePatternAnalysisJobs() error {
 	// Expire suggestions
 	if cs.cfg.PatternAnalysisJobs.ExpireSuggestions.Enabled {
 		if err := cs.scheduleJob(
-			jobs.JobTypeExpireOldSuggestions,
+			services.JobTypeExpireOldSuggestions,
 			cs.cfg.PatternAnalysisJobs.ExpireSuggestions,
 			cs.createExpireSuggestionsPayload(),
 		); err != nil {
@@ -204,7 +204,7 @@ func (cs *CronScheduler) ScheduleSystemJobs() error {
 	// Cleanup temp files
 	if cs.cfg.SystemJobs.CleanupTempFiles.Enabled {
 		if err := cs.scheduleJob(
-			jobs.JobTypeCleanupTempFiles,
+			services.JobTypeCleanupTempFiles,
 			cs.cfg.SystemJobs.CleanupTempFiles,
 			cs.createSystemJobPayload(),
 		); err != nil {
@@ -215,7 +215,7 @@ func (cs *CronScheduler) ScheduleSystemJobs() error {
 	// Generate reports
 	if cs.cfg.SystemJobs.GenerateReports.Enabled {
 		if err := cs.scheduleJob(
-			jobs.JobTypeGenerateReports,
+			services.JobTypeGenerateReports,
 			cs.cfg.SystemJobs.GenerateReports,
 			cs.createSystemJobPayload(),
 		); err != nil {
@@ -226,7 +226,7 @@ func (cs *CronScheduler) ScheduleSystemJobs() error {
 	// Data backup
 	if cs.cfg.SystemJobs.DataBackup.Enabled {
 		if err := cs.scheduleJob(
-			jobs.JobTypeDataBackup,
+			services.JobTypeDataBackup,
 			cs.cfg.SystemJobs.DataBackup,
 			cs.createSystemJobPayload(),
 		); err != nil {
@@ -239,8 +239,8 @@ func (cs *CronScheduler) ScheduleSystemJobs() error {
 
 // createGlobalPatternAnalysisPayload creates a payload for global pattern analysis
 func (cs *CronScheduler) createGlobalPatternAnalysisPayload() []byte {
-	payload := &jobs.PatternAnalysisPayload{
-		BasePayload: jobs.BasePayload{
+	payload := &services.PatternAnalysisPayload{
+		JobBasePayload: services.JobBasePayload{
 			JobID:     cs.generateNewJobID(),
 			Timestamp: timeutils.NowUnix(),
 		},
@@ -248,33 +248,33 @@ func (cs *CronScheduler) createGlobalPatternAnalysisPayload() []byte {
 		TriggerReason: "scheduled",
 	}
 
-	data, _ := jobs.MarshalPayload(payload)
+	data, _ := services.MarshalPayload(payload)
 	return data
 }
 
 func (cs *CronScheduler) createDelayShipmentPayload() []byte {
-	payload := &jobs.DelayShipmentPayload{
-		BasePayload: jobs.BasePayload{
+	payload := &services.DelayShipmentPayload{
+		JobBasePayload: services.JobBasePayload{
 			JobID:     cs.generateNewJobID(),
 			Timestamp: timeutils.NowUnix(),
 		},
 	}
 
-	data, _ := jobs.MarshalPayload(payload)
+	data, _ := services.MarshalPayload(payload)
 	return data
 }
 
 // createExpireSuggestionsPayload creates a payload for expiring suggestions
 func (cs *CronScheduler) createExpireSuggestionsPayload() []byte {
-	payload := &jobs.ExpireSuggestionsPayload{
-		BasePayload: jobs.BasePayload{
+	payload := &services.ExpireSuggestionsPayload{
+		JobBasePayload: services.JobBasePayload{
 			JobID:     cs.generateNewJobID(),
 			Timestamp: timeutils.NowUnix(),
 		},
 		BatchSize: 100,
 	}
 
-	data, _ := jobs.MarshalPayload(payload)
+	data, _ := services.MarshalPayload(payload)
 	return data
 }
 
@@ -289,7 +289,7 @@ func (cs *CronScheduler) ScheduleEmailQueueJobs() error {
 	// Process email queue
 	if cs.cfg.EmailQueueJobs.ProcessQueue.Enabled {
 		if err := cs.scheduleJob(
-			jobs.JobTypeProcessEmailQueue,
+			services.JobTypeProcessEmailQueue,
 			cs.cfg.EmailQueueJobs.ProcessQueue,
 			cs.createEmailQueuePayload(),
 		); err != nil {
@@ -302,34 +302,34 @@ func (cs *CronScheduler) ScheduleEmailQueueJobs() error {
 
 // createEmailQueuePayload creates a payload for email queue processing
 func (cs *CronScheduler) createEmailQueuePayload() []byte {
-	payload := &jobs.BasePayload{
+	payload := &services.JobBasePayload{
 		JobID:     cs.generateNewJobID(),
 		Timestamp: timeutils.NowUnix(),
 	}
 
-	data, _ := jobs.MarshalPayload(payload)
+	data, _ := services.MarshalPayload(payload)
 	return data
 }
 
 // createSystemJobPayload creates a payload for system jobs
 func (cs *CronScheduler) createSystemJobPayload() []byte {
-	payload := &jobs.BasePayload{
+	payload := &services.JobBasePayload{
 		JobID:     cs.generateNewJobID(),
 		Timestamp: timeutils.NowUnix(),
 	}
 
-	data, _ := jobs.MarshalPayload(payload)
+	data, _ := services.MarshalPayload(payload)
 	return data
 }
 
 // createComplianceJobPayload creates a payload for compliance jobs
 func (cs *CronScheduler) createComplianceJobPayload() []byte {
-	payload := &jobs.BasePayload{
+	payload := &services.JobBasePayload{
 		JobID:     cs.generateNewJobID(),
 		Timestamp: timeutils.NowUnix(),
 	}
 
-	data, _ := jobs.MarshalPayload(payload)
+	data, _ := services.MarshalPayload(payload)
 	return data
 }
 
@@ -344,7 +344,7 @@ func (cs *CronScheduler) ScheduleComplianceJobs() error {
 	// Compliance check
 	if cs.cfg.ComplianceJobs.ComplianceCheck.Enabled {
 		if err := cs.scheduleJob(
-			jobs.JobTypeComplianceCheck,
+			services.JobTypeComplianceCheck,
 			cs.cfg.ComplianceJobs.ComplianceCheck,
 			cs.createComplianceJobPayload(),
 		); err != nil {
@@ -355,7 +355,7 @@ func (cs *CronScheduler) ScheduleComplianceJobs() error {
 	// Hazmat expiration check
 	if cs.cfg.ComplianceJobs.HazmatExpiration.Enabled {
 		if err := cs.scheduleJob(
-			jobs.JobTypeHazmatExpirationCheck,
+			services.JobTypeHazmatExpirationCheck,
 			cs.cfg.ComplianceJobs.HazmatExpiration,
 			cs.createComplianceJobPayload(),
 		); err != nil {
@@ -368,7 +368,7 @@ func (cs *CronScheduler) ScheduleComplianceJobs() error {
 
 // scheduleJob is a helper method to schedule a single job with configuration
 func (cs *CronScheduler) scheduleJob(
-	jobType jobs.JobType,
+	jobType services.JobType,
 	cfg config.JobConfig,
 	payload []byte,
 ) error {

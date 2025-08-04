@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	dlservice "github.com/emoss08/trenova/internal/core/services/dedicatedlane"
-	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
@@ -35,7 +35,7 @@ type PatternAnalysisHandler struct {
 }
 
 // NewPatternAnalysisHandler creates a new pattern analysis job handler
-func NewPatternAnalysisHandler(p PatternAnalysisHandlerParams) jobs.JobHandler {
+func NewPatternAnalysisHandler(p PatternAnalysisHandlerParams) services.JobHandler {
 	log := p.Logger.With().
 		Str("handler", "pattern_analysis").
 		Logger()
@@ -47,8 +47,8 @@ func NewPatternAnalysisHandler(p PatternAnalysisHandlerParams) jobs.JobHandler {
 }
 
 // JobType returns the job type this handler processes
-func (pah *PatternAnalysisHandler) JobType() jobs.JobType {
-	return jobs.JobTypeAnalyzePatterns
+func (pah *PatternAnalysisHandler) JobType() services.JobType {
+	return services.JobTypeAnalyzePatterns
 }
 
 // ProcessTask processes a pattern analysis job
@@ -64,8 +64,8 @@ func (pah *PatternAnalysisHandler) ProcessTask(ctx context.Context, task *asynq.
 	log.Info().Msg("starting pattern analysis job")
 
 	// * Unmarshal job payload
-	var payload jobs.PatternAnalysisPayload
-	if err := jobs.UnmarshalPayload(task.Payload(), &payload); err != nil {
+	var payload services.PatternAnalysisPayload
+	if err := services.UnmarshalPayload(task.Payload(), &payload); err != nil {
 		log.Error().
 			Err(err).
 			Dur("job_duration", time.Since(jobStartTime)).
@@ -125,7 +125,7 @@ func (pah *PatternAnalysisHandler) ProcessTask(ctx context.Context, task *asynq.
 	}
 
 	if writer := task.ResultWriter(); writer != nil {
-		if data, dErr := jobs.MarshalPayload(resultData); dErr == nil {
+		if data, dErr := services.MarshalPayload(resultData); dErr == nil {
 			_, _ = writer.Write(data)
 		}
 	}
@@ -148,7 +148,7 @@ type ExpireSuggestionsHandler struct {
 }
 
 // NewExpireSuggestionsHandler creates a new expire suggestions job handler
-func NewExpireSuggestionsHandler(p ExpireSuggestionsHandlerParams) jobs.JobHandler {
+func NewExpireSuggestionsHandler(p ExpireSuggestionsHandlerParams) services.JobHandler {
 	log := p.Logger.With().
 		Str("handler", "expire_suggestions").
 		Logger()
@@ -160,8 +160,8 @@ func NewExpireSuggestionsHandler(p ExpireSuggestionsHandlerParams) jobs.JobHandl
 }
 
 // JobType returns the job type this handler processes
-func (esh *ExpireSuggestionsHandler) JobType() jobs.JobType {
-	return jobs.JobTypeExpireOldSuggestions
+func (esh *ExpireSuggestionsHandler) JobType() services.JobType {
+	return services.JobTypeExpireOldSuggestions
 }
 
 // ProcessTask processes an expire suggestions job
@@ -177,8 +177,8 @@ func (esh *ExpireSuggestionsHandler) ProcessTask(ctx context.Context, task *asyn
 	log.Info().Msg("starting expire old suggestions job")
 
 	// Unmarshal job payload
-	var payload jobs.ExpireSuggestionsPayload
-	if err := jobs.UnmarshalPayload(task.Payload(), &payload); err != nil {
+	var payload services.ExpireSuggestionsPayload
+	if err := services.UnmarshalPayload(task.Payload(), &payload); err != nil {
 		log.Error().
 			Err(err).
 			Dur("job_duration", time.Since(jobStartTime)).
@@ -222,7 +222,7 @@ func (esh *ExpireSuggestionsHandler) ProcessTask(ctx context.Context, task *asyn
 	}
 
 	if writer := task.ResultWriter(); writer != nil {
-		if data, dErr := jobs.MarshalPayload(resultData); dErr == nil {
+		if data, dErr := services.MarshalPayload(resultData); dErr == nil {
 			_, _ = writer.Write(data)
 		}
 	}
