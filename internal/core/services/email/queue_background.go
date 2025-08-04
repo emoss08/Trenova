@@ -11,7 +11,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
@@ -24,25 +23,25 @@ type BackgroundEmailService interface {
 	QueueEmail(
 		ctx context.Context,
 		req *services.SendEmailRequest,
-		opts *jobs.JobOptions,
+		opts *services.JobOptions,
 	) (*asynq.TaskInfo, error)
 	QueueTemplatedEmail(
 		ctx context.Context,
 		req *services.SendTemplatedEmailRequest,
-		opts *jobs.JobOptions,
+		opts *services.JobOptions,
 	) (*asynq.TaskInfo, error)
 }
 
 type backgroundEmailService struct {
 	l          *zerolog.Logger
-	jobService jobs.JobServiceInterface
+	jobService services.JobService
 }
 
 type BackgroundEmailServiceParams struct {
 	fx.In
 
 	Logger     *logger.Logger
-	JobService jobs.JobServiceInterface
+	JobService services.JobService
 }
 
 // NewBackgroundEmailService creates a new background email service
@@ -61,7 +60,7 @@ func NewBackgroundEmailService(p BackgroundEmailServiceParams) BackgroundEmailSe
 func (s *backgroundEmailService) QueueEmail(
 	ctx context.Context,
 	req *services.SendEmailRequest,
-	opts *jobs.JobOptions,
+	opts *services.JobOptions,
 ) (*asynq.TaskInfo, error) {
 	log := s.l.With().
 		Str("operation", "queue_email").
@@ -79,8 +78,8 @@ func (s *backgroundEmailService) QueueEmail(
 	}
 
 	// Create job payload
-	payload := &jobs.SendEmailPayload{
-		BasePayload: jobs.BasePayload{
+	payload := &services.SendEmailPayload{
+		JobBasePayload: services.JobBasePayload{
 			OrganizationID: req.OrganizationID,
 			BusinessUnitID: req.BusinessUnitID,
 		},
@@ -90,8 +89,8 @@ func (s *backgroundEmailService) QueueEmail(
 
 	// Set default options if not provided
 	if opts == nil {
-		opts = &jobs.JobOptions{
-			Queue:    jobs.QueueEmail,
+		opts = &services.JobOptions{
+			Queue:    services.QueueEmail,
 			Priority: s.determinePriority(req.Priority),
 			MaxRetry: 3,
 		}
@@ -126,7 +125,7 @@ func (s *backgroundEmailService) QueueEmail(
 func (s *backgroundEmailService) QueueTemplatedEmail(
 	ctx context.Context,
 	req *services.SendTemplatedEmailRequest,
-	opts *jobs.JobOptions,
+	opts *services.JobOptions,
 ) (*asynq.TaskInfo, error) {
 	log := s.l.With().
 		Str("operation", "queue_templated_email").
@@ -144,8 +143,8 @@ func (s *backgroundEmailService) QueueTemplatedEmail(
 	}
 
 	// Create job payload
-	payload := &jobs.SendEmailPayload{
-		BasePayload: jobs.BasePayload{
+	payload := &services.SendEmailPayload{
+		JobBasePayload: services.JobBasePayload{
 			OrganizationID: req.OrganizationID,
 			BusinessUnitID: req.BusinessUnitID,
 		},
@@ -155,8 +154,8 @@ func (s *backgroundEmailService) QueueTemplatedEmail(
 
 	// Set default options if not provided
 	if opts == nil {
-		opts = &jobs.JobOptions{
-			Queue:    jobs.QueueEmail,
+		opts = &services.JobOptions{
+			Queue:    services.QueueEmail,
 			Priority: s.determinePriority(req.Priority),
 			MaxRetry: 3,
 		}
@@ -192,10 +191,10 @@ func (s *backgroundEmailService) QueueTemplatedEmail(
 func (s *backgroundEmailService) determinePriority(emailPriority email.Priority) int {
 	switch emailPriority {
 	case email.PriorityHigh:
-		return jobs.PriorityHigh
+		return services.PriorityHigh
 	case email.PriorityLow:
-		return jobs.PriorityLow
+		return services.PriorityLow
 	default:
-		return jobs.PriorityNormal
+		return services.PriorityNormal
 	}
 }

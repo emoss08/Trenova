@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/pkg/jobs"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -23,13 +23,13 @@ type ShipmentTriggerParams struct {
 	fx.In
 
 	Logger     *logger.Logger
-	JobService jobs.JobServiceInterface
+	JobService services.JobService
 }
 
 // ShipmentTrigger handles triggering background jobs based on shipment events
 type ShipmentTrigger struct {
 	logger     *zerolog.Logger
-	jobService jobs.JobServiceInterface
+	jobService services.JobService
 }
 
 // ShipmentTriggerInterface defines methods for triggering shipment-related jobs
@@ -141,8 +141,8 @@ func (st *ShipmentTrigger) OnShipmentStatusChanged(
 		Logger()
 
 	// Schedule status update notification job
-	payload := &jobs.ShipmentStatusUpdatePayload{
-		BasePayload: jobs.BasePayload{
+	payload := &services.ShipmentStatusUpdatePayload{
+		JobBasePayload: services.JobBasePayload{
 			OrganizationID: shp.OrganizationID,
 			BusinessUnitID: shp.BusinessUnitID,
 			Timestamp:      timeutils.NowUnix(),
@@ -152,7 +152,7 @@ func (st *ShipmentTrigger) OnShipmentStatusChanged(
 		NewStatus:  string(newStatus),
 	}
 
-	opts := jobs.CriticalJobOptions()
+	opts := services.CriticalJobOptions()
 	taskInfo, err := st.jobService.ScheduleShipmentStatusUpdate(payload, opts)
 	if err != nil {
 		log.Error().
@@ -192,8 +192,8 @@ func (st *ShipmentTrigger) TriggerPatternAnalysisForCustomer(
 		Int64("analysis_days", 90).
 		Msg("triggering manual pattern analysis for customer") // 90 days ago
 
-	payload := &jobs.PatternAnalysisPayload{
-		BasePayload: jobs.BasePayload{
+	payload := &services.PatternAnalysisPayload{
+		JobBasePayload: services.JobBasePayload{
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 			UserID:         userID,
@@ -203,7 +203,7 @@ func (st *ShipmentTrigger) TriggerPatternAnalysisForCustomer(
 		TriggerReason: reason,
 	}
 
-	opts := jobs.PatternAnalysisOptions()
+	opts := services.PatternAnalysisOptions()
 	opts.UniqueKey = "pattern_analysis_customer_" + customerID.String()
 
 	taskInfo, err := st.jobService.SchedulePatternAnalysis(payload, opts)
@@ -231,8 +231,8 @@ func (st *ShipmentTrigger) scheduleDelayedPatternAnalysis(
 	reason string,
 	delay time.Duration,
 ) (*asynq.TaskInfo, error) {
-	payload := &jobs.PatternAnalysisPayload{
-		BasePayload: jobs.BasePayload{
+	payload := &services.PatternAnalysisPayload{
+		JobBasePayload: services.JobBasePayload{
 			OrganizationID: shp.OrganizationID,
 			BusinessUnitID: shp.BusinessUnitID,
 			Timestamp:      timeutils.NowUnix(),
@@ -241,9 +241,9 @@ func (st *ShipmentTrigger) scheduleDelayedPatternAnalysis(
 		TriggerReason: reason,
 	}
 
-	opts := jobs.PatternAnalysisOptions()
+	opts := services.PatternAnalysisOptions()
 	// Unique key prevents duplicate analysis for same customer within the delay period
 	opts.UniqueKey = "pattern_analysis_shipment_" + shp.CustomerID.String()
 
-	return st.jobService.EnqueueIn(jobs.JobTypeAnalyzePatterns, payload, delay, opts)
+	return st.jobService.EnqueueIn(services.JobTypeAnalyzePatterns, payload, delay, opts)
 }

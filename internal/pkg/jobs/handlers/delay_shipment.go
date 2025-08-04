@@ -14,7 +14,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types/pulid"
@@ -40,7 +39,7 @@ type DelayShipmentHandler struct {
 	notificationService services.NotificationService
 }
 
-func NewDelayShipmentHandler(p DelayShipmentHandlerParams) jobs.JobHandler {
+func NewDelayShipmentHandler(p DelayShipmentHandlerParams) services.JobHandler {
 	log := p.Logger.With().
 		Str("handler", "delay_shipment").
 		Logger()
@@ -67,8 +66,8 @@ func (dsh *DelayShipmentHandler) ProcessTask( //nolint:funlen // we need to keep
 
 	log.Info().Msg("starting delay shipment job")
 
-	var payload jobs.DelayShipmentPayload
-	if err := jobs.UnmarshalPayload(task.Payload(), &payload); err != nil {
+	var payload services.DelayShipmentPayload
+	if err := services.UnmarshalPayload(task.Payload(), &payload); err != nil {
 		log.Error().Err(err).Msg("failed to unmarshal payload")
 		return oops.
 			In("delay_shipment_handler").
@@ -185,6 +184,6 @@ func (dsh *DelayShipmentHandler) ProcessTask( //nolint:funlen // we need to keep
 	return nil
 }
 
-func (dsh *DelayShipmentHandler) JobType() jobs.JobType {
-	return jobs.JobTypeDelayShipment
+func (dsh *DelayShipmentHandler) JobType() services.JobType {
+	return services.JobTypeDelayShipment
 }

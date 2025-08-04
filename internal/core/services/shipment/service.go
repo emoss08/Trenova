@@ -18,7 +18,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	dedicatedlaneservice "github.com/emoss08/trenova/internal/core/services/dedicatedlane"
 	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
@@ -41,7 +40,7 @@ type ServiceParams struct {
 	StreamingService           services.StreamingService
 	Validator                  *shipmentvalidator.Validator
 	DedicatedLaneAssignService *dedicatedlaneservice.AssignmentService
-	JobService                 jobs.JobServiceInterface
+	JobService                 services.JobService
 }
 
 type Service struct {
@@ -53,7 +52,7 @@ type Service struct {
 	ss            services.StreamingService
 	v             *shipmentvalidator.Validator
 	dlas          *dedicatedlaneservice.AssignmentService
-	js            jobs.JobServiceInterface
+	js            services.JobService
 }
 
 //nolint:gocritic // The p parameter is passed using fx.In
@@ -615,8 +614,8 @@ func (s *Service) Duplicate(
 		return err
 	}
 
-	payload := &jobs.DuplicateShipmentPayload{
-		BasePayload: jobs.BasePayload{
+	payload := &services.DuplicateShipmentPayload{
+		JobBasePayload: services.JobBasePayload{
 			OrganizationID: req.OrgID,
 			BusinessUnitID: req.BuID,
 			UserID:         req.UserID,
@@ -629,9 +628,9 @@ func (s *Service) Duplicate(
 	}
 
 	if _, err = s.js.Enqueue(
-		jobs.JobTypeDuplicateShipment,
+		services.JobTypeDuplicateShipment,
 		payload,
-		jobs.DefaultJobOptions(),
+		services.DefaultJobOptions(),
 	); err != nil {
 		log.Error().Err(err).Msg("failed to enqueue shipment duplication job")
 		return err

@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/pkg/jobs"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/hibiken/asynq"
 	"github.com/rs/zerolog"
@@ -33,7 +32,7 @@ type EmailHandlerParams struct {
 }
 
 // NewEmailHandler creates a new email handler
-func NewEmailHandler(p EmailHandlerParams) jobs.JobHandler {
+func NewEmailHandler(p EmailHandlerParams) services.JobHandler {
 	log := p.Logger.With().
 		Str("handler", "email").
 		Logger()
@@ -45,8 +44,8 @@ func NewEmailHandler(p EmailHandlerParams) jobs.JobHandler {
 }
 
 // JobType returns the job type this handler processes
-func (h *EmailHandler) JobType() jobs.JobType {
-	return jobs.JobTypeSendEmail
+func (h *EmailHandler) JobType() services.JobType {
+	return services.JobTypeSendEmail
 }
 
 // ProcessTask processes an email job
@@ -59,8 +58,8 @@ func (h *EmailHandler) ProcessTask(ctx context.Context, task *asynq.Task) error 
 	log.Info().Msg("processing email job")
 
 	// Unmarshal payload
-	var payload jobs.SendEmailPayload
-	if err := jobs.UnmarshalPayload(task.Payload(), &payload); err != nil {
+	var payload services.SendEmailPayload
+	if err := services.UnmarshalPayload(task.Payload(), &payload); err != nil {
 		log.Error().Err(err).Msg("failed to unmarshal email payload")
 		return oops.In("email_handler").
 			Tags("operation", "unmarshal_payload").
@@ -96,7 +95,7 @@ func (h *EmailHandler) ProcessTask(ctx context.Context, task *asynq.Task) error 
 // processSendEmail processes a regular email send request
 func (h *EmailHandler) processSendEmail(
 	ctx context.Context,
-	payload *jobs.SendEmailPayload,
+	payload *services.SendEmailPayload,
 	log *zerolog.Logger,
 ) error {
 	log.Info().
@@ -133,7 +132,7 @@ func (h *EmailHandler) processSendEmail(
 // processSendTemplatedEmail processes a templated email send request
 func (h *EmailHandler) processSendTemplatedEmail(
 	ctx context.Context,
-	payload *jobs.SendEmailPayload,
+	payload *services.SendEmailPayload,
 	log *zerolog.Logger,
 ) error {
 	if payload.TemplatedRequest == nil {
