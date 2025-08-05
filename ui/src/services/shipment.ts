@@ -17,6 +17,7 @@ export type GetPreviousRatesRequest = {
   shipmentTypeId: string;
   serviceTypeId: string;
   customerId?: string | null;
+  excludeShipmentId?: string | null;
 };
 
 export class ShipmentAPI {

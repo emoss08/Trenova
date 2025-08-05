@@ -180,11 +180,8 @@ type GetShipmentByIDOptions struct {
 }
 
 type UpdateShipmentStatusRequest struct {
-	// Fetch the shipment
 	GetOpts *GetShipmentByIDOptions `json:"getOpts" query:"getOpts"`
-
-	// The status of the shipment
-	Status shipment.Status `json:"status" query:"status"`
+	Status  shipment.Status         `json:"status"  query:"status"`
 }
 
 type CancelShipmentRequest struct {
@@ -213,32 +210,15 @@ type TransferOwnershipRequest struct {
 }
 
 type DuplicateShipmentRequest struct {
-	// The ID of the shipment to duplicate
-	ShipmentID pulid.ID `json:"shipmentId" query:"shipmentId"`
-
-	// The ID of the organization
-	OrgID pulid.ID `json:"orgId" query:"orgId"`
-
-	// The ID of the business unit
-	BuID pulid.ID `json:"buId" query:"buId"`
-
-	// The ID of the user who is duplicating the shipment
-	UserID pulid.ID `json:"userId" query:"userId"`
-
-	// The number of shipments to duplicate
-	Count int `json:"count" default:"1" query:"count"`
-
-	// Optional parameter to override the dates of the new shipment
-	OverrideDates bool `json:"overrideDates" query:"overrideDates" default:"false"`
-
-	// Optional parameter to include commodities in the new shipment
-	IncludeCommodities bool `json:"includeCommodities" query:"includeCommodities" default:"false"`
-
-	// Optional parameter to include additional charges in the new shipment
-	IncludeAdditionalCharges bool `json:"includeAdditionalCharges" query:"includeAdditionalCharges" default:"false"`
-
-	// Optional parameter to include comments in the new shipment
-	IncludeComments bool `json:"includeComments" query:"includeComments" default:"false"`
+	ShipmentID               pulid.ID `json:"shipmentId"               query:"shipmentId"`
+	OrgID                    pulid.ID `json:"orgId"                    query:"orgId"`
+	BuID                     pulid.ID `json:"buId"                     query:"buId"`
+	UserID                   pulid.ID `json:"userId"                   query:"userId"`
+	Count                    int      `json:"count"                    query:"count"                    default:"1"`
+	OverrideDates            bool     `json:"overrideDates"            query:"overrideDates"            default:"false"`
+	IncludeCommodities       bool     `json:"includeCommodities"       query:"includeCommodities"       default:"false"`
+	IncludeAdditionalCharges bool     `json:"includeAdditionalCharges" query:"includeAdditionalCharges" default:"false"`
+	IncludeComments          bool     `json:"includeComments"          query:"includeComments"          default:"false"`
 }
 
 func (dr *DuplicateShipmentRequest) Validate(ctx context.Context) *errors.MultiError {
@@ -303,6 +283,9 @@ type GetPreviousRatesRequest struct {
 
 	// * Optional Customer filter
 	CustomerID *pulid.ID `json:"customerId" query:"customerId"`
+
+	// * Optional Exclude Shipment ID
+	ExcludeShipmentID *pulid.ID `json:"excludeShipmentId" query:"excludeShipmentId"`
 }
 
 type DelayShipmentRequest struct{}

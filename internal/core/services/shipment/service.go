@@ -135,6 +135,7 @@ func (s *Service) GetPreviousRates(
 ) (*ports.ListResult[*shipment.Shipment], error) {
 	log := s.l.With().
 		Str("operation", "GetPreviousRates").
+		Interface("req", req).
 		Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
