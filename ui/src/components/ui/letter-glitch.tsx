@@ -11,12 +11,16 @@ const LetterGlitch = ({
   centerVignette = false,
   outerVignette = true,
   smooth = true,
+  className,
+  canvasClassName,
 }: {
   glitchColors: string[];
   glitchSpeed: number;
   centerVignette: boolean;
   outerVignette: boolean;
   smooth: boolean;
+  className?: string;
+  canvasClassName?: string;
 }) => {
   const { theme } = useTheme();
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -297,10 +301,10 @@ const LetterGlitch = ({
   }, [glitchSpeed, smooth]);
 
   return (
-    <div className="relative w-full h-full overflow-hidden">
+    <div className={cn("relative w-full h-full overflow-hidden", className)}>
       <canvas
         ref={canvasRef}
-        className="block w-full h-full opacity-30"
+        className={cn("block w-full h-full opacity-30", canvasClassName)}
         style={{ maxWidth: "100%", maxHeight: "100%" }}
       />
       {outerVignette && (
