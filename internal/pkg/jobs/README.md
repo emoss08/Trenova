@@ -216,8 +216,8 @@ Daily 2 AM → CronScheduler triggers global pattern analysis
 
 ```go
 // From API endpoint or admin interface
-_, err := jobService.SchedulePatternAnalysis(ctx, &jobs.PatternAnalysisPayload{
-    BasePayload: jobs.BasePayload{
+_, err := jobService.SchedulePatternAnalysis(ctx, &services.PatternAnalysisPayload{
+    JobBasePayload: services.JobBasePayload{
         OrganizationID: orgID,
         BusinessUnitID: buID,
         UserID:         userID,
