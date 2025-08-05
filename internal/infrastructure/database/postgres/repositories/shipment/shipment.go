@@ -341,7 +341,6 @@ func (sr *shipmentRepository) GetByOrgID(
 		Relation("Organization").
 		Where("sp.organization_id = ?", orgID)
 
-	// Add options to expand shipment details for pattern analysis
 	q = sr.addOptions(q, repositories.ShipmentOptions{
 		ExpandShipmentDetails: true,
 	})
@@ -433,19 +432,16 @@ func (sr *shipmentRepository) Create(
 		Str("buID", shp.BusinessUnitID.String()).
 		Logger()
 
-	// Validate shipment
 	if err := sr.validateShipmentForCreation(shp); err != nil {
 		log.Error().Err(err).Msg("shipment validation failed")
 		return nil, err
 	}
 
-	// Prepare shipment for creation
 	if err := sr.prepareShipmentForCreation(ctx, shp, userID); err != nil {
 		log.Error().Err(err).Msg("failed to prepare shipment")
 		return nil, err
 	}
 
-	// Execute transaction
 	err := sr.executeInTransaction(ctx, func(c context.Context, tx bun.Tx) error {
 		return sr.createShipmentWithRelations(c, tx, shp, &log)
 	})
@@ -534,7 +530,6 @@ func (sr *shipmentRepository) Update(
 		Int64("version", shp.Version).
 		Logger()
 
-	// Calculate totals and status
 	sr.calc.CalculateTotals(ctx, shp, userID)
 
 	if err := sr.calc.CalculateStatus(shp); err != nil {
@@ -560,7 +555,6 @@ func (sr *shipmentRepository) Update(
 			Wrapf(err, "calculate shipment timestamps")
 	}
 
-	// Execute transaction
 	err := sr.executeInTransaction(ctx, func(c context.Context, tx bun.Tx) error {
 		return sr.updateShipmentWithRelations(c, tx, shp, &log)
 	})
@@ -600,15 +594,12 @@ func (sr *shipmentRepository) UpdateStatus(
 		Str("status", string(opts.Status)).
 		Logger()
 
-	// * Get the move
 	shp, err := sr.GetByID(ctx, opts.GetOpts)
 	if err != nil {
 		return nil, err
 	}
 
-	// * Run in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// * Update the move version
 		ov := shp.Version
 		shp.Version++
 
@@ -682,12 +673,9 @@ func (sr *shipmentRepository) Cancel(
 		Str("shipmentID", req.ShipmentID.String()).
 		Logger()
 
-	// * Create a new shipment
 	shp := new(shipment.Shipment)
 
-	// * Run in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// * Update shipment status
 		results, rErr := tx.NewUpdate().
 			Model(shp).
 			Where("sp.id = ? AND sp.organization_id = ? AND sp.business_unit_id = ?",
@@ -711,12 +699,10 @@ func (sr *shipmentRepository) Cancel(
 			return roErr
 		}
 
-		// * If no rows were affected, return a not found error
 		if rows == 0 {
 			return errors.NewNotFoundError("Shipment not found")
 		}
 
-		// * Cancel associated moves and their assignments
 		if err = sr.cancelShipmentComponents(c, tx, req); err != nil {
 			log.Error().Err(err).Msg("failed to cancel shipment components")
 			return err
@@ -738,18 +724,15 @@ func (sr *shipmentRepository) cancelShipmentComponents(
 	tx bun.Tx,
 	req *repositories.CancelShipmentRequest,
 ) error {
-	// Get all move IDs for the shipment
 	moveIDs, err := sr.getMoveIDsForShipment(ctx, tx, req.ShipmentID)
 	if err != nil {
 		return err
 	}
 
 	if len(moveIDs) == 0 {
-		// No moves to cancel
 		return nil
 	}
 
-	// Cancel all components in bulk
 	return sr.bulkCancelShipmentComponents(ctx, tx, moveIDs)
 }
 
@@ -770,12 +753,9 @@ func (sr *shipmentRepository) UnCancel(
 		Str("shipmentID", req.ShipmentID.String()).
 		Logger()
 
-	// * Create a new shipment
 	shp := new(shipment.Shipment)
 
-	// * Run in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// * Update shipment status
 		results, rErr := tx.NewUpdate().
 			Model(shp).
 			Set("status = ?", shipment.StatusNew).
@@ -803,12 +783,10 @@ func (sr *shipmentRepository) UnCancel(
 			return roErr
 		}
 
-		// * If no rows were affected, return a not found error
 		if rows == 0 {
 			return errors.NewNotFoundError("Shipment not found")
 		}
 
-		// * Cancel associated moves and their assignments
 		if err = sr.unCancelShipmentComponents(c, tx, req); err != nil {
 			log.Error().Err(err).Msg("failed to cancel shipment components")
 			return err
@@ -830,18 +808,15 @@ func (sr *shipmentRepository) unCancelShipmentComponents(
 	tx bun.Tx,
 	req *repositories.UnCancelShipmentRequest,
 ) error {
-	// Get all move IDs for the shipment
 	moveIDs, err := sr.getMoveIDsForShipment(ctx, tx, req.ShipmentID)
 	if err != nil {
 		return err
 	}
 
 	if len(moveIDs) == 0 {
-		// No moves to un-cancel
 		return nil
 	}
 
-	// Un-cancel all components in bulk
 	return sr.bulkUnCancelShipmentComponents(ctx, tx, moveIDs, req.UpdateAppointments)
 }
 
@@ -861,11 +836,9 @@ func (sr *shipmentRepository) BulkDuplicate(
 ) ([]*shipment.Shipment, error) {
 	log := sr.l.With().
 		Str("operation", "BulkDuplicate").
-		Int("count", req.Count).
-		Str("shipmentID", req.ShipmentID.String()).
+		Interface("req", req).
 		Logger()
 
-	// Get the original shipment
 	originalShipment, err := sr.GetByID(ctx, &repositories.GetShipmentByIDOptions{
 		ID:    req.ShipmentID,
 		OrgID: req.OrgID,
@@ -879,14 +852,12 @@ func (sr *shipmentRepository) BulkDuplicate(
 		return nil, err
 	}
 
-	// Prepare all data for bulk insertion
 	data, err := sr.prepareBulkShipmentData(ctx, originalShipment, req)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to prepare bulk shipment data")
 		return nil, err
 	}
 
-	// Execute bulk insertion in transaction
 	err = sr.executeInTransaction(ctx, func(c context.Context, tx bun.Tx) error {
 		return sr.bulkInsertShipmentData(c, tx, data, &log)
 	})
@@ -895,7 +866,6 @@ func (sr *shipmentRepository) BulkDuplicate(
 		return nil, err
 	}
 
-	log.Info().Int("created", len(data.shipments)).Msg("successfully bulk duplicated shipments")
 	return data.shipments, nil
 }
 
@@ -907,9 +877,9 @@ func (sr *shipmentRepository) insertEntities(
 	entityType EntityType,
 	entities any,
 ) error {
-	log.Debug().Interface(string(entityType), entities).Msgf("bulk inserting %s", entityType)
-	_, err := tx.NewInsert().Model(entities).Exec(ctx)
-	if err != nil {
+	if _, err := tx.NewInsert().
+		Model(entities).
+		Exec(ctx); err != nil {
 		log.Error().Err(err).Msgf("failed to bulk insert %s", entityType)
 		return oops.
 			In("shipment_repository").
@@ -929,7 +899,6 @@ func (sr *shipmentRepository) prepareMovesAndStops(
 	moves := make([]*shipment.ShipmentMove, 0, len(original.Moves))
 	stops := make([]*shipment.Stop, 0)
 
-	// * Loop through each move and prepare the new move and stops
 	for _, originalMove := range original.Moves {
 		newMove := &shipment.ShipmentMove{
 			ID:             pulid.MustNew("smv_"),
@@ -943,7 +912,6 @@ func (sr *shipmentRepository) prepareMovesAndStops(
 		}
 		moves = append(moves, newMove)
 
-		// * Prepare stops for this move
 		moveStops := sr.prepareStops(originalMove, newMove, overrideDates)
 		stops = append(stops, moveStops...)
 	}
@@ -957,7 +925,6 @@ func (sr *shipmentRepository) prepareStops(
 ) []*shipment.Stop {
 	stops := make([]*shipment.Stop, 0, len(originalMove.Stops))
 
-	// Loop through each stop and prepare the new stop
 	for _, stop := range originalMove.Stops {
 		newStop := sr.prepareStopForDuplication(stop, newMove.ID, overrideDates)
 		stops = append(stops, newStop)
@@ -972,7 +939,6 @@ func (sr *shipmentRepository) prepareCommodities(
 ) []*shipment.ShipmentCommodity {
 	commodities := make([]*shipment.ShipmentCommodity, 0, len(original.Commodities))
 
-	// * Loop through each commodity and prepare the new commodity
 	for _, commodity := range original.Commodities {
 		newCommodity := &shipment.ShipmentCommodity{
 			ID:             pulid.MustNew("sc_"),
@@ -984,7 +950,6 @@ func (sr *shipmentRepository) prepareCommodities(
 			Pieces:         commodity.Pieces,
 		}
 
-		// * Append the new commodity to the slice
 		commodities = append(commodities, newCommodity)
 	}
 
@@ -1106,7 +1071,6 @@ func (sr *shipmentRepository) GetDelayedShipments(
 	currentTime := timeutils.NowUnix()
 	delayedShipments := make([]*shipment.Shipment, 0)
 
-	// Build CTEs for delayed shipments
 	stopCte, moveCte := buildDelayedShipmentsCTEs(dba, currentTime)
 
 	q := dba.NewSelect().
@@ -1158,7 +1122,6 @@ func (sr *shipmentRepository) DelayShipments(ctx context.Context) ([]*shipment.S
 		Str("operation", "DelayShipments").
 		Logger()
 
-	// * Get shipments that should be delayed
 	delayedShipments, err := sr.GetDelayedShipments(ctx)
 	if err != nil {
 		return nil, err
@@ -1171,7 +1134,6 @@ func (sr *shipmentRepository) DelayShipments(ctx context.Context) ([]*shipment.S
 
 	currentTime := timeutils.NowUnix()
 
-	// * Update the shipments in a transaction
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
 		shipmentIDs := make([]pulid.ID, len(delayedShipments))
 		for i, shp := range delayedShipments {
@@ -1229,7 +1191,6 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(
 	orgID, buID pulid.ID,
 	excludeID *pulid.ID,
 ) ([]repositories.DuplicateBOLsResult, error) {
-	// * Skip empty BOL checks
 	if currentBOL == "" {
 		return []repositories.DuplicateBOLsResult{}, nil
 	}
@@ -1249,7 +1210,6 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(
 			Wrapf(err, "get database connection")
 	}
 
-	// * Query to find duplicates, selecting only necessary fields for efficiency
 	query := dba.NewSelect().
 		Column("sp.id").
 		Column("sp.pro_number").
@@ -1261,15 +1221,12 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(
 				Where("sp.status != ?", shipment.StatusCanceled)
 		})
 
-	// * Exclude the specified shipment ID if provided
 	if excludeID != nil {
 		query = query.Where("sp.id != ?", *excludeID)
 	}
 
-	// * Small struct to store the results of the query
 	duplicates := make([]repositories.DuplicateBOLsResult, 0)
 
-	// * Scan the results into the duplicates slice
 	if err = query.Scan(ctx, &duplicates); err != nil {
 		log.Error().Err(err).Msg("failed to query for duplicate BOLs")
 		return nil, oops.
@@ -1287,9 +1244,9 @@ func (sr *shipmentRepository) CalculateShipmentTotals(
 	shp *shipment.Shipment,
 	userID pulid.ID,
 ) (*repositories.ShipmentTotalsResponse, error) {
-	// All calculations are in-memory. We let the shared calculator populate the
-	// monetary fields, then fetch the base charge via the new helper to avoid
-	// duplicating the algorithm.
+	// ! All calculations are in-memory. We let the shared calculator populate the
+	// ! monetary fields, then fetch the base charge via the new helper to avoid
+	// ! duplicating the algorithm.
 
 	sr.calc.CalculateTotals(ctx, shp, userID)
 
@@ -1325,7 +1282,6 @@ func (sr *shipmentRepository) GetPreviousRates(
 
 	shipments := make([]*shipment.Shipment, 0)
 
-	// Build CTEs for origin and destination matching
 	originCTE, destCTE := buildPreviousRatesCTEs(
 		dba,
 		req.OriginLocationID,
@@ -1349,15 +1305,16 @@ func (sr *shipmentRepository) GetPreviousRates(
 				Where("sp.id IN (SELECT shipment_id FROM dest_shipments)")
 		})
 
-	// * Add customer filter if specified
 	if req.CustomerID != nil {
 		q = q.Where("sp.customer_id = ?", req.CustomerID)
 	}
 
-	// * Order by created_at descending to get most recent rates first
+	if req.ExcludeShipmentID != nil {
+		q = q.Where("sp.id != ?", req.ExcludeShipmentID)
+	}
+
 	q = q.Order("sp.created_at DESC")
 
-	// * Limit by 50 rates
 	q = q.Limit(50)
 
 	total, err := q.ScanAndCount(ctx)
@@ -1365,6 +1322,7 @@ func (sr *shipmentRepository) GetPreviousRates(
 		return nil, oops.
 			In("shipment_repository").
 			Time(time.Now()).
+			With("req", req).
 			Wrapf(err, "scan and count previous rates")
 	}
 

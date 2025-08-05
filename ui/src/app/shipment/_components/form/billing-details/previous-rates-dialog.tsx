@@ -14,7 +14,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { EmptyState } from "@/components/ui/empty-state";
+import LetterGlitch from "@/components/ui/letter-glitch";
 import {
   Table,
   TableBody,
@@ -28,11 +28,6 @@ import type { LocationSchema } from "@/lib/schemas/location-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { ShipmentLocations } from "@/lib/shipment/utils";
 import { formatLocation, USDollarFormat } from "@/lib/utils";
-import {
-  faFileInvoiceDollar,
-  faTruckContainer,
-  faTruckFast,
-} from "@fortawesome/pro-solid-svg-icons";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useFormContext } from "react-hook-form";
@@ -57,6 +52,7 @@ export function PreviousRatesDialog() {
       destinationLocationId: destination?.id ?? "",
       shipmentTypeId: shipment.shipmentTypeId,
       serviceTypeId: shipment.serviceTypeId,
+      excludeShipmentId: shipment.id,
     }),
     enabled: canViewPreviousRates,
   });
@@ -90,13 +86,26 @@ export function PreviousRatesDialog() {
           {isLoading ? (
             <p>Loading...</p>
           ) : previousRates?.total === 0 ? (
-            <div className="flex justify-center items-center h-full p-4">
-              <EmptyState
-                className="max-h-full max-w-full"
-                title="No Previous Rates"
-                description="No previous rates associated with this lane"
-                icons={[faFileInvoiceDollar, faTruckContainer, faTruckFast]}
-              />
+            <div className="flex flex-col items-center justify-center max-h-[300px] rounded-md overflow-hidden p-2">
+              <div className="relative size-full max-h-[300px]">
+                <LetterGlitch
+                  glitchColors={["#9c9c9c", "#696969", "#424242"]}
+                  glitchSpeed={50}
+                  centerVignette={true}
+                  outerVignette={true}
+                  smooth={true}
+                  className="max-h-[300px]"
+                  canvasClassName="max-h-[300px]"
+                />
+                <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center pointer-events-none">
+                  <p className="text-sm/none px-1 py-0.5 text-center font-medium uppercase select-none font-table dark:text-neutral-900 bg-amber-300 text-amber-950 dark:bg-amber-400">
+                    No data available
+                  </p>
+                  <p className="text-sm/none px-1 py-0.5 text-center font-medium uppercase select-none font-table dark:text-neutral-900 bg-neutral-900 text-white dark:bg-neutral-500">
+                    No previous rates associated with this lane
+                  </p>
+                </div>
+              </div>
             </div>
           ) : (
             <Table>
