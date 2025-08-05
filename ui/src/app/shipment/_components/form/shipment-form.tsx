@@ -3,7 +3,6 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-import { Badge } from "@/components/ui/badge";
 import {
   ScrollArea,
   ScrollAreaShadow,
@@ -92,14 +91,14 @@ function ShipmentSectionTabs({
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange}>
-      <ScrollArea className="w-full">
+      <ScrollArea>
         <TabsList className="text-foreground mb-3 h-auto gap-2 px-2 rounded-none border-b bg-transparent py-1 w-full justify-start overflow-x-auto">
           <TabsTrigger
             value="general-information"
-            className="hover:bg-accent shrink-0 hover:text-foreground text-xs data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className="h-7 shrink-0 hover:bg-accent hover:text-foreground data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             <HouseIcon
-              className="-ms-0.5 me-1.5 opacity-60"
+              className="-ms-0.5 mb-0.5 opacity-60"
               size={16}
               aria-hidden="true"
             />
@@ -107,39 +106,31 @@ function ShipmentSectionTabs({
           </TabsTrigger>
           <TabsTrigger
             value="comments"
-            className="hover:bg-accent hover:text-foreground text-xs data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className="h-7 shrink-0 hover:bg-accent hover:text-foreground text-xs data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             <MessageCircleIcon
-              className="-ms-0.5 me-1.5 opacity-60"
+              className="-ms-0.5 mb-0.5 opacity-60"
               size={16}
               aria-hidden="true"
             />
             Comments
-            <Badge
-              withDot={false}
-              className="bg-primary/15 ms-1.5 min-w-5"
-              variant="secondary"
-            >
+            <span className="max-w-5 bg-primary/15 py-0.5 px-1.5 rounded-sm text-xs">
               {commentCount?.count ?? 0}
-            </Badge>
+            </span>
           </TabsTrigger>
           <TabsTrigger
             value="documents"
-            className="hover:bg-accent hover:text-foreground text-xs data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            className="h-7 shrink-0 hover:bg-accent hover:text-foreground text-xs data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
             <PanelsTopLeftIcon
-              className="-ms-0.5 me-1.5 opacity-60"
+              className="-ms-0.5 mb-0.5 opacity-60"
               size={16}
               aria-hidden="true"
             />
             Documents
-            <Badge
-              withDot={false}
-              className="bg-primary/15 ms-1.5 min-w-5"
-              variant="secondary"
-            >
+            <span className="max-w-5 bg-primary/15 py-0.5 px-1.5 rounded-sm text-xs">
               3
-            </Badge>
+            </span>
           </TabsTrigger>
         </TabsList>
         <ScrollBar orientation="horizontal" />
