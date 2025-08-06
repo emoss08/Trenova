@@ -1,3 +1,4 @@
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 /*
  * Copyright 2023-2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
@@ -156,8 +157,11 @@ export default defineConfig({
       gzipSize: true,
       brotliSize: true,
     }) as PluginOption,
+    sentryVitePlugin({
+      org: "trenova",
+      project: "ui",
+    }),
   ],
-
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

@@ -32,3 +32,5 @@ stats.html
 # Million Lint
 .million
 .env
+# Sentry Config File
+.env.sentry-build-plugin
