@@ -327,12 +327,7 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
             type="submit"
             size="sm"
             disabled={!hasContent || isSubmitting || hasIncompleteSlashCommand}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-
-              handleSubmit(onSubmit)(e);
-            }}
+            onClick={handleSubmit(onSubmit)}
           >
             {isSubmitting
               ? isEditMode

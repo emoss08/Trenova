@@ -11,7 +11,7 @@ import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { useUser } from "@/stores/user-store";
 import { useQuery } from "@tanstack/react-query";
 
-export default function ShipmentDetailsHeader({
+export function ShipmentDetailsHeader({
   selectedShipment,
 }: {
   selectedShipment?: ShipmentSchema | null;
