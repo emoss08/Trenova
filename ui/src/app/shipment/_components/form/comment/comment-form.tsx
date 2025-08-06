@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
+import { getTodayDate } from "@/lib/date";
 import { queries } from "@/lib/queries";
 import {
   ShipmentCommentSchema,
@@ -16,8 +17,10 @@ import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { UserSchema } from "@/lib/schemas/user-schema";
 import { api } from "@/services/api";
 import { useCommentEditStore } from "@/stores/comment-edit-store";
+import { useUser } from "@/stores/user-store";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
+import { nanoid } from "nanoid";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Controller, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -31,6 +34,7 @@ interface CommentFormProps {
 
 export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
   const queryClient = useQueryClient();
+  const user = useUser();
   const { editingComment, isEditMode, clearEditMode } = useCommentEditStore();
   const [mentionedUserIds, setMentionedUserIds] = useState<string[]>([]);
   const [commentType, setCommentType] = useState<CommentType | null>(null);
@@ -91,20 +95,106 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
         return response;
       }
     },
+    onMutate: async (values: ShipmentCommentSchema) => {
+      await queryClient.cancelQueries({
+        queryKey: queries.shipment.listComments(shipmentId).queryKey,
+      });
+      await queryClient.cancelQueries({
+        queryKey: queries.shipment.getCommentCount(shipmentId).queryKey,
+      });
+
+      const previousComments = queryClient.getQueryData(
+        queries.shipment.listComments(shipmentId).queryKey,
+      );
+      const previousCount = queryClient.getQueryData(
+        queries.shipment.getCommentCount(shipmentId).queryKey,
+      );
+
+      if (isEditMode && editingComment?.id) {
+        queryClient.setQueryData(
+          queries.shipment.listComments(shipmentId).queryKey,
+          (old: any) => {
+            if (!old) return old;
+            return {
+              ...old,
+              results: old.results.map((comment: ShipmentCommentSchema) =>
+                comment.id === editingComment.id
+                  ? {
+                      ...comment,
+                      comment: values.comment,
+                      commentType: values.commentType,
+                      mentionedUsers: values.mentionedUsers,
+                      metadata: values.metadata,
+                    }
+                  : comment,
+              ),
+            };
+          },
+        );
+      } else {
+        const tempComment: ShipmentCommentSchema = {
+          id: nanoid(),
+          comment: values.comment,
+          commentType: values.commentType,
+          mentionedUsers: values.mentionedUsers,
+          metadata: values.metadata,
+          shipmentId: shipmentId,
+          userId: user?.id || "",
+          createdAt: getTodayDate(),
+          user: user,
+        };
+
+        queryClient.setQueryData(
+          queries.shipment.listComments(shipmentId).queryKey,
+          (old: any) => {
+            if (!old) return { results: [tempComment], count: 1 };
+            return {
+              ...old,
+              results: [...old.results, tempComment],
+              count: old.count + 1,
+            };
+          },
+        );
+
+        queryClient.setQueryData(
+          queries.shipment.getCommentCount(shipmentId).queryKey,
+          (old: any) => {
+            if (!old) return { count: 1 };
+            return { ...old, count: old.count + 1 };
+          },
+        );
+      }
+
+      return { previousComments, previousCount };
+    },
+    onError: (_err, _values, context) => {
+      if (context?.previousComments) {
+        queryClient.setQueryData(
+          queries.shipment.listComments(shipmentId).queryKey,
+          context.previousComments,
+        );
+      }
+      if (context?.previousCount) {
+        queryClient.setQueryData(
+          queries.shipment.getCommentCount(shipmentId).queryKey,
+          context.previousCount,
+        );
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({
+        queryKey: queries.shipment.listComments(shipmentId).queryKey,
+      });
+      queryClient.invalidateQueries({
+        queryKey: queries.shipment.getCommentCount(shipmentId).queryKey,
+      });
+    },
     onSuccess: () => {
       toast.success(
         isEditMode
           ? "Comment updated successfully"
           : "Comment added successfully",
       );
-
-      queryClient.invalidateQueries({
-        queryKey: queries.shipment.listComments(shipmentId).queryKey,
-      });
-
-      queryClient.invalidateQueries({
-        queryKey: queries.shipment.getCommentCount(shipmentId).queryKey,
-      });
 
       broadcastQueryInvalidation({
         queryKey: [
@@ -129,11 +219,9 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
   const commentValue = watch("comment");
   const hasContent = commentValue.trim().length > 0;
 
-  // Check if there's an incomplete slash command (when a comment type already exists)
   const hasIncompleteSlashCommand = useMemo(() => {
     if (!commentType || !commentValue) return false;
 
-    // Check if the comment contains a slash command pattern
     const slashPattern = /\/\w*(?:\s|$)/;
     return slashPattern.test(commentValue);
   }, [commentValue, commentType]);
@@ -141,7 +229,6 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
   const onSubmit = useCallback(
     async (values: ShipmentCommentSchema) => {
       try {
-        // Only prepend comment type to text if we're NOT using JSON
         let finalComment = values.comment;
         if (commentType && !commentJson) {
           const type = COMMENT_TYPES.find((t) => t.value === commentType);
@@ -161,7 +248,7 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
           shipmentId: editingComment?.shipmentId,
           metadata: {
             editorContent: commentJson,
-            version: "1.0", // Version the schema for future compatibility
+            version: "1.0",
           },
         };
 
