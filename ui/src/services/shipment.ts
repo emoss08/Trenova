@@ -71,6 +71,13 @@ export class ShipmentAPI {
     return await http.post<ShipmentSchema>("/shipments/", shipment);
   }
 
+  async update(shipmentId: ShipmentSchema["id"], shipment: ShipmentSchema) {
+    return await http.put<ShipmentSchema>(
+      `/shipments/${shipmentId}/`,
+      shipment,
+    );
+  }
+
   async uncancel(values: ShipmentUncancelSchema) {
     const response = await http.post<ShipmentSchema>(
       `/shipments/uncancel/`,

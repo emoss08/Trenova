@@ -3,38 +3,20 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-import {
-  ScrollArea,
-  ScrollAreaShadow,
-  ScrollBar,
-} from "@/components/ui/scroll-area";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUrlFragment } from "@/hooks/use-url-fragment";
 import { queries } from "@/lib/queries";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { useQuery } from "@tanstack/react-query";
 import { HouseIcon, MessageCircleIcon, PanelsTopLeftIcon } from "lucide-react";
-import { lazy, Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
+import { ShipmentCommentDetails } from "./comment/comment-details";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentFormContent } from "./shipment-form-body";
 import { ShipmentFormHeader } from "./shipment-form-header";
-
-// Lazy loaded components
-const ShipmentBillingDetails = lazy(
-  () => import("./billing-details/shipment-billing-details"),
-);
-const ShipmentGeneralInformation = lazy(
-  () => import("./shipment-general-information"),
-);
-const ShipmentCommodityDetails = lazy(
-  () => import("./commodity/commodity-details"),
-);
-const ShipmentMovesDetails = lazy(() => import("./move/move-details"));
-const ShipmentServiceDetails = lazy(
-  () => import("./service-details/shipment-service-details"),
-);
-const ShipmentCommentDetails = lazy(() => import("./comment/comment-details"));
+import { ShipmentGeneralInfoForm } from "./shipment-general-info-form";
 
 type ShipmentDetailsProps = {
   selectedShipment?: ShipmentSchema | null;
@@ -54,7 +36,10 @@ export function ShipmentForm({
   return (
     <Suspense fallback={<ShipmentDetailsSkeleton />}>
       <ShipmentFormBody selectedShipment={selectedShipment} isError={isError}>
-        <ShipmentSectionTabs shipmentId={selectedShipment?.id} />
+        <ShipmentSectionTabs
+          shipmentId={selectedShipment?.id}
+          currentRecord={selectedShipment}
+        />
       </ShipmentFormBody>
     </Suspense>
   );
@@ -62,8 +47,10 @@ export function ShipmentForm({
 
 function ShipmentSectionTabs({
   shipmentId,
+  currentRecord,
 }: {
   shipmentId: ShipmentSchema["id"];
+  currentRecord?: ShipmentSchema | null;
 }) {
   const { fragment, setFragment } = useUrlFragment();
 
@@ -114,8 +101,10 @@ function ShipmentSectionTabs({
               aria-hidden="true"
             />
             Comments
-            <span className="max-w-5 bg-primary/15 py-0.5 px-1.5 rounded-sm text-xs">
-              {commentCount?.count ?? 0}
+            <span className="max-w-6 bg-primary/15 py-0.5 px-1.5 rounded-sm text-xs">
+              {commentCount?.count && commentCount.count > 99
+                ? "99+"
+                : (commentCount?.count ?? 0)}
             </span>
           </TabsTrigger>
           <TabsTrigger
@@ -128,29 +117,22 @@ function ShipmentSectionTabs({
               aria-hidden="true"
             />
             Documents
-            <span className="max-w-5 bg-primary/15 py-0.5 px-1.5 rounded-sm text-xs">
+            <span className="max-w-6 bg-primary/15 py-0.5 px-1.5 rounded-sm text-xs">
               3
             </span>
           </TabsTrigger>
         </TabsList>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
-      <ScrollArea className="flex flex-col overflow-y-auto px-4 max-h-[calc(100vh-12rem)]">
-        <TabsContent className="pb-16" value="general-information">
-          <ShipmentServiceDetails />
-          <ShipmentBillingDetails />
-          <ShipmentGeneralInformation />
-          <ShipmentCommodityDetails />
-          <ShipmentMovesDetails />
-        </TabsContent>
-        <TabsContent value="comments">
-          <ShipmentCommentDetails />
-        </TabsContent>
-        <TabsContent value="documents">
-          <ShipmentCommentDetails />
-        </TabsContent>
-        <ScrollAreaShadow />
-      </ScrollArea>
+      <TabsContent value="general-information">
+        <ShipmentGeneralInfoForm currentRecord={currentRecord} />
+      </TabsContent>
+      <TabsContent value="comments">
+        <ShipmentCommentDetails shipmentId={shipmentId} />
+      </TabsContent>
+      <TabsContent value="documents">
+        <ShipmentCommentDetails shipmentId={shipmentId} />
+      </TabsContent>
     </Tabs>
   );
 }
@@ -160,7 +142,6 @@ export function ShipmentFormBody({
   isError,
   children,
 }: Omit<ShipmentDetailsProps, "isLoading"> & { children: React.ReactNode }) {
-  // Handle error state
   if (isError) {
     return (
       <div className="flex size-full items-center justify-center">

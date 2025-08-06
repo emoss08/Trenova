@@ -12,13 +12,17 @@ import { UserSchema } from "@/lib/schemas/user-schema";
 import { api } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircleIcon } from "lucide-react";
-import { useFormContext } from "react-hook-form";
+import { useEffect, useRef } from "react";
 import { CommentContent } from "./comment-content";
 import { CommentForm } from "./comment-form";
 
-export default function ShipmentCommentDetails() {
-  const { getValues } = useFormContext<ShipmentSchema>();
-  const shipmentId = getValues("id");
+export function ShipmentCommentDetails({
+  shipmentId,
+}: {
+  shipmentId: ShipmentSchema["id"];
+}) {
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const lastCommentRef = useRef<HTMLDivElement>(null);
 
   const {
     data: commentsData,
@@ -28,6 +32,17 @@ export default function ShipmentCommentDetails() {
   } = useQuery({
     ...queries.shipment.listComments(shipmentId),
   });
+
+  const comments = commentsData?.results || [];
+
+  useEffect(() => {
+    if (comments.length > 0 && lastCommentRef.current) {
+      lastCommentRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "end",
+      });
+    }
+  }, [comments.length]);
 
   const searchUsers = async (query: string): Promise<UserSchema[]> => {
     try {
@@ -77,22 +92,27 @@ export default function ShipmentCommentDetails() {
     );
   }
 
-  const comments = commentsData?.results || [];
-
   return (
-    <div className="flex flex-col gap-4 pb-16">
+    <div className="flex flex-col gap-4 pb-10">
       {comments.length === 0 ? (
         <div className="text-center py-8 text-sm text-muted-foreground">
           No comments yet. Be the first to add one!
         </div>
       ) : (
-        <ScrollArea className="flex flex-col overflow-y-auto max-h-[calc(100vh-14rem)]">
+        <ScrollArea
+          ref={scrollAreaRef}
+          className="flex flex-col overflow-y-auto px-4 max-h-[calc(100vh-24rem)]"
+        >
           {comments.map((comment, index) => (
-            <CommentContent
+            <div
               key={comment.id || index}
-              shipmentComment={comment}
-              isLast={index === comments.length - 1}
-            />
+              ref={index === comments.length - 1 ? lastCommentRef : undefined}
+            >
+              <CommentContent
+                shipmentComment={comment}
+                isLast={index === comments.length - 1}
+              />
+            </div>
           ))}
         </ScrollArea>
       )}
