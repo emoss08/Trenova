@@ -6,7 +6,7 @@
 package cdcutils
 
 import (
-	"github.com/emoss08/trenova/pkg/types/cdctypes"
+	"github.com/emoss08/trenova/shared/cdctypes"
 	"github.com/rotisserie/eris"
 )
 

@@ -56,7 +56,7 @@ func NewCronScheduler(p CronSchedulerParams) CronSchedulerInterface {
 		Logger()
 
 	scheduler := asynq.NewScheduler(p.RedisOpt, &asynq.SchedulerOpts{
-		LogLevel: asynq.DebugLevel, // Reduce noise
+		LogLevel: asynq.DebugLevel,
 		Logger:   &asynqLogger{logger: &log},
 	})
 

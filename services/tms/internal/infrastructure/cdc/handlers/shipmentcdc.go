@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/cdcutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/pkg/types/cdctypes"
+	"github.com/emoss08/trenova/shared/cdctypes"
 	"github.com/rs/zerolog"
 	"github.com/samber/oops"
 	"go.uber.org/fx"

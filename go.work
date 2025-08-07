@@ -5,6 +5,7 @@ use (
 	./services/jobs
 	./services/routing
 	./services/tms
+	./shared/cdctypes
 	./shared/payload
 	./shared/pulid
 )

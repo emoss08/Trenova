@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/cdcutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/maputils"
-	"github.com/emoss08/trenova/pkg/types/cdctypes"
+	"github.com/emoss08/trenova/shared/cdctypes"
 	"github.com/linkedin/goavro/v2"
 	"github.com/riferrei/srclient"
 	"github.com/rotisserie/eris"
