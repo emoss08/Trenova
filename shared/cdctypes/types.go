@@ -1,13 +1,6 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package cdctypes
 
-import (
-	"github.com/bytedance/sonic"
-)
+import "github.com/bytedance/sonic"
 
 // DebeziumAvroEnvelope represents the structure of Avro-encoded Debezium change events
 // as they come from Kafka with Confluent Schema Registry.

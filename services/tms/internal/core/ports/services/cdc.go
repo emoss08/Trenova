@@ -5,9 +5,7 @@
 
 package services
 
-import (
-	"github.com/emoss08/trenova/pkg/types/cdctypes"
-)
+import "github.com/emoss08/trenova/shared/cdctypes"
 
 // CDCService defines the interface for Change Data Capture services
 type CDCService interface {
