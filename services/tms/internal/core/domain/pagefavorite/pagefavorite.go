@@ -14,15 +14,17 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*PageFavorite)(nil)
-var _ domain.Validatable = (*PageFavorite)(nil)
+var (
+	_ bun.BeforeAppendModelHook = (*PageFavorite)(nil)
+	_ domain.Validatable        = (*PageFavorite)(nil)
+)
 
 type PageFavorite struct {
 	bun.BaseModel `bun:"table:page_favorites,alias:pf" json:"-"`

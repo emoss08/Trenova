@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
@@ -45,7 +45,6 @@ func (ac *AIConfig) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	err := validation.ValidateStructWithContext(ctx, ac,
 		validation.Field(&ac.APIKey, validation.Required.Error("API Key is required")),
 	)
-
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {

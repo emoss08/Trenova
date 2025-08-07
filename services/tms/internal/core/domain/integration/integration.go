@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
@@ -64,7 +64,6 @@ func (i *Integration) Validate(ctx context.Context, multiErr *errors.MultiError)
 		validation.Field(&i.Name, validation.Required.Error("Integration name is required")),
 		// validation.Field(&i.Status, validation.Required.Error("Integration status is required")),
 	)
-
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {

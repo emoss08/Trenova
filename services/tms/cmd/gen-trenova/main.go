@@ -57,18 +57,18 @@ var (
 	templateOnce     sync.Once
 
 	// CPU throttling controls
-	cpuThrottler     *rate.Limiter
-	fileIOThrottler  *rate.Limiter
-	parseThrottler   *rate.Limiter
+	cpuThrottler      *rate.Limiter
+	fileIOThrottler   *rate.Limiter
+	parseThrottler    *rate.Limiter
 	templateThrottler *rate.Limiter
-	
+
 	// Performance counters
-	filesProcessed   atomic.Int64
-	bytesProcessed   atomic.Int64
-	
+	filesProcessed atomic.Int64
+	bytesProcessed atomic.Int64
+
 	// Global context for cancellation
-	globalCtx        context.Context
-	globalCancel     context.CancelFunc
+	globalCtx    context.Context
+	globalCancel context.CancelFunc
 )
 
 func main() {
@@ -89,7 +89,7 @@ func main() {
 			*concurrency = 1
 		}
 	}
-	
+
 	// Limit GOMAXPROCS to prevent using all CPU cores
 	maxProcs := runtime.NumCPU() / 4
 	if maxProcs < 1 {
@@ -99,12 +99,16 @@ func main() {
 		maxProcs = 2 // More aggressive cap for WSL
 	}
 	runtime.GOMAXPROCS(maxProcs)
-	
+
 	// Initialize rate limiters for CPU throttling
 	initializeRateLimiters()
-	
-	log.Printf("Using %d concurrent workers with GOMAXPROCS=%d (use -concurrency flag to adjust)\n", *concurrency, maxProcs)
-	log.Printf("CPU throttling enabled: parse=%d/sec, file I/O=%d/sec, template=%d/sec\n", 
+
+	log.Printf(
+		"Using %d concurrent workers with GOMAXPROCS=%d (use -concurrency flag to adjust)\n",
+		*concurrency,
+		maxProcs,
+	)
+	log.Printf("CPU throttling enabled: parse=%d/sec, file I/O=%d/sec, template=%d/sec\n",
 		10*(*concurrency), 20*(*concurrency), 5*(*concurrency))
 
 	// Check if we're in scan mode or specific type mode
@@ -116,8 +120,12 @@ func main() {
 		}
 		elapsed := time.Since(start)
 		log.Printf("Code generation completed in %v\n", elapsed)
-		log.Printf("Processed %d files, %s total\n", filesProcessed.Load(), formatBytes(bytesProcessed.Load()))
-		log.Printf("Average: %.2f files/sec, %s/sec\n", 
+		log.Printf(
+			"Processed %d files, %s total\n",
+			filesProcessed.Load(),
+			formatBytes(bytesProcessed.Load()),
+		)
+		log.Printf("Average: %.2f files/sec, %s/sec\n",
 			float64(filesProcessed.Load())/elapsed.Seconds(),
 			formatBytes(int64(float64(bytesProcessed.Load())/elapsed.Seconds())))
 		return
@@ -162,17 +170,22 @@ func parsePackage(dir string) (*ast.Package, error) {
 	filter := func(info os.FileInfo) bool {
 		// Yield CPU periodically
 		runtime.Gosched()
-		
+
 		name := info.Name()
-		return strings.HasSuffix(name, ".go") && 
-			!strings.HasSuffix(name, "_test.go") && 
+		return strings.HasSuffix(name, ".go") &&
+			!strings.HasSuffix(name, "_test.go") &&
 			!strings.HasSuffix(name, "_gen.go")
 	}
-	
+
 	// Add small delay to prevent CPU spike
 	time.Sleep(2 * time.Millisecond)
-	
-	packages, err := parser.ParseDir(fset, dir, filter, parser.ParseComments|parser.SkipObjectResolution)
+
+	packages, err := parser.ParseDir(
+		fset,
+		dir,
+		filter,
+		parser.ParseComments|parser.SkipObjectResolution,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -266,7 +279,7 @@ type metadata struct {
 func extractMetadata(structType *ast.StructType) metadata {
 	// Yield CPU at the start of metadata extraction
 	runtime.Gosched()
-	
+
 	meta := metadata{
 		Fields:    make([]fieldInfo, 0, len(structType.Fields.List)),
 		Relations: make([]relationInfo, 0, 4), // Pre-allocate for typical relations
@@ -373,7 +386,8 @@ func extractMetadata(structType *ast.StructType) metadata {
 			info.GoType = extractGoType(field.Type)
 
 			// Handle custom types more efficiently
-			if ident, ok := field.Type.(*ast.Ident); ok && info.GoType == "string" && ident.Obj != nil {
+			if ident, ok := field.Type.(*ast.Ident); ok && info.GoType == "string" &&
+				ident.Obj != nil {
 				// This is a type alias or custom type, keep the original name
 				info.GoType = ident.Name
 			}
@@ -433,7 +447,7 @@ func extractMetadata(structType *ast.StructType) metadata {
 				// Map common packages to their import paths
 				switch pkg {
 				case "pulid":
-					meta.Imports[pkg] = "github.com/emoss08/trenova/pkg/types/pulid"
+					meta.Imports[pkg] = "github.com/emoss08/trenova/shared/pulid"
 				case "domain":
 					meta.Imports[pkg] = "github.com/emoss08/trenova/internal/core/domain"
 				case "decimal":
@@ -630,22 +644,22 @@ func formatWithImports(src []byte) ([]byte, error) {
 	if err := cpuThrottler.Wait(ctx); err != nil {
 		return nil, fmt.Errorf("format throttler: %w", err)
 	}
-	
+
 	// Yield CPU before intensive operation
 	runtime.Gosched()
-	
+
 	// Use goimports to format and fix imports
 	formatted, err := imports.Process("", src, &imports.Options{
-		Fragment: false,
+		Fragment:  false,
 		AllErrors: false,
-		Comments: true,
+		Comments:  true,
 		TabIndent: true,
-		TabWidth: 8,
+		TabWidth:  8,
 	})
-	
+
 	// Yield CPU after intensive operation
 	runtime.Gosched()
-	
+
 	return formatted, err
 }
 
@@ -705,7 +719,7 @@ func generateCodeOptimized(outputFile, packageName, typeName string, meta metada
 	if err := templateThrottler.Wait(ctx); err != nil {
 		return fmt.Errorf("template throttler: %w", err)
 	}
-	
+
 	meta.PackageName = packageName
 	meta.TypeName = typeName
 	meta.LowerName = strings.ToLower(typeName[:1]) + typeName[1:]
@@ -719,7 +733,7 @@ func generateCodeOptimized(outputFile, packageName, typeName string, meta metada
 
 	// Yield CPU before template execution
 	runtime.Gosched()
-	
+
 	// Use pre-compiled template
 	if err := compiledTemplate.Execute(buf, meta); err != nil {
 		return fmt.Errorf("executing template: %w", err)
@@ -739,11 +753,11 @@ func generateCodeOptimized(outputFile, packageName, typeName string, meta metada
 	if err := fileIOThrottler.Wait(ctx); err != nil {
 		return fmt.Errorf("file I/O throttler: %w", err)
 	}
-	
+
 	// Track metrics
 	bytesProcessed.Add(int64(len(formatted)))
 	filesProcessed.Add(1)
-	
+
 	// Write to file with small delay
 	time.Sleep(time.Millisecond)
 	return os.WriteFile(outputFile, formatted, 0o644)
@@ -806,50 +820,50 @@ func scanAndGenerate(domainPath string) error {
 		dir     string
 		domains []DomainInfo
 	}
-	
+
 	work := make([]dirWork, 0, len(domainsByDir))
 	for dir, domains := range domainsByDir {
 		work = append(work, dirWork{dir: dir, domains: domains})
 	}
-	
+
 	// Use semaphore for better concurrency control
 	sem := semaphore.NewWeighted(int64(*concurrency))
-	
+
 	// Process directories with proper concurrency control
 	var wg sync.WaitGroup
 	workChan := make(chan dirWork, len(work))
 	errorsChan := make(chan error, len(work))
-	
+
 	// Fill work channel
 	for _, w := range work {
 		workChan <- w
 	}
 	close(workChan)
-	
+
 	// Start workers with CPU-friendly processing
 	for i := 0; i < *concurrency; i++ {
 		wg.Add(1)
 		go func(workerID int) {
 			defer wg.Done()
-			
+
 			for w := range workChan {
 				// Acquire semaphore
 				if err := sem.Acquire(globalCtx, 1); err != nil {
 					log.Printf("Worker %d: failed to acquire semaphore: %v", workerID, err)
 					continue
 				}
-				
+
 				// Process with CPU yielding
 				func() {
 					defer sem.Release(1)
-					
+
 					// Add progressive backoff based on worker ID
 					backoff := time.Duration(workerID*10+5) * time.Millisecond
 					time.Sleep(backoff)
-					
+
 					// Yield CPU before processing
 					runtime.Gosched()
-					
+
 					if err := processDirectory(domainPath, w.dir, w.domains); err != nil {
 						select {
 						case errorsChan <- fmt.Errorf("processing %s: %w", w.dir, err):
@@ -858,7 +872,7 @@ func scanAndGenerate(domainPath string) error {
 							log.Printf("Error processing %s: %v", w.dir, err)
 						}
 					}
-					
+
 					// Yield CPU after processing
 					runtime.Gosched()
 					time.Sleep(5 * time.Millisecond)
@@ -866,18 +880,18 @@ func scanAndGenerate(domainPath string) error {
 			}
 		}(i)
 	}
-	
+
 	// Wait for all goroutines to complete
 	wg.Wait()
 	close(errorsChan)
-	
+
 	// Collect any errors
 	var hasErrors bool
 	for err := range errorsChan {
 		log.Printf("Error: %v", err)
 		hasErrors = true
 	}
-	
+
 	if hasErrors {
 		return fmt.Errorf("encountered errors during generation")
 	}
@@ -893,16 +907,16 @@ func processDirectory(domainPath, dir string, domains []DomainInfo) error {
 		return globalCtx.Err()
 	default:
 	}
-	
+
 	fmt.Printf("Processing package in %s (%d entities)\n", dir, len(domains))
-	
+
 	// Progressive delay based on number of entities
 	delay := time.Duration(5+len(domains)) * time.Millisecond
 	if delay > 50*time.Millisecond {
 		delay = 50 * time.Millisecond
 	}
 	time.Sleep(delay)
-	
+
 	// Parse package once for all types in this directory
 	pkg, err := parsePackage(dir)
 	if err != nil {
@@ -914,7 +928,7 @@ func processDirectory(domainPath, dir string, domains []DomainInfo) error {
 	fileCount := 0
 	for _, file := range pkg.Files {
 		extractTypesFromFile(file, typeMap)
-		
+
 		// Yield CPU between files with progressive delay
 		fileCount++
 		runtime.Gosched()
@@ -931,13 +945,13 @@ func processDirectory(domainPath, dir string, domains []DomainInfo) error {
 			return globalCtx.Err()
 		default:
 		}
-		
+
 		structType, found := typeMap[domain.TypeName]
 		if !found {
 			log.Printf("Warning: type %s not found in parsed AST", domain.TypeName)
 			continue
 		}
-		
+
 		fmt.Printf("  Generating for %s.%s\n", domain.PackageName, domain.TypeName)
 
 		// Determine output file
@@ -956,12 +970,12 @@ func processDirectory(domainPath, dir string, domains []DomainInfo) error {
 		metadata := extractMetadata(structType)
 		metadata.PackageName = domain.PackageName
 		metadata.TypeName = domain.TypeName
-		
+
 		if err := generateCodeOptimized(outputFile, domain.PackageName, domain.TypeName, metadata); err != nil {
 			log.Printf("Warning: failed to generate for %s: %v", domain.TypeName, err)
 			continue
 		}
-		
+
 		// Add progressive delay between generations
 		if idx < len(domains)-1 {
 			delay := time.Duration(3+idx%5) * time.Millisecond
@@ -980,18 +994,18 @@ func extractTypesFromFile(file *ast.File, typeMap map[string]*ast.StructType) {
 		if !ok || genDecl.Tok != token.TYPE {
 			continue
 		}
-		
+
 		for _, spec := range genDecl.Specs {
 			typeSpec, ok := spec.(*ast.TypeSpec)
 			if !ok {
 				continue
 			}
-			
+
 			structType, ok := typeSpec.Type.(*ast.StructType)
 			if !ok {
 				continue
 			}
-			
+
 			typeMap[typeSpec.Name.Name] = structType
 		}
 	}
@@ -1000,11 +1014,11 @@ func extractTypesFromFile(file *ast.File, typeMap map[string]*ast.StructType) {
 // initializeRateLimiters sets up rate limiters for CPU throttling
 func initializeRateLimiters() {
 	// Base rates that scale with concurrency
-	parseRate := rate.Limit(10 * (*concurrency))      // AST parsing operations per second
-	fileIORate := rate.Limit(20 * (*concurrency))     // File I/O operations per second
-	templateRate := rate.Limit(5 * (*concurrency))    // Template executions per second
-	cpuRate := rate.Limit(30 * (*concurrency))        // General CPU-intensive ops per second
-	
+	parseRate := rate.Limit(10 * (*concurrency))   // AST parsing operations per second
+	fileIORate := rate.Limit(20 * (*concurrency))  // File I/O operations per second
+	templateRate := rate.Limit(5 * (*concurrency)) // Template executions per second
+	cpuRate := rate.Limit(30 * (*concurrency))     // General CPU-intensive ops per second
+
 	// Create rate limiters with burst capacity
 	parseThrottler = rate.NewLimiter(parseRate, int(parseRate))
 	fileIOThrottler = rate.NewLimiter(fileIORate, int(fileIORate))
@@ -1016,12 +1030,12 @@ func initializeRateLimiters() {
 func setupSignalHandling() {
 	sigChan := make(chan os.Signal, 1)
 	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
-	
+
 	go func() {
 		<-sigChan
 		log.Println("\nReceived interrupt signal, shutting down gracefully...")
 		globalCancel()
-		
+
 		// Give goroutines time to finish
 		time.Sleep(500 * time.Millisecond)
 		os.Exit(0)
@@ -1041,4 +1055,3 @@ func formatBytes(bytes int64) string {
 	}
 	return fmt.Sprintf("%.1f %cB", float64(bytes)/float64(div), "KMGTPE"[exp])
 }
-

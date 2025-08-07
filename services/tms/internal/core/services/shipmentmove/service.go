@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )

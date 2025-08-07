@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/test/testutils"
 )
 

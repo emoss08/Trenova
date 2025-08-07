@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rs/zerolog"
 	"github.com/samber/oops"
 	"github.com/uptrace/bun"
@@ -157,7 +157,6 @@ func (p *Provider) GetCompletedShipmentsWithNoDocuments(
 			Where("doc.business_unit_id = sp.business_unit_id"),
 		).
 		Count(ctx)
-
 	if err != nil {
 		log.Error().Err(err).Msg("get completed shipments with no documents")
 		return nil, oops.

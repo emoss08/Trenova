@@ -7,7 +7,7 @@ package services
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/user"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
 

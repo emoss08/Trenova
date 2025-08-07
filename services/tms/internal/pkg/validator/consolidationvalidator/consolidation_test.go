@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	cgValidator "github.com/emoss08/trenova/internal/pkg/validator/consolidationvalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/framework"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/test/testutils"
 )
 
@@ -470,7 +470,6 @@ func TestConsolidationValidator_ValidateShipments_DirectCall(t *testing.T) {
 		multiErr := errors.NewMultiError()
 
 		err = val.ValidateShipments(ctx, valCtx, cg, multiErr)
-
 		if err != nil {
 			t.Errorf("ValidateShipments returned error: %v", err)
 		}

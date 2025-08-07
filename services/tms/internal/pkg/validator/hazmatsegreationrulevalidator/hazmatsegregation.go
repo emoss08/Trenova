@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/internal/pkg/validator/framework"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"

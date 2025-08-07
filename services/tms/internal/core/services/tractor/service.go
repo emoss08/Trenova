@@ -20,7 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/internal/pkg/validator/tractorvalidator"
 	"github.com/emoss08/trenova/pkg/types"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )

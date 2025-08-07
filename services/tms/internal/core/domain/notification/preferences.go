@@ -12,7 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
@@ -179,7 +179,6 @@ func (np *NotificationPreference) Validate(ctx context.Context, multiErr *errors
 			}),
 		),
 	)
-
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {

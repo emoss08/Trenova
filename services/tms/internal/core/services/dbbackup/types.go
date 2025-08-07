@@ -6,7 +6,7 @@
 package dbbackup
 
 import (
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // Response types for the backup API

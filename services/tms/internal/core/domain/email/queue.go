@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/rotisserie/eris"
@@ -149,7 +149,6 @@ func (q *Queue) Validate(ctx context.Context, multiErr *errors.MultiError) {
 			validation.Each(validation.By(validateAttachment)),
 		),
 	)
-
 	if err != nil {
 		var validationErrs validation.Errors
 		if eris.As(err, &validationErrs) {

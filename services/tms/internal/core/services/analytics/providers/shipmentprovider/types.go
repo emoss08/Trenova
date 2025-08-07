@@ -7,7 +7,7 @@ package shipmentprovider
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type ShipmentCountCard struct {

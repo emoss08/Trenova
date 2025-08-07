@@ -7,15 +7,14 @@ package permission
 
 import (
 	"fmt"
+	"slices"
 	"sort"
 	"strings"
-
-	"slices"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/samber/lo"
 )

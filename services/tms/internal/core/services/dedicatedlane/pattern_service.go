@@ -22,7 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rs/zerolog"
 	"github.com/samber/lo"
 	"github.com/samber/oops"
@@ -842,7 +842,6 @@ func (ps *PatternService) excludeExistingLanes(
 
 		// * Check if a pending suggestion already exists for this pattern
 		existingSuggestion, err := ps.suggRepo.CheckForDuplicatePattern(ctx, req)
-
 		if err != nil {
 			if errors.IsNotFoundError(err) {
 				// ! If the error is not found, include the pattern
@@ -1057,7 +1056,6 @@ func (ps *PatternService) checkPermission(
 			Action:   action,
 		},
 	})
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check permissions")
 		return err

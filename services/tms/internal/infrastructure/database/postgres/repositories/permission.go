@@ -19,7 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/samber/oops"
@@ -444,7 +444,6 @@ func (pr *permissionRepository) CreateRole(
 
 		return nil
 	})
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to create role")
 		return nil, err
@@ -503,7 +502,6 @@ func (pr *permissionRepository) UpdateRole(
 
 		return nil
 	})
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update role")
 		return nil, err
@@ -579,7 +577,6 @@ func (pr *permissionRepository) DeleteRole(
 
 		return nil
 	})
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete role")
 		return err

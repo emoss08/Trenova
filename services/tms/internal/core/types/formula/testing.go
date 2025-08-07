@@ -6,7 +6,7 @@
 package formula
 
 import (
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // * TestFormulaRequest represents a request to test a formula expression

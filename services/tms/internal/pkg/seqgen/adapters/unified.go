@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/sequencegen"
 	"github.com/emoss08/trenova/internal/pkg/sequencegen/consolidationgen"
 	"github.com/emoss08/trenova/internal/pkg/sequencegen/pronumbergen"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rotisserie/eris"
 )
 
