@@ -7,14 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import { faCircleExclamation } from "@fortawesome/pro-regular-svg-icons";
-import {
-  memo,
-  ReactNode,
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useFormContext, useFormState } from "react-hook-form";
 import { PulsatingDots } from "../ui/pulsating-dots";
 
@@ -37,8 +30,7 @@ interface FormSaveDockProps {
   className?: string;
 }
 
-// Memoized inner component that renders the actual dock UI
-const SaveDockContent = memo(function SaveDockContent({
+function SaveDockContent({
   saveButtonContent,
   unsavedText,
   position,
@@ -50,7 +42,6 @@ const SaveDockContent = memo(function SaveDockContent({
   isSubmitting: boolean;
   onReset: () => void;
 }) {
-  // Position-specific classes
   const positionClasses = {
     center: "left-1/2 transform -translate-x-1/2",
     left: "left-20",
@@ -102,22 +93,8 @@ const SaveDockContent = memo(function SaveDockContent({
       </div>
     </div>
   );
-});
+}
 
-/**
- * FormSaveDock - A floating dock that appears when a form has unsaved changes
- *
- * This component should be placed inside a Form component and will automatically
- * appear when the form has unsaved changes. It provides save and reset buttons
- * and displays a notification about unsaved changes.
- *
- * Note: Make sure this is wrapped in a FormProvider
- *
- * @example
- * <FormProvider {...form}>
- *   <FormSaveDock />
- * </FormProvider>
- */
 export function FormSaveDock({
   saveButtonContent = "Save",
   unsavedText = "Unsaved changes",
@@ -131,18 +108,15 @@ export function FormSaveDock({
     undefined,
   );
 
-  // Subscribe to form state
-  const { isDirty, isSubmitting } = useFormState({
+  const { isDirty, dirtyFields, isSubmitting } = useFormState({
     control,
   });
 
-  // Debounce visibility changes to reduce re-renders
   useEffect(() => {
     if (visibilityTimerRef.current) {
       clearTimeout(visibilityTimerRef.current);
     }
 
-    // Only update visibility after a short delay to batch rapid changes
     visibilityTimerRef.current = setTimeout(() => {
       if (isDirty && !isVisible) {
         setIsVisible(true);
@@ -168,8 +142,7 @@ export function FormSaveDock({
     );
   }, [reset]);
 
-  // Don't render anything if not visible
-  if (!isVisible) {
+  if (!isVisible || Object.keys(dirtyFields).length === 0) {
     return null;
   }
 
