@@ -1,0 +1,8 @@
+go 1.24.5
+
+use (
+	./services/tms
+	./services/jobs
+	./shared/payload
+	./shared/pulid
+)

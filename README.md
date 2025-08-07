@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./assets/logo.webp" alt="Trenova Logo" width="200">
+  <img src="./.github/logo.webp" alt="Trenova Logo" width="200">
   <h1 align="center"><b>Trenova Suite</b></h1>
   
   **Revolutionizing Transportation Management Through AI Innovation**
