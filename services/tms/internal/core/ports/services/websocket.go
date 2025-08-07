@@ -6,7 +6,7 @@
 package services
 
 import (
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gofiber/contrib/websocket"
 	"github.com/gofiber/fiber/v2"
 )

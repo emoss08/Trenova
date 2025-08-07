@@ -17,7 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/pkg/permissionbuilder"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/fatih/color"
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"

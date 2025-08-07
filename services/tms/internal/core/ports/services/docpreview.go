@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type GeneratePreviewRequest struct {

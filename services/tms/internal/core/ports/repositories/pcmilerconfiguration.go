@@ -9,7 +9,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/pcmilerconfiguration"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 type GetPCMilerConfigurationOptions struct {

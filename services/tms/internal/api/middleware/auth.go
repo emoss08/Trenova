@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"

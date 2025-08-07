@@ -6,7 +6,7 @@
 package session
 
 import (
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // Event represents a session event

@@ -15,7 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/pkg/types"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 )

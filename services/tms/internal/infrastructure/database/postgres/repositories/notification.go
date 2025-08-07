@@ -18,7 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/samber/oops"
@@ -154,7 +154,6 @@ func (nr *notificationRepository) GetByID(
 		Model(notif).
 		Where("notif.id = ?", id).
 		Scan(ctx)
-
 	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			log.Info().Msg("notification not found")
@@ -264,7 +263,6 @@ func (nr *notificationRepository) GetUnreadCount(
 		Where("notif.read_at IS NULL").
 		Where("(notif.expires_at IS NULL OR notif.expires_at > extract(epoch from current_timestamp)::bigint)").
 		Count(ctx)
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to count unread notifications")
 		return 0, eris.Wrap(err, "count unread notifications")
@@ -370,7 +368,6 @@ func (nr *notificationRepository) MarkAsRead(
 		}).
 		OmitZero().
 		Exec(ctx)
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to mark notification as read")
 		return oops.In("notification_repository").
@@ -479,7 +476,6 @@ func (nr *notificationRepository) MarkAsDelivered(
 		Set("notif.delivery_status = ?", notification.DeliveryStatusDelivered).
 		Where("notif.id = ?", notificationID).
 		Exec(ctx)
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to mark notification as delivered")
 		return eris.Wrap(err, "mark notification as delivered")
@@ -529,7 +525,6 @@ func (nr *notificationRepository) GetPendingRetries(
 		Order("notif.created_at ASC").
 		Limit(limit).
 		Scan(ctx)
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get pending retries")
 		return nil, oops.In("notification_repository").
@@ -568,7 +563,6 @@ func (nr *notificationRepository) GetExpiredNotifications(
 		Order("notif.expires_at ASC").
 		Limit(limit).
 		Scan(ctx)
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get expired notifications")
 		return nil, eris.Wrap(err, "get expired notifications")

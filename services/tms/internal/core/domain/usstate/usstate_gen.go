@@ -5,7 +5,7 @@ package usstate
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
 
@@ -110,8 +110,7 @@ var UsStateQuery = struct {
 	}
 
 	// UPDATE clause helpers
-	Update struct {
-	}
+	Update struct{}
 
 	// ORDER BY helpers
 	OrderBy struct {
@@ -424,8 +423,7 @@ var UsStateQuery = struct {
 	},
 
 	// UPDATE clause helpers
-	Update: struct {
-	}{},
+	Update: struct{}{},
 
 	// ORDER BY helpers
 	OrderBy: struct {

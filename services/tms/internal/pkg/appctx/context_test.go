@@ -9,7 +9,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/pkg/appctx"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 )
 

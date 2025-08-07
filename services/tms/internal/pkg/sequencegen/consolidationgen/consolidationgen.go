@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/pkg/sequencegen"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 func DefaultConsolidationFormat() *sequencegen.SequenceFormat {

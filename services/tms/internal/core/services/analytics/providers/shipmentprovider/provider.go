@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
@@ -268,7 +268,6 @@ func (p *Provider) getShipmentsByExpectedDeliveryDate(
 				Group("stp2.shipment_move_id"),
 		).
 		Scan(ctx, &shipments)
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get shipments by expected delivery date")
 		return nil, eris.Wrap(err, "failed to get shipments by expected delivery date")

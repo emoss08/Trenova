@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/consolidation"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 var ConsolidationFieldConfig = &ports.FieldConfiguration{

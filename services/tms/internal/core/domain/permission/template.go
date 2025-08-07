@@ -8,7 +8,7 @@ package permission
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
 

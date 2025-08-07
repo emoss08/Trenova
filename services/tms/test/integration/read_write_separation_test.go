@@ -15,7 +15,7 @@ import (
 	postgresrepos "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/test/testutils"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

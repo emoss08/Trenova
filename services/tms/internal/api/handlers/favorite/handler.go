@@ -13,7 +13,7 @@ import (
 	favoriteservice "github.com/emoss08/trenova/internal/core/services/favorite"
 	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/validator"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 )

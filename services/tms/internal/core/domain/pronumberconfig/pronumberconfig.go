@@ -13,7 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/sequencegen"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"

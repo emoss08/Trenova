@@ -8,7 +8,7 @@ package googlemaps
 import (
 	"context"
 
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 )
 
 // LocationDetails contains the details of a location returned from the Google Maps API

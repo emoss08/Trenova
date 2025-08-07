@@ -6,15 +6,14 @@
 package audit
 
 import (
+	"maps"
 	"strings"
 	"time"
-
-	"maps"
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rotisserie/eris"
 )
 

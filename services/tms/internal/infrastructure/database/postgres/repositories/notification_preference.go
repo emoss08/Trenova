@@ -16,7 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils/queryfilters"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
@@ -114,7 +114,6 @@ func (npr *notificationPreferenceRepository) Update(
 		Where("np.version = ?", pref.Version-1). // Optimistic locking
 		Returning("*").
 		Exec(ctx)
-
 	if err != nil {
 		log.Error().
 			Err(err).
@@ -156,7 +155,6 @@ func (npr *notificationPreferenceRepository) Delete(
 		Model((*notification.NotificationPreference)(nil)).
 		Where("np.id = ?", id).
 		Exec(ctx)
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to delete notification preference")
 		return eris.Wrap(err, "delete notification preference")
@@ -195,7 +193,6 @@ func (npr *notificationPreferenceRepository) GetByID(
 		Model(pref).
 		Where("np.id = ?", id).
 		Scan(ctx)
-
 	if err != nil {
 		if eris.Is(err, sql.ErrNoRows) {
 			log.Info().Msg("notification preference not found")

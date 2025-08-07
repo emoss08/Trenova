@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/jaswdr/faker/v2"
 	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"

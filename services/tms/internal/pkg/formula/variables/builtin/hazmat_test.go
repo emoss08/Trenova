@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/formula/schema"
 	"github.com/emoss08/trenova/internal/pkg/formula/variables"
 	"github.com/emoss08/trenova/internal/pkg/formula/variables/builtin"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

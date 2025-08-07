@@ -14,7 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/validator"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 )
@@ -34,6 +34,7 @@ type HandlerParams struct {
 func NewHandler(p HandlerParams) *Handler {
 	return &Handler{ds: p.DedicatedLaneService, eh: p.ErrorHandler}
 }
+
 func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	dedicatedLaneAPI := r.Group("/dedicated-lanes")
 

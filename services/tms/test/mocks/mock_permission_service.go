@@ -11,7 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/stretchr/testify/mock"
 )
 
@@ -26,6 +26,7 @@ func (m *MockPermissionService) List(
 	args := m.Called(ctx, req)
 	return args.Get(0).(*ports.ListResult[*permission.Permission]), args.Error(1)
 }
+
 func (m *MockPermissionService) HasPermission(
 	ctx context.Context,
 	check *services.PermissionCheck,

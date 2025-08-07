@@ -25,7 +25,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/pkg/types/pulid"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/test/mocks"
 	"github.com/emoss08/trenova/test/testutils"
 	"github.com/stretchr/testify/mock"

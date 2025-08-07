@@ -1,6 +1,6 @@
 package payload
 
-import "github.com/emoss08/trenova/pkg/types/pulid"
+import "github.com/emoss08/trenova/shared/pulid"
 
 type JobBasePayload struct {
 	JobID          string         `json:"jobId"`
