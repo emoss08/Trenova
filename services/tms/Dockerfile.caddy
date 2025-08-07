@@ -1,0 +1,42 @@
+# Build stage
+FROM caddy:2-builder AS builder
+
+RUN go install github.com/caddyserver/xcaddy/cmd/xcaddy@latest
+
+RUN xcaddy build \
+    --with github.com/caddyserver/transform-encoder
+
+# Final stage
+FROM alpine:latest
+
+COPY --from=builder /usr/bin/caddy /usr/bin/caddy
+
+# Set up directories Caddy needs
+RUN mkdir -p /config /data /var/log/caddy /etc/caddy/certs
+
+COPY Caddyfile /etc/caddy/Caddyfile
+
+# Create caddy user first
+RUN addgroup -S caddy && \
+    adduser -S caddy -G caddy
+
+# Copy certs with specific permissions
+COPY --chown=caddy:caddy certs/cert.pem /etc/caddy/certs/
+COPY --chown=caddy:caddy certs/key.pem /etc/caddy/certs/
+
+# Set permissions
+RUN chown -R caddy:caddy /config /data /var/log/caddy /etc/caddy && \
+    chmod 755 /usr/bin/caddy && \
+    chmod -R 755 /var/log/caddy && \
+    chmod 644 /etc/caddy/certs/cert.pem && \
+    chmod 644 /etc/caddy/certs/key.pem
+
+USER caddy
+
+EXPOSE 80 443
+VOLUME /config
+VOLUME /data
+VOLUME /var/log/caddy
+
+ENTRYPOINT ["/usr/bin/caddy"]
+CMD ["run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile"]
