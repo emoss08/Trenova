@@ -1,0 +1,113 @@
+##
+## Copyright 2023-2025 Eric Moss
+## Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+## Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md##
+
+# Optimized configuration for best model performance
+
+# Model configuration
+model:
+  backbone: "efficientnet_b0"  # Best balance of performance and accuracy
+  num_quality_classes: 5
+  num_issue_classes: 10
+  hidden_dim: 256  # Reduced capacity to prevent overfitting
+  dropout_rate: 0.5  # Increased dropout for stronger regularization
+  use_attention: true
+  freeze_backbone_layers: 5  # Freeze early layers to prevent overfitting
+
+# Training configuration
+training:
+  batch_size: 32
+  num_epochs: 50
+  learning_rate: 0.0002  # Much lower learning rate to prevent collapse
+  backbone_lr_factor: 0.01  # Even lower LR for pretrained backbone
+  weight_decay: 0.001  # Increased weight decay for regularization
+  patience: 15  # More patience for early stopping
+  scheduler_type: "cosine_warm_restarts"  # Cosine annealing with warm restarts
+  warm_restart_t0: 10  # Initial restart period
+  warm_restart_tmult: 2  # Restart period multiplier
+  min_lr: 1.0e-7  # Minimum learning rate
+  
+  # Loss weights - rebalanced for scale differences
+  regression_weight: 10.0  # Increased 10x due to scale differences
+  classification_weight: 1.0  # Standard weight for classification
+  issue_weight: 1.0  # Standard weight for issue detection
+  consistency_weight: 0.3  # Weight for consistency between score and class
+  use_focal_loss: true
+  
+  # Advanced loss settings
+  use_ordinal_regression: true  # Use ordinal regression for quality classes
+  use_uncertainty_weighting: false  # Enable uncertainty-based task weighting
+  
+  # Advanced training strategies
+  use_curriculum_learning: false  # Disable to ensure all data is used
+  use_mixup: false  # Disable mixup initially to debug core issues
+  mixup_alpha: 0.2  # Mixup interpolation strength
+  use_label_smoothing: true  # Smooth labels for better generalization
+  label_smoothing_alpha: 0.1  # Smoothing factor
+  
+  # Gradient clipping (already implemented in model.py)
+  gradient_clip_norm: 1.0  # Maximum gradient norm
+  
+  # Dynamic task weighting
+  use_dynamic_task_weighting: true  # Enable dynamic adjustment of task weights
+  task_weight_update_freq: 5  # Update weights every N epochs
+  
+  # Balanced sampling
+  use_balanced_sampling: true  # Balance batches across quality classes
+  
+  # Progressive unfreezing
+  use_progressive_unfreezing: true  # Gradually unfreeze backbone layers
+  unfreeze_schedule: [5, 10, 15, 20]  # Epochs at which to unfreeze layer groups
+
+# Dataset configuration
+dataset:
+  train_ratio: 0.8  # More training data
+  val_ratio: 0.1
+  test_ratio: 0.1
+  num_workers: 8  # More workers for faster loading
+  
+  # Stronger augmentation for better generalization
+  augmentation:
+    use_domain_augmentations: true  # Enable transportation document-specific augmentations
+    use_class_aware_aug: true  # Apply different augmentations based on quality class
+    random_horizontal_flip: true
+    random_rotation: 10  # Increased rotation
+    color_jitter:
+      brightness: 0.3  # Increased variation
+      contrast: 0.3
+      saturation: 0.2
+    gaussian_blur: 0.1
+    random_perspective: 0.1
+    random_grayscale: 0.1  # Some documents are grayscale
+    random_adjust_sharpness: 0.2  # Sharpness variations
+
+# Quality assessment thresholds
+quality_thresholds:
+  minimum_acceptable_score: 0.5
+  minimum_confidence: 0.4
+  minimum_sharpness: 80
+  minimum_text_density: 0.02
+  minimum_word_count: 30
+
+# Paths
+paths:
+  models_dir: "models"
+  datasets_dir: "datasets"
+  logs_dir: "logs"
+  temp_dir: "temp"
+
+# MLflow configuration
+mlflow:
+  tracking_uri: "mlruns"  # Can be local path or remote URI like http://localhost:5000
+  experiment_name: "document-quality-best-model"
+  run_name: "best_training_config"
+  
+  # Model registry settings
+  register_model: true
+  model_name: "document-quality-model"
+  
+  # Artifact logging
+  log_models: true
+  log_checkpoints: true
+  log_configs: true

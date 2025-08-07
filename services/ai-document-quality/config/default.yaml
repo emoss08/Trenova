@@ -1,0 +1,92 @@
+##
+## Copyright 2023-2025 Eric Moss
+## Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+## Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md##
+
+# Default configuration for Document Quality Assessment System
+
+# Model configuration
+model:
+  backbone: "efficientnet_b0"  # Options: efficientnet_b0, resnet50, mobilenet_v3
+  num_quality_classes: 5
+  num_issue_classes: 10
+  hidden_dim: 256
+  dropout_rate: 0.3
+  use_attention: true
+  freeze_backbone_layers: 0
+
+# Training configuration
+training:
+  batch_size: 32
+  num_epochs: 20
+  learning_rate: 0.001
+  backbone_lr_factor: 0.1  # Backbone LR = learning_rate * factor
+  weight_decay: 0.01
+  patience: 5
+  scheduler_type: "cosine"  # Options: cosine, plateau
+  
+  # Loss weights
+  regression_weight: 1.0
+  classification_weight: 0.5
+  issue_weight: 0.5
+  use_focal_loss: true
+
+# Dataset configuration
+dataset:
+  train_ratio: 0.7
+  val_ratio: 0.2
+  test_ratio: 0.1
+  num_workers: 4
+  
+  # Augmentation
+  augmentation:
+    random_horizontal_flip: true
+    random_rotation: 5
+    color_jitter:
+      brightness: 0.2
+      contrast: 0.2
+      saturation: 0.1
+
+# Quality assessment thresholds
+quality_thresholds:
+  minimum_acceptable_score: 0.5
+  minimum_confidence: 0.4
+  minimum_sharpness: 80
+  minimum_text_density: 0.02
+  minimum_word_count: 30
+
+# API configuration
+api:
+  host: "0.0.0.0"
+  port: 5000
+  debug: false
+  max_content_length: 16777216  # 16MB
+  allowed_extensions:
+    - pdf
+    - png
+    - jpg
+    - jpeg
+    - tiff
+    - bmp
+
+# Paths
+paths:
+  models_dir: "models"
+  datasets_dir: "datasets"
+  logs_dir: "logs"
+  temp_dir: "temp"
+
+# MLflow configuration
+mlflow:
+  tracking_uri: "mlruns"  # Can be local path or remote URI like http://localhost:5000
+  experiment_name: "document-quality-assessment"
+  run_name: null  # Optional: specify a custom run name
+  
+  # Model registry settings
+  register_model: true
+  model_name: "document-quality-model"
+  
+  # Artifact logging
+  log_models: true
+  log_checkpoints: true
+  log_configs: true
