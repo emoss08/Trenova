@@ -1,0 +1,22 @@
+# Python-generated files
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+.venv
+test_images/
+grid_visuals/
+datasets/*
+documents/*
+documents_processed/*
+models/*
+models_v2/*
+mlruns/*
+.mypy_cache/
+.pnotes
+.models
+configs/
+analysis_results
+.github/*
