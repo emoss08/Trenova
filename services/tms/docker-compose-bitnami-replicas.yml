@@ -1,0 +1,108 @@
+##
+## Copyright 2023-2025 Eric Moss
+## Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+## Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md##
+
+# Bitnami PostgreSQL with built-in replication support
+# This provides an easier setup for read replicas with automatic configuration
+
+version: '3.8'
+
+services:
+  db:
+    image: bitnami/postgresql:latest
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRESQL_USERNAME: ${DB_USER:-postgres}
+      POSTGRESQL_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRESQL_DATABASE: ${DB_NAME:-trenova_go_db}
+      POSTGRESQL_REPLICATION_MODE: master
+      POSTGRESQL_REPLICATION_USER: replicator
+      POSTGRESQL_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:-replicator_password}
+    volumes:
+      - pg_data:/bitnami/postgresql
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  db-replica1:
+    image: bitnami/postgresql:latest
+    ports:
+      - "5433:5432"
+    environment:
+      POSTGRESQL_USERNAME: ${DB_USER:-postgres}
+      POSTGRESQL_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRESQL_DATABASE: ${DB_NAME:-trenova_go_db}
+      POSTGRESQL_REPLICATION_MODE: slave
+      POSTGRESQL_REPLICATION_USER: replicator
+      POSTGRESQL_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:-replicator_password}
+      POSTGRESQL_MASTER_HOST: db
+      POSTGRESQL_MASTER_PORT_NUMBER: 5432
+    volumes:
+      - pg_replica1_data:/bitnami/postgresql
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app-network
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  db-replica2:
+    image: bitnami/postgresql:latest
+    ports:
+      - "5434:5432"
+    environment:
+      POSTGRESQL_USERNAME: ${DB_USER:-postgres}
+      POSTGRESQL_PASSWORD: ${DB_PASSWORD:-postgres}
+      POSTGRESQL_DATABASE: ${DB_NAME:-trenova_go_db}
+      POSTGRESQL_REPLICATION_MODE: slave
+      POSTGRESQL_REPLICATION_USER: replicator
+      POSTGRESQL_REPLICATION_PASSWORD: ${REPLICATION_PASSWORD:-replicator_password}
+      POSTGRESQL_MASTER_HOST: db
+      POSTGRESQL_MASTER_PORT_NUMBER: 5432
+    volumes:
+      - pg_replica2_data:/bitnami/postgresql
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - app-network
+    depends_on:
+      - db
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+volumes:
+  pg_data: {}
+  pg_replica1_data: {}
+  pg_replica2_data: {}
+
+networks:
+  app-network:
+    name: app-network
+    external: true

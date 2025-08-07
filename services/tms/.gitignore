@@ -1,0 +1,15 @@
+tmp/*
+init-scripts/*
+.pnotes
+.vscode
+node_modules
+.fleet
+.idea
+.cursorrules
+logs/*
+certs/*
+backups/*
+config/development/*
+config/production/*
+summaries/*
+debug_connections.go
