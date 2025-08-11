@@ -235,6 +235,7 @@ func (h *Handler) create(c *fiber.Ctx) error {
 	shp := new(shipmentdomain.Shipment)
 	shp.OrganizationID = reqCtx.OrgID
 	shp.BusinessUnitID = reqCtx.BuID
+	shp.EnteredByID = &reqCtx.UserID
 
 	if err = c.BodyParser(shp); err != nil {
 		return h.eh.HandleError(c, err)

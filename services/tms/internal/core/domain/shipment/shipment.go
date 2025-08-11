@@ -46,6 +46,7 @@ type Shipment struct {
 	TractorTypeID        *pulid.ID           `json:"tractorTypeId"        bun:"tractor_type_id,type:VARCHAR(100),nullzero"`
 	TrailerTypeID        *pulid.ID           `json:"trailerTypeId"        bun:"trailer_type_id,type:VARCHAR(100),nullzero"`
 	OwnerID              *pulid.ID           `json:"ownerId"              bun:"owner_id,type:VARCHAR(100),nullzero"`
+	EnteredByID          *pulid.ID           `json:"enteredById"          bun:"entered_by_id,type:VARCHAR(100),nullzero"`
 	CanceledByID         *pulid.ID           `json:"canceledById"         bun:"canceled_by_id,type:VARCHAR(100),nullzero"`
 	FormulaTemplateID    *pulid.ID           `json:"formulaTemplateId"    bun:"formula_template_id,type:VARCHAR(100),nullzero"`
 	ConsolidationGroupID *pulid.ID           `json:"consolidationGroupId" bun:"consolidation_group_id,type:VARCHAR(100),nullzero"`
@@ -81,6 +82,7 @@ type Shipment struct {
 	TrailerType       *equipmenttype.EquipmentType     `json:"trailerType,omitempty"      bun:"rel:belongs-to,join:trailer_type_id=id"`
 	CanceledBy        *user.User                       `json:"canceledBy,omitempty"       bun:"rel:belongs-to,join:canceled_by_id=id"`
 	Owner             *user.User                       `json:"owner,omitempty"            bun:"rel:belongs-to,join:owner_id=id"`
+	EnteredBy         *user.User                       `json:"enteredBy,omitempty"        bun:"rel:belongs-to,join:entered_by_id=id"`
 	FormulaTemplate   *formulatemplate.FormulaTemplate `json:"formulaTemplate,omitempty"  bun:"rel:belongs-to,join:formula_template_id=id"`
 	Moves             []*ShipmentMove                  `json:"moves,omitempty"            bun:"rel:has-many,join:id=shipment_id"`
 	Comments          []*ShipmentComment               `json:"comments,omitempty"         bun:"rel:has-many,join:id=shipment_id"`
@@ -199,8 +201,6 @@ func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		}
 	}
 }
-
-// Pagination Configuration
 
 func (st *Shipment) GetID() string {
 	return st.ID.String()
