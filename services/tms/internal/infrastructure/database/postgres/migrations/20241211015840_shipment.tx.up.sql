@@ -2,7 +2,6 @@
 -- Copyright 2023-2025 Eric Moss
 -- Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
 -- Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md--
-
 -- Enums with documentation
 CREATE TYPE "shipment_status_enum" AS ENUM(
     'New',
@@ -69,6 +68,7 @@ CREATE TABLE IF NOT EXISTS "shipments"(
     "canceled_by_id" varchar(100),
     "canceled_at" bigint,
     "cancel_reason" varchar(100),
+    "entered_by_id" varchar(100),
     -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) ::bigint,
@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS "shipments"(
     CONSTRAINT "pk_shipments" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
     CONSTRAINT "fk_shipments_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_shipments_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
+    CONSTRAINT "fk_shipments_entered_by" FOREIGN KEY ("entered_by_id") REFERENCES "users"("id") ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT "fk_shipments_canceled_by" FOREIGN KEY ("canceled_by_id") REFERENCES "users"("id") ON UPDATE NO ACTION ON DELETE SET NULL
 );
 
@@ -86,6 +87,8 @@ CREATE INDEX IF NOT EXISTS "idx_shipments_bol" ON "shipments"("bol");
 CREATE INDEX IF NOT EXISTS "idx_shipments_created_at" ON "shipments"("created_at", "updated_at");
 
 CREATE INDEX IF NOT EXISTS "idx_shipments_status" ON "shipments"("status");
+
+CREATE INDEX IF NOT EXISTS "idx_shipments_entered_by" ON "shipments"("entered_by_id");
 
 CREATE INDEX IF NOT EXISTS "idx_shipments_business_unit" ON "shipments"("business_unit_id", "organization_id");
 
@@ -107,9 +110,7 @@ CREATE OR REPLACE FUNCTION shipments_search_vector_update()
     AS $$
 BEGIN
     NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.pro_number, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.bol, '')), 'A') || setweight(to_tsvector('english', COALESCE(CAST(NEW.status AS text), '')), 'B') || setweight(to_tsvector('english', COALESCE(CAST(NEW.rating_method AS text), '')), 'C');
-    -- Update total_charge_amount if it's changed
     NEW.total_charge_amount := NEW.freight_charge_amount + NEW.other_charge_amount;
-    -- Auto-update timestamps
     NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
     RETURN NEW;
 END;
