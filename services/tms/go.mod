@@ -1,11 +1,13 @@
 module github.com/emoss08/trenova
 
-go 1.24.5
+go 1.24.6
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/bytedance/sonic v1.14.0
 	github.com/docker/go-connections v0.5.0
+	github.com/emoss08/trenova/shared/cdctypes v0.0.0-20250807024730-d2b3232b01a3
+	github.com/emoss08/trenova/shared/pulid v0.0.0-20250807024730-d2b3232b01a3
 	github.com/fatih/color v1.18.0
 	github.com/gen2brain/go-fitz v1.24.15
 	github.com/go-co-op/gocron v1.37.0
@@ -187,7 +189,6 @@ require (
 	github.com/radovskyb/watcher v1.0.7 // indirect
 	github.com/refraction-networking/utls v1.8.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
-	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/sagikazarmark/locafero v0.10.0 // indirect
 	github.com/sajari/fuzzy v1.0.0 // indirect
