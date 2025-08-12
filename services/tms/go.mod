@@ -5,9 +5,10 @@ go 1.24.6
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/bytedance/sonic v1.14.0
-	github.com/docker/go-connections v0.5.0
-	github.com/emoss08/trenova/shared/cdctypes v0.0.0-20250807024730-d2b3232b01a3
-	github.com/emoss08/trenova/shared/pulid v0.0.0-20250807024730-d2b3232b01a3
+	github.com/docker/go-connections v0.6.0
+	github.com/emoss08/trenova/shared/cdctypes v0.0.0-20250812014019-71090035dcc1
+	github.com/emoss08/trenova/shared/edi v0.0.0-00010101000000-000000000000
+	github.com/emoss08/trenova/shared/pulid v0.0.0-20250812014019-71090035dcc1
 	github.com/fatih/color v1.18.0
 	github.com/gen2brain/go-fitz v1.24.15
 	github.com/go-co-op/gocron v1.37.0
@@ -18,14 +19,14 @@ require (
 	github.com/hibiken/asynq v0.25.1
 	github.com/imroc/req/v3 v3.54.0
 	github.com/jackc/pgx/v5 v5.7.5
-	github.com/jaswdr/faker/v2 v2.6.1
+	github.com/jaswdr/faker/v2 v2.8.0
 	github.com/lib/pq v1.10.9
 	github.com/linkedin/goavro/v2 v2.14.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/minio/minio-go/v7 v7.0.95
 	github.com/oklog/ulid/v2 v2.1.1
-	github.com/prometheus/client_golang v1.22.0
-	github.com/redis/go-redis/v9 v9.12.0
+	github.com/prometheus/client_golang v1.23.0
+	github.com/redis/go-redis/v9 v9.12.1
 	github.com/riferrei/srclient v0.7.3
 	github.com/robfig/cron/v3 v3.0.1
 	github.com/rotisserie/eris v0.5.4
@@ -48,6 +49,7 @@ require (
 	github.com/uptrace/bun/extra/bundebug v1.2.15
 	github.com/valyala/fasthttp v1.64.0
 	github.com/wneessen/go-mail v0.6.2
+	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.37.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.37.0
@@ -59,12 +61,12 @@ require (
 	go.opentelemetry.io/otel/trace v1.37.0
 	go.uber.org/atomic v1.11.0
 	go.uber.org/fx v1.24.0
-	golang.org/x/crypto v0.40.0
-	golang.org/x/net v0.42.0
+	golang.org/x/crypto v0.41.0
+	golang.org/x/net v0.43.0
 	golang.org/x/sync v0.16.0
-	golang.org/x/text v0.27.0
+	golang.org/x/text v0.28.0
 	golang.org/x/time v0.12.0
-	golang.org/x/tools v0.35.0
+	golang.org/x/tools v0.36.0
 	google.golang.org/grpc v1.74.2
 	googlemaps.github.io/maps v1.7.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
@@ -91,7 +93,7 @@ require (
 	github.com/chainguard-dev/git-urls v1.0.2 // indirect
 	github.com/cli/safeexec v1.0.1 // indirect
 	github.com/cloudflare/circl v1.6.1 // indirect
-	github.com/cloudwego/base64x v0.1.5 // indirect
+	github.com/cloudwego/base64x v0.1.6 // indirect
 	github.com/containerd/errdefs v1.0.0 // indirect
 	github.com/containerd/errdefs/pkg v0.3.0 // indirect
 	github.com/containerd/log v0.1.0 // indirect
@@ -181,7 +183,7 @@ require (
 	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.65.0 // indirect
-	github.com/prometheus/otlptranslator v0.0.0-20250725141939-ab8d56d297e3 // indirect
+	github.com/prometheus/otlptranslator v0.0.2 // indirect
 	github.com/prometheus/procfs v0.17.0 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
@@ -195,7 +197,7 @@ require (
 	github.com/santhosh-tekuri/jsonschema/v5 v5.3.1 // indirect
 	github.com/savsgio/gotils v0.0.0-20250408102913-196191ec6287 // indirect
 	github.com/sergi/go-diff v1.3.2-0.20230802210424-5b0b94c5c0d3 // indirect
-	github.com/shirou/gopsutil/v4 v4.25.6 // indirect
+	github.com/shirou/gopsutil/v4 v4.25.7 // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/skeema/knownhosts v1.3.0 // indirect
 	github.com/spf13/afero v1.14.0 // indirect
@@ -219,20 +221,20 @@ require (
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
 	go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp v0.62.0 // indirect
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracehttp v1.21.0 // indirect
-	go.opentelemetry.io/proto/otlp v1.7.0 // indirect
+	go.opentelemetry.io/proto/otlp v1.7.1 // indirect
 	go.uber.org/dig v1.19.0 // indirect
 	go.uber.org/mock v0.5.2 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.27.0 // indirect
-	golang.org/x/arch v0.19.0 // indirect
+	golang.org/x/arch v0.20.0 // indirect
 	golang.org/x/exp v0.0.0-20250620022241-b7579e27df2b // indirect
 	golang.org/x/image v0.25.0 // indirect
-	golang.org/x/mod v0.26.0 // indirect
-	golang.org/x/sys v0.34.0 // indirect
-	golang.org/x/term v0.33.0 // indirect
-	google.golang.org/genproto/googleapis/api v0.0.0-20250728155136-f173205681a0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20250728155136-f173205681a0 // indirect
-	google.golang.org/protobuf v1.36.6 // indirect
+	golang.org/x/mod v0.27.0 // indirect
+	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/term v0.34.0 // indirect
+	google.golang.org/genproto/googleapis/api v0.0.0-20250811230008-5f3141c8851a // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20250811230008-5f3141c8851a // indirect
+	google.golang.org/protobuf v1.36.7 // indirect
 	gopkg.in/warnings.v0 v0.1.2 // indirect
 	mellium.im/sasl v0.3.2 // indirect
 	mvdan.cc/sh/v3 v3.10.0 // indirect
@@ -242,3 +244,5 @@ tool (
 	github.com/air-verse/air
 	github.com/go-task/task/v3/cmd/task
 )
+
+replace github.com/emoss08/trenova/shared/edi => ../../shared/edi

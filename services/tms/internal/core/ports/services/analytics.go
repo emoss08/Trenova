@@ -33,6 +33,7 @@ type AnalyticsRequestOptions struct {
 	UserID    pulid.ID      `json:"userId"`
 	Page      AnalyticsPage `json:"page"`
 	DateRange *DateRange    `json:"dateRange,omitempty"`
+	Timezone  string        `json:"timezone"`
 	Limit     int           `json:"limit,omitempty"`
 }
 

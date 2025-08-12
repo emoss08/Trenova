@@ -57,8 +57,11 @@ type Config struct {
 	// CronScheduler is the cron scheduler configuration.
 	CronScheduler CronSchedulerConfig `mapstructure:"cronScheduler"`
 
-	// Telemetry is the telemetry configuration.
-	Telemetry TelemetryConfig `mapstructure:"telemetry"`
+    // Telemetry is the telemetry configuration.
+    Telemetry TelemetryConfig `mapstructure:"telemetry"`
+
+    // GRPC is the gRPC server configuration.
+    GRPC GRPCServerConfig `mapstructure:"grpc"`
 }
 
 type LogConfig struct {
@@ -169,6 +172,11 @@ type AppConfig struct {
 	// development, staging, production, testing
 	Environment string `mapstructure:"environment"`
 
+	// Timezone for the server.
+	// This is the timezone for the server.
+	// Defaults to "UTC".
+	Timezone string `mapstructure:"timezone"`
+
 	// Version is the app version.
 	Version string `mapstructure:"version"`
 }
@@ -241,6 +249,41 @@ type ServerConfig struct {
 	// EnablePrintRoutes enables print all routes with their method,
 	// path, name and handler..
 	EnablePrintRoutes bool `mapstructure:"enablePrintRoutes"`
+}
+
+// GRPCServerConfig configures the internal gRPC server for inter-service communication.
+type GRPCServerConfig struct {
+    // Enabled toggles the gRPC server.
+    Enabled bool `mapstructure:"enabled"`
+
+    // ListenAddress is the address the gRPC server listens on, e.g., ":9090".
+    ListenAddress string `mapstructure:"listenAddress"`
+
+    // MaxRecvMsgSize is the maximum message size the server can receive in bytes.
+    MaxRecvMsgSize int `mapstructure:"maxRecvMsgSize"`
+
+    // MaxSendMsgSize is the maximum message size the server can send in bytes.
+    MaxSendMsgSize int `mapstructure:"maxSendMsgSize"`
+
+    // Reflection enables server reflection (useful for dev/testing).
+    Reflection bool `mapstructure:"reflection"`
+
+    // TLS configuration for serving over TLS.
+    TLS struct {
+        Enabled  bool   `mapstructure:"enabled"`
+        CertFile string `mapstructure:"certFile"`
+        KeyFile  string `mapstructure:"keyFile"`
+        // ClientCAFile enables mTLS when set with RequireClientCert.
+        ClientCAFile     string `mapstructure:"clientCAFile"`
+        RequireClientCert bool   `mapstructure:"requireClientCert"`
+    } `mapstructure:"tls"`
+
+    // Auth config for token-based access to gRPC APIs.
+    Auth struct {
+        Enabled      bool     `mapstructure:"enabled"`
+        BearerTokens []string `mapstructure:"bearerTokens"`
+        APIKeys      []string `mapstructure:"apiKeys"`
+    } `mapstructure:"auth"`
 }
 
 type DatabaseDriver string

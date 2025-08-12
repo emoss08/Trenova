@@ -2315,3 +2315,55 @@
         - type: "field"
           name: "ratingMethod"
           description: "Service level"
+
+- model: PartnerConfig
+  rows:
+    - _id: default_edi
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      name: "Default 204 (4010)"
+      schema_path: "shared/edi/testdata/schema/generic-204-4010.json"
+      delims:
+        element: "*"
+        component: ">"
+        segment: "~"
+        repetition: ""
+      validation:
+        strictness: strict
+        enforce_se_count: true
+        require_pickup_and_delivery: true
+        require_b2_ship_id: false
+        require_n1_sh: false
+        require_n1_st: false
+      references:
+        customer_po: ["PO"]
+        bill_of_lading: ["BM"]
+        shipment_ref: ["SI","CR"]
+      party_roles:
+        shipper: ["SH","SF"]
+        consignee: ["ST","CN"]
+        bill_to: ["BT"]
+      stop_type_map:
+        LD: pickup
+        CL: pickup
+        UL: delivery
+        CU: delivery
+      shipment_id_quals: ["SI","CR"]
+      shipment_id_mode: ref_first
+      carrier_scac_fallback: "TRNV"
+      include_raw_l11: true
+      raw_l11_filter: ["PO","BM","SI","CR"]
+      equipment_type_map:
+        VEH: trailer
+        "53_FT_DRY": dry_van
+      include_segments: false
+      emit_iso_datetime: true
+      timezone: "UTC"
+      service_level_quals: ["SVL"]
+      service_level_map:
+        EXP: "expedited"
+        STD: "standard"
+      accessorial_quals: ["ACC"]
+      accessorial_map:
+        LAY: layover
+        DET: detention
