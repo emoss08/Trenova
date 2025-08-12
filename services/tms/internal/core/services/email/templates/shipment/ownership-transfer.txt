@@ -1,0 +1,38 @@
+SHIPMENT OWNERSHIP TRANSFER
+============================
+
+Hello {{.NewOwnerName}},
+
+You have been assigned ownership of shipment {{.ProNumber}} by {{.PreviousOwnerName}}.
+
+SHIPMENT DETAILS
+----------------
+Pro Number: {{.ProNumber}}
+{{if .BOL}}Bill of Lading: {{.BOL}}{{end}}
+{{if .CustomerName}}Customer: {{.CustomerName}}{{end}}
+{{if .Origin}}Origin: {{.Origin}}{{end}}
+{{if .Destination}}Destination: {{.Destination}}{{end}}
+{{if .Status}}Current Status: {{.Status}}{{end}}
+Transfer Date: {{formatDateTime .TransferDate}}
+
+{{if .TransferReason}}TRANSFER REASON
+----------------
+{{.TransferReason}}
+{{end}}
+
+{{if .EstimatedDelivery}}Estimated Delivery: {{formatDate .EstimatedDelivery}}{{end}}
+{{if .Priority}}Priority: {{.Priority}}{{end}}
+
+{{if .ViewShipmentURL}}View Shipment Details: {{.ViewShipmentURL}}{{end}}
+
+{{if .Notes}}ADDITIONAL NOTES
+----------------
+{{.Notes}}
+{{end}}
+
+YOUR RESPONSIBILITIES
+---------------------
+As the new owner, you are now responsible for managing and tracking this shipment through completion.
+
+---
+This is an automated notification from Trenova. Please do not reply to this email.

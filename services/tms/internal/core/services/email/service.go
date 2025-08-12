@@ -437,6 +437,56 @@ func (s *Service) CancelScheduledEmail(ctx context.Context, queueID pulid.ID) er
 	return nil
 }
 
+// SendSystemEmail sends an email using a predefined system template
+func (s *Service) SendSystemEmail(
+	ctx context.Context,
+	templateKey services.SystemTemplateKey,
+	to []string,
+	vars map[string]any,
+	orgID pulid.ID,
+	buID pulid.ID,
+	userID pulid.ID,
+) (*services.SendEmailResponse, error) {
+	log := s.l.With().
+		Str("operation", "send_system_email").
+		Str("template_key", string(templateKey)).
+		Str("org_id", orgID.String()).
+		Logger()
+
+	// Initialize template manager
+	tm, err := NewTemplateManager()
+	if err != nil {
+		log.Error().Err(err).Msg("failed to initialize template manager")
+		return nil, oops.In("email_service").
+			Tags("operation", "init_template_manager").
+			Time(time.Now()).
+			Wrapf(err, "failed to initialize template manager")
+	}
+
+	// Render the system template
+	rendered, err := tm.RenderTemplate(templateKey, vars)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to render system template")
+		return nil, oops.In("email_service").
+			Tags("operation", "render_system_template").
+			Tags("template_key", string(templateKey)).
+			Time(time.Now()).
+			Wrapf(err, "failed to render system template")
+	}
+
+	// Send the email
+	return s.SendEmail(ctx, &services.SendEmailRequest{
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		UserID:         userID,
+		To:             to,
+		Subject:        rendered.Subject,
+		HTMLBody:       rendered.HTMLBody,
+		TextBody:       rendered.TextBody,
+		Priority:       email.PriorityMedium,
+	})
+}
+
 // Helper methods
 
 func (s *Service) getProfileOrDefault(

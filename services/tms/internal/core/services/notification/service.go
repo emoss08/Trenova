@@ -179,6 +179,38 @@ func (s *Service) SendConfigurationCopiedNotification(
 	return s.SendNotification(ctx, notifReq)
 }
 
+func (s *Service) SendOwnershipTransferNotification(
+	ctx context.Context,
+	req *services.OwnershipTransferNotificationRequest,
+) error {
+	s.l.Info().
+		Interface("req", req).
+		Msg("sending configuration copied notification")
+
+	notifReq := &services.SendNotificationRequest{
+		EventType: notification.EventConfigurationCopied,
+		Priority:  notification.PriorityMedium,
+		Targeting: notification.Targeting{
+			Channel:        notification.ChannelUser,
+			OrganizationID: req.OrgID,
+			BusinessUnitID: &req.BuID,
+			TargetUserID:   &req.TargetUserID,
+		},
+		Title: "Shipment Ownership Transferred",
+		Message: fmt.Sprintf(
+			"Shipment %s has been transferred from %s to you",
+			req.ProNumber,
+			req.OwnerName,
+		),
+		Data: map[string]any{
+			"proNumber": req.ProNumber,
+			"ownerName": req.OwnerName,
+		},
+	}
+
+	return s.SendNotification(ctx, notifReq)
+}
+
 func (s *Service) SendCommentNotification(
 	ctx context.Context,
 	req *services.ShipmentCommentNotificationRequest,

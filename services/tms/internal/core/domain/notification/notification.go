@@ -32,14 +32,14 @@ type Targeting struct {
 type Action struct {
 	ID       string         `json:"id"`
 	Label    string         `json:"label"`
-	Type     string         `json:"type"`  // "button", "link", "form"
-	Style    string         `json:"style"` // "primary", "secondary", "danger"
+	Type     string         `json:"type"`
+	Style    string         `json:"style"`
 	Endpoint string         `json:"endpoint,omitempty"`
 	Payload  map[string]any `json:"payload,omitempty"`
 }
 
 type RelatedEntity struct {
-	Type string   `json:"type"` // "shipment", "worker", "customer"
+	Type string   `json:"type"`
 	ID   pulid.ID `json:"id"`
 	Name string   `json:"name,omitempty"`
 	URL  string   `json:"url,omitempty"`
@@ -111,6 +111,7 @@ func (n *Notification) BeforeAppendModel(_ context.Context, q bun.Query) error {
 		if n.ID.IsNil() {
 			n.ID = pulid.MustNew("notif_")
 		}
+
 		n.CreatedAt = now
 	case *bun.UpdateQuery:
 		n.UpdatedAt = now

@@ -9,6 +9,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -37,10 +38,13 @@ type ServiceParams struct {
 	ProNumberRepo              repositories.ProNumberRepository
 	PermService                services.PermissionService
 	AuditService               services.AuditService
+	UserRepo                   repositories.UserRepository
 	StreamingService           services.StreamingService
+	JobService                 services.JobService
+	NotificationService        services.NotificationService
+	EmailService               services.EmailService
 	Validator                  *shipmentvalidator.Validator
 	DedicatedLaneAssignService *dedicatedlaneservice.AssignmentService
-	JobService                 services.JobService
 }
 
 type Service struct {
@@ -49,10 +53,13 @@ type Service struct {
 	proNumberRepo repositories.ProNumberRepository
 	ps            services.PermissionService
 	as            services.AuditService
+	ur            repositories.UserRepository
 	ss            services.StreamingService
+	ns            services.NotificationService
+	js            services.JobService
+	es            services.EmailService
 	v             *shipmentvalidator.Validator
 	dlas          *dedicatedlaneservice.AssignmentService
-	js            services.JobService
 }
 
 //nolint:gocritic // The p parameter is passed using fx.In
@@ -67,10 +74,13 @@ func NewService(p ServiceParams) *Service {
 		proNumberRepo: p.ProNumberRepo,
 		ps:            p.PermService,
 		as:            p.AuditService,
+		ur:            p.UserRepo,
 		ss:            p.StreamingService,
+		ns:            p.NotificationService,
+		js:            p.JobService,
+		es:            p.EmailService,
 		v:             p.Validator,
 		dlas:          p.DedicatedLaneAssignService,
-		js:            p.JobService,
 	}
 }
 
@@ -98,7 +108,10 @@ func (s *Service) List(
 	ctx context.Context,
 	opts *repositories.ListShipmentOptions,
 ) (*ports.ListResult[*shipment.Shipment], error) {
-	log := s.l.With().Str("operation", "List").Logger()
+	log := s.l.With().
+		Str("operation", "List").
+		Interface("opts", opts).
+		Logger()
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
@@ -547,15 +560,12 @@ func (s *Service) TransferOwnership(
 		)
 	}
 
-	log.Info().Interface("req", req).Msg("req for transfer ownership")
-
 	updatedEntity, err := s.repo.TransferOwnership(ctx, req)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to transfer ownership of shipment")
 		return nil, err
 	}
 
-	// Log the update if the insert was successful
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceShipment,
@@ -574,6 +584,61 @@ func (s *Service) TransferOwnership(
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to log shipment ownership transfer")
+	}
+
+	ownerName, err := s.ur.GetNameByID(ctx, req.UserID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get original owner")
+		return nil, err
+	}
+
+	newOwner, err := s.ur.GetByID(ctx, repositories.GetUserByIDOptions{
+		OrgID:  req.OrgID,
+		BuID:   req.BuID,
+		UserID: pulid.ConvertFromPtr(updatedEntity.OwnerID),
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get new owner")
+	}
+	if err := s.ns.SendOwnershipTransferNotification(ctx, &services.OwnershipTransferNotificationRequest{
+		OrgID:        req.OrgID,
+		BuID:         req.BuID,
+		OwnerName:    ownerName,
+		ProNumber:    original.ProNumber,
+		TargetUserID: pulid.ConvertFromPtr(updatedEntity.OwnerID),
+	}); err != nil {
+		log.Error().Err(err).Msg("failed to send ownership transfer notification")
+	}
+
+	// Send ownership transfer email using the system template
+	customerName := ""
+
+	_, err = s.es.SendSystemEmail(
+		ctx,
+		services.TemplateShipmentOwnershipTransfer,
+		[]string{newOwner.EmailAddress},
+		map[string]any{
+			"NewOwnerName":      newOwner.Name,
+			"PreviousOwnerName": ownerName,
+			"ProNumber":         original.ProNumber,
+			"TransferDate":      time.Now(),
+			"BOL":               original.BOL,
+			"CustomerName":      customerName,
+			"Status":            string(original.Status),
+			"ViewShipmentURL": fmt.Sprintf(
+				"http://localhost:5173/shipments/management?entityId=%s&modalType=edit",
+				updatedEntity.GetID(),
+			),
+			// Optional fields
+			"TransferReason": "",
+			"Notes":          "",
+		},
+		req.OrgID,
+		req.BuID,
+		req.UserID,
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to send ownership transfer email")
 	}
 
 	return updatedEntity, nil
