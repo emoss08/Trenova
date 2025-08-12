@@ -1,12 +1,12 @@
 module github.com/emoss08/trenova
 
-go 1.24.6
+go 1.24.0
 
 require (
 	github.com/asaskevich/govalidator v0.0.0-20230301143203-a9d515a09cc2
 	github.com/bytedance/sonic v1.14.0
 	github.com/docker/go-connections v0.6.0
-	github.com/emoss08/trenova/shared/cdctypes v0.0.0-20250812014019-71090035dcc1
+	github.com/emoss08/trenova/shared/cdctypes v0.0.0-20250812030048-2363b460ca82
 	github.com/emoss08/trenova/shared/edi v0.0.0-00010101000000-000000000000
 	github.com/emoss08/trenova/shared/pulid v0.0.0-20250812014019-71090035dcc1
 	github.com/fatih/color v1.18.0
@@ -49,7 +49,6 @@ require (
 	github.com/uptrace/bun/extra/bundebug v1.2.15
 	github.com/valyala/fasthttp v1.64.0
 	github.com/wneessen/go-mail v0.6.2
-	go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc v0.62.0
 	go.opentelemetry.io/otel v1.37.0
 	go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc v1.37.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.37.0
@@ -246,3 +245,9 @@ tool (
 )
 
 replace github.com/emoss08/trenova/shared/edi => ../../shared/edi
+
+replace github.com/emoss08/trenova/shared/pulid => ../../shared/pulid
+
+replace github.com/emoss08/trenova/shared/payload => ../../shared/payload
+
+replace github.com/emoss08/trenova/shared/cdctypes => ../../shared/cdctypes

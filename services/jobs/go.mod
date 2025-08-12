@@ -1,6 +1,6 @@
 module github.com/emoss08/trenova/microservices/jobs-service
 
-go 1.24
+go 1.24.0
 
 require github.com/hibiken/asynq v0.25.1
 
