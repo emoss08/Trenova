@@ -63,6 +63,7 @@ export enum Resource {
   BillingQueue = "billing_queue", // Represents resources for managing billing queue.
   Assignment = "assignment", // Represents resources for managing assignments.
   ShipmentMove = "shipment_move", // Represents resources for managing movements.
+  ShipmentComment = "shipment_comment", // Represents resources for managing shipment comments.
   Stop = "stop", // Represents resources for managing stops.
   FleetCode = "fleet_code", // Represents resources for managing fleet codes.
   EquipmentType = "equipment_type", // Represents resources for managing equipment types.

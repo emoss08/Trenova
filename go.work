@@ -6,6 +6,7 @@ use (
 	./services/routing
 	./services/tms
 	./shared/cdctypes
+	./shared/edi
 	./shared/payload
 	./shared/pulid
 )
