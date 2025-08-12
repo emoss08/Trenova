@@ -1,0 +1,10 @@
+version: v2
+modules:
+  - path: .
+breaking:
+  use:
+    - FILE
+    - WIRE
+lint:
+  use:
+    - DEFAULT
