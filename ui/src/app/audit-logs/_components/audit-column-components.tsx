@@ -265,6 +265,10 @@ export function AuditEntryResourceBadge({
       variant: "indigo",
       text: "Document",
     },
+    [Resource.ShipmentComment]: {
+      variant: "indigo",
+      text: "Shipment Comment",
+    },
     [Resource.EquipmentType]: {
       variant: "indigo",
       text: "Equipment Type",

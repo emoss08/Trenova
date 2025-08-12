@@ -31,6 +31,7 @@ export function ShipmentCommentDetails({
     error,
   } = useQuery({
     ...queries.shipment.listComments(shipmentId),
+    enabled: !!shipmentId,
   });
 
   const comments = commentsData?.results || [];

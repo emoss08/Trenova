@@ -41,7 +41,6 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
   const { isPopout, closePopout } = usePopoutWindow();
   const { clearFragment } = useUrlFragment();
 
-  // TODO(Wolfred): Add placeholder data
   const form = useForm({
     resolver: zodResolver(shipmentSchema),
     defaultValues: {
@@ -65,6 +64,9 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
       otherChargeAmount: 0,
       totalChargeAmount: 0,
       customer: undefined,
+      enteredById: undefined,
+      comments: [],
+      formulaTemplateId: undefined,
       additionalCharges: [],
       commodities: [],
       moves: [

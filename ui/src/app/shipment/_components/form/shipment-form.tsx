@@ -101,7 +101,7 @@ function ShipmentSectionTabs({
               aria-hidden="true"
             />
             Comments
-            <span className="max-w-6 bg-primary/15 py-0.5 px-1.5 rounded-sm text-xs">
+            <span className="max-w-6 bg-primary/15 py-0.5 px-1.5 rounded-sm text-2xs">
               {commentCount?.count && commentCount.count > 99
                 ? "99+"
                 : (commentCount?.count ?? 0)}
@@ -117,7 +117,7 @@ function ShipmentSectionTabs({
               aria-hidden="true"
             />
             Documents
-            <span className="max-w-6 bg-primary/15 py-0.5 px-1.5 rounded-sm text-xs">
+            <span className="max-w-6 bg-primary/15 py-0.5 px-1.5 rounded-sm text-2xs">
               3
             </span>
           </TabsTrigger>

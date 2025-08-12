@@ -159,7 +159,7 @@ export function ShipmentGeneralInfoForm({
   }, [isSubmitting, handleSubmit, onSubmit]);
 
   return (
-    <ScrollArea className="flex flex-col overflow-y-auto px-4 max-h-[calc(100vh-12rem)]">
+    <ScrollArea className="flex flex-col overflow-y-auto px-4 max-h-[calc(100vh-11rem)]">
       <FormProvider {...form}>
         <Form className="space-y-0 p-0 pb-16" onSubmit={handleSubmit(onSubmit)}>
           <ShipmentServiceDetails />

@@ -60,7 +60,6 @@ export const shipmentSchema = z
     updatedAt: timestampSchema,
     organizationId: optionalStringSchema,
     businessUnitId: optionalStringSchema,
-
     proNumber: optionalStringSchema, // * Will not be available on create, but will be added on update
     bol: z
       .string()
@@ -83,6 +82,7 @@ export const shipmentSchema = z
     tractorTypeId: nullableStringSchema,
     trailerTypeId: nullableStringSchema,
     ownerId: nullableStringSchema,
+    enteredById: nullableStringSchema,
     canceledById: nullableStringSchema,
     formulaTemplateId: nullableStringSchema,
     status: ShipmentStatus,
