@@ -81,6 +81,7 @@ func (p *Provider) GetAnalyticsData(
 		ctx,
 		opts.OrgID,
 		opts.BuID,
+		opts.Timezone,
 	)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get shipments by expected delivery date")
@@ -192,6 +193,7 @@ func (p *Provider) getCountByShipmentStatus(
 func (p *Provider) getShipmentsByExpectedDeliveryDate(
 	ctx context.Context,
 	orgID, buID pulid.ID,
+	timezone string,
 ) (*ShipmentsByExpectedDeliverDateCard, error) {
 	log := p.l.With().
 		Str("query", "getShipmentsByExpectedDeliveryDate").
@@ -205,10 +207,12 @@ func (p *Provider) getShipmentsByExpectedDeliveryDate(
 
 	shipments := make([]*ShipmentSummary, 0)
 
-	// Get current date in application timezone for comparison
-	currentDate := timeutils.CurrentDateInTimezone("America/New_York")
+	currentDate := timeutils.CurrentDateInTimezone(timezone)
 
-	// Query shipments with delivery stops scheduled for today, selecting only needed fields
+	if timezone == "" {
+		timezone = "UTC"
+	}
+
 	err = dba.NewSelect().
 		TableExpr("shipments sp").
 		ColumnExpr("sp.id").
@@ -242,9 +246,7 @@ func (p *Provider) getShipmentsByExpectedDeliveryDate(
 			return sq.Where("stp.type = ?", "Delivery").
 				WhereOr("stp.type = ?", "SplitDelivery")
 		}).
-		Where("DATE(TO_TIMESTAMP(stp.planned_arrival) AT TIME ZONE 'America/New_York') = ?", currentDate).
-
-		// Get the latest delivery stop for each shipment
+		Where("DATE(TO_TIMESTAMP(stp.planned_arrival) AT TIME ZONE ?) = ?", timezone, currentDate).
 		Where("(sm.shipment_id, sm.sequence) IN (?)",
 			dba.NewSelect().
 				TableExpr("shipment_moves sm2").

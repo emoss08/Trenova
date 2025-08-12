@@ -163,6 +163,21 @@ func (m *Manager) setDefaults() {
 	m.Viper.SetDefault("streaming.enableHeartbeat", true)
 	m.Viper.SetDefault("streaming.heartbeatInterval", "30s")
 	m.Viper.SetDefault("streaming.maxConnectionsPerUser", 5)
+
+	// gRPC server defaults
+	m.Viper.SetDefault("grpc.enabled", false)
+	m.Viper.SetDefault("grpc.listenAddress", ":9090")
+	m.Viper.SetDefault("grpc.maxRecvMsgSize", 16*1024*1024) // 16MB
+	m.Viper.SetDefault("grpc.maxSendMsgSize", 16*1024*1024) // 16MB
+	m.Viper.SetDefault("grpc.reflection", true)
+    m.Viper.SetDefault("grpc.tls.enabled", false)
+    m.Viper.SetDefault("grpc.tls.certFile", "")
+    m.Viper.SetDefault("grpc.tls.keyFile", "")
+    m.Viper.SetDefault("grpc.tls.clientCAFile", "")
+    m.Viper.SetDefault("grpc.tls.requireClientCert", false)
+    m.Viper.SetDefault("grpc.auth.enabled", false)
+    m.Viper.SetDefault("grpc.auth.bearerTokens", []string{})
+    m.Viper.SetDefault("grpc.auth.apiKeys", []string{})
 }
 
 func (m *Manager) Get() *Config {
@@ -188,6 +203,10 @@ func (m *Manager) Validate() error {
 
 	if err := m.validateBackup(); err != nil {
 		return eris.Wrap(err, "backup config validation failed")
+	}
+
+	if err := m.validateGRPC(); err != nil {
+		return eris.Wrap(err, "grpc config validation failed")
 	}
 
 	return nil
@@ -221,6 +240,16 @@ func (m *Manager) validateDatabase() error {
 		return ErrInvalidDBUser
 	}
 	return nil
+}
+
+func (m *Manager) validateGRPC() error {
+    if !m.Cfg.GRPC.Enabled {
+        return nil
+    }
+    if m.Cfg.GRPC.ListenAddress == "" {
+        return ErrInvalidServerAddress
+    }
+    return nil
 }
 
 func (m *Manager) validateBackup() error {

@@ -15,6 +15,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/external"
+	grpcmod "github.com/emoss08/trenova/internal/bootstrap/modules/grpc"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/seqgen"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/services"
@@ -30,7 +31,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/telemetry"
 	"github.com/emoss08/trenova/internal/pkg/formula"
 	"github.com/emoss08/trenova/internal/pkg/statemachine"
-
 	"go.uber.org/fx"
 )
 
@@ -40,16 +40,16 @@ func Bootstrap() error {
 		// Config and Logger must come first
 		infrastructure.ConfigModule,
 		infrastructure.LoggerModule,
-		
+
 		// Telemetry needs to be loaded before database and cache
 		telemetry.Module,
-		
+
 		// Now load the rest of infrastructure
 		infrastructure.DatabaseModule,
 		infrastructure.StorageModule,
 		infrastructure.CacheModule,
 		infrastructure.BackupModule,
-		
+
 		redisRepos.Module,
 		statemachine.Module,
 		seqgen.Module,
@@ -65,6 +65,8 @@ func Bootstrap() error {
 		services.Module,
 		streaming.Module,
 		api.Module,
+		// Start internal gRPC server for inter-service APIs (e.g., EDI config service)
+		grpcmod.Module,
 		jobs.Module,
 		// fx.WithLogger(func() fxevent.Logger {
 		// 	return &fxevent.ZapLogger{Logger: zap.NewExample()}

@@ -25,7 +25,7 @@ import (
 	"go.uber.org/fx"
 )
 
-type classificationServiceImpl struct {
+type classificationService struct {
 	logger               *logger.Logger
 	claudeClient         *claude.Client
 	locationCategoryRepo repositories.LocationCategoryRepository
@@ -42,16 +42,16 @@ type ServiceParams struct {
 }
 
 // NewClassificationService creates a new AI classification service
-func NewClassificationService(params ServiceParams) services.AIClassificationService {
-	return &classificationServiceImpl{
-		logger:               params.Logger,
-		claudeClient:         params.ClaudeClient,
-		cache:                params.Cache,
-		locationCategoryRepo: params.LocationCategoryRepo,
+func NewClassificationService(p ServiceParams) services.AIClassificationService {
+	return &classificationService{
+		logger:               p.Logger,
+		claudeClient:         p.ClaudeClient,
+		cache:                p.Cache,
+		locationCategoryRepo: p.LocationCategoryRepo,
 	}
 }
 
-func (s *classificationServiceImpl) ClassifyLocation(
+func (s *classificationService) ClassifyLocation(
 	ctx context.Context,
 	req *ai.ClassificationRequest,
 ) (*ai.ClassificationResponse, error) {
@@ -113,7 +113,7 @@ func (s *classificationServiceImpl) ClassifyLocation(
 	return response, nil
 }
 
-func (s *classificationServiceImpl) ClassifyLocationBatch(
+func (s *classificationService) ClassifyLocationBatch(
 	ctx context.Context,
 	req *ai.BatchClassificationRequest,
 ) (*ai.BatchClassificationResponse, error) {
@@ -151,7 +151,7 @@ func (s *classificationServiceImpl) ClassifyLocationBatch(
 	return &ai.BatchClassificationResponse{Results: results}, nil
 }
 
-func (s *classificationServiceImpl) buildCacheKey(req *ai.ClassificationRequest) string {
+func (s *classificationService) buildCacheKey(req *ai.ClassificationRequest) string {
 	parts := []string{"location_classification", req.Name}
 	if req.Description != nil {
 		parts = append(parts, *req.Description)
@@ -162,7 +162,7 @@ func (s *classificationServiceImpl) buildCacheKey(req *ai.ClassificationRequest)
 	return strings.Join(parts, ":")
 }
 
-func (s *classificationServiceImpl) buildClassificationPromptWithCategories(
+func (s *classificationService) buildClassificationPromptWithCategories(
 	req *ai.ClassificationRequest,
 	categories []*locationDomain.LocationCategory,
 ) string {
@@ -213,12 +213,13 @@ Return JSON with these exact fields:
 		addressPart)
 }
 
-func (s *classificationServiceImpl) parseClassificationResponse(
+func (s *classificationService) parseClassificationResponse(
 	rawResponse string,
 ) (*ai.ClassificationResponse, error) {
 	jsonStr := jsonutils.ExtractJSON(rawResponse)
 	if jsonStr == "" {
-		return nil, oops.In("classification_service").
+		return nil, oops.
+			In("classification_service").
 			With("raw_response", rawResponse).
 			New("no JSON found in response")
 	}
