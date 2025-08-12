@@ -186,6 +186,7 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             "min-h-[100px]",
             "transition-[border-color,box-shadow] duration-200 ease-in-out",
             "border-muted-foreground/20 bg-muted px-3 py-2",
+            "cursor-text",
             isEditMode && "rounded-bl-none",
             "focus-within:border-blue-600 focus-within:ring-4 focus-within:ring-blue-600/20",
             isInvalid &&
