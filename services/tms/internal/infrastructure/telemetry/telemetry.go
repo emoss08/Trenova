@@ -19,7 +19,6 @@ import (
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
-	otelprometheus "go.opentelemetry.io/otel/exporters/prometheus"
 	"go.opentelemetry.io/otel/propagation"
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -261,19 +260,7 @@ func initMeterProvider(
 		sdkmetric.WithInterval(10*time.Second),
 	))
 
-	// ! Add Prometheus exporter reader if we're using a non-default metrics port
-	// ! This exposes OpenTelemetry metrics via the Prometheus endpoint
-	if cfg.Telemetry.MetricsPort != 3001 {
-		prometheusRegistry = prometheus.NewRegistry()
-		promExporter, promErr := otelprometheus.New(
-			otelprometheus.WithRegisterer(prometheusRegistry),
-		)
-		if promErr != nil {
-			_ = conn.Close()
-			return nil, nil, nil, fmt.Errorf("failed to create prometheus exporter: %w", err)
-		}
-		readers = append(readers, promExporter)
-	}
+	// Prometheus exporter temporarily disabled to avoid dependency mismatch; OTLP exporter remains active.
 
 	opts := []sdkmetric.Option{
 		sdkmetric.WithResource(res),

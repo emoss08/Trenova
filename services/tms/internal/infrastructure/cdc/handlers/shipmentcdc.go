@@ -279,7 +279,7 @@ func (h *ShipmentCDCHandler) handleUpdate(event *cdctypes.CDCEvent) error {
 			Wrapf(err, "broadcast failed")
 	}
 
-	h.l.Info().
+	h.l.Debug().
 		Str("shipmentID", shipmentObj.ID.String()).
 		Str("proNumber", shipmentObj.ProNumber).
 		Str("orgID", orgID).
