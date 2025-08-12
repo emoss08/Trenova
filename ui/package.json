@@ -78,6 +78,7 @@
     "pdfjs-dist": "^5.4.54",
     "react": "19.1.1",
     "react-day-picker": "^9.8.1",
+    "react-device-detect": "^2.2.3",
     "react-dom": "19.1.1",
     "react-error-boundary": "^6.0.0",
     "react-hook-form": "^7.62.0",

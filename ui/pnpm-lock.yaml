@@ -212,6 +212,9 @@ importers:
       react-day-picker:
         specifier: ^9.8.1
         version: 9.8.1(react@19.1.1)
+      react-device-detect:
+        specifier: ^2.2.3
+        version: 2.2.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1)
       react-dom:
         specifier: 19.1.1
         version: 19.1.1(react@19.1.1)
@@ -4953,6 +4956,12 @@ packages:
     peerDependencies:
       react: '>=16.8.0'
 
+  react-device-detect@2.2.3:
+    resolution: {integrity: sha512-buYY3qrCnQVlIFHrC5UcUoAj7iANs/+srdkwsnNjI7anr3Tt7UY6MqNxtMLlr0tMBied0O49UZVK8XKs3ZIiPw==}
+    peerDependencies:
+      react: '>= 0.14.0'
+      react-dom: '>= 0.14.0'
+
   react-dom@19.1.1:
     resolution: {integrity: sha512-Dlq/5LAZgF0Gaz6yiqZCf6VCcZs1ghAJyrsu84Q/GT0gV+mCxbfmKNoGRKBYMJ8IEdGPqu49YWXD02GCknEDkw==}
     peerDependencies:
@@ -5524,6 +5533,10 @@ packages:
   typescript@5.9.2:
     resolution: {integrity: sha512-CWBzXQrc/qOkhidw1OzBTQuYRbfyxDXJMVJ1XNwUHGROVmuaeiEm3OslpZ1RV96d7SKKjZKrSJu3+t/xlw3R9A==}
     engines: {node: '>=14.17'}
+    hasBin: true
+
+  ua-parser-js@1.0.40:
+    resolution: {integrity: sha512-z6PJ8Lml+v3ichVojCiB8toQJBuwR42ySM4ezjXIqXK3M0HczmKQ3LF4rhU55PfD99KEEXQG6yb7iOMyvYuHew==}
     hasBin: true
 
   uc.micro@2.1.0:
@@ -11260,6 +11273,12 @@ snapshots:
       date-fns-jalali: 4.1.0-0
       react: 19.1.1
 
+  react-device-detect@2.2.3(react-dom@19.1.1(react@19.1.1))(react@19.1.1):
+    dependencies:
+      react: 19.1.1
+      react-dom: 19.1.1(react@19.1.1)
+      ua-parser-js: 1.0.40
+
   react-dom@19.1.1(react@19.1.1):
     dependencies:
       react: 19.1.1
@@ -11950,6 +11969,8 @@ snapshots:
       - supports-color
 
   typescript@5.9.2: {}
+
+  ua-parser-js@1.0.40: {}
 
   uc.micro@2.1.0: {}
 

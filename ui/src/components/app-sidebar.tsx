@@ -37,6 +37,7 @@ import { RouteInfo } from "@/types/nav-links";
 import { Action } from "@/types/roles-permissions";
 import { faSearch, faXmark } from "@fortawesome/pro-regular-svg-icons";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
+import { isMacOs } from "react-device-detect";
 import { Link, useLocation } from "react-router";
 import { FavoritesSidebar } from "./favorites-sidebar";
 import { NavUser } from "./nav-user";
@@ -45,6 +46,7 @@ import Highlight from "./ui/highlight";
 import { Icon } from "./ui/icons";
 import { Kbd, KbdKey } from "./ui/kibo-ui/kbd";
 import { Skeleton } from "./ui/skeleton";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { WorkflowPlaceholder } from "./workflow";
 
 // Helper function to check if a route is active
@@ -352,10 +354,17 @@ export const AppSidebar = memo(function AppSidebar({
               <Icon icon={faSearch} className="size-3 text-muted-foreground" />
             }
             rightElement={
-              <Kbd>
-                <KbdKey aria-label="Meta">⌘</KbdKey>
-                <KbdKey>K</KbdKey>
-              </Kbd>
+              <Tooltip>
+                <TooltipTrigger>
+                  <Kbd>
+                    <KbdKey aria-label="Meta">{isMacOs ? "⌘" : "Ctrl"}</KbdKey>
+                    <KbdKey>K</KbdKey>
+                  </Kbd>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>{isMacOs ? "⌘" : "Ctrl"} + K to trigger advanced search</p>
+                </TooltipContent>
+              </Tooltip>
             }
           />
           {searchQuery && (
