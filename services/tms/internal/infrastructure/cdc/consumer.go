@@ -145,7 +145,7 @@ func (s *KafkaConsumerService) Start() error {
 		topics = s.getDefaultTopics()
 	}
 
-	s.l.Info().Strs("topics", topics).Msg("Subscribing to topics")
+	s.l.Debug().Strs("topics", topics).Msg("Subscribing to topics")
 
 	if len(topics) > 0 {
 		s.l.Info().Strs("topics", topics).Msg("Starting consumer for topics")

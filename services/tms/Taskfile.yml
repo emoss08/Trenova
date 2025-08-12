@@ -8,7 +8,6 @@ tasks:
     desc: Reset the database, Redis
     cmds:
       - task: db-reset
-      - task: redis-flushall
       - task: db-init
       - task: db-migrate
       - task: db-seed

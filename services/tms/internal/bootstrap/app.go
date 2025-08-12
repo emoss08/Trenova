@@ -15,7 +15,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/external"
-	grpcmod "github.com/emoss08/trenova/internal/bootstrap/modules/grpc"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/infrastructure"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/seqgen"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/services"
@@ -27,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/cdc"
 	postgresRepos "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/encryption"
+	"github.com/emoss08/trenova/internal/infrastructure/grpc"
 	"github.com/emoss08/trenova/internal/infrastructure/jobs"
 	"github.com/emoss08/trenova/internal/infrastructure/telemetry"
 	"github.com/emoss08/trenova/internal/pkg/formula"
@@ -65,8 +65,7 @@ func Bootstrap() error {
 		services.Module,
 		streaming.Module,
 		api.Module,
-		// Start internal gRPC server for inter-service APIs (e.g., EDI config service)
-		grpcmod.Module,
+		grpc.Module,
 		jobs.Module,
 		// fx.WithLogger(func() fxevent.Logger {
 		// 	return &fxevent.ZapLogger{Logger: zap.NewExample()}
