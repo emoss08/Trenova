@@ -7,9 +7,7 @@ package user
 
 import (
 	"context"
-	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/ports"
@@ -21,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/stringutils"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/pkg/types"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rotisserie/eris"
@@ -187,41 +186,22 @@ func (s *Service) Create(
 		return nil, err
 	}
 
-	emailHTMLBody := fmt.Sprintf(`
-		<html>
-			<body>
-				<h2>Welcome to Trenova</h2>
-				<p>Your account has been created successfully.</p>
-				<p><strong>Email:</strong> %s</p>
-				<p><strong>Temporary Password:</strong> %s</p>
-				<p>Please log in and change your password immediately.</p>
-			</body>
-		</html>
-	`, u.EmailAddress, temporaryPassword)
-
-	emailTextBody := fmt.Sprintf(`
-Welcome to Trenova
-
-Your account has been created successfully.
-
-Email: %s
-Temporary Password: %s
-
-Please log in and change your password immediately.
-	`, u.EmailAddress, temporaryPassword)
-
-	_, err = s.es.SendEmail(ctx, &services.SendEmailRequest{
-		OrganizationID: createdEntity.CurrentOrganizationID,
-		BusinessUnitID: createdEntity.BusinessUnitID,
-		UserID:         userID,
-		Subject:        "Welcome to Trenova - Account Created",
-		To:             []string{u.EmailAddress},
-		HTMLBody:       emailHTMLBody,
-		TextBody:       emailTextBody,
-		Priority:       email.PriorityHigh,
-	})
+	_, err = s.es.SendSystemEmail(
+		ctx,
+		services.TemplateUserWelcome,
+		[]string{u.EmailAddress},
+		map[string]any{
+			"UserName":          u.Name,
+			"EmailAddress":      u.EmailAddress,
+			"TemporaryPassword": temporaryPassword,
+			"Year":              timeutils.CurrentYear(),
+		},
+		createdEntity.CurrentOrganizationID,
+		createdEntity.BusinessUnitID,
+		userID,
+	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to send email")
+		log.Error().Err(err).Msg("failed to send welcome email")
 		return nil, err
 	}
 

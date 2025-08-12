@@ -132,3 +132,7 @@ func CurrentDateInTimezone(location string) string {
 	}
 	return time.Now().In(loc).Format("2006-01-02")
 }
+
+func CurrentYear() int {
+	return time.Now().Year()
+}

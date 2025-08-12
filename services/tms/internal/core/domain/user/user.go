@@ -49,6 +49,7 @@ type User struct {
 	UpdatedAt             int64         `json:"updatedAt"             bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
+	Preferences         *UserPreferences             `json:"preferences,omitempty"         bun:"rel:has-one,join:id=user_id"`
 	BusinessUnit        *businessunit.BusinessUnit   `json:"-"                             bun:"rel:belongs-to,join:business_unit_id=id"`
 	CurrentOrganization *organization.Organization   `json:"currentOrganization,omitempty" bun:"rel:belongs-to,join:current_organization_id=id"`
 	Organizations       []*organization.Organization `json:"organizations,omitempty"       bun:"m2m:user_organizations,join:User=Organization"`

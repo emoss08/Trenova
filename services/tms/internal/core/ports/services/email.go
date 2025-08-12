@@ -16,6 +16,26 @@ import (
 	"github.com/go-ozzo/ozzo-validation/v4/is"
 )
 
+// SystemTemplateKey represents predefined system email template keys
+type SystemTemplateKey string
+
+const (
+	// User-related templates
+	TemplateUserWelcome     SystemTemplateKey = "user-welcome"
+	TemplatePasswordReset   SystemTemplateKey = "password-reset"
+	TemplatePasswordChanged SystemTemplateKey = "password-changed"
+
+	// Shipment-related templates
+	TemplateShipmentOwnershipTransfer SystemTemplateKey = "shipment-ownership-transfer"
+	TemplateShipmentStatusUpdate      SystemTemplateKey = "shipment-status-update"
+	TemplateShipmentCreated           SystemTemplateKey = "shipment-created"
+	TemplateShipmentCanceled          SystemTemplateKey = "shipment-canceled"
+
+	// Notification templates
+	TemplateGeneralNotification SystemTemplateKey = "general-notification"
+	TemplateSystemAlert         SystemTemplateKey = "system-alert"
+)
+
 // EmailService handles email sending operations
 type EmailService interface {
 	// SendEmail sends an email immediately
@@ -25,6 +45,17 @@ type EmailService interface {
 	SendTemplatedEmail(
 		ctx context.Context,
 		req *SendTemplatedEmailRequest,
+	) (*SendEmailResponse, error)
+
+	// SendSystemEmail sends an email using a system template
+	SendSystemEmail(
+		ctx context.Context,
+		templateKey SystemTemplateKey,
+		to []string,
+		variables map[string]any,
+		orgID pulid.ID,
+		buID pulid.ID,
+		userID pulid.ID,
 	) (*SendEmailResponse, error)
 
 	// QueueEmail adds an email to the queue for later processing
@@ -227,10 +258,6 @@ func (r *SendEmailRequest) Validate() error {
 			validation.Required.Error("Subject is required"),
 			validation.Length(1, 500).Error("Subject must be between 1 and 500 characters"),
 		),
-		// validation.Field(&r.HTMLBody,
-		// 	validation.Required.Error("HTML body is required"),
-		// 	validation.Length(1, 10485760).Error("HTML body must not exceed 10MB"),
-		// ),
 		validation.Field(&r.TextBody,
 			validation.Length(0, 5242880).Error("Text body must not exceed 5MB"),
 		),

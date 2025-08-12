@@ -14,45 +14,6 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 )
 
-type NotificationService interface {
-	// SendNotification sends a notification to the specified targets
-	SendNotification(ctx context.Context, req *SendNotificationRequest) error
-
-	// SendJobCompletionNotification sends a notification when a job completes
-	SendJobCompletionNotification(ctx context.Context, req *JobCompletionNotificationRequest) error
-
-	SendConfigurationCopiedNotification(
-		ctx context.Context,
-		req *ConfigurationCopiedNotificationRequest,
-	) error
-
-	SendCommentNotification(ctx context.Context, req *ShipmentCommentNotificationRequest) error
-
-	// SendBulkCommentNotifications sends multiple comment notifications
-	SendBulkCommentNotifications(
-		ctx context.Context,
-		reqs []*ShipmentCommentNotificationRequest,
-	) error
-
-	// MarkAsRead marks a notification as read
-	MarkAsRead(ctx context.Context, req repositories.MarkAsReadRequest) error
-
-	// MarkAsDismissed marks a notification as dismissed
-	MarkAsDismissed(ctx context.Context, req repositories.MarkAsDismissedRequest) error
-
-	// ReadAllNotifications reads all notifications for a user
-	ReadAllNotifications(ctx context.Context, req repositories.ReadAllNotificationsRequest) error
-
-	// GetUserNotifications retrieves notifications for a user
-	GetUserNotifications(
-		ctx context.Context,
-		req *repositories.GetUserNotificationsRequest,
-	) (*ports.ListResult[*notification.Notification], error)
-
-	// GetUnreadCount gets the count of unread notifications for a user
-	GetUnreadCount(ctx context.Context, userID pulid.ID, organizationID pulid.ID) (int, error)
-}
-
 type SendNotificationRequest struct {
 	EventType       notification.EventType       `json:"eventType"`
 	Priority        notification.Priority        `json:"priority"`
@@ -98,4 +59,56 @@ type ShipmentCommentNotificationRequest struct {
 	CommentID       pulid.ID `json:"commentId"`
 	OwnerName       string   `json:"ownerName"`
 	MentionedUserID pulid.ID `json:"mentionedUserId"`
+}
+
+type OwnershipTransferNotificationRequest struct {
+	OrgID        pulid.ID `json:"orgId"`
+	BuID         pulid.ID `json:"buId"`
+	ProNumber    string   `json:"proNumber"`
+	OwnerName    string   `json:"ownerName"`
+	TargetUserID pulid.ID `json:"targetUserId"`
+}
+
+type NotificationService interface {
+	// SendNotification sends a notification to the specified targets
+	SendNotification(ctx context.Context, req *SendNotificationRequest) error
+
+	// SendJobCompletionNotification sends a notification when a job completes
+	SendJobCompletionNotification(ctx context.Context, req *JobCompletionNotificationRequest) error
+
+	SendConfigurationCopiedNotification(
+		ctx context.Context,
+		req *ConfigurationCopiedNotificationRequest,
+	) error
+
+	SendCommentNotification(ctx context.Context, req *ShipmentCommentNotificationRequest) error
+
+	SendOwnershipTransferNotification(
+		ctx context.Context,
+		req *OwnershipTransferNotificationRequest,
+	) error
+
+	// SendBulkCommentNotifications sends multiple comment notifications
+	SendBulkCommentNotifications(
+		ctx context.Context,
+		reqs []*ShipmentCommentNotificationRequest,
+	) error
+
+	// MarkAsRead marks a notification as read
+	MarkAsRead(ctx context.Context, req repositories.MarkAsReadRequest) error
+
+	// MarkAsDismissed marks a notification as dismissed
+	MarkAsDismissed(ctx context.Context, req repositories.MarkAsDismissedRequest) error
+
+	// ReadAllNotifications reads all notifications for a user
+	ReadAllNotifications(ctx context.Context, req repositories.ReadAllNotificationsRequest) error
+
+	// GetUserNotifications retrieves notifications for a user
+	GetUserNotifications(
+		ctx context.Context,
+		req *repositories.GetUserNotificationsRequest,
+	) (*ports.ListResult[*notification.Notification], error)
+
+	// GetUnreadCount gets the count of unread notifications for a user
+	GetUnreadCount(ctx context.Context, userID pulid.ID, organizationID pulid.ID) (int, error)
 }

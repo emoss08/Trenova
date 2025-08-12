@@ -1176,6 +1176,7 @@
       pieces: 1
       weight: 1000
       temperature_min: 10
+      entered_by_id: "{{ $.User.test_user.ID }}"
       temperature_max: 20
       consolidation_group_id: "{{ $.ConsolidationGroup.consolidation_group_1.ID }}"
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
@@ -1199,6 +1200,7 @@
       pieces: 1
       weight: 1000
       temperature_min: 10
+      entered_by_id: "{{ $.User.test_user.ID }}"
       temperature_max: 20
       consolidation_group_id: "{{ $.ConsolidationGroup.consolidation_group_1.ID }}"
       tractor_type_id: "{{ $.EquipmentType.tractor_equip_type.ID }}"
@@ -1224,6 +1226,7 @@
       weight: 1000
       temperature_min: 10
       temperature_max: 20
+      entered_by_id: "{{ $.User.test_user.ID }}"
 
     - _id: in_transit_shipment_2
       organization_id: "{{ $.Organization.trenova.ID }}"
@@ -1244,6 +1247,7 @@
       weight: 1000
       temperature_min: 10
       temperature_max: 20
+      entered_by_id: "{{ $.User.test_user.ID }}"
 
     # Delayed Shipment
     - _id: delayed_shipment
@@ -1265,6 +1269,7 @@
       weight: 1000
       temperature_min: 10
       temperature_max: 20
+      entered_by_id: "{{ $.User.test_user.ID }}"
 
     # Completed Shipment
     - _id: completed_shipment
@@ -1286,6 +1291,7 @@
       weight: 1000
       temperature_min: 10
       temperature_max: 20
+      entered_by_id: "{{ $.User.test_user.ID }}"
 
     # Billed Shipment
     - _id: billed_shipment
@@ -1307,6 +1313,7 @@
       weight: 1000
       temperature_min: 10
       temperature_max: 20
+      entered_by_id: "{{ $.User.test_user.ID }}"
 
     # Canceled Shipment
     - _id: canceled_shipment
@@ -1331,6 +1338,7 @@
       canceled_at: "{{ now.Unix }}"
       canceled_by_id: "{{ $.User.test_user.ID }}"
       cancel_reason: "Test"
+      entered_by_id: "{{ $.User.test_user.ID }}"
 
 - model: ShipmentMove
   rows:

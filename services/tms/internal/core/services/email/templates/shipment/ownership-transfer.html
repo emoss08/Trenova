@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+        /* Base */
+        body { margin:0; padding:0; background:#f5f7fb; color:#111827; font-family:-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height:1.55; }
+        .wrapper { width:100%; padding:24px 0; }
+        .container { max-width:600px; margin:0 auto; background:#ffffff; border:1px solid #e5e7eb; border-radius:10px; overflow:hidden; }
+
+        /* Header */
+        .brandbar { background:#1f2937; color:#eef2ff; padding:12px 24px; font-size:14px; letter-spacing:0.3px; }
+        .header { padding:24px; border-bottom:1px solid #f3f4f6; }
+        .title { margin:0; font-size:22px; font-weight:700; color:#111827; }
+        .subtitle { margin:6px 0 0 0; color:#6b7280; font-size:14px; }
+
+        /* Content */
+        .content { padding:24px; }
+        .notice { background:#eff6ff; border:1px solid #dbeafe; color:#1e40af; border-radius:8px; padding:14px 16px; }
+        .lead { margin:8px 0 0 0; color:#1f2937; }
+
+        /* Key/Value list */
+        .kv { border:1px solid #e5e7eb; border-radius:8px; margin-top:18px; }
+        .kv-row { display:flex; padding:10px 12px; border-top:1px solid #e5e7eb; }
+        .kv-row:first-child { border-top:none; }
+        .kv-key { width:42%; min-width:120px; color:#6b7280; font-weight:600; }
+        .kv-val { width:58%; color:#111827; text-align:right; }
+
+        /* Badge */
+        .badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700; color:#ffffff; }
+        .badge.is-new { background:#10b981; }
+        .badge.is-inprogress { background:#f59e0b; }
+        .badge.is-completed { background:#6b7280; }
+
+        /* Button */
+        .btn-wrap { text-align:center; margin:22px 0; }
+        .btn { display:inline-block; background:#2563eb; color:#ffffff !important; text-decoration:none; padding:12px 22px; border-radius:8px; font-weight:700; font-size:14px; }
+
+        /* Extra blocks */
+        .callout-warn { background:#fff7ed; border:1px solid #fed7aa; color:#7c2d12; border-radius:8px; padding:14px 16px; margin-top:18px; }
+
+        /* Footer */
+        .footer { background:#f9fafb; border-top:1px solid #e5e7eb; padding:18px 24px; text-align:center; color:#6b7280; font-size:12px; }
+    </style>
+    <!--[if mso]>
+      <style type="text/css">
+        .kv-row { display:block !important; }
+        .kv-key, .kv-val { display:inline-block !important; width:49% !important; text-align:left !important; }
+        .kv-val { text-align:right !important; }
+      </style>
+    <![endif]-->
+    <title>Shipment Ownership Transfer</title>
+</head>
+<body>
+    <div class="wrapper">
+        <div class="container">
+            <div class="brandbar">Trenova</div>
+            <div class="header">
+                <h1 class="title">Shipment Ownership Transfer</h1>
+                <p class="subtitle">Action required: new shipment assignment</p>
+            </div>
+
+            <div class="content">
+                <div class="notice">
+                    <div>Hello <strong>{{.NewOwnerName}}</strong>,</div>
+                    <div class="lead">You have been assigned ownership of shipment <strong>{{.ProNumber}}</strong> by <strong>{{.PreviousOwnerName}}</strong>.</div>
+                </div>
+
+                <div class="kv" role="group" aria-label="Shipment details">
+                    <div class="kv-row"><div class="kv-key">Pro Number</div><div class="kv-val" style="font-weight:700; color:#2563eb;">{{.ProNumber}}</div></div>
+                    {{if .BOL}}
+                    <div class="kv-row"><div class="kv-key">Bill of Lading</div><div class="kv-val">{{.BOL}}</div></div>
+                    {{end}}
+                    {{if .CustomerName}}
+                    <div class="kv-row"><div class="kv-key">Customer</div><div class="kv-val">{{.CustomerName}}</div></div>
+                    {{end}}
+                    {{if .Origin}}
+                    <div class="kv-row"><div class="kv-key">Origin</div><div class="kv-val">{{.Origin}}</div></div>
+                    {{end}}
+                    {{if .Destination}}
+                    <div class="kv-row"><div class="kv-key">Destination</div><div class="kv-val">{{.Destination}}</div></div>
+                    {{end}}
+                    {{if .Status}}
+                    <div class="kv-row"><div class="kv-key">Current Status</div><div class="kv-val"><span class="badge is-{{.StatusClass}}">{{.Status}}</span></div></div>
+                    {{end}}
+                    <div class="kv-row"><div class="kv-key">Transfer Date</div><div class="kv-val">{{formatDateTime .TransferDate}}</div></div>
+                </div>
+
+                {{if or .EstimatedDelivery .Priority}}
+                <div class="kv" role="group" aria-label="Additional information" style="margin-top:12px;">
+                    {{if .EstimatedDelivery}}
+                    <div class="kv-row"><div class="kv-key">Estimated Delivery</div><div class="kv-val">{{formatDate .EstimatedDelivery}}</div></div>
+                    {{end}}
+                    {{if .Priority}}
+                    <div class="kv-row"><div class="kv-key">Priority</div><div class="kv-val">{{.Priority}}</div></div>
+                    {{end}}
+                </div>
+                {{end}}
+
+                {{if .ViewShipmentURL}}
+                <div class="btn-wrap">
+                    <a href="{{.ViewShipmentURL}}" class="btn">View Shipment Details</a>
+                </div>
+                {{end}}
+
+                {{if .TransferReason}}
+                <div class="callout-warn">
+                    <div style="font-weight:700; margin-bottom:6px;">Transfer Reason</div>
+                    <div>{{.TransferReason}}</div>
+                </div>
+                {{end}}
+
+                {{if .Notes}}
+                <div class="callout-warn" style="background:#f9fafb; border-color:#e5e7eb; color:#374151;">
+                    <div style="font-weight:700; margin-bottom:6px;">Additional Notes</div>
+                    <div>{{.Notes}}</div>
+                </div>
+                {{end}}
+            </div>
+
+            <div class="footer">
+                <div><strong>Your responsibilities:</strong> As the new owner, manage and track this shipment to completion.</div>
+                <div style="margin-top:10px; color:#9ca3af;">This is an automated notification from Trenova. Please do not reply.</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
