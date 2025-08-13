@@ -1,0 +1,50 @@
+{
+  "id": "AK5",
+  "name": "Transaction Set Response Trailer",
+  "purpose": "To acknowledge acceptance or rejection and report errors in a transaction set",
+  "position": 50,
+  "max_use": 1,
+  "elements": [
+    {
+      "position": 1,
+      "ref_id": "717",
+      "name": "Transaction Set Acknowledgment Code",
+      "type": "ID",
+      "data_type": "Identifier (ID)",
+      "requirement": "Mandatory",
+      "min_length": 1,
+      "max_length": 1,
+      "repeat": 1,
+      "description": "Code indicating accept or reject condition based on the syntax edits",
+      "codes": [
+        {"code": "A", "description": "Accepted"},
+        {"code": "E", "description": "Accepted but errors were noted"},
+        {"code": "M", "description": "Rejected, message authentication code (MAC) failed"},
+        {"code": "R", "description": "Rejected"},
+        {"code": "W", "description": "Rejected, assurance failed validity tests"},
+        {"code": "X", "description": "Rejected, content after decryption could not be analyzed"}
+      ]
+    },
+    {
+      "position": 2,
+      "ref_id": "718",
+      "name": "Transaction Set Syntax Error Code",
+      "type": "ID",
+      "data_type": "Identifier (ID)",
+      "requirement": "Optional",
+      "min_length": 1,
+      "max_length": 3,
+      "repeat": 5,
+      "description": "Code indicating error found based on the syntax editing of a transaction set",
+      "codes": [
+        {"code": "1", "description": "Transaction set not supported"},
+        {"code": "2", "description": "Transaction set trailer missing"},
+        {"code": "3", "description": "Transaction set control number in header and trailer do not match"},
+        {"code": "4", "description": "Number of included segments does not match actual count"},
+        {"code": "5", "description": "One or more segments in error"},
+        {"code": "6", "description": "Missing or invalid transaction set identifier"},
+        {"code": "7", "description": "Missing or invalid transaction set control number"}
+      ]
+    }
+  ]
+}

@@ -1,0 +1,164 @@
+{
+  "id": "AT8",
+  "name": "Shipment Weight, Packaging and Quantity Data",
+  "purpose": "To specify shipment details in terms of weight, and quantity of handling units",
+  "elements": [
+    {
+      "position": 1,
+      "id": "AT801",
+      "name": "Weight Qualifier",
+      "type": "ID",
+      "min": 1,
+      "max": 2,
+      "required": true,
+      "codes": [
+        {
+          "code": "A",
+          "description": "Aggregate Weight"
+        },
+        {
+          "code": "B",
+          "description": "Billed Weight"
+        },
+        {
+          "code": "C",
+          "description": "Containerized Weight"
+        },
+        {
+          "code": "D",
+          "description": "Dimensional Weight"
+        },
+        {
+          "code": "E",
+          "description": "Estimated Net Weight"
+        },
+        {
+          "code": "F",
+          "description": "Deficit Weight"
+        },
+        {
+          "code": "G",
+          "description": "Gross Weight"
+        },
+        {
+          "code": "K",
+          "description": "Kilograms"
+        },
+        {
+          "code": "L",
+          "description": "Pounds"
+        },
+        {
+          "code": "N",
+          "description": "Actual Net Weight"
+        },
+        {
+          "code": "P",
+          "description": "Weight Per Package"
+        },
+        {
+          "code": "T",
+          "description": "Tare Weight"
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "id": "AT802",
+      "name": "Weight Unit Code",
+      "type": "ID",
+      "min": 1,
+      "max": 1,
+      "required": true,
+      "codes": [
+        {
+          "code": "K",
+          "description": "Kilograms"
+        },
+        {
+          "code": "L",
+          "description": "Pounds"
+        },
+        {
+          "code": "T",
+          "description": "Metric Ton"
+        },
+        {
+          "code": "G",
+          "description": "Grams"
+        },
+        {
+          "code": "O",
+          "description": "Ounces"
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "id": "AT803",
+      "name": "Weight",
+      "type": "R",
+      "min": 1,
+      "max": 10,
+      "required": true
+    },
+    {
+      "position": 4,
+      "id": "AT804",
+      "name": "Lading Quantity",
+      "type": "N0",
+      "min": 1,
+      "max": 7,
+      "required": true
+    },
+    {
+      "position": 5,
+      "id": "AT805",
+      "name": "Lading Quantity",
+      "type": "N0",
+      "min": 1,
+      "max": 7,
+      "required": false
+    },
+    {
+      "position": 6,
+      "id": "AT806",
+      "name": "Volume Unit Qualifier",
+      "type": "ID",
+      "min": 1,
+      "max": 1,
+      "required": false,
+      "codes": [
+        {
+          "code": "C",
+          "description": "Cubic Feet"
+        },
+        {
+          "code": "E",
+          "description": "Cubic Meters"
+        },
+        {
+          "code": "G",
+          "description": "Gallons"
+        },
+        {
+          "code": "L",
+          "description": "Liters"
+        },
+        {
+          "code": "Y",
+          "description": "Cubic Yards"
+        }
+      ]
+    },
+    {
+      "position": 7,
+      "id": "AT807",
+      "name": "Volume",
+      "type": "R",
+      "min": 1,
+      "max": 8,
+      "required": false
+    }
+  ]
+}

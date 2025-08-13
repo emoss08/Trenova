@@ -1,12 +1,13 @@
 package main
 
 import (
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"os"
 	"strings"
+
+	"github.com/bytedance/sonic"
 
 	ackpkg "github.com/emoss08/trenova/shared/edi/internal/ack"
 	"github.com/emoss08/trenova/shared/edi/internal/config"
@@ -504,9 +505,9 @@ func emitJSON(v any, pretty bool) {
 	var b []byte
 	var err error
 	if pretty {
-		b, err = json.MarshalIndent(v, "", "  ")
+		b, err = sonic.ConfigFastest.MarshalIndent(v, "", "  ")
 	} else {
-		b, err = json.Marshal(v)
+		b, err = sonic.ConfigFastest.Marshal(v)
 	}
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "json encode error: %v\n", err)

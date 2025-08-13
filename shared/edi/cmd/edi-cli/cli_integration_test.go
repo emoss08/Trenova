@@ -1,11 +1,12 @@
 package main
 
 import (
-    "encoding/json"
     "os"
     "os/exec"
     "path/filepath"
     "testing"
+
+    "github.com/bytedance/sonic"
 )
 
 func TestCLI_Shipment_IncludesSegments_WhenProfileEnabled(t *testing.T) {
@@ -32,7 +33,7 @@ func TestCLI_Shipment_IncludesSegments_WhenProfileEnabled(t *testing.T) {
     var payload struct {
         Segments []any `json:"segments"`
     }
-    if err := json.Unmarshal(out, &payload); err != nil {
+    if err := sonic.Unmarshal(out, &payload); err != nil {
         t.Fatalf("json parse: %v\n%s", err, string(out))
     }
     if len(payload.Segments) == 0 {
@@ -75,7 +76,7 @@ func TestCLI_Profile_ISODatetime(t *testing.T) {
     }
     // Support both wrapped and bare shipment shapes
     var anyObj map[string]any
-    if err := json.Unmarshal(out, &anyObj); err != nil {
+    if err := sonic.Unmarshal(out, &anyObj); err != nil {
         t.Fatalf("json parse: %v\n%s", err, string(out))
     }
     var stops any
@@ -118,7 +119,7 @@ func TestCLI_AckJSON_WrapsAckAndJSON(t *testing.T) {
     var payload struct {
         Ack string `json:"ack"`
     }
-    if err := json.Unmarshal(out, &payload); err != nil {
+    if err := sonic.Unmarshal(out, &payload); err != nil {
         t.Fatalf("json parse: %v\n%s", err, string(out))
     }
     if payload.Ack == "" {

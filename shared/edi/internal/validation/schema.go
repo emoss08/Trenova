@@ -1,11 +1,11 @@
 package validation
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"strings"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/edi/internal/x12"
 )
 
@@ -70,7 +70,7 @@ func LoadSchema(path string) (*Schema, error) {
 		return nil, err
 	}
 	var s Schema
-	if err := json.Unmarshal(b, &s); err != nil {
+	if err := sonic.Unmarshal(b, &s); err != nil {
 		return nil, err
 	}
 	return &s, nil

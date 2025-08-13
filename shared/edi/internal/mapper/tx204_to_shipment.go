@@ -10,16 +10,14 @@ import (
 
 // ToShipment maps a tx204.LoadTender into a dto.Shipment with basic normalization.
 func ToShipment(lt tx204.LoadTender) dto.Shipment {
-	// Use default mapping when no partner mapping is provided
 	return ToShipmentWithOptions(lt, DefaultOptions())
 }
 
 // ToShipmentWithRefMap maps a tx204.LoadTender into a dto.Shipment using a partner-provided
 // reference mapping (DTO key -> list of L11 qualifiers). If map is nil/empty, defaults are used.
 func ToShipmentWithRefMap(lt tx204.LoadTender, refMap map[string][]string) dto.Shipment {
-	// Backward compatibility wrapper using Options
 	opts := DefaultOptions()
-	if refMap != nil && len(refMap) > 0 {
+	if refMap != nil {
 		opts.RefMap = refMap
 	}
 	return ToShipmentWithOptions(lt, opts)
@@ -36,10 +34,10 @@ func ToShipmentWithOptions(lt tx204.LoadTender, opts Options) dto.Shipment {
 	}
 
 	refMap := opts.RefMap
-	if refMap == nil || len(refMap) == 0 {
+	if refMap == nil {
 		refMap = DefaultRefMap()
 	}
-	// Apply partner/default reference mapping: keep first matching qualifier value for each key.
+
 	for key, quals := range refMap {
 		for _, q := range quals {
 			if vals, ok := lt.Header.References[q]; ok && len(vals) > 0 {
@@ -50,21 +48,18 @@ func ToShipmentWithOptions(lt tx204.LoadTender, opts Options) dto.Shipment {
 		}
 	}
 
-	// ShipmentID selection per mode
 	out.ShipmentID = pickShipmentID(lt, opts)
 
-	// Carrier SCAC with fallback
 	if strings.TrimSpace(out.CarrierSCAC) == "" &&
 		strings.TrimSpace(opts.CarrierSCACFallback) != "" {
 		out.CarrierSCAC = opts.CarrierSCACFallback
 	}
 
-	// Parties: prefer explicit codes if available
 	roles := opts.PartyRoles
-	if roles == nil || len(roles) == 0 {
+	if roles == nil {
 		roles = DefaultPartyRoles()
 	}
-	// Helper to pick first available N1 code in priority list
+
 	pick := func(codes []string) *dto.Party {
 		for _, code := range codes {
 			if p, ok := lt.Parties[code]; ok {
@@ -84,7 +79,6 @@ func ToShipmentWithOptions(lt tx204.LoadTender, opts Options) dto.Shipment {
 		out.Consignee = pick(v)
 	}
 
-	// Stops and appointments
 	out.Stops = make([]dto.Stop, 0, len(lt.Stops))
 	for _, s := range lt.Stops {
 		stype := mapS5TypeWith(opts.StopTypeMap, s.Type)
@@ -94,6 +88,7 @@ func ToShipmentWithOptions(lt tx204.LoadTender, opts Options) dto.Shipment {
 			Location: partyFrom(s.Location),
 			Notes:    append([]string{}, s.Notes...),
 		}
+
 		if len(s.Appointments) > 0 {
 			ds.Appointments = make([]dto.Appt, 0, len(s.Appointments))
 			for _, a := range s.Appointments {
@@ -109,7 +104,6 @@ func ToShipmentWithOptions(lt tx204.LoadTender, opts Options) dto.Shipment {
 		out.Stops = append(out.Stops, ds)
 	}
 
-	// Equipment type normalization
 	if opts.EquipmentTypeMap != nil {
 		if norm, ok := opts.EquipmentTypeMap[strings.ToUpper(strings.TrimSpace(out.Equipment.Type))]; ok &&
 			norm != "" {
@@ -117,7 +111,6 @@ func ToShipmentWithOptions(lt tx204.LoadTender, opts Options) dto.Shipment {
 		}
 	}
 
-	// Raw L11 references (auditing)
 	if opts.IncludeRawL11 {
 		out.ReferencesRaw = make(map[string][]string, len(lt.Header.References))
 		if len(opts.RawL11Filter) == 0 {
@@ -138,13 +131,12 @@ func ToShipmentWithOptions(lt tx204.LoadTender, opts Options) dto.Shipment {
 		}
 	}
 
-	// Totals mapping
 	out.Totals = dto.Totals{
 		Weight:     lt.Totals.Weight,
 		WeightUnit: lt.Totals.WeightUnit,
 		Pieces:     lt.Totals.Pieces,
 	}
-	// Commodities
+
 	if len(lt.Commodities) > 0 {
 		out.Goods = make([]dto.Commodity, 0, len(lt.Commodities))
 		for _, c := range lt.Commodities {
@@ -152,7 +144,6 @@ func ToShipmentWithOptions(lt tx204.LoadTender, opts Options) dto.Shipment {
 		}
 	}
 
-	// Service level from configured references with normalization
 	for _, q := range opts.ServiceLevelQuals {
 		if vals, ok := lt.Header.References[q]; ok && len(vals) > 0 {
 			out.ServiceLevel = vals[0]
@@ -162,7 +153,7 @@ func ToShipmentWithOptions(lt tx204.LoadTender, opts Options) dto.Shipment {
 			break
 		}
 	}
-	// Accessorials from configured qualifiers
+
 	if len(opts.AccessorialQuals) > 0 {
 		accs := []dto.Accessorial{}
 		for _, q := range opts.AccessorialQuals {
@@ -235,7 +226,7 @@ func pickShipmentID(lt tx204.LoadTender, opts Options) string {
 		}
 		return "", false
 	}
-	// Evaluate modes
+
 	switch mode {
 	case "ref_only":
 		if v, ok := pickFromRefs(); ok {
@@ -263,7 +254,6 @@ func pickShipmentID(lt tx204.LoadTender, opts Options) string {
 }
 
 func normalizeDT(date, tim, tz string) string {
-	// Expect CCYYMMDD and HHMM or HHMMSS
 	if len(date) != 8 || (len(tim) != 4 && len(tim) != 6) {
 		return ""
 	}

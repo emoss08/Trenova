@@ -1,0 +1,173 @@
+{
+  "tag": "LAD",
+  "name": "Lading Detail",
+  "purpose": "To transmit detailed lading data pertinent to a pickup or delivery",
+  "elements": [
+    {
+      "position": 1,
+      "id": "213",
+      "name": "Packaging Form Code",
+      "type": "ID",
+      "min": 3,
+      "max": 3,
+      "required": false,
+      "codes": [
+        {
+          "code": "PLT",
+          "description": "Pallet"
+        },
+        {
+          "code": "CTN",
+          "description": "Carton"
+        },
+        {
+          "code": "PCS",
+          "description": "Pieces"
+        },
+        {
+          "code": "TBN",
+          "description": "Tote Bin"
+        },
+        {
+          "code": "BDL",
+          "description": "Bundle"
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "id": "80",
+      "name": "Lading Quantity",
+      "type": "N0",
+      "min": 1,
+      "max": 7,
+      "required": false
+    },
+    {
+      "position": 3,
+      "id": "80",
+      "name": "Lading Quantity",
+      "type": "N0",
+      "min": 1,
+      "max": 7,
+      "required": false
+    },
+    {
+      "position": 4,
+      "id": "80",
+      "name": "Lading Quantity",
+      "type": "N0",
+      "min": 1,
+      "max": 7,
+      "required": false
+    },
+    {
+      "position": 5,
+      "id": "187",
+      "name": "Weight Unit Code",
+      "type": "ID",
+      "min": 1,
+      "max": 1,
+      "required": false,
+      "codes": [
+        {
+          "code": "L",
+          "description": "Pounds"
+        },
+        {
+          "code": "K",
+          "description": "Kilograms"
+        },
+        {
+          "code": "G",
+          "description": "Grams"
+        },
+        {
+          "code": "T",
+          "description": "Tons"
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "id": "81",
+      "name": "Weight",
+      "type": "R",
+      "min": 1,
+      "max": 10,
+      "required": false
+    },
+    {
+      "position": 7,
+      "id": "213",
+      "name": "Product/Service ID Qualifier",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "required": false
+    },
+    {
+      "position": 8,
+      "id": "234",
+      "name": "Product/Service ID",
+      "type": "AN",
+      "min": 1,
+      "max": 48,
+      "required": false
+    },
+    {
+      "position": 9,
+      "id": "235",
+      "name": "Product/Service ID Qualifier",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "required": false
+    },
+    {
+      "position": 10,
+      "id": "234",
+      "name": "Product/Service ID",
+      "type": "AN",
+      "min": 1,
+      "max": 48,
+      "required": false
+    },
+    {
+      "position": 11,
+      "id": "235",
+      "name": "Product/Service ID Qualifier",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "required": false
+    },
+    {
+      "position": 12,
+      "id": "234",
+      "name": "Product/Service ID",
+      "type": "AN",
+      "min": 1,
+      "max": 48,
+      "required": false
+    },
+    {
+      "position": 13,
+      "id": "79",
+      "name": "Lading Description",
+      "type": "AN",
+      "min": 1,
+      "max": 50,
+      "required": false
+    },
+    {
+      "position": 14,
+      "id": "213",
+      "name": "Hazardous Material Code",
+      "type": "ID",
+      "min": 1,
+      "max": 1,
+      "required": false
+    }
+  ]
+}

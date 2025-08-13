@@ -2,7 +2,6 @@ package main
 
 import (
 	"bufio"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/fs"
@@ -10,6 +9,8 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+
+	"github.com/bytedance/sonic"
 
 	"github.com/emoss08/trenova/shared/edi/internal/config"
 	"github.com/emoss08/trenova/shared/edi/internal/mapper"
@@ -261,7 +262,7 @@ func main() {
 						Issues   []validation.Issue `json:"issues"`
 						Segments *[]x12.Segment     `json:"segments,omitempty"`
 					}{File: f, Shipment: shp, Issues: iss, Segments: segPtr}
-					if bts, err := json.Marshal(entry); err == nil {
+					if bts, err := sonic.ConfigFastest.Marshal(entry); err == nil {
 						out.Write(bts)
 						out.WriteByte('\n')
 					}
@@ -279,7 +280,7 @@ func main() {
 					segPtr = &segs
 				}
 				line := outLine{File: f, Shipment: shp, Issues: issues, Segments: segPtr}
-				b, err := json.Marshal(line)
+				b, err := sonic.ConfigFastest.Marshal(line)
 				if err != nil {
 					fmt.Fprintf(os.Stderr, "json encode error for %s: %v\n", f, err)
 					continue

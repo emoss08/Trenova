@@ -1,0 +1,137 @@
+{
+  "id": "G61",
+  "name": "Contact",
+  "purpose": "To identify a person or office to whom communications should be directed",
+  "elements": [
+    {
+      "position": 1,
+      "id": "G6101",
+      "name": "Contact Function Code",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "required": true,
+      "codes": [
+        {
+          "code": "AP",
+          "description": "Accounts Payable Department"
+        },
+        {
+          "code": "AR",
+          "description": "Accounts Receivable Department"
+        },
+        {
+          "code": "CN",
+          "description": "General Contact"
+        },
+        {
+          "code": "DC",
+          "description": "Delivery Contact"
+        },
+        {
+          "code": "DI",
+          "description": "Dispatcher"
+        },
+        {
+          "code": "DR",
+          "description": "Driver"
+        },
+        {
+          "code": "EP",
+          "description": "Emergency Contact \u2013 Primary"
+        },
+        {
+          "code": "ES",
+          "description": "Emergency Contact \u2013 Secondary"
+        },
+        {
+          "code": "IC",
+          "description": "Information Contact"
+        },
+        {
+          "code": "PP",
+          "description": "Plant Contact"
+        },
+        {
+          "code": "RE",
+          "description": "Receiving Contact"
+        },
+        {
+          "code": "SD",
+          "description": "Scheduling Contact"
+        },
+        {
+          "code": "SR",
+          "description": "Sales Representative"
+        },
+        {
+          "code": "SS",
+          "description": "Shipping Schedule Contact"
+        },
+        {
+          "code": "SU",
+          "description": "Supplier Contact"
+        },
+        {
+          "code": "WH",
+          "description": "Warehouse Contact"
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "id": "G6102",
+      "name": "Name",
+      "type": "AN",
+      "min": 1,
+      "max": 60,
+      "required": true
+    },
+    {
+      "position": 3,
+      "id": "G6103",
+      "name": "Communication Number Qualifier",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "codes": [
+        {
+          "code": "EM",
+          "description": "Electronic Mail"
+        },
+        {
+          "code": "FX",
+          "description": "Facsimile"
+        },
+        {
+          "code": "TE",
+          "description": "Telephone"
+        },
+        {
+          "code": "TL",
+          "description": "Telex"
+        },
+        {
+          "code": "UR",
+          "description": "Uniform Resource Locator (URL)"
+        }
+      ]
+    },
+    {
+      "position": 4,
+      "id": "G6104",
+      "name": "Communication Number",
+      "type": "AN",
+      "min": 1,
+      "max": 80
+    },
+    {
+      "position": 5,
+      "id": "G6105",
+      "name": "Contact Inquiry Reference",
+      "type": "AN",
+      "min": 1,
+      "max": 20
+    }
+  ]
+}

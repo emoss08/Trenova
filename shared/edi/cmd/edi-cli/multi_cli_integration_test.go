@@ -2,12 +2,13 @@ package main
 
 import (
     "bufio"
-    "encoding/json"
     "os"
     "os/exec"
     "path/filepath"
     "strings"
     "testing"
+
+    "github.com/bytedance/sonic"
 )
 
 func TestCLI_Multi_NDJSON(t *testing.T) {
@@ -30,7 +31,7 @@ func TestCLI_Multi_NDJSON(t *testing.T) {
     for scanner.Scan() {
         line := scanner.Bytes()
         var obj map[string]any
-        if err := json.Unmarshal(line, &obj); err != nil {
+        if err := sonic.Unmarshal(line, &obj); err != nil {
             t.Fatalf("invalid json line: %v\n%s", err, string(line))
         }
         if _, ok := obj["shipment"]; !ok {

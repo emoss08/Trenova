@@ -1,0 +1,267 @@
+{
+  "id": "L5",
+  "name": "Description, Marks and Numbers",
+  "purpose": "To specify the line item in terms of description, quantity, packaging, and marks and numbers",
+  "elements": [
+    {
+      "position": 1,
+      "id": "L501",
+      "name": "Lading Line Item Number",
+      "type": "N0",
+      "min": 1,
+      "max": 3,
+      "required": false
+    },
+    {
+      "position": 2,
+      "id": "L502",
+      "name": "Lading Description",
+      "type": "AN",
+      "min": 1,
+      "max": 50,
+      "required": false
+    },
+    {
+      "position": 3,
+      "id": "L503",
+      "name": "Commodity Code",
+      "type": "AN",
+      "min": 1,
+      "max": 30,
+      "required": false
+    },
+    {
+      "position": 4,
+      "id": "L504",
+      "name": "Commodity Code Qualifier",
+      "type": "ID",
+      "min": 1,
+      "max": 1,
+      "required": false,
+      "codes": [
+        {
+          "code": "A",
+          "description": "Harmonized Tariff Schedule of the United States Annotated"
+        },
+        {
+          "code": "H",
+          "description": "Harmonized Tariff Schedule"
+        },
+        {
+          "code": "N",
+          "description": "National Motor Freight Classification (NMFC)"
+        },
+        {
+          "code": "S",
+          "description": "Standard Transportation Commodity Code (STCC)"
+        },
+        {
+          "code": "T",
+          "description": "Standard International Trade Classification (SITC)"
+        },
+        {
+          "code": "U",
+          "description": "Universal Product Code (UPC)"
+        },
+        {
+          "code": "Z",
+          "description": "Mutually Defined"
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "id": "L505",
+      "name": "Packaging Code",
+      "type": "AN",
+      "min": 3,
+      "max": 5,
+      "required": false,
+      "codes": [
+        {
+          "code": "BAG",
+          "description": "Bag"
+        },
+        {
+          "code": "BAL",
+          "description": "Bale"
+        },
+        {
+          "code": "BBL",
+          "description": "Barrel"
+        },
+        {
+          "code": "BDL",
+          "description": "Bundle"
+        },
+        {
+          "code": "BIN",
+          "description": "Bin"
+        },
+        {
+          "code": "BOX",
+          "description": "Box"
+        },
+        {
+          "code": "BXT",
+          "description": "Bucket"
+        },
+        {
+          "code": "CAS",
+          "description": "Case"
+        },
+        {
+          "code": "COL",
+          "description": "Coil"
+        },
+        {
+          "code": "CRT",
+          "description": "Crate"
+        },
+        {
+          "code": "CTN",
+          "description": "Carton"
+        },
+        {
+          "code": "CYL",
+          "description": "Cylinder"
+        },
+        {
+          "code": "DRM",
+          "description": "Drum"
+        },
+        {
+          "code": "ENV",
+          "description": "Envelope"
+        },
+        {
+          "code": "LSE",
+          "description": "Loose"
+        },
+        {
+          "code": "PAL",
+          "description": "Pallet"
+        },
+        {
+          "code": "PCK",
+          "description": "Package"
+        },
+        {
+          "code": "PLT",
+          "description": "Pallet"
+        },
+        {
+          "code": "REL",
+          "description": "Reel"
+        },
+        {
+          "code": "RLL",
+          "description": "Roll"
+        },
+        {
+          "code": "SKD",
+          "description": "Skid"
+        },
+        {
+          "code": "TNK",
+          "description": "Tank"
+        },
+        {
+          "code": "TRY",
+          "description": "Tray"
+        },
+        {
+          "code": "TUB",
+          "description": "Tub"
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "id": "L506",
+      "name": "Marks and Numbers",
+      "type": "AN",
+      "min": 1,
+      "max": 48,
+      "required": false
+    },
+    {
+      "position": 7,
+      "id": "L507",
+      "name": "Marks and Numbers Qualifier",
+      "type": "ID",
+      "min": 1,
+      "max": 2,
+      "required": false,
+      "codes": [
+        {
+          "code": "CP",
+          "description": "Carrier-Assigned Package ID Number"
+        },
+        {
+          "code": "GM",
+          "description": "SSCC-18 and Application Identifier"
+        },
+        {
+          "code": "L",
+          "description": "Line Item Only"
+        },
+        {
+          "code": "PB",
+          "description": "Pallet ID Number"
+        },
+        {
+          "code": "S",
+          "description": "Entire Shipment"
+        },
+        {
+          "code": "SM",
+          "description": "Shipper Assigned"
+        },
+        {
+          "code": "SR",
+          "description": "Shipper Assigned Roll Number"
+        },
+        {
+          "code": "SS",
+          "description": "Shipper Assigned Skid Number"
+        },
+        {
+          "code": "UP",
+          "description": "U.P.C. Shipping Container Code"
+        },
+        {
+          "code": "ZZ",
+          "description": "Mutually Defined"
+        }
+      ]
+    },
+    {
+      "position": 8,
+      "id": "L508",
+      "name": "Commodity Code Qualifier",
+      "type": "ID",
+      "min": 1,
+      "max": 1,
+      "required": false
+    },
+    {
+      "position": 9,
+      "id": "L509",
+      "name": "Commodity Code",
+      "type": "AN",
+      "min": 1,
+      "max": 30,
+      "required": false
+    },
+    {
+      "position": 10,
+      "id": "L510",
+      "name": "Compartment ID Code",
+      "type": "AN",
+      "min": 1,
+      "max": 1,
+      "required": false
+    }
+  ]
+}

@@ -37,7 +37,7 @@ func Generate999(
 
 	out := ""
 	out += fmt.Sprintf(
-		"ISA%[1]s00%[1]s          %[1]s00%[1]s          %[1]sZZ%[1]s%-15s%[1]sZZ%[1]s%-15s%[1]s%s%[1]s%s%[1]sU%[1]s00501%[1]s%s%[1]s0%[1]sP%[1]s>%s",
+		"ISA%[1]s00%[1]s          %[1]s00%[1]s          %[1]sZZ%[1]s%-15s%[1]sZZ%[1]s%-15s%[1]s%[4]s%[1]s%[5]s%[1]sU%[1]s00501%[1]s%[6]s%[1]s0%[1]sP%[1]s>%[7]s",
 		elem,
 		isaReceiver,
 		isaSender,
@@ -47,7 +47,7 @@ func Generate999(
 		seg,
 	)
 	out += fmt.Sprintf(
-		"GS%[1]sFA%[1]s%s%[1]s%s%[1]s%s%[1]s%s%[1]sX%[1]s005010%s",
+		"GS%[1]sFA%[1]s%[2]s%[1]s%[3]s%[1]s%[4]s%[1]s%[5]s%[1]sX%[1]s005010%[7]s",
 		elem,
 		isaSender,
 		isaReceiver,
@@ -56,9 +56,9 @@ func Generate999(
 		gsCtrl,
 		seg,
 	)
-	out += fmt.Sprintf("ST%[1]s999%[1]s%s%s", elem, stCtrl, seg)
+	out += fmt.Sprintf("ST%[1]s999%[1]s%[2]s%[3]s", elem, stCtrl, seg)
 	// AK1 for Functional Group SM
-	out += fmt.Sprintf("AK1%[1]sSM%[1]s1%s", elem, seg)
+	out += fmt.Sprintf("AK1%[1]sSM%[1]s1%[2]s", elem, seg)
 	// Per-transaction AK2/IK5
 	acceptedCount := 0
 	for i, tx := range txs {
@@ -66,14 +66,14 @@ func Generate999(
 		if tx.SetID != "204" {
 			continue
 		}
-		out += fmt.Sprintf("AK2%[1]s%s%[1]s%s%s", elem, tx.SetID, tx.Control, seg)
+		out += fmt.Sprintf("AK2%[1]s%[2]s%[1]s%[3]s%[4]s", elem, tx.SetID, tx.Control, seg)
 		code := "A"
 		if i < len(txAccepted) && !txAccepted[i] {
 			code = "E"
 		} else {
 			acceptedCount++
 		}
-		out += fmt.Sprintf("IK5%[1]s%s%s", elem, code, seg)
+		out += fmt.Sprintf("IK5%[1]s%[2]s%[3]s", elem, code, seg)
 	}
 	// AK9 summary for group
 	total := 0
@@ -96,7 +96,7 @@ func Generate999(
 	// naive segment count for ST/SE: ST, AK1, (AK2+IK5)*total, AK9, SE
 	seCount := 4 + 2*total
 	out += fmt.Sprintf("SE%[1]s%[2]d%[1]s%[3]s%[4]s", elem, seCount, stCtrl, seg)
-	out += fmt.Sprintf("GE%[1]s1%[1]s%s%s", elem, gsCtrl, seg)
-	out += fmt.Sprintf("IEA%[1]s1%[1]s%s%s", elem, ctrl, seg)
+	out += fmt.Sprintf("GE%[1]s1%[1]s%[2]s%[3]s", elem, gsCtrl, seg)
+	out += fmt.Sprintf("IEA%[1]s1%[1]s%[2]s%[3]s", elem, ctrl, seg)
 	return out
 }

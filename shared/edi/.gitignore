@@ -1,3 +1,5 @@
 .gocache
+.env
 testdata/
 specs/
+.claude/

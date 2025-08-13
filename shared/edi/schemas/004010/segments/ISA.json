@@ -1,0 +1,237 @@
+{
+  "id": "ISA",
+  "name": "Interchange Control Header",
+  "purpose": "To start and identify an interchange of zero or more functional groups and interchange-related control segments",
+  "position": 1,
+  "max_use": 1,
+  "elements": [
+    {
+      "position": 1,
+      "ref_id": "I01",
+      "name": "Authorization Information Qualifier",
+      "type": "ID",
+      "data_type": "Identifier (ID)",
+      "requirement": "Mandatory",
+      "min_length": 2,
+      "max_length": 2,
+      "repeat": 1,
+      "description": "Code to identify the type of information in the Authorization Information",
+      "codes": [
+        {"code": "00", "description": "No Authorization Information Present"},
+        {"code": "03", "description": "Additional Data Identification"}
+      ]
+    },
+    {
+      "position": 2,
+      "ref_id": "I02",
+      "name": "Authorization Information",
+      "type": "AN",
+      "data_type": "Alphanumeric",
+      "requirement": "Mandatory",
+      "min_length": 10,
+      "max_length": 10,
+      "repeat": 1,
+      "description": "Information used for additional identification or authorization"
+    },
+    {
+      "position": 3,
+      "ref_id": "I03",
+      "name": "Security Information Qualifier",
+      "type": "ID",
+      "data_type": "Identifier (ID)",
+      "requirement": "Mandatory",
+      "min_length": 2,
+      "max_length": 2,
+      "repeat": 1,
+      "description": "Code to identify the type of information in the Security Information",
+      "codes": [
+        {"code": "00", "description": "No Security Information Present"},
+        {"code": "01", "description": "Password"}
+      ]
+    },
+    {
+      "position": 4,
+      "ref_id": "I04",
+      "name": "Security Information",
+      "type": "AN",
+      "data_type": "Alphanumeric",
+      "requirement": "Mandatory",
+      "min_length": 10,
+      "max_length": 10,
+      "repeat": 1,
+      "description": "This is used for identifying the security information"
+    },
+    {
+      "position": 5,
+      "ref_id": "I05",
+      "name": "Interchange ID Qualifier",
+      "type": "ID",
+      "data_type": "Identifier (ID)",
+      "requirement": "Mandatory",
+      "min_length": 2,
+      "max_length": 2,
+      "repeat": 1,
+      "description": "Code indicating the system/method of code structure used to designate the sender ID",
+      "codes": [
+        {"code": "01", "description": "Duns (Dun & Bradstreet)"},
+        {"code": "02", "description": "SCAC (Standard Carrier Alpha Code)"},
+        {"code": "12", "description": "Phone (Telephone Companies)"},
+        {"code": "ZZ", "description": "Mutually Defined"}
+      ]
+    },
+    {
+      "position": 6,
+      "ref_id": "I06",
+      "name": "Interchange Sender ID",
+      "type": "AN",
+      "data_type": "Alphanumeric",
+      "requirement": "Mandatory",
+      "min_length": 15,
+      "max_length": 15,
+      "repeat": 1,
+      "description": "Identification code published by the sender"
+    },
+    {
+      "position": 7,
+      "ref_id": "I05",
+      "name": "Interchange ID Qualifier",
+      "type": "ID",
+      "data_type": "Identifier (ID)",
+      "requirement": "Mandatory",
+      "min_length": 2,
+      "max_length": 2,
+      "repeat": 1,
+      "description": "Code indicating the system/method of code structure used to designate the receiver ID"
+    },
+    {
+      "position": 8,
+      "ref_id": "I07",
+      "name": "Interchange Receiver ID",
+      "type": "AN",
+      "data_type": "Alphanumeric",
+      "requirement": "Mandatory",
+      "min_length": 15,
+      "max_length": 15,
+      "repeat": 1,
+      "description": "Identification code published by the receiver"
+    },
+    {
+      "position": 9,
+      "ref_id": "I08",
+      "name": "Interchange Date",
+      "type": "DT",
+      "data_type": "Date",
+      "requirement": "Mandatory",
+      "min_length": 6,
+      "max_length": 6,
+      "repeat": 1,
+      "description": "Date of the interchange (YYMMDD)"
+    },
+    {
+      "position": 10,
+      "ref_id": "I09",
+      "name": "Interchange Time",
+      "type": "TM",
+      "data_type": "Time",
+      "requirement": "Mandatory",
+      "min_length": 4,
+      "max_length": 4,
+      "repeat": 1,
+      "description": "Time of the interchange (HHMM)"
+    },
+    {
+      "position": 11,
+      "ref_id": "I10",
+      "name": "Interchange Control Standards ID",
+      "type": "ID",
+      "data_type": "Identifier (ID)",
+      "requirement": "Mandatory",
+      "min_length": 1,
+      "max_length": 1,
+      "repeat": 1,
+      "description": "Code to identify the agency responsible for the control standard",
+      "codes": [
+        {"code": "U", "description": "U.S. EDI Community of ASC X12"}
+      ]
+    },
+    {
+      "position": 12,
+      "ref_id": "I11",
+      "name": "Interchange Control Version Number",
+      "type": "ID",
+      "data_type": "Identifier (ID)",
+      "requirement": "Mandatory",
+      "min_length": 5,
+      "max_length": 5,
+      "repeat": 1,
+      "description": "Code specifying the version number of the interchange control segments",
+      "codes": [
+        {"code": "00401", "description": "Version 004010"}
+      ]
+    },
+    {
+      "position": 13,
+      "ref_id": "I12",
+      "name": "Interchange Control Number",
+      "type": "N0",
+      "data_type": "Numeric",
+      "requirement": "Mandatory",
+      "min_length": 9,
+      "max_length": 9,
+      "repeat": 1,
+      "description": "A control number assigned by the sender"
+    },
+    {
+      "position": 14,
+      "ref_id": "I13",
+      "name": "Acknowledgment Requested",
+      "type": "ID",
+      "data_type": "Identifier (ID)",
+      "requirement": "Mandatory",
+      "min_length": 1,
+      "max_length": 1,
+      "repeat": 1,
+      "description": "Code indicating sender's request for an acknowledgment",
+      "codes": [
+        {"code": "0", "description": "No Acknowledgment Requested"},
+        {"code": "1", "description": "Interchange Acknowledgment Requested"}
+      ]
+    },
+    {
+      "position": 15,
+      "ref_id": "I14",
+      "name": "Usage Indicator",
+      "type": "ID",
+      "data_type": "Identifier (ID)",
+      "requirement": "Mandatory",
+      "min_length": 1,
+      "max_length": 1,
+      "repeat": 1,
+      "description": "Code indicating whether data is test, production, or information",
+      "codes": [
+        {"code": "I", "description": "Information"},
+        {"code": "P", "description": "Production Data"},
+        {"code": "T", "description": "Test Data"}
+      ]
+    },
+    {
+      "position": 16,
+      "ref_id": "I15",
+      "name": "Component Element Separator",
+      "type": "AN",
+      "data_type": "Special",
+      "requirement": "Mandatory",
+      "min_length": 1,
+      "max_length": 1,
+      "repeat": 1,
+      "description": "Character used to separate component data elements"
+    }
+  ],
+  "example": "ISA*00*          *00*          *ZZ*SENDER         *ZZ*RECEIVER       *240101*1200*U*00401*000000001*0*P*>",
+  "notes": [
+    "ISA is a fixed-length segment",
+    "All elements are required",
+    "ISA06 and ISA08 must be left-padded with spaces to 15 characters",
+    "ISA02 and ISA04 must be right-padded with spaces to 10 characters"
+  ]
+}

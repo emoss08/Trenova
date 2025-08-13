@@ -1,0 +1,104 @@
+{
+  "id": "B2A",
+  "name": "Set Purpose",
+  "purpose": "To transmit identifying numbers and descriptive information as specified by the reference number qualifier",
+  "elements": [
+    {
+      "position": 1,
+      "id": "B2A01",
+      "name": "Transaction Set Purpose Code",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "required": true,
+      "codes": [
+        {
+          "code": "00",
+          "description": "Original"
+        },
+        {
+          "code": "01",
+          "description": "Cancellation"
+        },
+        {
+          "code": "02",
+          "description": "Add"
+        },
+        {
+          "code": "03",
+          "description": "Delete"
+        },
+        {
+          "code": "04",
+          "description": "Change"
+        },
+        {
+          "code": "05",
+          "description": "Replace"
+        },
+        {
+          "code": "07",
+          "description": "Duplicate"
+        },
+        {
+          "code": "11",
+          "description": "Response"
+        },
+        {
+          "code": "20",
+          "description": "Re-Submission"
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "id": "B2A02",
+      "name": "Type of Service Code",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "codes": [
+        {
+          "code": "LT",
+          "description": "Less Than Truckload"
+        },
+        {
+          "code": "TL",
+          "description": "Truckload"
+        },
+        {
+          "code": "AI",
+          "description": "Air"
+        },
+        {
+          "code": "MP",
+          "description": "Motor - Package Carrier"
+        },
+        {
+          "code": "TC",
+          "description": "Truckload with Temperature Control"
+        },
+        {
+          "code": "FL",
+          "description": "Flatbed"
+        },
+        {
+          "code": "EX",
+          "description": "Express"
+        },
+        {
+          "code": "IM",
+          "description": "Intermodal"
+        },
+        {
+          "code": "PP",
+          "description": "Private Parcel Service"
+        },
+        {
+          "code": "RL",
+          "description": "Rail"
+        }
+      ]
+    }
+  ]
+}

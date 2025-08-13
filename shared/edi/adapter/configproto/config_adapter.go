@@ -1,6 +1,8 @@
 package configproto
 
 import (
+	"maps"
+
 	"github.com/emoss08/trenova/shared/edi/pkg/configtypes"
 	configpb "github.com/emoss08/trenova/shared/edi/proto/config/v1"
 )
@@ -37,14 +39,12 @@ func ToProto(in *configtypes.PartnerConfig) *configpb.PartnerConfig {
 		AccessorialMap:      map[string]string{},
 		ShipmentIdQuals:     append([]string{}, in.ShipmentIDQuals...),
 	}
-	// Optional validation flags
 	out.Validation.EnforceSeCount = in.Validation.EnforceSECount
 	out.Validation.RequirePickupAndDelivery = in.Validation.RequirePickupAndDelivery
 	out.Validation.RequireB2ShipId = in.Validation.RequireB2ShipID
 	out.Validation.RequireN1Sh = in.Validation.RequireN1SH
 	out.Validation.RequireN1St = in.Validation.RequireN1ST
 
-	// References map[string][]string -> repeated entries
 	if len(in.References) > 0 {
 		out.References = make([]*configpb.ReferencesEntry, 0, len(in.References))
 		for k, vs := range in.References {
@@ -57,7 +57,6 @@ func ToProto(in *configtypes.PartnerConfig) *configpb.PartnerConfig {
 			)
 		}
 	}
-	// Party roles map
 	if len(in.PartyRoles) > 0 {
 		out.PartyRoles = make([]*configpb.PartyRolesEntry, 0, len(in.PartyRoles))
 		for role, codes := range in.PartyRoles {
@@ -67,19 +66,12 @@ func ToProto(in *configtypes.PartnerConfig) *configpb.PartnerConfig {
 			)
 		}
 	}
-	// Simple maps copy
-	for k, v := range in.StopTypeMap {
-		out.StopTypeMap[k] = v
-	}
-	for k, v := range in.EquipmentTypeMap {
-		out.EquipmentTypeMap[k] = v
-	}
-	for k, v := range in.ServiceLevelMap {
-		out.ServiceLevelMap[k] = v
-	}
-	for k, v := range in.AccessorialMap {
-		out.AccessorialMap[k] = v
-	}
+
+	maps.Copy(out.StopTypeMap, in.StopTypeMap)
+	maps.Copy(out.EquipmentTypeMap, in.EquipmentTypeMap)
+	maps.Copy(out.ServiceLevelMap, in.ServiceLevelMap)
+	maps.Copy(out.AccessorialMap, in.AccessorialMap)
+
 	return out
 }
 
@@ -117,7 +109,6 @@ func FromProto(in *configpb.PartnerConfig) *configtypes.PartnerConfig {
 		AccessorialQuals:    append([]string{}, in.GetAccessorialQuals()...),
 		AccessorialMap:      map[string]string{},
 	}
-	// Optional validation flags
 	if v := in.GetValidation().GetEnforceSeCount(); v != false {
 		out.Validation.EnforceSECount = &v
 	}
@@ -134,33 +125,24 @@ func FromProto(in *configpb.PartnerConfig) *configtypes.PartnerConfig {
 		out.Validation.RequireN1ST = &v
 	}
 
-	// References
 	for _, e := range in.GetReferences() {
 		if e == nil || e.List == nil {
 			continue
 		}
 		out.References[e.Key] = append([]string{}, e.List.Values...)
 	}
-	// Party roles
 	for _, pr := range in.GetPartyRoles() {
 		if pr == nil {
 			continue
 		}
 		out.PartyRoles[pr.Role] = append([]string{}, pr.N1Codes...)
 	}
-	// Maps
-	for k, v := range in.GetStopTypeMap() {
-		out.StopTypeMap[k] = v
-	}
-	for k, v := range in.GetEquipmentTypeMap() {
-		out.EquipmentTypeMap[k] = v
-	}
-	for k, v := range in.GetServiceLevelMap() {
-		out.ServiceLevelMap[k] = v
-	}
-	for k, v := range in.GetAccessorialMap() {
-		out.AccessorialMap[k] = v
-	}
+
+	maps.Copy(out.StopTypeMap, in.GetStopTypeMap())
+	maps.Copy(out.EquipmentTypeMap, in.GetEquipmentTypeMap())
+	maps.Copy(out.ServiceLevelMap, in.GetServiceLevelMap())
+	maps.Copy(out.AccessorialMap, in.GetAccessorialMap())
+
 	return out
 }
 

@@ -1,0 +1,253 @@
+{
+  "id": "G62",
+  "name": "Date/Time",
+  "purpose": "To specify pertinent dates and times",
+  "elements": [
+    {
+      "position": 1,
+      "id": "G6201",
+      "name": "Date Qualifier",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "required": true,
+      "codes": [
+        {
+          "code": "01",
+          "description": "Cancel After"
+        },
+        {
+          "code": "02",
+          "description": "Delivery Requested"
+        },
+        {
+          "code": "03",
+          "description": "Invoice"
+        },
+        {
+          "code": "04",
+          "description": "Purchase Order"
+        },
+        {
+          "code": "05",
+          "description": "Sailing"
+        },
+        {
+          "code": "06",
+          "description": "Sold"
+        },
+        {
+          "code": "07",
+          "description": "Effective"
+        },
+        {
+          "code": "10",
+          "description": "Requested Ship"
+        },
+        {
+          "code": "37",
+          "description": "Ship Not Before"
+        },
+        {
+          "code": "38",
+          "description": "Ship Not Later"
+        },
+        {
+          "code": "53",
+          "description": "Deliver No Later Than"
+        },
+        {
+          "code": "54",
+          "description": "Deliver No Earlier Than"
+        },
+        {
+          "code": "64",
+          "description": "Latest Ship Date"
+        },
+        {
+          "code": "68",
+          "description": "Requested Pickup"
+        },
+        {
+          "code": "69",
+          "description": "Promised for Delivery"
+        },
+        {
+          "code": "70",
+          "description": "Scheduled for Delivery"
+        },
+        {
+          "code": "76",
+          "description": "Scheduled Pickup"
+        },
+        {
+          "code": "77",
+          "description": "Actual Pickup"
+        },
+        {
+          "code": "78",
+          "description": "Actual Delivery"
+        },
+        {
+          "code": "79",
+          "description": "Promised for Pickup"
+        },
+        {
+          "code": "86",
+          "description": "Actual Pickup Date/Time"
+        },
+        {
+          "code": "87",
+          "description": "Estimated Delivery"
+        },
+        {
+          "code": "89",
+          "description": "Stop Off"
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "id": "G6202",
+      "name": "Date",
+      "type": "DT",
+      "min": 8,
+      "max": 8,
+      "format": "CCYYMMDD",
+      "required": true
+    },
+    {
+      "position": 3,
+      "id": "G6203",
+      "name": "Time Qualifier",
+      "type": "ID",
+      "min": 1,
+      "max": 2,
+      "codes": [
+        {
+          "code": "1",
+          "description": "Local Time"
+        },
+        {
+          "code": "2",
+          "description": "Eastern Time"
+        },
+        {
+          "code": "3",
+          "description": "Central Time"
+        },
+        {
+          "code": "4",
+          "description": "Mountain Time"
+        },
+        {
+          "code": "5",
+          "description": "Pacific Time"
+        },
+        {
+          "code": "A",
+          "description": "Alaska Time"
+        },
+        {
+          "code": "E",
+          "description": "Eastern Time"
+        },
+        {
+          "code": "H",
+          "description": "Hawaii-Aleutian Time"
+        },
+        {
+          "code": "LT",
+          "description": "Local Time"
+        },
+        {
+          "code": "ET",
+          "description": "Eastern Time"
+        },
+        {
+          "code": "CT",
+          "description": "Central Time"
+        },
+        {
+          "code": "MT",
+          "description": "Mountain Time"
+        },
+        {
+          "code": "PT",
+          "description": "Pacific Time"
+        }
+      ]
+    },
+    {
+      "position": 4,
+      "id": "G6204",
+      "name": "Time",
+      "type": "TM",
+      "min": 4,
+      "max": 8,
+      "format": "HHMM"
+    },
+    {
+      "position": 5,
+      "id": "G6205",
+      "name": "Time Code",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "codes": [
+        {
+          "code": "01",
+          "description": "Central Time"
+        },
+        {
+          "code": "02",
+          "description": "Eastern Time"
+        },
+        {
+          "code": "03",
+          "description": "Greenwich Mean Time"
+        },
+        {
+          "code": "04",
+          "description": "Local Time"
+        },
+        {
+          "code": "05",
+          "description": "Mountain Time"
+        },
+        {
+          "code": "06",
+          "description": "Pacific Time"
+        },
+        {
+          "code": "AT",
+          "description": "Alaska Time"
+        },
+        {
+          "code": "CT",
+          "description": "Central Time"
+        },
+        {
+          "code": "ET",
+          "description": "Eastern Time"
+        },
+        {
+          "code": "HT",
+          "description": "Hawaii-Aleutian Time"
+        },
+        {
+          "code": "LT",
+          "description": "Local Time"
+        },
+        {
+          "code": "MT",
+          "description": "Mountain Time"
+        },
+        {
+          "code": "PT",
+          "description": "Pacific Time"
+        }
+      ]
+    }
+  ]
+}

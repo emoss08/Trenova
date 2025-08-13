@@ -1,10 +1,10 @@
 package config
 
 import (
-	"encoding/json"
 	"os"
 	"strings"
 
+	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/shared/edi/internal/validation"
 	"github.com/emoss08/trenova/shared/edi/internal/x12"
 )
@@ -73,7 +73,7 @@ func Load(path string) (*PartnerConfig, error) {
 		return nil, err
 	}
 	var pc PartnerConfig
-	if err := json.Unmarshal(b, &pc); err != nil {
+	if err := sonic.Unmarshal(b, &pc); err != nil {
 		return nil, err
 	}
 	return &pc, nil
