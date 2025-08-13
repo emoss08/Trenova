@@ -1,0 +1,82 @@
+{
+  "tag": "RTT",
+  "name": "Freight Rate Information",
+  "purpose": "To specify freight rate details",
+  "elements": [
+    {
+      "position": 1,
+      "id": "346",
+      "name": "Rate/Value Qualifier",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "required": true,
+      "codes": [
+        {
+          "code": "FC",
+          "description": "Full Charge"
+        },
+        {
+          "code": "FR",
+          "description": "Flat Rate"
+        },
+        {
+          "code": "PM",
+          "description": "Per Mile"
+        },
+        {
+          "code": "CW",
+          "description": "Per Hundred Weight"
+        },
+        {
+          "code": "PC",
+          "description": "Percent"
+        },
+        {
+          "code": "DI",
+          "description": "Discount"
+        },
+        {
+          "code": "FS",
+          "description": "Fuel Surcharge"
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "id": "122",
+      "name": "Freight Rate",
+      "type": "R",
+      "min": 1,
+      "max": 9,
+      "required": false
+    },
+    {
+      "position": 3,
+      "id": "100",
+      "name": "Currency Code",
+      "type": "ID",
+      "min": 3,
+      "max": 3,
+      "required": false
+    },
+    {
+      "position": 4,
+      "id": "21",
+      "name": "Minimum Weight",
+      "type": "R",
+      "min": 1,
+      "max": 10,
+      "required": false
+    },
+    {
+      "position": 5,
+      "id": "155",
+      "name": "Minimum Volume",
+      "type": "R",
+      "min": 1,
+      "max": 8,
+      "required": false
+    }
+  ]
+}

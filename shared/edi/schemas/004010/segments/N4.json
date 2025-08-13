@@ -1,0 +1,115 @@
+{
+  "id": "N4",
+  "name": "Geographic Location",
+  "purpose": "To specify the geographic place of the named party",
+  "elements": [
+    {
+      "position": 1,
+      "id": "N401",
+      "name": "City Name",
+      "type": "AN",
+      "min": 2,
+      "max": 30,
+      "required": false
+    },
+    {
+      "position": 2,
+      "id": "N402",
+      "name": "State or Province Code",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "required": false
+    },
+    {
+      "position": 3,
+      "id": "N403",
+      "name": "Postal Code",
+      "type": "ID",
+      "min": 3,
+      "max": 15,
+      "required": false
+    },
+    {
+      "position": 4,
+      "id": "N404",
+      "name": "Country Code",
+      "type": "ID",
+      "min": 2,
+      "max": 3,
+      "required": false,
+      "codes": [
+        {
+          "code": "US",
+          "description": "United States"
+        },
+        {
+          "code": "CA",
+          "description": "Canada"
+        },
+        {
+          "code": "MX",
+          "description": "Mexico"
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "id": "N405",
+      "name": "Location Qualifier",
+      "type": "ID",
+      "min": 1,
+      "max": 2,
+      "codes": [
+        {
+          "code": "AR",
+          "description": "Armed Services Location Designation"
+        },
+        {
+          "code": "CI",
+          "description": "City"
+        },
+        {
+          "code": "CO",
+          "description": "County/Parish"
+        },
+        {
+          "code": "MI",
+          "description": "Mill"
+        },
+        {
+          "code": "PL",
+          "description": "Plant"
+        },
+        {
+          "code": "SP",
+          "description": "State/Province"
+        },
+        {
+          "code": "TM",
+          "description": "Terminal"
+        },
+        {
+          "code": "UN",
+          "description": "United Nations Location Code"
+        }
+      ]
+    },
+    {
+      "position": 6,
+      "id": "N406",
+      "name": "Location Identifier",
+      "type": "AN",
+      "min": 1,
+      "max": 30
+    },
+    {
+      "position": 7,
+      "id": "N407",
+      "name": "Country Subdivision Code",
+      "type": "ID",
+      "min": 1,
+      "max": 3
+    }
+  ]
+}

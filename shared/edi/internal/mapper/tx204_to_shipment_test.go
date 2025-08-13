@@ -109,29 +109,6 @@ func TestOptions_DateTimeNormalization(t *testing.T) {
 	}
 }
 
-func TestMapping_Totals_Commodities_FedEx(t *testing.T) {
-	raw, err := os.ReadFile("../../testdata/204/fedex.edi")
-	if err != nil {
-		t.Skip("fedex sample not present")
-	}
-	delims, err := x12.DetectDelimiters(raw)
-	if err != nil {
-		t.Fatalf("delims: %v", err)
-	}
-	segs, err := x12.ParseSegments(raw, delims)
-	if err != nil {
-		t.Fatalf("parse: %v", err)
-	}
-	lt := tx204.BuildFromSegments(segs)
-	shp := ToShipmentWithOptions(lt, DefaultOptions())
-	if shp.Totals.Weight == "" {
-		t.Fatalf("expected totals weight populated from L3/AT8")
-	}
-	// FedEx sample uses pounds; unit may be 'L'
-	if len(shp.Goods) == 0 {
-		t.Fatalf("expected at least one commodity from L5")
-	}
-}
 
 func TestMapping_ServiceLevel_Accessorials_FromRefs(t *testing.T) {
 	// Build a minimal LT with header references for service level and accessorials

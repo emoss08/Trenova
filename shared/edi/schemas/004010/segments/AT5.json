@@ -1,0 +1,52 @@
+{
+  "tag": "AT5",
+  "name": "Bill of Lading Handling Requirements",
+  "purpose": "To specify special handling instructions, or hazardous materials, or both",
+  "elements": [
+    {
+      "position": 1,
+      "id": "152",
+      "name": "Special Handling Code",
+      "type": "ID",
+      "min": 2,
+      "max": 3,
+      "required": false,
+      "codes": [
+        {"code": "400", "description": "Transport"},
+        {"code": "SOC", "description": "Stop-off Charge"},
+        {"code": "FC", "description": "Full Charge"},
+        {"code": "HM", "description": "Hazardous Material"},
+        {"code": "LG", "description": "Liftgate"},
+        {"code": "ID", "description": "Inside Delivery"},
+        {"code": "RD", "description": "Residential Delivery"}
+      ]
+    },
+    {
+      "position": 2,
+      "id": "153",
+      "name": "Special Services Code",
+      "type": "ID",
+      "min": 2,
+      "max": 10,
+      "required": false
+    },
+    {
+      "position": 3,
+      "id": "352",
+      "name": "Special Handling Description",
+      "type": "AN",
+      "min": 2,
+      "max": 80,
+      "required": false
+    },
+    {
+      "position": 4,
+      "id": "755",
+      "name": "Unit or Basis for Measurement Code",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "required": false
+    }
+  ]
+}

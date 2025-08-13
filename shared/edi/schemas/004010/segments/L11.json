@@ -1,0 +1,92 @@
+{
+  "id": "L11",
+  "name": "Business Instructions and Reference Number",
+  "purpose": "To transmit identifying numbers and descriptive information as specified by the reference number qualifier",
+  "elements": [
+    {
+      "position": 1,
+      "id": "L1101",
+      "name": "Reference Identification",
+      "type": "AN",
+      "min": 1,
+      "max": 30,
+      "required": false
+    },
+    {
+      "position": 2,
+      "id": "L1102",
+      "name": "Reference Identification Qualifier",
+      "type": "ID",
+      "min": 2,
+      "max": 3,
+      "required": true,
+      "codes": [
+        {
+          "code": "BM",
+          "description": "Bill of Lading Number"
+        },
+        {
+          "code": "CN",
+          "description": "Carrier's Reference Number (PRO/Invoice)"
+        },
+        {
+          "code": "CR",
+          "description": "Customer Reference Number"
+        },
+        {
+          "code": "DO",
+          "description": "Delivery Order Number"
+        },
+        {
+          "code": "LO",
+          "description": "Load Planning Number"
+        },
+        {
+          "code": "MB",
+          "description": "Master Bill of Lading"
+        },
+        {
+          "code": "PO",
+          "description": "Purchase Order Number"
+        },
+        {
+          "code": "QN",
+          "description": "Stop Sequence Number"
+        },
+        {
+          "code": "QY",
+          "description": "Service Performed Qualifier"
+        },
+        {
+          "code": "SI",
+          "description": "Shipper's Identifying Number for Shipment"
+        },
+        {
+          "code": "TH",
+          "description": "Transportation Control Number"
+        },
+        {
+          "code": "TN",
+          "description": "Transaction Reference Number"
+        },
+        {
+          "code": "VN",
+          "description": "Vendor Order Number"
+        },
+        {
+          "code": "ZZ",
+          "description": "Mutually Defined"
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "id": "L1103",
+      "name": "Description",
+      "type": "AN",
+      "min": 1,
+      "max": 80,
+      "required": false
+    }
+  ]
+}

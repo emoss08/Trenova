@@ -1,0 +1,119 @@
+{
+  "id": "NTE",
+  "name": "Note/Special Instruction",
+  "purpose": "To transmit information in a free-form format, if necessary, for comment or special instruction",
+  "elements": [
+    {
+      "position": 1,
+      "id": "NTE01",
+      "name": "Note Reference Code",
+      "type": "ID",
+      "min": 3,
+      "max": 3,
+      "required": false,
+      "codes": [
+        {
+          "code": "ADD",
+          "description": "Additional Information"
+        },
+        {
+          "code": "BOL",
+          "description": "Bill of Lading Note"
+        },
+        {
+          "code": "CAH",
+          "description": "Carrier Assigned Number"
+        },
+        {
+          "code": "CBH",
+          "description": "Carrier Bill of Lading Number"
+        },
+        {
+          "code": "CER",
+          "description": "Certification"
+        },
+        {
+          "code": "DFR",
+          "description": "Delivery Receipt"
+        },
+        {
+          "code": "DEL",
+          "description": "Delivery"
+        },
+        {
+          "code": "DRV",
+          "description": "Driver Instructions"
+        },
+        {
+          "code": "GEN",
+          "description": "General"
+        },
+        {
+          "code": "HAN",
+          "description": "Handling Instructions"
+        },
+        {
+          "code": "HAZ",
+          "description": "Hazardous Material Information"
+        },
+        {
+          "code": "ICN",
+          "description": "Interline Carrier"
+        },
+        {
+          "code": "IMP",
+          "description": "Important Notice"
+        },
+        {
+          "code": "INT",
+          "description": "General Order"
+        },
+        {
+          "code": "LOI",
+          "description": "Loading Instructions"
+        },
+        {
+          "code": "ORI",
+          "description": "Origin"
+        },
+        {
+          "code": "PED",
+          "description": "Pick-up"
+        },
+        {
+          "code": "PRI",
+          "description": "Priority"
+        },
+        {
+          "code": "REL",
+          "description": "Release Note"
+        },
+        {
+          "code": "SHP",
+          "description": "Shipping"
+        },
+        {
+          "code": "SPH",
+          "description": "Special Handling"
+        },
+        {
+          "code": "TRN",
+          "description": "Transportation"
+        },
+        {
+          "code": "WHI",
+          "description": "Warehouse Instruction"
+        }
+      ]
+    },
+    {
+      "position": 2,
+      "id": "NTE02",
+      "name": "Description",
+      "type": "AN",
+      "min": 1,
+      "max": 80,
+      "required": true
+    }
+  ]
+}

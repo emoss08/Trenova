@@ -42,7 +42,7 @@ func Generate997(segs []x12.Segment, delims x12.Delimiters, issues []validation.
 	// ISA (swap sender/receiver for ack)
 	out := ""
 	out += fmt.Sprintf(
-		"ISA%[1]s00%[1]s          %[1]s00%[1]s          %[1]sZZ%[1]s%-15s%[1]sZZ%[1]s%-15s%[1]s%s%[1]s%s%[1]sU%[1]s00401%[1]s%s%[1]s0%[1]sP%[1]s>%s",
+		"ISA%[1]s00%[1]s          %[1]s00%[1]s          %[1]sZZ%[1]s%-15s%[1]sZZ%[1]s%-15s%[1]s%[4]s%[1]s%[5]s%[1]sU%[1]s00401%[1]s%[6]s%[1]s0%[1]sP%[1]s>%[7]s",
 		elem,
 		isaReceiver,
 		isaSender,
@@ -52,7 +52,7 @@ func Generate997(segs []x12.Segment, delims x12.Delimiters, issues []validation.
 		seg,
 	)
 	out += fmt.Sprintf(
-		"GS%[1]sFA%[1]s%s%[1]s%s%[1]s%s%[1]s%s%[1]sX%[1]s004010%s",
+		"GS%[1]sFA%[1]s%[2]s%[1]s%[3]s%[1]s%[4]s%[1]s%[5]s%[1]sX%[1]s004010%[7]s",
 		elem,
 		isaSender,
 		isaReceiver,
@@ -61,19 +61,19 @@ func Generate997(segs []x12.Segment, delims x12.Delimiters, issues []validation.
 		gsCtrl,
 		seg,
 	)
-	out += fmt.Sprintf("ST%[1]s997%[1]s%s%s", elem, stCtrl, seg)
+	out += fmt.Sprintf("ST%[1]s997%[1]s%[2]s%[3]s", elem, stCtrl, seg)
 	// AK1: Functional group response (SM)
-	out += fmt.Sprintf("AK1%[1]sSM%[1]s1%s", elem, seg)
+	out += fmt.Sprintf("AK1%[1]sSM%[1]s1%[2]s", elem, seg)
 	// AK9: Group response code
 	code := "A"
 	if hasErrors(issues) {
 		code = "E"
 	}
 	// AK9 with counts: here we collapse to 1/1/1 for simplicity
-	out += fmt.Sprintf("AK9%[1]s%s%[1]s1%[1]s1%[1]s1%s", elem, code, seg)
-	out += fmt.Sprintf("SE%[1]s4%[1]s%s%s", elem, stCtrl, seg)
-	out += fmt.Sprintf("GE%[1]s1%[1]s%s%s", elem, gsCtrl, seg)
-	out += fmt.Sprintf("IEA%[1]s1%[1]s%s%s", elem, ctrl, seg)
+	out += fmt.Sprintf("AK9%[1]s%[2]s%[1]s1%[1]s1%[1]s1%[3]s", elem, code, seg)
+	out += fmt.Sprintf("SE%[1]s4%[1]s%[2]s%[3]s", elem, stCtrl, seg)
+	out += fmt.Sprintf("GE%[1]s1%[1]s%[2]s%[3]s", elem, gsCtrl, seg)
+	out += fmt.Sprintf("IEA%[1]s1%[1]s%[2]s%[3]s", elem, ctrl, seg)
 	return out
 }
 

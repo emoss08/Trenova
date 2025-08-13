@@ -1,0 +1,222 @@
+{
+  "id": "L3",
+  "name": "Total Weight and Charges",
+  "purpose": "To specify the total shipment in terms of weight, volume, quantity, rate, and charges",
+  "elements": [
+    {
+      "position": 1,
+      "id": "L301",
+      "name": "Weight",
+      "type": "R",
+      "min": 1,
+      "max": 10,
+      "required": false
+    },
+    {
+      "position": 2,
+      "id": "L302",
+      "name": "Weight Qualifier",
+      "type": "ID",
+      "min": 1,
+      "max": 2,
+      "required": false,
+      "codes": [
+        {
+          "code": "A",
+          "description": "Aggregate Weight"
+        },
+        {
+          "code": "B",
+          "description": "Billed Weight"
+        },
+        {
+          "code": "G",
+          "description": "Gross Weight"
+        },
+        {
+          "code": "N",
+          "description": "Actual Net Weight"
+        },
+        {
+          "code": "T",
+          "description": "Tare Weight"
+        }
+      ]
+    },
+    {
+      "position": 3,
+      "id": "L303",
+      "name": "Freight Rate",
+      "type": "R",
+      "min": 1,
+      "max": 9,
+      "required": false
+    },
+    {
+      "position": 4,
+      "id": "L304",
+      "name": "Rate/Value Qualifier",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "required": false,
+      "codes": [
+        {
+          "code": "FR",
+          "description": "Flat Rate"
+        },
+        {
+          "code": "PM",
+          "description": "Per Mile"
+        },
+        {
+          "code": "PH",
+          "description": "Per Hundred Weight"
+        },
+        {
+          "code": "PS",
+          "description": "Per Shipment"
+        },
+        {
+          "code": "PT",
+          "description": "Per Ton"
+        },
+        {
+          "code": "PU",
+          "description": "Per Unit"
+        }
+      ]
+    },
+    {
+      "position": 5,
+      "id": "L305",
+      "name": "Charge",
+      "type": "N2",
+      "min": 1,
+      "max": 12,
+      "required": false
+    },
+    {
+      "position": 6,
+      "id": "L306",
+      "name": "Advances",
+      "type": "N2",
+      "min": 1,
+      "max": 9,
+      "required": false
+    },
+    {
+      "position": 7,
+      "id": "L307",
+      "name": "Prepaid Amount",
+      "type": "N2",
+      "min": 1,
+      "max": 9,
+      "required": false
+    },
+    {
+      "position": 8,
+      "id": "L308",
+      "name": "Special Charge or Allowance Code",
+      "type": "ID",
+      "min": 3,
+      "max": 3,
+      "required": false
+    },
+    {
+      "position": 9,
+      "id": "L309",
+      "name": "Volume",
+      "type": "R",
+      "min": 1,
+      "max": 8,
+      "required": false
+    },
+    {
+      "position": 10,
+      "id": "L310",
+      "name": "Volume Unit Qualifier",
+      "type": "ID",
+      "min": 1,
+      "max": 1,
+      "required": false,
+      "codes": [
+        {
+          "code": "C",
+          "description": "Cubic Feet"
+        },
+        {
+          "code": "E",
+          "description": "Cubic Meters"
+        },
+        {
+          "code": "G",
+          "description": "Gallons"
+        },
+        {
+          "code": "L",
+          "description": "Liters"
+        }
+      ]
+    },
+    {
+      "position": 11,
+      "id": "L311",
+      "name": "Lading Quantity",
+      "type": "N0",
+      "min": 1,
+      "max": 7,
+      "required": false
+    },
+    {
+      "position": 12,
+      "id": "L312",
+      "name": "Weight Unit Code",
+      "type": "ID",
+      "min": 1,
+      "max": 1,
+      "required": false,
+      "codes": [
+        {
+          "code": "K",
+          "description": "Kilograms"
+        },
+        {
+          "code": "L",
+          "description": "Pounds"
+        },
+        {
+          "code": "T",
+          "description": "Metric Ton"
+        }
+      ]
+    },
+    {
+      "position": 13,
+      "id": "L313",
+      "name": "Tariff Number",
+      "type": "AN",
+      "min": 1,
+      "max": 7,
+      "required": false
+    },
+    {
+      "position": 14,
+      "id": "L314",
+      "name": "Declared Value",
+      "type": "N2",
+      "min": 2,
+      "max": 12,
+      "required": false
+    },
+    {
+      "position": 15,
+      "id": "L315",
+      "name": "Rate/Value Qualifier",
+      "type": "ID",
+      "min": 2,
+      "max": 2,
+      "required": false
+    }
+  ]
+}

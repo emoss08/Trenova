@@ -1,0 +1,46 @@
+{
+  "id": "ST",
+  "name": "Transaction Set Header",
+  "purpose": "To indicate the start of a transaction set and to assign a control number",
+  "version": "004010",
+  "elements": [
+    {
+      "id": "ST01",
+      "name": "Transaction Set Identifier Code",
+      "position": 1,
+      "requirement": "mandatory",
+      "data_type": "ID",
+      "min_length": 3,
+      "max_length": 3,
+      "code_values": {
+        "204": "Motor Carrier Load Tender",
+        "210": "Motor Carrier Freight Details and Invoice",
+        "211": "Motor Carrier Bill of Lading",
+        "214": "Transportation Carrier Shipment Status Message",
+        "990": "Response to a Load Tender",
+        "997": "Functional Acknowledgment",
+        "999": "Implementation Acknowledgment"
+      }
+    },
+    {
+      "id": "ST02",
+      "name": "Transaction Set Control Number",
+      "position": 2,
+      "requirement": "mandatory",
+      "data_type": "AN",
+      "min_length": 4,
+      "max_length": 9,
+      "description": "Identifying control number that must be unique within the transaction set functional group assigned by the originator for a transaction set"
+    },
+    {
+      "id": "ST03",
+      "name": "Implementation Convention Reference",
+      "position": 3,
+      "requirement": "optional",
+      "data_type": "AN",
+      "min_length": 1,
+      "max_length": 35,
+      "description": "Reference assigned to identify Implementation Convention"
+    }
+  ]
+}
