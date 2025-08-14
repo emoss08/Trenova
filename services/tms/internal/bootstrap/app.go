@@ -26,7 +26,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/cdc"
 	postgresRepos "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/encryption"
-	"github.com/emoss08/trenova/internal/infrastructure/grpc"
 	"github.com/emoss08/trenova/internal/infrastructure/jobs"
 	"github.com/emoss08/trenova/internal/infrastructure/telemetry"
 	"github.com/emoss08/trenova/internal/pkg/formula"
@@ -37,19 +36,13 @@ import (
 // Bootstrap initializes and starts the application
 func Bootstrap() error {
 	app := fx.New(
-		// Config and Logger must come first
 		infrastructure.ConfigModule,
 		infrastructure.LoggerModule,
-
-		// Telemetry needs to be loaded before database and cache
 		telemetry.Module,
-
-		// Now load the rest of infrastructure
 		infrastructure.DatabaseModule,
 		infrastructure.StorageModule,
 		infrastructure.CacheModule,
 		infrastructure.BackupModule,
-
 		redisRepos.Module,
 		statemachine.Module,
 		seqgen.Module,
@@ -65,12 +58,7 @@ func Bootstrap() error {
 		services.Module,
 		streaming.Module,
 		api.Module,
-		grpc.Module,
 		jobs.Module,
-		// fx.WithLogger(func() fxevent.Logger {
-		// 	return &fxevent.ZapLogger{Logger: zap.NewExample()}
-		// }),
-		fx.NopLogger,
 	)
 
 	startCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
@@ -80,27 +68,22 @@ func Bootstrap() error {
 		return err
 	}
 
-	// Wait for interrupt signal
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 
 	fmt.Println("Shutdown initiated, closing resources...")
 
-	// Graceful shutdown with a deadline warning
 	stopCtx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	// Set up a deadline warning
 	go func() {
 		select {
 		case <-stopCtx.Done():
-			// Context deadline exceeded, but we still want to continue shutdown
 			fmt.Println(
 				"WARNING: Shutdown is taking longer than expected, some resources may not be properly cleaned up",
 			)
 		case <-time.After(5 * time.Second):
-			// This will only trigger if stopCtx doesn't finish within 5 seconds
 			fmt.Println("Shutdown in progress, waiting for resources to clean up...")
 		}
 	}()
@@ -108,7 +91,6 @@ func Bootstrap() error {
 	err := app.Stop(stopCtx)
 	if err != nil {
 		fmt.Printf("Error during shutdown: %v\n", err)
-		// Even if we have an error, we return nil to ensure the process exits cleanly
 		return nil
 	}
 

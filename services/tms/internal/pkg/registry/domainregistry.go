@@ -16,7 +16,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/domain/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/core/domain/documentqualityfeedback"
-	"github.com/emoss08/trenova/internal/core/domain/edi"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
@@ -104,6 +103,5 @@ func RegisterEntities() []any {
 		&consolidation.ConsolidationSettings{},
 		&consolidation.ConsolidationGroup{},
 		&formulatemplate.FormulaTemplate{},
-		&edi.PartnerConfig{},
 	}
 }
