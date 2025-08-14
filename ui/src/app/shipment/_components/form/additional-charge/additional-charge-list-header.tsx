@@ -30,7 +30,7 @@ function AdditionalChargeHeaderDetails({
   additionalCharges: ShipmentSchema["additionalCharges"];
 }) {
   return (
-    <div className="flex items-center gap-1">
+    <div className="flex items-center gap-1 font-table">
       <h3 className="text-sm font-medium">Additional Charges</h3>
       <span className="text-2xs text-muted-foreground">
         ({additionalCharges?.length ?? 0})

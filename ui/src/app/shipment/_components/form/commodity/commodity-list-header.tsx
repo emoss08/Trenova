@@ -34,8 +34,8 @@ function CommodityListHeaderDetails({
   commodities: ShipmentSchema["commodities"];
 }) {
   return (
-    <div className="flex items-center gap-1">
-      <h3 className="text-sm font-medium">Commodities</h3>
+    <div className="flex flex-row text-center items-center gap-1 font-table">
+      <h3 className="text-sm font-medium capitalize">Commodities</h3>
       <span className="text-2xs text-muted-foreground">
         ({commodities?.length ?? 0})
       </span>

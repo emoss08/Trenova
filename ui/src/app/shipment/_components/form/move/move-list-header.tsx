@@ -24,9 +24,9 @@ const AddMoveButton = memo(function AddMoveButton({
 
 function MoveListHeaderDetails({ moves }: { moves: ShipmentSchema["moves"] }) {
   return (
-    <div className="flex items-center gap-1">
-      <h3 className="text-sm font-medium">Moves</h3>
-      <span className="text-2xs text-muted-foreground">
+    <div className="flex flex-row text-center items-center gap-x-1 font-table">
+      <h3 className="text-sm font-medium font-table capitalize">Moves</h3>
+      <span className="text-2xs text-muted-foreground mt-0.5">
         ({moves?.length ?? 0})
       </span>
     </div>

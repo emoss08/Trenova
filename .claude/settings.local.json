@@ -48,7 +48,8 @@
       "Bash(go doc:*)",
       "Bash(task test:*)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   },
   "enableAllProjectMcpServers": false
 }

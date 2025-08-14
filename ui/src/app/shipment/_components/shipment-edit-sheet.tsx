@@ -1,9 +1,11 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 /*
  * Copyright 2023-2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-/* eslint-disable react-hooks/exhaustive-deps */
+"use no memo";
+
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import {
   Sheet,
@@ -18,7 +20,7 @@ import { useUrlFragment } from "@/hooks/use-url-fragment";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { EditTableSheetProps } from "@/types/data-table";
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
-import { ShipmentForm } from "./form/shipment-form";
+import { ShipmentEditForm } from "./form/shipment-form";
 
 export function ShipmentEditSheet({
   currentRecord,
@@ -112,7 +114,6 @@ export function ShipmentEditSheet({
           <MemoizedShipmentSheetBody
             selectedShipment={currentRecord}
             isLoading={isLoading}
-            isError={false}
           />
         </SheetContent>
       </Sheet>
@@ -121,20 +122,17 @@ export function ShipmentEditSheet({
 }
 
 function ShipmentSheetBody({
-  isLoading,
-  isError,
   selectedShipment,
+  isLoading,
 }: {
-  isLoading: boolean;
-  isError: boolean;
   selectedShipment?: ShipmentSchema | null;
+  isLoading: boolean;
 }) {
   return (
     <SheetBody className="p-0">
-      <ShipmentForm
+      <ShipmentEditForm
         selectedShipment={selectedShipment}
         isLoading={isLoading}
-        isError={isError}
       />
     </SheetBody>
   );

@@ -37,10 +37,9 @@ type BaseNumberFieldProps = Omit<ArkNumberInput.RootProps, "name"> & {
   className?: string;
   placeholder?: string;
   formattedOptions?: Intl.NumberFormatOptions;
-  inputMode?: "text" | "tel" | "numeric" | "decimal";
   sideText?: string;
-  rightElement?: React.ReactNode;
   hideLabel?: boolean;
+  tabIndex?: number;
 };
 
 export type NumberFieldProps<T extends FieldValues> = BaseNumberFieldProps &

@@ -137,7 +137,7 @@ function ShipmentsByExpectedDeliverDateCard({
         shipment.proNumber,
         shipment.customerName,
         shipment.status,
-        formatToUserTimezone(shipment.expectedDelivery, {
+        formatToUserTimezone(shipment.expectedDelivery ?? 0, {
           timeFormat: user?.timeFormat,
         }),
         shipment.deliveryLocation,
@@ -228,7 +228,7 @@ function ShipmentsByExpectedDeliverDateCard({
                       </Link>{" "}
                       on{" "}
                       <span className="font-semibold text-primary">
-                        {formatToUserTimezone(shipment.expectedDelivery, {
+                        {formatToUserTimezone(shipment.expectedDelivery ?? 0, {
                           timeFormat: user?.timeFormat,
                           showSeconds: false,
                           showTime: false,

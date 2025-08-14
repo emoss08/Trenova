@@ -2,22 +2,14 @@
  * Copyright 2023-2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import { LazyComponent } from "@/components/error-boundary";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { MoveSchema } from "@/lib/schemas/move-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { nanoid } from "nanoid";
-import React, { lazy } from "react";
+import React from "react";
 import type { UseFieldArrayRemove, UseFieldArrayUpdate } from "react-hook-form";
 import { toast } from "sonner";
-
-const StopTimeline = lazy(
-  () =>
-    import(
-      "@/app/shipment/_components/sidebar/stop-details/stop-timeline-content"
-    ),
-);
+import { StopTimeline } from "../../sidebar/stop-details/stop-timeline-content";
 
 function MoveListScrollArea({ children }: { children: React.ReactNode }) {
   return (
@@ -72,17 +64,16 @@ export function MoveList({
           const key = stop.id || `stop-${moveIdx}-${stopIdx}-${nanoid()}`;
 
           return (
-            <LazyComponent key={key}>
-              <StopTimeline
-                stop={stop}
-                nextStop={nextStop}
-                isLast={isLastStop}
-                moveStatus={move.status}
-                moveIdx={moveIdx}
-                stopIdx={stopIdx}
-                prevStopStatus={prevStopStatus}
-              />
-            </LazyComponent>
+            <StopTimeline
+              key={key}
+              stop={stop}
+              nextStop={nextStop}
+              isLast={isLastStop}
+              moveStatus={move.status}
+              moveIdx={moveIdx}
+              stopIdx={stopIdx}
+              prevStopStatus={prevStopStatus}
+            />
           );
         })}
       </MoveListScrollAreaInner>

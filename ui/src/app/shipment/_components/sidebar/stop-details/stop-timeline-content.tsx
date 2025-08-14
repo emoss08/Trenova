@@ -2,8 +2,6 @@
  * Copyright 2023-2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-"use no memo";
 import { StopDialog } from "@/app/shipment/_components/sidebar/stop-details/stop-dialog";
 import {
   ContextMenu,
@@ -12,12 +10,18 @@ import {
   ContextMenuTrigger,
 } from "@/components/ui/context-menu";
 import { Icon } from "@/components/ui/icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { formatSplitDateTime } from "@/lib/date";
 import type { MoveSchema } from "@/lib/schemas/move-schema";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import type { StopSchema } from "@/lib/schemas/stop-schema";
 import { cn } from "@/lib/utils";
-import { useCallback, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import { useLocationData } from "./queries";
@@ -74,12 +78,14 @@ function StopCircle({
   isLast,
   moveStatus,
   hasErrors,
+  errorMessages = [],
   prevStopStatus,
 }: {
   status: StopSchema["status"];
   isLast: boolean;
   moveStatus: MoveSchema["status"];
   hasErrors?: boolean;
+  errorMessages?: string[];
   prevStopStatus?: StopSchema["status"];
 }) {
   const stopIcon = getStatusIcon(status, isLast, moveStatus);
@@ -87,6 +93,12 @@ function StopCircle({
   const borderColor = prevStopStatus
     ? getStopStatusBorderColor(prevStopStatus)
     : "";
+
+  const errorIndicator = hasErrors && (
+    <div className="absolute -top-1 -right-1 size-3 rounded-full bg-destructive flex items-center justify-center">
+      <span className="text-[8px] font-bold text-red-200">!</span>
+    </div>
+  );
 
   return (
     <div className="relative">
@@ -100,16 +112,30 @@ function StopCircle({
       >
         <Icon icon={stopIcon} className="size-3.5 text-white" />
       </div>
-      {hasErrors && (
-        <div className="absolute -top-1 -right-1 size-3 rounded-full bg-destructive flex items-center justify-center">
-          <span className="text-[8px] font-bold text-red-200">!</span>
-        </div>
+      {hasErrors && errorMessages.length > 0 ? (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>{errorIndicator}</TooltipTrigger>
+            <TooltipContent side="right" className="max-w-xs">
+              <div className="space-y-1">
+                <p className="font-semibold text-sm">Validation Errors:</p>
+                {errorMessages.map((msg, idx) => (
+                  <p key={idx} className="text-xs">
+                    • {msg}
+                  </p>
+                ))}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      ) : (
+        errorIndicator
       )}
     </div>
   );
 }
 
-export default function StopTimeline({
+function StopTimelineComponent({
   stop,
   nextStop,
   isLast,
@@ -135,17 +161,29 @@ export default function StopTimeline({
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  // Watch the entire moves array to ensure we get updates when stops change
-  const watchedMoves = watch("moves");
+  // Watch only the specific stop instead of entire moves array for better performance
+  const watchedStop = watch(`moves.${moveIdx}.stops.${stopIdx}`);
+  const watchedNextStop = watch(`moves.${moveIdx}.stops.${stopIdx + 1}`);
 
-  // Get the current stop and next stop from the watched moves array
-  const currentMove = watchedMoves?.[moveIdx];
-  const currentStop = currentMove?.stops?.[stopIdx] || stop;
-  const currentNextStop = currentMove?.stops?.[stopIdx + 1] || nextStop;
+  // Use watched values if available, otherwise fallback to props
+  const currentStop = watchedStop || stop;
+  const currentNextStop = watchedNextStop || nextStop;
 
-  // Check for errors
+  // Check for errors - improved error detection
   const stopErrors = errors.moves?.[moveIdx]?.stops?.[stopIdx];
-  const hasErrors = stopErrors && Object.keys(stopErrors).length > 0;
+  const hasErrors = !!(stopErrors && Object.keys(stopErrors).length > 0);
+
+  // Get specific error messages for display
+  const errorMessages: string[] = hasErrors
+    ? Object.entries(stopErrors)
+        .map(([field, error]) => {
+          if (error && typeof error === "object" && "message" in error) {
+            return `${field}: ${error.message}`;
+          }
+          return null;
+        })
+        .filter((msg): msg is string => msg !== null)
+    : [];
 
   // Check if we have stop info
   const hasStopInfo =
@@ -201,6 +239,7 @@ export default function StopTimeline({
             <StopTimelineItem
               stop={currentStop}
               hasErrors={hasErrors}
+              errorMessages={errorMessages}
               nextStopHasInfo={nextStopHasInfo}
               isLast={isLast}
               moveStatus={moveStatus}
@@ -254,6 +293,7 @@ export default function StopTimeline({
 function StopTimelineItem({
   stop,
   hasErrors,
+  errorMessages = [],
   nextStopHasInfo,
   isLast,
   moveStatus,
@@ -265,6 +305,7 @@ function StopTimelineItem({
   moveStatus: MoveSchema["status"];
   prevStopStatus?: StopSchema["status"];
   hasErrors?: boolean;
+  errorMessages?: string[];
 }) {
   const currentStop = stop;
 
@@ -308,6 +349,7 @@ function StopTimelineItem({
                 isLast={isLast}
                 moveStatus={moveStatus}
                 hasErrors={hasErrors}
+                errorMessages={errorMessages}
                 prevStopStatus={prevStopStatus}
               />
             </div>
@@ -323,12 +365,39 @@ function StopTimelineItem({
       ) : (
         <div className="flex flex-col items-center justify-center text-center">
           {hasErrors ? (
-            <div className="flex flex-col items-center justify-center">
-              <span className="mt-1 text-sm text-red-500">
-                Error in &apos;{getStopTypeLabel(currentStop.type)}&apos; stop
-              </span>
+            <div className="flex flex-col items-center justify-center gap-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div className="flex items-center gap-2 cursor-help">
+                      <div className="size-5 rounded-full bg-destructive flex items-center justify-center">
+                        <span className="text-xs font-bold text-red-200">
+                          !
+                        </span>
+                      </div>
+                      <span className="text-sm text-red-500">
+                        Error in {getStopTypeLabel(currentStop.type)} stop
+                      </span>
+                    </div>
+                  </TooltipTrigger>
+                  {errorMessages.length > 0 && (
+                    <TooltipContent className="max-w-xs">
+                      <div className="space-y-1">
+                        <p className="font-semibold text-sm">
+                          Validation Errors:
+                        </p>
+                        {errorMessages.map((msg, idx) => (
+                          <p key={idx} className="text-xs">
+                            • {msg}
+                          </p>
+                        ))}
+                      </div>
+                    </TooltipContent>
+                  )}
+                </Tooltip>
+              </TooltipProvider>
               <p className="text-red-500 text-xs">
-                Please click to edit and fix the errors.
+                Click to edit and fix the errors
               </p>
             </div>
           ) : (
@@ -364,3 +433,6 @@ function StopContextMenuItem({
     </div>
   );
 }
+
+// Export memoized version to prevent unnecessary re-renders
+export const StopTimeline = memo(StopTimelineComponent);

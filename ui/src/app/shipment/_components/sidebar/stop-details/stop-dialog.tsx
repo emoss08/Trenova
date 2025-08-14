@@ -26,12 +26,7 @@ import {
 import { type TableSheetProps } from "@/types/data-table";
 import { faInfoCircle, faXmark } from "@fortawesome/pro-solid-svg-icons";
 import { memo, useCallback, useEffect, useState } from "react";
-import {
-  FormProvider,
-  useFieldArray,
-  useForm,
-  useFormContext,
-} from "react-hook-form";
+import { useFieldArray, useFormContext } from "react-hook-form";
 import { toast } from "sonner";
 import { StopDialogForm } from "./stop-dialog-form";
 
@@ -46,15 +41,12 @@ export function StopDialog({
   moveIdx,
   stopIdx,
 }: StopDialogProps) {
-  const {
-    getValues,
-    clearErrors,
-    formState: { errors },
-  } = useFormContext<ShipmentSchema>();
+  const { getValues, setValue, clearErrors, trigger } =
+    useFormContext<ShipmentSchema>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Use field array for reactive updates
-  const { append, update } = useFieldArray({
+  const { append } = useFieldArray({
     name: `moves.${moveIdx}.stops`,
   });
 
@@ -62,10 +54,14 @@ export function StopDialog({
   const currentStops = getValues(`moves.${moveIdx}.stops`) || [];
   const isEditing = stopIdx < currentStops.length;
 
-  // Create a local form for the stop dialog
-  const localForm = useForm<{ stop: StopSchema }>({
-    defaultValues: {
-      stop: {
+  // Initialize default values for new stops
+  useEffect(() => {
+    if (open && !isEditing) {
+      const now = Math.floor(Date.now() / 1000);
+      const oneHour = 3600;
+
+      // Initialize new stop with default values directly in the parent form
+      const newStop: StopSchema = {
         status: StopStatus.enum.New,
         actualArrival: undefined,
         actualDeparture: undefined,
@@ -75,113 +71,52 @@ export function StopDialog({
         sequence: stopIdx,
         locationId: "",
         addressLine: "",
-        plannedArrival: Math.floor(Date.now() / 1000),
-        plannedDeparture: Math.floor(Date.now() / 1000) + 3600,
-        organizationId: "",
-        businessUnitId: "",
-      },
-    },
-  });
+        plannedArrival: now,
+        plannedDeparture: now + oneHour,
+        organizationId: getValues().moves?.[moveIdx]?.organizationId || "",
+        businessUnitId: getValues().moves?.[moveIdx]?.businessUnitId || "",
+        location: null, // Required field
+      };
 
-  // Initialize the local form with existing data when editing or default values when adding
-  useEffect(() => {
-    if (open) {
-      const now = Math.floor(Date.now() / 1000);
-      const oneHour = 3600;
-
-      if (isEditing) {
-        // Load existing stop data
-        const existingStop = getValues(`moves.${moveIdx}.stops.${stopIdx}`);
-        if (existingStop) {
-          localForm.reset({ stop: existingStop });
-        }
-      } else {
-        // Initialize with default values for new stop
-        localForm.reset({
-          stop: {
-            status: StopStatus.enum.New,
-            actualArrival: undefined,
-            actualDeparture: undefined,
-            pieces: 0,
-            weight: 0,
-            type: StopType.enum.Pickup,
-            sequence: stopIdx,
-            locationId: "",
-            addressLine: "",
-            plannedArrival: now,
-            plannedDeparture: now + oneHour,
-            organizationId: getValues().moves?.[moveIdx]?.organizationId || "",
-            businessUnitId: getValues().moves?.[moveIdx]?.businessUnitId || "",
-          },
-        });
-      }
+      // Temporarily add the stop to the form for editing
+      append(newStop);
     }
-  }, [open, isEditing, getValues, moveIdx, stopIdx, localForm]);
-
-  // Sync server validation errors to local form
-  useEffect(() => {
-    if (open) {
-      const stopErrors = errors.moves?.[moveIdx]?.stops?.[stopIdx];
-      if (stopErrors) {
-        // Clear existing errors first
-        localForm.clearErrors();
-
-        // Map server errors to local form
-        Object.entries(stopErrors).forEach(([fieldName, error]) => {
-          if (error && typeof error === "object" && "message" in error) {
-            const localFieldPath = `stop.${fieldName}` as any;
-            localForm.setError(localFieldPath, {
-              type: "server",
-              message: error.message as string,
-            });
-          }
-        });
-      }
-    }
-  }, [open, errors, moveIdx, stopIdx, localForm]);
+  }, [open, isEditing, getValues, moveIdx, stopIdx, append]);
 
   const handleClose = useCallback(() => {
+    // Trigger validation for the stop to ensure errors are shown in timeline
+    const stopPath = `moves.${moveIdx}.stops.${stopIdx}` as const;
+    trigger(stopPath);
+    
+    // If we were adding a new stop and canceling, remove the temporary stop
+    if (!isEditing) {
+      const stops = getValues(`moves.${moveIdx}.stops`) || [];
+      if (stops.length > stopIdx) {
+        // Remove the temporarily added stop
+        const newStops = [...stops];
+        newStops.splice(stopIdx, 1);
+        setValue(`moves.${moveIdx}.stops`, newStops);
+      }
+    }
+
     onOpenChange(false);
-    // Clear main form errors for this stop
-    clearErrors(`moves.${moveIdx}.stops.${stopIdx}`);
-    localForm.reset(); // Reset local form on close
-  }, [onOpenChange, clearErrors, localForm, moveIdx, stopIdx]);
+  }, [
+    onOpenChange,
+    moveIdx,
+    stopIdx,
+    isEditing,
+    getValues,
+    setValue,
+    trigger,
+  ]);
 
   const handleSave = useCallback(async () => {
     setIsSubmitting(true);
 
     try {
-      // Get the stop data from the local form
-      const stopData = localForm.getValues("stop");
-
-      if (!stopData) {
-        toast.error("Stop data not found");
-        return;
-      }
-
-      // Validate the stop data using zod schema
-      const validationResult = stopSchema.safeParse(stopData);
-
-      if (!validationResult.success) {
-        // Set form errors on the local form
-        const errors = validationResult.error.issues;
-
-        errors.forEach((error) => {
-          const fieldPath = `stop.${error.path.join(".")}` as any;
-          localForm.setError(fieldPath, {
-            type: "manual",
-            message: error.message,
-          });
-        });
-
-        toast.error("Please fix the validation errors", {
-          description: "Check the form for errors and try again",
-        });
-        return;
-      }
-
-      // Trigger validation on the local form
-      const isValid = await localForm.trigger("stop");
+      // Validate only the stop fields (field-level validation)
+      const stopPath = `moves.${moveIdx}.stops.${stopIdx}` as const;
+      const isValid = await trigger(stopPath);
 
       if (!isValid) {
         toast.error("Please fix the validation errors", {
@@ -190,16 +125,29 @@ export function StopDialog({
         return;
       }
 
-      // If validation passed, update the main shipment form
-      if (isEditing) {
-        // Update existing stop
-        update(stopIdx, stopData);
-      } else {
-        // Add new stop
-        append(stopData);
+      // Get the validated stop data
+      const stopData = getValues(stopPath);
+
+      if (!stopData) {
+        toast.error("Stop data not found");
+        return;
       }
 
-      // Close the dialog first
+      // Additional validation with zod schema
+      const validationResult = stopSchema.safeParse(stopData);
+
+      if (!validationResult.success) {
+        toast.error("Please fix the validation errors", {
+          description:
+            validationResult.error.issues[0]?.message ||
+            "Check the form for errors",
+        });
+        return;
+      }
+
+      // If we're adding a new stop, it's already been appended
+      // If we're editing, the changes are already in the form
+      // Just close the dialog
       onOpenChange(false);
 
       // Success message
@@ -219,7 +167,7 @@ export function StopDialog({
     } finally {
       setIsSubmitting(false);
     }
-  }, [localForm, stopIdx, isEditing, onOpenChange, update, append]);
+  }, [moveIdx, stopIdx, trigger, getValues, isEditing, onOpenChange]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -234,9 +182,7 @@ export function StopDialog({
         </DialogHeader>
         <StopDialogNotice />
         <DialogBody>
-          <FormProvider {...localForm}>
-            <StopDialogForm moveIdx={0} stopIdx={0} stopFieldName="stop" />
-          </FormProvider>
+          <StopDialogForm moveIdx={moveIdx} stopIdx={stopIdx} />
         </DialogBody>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={handleClose}>

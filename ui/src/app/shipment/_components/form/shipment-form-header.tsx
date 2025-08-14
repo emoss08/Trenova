@@ -157,7 +157,7 @@ export function ShipmentFormHeaderInner({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex items-center justify-between px-2 py-4">
+    <div className="flex items-center justify-between px-2 pt-4 bg-sidebar rounded-t-lg">
       {children}
     </div>
   );
