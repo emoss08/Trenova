@@ -24,7 +24,6 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/pkg/types"
-	configpb "github.com/emoss08/trenova/shared/edi/proto/config/v1"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
@@ -46,7 +45,6 @@ type ServiceParams struct {
 	EmailService               services.EmailService
 	Validator                  *shipmentvalidator.Validator
 	DedicatedLaneAssignService *dedicatedlaneservice.AssignmentService
-	EDIConfigClient            configpb.EDIConfigServiceClient
 }
 
 type Service struct {
@@ -62,7 +60,6 @@ type Service struct {
 	es            services.EmailService
 	v             *shipmentvalidator.Validator
 	dlas          *dedicatedlaneservice.AssignmentService
-	ec            configpb.EDIConfigServiceClient
 }
 
 //nolint:gocritic // The p parameter is passed using fx.In
@@ -84,7 +81,6 @@ func NewService(p ServiceParams) *Service {
 		es:            p.EmailService,
 		v:             p.Validator,
 		dlas:          p.DedicatedLaneAssignService,
-		ec:            p.EDIConfigClient,
 	}
 }
 
@@ -116,17 +112,6 @@ func (s *Service) List(
 		Str("operation", "List").
 		Interface("opts", opts).
 		Logger()
-
-	cfgResp, cfgErr := s.ec.GetPartnerConfig(ctx, &configpb.GetPartnerConfigRequest{
-		BusinessUnitId: opts.Filter.TenantOpts.BuID.String(),
-		OrganizationId: opts.Filter.TenantOpts.OrgID.String(),
-		Name:           "Default 204 (4010)",
-	})
-	if cfgErr != nil {
-		log.Warn().Err(cfgErr).Msg("failed to fetch EDI partner config")
-	} else {
-		log.Info().Interface("config", cfgResp.GetConfig()).Msg("config")
-	}
 
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{

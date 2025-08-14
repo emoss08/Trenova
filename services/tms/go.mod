@@ -7,7 +7,6 @@ require (
 	github.com/bytedance/sonic v1.14.0
 	github.com/docker/go-connections v0.6.0
 	github.com/emoss08/trenova/shared/cdctypes v0.0.0-20250812030048-2363b460ca82
-	github.com/emoss08/trenova/shared/edi v0.0.0-00010101000000-000000000000
 	github.com/emoss08/trenova/shared/pulid v0.0.0-20250812014019-71090035dcc1
 	github.com/fatih/color v1.18.0
 	github.com/gen2brain/go-fitz v1.24.15
@@ -240,8 +239,6 @@ tool (
 	github.com/air-verse/air
 	github.com/go-task/task/v3/cmd/task
 )
-
-replace github.com/emoss08/trenova/shared/edi => ../../shared/edi
 
 replace github.com/emoss08/trenova/shared/pulid => ../../shared/pulid
 

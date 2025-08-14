@@ -9,6 +9,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/lib/variants/button";
+import { isMacOs } from "react-device-detect";
 import { PulsatingDots } from "./pulsating-dots";
 import {
   Tooltip,
@@ -91,7 +92,7 @@ function FormSaveButton({
           className="flex items-center gap-2 text-xs"
         >
           <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-            Ctrl
+            {isMacOs ? "⌘" : "Ctrl"}
           </kbd>
           <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
             Enter

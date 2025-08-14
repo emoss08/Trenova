@@ -361,8 +361,14 @@ export const AppSidebar = memo(function AppSidebar({
                     <KbdKey>K</KbdKey>
                   </Kbd>
                 </TooltipTrigger>
-                <TooltipContent>
-                  <p>{isMacOs ? "⌘" : "Ctrl"} + K to trigger advanced search</p>
+                <TooltipContent className="flex items-center gap-2 text-xs">
+                  <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
+                    {isMacOs ? "⌘" : "Ctrl"}
+                  </kbd>
+                  <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
+                    K
+                  </kbd>
+                  <p>to trigger advanced search</p>
                 </TooltipContent>
               </Tooltip>
             }
