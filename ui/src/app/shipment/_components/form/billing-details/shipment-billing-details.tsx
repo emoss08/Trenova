@@ -5,13 +5,13 @@
 
 "use no memo";
 import { LazyComponent } from "@/components/error-boundary";
-import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import {
   CustomerAutocompleteField,
   FormulaTemplateAutocompleteField,
 } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { ratingMethodChoices } from "@/lib/choices";
 import { RatingMethod, ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import React, { lazy } from "react";
@@ -47,7 +47,9 @@ export default function ShipmentBillingDetails() {
       <>
         <div className="flex flex-col gap-2 border-y border-bg-sidebar-border py-4">
           <div className="flex justify-between items-center">
-            <h3 className="text-sm font-medium">Billing Information</h3>
+            <h3 className="text-sm font-medium font-table">
+              Billing Information
+            </h3>
             <PreviousRatesDialog />
           </div>
           {children}
@@ -87,12 +89,17 @@ export default function ShipmentBillingDetails() {
           />
         </FormControl>
         <FormControl>
-          <InputField
+          <NumberField
+            inputMode="numeric"
+            formattedOptions={{
+              style: "decimal",
+              minimumFractionDigits: 0,
+              maximumFractionDigits: 0,
+            }}
             control={control}
             rules={{ required: true }}
             name="ratingUnit"
             label="Rating Unit"
-            type="number"
             placeholder="Enter Rating Unit"
             description="Specify the cost per selected rating method (e.g., per mile or per pallet)."
           />
@@ -112,30 +119,41 @@ export default function ShipmentBillingDetails() {
           </FormControl>
         )}
         <FormControl>
-          <InputField
+          <NumberField
             tabIndex={-1}
             readOnly
+            formattedOptions={{
+              style: "currency",
+              currency: "USD",
+              minimumIntegerDigits: 1,
+              signDisplay: "exceptZero",
+            }}
             control={control}
             name="otherChargeAmount"
-            type="number"
             label="Other Charges"
             placeholder="Additional Charges"
             description="Sum of all additional charges (tolls, fees, etc.)."
           />
         </FormControl>
         <FormControl>
-          <InputField
+          <NumberField
+            formattedOptions={{
+              style: "currency",
+              currency: "USD",
+              minimumIntegerDigits: 1,
+              signDisplay: "exceptZero",
+            }}
             control={control}
             rules={{ required: true }}
             name="freightChargeAmount"
             label="Freight Charges"
             placeholder="Enter Freight Charges"
             description="Base charge for transporting the shipment, excluding additional fees."
-            type="number"
+            sideText="USD"
           />
         </FormControl>
         <FormControl cols={ratingMethodIsFormulaTemplate ? "full" : undefined}>
-          <InputField
+          <NumberField
             tabIndex={-1}
             readOnly
             control={control}
@@ -144,7 +162,7 @@ export default function ShipmentBillingDetails() {
             label="Total Charge"
             placeholder="Total Charge"
             description="Automatically calculated total, including base and additional charges."
-            type="number"
+            sideText="USD"
           />
         </FormControl>
       </FormGroup>

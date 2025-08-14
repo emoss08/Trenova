@@ -98,7 +98,7 @@ export const shipmentSchema = z
     actualDeliveryDate: nullableIntegerSchema,
     actualShipDate: nullableIntegerSchema,
     canceledAt: nullableIntegerSchema,
-    ratingUnit: z.number().int().default(1),
+    ratingUnit: nullableIntegerSchema,
 
     // * Relationships
     shipmentType: shipmentTypeSchema.nullish(),

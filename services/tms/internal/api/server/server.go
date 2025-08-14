@@ -10,7 +10,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/infrastructure/telemetry"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/logger"
@@ -40,7 +39,7 @@ func NewServer(p Params) *Server {
 		Bool("metrics_enabled", p.Config.Telemetry.MetricsEnabled).
 		Bool("has_metrics", p.TelemetryMetrics != nil).
 		Msg("Server initialization - checking telemetry")
-	
+
 	// Create Fiber app with configuration
 	app := fiber.New(fiber.Config{
 		AppName: fmt.Sprintf(
@@ -48,8 +47,8 @@ func NewServer(p Params) *Server {
 			p.Config.App.Name,
 			p.Config.App.Version,
 		),
-		JSONEncoder:             sonic.Marshal,
-		JSONDecoder:             sonic.Unmarshal,
+		// JSONEncoder:             sonic.Marshal,
+		// JSONDecoder:             sonic.Unmarshal,
 		BodyLimit:               16 * 1024 * 1024, // 16MB
 		ReadBufferSize:          p.Config.Server.ReadBufferSize,
 		WriteBufferSize:         p.Config.Server.WriteBufferSize,
@@ -75,10 +74,10 @@ func NewServer(p Params) *Server {
 			p.TelemetryMetrics,
 			p.Logger,
 		)
-		
+
 		// Apply all middleware in correct order
 		middleware.Apply(app)
-		
+
 		p.Logger.Info().Msg("Telemetry middleware added to HTTP server")
 	} else {
 		// At minimum, add recovery middleware for safety

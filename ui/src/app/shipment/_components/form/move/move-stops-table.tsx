@@ -79,14 +79,14 @@ export function CompactStopsTable({
                   {/* Arrival */}
                   <TableCell className="py-1 px-4 text-2xs">
                     {generateDateTimeStringFromUnixTimestamp(
-                      stop.plannedArrival,
+                      stop.plannedArrival ?? 0,
                     )}
                   </TableCell>
 
                   {/* Departure */}
                   <TableCell className="py-1 px-4 text-2xs">
                     {generateDateTimeStringFromUnixTimestamp(
-                      stop.plannedDeparture,
+                      stop.plannedDeparture ?? 0,
                     )}
                   </TableCell>
 

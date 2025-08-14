@@ -2,9 +2,8 @@
  * Copyright 2023-2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
+"use no memo";
 import { FormSaveDock } from "@/components/form/form-save-dock";
-import { Form } from "@/components/ui/form";
 import {
   Sheet,
   SheetBody,
@@ -17,7 +16,6 @@ import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
-import { useUrlFragment } from "@/hooks/use-url-fragment";
 import { MoveStatus } from "@/lib/schemas/move-schema";
 import {
   RatingMethod,
@@ -33,13 +31,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { ShipmentForm } from "./form/shipment-form";
+import { ShipmentCreateForm } from "./form/shipment-form";
+import { ShipmentFormWrapper } from "./form/shipment-form-wrapper";
 
 export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
   const sheetRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { isPopout, closePopout } = usePopoutWindow();
-  const { clearFragment } = useUrlFragment();
 
   const form = useForm({
     resolver: zodResolver(shipmentSchema),
@@ -102,8 +100,8 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
               weight: undefined,
               actualArrival: undefined,
               actualDeparture: undefined,
-              plannedArrival: undefined,
-              plannedDeparture: undefined,
+              plannedArrival: 0,
+              plannedDeparture: 0,
               shipmentMoveId: undefined,
               location: null,
             },
@@ -118,21 +116,19 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
     setError,
     reset,
     handleSubmit,
-    formState: { isSubmitting, isSubmitSuccessful },
+    formState: { isSubmitting, isSubmitSuccessful, errors },
   } = form;
 
-  // Reset the form when the mutation is successful
-  // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
+  console.log("errors", errors);
+
   useEffect(() => {
     reset();
-  }, [isSubmitSuccessful, reset, onOpenChange]);
+  }, [isSubmitSuccessful, reset]);
 
   const handleClose = useCallback(() => {
     onOpenChange(false);
     reset();
-    // Clear URL fragment when closing
-    clearFragment();
-  }, [onOpenChange, reset, clearFragment]);
+  }, [onOpenChange, reset]);
 
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: ShipmentSchema) => {
@@ -192,10 +188,6 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
     <Sheet
       open={open}
       onOpenChange={(newOpen) => {
-        if (!newOpen) {
-          // Clear URL fragment when closing
-          clearFragment();
-        }
         onOpenChange(newOpen);
       }}
     >
@@ -208,16 +200,18 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
           <SheetHeader>
             <SheetTitle>Shipment Details</SheetTitle>
           </SheetHeader>
-          <SheetDescription>Test</SheetDescription>
+          <SheetDescription>
+            Create a new shipment by filling out the form below.
+          </SheetDescription>
         </VisuallyHidden>
 
         <FormProvider {...form}>
-          <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
+          <ShipmentFormWrapper onSubmit={onSubmit}>
             <SheetBody className="p-0">
-              <ShipmentForm />
+              <ShipmentCreateForm />
             </SheetBody>
             <FormSaveDock position="right" />
-          </Form>
+          </ShipmentFormWrapper>
         </FormProvider>
       </SheetContent>
     </Sheet>

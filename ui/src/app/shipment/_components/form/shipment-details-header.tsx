@@ -29,7 +29,11 @@ function ShipmentDetailsHeaderInner({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="flex flex-col px-4 pb-2">{children}</div>;
+  return (
+    <div className="flex flex-col px-4 pb-2 border-b border-border pt-2 bg-sidebar rounded-t-lg">
+      {children}
+    </div>
+  );
 }
 
 function ShipmentDetailsHeaderTitle({
@@ -78,6 +82,7 @@ function ShipmentDetailsHeaderDescription({
           Please fill out the form below to create a new shipment.
         </p>
       )}
+
       {isLoadingOwnerInfo ? (
         <Skeleton className="w-34 h-2.5" />
       ) : selectedShipment?.ownerId ? (
@@ -87,11 +92,11 @@ function ShipmentDetailsHeaderDescription({
             {ownerInfo?.name}
           </p>
         </div>
-      ) : (
+      ) : selectedShipment?.id !== undefined ? (
         <p className="text-2xs text-foreground font-normal">
           No owner assigned
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

@@ -85,7 +85,6 @@ export const FieldWrapper = memo(function FieldWrapper({
   children,
   error,
 }: FieldWrapperProps) {
-  // Use useMemo for the description and error components to avoid unnecessary re-renders
   const descriptionElement = useMemo(() => {
     return description && !error ? (
       <FieldDescription description={description} />

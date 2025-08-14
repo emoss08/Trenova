@@ -5,6 +5,7 @@
 
 import { InputField } from "@/components/fields/input-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
+import { NumberField } from "@/components/ui/number-input";
 import { handleMutationError } from "@/hooks/use-api-mutation";
 import useDebouncedEffect from "@/hooks/use-debounce-effect";
 import { queries } from "@/lib/queries";
@@ -33,7 +34,7 @@ function ShipmentGeneralInformationInner({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="text-sm font-medium">General Information</h3>
+      <h3 className="text-sm font-medium font-table">General Information</h3>
       {children}
     </div>
   );
@@ -143,7 +144,8 @@ function WeightAndPiecesFields() {
   return (
     <>
       <FormControl>
-        <InputField
+        <NumberField
+          inputMode="numeric"
           control={control}
           name="weight"
           label="Total Weight"
@@ -152,11 +154,11 @@ function WeightAndPiecesFields() {
           description="The total weight of the shipment."
           placeholder="Enter Weight"
           sideText="lbs"
-          type="number"
         />
       </FormControl>
       <FormControl>
-        <InputField
+        <NumberField
+          inputMode="numeric"
           control={control}
           name="pieces"
           readOnly
@@ -164,7 +166,6 @@ function WeightAndPiecesFields() {
           label="Total Pieces"
           description="The total number of pieces in the shipment."
           placeholder="Enter Pieces"
-          type="number"
         />
       </FormControl>
     </>

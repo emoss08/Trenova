@@ -28,7 +28,7 @@ function ShipmentServiceDetailsInner({
 }) {
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="text-sm font-medium">Service Information</h3>
+      <h3 className="text-sm font-medium font-table">Service Information</h3>
       {children}
     </div>
   );

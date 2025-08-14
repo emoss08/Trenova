@@ -2,7 +2,6 @@
  * Copyright 2023-2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useUrlFragment } from "@/hooks/use-url-fragment";
@@ -14,21 +13,31 @@ import { Suspense, useCallback, useEffect, useState } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
 import { ShipmentCommentDetails } from "./comment/comment-details";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
+import { ShipmentEditFormWrapper } from "./shipment-edit-form-wrapper";
 import { ShipmentFormContent } from "./shipment-form-body";
 import { ShipmentFormHeader } from "./shipment-form-header";
 import { ShipmentGeneralInfoForm } from "./shipment-general-info-form";
 
-type ShipmentDetailsProps = {
-  selectedShipment?: ShipmentSchema | null;
-  isLoading?: boolean;
-  isError?: boolean;
-};
+export function ShipmentCreateForm() {
+  return (
+    <Suspense fallback={<ShipmentDetailsSkeleton />}>
+      <ShipmentFormBody>
+        <ShipmentGeneralInfoForm className="max-h-[calc(100vh-7rem)]" />
+      </ShipmentFormBody>
+    </Suspense>
+  );
+}
 
-export function ShipmentForm({
+// For edit mode - manages its own form
+export function ShipmentEditForm({
   selectedShipment,
   isLoading,
   isError,
-}: ShipmentDetailsProps) {
+}: {
+  selectedShipment?: ShipmentSchema | null;
+  isLoading?: boolean;
+  isError?: boolean;
+}) {
   if (isLoading) {
     return <ShipmentDetailsSkeleton />;
   }
@@ -36,42 +45,58 @@ export function ShipmentForm({
   return (
     <Suspense fallback={<ShipmentDetailsSkeleton />}>
       <ShipmentFormBody selectedShipment={selectedShipment} isError={isError}>
-        <ShipmentSectionTabs
+        <ShipmentEditTabs
           shipmentId={selectedShipment?.id}
-          currentRecord={selectedShipment}
+          selectedShipment={selectedShipment}
         />
       </ShipmentFormBody>
     </Suspense>
   );
 }
 
-function ShipmentSectionTabs({
+// Tabs for edit mode - uses ShipmentEditFormWrapper
+function ShipmentEditTabs({
   shipmentId,
-  currentRecord,
+  selectedShipment,
 }: {
   shipmentId: ShipmentSchema["id"];
-  currentRecord?: ShipmentSchema | null;
+  selectedShipment?: ShipmentSchema | null;
 }) {
   const { fragment, setFragment } = useUrlFragment();
 
   const { data: commentCount } = useQuery({
     ...queries.shipment.getCommentCount(shipmentId),
+    enabled: !!shipmentId,
   });
 
   const [activeTab, setActiveTab] = useState(() => {
-    return fragment === "comments" ? "comments" : "general-information";
+    // Check for prefixed tab fragments
+    if (fragment?.startsWith("tab-")) {
+      const tabName = fragment.replace("tab-", "");
+      return tabName === "comments" || tabName === "documents"
+        ? tabName
+        : "general-information";
+    }
+    return "general-information";
   });
 
   useEffect(() => {
-    const validTab =
-      fragment === "comments" ? "comments" : "general-information";
-    setActiveTab(validTab);
+    // Handle prefixed tab fragments
+    if (fragment?.startsWith("tab-")) {
+      const tabName = fragment.replace("tab-", "");
+      const validTab =
+        tabName === "comments" || tabName === "documents"
+          ? tabName
+          : "general-information";
+      setActiveTab(validTab);
+    }
   }, [fragment]);
 
   const handleTabChange = useCallback(
     (value: string) => {
       setActiveTab(value);
-      setFragment(value);
+      // Prefix with 'tab-' to avoid conflicts with other fragment usage
+      setFragment(`tab-${value}`);
     },
     [setFragment],
   );
@@ -79,7 +104,7 @@ function ShipmentSectionTabs({
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange}>
       <ScrollArea>
-        <TabsList className="text-foreground mb-3 h-auto gap-2 px-2 rounded-none border-b bg-transparent py-1 w-full justify-start overflow-x-auto">
+        <TabsList className="text-foreground mb-3 h-auto bg-transparent gap-2 px-2 rounded-none border-b py-1 w-full justify-start overflow-x-auto">
           <TabsTrigger
             value="general-information"
             className="h-7 shrink-0 hover:bg-accent hover:text-foreground data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
@@ -125,7 +150,7 @@ function ShipmentSectionTabs({
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
       <TabsContent value="general-information">
-        <ShipmentGeneralInfoForm currentRecord={currentRecord} />
+        <ShipmentEditFormWrapper currentRecord={selectedShipment} />
       </TabsContent>
       <TabsContent value="comments">
         <ShipmentCommentDetails shipmentId={shipmentId} />
@@ -141,7 +166,11 @@ export function ShipmentFormBody({
   selectedShipment,
   isError,
   children,
-}: Omit<ShipmentDetailsProps, "isLoading"> & { children: React.ReactNode }) {
+}: {
+  selectedShipment?: ShipmentSchema | null;
+  isError?: boolean;
+  children: React.ReactNode;
+}) {
   if (isError) {
     return (
       <div className="flex size-full items-center justify-center">

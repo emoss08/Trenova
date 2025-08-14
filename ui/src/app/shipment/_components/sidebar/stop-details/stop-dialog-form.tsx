@@ -19,13 +19,12 @@ import { useLocationData } from "./queries";
 export function StopDialogForm({
   moveIdx,
   stopIdx,
-  stopFieldName = `moves.${moveIdx}.stops.${stopIdx}`,
 }: {
   moveIdx: number;
   stopIdx: number;
-  stopFieldName?: string;
 }) {
   const { control, setValue, getValues } = useFormContext<ShipmentSchema>();
+  const stopFieldName = `moves.${moveIdx}.stops.${stopIdx}`;
 
   const locationId = useWatch({
     control,
@@ -42,31 +41,12 @@ export function StopDialogForm({
         shouldValidate: true,
       });
 
-      if (stopFieldName === "stop") {
-        const currentStop = getValues(stopFieldName as any);
-        setValue(stopFieldName as any, {
-          ...currentStop,
-          location: locationData,
-        });
-      } else {
-        const currentValues = getValues();
-        const currentMove = currentValues.moves?.[moveIdx];
-
-        if (currentMove && currentMove.stops && currentMove.stops[stopIdx]) {
-          const updatedStop = {
-            ...currentMove.stops[stopIdx],
-            location: locationData,
-          };
-
-          const updatedStops = [...currentMove.stops];
-          updatedStops[stopIdx] = updatedStop;
-
-          setValue(`moves.${moveIdx}`, {
-            ...currentMove,
-            stops: updatedStops,
-          });
-        }
-      }
+      // Update the location data in the stop
+      const currentStop = getValues(`${stopFieldName}` as any);
+      setValue(`${stopFieldName}` as any, {
+        ...currentStop,
+        location: locationData,
+      });
     }
   }, [
     isLoadingLocation,
@@ -74,8 +54,6 @@ export function StopDialogForm({
     locationData,
     stopFieldName,
     setValue,
-    moveIdx,
-    stopIdx,
     getValues,
   ]);
 

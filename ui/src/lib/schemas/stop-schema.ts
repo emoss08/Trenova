@@ -58,12 +58,13 @@ export const stopSchema = z
     plannedDeparture: z.number().min(1, {
       error: "Planned departure is required",
     }),
+
     actualArrival: optionalIntegerSchema,
     actualDeparture: optionalIntegerSchema,
     addressLine: z.string().min(1, {
       error: "Address line is required",
     }),
-    location: locationSchema.nullable(),
+    location: locationSchema.nullish(),
   })
   .refine(
     (data) => {

@@ -73,21 +73,21 @@ type Shipment struct {
 	UpdatedAt            int64               `json:"updatedAt"            bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit      *businessunit.BusinessUnit       `json:"businessUnit,omitempty"     bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization      *organization.Organization       `json:"organization,omitempty"     bun:"rel:belongs-to,join:organization_id=id"`
-	ShipmentType      *shipmenttype.ShipmentType       `json:"shipmentType,omitempty"     bun:"rel:belongs-to,join:shipment_type_id=id"`
-	ServiceType       *servicetype.ServiceType         `json:"serviceType,omitempty"      bun:"rel:belongs-to,join:service_type_id=id"`
-	Customer          *customer.Customer               `json:"customer,omitempty"         bun:"rel:belongs-to,join:customer_id=id"`
-	TractorType       *equipmenttype.EquipmentType     `json:"tractorType,omitempty"      bun:"rel:belongs-to,join:tractor_type_id=id"`
-	TrailerType       *equipmenttype.EquipmentType     `json:"trailerType,omitempty"      bun:"rel:belongs-to,join:trailer_type_id=id"`
-	CanceledBy        *user.User                       `json:"canceledBy,omitempty"       bun:"rel:belongs-to,join:canceled_by_id=id"`
-	Owner             *user.User                       `json:"owner,omitempty"            bun:"rel:belongs-to,join:owner_id=id"`
-	EnteredBy         *user.User                       `json:"enteredBy,omitempty"        bun:"rel:belongs-to,join:entered_by_id=id"`
-	FormulaTemplate   *formulatemplate.FormulaTemplate `json:"formulaTemplate,omitempty"  bun:"rel:belongs-to,join:formula_template_id=id"`
-	Moves             []*ShipmentMove                  `json:"moves,omitempty"            bun:"rel:has-many,join:id=shipment_id"`
-	Comments          []*ShipmentComment               `json:"comments,omitempty"         bun:"rel:has-many,join:id=shipment_id"`
-	Commodities       []*ShipmentCommodity             `json:"commodities,omitempty"      bun:"rel:has-many,join:id=shipment_id"`
-	AdditionalCharges []*AdditionalCharge              `json:"additionalCharges,omitzero" bun:"rel:has-many,join:id=shipment_id"`
+	BusinessUnit      *businessunit.BusinessUnit       `json:"businessUnit,omitempty"      bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization      *organization.Organization       `json:"organization,omitempty"      bun:"rel:belongs-to,join:organization_id=id"`
+	ShipmentType      *shipmenttype.ShipmentType       `json:"shipmentType,omitempty"      bun:"rel:belongs-to,join:shipment_type_id=id"`
+	ServiceType       *servicetype.ServiceType         `json:"serviceType,omitempty"       bun:"rel:belongs-to,join:service_type_id=id"`
+	Customer          *customer.Customer               `json:"customer,omitempty"          bun:"rel:belongs-to,join:customer_id=id"`
+	TractorType       *equipmenttype.EquipmentType     `json:"tractorType,omitempty"       bun:"rel:belongs-to,join:tractor_type_id=id"`
+	TrailerType       *equipmenttype.EquipmentType     `json:"trailerType,omitempty"       bun:"rel:belongs-to,join:trailer_type_id=id"`
+	CanceledBy        *user.User                       `json:"canceledBy,omitempty"        bun:"rel:belongs-to,join:canceled_by_id=id"`
+	Owner             *user.User                       `json:"owner,omitempty"             bun:"rel:belongs-to,join:owner_id=id"`
+	EnteredBy         *user.User                       `json:"enteredBy,omitempty"         bun:"rel:belongs-to,join:entered_by_id=id"`
+	FormulaTemplate   *formulatemplate.FormulaTemplate `json:"formulaTemplate,omitempty"   bun:"rel:belongs-to,join:formula_template_id=id"`
+	Moves             []*ShipmentMove                  `json:"moves,omitempty"             bun:"rel:has-many,join:id=shipment_id"`
+	Comments          []*ShipmentComment               `json:"comments,omitempty"          bun:"rel:has-many,join:id=shipment_id"`
+	Commodities       []*ShipmentCommodity             `json:"commodities,omitempty"       bun:"rel:has-many,join:id=shipment_id"`
+	AdditionalCharges []*AdditionalCharge              `json:"additionalCharges,omitempty" bun:"rel:has-many,join:id=shipment_id"`
 }
 
 func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {

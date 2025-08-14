@@ -1,3 +1,4 @@
+"use no memo";
 /*
  * Copyright 2023-2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
@@ -110,6 +111,7 @@ export function NumberField<T extends FieldValues>({
   placeholder = "Enter Valid Number",
   sideText,
   rules,
+  tabIndex,
   ...props
 }: NumberFieldProps<T>) {
   const inputId = `input-${name}`;
@@ -138,14 +140,25 @@ export function NumberField<T extends FieldValues>({
             value={field.value ?? undefined}
             invalid={fieldState.invalid}
             onValueChange={(details) => {
-              field.onChange(details.value);
+              // * This will add a decimal point to the number if inputMode is "decimal"
+              if (inputMode === "numeric") {
+                field.onChange(details.valueAsNumber);
+              } else {
+                field.onChange(details.value);
+              }
             }}
           >
-            <NumberInputControl>
+            <NumberInputControl defaultValue={field.value}>
               <NumberInputField
+                tabIndex={tabIndex}
                 id={inputId}
                 placeholder={placeholder}
                 aria-label={label}
+                value={field.value ?? undefined}
+                defaultValue={field.value ?? undefined}
+                onChange={(e) => {
+                  field.onChange(e.target.value);
+                }}
                 aria-describedby={cn(
                   description && descriptionId,
                   fieldState.error && errorId,
@@ -157,12 +170,12 @@ export function NumberField<T extends FieldValues>({
                 </div>
               )}
               <NumberInputIncrementTrigger asChild>
-                <ark.button className="hover:bg-muted focus:bg-muted cursor-pointer rounded-tr-md">
+                <ark.button className="hover:bg-muted max-w-5 focus:bg-muted cursor-pointer rounded-tr-md">
                   <ChevronUpIcon className="size-3" />
                 </ark.button>
               </NumberInputIncrementTrigger>
               <NumberInputDecrementTrigger asChild>
-                <ark.button className="hover:bg-muted focus:bg-muted cursor-pointer rounded-br-md">
+                <ark.button className="hover:bg-muted max-w-5 focus:bg-muted cursor-pointer rounded-br-md">
                   <ChevronDownIcon className="size-3" />
                 </ark.button>
               </NumberInputDecrementTrigger>
