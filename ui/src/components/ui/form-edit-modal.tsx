@@ -32,7 +32,7 @@ import {
 } from "@fortawesome/pro-solid-svg-icons";
 import { useQueryClient } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, useTransition } from "react";
 import {
   FormProvider,
   type FieldValues,
@@ -76,8 +76,13 @@ export function FormEditModal<T extends FieldValues>({
 }: FormEditModalProps<T>) {
   const { table, rowSelection, isLoading } = useDataTable();
   const { isPopout, closePopout } = usePopoutWindow();
+  const [isPending, startTransition] = useTransition();
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_, setSearchParams] = useQueryStates(searchParamsParser);
+  const [_, setSearchParams] = useQueryStates(searchParamsParser, {
+    // Use replace to avoid history stacking and reduce throttling
+    history: 'replace',
+    throttleMs: 50, // Minimum allowed value
+  });
   const queryClient = useQueryClient();
   const user = useUser();
 
@@ -89,6 +94,8 @@ export function FormEditModal<T extends FieldValues>({
   } = form;
 
   const previousRecordIdRef = useRef<string | number | null>(null);
+  const navigationQueueRef = useRef<string | null>(null);
+  const isNavigatingRef = useRef(false);
   const selectedRowKey = Object.keys(rowSelection)?.[0];
 
   const selectedRow = React.useMemo(() => {
@@ -112,21 +119,50 @@ export function FormEditModal<T extends FieldValues>({
     [index, isLoading],
   );
 
+  // Process navigation with useTransition to prevent blinking
+  const processNavigation = React.useCallback(async (targetId: string) => {
+    if (isNavigatingRef.current) {
+      navigationQueueRef.current = targetId;
+      return;
+    }
+    
+    isNavigatingRef.current = true;
+    
+    try {
+      // Use startTransition to mark this update as non-urgent
+      startTransition(() => {
+        setSearchParams({ entityId: targetId, modalType: "edit" }).then(() => {
+          // Process any queued navigation
+          if (navigationQueueRef.current) {
+            const queuedId = navigationQueueRef.current;
+            navigationQueueRef.current = null;
+            // Use a small delay to prevent visual blinking
+            setTimeout(() => {
+              isNavigatingRef.current = false;
+              processNavigation(queuedId);
+            }, 50);
+          } else {
+            isNavigatingRef.current = false;
+          }
+        });
+      });
+    } catch (error) {
+      console.error('Navigation error:', error);
+      isNavigatingRef.current = false;
+    }
+  }, [setSearchParams, startTransition]);
+
   const onPrev = React.useCallback(() => {
     if (prevId) {
-      // Instead of calling table.setRowSelection, update the URL directly
-      // This avoids the feedback loop with DataTable's row selection sync
-      setSearchParams({ entityId: prevId, modalType: "edit" });
+      processNavigation(prevId);
     }
-  }, [prevId, setSearchParams]);
+  }, [prevId, processNavigation]);
 
   const onNext = React.useCallback(() => {
     if (nextId) {
-      // Instead of calling table.setRowSelection, update the URL directly
-      // This avoids the feedback loop with DataTable's row selection sync
-      setSearchParams({ entityId: nextId, modalType: "edit" });
+      processNavigation(nextId);
     }
-  }, [nextId, setSearchParams]);
+  }, [nextId, processNavigation]);
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -294,10 +330,10 @@ export function FormEditModal<T extends FieldValues>({
                     size="icon"
                     variant="ghost"
                     className="h-7 w-7"
-                    disabled={!prevId}
+                    disabled={!prevId || isPending}
                     onClick={onPrev}
                   >
-                    <Icon icon={faChevronUp} className="size-5" />
+                    <Icon icon={faChevronUp} className={cn("size-5", isPending && "opacity-50")} />
                     <span className="sr-only">Previous</span>
                   </Button>
                 </TooltipTrigger>
@@ -313,10 +349,10 @@ export function FormEditModal<T extends FieldValues>({
                     size="icon"
                     variant="ghost"
                     className="h-7 w-7"
-                    disabled={!nextId}
+                    disabled={!nextId || isPending}
                     onClick={onNext}
                   >
-                    <Icon icon={faChevronDown} className="h-5 w-5" />
+                    <Icon icon={faChevronDown} className={cn("h-5 w-5", isPending && "opacity-50")} />
                     <span className="sr-only">Next</span>
                   </Button>
                 </TooltipTrigger>
