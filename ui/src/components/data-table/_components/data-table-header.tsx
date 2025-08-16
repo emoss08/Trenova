@@ -7,11 +7,7 @@
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { flexRender, type Table } from "@tanstack/react-table";
 
-export function DataTableHeader<TData>({
-  table,
-}: {
-  table: Table<TData>;
-}) {
+export function DataTableHeader<TData>({ table }: { table: Table<TData> }) {
   return (
     <TableHeader>
       {table.getHeaderGroups().map((headerGroup) => (

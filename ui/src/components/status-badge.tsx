@@ -6,6 +6,11 @@
 import { ConsolidationStatus } from "@/lib/schemas/consolidation-schema";
 import { MoveStatus, type MoveSchema } from "@/lib/schemas/move-schema";
 import {
+  HoldSeverity,
+  HoldType,
+  ShipmentHoldSchema,
+} from "@/lib/schemas/shipment-hold-schema";
+import {
   ShipmentStatus,
   type ShipmentSchema,
 } from "@/lib/schemas/shipment-schema";
@@ -271,6 +276,70 @@ export function ConsolidationStatusBadge({
   return (
     <Badge variant={statusAttributes[status].variant} className="max-h-6">
       {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function HoldTypeBadge({ type }: { type: ShipmentHoldSchema["type"] }) {
+  const typeAttributes: Record<ShipmentHoldSchema["type"], BadgeAttrProps> = {
+    [HoldType.enum.OperationalHold]: {
+      variant: "purple",
+      text: "Operational Hold",
+    },
+    [HoldType.enum.ComplianceHold]: {
+      variant: "indigo",
+      text: "Compliance Hold",
+    },
+    [HoldType.enum.CustomerHold]: {
+      variant: "warning",
+      text: "Customer Hold",
+    },
+    [HoldType.enum.FinanceHold]: {
+      variant: "active",
+      text: "Finance Hold",
+    },
+  };
+
+  return (
+    <Badge variant={typeAttributes[type].variant} className="max-h-6">
+      {typeAttributes[type].text}
+    </Badge>
+  );
+}
+
+export function HoldSeverityBadge({
+  severity,
+}: {
+  severity: ShipmentHoldSchema["severity"];
+}) {
+  const severityAttributes: Record<
+    ShipmentHoldSchema["severity"],
+    BadgeAttrProps
+  > = {
+    [HoldSeverity.enum.Informational]: {
+      variant: "purple",
+      text: "Informational",
+      description: "FYI, never blocks ops",
+    },
+    [HoldSeverity.enum.Advisory]: {
+      variant: "indigo",
+      text: "Advisory",
+      description: "Warns, may block billing, not movement",
+    },
+    [HoldSeverity.enum.Blocking]: {
+      variant: "warning",
+      text: "Blocking",
+      description: "Can block dispatch/delivery until released",
+    },
+  };
+
+  return (
+    <Badge
+      variant={severityAttributes[severity].variant}
+      className="max-h-6"
+      withDot={false}
+    >
+      {severityAttributes[severity].text}
     </Badge>
   );
 }
