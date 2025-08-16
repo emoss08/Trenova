@@ -4,7 +4,6 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 "use no memo";
-/* eslint-disable react-hooks/exhaustive-deps */
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
@@ -90,7 +89,7 @@ export function FormEditModal<T extends FieldValues>({
   } = form;
 
   const previousRecordIdRef = useRef<string | number | null>(null);
-  const selectedRowKey = Object.keys(rowSelection)[0];
+  const selectedRowKey = Object.keys(rowSelection)?.[0];
 
   const selectedRow = React.useMemo(() => {
     if (isLoading && !selectedRowKey) return;
@@ -115,15 +114,19 @@ export function FormEditModal<T extends FieldValues>({
 
   const onPrev = React.useCallback(() => {
     if (prevId) {
-      table.setRowSelection({ [prevId]: true });
+      // Instead of calling table.setRowSelection, update the URL directly
+      // This avoids the feedback loop with DataTable's row selection sync
+      setSearchParams({ entityId: prevId, modalType: "edit" });
     }
-  }, [prevId, isLoading]);
+  }, [prevId, setSearchParams]);
 
   const onNext = React.useCallback(() => {
     if (nextId) {
-      table.setRowSelection({ [nextId]: true });
+      // Instead of calling table.setRowSelection, update the URL directly
+      // This avoids the feedback loop with DataTable's row selection sync
+      setSearchParams({ entityId: nextId, modalType: "edit" });
     }
-  }, [nextId, isLoading, table]);
+  }, [nextId, setSearchParams]);
 
   React.useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -173,9 +176,9 @@ export function FormEditModal<T extends FieldValues>({
 
   const handleClose = useCallback(() => {
     reset();
-    table.resetRowSelection();
+    // Just clear the URL - no need to reset row selection separately
     setSearchParams({ modalType: null, entityId: null });
-  }, [reset, table, setSearchParams]);
+  }, [reset, setSearchParams]);
 
   const { mutateAsync } = useApiMutation<
     T, // The response data type
@@ -221,10 +224,7 @@ export function FormEditModal<T extends FieldValues>({
       // * Reset the form to the new values
       reset(newValues);
 
-      // * Reset row seleciton
-      table.resetRowSelection();
-
-      // * Close the modal
+      // * Close the modal (which also clears row selection via URL)
       setSearchParams({ modalType: null, entityId: null });
 
       // * If the page is a popout, close it
@@ -366,11 +366,13 @@ export function FormEditModal<T extends FieldValues>({
       open={!!selectedRowKey}
       onOpenChange={(open) => {
         if (!open) {
+          // When closing, clear the URL selection
           const el = selectedRowKey
             ? document.getElementById(selectedRowKey)
             : null;
-          table.resetRowSelection();
-
+          setSearchParams({ modalType: null, entityId: null });
+          
+          // Focus back to the row after closing
           setTimeout(() => el?.focus(), 0);
         }
       }}

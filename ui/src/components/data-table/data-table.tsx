@@ -42,18 +42,16 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
   Row,
-  RowSelectionState,
   useReactTable,
   VisibilityState,
 } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
-import {
+import React, {
   lazy,
   Suspense,
   useCallback,
   useEffect,
   useMemo,
-  useState,
 } from "react";
 import { toast } from "sonner";
 import LetterGlitch from "../ui/letter-glitch";
@@ -118,8 +116,11 @@ export function DataTable<TData extends Record<string, any>>({
 }: EnhancedDataTableProps<TData>) {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { page, pageSize, entityId, modalType } = searchParams;
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>(
-    entityId ? { [entityId]: true } : {},
+
+  // Derive rowSelection from entityId - URL is the single source of truth
+  const rowSelection = React.useMemo(
+    () => (entityId ? { [entityId]: true } : {}),
+    [entityId],
   );
 
   // Initialize column order with empty array like infinite table
@@ -298,7 +299,18 @@ export function DataTable<TData extends Record<string, any>>({
     manualPagination: true,
     enableRowSelection: true,
     getRowId: (row) => row.id,
-    onRowSelectionChange: setRowSelection,
+    onRowSelectionChange: (updater) => {
+      // When row selection changes, update the URL
+      const newSelection =
+        typeof updater === "function" ? updater(rowSelection) : updater;
+      const selectedId = Object.keys(newSelection)[0];
+
+      if (selectedId) {
+        setSearchParams({ entityId: selectedId, modalType: "edit" });
+      } else {
+        setSearchParams({ entityId: null, modalType: null });
+      }
+    },
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     meta: {
@@ -352,51 +364,13 @@ export function DataTable<TData extends Record<string, any>>({
       .flatRows.find((row) => row.id === selectedRowKey);
   }, [
     rowSelection,
-    table,
     dataQuery.isLoading,
     dataQuery.isFetching,
     dataQuery.data?.results,
   ]);
 
-  useEffect(() => {
-    if (entityId && !rowSelection[entityId]) {
-      setRowSelection({ [entityId]: true });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [entityId]);
-
-  // Handle row selection changes (when user clicks on table rows)
-  useEffect(() => {
-    if (dataQuery.isLoading || dataQuery.isFetching) return;
-    if (modalType === "create") return;
-
-    const selectedKeys = Object.keys(rowSelection);
-
-    if (selectedKeys.length > 0) {
-      const selectedId = selectedKeys[0];
-      if (selectedId !== entityId) {
-        setSearchParams({
-          entityId: selectedId,
-          modalType: "edit",
-        });
-      }
-    } else if (entityId && modalType === "edit") {
-      const entityInCurrentData = table
-        .getCoreRowModel()
-        .flatRows.some((row) => row.id === entityId);
-      if (entityInCurrentData) {
-        setSearchParams({ entityId: null, modalType: null });
-      }
-    }
-  }, [
-    rowSelection,
-    entityId,
-    modalType,
-    setSearchParams,
-    dataQuery.isLoading,
-    dataQuery.isFetching,
-    table,
-  ]);
+  // No longer need effects to sync rowSelection with entityId
+  // The rowSelection is now derived directly from entityId
 
   const handleFilterChange = useCallback(
     (newFilterState: FilterStateSchema) => {
@@ -541,7 +515,7 @@ export function DataTable<TData extends Record<string, any>>({
                 </div>
               </div>
             ) : (
-              <Table containerClassName="overflow-x-auto overflow-y-hidden">
+              <Table>
                 {includeHeader && <DataTableHeader table={table} />}
                 <DataTableBody
                   table={table}
