@@ -541,7 +541,7 @@ export function DataTable<TData extends Record<string, any>>({
                 </div>
               </div>
             ) : (
-              <Table>
+              <Table containerClassName="overflow-x-auto overflow-y-hidden">
                 {includeHeader && <DataTableHeader table={table} />}
                 <DataTableBody
                   table={table}

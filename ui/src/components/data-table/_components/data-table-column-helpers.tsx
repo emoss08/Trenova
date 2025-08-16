@@ -232,6 +232,9 @@ export function createCommonColumns<T extends Record<string, unknown>>() {
         const createdAt = row.getValue<number | undefined>("createdAt");
         return <HoverCardTimestamp timestamp={createdAt} />;
       },
+      size: 210,
+      minSize: 210,
+      maxSize: 230,
     },
   };
 }

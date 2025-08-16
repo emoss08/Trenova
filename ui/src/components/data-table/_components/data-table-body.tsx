@@ -91,13 +91,13 @@ function DataTableRow<TData>({
         }
       }}
       className={cn(
-        "-outline-offset-2 rounded-md outline-muted-foreground transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline",
+        "-outline-offset-2 outline-muted-foreground transition-colors focus-visible:bg-muted/50 focus-visible:outline data-[state=selected]:outline",
         table.options.meta?.getRowClassName?.(row),
       )}
     >
       {row.getVisibleCells().map((cell) => (
         <TableCell
-          className="font-table truncate"
+          className="font-sans truncate"
           key={cell.id}
           role="cell"
           aria-label={`${cell.column.id} cell`}
