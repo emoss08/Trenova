@@ -154,7 +154,7 @@ export function supportsEnhancedFiltering(endpoint: string): boolean {
     "/workers",
     "/consolidations",
     "/email-profiles",
-    // Add more as they're implemented
+    "/hold-reasons",
   ];
 
   return enhancedEndpoints.some((e) => endpoint.includes(e));
@@ -195,7 +195,10 @@ export function getDataTableEndpoint(
       legacy: "/email-profiles/",
       enhanced: "/email-profiles/",
     },
-    // Add more resources as needed
+    hold_reason: {
+      legacy: "/hold-reasons/",
+      enhanced: "/hold-reasons/",
+    },
   };
 
   // Normalize resource name to lowercase

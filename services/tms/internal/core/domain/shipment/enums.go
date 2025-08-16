@@ -200,3 +200,39 @@ const (
 	ComplianceEnforcementLevelBlock   = ComplianceEnforcementLevel("Block")
 	ComplianceEnforcementLevelAudit   = ComplianceEnforcementLevel("Audit")
 )
+
+type HoldType string
+
+const (
+	// missing appt/window, facility closed, dock issue
+	HoldOperational = HoldType("OperationalHold")
+	// OOS, HOS, CDL, permits, safety blocks
+	HoldCompliance = HoldType("ComplianceHold")
+	// shipper/consignee requested pause/change
+	HoldCustomer = HoldType("CustomerHold")
+	// credit limit, AR blocks (doesn't have to block ops)
+	HoldFinance = HoldType("FinanceHold")
+)
+
+type HoldSeverity string
+
+const (
+	// FYI, never blocks ops
+	SeverityInfo = HoldSeverity("Informational")
+
+	// Warns, may block billing, not movement
+	SeverityAdvisory = HoldSeverity("Advisory")
+
+	// can block dispatch/delivery until released
+	SeverityBlocking = HoldSeverity("Blocking")
+)
+
+type HoldSource string
+
+const (
+	SourceUser = HoldSource("User")
+	SourceRule = HoldSource("Rule")
+	SourceAPI  = HoldSource("API")
+	SourceELD  = HoldSource("ELD")
+	SourceEDI  = HoldSource("EDI")
+)

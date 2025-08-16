@@ -1898,6 +1898,285 @@
       trailer_type_id: "{{ $.EquipmentType.container_equip_type.ID }}"
       auto_assign: false
 
+- model: HoldReason
+  rows:
+    # -------------------- COMPLIANCE --------------------
+    - _id: hold_reason_eld_oos
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "ComplianceHold"
+      code: "ELD_OOS"
+      label: "ELD Out of Service"
+      description: "Driver/device reported OOS state from ELD/telematics."
+      default_severity: "Blocking"
+      default_blocks_dispatch: true
+      default_blocks_delivery: true
+      default_blocks_billing: false
+      default_visible_to_customer: false
+      sort_order: 10
+      external_map:
+        edi214:
+          status: "AD"
+          reason: "OOS"
+        samsara:
+          driver_status: "out_of_service"
+        tms_event: "compliance.oos"
+      created_at: "{{ now.Unix }}"
+
+    - _id: hold_reason_hos_reset_required
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "ComplianceHold"
+      code: "HOS_RESET_REQUIRED"
+      label: "HOS Reset Required"
+      description: "Driver at/over HOS; movement paused until reset/rest window."
+      default_severity: "Advisory"
+      default_blocks_dispatch: true
+      default_blocks_delivery: false
+      default_blocks_billing: false
+      default_visible_to_customer: false
+      sort_order: 20
+      external_map:
+        edi214:
+          status: "AD"
+          reason: "HOS"
+        tms_event: "compliance.hos_reset"
+      created_at: "{{ now.Unix }}"
+
+    - _id: hold_reason_cdl_suspended
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "ComplianceHold"
+      code: "CDL_SUSPENDED"
+      label: "CDL Suspended"
+      description: "Safety block due to CDL/license/credential status."
+      default_severity: "Blocking"
+      default_blocks_dispatch: true
+      default_blocks_delivery: true
+      default_blocks_billing: false
+      default_visible_to_customer: false
+      sort_order: 30
+      external_map:
+        tms_event: "compliance.cdl_suspended"
+      created_at: "{{ now.Unix }}"
+
+    - _id: hold_reason_inspection_oos
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "ComplianceHold"
+      code: "INSPECTION_OOS"
+      label: "Inspection OOS"
+      description: "Placed out-of-service at inspection; movement prohibited until cleared."
+      default_severity: "Blocking"
+      default_blocks_dispatch: true
+      default_blocks_delivery: true
+      default_blocks_billing: false
+      default_visible_to_customer: false
+      sort_order: 40
+      external_map:
+        edi214:
+          status: "AD"
+          reason: "INSP"
+        tms_event: "compliance.inspection_oos"
+      created_at: "{{ now.Unix }}"
+
+    # -------------------- OPERATIONAL --------------------
+    - _id: hold_reason_appt_pending
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "OperationalHold"
+      code: "APPT_PENDING"
+      label: "Appointment Pending"
+      description: "Pickup/delivery appointment not yet confirmed."
+      default_severity: "Advisory"
+      default_blocks_dispatch: true
+      default_blocks_delivery: false
+      default_blocks_billing: false
+      default_visible_to_customer: false
+      sort_order: 110
+      external_map:
+        edi214:
+          status: "AD"
+          reason: "AP"
+        tms_event: "ops.appt_pending"
+      created_at: "{{ now.Unix }}"
+
+    - _id: hold_reason_facility_closed
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "OperationalHold"
+      code: "FACILITY_CLOSED"
+      label: "Facility Closed"
+      description: "Shipper/consignee reported closed; reschedule required."
+      default_severity: "Advisory"
+      default_blocks_dispatch: false
+      default_blocks_delivery: true
+      default_blocks_billing: false
+      default_visible_to_customer: true
+      sort_order: 120
+      external_map:
+        edi214:
+          status: "AD"
+          reason: "FC"
+        tms_event: "ops.facility_closed"
+      created_at: "{{ now.Unix }}"
+
+    - _id: hold_reason_weather_impact
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "OperationalHold"
+      code: "WEATHER_IMPACT"
+      label: "Weather Impact"
+      description: "Severe weather affecting safe movement; monitor and reschedule if needed."
+      default_severity: "Advisory"
+      default_blocks_dispatch: false
+      default_blocks_delivery: false
+      default_blocks_billing: false
+      default_visible_to_customer: true
+      sort_order: 130
+      external_map:
+        project44:
+          exception: "WEATHER"
+      created_at: "{{ now.Unix }}"
+
+    - _id: hold_reason_mechanical_breakdown
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "OperationalHold"
+      code: "MECHANICAL_BREAKDOWN"
+      label: "Mechanical Breakdown"
+      description: "Asset unavailable due to mechanical issue; swap/repair pending."
+      default_severity: "Advisory"
+      default_blocks_dispatch: false
+      default_blocks_delivery: false
+      default_blocks_billing: false
+      default_visible_to_customer: false
+      sort_order: 140
+      external_map:
+        tms_event: "ops.mechanical"
+      created_at: "{{ now.Unix }}"
+
+    # -------------------- CUSTOMER --------------------
+    - _id: hold_reason_customer_request_pause
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "CustomerHold"
+      code: "CUSTOMER_REQUEST_PAUSE"
+      label: "Customer Requested Pause"
+      description: "Customer requested we pause dispatch/delivery until further notice."
+      default_severity: "Advisory"
+      default_blocks_dispatch: true
+      default_blocks_delivery: false
+      default_blocks_billing: false
+      default_visible_to_customer: true
+      sort_order: 210
+      external_map:
+        edi214:
+          status: "AD"
+          reason: "CR"
+      created_at: "{{ now.Unix }}"
+
+    - _id: hold_reason_appt_rescheduled
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "CustomerHold"
+      code: "APPT_RESCHEDULED"
+      label: "Appointment Rescheduled"
+      description: "Appointment changed by customer; awaiting new window."
+      default_severity: "Advisory"
+      default_blocks_dispatch: true
+      default_blocks_delivery: false
+      default_blocks_billing: false
+      default_visible_to_customer: true
+      sort_order: 220
+      external_map:
+        tms_event: "customer.appt_rescheduled"
+      created_at: "{{ now.Unix }}"
+
+    - _id: hold_reason_awaiting_customer_docs
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "CustomerHold"
+      code: "AWAITING_CUSTOMER_DOCS"
+      label: "Awaiting Customer Documents"
+      description: "Cannot proceed without customer paperwork (e.g., BOL update, PO release)."
+      default_severity: "Advisory"
+      default_blocks_dispatch: false
+      default_blocks_delivery: false
+      default_blocks_billing: false
+      default_visible_to_customer: true
+      sort_order: 230
+      external_map:
+        billing_code: "AWAIT_DOCS"
+      created_at: "{{ now.Unix }}"
+
+    # -------------------- FINANCE --------------------
+    - _id: hold_reason_credit_limit_exceeded
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "FinanceHold"
+      code: "CREDIT_LIMIT_EXCEEDED"
+      label: "Credit Limit Exceeded"
+      description: "Customer over credit limit; block invoicing until cleared by AR."
+      default_severity: "Advisory"
+      default_blocks_dispatch: false
+      default_blocks_delivery: false
+      default_blocks_billing: true
+      default_visible_to_customer: false
+      sort_order: 310
+      external_map:
+        billing_code: "CREDIT_HOLD"
+        tms_event: "finance.credit_limit"
+      created_at: "{{ now.Unix }}"
+
+    - _id: hold_reason_past_due_account
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "FinanceHold"
+      code: "PAST_DUE_ACCOUNT"
+      label: "Past-Due Account"
+      description: "AR indicates past-due status; billing blocked per policy."
+      default_severity: "Advisory"
+      default_blocks_dispatch: false
+      default_blocks_delivery: false
+      default_blocks_billing: true
+      default_visible_to_customer: false
+      sort_order: 320
+      external_map:
+        billing_code: "PAST_DUE"
+      created_at: "{{ now.Unix }}"
+
+    - _id: hold_reason_billing_dispute_open
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      active: true
+      type: "FinanceHold"
+      code: "BILLING_DISPUTE_OPEN"
+      label: "Billing Dispute Open"
+      description: "Open dispute with customer; hold billing until resolved."
+      default_severity: "Advisory"
+      default_blocks_dispatch: false
+      default_blocks_delivery: false
+      default_blocks_billing: true
+      default_visible_to_customer: false
+      sort_order: 330
+      external_map:
+        billing_code: "DISPUTE_OPEN"
+      created_at: "{{ now.Unix }}"
+
 - model: FormulaTemplate
   rows:
     - _id: weight_based_rate_template
@@ -2315,55 +2594,3 @@
         - type: "field"
           name: "ratingMethod"
           description: "Service level"
-
-- model: PartnerConfig
-  rows:
-    - _id: default_edi
-      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
-      organization_id: "{{ $.Organization.trenova.ID }}"
-      name: "Default 204 (4010)"
-      schema_path: "shared/edi/testdata/schema/generic-204-4010.json"
-      delims:
-        element: "*"
-        component: ">"
-        segment: "~"
-        repetition: ""
-      validation:
-        strictness: strict
-        enforce_se_count: true
-        require_pickup_and_delivery: true
-        require_b2_ship_id: false
-        require_n1_sh: false
-        require_n1_st: false
-      references:
-        customer_po: ["PO"]
-        bill_of_lading: ["BM"]
-        shipment_ref: ["SI","CR"]
-      party_roles:
-        shipper: ["SH","SF"]
-        consignee: ["ST","CN"]
-        bill_to: ["BT"]
-      stop_type_map:
-        LD: pickup
-        CL: pickup
-        UL: delivery
-        CU: delivery
-      shipment_id_quals: ["SI","CR"]
-      shipment_id_mode: ref_first
-      carrier_scac_fallback: "TRNV"
-      include_raw_l11: true
-      raw_l11_filter: ["PO","BM","SI","CR"]
-      equipment_type_map:
-        VEH: trailer
-        "53_FT_DRY": dry_van
-      include_segments: false
-      emit_iso_datetime: true
-      timezone: "UTC"
-      service_level_quals: ["SVL"]
-      service_level_map:
-        EXP: "expedited"
-        STD: "standard"
-      accessorial_quals: ["ACC"]
-      accessorial_map:
-        LAY: layover
-        DET: detention

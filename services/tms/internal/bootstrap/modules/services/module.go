@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/core/services/holdreason"
 	"github.com/emoss08/trenova/internal/core/services/imagegen"
 	"github.com/emoss08/trenova/internal/core/services/integration"
 	"github.com/emoss08/trenova/internal/core/services/location"
@@ -48,6 +49,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipment"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcomment"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/core/services/shipmenthold"
 	"github.com/emoss08/trenova/internal/core/services/shipmentmove"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/services/stop"
@@ -119,6 +121,8 @@ var Module = fx.Module("services", fx.Provide(
 	consolidationsetting.NewService,
 	formula.NewService,
 	shipmentcomment.NewService,
+	shipmenthold.NewService,
+	holdreason.NewService,
 ),
 	fx.Invoke(func(s services.WebSocketService) { //nolint:revive // required for fx
 		log.Info().Msg("websocket service initialized")

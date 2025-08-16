@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/formula"
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/api/handlers/holdreason"
 	"github.com/emoss08/trenova/internal/api/handlers/integration"
 	"github.com/emoss08/trenova/internal/api/handlers/location"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
@@ -118,4 +119,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	consolidationsetting.NewHandler,
 	formula.NewHandler,
 	email.NewHandler,
+	holdreason.NewHandler,
 ))

@@ -34,6 +34,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/formula"
 	"github.com/emoss08/trenova/internal/api/handlers/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/api/handlers/hazmatsegregationrule"
+	"github.com/emoss08/trenova/internal/api/handlers/holdreason"
 	"github.com/emoss08/trenova/internal/api/handlers/integration"
 	"github.com/emoss08/trenova/internal/api/handlers/location"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategory"
@@ -151,6 +152,7 @@ type RouterParams struct {
 	NotificationHandler            *notification.Handler
 	ConsolidationSettingHandler    *consolidationsetting.Handler
 	EmailProfileHandler            *email.Handler
+	HoldReasonHandler              *holdreason.Handler
 }
 
 type Router struct {
@@ -374,4 +376,7 @@ func (r *Router) setupProtectedRoutes( //nolint:funlen // this is to setup prote
 
 	// Email Profiles
 	r.p.EmailProfileHandler.RegisterRoutes(router, rl)
+
+	// Hold Reasons
+	r.p.HoldReasonHandler.RegisterRoutes(router, rl)
 }

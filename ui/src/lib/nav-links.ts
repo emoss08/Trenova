@@ -68,6 +68,11 @@ export const adminLinks: SidebarLink[] = [
     group: "Organization",
   },
   {
+    href: "/organization/hold-reasons/",
+    title: "Hold Reasons",
+    group: "Organization",
+  },
+  {
     href: "/organization/users/",
     title: "Users & Roles",
     group: "Organization",
@@ -402,6 +407,12 @@ export const routes: RouteInfo[] = [
         key: Resource.HazmatSegregationRule,
         label: "Hazmat Segregation Rules",
         link: "/organization/hazmat-segregation-rules/",
+        supportsModal: true,
+      },
+      {
+        key: Resource.HoldReason,
+        label: "Hold Reasons",
+        link: "/organization/hold-reasons/",
         supportsModal: true,
       },
       {

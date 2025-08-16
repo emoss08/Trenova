@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator/framework"
 	"github.com/emoss08/trenova/internal/pkg/validator/hazardousmaterialvalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/hazmatsegreationrulevalidator"
+	"github.com/emoss08/trenova/internal/pkg/validator/holdreasonvalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/locationvalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/notificationpreferencevalidator"
 	"github.com/emoss08/trenova/internal/pkg/validator/organizationvalidator"
@@ -52,6 +53,7 @@ var Module = fx.Module("validators",
 		hazmatsegreationrulevalidator.NewValidator,
 		shipmentvalidator.NewStopValidator,
 		shipmentvalidator.NewMoveValidator,
+		shipmentvalidator.NewShipmentHoldValidator,
 		shipmentvalidator.NewValidator,
 		assignmentvalidator.NewValidator,
 		shipmentcontrolvalidator.NewValidator,
@@ -65,6 +67,7 @@ var Module = fx.Module("validators",
 		notificationpreferencevalidator.NewValidator,
 		consolidationsettingvalidator.NewValidator,
 		consolidationvalidator.NewValidator,
+		holdreasonvalidator.NewValidator,
 	),
 	fx.Options(
 		framework.Module,
