@@ -40,6 +40,7 @@ import {
   type EmailProfileSchema,
 } from "./schemas/email-profile-schema";
 import { MoveStatus, type MoveSchema } from "./schemas/move-schema";
+import { HoldSeverity, HoldType } from "./schemas/shipment-hold-schema";
 import {
   RatingMethod,
   ShipmentStatus,
@@ -500,6 +501,54 @@ export const billingExceptionHandlingChoices = [
     color: "#f59e0b",
   },
 ] satisfies ReadonlyArray<ChoiceProps<BillingExceptionHandling>>;
+
+export const holdTypeChoices = [
+  {
+    value: HoldType.enum.OperationalHold,
+    label: "Operational Hold",
+    description: "Missing appointment window, facility closed, dock issue",
+    color: "#15803d",
+  },
+  {
+    value: HoldType.enum.ComplianceHold,
+    label: "Compliance Hold",
+    description: "OOS, HOS, CDL, permits, safety blocks",
+    color: "#7e22ce",
+  },
+  {
+    value: HoldType.enum.CustomerHold,
+    label: "Customer Hold",
+    description: "Shipper/consignee requested pause/change",
+    color: "#b91c1c",
+  },
+  {
+    value: HoldType.enum.FinanceHold,
+    label: "Finance Hold",
+    description: "Credit limit, AR blocks (doesn't have to block ops)",
+    color: "#f59e0b",
+  },
+];
+
+export const holdSeverityChoices = [
+  {
+    value: HoldSeverity.enum.Informational,
+    label: "Informational",
+    description: "FYI, never blocks ops",
+    color: "#0369a1",
+  },
+  {
+    value: HoldSeverity.enum.Advisory,
+    label: "Advisory",
+    description: "Warns, may block billing, not movement",
+    color: "#f59e0b",
+  },
+  {
+    value: HoldSeverity.enum.Blocking,
+    label: "Blocking",
+    description: "Can block dispatch/delivery until released",
+    color: "#b91c1c",
+  },
+];
 
 export const transferScheduleChoices = [
   {

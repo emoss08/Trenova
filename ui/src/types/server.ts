@@ -137,6 +137,7 @@ export type BaseEndpoint =
   | "/table-configurations/"
   | "/dedicated-lanes/"
   | "/consolidations/"
-  | "/document-types/";
+  | "/document-types/"
+  | "/hold-reasons/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;

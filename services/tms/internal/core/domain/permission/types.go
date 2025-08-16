@@ -77,6 +77,12 @@ const (
 	ResourceShipment = Resource(
 		"shipment",
 	) // Represents resources for managing shipments.
+	ResourceShipmentHold = Resource(
+		"shipment_hold",
+	) // Represents resources for managing shipment holds.
+	ResourceHoldReason = Resource(
+		"hold_reason",
+	) // Represents resources for managing hold reasons.
 	ResourceShipmentComment = Resource(
 		"shipment_comment",
 	) // Represents resources for managing shipment comments.
@@ -464,6 +470,14 @@ var (
 			append(AssignableActions, FieldActions...)...,
 		),
 		ResourceShipmentComment: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
+		),
+		ResourceShipmentHold: append(
+			BaseActions,
+			append(DataActions, FieldActions...)...,
+		),
+		ResourceHoldReason: append(
 			BaseActions,
 			append(DataActions, FieldActions...)...,
 		),

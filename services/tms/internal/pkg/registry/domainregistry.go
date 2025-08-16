@@ -103,5 +103,7 @@ func RegisterEntities() []any {
 		&consolidation.ConsolidationSettings{},
 		&consolidation.ConsolidationGroup{},
 		&formulatemplate.FormulaTemplate{},
+		&shipment.ShipmentHold{},
+		&shipment.HoldReason{},
 	}
 }

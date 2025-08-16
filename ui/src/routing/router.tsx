@@ -504,6 +504,18 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "hold-reasons",
+                loader: createPermissionLoader(Resource.HoldReason),
+                async lazy() {
+                  let { HoldReasons } = await import("@/app/hold-reason/page");
+                  return { Component: HoldReasons };
+                },
+                handle: {
+                  crumb: "Hold Reasons",
+                  title: "Hold Reasons",
+                },
+              },
+              {
                 path: "audit-entries",
                 loader: createPermissionLoader(Resource.AuditEntry),
                 async lazy() {
