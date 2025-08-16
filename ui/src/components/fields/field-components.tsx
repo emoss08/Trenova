@@ -64,10 +64,8 @@ const FieldLabel = memo(
     required?: boolean;
   }) {
     return label ? (
-      <Label
-        className={cn("block text-xs font-medium", required && "required")}
-      >
-        {label}
+      <Label className="block text-xs font-medium">
+        {label} {required && <span className="text-red-500">(required)</span>}
       </Label>
     ) : null;
   },
