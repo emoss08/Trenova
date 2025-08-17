@@ -141,7 +141,7 @@ func (br *billingQueueRepository) List(
 	ctx context.Context,
 	req *repositories.ListBillingQueueRequest,
 ) (*ports.ListResult[*billingqueue.QueueItem], error) {
-	dba, err := br.db.DB(ctx)
+	dba, err := br.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("billing_queue_repository").
@@ -155,7 +155,7 @@ func (br *billingQueueRepository) List(
 		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*billingqueue.QueueItem, 0)
+	entities := make([]*billingqueue.QueueItem, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = br.filterQuery(q, req)
@@ -189,7 +189,7 @@ func (br *billingQueueRepository) GetByID(
 	ctx context.Context,
 	req *repositories.GetBillingQueueItemRequest,
 ) (*billingqueue.QueueItem, error) {
-	dba, err := br.db.DB(ctx)
+	dba, err := br.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("billing_queue_repository").
@@ -243,7 +243,7 @@ func (br *billingQueueRepository) Create(
 	ctx context.Context,
 	qi *billingqueue.QueueItem,
 ) (*billingqueue.QueueItem, error) {
-	dba, err := br.db.DB(ctx)
+	dba, err := br.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("billing_queue_repository").
@@ -282,7 +282,7 @@ func (br *billingQueueRepository) Update(
 	ctx context.Context,
 	qi *billingqueue.QueueItem,
 ) (*billingqueue.QueueItem, error) {
-	dba, err := br.db.DB(ctx)
+	dba, err := br.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("billing_queue_repository").
@@ -356,7 +356,7 @@ func (br *billingQueueRepository) BulkTransfer(
 	ctx context.Context,
 	_ *repositories.BulkTransferRequest,
 ) error {
-	dba, err := br.db.DB(ctx)
+	dba, err := br.db.WriteDB(ctx)
 	if err != nil {
 		return oops.
 			In("billing_queue_repository").

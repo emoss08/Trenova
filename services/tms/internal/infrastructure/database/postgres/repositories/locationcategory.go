@@ -73,7 +73,7 @@ func (lcr *locationCategoryRepository) List(
 	ctx context.Context,
 	opts *ports.LimitOffsetQueryOptions,
 ) (*ports.ListResult[*location.LocationCategory], error) {
-	dba, err := lcr.db.DB(ctx)
+	dba, err := lcr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -84,7 +84,7 @@ func (lcr *locationCategoryRepository) List(
 		Str("userID", opts.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*location.LocationCategory, 0)
+	entities := make([]*location.LocationCategory, 0, opts.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = lcr.filterQuery(q, opts)
@@ -105,7 +105,7 @@ func (lcr *locationCategoryRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetLocationCategoryByIDOptions,
 ) (*location.LocationCategory, error) {
-	dba, err := lcr.db.DB(ctx)
+	dba, err := lcr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -138,7 +138,7 @@ func (lcr *locationCategoryRepository) Create(
 	ctx context.Context,
 	lc *location.LocationCategory,
 ) (*location.LocationCategory, error) {
-	dba, err := lcr.db.DB(ctx)
+	dba, err := lcr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -166,7 +166,7 @@ func (lcr *locationCategoryRepository) Update(
 	ctx context.Context,
 	lc *location.LocationCategory,
 ) (*location.LocationCategory, error) {
-	dba, err := lcr.db.DB(ctx)
+	dba, err := lcr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

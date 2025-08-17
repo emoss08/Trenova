@@ -97,7 +97,7 @@ func (r *hazmatSegregationRuleRepository) List(
 	ctx context.Context,
 	req *repositories.ListHazmatSegregationRuleRequest,
 ) (*ports.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -108,7 +108,7 @@ func (r *hazmatSegregationRuleRepository) List(
 		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*hazmatsegregationrule.HazmatSegregationRule, 0)
+	entities := make([]*hazmatsegregationrule.HazmatSegregationRule, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = r.filterQuery(q, req)
@@ -138,7 +138,7 @@ func (r *hazmatSegregationRuleRepository) GetByID(
 	ctx context.Context,
 	req *repositories.GetHazmatSegregationRuleByIDRequest,
 ) (*hazmatsegregationrule.HazmatSegregationRule, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -184,7 +184,7 @@ func (r *hazmatSegregationRuleRepository) Create(
 	ctx context.Context,
 	hsr *hazmatsegregationrule.HazmatSegregationRule,
 ) (*hazmatsegregationrule.HazmatSegregationRule, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -224,7 +224,7 @@ func (r *hazmatSegregationRuleRepository) Update(
 	ctx context.Context,
 	hsr *hazmatsegregationrule.HazmatSegregationRule,
 ) (*hazmatsegregationrule.HazmatSegregationRule, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

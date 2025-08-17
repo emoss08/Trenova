@@ -121,7 +121,7 @@ func (dlsr *dedicatedLaneSuggestionRepository) List(
 	ctx context.Context,
 	req *repositories.ListDedicatedLaneSuggestionRequest,
 ) (*ports.ListResult[*dedicatedlane.DedicatedLaneSuggestion], error) {
-	dba, err := dlsr.db.DB(ctx)
+	dba, err := dlsr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.In("dedicated_lane_suggestion_repository").
 			With("op", "list").
@@ -134,7 +134,7 @@ func (dlsr *dedicatedLaneSuggestionRepository) List(
 		Interface("tenantOps", req.Filter.TenantOpts).
 		Logger()
 
-	entities := make([]*dedicatedlane.DedicatedLaneSuggestion, 0)
+	entities := make([]*dedicatedlane.DedicatedLaneSuggestion, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = dlsr.filterQuery(q, req)
@@ -155,7 +155,7 @@ func (dlsr *dedicatedLaneSuggestionRepository) GetByID(
 	ctx context.Context,
 	req *repositories.GetDedicatedLaneSuggestionByIDRequest,
 ) (*dedicatedlane.DedicatedLaneSuggestion, error) {
-	dba, err := dlsr.db.DB(ctx)
+	dba, err := dlsr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.In("dedicated_lane_suggestion_repository").
 			With("op", "get_by_id").
@@ -210,7 +210,7 @@ func (dlsr *dedicatedLaneSuggestionRepository) Create(
 	ctx context.Context,
 	suggestion *dedicatedlane.DedicatedLaneSuggestion,
 ) (*dedicatedlane.DedicatedLaneSuggestion, error) {
-	dba, err := dlsr.db.DB(ctx)
+	dba, err := dlsr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.In("dedicated_lane_suggestion_repository").
 			With("op", "create").
@@ -238,7 +238,7 @@ func (dlsr *dedicatedLaneSuggestionRepository) Update(
 	ctx context.Context,
 	suggestion *dedicatedlane.DedicatedLaneSuggestion,
 ) (*dedicatedlane.DedicatedLaneSuggestion, error) {
-	dba, err := dlsr.db.DB(ctx)
+	dba, err := dlsr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.In("dedicated_lane_suggestion_repository").
 			With("op", "update").
@@ -306,7 +306,7 @@ func (dlsr *dedicatedLaneSuggestionRepository) UpdateStatus(
 	ctx context.Context,
 	req *repositories.UpdateSuggestionStatusRequest,
 ) (*dedicatedlane.DedicatedLaneSuggestion, error) {
-	dba, err := dlsr.db.DB(ctx)
+	dba, err := dlsr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.In("dedicated_lane_suggestion_repository").
 			With("op", "update_status").
@@ -323,14 +323,12 @@ func (dlsr *dedicatedLaneSuggestionRepository) UpdateStatus(
 	suggestion := &dedicatedlane.DedicatedLaneSuggestion{}
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// First get the current suggestion
 		if err = tx.NewSelect().Model(suggestion).
 			Where("dls.id = ?", req.SuggestionID).
 			Scan(c); err != nil {
 			return eris.Wrap(err, "get suggestion for status update")
 		}
 
-		// Update the status and related fields
 		suggestion.Status = req.Status
 		suggestion.ProcessedByID = req.ProcessedByID
 		suggestion.ProcessedAt = req.ProcessedAt
@@ -373,7 +371,7 @@ func (dlsr *dedicatedLaneSuggestionRepository) Delete(
 	orgID pulid.ID,
 	buID pulid.ID,
 ) error {
-	dba, err := dlsr.db.DB(ctx)
+	dba, err := dlsr.db.WriteDB(ctx)
 	if err != nil {
 		return oops.In("dedicated_lane_suggestion_repository").
 			With("op", "delete").
@@ -424,7 +422,7 @@ func (dlsr *dedicatedLaneSuggestionRepository) ExpireOldSuggestions(
 	orgID pulid.ID,
 	buID pulid.ID,
 ) (int64, error) {
-	dba, err := dlsr.db.DB(ctx)
+	dba, err := dlsr.db.WriteDB(ctx)
 	if err != nil {
 		return 0, oops.In("dedicated_lane_suggestion_repository").
 			With("op", "expire_old_suggestions").
@@ -474,7 +472,7 @@ func (dlsr *dedicatedLaneSuggestionRepository) CheckForDuplicatePattern(
 	ctx context.Context,
 	req *repositories.FindDedicatedLaneByShipmentRequest,
 ) (*dedicatedlane.DedicatedLaneSuggestion, error) {
-	dba, err := dlsr.db.DB(ctx)
+	dba, err := dlsr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.In("dedicated_lane_suggestion_repository").
 			With("op", "check_duplicate_pattern").

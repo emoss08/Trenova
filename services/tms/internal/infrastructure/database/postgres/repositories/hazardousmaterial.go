@@ -71,7 +71,7 @@ func (hmr *hazardousMaterialRepository) List(
 	ctx context.Context,
 	opts *ports.LimitOffsetQueryOptions,
 ) (*ports.ListResult[*hazardousmaterial.HazardousMaterial], error) {
-	dba, err := hmr.db.DB(ctx)
+	dba, err := hmr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -82,7 +82,7 @@ func (hmr *hazardousMaterialRepository) List(
 		Str("userID", opts.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*hazardousmaterial.HazardousMaterial, 0)
+	entities := make([]*hazardousmaterial.HazardousMaterial, 0, opts.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = hmr.filterQuery(q, opts)
@@ -103,7 +103,7 @@ func (hmr *hazardousMaterialRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetHazardousMaterialByIDOptions,
 ) (*hazardousmaterial.HazardousMaterial, error) {
-	dba, err := hmr.db.DB(ctx)
+	dba, err := hmr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -136,7 +136,7 @@ func (hmr *hazardousMaterialRepository) Create(
 	ctx context.Context,
 	hm *hazardousmaterial.HazardousMaterial,
 ) (*hazardousmaterial.HazardousMaterial, error) {
-	dba, err := hmr.db.DB(ctx)
+	dba, err := hmr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("hazardous_material_repository").
@@ -168,7 +168,7 @@ func (hmr *hazardousMaterialRepository) Update(
 	ctx context.Context,
 	hm *hazardousmaterial.HazardousMaterial,
 ) (*hazardousmaterial.HazardousMaterial, error) {
-	dba, err := hmr.db.DB(ctx)
+	dba, err := hmr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

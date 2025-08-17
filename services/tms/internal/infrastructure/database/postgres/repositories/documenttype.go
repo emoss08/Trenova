@@ -103,7 +103,7 @@ func (dt *documentTypeRepository) List(
 	ctx context.Context,
 	opts *ports.LimitOffsetQueryOptions,
 ) (*ports.ListResult[*billing.DocumentType], error) {
-	dba, err := dt.db.DB(ctx)
+	dba, err := dt.db.ReadDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -114,7 +114,7 @@ func (dt *documentTypeRepository) List(
 		Str("userID", opts.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*billing.DocumentType, 0)
+	entities := make([]*billing.DocumentType, 0, opts.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = dt.filterQuery(q, opts)
@@ -144,7 +144,7 @@ func (dt *documentTypeRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetDocumentTypeByIDRequest,
 ) (*billing.DocumentType, error) {
-	dba, err := dt.db.DB(ctx)
+	dba, err := dt.db.ReadDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +189,7 @@ func (dt *documentTypeRepository) GetByIDs(
 	ctx context.Context,
 	docIDs []string,
 ) ([]*billing.DocumentType, error) {
-	dba, err := dt.db.DB(ctx)
+	dba, err := dt.db.ReadDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -225,7 +225,7 @@ func (dt *documentTypeRepository) Create(
 	ctx context.Context,
 	entity *billing.DocumentType,
 ) (*billing.DocumentType, error) {
-	dba, err := dt.db.DB(ctx)
+	dba, err := dt.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("document_type_repository").
@@ -267,7 +267,7 @@ func (dt *documentTypeRepository) Update(
 	ctx context.Context,
 	entity *billing.DocumentType,
 ) (*billing.DocumentType, error) {
-	dba, err := dt.db.DB(ctx)
+	dba, err := dt.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

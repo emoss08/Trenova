@@ -49,7 +49,7 @@ func (r *favoriteRepository) List(
 	ctx context.Context,
 	opts repositories.ListFavoritesOptions,
 ) ([]*pagefavorite.PageFavorite, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("page_favorite_repository").
@@ -85,7 +85,7 @@ func (r *favoriteRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetFavoriteByIDOptions,
 ) (*pagefavorite.PageFavorite, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("page_favorite_repository").
@@ -125,7 +125,7 @@ func (r *favoriteRepository) GetByURL(
 	ctx context.Context,
 	opts repositories.GetFavoriteByURLOptions,
 ) (*pagefavorite.PageFavorite, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("page_favorite_repository").
@@ -170,7 +170,7 @@ func (r *favoriteRepository) Create(
 	ctx context.Context,
 	f *pagefavorite.PageFavorite,
 ) (*pagefavorite.PageFavorite, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("page_favorite_repository").
@@ -200,7 +200,7 @@ func (r *favoriteRepository) Update(
 	ctx context.Context,
 	f *pagefavorite.PageFavorite,
 ) (*pagefavorite.PageFavorite, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("page_favorite_repository").
@@ -236,7 +236,7 @@ func (r *favoriteRepository) Delete(
 	ctx context.Context,
 	opts repositories.DeleteFavoriteOptions,
 ) error {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return oops.
 			In("page_favorite_repository").

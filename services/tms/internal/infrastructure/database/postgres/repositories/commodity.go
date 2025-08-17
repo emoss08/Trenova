@@ -73,7 +73,7 @@ func (cr *commodityRepository) List(
 	ctx context.Context,
 	opts *ports.LimitOffsetQueryOptions,
 ) (*ports.ListResult[*commodity.Commodity], error) {
-	dba, err := cr.db.DB(ctx)
+	dba, err := cr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -84,7 +84,7 @@ func (cr *commodityRepository) List(
 		Str("userID", opts.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*commodity.Commodity, 0)
+	entities := make([]*commodity.Commodity, 0, opts.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = cr.filterQuery(q, opts)
@@ -105,7 +105,7 @@ func (cr *commodityRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetCommodityByIDOptions,
 ) (*commodity.Commodity, error) {
-	dba, err := cr.db.DB(ctx)
+	dba, err := cr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -136,7 +136,7 @@ func (cr *commodityRepository) Create(
 	ctx context.Context,
 	com *commodity.Commodity,
 ) (*commodity.Commodity, error) {
-	dba, err := cr.db.DB(ctx)
+	dba, err := cr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("commodity_repository").
@@ -169,7 +169,7 @@ func (cr *commodityRepository) Update(
 	ctx context.Context,
 	com *commodity.Commodity,
 ) (*commodity.Commodity, error) {
-	dba, err := cr.db.DB(ctx)
+	dba, err := cr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

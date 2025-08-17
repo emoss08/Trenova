@@ -227,7 +227,7 @@ func (ac *accessorialChargeRepository) Update(
 	ctx context.Context,
 	acc *accessorialcharge.AccessorialCharge,
 ) (*accessorialcharge.AccessorialCharge, error) {
-	dba, err := ac.db.DB(ctx)
+	dba, err := ac.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("accessorial_charge_repository").

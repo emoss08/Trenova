@@ -72,7 +72,7 @@ func (r shipmentControlRepository) GetByOrgID(
 	ctx context.Context,
 	orgID pulid.ID,
 ) (*shipment.ShipmentControl, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -115,7 +115,7 @@ func (r shipmentControlRepository) Update(
 	ctx context.Context,
 	sc *shipment.ShipmentControl,
 ) (*shipment.ShipmentControl, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
