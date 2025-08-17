@@ -5,6 +5,7 @@
 
 import { Slot } from "@radix-ui/react-slot";
 import { VariantProps, cva } from "class-variance-authority";
+import { motion } from "motion/react";
 import * as React from "react";
 
 import { Button } from "@/components/ui/button";
@@ -38,6 +39,8 @@ type SidebarContext = {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
+  isHovering: boolean;
+  setIsHovering: (hovering: boolean) => void;
 };
 
 const SidebarContext = React.createContext<SidebarContext | null>(null);
@@ -73,6 +76,7 @@ const SidebarProvider = React.forwardRef<
   ) => {
     const isMobile = useIsMobile();
     const [openMobile, setOpenMobile] = React.useState(false);
+    const [isHovering, setIsHovering] = React.useState(false);
 
     // This is the internal state of the sidebar.
     // We use openProp and setOpenProp for control from outside the component.
@@ -129,6 +133,8 @@ const SidebarProvider = React.forwardRef<
         openMobile,
         setOpenMobile,
         toggleSidebar,
+        isHovering,
+        setIsHovering,
       }),
       [
         state,
@@ -138,6 +144,8 @@ const SidebarProvider = React.forwardRef<
         openMobile,
         setOpenMobile,
         toggleSidebar,
+        isHovering,
+        setIsHovering,
       ],
     );
 
@@ -189,7 +197,51 @@ const Sidebar = React.forwardRef<
     },
     ref,
   ) => {
-    const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
+    const {
+      isMobile,
+      state,
+      openMobile,
+      setOpenMobile,
+      isHovering,
+      setIsHovering,
+    } = useSidebar();
+
+    // Use a timeout ref to prevent flickering on quick mouse movements
+    const hoverTimeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
+
+    // Memoized handlers for performance
+    const handleMouseEnter = React.useCallback(() => {
+      if (state === "collapsed") {
+        clearTimeout(hoverTimeoutRef.current);
+        hoverTimeoutRef.current = setTimeout(() => {
+          setIsHovering(true);
+        }, 50); // Small delay to prevent accidental triggers
+      }
+    }, [state, setIsHovering]);
+
+    const handleMouseLeave = React.useCallback(() => {
+      clearTimeout(hoverTimeoutRef.current);
+      hoverTimeoutRef.current = setTimeout(() => {
+        setIsHovering(false);
+      }, 300); // Longer delay when leaving to prevent flickering
+    }, [setIsHovering]);
+
+    // Reset hover state when sidebar is expanded
+    React.useEffect(() => {
+      if (state === "expanded") {
+        setIsHovering(false);
+        clearTimeout(hoverTimeoutRef.current);
+      }
+    }, [state, setIsHovering]);
+
+    // Cleanup timeout on unmount
+    React.useEffect(() => {
+      return () => {
+        if (hoverTimeoutRef.current) {
+          clearTimeout(hoverTimeoutRef.current);
+        }
+      };
+    }, []);
 
     if (collapsible === "none") {
       return (
@@ -226,48 +278,83 @@ const Sidebar = React.forwardRef<
       );
     }
 
+    // Determine if sidebar should be visible (expanded or hovering while collapsed)
+    const shouldShowSidebar =
+      state === "expanded" || (state === "collapsed" && isHovering);
+
     return (
-      <div
-        ref={ref}
-        className="group peer hidden text-sidebar-foreground md:block"
-        data-state={state}
-        data-collapsible={state === "collapsed" ? collapsible : ""}
-        data-variant={variant}
-        data-side={side}
-      >
-        {/* This is what handles the sidebar gap on desktop */}
-        <div
-          className={cn(
-            "duration-200 relative h-svh w-(--sidebar-width) bg-transparent transition-[width] ease-linear",
-            "group-data-[collapsible=offcanvas]:w-0",
-            "group-data-[side=right]:rotate-180",
-            variant === "floating" || variant === "inset"
-              ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
-              : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
-          )}
-        />
-        <div
-          className={cn(
-            "duration-200 fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] ease-linear md:flex",
-            side === "left"
-              ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]"
-              : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]",
-            // Adjust the padding for floating and inset variants.
-            variant === "floating" || variant === "inset"
-              ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4))+2px)]"
-              : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l",
-            className,
-          )}
-          {...props}
-        >
+      <>
+        {/* Hover trigger zone - only visible when collapsed */}
+        {state === "collapsed" && !isMobile && (
           <div
-            data-sidebar="sidebar"
-            className="flex size-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border"
+            className="fixed left-0 top-0 z-40 h-full w-5 cursor-pointer"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            aria-label="Hover to reveal sidebar"
           >
-            {children}
+            {/* Optional visual hint - a subtle gradient */}
+            <div className="h-full w-full bg-gradient-to-r from-sidebar-border/10 to-transparent opacity-0 transition-opacity hover:opacity-100" />
           </div>
+        )}
+
+        <div
+          ref={ref}
+          className="group peer hidden text-sidebar-foreground md:block"
+          data-state={state}
+          data-collapsible={state === "collapsed" ? collapsible : ""}
+          data-variant={variant}
+          data-side={side}
+        >
+          {/* This is what handles the sidebar gap on desktop */}
+          <div
+            className={cn(
+              "duration-200 relative h-svh w-(--sidebar-width) bg-transparent transition-[width] ease-linear",
+              "group-data-[collapsible=offcanvas]:w-0",
+              "group-data-[side=right]:rotate-180",
+              variant === "floating" || variant === "inset"
+                ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)+(--spacing(4)))]"
+                : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)",
+            )}
+          />
+
+          {/* Main sidebar container with motion animation */}
+          <motion.div
+            initial={false}
+            animate={{
+              x: shouldShowSidebar ? 0 : side === "left" ? "-100%" : "100%",
+              opacity: shouldShowSidebar ? 1 : 0.95,
+            }}
+            transition={{
+              x: {
+                type: "spring",
+                stiffness: 400,
+                damping: 40,
+                mass: 0.8,
+              },
+              opacity: { duration: 0.2 },
+            }}
+            className={cn(
+              "fixed inset-y-0 hidden h-svh w-(--sidebar-width) md:flex",
+              isHovering ? "z-50" : "z-10", // Higher z-index when hovering
+              side === "left" ? "left-0" : "right-0",
+              // Adjust the padding for floating and inset variants.
+              variant === "floating" || variant === "inset"
+                ? "p-2"
+                : "group-data-[side=left]:border-r group-data-[side=right]:border-l",
+              className,
+            )}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+          >
+            <div
+              data-sidebar="sidebar"
+              className="flex size-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border"
+            >
+              {children}
+            </div>
+          </motion.div>
         </div>
-      </div>
+      </>
     );
   },
 );
