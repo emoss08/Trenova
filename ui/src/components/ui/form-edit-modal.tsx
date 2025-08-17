@@ -141,17 +141,14 @@ export function FormEditModal<T extends FieldValues>({
       }
       return failureCount < 3;
     },
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
   });
 
-  // Use either the currentRecord from table or the fetched record
   const effectiveRecord = currentRecord || fetchedRecord;
   const isLoadingRecord = isLoading || isFetchingRecord;
 
-  // Check if we're using a fetched record (no table context for navigation)
   const isFetchedRecord = !currentRecord && !!fetchedRecord;
 
-  // Clean up entityId from URL if it doesn't match any record and we're not fetching
   React.useEffect(() => {
     if (
       searchParams.entityId &&
@@ -173,7 +170,6 @@ export function FormEditModal<T extends FieldValues>({
     fetchError,
   ]);
 
-  // Process navigation with useTransition to prevent blinking
   const processNavigation = React.useCallback(
     async (targetId: string) => {
       if (isNavigatingRef.current) {
@@ -184,15 +180,12 @@ export function FormEditModal<T extends FieldValues>({
       isNavigatingRef.current = true;
 
       try {
-        // Use startTransition to mark this update as non-urgent
         startTransition(() => {
           setSearchParams({ entityId: targetId, modalType: "edit" }).then(
             () => {
-              // Process any queued navigation
               if (navigationQueueRef.current) {
                 const queuedId = navigationQueueRef.current;
                 navigationQueueRef.current = null;
-                // Use a small delay to prevent visual blinking
                 setTimeout(() => {
                   isNavigatingRef.current = false;
                   processNavigation(queuedId);
