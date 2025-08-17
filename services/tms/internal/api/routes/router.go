@@ -51,6 +51,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/session"
 	"github.com/emoss08/trenova/internal/api/handlers/shipment"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/api/handlers/shipmenthold"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentmove"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/stop"
@@ -153,6 +154,7 @@ type RouterParams struct {
 	ConsolidationSettingHandler    *consolidationsetting.Handler
 	EmailProfileHandler            *email.Handler
 	HoldReasonHandler              *holdreason.Handler
+	ShipmentHoldHandler            *shipmenthold.Handler
 }
 
 type Router struct {
@@ -379,4 +381,7 @@ func (r *Router) setupProtectedRoutes( //nolint:funlen // this is to setup prote
 
 	// Hold Reasons
 	r.p.HoldReasonHandler.RegisterRoutes(router, rl)
+
+	// Shipment Holds
+	r.p.ShipmentHoldHandler.RegisterRoutes(router, rl)
 }

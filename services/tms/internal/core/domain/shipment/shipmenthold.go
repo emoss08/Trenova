@@ -21,11 +21,11 @@ type ShipmentHold struct {
 	ShipmentID        pulid.ID       `json:"shipmentId"        bun:"shipment_id,type:VARCHAR(100),notnull"`
 	BusinessUnitID    pulid.ID       `json:"businessUnitId"    bun:"business_unit_id,type:VARCHAR(100),notnull"`
 	OrganizationID    pulid.ID       `json:"organizationId"    bun:"organization_id,type:VARCHAR(100),notnull"`
-	Type              HoldType       `json:"type"              bun:"type,type:VARCHAR(64),notnull"`
+	Type              HoldType       `json:"type"              bun:"type,type:hold_type_enum,notnull"`
 	Severity          HoldSeverity   `json:"severity"          bun:"severity,type:VARCHAR(32),notnull,default:'Advisory'"`
 	ReasonCode        string         `json:"reasonCode"        bun:"reason_code,type:VARCHAR(100),nullzero"` // e.g. ELD_OOS, APPT_PENDING
 	Notes             string         `json:"notes"             bun:"notes,type:TEXT,nullzero"`
-	Source            HoldSource     `json:"source"            bun:"source,type:VARCHAR(16),notnull,default:'user'"`
+	Source            HoldSource     `json:"source"            bun:"source,type:hold_source_enum,notnull,default:'User'"`
 	BlocksDispatch    bool           `json:"blocksDispatch"    bun:"blocks_dispatch,type:BOOLEAN,notnull,default:false"`
 	BlocksDelivery    bool           `json:"blocksDelivery"    bun:"blocks_delivery,type:BOOLEAN,notnull,default:false"`
 	BlocksBilling     bool           `json:"blocksBilling"     bun:"blocks_billing,type:BOOLEAN,notnull,default:false"`
@@ -136,6 +136,10 @@ func (sh *ShipmentHold) BeforeAppendModel(_ context.Context, query bun.Query) er
 
 	switch query.(type) {
 	case *bun.InsertQuery:
+		if sh.ID.IsNil() {
+			sh.ID = pulid.MustNew("sh_")
+		}
+
 		sh.CreatedAt = now
 	case *bun.UpdateQuery:
 		sh.UpdatedAt = now

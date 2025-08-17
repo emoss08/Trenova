@@ -51,6 +51,12 @@ func NewShipmentHoldRepository(
 	}
 }
 
+func (sh *shipmentHoldRepository) List(
+	ctx context.Context,
+) (*ports.ListResult[*shipment.ShipmentHold], error) {
+	panic("not implemented")
+}
+
 func (sh *shipmentHoldRepository) GetByID(
 	ctx context.Context,
 	req *repositories.GetShipmentHoldByIDRequest,

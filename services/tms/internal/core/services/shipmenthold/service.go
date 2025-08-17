@@ -2,6 +2,7 @@ package shipmenthold
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -22,17 +23,19 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Logger       *logger.Logger
-	Repo         repositories.ShipmentHoldRepository
-	PermService  services.PermissionService
-	AuditService services.AuditService
-	Validator    *shipmentvalidator.ShipmentHoldValidator
+	Logger         *logger.Logger
+	Repo           repositories.ShipmentHoldRepository
+	HoldReasonRepo repositories.HoldReasonRepository
+	PermService    services.PermissionService
+	AuditService   services.AuditService
+	Validator      *shipmentvalidator.ShipmentHoldValidator
 }
 
 type Service struct {
 	l    *zerolog.Logger
 	repo repositories.ShipmentHoldRepository
 	ps   services.PermissionService
+	hr   repositories.HoldReasonRepository
 	as   services.AuditService
 	v    *shipmentvalidator.ShipmentHoldValidator
 }
@@ -48,6 +51,7 @@ func NewService(p ServiceParams) *Service {
 		ps:   p.PermService,
 		as:   p.AuditService,
 		v:    p.Validator,
+		hr:   p.HoldReasonRepo,
 	}
 }
 
@@ -220,4 +224,56 @@ func (s *Service) Update(
 	}
 
 	return updatedEntity, nil
+}
+
+func (s *Service) HoldShipment(
+	ctx context.Context,
+	req *repositories.HoldShipmentRequest,
+) (*shipment.ShipmentHold, error) {
+	log := s.l.With().
+		Str("operation", "HoldShipment").
+		Str("shipmentID", req.ShipmentID.String()).
+		Logger()
+
+	log.Info().Interface("request", req).Msg("request")
+
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	holdReason, err := s.hr.GetByID(ctx, &repositories.GetHoldReasonByIDRequest{
+		ID:     req.HoldReasonID,
+		OrgID:  req.OrgID,
+		BuID:   req.BuID,
+		UserID: req.UserID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get hold reason")
+		return nil, err
+	}
+
+	hold := &shipment.ShipmentHold{
+		ShipmentID:        req.ShipmentID,
+		BusinessUnitID:    req.BuID,
+		OrganizationID:    req.OrgID,
+		Type:              holdReason.Type,
+		Severity:          holdReason.DefaultSeverity,
+		ReasonCode:        holdReason.Code,
+		Notes:             holdReason.Description,
+		Source:            shipment.SourceUser,
+		BlocksDispatch:    holdReason.DefaultBlocksDispatch,
+		BlocksDelivery:    holdReason.DefaultBlocksDelivery,
+		BlocksBilling:     holdReason.DefaultBlocksBilling,
+		VisibleToCustomer: holdReason.DefaultVisibleToCustomer,
+		Metadata:          holdReason.ExternalMap,
+		CreatedByID:       &req.UserID,
+		StartedAt:         time.Now().Unix(),
+	}
+
+	createdHold, err := s.Create(ctx, hold, req.UserID)
+	if err != nil {
+		return nil, err
+	}
+
+	return createdHold, nil
 }
