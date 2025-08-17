@@ -1,20 +1,18 @@
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
-    Dialog,
-    DialogBody,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
+  Dialog,
+  DialogBody,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { http } from "@/lib/http-client";
 import {
-    HoldSeverity,
-    HoldType,
-    ShipmentHoldSchema,
-    shipmentHoldSchema,
+  HoldShipmentRequestSchema,
+  holdShipmentRequestSchema,
 } from "@/lib/schemas/shipment-hold-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -35,20 +33,13 @@ export function ShipmentHoldDialog({
   shipmentId,
 }: ShipmentHoldDialogProps) {
   const form = useForm({
-    resolver: zodResolver(shipmentHoldSchema),
+    resolver: zodResolver(holdShipmentRequestSchema),
     defaultValues: {
       shipmentId: shipmentId || "",
-      type: HoldType.enum.OperationalHold,
-      severity: HoldSeverity.enum.Informational,
-      reasonCode: "",
-      notes: "",
-      blocksBilling: false,
-      blocksDelivery: false,
-      blocksDispatch: false,
-      releasedById: "",
-      releasedAt: undefined,
-      visibleToCustomer: false,
-      createdById: "",
+      holdReasonId: "",
+      orgId: "",
+      buId: "",
+      userId: "",
     },
   });
 
@@ -60,8 +51,8 @@ export function ShipmentHoldDialog({
   } = form;
 
   const { mutateAsync } = useMutation({
-    mutationFn: async (values: ShipmentHoldSchema) => {
-      const response = await http.post(`/shipments/hold/`, values);
+    mutationFn: async (values: HoldShipmentRequestSchema) => {
+      const response = await http.post(`/shipment-holds/`, values);
       return response.data;
     },
     onSuccess: () => {
@@ -72,7 +63,7 @@ export function ShipmentHoldDialog({
   });
 
   const onSubmit = useCallback(
-    async (values: ShipmentHoldSchema) => {
+    async (values: HoldShipmentRequestSchema) => {
       await mutateAsync(values);
     },
     [mutateAsync],

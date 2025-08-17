@@ -1,5 +1,5 @@
 import * as z from "zod/v4";
-import { optionalStringSchema, timestampSchema } from "./helpers";
+import { optionalStringSchema, pulidSchema, timestampSchema } from "./helpers";
 import { userSchema } from "./user-schema";
 
 export const HoldType = z.enum([
@@ -39,4 +39,15 @@ export const shipmentHoldSchema = z.object({
   releasedBy: userSchema.nullish(),
 });
 
+export const holdShipmentRequestSchema = z.object({
+  shipmentId: pulidSchema,
+  holdReasonId: z.string().min(1, { error: "Hold reason is required" }),
+  orgId: optionalStringSchema,
+  buId: optionalStringSchema,
+  userId: optionalStringSchema,
+});
+
 export type ShipmentHoldSchema = z.infer<typeof shipmentHoldSchema>;
+export type HoldShipmentRequestSchema = z.infer<
+  typeof holdShipmentRequestSchema
+>;
