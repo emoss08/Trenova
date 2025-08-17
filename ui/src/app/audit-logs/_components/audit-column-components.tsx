@@ -334,6 +334,14 @@ export function AuditEntryResourceBadge({
       variant: "pink",
       text: "Integration",
     },
+    [Resource.ShipmentHold]: {
+      variant: "pink",
+      text: "Shipment Hold",
+    },
+    [Resource.HoldReason]: {
+      variant: "pink",
+      text: "Hold Reason",
+    },
     [Resource.Setting]: {
       variant: "warning",
       text: "Setting",

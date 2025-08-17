@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/shipment"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcomment"
+	"github.com/emoss08/trenova/internal/core/services/shipmenthold"
 	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils"
 	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
@@ -27,12 +28,14 @@ type HandlerParams struct {
 
 	ShipmentService        *shipment.Service
 	ShipmentCommentService *shipmentcomment.Service
+	ShipmentHoldService    *shipmenthold.Service
 	ErrorHandler           *validator.ErrorHandler
 }
 
 type Handler struct {
 	ss *shipment.Service
 	sc *shipmentcomment.Service
+	sh *shipmenthold.Service
 	eh *validator.ErrorHandler
 }
 
@@ -40,6 +43,7 @@ func NewHandler(p HandlerParams) *Handler {
 	return &Handler{
 		ss: p.ShipmentService,
 		sc: p.ShipmentCommentService,
+		sh: p.ShipmentHoldService,
 		eh: p.ErrorHandler,
 	}
 }

@@ -97,7 +97,7 @@ func buildDateRangeFilter(
 }
 
 // buildBulkUpdateQuery builds a query for bulk updating shipment status
-func buildBulkUpdateQuery(
+func buildBulkUpdateStatusQuery(
 	tx bun.Tx,
 	shipmentIDs []pulid.ID,
 	status shipment.Status,

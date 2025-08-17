@@ -1140,7 +1140,7 @@ func (sr *shipmentRepository) DelayShipments(ctx context.Context) ([]*shipment.S
 			shipmentIDs[i] = shp.ID
 		}
 
-		query := buildBulkUpdateQuery(tx, shipmentIDs, shipment.StatusDelayed)
+		query := buildBulkUpdateStatusQuery(tx, shipmentIDs, shipment.StatusDelayed)
 		_, err = query.Exec(c)
 		if err != nil {
 			log.Error().

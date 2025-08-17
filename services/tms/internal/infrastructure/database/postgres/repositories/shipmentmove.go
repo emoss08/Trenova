@@ -747,7 +747,6 @@ func (sr *shipmentMoveRepository) prepareMovesData(
 
 		// Create map of existing moves for quick lookup
 		for _, move := range data.existingMoves {
-			log.Debug().Interface("move", move).Msg("existing move")
 			data.existingMoveMap[move.ID] = move
 		}
 	}
@@ -947,13 +946,11 @@ func (sr *shipmentMoveRepository) checkAndHandleMoveDeletions(
 		Str("operation", "checkAndHandleMoveDeletions").
 		Logger()
 
-	// Check if there are moves to delete and if organization allows it
 	deletionRequired := false
 	for moveID := range data.existingMoveMap {
 		if _, ok := data.updatedMoveIDs[moveID]; !ok {
 			deletionRequired = true
 
-			// Check if the organization allows move removals
 			if !scr.AllowMoveRemovals {
 				log.Debug().
 					Msgf("Organization %s does not allow move removals, returning error...", shp.OrganizationID)
@@ -965,7 +962,6 @@ func (sr *shipmentMoveRepository) checkAndHandleMoveDeletions(
 		}
 	}
 
-	// If no deletion needed or already checked permission above
 	if deletionRequired {
 		if err := sr.handleMoveDeletions(ctx, tx, &repositories.HandleMoveDeletionsRequest{
 			ExistingMoveMap: data.existingMoveMap,
