@@ -30,7 +30,7 @@ import {
   faChevronUp,
   faX,
 } from "@fortawesome/pro-solid-svg-icons";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import React, { useCallback, useEffect, useRef, useTransition } from "react";
 import {
@@ -77,10 +77,9 @@ export function FormEditModal<T extends FieldValues>({
   const { table, rowSelection, isLoading } = useDataTable();
   const { isPopout, closePopout } = usePopoutWindow();
   const [isPending, startTransition] = useTransition();
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [_, setSearchParams] = useQueryStates(searchParamsParser, {
+  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser, {
     // Use replace to avoid history stacking and reduce throttling
-    history: 'replace',
+    history: "replace",
     throttleMs: 50, // Minimum allowed value
   });
   const queryClient = useQueryClient();
@@ -103,7 +102,7 @@ export function FormEditModal<T extends FieldValues>({
     return table
       .getCoreRowModel()
       .flatRows.find((row) => row.id === selectedRowKey);
-  }, [selectedRowKey, isLoading]);
+  }, [selectedRowKey, isLoading, table]);
 
   const index = table
     .getCoreRowModel()
@@ -111,46 +110,106 @@ export function FormEditModal<T extends FieldValues>({
 
   const nextId = React.useMemo(
     () => table.getCoreRowModel().flatRows[index + 1]?.id,
-    [index, isLoading],
+    [index, table],
   );
 
   const prevId = React.useMemo(
     () => table.getCoreRowModel().flatRows[index - 1]?.id,
-    [index, isLoading],
+    [index, table],
   );
 
+  // Fetch individual record when currentRecord is undefined but entityId exists in URL
+  const {
+    data: fetchedRecord,
+    isLoading: isFetchingRecord,
+    error: fetchError,
+  } = useQuery<T>({
+    queryKey: [queryKey, "single", searchParams.entityId, url],
+    queryFn: async () => {
+      if (!searchParams.entityId) {
+        throw new Error("No entity ID provided");
+      }
+      const response = await http.get<T>(`${url}${searchParams.entityId}`);
+      return response.data;
+    },
+    enabled: !currentRecord && !!searchParams.entityId && !isLoading,
+    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    retry: (failureCount, error) => {
+      // Don't retry on 404 errors
+      if (error instanceof Error && error.message.includes("404")) {
+        return false;
+      }
+      return failureCount < 3;
+    },
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+  });
+
+  // Use either the currentRecord from table or the fetched record
+  const effectiveRecord = currentRecord || fetchedRecord;
+  const isLoadingRecord = isLoading || isFetchingRecord;
+
+  // Check if we're using a fetched record (no table context for navigation)
+  const isFetchedRecord = !currentRecord && !!fetchedRecord;
+
+  // Clean up entityId from URL if it doesn't match any record and we're not fetching
+  React.useEffect(() => {
+    if (
+      searchParams.entityId &&
+      !currentRecord &&
+      !fetchedRecord &&
+      !isFetchingRecord &&
+      !isLoading &&
+      fetchError
+    ) {
+      // Record not found, clean up URL
+      console.warn(`Record with ID ${searchParams.entityId} not found`);
+    }
+  }, [
+    searchParams.entityId,
+    currentRecord,
+    fetchedRecord,
+    isFetchingRecord,
+    isLoading,
+    fetchError,
+  ]);
+
   // Process navigation with useTransition to prevent blinking
-  const processNavigation = React.useCallback(async (targetId: string) => {
-    if (isNavigatingRef.current) {
-      navigationQueueRef.current = targetId;
-      return;
-    }
-    
-    isNavigatingRef.current = true;
-    
-    try {
-      // Use startTransition to mark this update as non-urgent
-      startTransition(() => {
-        setSearchParams({ entityId: targetId, modalType: "edit" }).then(() => {
-          // Process any queued navigation
-          if (navigationQueueRef.current) {
-            const queuedId = navigationQueueRef.current;
-            navigationQueueRef.current = null;
-            // Use a small delay to prevent visual blinking
-            setTimeout(() => {
-              isNavigatingRef.current = false;
-              processNavigation(queuedId);
-            }, 50);
-          } else {
-            isNavigatingRef.current = false;
-          }
+  const processNavigation = React.useCallback(
+    async (targetId: string) => {
+      if (isNavigatingRef.current) {
+        navigationQueueRef.current = targetId;
+        return;
+      }
+
+      isNavigatingRef.current = true;
+
+      try {
+        // Use startTransition to mark this update as non-urgent
+        startTransition(() => {
+          setSearchParams({ entityId: targetId, modalType: "edit" }).then(
+            () => {
+              // Process any queued navigation
+              if (navigationQueueRef.current) {
+                const queuedId = navigationQueueRef.current;
+                navigationQueueRef.current = null;
+                // Use a small delay to prevent visual blinking
+                setTimeout(() => {
+                  isNavigatingRef.current = false;
+                  processNavigation(queuedId);
+                }, 50);
+              } else {
+                isNavigatingRef.current = false;
+              }
+            },
+          );
         });
-      });
-    } catch (error) {
-      console.error('Navigation error:', error);
-      isNavigatingRef.current = false;
-    }
-  }, [setSearchParams, startTransition]);
+      } catch (error) {
+        console.error("Navigation error:", error);
+        isNavigatingRef.current = false;
+      }
+    },
+    [setSearchParams, startTransition],
+  );
 
   const onPrev = React.useCallback(() => {
     if (prevId) {
@@ -188,17 +247,17 @@ export function FormEditModal<T extends FieldValues>({
     return () => document.removeEventListener("keydown", down);
   }, [selectedRowKey, onNext, onPrev]);
 
-  // Update form values when currentRecord changes and is not loading
+  // Update form values when effectiveRecord changes and is not loading
   useEffect(() => {
     if (
-      !isLoading &&
-      currentRecord &&
-      currentRecord.id !== previousRecordIdRef.current
+      !isLoadingRecord &&
+      effectiveRecord &&
+      effectiveRecord.id !== previousRecordIdRef.current
     ) {
       // Ensure all form fields have explicit values, including empty arrays for missing fields
       const formData = {
-        ...currentRecord,
-        roles: currentRecord.roles || [], // Ensure roles is always an array
+        ...effectiveRecord,
+        roles: effectiveRecord.roles || [], // Ensure roles is always an array
       };
 
       // Use setTimeout to ensure reset happens after any potential race conditions
@@ -206,9 +265,9 @@ export function FormEditModal<T extends FieldValues>({
         reset(formData, { keepDefaultValues: false });
       }, 0);
 
-      previousRecordIdRef.current = currentRecord.id;
+      previousRecordIdRef.current = effectiveRecord.id;
     }
-  }, [currentRecord, isLoading, reset]);
+  }, [effectiveRecord, isLoadingRecord, reset]);
 
   const handleClose = useCallback(() => {
     reset();
@@ -223,7 +282,10 @@ export function FormEditModal<T extends FieldValues>({
     T // The form values type for error handling
   >({
     mutationFn: async (values: T) => {
-      const response = await http.put<T>(`${url}${currentRecord?.id}`, values);
+      const response = await http.put<T>(
+        `${url}${effectiveRecord?.id}`,
+        values,
+      );
       return response.data;
     },
     onMutate: async (newValues) => {
@@ -256,6 +318,13 @@ export function FormEditModal<T extends FieldValues>({
           refetchType: "all",
         },
       });
+
+      // Also invalidate the single record query if it was fetched
+      if (isFetchedRecord) {
+        queryClient.invalidateQueries({
+          queryKey: [queryKey, "single", searchParams.entityId, url],
+        });
+      }
 
       // * Reset the form to the new values
       reset(newValues);
@@ -302,21 +371,21 @@ export function FormEditModal<T extends FieldValues>({
           <div className="flex flex-col">
             <DialogTitle>
               {titleComponent ? (
-                titleComponent(currentRecord as T)
+                titleComponent(effectiveRecord as T)
               ) : (
                 <div>
-                  {isLoading
+                  {isLoadingRecord
                     ? "Loading record..."
-                    : fieldKey && currentRecord
-                      ? currentRecord[fieldKey]
+                    : fieldKey && effectiveRecord
+                      ? effectiveRecord[fieldKey]
                       : title}
                 </div>
               )}
             </DialogTitle>
-            {!isLoading && currentRecord && (
+            {!isLoadingRecord && effectiveRecord && (
               <DialogDescription>
                 Last updated on{" "}
-                {formatToUserTimezone(currentRecord.updatedAt, {
+                {formatToUserTimezone(effectiveRecord.updatedAt, {
                   timeFormat: user?.timeFormat,
                 })}
               </DialogDescription>
@@ -330,17 +399,27 @@ export function FormEditModal<T extends FieldValues>({
                     size="icon"
                     variant="ghost"
                     className="h-7 w-7"
-                    disabled={!prevId || isPending}
+                    disabled={!prevId || isPending || isFetchedRecord}
                     onClick={onPrev}
                   >
-                    <Icon icon={faChevronUp} className={cn("size-5", isPending && "opacity-50")} />
+                    <Icon
+                      icon={faChevronUp}
+                      className={cn(
+                        "size-5",
+                        (isPending || isFetchedRecord) && "opacity-50",
+                      )}
+                    />
                     <span className="sr-only">Previous</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>
-                    Navigate <Kbd variant="outline">↑</Kbd>
-                  </p>
+                  {isFetchedRecord ? (
+                    <p>Navigation unavailable when viewing record directly</p>
+                  ) : (
+                    <p>
+                      Navigate <Kbd variant="outline">↑</Kbd>
+                    </p>
+                  )}
                 </TooltipContent>
               </Tooltip>
               <Tooltip>
@@ -349,17 +428,27 @@ export function FormEditModal<T extends FieldValues>({
                     size="icon"
                     variant="ghost"
                     className="h-7 w-7"
-                    disabled={!nextId || isPending}
+                    disabled={!nextId || isPending || isFetchedRecord}
                     onClick={onNext}
                   >
-                    <Icon icon={faChevronDown} className={cn("h-5 w-5", isPending && "opacity-50")} />
+                    <Icon
+                      icon={faChevronDown}
+                      className={cn(
+                        "h-5 w-5",
+                        (isPending || isFetchedRecord) && "opacity-50",
+                      )}
+                    />
                     <span className="sr-only">Next</span>
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  <p>
-                    Navigate <Kbd variant="outline">↓</Kbd>
-                  </p>
+                  {isFetchedRecord ? (
+                    <p>Navigation unavailable when viewing record directly</p>
+                  ) : (
+                    <p>
+                      Navigate <Kbd variant="outline">↓</Kbd>
+                    </p>
+                  )}
                 </TooltipContent>
               </Tooltip>
             </TooltipProvider>
@@ -376,8 +465,27 @@ export function FormEditModal<T extends FieldValues>({
       <FormProvider {...form}>
         <Form onSubmit={handleSubmit(onSubmit)}>
           <DialogBody>
-            {isLoading ? (
+            {isLoadingRecord ? (
               <ComponentLoader message={`Loading ${title}...`} />
+            ) : fetchError ? (
+              <div className="flex flex-col items-center justify-center space-y-3 py-8">
+                <p className="text-sm text-muted-foreground">
+                  {fetchError instanceof Error &&
+                  fetchError.message.includes("404")
+                    ? "Record not found. It may have been deleted."
+                    : "Failed to load record. Please try again."}
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    // Close modal and navigate back
+                    setSearchParams({ modalType: null, entityId: null });
+                  }}
+                >
+                  Close
+                </Button>
+              </div>
             ) : (
               formComponent
             )}
@@ -386,11 +494,13 @@ export function FormEditModal<T extends FieldValues>({
             <Button type="button" variant="outline" onClick={handleClose}>
               Cancel
             </Button>
-            <FormSaveButton
-              isPopout={isPopout}
-              isSubmitting={isSubmitting}
-              title={title}
-            />
+            {!fetchError && (
+              <FormSaveButton
+                isPopout={isPopout}
+                isSubmitting={isSubmitting}
+                title={title}
+              />
+            )}
           </DialogFooter>
         </Form>
       </FormProvider>
@@ -407,7 +517,7 @@ export function FormEditModal<T extends FieldValues>({
             ? document.getElementById(selectedRowKey)
             : null;
           setSearchParams({ modalType: null, entityId: null });
-          
+
           // Focus back to the row after closing
           setTimeout(() => el?.focus(), 0);
         }
