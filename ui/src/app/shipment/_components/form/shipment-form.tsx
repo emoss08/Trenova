@@ -4,12 +4,11 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useUrlFragment } from "@/hooks/use-url-fragment";
 import { queries } from "@/lib/queries";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { useQuery } from "@tanstack/react-query";
 import { HouseIcon, MessageCircleIcon, PanelsTopLeftIcon } from "lucide-react";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { Suspense, useCallback, useState } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
 import { ShipmentCommentDetails } from "./comment/comment-details";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
@@ -62,44 +61,16 @@ function ShipmentEditTabs({
   shipmentId: ShipmentSchema["id"];
   selectedShipment?: ShipmentSchema | null;
 }) {
-  const { fragment, setFragment } = useUrlFragment();
-
   const { data: commentCount } = useQuery({
     ...queries.shipment.getCommentCount(shipmentId),
     enabled: !!shipmentId,
   });
 
-  const [activeTab, setActiveTab] = useState(() => {
-    // Check for prefixed tab fragments
-    if (fragment?.startsWith("tab-")) {
-      const tabName = fragment.replace("tab-", "");
-      return tabName === "comments" || tabName === "documents"
-        ? tabName
-        : "general-information";
-    }
-    return "general-information";
-  });
+  const [activeTab, setActiveTab] = useState("general-information");
 
-  useEffect(() => {
-    // Handle prefixed tab fragments
-    if (fragment?.startsWith("tab-")) {
-      const tabName = fragment.replace("tab-", "");
-      const validTab =
-        tabName === "comments" || tabName === "documents"
-          ? tabName
-          : "general-information";
-      setActiveTab(validTab);
-    }
-  }, [fragment]);
-
-  const handleTabChange = useCallback(
-    (value: string) => {
-      setActiveTab(value);
-      // Prefix with 'tab-' to avoid conflicts with other fragment usage
-      setFragment(`tab-${value}`);
-    },
-    [setFragment],
-  );
+  const handleTabChange = useCallback((value: string) => {
+    setActiveTab(value);
+  }, []);
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange}>
