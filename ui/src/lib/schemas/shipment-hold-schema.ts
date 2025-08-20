@@ -47,7 +47,17 @@ export const holdShipmentRequestSchema = z.object({
   userId: optionalStringSchema,
 });
 
+export const releaseShipmentHoldRequestSchema = z.object({
+  holdId: z.string().min(1, { error: "Hold ID is required" }),
+  orgId: optionalStringSchema,
+  buId: optionalStringSchema,
+  userId: optionalStringSchema,
+});
+
 export type ShipmentHoldSchema = z.infer<typeof shipmentHoldSchema>;
 export type HoldShipmentRequestSchema = z.infer<
   typeof holdShipmentRequestSchema
+>;
+export type ReleaseShipmentHoldRequestSchema = z.infer<
+  typeof releaseShipmentHoldRequestSchema
 >;

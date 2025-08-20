@@ -57,6 +57,37 @@ func (hr *HoldShipmentRequest) Validate() *errors.MultiError {
 	return nil
 }
 
+type ReleaseShipmentHoldRequest struct {
+	HoldID pulid.ID `json:"holdId" query:"holdId"`
+	OrgID  pulid.ID `json:"orgId"  query:"orgId"`
+	BuID   pulid.ID `json:"buId"   query:"buId"`
+	UserID pulid.ID `json:"userId" query:"userId"`
+}
+
+func (hr *ReleaseShipmentHoldRequest) Validate() *errors.MultiError {
+	me := errors.NewMultiError()
+
+	err := validation.ValidateStruct(
+		hr,
+		validation.Field(&hr.HoldID, validation.Required.Error("Hold ID is required")),
+		validation.Field(&hr.OrgID, validation.Required.Error("Organization ID is required")),
+		validation.Field(&hr.BuID, validation.Required.Error("Business Unit ID is required")),
+		validation.Field(&hr.UserID, validation.Required.Error("User ID is required")),
+	)
+	if err != nil {
+		var validationErrs validation.Errors
+		if eris.As(err, &validationErrs) {
+			errors.FromOzzoErrors(validationErrs, me)
+		}
+	}
+
+	if me.HasErrors() {
+		return me
+	}
+
+	return nil
+}
+
 type ShipmentHoldRepository interface {
 	GetByShipmentID(
 		ctx context.Context,

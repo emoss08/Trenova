@@ -1,3 +1,4 @@
+import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,13 +10,14 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
-import { http } from "@/lib/http-client";
+import { useApiMutation } from "@/hooks/use-api-mutation";
+import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import {
   HoldShipmentRequestSchema,
   holdShipmentRequestSchema,
 } from "@/lib/schemas/shipment-hold-schema";
+import { api } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -42,6 +44,7 @@ export function ShipmentHoldDialog({
       userId: "",
     },
   });
+  const { table } = useDataTable();
 
   const {
     setError,
@@ -50,16 +53,29 @@ export function ShipmentHoldDialog({
     reset,
   } = form;
 
-  const { mutateAsync } = useMutation({
-    mutationFn: async (values: HoldShipmentRequestSchema) => {
-      const response = await http.post(`/shipment-holds/`, values);
-      return response.data;
-    },
+  const { mutateAsync } = useApiMutation({
+    mutationFn: (values: HoldShipmentRequestSchema) =>
+      api.shipments.applyHold(values),
     onSuccess: () => {
       toast.success("Shipment hold added successfully", {
         description: `The shipment hold has been added`,
       });
+
+      broadcastQueryInvalidation({
+        queryKey: ["shipment", "shipment-list", "stop", "assignment"],
+        options: {
+          correlationId: `apply-shipment-hold-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
+      });
+
+      table.resetRowSelection();
     },
+    resourceName: "Shipment Hold",
+    setFormError: setError,
   });
 
   const onSubmit = useCallback(
@@ -101,7 +117,6 @@ export function ShipmentHoldDialog({
                 isSubmitting={isSubmitting}
                 title="shipment hold"
                 text="Confirm Hold"
-                variant="destructive"
               />
             </DialogFooter>
           </Form>

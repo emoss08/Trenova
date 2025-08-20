@@ -3,6 +3,7 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
+import { holdTypeChoices } from "@/lib/choices";
 import type { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
 import type { CommoditySchema } from "@/lib/schemas/commodity-schema";
 import type { CustomerSchema } from "@/lib/schemas/customer-schema";
@@ -439,7 +440,10 @@ export function HoldReasonAutocompleteField<T extends FieldValues>({
               {option.label}
             </span>
             <span className="text-2xs text-muted-foreground truncate">
-              {option.code}
+              {
+                holdTypeChoices.find((choice) => choice.value === option.type)
+                  ?.label
+              }
             </span>
           </p>
           {option.description && (

@@ -7,6 +7,10 @@ import { http } from "@/lib/http-client";
 import type { ShipmentUncancelSchema } from "@/lib/schemas/shipment-cancellation-schema";
 import { ShipmentCommentSchema } from "@/lib/schemas/shipment-comment-schema";
 import type { ShipmentDuplicateSchema } from "@/lib/schemas/shipment-duplicate-schema";
+import {
+  HoldShipmentRequestSchema,
+  ReleaseShipmentHoldRequestSchema,
+} from "@/lib/schemas/shipment-hold-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { LimitOffsetResponse, type ListResult } from "@/types/server";
 import { type ShipmentQueryParams } from "@/types/shipment";
@@ -184,6 +188,24 @@ export class ShipmentAPI {
   async getCommentCount(shipmentId: ShipmentSchema["id"]) {
     const response = await http.get<{ count: number }>(
       `/shipments/${shipmentId}/comments/count/`,
+    );
+
+    return response.data;
+  }
+
+  async applyHold(values: HoldShipmentRequestSchema) {
+    const response = await http.post<HoldShipmentRequestSchema>(
+      "/shipment-holds/hold/",
+      values,
+    );
+
+    return response.data;
+  }
+
+  async releaseHold(values: ReleaseShipmentHoldRequestSchema) {
+    const response = await http.post<ReleaseShipmentHoldRequestSchema>(
+      "/shipment-holds/release/",
+      values,
     );
 
     return response.data;

@@ -133,12 +133,16 @@ func (sr *shipmentRepository) addOptions(
 
 		q = q.Relation("ServiceType")
 		q = q.Relation("ShipmentType")
-
 		q = q.Relation("TractorType")
 		q = q.Relation("TrailerType")
-
 		q = q.Relation("CanceledBy")
-
+		q = q.RelationWithOpts("Holds", bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					Relation("ReleasedBy").
+					Relation("CreatedBy")
+			},
+		})
 		q = q.Relation("FormulaTemplate")
 	}
 

@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -87,6 +88,81 @@ func (s *Service) GetShipmentHoldByShipmentID(
 	return s.repo.GetByShipmentID(ctx, req)
 }
 
+func (s *Service) Update(
+	ctx context.Context,
+	hold *shipment.ShipmentHold,
+	userID pulid.ID,
+) (*shipment.ShipmentHold, error) {
+	log := s.l.With().
+		Str("operation", "Update").
+		Str("holdID", hold.GetID()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         userID,
+			Resource:       permission.ResourceShipmentHold,
+			Action:         permission.ActionUpdate,
+			BusinessUnitID: hold.BusinessUnitID,
+			OrganizationID: hold.OrganizationID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to update shipment holds within your organization",
+		)
+	}
+
+	valCtx := &validator.ValidationContext{
+		IsCreate: false,
+		IsUpdate: true,
+	}
+
+	if err := s.v.Validate(ctx, valCtx, hold); err != nil {
+		return nil, err
+	}
+
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentHoldByIDRequest{
+		ID:     hold.ID,
+		OrgID:  hold.OrganizationID,
+		BuID:   hold.BusinessUnitID,
+		UserID: userID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	updateHold, err := s.repo.Update(ctx, hold)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceShipmentHold,
+			ResourceID:     updateHold.GetID(),
+			Action:         permission.ActionUpdate,
+			UserID:         userID,
+			CurrentState:   jsonutils.MustToJSON(updateHold),
+			PreviousState:  jsonutils.MustToJSON(original),
+			OrganizationID: updateHold.OrganizationID,
+			BusinessUnitID: updateHold.BusinessUnitID,
+		},
+		audit.WithComment("Shipment hold updated"),
+		audit.WithDiff(original, updateHold),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log shipment hold update")
+	}
+
+	return updateHold, nil
+}
+
 func (s *Service) Create(
 	ctx context.Context,
 	hold *shipment.ShipmentHold,
@@ -150,82 +226,6 @@ func (s *Service) Create(
 	return createdEntity, nil
 }
 
-func (s *Service) Update(
-	ctx context.Context,
-	h *shipment.ShipmentHold,
-	userID pulid.ID,
-) (*shipment.ShipmentHold, error) {
-	log := s.l.With().
-		Str("operation", "Update").
-		Str("shipmentID", h.ShipmentID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
-			UserID:         userID,
-			Resource:       permission.ResourceShipmentHold,
-			Action:         permission.ActionUpdate,
-			BusinessUnitID: h.BusinessUnitID,
-			OrganizationID: h.OrganizationID,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to update shipment holds within your organization",
-		)
-	}
-
-	valCtx := &validator.ValidationContext{
-		IsUpdate: true,
-		IsCreate: false,
-	}
-
-	if err := s.v.Validate(ctx, valCtx, h); err != nil {
-		return nil, err
-	}
-
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentHoldByIDRequest{
-		ID:     h.ID,
-		OrgID:  h.OrganizationID,
-		BuID:   h.BusinessUnitID,
-		UserID: userID,
-	})
-	if err != nil {
-		return nil, err
-	}
-
-	updatedEntity, err := s.repo.Update(ctx, h)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to update shipment hold")
-		return nil, err
-	}
-
-	err = s.as.LogAction(
-		&services.LogActionParams{
-			Resource:       permission.ResourceShipmentHold,
-			ResourceID:     updatedEntity.GetID(),
-			Action:         permission.ActionUpdate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(updatedEntity),
-			PreviousState:  jsonutils.MustToJSON(original),
-			OrganizationID: updatedEntity.OrganizationID,
-			BusinessUnitID: updatedEntity.BusinessUnitID,
-		},
-		audit.WithComment("Shipment hold updated"),
-		audit.WithDiff(original, updatedEntity),
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to log shipment hold update")
-	}
-
-	return updatedEntity, nil
-}
-
 func (s *Service) HoldShipment(
 	ctx context.Context,
 	req *repositories.HoldShipmentRequest,
@@ -234,8 +234,6 @@ func (s *Service) HoldShipment(
 		Str("operation", "HoldShipment").
 		Str("shipmentID", req.ShipmentID.String()).
 		Logger()
-
-	log.Info().Interface("request", req).Msg("request")
 
 	if err := req.Validate(); err != nil {
 		return nil, err
@@ -276,4 +274,76 @@ func (s *Service) HoldShipment(
 	}
 
 	return createdHold, nil
+}
+
+func (s *Service) ReleaseShipmentHold(
+	ctx context.Context,
+	req *repositories.ReleaseShipmentHoldRequest,
+) (*shipment.ShipmentHold, error) {
+	log := s.l.With().
+		Str("operation", "ReleaseShipmentHold").
+		Interface("request", req).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         req.UserID,
+			Resource:       permission.ResourceShipmentHold,
+			Action:         permission.ActionUpdate,
+			BusinessUnitID: req.BuID,
+			OrganizationID: req.OrgID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to release shipment holds within your organization",
+		)
+	}
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	hold, err := s.repo.GetByID(ctx, &repositories.GetShipmentHoldByIDRequest{
+		ID:     req.HoldID,
+		OrgID:  req.OrgID,
+		BuID:   req.BuID,
+		UserID: req.UserID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get shipment hold")
+		return nil, err
+	}
+
+	hold.ReleasedAt = timeutils.NowUnixPointer()
+	hold.ReleasedByID = &req.UserID
+
+	updatedHold, err := s.repo.Update(ctx, hold)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.as.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceShipmentHold,
+			ResourceID:     updatedHold.GetID(),
+			Action:         permission.ActionUpdate,
+			UserID:         req.UserID,
+			CurrentState:   jsonutils.MustToJSON(updatedHold),
+			PreviousState:  jsonutils.MustToJSON(hold),
+			OrganizationID: updatedHold.OrganizationID,
+			BusinessUnitID: updatedHold.BusinessUnitID,
+		},
+		audit.WithComment("Shipment hold released"),
+		audit.WithDiff(hold, updatedHold),
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to log shipment hold release")
+	}
+
+	return updatedHold, nil
 }

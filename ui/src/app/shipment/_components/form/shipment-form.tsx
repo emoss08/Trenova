@@ -7,10 +7,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { queries } from "@/lib/queries";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { useQuery } from "@tanstack/react-query";
-import { HouseIcon, MessageCircleIcon, PanelsTopLeftIcon } from "lucide-react";
+import {
+  HouseIcon,
+  LockIcon,
+  MessageCircleIcon,
+  PanelsTopLeftIcon,
+} from "lucide-react";
 import { Suspense, useCallback, useState } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
 import { ShipmentCommentDetails } from "./comment/comment-details";
+import { HoldList } from "./holds/hold-list";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentEditFormWrapper } from "./shipment-edit-form-wrapper";
 import { ShipmentFormContent } from "./shipment-form-body";
@@ -75,7 +81,7 @@ function ShipmentEditTabs({
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange}>
       <ScrollArea>
-        <TabsList className="text-foreground mb-3 h-auto bg-transparent gap-2 px-2 rounded-none border-b py-1 w-full justify-start overflow-x-auto">
+        <TabsList className="text-foreground h-auto bg-transparent gap-2 px-2 rounded-none border-b py-1 w-full justify-start overflow-x-auto">
           <TabsTrigger
             value="general-information"
             className="h-7 shrink-0 hover:bg-accent hover:text-foreground data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
@@ -117,6 +123,13 @@ function ShipmentEditTabs({
               3
             </span>
           </TabsTrigger>
+          <TabsTrigger
+            value="holds"
+            className="h-7 shrink-0 hover:bg-accent hover:text-foreground text-xs data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+          >
+            <LockIcon className="-ms-0.5 mb-0.5 opacity-60" size={16} />
+            Holds
+          </TabsTrigger>
         </TabsList>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
@@ -128,6 +141,9 @@ function ShipmentEditTabs({
       </TabsContent>
       <TabsContent value="documents">
         <ShipmentCommentDetails shipmentId={shipmentId} />
+      </TabsContent>
+      <TabsContent value="holds">
+        <HoldList holds={selectedShipment?.holds ?? []} />
       </TabsContent>
     </Tabs>
   );

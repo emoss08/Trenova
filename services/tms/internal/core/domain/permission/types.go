@@ -212,6 +212,7 @@ const (
 	ActionReassign  = Action("reassign")  // Reassign a resource to a different user or group.
 	ActionComplete  = Action("complete")  // Mark a resource or action as completed.
 	ActionDuplicate = Action("duplicate") // Duplicate a resource.
+	ActionRelease   = Action("release")   // Release a resource.
 
 	// Configuration actions
 	ActionManageDefaults = Action("manage_defaults") // Manage default table configurations.
@@ -474,7 +475,7 @@ var (
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceShipmentHold: append(
-			BaseActions,
+			append(BaseActions, ActionRelease),
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceHoldReason: append(

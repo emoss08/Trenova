@@ -30,6 +30,7 @@ export enum Action {
   Reassign = "reassign", // Reassign a resource to a different user or group.
   Complete = "complete", // Mark a resource or action as completed.
   Duplicate = "duplicate", // Duplicate a resource.
+  Release = "release", // Release a resource.
 
   // Configuration actions
   ManageDefaults = "manage_defaults", // Manage default table configurations.

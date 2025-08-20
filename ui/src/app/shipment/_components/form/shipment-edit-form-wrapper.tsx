@@ -146,7 +146,7 @@ export function ShipmentEditFormWrapper({
   return (
     <FormProvider {...form}>
       <ShipmentFormWrapper onSubmit={onSubmit}>
-        <ShipmentGeneralInfoForm className="max-h-[calc(100vh-11rem)]" />
+        <ShipmentGeneralInfoForm className="max-h-[calc(100vh-10.5rem)]" />
         <FormSaveDock position="right" />
       </ShipmentFormWrapper>
     </FormProvider>

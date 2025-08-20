@@ -33,10 +33,12 @@ type HoldReason struct {
 	DefaultBlocksBilling     bool         `json:"defaultBlocksBilling"     bun:"default_blocks_billing,type:BOOLEAN,notnull,default:false"`
 	DefaultVisibleToCustomer bool         `json:"defaultVisibleToCustomer" bun:"default_visible_to_customer,type:BOOLEAN,notnull,default:false"`
 
-	Active      bool           `json:"active"      bun:"active,type:BOOLEAN,notnull,default:true"`
-	SortOrder   int32          `json:"sortOrder"   bun:"sort_order,type:INTEGER,notnull,default:100"`
-	ExternalMap map[string]any `json:"externalMap" bun:"external_map,type:JSONB,nullzero"` // e.g., {"edi214":"AD","eld":"OOS"}
-	Version     int64          `json:"version"     bun:"version,type:BIGINT"`
+	Active       bool           `json:"active"      bun:"active,type:BOOLEAN,notnull,default:true"`
+	SortOrder    int32          `json:"sortOrder"   bun:"sort_order,type:INTEGER,notnull,default:100"`
+	ExternalMap  map[string]any `json:"externalMap" bun:"external_map,type:JSONB,nullzero"` // e.g., {"edi214":"AD","eld":"OOS"}
+	SearchVector string         `json:"-"           bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank         string         `json:"-"           bun:"rank,type:VARCHAR(100),scanonly"`
+	Version      int64          `json:"version"     bun:"version,type:BIGINT"`
 
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
