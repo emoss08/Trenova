@@ -243,7 +243,7 @@ _, err := jobService.SchedulePatternAnalysis(ctx, &services.PatternAnalysisPaylo
 
 ### 1. Define the Job Type
 
-Add your new job type to `types.go`:
+Add your new job type to `internal/core/ports/services/jobservice.go`:
 
 ```go
 const (
@@ -254,7 +254,7 @@ const (
 
 ### 2. Create the Payload Structure
 
-Add your payload to `types.go`:
+Add your payload to `internal/core/ports/services/jobservice.go`:
 
 ```go
 type YourJobPayload struct {

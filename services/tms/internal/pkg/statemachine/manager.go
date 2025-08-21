@@ -16,18 +16,18 @@ import (
 	"go.uber.org/fx"
 )
 
+type ManagerParams struct {
+	fx.In
+
+	Logger *logger.Logger
+}
+
 type Manager struct {
 	logger *zerolog.Logger
 
 	stopStateMachineFactory     func(stop *shipment.Stop) StateMachine
 	moveStateMachineFactory     func(move *shipment.ShipmentMove) StateMachine
 	shipmentStateMachineFactory func(shipment *shipment.Shipment) StateMachine
-}
-
-type ManagerParams struct {
-	fx.In
-
-	Logger *logger.Logger
 }
 
 func NewManager(p ManagerParams) *Manager {
@@ -284,24 +284,19 @@ func (m *Manager) processShipmentStatus(
 func (m *Manager) hasDelayedStops(shp *shipment.Shipment, currentTime int64) bool {
 	for _, move := range shp.Moves {
 		for _, stop := range move.Stops {
-			// A stop contributes to delay if it's not completed or canceled,
-			// has a valid planned arrival time, and that time is in the past.
+			// ! A stop contributes to delay if it's not completed or canceled,
+			// ! has a valid planned arrival time, and that time is in the past.
 			if stop.Status != shipment.StopStatusCompleted &&
 				stop.Status != shipment.StopStatusCanceled &&
-				stop.PlannedArrival > 0 && // Assuming 0 is not a valid/set planned time
+				stop.PlannedArrival > 0 && // ! 0 is not a valid/set planned time
 				currentTime > stop.PlannedArrival {
-				m.logger.Debug().
-					Str("shipmentID", shp.ID.String()).
-					Str("moveID", move.ID.String()).
-					Str("stopID", stop.ID.String()).
-					Int64("plannedArrival", stop.PlannedArrival).
-					Int64("currentTime", currentTime).
-					Msg("stop is delayed, contributing to shipment delay check")
-				return true // Found a delayed stop
+
+				return true
 			}
 		}
 	}
-	return false // No delayed stops
+
+	return false
 }
 
 // determineShipmentEvent determines the appropriate event for a shipment based on its moves

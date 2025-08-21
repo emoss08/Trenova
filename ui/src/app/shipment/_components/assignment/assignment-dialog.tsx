@@ -66,7 +66,7 @@ export function AssignmentDialog({
       primaryWorkerId: "",
       secondaryWorkerId: "",
       tractorId: "",
-      trailerId: "",
+      trailerId: undefined,
       createdAt: undefined,
       updatedAt: undefined,
       id: undefined,

@@ -11,11 +11,22 @@ import (
 	"github.com/rotisserie/eris"
 )
 
+type ListShipmentHoldOptions struct {
+	ShipmentID pulid.ID `query:"shipmentId"`
+	Filter     *ports.LimitOffsetQueryOptions
+}
+
 type GetShipmentHoldByShipmentIDRequest struct {
 	ShipmentID pulid.ID
 	OrgID      pulid.ID
 	BuID       pulid.ID
 	UserID     pulid.ID
+}
+
+type GetShipmentHoldByMoveIDRequest struct {
+	MoveID pulid.ID
+	OrgID  pulid.ID
+	BuID   pulid.ID
 }
 
 type GetShipmentHoldByIDRequest struct {
@@ -89,6 +100,10 @@ func (hr *ReleaseShipmentHoldRequest) Validate() *errors.MultiError {
 }
 
 type ShipmentHoldRepository interface {
+	List(
+		ctx context.Context,
+		opts *ListShipmentHoldOptions,
+	) (*ports.ListResult[*shipment.ShipmentHold], error)
 	GetByShipmentID(
 		ctx context.Context,
 		req *GetShipmentHoldByShipmentIDRequest,

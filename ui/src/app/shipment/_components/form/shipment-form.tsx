@@ -72,6 +72,15 @@ function ShipmentEditTabs({
     enabled: !!shipmentId,
   });
 
+  const { data: holds, isLoading: isHoldsLoading } = useQuery({
+    ...queries.shipment.getHolds(shipmentId),
+    enabled: !!shipmentId,
+  });
+
+  const hasHolds = holds && holds.count > 0;
+
+  console.info(hasHolds);
+
   const [activeTab, setActiveTab] = useState("general-information");
 
   const handleTabChange = useCallback((value: string) => {
@@ -123,13 +132,18 @@ function ShipmentEditTabs({
               3
             </span>
           </TabsTrigger>
-          <TabsTrigger
-            value="holds"
-            className="h-7 shrink-0 hover:bg-accent hover:text-foreground text-xs data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-          >
-            <LockIcon className="-ms-0.5 mb-0.5 opacity-60" size={16} />
-            Holds
-          </TabsTrigger>
+          {hasHolds && (
+            <TabsTrigger
+              value="holds"
+              className="h-7 shrink-0 hover:bg-accent hover:text-foreground text-xs data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+              <LockIcon className="-ms-0.5 mb-0.5 opacity-60" size={16} />
+              Holds
+              <span className="max-w-6 bg-primary/15 py-0.5 px-1.5 rounded-sm text-2xs">
+                {holds.count}
+              </span>
+            </TabsTrigger>
+          )}
         </TabsList>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
@@ -143,7 +157,7 @@ function ShipmentEditTabs({
         <ShipmentCommentDetails shipmentId={shipmentId} />
       </TabsContent>
       <TabsContent value="holds">
-        <HoldList holds={selectedShipment?.holds ?? []} />
+        <HoldList holds={holds?.results ?? []} />
       </TabsContent>
     </Tabs>
   );

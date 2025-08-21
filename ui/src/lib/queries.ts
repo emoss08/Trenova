@@ -167,6 +167,10 @@ export const queries = createQueryKeyStore({
       queryKey: ["shipment/comments/count", shipmentId],
       queryFn: async () => api.shipments.getCommentCount(shipmentId),
     }),
+    getHolds: (shipmentId: ShipmentSchema["id"]) => ({
+      queryKey: ["shipment/holds", shipmentId],
+      queryFn: async () => api.shipments.getHolds(shipmentId),
+    }),
   },
   customer: {
     getDocumentRequirements: (customerId: string) => ({

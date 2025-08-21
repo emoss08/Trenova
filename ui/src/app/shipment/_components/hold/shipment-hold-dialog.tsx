@@ -1,4 +1,3 @@
-import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
@@ -12,12 +11,14 @@ import {
 import { Form } from "@/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
+import { queries } from "@/lib/queries";
 import {
   HoldShipmentRequestSchema,
   holdShipmentRequestSchema,
 } from "@/lib/schemas/shipment-hold-schema";
 import { api } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -34,6 +35,7 @@ export function ShipmentHoldDialog({
   onOpenChange,
   shipmentId,
 }: ShipmentHoldDialogProps) {
+  const queryClient = useQueryClient();
   const form = useForm({
     resolver: zodResolver(holdShipmentRequestSchema),
     defaultValues: {
@@ -44,7 +46,6 @@ export function ShipmentHoldDialog({
       userId: "",
     },
   });
-  const { table } = useDataTable();
 
   const {
     setError,
@@ -61,6 +62,9 @@ export function ShipmentHoldDialog({
         description: `The shipment hold has been added`,
       });
 
+      queryClient.invalidateQueries({
+        queryKey: queries.shipment.getHolds(shipmentId).queryKey,
+      });
       broadcastQueryInvalidation({
         queryKey: ["shipment", "shipment-list", "stop", "assignment"],
         options: {
@@ -72,7 +76,7 @@ export function ShipmentHoldDialog({
         },
       });
 
-      table.resetRowSelection();
+      onOpenChange(false);
     },
     resourceName: "Shipment Hold",
     setFormError: setError,

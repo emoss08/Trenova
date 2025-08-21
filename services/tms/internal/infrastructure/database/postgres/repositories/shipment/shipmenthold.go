@@ -23,13 +23,15 @@ import (
 type ShipmentHoldRepositoryParams struct {
 	fx.In
 
-	DB     db.Connection
-	Logger *logger.Logger
+	DB       db.Connection
+	MoveRepo repositories.ShipmentMoveRepository
+	Logger   *logger.Logger
 }
 
 type shipmentHoldRepository struct {
-	db db.Connection
-	l  *zerolog.Logger
+	db       db.Connection
+	moveRepo repositories.ShipmentMoveRepository
+	l        *zerolog.Logger
 }
 
 // NewShipmentHoldRepository initializes a new instance of shipmentHoldRepository with its dependencies.
@@ -45,16 +47,62 @@ func NewShipmentHoldRepository(
 	log := p.Logger.With().
 		Str("repository", "shipmenthold").
 		Logger()
+
 	return &shipmentHoldRepository{
-		db: p.DB,
-		l:  &log,
+		db:       p.DB,
+		moveRepo: p.MoveRepo,
+		l:        &log,
 	}
+}
+
+func (sh *shipmentHoldRepository) filterQuery(
+	q *bun.SelectQuery,
+	opts *repositories.ListShipmentHoldOptions,
+) *bun.SelectQuery {
+	q = q.WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return sq.
+			Where("sh.shipment_id = ?", opts.ShipmentID).
+			Where("sh.organization_id = ?", opts.Filter.TenantOpts.OrgID).
+			Where("sh.business_unit_id = ?", opts.Filter.TenantOpts.BuID)
+	})
+
+	q = q.Relation("ReleasedBy").
+		Relation("CreatedBy")
+
+	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
 
 func (sh *shipmentHoldRepository) List(
 	ctx context.Context,
+	opts *repositories.ListShipmentHoldOptions,
 ) (*ports.ListResult[*shipment.ShipmentHold], error) {
-	panic("not implemented")
+	dba, err := sh.db.ReadDB(ctx)
+	if err != nil {
+		return nil, oops.In("shipment_hold_repository").
+			With("op", "list").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := sh.l.With().
+		Str("operation", "list").
+		Logger()
+
+	entities := make([]*shipment.ShipmentHold, 0)
+
+	q := dba.NewSelect().Model(&entities)
+	q = sh.filterQuery(q, opts)
+
+	total, err := q.ScanAndCount(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to scan shipment holds")
+		return nil, err
+	}
+
+	return &ports.ListResult[*shipment.ShipmentHold]{
+		Items: entities,
+		Total: total,
+	}, nil
 }
 
 func (sh *shipmentHoldRepository) GetByID(
@@ -95,6 +143,56 @@ func (sh *shipmentHoldRepository) GetByID(
 	}
 
 	return entity, nil
+}
+
+func (sh *shipmentHoldRepository) GetByMoveID(
+	ctx context.Context,
+	req *repositories.GetShipmentHoldByMoveIDRequest,
+) (*ports.ListResult[*shipment.ShipmentHold], error) {
+	dba, err := sh.db.ReadDB(ctx)
+	if err != nil {
+		return nil, oops.In("shipment_hold_repository").
+			With("op", "get_by_move_id").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	log := sh.l.With().
+		Str("operation", "get_by_move_id").
+		Str("move_id", req.MoveID.String()).
+		Logger()
+
+	// * we need to retrieve the shipment ID from the move
+	move, err := sh.moveRepo.GetByID(ctx, repositories.GetMoveByIDOptions{
+		MoveID: req.MoveID,
+		OrgID:  req.OrgID,
+		BuID:   req.BuID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	entities := make([]*shipment.ShipmentHold, 0)
+
+	q := dba.NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("sh.shipment_id = ?", move.ShipmentID).
+				Where("sh.organization_id = ?", req.OrgID).
+				Where("sh.business_unit_id = ?", req.BuID)
+		})
+
+	total, err := q.ScanAndCount(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to scan shipment holds")
+		return nil, err
+	}
+
+	return &ports.ListResult[*shipment.ShipmentHold]{
+		Items: entities,
+		Total: total,
+	}, nil
 }
 
 // GetByShipmentID retrieves a shipment hold by its shipment ID.

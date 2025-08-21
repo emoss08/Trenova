@@ -2,10 +2,14 @@ package shipmenthold
 
 import (
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/shipmenthold"
 	"github.com/emoss08/trenova/internal/pkg/appctx"
+	"github.com/emoss08/trenova/internal/pkg/utils/paginationutils/limitoffsetpagination"
 	"github.com/emoss08/trenova/internal/pkg/validator"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/fx"
 )
@@ -32,6 +36,11 @@ func NewHandler(p HandlerParams) *Handler {
 func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 	api := r.Group("/shipment-holds")
 
+	api.Get("/:shipmentID/", rl.WithRateLimit(
+		[]fiber.Handler{h.list},
+		middleware.PerMinute(60), // 60 reads per minute
+	)...)
+
 	api.Post("/hold/", rl.WithRateLimit(
 		[]fiber.Handler{h.holdShipment},
 		middleware.PerMinute(60), // 60 writes per minute
@@ -41,6 +50,31 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		[]fiber.Handler{h.releaseShipmentHold},
 		middleware.PerMinute(60), // 60 writes per minute
 	)...)
+}
+
+func (h *Handler) list(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*shipment.ShipmentHold], error) {
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
+		shipmentID, err := pulid.MustParse(fc.Params("shipmentID"))
+		if err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
+		return h.sh.List(fc.UserContext(), &repositories.ListShipmentHoldOptions{
+			ShipmentID: shipmentID,
+			Filter:     filter,
+		})
+	}
+
+	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
 }
 
 func (h *Handler) holdShipment(c *fiber.Ctx) error {

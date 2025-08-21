@@ -96,24 +96,6 @@ func (sh *ShipmentHold) Validate(ctx context.Context, multiErr *errors.MultiErro
 				validation.Required.Error("Created By is required when Source is user"),
 			),
 		),
-		validation.Field(&sh.BlocksDispatch,
-			validation.When(
-				sh.Severity == SeverityBlocking,
-				validation.Required.Error("Blocks Dispatch is required when Severity is Blocking"),
-			),
-		),
-		validation.Field(&sh.BlocksDelivery,
-			validation.When(
-				sh.Severity == SeverityBlocking,
-				validation.Required.Error("Blocks Delivery is required when Severity is Blocking"),
-			),
-		),
-		validation.Field(&sh.BlocksBilling,
-			validation.When(
-				sh.Severity == SeverityBlocking,
-				validation.Required.Error("Blocks Billing is required when Severity is Blocking"),
-			),
-		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
@@ -121,6 +103,24 @@ func (sh *ShipmentHold) Validate(ctx context.Context, multiErr *errors.MultiErro
 			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
+}
+
+func (sh *ShipmentHold) IsBlockedForDispatch() bool {
+	return sh.Severity == SeverityBlocking &&
+		sh.BlocksDispatch &&
+		sh.ReleasedAt == nil
+}
+
+func (sh *ShipmentHold) IsBlockedForBilling() bool {
+	return sh.Severity == SeverityBlocking &&
+		sh.BlocksBilling &&
+		sh.ReleasedAt == nil
+}
+
+func (sh *ShipmentHold) IsBlockedForDelivery() bool {
+	return sh.Severity == SeverityBlocking &&
+		sh.BlocksDelivery &&
+		sh.ReleasedAt == nil
 }
 
 func (sh *ShipmentHold) GetID() string {

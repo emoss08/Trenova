@@ -99,9 +99,12 @@ func (tr *tractorRepository) addOptions(
 	}
 
 	if opts.Status != "" {
-		status, err := domain.StatusFromString(opts.Status)
+		status, err := domain.EquipmentStatusFromString(opts.Status)
 		if err != nil {
-			tr.l.Error().Err(err).Msg("failed to convert status to equipment status")
+			tr.l.Error().
+				Str("status", opts.Status).
+				Err(err).
+				Msg("failed to convert status to equipment status")
 			return q
 		}
 

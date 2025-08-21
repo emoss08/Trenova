@@ -56,6 +56,38 @@ func NewService(p ServiceParams) *Service {
 	}
 }
 
+func (s *Service) List(
+	ctx context.Context,
+	req *repositories.ListShipmentHoldOptions,
+) (*ports.ListResult[*shipment.ShipmentHold], error) {
+	log := s.l.With().
+		Str("operation", "List").
+		Str("shipmentID", req.ShipmentID.String()).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
+		{
+			UserID:         req.Filter.TenantOpts.UserID,
+			Resource:       permission.ResourceShipmentHold,
+			Action:         permission.ActionRead,
+			BusinessUnitID: req.Filter.TenantOpts.BuID,
+			OrganizationID: req.Filter.TenantOpts.OrgID,
+		},
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, err
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read shipment holds within your organization",
+		)
+	}
+
+	return s.repo.List(ctx, req)
+}
+
 func (s *Service) GetShipmentHoldByShipmentID(
 	ctx context.Context,
 	req *repositories.GetShipmentHoldByShipmentIDRequest,

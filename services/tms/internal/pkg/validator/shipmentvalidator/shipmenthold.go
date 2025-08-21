@@ -5,6 +5,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/ports/db"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/utils/queryutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
@@ -16,20 +17,31 @@ type ShipmentHoldValidatorParams struct {
 	fx.In
 
 	DB                      db.Connection
+	HoldRepo                repositories.ShipmentHoldRepository
 	ValidationEngineFactory framework.ValidationEngineFactory
 }
 
 type ShipmentHoldValidator struct {
-	db  db.Connection
-	vef framework.ValidationEngineFactory
+	db       db.Connection
+	holdRepo repositories.ShipmentHoldRepository
+	vef      framework.ValidationEngineFactory
 }
 
 func NewShipmentHoldValidator(p ShipmentHoldValidatorParams) *ShipmentHoldValidator {
 	return &ShipmentHoldValidator{
-		db:  p.DB,
-		vef: p.ValidationEngineFactory,
+		db:       p.DB,
+		holdRepo: p.HoldRepo,
+		vef:      p.ValidationEngineFactory,
 	}
 }
+
+type ShipmentHoldPhase int
+
+const (
+	PhasePrePickup ShipmentHoldPhase = iota
+	PhasePostPickupPreDelivery
+	PhaseDelivered
+)
 
 func (v *ShipmentHoldValidator) Validate(
 	ctx context.Context,
@@ -44,6 +56,8 @@ func (v *ShipmentHoldValidator) Validate(
 			framework.ValidationPriorityHigh,
 			func(ctx context.Context, multiErr *errors.MultiError) error {
 				h.Validate(ctx, multiErr)
+				v.ValidateGatingRules(h, multiErr)
+
 				return nil
 			},
 		),
@@ -120,4 +134,92 @@ func (v *ShipmentHoldValidator) validateID(
 	if valCtx.IsCreate && h.ID.IsNotNil() {
 		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
 	}
+}
+
+func (v *ShipmentHoldValidator) ValidateGatingRules(
+	hold *shipment.ShipmentHold,
+	multiErr *errors.MultiError,
+) {
+	// * ensure one of the blocks is true if severity is blocking
+	if hold.Severity == shipment.SeverityBlocking {
+		if !hold.BlocksDispatch && !hold.BlocksDelivery && !hold.BlocksBilling {
+			multiErr.Add(
+				"severity",
+				errors.ErrInvalid,
+				"At least one of Blocks Dispatch, Blocks Delivery, or Blocks Billing must be true when Severity is Blocking",
+			)
+		}
+	}
+}
+
+func (v *ShipmentHoldValidator) derivePhase(status shipment.Status) ShipmentHoldPhase {
+	switch status {
+	case shipment.StatusNew, shipment.StatusPartiallyAssigned, shipment.StatusAssigned:
+		return PhasePrePickup
+	case shipment.StatusInTransit, shipment.StatusDelayed, shipment.StatusPartiallyCompleted:
+		return PhasePostPickupPreDelivery
+	default:
+		return PhaseDelivered
+	}
+}
+
+func (v *ShipmentHoldValidator) CanStartTransit(
+	status shipment.Status,
+	holds []*shipment.ShipmentHold,
+) bool {
+	phase := v.derivePhase(status)
+	if phase != PhasePrePickup {
+		return true
+	}
+
+	for _, h := range holds {
+		if h.IsBlockedForDispatch() {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (v *ShipmentHoldValidator) CanDispatchNewMove(
+	status shipment.Status,
+	holds []*shipment.ShipmentHold,
+) bool {
+	phase := v.derivePhase(status)
+	if phase == PhaseDelivered {
+		return false
+	}
+
+	for _, h := range holds {
+		if h.IsBlockedForDispatch() {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (v *ShipmentHoldValidator) CanMarkDelivered(
+	status shipment.Status,
+	holds []*shipment.ShipmentHold,
+) bool {
+	for _, h := range holds {
+		if h.IsBlockedForDelivery() {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (v *ShipmentHoldValidator) CanMarkReadyToBill(
+	holds []*shipment.ShipmentHold,
+) bool {
+	for _, h := range holds {
+		if h.IsBlockedForBilling() {
+			return false
+		}
+	}
+
+	return true
 }

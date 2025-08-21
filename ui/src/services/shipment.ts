@@ -10,6 +10,7 @@ import type { ShipmentDuplicateSchema } from "@/lib/schemas/shipment-duplicate-s
 import {
   HoldShipmentRequestSchema,
   ReleaseShipmentHoldRequestSchema,
+  ShipmentHoldSchema,
 } from "@/lib/schemas/shipment-hold-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { LimitOffsetResponse, type ListResult } from "@/types/server";
@@ -188,6 +189,14 @@ export class ShipmentAPI {
   async getCommentCount(shipmentId: ShipmentSchema["id"]) {
     const response = await http.get<{ count: number }>(
       `/shipments/${shipmentId}/comments/count/`,
+    );
+
+    return response.data;
+  }
+
+  async getHolds(shipmentId: ShipmentSchema["id"]) {
+    const response = await http.get<LimitOffsetResponse<ShipmentHoldSchema>>(
+      `/shipment-holds/${shipmentId}/`,
     );
 
     return response.data;

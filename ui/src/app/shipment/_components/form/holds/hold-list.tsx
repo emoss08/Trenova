@@ -114,6 +114,7 @@ function HoldRow({ hold }: { hold: ShipmentHoldSchema }) {
             </Tooltip>
           )}
           <div className="text-sm font-medium">{holdType?.label}</div>
+          <div className="text-sm text-muted-foreground">({hold.severity})</div>
         </div>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -137,17 +138,13 @@ function HoldRow({ hold }: { hold: ShipmentHoldSchema }) {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="flex justify-between items-center border-t border-border pt-2">
-        <div className="flex flex-col gap-1">
-          <div className="text-sm text-muted-foreground">{hold.severity}</div>
-          <div className="grid grid-cols-3 gap-2">
-            <HoldRowGatingRow blocks={hold.blocksBilling} title="Billing" />
-            <HoldRowGatingRow blocks={hold.blocksDelivery} title="Delivery" />
-            <HoldRowGatingRow blocks={hold.blocksDispatch} title="Dispatch" />
-          </div>
-        </div>
+      <div className="text-sm text-muted-foreground">{hold.notes}</div>
+      <div className="grid grid-cols-3 gap-2 max-w-[300px]">
+        <HoldRowGatingRow blocks={hold.blocksBilling} title="Billing" />
+        <HoldRowGatingRow blocks={hold.blocksDelivery} title="Delivery" />
+        <HoldRowGatingRow blocks={hold.blocksDispatch} title="Dispatch" />
       </div>
-      <div className="flex flex-row gap-2 border-t border-border items-center justify-between p-1">
+      <div className="flex flex-row gap-2 border-t border-border items-center justify-between p-0.5 shrink-0">
         <div className="flex flex-row gap-1 items-center text-sm text-muted-foreground">
           {!hold.releasedAt ? (
             <div className="flex flex-row gap-0.5 items-center">
@@ -182,12 +179,12 @@ function HoldRowGatingRow({
   return (
     <div
       className={cn(
-        "flex px-1 py-0.5 size-full text-nowrap rounded-md border text-green-700 bg-green-600/20 border-green-600/30 dark:text-green-400 text-xs font-medium",
+        "flex px-1 py-0.5 size-full text-nowrap rounded-md border text-green-700 bg-green-600/20 border-green-600/30 dark:text-green-400 text-xs font-medium shrink-0",
         blocks &&
           "text-red-700 bg-red-600/20 border-red-600/30 dark:text-red-400",
       )}
     >
-      <div className="flex flex-row gap-x-1 items-center">
+      <div className="flex flex-row gap-x-0.5 items-center">
         {blocks ? <Cross2Icon /> : <CheckIcon />}
         <span>{title}</span>
       </div>
