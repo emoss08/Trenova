@@ -230,12 +230,13 @@ func (s *Service) SendShipmentHoldReleaseNotification(
 		},
 		Title: "Shipment Hold Released",
 		Message: fmt.Sprintf(
-			"Shipment %s has been released from hold",
+			"Shipment %s has been released from hold by %s",
 			req.ProNumber,
+			req.ReleasedByName,
 		),
 		Data: map[string]any{
-			"proNumber": req.ProNumber,
-			"ownerName": req.OwnerName,
+			"proNumber":      req.ProNumber,
+			"releasedByName": req.ReleasedByName,
 		},
 	}
 

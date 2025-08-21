@@ -600,7 +600,7 @@ func (s *Service) TransferOwnership(
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get new owner")
 	}
-	if err := s.ns.SendOwnershipTransferNotification(ctx, &services.OwnershipTransferNotificationRequest{
+	if err = s.ns.SendOwnershipTransferNotification(ctx, &services.OwnershipTransferNotificationRequest{
 		OrgID:        req.OrgID,
 		BuID:         req.BuID,
 		OwnerName:    ownerName,
@@ -629,9 +629,6 @@ func (s *Service) TransferOwnership(
 				"http://localhost:5173/shipments/management?entityId=%s&modalType=edit",
 				updatedEntity.GetID(),
 			),
-			// Optional fields
-			"TransferReason": "",
-			"Notes":          "",
 		},
 		req.OrgID,
 		req.BuID,

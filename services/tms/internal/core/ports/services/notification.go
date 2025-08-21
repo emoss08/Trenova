@@ -70,11 +70,11 @@ type OwnershipTransferNotificationRequest struct {
 }
 
 type ShipmentHoldReleaseNotificationRequest struct {
-	OrgID        pulid.ID `json:"orgId"`
-	BuID         pulid.ID `json:"buId"`
-	ProNumber    string   `json:"proNumber"`
-	OwnerName    string   `json:"ownerName"`
-	TargetUserID pulid.ID `json:"targetUserId"`
+	OrgID          pulid.ID `json:"orgId"`
+	BuID           pulid.ID `json:"buId"`
+	ProNumber      string   `json:"proNumber"`
+	ReleasedByName string   `json:"releasedByName"`
+	TargetUserID   pulid.ID `json:"targetUserId"`
 }
 type NotificationService interface {
 	// SendNotification sends a notification to the specified targets

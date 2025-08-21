@@ -18,26 +18,33 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"go.uber.org/fx"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	Logger         *logger.Logger
-	Repo           repositories.ShipmentHoldRepository
-	HoldReasonRepo repositories.HoldReasonRepository
-	PermService    services.PermissionService
-	AuditService   services.AuditService
-	Validator      *shipmentvalidator.ShipmentHoldValidator
+	Logger              *logger.Logger
+	Repo                repositories.ShipmentHoldRepository
+	HoldReasonRepo      repositories.HoldReasonRepository
+	UserRepo            repositories.UserRepository
+	ShipmentRepo        repositories.ShipmentRepository
+	PermService         services.PermissionService
+	NotificationService services.NotificationService
+	AuditService        services.AuditService
+	Validator           *shipmentvalidator.ShipmentHoldValidator
 }
 
 type Service struct {
 	l    *zerolog.Logger
 	repo repositories.ShipmentHoldRepository
-	ps   services.PermissionService
 	hr   repositories.HoldReasonRepository
+	ur   repositories.UserRepository
+	ps   services.PermissionService
+	ns   services.NotificationService
 	as   services.AuditService
+	sr   repositories.ShipmentRepository
 	v    *shipmentvalidator.ShipmentHoldValidator
 }
 
@@ -49,10 +56,13 @@ func NewService(p ServiceParams) *Service {
 	return &Service{
 		l:    &log,
 		repo: p.Repo,
+		ur:   p.UserRepo,
 		ps:   p.PermService,
 		as:   p.AuditService,
 		v:    p.Validator,
 		hr:   p.HoldReasonRepo,
+		ns:   p.NotificationService,
+		sr:   p.ShipmentRepo,
 	}
 }
 
@@ -359,6 +369,10 @@ func (s *Service) ReleaseShipmentHold(
 		return nil, err
 	}
 
+	if err = s.sendShipmentHoldReleaseNotification(ctx, updatedHold); err != nil {
+		log.Error().Err(err).Msg("failed to send shipment hold release notification")
+	}
+
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceShipmentHold,
@@ -378,4 +392,37 @@ func (s *Service) ReleaseShipmentHold(
 	}
 
 	return updatedHold, nil
+}
+
+func (s *Service) sendShipmentHoldReleaseNotification(
+	ctx context.Context,
+	hold *shipment.ShipmentHold,
+) error {
+	originalShipment, err := s.sr.GetByID(ctx, &repositories.GetShipmentByIDOptions{
+		ID:    hold.ShipmentID,
+		OrgID: hold.OrganizationID,
+		BuID:  hold.BusinessUnitID,
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get shipment")
+		return err
+	}
+
+	releasedBy, err := s.ur.GetNameByID(ctx, *hold.ReleasedByID)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get released by user name")
+		return err
+	}
+
+	if err = s.ns.SendShipmentHoldReleaseNotification(ctx, &services.ShipmentHoldReleaseNotificationRequest{
+		OrgID:          hold.OrganizationID,
+		BuID:           hold.BusinessUnitID,
+		ProNumber:      originalShipment.ProNumber,
+		ReleasedByName: releasedBy,
+		TargetUserID:   pulid.ConvertFromPtr(originalShipment.OwnerID),
+	}); err != nil {
+		log.Error().Err(err).Msg("failed to send shipment hold release notification")
+	}
+
+	return nil
 }
