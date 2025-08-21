@@ -69,6 +69,13 @@ type OwnershipTransferNotificationRequest struct {
 	TargetUserID pulid.ID `json:"targetUserId"`
 }
 
+type ShipmentHoldReleaseNotificationRequest struct {
+	OrgID        pulid.ID `json:"orgId"`
+	BuID         pulid.ID `json:"buId"`
+	ProNumber    string   `json:"proNumber"`
+	OwnerName    string   `json:"ownerName"`
+	TargetUserID pulid.ID `json:"targetUserId"`
+}
 type NotificationService interface {
 	// SendNotification sends a notification to the specified targets
 	SendNotification(ctx context.Context, req *SendNotificationRequest) error
@@ -86,6 +93,11 @@ type NotificationService interface {
 	SendOwnershipTransferNotification(
 		ctx context.Context,
 		req *OwnershipTransferNotificationRequest,
+	) error
+
+	SendShipmentHoldReleaseNotification(
+		ctx context.Context,
+		req *ShipmentHoldReleaseNotificationRequest,
 	) error
 
 	// SendBulkCommentNotifications sends multiple comment notifications

@@ -35,11 +35,11 @@ type DomainInfo struct {
 func ScanDomainFolder(domainPath string) ([]DomainInfo, error) {
 	var filesScanned atomic.Int64
 	var directoriesScanned atomic.Int64
-	
+
 	// First, collect all files to process with CPU yielding
 	var files []string
 	var walkCount int
-	
+
 	err := filepath.WalkDir(domainPath, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
@@ -51,13 +51,13 @@ func ScanDomainFolder(domainPath string) ([]DomainInfo, error) {
 			runtime.Gosched()
 			time.Sleep(500 * time.Microsecond)
 		}
-		
+
 		// Track directories
 		if d.IsDir() {
 			directoriesScanned.Add(1)
 			return nil
 		}
-		
+
 		// Skip non-go files
 		if !strings.HasSuffix(path, ".go") {
 			return nil
@@ -75,7 +75,7 @@ func ScanDomainFolder(domainPath string) ([]DomainInfo, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
 	fmt.Printf("Found %d Go files in %d directories\n", len(files), directoriesScanned.Load())
 
 	// Process files concurrently with better control
@@ -90,13 +90,13 @@ func ScanDomainFolder(domainPath string) ([]DomainInfo, error) {
 	// Use semaphore for better concurrency control
 	sem := semaphore.NewWeighted(int64(concurrency))
 	ctx := context.Background()
-	
+
 	// Batch processing to reduce overhead
 	batchSize := 10
 	if len(files) < 50 {
 		batchSize = 5
 	}
-	
+
 	var wg sync.WaitGroup
 	var mu sync.Mutex
 	var domains []DomainInfo
@@ -109,42 +109,42 @@ func ScanDomainFolder(domainPath string) ([]DomainInfo, error) {
 			end = len(files)
 		}
 		batch := files[i:end]
-		
+
 		wg.Add(1)
 		go func(batchFiles []string, batchNum int) {
 			defer wg.Done()
-			
+
 			// Acquire semaphore for batch
 			if err := sem.Acquire(ctx, 1); err != nil {
 				fmt.Printf("Failed to acquire semaphore: %v\n", err)
 				return
 			}
 			defer sem.Release(1)
-			
+
 			// Add delay between batches to prevent CPU spikes
 			time.Sleep(time.Duration(batchNum*2) * time.Millisecond)
-			
+
 			// Process files in batch
 			for _, path := range batchFiles {
 				// Yield CPU between files
 				runtime.Gosched()
-				
+
 				infos, err := scanFile(path)
 				if err != nil {
 					// Log error but don't fail the entire scan
 					fmt.Printf("Warning: failed to scan %s: %v\n", path, err)
 					continue
 				}
-				
+
 				filesScanned.Add(1)
 				processedFiles.Add(1)
-				
+
 				if len(infos) > 0 {
 					mu.Lock()
 					domains = append(domains, infos...)
 					mu.Unlock()
 				}
-				
+
 				// Small delay between files in batch
 				if processedFiles.Load()%5 == 0 {
 					time.Sleep(time.Millisecond)
@@ -155,39 +155,45 @@ func ScanDomainFolder(domainPath string) ([]DomainInfo, error) {
 
 	wg.Wait()
 	fmt.Printf("Scanned %d files, found %d domain entities\n", filesScanned.Load(), len(domains))
-	return domains, nil}
+	return domains, nil
+}
 
 // scanFile scans a single Go file for domain entities
 func scanFile(filePath string) ([]DomainInfo, error) {
 	// Add small delay to prevent rapid file access
 	time.Sleep(500 * time.Microsecond)
-	
+
 	// Get file info for size checking
 	fileInfo, err := os.Stat(filePath)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	// Skip very large files that might cause issues
 	if fileInfo.Size() > 1024*1024 { // 1MB
 		fmt.Printf("Skipping large file: %s (%d bytes)\n", filePath, fileInfo.Size())
 		return nil, nil
 	}
-	
+
 	fset := token.NewFileSet()
-	
+
 	// Yield CPU before parsing
 	runtime.Gosched()
-	
+
 	// Parse only what we need - skip function bodies and object resolution
-	node, err := parser.ParseFile(fset, filePath, nil, parser.SkipObjectResolution|parser.ParseComments)
+	node, err := parser.ParseFile(
+		fset,
+		filePath,
+		nil,
+		parser.SkipObjectResolution|parser.ParseComments,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	// Yield CPU after parsing
 	runtime.Gosched()
-	
+
 	var domains []DomainInfo
 	packageName := node.Name.Name
 
@@ -199,7 +205,7 @@ func scanFile(filePath string) ([]DomainInfo, error) {
 		if declCount%10 == 0 {
 			runtime.Gosched()
 		}
-		
+
 		genDecl, ok := decl.(*ast.GenDecl)
 		if !ok || genDecl.Tok != token.TYPE {
 			continue
@@ -228,7 +234,8 @@ func scanFile(filePath string) ([]DomainInfo, error) {
 		}
 	}
 
-	return domains, nil}
+	return domains, nil
+}
 
 // hasBunBaseModel checks if a struct has bun.BaseModel embedded
 func hasBunBaseModel(structType *ast.StructType) bool {
@@ -236,7 +243,7 @@ func hasBunBaseModel(structType *ast.StructType) bool {
 	if structType.Fields == nil || len(structType.Fields.List) == 0 {
 		return false
 	}
-	
+
 	// Limit check to prevent excessive processing
 	fieldCount := 0
 	for _, field := range structType.Fields.List {
@@ -244,12 +251,12 @@ func hasBunBaseModel(structType *ast.StructType) bool {
 		if fieldCount > 100 { // Reasonable limit for struct fields
 			break
 		}
-		
+
 		// Yield CPU periodically
 		if fieldCount%20 == 0 {
 			runtime.Gosched()
 		}
-		
+
 		// Check for embedded bun.BaseModel
 		if len(field.Names) == 0 {
 			// This is an embedded field

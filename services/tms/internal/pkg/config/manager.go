@@ -170,14 +170,14 @@ func (m *Manager) setDefaults() {
 	m.Viper.SetDefault("grpc.maxRecvMsgSize", 16*1024*1024) // 16MB
 	m.Viper.SetDefault("grpc.maxSendMsgSize", 16*1024*1024) // 16MB
 	m.Viper.SetDefault("grpc.reflection", true)
-    m.Viper.SetDefault("grpc.tls.enabled", false)
-    m.Viper.SetDefault("grpc.tls.certFile", "")
-    m.Viper.SetDefault("grpc.tls.keyFile", "")
-    m.Viper.SetDefault("grpc.tls.clientCAFile", "")
-    m.Viper.SetDefault("grpc.tls.requireClientCert", false)
-    m.Viper.SetDefault("grpc.auth.enabled", false)
-    m.Viper.SetDefault("grpc.auth.bearerTokens", []string{})
-    m.Viper.SetDefault("grpc.auth.apiKeys", []string{})
+	m.Viper.SetDefault("grpc.tls.enabled", false)
+	m.Viper.SetDefault("grpc.tls.certFile", "")
+	m.Viper.SetDefault("grpc.tls.keyFile", "")
+	m.Viper.SetDefault("grpc.tls.clientCAFile", "")
+	m.Viper.SetDefault("grpc.tls.requireClientCert", false)
+	m.Viper.SetDefault("grpc.auth.enabled", false)
+	m.Viper.SetDefault("grpc.auth.bearerTokens", []string{})
+	m.Viper.SetDefault("grpc.auth.apiKeys", []string{})
 }
 
 func (m *Manager) Get() *Config {
@@ -243,13 +243,13 @@ func (m *Manager) validateDatabase() error {
 }
 
 func (m *Manager) validateGRPC() error {
-    if !m.Cfg.GRPC.Enabled {
-        return nil
-    }
-    if m.Cfg.GRPC.ListenAddress == "" {
-        return ErrInvalidServerAddress
-    }
-    return nil
+	if !m.Cfg.GRPC.Enabled {
+		return nil
+	}
+	if m.Cfg.GRPC.ListenAddress == "" {
+		return ErrInvalidServerAddress
+	}
+	return nil
 }
 
 func (m *Manager) validateBackup() error {

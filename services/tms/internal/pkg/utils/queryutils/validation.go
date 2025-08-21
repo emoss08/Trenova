@@ -403,7 +403,11 @@ func CheckCompositeUniqueness(
 
 	if len(fields) == 0 {
 		logger.Error().Msg("at least one field is required for composite uniqueness")
-		multiErr.Add("", errors.ErrInvalid, "Invalid validation criteria: at least one field is required")
+		multiErr.Add(
+			"",
+			errors.ErrInvalid,
+			"Invalid validation criteria: at least one field is required",
+		)
 		return
 	}
 
@@ -449,7 +453,11 @@ func CheckCompositeUniqueness(
 	exists, err := query.Exists(ctx)
 	if err != nil {
 		logger.Error().Err(err).Msg("failed to check composite uniqueness")
-		multiErr.Add(opts.ErrorFieldName, errors.ErrInvalid, "Failed to validate uniqueness constraint")
+		multiErr.Add(
+			opts.ErrorFieldName,
+			errors.ErrInvalid,
+			"Failed to validate uniqueness constraint",
+		)
 		return
 	}
 
@@ -462,7 +470,10 @@ func CheckCompositeUniqueness(
 			for name := range fields {
 				fieldNames = append(fieldNames, name)
 			}
-			message = fmt.Sprintf("A record with this combination of %s already exists", strings.Join(fieldNames, ", "))
+			message = fmt.Sprintf(
+				"A record with this combination of %s already exists",
+				strings.Join(fieldNames, ", "),
+			)
 		} else {
 			// Replace variables in the template
 			for key, value := range opts.ErrorVars {
@@ -773,13 +784,18 @@ func NewCompositeUniquenessValidator(tableName string) *CompositeUniquenessValid
 }
 
 // WithField adds a field to the composite uniqueness check
-func (b *CompositeUniquenessValidatorBuilder) WithField(name string, value any) *CompositeUniquenessValidatorBuilder {
+func (b *CompositeUniquenessValidatorBuilder) WithField(
+	name string,
+	value any,
+) *CompositeUniquenessValidatorBuilder {
 	b.fields[name] = value
 	return b
 }
 
 // WithFields adds multiple fields at once to the composite uniqueness check
-func (b *CompositeUniquenessValidatorBuilder) WithFields(fields map[string]any) *CompositeUniquenessValidatorBuilder {
+func (b *CompositeUniquenessValidatorBuilder) WithFields(
+	fields map[string]any,
+) *CompositeUniquenessValidatorBuilder {
 	for name, value := range fields {
 		b.fields[name] = value
 	}
@@ -787,33 +803,45 @@ func (b *CompositeUniquenessValidatorBuilder) WithFields(fields map[string]any) 
 }
 
 // WithTenant sets the tenant context for the validation
-func (b *CompositeUniquenessValidatorBuilder) WithTenant(orgID, buID pulid.ID) *CompositeUniquenessValidatorBuilder {
+func (b *CompositeUniquenessValidatorBuilder) WithTenant(
+	orgID, buID pulid.ID,
+) *CompositeUniquenessValidatorBuilder {
 	b.options.OrganizationID = orgID
 	b.options.BusinessUnitID = buID
 	return b
 }
 
 // WithErrorField sets which field should receive the error if validation fails
-func (b *CompositeUniquenessValidatorBuilder) WithErrorField(fieldName string) *CompositeUniquenessValidatorBuilder {
+func (b *CompositeUniquenessValidatorBuilder) WithErrorField(
+	fieldName string,
+) *CompositeUniquenessValidatorBuilder {
 	b.options.ErrorFieldName = fieldName
 	return b
 }
 
 // WithErrorTemplate sets a custom error message template
-func (b *CompositeUniquenessValidatorBuilder) WithErrorTemplate(template string, vars map[string]string) *CompositeUniquenessValidatorBuilder {
+func (b *CompositeUniquenessValidatorBuilder) WithErrorTemplate(
+	template string,
+	vars map[string]string,
+) *CompositeUniquenessValidatorBuilder {
 	b.options.ErrorTemplate = template
 	b.options.ErrorVars = vars
 	return b
 }
 
 // WithCaseSensitive sets whether the comparison should be case-sensitive
-func (b *CompositeUniquenessValidatorBuilder) WithCaseSensitive(caseSensitive bool) *CompositeUniquenessValidatorBuilder {
+func (b *CompositeUniquenessValidatorBuilder) WithCaseSensitive(
+	caseSensitive bool,
+) *CompositeUniquenessValidatorBuilder {
 	b.options.CaseSensitive = caseSensitive
 	return b
 }
 
 // WithCondition adds an additional WHERE condition to the uniqueness check
-func (b *CompositeUniquenessValidatorBuilder) WithCondition(query string, args ...any) *CompositeUniquenessValidatorBuilder {
+func (b *CompositeUniquenessValidatorBuilder) WithCondition(
+	query string,
+	args ...any,
+) *CompositeUniquenessValidatorBuilder {
 	b.options.AdditionalConditions = append(b.options.AdditionalConditions, WhereCondition{
 		Query: query,
 		Args:  args,
@@ -828,14 +856,18 @@ func (b *CompositeUniquenessValidatorBuilder) ForCreate() *CompositeUniquenessVa
 }
 
 // ForUpdate sets the validation for an update operation with the given primary key
-func (b *CompositeUniquenessValidatorBuilder) ForUpdate(primaryKeyValue string) *CompositeUniquenessValidatorBuilder {
+func (b *CompositeUniquenessValidatorBuilder) ForUpdate(
+	primaryKeyValue string,
+) *CompositeUniquenessValidatorBuilder {
 	b.options.Operation = OperationUpdate
 	b.options.PrimaryKeyValue = primaryKeyValue
 	return b
 }
 
 // ForUpdateWithPK sets the validation for an update with a custom primary key field
-func (b *CompositeUniquenessValidatorBuilder) ForUpdateWithPK(pkField, pkValue string) *CompositeUniquenessValidatorBuilder {
+func (b *CompositeUniquenessValidatorBuilder) ForUpdateWithPK(
+	pkField, pkValue string,
+) *CompositeUniquenessValidatorBuilder {
 	b.options.Operation = OperationUpdate
 	b.options.PrimaryKeyField = pkField
 	b.options.PrimaryKeyValue = pkValue
@@ -843,6 +875,10 @@ func (b *CompositeUniquenessValidatorBuilder) ForUpdateWithPK(pkField, pkValue s
 }
 
 // Validate executes the composite uniqueness validation
-func (b *CompositeUniquenessValidatorBuilder) Validate(ctx context.Context, tx bun.IDB, multiErr *errors.MultiError) {
+func (b *CompositeUniquenessValidatorBuilder) Validate(
+	ctx context.Context,
+	tx bun.IDB,
+	multiErr *errors.MultiError,
+) {
 	CheckCompositeUniqueness(ctx, tx, b.tableName, b.fields, &b.options, multiErr)
 }
