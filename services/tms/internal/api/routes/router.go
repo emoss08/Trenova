@@ -23,6 +23,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlane"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlanesuggestion"
+	"github.com/emoss08/trenova/internal/api/handlers/docker"
 	"github.com/emoss08/trenova/internal/api/handlers/document"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttype"
@@ -155,6 +156,7 @@ type RouterParams struct {
 	EmailProfileHandler            *email.Handler
 	HoldReasonHandler              *holdreason.Handler
 	ShipmentHoldHandler            *shipmenthold.Handler
+	DockerHandler                  *docker.Handler
 }
 
 type Router struct {
@@ -384,4 +386,7 @@ func (r *Router) setupProtectedRoutes( //nolint:funlen // this is to setup prote
 
 	// Shipment Holds
 	r.p.ShipmentHoldHandler.RegisterRoutes(router, rl)
+
+	// Docker Management
+	r.p.DockerHandler.RegisterRoutes(router, rl)
 }

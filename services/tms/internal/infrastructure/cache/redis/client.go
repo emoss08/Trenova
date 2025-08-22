@@ -39,7 +39,9 @@ const (
 
 type StringCmd = redis.StringCmd
 
-type Z = redis.Z
+type (
+	Z = redis.Z
+)
 
 // Client wraps the Redis client with additional functionality including circuit breaker
 type Client struct {

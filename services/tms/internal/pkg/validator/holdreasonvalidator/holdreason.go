@@ -44,6 +44,7 @@ func (v *Validator) Validate(
 			framework.ValidationPriorityHigh,
 			func(ctx context.Context, multiErr *errors.MultiError) error {
 				hr.Validate(ctx, multiErr)
+				v.validateSeverity(hr, multiErr)
 				return nil
 			},
 		),
@@ -119,5 +120,21 @@ func (v *Validator) validateID(
 ) {
 	if valCtx.IsCreate && hr.ID.IsNotNil() {
 		multiErr.Add("id", errors.ErrInvalid, "ID cannot be set on create")
+	}
+}
+
+func (v *Validator) validateSeverity(
+	hr *shipment.HoldReason,
+	multiErr *errors.MultiError,
+) {
+	// * At least one of the blocks must be true if the severity is Blocking
+	if hr.DefaultSeverity == shipment.SeverityBlocking {
+		if !hr.DefaultBlocksBilling && !hr.DefaultBlocksDelivery && !hr.DefaultBlocksDispatch {
+			multiErr.Add(
+				"defaultSeverity",
+				errors.ErrInvalid,
+				"At least one block must be true if the severity is Blocking",
+			)
+		}
 	}
 }

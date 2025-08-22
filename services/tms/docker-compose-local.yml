@@ -40,6 +40,7 @@ services:
     image: redis/redis-stack:latest
     ports:
       - "6379:6379"
+      - "8001:8001"
     environment:
       - ALLOW_EMPTY_PASSWORD=yes
       - REDIS_ARGS=--maxmemory 1536mb --maxmemory-policy allkeys-lru
@@ -100,20 +101,6 @@ services:
       timeout: 20s
       retries: 3
 
-  mailhog:
-    image: mailhog/mailhog:latest
-    restart: always
-    ports:
-      - "1025:1025" # SMTP port
-      - "8025:8025" # Web UI port
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-
-  # Kafka and CDC services
   zookeeper:
     image: confluentinc/cp-zookeeper:7.4.0
     hostname: zookeeper
@@ -237,188 +224,14 @@ services:
       timeout: 10s
       retries: 5
 
-  kafka-ui:
-    image: provectuslabs/kafka-ui:latest
-    container_name: kafka-ui
-    depends_on:
-      - kafka
-      - schema-registry
-      - kafka-connect
-    ports:
-      - "8082:8080"
-    environment:
-      KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
-      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: http://schema-registry:8081
-      KAFKA_CLUSTERS_0_KAFKACONNECT_0_NAME: debezium
-      KAFKA_CLUSTERS_0_KAFKACONNECT_0_ADDRESS: http://kafka-connect:8083
-    networks:
-      - app-network
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-
-  # LGTM Stack Services
-  # OpenTelemetry Collector - Central telemetry hub
-  otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
-    restart: always
-    command: ["--config=/etc/otel-collector-config.yaml"]
-    volumes:
-      - ./config/otel-collector-config.yaml:/etc/otel-collector-config.yaml
-    ports:
-      - "4317:4317"   # OTLP gRPC receiver
-      - "4318:4318"   # OTLP HTTP receiver
-      - "8888:8888"   # Prometheus metrics exposed by the collector
-      - "8889:8889"   # Prometheus exporter metrics
-    depends_on:
-      - loki
-      - tempo
-      - mimir
-    networks:
-      - app-network
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-
-  # Grafana - Visualization and dashboards
-  grafana:
-    image: grafana/grafana:latest
-    restart: always
-    environment:
-      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
-      - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-piechart-panel
-    ports:
-      - "3000:3000"
-    volumes:
-      - grafana_data:/var/lib/grafana
-      - ./config/grafana/provisioning:/etc/grafana/provisioning
-      - ./config/grafana/provisioning/dashboards:/var/lib/grafana/dashboards
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    healthcheck:
-      test: ["CMD-SHELL", "curl -f http://localhost:3000/api/health || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Loki - Log aggregation
-  loki:
-    image: grafana/loki:latest
-    restart: always
-    ports:
-      - "3100:3100"
-    command: -config.file=/etc/loki/local-config.yaml
-    volumes:
-      - loki_data:/loki
-      - ./config/loki-config.yaml:/etc/loki/local-config.yaml
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3100/ready || exit 1"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Tempo - Distributed tracing
-  tempo:
-    image: grafana/tempo:latest
-    restart: always
-    command: ["-config.file=/etc/tempo.yaml"]
-    volumes:
-      - tempo_data:/var/tempo
-      - ./config/tempo-config.yaml:/etc/tempo.yaml
-    ports:
-      - "3200:3200"   # Tempo HTTP
-      - "9095:9095"   # Tempo gRPC
-      - "14268:14268" # Jaeger ingest
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3200/ready"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # Mimir - Long-term metrics storage
-  mimir:
-    image: grafana/mimir:latest
-    restart: always
-    command: ["-config.file=/etc/mimir.yaml"]
-    volumes:
-      - mimir_data:/data
-      - ./config/mimir-config.yaml:/etc/mimir.yaml:ro
-      - ./config/mimir/rules:/etc/mimir/rules
-    ports:
-      - "9009:9009"
-    networks:
-      - app-network
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9009/ready"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  # PostgreSQL Exporter for database metrics
-  postgres-exporter:
-    image: prometheuscommunity/postgres-exporter:latest
-    restart: always
-    environment:
-      DATA_SOURCE_NAME: "postgresql://${DB_USER:-postgres}:${DB_PASSWORD:-postgres}@db:5432/${DB_NAME:-trenova_go_db}?sslmode=disable"
-      PG_EXPORTER_EXTEND_QUERY_PATH: "/etc/postgres-exporter/queries.yaml"
-      PG_EXPORTER_DISABLE_DEFAULT_METRICS: "false"
-      PG_EXPORTER_DISABLE_SETTINGS_METRICS: "false"
-    volumes:
-      - ./config/postgres-exporter-queries.yaml:/etc/postgres-exporter/queries.yaml:ro
-    ports:
-      - "9187:9187"
-    networks:
-      - app-network
-    depends_on:
-      - db
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-
 volumes:
   pg_data: {}
   redis_data: {}
   minio_data: {}
-  rabbitmq_data: {}
-  rabbitmq.conf: {}
-  watchtower_data: {}
   zookeeper_data: {}
   zookeeper_logs: {}
   kafka_data: {}
   kafka_connect_data: {}
-  grafana_data: {}
-  loki_data: {}
-  tempo_data: {}
-  mimir_data: {}
 
 networks:
   app-network:

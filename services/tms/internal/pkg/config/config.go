@@ -48,6 +48,9 @@ type Config struct {
 	// Kafka is the kafka configuration for CDC.
 	Kafka KafkaConfig `mapstructure:"kafka"`
 
+	// Docker is the docker configuration.
+	Docker DockerConfig `mapstructure:"docker"`
+
 	// Streaming is the streaming configuration.
 	Streaming StreamingConfig `mapstructure:"streaming"`
 

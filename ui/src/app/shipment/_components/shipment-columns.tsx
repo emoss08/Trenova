@@ -21,6 +21,7 @@ import {
 } from "@/lib/shipment/utils";
 import { formatLocation } from "@/lib/utils";
 import { type ColumnDef } from "@tanstack/react-table";
+import { HoldsCell } from "./form/holds/_components/holds-cell";
 
 export function getColumns(): ColumnDef<ShipmentSchema>[] {
   return [
@@ -42,6 +43,24 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
         filterType: "select",
         filterOptions: shipmentStatusChoices,
         defaultFilterOperator: "eq",
+      },
+    },
+    {
+      id: "holdCount",
+      accessorKey: "holds",
+      header: "Holds",
+      size: 100,
+      minSize: 100,
+      maxSize: 200,
+      cell: ({ row }) => {
+        const holds = row.original.holds;
+        return <HoldsCell holds={holds} />;
+      },
+      meta: {
+        apiField: "holds",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
       },
     },
     {

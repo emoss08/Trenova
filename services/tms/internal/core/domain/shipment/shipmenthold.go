@@ -30,7 +30,7 @@ type ShipmentHold struct {
 	BlocksDelivery    bool           `json:"blocksDelivery"    bun:"blocks_delivery,type:BOOLEAN,notnull,default:false"`
 	BlocksBilling     bool           `json:"blocksBilling"     bun:"blocks_billing,type:BOOLEAN,notnull,default:false"`
 	VisibleToCustomer bool           `json:"visibleToCustomer" bun:"visible_to_customer,type:BOOLEAN,notnull,default:false"`
-	Metadata          map[string]any `json:"metadata"          bun:"metadata,type:JSONB,nullzero"` // freeform (e.g., apptId, doc refs)
+	Metadata          map[string]any `json:"metadata"          bun:"metadata,type:JSONB,nullzero"`
 	StartedAt         int64          `json:"startedAt"         bun:"started_at,type:BIGINT,notnull"`
 	CreatedAt         int64          `json:"createdAt"         bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt         int64          `json:"updatedAt"         bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`

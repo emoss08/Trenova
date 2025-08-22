@@ -74,6 +74,9 @@ const (
 	ResourceTrailer = Resource(
 		"trailer",
 	) // Represents resources for managing trailers.
+	ResourceDocker = Resource(
+		"docker",
+	) // Represents resources for managing docker.
 	ResourceShipment = Resource(
 		"shipment",
 	) // Represents resources for managing shipments.
@@ -653,6 +656,13 @@ var (
 			ActionAudit,
 			ActionModifyField,
 		),
+		ResourceDocker: {
+			ActionRead,    // View containers, images, volumes, networks, system info
+			ActionManage,  // Start, stop, restart containers, prune system
+			ActionDelete,  // Remove containers, images, volumes
+			ActionAudit,   // View container logs and audit information
+			ActionExport,  // Export container stats and logs
+		},
 	}
 )
 

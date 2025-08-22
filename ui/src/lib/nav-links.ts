@@ -470,6 +470,12 @@ export const routes: RouteInfo[] = [
         supportsModal: false,
       },
       {
+        key: Resource.DockerManagement,
+        label: "Docker Management",
+        link: "/organization/docker/",
+        supportsModal: false,
+      },
+      {
         key: Resource.AuditEntry,
         label: "Audit Entries",
         link: "/organization/audit-entries/",

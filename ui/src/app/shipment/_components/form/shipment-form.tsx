@@ -7,12 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { queries } from "@/lib/queries";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { useQuery } from "@tanstack/react-query";
-import {
-  HouseIcon,
-  LockIcon,
-  MessageCircleIcon,
-  PanelsTopLeftIcon,
-} from "lucide-react";
+import { HouseIcon, LockIcon, MessageCircleIcon } from "lucide-react";
 import { Suspense, useCallback, useState } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
 import { ShipmentCommentDetails } from "./comment/comment-details";
@@ -72,14 +67,12 @@ function ShipmentEditTabs({
     enabled: !!shipmentId,
   });
 
-  const { data: holds, isLoading: isHoldsLoading } = useQuery({
+  const { data: holds } = useQuery({
     ...queries.shipment.getHolds(shipmentId),
     enabled: !!shipmentId,
   });
 
   const hasHolds = holds && holds.count > 0;
-
-  console.info(hasHolds);
 
   const [activeTab, setActiveTab] = useState("general-information");
 
@@ -118,7 +111,7 @@ function ShipmentEditTabs({
                 : (commentCount?.count ?? 0)}
             </span>
           </TabsTrigger>
-          <TabsTrigger
+          {/* <TabsTrigger
             value="documents"
             className="h-7 shrink-0 hover:bg-accent hover:text-foreground text-xs data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
@@ -131,7 +124,7 @@ function ShipmentEditTabs({
             <span className="max-w-6 bg-primary/15 py-0.5 px-1.5 rounded-sm text-2xs">
               3
             </span>
-          </TabsTrigger>
+          </TabsTrigger> */}
           {hasHolds && (
             <TabsTrigger
               value="holds"

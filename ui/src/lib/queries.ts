@@ -14,6 +14,7 @@ import type { NotificationQueryParams } from "@/types/notification";
 import type { ShipmentQueryParams } from "@/types/shipment";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 import type { AccessorialChargeSchema } from "./schemas/accessorial-charge-schema";
+import { HoldReasonSchema } from "./schemas/hold-reason-schema";
 import type { PatternConfigSchema } from "./schemas/pattern-config-schema";
 import { ShipmentSchema } from "./schemas/shipment-schema";
 import type { TableConfigurationSchema } from "./schemas/table-configuration-schema";
@@ -90,6 +91,12 @@ export const queries = createQueryKeyStore({
       queryFn: async () => {
         return await api.usStates.getUsStateOptions();
       },
+    }),
+  },
+  holdReason: {
+    getById: (id: HoldReasonSchema["id"]) => ({
+      queryKey: ["hold-reason", id],
+      queryFn: async () => api.holdReasons.getById(id),
     }),
   },
   document: {

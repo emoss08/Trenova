@@ -36,11 +36,18 @@ type GetShipmentHoldByIDRequest struct {
 	UserID pulid.ID
 }
 type HoldShipmentRequest struct {
-	ShipmentID   pulid.ID `json:"shipmentId"   query:"shipmentId"`
-	OrgID        pulid.ID `json:"orgId"        query:"orgId"`
-	BuID         pulid.ID `json:"buId"         query:"buId"`
-	UserID       pulid.ID `json:"userId"       query:"userId"`
-	HoldReasonID pulid.ID `json:"holdReasonId" query:"holdReasonId"`
+	ShipmentID        pulid.ID              `json:"shipmentId"        query:"shipmentId"`
+	Type              shipment.HoldType     `json:"type"              query:"type"`
+	Severity          shipment.HoldSeverity `json:"severity"          query:"severity"`
+	BlocksDispatch    bool                  `json:"blocksDispatch"    query:"blocksDispatch"`
+	BlocksDelivery    bool                  `json:"blocksDelivery"    query:"blocksDelivery"`
+	BlocksBilling     bool                  `json:"blocksBilling"     query:"blocksBilling"`
+	VisibleToCustomer bool                  `json:"visibleToCustomer" query:"visibleToCustomer"`
+	Notes             string                `json:"notes"             query:"notes"`
+	OrgID             pulid.ID              `json:"orgId"             query:"orgId"`
+	BuID              pulid.ID              `json:"buId"              query:"buId"`
+	UserID            pulid.ID              `json:"userId"            query:"userId"`
+	HoldReasonID      pulid.ID              `json:"holdReasonId"      query:"holdReasonId"`
 }
 
 func (hr *HoldShipmentRequest) Validate() *errors.MultiError {

@@ -2,7 +2,6 @@ package shipmenthold
 
 import (
 	"context"
-	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -296,18 +295,18 @@ func (s *Service) HoldShipment(
 		ShipmentID:        req.ShipmentID,
 		BusinessUnitID:    req.BuID,
 		OrganizationID:    req.OrgID,
-		Type:              holdReason.Type,
-		Severity:          holdReason.DefaultSeverity,
-		ReasonCode:        holdReason.Code,
-		Notes:             holdReason.Description,
+		Type:              req.Type,
+		Severity:          req.Severity,
+		Notes:             req.Notes,
 		Source:            shipment.SourceUser,
-		BlocksDispatch:    holdReason.DefaultBlocksDispatch,
-		BlocksDelivery:    holdReason.DefaultBlocksDelivery,
-		BlocksBilling:     holdReason.DefaultBlocksBilling,
-		VisibleToCustomer: holdReason.DefaultVisibleToCustomer,
+		BlocksDispatch:    req.BlocksDispatch,
+		BlocksDelivery:    req.BlocksDelivery,
+		BlocksBilling:     req.BlocksBilling,
+		VisibleToCustomer: req.VisibleToCustomer,
 		Metadata:          holdReason.ExternalMap,
+		ReasonCode:        holdReason.Code,
 		CreatedByID:       &req.UserID,
-		StartedAt:         time.Now().Unix(),
+		StartedAt:         timeutils.NowUnix(),
 	}
 
 	createdHold, err := s.Create(ctx, hold, req.UserID)

@@ -40,3 +40,5 @@ function Highlight({ text, highlight = "", className }: HighlightProps) {
 Highlight.displayName = "Highlight";
 
 export default memo(Highlight);
+
+// small helper to highlight search matches
