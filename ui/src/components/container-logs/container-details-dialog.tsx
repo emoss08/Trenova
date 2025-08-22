@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/tooltip";
 
 import { formatBytes } from "@/lib/utils";
+import { api } from "@/services/api";
 import { dockerAPI } from "@/services/docker";
 import { useContainerLogStore } from "@/stores/docker-store";
 import { ContainerStats } from "@/types/docker";
@@ -67,40 +68,78 @@ export function ContainerDetailsDialog({
   const historyCap = 60;
 
   const prevStatsRef = useRef<ContainerStats | null>(null);
+  const eventSourceRef = useRef<EventSource | null>(null);
 
   const isRunning = selectedContainer?.State?.toLowerCase() === "running";
 
+  // Clean up on dialog close
+  useEffect(() => {
+    if (!open) {
+      // Reset state when dialog closes
+      setStats(null);
+      setCpuHistory([]);
+      setMemHistory([]);
+      prevStatsRef.current = null;
+      setLive(true); // Reset live mode for next opening
+
+      // Ensure EventSource is closed
+      if (eventSourceRef.current) {
+        console.log("Closing stats stream on dialog close");
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
+    }
+  }, [open]);
+
   const { data: details, refetch: refetchDetails } = useQuery({
     queryKey: ["docker", "container", selectedContainer?.Id],
-    queryFn: () => dockerAPI.inspectContainer(selectedContainer?.Id ?? ""),
+    queryFn: () => api.docker.inspectContainer(selectedContainer?.Id ?? ""),
     enabled: open,
     staleTime: 60_000,
     refetchOnWindowFocus: false,
   });
 
   useEffect(() => {
-    if (!open || !isRunning || !live) return;
+    // Clean up any existing connection
+    if (eventSourceRef.current) {
+      console.log("Closing existing stats stream");
+      eventSourceRef.current.close();
+      eventSourceRef.current = null;
+    }
 
-    const eventSource = dockerAPI.streamContainerStats(
-      selectedContainer?.Id ?? "",
-      (newStats: ContainerStats) => {
-        setStats(newStats);
-        setCpuHistory((h) => {
-          const next = [...h, clamp(newStats.cpuPercent, 0, 100)];
-          return next.length > historyCap ? next.slice(-historyCap) : next;
-        });
-        const memPct = clamp(newStats.memPercent, 0, 100);
-        setMemHistory((h) => {
-          const next = [...h, memPct];
-          return next.length > historyCap ? next.slice(-historyCap) : next;
-        });
-        prevStatsRef.current = newStats;
-      },
-      (error: unknown) => console.error("Stats stream error:", error),
-    );
+    if (open && isRunning && live && selectedContainer?.Id) {
+      console.log("Starting stats stream for container:", selectedContainer.Id);
+      eventSourceRef.current = dockerAPI.streamContainerStats(
+        selectedContainer.Id,
+        (newStats: ContainerStats) => {
+          setStats(newStats);
+          setCpuHistory((h) => {
+            const next = [...h, clamp(newStats.cpuPercent, 0, 100)];
+            return next.length > historyCap ? next.slice(-historyCap) : next;
+          });
+          const memPct = clamp(newStats.memPercent, 0, 100);
+          setMemHistory((h) => {
+            const next = [...h, memPct];
+            return next.length > historyCap ? next.slice(-historyCap) : next;
+          });
+          prevStatsRef.current = newStats;
+        },
+        (error: string) => {
+          console.error("Stats stream error:", error);
+          setLive(false); // Disable live mode on error
+        },
+        () => {
+          console.log("Connected to stats stream");
+        },
+      );
+    }
 
     return () => {
-      eventSource?.close?.();
+      if (eventSourceRef.current) {
+        console.log("Closing stats stream in cleanup");
+        eventSourceRef.current.close();
+        eventSourceRef.current = null;
+      }
     };
   }, [open, isRunning, live, selectedContainer?.Id]);
 
@@ -176,7 +215,7 @@ export function ContainerDetailsDialog({
                 {selectedContainer?.Image}
               </DialogDescription>
             </div>
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               <div className="flex items-center gap-2">
                 <Switch
                   id="live"
@@ -239,7 +278,6 @@ export function ContainerDetailsDialog({
           </TabsList>
 
           <ScrollArea className="h-[520px] px-4">
-            {/* OVERVIEW */}
             <TabsContent value="overview" className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <Card>
@@ -299,14 +337,16 @@ export function ContainerDetailsDialog({
               </div>
 
               {selectedContainer?.Mounts?.length ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="text-sm">Mounts</CardTitle>
-                    <CardDescription>Volumes and bind mounts</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-2">
+                <div className="bg-muted p-4 rounded-md border">
+                  <div className="pb-2">
+                    <h3 className="text-sm">Mounts</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Volumes and bind mounts
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2 text-sm">
                     {selectedContainer?.Mounts.map((m, idx) => (
-                      <div key={idx} className="text-sm rounded-md border p-2">
+                      <div key={idx}>
                         <KV label="Type">{m.Type}</KV>
                         <KV label="Source">
                           <Mono>{m.Source}</Mono>
@@ -333,8 +373,8 @@ export function ContainerDetailsDialog({
                         )}
                       </div>
                     ))}
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               ) : null}
             </TabsContent>
 

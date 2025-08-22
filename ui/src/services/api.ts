@@ -18,6 +18,7 @@ import { ConsolidationSettingsAPI } from "./consolidation-setting";
 import { CustomerAPI } from "./customer";
 import { DatabaseBackupAPI } from "./database-backups";
 import { DedicatedLaneAPI, DedicatedLaneSuggestionAPI } from "./dedicated-lane";
+import { DockerAPI } from "./docker";
 import { DocumentAPI } from "./document";
 import { FavoriteAPI } from "./favorite";
 import { GoogleMapsAPI } from "./google-maps";
@@ -75,6 +76,7 @@ class API {
   consolidationSettings: ConsolidationSettingsAPI;
   ai: AIAPI;
   holdReasons: HoldReasonAPI;
+  docker: DockerAPI;
 
   constructor() {
     this.assignments = new AssignmentsAPI();
@@ -106,6 +108,7 @@ class API {
     this.consolidationSettings = new ConsolidationSettingsAPI();
     this.ai = new AIAPI();
     this.holdReasons = new HoldReasonAPI();
+    this.docker = new DockerAPI();
   }
 }
 

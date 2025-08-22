@@ -6,8 +6,8 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { dockerAPI } from "@/services/docker";
 import { formatBytes } from "@/lib/utils";
+import { api } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import {
   Activity,
@@ -21,13 +21,13 @@ import {
 export function DockerOverview() {
   const { data: systemInfo, isLoading: loadingInfo } = useQuery({
     queryKey: ["docker", "system-info"],
-    queryFn: dockerAPI.getSystemInfo,
+    queryFn: api.docker.getSystemInfo,
     refetchInterval: 30000, // Refresh every 30 seconds
   });
 
   const { data: diskUsage, isLoading: loadingDisk } = useQuery({
     queryKey: ["docker", "disk-usage"],
-    queryFn: dockerAPI.getDiskUsage,
+    queryFn: api.docker.getDiskUsage,
     refetchInterval: 30000,
   });
 

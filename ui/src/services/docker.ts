@@ -18,180 +18,212 @@ import {
   SystemPruneReport,
 } from "@/types/docker";
 
-export const dockerAPI = {
-  // Container operations
-  listContainers: async (all = false) => {
+export class DockerAPI {
+  async listContainers(all = false): Promise<Container[]> {
     const response = await http.get<{ containers: Container[] }>(
       `/docker/containers?all=${all}`,
     );
     return response.data.containers;
-  },
+  }
 
-  inspectContainer: async (id: string) => {
+  async inspectContainer(id: string): Promise<ContainerInspect> {
     const response = await http.get<ContainerInspect>(
       `/docker/containers/${id}`,
     );
     return response.data;
-  },
+  }
 
-  startContainer: async (id: string) => {
+  async startContainer(id: string): Promise<{ message: string }> {
     const response = await http.post<{ message: string }>(
       `/docker/containers/${id}/start`,
     );
     return response.data;
-  },
+  }
 
-  stopContainer: async (id: string, timeout?: number) => {
+  async stopContainer(
+    id: string,
+    timeout?: number,
+  ): Promise<{ message: string }> {
     const params = timeout ? `?timeout=${timeout}` : "";
     const response = await http.post<{ message: string }>(
       `/docker/containers/${id}/stop${params}`,
     );
     return response.data;
-  },
+  }
 
-  restartContainer: async (id: string, timeout?: number) => {
+  async restartContainer(
+    id: string,
+    timeout?: number,
+  ): Promise<{ message: string }> {
     const params = timeout ? `?timeout=${timeout}` : "";
     const response = await http.post<{ message: string }>(
       `/docker/containers/${id}/restart${params}`,
     );
     return response.data;
-  },
+  }
 
-  removeContainer: async (id: string, force = false) => {
+  async removeContainer(
+    id: string,
+    force = false,
+  ): Promise<{ message: string }> {
     const response = await http.delete<{ message: string }>(
       `/docker/containers/${id}?force=${force}`,
     );
     return response.data;
-  },
+  }
 
-  getContainerLogs: async (
+  async getContainerLogs(
     id: string,
     tail = "100",
     follow = false,
-  ): Promise<string[]> => {
+  ): Promise<string[]> {
     const response = await http.get<{ logs: string[] }>(
       `/docker/containers/${id}/logs?tail=${tail}&follow=${follow}`,
     );
     return response.data.logs;
-  },
+  }
 
-  getContainerStats: async (id: string) => {
+  async getContainerStats(id: string): Promise<ContainerStats> {
     const response = await http.get<ContainerStats>(
       `/docker/containers/${id}/stats`,
     );
     return response.data;
-  },
+  }
 
-  // SSE stream for container stats
-  streamContainerStats: (
+  streamContainerStats(
     id: string,
     onStats: (stats: ContainerStats) => void,
     onError?: (error: string) => void,
-  ) => {
+    onConnected?: () => void,
+  ): EventSource {
     const eventSource = new EventSource(
       `${API_URL}/docker/containers/${id}/stats/stream`,
+      {
+        withCredentials: true,
+      },
     );
 
+    // Handle connected event
+    eventSource.addEventListener("connected", () => {
+      onConnected?.();
+    });
+
+    // Handle stats event
     eventSource.addEventListener("stats", (event) => {
-      const stats = JSON.parse(event.data) as ContainerStats;
-      onStats(stats);
-    });
-
-    eventSource.addEventListener("error", (event) => {
-      if (onError && event.data) {
-        const error = JSON.parse(event.data as string) as { error: string };
-        onError(error.error);
+      try {
+        const stats = JSON.parse(event.data) as ContainerStats;
+        onStats(stats);
+      } catch (error) {
+        console.error("Failed to parse stats data:", error);
+        onError?.("Failed to parse stats data");
       }
     });
 
-    eventSource.onerror = () => {
-      if (onError) {
-        onError("Connection lost");
+    // Handle server error event
+    eventSource.addEventListener("error", (event: MessageEvent) => {
+      if (event.data) {
+        try {
+          const error = JSON.parse(event.data) as { error: string };
+          onError?.(error.error);
+        } catch {
+          onError?.("Unknown error occurred");
+        }
       }
-      eventSource.close();
+    });
+
+    // Handle connection errors
+    eventSource.onerror = (event) => {
+      if (eventSource.readyState === EventSource.CLOSED) {
+        onError?.("Connection closed");
+        eventSource.close();
+      } else if (eventSource.readyState === EventSource.CONNECTING) {
+        // Attempting to reconnect
+        console.log("Reconnecting to stats stream...");
+      }
     };
 
     return eventSource;
-  },
+  }
 
-  // Image operations
-  listImages: async () => {
+  async listImages(): Promise<DockerImage[]> {
     const response = await http.get<{ images: DockerImage[] }>(
       "/docker/images",
     );
     return response.data.images;
-  },
+  }
 
-  pullImage: async (imageName: string) => {
+  async pullImage(imageName: string): Promise<{ message: string }> {
     const response = await http.post<{ message: string }>(
       "/docker/images/pull",
       { imageName },
     );
     return response.data;
-  },
+  }
 
-  removeImage: async (id: string, force = false) => {
+  async removeImage(id: string, force = false): Promise<{ message: string }> {
     const response = await http.delete<{ message: string }>(
       `/docker/images/${id}?force=${force}`,
     );
     return response.data;
-  },
+  }
 
-  // Volume operations
-  listVolumes: async () => {
+  async listVolumes(): Promise<{
+    volumes: DockerVolume[];
+    Warnings: string[];
+  }> {
     const response = await http.get<{
       volumes: DockerVolume[];
       Warnings: string[];
     }>("/docker/volumes");
     return response.data;
-  },
+  }
 
-  createVolume: async (
+  async createVolume(
     name: string,
     driver = "local",
     labels?: Record<string, string>,
-  ) => {
+  ): Promise<DockerVolume> {
     const response = await http.post<DockerVolume>("/docker/volumes", {
       name,
       driver,
       labels,
     });
     return response.data;
-  },
+  }
 
-  removeVolume: async (id: string, force = false) => {
+  async removeVolume(id: string, force = false): Promise<{ message: string }> {
     const response = await http.delete<{ message: string }>(
       `/docker/volumes/${id}?force=${force}`,
     );
     return response.data;
-  },
+  }
 
-  // Network operations
-  listNetworks: async () => {
+  async listNetworks(): Promise<DockerNetwork[]> {
     const response = await http.get<{ networks: DockerNetwork[] }>(
       "/docker/networks",
     );
     return response.data.networks;
-  },
+  }
 
-  inspectNetwork: async (id: string) => {
+  async inspectNetwork(id: string): Promise<DockerNetwork> {
     const response = await http.get<DockerNetwork>(`/docker/networks/${id}`);
     return response.data;
-  },
+  }
 
-  // System operations
-  getSystemInfo: async () => {
+  async getSystemInfo(): Promise<DockerSystemInfo> {
     const response = await http.get<DockerSystemInfo>("/docker/system/info");
     return response.data;
-  },
+  }
 
-  getDiskUsage: async () => {
+  async getDiskUsage(): Promise<DiskUsage> {
     const response = await http.get<DiskUsage>("/docker/system/disk-usage");
     return response.data;
-  },
+  }
 
-  pruneSystem: async () => {
+  async pruneSystem(): Promise<SystemPruneReport> {
     const response = await http.post<SystemPruneReport>("/docker/system/prune");
     return response.data;
-  },
-};
+  }
+}
+
+export const dockerAPI = new DockerAPI();

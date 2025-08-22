@@ -24,7 +24,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatBytes } from "@/lib/utils";
-import { dockerAPI } from "@/services/docker";
+import { api } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Download, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -41,12 +41,12 @@ export function ImageList() {
     refetch,
   } = useQuery({
     queryKey: ["docker", "images"],
-    queryFn: dockerAPI.listImages,
+    queryFn: api.docker.listImages,
     refetchInterval: 10000, // Refresh every 10 seconds
   });
 
   const pullMutation = useMutation({
-    mutationFn: dockerAPI.pullImage,
+    mutationFn: api.docker.pullImage,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["docker", "images"] });
       toast.success(`Successfully pulled ${imageName}`);
@@ -62,7 +62,7 @@ export function ImageList() {
 
   const removeMutation = useMutation({
     mutationFn: ({ id, force }: { id: string; force: boolean }) =>
-      dockerAPI.removeImage(id, force),
+      api.docker.removeImage(id, force),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["docker", "images"] });
       toast.success("Image removed");

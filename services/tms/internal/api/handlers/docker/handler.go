@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/gofiber/fiber/v2"
+	"github.com/valyala/fasthttp"
 	"go.uber.org/fx"
 )
 
@@ -54,8 +55,19 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerSecond(10),
 	)...)
 
-	api.Get("/containers/:id", rl.WithRateLimit(
-		[]fiber.Handler{h.inspectContainer},
+	// SSE endpoint for real-time stats (most specific first)
+	api.Get("/containers/:id/stats/stream", rl.WithRateLimit(
+		[]fiber.Handler{h.streamContainerStats},
+		middleware.PerSecond(5),
+	)...)
+
+	api.Get("/containers/:id/stats", rl.WithRateLimit(
+		[]fiber.Handler{h.getContainerStats},
+		middleware.PerSecond(10),
+	)...)
+
+	api.Get("/containers/:id/logs", rl.WithRateLimit(
+		[]fiber.Handler{h.getContainerLogs},
 		middleware.PerSecond(10),
 	)...)
 
@@ -79,20 +91,9 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerSecond(5),
 	)...)
 
-	api.Get("/containers/:id/logs", rl.WithRateLimit(
-		[]fiber.Handler{h.getContainerLogs},
+	api.Get("/containers/:id", rl.WithRateLimit(
+		[]fiber.Handler{h.inspectContainer},
 		middleware.PerSecond(10),
-	)...)
-
-	api.Get("/containers/:id/stats", rl.WithRateLimit(
-		[]fiber.Handler{h.getContainerStats},
-		middleware.PerSecond(10),
-	)...)
-
-	// SSE endpoint for real-time stats
-	api.Get("/containers/:id/stats/stream", rl.WithRateLimit(
-		[]fiber.Handler{h.streamContainerStats},
-		middleware.PerSecond(5),
 	)...)
 
 	// Image endpoints
@@ -470,20 +471,15 @@ func (h *Handler) streamContainerStats(c *fiber.Ctx) error {
 			"Container ID is required",
 		))
 	}
+	
+	// Log the received container ID for debugging
+	fmt.Printf("DEBUG: Received container ID for streaming: %s\n", containerID)
 
 	// Set SSE headers
 	c.Set("Content-Type", "text/event-stream")
 	c.Set("Cache-Control", "no-cache")
 	c.Set("Connection", "keep-alive")
-	c.Set("X-Accel-Buffering", "no") // Disable proxy buffering
-
-	// Create context for cancellation
-	ctx, cancel := context.WithCancel(c.UserContext())
-	defer cancel()
-
-	// Create channels for stats streaming
-	statsChan := make(chan *dockerhub.ContainerStatsResponse)
-	errChan := make(chan error)
+	c.Set("Transfer-Encoding", "chunked")
 
 	// Create Docker operation request
 	dockerReq := &services.DockerOperationRequest{
@@ -492,57 +488,114 @@ func (h *Handler) streamContainerStats(c *fiber.Ctx) error {
 		BusinessUnitID: reqCtx.BuID,
 	}
 
-	// Start streaming stats in background
-	go func() {
-		err := h.dockerService.StreamContainerStats(ctx, dockerReq, containerID, statsChan)
-		if err != nil && err != context.Canceled {
-			errChan <- err
-		}
-	}()
+	// Use Fiber's StreamWriter for proper SSE handling
+	c.Status(fiber.StatusOK).Context().SetBodyStreamWriter(fasthttp.StreamWriter(func(w *bufio.Writer) {
+		// Create context for cancellation
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 
-	// Stream stats to client
-	ticker := time.NewTicker(30 * time.Second) // Keepalive ticker
-	defer ticker.Stop()
+		// Create channels for stats streaming
+		statsChan := make(chan *dockerhub.ContainerStatsResponse, 1)
+		errChan := make(chan error, 1)
+		done := make(chan struct{})
 
-	for {
-		select {
-		case <-ctx.Done():
-			return nil
+		// Start streaming stats in background
+		go func() {
+			defer func() {
+				close(statsChan)
+				close(errChan)
+				close(done)
+			}()
 			
-		case stats := <-statsChan:
-			// Marshal stats to JSON
-			data, err := json.Marshal(stats)
-			if err != nil {
-				fmt.Fprintf(c, "event: error\ndata: {\"error\":\"Failed to marshal stats\"}\n\n")
-				if flusher, ok := c.Response().BodyWriter().(interface{ Flush() }); ok {
-					flusher.Flush()
+			err := h.dockerService.StreamContainerStats(ctx, dockerReq, containerID, statsChan)
+			if err != nil && err != context.Canceled {
+				select {
+				case errChan <- err:
+				default:
 				}
-				continue
 			}
-			
-			// Send SSE event
-			fmt.Fprintf(c, "event: stats\ndata: %s\n\n", data)
-			if flusher, ok := c.Response().BodyWriter().(interface{ Flush() }); ok {
-				flusher.Flush()
-			}
-			
-		case err := <-errChan:
-			// Send error event
-			errorData, _ := json.Marshal(fiber.Map{"error": err.Error()})
-			fmt.Fprintf(c, "event: error\ndata: %s\n\n", errorData)
-			if flusher, ok := c.Response().BodyWriter().(interface{ Flush() }); ok {
-				flusher.Flush()
-			}
-			return nil
-			
-		case <-ticker.C:
-			// Send keepalive ping
-			fmt.Fprintf(c, ": keepalive\n\n")
-			if flusher, ok := c.Response().BodyWriter().(interface{ Flush() }); ok {
-				flusher.Flush()
+		}()
+
+		// Send initial connected event
+		if _, err := fmt.Fprintf(w, "event: connected\ndata: {\"status\":\"connected\"}\n\n"); err != nil {
+			fmt.Printf("DEBUG: Client disconnected immediately\n")
+			return
+		}
+		if err := w.Flush(); err != nil {
+			fmt.Printf("DEBUG: Failed to flush initial connection: %v\n", err)
+			return
+		}
+
+		// Keepalive ticker
+		ticker := time.NewTicker(30 * time.Second)
+		defer ticker.Stop()
+
+		fmt.Printf("DEBUG: Starting SSE stream for container %s\n", containerID)
+		defer fmt.Printf("DEBUG: Ending SSE stream for container %s\n", containerID)
+
+		for {
+			select {
+			case <-done:
+				fmt.Printf("DEBUG: Stream ended by service\n")
+				return
+
+			case <-ctx.Done():
+				fmt.Printf("DEBUG: Context cancelled\n")
+				return
+
+			case stats, ok := <-statsChan:
+				if !ok {
+					fmt.Printf("DEBUG: Stats channel closed\n")
+					return
+				}
+				
+				// Marshal stats to JSON
+				data, err := json.Marshal(stats)
+				if err != nil {
+					if _, err := fmt.Fprintf(w, "event: error\ndata: {\"error\":\"Failed to marshal stats\"}\n\n"); err != nil {
+						fmt.Printf("DEBUG: Client disconnected while sending error\n")
+						return
+					}
+					w.Flush()
+					continue
+				}
+
+				// Send SSE event
+				if _, err := fmt.Fprintf(w, "event: stats\ndata: %s\n\n", data); err != nil {
+					fmt.Printf("DEBUG: Client disconnected while sending stats\n")
+					return
+				}
+				if err := w.Flush(); err != nil {
+					fmt.Printf("DEBUG: Client disconnected on flush\n")
+					return
+				}
+
+			case err, ok := <-errChan:
+				if !ok {
+					fmt.Printf("DEBUG: Error channel closed\n")
+					return
+				}
+				// Send error event
+				errorData, _ := json.Marshal(fiber.Map{"error": err.Error()})
+				fmt.Fprintf(w, "event: error\ndata: %s\n\n", errorData)
+				w.Flush()
+				return
+
+			case <-ticker.C:
+				// Send keepalive ping
+				if _, err := fmt.Fprintf(w, ": keepalive\n\n"); err != nil {
+					fmt.Printf("DEBUG: Client disconnected during keepalive\n")
+					return
+				}
+				if err := w.Flush(); err != nil {
+					fmt.Printf("DEBUG: Client disconnected on keepalive flush\n")
+					return
+				}
 			}
 		}
-	}
+	}))
+
+	return nil
 }
 
 // Image handlers
@@ -684,7 +737,13 @@ func (h *Handler) createVolume(c *fiber.Ctx) error {
 		BusinessUnitID: reqCtx.BuID,
 	}
 
-	volume, err := h.dockerService.CreateVolume(c.UserContext(), dockerReq, req.Name, req.Driver, req.Labels)
+	volume, err := h.dockerService.CreateVolume(
+		c.UserContext(),
+		dockerReq,
+		req.Name,
+		req.Driver,
+		req.Labels,
+	)
 	if err != nil {
 		return h.errorHandler.HandleError(c, err)
 	}

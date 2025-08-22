@@ -4,7 +4,6 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md
  */
 
-import { dockerAPI } from "@/services/docker";
 import { useQuery } from "@tanstack/react-query";
 import {
   useCallback,
@@ -46,6 +45,7 @@ import {
 
 import Highlight from "@/components/ui/highlight";
 import { cn } from "@/lib/utils";
+import { api } from "@/services/api";
 import {
   ArrowDown,
   Check,
@@ -89,7 +89,7 @@ export function ContainerLogsDialog({
     error,
   } = useQuery({
     queryKey: ["docker", "container-logs", containerId, tail],
-    queryFn: () => dockerAPI.getContainerLogs(containerId, tail, false),
+    queryFn: () => api.docker.getContainerLogs(containerId, tail, false),
     enabled: open,
     refetchOnWindowFocus: false,
     refetchInterval: open && autoRefresh ? 5000 : false,

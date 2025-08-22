@@ -16,7 +16,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { upperFirst } from "@/lib/utils";
-import { dockerAPI } from "@/services/docker";
+import { api } from "@/services/api";
 import { DockerNetwork } from "@/types/docker";
 import { useQuery } from "@tanstack/react-query";
 import { Info, RefreshCw } from "lucide-react";
@@ -33,7 +33,7 @@ export function NetworkList() {
     refetch,
   } = useQuery({
     queryKey: ["docker", "networks"],
-    queryFn: dockerAPI.listNetworks,
+    queryFn: api.docker.listNetworks,
     refetchInterval: 10000,
   });
 

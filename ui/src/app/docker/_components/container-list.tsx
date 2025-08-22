@@ -4,14 +4,13 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md
  */
 
-import { dockerAPI } from "@/services/docker";
-import { useQuery } from "@tanstack/react-query";
-
 import { ContainerDetailsDialog } from "@/components/container-logs/container-details-dialog";
+import { ContainerLogsDialog } from "@/components/container-logs/container-logs-dialog";
 import { ContainerListTable } from "@/components/container-logs/container-table";
 import { ContainerTableHeader } from "@/components/container-logs/container-table-header";
+import { api } from "@/services/api";
 import { useContainerLogStore } from "@/stores/docker-store";
-import { ContainerLogsDialog } from "./container-logs-dialog";
+import { useQuery } from "@tanstack/react-query";
 
 export function ContainerList() {
   const showAll = useContainerLogStore.get("showAll");
@@ -25,8 +24,7 @@ export function ContainerList() {
     refetch,
   } = useQuery({
     queryKey: ["docker", "containers", showAll],
-    queryFn: () => dockerAPI.listContainers(showAll),
-    refetchInterval: 5000, // Refresh every 5 seconds
+    queryFn: () => api.docker.listContainers(showAll),
   });
 
   return (

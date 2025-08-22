@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { dockerAPI } from "@/services/docker";
+import { api } from "@/services/api";
 import { useContainerLogStore } from "@/stores/docker-store";
 import { Container } from "@/types/docker";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -48,7 +48,7 @@ export function ContainerListTable({
 }) {
   const queryClient = useQueryClient();
   const startMutation = useMutation({
-    mutationFn: dockerAPI.startContainer,
+    mutationFn: api.docker.startContainer,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["docker", "containers"] });
       toast.success("Container started");
@@ -61,7 +61,7 @@ export function ContainerListTable({
   });
 
   const stopMutation = useMutation({
-    mutationFn: (id: string) => dockerAPI.stopContainer(id, 10),
+    mutationFn: (id: string) => api.docker.stopContainer(id, 10),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["docker", "containers"] });
       toast.success("Container stopped");
@@ -74,7 +74,7 @@ export function ContainerListTable({
   });
 
   const restartMutation = useMutation({
-    mutationFn: (id: string) => dockerAPI.restartContainer(id, 10),
+    mutationFn: (id: string) => api.docker.restartContainer(id, 10),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["docker", "containers"] });
       toast.success("Container restarted");
@@ -88,7 +88,7 @@ export function ContainerListTable({
 
   const removeMutation = useMutation({
     mutationFn: ({ id, force }: { id: string; force: boolean }) =>
-      dockerAPI.removeContainer(id, force),
+      api.docker.removeContainer(id, force),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["docker", "containers"] });
       toast.success("Container removed");

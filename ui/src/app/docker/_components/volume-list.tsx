@@ -31,7 +31,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { formatBytes } from "@/lib/utils";
-import { dockerAPI } from "@/services/docker";
+import { api } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
@@ -49,12 +49,12 @@ export function VolumeList() {
     refetch,
   } = useQuery({
     queryKey: ["docker", "volumes"],
-    queryFn: dockerAPI.listVolumes,
+    queryFn: api.docker.listVolumes,
     refetchInterval: 10000,
   });
 
   const createMutation = useMutation({
-    mutationFn: () => dockerAPI.createVolume(volumeName, driver),
+    mutationFn: () => api.docker.createVolume(volumeName, driver),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["docker", "volumes"] });
       toast.success(`Successfully created volume ${volumeName}`);
@@ -71,7 +71,7 @@ export function VolumeList() {
 
   const removeMutation = useMutation({
     mutationFn: ({ id, force }: { id: string; force: boolean }) =>
-      dockerAPI.removeVolume(id, force),
+      api.docker.removeVolume(id, force),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["docker", "volumes"] });
       toast.success("Volume removed");
