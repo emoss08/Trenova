@@ -479,6 +479,7 @@ const routes: RouteObject[] = [
               },
               {
                 path: "docker",
+                loader: createPermissionLoader(Resource.Docker),
                 async lazy() {
                   let { DockerManagement } = await import("@/app/docker/page");
                   return { Component: DockerManagement };
