@@ -378,7 +378,6 @@ export function ContainerDetailsDialog({
               ) : null}
             </TabsContent>
 
-            {/* STATS */}
             <TabsContent value="stats" className="space-y-4">
               {isRunning ? (
                 stats ? (
