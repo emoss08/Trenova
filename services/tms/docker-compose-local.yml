@@ -142,6 +142,7 @@ services:
       KAFKA_LOG_RETENTION_HOURS: 168
       KAFKA_LOG_SEGMENT_BYTES: 1073741824
       KAFKA_LOG_RETENTION_CHECK_INTERVAL_MS: 300000
+      KAFKA_HEAP_OPTS: "-Xms1G -Xmx1G"
     volumes:
       - kafka_data:/var/lib/kafka/data
     networks:
@@ -150,7 +151,8 @@ services:
     deploy:
       resources:
         limits:
-          memory: 1G
+          memory: 2G
+          cpus: "2"
     healthcheck:
       test: kafka-broker-api-versions --bootstrap-server kafka:29092
       interval: 30s
