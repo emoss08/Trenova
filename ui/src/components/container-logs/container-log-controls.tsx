@@ -3,7 +3,6 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md
  */
-
 import { Badge, BadgeProps } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { summarizeLevels } from "@/lib/docker-utils";
@@ -70,12 +69,12 @@ export function ContainerLogControls({
                 <linearGradient id="barFill" x1="0" y1="0" x2="0" y2="1">
                   <stop
                     offset="0%"
-                    stopColor="hsl(var(--primary))"
+                    stopColor="var(--primary)"
                     stopOpacity={0.8}
                   />
                   <stop
                     offset="100%"
-                    stopColor="hsl(var(--primary))"
+                    stopColor="var(--primary)"
                     stopOpacity={0.4}
                   />
                 </linearGradient>
@@ -161,8 +160,6 @@ function ContainerLogControlActions({
         </Select>
       </div>
 
-      <Separator orientation="vertical" className="h-6 hidden md:block" />
-
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
           <Switch
@@ -187,7 +184,6 @@ function ContainerLogControlActions({
           />
           <Label htmlFor="follow">Follow tail</Label>
         </div>
-        <Separator orientation="vertical" className="h-6 hidden md:block" />
         <div className="flex items-center gap-2">
           <Switch
             id="ln"

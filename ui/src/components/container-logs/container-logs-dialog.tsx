@@ -6,6 +6,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import {
+  lazy,
   useCallback,
   useDeferredValue,
   useEffect,
@@ -24,16 +25,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
 import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
-import { ArrowDown } from "lucide-react";
-
-// Optional mini chart (uses recharts like other modernized components)
 import { useContainerLogStore } from "@/stores/docker-store";
+import { ArrowDown } from "lucide-react";
+import { LazyLoader } from "../error-boundary";
+import { Skeleton } from "../ui/skeleton";
 import { ContainerLogActions } from "./container-log-actions";
-import { ContainerLogContent } from "./container-log-content";
 import { ContainerLogControls } from "./container-log-controls";
+
+const ContainerLogContent = lazy(() => import("./container-log-content"));
 
 interface ContainerLogsDialogProps {
   containerId: string;
@@ -74,7 +75,7 @@ export function ContainerLogsDialog({
     queryFn: () => api.docker.getContainerLogs(containerId, tail, false),
     enabled: open,
     refetchOnWindowFocus: false,
-    // refetchInterval: refreshInterval,
+    refetchInterval: refreshInterval,
   });
 
   // Track scroll position & auto-follow
@@ -91,7 +92,7 @@ export function ContainerLogsDialog({
 
     el.addEventListener("scroll", onScroll, { passive: true });
     return () => el.removeEventListener("scroll", onScroll);
-  }, []);
+  }, [setFollow]);
 
   // Auto-scroll to bottom on new logs if following
   useEffect(() => {
@@ -115,7 +116,7 @@ export function ContainerLogsDialog({
     if (!el) return;
     el.scrollTop = el.scrollHeight;
     setFollow(true);
-  }, []);
+  }, [setFollow]);
 
   const livePill = autoRefresh && follow && isAtBottom && !needle;
 
@@ -166,8 +167,6 @@ export function ContainerLogsDialog({
           filteredCount={filteredCount}
           handleJumpToLatest={handleJumpToLatest}
         />
-
-        {/* Log viewport */}
         <div className="relative">
           {!follow && (
             <Button
@@ -180,16 +179,17 @@ export function ContainerLogsDialog({
               Jump to latest
             </Button>
           )}
-          <ContainerLogContent
-            filteredCount={filteredCount}
-            needle={needle}
-            filteredLogs={filteredLogs}
-            scrollAreaRef={scrollAreaRef}
-            isLoading={isLoading}
-            error={error}
-          />
+          <LazyLoader fallback={<ContainerLogContentSkeleton />}>
+            <ContainerLogContent
+              filteredCount={filteredCount}
+              needle={needle}
+              filteredLogs={filteredLogs}
+              scrollAreaRef={scrollAreaRef}
+              isLoading={isLoading}
+              error={error}
+            />
+          </LazyLoader>
         </div>
-
         <DialogFooter className="mt-1 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground p-2">
           <div className="flex items-center gap-2">
             {autoRefresh && (
@@ -211,5 +211,15 @@ export function ContainerLogsDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+function ContainerLogContentSkeleton() {
+  return (
+    <div className="flex flex-col gap-1 p-2 h-[520px] overflow-y-auto">
+      {Array.from({ length: 100 }).map((_, index) => (
+        <Skeleton key={index} className="h-4 w-full shrink-0" />
+      ))}
+    </div>
   );
 }

@@ -132,7 +132,7 @@ export class DockerAPI {
     });
 
     // Handle connection errors
-    eventSource.onerror = (event) => {
+    eventSource.onerror = () => {
       if (eventSource.readyState === EventSource.CLOSED) {
         onError?.("Connection closed");
         eventSource.close();

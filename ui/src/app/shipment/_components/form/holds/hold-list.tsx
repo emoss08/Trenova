@@ -31,7 +31,7 @@ import {
 } from "@radix-ui/react-icons";
 import { useMutation } from "@tanstack/react-query";
 import { formatDistanceToNow, fromUnixTime } from "date-fns";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { UserHoverCard } from "../comment/user-hover-card";
 
@@ -53,7 +53,6 @@ export function HoldList({ holds }: { holds: ShipmentSchema["holds"] }) {
 
 function HoldRow({ hold }: { hold: ShipmentHoldSchema }) {
   const { can } = usePermissions();
-  const [isEditing, setIsEditing] = useState<boolean>(false);
   const holdType = useMemo(() => {
     return holdTypeChoices.find((choice) => choice.value === hold.type);
   }, [hold.type]);

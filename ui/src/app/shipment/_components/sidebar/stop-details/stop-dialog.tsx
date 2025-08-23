@@ -41,8 +41,7 @@ export function StopDialog({
   moveIdx,
   stopIdx,
 }: StopDialogProps) {
-  const { getValues, setValue, clearErrors, trigger } =
-    useFormContext<ShipmentSchema>();
+  const { getValues, setValue, trigger } = useFormContext<ShipmentSchema>();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Use field array for reactive updates
@@ -87,7 +86,7 @@ export function StopDialog({
     // Trigger validation for the stop to ensure errors are shown in timeline
     const stopPath = `moves.${moveIdx}.stops.${stopIdx}` as const;
     trigger(stopPath);
-    
+
     // If we were adding a new stop and canceling, remove the temporary stop
     if (!isEditing) {
       const stops = getValues(`moves.${moveIdx}.stops`) || [];
@@ -100,15 +99,7 @@ export function StopDialog({
     }
 
     onOpenChange(false);
-  }, [
-    onOpenChange,
-    moveIdx,
-    stopIdx,
-    isEditing,
-    getValues,
-    setValue,
-    trigger,
-  ]);
+  }, [onOpenChange, moveIdx, stopIdx, isEditing, getValues, setValue, trigger]);
 
   const handleSave = useCallback(async () => {
     setIsSubmitting(true);

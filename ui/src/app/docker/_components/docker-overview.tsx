@@ -89,14 +89,6 @@ export function DockerOverview() {
           <div className="text-2xl font-bold">
             {diskUsage?.Volumes?.length || 0}
           </div>
-          <p className="text-xs text-muted-foreground">
-            {formatBytes(
-              diskUsage?.Volumes?.reduce(
-                (acc, v) => acc + (v.UsageData?.Size || 0),
-                0,
-              ) || 0,
-            )}
-          </p>
         </CardContent>
       </Card>
 

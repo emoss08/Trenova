@@ -3,7 +3,6 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md
  */
-
 import {
   ScrollAreaShadow,
   VirtualCompatibleScrollArea,
@@ -16,7 +15,7 @@ import { useVirtualizer } from "@tanstack/react-virtual";
 import { Activity, AlertCircle } from "lucide-react";
 import { useCallback } from "react";
 
-export function ContainerLogContent({
+export default function ContainerLogContent({
   filteredCount,
   needle,
   filteredLogs,
@@ -45,10 +44,10 @@ export function ContainerLogContent({
     ),
     overscan: 5,
     measureElement: (element) => {
-      // Use ResizeObserver to get the actual height
       return element?.getBoundingClientRect().height ?? 70;
     },
   });
+
   return (
     <VirtualCompatibleScrollArea
       viewPortRef={scrollAreaRef}
@@ -103,19 +102,18 @@ export function ContainerLogContent({
                     width: "100%",
                     transform: `translateY(${vi.start}px)`,
                   }}
-                  // className="flex items-start gap-2 py-0.5"
                 >
                   {showLineNumbers && (
-                    <span className="select-none max-w-12 shrink-0 text-right tabular-nums text-foreground font-medium">
+                    <span className="select-none max-w-12 mr-1 shrink-0 text-right tabular-nums text-foreground font-medium">
                       {ln}
                     </span>
                   )}
                   <span
                     className={cn(
-                      "mt-1 inline-block h-2 w-2 rounded-full",
+                      "mt-1 inline-block size-2 rounded-full mr-1",
                       level === "error" && "bg-rose-500",
                       level === "warn" && "bg-amber-500",
-                      level === "info" && "bg-sky-500",
+                      level === "info" && "bg-blue-500",
                       level === "debug" && "bg-muted-foreground",
                       level === "other" && "bg-muted-foreground/50",
                     )}
@@ -129,7 +127,7 @@ export function ContainerLogContent({
           </ul>
         ) : (
           <div className="flex items-center gap-2 text-muted-foreground">
-            <Activity className="h-4 w-4" />
+            <Activity className="size-4" />
             <span>No logs found.</span>
           </div>
         )}
