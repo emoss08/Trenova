@@ -45,6 +45,10 @@ export function ActionBadge({
       variant: "purple",
       text: "Classified",
     },
+    [Action.Release]: {
+      variant: "purple",
+      text: "Released",
+    },
     [Action.Reject]: {
       variant: "inactive",
       text: "Rejected",
@@ -228,6 +232,10 @@ export function AuditEntryResourceBadge({
     [Resource.AIClassification]: {
       variant: "purple",
       text: "AI Classification",
+    },
+    [Resource.Docker]: {
+      variant: "indigo",
+      text: "Docker",
     },
     [Resource.Shipment]: {
       variant: "indigo",

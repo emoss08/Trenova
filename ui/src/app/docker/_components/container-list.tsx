@@ -4,7 +4,7 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md
  */
 
-import { ContainerDetailsDialog } from "@/components/container-logs/container-details-dialog";
+import { ContainerDetailsDialog } from "@/components/container-details/container-details-dialog";
 import { ContainerLogsDialog } from "@/components/container-logs/container-logs-dialog";
 import { ContainerListTable } from "@/components/container-logs/container-table";
 import { ContainerTableHeader } from "@/components/container-logs/container-table-header";

@@ -1,3 +1,4 @@
+import { cn } from "@/lib/utils";
 import { useContainerLogStore } from "@/stores/docker-store";
 import { ContainerInspect } from "@/types/docker";
 import { Check, Clipboard } from "lucide-react";
@@ -18,10 +19,7 @@ export function CommandDetails({
 
   return (
     <div className="p-4">
-      <div className="pb-2">
-        <h3 className="text-sm">Command</h3>
-        <p className="text-xs text-muted-foreground">Entrypoint + args</p>
-      </div>
+      <ContainerDetailHeader title="Command" description="Entrypoint + args" />
       <div className="rounded-md border p-3">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-muted-foreground">Shell-friendly</span>
@@ -63,10 +61,10 @@ export function EnvironmentVariables({
 
   return (
     <div className="p-4">
-      <div className="pb-2">
-        <h3 className="text-sm">Environment Variables</h3>
-        <p className="text-xs text-muted-foreground">From docker inspect</p>
-      </div>
+      <ContainerDetailHeader
+        title="Environment Variables"
+        description="From docker inspect"
+      />
       <div className="rounded-md border p-3 relative">
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs text-muted-foreground">
@@ -109,12 +107,10 @@ export function ContainerLabels({
   const selectedContainer = useContainerLogStore.get("selectedContainer");
   return (
     <div className="p-4">
-      <div className="pb-2">
-        <h3 className="text-sm">Labels</h3>
-        <p className="text-xs text-muted-foreground">
-          Arbitrary key/value metadata
-        </p>
-      </div>
+      <ContainerDetailHeader
+        title="Labels"
+        description="Arbitrary key/value metadata"
+      />
       <ScrollArea className="h-[150px] rounded-md border p-3">
         {Object.keys(selectedContainer?.Labels || {}).length ? (
           <div className="space-y-1">
@@ -168,5 +164,45 @@ export function CopyIcon({
         <Clipboard className="h-4 w-4" />
       )}
     </Button>
+  );
+}
+
+export function KV({
+  label,
+  children,
+}: {
+  label: string;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-start justify-between gap-3 py-1">
+      <span className="text-muted-foreground">{label}:</span>
+      <div className="min-w-0 text-right">{children ?? "—"}</div>
+    </div>
+  );
+}
+
+export function Mono({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return <span className={cn("font-mono text-xs", className)}>{children}</span>;
+}
+
+export function ContainerDetailHeader({
+  title,
+  description,
+}: {
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="pb-2">
+      <h3 className="text-sm">{title}</h3>
+      <p className="text-xs text-muted-foreground">{description}</p>
+    </div>
   );
 }
