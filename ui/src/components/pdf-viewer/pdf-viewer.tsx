@@ -4,7 +4,6 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import useResizeObserver from "@/hooks/use-resize-observer";
-import type { PDFDocumentProxy } from "pdfjs-dist";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { pdfjs } from "react-pdf";
 import { PDFDocumentOutline } from "./pdf-document-outline";
@@ -58,7 +57,7 @@ function highlightPattern(text: string, pattern: string | RegExp): string {
 }
 
 export default function PDFViewer({ fileUrl, className = "" }: PDFViewerProps) {
-  const [numPages, setNumPages] = useState<number>(0);
+  const [numPages] = useState<number>(0);
   const [pageNumber, setPageNumber] = useState<number>(1);
   const [containerRef, setContainerRef] = useState<HTMLElement | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>();
@@ -86,20 +85,20 @@ export default function PDFViewer({ fileUrl, className = "" }: PDFViewerProps) {
 
   useResizeObserver(containerRef, resizeObserverOptions, onResize);
 
-  function onDocumentLoadSuccess(pdf: PDFDocumentProxy) {
-    setNumPages(pdf.numPages);
-    setIsLoading(false);
+  // function onDocumentLoadSuccess(pdf: PDFDocumentProxy) {
+  //   setNumPages(pdf.numPages);
+  //   setIsLoading(false);
 
-    // Check if the document has an outline
-    pdf
-      .getOutline()
-      .then((outline) => {
-        setHasOutline(outline !== null && outline.length > 0);
-      })
-      .catch(() => {
-        setHasOutline(false);
-      });
-  }
+  //   // Check if the document has an outline
+  //   pdf
+  //     .getOutline()
+  //     .then((outline) => {
+  //       setHasOutline(outline !== null && outline.length > 0);
+  //     })
+  //     .catch(() => {
+  //       setHasOutline(false);
+  //     });
+  // }
 
   function onDocumentLoadError() {
     setIsLoading(false);
@@ -366,7 +365,6 @@ export default function PDFViewer({ fileUrl, className = "" }: PDFViewerProps) {
           hasOutline={hasOutline}
           isLoading={isLoading}
           numPages={numPages}
-          onDocumentLoadSuccess={onDocumentLoadSuccess}
           onDocumentLoadError={onDocumentLoadError}
           onItemClick={onItemClick}
           onOutlineLoadSuccess={onOutlineLoadSuccess}

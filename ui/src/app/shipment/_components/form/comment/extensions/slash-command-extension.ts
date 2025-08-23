@@ -28,7 +28,7 @@ export const SlashCommandExtension = Extension.create<SlashCommandOptions>({
       new Plugin({
         key: new PluginKey("slashCommand"),
         props: {
-          handleTextInput(view, from, to, text) {
+          handleTextInput(view, _from, _to, text) {
             const { state } = view;
             const { $from } = state.selection;
 

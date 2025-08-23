@@ -5,7 +5,6 @@
 
 import { cn } from "@/lib/utils";
 import { faLoader } from "@fortawesome/pro-solid-svg-icons";
-import type { PDFDocumentProxy } from "pdfjs-dist";
 import { Document, Outline, Page } from "react-pdf";
 import "react-pdf/dist/Page/AnnotationLayer.css";
 import "react-pdf/dist/Page/TextLayer.css";
@@ -22,7 +21,6 @@ export function PDFDocumentViewer({
   hasOutline,
   isLoading,
   numPages,
-  onDocumentLoadSuccess,
   onDocumentLoadError,
   onItemClick,
   onOutlineLoadSuccess,
@@ -42,7 +40,6 @@ export function PDFDocumentViewer({
   numPages: number;
   hasOutline: boolean;
   isLoading: boolean;
-  onDocumentLoadSuccess: (pdf: PDFDocumentProxy) => void;
   onDocumentLoadError: () => void;
   onItemClick: (props: OnItemClickArgs) => void;
   onOutlineLoadSuccess: (outline: unknown) => void;
@@ -81,7 +78,6 @@ export function PDFDocumentViewer({
 
       <Document
         file={fileUrl}
-        onLoadSuccess={onDocumentLoadSuccess}
         onLoadError={onDocumentLoadError}
         options={options}
         className="flex flex-col items-center max-h-[calc(100vh-300px)]"

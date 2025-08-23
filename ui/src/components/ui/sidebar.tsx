@@ -207,7 +207,9 @@ const Sidebar = React.forwardRef<
     } = useSidebar();
 
     // Use a timeout ref to prevent flickering on quick mouse movements
-    const hoverTimeoutRef = React.useRef<ReturnType<typeof setTimeout>>();
+    const hoverTimeoutRef = React.useRef<
+      ReturnType<typeof setTimeout> | undefined
+    >(undefined);
 
     // Memoized handlers for performance
     const handleMouseEnter = React.useCallback(() => {
