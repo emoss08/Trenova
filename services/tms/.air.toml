@@ -2,7 +2,7 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "go build -o ./tmp/main ./cmd/api/main.go"
+cmd = "GOTOOLCHAIN=go1.25.0 GOEXPERIMENT=greenteagc go1.25.0 build -o ./tmp/main ./cmd/api/main.go"
 bin = "./tmp/main"
 delay = 100
 exclude_dir = ["assets", "tmp", "vendor", "ui", "platform", "microservices"]

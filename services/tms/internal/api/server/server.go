@@ -47,8 +47,8 @@ func NewServer(p Params) *Server {
 			p.Config.App.Name,
 			p.Config.App.Version,
 		),
-		// JSONEncoder:             sonic.Marshal,
-		// JSONDecoder:             sonic.Unmarshal,
+		// JSONEncoder:             json.Marshal,
+		// JSONDecoder:             json.Unmarshal,
 		BodyLimit:               16 * 1024 * 1024, // 16MB
 		ReadBufferSize:          p.Config.Server.ReadBufferSize,
 		WriteBufferSize:         p.Config.Server.WriteBufferSize,
