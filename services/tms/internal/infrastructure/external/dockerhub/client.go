@@ -267,7 +267,7 @@ func (c *Client) ListNetworks(ctx context.Context) ([]network.Summary, error) {
 // InspectNetwork returns detailed information about a network
 func (c *Client) InspectNetwork(ctx context.Context, networkID string) (network.Inspect, error) {
 	net, err := c.cli.NetworkInspect(ctx, networkID, network.InspectOptions{
-		Verbose: true, // Include container details
+		Verbose: true,
 	})
 	if err != nil {
 		return network.Inspect{}, oops.In("docker_inspect_network").
@@ -278,7 +278,17 @@ func (c *Client) InspectNetwork(ctx context.Context, networkID string) (network.
 	return net, nil
 }
 
-// System Operations
+// RemoveNetwork removes a Docker network
+func (c *Client) RemoveNetwork(ctx context.Context, networkID string) error {
+	if err := c.cli.NetworkRemove(ctx, networkID); err != nil {
+		return oops.In("docker_remove_network").
+			Time(time.Now()).
+			With("network_id", networkID).
+			Wrap(err)
+	}
+
+	return nil
+}
 
 // GetSystemInfo returns Docker system information
 func (c *Client) GetSystemInfo(ctx context.Context) (system.Info, error) {

@@ -210,6 +210,13 @@ export class DockerAPI {
     return response.data;
   }
 
+  async removeNetwork(id: string): Promise<{ message: string }> {
+    const response = await http.delete<{ message: string }>(
+      `/docker/networks/${id}`,
+    );
+    return response.data;
+  }
+
   async getSystemInfo(): Promise<DockerSystemInfo> {
     const response = await http.get<DockerSystemInfo>("/docker/system/info");
     return response.data;

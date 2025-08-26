@@ -15,8 +15,8 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { queries } from "@/lib/queries";
 import { upperFirst } from "@/lib/utils";
-import { api } from "@/services/api";
 import { DockerNetwork } from "@/types/docker";
 import { useQuery } from "@tanstack/react-query";
 import { Info, RefreshCw } from "lucide-react";
@@ -32,9 +32,7 @@ export function NetworkList() {
     isLoading,
     refetch,
   } = useQuery({
-    queryKey: ["docker", "networks"],
-    queryFn: api.docker.listNetworks,
-    refetchInterval: 10000,
+    ...queries.docker.listNetworks(),
   });
 
   const getNetworkBadge = (driver: string) => {
@@ -165,7 +163,6 @@ export function NetworkList() {
           )}
         </TableBody>
       </Table>
-
       <NetworkDetailsDialog
         network={selectedNetwork}
         open={!!selectedNetwork}

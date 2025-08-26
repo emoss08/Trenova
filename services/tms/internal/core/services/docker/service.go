@@ -83,7 +83,12 @@ func (s *Service) ListContainers(
 		Bool("all", all).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionRead); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionRead,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return nil, err
 	}
@@ -111,7 +116,12 @@ func (s *Service) InspectContainer(
 		Str("container_id", containerID).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionRead); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionRead,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return container.InspectResponse{}, err
 	}
@@ -139,7 +149,12 @@ func (s *Service) StartContainer(
 		Str("container_id", containerID).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionManage); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionManage,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return err
 	}
@@ -172,7 +187,12 @@ func (s *Service) StopContainer(
 		Str("container_id", containerID).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionManage); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionManage,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return err
 	}
@@ -205,7 +225,12 @@ func (s *Service) RestartContainer(
 		Str("container_id", containerID).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionManage); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionManage,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return err
 	}
@@ -239,7 +264,12 @@ func (s *Service) RemoveContainer(
 		Bool("force", force).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionDelete); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionDelete,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return err
 	}
@@ -276,7 +306,12 @@ func (s *Service) GetContainerLogs(
 		Bool("follow", follow).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionAudit); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionAudit,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return nil, err
 	}
@@ -304,7 +339,12 @@ func (s *Service) GetContainerStats(
 		Str("container_id", containerID).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionRead); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionRead,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return nil, err
 	}
@@ -327,7 +367,6 @@ func (s *Service) GetContainerStats(
 			Wrap(err)
 	}
 
-	log.Debug().Msg("container stats retrieved successfully")
 	return parsedStats, nil
 }
 
@@ -342,7 +381,12 @@ func (s *Service) StreamContainerStats(
 		Str("container_id", containerID).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionRead); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionRead,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return err
 	}
@@ -387,7 +431,12 @@ func (s *Service) ListImages(
 		Str("operation", "ListImages").
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionRead); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionRead,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return nil, err
 	}
@@ -400,7 +449,6 @@ func (s *Service) ListImages(
 			Wrap(err)
 	}
 
-	log.Debug().Int("count", len(images)).Msg("images listed successfully")
 	return images, nil
 }
 
@@ -414,7 +462,12 @@ func (s *Service) PullImage(
 		Str("image", imageName).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionManage); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionManage,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return "", err
 	}
@@ -430,7 +483,6 @@ func (s *Service) PullImage(
 	defer reader.Close()
 
 	decoder := json.NewDecoder(reader)
-	var lastStatus string
 	for {
 		var event map[string]any
 		if err := decoder.Decode(&event); err != nil {
@@ -442,10 +494,6 @@ func (s *Service) PullImage(
 				With("image", imageName).
 				Wrap(err)
 		}
-
-		if status, ok := event["status"].(string); ok {
-			lastStatus = status
-		}
 	}
 
 	if err := s.auditDockerOperation(req.UserID, req.OrganizationID, req.BusinessUnitID,
@@ -453,7 +501,6 @@ func (s *Service) PullImage(
 		log.Warn().Err(err).Msg("failed to create audit log")
 	}
 
-	log.Info().Str("status", lastStatus).Msg("image pulled successfully")
 	return fmt.Sprintf("Image %s pulled successfully", imageName), nil
 }
 
@@ -469,19 +516,14 @@ func (s *Service) RemoveImage(
 		Bool("force", force).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionDelete); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionDelete,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return err
-	}
-
-	removed, err := s.client.RemoveImage(ctx, imageID, force)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to remove image")
-		return s.errBuilder.
-			With("operation", "remove_image").
-			With("image_id", imageID).
-			With("force", force).
-			Wrap(err)
 	}
 
 	if err := s.cache.InvalidateDiskUsage(ctx); err != nil {
@@ -493,19 +535,23 @@ func (s *Service) RemoveImage(
 		log.Warn().Err(err).Msg("failed to create audit log")
 	}
 
-	log.Info().Int("layers_removed", len(removed)).Msg("image removed successfully")
 	return nil
 }
 
 func (s *Service) ListVolumes(
 	ctx context.Context,
 	req *services.DockerOperationRequest,
-) (*services.EnhancedVolumeListResponse, error) {
+) (*services.VolumeListResponse, error) {
 	log := s.l.With().
 		Str("operation", "ListVolumes").
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionRead); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionRead,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return nil, err
 	}
@@ -518,19 +564,15 @@ func (s *Service) ListVolumes(
 			Wrap(err)
 	}
 
-	// Try to get disk usage for volume sizes
 	var diskUsage types.DiskUsage
 	diskUsage, err = s.cache.GetDiskUsage(ctx)
 	if err != nil {
-		// If cache miss, try to get from client but don't fail if it errors
 		diskUsage, err = s.client.GetDiskUsage(ctx)
 		if err != nil {
 			log.Warn().Err(err).Msg("failed to get disk usage for volume sizes")
-			// Continue without size information
 		}
 	}
 
-	// Create a map of volume sizes from disk usage
 	volumeSizes := make(map[string]int64)
 	for _, v := range diskUsage.Volumes {
 		if v.Name != "" {
@@ -538,18 +580,16 @@ func (s *Service) ListVolumes(
 		}
 	}
 
-	// Create enhanced volume list
-	enhancedVolumes := make([]*services.EnhancedVolume, 0, len(volumes.Volumes))
+	enhancedVolumes := make([]*services.Volume, 0, len(volumes.Volumes))
 	for _, v := range volumes.Volumes {
-		enhancedVol := &services.EnhancedVolume{
+		enhancedVol := &services.Volume{
 			Volume: *v,
 			Size:   volumeSizes[v.Name],
 		}
 		enhancedVolumes = append(enhancedVolumes, enhancedVol)
 	}
 
-	log.Debug().Int("count", len(enhancedVolumes)).Msg("volumes listed successfully")
-	return &services.EnhancedVolumeListResponse{
+	return &services.VolumeListResponse{
 		Volumes:  enhancedVolumes,
 		Warnings: volumes.Warnings,
 	}, nil
@@ -568,7 +608,12 @@ func (s *Service) CreateVolume(
 		Str("driver", driver).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionManage); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionManage,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return volume.Volume{}, err
 	}
@@ -608,7 +653,12 @@ func (s *Service) RemoveVolume(
 		Bool("force", force).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionDelete); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionDelete,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return err
 	}
@@ -645,12 +695,16 @@ func (s *Service) ListNetworks(
 		Str("operation", "ListNetworks").
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionRead); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionRead,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return nil, err
 	}
 
-	// First get the list of networks
 	networkList, err := s.client.ListNetworks(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list networks")
@@ -659,7 +713,6 @@ func (s *Service) ListNetworks(
 			Wrap(err)
 	}
 
-	// Now inspect each network to get full details including containers
 	networks := make([]network.Inspect, 0, len(networkList))
 	for _, net := range networkList {
 		netDetail, err := s.client.InspectNetwork(ctx, net.ID)
@@ -674,7 +727,6 @@ func (s *Service) ListNetworks(
 		networks = append(networks, netDetail)
 	}
 
-	log.Debug().Int("count", len(networks)).Msg("networks listed successfully")
 	return networks, nil
 }
 
@@ -688,7 +740,12 @@ func (s *Service) InspectNetwork(
 		Str("network_id", networkID).
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionRead); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionRead,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return network.Inspect{}, err
 	}
@@ -702,8 +759,43 @@ func (s *Service) InspectNetwork(
 			Wrap(err)
 	}
 
-	log.Debug().Msg("network inspected successfully")
 	return net, nil
+}
+
+func (s *Service) RemoveNetwork(
+	ctx context.Context,
+	req *services.DockerOperationRequest,
+	networkID string,
+) error {
+	log := s.l.With().
+		Str("operation", "RemoveNetwork").
+		Str("network_id", networkID).
+		Logger()
+
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionDelete,
+	}); err != nil {
+		log.Error().Err(err).Msg("permission check failed")
+		return err
+	}
+
+	if err := s.client.RemoveNetwork(ctx, networkID); err != nil {
+		log.Error().Err(err).Msg("failed to remove network")
+		return s.errBuilder.
+			With("operation", "remove_network").
+			With("network_id", networkID).
+			Wrap(err)
+	}
+
+	if err := s.auditDockerOperation(req.UserID, req.OrganizationID, req.BusinessUnitID,
+		"network_removed", networkID, map[string]any{"network_id": networkID}); err != nil {
+		log.Warn().Err(err).Msg("failed to create audit log")
+	}
+
+	return nil
 }
 
 func (s *Service) GetSystemInfo(
@@ -714,7 +806,12 @@ func (s *Service) GetSystemInfo(
 		Str("operation", "GetSystemInfo").
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionRead); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionRead,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return system.Info{}, err
 	}
@@ -734,11 +831,6 @@ func (s *Service) GetSystemInfo(
 		}
 	}
 
-	log.Debug().
-		Int("containers", info.Containers).
-		Int("images", info.Images).
-		Msg("system info retrieved successfully")
-
 	return info, nil
 }
 
@@ -750,7 +842,12 @@ func (s *Service) GetDiskUsage(
 		Str("operation", "GetDiskUsage").
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionRead); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionRead,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return types.DiskUsage{}, err
 	}
@@ -771,12 +868,6 @@ func (s *Service) GetDiskUsage(
 		}
 	}
 
-	log.Debug().
-		Int("images", len(du.Images)).
-		Int("containers", len(du.Containers)).
-		Int("volumes", len(du.Volumes)).
-		Msg("disk usage retrieved successfully")
-
 	return du, nil
 }
 
@@ -788,7 +879,12 @@ func (s *Service) PruneContainers(
 		Str("operation", "PruneContainers").
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionDelete); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionDelete,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return container.PruneReport{}, err
 	}
@@ -810,10 +906,6 @@ func (s *Service) PruneContainers(
 		log.Warn().Err(err).Msg("failed to create audit log")
 	}
 
-	log.Info().
-		Uint64("space_reclaimed", report.SpaceReclaimed).
-		Int("containers_deleted", len(report.ContainersDeleted)).
-		Msg("containers pruned successfully")
 	return report, nil
 }
 
@@ -825,7 +917,12 @@ func (s *Service) PruneImages(
 		Str("operation", "PruneImages").
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionDelete); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionDelete,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return image.PruneReport{}, err
 	}
@@ -847,10 +944,6 @@ func (s *Service) PruneImages(
 		log.Warn().Err(err).Msg("failed to create audit log")
 	}
 
-	log.Info().
-		Uint64("space_reclaimed", report.SpaceReclaimed).
-		Int("images_deleted", len(report.ImagesDeleted)).
-		Msg("images pruned successfully")
 	return report, nil
 }
 
@@ -862,7 +955,12 @@ func (s *Service) PruneVolumes(
 		Str("operation", "PruneVolumes").
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionDelete); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionDelete,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return volume.PruneReport{}, err
 	}
@@ -884,10 +982,6 @@ func (s *Service) PruneVolumes(
 		log.Warn().Err(err).Msg("failed to create audit log")
 	}
 
-	log.Info().
-		Uint64("space_reclaimed", report.SpaceReclaimed).
-		Int("volumes_deleted", len(report.VolumesDeleted)).
-		Msg("volumes pruned successfully")
 	return report, nil
 }
 
@@ -899,7 +993,12 @@ func (s *Service) PruneSystem(
 		Str("operation", "PruneSystem").
 		Logger()
 
-	if err := s.checkDockerPermission(ctx, req.UserID, req.OrganizationID, req.BusinessUnitID, permission.ActionDelete); err != nil {
+	if err := s.checkDockerPermission(ctx, checkDockerPermissionParams{
+		userID: req.UserID,
+		orgID:  req.OrganizationID,
+		buID:   req.BusinessUnitID,
+		action: permission.ActionDelete,
+	}); err != nil {
 		log.Error().Err(err).Msg("permission check failed")
 		return nil, err
 	}
@@ -953,13 +1052,6 @@ func (s *Service) PruneSystem(
 		log.Warn().Err(err).Msg("failed to create audit log")
 	}
 
-	log.Info().
-		Uint64("total_space_reclaimed", totalSpace).
-		Int("containers_deleted", len(containersDeleted)).
-		Int("images_deleted", len(imagesDeleted)).
-		Int("volumes_deleted", len(volumesDeleted)).
-		Msg("system pruned successfully")
-
 	return &services.SystemPruneReport{
 		ContainersDeleted: containersDeleted,
 		SpaceReclaimed:    totalSpace,
@@ -968,21 +1060,25 @@ func (s *Service) PruneSystem(
 	}, nil
 }
 
+type checkDockerPermissionParams struct {
+	userID pulid.ID
+	orgID  pulid.ID
+	buID   pulid.ID
+	action permission.Action
+}
+
 func (s *Service) checkDockerPermission(
 	ctx context.Context,
-	userID pulid.ID,
-	orgID pulid.ID,
-	buID pulid.ID,
-	action permission.Action,
+	params checkDockerPermissionParams,
 ) error {
 	result, err := s.ps.HasAnyPermissions(ctx,
 		[]*services.PermissionCheck{
 			{
-				UserID:         userID,
+				UserID:         params.userID,
 				Resource:       permission.ResourceDocker,
-				Action:         action,
-				BusinessUnitID: buID,
-				OrganizationID: orgID,
+				Action:         params.action,
+				BusinessUnitID: params.buID,
+				OrganizationID: params.orgID,
 			},
 		},
 	)
@@ -992,7 +1088,7 @@ func (s *Service) checkDockerPermission(
 
 	if !result.Allowed {
 		return errors.NewAuthorizationError(
-			fmt.Sprintf("You do not have permission to %s Docker resources", action),
+			fmt.Sprintf("You do not have permission to %s Docker resources", params.action),
 		)
 	}
 
@@ -1011,7 +1107,7 @@ func (s *Service) auditDockerOperation(
 	switch operation {
 	case "container_started", "container_stopped", "container_restarted":
 		action = permission.ActionManage
-	case "container_removed", "image_removed", "volume_removed":
+	case "container_removed", "image_removed", "volume_removed", "network_removed":
 		action = permission.ActionDelete
 	case "image_pulled", "volume_created":
 		action = permission.ActionManage

@@ -319,4 +319,10 @@ export const queries = createQueryKeyStore({
       queryFn: async () => api.notifications.list(params),
     }),
   },
+  docker: {
+    listNetworks: () => ({
+      queryKey: ["docker", "networks"],
+      queryFn: async () => api.docker.listNetworks(),
+    }),
+  },
 });

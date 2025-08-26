@@ -42,7 +42,6 @@ export function ImageList() {
   } = useQuery({
     queryKey: ["docker", "images"],
     queryFn: api.docker.listImages,
-    refetchInterval: 10000, // Refresh every 10 seconds
   });
 
   const pullMutation = useMutation({

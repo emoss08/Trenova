@@ -29,12 +29,35 @@ type DockerOperationRequest struct {
 // DockerService defines the interface for Docker management operations
 type DockerService interface {
 	// Container operations
-	ListContainers(ctx context.Context, req *DockerOperationRequest, all bool) ([]container.Summary, error)
-	InspectContainer(ctx context.Context, req *DockerOperationRequest, containerID string) (container.InspectResponse, error)
+	ListContainers(
+		ctx context.Context,
+		req *DockerOperationRequest,
+		all bool,
+	) ([]container.Summary, error)
+	InspectContainer(
+		ctx context.Context,
+		req *DockerOperationRequest,
+		containerID string,
+	) (container.InspectResponse, error)
 	StartContainer(ctx context.Context, req *DockerOperationRequest, containerID string) error
-	StopContainer(ctx context.Context, req *DockerOperationRequest, containerID string, timeout *int) error
-	RestartContainer(ctx context.Context, req *DockerOperationRequest, containerID string, timeout *int) error
-	RemoveContainer(ctx context.Context, req *DockerOperationRequest, containerID string, force bool) error
+	StopContainer(
+		ctx context.Context,
+		req *DockerOperationRequest,
+		containerID string,
+		timeout *int,
+	) error
+	RestartContainer(
+		ctx context.Context,
+		req *DockerOperationRequest,
+		containerID string,
+		timeout *int,
+	) error
+	RemoveContainer(
+		ctx context.Context,
+		req *DockerOperationRequest,
+		containerID string,
+		force bool,
+	) error
 	GetContainerLogs(
 		ctx context.Context,
 		req *DockerOperationRequest,
@@ -60,7 +83,10 @@ type DockerService interface {
 	RemoveImage(ctx context.Context, req *DockerOperationRequest, imageID string, force bool) error
 
 	// Volume operations
-	ListVolumes(ctx context.Context, req *DockerOperationRequest) (*EnhancedVolumeListResponse, error)
+	ListVolumes(
+		ctx context.Context,
+		req *DockerOperationRequest,
+	) (*VolumeListResponse, error)
 	CreateVolume(
 		ctx context.Context,
 		req *DockerOperationRequest,
@@ -68,11 +94,21 @@ type DockerService interface {
 		driver string,
 		labels map[string]string,
 	) (volume.Volume, error)
-	RemoveVolume(ctx context.Context, req *DockerOperationRequest, volumeID string, force bool) error
+	RemoveVolume(
+		ctx context.Context,
+		req *DockerOperationRequest,
+		volumeID string,
+		force bool,
+	) error
 
 	// Network operations
 	ListNetworks(ctx context.Context, req *DockerOperationRequest) ([]network.Inspect, error)
-	InspectNetwork(ctx context.Context, req *DockerOperationRequest, networkID string) (network.Inspect, error)
+	InspectNetwork(
+		ctx context.Context,
+		req *DockerOperationRequest,
+		networkID string,
+	) (network.Inspect, error)
+	RemoveNetwork(ctx context.Context, req *DockerOperationRequest, networkID string) error
 
 	// System operations
 	GetSystemInfo(ctx context.Context, req *DockerOperationRequest) (system.Info, error)
@@ -91,14 +127,14 @@ type SystemPruneReport struct {
 	VolumesDeleted    []string `json:"volumesDeleted"`
 }
 
-// EnhancedVolume represents a Docker volume with additional size information
-type EnhancedVolume struct {
+// Volume represents a Docker volume with additional size information
+type Volume struct {
 	volume.Volume
 	Size int64 `json:"size"`
 }
 
-// EnhancedVolumeListResponse represents a list of volumes with size information
-type EnhancedVolumeListResponse struct {
-	Volumes  []*EnhancedVolume `json:"volumes"`
-	Warnings []string          `json:"warnings,omitempty"`
+// VolumeListResponse represents a list of volumes with size information
+type VolumeListResponse struct {
+	Volumes  []*Volume `json:"volumes"`
+	Warnings []string  `json:"warnings,omitempty"`
 }

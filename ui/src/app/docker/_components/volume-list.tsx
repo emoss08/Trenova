@@ -50,7 +50,6 @@ export function VolumeList() {
   } = useQuery({
     queryKey: ["docker", "volumes"],
     queryFn: api.docker.listVolumes,
-    refetchInterval: 10000,
   });
 
   const createMutation = useMutation({
