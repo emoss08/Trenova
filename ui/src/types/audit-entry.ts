@@ -118,4 +118,5 @@ export enum Resource {
   RevenueCode = "revenue_code",
   AIClassification = "ai_classification",
   EmailProfile = "email_profile",
+  Docker = "docker",
 }

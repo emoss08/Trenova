@@ -88,6 +88,7 @@ type Shipment struct {
 	Comments          []*ShipmentComment               `json:"comments,omitempty"          bun:"rel:has-many,join:id=shipment_id"`
 	Commodities       []*ShipmentCommodity             `json:"commodities,omitempty"       bun:"rel:has-many,join:id=shipment_id"`
 	AdditionalCharges []*AdditionalCharge              `json:"additionalCharges,omitempty" bun:"rel:has-many,join:id=shipment_id"`
+	Holds             []*ShipmentHold                  `json:"holds,omitempty"             bun:"rel:has-many,join:id=shipment_id"`
 }
 
 func (st *Shipment) Validate(ctx context.Context, multiErr *errors.MultiError) {

@@ -18,7 +18,8 @@ export function SensitiveBadge({
 }: SensitiveBadgeProps) {
   const variantStyles = {
     default: "bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300",
-    warning: "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400",
+    warning:
+      "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400",
     destructive: "bg-red-100 dark:bg-red-900/40 text-red-700 dark:text-red-400",
   };
 
@@ -35,7 +36,7 @@ export function SensitiveBadge({
         "inline-flex items-center rounded-sm font-medium select-none",
         variantStyles[variant],
         sizeStyles[size],
-        className
+        className,
       )}
     >
       Sensitive

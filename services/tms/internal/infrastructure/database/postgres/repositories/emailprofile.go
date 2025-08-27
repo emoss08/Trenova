@@ -110,7 +110,7 @@ func (r *emailProfileRepository) List(
 		Str("buID", req.Filter.TenantOpts.BuID.String()).
 		Logger()
 
-	profiles := make([]*email.Profile, 0)
+	profiles := make([]*email.Profile, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&profiles)
 

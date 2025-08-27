@@ -7,6 +7,7 @@ import { http } from "@/lib/http-client";
 import type { TractorSchema } from "@/lib/schemas/tractor-schema";
 import type { TractorAssignment } from "@/types/assignment";
 import { AccessorialChargeAPI } from "./accessorial-charge";
+import { AIAPI } from "./ai";
 import { AnalyticsAPI } from "./analytics";
 import { AuditEntryAPI } from "./audit-entry";
 import { AuthAPI } from "./auth";
@@ -17,9 +18,11 @@ import { ConsolidationSettingsAPI } from "./consolidation-setting";
 import { CustomerAPI } from "./customer";
 import { DatabaseBackupAPI } from "./database-backups";
 import { DedicatedLaneAPI, DedicatedLaneSuggestionAPI } from "./dedicated-lane";
+import { DockerAPI } from "./docker";
 import { DocumentAPI } from "./document";
 import { FavoriteAPI } from "./favorite";
 import { GoogleMapsAPI } from "./google-maps";
+import { HoldReasonAPI } from "./hold-reason";
 import { IntegrationAPI } from "./integration";
 import { NotificationAPI } from "./notification";
 import { OrganizationAPI } from "./organization";
@@ -31,7 +34,6 @@ import { ShipmentControlAPI } from "./shipment-control";
 import { TableConfigurationAPI } from "./table-configuration";
 import { UsStateAPI } from "./us-state";
 import { UserAPI } from "./user";
-import { AIAPI } from "./ai";
 
 class AssignmentsAPI {
   // Get a tractor's assignments from the API
@@ -73,6 +75,8 @@ class API {
   consolidations: ConsolidationAPI;
   consolidationSettings: ConsolidationSettingsAPI;
   ai: AIAPI;
+  holdReasons: HoldReasonAPI;
+  docker: DockerAPI;
 
   constructor() {
     this.assignments = new AssignmentsAPI();
@@ -103,6 +107,8 @@ class API {
     this.consolidations = new ConsolidationAPI();
     this.consolidationSettings = new ConsolidationSettingsAPI();
     this.ai = new AIAPI();
+    this.holdReasons = new HoldReasonAPI();
+    this.docker = new DockerAPI();
   }
 }
 

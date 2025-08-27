@@ -65,7 +65,7 @@ func (r *integrationRepository) List(
 	ctx context.Context,
 	opts *ports.LimitOffsetQueryOptions,
 ) (*ports.ListResult[*integration.Integration], error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -100,7 +100,7 @@ func (r *integrationRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetIntegrationByIDOptions,
 ) (*integration.Integration, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -142,7 +142,7 @@ func (r *integrationRepository) GetByType(
 	ctx context.Context,
 	req repositories.GetIntegrationByTypeRequest,
 ) (*integration.Integration, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -179,7 +179,7 @@ func (r *integrationRepository) Update(
 	ctx context.Context,
 	i *integration.Integration,
 ) (*integration.Integration, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

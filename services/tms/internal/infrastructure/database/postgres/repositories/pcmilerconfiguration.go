@@ -44,7 +44,7 @@ func (r *pcmilerConfigurationRepository) GetPCMilerConfiguration(
 	ctx context.Context,
 	opts repositories.GetPCMilerConfigurationOptions,
 ) (*pcmilerconfiguration.PCMilerConfiguration, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

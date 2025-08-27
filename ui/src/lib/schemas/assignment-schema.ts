@@ -6,6 +6,7 @@
 import { AssignmentStatus } from "@/types/assignment";
 import * as z from "zod/v4";
 import {
+  nullablePulidSchema,
   nullableStringSchema,
   optionalStringSchema,
   timestampSchema,
@@ -28,7 +29,7 @@ export const assignmentSchema = z.object({
     .string({ error: "Primary Worker is required" })
     .min(1, { error: "Primary Worker is required" }),
   secondaryWorkerId: nullableStringSchema,
-  trailerId: z.string().min(1, { error: "Trailer is required" }),
+  trailerId: nullablePulidSchema,
   tractorId: z.string().min(1, { error: "Tractor is required" }),
 
   // * Relationships

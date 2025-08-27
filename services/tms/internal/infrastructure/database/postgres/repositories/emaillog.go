@@ -173,7 +173,7 @@ func (r *emailLogRepository) GetByMessageID(
 	ctx context.Context,
 	messageID string,
 ) (*email.Log, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_log_repository").
@@ -218,7 +218,7 @@ func (r *emailLogRepository) List(
 	ctx context.Context,
 	filter *ports.QueryOptions,
 ) (*ports.ListResult[*email.Log], error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_log_repository").
@@ -231,7 +231,7 @@ func (r *emailLogRepository) List(
 		Str("operation", "List").
 		Logger()
 
-	logs := make([]*email.Log, 0)
+	logs := make([]*email.Log, 0, filter.Limit)
 
 	q := dba.NewSelect().Model(&logs).
 		Relation("Queue").

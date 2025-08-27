@@ -31,30 +31,33 @@ function ScrollArea({
   );
 }
 
-/*
- * VirtualizedScroll Area moves the ref to the viewport
- * Only use this if you're using a virtualized list
- * and want to use a scrollarea as the parent
- * Otherwise, use the ScrollArea component
- */
-export function VirtualizedScrollArea({
-  className,
+export function VirtualCompatibleScrollArea({
   children,
+  className,
+  viewPortClassName,
+  viewPortRef,
+  orientation = "vertical",
   ...props
-}: React.ComponentProps<typeof ScrollAreaPrimitive.Root>) {
+}: React.ComponentProps<typeof ScrollAreaPrimitive.Root> & {
+  viewPortClassName?: string;
+  orientation?: "vertical" | "horizontal";
+  viewPortRef?: React.RefObject<HTMLDivElement | null>;
+}) {
   return (
     <ScrollAreaPrimitive.Root
-      data-slot="scroll-area"
-      className={cn("relative", className)}
+      className={cn("relative overflow-hidden", className)}
       {...props}
     >
       <ScrollAreaPrimitive.Viewport
-        data-slot="scroll-area-viewport"
-        className="ring-ring/10 dark:ring-ring/20 dark:outline-ring/40 outline-ring/50 size-full rounded-[inherit] transition-[color,box-shadow] focus-visible:ring-4 focus-visible:outline-1"
+        className={cn(
+          "size-full rounded-[inherit] [&>div]:!block",
+          viewPortClassName,
+        )}
+        ref={viewPortRef}
       >
         {children}
       </ScrollAreaPrimitive.Viewport>
-      <ScrollBar />
+      <ScrollBar orientation={orientation} />
       <ScrollAreaPrimitive.Corner />
     </ScrollAreaPrimitive.Root>
   );

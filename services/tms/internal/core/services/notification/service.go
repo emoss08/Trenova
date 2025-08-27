@@ -183,12 +183,12 @@ func (s *Service) SendOwnershipTransferNotification(
 	ctx context.Context,
 	req *services.OwnershipTransferNotificationRequest,
 ) error {
-	s.l.Info().
+	s.l.Debug().
 		Interface("req", req).
 		Msg("sending configuration copied notification")
 
 	notifReq := &services.SendNotificationRequest{
-		EventType: notification.EventConfigurationCopied,
+		EventType: notification.EventShipmentOwnershipTransferred,
 		Priority:  notification.PriorityMedium,
 		Targeting: notification.Targeting{
 			Channel:        notification.ChannelUser,
@@ -205,6 +205,38 @@ func (s *Service) SendOwnershipTransferNotification(
 		Data: map[string]any{
 			"proNumber": req.ProNumber,
 			"ownerName": req.OwnerName,
+		},
+	}
+
+	return s.SendNotification(ctx, notifReq)
+}
+
+func (s *Service) SendShipmentHoldReleaseNotification(
+	ctx context.Context,
+	req *services.ShipmentHoldReleaseNotificationRequest,
+) error {
+	s.l.Debug().
+		Interface("req", req).
+		Msg("sending shipment hold release notification")
+
+	notifReq := &services.SendNotificationRequest{
+		EventType: notification.EventShipmentHoldRelease,
+		Priority:  notification.PriorityHigh,
+		Targeting: notification.Targeting{
+			Channel:        notification.ChannelUser,
+			OrganizationID: req.OrgID,
+			BusinessUnitID: &req.BuID,
+			TargetUserID:   &req.TargetUserID,
+		},
+		Title: "Shipment Hold Released",
+		Message: fmt.Sprintf(
+			"Shipment %s has been released from hold by %s",
+			req.ProNumber,
+			req.ReleasedByName,
+		),
+		Data: map[string]any{
+			"proNumber":      req.ProNumber,
+			"releasedByName": req.ReleasedByName,
 		},
 	}
 

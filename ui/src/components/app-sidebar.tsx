@@ -163,7 +163,18 @@ function Tree({
 }) {
   const isActive = isRouteActive(currentPath, item.link);
   const hasActive = hasActiveChild(currentPath, item);
-  const [isOpen, setIsOpen] = React.useState(hasActive);
+
+  // Check if this item has children and we're searching
+  const hasChildrenDuringSearch = !!(
+    searchQuery &&
+    item.tree &&
+    item.tree.length > 0
+  );
+
+  // Initialize open state - open if has active child OR has children during search
+  const [isOpen, setIsOpen] = React.useState(
+    hasActive || hasChildrenDuringSearch,
+  );
 
   // Helper to handle navigation - prevent navigation if already on the same route
   const handleNavigation = React.useCallback(
@@ -190,6 +201,16 @@ function Tree({
       setIsOpen(true);
     }
   }, [hasActive, currentPath]);
+
+  // Auto-expand when searching and has children
+  React.useEffect(() => {
+    if (searchQuery && item.tree && item.tree.length > 0) {
+      setIsOpen(true);
+    } else if (!searchQuery && !hasActive) {
+      // Collapse when search is cleared (unless has active child)
+      setIsOpen(false);
+    }
+  }, [searchQuery, item.tree, hasActive]);
 
   if (!item.tree) {
     return (

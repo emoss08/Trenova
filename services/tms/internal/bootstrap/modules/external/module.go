@@ -7,6 +7,7 @@ package external
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/external/ai/claude"
+	"github.com/emoss08/trenova/internal/infrastructure/external/dockerhub"
 	"github.com/emoss08/trenova/internal/infrastructure/external/maps/googlemaps"
 	"github.com/emoss08/trenova/internal/infrastructure/external/maps/pcmiler"
 	"github.com/emoss08/trenova/internal/pkg/config"
@@ -40,4 +41,5 @@ var Module = fx.Module("external", fx.Provide(
 	pcmiler.NewClient,
 	googlemaps.NewClient,
 	NewClaudeClient,
+	dockerhub.NewClient,
 ))

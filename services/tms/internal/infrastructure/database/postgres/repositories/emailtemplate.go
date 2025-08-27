@@ -58,7 +58,7 @@ func (r *emailTemplateRepository) Create(
 	ctx context.Context,
 	template *email.Template,
 ) (*email.Template, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_template_repository").
@@ -109,7 +109,7 @@ func (r *emailTemplateRepository) Update(
 	ctx context.Context,
 	template *email.Template,
 ) (*email.Template, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_template_repository").
@@ -183,7 +183,7 @@ func (r *emailTemplateRepository) Update(
 
 // Get retrieves an email template by ID
 func (r *emailTemplateRepository) Get(ctx context.Context, id pulid.ID) (*email.Template, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_template_repository").
@@ -226,7 +226,7 @@ func (r *emailTemplateRepository) GetBySlug(
 	slug string,
 	organizationID pulid.ID,
 ) (*email.Template, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_template_repository").
@@ -316,7 +316,7 @@ func (r *emailTemplateRepository) List(
 		Str("buID", filter.TenantOpts.BuID.String()).
 		Logger()
 
-	templates := make([]*email.Template, 0)
+	templates := make([]*email.Template, 0, filter.Limit)
 
 	q := dba.NewSelect().Model(&templates)
 
@@ -340,7 +340,7 @@ func (r *emailTemplateRepository) List(
 
 // Delete deletes an email template
 func (r *emailTemplateRepository) Delete(ctx context.Context, id pulid.ID) error {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return oops.
 			In("email_template_repository").

@@ -49,7 +49,7 @@ func (r *documentQualityConfigRepository) Get(
 	ctx context.Context,
 	opts *repositories.GetDocumentQualityConfigOptions,
 ) (*documentqualityconfig.DocumentQualityConfig, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		r.l.Error().Err(err).Msg("failed to get database connection")
 		return nil, eris.Wrap(err, "get database connection")
@@ -80,7 +80,7 @@ func (r *documentQualityConfigRepository) Update(
 	ctx context.Context,
 	dqc *documentqualityconfig.DocumentQualityConfig,
 ) (*documentqualityconfig.DocumentQualityConfig, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		r.l.Error().Err(err).Msg("failed to get database connection")
 		return nil, eris.Wrap(err, "get database connection")

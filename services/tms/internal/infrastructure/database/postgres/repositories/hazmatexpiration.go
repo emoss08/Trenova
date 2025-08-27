@@ -47,7 +47,7 @@ func (r *hazmatExpirationRepository) GetHazmatExpirationByStateID(
 	ctx context.Context,
 	stateID pulid.ID,
 ) (*compliance.HazmatExpiration, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

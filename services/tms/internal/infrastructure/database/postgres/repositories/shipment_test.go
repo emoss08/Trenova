@@ -764,14 +764,22 @@ func TestShipmentRepository(t *testing.T) {
 	// Test CheckForDuplicateBOLs operations
 	t.Run("CheckForDuplicateBOLs", func(t *testing.T) {
 		t.Run("No Duplicates", func(t *testing.T) {
-			result, err := repo.CheckForDuplicateBOLs(ctx, "UNIQUE-BOL-123", org.ID, bu.ID, nil)
+			result, err := repo.CheckForDuplicateBOLs(ctx, &repoports.DuplicateBolsRequest{
+				CurrentBOL: "UNIQUE-BOL-123",
+				OrgID:      org.ID,
+				BuID:       bu.ID,
+			})
 			require.NoError(t, err, "CheckForDuplicateBOLs should not return error")
 			require.NotNil(t, result, "Result should not be nil")
 			assert.Empty(t, result, "Should find no duplicates")
 		})
 
 		t.Run("Empty BOL", func(t *testing.T) {
-			result, err := repo.CheckForDuplicateBOLs(ctx, "", org.ID, bu.ID, nil)
+			result, err := repo.CheckForDuplicateBOLs(ctx, &repoports.DuplicateBolsRequest{
+				CurrentBOL: "",
+				OrgID:      org.ID,
+				BuID:       bu.ID,
+			})
 			require.NoError(t, err, "CheckForDuplicateBOLs with empty BOL should not return error")
 			require.NotNil(t, result, "Result should not be nil")
 			assert.Empty(t, result, "Should find no duplicates for empty BOL")
@@ -795,10 +803,12 @@ func TestShipmentRepository(t *testing.T) {
 			// Check for duplicates excluding the created shipment
 			result, err := repo.CheckForDuplicateBOLs(
 				ctx,
-				"DUPLICATE-BOL-TEST",
-				org.ID,
-				bu.ID,
-				&created.ID,
+				&repoports.DuplicateBolsRequest{
+					CurrentBOL: "DUPLICATE-BOL-TEST",
+					OrgID:      org.ID,
+					BuID:       bu.ID,
+					ExcludeID:  &created.ID,
+				},
 			)
 			require.NoError(t, err, "CheckForDuplicateBOLs with exclusion should not return error")
 			assert.Empty(t, result, "Should find no duplicates when excluding self")
@@ -806,10 +816,11 @@ func TestShipmentRepository(t *testing.T) {
 			// Check for duplicates without exclusion
 			result2, err := repo.CheckForDuplicateBOLs(
 				ctx,
-				"DUPLICATE-BOL-TEST",
-				org.ID,
-				bu.ID,
-				nil,
+				&repoports.DuplicateBolsRequest{
+					CurrentBOL: "DUPLICATE-BOL-TEST",
+					OrgID:      org.ID,
+					BuID:       bu.ID,
+				},
 			)
 			require.NoError(
 				t,
@@ -823,10 +834,11 @@ func TestShipmentRepository(t *testing.T) {
 		t.Run("Wrong Organization", func(t *testing.T) {
 			result, err := repo.CheckForDuplicateBOLs(
 				ctx,
-				testShipment.BOL,
-				pulid.MustNew("org_"),
-				bu.ID,
-				nil,
+				&repoports.DuplicateBolsRequest{
+					CurrentBOL: testShipment.BOL,
+					OrgID:      pulid.MustNew("org_"),
+					BuID:       bu.ID,
+				},
 			)
 			require.NoError(t, err, "CheckForDuplicateBOLs with wrong org should not return error")
 			assert.Empty(t, result, "Should find no duplicates in wrong organization")

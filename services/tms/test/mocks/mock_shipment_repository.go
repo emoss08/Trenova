@@ -102,11 +102,8 @@ func (m *MockShipmentRepository) Duplicate(
 
 func (m *MockShipmentRepository) CheckForDuplicateBOLs(
 	ctx context.Context,
-	currentBOL string,
-	orgID pulid.ID,
-	buID pulid.ID,
-	excludeID *pulid.ID,
-) ([]repositories.DuplicateBOLsResult, error) {
+	req *repositories.DuplicateBolsRequest,
+) ([]*repositories.DuplicateBOLsResult, error) {
 	return nil, nil
 }
 

@@ -3,6 +3,7 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
+import { holdTypeChoices } from "@/lib/choices";
 import type { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
 import type { CommoditySchema } from "@/lib/schemas/commodity-schema";
 import type { CustomerSchema } from "@/lib/schemas/customer-schema";
@@ -12,6 +13,7 @@ import type { EquipmentTypeSchema } from "@/lib/schemas/equipment-type-schema";
 import type { FleetCodeSchema } from "@/lib/schemas/fleet-code-schema";
 import type { FormulaTemplateSchema } from "@/lib/schemas/formula-template-schema";
 import type { HazardousMaterialSchema } from "@/lib/schemas/hazardous-material-schema";
+import { HoldReasonSchema } from "@/lib/schemas/hold-reason-schema";
 import type { LocationCategorySchema } from "@/lib/schemas/location-category-schema";
 import type { LocationSchema } from "@/lib/schemas/location-schema";
 import type { ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
@@ -418,6 +420,39 @@ export function CommodityAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.name}
       renderOption={(option) => option.name}
+      {...props}
+    />
+  );
+}
+
+export function HoldReasonAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<HoldReasonSchema, T>) {
+  return (
+    <AutocompleteField<HoldReasonSchema, T>
+      link="/hold-reasons/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => option.label}
+      renderOption={(option) => (
+        <div className="flex flex-col gap-0.5 items-start size-full">
+          <p className="flex flex-row items-center gap-1">
+            <span className="text-sm font-medium max-w-prose truncate">
+              {option.label}
+            </span>
+            <span className="text-2xs text-muted-foreground truncate">
+              {
+                holdTypeChoices.find((choice) => choice.value === option.type)
+                  ?.label
+              }
+            </span>
+          </p>
+          {option.description && (
+            <p className="text-xs text-muted-foreground truncate max-w-prose">
+              {option.description}
+            </p>
+          )}
+        </div>
+      )}
       {...props}
     />
   );

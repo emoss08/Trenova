@@ -14,6 +14,7 @@ import type { NotificationQueryParams } from "@/types/notification";
 import type { ShipmentQueryParams } from "@/types/shipment";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 import type { AccessorialChargeSchema } from "./schemas/accessorial-charge-schema";
+import { HoldReasonSchema } from "./schemas/hold-reason-schema";
 import type { PatternConfigSchema } from "./schemas/pattern-config-schema";
 import { ShipmentSchema } from "./schemas/shipment-schema";
 import type { TableConfigurationSchema } from "./schemas/table-configuration-schema";
@@ -92,6 +93,12 @@ export const queries = createQueryKeyStore({
       },
     }),
   },
+  holdReason: {
+    getById: (id: HoldReasonSchema["id"]) => ({
+      queryKey: ["hold-reason", id],
+      queryFn: async () => api.holdReasons.getById(id),
+    }),
+  },
   document: {
     getDocumentTypes: () => ({
       queryKey: ["document/types"],
@@ -166,6 +173,10 @@ export const queries = createQueryKeyStore({
     getCommentCount: (shipmentId: ShipmentSchema["id"]) => ({
       queryKey: ["shipment/comments/count", shipmentId],
       queryFn: async () => api.shipments.getCommentCount(shipmentId),
+    }),
+    getHolds: (shipmentId: ShipmentSchema["id"]) => ({
+      queryKey: ["shipment/holds", shipmentId],
+      queryFn: async () => api.shipments.getHolds(shipmentId),
     }),
   },
   customer: {
@@ -306,6 +317,12 @@ export const queries = createQueryKeyStore({
     list: (params?: NotificationQueryParams) => ({
       queryKey: ["notifications", params],
       queryFn: async () => api.notifications.list(params),
+    }),
+  },
+  docker: {
+    listNetworks: () => ({
+      queryKey: ["docker", "networks"],
+      queryFn: async () => api.docker.listNetworks(),
     }),
   },
 });

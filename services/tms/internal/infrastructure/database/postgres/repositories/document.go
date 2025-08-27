@@ -250,7 +250,7 @@ func (r *documentRepository) GetDocumentsByResourceID(
 		Str("resourceID", req.ResourceID).
 		Logger()
 
-	entities := make([]*document.Document, 0)
+	entities := make([]*document.Document, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = r.filterResourceQuery(q, req)

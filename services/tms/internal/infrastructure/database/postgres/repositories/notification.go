@@ -58,7 +58,7 @@ func (nr *notificationRepository) Create(
 		Str("notification_id", notif.ID.String()).
 		Logger()
 
-	dba, err := nr.db.DB(ctx)
+	dba, err := nr.db.WriteDB(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection")
 		return eris.Wrap(err, "get database connection")
@@ -84,7 +84,7 @@ func (nr *notificationRepository) Update(
 		Str("notification_id", notif.ID.String()).
 		Logger()
 
-	dba, err := nr.db.DB(ctx)
+	dba, err := nr.db.WriteDB(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection")
 		return eris.Wrap(err, "get database connection")
@@ -143,7 +143,7 @@ func (nr *notificationRepository) GetByID(
 		Str("notification_id", id.String()).
 		Logger()
 
-	dba, err := nr.db.DB(ctx)
+	dba, err := nr.db.ReadDB(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection")
 		return nil, eris.Wrap(err, "get database connection")
@@ -208,7 +208,7 @@ func (nr *notificationRepository) GetUserNotifications(
 		return nil, eris.Wrap(err, "get database connection")
 	}
 
-	notifications := make([]*notification.Notification, 0)
+	notifications := make([]*notification.Notification, 0, req.Filter.Limit)
 
 	// * Build the notifications query based on the request.
 	q := dba.NewSelect().
@@ -245,7 +245,7 @@ func (nr *notificationRepository) GetUnreadCount(
 		Str("organization_id", organizationID.String()).
 		Logger()
 
-	dba, err := nr.db.DB(ctx)
+	dba, err := nr.db.ReadDB(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection")
 		return 0, eris.Wrap(err, "get database connection")
@@ -283,7 +283,7 @@ func (nr *notificationRepository) ReadAllNotifications(
 		Str("business_unit_id", req.BuID.String()).
 		Logger()
 
-	dba, err := nr.db.DB(ctx)
+	dba, err := nr.db.WriteDB(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection")
 		return oops.In("notification_repository").
@@ -344,7 +344,7 @@ func (nr *notificationRepository) MarkAsRead(
 		Str("user_id", req.UserID.String()).
 		Logger()
 
-	dba, err := nr.db.DB(ctx)
+	dba, err := nr.db.WriteDB(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection")
 		return eris.Wrap(err, "get database connection")
@@ -461,7 +461,7 @@ func (nr *notificationRepository) MarkAsDelivered(
 		Str("notification_id", notificationID.String()).
 		Logger()
 
-	dba, err := nr.db.DB(ctx)
+	dba, err := nr.db.ReadDB(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection")
 		return oops.In("notification_repository").
@@ -514,7 +514,7 @@ func (nr *notificationRepository) GetPendingRetries(
 			Wrapf(err, "get database connection")
 	}
 
-	notifications := make([]*notification.Notification, 0)
+	notifications := make([]*notification.Notification, 0, limit)
 	err = dba.NewSelect().
 		Model(&notifications).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -552,7 +552,7 @@ func (nr *notificationRepository) GetExpiredNotifications(
 		return nil, eris.Wrap(err, "get database connection")
 	}
 
-	notifications := make([]*notification.Notification, 0)
+	notifications := make([]*notification.Notification, 0, limit)
 	err = dba.NewSelect().
 		Model(&notifications).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -581,7 +581,7 @@ func (nr *notificationRepository) DeleteOldNotifications(
 		Int64("older_than", olderThan).
 		Logger()
 
-	dba, err := nr.db.DB(ctx)
+	dba, err := nr.db.WriteDB(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get database connection")
 		return oops.In("notification_repository").

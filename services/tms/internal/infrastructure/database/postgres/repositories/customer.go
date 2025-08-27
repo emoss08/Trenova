@@ -136,7 +136,7 @@ func (cr *customerRepository) List(
 	ctx context.Context,
 	opts *repositories.ListCustomerOptions,
 ) (*ports.ListResult[*customer.Customer], error) {
-	dba, err := cr.db.DB(ctx)
+	dba, err := cr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +147,7 @@ func (cr *customerRepository) List(
 		Str("userID", opts.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*customer.Customer, 0)
+	entities := make([]*customer.Customer, 0, opts.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = cr.filterQuery(q, opts)
@@ -177,7 +177,7 @@ func (cr *customerRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetCustomerByIDOptions,
 ) (*customer.Customer, error) {
-	dba, err := cr.db.DB(ctx)
+	dba, err := cr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +250,11 @@ func (cr *customerRepository) GetDocumentRequirements(
 	}
 
 	// * Create the response with the exact capacity needed
-	response := make([]*repositories.CustomerDocRequirementResponse, 0)
+	response := make(
+		[]*repositories.CustomerDocRequirementResponse,
+		0,
+		len(billingProfile.DocumentTypes),
+	)
 
 	// * Iterate over the document types and create the response
 	for _, docType := range billingProfile.DocumentTypes {

@@ -84,7 +84,7 @@ func (hr *holdReasonRepository) List(
 		Str("buID", req.Filter.TenantOpts.BuID.String()).
 		Logger()
 
-	entities := make([]*shipment.HoldReason, 0)
+	entities := make([]*shipment.HoldReason, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = hr.filterQuery(q, req)

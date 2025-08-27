@@ -56,7 +56,7 @@ func (r *emailQueueRepository) Create(
 	ctx context.Context,
 	queue *email.Queue,
 ) (*email.Queue, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_queue_repository").
@@ -93,7 +93,7 @@ func (r *emailQueueRepository) Update(
 	ctx context.Context,
 	queue *email.Queue,
 ) (*email.Queue, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_queue_repository").
@@ -230,7 +230,7 @@ func (r *emailQueueRepository) List(
 	ctx context.Context,
 	filter *ports.QueryOptions,
 ) (*ports.ListResult[*email.Queue], error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_queue_repository").
@@ -245,7 +245,7 @@ func (r *emailQueueRepository) List(
 		Str("buID", filter.TenantOpts.BuID.String()).
 		Logger()
 
-	queues := make([]*email.Queue, 0)
+	queues := make([]*email.Queue, 0, filter.Limit)
 
 	q := dba.NewSelect().Model(&queues)
 
@@ -269,7 +269,7 @@ func (r *emailQueueRepository) List(
 
 // GetPending retrieves pending emails to process
 func (r *emailQueueRepository) GetPending(ctx context.Context, limit int) ([]*email.Queue, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_queue_repository").
@@ -316,7 +316,7 @@ func (r *emailQueueRepository) GetScheduled(
 	ctx context.Context,
 	limit int,
 ) ([]*email.Queue, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("email_queue_repository").
@@ -365,7 +365,7 @@ func (r *emailQueueRepository) MarkAsSent(
 	queueID pulid.ID,
 	messageID string,
 ) error {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return oops.
 			In("email_queue_repository").
@@ -425,7 +425,7 @@ func (r *emailQueueRepository) MarkAsFailed(
 	queueID pulid.ID,
 	errorMessage string,
 ) error {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return oops.
 			In("email_queue_repository").
@@ -481,7 +481,7 @@ func (r *emailQueueRepository) MarkAsFailed(
 }
 
 func (r *emailQueueRepository) IncrementRetryCount(ctx context.Context, queueID pulid.ID) error {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return oops.
 			In("email_queue_repository").

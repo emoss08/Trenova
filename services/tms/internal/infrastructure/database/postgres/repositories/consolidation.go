@@ -105,7 +105,7 @@ func (r *consolidationRepository) List(
 	ctx context.Context,
 	req *repositories.ListConsolidationRequest,
 ) (*ports.ListResult[*consolidation.ConsolidationGroup], error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.In("consolidation_repository").
 			Time(time.Now()).
@@ -118,7 +118,7 @@ func (r *consolidationRepository) List(
 		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*consolidation.ConsolidationGroup, 0)
+	entities := make([]*consolidation.ConsolidationGroup, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = r.filterQuery(q, req)
@@ -205,7 +205,7 @@ func (r *consolidationRepository) Create(
 	ctx context.Context,
 	cg *consolidation.ConsolidationGroup,
 ) (*consolidation.ConsolidationGroup, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.In("consolidation_repository").
 			Time(time.Now()).
@@ -288,7 +288,7 @@ func (r *consolidationRepository) Get(
 	ctx context.Context,
 	id pulid.ID,
 ) (*consolidation.ConsolidationGroup, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.In("consolidation_repository").
 			Time(time.Now()).
@@ -335,7 +335,7 @@ func (r *consolidationRepository) GetByConsolidationNumber(
 	ctx context.Context,
 	consolidationNumber string,
 ) (*consolidation.ConsolidationGroup, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.In("consolidation_repository").
 			Time(time.Now()).
@@ -382,7 +382,7 @@ func (r *consolidationRepository) Update(
 	ctx context.Context,
 	group *consolidation.ConsolidationGroup,
 ) (*consolidation.ConsolidationGroup, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.In("consolidation_repository").
 			Time(time.Now()).
@@ -461,7 +461,7 @@ func (r *consolidationRepository) AddShipmentToGroup(
 	ctx context.Context,
 	groupID, shipmentID pulid.ID,
 ) error {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return oops.In("consolidation_repository").
 			Time(time.Now()).
@@ -525,7 +525,7 @@ func (r *consolidationRepository) RemoveShipmentFromGroup(
 	ctx context.Context,
 	groupID, shipmentID pulid.ID,
 ) error {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return oops.In("consolidation_repository").
 			Time(time.Now()).
@@ -584,7 +584,7 @@ func (r *consolidationRepository) GetGroupShipments(
 	ctx context.Context,
 	groupID pulid.ID,
 ) ([]*shipment.Shipment, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.In("consolidation_repository").
 			Time(time.Now()).

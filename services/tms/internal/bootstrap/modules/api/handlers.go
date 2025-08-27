@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlane"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlanesuggestion"
+	"github.com/emoss08/trenova/internal/api/handlers/docker"
 	"github.com/emoss08/trenova/internal/api/handlers/document"
 	"github.com/emoss08/trenova/internal/api/handlers/documentqualityconfig"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttype"
@@ -50,6 +51,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/session"
 	"github.com/emoss08/trenova/internal/api/handlers/shipment"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentcontrol"
+	"github.com/emoss08/trenova/internal/api/handlers/shipmenthold"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentmove"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttype"
 	"github.com/emoss08/trenova/internal/api/handlers/stop"
@@ -120,4 +122,6 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	formula.NewHandler,
 	email.NewHandler,
 	holdreason.NewHandler,
+	shipmenthold.NewHandler,
+	docker.NewHandler,
 ))

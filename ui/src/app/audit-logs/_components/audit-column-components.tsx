@@ -45,6 +45,10 @@ export function ActionBadge({
       variant: "purple",
       text: "Classified",
     },
+    [Action.Release]: {
+      variant: "purple",
+      text: "Released",
+    },
     [Action.Reject]: {
       variant: "inactive",
       text: "Rejected",
@@ -229,6 +233,10 @@ export function AuditEntryResourceBadge({
       variant: "purple",
       text: "AI Classification",
     },
+    [Resource.Docker]: {
+      variant: "indigo",
+      text: "Docker",
+    },
     [Resource.Shipment]: {
       variant: "indigo",
       text: "Shipment",
@@ -333,6 +341,14 @@ export function AuditEntryResourceBadge({
     [Resource.Integration]: {
       variant: "pink",
       text: "Integration",
+    },
+    [Resource.ShipmentHold]: {
+      variant: "pink",
+      text: "Shipment Hold",
+    },
+    [Resource.HoldReason]: {
+      variant: "pink",
+      text: "Hold Reason",
     },
     [Resource.Setting]: {
       variant: "warning",

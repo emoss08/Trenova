@@ -13,6 +13,7 @@ export const shipmentActionsParser = {
   cancellationDialogOpen: parseAsBoolean.withDefault(false),
   duplicateDialogOpen: parseAsBoolean.withDefault(false),
   transferDialogOpen: parseAsBoolean.withDefault(false),
+  holdDialogOpen: parseAsBoolean.withDefault(false),
 };
 
 export type ShipmentActionState = inferParserType<typeof shipmentActionsParser>;

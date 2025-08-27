@@ -30,6 +30,7 @@ type ValidatorParams struct {
 
 	DB                         db.Connection
 	MoveValidator              *MoveValidator
+	ShipmentHoldValidator      *ShipmentHoldValidator
 	ShipmentControlRepo        repositories.ShipmentControlRepository
 	HazmatSegregationValidator *hazmatsegreationrulevalidator.Validator
 	ValidationEngineFactory    framework.ValidationEngineFactory
@@ -40,6 +41,7 @@ type ValidatorParams struct {
 type Validator struct {
 	db  db.Connection
 	mv  *MoveValidator
+	shv *ShipmentHoldValidator
 	scp repositories.ShipmentControlRepository
 	hsr *hazmatsegreationrulevalidator.Validator
 	vef framework.ValidationEngineFactory
@@ -56,6 +58,7 @@ func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
 		db:  p.DB,
 		mv:  p.MoveValidator,
+		shv: p.ShipmentHoldValidator,
 		scp: p.ShipmentControlRepo,
 		hsr: p.HazmatSegregationValidator,
 		vef: p.ValidationEngineFactory,

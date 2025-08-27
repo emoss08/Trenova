@@ -51,7 +51,7 @@ func NewPatternConfigRepository(
 func (pcr *patternConfigRepository) GetAll(
 	ctx context.Context,
 ) ([]*dedicatedlane.PatternConfig, error) {
-	dba, err := pcr.db.DB(ctx)
+	dba, err := pcr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.In("pattern_config_repository").
 			With("op", "get_all").
@@ -96,6 +96,7 @@ func (pcr *patternConfigRepository) GetAll(
 
 	return entities, nil
 }
+
 func (pcr *patternConfigRepository) GetByOrgID(
 	ctx context.Context,
 	req repositories.GetPatternConfigRequest,
@@ -144,7 +145,7 @@ func (pcr *patternConfigRepository) Update(
 	ctx context.Context,
 	pc *dedicatedlane.PatternConfig,
 ) (*dedicatedlane.PatternConfig, error) {
-	dba, err := pcr.db.DB(ctx)
+	dba, err := pcr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.In("pattern_config_repository").
 			With("op", "update").

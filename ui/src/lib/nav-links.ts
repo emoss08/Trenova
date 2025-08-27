@@ -133,6 +133,11 @@ export const adminLinks: SidebarLink[] = [
     group: "Data & Integrations",
   },
   {
+    href: "/organization/docker/",
+    title: "Docker Management",
+    group: "Data & Integrations",
+  },
+  {
     href: "/organization/resource-editor/",
     title: "Resource Editor",
     group: "Data & Integrations",
@@ -467,6 +472,12 @@ export const routes: RouteInfo[] = [
         key: Resource.ResourceEditor,
         label: "Resource Editor",
         link: "/organization/resource-editor/",
+        supportsModal: false,
+      },
+      {
+        key: Resource.Docker,
+        label: "Docker Management",
+        link: "/organization/docker/",
         supportsModal: false,
       },
       {

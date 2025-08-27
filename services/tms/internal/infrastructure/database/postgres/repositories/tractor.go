@@ -99,9 +99,12 @@ func (tr *tractorRepository) addOptions(
 	}
 
 	if opts.Status != "" {
-		status, err := domain.StatusFromString(opts.Status)
+		status, err := domain.EquipmentStatusFromString(opts.Status)
 		if err != nil {
-			tr.l.Error().Err(err).Msg("failed to convert status to equipment status")
+			tr.l.Error().
+				Str("status", opts.Status).
+				Err(err).
+				Msg("failed to convert status to equipment status")
 			return q
 		}
 
@@ -159,7 +162,7 @@ func (tr *tractorRepository) List(
 	ctx context.Context,
 	req *repositories.ListTractorRequest,
 ) (*ports.ListResult[*tractor.Tractor], error) {
-	dba, err := tr.db.DB(ctx)
+	dba, err := tr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -170,7 +173,7 @@ func (tr *tractorRepository) List(
 		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*tractor.Tractor, 0)
+	entities := make([]*tractor.Tractor, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = tr.filterQuery(q, req)
@@ -200,7 +203,7 @@ func (tr *tractorRepository) GetByID(
 	ctx context.Context,
 	req *repositories.GetTractorByIDRequest,
 ) (*tractor.Tractor, error) {
-	dba, err := tr.db.DB(ctx)
+	dba, err := tr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -246,7 +249,7 @@ func (tr *tractorRepository) GetByPrimaryWorkerID(
 	ctx context.Context,
 	req repositories.GetTractorByPrimaryWorkerIDRequest,
 ) (*tractor.Tractor, error) {
-	dba, err := tr.db.DB(ctx)
+	dba, err := tr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.In("tractor_repository").
 			With("op", "get_by_primary_worker_id").
@@ -294,7 +297,7 @@ func (tr *tractorRepository) Create(
 	ctx context.Context,
 	t *tractor.Tractor,
 ) (*tractor.Tractor, error) {
-	dba, err := tr.db.DB(ctx)
+	dba, err := tr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("tractor_repository").
@@ -333,7 +336,7 @@ func (tr *tractorRepository) Update(
 	ctx context.Context,
 	t *tractor.Tractor,
 ) (*tractor.Tractor, error) {
-	dba, err := tr.db.DB(ctx)
+	dba, err := tr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -407,7 +410,7 @@ func (tr *tractorRepository) Assignment(
 	ctx context.Context,
 	opts repositories.TractorAssignmentRequest,
 ) (*repositories.AssignmentResponse, error) {
-	dba, err := tr.db.DB(ctx)
+	dba, err := tr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

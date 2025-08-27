@@ -141,7 +141,7 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
       handleClose();
 
       broadcastQueryInvalidation({
-        queryKey: ["shipments"],
+        queryKey: ["shipment", "shipment-list", "stop", "assignment"],
         options: { correlationId: `create-shipment-${Date.now()}` },
         config: {
           predicate: true,

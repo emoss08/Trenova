@@ -90,7 +90,7 @@ func (lr *locationRepository) List(
 	ctx context.Context,
 	opts *repositories.ListLocationOptions,
 ) (*ports.ListResult[*location.Location], error) {
-	dba, err := lr.db.DB(ctx)
+	dba, err := lr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -101,7 +101,7 @@ func (lr *locationRepository) List(
 		Str("userID", opts.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*location.Location, 0)
+	entities := make([]*location.Location, 0, opts.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = lr.filterQuery(q, opts)
@@ -122,7 +122,7 @@ func (lr *locationRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetLocationByIDOptions,
 ) (*location.Location, error) {
-	dba, err := lr.db.DB(ctx)
+	dba, err := lr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -165,7 +165,7 @@ func (lr *locationRepository) Create(
 	ctx context.Context,
 	l *location.Location,
 ) (*location.Location, error) {
-	dba, err := lr.db.DB(ctx)
+	dba, err := lr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -196,7 +196,7 @@ func (lr *locationRepository) Update(
 	ctx context.Context,
 	loc *location.Location,
 ) (*location.Location, error) {
-	dba, err := lr.db.DB(ctx)
+	dba, err := lr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

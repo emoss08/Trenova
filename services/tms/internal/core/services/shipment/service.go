@@ -600,7 +600,7 @@ func (s *Service) TransferOwnership(
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get new owner")
 	}
-	if err := s.ns.SendOwnershipTransferNotification(ctx, &services.OwnershipTransferNotificationRequest{
+	if err = s.ns.SendOwnershipTransferNotification(ctx, &services.OwnershipTransferNotificationRequest{
 		OrgID:        req.OrgID,
 		BuID:         req.BuID,
 		OwnerName:    ownerName,
@@ -629,9 +629,6 @@ func (s *Service) TransferOwnership(
 				"http://localhost:5173/shipments/management?entityId=%s&modalType=edit",
 				updatedEntity.GetID(),
 			),
-			// Optional fields
-			"TransferReason": "",
-			"Notes":          "",
 		},
 		req.OrgID,
 		req.BuID,
@@ -711,14 +708,6 @@ func (s *Service) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shipm
 		Str("bol", shp.BOL).
 		Logger()
 
-	me := errors.NewMultiError()
-
-	// Skip check if BOL is empty
-	if shp.BOL == "" {
-		return nil
-	}
-
-	// Determine if we should exclude the current shipment ID (during updates)
 	var excludeID *pulid.ID
 	if !shp.ID.IsNil() {
 		excludeID = &shp.ID
@@ -727,17 +716,19 @@ func (s *Service) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shipm
 			Msg("excluding current shipment from duplicate check")
 	}
 
-	// Call repository function to check for duplicates
-	duplicates, err := s.repo.CheckForDuplicateBOLs(
-		ctx,
-		shp.BOL,
-		shp.OrganizationID,
-		shp.BusinessUnitID,
-		excludeID,
-	)
+	req := &repositories.DuplicateBolsRequest{
+		CurrentBOL: shp.BOL,
+		OrgID:      shp.OrganizationID,
+		BuID:       shp.BusinessUnitID,
+		ExcludeID:  excludeID,
+	}
+
+	me := req.Validate()
+
+	duplicates, err := s.repo.CheckForDuplicateBOLs(ctx, req)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to check for duplicate BOLs")
-		return errors.NewBusinessError("Failed to check for duplicate BOLs").WithInternal(err)
+		return err
 	}
 
 	// Add any duplicates found to the multi-error

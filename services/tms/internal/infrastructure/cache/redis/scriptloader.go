@@ -115,24 +115,17 @@ func (sl *ScriptLoader) EvalSHA(
 	var result any
 	var err error
 
-	// Execute script with circuit breaker protection
 	executeErr := sl.redis.executeWithCircuitBreaker(ctx, "EVALSHA_"+scriptName, func() error {
 		result, err = sl.redis.EvalSha(ctx, sha, keys, args...).Result()
 		return err
 	})
 
-	if executeErr != nil {
-		return nil, executeErr
-	}
-
-	if err != nil && isNoScriptError(err) {
-		// Script not found in Redis, try to reload it
+	if (executeErr != nil && isNoScriptError(executeErr)) || (err != nil && isNoScriptError(err)) {
 		sha, err = sl.reloadScript(ctx, scriptName)
 		if err != nil {
 			return nil, err
 		}
 
-		// Retry with the reloaded script with circuit breaker protection
 		executeErr = sl.redis.executeWithCircuitBreaker(
 			ctx,
 			"EVALSHA_"+scriptName+"_RETRY",
@@ -145,12 +138,16 @@ func (sl *ScriptLoader) EvalSHA(
 		if executeErr != nil {
 			return nil, executeErr
 		}
+		return result, err
+	}
+
+	if executeErr != nil {
+		return nil, executeErr
 	}
 
 	return result, err
 }
 
-// reloadScript attempts to reload a script into Redis
 func (sl *ScriptLoader) reloadScript(ctx context.Context, scriptName string) (string, error) {
 	entries, err := scriptsF5.ReadDir("scripts")
 	if err != nil {
@@ -178,7 +175,6 @@ func (sl *ScriptLoader) reloadScript(ctx context.Context, scriptName string) (st
 	return sha, nil
 }
 
-// GetScriptSHA returns the SHA for a script name
 func (sl *ScriptLoader) GetScriptSHA(scriptName string) (string, bool) {
 	sl.mu.RLock()
 	defer sl.mu.RUnlock()
@@ -186,7 +182,6 @@ func (sl *ScriptLoader) GetScriptSHA(scriptName string) (string, bool) {
 	return sha, exists
 }
 
-// GetScriptName returns the name for a script SHA
 func (sl *ScriptLoader) GetScriptName(sha string) (string, bool) {
 	sl.mu.RLock()
 	defer sl.mu.RUnlock()
@@ -194,7 +189,6 @@ func (sl *ScriptLoader) GetScriptName(sha string) (string, bool) {
 	return name, exists
 }
 
-// isNoScriptError checks if the error is a Redis NOSCRIPT error
 func isNoScriptError(err error) bool {
 	return err != nil && strings.Contains(strings.ToLower(err.Error()), "noscript")
 }

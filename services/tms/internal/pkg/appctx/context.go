@@ -23,6 +23,7 @@ const (
 	CTXBusinessUnitID = ContextKey("businessUnitID")
 	CTXSessionID      = ContextKey("sessionID")
 	CTXUserRole       = ContextKey("userRole")
+	CTXRequestContext = ContextKey("requestContext")
 )
 
 var (

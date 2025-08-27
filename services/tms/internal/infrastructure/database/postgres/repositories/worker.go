@@ -114,7 +114,7 @@ func (wr *workerRepository) List(
 	ctx context.Context,
 	req *repositories.ListWorkerRequest,
 ) (*ports.ListResult[*worker.Worker], error) {
-	dba, err := wr.db.DB(ctx)
+	dba, err := wr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -125,7 +125,7 @@ func (wr *workerRepository) List(
 		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	workers := make([]*worker.Worker, 0)
+	workers := make([]*worker.Worker, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&workers)
 	q = wr.filterQuery(q, req)
@@ -146,7 +146,7 @@ func (wr *workerRepository) GetByID(
 	ctx context.Context,
 	req *repositories.GetWorkerByIDRequest,
 ) (*worker.Worker, error) {
-	dba, err := wr.db.DB(ctx)
+	dba, err := wr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -183,7 +183,7 @@ func (wr *workerRepository) Create(
 	ctx context.Context,
 	wrk *worker.Worker,
 ) (*worker.Worker, error) {
-	dba, err := wr.db.DB(ctx)
+	dba, err := wr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -244,7 +244,7 @@ func (wr *workerRepository) Update(
 	ctx context.Context,
 	wkr *worker.Worker,
 ) (*worker.Worker, error) {
-	dba, err := wr.db.DB(ctx)
+	dba, err := wr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -326,7 +326,7 @@ func (wr *workerRepository) updateProfile(
 	ctx context.Context,
 	profile *worker.WorkerProfile,
 ) error {
-	dba, err := wr.db.DB(ctx)
+	dba, err := wr.db.ReadDB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
 	}
@@ -403,8 +403,7 @@ func (wr *workerRepository) handlePTOOperations( //nolint:funlen,gocognit,cyclop
 		return nil
 	}
 
-	// Get existing PTOs for comparison if this is an update
-	var existingPTOs []*worker.WorkerPTO
+	existingPTOs := make([]*worker.WorkerPTO, 0)
 	if !isCreate {
 		if err := tx.NewSelect().
 			Model(&existingPTOs).
@@ -417,20 +416,17 @@ func (wr *workerRepository) handlePTOOperations( //nolint:funlen,gocognit,cyclop
 		}
 	}
 
-	// Prepare PTOs for operations
-	newPTOs := make([]*worker.WorkerPTO, 0)
-	updatePTOs := make([]*worker.WorkerPTO, 0)
-	existingPTOMap := make(map[pulid.ID]*worker.WorkerPTO)
-	updatedPTOIDs := make(map[pulid.ID]struct{})
+	ptoCount := len(wkr.PTO)
+	newPTOs := make([]*worker.WorkerPTO, 0, ptoCount)
+	updatePTOs := make([]*worker.WorkerPTO, 0, ptoCount)
+	updatedPTOIDs := make(map[pulid.ID]struct{}, ptoCount)
+	existingPTOMap := make(map[pulid.ID]*worker.WorkerPTO, len(existingPTOs))
 
-	// Create map of existing PTOs for quick lookup
 	for _, pto := range existingPTOs {
 		existingPTOMap[pto.ID] = pto
 	}
 
-	// Categorize PTOs for different operations
 	for _, pto := range wkr.PTO {
-		// Set required fields
 		pto.WorkerID = wkr.ID
 		pto.OrganizationID = wkr.OrganizationID
 		pto.BusinessUnitID = wkr.BusinessUnitID
@@ -439,7 +435,6 @@ func (wr *workerRepository) handlePTOOperations( //nolint:funlen,gocognit,cyclop
 			newPTOs = append(newPTOs, pto)
 		} else {
 			if existing, ok := existingPTOMap[pto.ID]; ok {
-				// Increment version for optimistic locking
 				pto.Version = existing.Version + 1
 				updatePTOs = append(updatePTOs, pto)
 				updatedPTOIDs[pto.ID] = struct{}{}
@@ -497,7 +492,7 @@ func (wr *workerRepository) handlePTOOperations( //nolint:funlen,gocognit,cyclop
 
 	// Handle deletion of PTOs that are no longer present
 	if !isCreate {
-		ptosToDelete := make([]*worker.WorkerPTO, 0)
+		ptosToDelete := make([]*worker.WorkerPTO, 0, len(existingPTOs))
 		for id, pto := range existingPTOMap {
 			if _, exists := updatedPTOIDs[id]; !exists {
 				ptosToDelete = append(ptosToDelete, pto)
@@ -524,7 +519,7 @@ func (wr *workerRepository) GetWorkerPTO(
 	ctx context.Context,
 	ptoID, workerID, buID, orgID pulid.ID,
 ) (*worker.WorkerPTO, error) {
-	dba, err := wr.db.DB(ctx)
+	dba, err := wr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

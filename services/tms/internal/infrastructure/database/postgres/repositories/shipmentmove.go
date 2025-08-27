@@ -77,7 +77,7 @@ func (sr *shipmentMoveRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetMoveByIDOptions,
 ) (*shipment.ShipmentMove, error) {
-	dba, err := sr.db.DB(ctx)
+	dba, err := sr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -140,7 +140,7 @@ func (sr *shipmentMoveRepository) BulkUpdateStatus(
 	ctx context.Context,
 	req repositories.BulkUpdateMoveStatusRequest,
 ) ([]*shipment.ShipmentMove, error) {
-	dba, err := sr.db.DB(ctx)
+	dba, err := sr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -200,7 +200,7 @@ func (sr *shipmentMoveRepository) UpdateStatus(
 	ctx context.Context,
 	opts *repositories.UpdateMoveStatusRequest,
 ) (*shipment.ShipmentMove, error) {
-	dba, err := sr.db.DB(ctx)
+	dba, err := sr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -280,7 +280,7 @@ func (sr *shipmentMoveRepository) GetMovesByShipmentID(
 	ctx context.Context,
 	opts repositories.GetMovesByShipmentIDOptions,
 ) ([]*shipment.ShipmentMove, error) {
-	dba, err := sr.db.DB(ctx)
+	dba, err := sr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -720,13 +720,14 @@ func (sr *shipmentMoveRepository) prepareMovesData(
 		Str("shipmentID", shp.ID.String()).
 		Logger()
 
+	moveCount := len(shp.Moves)
 	data := &movesOperationData{
-		newMoves:        make([]*shipment.ShipmentMove, 0),
-		updateMoves:     make([]*shipment.ShipmentMove, 0),
-		existingMoveMap: make(map[pulid.ID]*shipment.ShipmentMove),
-		updatedMoveIDs:  make(map[pulid.ID]struct{}),
-		moveToDelete:    make([]*shipment.ShipmentMove, 0),
-		existingMoves:   make([]*shipment.ShipmentMove, 0),
+		newMoves:        make([]*shipment.ShipmentMove, 0, moveCount),
+		updateMoves:     make([]*shipment.ShipmentMove, 0, moveCount),
+		existingMoveMap: make(map[pulid.ID]*shipment.ShipmentMove, moveCount),
+		updatedMoveIDs:  make(map[pulid.ID]struct{}, moveCount),
+		moveToDelete:    make([]*shipment.ShipmentMove, 0, moveCount),
+		existingMoves:   make([]*shipment.ShipmentMove, 0, moveCount),
 	}
 
 	// Get existing moves if this is an update operation
@@ -747,7 +748,6 @@ func (sr *shipmentMoveRepository) prepareMovesData(
 
 		// Create map of existing moves for quick lookup
 		for _, move := range data.existingMoves {
-			log.Debug().Interface("move", move).Msg("existing move")
 			data.existingMoveMap[move.ID] = move
 		}
 	}
@@ -947,13 +947,11 @@ func (sr *shipmentMoveRepository) checkAndHandleMoveDeletions(
 		Str("operation", "checkAndHandleMoveDeletions").
 		Logger()
 
-	// Check if there are moves to delete and if organization allows it
 	deletionRequired := false
 	for moveID := range data.existingMoveMap {
 		if _, ok := data.updatedMoveIDs[moveID]; !ok {
 			deletionRequired = true
 
-			// Check if the organization allows move removals
 			if !scr.AllowMoveRemovals {
 				log.Debug().
 					Msgf("Organization %s does not allow move removals, returning error...", shp.OrganizationID)
@@ -965,7 +963,6 @@ func (sr *shipmentMoveRepository) checkAndHandleMoveDeletions(
 		}
 	}
 
-	// If no deletion needed or already checked permission above
 	if deletionRequired {
 		if err := sr.handleMoveDeletions(ctx, tx, &repositories.HandleMoveDeletionsRequest{
 			ExistingMoveMap: data.existingMoveMap,
@@ -1059,10 +1056,8 @@ func (sr *shipmentMoveRepository) handleMoveDeletions(
 		Str("operation", "handleMoveDeletions").
 		Logger()
 
-	// * Create a slice to hold the IDs of moves to delete
-	moveIDsToDelete := make([]pulid.ID, 0)
+	moveIDsToDelete := make([]pulid.ID, 0, len(req.ExistingMoveMap))
 
-	// * For each existing move, check if it is still present in the updated move list
 	for moveID, move := range req.ExistingMoveMap {
 		if _, ok := req.UpdatedMoveIDs[moveID]; !ok {
 			moveIDsToDelete = append(moveIDsToDelete, moveID)
@@ -1074,17 +1069,13 @@ func (sr *shipmentMoveRepository) handleMoveDeletions(
 		Interface("moveIDsToDelete", moveIDsToDelete).
 		Msg("moves to delete")
 
-	// * If there are moves to delete
 	if len(moveIDsToDelete) > 0 {
-		// Get the shipment ID from the first move (all moves being deleted are from the same shipment)
 		shipmentID := req.ExistingMoveMap[moveIDsToDelete[0]].ShipmentID
 
-		// Delete associated data and the moves themselves
 		if err := sr.deleteMovesAndAssociatedData(ctx, tx, moveIDsToDelete); err != nil {
 			return err
 		}
 
-		// Resequence the remaining moves
 		if err := sr.resequenceRemainingMoves(ctx, tx, shipmentID); err != nil {
 			log.Error().Err(err).
 				Interface("moveIDs", moveIDsToDelete).
@@ -1102,17 +1093,14 @@ func (sr *shipmentMoveRepository) deleteMovesAndAssociatedData(
 	tx bun.IDB,
 	moveIDsToDelete []pulid.ID,
 ) error {
-	// Delete associated stops
 	if err := sr.deleteAssociatedStops(ctx, tx, moveIDsToDelete); err != nil {
 		return err
 	}
 
-	// Delete associated assignments
 	if err := sr.deleteAssociatedAssignments(ctx, tx, moveIDsToDelete); err != nil {
 		return err
 	}
 
-	// Delete the moves themselves
 	return sr.deleteMoves(ctx, tx, moveIDsToDelete)
 }
 
@@ -1201,7 +1189,6 @@ func (sr *shipmentMoveRepository) deleteMoves(
 		return err
 	}
 
-	// Check that the expected number of moves were deleted
 	rowsAffected, err := result.RowsAffected()
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get rows affected for move deletion")
@@ -1228,8 +1215,7 @@ func (sr *shipmentMoveRepository) resequenceRemainingMoves(
 		Str("shipmentID", shipmentID.String()).
 		Logger()
 
-	// * Get all remaining moves for this shipment, ordered by their current sequence
-	var moves []*shipment.ShipmentMove
+	moves := make([]*shipment.ShipmentMove, 0)
 	err := tx.NewSelect().
 		Model(&moves).
 		Where("shipment_id = ?", shipmentID).
@@ -1242,12 +1228,10 @@ func (sr *shipmentMoveRepository) resequenceRemainingMoves(
 		return err
 	}
 
-	// * Nothing to resequence if there are no moves or just one move
 	if len(moves) <= 1 {
 		return nil
 	}
 
-	// * Check if sequences are already contiguous and start from 0
 	needsResequencing := false
 	for i, move := range moves {
 		if move.Sequence != i {
@@ -1256,16 +1240,14 @@ func (sr *shipmentMoveRepository) resequenceRemainingMoves(
 		}
 	}
 
-	// * Skip resequencing if already in order
 	if !needsResequencing {
 		log.Debug().Msg("moves already properly sequenced, skipping resequencing")
 		return nil
 	}
 
-	// * Update each move with its new sequence number
 	for i, move := range moves {
 		if move.Sequence == i {
-			continue // Skip if already has the correct sequence
+			continue
 		}
 
 		_, err = tx.NewUpdate().

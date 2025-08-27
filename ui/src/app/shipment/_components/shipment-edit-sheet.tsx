@@ -16,7 +16,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
-import { useUrlFragment } from "@/hooks/use-url-fragment";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { EditTableSheetProps } from "@/types/data-table";
 import { memo, useCallback, useEffect, useMemo, useRef } from "react";
@@ -27,7 +26,6 @@ export function ShipmentEditSheet({
 }: EditTableSheetProps<ShipmentSchema>) {
   const { table, rowSelection, isLoading } = useDataTable();
   const sheetRef = useRef<HTMLDivElement>(null);
-  const { clearFragment } = useUrlFragment();
 
   const selectedRowKey = Object.keys(rowSelection)[0];
 
@@ -95,7 +93,6 @@ export function ShipmentEditSheet({
               : null;
 
             table.resetRowSelection();
-            clearFragment();
             setTimeout(() => el?.focus(), 0);
           }
         }}
