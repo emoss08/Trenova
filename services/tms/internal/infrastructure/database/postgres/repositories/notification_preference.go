@@ -65,12 +65,43 @@ func (npr *notificationPreferenceRepository) filterQuery(
 	return q.Limit(opts.Limit).Offset(opts.Offset)
 }
 
+// List retrieves all notification preferences with filtering
+func (npr *notificationPreferenceRepository) List(
+	ctx context.Context,
+	req repositories.ListNotificationPreferencesRequest,
+) (*ports.ListResult[*notification.NotificationPreference], error) {
+	dba, err := npr.db.ReadDB(ctx)
+	if err != nil {
+		return nil, eris.Wrap(err, "get database connection")
+	}
+
+	log := npr.l.With().
+		Str("operation", "List").
+		Logger()
+
+	prefs := make([]*notification.NotificationPreference, 0, req.Filter.Limit)
+
+	q := dba.NewSelect().Model(&prefs)
+	q = npr.filterQuery(q, req.Filter)
+
+	total, err := q.ScanAndCount(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to list notification preferences")
+		return nil, eris.Wrap(err, "list notification preferences")
+	}
+
+	return &ports.ListResult[*notification.NotificationPreference]{
+		Items: prefs,
+		Total: total,
+	}, nil
+}
+
 // Create creates a new notification preference
 func (npr *notificationPreferenceRepository) Create(
 	ctx context.Context,
 	pref *notification.NotificationPreference,
 ) (*notification.NotificationPreference, error) {
-	dba, err := npr.db.DB(ctx)
+	dba, err := npr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -98,7 +129,7 @@ func (npr *notificationPreferenceRepository) Update(
 	ctx context.Context,
 	pref *notification.NotificationPreference,
 ) (*notification.NotificationPreference, error) {
-	dba, err := npr.db.DB(ctx)
+	dba, err := npr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -141,7 +172,7 @@ func (npr *notificationPreferenceRepository) Delete(
 	ctx context.Context,
 	id pulid.ID,
 ) error {
-	dba, err := npr.db.DB(ctx)
+	dba, err := npr.db.WriteDB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
 	}
@@ -178,7 +209,7 @@ func (npr *notificationPreferenceRepository) GetByID(
 	ctx context.Context,
 	id pulid.ID,
 ) (*notification.NotificationPreference, error) {
-	dba, err := npr.db.DB(ctx)
+	dba, err := npr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -211,7 +242,7 @@ func (npr *notificationPreferenceRepository) GetUserPreferences(
 	ctx context.Context,
 	req *repositories.GetUserPreferencesRequest,
 ) ([]*notification.NotificationPreference, error) {
-	dba, err := npr.db.DB(ctx)
+	dba, err := npr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -245,35 +276,4 @@ func (npr *notificationPreferenceRepository) GetUserPreferences(
 
 	log.Info().Int("count", len(prefs)).Msg("user preferences retrieved successfully")
 	return prefs, nil
-}
-
-// List retrieves all notification preferences with filtering
-func (npr *notificationPreferenceRepository) List(
-	ctx context.Context,
-	req repositories.ListNotificationPreferencesRequest,
-) (*ports.ListResult[*notification.NotificationPreference], error) {
-	dba, err := npr.db.DB(ctx)
-	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
-	}
-
-	log := npr.l.With().
-		Str("operation", "List").
-		Logger()
-
-	prefs := make([]*notification.NotificationPreference, 0)
-
-	q := dba.NewSelect().Model(&prefs)
-	q = npr.filterQuery(q, req.Filter)
-
-	total, err := q.ScanAndCount(ctx)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to list notification preferences")
-		return nil, eris.Wrap(err, "list notification preferences")
-	}
-
-	return &ports.ListResult[*notification.NotificationPreference]{
-		Items: prefs,
-		Total: total,
-	}, nil
 }

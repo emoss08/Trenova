@@ -110,7 +110,6 @@ CREATE OR REPLACE FUNCTION shipments_search_vector_update()
     AS $$
 BEGIN
     NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.pro_number, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.bol, '')), 'A') || setweight(to_tsvector('english', COALESCE(CAST(NEW.status AS text), '')), 'B') || setweight(to_tsvector('english', COALESCE(CAST(NEW.rating_method AS text), '')), 'C');
-    NEW.total_charge_amount := NEW.freight_charge_amount + NEW.other_charge_amount;
     NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
     RETURN NEW;
 END;

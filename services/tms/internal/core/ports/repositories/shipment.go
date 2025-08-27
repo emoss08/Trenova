@@ -252,6 +252,36 @@ func (dr *DuplicateShipmentRequest) Validate(ctx context.Context) *errors.MultiE
 	return nil
 }
 
+type DuplicateBolsRequest struct {
+	CurrentBOL string    `json:"currentBOL"`
+	OrgID      pulid.ID  `json:"orgId"`
+	BuID       pulid.ID  `json:"buId"`
+	ExcludeID  *pulid.ID `json:"excludeId"`
+}
+
+func (dr *DuplicateBolsRequest) Validate() *errors.MultiError {
+	me := errors.NewMultiError()
+
+	err := validation.ValidateStruct(
+		dr,
+		validation.Field(&dr.CurrentBOL, validation.Required.Error("Current BOL is required")),
+		validation.Field(&dr.OrgID, validation.Required.Error("Organization ID is required")),
+		validation.Field(&dr.BuID, validation.Required.Error("Business Unit ID is required")),
+	)
+	if err != nil {
+		var validationErrs validation.Errors
+		if eris.As(err, &validationErrs) {
+			errors.FromOzzoErrors(validationErrs, me)
+		}
+	}
+
+	if me.HasErrors() {
+		return me
+	}
+
+	return nil
+}
+
 // DuplicateBOLsResult represents the minimal data needed when checking for duplicate BOLs
 type DuplicateBOLsResult struct {
 	ID        pulid.ID `bun:"id"`
@@ -320,11 +350,8 @@ type ShipmentRepository interface {
 	DelayShipments(ctx context.Context) ([]*shipment.Shipment, error)
 	CheckForDuplicateBOLs(
 		ctx context.Context,
-		currentBOL string,
-		orgID pulid.ID,
-		buID pulid.ID,
-		excludeID *pulid.ID,
-	) ([]DuplicateBOLsResult, error)
+		req *DuplicateBolsRequest,
+	) ([]*DuplicateBOLsResult, error)
 	CalculateShipmentTotals(
 		ctx context.Context,
 		shp *shipment.Shipment,

@@ -25,7 +25,7 @@ function Highlight({ text, highlight = "", className }: HighlightProps) {
         part.toLowerCase() === highlight.toLowerCase() ? (
           <span
             key={i}
-            className="bg-yellow-400/80 font-medium dark:bg-yellow-400/40"
+            className="bg-yellow-400/80 shrink-0 font-medium dark:bg-yellow-400/40"
           >
             {part}
           </span>

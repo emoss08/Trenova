@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/validator/framework"
+	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"go.uber.org/fx"
 )
 
@@ -24,15 +25,21 @@ type ValidatorParams struct {
 
 	DB                      db.Connection
 	MoveRepo                repositories.ShipmentMoveRepository
+	ShipmentRepo            repositories.ShipmentRepository
+	ShipmentHoldRepo        repositories.ShipmentHoldRepository
+	ShipmentHoldValidator   *shipmentvalidator.ShipmentHoldValidator
 	ValidationEngineFactory framework.ValidationEngineFactory
 }
 
 // Validator is a struct that contains the database connection and the validator.
 // It provides methods to validate assignments and other related entities.
 type Validator struct {
-	db       db.Connection
-	moveRepo repositories.ShipmentMoveRepository
-	vef      framework.ValidationEngineFactory
+	db           db.Connection
+	moveRepo     repositories.ShipmentMoveRepository
+	shipmentRepo repositories.ShipmentRepository
+	holdRepo     repositories.ShipmentHoldRepository
+	shv          *shipmentvalidator.ShipmentHoldValidator
+	vef          framework.ValidationEngineFactory
 }
 
 // NewValidator initializes a new Validator with the provided dependencies.
@@ -44,9 +51,12 @@ type Validator struct {
 //   - *Validator: A new Validator instance.
 func NewValidator(p ValidatorParams) *Validator {
 	return &Validator{
-		db:       p.DB,
-		moveRepo: p.MoveRepo,
-		vef:      p.ValidationEngineFactory,
+		db:           p.DB,
+		moveRepo:     p.MoveRepo,
+		shipmentRepo: p.ShipmentRepo,
+		holdRepo:     p.ShipmentHoldRepo,
+		shv:          p.ShipmentHoldValidator,
+		vef:          p.ValidationEngineFactory,
 	}
 }
 
@@ -109,6 +119,49 @@ func (v *Validator) validateAssignmentCriteria(
 			"__all__",
 			errors.ErrInvalid,
 			fmt.Sprintf("Cannot assign to a move that is in the `%s` status", move.Status),
+		)
+
+		return
+	}
+
+	// * I need the shipment status
+	shp, err := v.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDOptions{
+		ID:    move.ShipmentID,
+		OrgID: a.OrganizationID,
+		BuID:  a.BusinessUnitID,
+	})
+	if err != nil {
+		multiErr.Add(
+			"__all__",
+			errors.ErrSystemError,
+			fmt.Sprintf("failed to get shipment status: %s", err.Error()),
+		)
+
+		return
+	}
+
+	// * I need the shipment holds
+	holds, err := v.holdRepo.GetByShipmentID(ctx, &repositories.GetShipmentHoldByShipmentIDRequest{
+		ShipmentID: move.ShipmentID,
+		OrgID:      a.OrganizationID,
+		BuID:       a.BusinessUnitID,
+	})
+	if err != nil {
+		multiErr.Add(
+			"__all__",
+			errors.ErrSystemError,
+			fmt.Sprintf("failed to get shipment holds: %s", err.Error()),
+		)
+
+		return
+	}
+
+	// * validate the move can be assigned
+	if !v.shv.CanStartTransit(shp.Status, holds.Items) {
+		multiErr.Add(
+			"tractorId",
+			errors.ErrInvalid,
+			"Shipment has a blocking hold that prevents dispatch",
 		)
 
 		return

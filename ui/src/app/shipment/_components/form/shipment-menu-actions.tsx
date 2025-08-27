@@ -24,11 +24,12 @@ import { Resource } from "@/types/audit-entry";
 import { Action } from "@/types/roles-permissions";
 import { faEllipsisVertical } from "@fortawesome/pro-regular-svg-icons";
 import { useQueryStates } from "nuqs";
-import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellatioin-dialog";
+import { ShipmentCancellationDialog } from "../cancellation/shipment-cancellation-dialog";
 import { UnCancelShipmentDialog } from "../cancellation/shipment-uncanel-dialog";
 import { ShipmentDocumentDialog } from "../document/shipment-document-dialog";
 import { ShipmentDocumentWorkflow } from "../document/shipment-document-workflow";
 import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog";
+import { ShipmentHoldDialog } from "../hold/shipment-hold-dialog";
 import { TransferOwnershipDialog } from "../transfer-ownership/transfer-ownership-dialog";
 
 // Map of status that are allowed to be canceled.
@@ -96,6 +97,11 @@ export function ShipmentActions({
           />
           <DropdownMenuLabel>Management Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
+          <DropdownMenuItem
+            title="Hold Shipment"
+            description="Place this shipment on hold."
+            onClick={() => setSearchParams({ holdDialogOpen: true })}
+          />
           <DropdownMenuItem
             title="Merge Shipment"
             description="Combine multiple shipments into one."
@@ -178,6 +184,11 @@ export function ShipmentActions({
         onOpenChange={(open) => setSearchParams({ transferDialogOpen: open })}
         shipmentId={shipment.id}
         currentOwnerId={shipment.ownerId}
+      />
+      <ShipmentHoldDialog
+        open={searchParams.holdDialogOpen}
+        onOpenChange={(open) => setSearchParams({ holdDialogOpen: open })}
+        shipmentId={shipment.id}
       />
     </>
   );

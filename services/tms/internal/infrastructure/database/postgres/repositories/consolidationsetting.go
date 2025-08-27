@@ -72,7 +72,7 @@ func (r consolidationSettingRepository) GetByOrgID(
 	ctx context.Context,
 	orgID pulid.ID,
 ) (*consolidation.ConsolidationSettings, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -115,7 +115,7 @@ func (r consolidationSettingRepository) Update(
 	ctx context.Context,
 	cs *consolidation.ConsolidationSettings,
 ) (*consolidation.ConsolidationSettings, error) {
-	dba, err := r.db.DB(ctx)
+	dba, err := r.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

@@ -133,12 +133,16 @@ func (sr *shipmentRepository) addOptions(
 
 		q = q.Relation("ServiceType")
 		q = q.Relation("ShipmentType")
-
 		q = q.Relation("TractorType")
 		q = q.Relation("TrailerType")
-
 		q = q.Relation("CanceledBy")
-
+		q = q.RelationWithOpts("Holds", bun.RelationOpts{
+			Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+				return sq.
+					Relation("ReleasedBy").
+					Relation("CreatedBy")
+			},
+		})
 		q = q.Relation("FormulaTemplate")
 	}
 
@@ -212,7 +216,7 @@ func (sr *shipmentRepository) List(
 		Str("userID", opts.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*shipment.Shipment, 0)
+	entities := make([]*shipment.Shipment, 0, opts.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 
@@ -1140,7 +1144,7 @@ func (sr *shipmentRepository) DelayShipments(ctx context.Context) ([]*shipment.S
 			shipmentIDs[i] = shp.ID
 		}
 
-		query := buildBulkUpdateQuery(tx, shipmentIDs, shipment.StatusDelayed)
+		query := buildBulkUpdateStatusQuery(tx, shipmentIDs, shipment.StatusDelayed)
 		_, err = query.Exec(c)
 		if err != nil {
 			log.Error().
@@ -1187,19 +1191,13 @@ func (sr *shipmentRepository) DelayShipments(ctx context.Context) ([]*shipment.S
 //   - error: If the database query fails
 func (sr *shipmentRepository) CheckForDuplicateBOLs(
 	ctx context.Context,
-	currentBOL string,
-	orgID, buID pulid.ID,
-	excludeID *pulid.ID,
-) ([]repositories.DuplicateBOLsResult, error) {
-	if currentBOL == "" {
-		return []repositories.DuplicateBOLsResult{}, nil
-	}
-
+	req *repositories.DuplicateBolsRequest,
+) ([]*repositories.DuplicateBOLsResult, error) {
 	log := sr.l.With().
 		Str("operation", "checkForDuplicateBOLs").
-		Str("bol", currentBOL).
-		Str("orgID", orgID.String()).
-		Str("buID", buID.String()).
+		Str("bol", req.CurrentBOL).
+		Str("orgID", req.OrgID.String()).
+		Str("buID", req.BuID.String()).
 		Logger()
 
 	dba, err := sr.db.ReadDB(ctx)
@@ -1215,24 +1213,24 @@ func (sr *shipmentRepository) CheckForDuplicateBOLs(
 		Column("sp.pro_number").
 		Model((*shipment.Shipment)(nil)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("sp.organization_id = ?", orgID).
-				Where("sp.business_unit_id = ?", buID).
-				Where("sp.bol = ?", currentBOL).
+			return sq.Where("sp.organization_id = ?", req.OrgID).
+				Where("sp.business_unit_id = ?", req.BuID).
+				Where("sp.bol = ?", req.CurrentBOL).
 				Where("sp.status != ?", shipment.StatusCanceled)
 		})
 
-	if excludeID != nil {
-		query = query.Where("sp.id != ?", *excludeID)
+	if req.ExcludeID != nil {
+		query = query.Where("sp.id != ?", pulid.ConvertFromPtr(req.ExcludeID))
 	}
 
-	duplicates := make([]repositories.DuplicateBOLsResult, 0)
+	duplicates := make([]*repositories.DuplicateBOLsResult, 0)
 
 	if err = query.Scan(ctx, &duplicates); err != nil {
 		log.Error().Err(err).Msg("failed to query for duplicate BOLs")
 		return nil, oops.
 			In("shipment_repository").
 			Time(time.Now()).
-			With("currentBOL", currentBOL).
+			With("currentBOL", req.CurrentBOL).
 			Wrap(err)
 	}
 

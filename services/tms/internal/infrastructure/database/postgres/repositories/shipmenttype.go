@@ -120,12 +120,11 @@ func (str *shipmentTypeRepository) List(
 		return nil, err
 	}
 
-	entities := make([]*shipmenttype.ShipmentType, 0)
+	entities := make([]*shipmenttype.ShipmentType, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = str.filterQuery(q, req)
 
-	// Order by status and created at
 	q = common.ApplyDefaultListOrdering(
 		q,
 		shipmenttype.ShipmentTypeQuery.Alias,
@@ -164,7 +163,6 @@ func (str *shipmentTypeRepository) GetByID(
 		WhereIDEQ(opts.ID).
 		WhereTenant(opts.OrgID, opts.BuID).
 		One(ctx)
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get shipment type")
 		return nil, common.HandleNotFoundError(err, str.EntityName)
@@ -218,7 +216,6 @@ func (str *shipmentTypeRepository) Update(
 	ctx context.Context,
 	st *shipmenttype.ShipmentType,
 ) (*shipmenttype.ShipmentType, error) {
-	// Update needs read-write access for transactions with optimistic locking
 	_, log, err := str.SetupReadWrite(ctx, "Update",
 		"id", st.GetID(),
 		"version", st.Version,
@@ -234,7 +231,6 @@ func (str *shipmentTypeRepository) Update(
 			}
 			return st, nil
 		})
-
 	if err != nil {
 		log.Error().Err(err).Interface("shipmentType", st).Msg("failed to update shipment type")
 		return nil, common.WrapDatabaseError(err, "update shipment type")

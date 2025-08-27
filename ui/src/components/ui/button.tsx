@@ -9,6 +9,7 @@ import * as React from "react";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/lib/variants/button";
+import { Check, Clipboard } from "lucide-react";
 import { isMacOs } from "react-device-detect";
 import { PulsatingDots } from "./pulsating-dots";
 import {
@@ -104,5 +105,26 @@ function FormSaveButton({
   );
 }
 
-export { Button, FormSaveButton };
+function CopyButton({
+  label = "Copy",
+  onClick,
+  active,
+}: {
+  label?: string;
+  onClick: () => void;
+  active?: boolean;
+}) {
+  return (
+    <Button size="sm" variant="default" onClick={onClick}>
+      {active ? (
+        <Check className="h-4 w-4" />
+      ) : (
+        <Clipboard className="h-4 w-4" />
+      )}
+      {active ? "Copied" : label}
+    </Button>
+  );
+}
+
+export { Button, CopyButton, FormSaveButton };
 

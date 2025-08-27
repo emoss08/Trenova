@@ -20,6 +20,7 @@ import { moveSchema } from "./move-schema";
 import { serviceTypeSchema } from "./service-type-schema";
 import { shipmentCommentSchema } from "./shipment-comment-schema";
 import { shipmentCommoditySchema } from "./shipment-commodity-schema";
+import { shipmentHoldSchema } from "./shipment-hold-schema";
 import { shipmentTypeSchema } from "./shipment-type-schema";
 import { userSchema } from "./user-schema";
 
@@ -115,6 +116,7 @@ export const shipmentSchema = z
     commodities: z.array(shipmentCommoditySchema).nullish(),
     additionalCharges: z.array(additionalChargeSchema).nullish(),
     comments: z.array(shipmentCommentSchema).nullish(),
+    holds: z.array(shipmentHoldSchema).nullish(),
   })
   .refine(
     (data) => {

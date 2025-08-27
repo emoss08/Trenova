@@ -97,7 +97,7 @@ func (ar *auditRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetAuditEntryByIDOptions,
 ) (*audit.Entry, error) {
-	dba, err := ar.db.DB(ctx)
+	dba, err := ar.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -147,7 +147,7 @@ func (ar *auditRepository) List(
 	ctx context.Context,
 	opts *ports.LimitOffsetQueryOptions,
 ) (*ports.ListResult[*audit.Entry], error) {
-	dba, err := ar.db.DB(ctx)
+	dba, err := ar.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -158,7 +158,7 @@ func (ar *auditRepository) List(
 		Str("userID", opts.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*audit.Entry, 0)
+	entities := make([]*audit.Entry, 0, opts.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = ar.filterQuery(q, opts)
@@ -188,7 +188,8 @@ func (ar *auditRepository) ListByResourceID(
 	ctx context.Context,
 	opts repositories.ListByResourceIDRequest,
 ) (*ports.ListResult[*audit.Entry], error) {
-	dba, err := ar.db.DB(ctx)
+	// TODO(Wolfred): We need to add a limit offset to this query
+	dba, err := ar.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -271,7 +272,7 @@ func (ar *auditRepository) GetByResourceAndAction(
 	ctx context.Context,
 	req *repositories.GetAuditByResourceRequest,
 ) ([]*audit.Entry, error) {
-	dba, err := ar.db.DB(ctx)
+	dba, err := ar.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -321,7 +322,7 @@ func (ar *auditRepository) GetRecentEntries(
 	ctx context.Context,
 	req *repositories.GetRecentEntriesRequest,
 ) ([]*audit.Entry, error) {
-	dba, err := ar.db.DB(ctx)
+	dba, err := ar.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -332,7 +333,7 @@ func (ar *auditRepository) GetRecentEntries(
 		Str("action", string(req.Action)).
 		Logger()
 
-	entries := make([]*audit.Entry, 0)
+	entries := make([]*audit.Entry, 0, req.Limit)
 
 	q := dba.NewSelect().Model(&entries).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {

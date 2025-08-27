@@ -4,14 +4,14 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useUrlFragment } from "@/hooks/use-url-fragment";
 import { queries } from "@/lib/queries";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { useQuery } from "@tanstack/react-query";
-import { HouseIcon, MessageCircleIcon, PanelsTopLeftIcon } from "lucide-react";
-import { Suspense, useCallback, useEffect, useState } from "react";
+import { HouseIcon, LockIcon, MessageCircleIcon } from "lucide-react";
+import { Suspense, useCallback, useState } from "react";
 import { ShipmentNotFoundOverlay } from "../sidebar/shipment-not-found-overlay";
 import { ShipmentCommentDetails } from "./comment/comment-details";
+import { HoldList } from "./holds/hold-list";
 import { ShipmentDetailsSkeleton } from "./shipment-details-skeleton";
 import { ShipmentEditFormWrapper } from "./shipment-edit-form-wrapper";
 import { ShipmentFormContent } from "./shipment-form-body";
@@ -62,49 +62,28 @@ function ShipmentEditTabs({
   shipmentId: ShipmentSchema["id"];
   selectedShipment?: ShipmentSchema | null;
 }) {
-  const { fragment, setFragment } = useUrlFragment();
-
   const { data: commentCount } = useQuery({
     ...queries.shipment.getCommentCount(shipmentId),
     enabled: !!shipmentId,
   });
 
-  const [activeTab, setActiveTab] = useState(() => {
-    // Check for prefixed tab fragments
-    if (fragment?.startsWith("tab-")) {
-      const tabName = fragment.replace("tab-", "");
-      return tabName === "comments" || tabName === "documents"
-        ? tabName
-        : "general-information";
-    }
-    return "general-information";
+  const { data: holds } = useQuery({
+    ...queries.shipment.getHolds(shipmentId),
+    enabled: !!shipmentId,
   });
 
-  useEffect(() => {
-    // Handle prefixed tab fragments
-    if (fragment?.startsWith("tab-")) {
-      const tabName = fragment.replace("tab-", "");
-      const validTab =
-        tabName === "comments" || tabName === "documents"
-          ? tabName
-          : "general-information";
-      setActiveTab(validTab);
-    }
-  }, [fragment]);
+  const hasHolds = holds && holds.count > 0;
 
-  const handleTabChange = useCallback(
-    (value: string) => {
-      setActiveTab(value);
-      // Prefix with 'tab-' to avoid conflicts with other fragment usage
-      setFragment(`tab-${value}`);
-    },
-    [setFragment],
-  );
+  const [activeTab, setActiveTab] = useState("general-information");
+
+  const handleTabChange = useCallback((value: string) => {
+    setActiveTab(value);
+  }, []);
 
   return (
     <Tabs value={activeTab} onValueChange={handleTabChange}>
       <ScrollArea>
-        <TabsList className="text-foreground mb-3 h-auto bg-transparent gap-2 px-2 rounded-none border-b py-1 w-full justify-start overflow-x-auto">
+        <TabsList className="text-foreground h-auto bg-transparent gap-2 px-2 rounded-none border-b py-1 w-full justify-start overflow-x-auto">
           <TabsTrigger
             value="general-information"
             className="h-7 shrink-0 hover:bg-accent hover:text-foreground data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
@@ -132,7 +111,7 @@ function ShipmentEditTabs({
                 : (commentCount?.count ?? 0)}
             </span>
           </TabsTrigger>
-          <TabsTrigger
+          {/* <TabsTrigger
             value="documents"
             className="h-7 shrink-0 hover:bg-accent hover:text-foreground text-xs data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
           >
@@ -145,7 +124,19 @@ function ShipmentEditTabs({
             <span className="max-w-6 bg-primary/15 py-0.5 px-1.5 rounded-sm text-2xs">
               3
             </span>
-          </TabsTrigger>
+          </TabsTrigger> */}
+          {hasHolds && (
+            <TabsTrigger
+              value="holds"
+              className="h-7 shrink-0 hover:bg-accent hover:text-foreground text-xs data-[state=active]:after:bg-primary data-[state=active]:hover:bg-accent relative after:absolute after:inset-x-0 after:bottom-0 after:-mb-1 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+            >
+              <LockIcon className="-ms-0.5 mb-0.5 opacity-60" size={16} />
+              Holds
+              <span className="max-w-6 bg-primary/15 py-0.5 px-1.5 rounded-sm text-2xs">
+                {holds.count}
+              </span>
+            </TabsTrigger>
+          )}
         </TabsList>
         <ScrollBar orientation="horizontal" />
       </ScrollArea>
@@ -157,6 +148,9 @@ function ShipmentEditTabs({
       </TabsContent>
       <TabsContent value="documents">
         <ShipmentCommentDetails shipmentId={shipmentId} />
+      </TabsContent>
+      <TabsContent value="holds">
+        <HoldList holds={holds?.results ?? []} />
       </TabsContent>
     </Tabs>
   );

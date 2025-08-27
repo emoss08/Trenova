@@ -171,13 +171,20 @@ export function SlashCommandMenu({
   return (
     <FloatingMenu
       editor={editor}
+      className="z-50"
       options={{
-        strategy: "fixed",
+        strategy: "absolute",
         placement: "bottom-start",
         offset: 10,
         flip: true,
         shift: true,
         arrow: false,
+        getBoundingClientRect: () => {
+          const { view, state } = editor;
+          const { from } = state.selection;
+          const coords = view.coordsAtPos(from);
+          return new DOMRect(coords.left, coords.top, 0, 0);
+        },
       }}
       shouldShow={({ state }) => {
         if (!editor) return false;

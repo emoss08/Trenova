@@ -91,7 +91,7 @@ func (pr *permissionRepository) ListRoles(
 	ctx context.Context,
 	req *repositories.ListRolesRequest,
 ) (*ports.ListResult[*permission.Role], error) {
-	dba, err := pr.db.DB(ctx)
+	dba, err := pr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -102,7 +102,7 @@ func (pr *permissionRepository) ListRoles(
 		Str("buID", req.Filter.TenantOpts.BuID.String()).
 		Logger()
 
-	entities := make([]*permission.Role, 0)
+	entities := make([]*permission.Role, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = pr.filterRolesQuery(q, req)
@@ -126,7 +126,7 @@ func (pr *permissionRepository) GetRoleByID(
 	ctx context.Context,
 	req *repositories.GetRoleByIDRequest,
 ) (*permission.Role, error) {
-	dba, err := pr.db.DB(ctx)
+	dba, err := pr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -180,13 +180,13 @@ func (pr *permissionRepository) GetUserPermissions(
 	}
 
 	// On cache miss, get from database
-	dba, err := pr.db.DB(ctx)
+	dba, err := pr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
 
 	// Get permissions from database with role information
-	var dbPermissions []*permission.Permission
+	dbPermissions := make([]*permission.Permission, 0)
 	err = dba.NewSelect().
 		Model(&dbPermissions).
 		Join("JOIN role_permissions rp ON rp.permission_id = perm.id").
@@ -253,7 +253,7 @@ func (pr *permissionRepository) GetUserRoles(
 	}
 
 	// On cache miss, get from database
-	dba, err := pr.db.DB(ctx)
+	dba, err := pr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -315,17 +315,10 @@ func (pr *permissionRepository) GetRolesAndPermissions(
 		Str("userId", userID.String()).
 		Logger()
 
-	// First try to get from cache
 	permissions, permErr := pr.cache.GetUserPermissions(ctx, userID)
 	roles, rolesErr := pr.cache.GetUserRoles(ctx, userID)
 
-	// If cache hit for both, return early
 	if permErr == nil && rolesErr == nil && len(roles) > 0 {
-		// log.Debug().
-		// 	Int("roleCount", len(roles)).
-		// 	Int("permissionCount", len(permissions)).
-		// 	Msg("got roles and permissions from cache")
-
 		return &permission.RolesAndPermissions{
 			Roles:       roles,
 			Permissions: permissions,
@@ -333,13 +326,12 @@ func (pr *permissionRepository) GetRolesAndPermissions(
 	}
 
 	// If cache miss, load from database
-	dba, err := pr.db.DB(ctx)
+	dba, err := pr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
 
-	// Get roles with their permissions in one query
-	var dbRoles []*permission.Role
+	dbRoles := make([]*permission.Role, 0)
 	err = dba.NewSelect().
 		Model(&dbRoles).
 		Relation("Permissions").
@@ -414,7 +406,7 @@ func (pr *permissionRepository) CreateRole(
 	ctx context.Context,
 	req *repositories.CreateRoleRequest,
 ) (*permission.Role, error) {
-	dba, err := pr.db.DB(ctx)
+	dba, err := pr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -458,7 +450,7 @@ func (pr *permissionRepository) UpdateRole(
 	ctx context.Context,
 	req *repositories.UpdateRoleRequest,
 ) (*permission.Role, error) {
-	dba, err := pr.db.DB(ctx)
+	dba, err := pr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -516,7 +508,7 @@ func (pr *permissionRepository) DeleteRole(
 	ctx context.Context,
 	req *repositories.DeleteRoleRequest,
 ) error {
-	dba, err := pr.db.DB(ctx)
+	dba, err := pr.db.WriteDB(ctx)
 	if err != nil {
 		return eris.Wrap(err, "get database connection")
 	}
@@ -529,7 +521,6 @@ func (pr *permissionRepository) DeleteRole(
 		Logger()
 
 	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
-		// First delete role permissions
 		_, dpErr := tx.NewDelete().
 			Model((*permission.RolePermission)(nil)).
 			Where("role_id = ?", req.RoleID).
@@ -541,7 +532,6 @@ func (pr *permissionRepository) DeleteRole(
 			return dpErr
 		}
 
-		// Then delete user roles
 		_, durErr := tx.NewDelete().
 			Model((*user.UserRole)(nil)).
 			Where("role_id = ?", req.RoleID).
@@ -553,7 +543,6 @@ func (pr *permissionRepository) DeleteRole(
 			return durErr
 		}
 
-		// Finally delete the role
 		result, drErr := tx.NewDelete().
 			Model((*permission.Role)(nil)).
 			Where("r.id = ?", req.RoleID).
@@ -591,7 +580,7 @@ func (pr *permissionRepository) ListPermissions(
 	ctx context.Context,
 	req *repositories.ListPermissionsRequest,
 ) (*ports.ListResult[*permission.Permission], error) {
-	dba, err := pr.db.DB(ctx)
+	dba, err := pr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -632,12 +621,10 @@ func (pr *permissionRepository) handleRolePermissions(
 	permissionIDs []pulid.ID,
 	isCreate bool,
 ) error {
-	// Early return if no permissions to assign
 	if len(permissionIDs) == 0 && isCreate {
 		return nil
 	}
 
-	// Get existing role permissions for update operations
 	existingPermissionMap := make(map[pulid.ID]*permission.RolePermission)
 	if !isCreate {
 		if err := pr.loadExistingRolePermissionsMap(ctx, tx, role, existingPermissionMap); err != nil {
@@ -645,28 +632,32 @@ func (pr *permissionRepository) handleRolePermissions(
 		}
 	}
 
-	// Categorize permissions
-	newRolePermissions, updatedPermissionIDs := pr.categorizeRolePermissions(
+	categorizedRolePermissions, err := pr.categorizeRolePermissions(
 		role, permissionIDs, existingPermissionMap, isCreate)
-
-	// Process database operations
-	if err := pr.processRolePermissionOperations(ctx, tx, newRolePermissions); err != nil {
+	if err != nil {
 		return err
 	}
 
-	// Handle deletions for update operations
+	if err := pr.processRolePermissionOperations(ctx, tx, categorizedRolePermissions.newRolePermissions); err != nil {
+		return err
+	}
+
 	if !isCreate {
 		rolePermissionsToDelete := make([]*permission.RolePermission, 0)
-		if err := pr.handleRolePermissionDeletions(ctx, tx, existingPermissionMap, updatedPermissionIDs, &rolePermissionsToDelete); err != nil {
+		if err := pr.handleRolePermissionDeletions(ctx, tx, &permissionDeletionReq{
+			existingPermissionMap:   existingPermissionMap,
+			updatedPermissionIDs:    categorizedRolePermissions.updatedPermissionIDs,
+			rolePermissionsToDelete: &rolePermissionsToDelete,
+		}); err != nil {
 			pr.l.Error().Err(err).Msg("failed to handle role permission deletions")
 			return err
 		}
 
-		pr.l.Debug().Int("newPermissions", len(newRolePermissions)).
+		pr.l.Debug().Int("newPermissions", len(categorizedRolePermissions.newRolePermissions)).
 			Int("deletedPermissions", len(rolePermissionsToDelete)).
 			Msg("role permission operations completed")
 	} else {
-		pr.l.Debug().Int("newPermissions", len(newRolePermissions)).
+		pr.l.Debug().Int("newPermissions", len(categorizedRolePermissions.newRolePermissions)).
 			Msg("role permission operations completed")
 	}
 
@@ -693,34 +684,41 @@ func (pr *permissionRepository) loadExistingRolePermissionsMap(
 	return nil
 }
 
+type categorizedRolePermissions struct {
+	newRolePermissions   []*permission.RolePermission
+	updatedPermissionIDs map[pulid.ID]struct{}
+}
+
 // categorizeRolePermissions categorizes permissions for different operations
 func (pr *permissionRepository) categorizeRolePermissions(
 	role *permission.Role,
 	permissionIDs []pulid.ID,
 	existingPermissionMap map[pulid.ID]*permission.RolePermission,
 	isCreate bool,
-) (newRolePermissions []*permission.RolePermission, updatedPermissionIDs map[pulid.ID]struct{}) {
-	newRolePermissions = make([]*permission.RolePermission, 0)
-	updatedPermissionIDs = make(map[pulid.ID]struct{})
+) (categorizedRolePermissions, error) {
+	categorizedRolePermissions := categorizedRolePermissions{
+		newRolePermissions:   make([]*permission.RolePermission, 0, len(permissionIDs)),
+		updatedPermissionIDs: make(map[pulid.ID]struct{}),
+	}
 
 	for _, permissionID := range permissionIDs {
-		// Check if this permission assignment already exists
 		if _, exists := existingPermissionMap[permissionID]; !exists || isCreate {
-			// Create new RolePermission assignment
 			rolePermission := &permission.RolePermission{
 				BusinessUnitID: role.BusinessUnitID,
 				OrganizationID: role.OrganizationID,
 				RoleID:         role.ID,
 				PermissionID:   permissionID,
 			}
-			newRolePermissions = append(newRolePermissions, rolePermission)
+			categorizedRolePermissions.newRolePermissions = append(
+				categorizedRolePermissions.newRolePermissions,
+				rolePermission,
+			)
 		} else {
-			// Mark as updated (exists and should remain)
-			updatedPermissionIDs[permissionID] = struct{}{}
+			categorizedRolePermissions.updatedPermissionIDs[permissionID] = struct{}{}
 		}
 	}
 
-	return newRolePermissions, updatedPermissionIDs
+	return categorizedRolePermissions, nil
 }
 
 // processRolePermissionOperations handles database insert operations
@@ -729,7 +727,6 @@ func (pr *permissionRepository) processRolePermissionOperations(
 	tx bun.IDB,
 	newRolePermissions []*permission.RolePermission,
 ) error {
-	// Handle bulk insert of new role permission assignments
 	if len(newRolePermissions) > 0 {
 		if _, err := tx.NewInsert().Model(&newRolePermissions).Exec(ctx); err != nil {
 			pr.l.Error().Err(err).Msg("failed to bulk insert new role permissions")
@@ -762,25 +759,29 @@ func (pr *permissionRepository) getExistingRolePermissions(
 	return rolePermissions, nil
 }
 
+type permissionDeletionReq struct {
+	existingPermissionMap   map[pulid.ID]*permission.RolePermission
+	updatedPermissionIDs    map[pulid.ID]struct{}
+	rolePermissionsToDelete *[]*permission.RolePermission
+}
+
 // handleRolePermissionDeletions handles deletion of permissions that are no longer assigned
 func (pr *permissionRepository) handleRolePermissionDeletions(
 	ctx context.Context,
 	tx bun.IDB,
-	existingPermissionMap map[pulid.ID]*permission.RolePermission,
-	updatedPermissionIDs map[pulid.ID]struct{},
-	rolePermissionsToDelete *[]*permission.RolePermission,
+	req *permissionDeletionReq,
 ) error {
 	// For each existing permission assignment, check if it should remain
-	for permissionID, rolePermission := range existingPermissionMap {
-		if _, exists := updatedPermissionIDs[permissionID]; !exists {
-			*rolePermissionsToDelete = append(*rolePermissionsToDelete, rolePermission)
+	for permissionID, rolePermission := range req.existingPermissionMap {
+		if _, exists := req.updatedPermissionIDs[permissionID]; !exists {
+			*req.rolePermissionsToDelete = append(*req.rolePermissionsToDelete, rolePermission)
 		}
 	}
 
 	// If there are any permission assignments to delete, delete them
-	if len(*rolePermissionsToDelete) > 0 {
+	if len(*req.rolePermissionsToDelete) > 0 {
 		_, err := tx.NewDelete().
-			Model(rolePermissionsToDelete).
+			Model(req.rolePermissionsToDelete).
 			WherePK().
 			Exec(ctx)
 		if err != nil {

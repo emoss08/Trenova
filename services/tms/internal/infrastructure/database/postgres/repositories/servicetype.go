@@ -85,7 +85,7 @@ func (str *serviceTypeRepository) List(
 	ctx context.Context,
 	req *repositories.ListServiceTypeRequest,
 ) (*ports.ListResult[*servicetype.ServiceType], error) {
-	dba, err := str.db.DB(ctx)
+	dba, err := str.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -96,7 +96,7 @@ func (str *serviceTypeRepository) List(
 		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*servicetype.ServiceType, 0)
+	entities := make([]*servicetype.ServiceType, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = str.filterQuery(q, req)
@@ -117,7 +117,7 @@ func (str *serviceTypeRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetServiceTypeByIDOptions,
 ) (*servicetype.ServiceType, error) {
-	dba, err := str.db.DB(ctx)
+	dba, err := str.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -148,7 +148,7 @@ func (str *serviceTypeRepository) Create(
 	ctx context.Context,
 	st *servicetype.ServiceType,
 ) (*servicetype.ServiceType, error) {
-	dba, err := str.db.DB(ctx)
+	dba, err := str.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("service_type_repository").
@@ -180,7 +180,7 @@ func (str *serviceTypeRepository) Update(
 	ctx context.Context,
 	st *servicetype.ServiceType,
 ) (*servicetype.ServiceType, error) {
-	dba, err := str.db.DB(ctx)
+	dba, err := str.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

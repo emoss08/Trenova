@@ -103,7 +103,7 @@ func (dlr *dedicatedLaneRepository) List(
 	ctx context.Context,
 	req *repositories.ListDedicatedLaneRequest,
 ) (*ports.ListResult[*dedicatedlane.DedicatedLane], error) {
-	dba, err := dlr.db.DB(ctx)
+	dba, err := dlr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.In("dedicated_lane_repository").
 			With("op", "list").
@@ -116,7 +116,7 @@ func (dlr *dedicatedLaneRepository) List(
 		Interface("tenantOps", req.Filter.TenantOpts).
 		Logger()
 
-	entities := make([]*dedicatedlane.DedicatedLane, 0)
+	entities := make([]*dedicatedlane.DedicatedLane, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = dlr.filterQuery(q, req)
@@ -137,7 +137,7 @@ func (dlr *dedicatedLaneRepository) GetByID(
 	ctx context.Context,
 	req *repositories.GetDedicatedLaneByIDRequest,
 ) (*dedicatedlane.DedicatedLane, error) {
-	dba, err := dlr.db.DB(ctx)
+	dba, err := dlr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, oops.In("dedicated_lane_repository").
 			With("op", "get_by_id").
@@ -182,7 +182,7 @@ func (dlr *dedicatedLaneRepository) Create(
 	ctx context.Context,
 	dl *dedicatedlane.DedicatedLane,
 ) (*dedicatedlane.DedicatedLane, error) {
-	dba, err := dlr.db.DB(ctx)
+	dba, err := dlr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.In("dedicated_lane_repository").
 			With("op", "create").
@@ -210,7 +210,7 @@ func (dlr *dedicatedLaneRepository) FindByShipment(
 	ctx context.Context,
 	req *repositories.FindDedicatedLaneByShipmentRequest,
 ) (*dedicatedlane.DedicatedLane, error) {
-	dba, err := dlr.db.DB(ctx)
+	dba, err := dlr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.In("dedicated_lane_repository").
 			With("op", "find_by_shipment").
@@ -282,7 +282,7 @@ func (dlr *dedicatedLaneRepository) Update(
 	ctx context.Context,
 	dl *dedicatedlane.DedicatedLane,
 ) (*dedicatedlane.DedicatedLane, error) {
-	dba, err := dlr.db.DB(ctx)
+	dba, err := dlr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.In("dedicated_lane_repository").
 			With("op", "update").
@@ -335,7 +335,6 @@ func (dlr *dedicatedLaneRepository) Update(
 
 		return nil
 	})
-
 	if err != nil {
 		log.Error().Err(err).Msg("failed to update dedicated lane")
 		return nil, oops.In("dedicated_lane_repository").

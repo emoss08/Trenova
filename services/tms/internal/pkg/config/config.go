@@ -48,6 +48,9 @@ type Config struct {
 	// Kafka is the kafka configuration for CDC.
 	Kafka KafkaConfig `mapstructure:"kafka"`
 
+	// Docker is the docker configuration.
+	Docker DockerConfig `mapstructure:"docker"`
+
 	// Streaming is the streaming configuration.
 	Streaming StreamingConfig `mapstructure:"streaming"`
 
@@ -57,11 +60,11 @@ type Config struct {
 	// CronScheduler is the cron scheduler configuration.
 	CronScheduler CronSchedulerConfig `mapstructure:"cronScheduler"`
 
-    // Telemetry is the telemetry configuration.
-    Telemetry TelemetryConfig `mapstructure:"telemetry"`
+	// Telemetry is the telemetry configuration.
+	Telemetry TelemetryConfig `mapstructure:"telemetry"`
 
-    // GRPC is the gRPC server configuration.
-    GRPC GRPCServerConfig `mapstructure:"grpc"`
+	// GRPC is the gRPC server configuration.
+	GRPC GRPCServerConfig `mapstructure:"grpc"`
 }
 
 type LogConfig struct {
@@ -253,37 +256,37 @@ type ServerConfig struct {
 
 // GRPCServerConfig configures the internal gRPC server for inter-service communication.
 type GRPCServerConfig struct {
-    // Enabled toggles the gRPC server.
-    Enabled bool `mapstructure:"enabled"`
+	// Enabled toggles the gRPC server.
+	Enabled bool `mapstructure:"enabled"`
 
-    // ListenAddress is the address the gRPC server listens on, e.g., ":9090".
-    ListenAddress string `mapstructure:"listenAddress"`
+	// ListenAddress is the address the gRPC server listens on, e.g., ":9090".
+	ListenAddress string `mapstructure:"listenAddress"`
 
-    // MaxRecvMsgSize is the maximum message size the server can receive in bytes.
-    MaxRecvMsgSize int `mapstructure:"maxRecvMsgSize"`
+	// MaxRecvMsgSize is the maximum message size the server can receive in bytes.
+	MaxRecvMsgSize int `mapstructure:"maxRecvMsgSize"`
 
-    // MaxSendMsgSize is the maximum message size the server can send in bytes.
-    MaxSendMsgSize int `mapstructure:"maxSendMsgSize"`
+	// MaxSendMsgSize is the maximum message size the server can send in bytes.
+	MaxSendMsgSize int `mapstructure:"maxSendMsgSize"`
 
-    // Reflection enables server reflection (useful for dev/testing).
-    Reflection bool `mapstructure:"reflection"`
+	// Reflection enables server reflection (useful for dev/testing).
+	Reflection bool `mapstructure:"reflection"`
 
-    // TLS configuration for serving over TLS.
-    TLS struct {
-        Enabled  bool   `mapstructure:"enabled"`
-        CertFile string `mapstructure:"certFile"`
-        KeyFile  string `mapstructure:"keyFile"`
-        // ClientCAFile enables mTLS when set with RequireClientCert.
-        ClientCAFile     string `mapstructure:"clientCAFile"`
-        RequireClientCert bool   `mapstructure:"requireClientCert"`
-    } `mapstructure:"tls"`
+	// TLS configuration for serving over TLS.
+	TLS struct {
+		Enabled  bool   `mapstructure:"enabled"`
+		CertFile string `mapstructure:"certFile"`
+		KeyFile  string `mapstructure:"keyFile"`
+		// ClientCAFile enables mTLS when set with RequireClientCert.
+		ClientCAFile      string `mapstructure:"clientCAFile"`
+		RequireClientCert bool   `mapstructure:"requireClientCert"`
+	} `mapstructure:"tls"`
 
-    // Auth config for token-based access to gRPC APIs.
-    Auth struct {
-        Enabled      bool     `mapstructure:"enabled"`
-        BearerTokens []string `mapstructure:"bearerTokens"`
-        APIKeys      []string `mapstructure:"apiKeys"`
-    } `mapstructure:"auth"`
+	// Auth config for token-based access to gRPC APIs.
+	Auth struct {
+		Enabled      bool     `mapstructure:"enabled"`
+		BearerTokens []string `mapstructure:"bearerTokens"`
+		APIKeys      []string `mapstructure:"apiKeys"`
+	} `mapstructure:"auth"`
 }
 
 type DatabaseDriver string

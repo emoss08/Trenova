@@ -74,6 +74,9 @@ const (
 	ResourceTrailer = Resource(
 		"trailer",
 	) // Represents resources for managing trailers.
+	ResourceDocker = Resource(
+		"docker",
+	) // Represents resources for managing docker.
 	ResourceShipment = Resource(
 		"shipment",
 	) // Represents resources for managing shipments.
@@ -212,6 +215,7 @@ const (
 	ActionReassign  = Action("reassign")  // Reassign a resource to a different user or group.
 	ActionComplete  = Action("complete")  // Mark a resource or action as completed.
 	ActionDuplicate = Action("duplicate") // Duplicate a resource.
+	ActionRelease   = Action("release")   // Release a resource.
 
 	// Configuration actions
 	ActionManageDefaults = Action("manage_defaults") // Manage default table configurations.
@@ -474,7 +478,7 @@ var (
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceShipmentHold: append(
-			BaseActions,
+			append(BaseActions, ActionRelease),
 			append(DataActions, FieldActions...)...,
 		),
 		ResourceHoldReason: append(
@@ -652,6 +656,13 @@ var (
 			ActionAudit,
 			ActionModifyField,
 		),
+		ResourceDocker: {
+			ActionRead,    // View containers, images, volumes, networks, system info
+			ActionManage,  // Start, stop, restart containers, prune system
+			ActionDelete,  // Remove containers, images, volumes
+			ActionAudit,   // View container logs and audit information
+			ActionExport,  // Export container stats and logs
+		},
 	}
 )
 

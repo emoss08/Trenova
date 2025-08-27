@@ -64,7 +64,7 @@ func (or *organizationRepository) List(
 	ctx context.Context,
 	opts *ports.LimitOffsetQueryOptions,
 ) (*ports.ListResult[*organization.Organization], error) {
-	dba, err := or.db.DB(ctx)
+	dba, err := or.db.ReadDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -75,7 +75,7 @@ func (or *organizationRepository) List(
 		Str("userID", opts.TenantOpts.UserID.String()).
 		Logger()
 
-	organizations := make([]*organization.Organization, 0)
+	organizations := make([]*organization.Organization, 0, opts.Limit)
 
 	q := dba.NewSelect().Model(&organizations)
 	q = or.filterQuery(q, opts)
@@ -97,7 +97,7 @@ func (or *organizationRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetOrgByIDOptions,
 ) (*organization.Organization, error) {
-	dba, err := or.db.DB(ctx)
+	dba, err := or.db.ReadDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -176,7 +176,7 @@ func (or *organizationRepository) Create(
 	ctx context.Context,
 	org *organization.Organization,
 ) (*organization.Organization, error) {
-	dba, err := or.db.DB(ctx)
+	dba, err := or.db.WriteDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -214,7 +214,7 @@ func (or *organizationRepository) Update(
 	ctx context.Context,
 	org *organization.Organization,
 ) (*organization.Organization, error) {
-	dba, err := or.db.DB(ctx)
+	dba, err := or.db.WriteDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -278,7 +278,7 @@ func (or *organizationRepository) SetLogo(
 	ctx context.Context,
 	org *organization.Organization,
 ) (*organization.Organization, error) {
-	dba, err := or.db.DB(ctx)
+	dba, err := or.db.WriteDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -336,7 +336,10 @@ func (or *organizationRepository) ClearLogo(
 	ctx context.Context,
 	org *organization.Organization,
 ) (*organization.Organization, error) {
-	log := or.l.With().Str("operation", "ClearLogo").Str("orgID", org.ID.String()).Logger()
+	log := or.l.With().
+		Str("operation", "ClearLogo").
+		Str("orgID", org.ID.String()).
+		Logger()
 
 	original, err := or.GetByID(ctx, repositories.GetOrgByIDOptions{
 		OrgID: org.ID,
@@ -378,7 +381,7 @@ func (or *organizationRepository) GetUserOrganizations(
 	ctx context.Context,
 	opts *ports.LimitOffsetQueryOptions,
 ) (*ports.ListResult[*organization.Organization], error) {
-	dba, err := or.db.DB(ctx)
+	dba, err := or.db.ReadDB(ctx)
 	if err != nil {
 		or.l.Error().Err(err).Msg("failed to get database connection")
 		return nil, err
@@ -399,7 +402,7 @@ func (or *organizationRepository) GetUserOrganizations(
 		}, nil
 	}
 
-	dbOrgs := make([]*organization.Organization, 0)
+	dbOrgs := make([]*organization.Organization, 0, opts.Limit)
 
 	q := dba.NewSelect().
 		Model(&dbOrgs).
@@ -435,7 +438,7 @@ func (or *organizationRepository) GetOrganizationBucketName(
 	ctx context.Context,
 	orgID pulid.ID,
 ) (string, error) {
-	dba, err := or.db.DB(ctx)
+	dba, err := or.db.ReadDB(ctx)
 	if err != nil {
 		return "", err
 	}

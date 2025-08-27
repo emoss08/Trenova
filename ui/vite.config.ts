@@ -29,7 +29,7 @@ const vendorChunks = {
   ],
 
   // State Management and Data Fetching
-  "data-management": ["@tanstack/react-query", "zustand"],
+  "data-management": ["@tanstack/react-query", "zustand", "recharts"],
 
   // UI Components and Styling
   "ui-components": [

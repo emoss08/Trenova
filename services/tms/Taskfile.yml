@@ -3,7 +3,10 @@ version: "3"
 tasks:
   run:
     desc: Run the application
-    cmd: go run ./cmd/api/main.go serve
+    cmd: go run ./cmd/api/main.go serve 
+  run-gc:
+    desc: Run the application with new experimental gc and jsonv2
+    cmd: GOTOOLCHAIN=go1.25.0 GOEXPERIMENT=greenteagc go1.25.0 run ./cmd/api/main.go serve
   reset:
     desc: Reset the database, Redis
     cmds:

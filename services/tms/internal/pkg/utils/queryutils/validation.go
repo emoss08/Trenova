@@ -376,6 +376,130 @@ func formatErrorMessage(template *ErrorTemplate) string {
 	return message
 }
 
+// CheckCompositeUniqueness performs uniqueness validation for multiple fields as a composite constraint.
+// Unlike CheckFieldUniqueness which validates each field separately, this checks the combination
+// of all fields together as a single unique constraint.
+//
+// Example usage for a constraint like:
+// UNIQUE(shipment_id, organization_id, business_unit_id, type) WHERE released_at IS NULL
+func CheckCompositeUniqueness(
+	ctx context.Context,
+	tx bun.IDB,
+	tableName string,
+	fields map[string]any,
+	opts *CompositeUniquenessOptions,
+	multiErr *errors.MultiError,
+) {
+	logger := log.With().
+		Str("operation", "CheckCompositeUniqueness").
+		Str("table", tableName).
+		Logger()
+
+	if tableName == "" {
+		logger.Error().Msg("table name is required")
+		multiErr.Add("", errors.ErrInvalid, "Invalid validation criteria: table name is required")
+		return
+	}
+
+	if len(fields) == 0 {
+		logger.Error().Msg("at least one field is required for composite uniqueness")
+		multiErr.Add(
+			"",
+			errors.ErrInvalid,
+			"Invalid validation criteria: at least one field is required",
+		)
+		return
+	}
+
+	// Build the query
+	query := tx.NewSelect().TableExpr(tableName)
+
+	// Add all composite fields to the WHERE clause
+	for name, value := range fields {
+		if value == nil {
+			continue // Skip nil values
+		}
+
+		if opts.CaseSensitive {
+			query = query.Where(fmt.Sprintf("%s.%s = ?", tableName, name), value)
+		} else {
+			query = query.Where(fmt.Sprintf("LOWER(%s.%s) = LOWER(?)", tableName, name), value)
+		}
+	}
+
+	// Add tenant conditions
+	if opts.OrganizationID != "" {
+		query = query.Where(fmt.Sprintf("%s.organization_id = ?", tableName), opts.OrganizationID)
+	}
+	if opts.BusinessUnitID != "" {
+		query = query.Where(fmt.Sprintf("%s.business_unit_id = ?", tableName), opts.BusinessUnitID)
+	}
+
+	// Add primary key exclusion for updates
+	if opts.Operation == OperationUpdate && opts.PrimaryKeyValue != "" {
+		pkField := opts.PrimaryKeyField
+		if pkField == "" {
+			pkField = "id"
+		}
+		query = query.Where(fmt.Sprintf("%s.%s != ?", tableName, pkField), opts.PrimaryKeyValue)
+	}
+
+	// Add any additional conditions
+	for _, cond := range opts.AdditionalConditions {
+		query = query.Where(cond.Query, cond.Args...)
+	}
+
+	// Execute the query
+	exists, err := query.Exists(ctx)
+	if err != nil {
+		logger.Error().Err(err).Msg("failed to check composite uniqueness")
+		multiErr.Add(
+			opts.ErrorFieldName,
+			errors.ErrInvalid,
+			"Failed to validate uniqueness constraint",
+		)
+		return
+	}
+
+	if exists {
+		// Format the error message
+		message := opts.ErrorTemplate
+		if message == "" {
+			// Default message - list the field names
+			fieldNames := make([]string, 0, len(fields))
+			for name := range fields {
+				fieldNames = append(fieldNames, name)
+			}
+			message = fmt.Sprintf(
+				"A record with this combination of %s already exists",
+				strings.Join(fieldNames, ", "),
+			)
+		} else {
+			// Replace variables in the template
+			for key, value := range opts.ErrorVars {
+				message = strings.ReplaceAll(message, fmt.Sprintf(":%s", key), value)
+			}
+		}
+
+		multiErr.Add(opts.ErrorFieldName, errors.ErrDuplicate, message)
+	}
+}
+
+// CompositeUniquenessOptions contains options for composite uniqueness validation
+type CompositeUniquenessOptions struct {
+	ModelName            string
+	ErrorFieldName       string
+	ErrorTemplate        string
+	ErrorVars            map[string]string
+	CaseSensitive        bool
+	PrimaryKeyField      string
+	PrimaryKeyValue      string
+	OrganizationID       pulid.ID
+	BusinessUnitID       pulid.ID
+	Operation            OperationType
+	AdditionalConditions []WhereCondition
+}
+
 // UniquenessValidatorBuilder provides a fluent interface for constructing uniqueness validation criteria.
 // It supports configuration of:
 //   - Multiple fields with case sensitivity options
@@ -641,4 +765,120 @@ func (b *UniquenessValidatorBuilder) WithOperation(op OperationType) *Uniqueness
 //   - A pointer to the configured UniquenessCriteria
 func (b *UniquenessValidatorBuilder) Build() *UniquenessCriteria {
 	return &b.criteria
+}
+
+// CompositeUniquenessValidatorBuilder provides a fluent interface for building composite uniqueness validations
+type CompositeUniquenessValidatorBuilder struct {
+	tableName string
+	fields    map[string]any
+	options   CompositeUniquenessOptions
+}
+
+// NewCompositeUniquenessValidator creates a new builder for composite field uniqueness validation
+func NewCompositeUniquenessValidator(tableName string) *CompositeUniquenessValidatorBuilder {
+	return &CompositeUniquenessValidatorBuilder{
+		tableName: tableName,
+		fields:    make(map[string]any),
+		options:   CompositeUniquenessOptions{},
+	}
+}
+
+// WithField adds a field to the composite uniqueness check
+func (b *CompositeUniquenessValidatorBuilder) WithField(
+	name string,
+	value any,
+) *CompositeUniquenessValidatorBuilder {
+	b.fields[name] = value
+	return b
+}
+
+// WithFields adds multiple fields at once to the composite uniqueness check
+func (b *CompositeUniquenessValidatorBuilder) WithFields(
+	fields map[string]any,
+) *CompositeUniquenessValidatorBuilder {
+	for name, value := range fields {
+		b.fields[name] = value
+	}
+	return b
+}
+
+// WithTenant sets the tenant context for the validation
+func (b *CompositeUniquenessValidatorBuilder) WithTenant(
+	orgID, buID pulid.ID,
+) *CompositeUniquenessValidatorBuilder {
+	b.options.OrganizationID = orgID
+	b.options.BusinessUnitID = buID
+	return b
+}
+
+// WithErrorField sets which field should receive the error if validation fails
+func (b *CompositeUniquenessValidatorBuilder) WithErrorField(
+	fieldName string,
+) *CompositeUniquenessValidatorBuilder {
+	b.options.ErrorFieldName = fieldName
+	return b
+}
+
+// WithErrorTemplate sets a custom error message template
+func (b *CompositeUniquenessValidatorBuilder) WithErrorTemplate(
+	template string,
+	vars map[string]string,
+) *CompositeUniquenessValidatorBuilder {
+	b.options.ErrorTemplate = template
+	b.options.ErrorVars = vars
+	return b
+}
+
+// WithCaseSensitive sets whether the comparison should be case-sensitive
+func (b *CompositeUniquenessValidatorBuilder) WithCaseSensitive(
+	caseSensitive bool,
+) *CompositeUniquenessValidatorBuilder {
+	b.options.CaseSensitive = caseSensitive
+	return b
+}
+
+// WithCondition adds an additional WHERE condition to the uniqueness check
+func (b *CompositeUniquenessValidatorBuilder) WithCondition(
+	query string,
+	args ...any,
+) *CompositeUniquenessValidatorBuilder {
+	b.options.AdditionalConditions = append(b.options.AdditionalConditions, WhereCondition{
+		Query: query,
+		Args:  args,
+	})
+	return b
+}
+
+// ForCreate sets the validation for a create operation
+func (b *CompositeUniquenessValidatorBuilder) ForCreate() *CompositeUniquenessValidatorBuilder {
+	b.options.Operation = OperationCreate
+	return b
+}
+
+// ForUpdate sets the validation for an update operation with the given primary key
+func (b *CompositeUniquenessValidatorBuilder) ForUpdate(
+	primaryKeyValue string,
+) *CompositeUniquenessValidatorBuilder {
+	b.options.Operation = OperationUpdate
+	b.options.PrimaryKeyValue = primaryKeyValue
+	return b
+}
+
+// ForUpdateWithPK sets the validation for an update with a custom primary key field
+func (b *CompositeUniquenessValidatorBuilder) ForUpdateWithPK(
+	pkField, pkValue string,
+) *CompositeUniquenessValidatorBuilder {
+	b.options.Operation = OperationUpdate
+	b.options.PrimaryKeyField = pkField
+	b.options.PrimaryKeyValue = pkValue
+	return b
+}
+
+// Validate executes the composite uniqueness validation
+func (b *CompositeUniquenessValidatorBuilder) Validate(
+	ctx context.Context,
+	tx bun.IDB,
+	multiErr *errors.MultiError,
+) {
+	CheckCompositeUniqueness(ctx, tx, b.tableName, b.fields, &b.options, multiErr)
 }

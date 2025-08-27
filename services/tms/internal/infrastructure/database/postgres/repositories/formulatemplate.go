@@ -101,7 +101,7 @@ func (r *formulaTemplateRepository) List(
 		Str("userID", opts.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*formulatemplate.FormulaTemplate, 0)
+	entities := make([]*formulatemplate.FormulaTemplate, 0, opts.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities).
 		Apply(func(q *bun.SelectQuery) *bun.SelectQuery {

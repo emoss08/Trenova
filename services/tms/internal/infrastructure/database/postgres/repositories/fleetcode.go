@@ -77,7 +77,7 @@ func (fcr *fleetCodeRepository) List(
 	ctx context.Context,
 	opts *repositories.ListFleetCodeOptions,
 ) (*ports.ListResult[*fleetcode.FleetCode], error) {
-	dba, err := fcr.db.DB(ctx)
+	dba, err := fcr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +88,7 @@ func (fcr *fleetCodeRepository) List(
 		Str("userID", opts.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	fcs := make([]*fleetcode.FleetCode, 0)
+	fcs := make([]*fleetcode.FleetCode, 0, opts.Filter.Limit)
 
 	q := dba.NewSelect().Model(&fcs)
 	q = fcr.filterQuery(q, opts)
@@ -109,7 +109,7 @@ func (fcr *fleetCodeRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetFleetCodeByIDOptions,
 ) (*fleetcode.FleetCode, error) {
-	dba, err := fcr.db.DB(ctx)
+	dba, err := fcr.db.ReadDB(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -144,7 +144,7 @@ func (fcr *fleetCodeRepository) Create(
 	ctx context.Context,
 	fc *fleetcode.FleetCode,
 ) (*fleetcode.FleetCode, error) {
-	dba, err := fcr.db.DB(ctx)
+	dba, err := fcr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, oops.
 			In("fleet_code_repository").
@@ -176,7 +176,7 @@ func (fcr *fleetCodeRepository) Update(
 	ctx context.Context,
 	fc *fleetcode.FleetCode,
 ) (*fleetcode.FleetCode, error) {
-	dba, err := fcr.db.DB(ctx)
+	dba, err := fcr.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}

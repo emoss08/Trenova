@@ -113,7 +113,7 @@ func (ur *userRepository) List(
 	ctx context.Context,
 	req repositories.ListUserRequest,
 ) (*ports.ListResult[*user.User], error) {
-	dba, err := ur.db.DB(ctx)
+	dba, err := ur.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -123,7 +123,7 @@ func (ur *userRepository) List(
 		Str("userID", req.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	users := make([]*user.User, 0)
+	users := make([]*user.User, 0, req.Filter.Limit)
 
 	q := dba.NewSelect().Model(&users)
 	q = ur.filterQuery(q, req)
@@ -150,7 +150,7 @@ func (ur *userRepository) List(
 //   - *user.User: The user found with the given email address.
 //   - error: An error if the operation fails.
 func (ur *userRepository) FindByEmail(ctx context.Context, email string) (*user.User, error) {
-	dba, err := ur.db.DB(ctx)
+	dba, err := ur.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -232,7 +232,7 @@ func (ur *userRepository) GetByID(
 	ctx context.Context,
 	opts repositories.GetUserByIDOptions,
 ) (*user.User, error) {
-	dba, err := ur.db.DB(ctx)
+	dba, err := ur.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -292,7 +292,7 @@ func (ur *userRepository) GetByIDs(
 		return []*user.User{}, nil
 	}
 
-	dba, err := ur.db.DB(ctx)
+	dba, err := ur.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -378,7 +378,7 @@ func (ur *userRepository) loadUserRolesAndPermissions(
 // Returns:
 //   - error: An error if the operation fails.
 func (ur *userRepository) UpdateLastLogin(ctx context.Context, userID pulid.ID) error {
-	dba, err := ur.db.DB(ctx)
+	dba, err := ur.db.WriteDB(ctx)
 	if err != nil {
 		return err
 	}
@@ -414,7 +414,7 @@ func (ur *userRepository) UpdateLastLogin(ctx context.Context, userID pulid.ID) 
 //   - *user.User: The created user.
 //   - error: An error if the operation fails.
 func (ur *userRepository) Create(ctx context.Context, u *user.User) (*user.User, error) {
-	dba, err := ur.db.DB(ctx)
+	dba, err := ur.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -458,7 +458,7 @@ func (ur *userRepository) Create(ctx context.Context, u *user.User) (*user.User,
 //   - *user.User: The updated user.
 //   - error: An error if the operation fails.
 func (ur *userRepository) Update(ctx context.Context, u *user.User) (*user.User, error) {
-	dba, err := ur.db.DB(ctx)
+	dba, err := ur.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -531,7 +531,7 @@ func (ur *userRepository) handleRoleOperations(
 	}
 
 	// Get existing roles for update operations
-	existingRoleMap := make(map[pulid.ID]*user.UserRole)
+	existingRoleMap := make(map[pulid.ID]*user.UserRole, len(u.Roles))
 	if !isCreate {
 		if err := ur.loadExistingRolesMap(ctx, tx, u, existingRoleMap); err != nil {
 			return err
@@ -593,8 +593,9 @@ func (ur *userRepository) categorizeRoles(
 	existingRoleMap map[pulid.ID]*user.UserRole,
 	isCreate bool,
 ) (newRoles []*user.UserRole, updatedRoleIDs map[pulid.ID]struct{}) {
-	newRoles = make([]*user.UserRole, 0)
-	updatedRoleIDs = make(map[pulid.ID]struct{})
+	roleCount := len(u.Roles)
+	newRoles = make([]*user.UserRole, 0, roleCount)
+	updatedRoleIDs = make(map[pulid.ID]struct{}, roleCount)
 
 	for _, role := range u.Roles {
 		// Check if this role assignment already exists
@@ -641,7 +642,6 @@ func (ur *userRepository) getExistingUserRoles(
 ) ([]*user.UserRole, error) {
 	userRoles := make([]*user.UserRole, 0, len(u.Roles))
 
-	// Fetch the existing user role assignments
 	if err := tx.NewSelect().
 		Model(&userRoles).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -666,14 +666,12 @@ func (ur *userRepository) handleRoleDeletions(
 	updatedRoleIDs map[pulid.ID]struct{},
 	rolesToDelete *[]*user.UserRole,
 ) error {
-	// For each existing role assignment, check if it should remain
 	for roleID, userRole := range existingRoleMap {
 		if _, exists := updatedRoleIDs[roleID]; !exists {
 			*rolesToDelete = append(*rolesToDelete, userRole)
 		}
 	}
 
-	// If there are any role assignments to delete, delete them
 	if len(*rolesToDelete) > 0 {
 		_, err := tx.NewDelete().
 			Model(rolesToDelete).
@@ -689,7 +687,7 @@ func (ur *userRepository) handleRoleDeletions(
 }
 
 func (ur *userRepository) GetSystemUser(ctx context.Context) (*user.User, error) {
-	dba, err := ur.db.DB(ctx)
+	dba, err := ur.db.ReadDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
@@ -728,7 +726,7 @@ func (ur *userRepository) SwitchOrganization(
 	ctx context.Context,
 	userID, newOrgID pulid.ID,
 ) (*user.User, error) {
-	dba, err := ur.db.DB(ctx)
+	dba, err := ur.db.WriteDB(ctx)
 	if err != nil {
 		return nil, eris.Wrap(err, "get database connection")
 	}
