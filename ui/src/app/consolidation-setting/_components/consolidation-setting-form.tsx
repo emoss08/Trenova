@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { NumberField } from "@/components/ui/number-input";
+import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { queries } from "@/lib/queries";
 import {
@@ -58,15 +59,17 @@ export default function ConsolidationSettingForm() {
     <FormProvider {...form}>
       <Form onSubmit={handleSubmit(onSubmit)}>
         <Card>
-          <CardHeader>
-            <CardTitle>Shipment Consolidation Settings</CardTitle>
-            <CardDescription>
-              Configure intelligent consolidation parameters to optimize route
-              efficiency and reduce transportation costs. These settings control
-              how the system identifies and suggests shipment consolidation
-              opportunities.
-            </CardDescription>
-          </CardHeader>
+          <VisuallyHidden>
+            <CardHeader>
+              <CardTitle>Shipment Consolidation Settings</CardTitle>
+              <CardDescription>
+                Configure intelligent consolidation parameters to optimize route
+                efficiency and reduce transportation costs. These settings
+                control how the system identifies and suggests shipment
+                consolidation opportunities.
+              </CardDescription>
+            </CardHeader>
+          </VisuallyHidden>
           <CardContent className="max-w-prose">
             {/* Distance Parameters Section */}
             <div className="space-y-4">

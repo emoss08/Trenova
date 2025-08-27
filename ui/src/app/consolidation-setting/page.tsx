@@ -36,7 +36,10 @@ const Header = memo(() => {
           Consolidation Settings
         </h1>
         <p className="text-muted-foreground">
-          Configure and manage your consolidation settings
+          Configure intelligent consolidation parameters to optimize route
+          efficiency and reduce transportation costs. These settings control how
+          the system identifies and suggests shipment consolidation
+          opportunities.
         </p>
       </div>
     </div>
