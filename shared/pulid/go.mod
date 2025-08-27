@@ -5,7 +5,7 @@ go 1.24
 require (
 	github.com/oklog/ulid/v2 v2.1.1
 	github.com/rotisserie/eris v0.5.4
-	github.com/stretchr/testify v1.10.0
+	github.com/stretchr/testify v1.11.0
 )
 
 require (

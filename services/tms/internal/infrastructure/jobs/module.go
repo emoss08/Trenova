@@ -25,11 +25,15 @@ var Module = fx.Module(
 	fx.Provide(
 		// Infrastructure
 		NewRedisConnOpt,
-		jobs.NewJobService,
+		// Provide the base Asynq service with a specific name
+		fx.Annotate(
+			jobs.NewJobService,
+			fx.ResultTags(`name:"asynq_service"`),
+		),
 		scheduler.NewCronScheduler,
 		triggers.NewShipmentTrigger,
 
-		// Job Handlers
+		// Job Handlers (excluding DuplicateShipmentHandler as it's handled by Temporal)
 		fx.Annotate(
 			handlers.NewPatternAnalysisHandler,
 			fx.As(new(services.JobHandler)),
@@ -40,11 +44,7 @@ var Module = fx.Module(
 			fx.As(new(services.JobHandler)),
 			fx.ResultTags(`group:"job_handlers"`),
 		),
-		fx.Annotate(
-			handlers.NewDuplicateShipmentHandler,
-			fx.As(new(services.JobHandler)),
-			fx.ResultTags(`group:"job_handlers"`),
-		),
+		// Removed DuplicateShipmentHandler as it's now handled by Temporal
 		fx.Annotate(
 			handlers.NewDelayShipmentHandler,
 			fx.As(new(services.JobHandler)),

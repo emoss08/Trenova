@@ -1,0 +1,1059 @@
+╭─────────────────────────────────────────────────────╮
+│ ✻ Welcome to Claude Code!                           │
+│                                                     │
+│   /help for help, /status for your current setup    │
+│                                                     │
+│   cwd: /home/wolfred/Projects/Trenova/services/tms  │
+╰─────────────────────────────────────────────────────╯
+● Compact summary (ctrl+r to expand)
+  ⎿  Read internal/infrastructure/external/temporaljobs/registry.go (222 lines)
+  ⎿  Read internal/infrastructure/external/temporaljobs/interfaces.go (88 lines)
+  ⎿  Read internal/infrastructure/external/temporaljobs/worker.go (220 lines)
+  ⎿  Read internal/infrastructure/external/temporaljobs/scheduler/scheduler.go (352 lines)
+  ⎿  Read internal/infrastructure/external/temporaljobs/registration.go (246 lines)
+  ⎿  Todo list read (7 items)
+
+● I'll continue restructuring the Temporal implementation to separate workflows and activities into
+  domain-specific packages for better enterprise organization.
+  ⎿  Found 1 new diagnostic issue in 1 file (ctrl-r to expand)
+
+● Let me first fix the compilation error in registry.go:
+
+● Update(internal/infrastructure/external/temporaljobs/registry.go)
+  ⎿  Error editing file
+
+● Let me check the import issue:
+
+● Update(internal/infrastructure/external/temporaljobs/registry.go)
+  ⎿  Updated internal/infrastructure/external/temporaljobs/registry.go with 1 addition
+       11    
+       12      "github.com/emoss08/trenova/internal/pkg/logger"
+       13      "github.com/rs/zerolog"
+       14 +    "go.temporal.io/sdk/workflow"
+       15      "go.uber.org/fx"
+       16    )
+       17    
+
+● Now let's create domain-specific packages for better organization. I'll start with the email domain:
+
+● Write(internal/infrastructure/external/temporaljobs/domains/email/workflows.go)
+  ⎿  Wrote 90 lines to internal/infrastructure/external/temporaljobs/domains/email/workflows.go
+     /*
+      * Copyright 2023-2025 Eric Moss
+      * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+      * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+     package email
+     import (
+       "time"
+     … +80 lines (ctrl+r to expand)
+
+● Write(internal/infrastructure/external/temporaljobs/domains/email/activities.go)
+  ⎿  Wrote 105 lines to internal/infrastructure/external/temporaljobs/domains/email/activities.go
+     /*
+      * Copyright 2023-2025 Eric Moss
+      * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+      * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+     package email
+     import (
+       "context"
+     … +95 lines (ctrl+r to expand)
+
+● Now let's create the pattern analysis domain:
+
+● Write(internal/infrastructure/external/temporaljobs/domains/patterns/workflows.go)
+  ⎿  Wrote 81 lines to internal/infrastructure/external/temporaljobs/domains/patterns/workflows.go
+     /*
+      * Copyright 2023-2025 Eric Moss
+      * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+      * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+     package patterns
+     import (
+       "time"
+     … +71 lines (ctrl+r to expand)
+
+● Write(internal/infrastructure/external/temporaljobs/domains/patterns/activities.go)
+  ⎿  Wrote 68 lines to internal/infrastructure/external/temporaljobs/domains/patterns/activities.go
+     /*
+      * Copyright 2023-2025 Eric Moss
+      * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+      * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+     package patterns
+     import (
+       "context"
+     … +58 lines (ctrl+r to expand)
+
+● Now let's create the compliance domain:
+
+● Write(internal/infrastructure/external/temporaljobs/domains/compliance/workflows.go)
+  ⎿  Wrote 77 lines to internal/infrastructure/external/temporaljobs/domains/compliance/workflows.go
+     /*
+      * Copyright 2023-2025 Eric Moss
+      * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+      * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+     package compliance
+     import (
+       "time"
+     … +67 lines (ctrl+r to expand)
+
+● Write(internal/infrastructure/external/temporaljobs/domains/compliance/activities.go)
+  ⎿  Wrote 69 lines to internal/infrastructure/external/temporaljobs/domains/compliance/activities.go
+     /*
+      * Copyright 2023-2025 Eric Moss
+      * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+      * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+     package compliance
+     import (
+       "context"
+     … +59 lines (ctrl+r to expand)
+
+● Now let's update the registration.go to use these new domain packages:
+
+● Write(internal/infrastructure/external/temporaljobs/registration.go)
+  ⎿  Updated internal/infrastructure/external/temporaljobs/registration.go with 124 additions and 245  
+     removals
+         1 -  /*
+         2 -   * Copyright 2023-2025 Eric Moss
+         3 -   * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+         4 -   * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+         5 -  
+         6 -  package temporaljobs
+         7 -  
+         8 -  import (
+         9 -    "context"
+        10 -    "time"
+        11 -  
+        12 -    "github.com/emoss08/trenova/internal/core/ports/services"
+        13 -    "github.com/emoss08/trenova/internal/pkg/logger"
+        14 -    "github.com/rs/zerolog"
+        15 -    "go.temporal.io/sdk/activity"
+        16 -    "go.temporal.io/sdk/temporal"
+        17 -    "go.temporal.io/sdk/workflow"
+        18 -  )
+        19 -  
+        20 -  // RegisterWorkflowsAndActivities registers all workflows and activities with the worker
+        21 -  func RegisterWorkflowsAndActivities(worker *Worker) {
+        22 -    // Register workflows with the names used by the scheduler
+        23 -    // These names must match what's in the scheduler exactly
+        24 -    worker.RegisterWorkflowWithOptions(PatternAnalysisWorkflow, workflow.RegisterOptions{
+        25 -      Name: "PatternAnalysisWorkflow",
+        26 -    })
+        27 -    worker.RegisterWorkflowWithOptions(ExpireSuggestionsWorkflow, workflow.RegisterOptions{
+        28 -      Name: "ExpireSuggestionsWorkflow",
+        29 -    })
+        30 -    worker.RegisterWorkflowWithOptions(ComplianceCheckWorkflow, workflow.RegisterOptions{
+        31 -      Name: "ComplianceCheckWorkflow",
+        32 -    })
+        33 -    worker.RegisterWorkflowWithOptions(SendEmailWorkflow, workflow.RegisterOptions{
+        34 -      Name: "SendEmailWorkflow",
+        35 -    })
+        36 -    worker.RegisterWorkflowWithOptions(ProcessEmailQueueWorkflow, workflow.RegisterOptions{
+        37 -      Name: "ProcessEmailQueueWorkflow",
+        38 -    })
+        39 -    
+        40 -    // Register activities
+        41 -    worker.RegisterActivity(SendEmailActivity)
+        42 -    worker.RegisterActivity(FetchEmailsFromQueueActivity)
+        43 -    worker.RegisterActivity(AnalyzePatternActivity)
+        44 -  }
+        45 -  
+        46 -  // SendEmailWorkflow is a simple workflow for sending emails
+        47 -  func SendEmailWorkflow(ctx workflow.Context, payload *EmailPayload) error {
+        48 -    logger := workflow.GetLogger(ctx)
+        49 -    logger.Info("starting email workflow",
+        50 -      "organizationId", payload.OrganizationID.String(),
+        51 -      "to", payload.To,
+        52 -    )
+        53 -  
+        54 -    ao := workflow.ActivityOptions{
+        55 -      StartToCloseTimeout: 30 * time.Second,
+        56 -      HeartbeatTimeout:    5 * time.Second,
+        57 -      RetryPolicy: &temporal.RetryPolicy{
+        58 -        InitialInterval:    time.Second,
+        59 -        BackoffCoefficient: 2.0,
+        60 -        MaximumInterval:    30 * time.Second,
+        61 -        MaximumAttempts:    3,
+        62 -      },
+        63 -    }
+        64 -    ctx = workflow.WithActivityOptions(ctx, ao)
+        65 -  
+        66 -    var result string
+        67 -    err := workflow.ExecuteActivity(ctx, SendEmailActivity, payload).Get(ctx, &result)
+        68 -    if err != nil {
+        69 -      logger.Error("failed to send email", "error", err)
+        70 -      return err
+        71 -    }
+        72 -  
+        73 -    logger.Info("email sent successfully", "result", result)
+        74 -    return nil
+        75 -  }
+        76 -  
+        77 -  // ProcessEmailQueueWorkflow processes a batch of emails
+        78 -  func ProcessEmailQueueWorkflow(ctx workflow.Context, payload *BasePayload) error {
+        79 -    logger := workflow.GetLogger(ctx)
+        80 -    logger.Info("processing email queue",
+        81 -      "organizationId", payload.OrganizationID.String(),
+        82 -    )
+        83 -    
+        84 -    ao := workflow.ActivityOptions{
+        85 -      StartToCloseTimeout: 5 * time.Minute,
+        86 -      HeartbeatTimeout:    30 * time.Second,
+        87 -    }
+        88 -    ctx = workflow.WithActivityOptions(ctx, ao)
+        89 -  
+        90 -    var emailBatch []EmailPayload
+        91 -    err := workflow.ExecuteActivity(ctx, FetchEmailsFromQueueActivity, payload).Get(ctx, 
+     &emailBatch)
+           - &emailBatch)
+        92 -    if err != nil {
+        93 -      return err
+        94 -    }
+        95 -  
+        96 -    for _, email := range emailBatch {
+        97 -      var result string
+        98 -      _ = workflow.ExecuteActivity(ctx, SendEmailActivity, &email).Get(ctx, &result)
+        99 -    }
+       100 -  
+       101 -    return nil
+       102 -  }
+       103 -  
+       104 -  // PatternAnalysisWorkflow analyzes patterns for dedicated lanes
+       105 -  func PatternAnalysisWorkflow(ctx workflow.Context, payload *PatternAnalysisPayload) error 
+     {
+           - {
+       106 -    logger := workflow.GetLogger(ctx)
+       107 -    logger.Info("starting pattern analysis",
+       108 -      "organizationId", payload.OrganizationID.String(),
+       109 -      "triggerReason", payload.TriggerReason,
+       110 -    )
+       111 -  
+       112 -    ao := workflow.ActivityOptions{
+       113 -      StartToCloseTimeout: 10 * time.Minute,
+       114 -      HeartbeatTimeout:    1 * time.Minute,
+       115 -    }
+       116 -    ctx = workflow.WithActivityOptions(ctx, ao)
+       117 -  
+       118 -    var result string
+       119 -    err := workflow.ExecuteActivity(ctx, AnalyzePatternActivity, payload).Get(ctx, &result)
+       120 -    if err != nil {
+       121 -      logger.Error("pattern analysis failed", "error", err)
+       122 -      return err
+       123 -    }
+       124 -  
+       125 -    logger.Info("pattern analysis completed", "result", result)
+       126 -    return nil
+       127 -  }
+       128 -  
+       129 -  // ExpireSuggestionsWorkflow expires old suggestions
+       130 -  func ExpireSuggestionsWorkflow(ctx workflow.Context, payload *ExpireSuggestionsPayload) 
+           - error {
+       131 -    logger := workflow.GetLogger(ctx)
+       132 -    logger.Info("expiring old suggestions",
+       133 -      "organizationId", payload.OrganizationID.String(),
+       134 -      "batchSize", payload.BatchSize,
+       135 -    )
+       136 -  
+       137 -    ao := workflow.ActivityOptions{
+       138 -      StartToCloseTimeout: 5 * time.Minute,
+       139 -      HeartbeatTimeout:    30 * time.Second,
+       140 -    }
+       141 -    ctx = workflow.WithActivityOptions(ctx, ao)
+       142 -  
+       143 -    // Placeholder - actual implementation would call an activity
+       144 -    logger.Info("expired suggestions successfully")
+       145 -    return nil
+       146 -  }
+       147 -  
+       148 -  // ComplianceCheckWorkflow performs compliance checks
+       149 -  func ComplianceCheckWorkflow(ctx workflow.Context, payload *ComplianceCheckPayload) error 
+           - {
+       150 -    logger := workflow.GetLogger(ctx)
+       151 -    logger.Info("starting compliance check",
+       152 -      "organizationId", payload.OrganizationID.String(),
+       153 -      "checkType", payload.CheckType,
+       154 -    )
+       155 -  
+       156 -    ao := workflow.ActivityOptions{
+       157 -      StartToCloseTimeout: 15 * time.Minute,
+       158 -      HeartbeatTimeout:    1 * time.Minute,
+       159 -    }
+       160 -    ctx = workflow.WithActivityOptions(ctx, ao)
+       161 -  
+       162 -    // Placeholder - actual implementation would call compliance check activities
+       163 -    logger.Info("compliance check completed")
+       164 -    return nil
+       165 -  }
+       166 -  
+       167 -  // SendEmailActivity sends an email
+       168 -  func SendEmailActivity(ctx context.Context, payload *EmailPayload) (string, error) {
+       169 -    logger := activity.GetLogger(ctx)
+       170 -    logger.Info("sending email activity",
+       171 -      "to", payload.To,
+       172 -      "subject", payload.Subject,
+       173 -    )
+       174 -  
+       175 -    // Placeholder implementation
+       176 -    activity.RecordHeartbeat(ctx, "sending email")
+       177 -    
+       178 -    // In production, this would call the actual email service
+       179 -    result := "Email sent successfully to " + payload.To[0]
+       180 -    return result, nil
+       181 -  }
+       182 -  
+       183 -  // FetchEmailsFromQueueActivity fetches emails from queue
+       184 -  func FetchEmailsFromQueueActivity(ctx context.Context, payload *BasePayload) 
+           - ([]EmailPayload, error) {
+       185 -    logger := activity.GetLogger(ctx)
+       186 -    logger.Info("fetching emails from queue")
+       187 -    
+       188 -    // Return empty batch for now
+       189 -    return []EmailPayload{}, nil
+       190 -  }
+       191 -  
+       192 -  // AnalyzePatternActivity analyzes shipment patterns
+       193 -  func AnalyzePatternActivity(ctx context.Context, payload *PatternAnalysisPayload) 
+     (string,
+           -  error) {
+       194 -    logger := activity.GetLogger(ctx)
+       195 -    logger.Info("analyzing patterns",
+       196 -      "organizationId", payload.OrganizationID.String(),
+       197 -      "minFrequency", payload.MinFrequency,
+       198 -    )
+       199 -  
+       200 -    activity.RecordHeartbeat(ctx, "analyzing patterns")
+       201 -    
+       202 -    // Placeholder - would analyze patterns in production
+       203 -    return "Pattern analysis completed", nil
+       204 -  }
+       205 -  
+       206 -  // EmailActivityProvider provides email activities with dependencies
+       207 -  type EmailActivityProvider struct {
+       208 -    logger       *zerolog.Logger
+       209 -    emailService services.EmailService
+       210 -  }
+       211 -  
+       212 -  // NewEmailActivityProvider creates a new email activity provider
+       213 -  func NewEmailActivityProvider(logger *logger.Logger, emailService services.EmailService) 
+           - *EmailActivityProvider {
+       214 -    log := logger.With().
+       215 -      Str("component", "temporal-email-activities").
+       216 -      Logger()
+       217 -  
+       218 -    return &EmailActivityProvider{
+       219 -      logger:       &log,
+       220 -      emailService: emailService,
+       221 -    }
+       222 -  }
+       223 -  
+       224 -  // SendEmailWithService sends an email using the email service
+       225 -  func (ea *EmailActivityProvider) SendEmailWithService(ctx context.Context, payload 
+           - *EmailPayload) (string, error) {
+       226 -    if ea.emailService == nil {
+       227 -      return SendEmailActivity(ctx, payload) // Fall back to basic implementation
+       228 -    }
+       229 -  
+       230 -    emailReq := &services.SendEmailRequest{
+       231 -      OrganizationID: payload.OrganizationID,
+       232 -      BusinessUnitID: payload.BusinessUnitID,
+       233 -      UserID:         payload.UserID,
+       234 -      To:             payload.To,
+       235 -      Subject:        payload.Subject,
+       236 -      TextBody:       payload.Body,
+       237 -      HTMLBody:       payload.BodyHTML,
+       238 -    }
+       239 -  
+       240 -    response, err := ea.emailService.SendEmail(ctx, emailReq)
+       241 -    if err != nil {
+       242 -      return "", err
+       243 -    }
+       244 -  
+       245 -    return "Email sent with ID: " + response.MessageID, nil
+         1 +  /*
+         2 +   * Copyright 2023-2025 Eric Moss
+         3 +   * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+         4 +   * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+         5 +  
+         6 +  package temporaljobs
+         7 +  
+         8 +  import (
+         9 +    
+     "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs/domains/compliance"
+           + ance"
+        10 +    
+     "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs/domains/email"
+        11 +    
+     "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs/domains/patterns"
+           + 
+     "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs/domains/patterns"
+        12 +    "github.com/emoss08/trenova/internal/pkg/logger"
+        13 +    "go.uber.org/fx"
+        14 +  )
+        15 +  
+        16 +  // RegistrationParams defines dependencies for registration
+        17 +  type RegistrationParams struct {
+        18 +    fx.In
+        19 +  
+        20 +    Logger   *logger.Logger
+        21 +    Registry *Registry
+        22 +    Worker   *Worker
+        23 +  }
+        24 +  
+        25 +  // RegisterAllWorkflowsAndActivities registers all domain workflows and activities
+        26 +  func RegisterAllWorkflowsAndActivities(p RegistrationParams) error {
+        27 +    log := p.Logger.With().
+        28 +      Str("component", "temporal-registration").
+        29 +      Logger()
+        30 +  
+        31 +    // Register email domain workflows and activities
+        32 +    for _, def := range email.RegisterWorkflows() {
+        33 +      if err := p.Registry.RegisterWorkflow(&def); err != nil {
+        34 +        log.Error().Err(err).Str("workflow", def.Name).Msg("failed to register workflow")
+        35 +        return err
+        36 +      }
+        37 +    }
+        38 +  
+        39 +    for _, def := range email.RegisterActivities() {
+        40 +      if err := p.Registry.RegisterActivity(&def); err != nil {
+        41 +        log.Error().Err(err).Str("activity", def.Name).Msg("failed to register activity")
+        42 +        return err
+        43 +      }
+        44 +    }
+        45 +  
+        46 +    // Register pattern domain workflows and activities
+        47 +    for _, def := range patterns.RegisterWorkflows() {
+        48 +      if err := p.Registry.RegisterWorkflow(&def); err != nil {
+        49 +        log.Error().Err(err).Str("workflow", def.Name).Msg("failed to register workflow")
+        50 +        return err
+        51 +      }
+        52 +    }
+        53 +  
+        54 +    for _, def := range patterns.RegisterActivities() {
+        55 +      if err := p.Registry.RegisterActivity(&def); err != nil {
+        56 +        log.Error().Err(err).Str("activity", def.Name).Msg("failed to register activity")
+        57 +        return err
+        58 +      }
+        59 +    }
+        60 +  
+        61 +    // Register compliance domain workflows and activities
+        62 +    for _, def := range compliance.RegisterWorkflows() {
+        63 +      if err := p.Registry.RegisterWorkflow(&def); err != nil {
+        64 +        log.Error().Err(err).Str("workflow", def.Name).Msg("failed to register workflow")
+        65 +        return err
+        66 +      }
+        67 +    }
+        68 +  
+        69 +    for _, def := range compliance.RegisterActivities() {
+        70 +      if err := p.Registry.RegisterActivity(&def); err != nil {
+        71 +        log.Error().Err(err).Str("activity", def.Name).Msg("failed to register activity")
+        72 +        return err
+        73 +      }
+        74 +    }
+        75 +  
+        76 +    // Apply all registered workflows and activities to the worker
+        77 +    if err := p.Registry.ApplyToWorker(p.Worker); err != nil {
+        78 +      log.Error().Err(err).Msg("failed to apply registrations to worker")
+        79 +      return err
+        80 +    }
+        81 +  
+        82 +    log.Info().
+        83 +      Int("workflows", len(p.Registry.GetAllWorkflows())).
+        84 +      Int("activities", len(p.Registry.GetAllActivities())).
+        85 +      Msg("registered all workflows and activities")
+        86 +  
+        87 +    return nil
+        88 +  }
+        89 +  
+        90 +  // RegisterWorkflowsAndActivities is a backwards-compatible function that registers 
+     workflows directly
+           + workflows directly
+        91 +  // This is called by the worker during startup
+        92 +  func RegisterWorkflowsAndActivities(worker *Worker) {
+        93 +    // Register workflows directly on the worker for backwards compatibility
+        94 +    // These are the actual workflow functions that execute
+        95 +    for _, def := range email.RegisterWorkflows() {
+        96 +      worker.RegisterWorkflowWithOptions(def.Fn, workflow.RegisterOptions{
+        97 +        Name: def.Name,
+        98 +      })
+        99 +    }
+       100 +  
+       101 +    for _, def := range patterns.RegisterWorkflows() {
+       102 +      worker.RegisterWorkflowWithOptions(def.Fn, workflow.RegisterOptions{
+       103 +        Name: def.Name,
+       104 +      })
+       105 +    }
+       106 +  
+       107 +    for _, def := range compliance.RegisterWorkflows() {
+       108 +      worker.RegisterWorkflowWithOptions(def.Fn, workflow.RegisterOptions{
+       109 +        Name: def.Name,
+       110 +      })
+       111 +    }
+       112 +  
+       113 +    // Register activities
+       114 +    for _, def := range email.RegisterActivities() {
+       115 +      worker.RegisterActivity(def.Fn)
+       116 +    }
+       117 +  
+       118 +    for _, def := range patterns.RegisterActivities() {
+       119 +      worker.RegisterActivity(def.Fn)
+       120 +    }
+       121 +  
+       122 +    for _, def := range compliance.RegisterActivities() {
+       123 +      worker.RegisterActivity(def.Fn)
+       124 +    }
+       125    }
+       126   \ No newline at end of file
+
+● We need to add the missing import:
+
+● Update(internal/infrastructure/external/temporaljobs/registration.go)
+  ⎿  Updated internal/infrastructure/external/temporaljobs/registration.go with 1 addition             
+       10      "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs/domains/email"
+       11      
+            "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs/domains/patterns"
+       12      "github.com/emoss08/trenova/internal/pkg/logger"
+       13 +    "go.temporal.io/sdk/workflow"
+       14      "go.uber.org/fx"
+       15    )
+       16    
+  ⎿  Found 5 new diagnostic issues in 5 files (ctrl-r to expand)
+
+● We have an import cycle issue. Let me fix this by moving the payload types to a separate package:
+
+● Write(internal/infrastructure/external/temporaljobs/payloads/payloads.go)
+  ⎿  Wrote 50 lines to internal/infrastructure/external/temporaljobs/payloads/payloads.go
+     /*
+      * Copyright 2023-2025 Eric Moss
+      * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+      * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+     package payloads
+     import "github.com/emoss08/trenova/shared/pulid"
+     // BasePayload contains common fields for all workflow payloads
+     … +40 lines (ctrl+r to expand)
+
+● Now let's update the types.go to reference the payloads package and export the types:
+
+● Update(internal/infrastructure/external/temporaljobs/types.go)
+  ⎿  Error editing file
+
+● Read(internal/infrastructure/external/temporaljobs/types.go)
+  ⎿  Read 216 lines (ctrl+r to expand)
+
+● Now let me update the domain packages to use the payloads package instead of temporaljobs to avoid
+  the import cycle:
+
+● Update(internal/infrastructure/external/temporaljobs/domains/email/workflows.go)
+  ⎿  Updated internal/infrastructure/external/temporaljobs/domains/email/workflows.go with 16 additions
+     and 8 removals
+        8    import (
+        9      "time"
+       10    
+       11 -    "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs"
+       11 +    "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs/payloads"
+       12      "go.temporal.io/sdk/temporal"
+       13      "go.temporal.io/sdk/workflow"
+       14    )
+       15    
+       16    // SendEmailWorkflow sends a single email
+       17 -  func SendEmailWorkflow(ctx workflow.Context, payload *temporaljobs.EmailPayload) error {
+       17 +  func SendEmailWorkflow(ctx workflow.Context, payload *payloads.EmailPayload) error {
+       18      logger := workflow.GetLogger(ctx)
+       19      logger.Info("starting email workflow",
+       20        "organizationId", payload.OrganizationID.String(),
+     ...
+       45    }
+       46    
+       47    // ProcessEmailQueueWorkflow processes a batch of emails from queue
+       48 -  func ProcessEmailQueueWorkflow(ctx workflow.Context, payload *temporaljobs.BasePayload) 
+     error {
+          - error {
+       48 +  func ProcessEmailQueueWorkflow(ctx workflow.Context, payload *payloads.BasePayload) error 
+     {
+       49      logger := workflow.GetLogger(ctx)
+       50      logger.Info("processing email queue",
+       51        "organizationId", payload.OrganizationID.String(),
+     ...
+       57      }
+       58      ctx = workflow.WithActivityOptions(ctx, ao)
+       59    
+       60 -    var emailBatch []temporaljobs.EmailPayload
+       60 +    var emailBatch []payloads.EmailPayload
+       61      err := workflow.ExecuteActivity(ctx, FetchEmailsFromQueueActivity, payload).Get(ctx, 
+            &emailBatch)
+       62      if err != nil {
+       63        return err
+     ...
+       71      return nil
+       72    }
+       73    
+       74 +  // WorkflowDefinition defines a workflow with its configuration
+       75 +  type WorkflowDefinition struct {
+       76 +    Name        string
+       77 +    Fn          any
+       78 +    TaskQueue   string
+       79 +    Description string
+       80 +  }
+       81 +  
+       82    // RegisterWorkflows registers all email-related workflows
+       83 -  func RegisterWorkflows() []temporaljobs.WorkflowDefinition {
+       84 -    return []temporaljobs.WorkflowDefinition{
+       83 +  func RegisterWorkflows() []WorkflowDefinition {
+       84 +    return []WorkflowDefinition{
+       85        {
+       86          Name:        "SendEmailWorkflow",
+       87          Fn:          SendEmailWorkflow,
+       88 -        TaskQueue:   temporaljobs.TaskQueueEmail,
+       88 +        TaskQueue:   "email-tasks",
+       89          Description: "Sends individual emails",
+       90        },
+       91        {
+       92          Name:        "ProcessEmailQueueWorkflow",
+       93          Fn:          ProcessEmailQueueWorkflow,
+       94 -        TaskQueue:   temporaljobs.TaskQueueEmail,
+       94 +        TaskQueue:   "email-tasks",
+       95          Description: "Processes batches of emails from queue",
+       96        },
+       97      }
+
+● Update(internal/infrastructure/external/temporaljobs/domains/email/activities.go)
+  ⎿  Updated internal/infrastructure/external/temporaljobs/domains/email/activities.go with 14 addition
+      and 7 removals
+        9      "context"
+       10    
+       11      "github.com/emoss08/trenova/internal/core/ports/services"
+       12 -    "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs"
+       12 +    "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs/payloads"
+       13      "github.com/emoss08/trenova/internal/pkg/logger"
+       14      "github.com/rs/zerolog"
+       15      "go.temporal.io/sdk/activity"
+     ...
+       34    }
+       35    
+       36    // SendEmailActivity sends an email
+       37 -  func SendEmailActivity(ctx context.Context, payload *temporaljobs.EmailPayload) (string, 
+     error) {
+          - error) {
+       37 +  func SendEmailActivity(ctx context.Context, payload *payloads.EmailPayload) (string, 
+     error) {
+          +  {
+       38      logger := activity.GetLogger(ctx)
+       39      logger.Info("sending email activity",
+       40        "to", payload.To,
+     ...
+       49    }
+       50    
+       51    // SendEmailWithService sends an email using the injected email service
+       52 -  func (p *ActivityProvider) SendEmailWithService(ctx context.Context, payload 
+     *temporaljobs.EmailPayload) (string, error) {
+          - *temporaljobs.EmailPayload) (string, error) {
+       52 +  func (p *ActivityProvider) SendEmailWithService(ctx context.Context, payload 
+     *payloads.EmailPayload) (string, error) {
+          + *payloads.EmailPayload) (string, error) {
+       53      if p.emailService == nil {
+       54        return SendEmailActivity(ctx, payload)
+       55      }
+     ...
+       76    }
+       77    
+       78    // FetchEmailsFromQueueActivity fetches emails from queue
+       79 -  func FetchEmailsFromQueueActivity(ctx context.Context, payload *temporaljobs.BasePayload) 
+     ([]temporaljobs.EmailPayload, error) {
+          - ([]temporaljobs.EmailPayload, error) {
+       79 +  func FetchEmailsFromQueueActivity(ctx context.Context, payload *payloads.BasePayload) 
+     ([]payloads.EmailPayload, error) {
+          + ([]payloads.EmailPayload, error) {
+       80      logger := activity.GetLogger(ctx)
+       81      logger.Info("fetching emails from queue",
+       82        "organizationId", payload.OrganizationID.String(),
+     ...
+        85      activity.RecordHeartbeat(ctx, "fetching emails")
+        86      
+        87      // Return empty batch for now - would fetch from queue in production
+        88 -    return []temporaljobs.EmailPayload{}, nil
+        88 +    return []payloads.EmailPayload{}, nil
+        89    }
+        90    
+        91 +  // ActivityDefinition defines an activity with its configuration
+        92 +  type ActivityDefinition struct {
+        93 +    Name        string
+        94 +    Fn          any
+        95 +    Description string
+        96 +  }
+        97 +  
+        98    // RegisterActivities registers all email-related activities
+        99 -  func RegisterActivities() []temporaljobs.ActivityDefinition {
+       100 -    return []temporaljobs.ActivityDefinition{
+        99 +  func RegisterActivities() []ActivityDefinition {
+       100 +    return []ActivityDefinition{
+       101        {
+       102          Name:        "SendEmailActivity",
+       103          Fn:          SendEmailActivity,
+
+● Update(internal/infrastructure/external/temporaljobs/domains/patterns/workflows.go)
+  ⎿  Updated internal/infrastructure/external/temporaljobs/domains/patterns/workflows.go with 15       
+     additions and 7 removals
+        8    import (
+        9      "time"
+       10    
+       11 -    "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs"
+       11 +    "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs/payloads"
+       12      "go.temporal.io/sdk/workflow"
+       13    )
+       14    
+       15    // PatternAnalysisWorkflow analyzes patterns for dedicated lanes
+       16 -  func PatternAnalysisWorkflow(ctx workflow.Context, payload 
+     *temporaljobs.PatternAnalysisPayload) error {
+          - *temporaljobs.PatternAnalysisPayload) error {
+       16 +  func PatternAnalysisWorkflow(ctx workflow.Context, payload 
+     *payloads.PatternAnalysisPayload) error {
+          + *payloads.PatternAnalysisPayload) error {
+       17      logger := workflow.GetLogger(ctx)
+       18      logger.Info("starting pattern analysis",
+       19        "organizationId", payload.OrganizationID.String(),
+     ...
+       38    }
+       39    
+       40    // ExpireSuggestionsWorkflow expires old pattern suggestions
+       41 -  func ExpireSuggestionsWorkflow(ctx workflow.Context, payload 
+     *temporaljobs.ExpireSuggestionsPayload) error {
+          - *temporaljobs.ExpireSuggestionsPayload) error {
+       41 +  func ExpireSuggestionsWorkflow(ctx workflow.Context, payload 
+     *payloads.ExpireSuggestionsPayload) error {
+          + *payloads.ExpireSuggestionsPayload) error {
+       42      logger := workflow.GetLogger(ctx)
+       43      logger.Info("expiring old suggestions",
+       44        "organizationId", payload.OrganizationID.String(),
+     ...
+       62      return nil
+       63    }
+       64    
+       65 +  // WorkflowDefinition defines a workflow with its configuration
+       66 +  type WorkflowDefinition struct {
+       67 +    Name        string
+       68 +    Fn          any
+       69 +    TaskQueue   string
+       70 +    Description string
+       71 +  }
+       72 +  
+       73    // RegisterWorkflows registers all pattern-related workflows
+       74 -  func RegisterWorkflows() []temporaljobs.WorkflowDefinition {
+       75 -    return []temporaljobs.WorkflowDefinition{
+       74 +  func RegisterWorkflows() []WorkflowDefinition {
+       75 +    return []WorkflowDefinition{
+       76        {
+       77          Name:        "PatternAnalysisWorkflow",
+       78          Fn:          PatternAnalysisWorkflow,
+       79 -        TaskQueue:   temporaljobs.TaskQueuePattern,
+       79 +        TaskQueue:   "pattern-analysis-tasks",
+       80          Description: "Analyzes shipment patterns for dedicated lanes",
+       81        },
+       82        {
+       83          Name:        "ExpireSuggestionsWorkflow",
+       84          Fn:          ExpireSuggestionsWorkflow,
+       85 -        TaskQueue:   temporaljobs.TaskQueueDefault,
+       85 +        TaskQueue:   "default-tasks",
+       86          Description: "Expires old pattern suggestions",
+       87        },
+       88      }
+
+● Update(internal/infrastructure/external/temporaljobs/domains/patterns/activities.go)
+  ⎿  Updated internal/infrastructure/external/temporaljobs/domains/patterns/activities.go with 12      
+     additions and 5 removals
+        8    import (
+        9      "context"
+       10    
+       11 -    "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs"
+       11 +    "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs/payloads"
+       12      "go.temporal.io/sdk/activity"
+       13    )
+       14    
+       15    // AnalyzePatternActivity analyzes shipment patterns
+       16 -  func AnalyzePatternActivity(ctx context.Context, payload 
+     *temporaljobs.PatternAnalysisPayload) (string, error) {
+          - *temporaljobs.PatternAnalysisPayload) (string, error) {
+       16 +  func AnalyzePatternActivity(ctx context.Context, payload *payloads.PatternAnalysisPayload) 
+     (string, error) {
+          + (string, error) {
+       17      logger := activity.GetLogger(ctx)
+       18      logger.Info("analyzing patterns",
+       19        "organizationId", payload.OrganizationID.String(),
+     ...
+       33    }
+       34    
+       35    // ExpireSuggestionsActivity expires old pattern suggestions
+       36 -  func ExpireSuggestionsActivity(ctx context.Context, payload 
+     *temporaljobs.ExpireSuggestionsPayload) (int, error) {
+          - *temporaljobs.ExpireSuggestionsPayload) (int, error) {
+       36 +  func ExpireSuggestionsActivity(ctx context.Context, payload 
+     *payloads.ExpireSuggestionsPayload) (int, error) {
+          + *payloads.ExpireSuggestionsPayload) (int, error) {
+       37      logger := activity.GetLogger(ctx)
+       38      logger.Info("expiring suggestions",
+       39        "organizationId", payload.OrganizationID.String(),
+     ...
+       51      return 0, nil
+       52    }
+       53    
+       54 +  // ActivityDefinition defines an activity with its configuration
+       55 +  type ActivityDefinition struct {
+       56 +    Name        string
+       57 +    Fn          any
+       58 +    Description string
+       59 +  }
+       60 +  
+       61    // RegisterActivities registers all pattern-related activities
+       62 -  func RegisterActivities() []temporaljobs.ActivityDefinition {
+       63 -    return []temporaljobs.ActivityDefinition{
+       62 +  func RegisterActivities() []ActivityDefinition {
+       63 +    return []ActivityDefinition{
+       64        {
+       65          Name:        "AnalyzePatternActivity",
+       66          Fn:          AnalyzePatternActivity,
+  ⎿  Found 1 new diagnostic issue in 1 file (ctrl-r to expand)
+
+● Update(internal/infrastructure/external/temporaljobs/domains/compliance/workflows.go)
+  ⎿  Updated internal/infrastructure/external/temporaljobs/domains/compliance/workflows.go with 13     
+     additions and 5 removals
+        8    import (
+        9      "time"
+       10    
+       11 -    "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs"
+       11 +    "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs/payloads"
+       12      "go.temporal.io/sdk/workflow"
+       13    )
+       14    
+       15    // ComplianceCheckWorkflow performs compliance checks
+       16 -  func ComplianceCheckWorkflow(ctx workflow.Context, payload 
+     *temporaljobs.ComplianceCheckPayload) error {
+          - *temporaljobs.ComplianceCheckPayload) error {
+       16 +  func ComplianceCheckWorkflow(ctx workflow.Context, payload 
+     *payloads.ComplianceCheckPayload) error {
+          + *payloads.ComplianceCheckPayload) error {
+       17      logger := workflow.GetLogger(ctx)
+       18      logger.Info("starting compliance check",
+       19        "organizationId", payload.OrganizationID.String(),
+     ...
+       64      return nil
+       65    }
+       66    
+       67 +  // WorkflowDefinition defines a workflow with its configuration
+       68 +  type WorkflowDefinition struct {
+       69 +    Name        string
+       70 +    Fn          any
+       71 +    TaskQueue   string
+       72 +    Description string
+       73 +  }
+       74 +  
+       75    // RegisterWorkflows registers all compliance-related workflows
+       76 -  func RegisterWorkflows() []temporaljobs.WorkflowDefinition {
+       77 -    return []temporaljobs.WorkflowDefinition{
+       76 +  func RegisterWorkflows() []WorkflowDefinition {
+       77 +    return []WorkflowDefinition{
+       78        {
+       79          Name:        "ComplianceCheckWorkflow",
+       80          Fn:          ComplianceCheckWorkflow,
+       81 -        TaskQueue:   temporaljobs.TaskQueueCompliance,
+       81 +        TaskQueue:   "compliance-tasks",
+       82          Description: "Performs compliance checks for DOT and Hazmat regulations",
+       83        },
+       84      }
+  ⎿  Found 2 new diagnostic issues in 1 file (ctrl-r to expand)
+
+● Update(internal/infrastructure/external/temporaljobs/domains/compliance/activities.go)
+  ⎿  Updated internal/infrastructure/external/temporaljobs/domains/compliance/activities.go with 12    
+     additions and 5 removals
+        8    import (
+        9      "context"
+       10    
+       11 -    "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs"
+       11 +    "github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs/payloads"
+       12      "go.temporal.io/sdk/activity"
+       13    )
+       14    
+       15    // CheckDOTComplianceActivity checks DOT compliance
+       16 -  func CheckDOTComplianceActivity(ctx context.Context, payload 
+     *temporaljobs.ComplianceCheckPayload) ([]string, error) {
+          - *temporaljobs.ComplianceCheckPayload) ([]string, error) {
+       16 +  func CheckDOTComplianceActivity(ctx context.Context, payload 
+     *payloads.ComplianceCheckPayload) ([]string, error) {
+          + *payloads.ComplianceCheckPayload) ([]string, error) {
+       17      logger := activity.GetLogger(ctx)
+       18      logger.Info("checking DOT compliance",
+       19        "organizationId", payload.OrganizationID.String(),
+     ...
+       33    }
+       34    
+       35    // CheckHazmatComplianceActivity checks Hazmat compliance
+       36 -  func CheckHazmatComplianceActivity(ctx context.Context, payload 
+     *temporaljobs.ComplianceCheckPayload) ([]string, error) {
+          - *temporaljobs.ComplianceCheckPayload) ([]string, error) {
+       36 +  func CheckHazmatComplianceActivity(ctx context.Context, payload 
+     *payloads.ComplianceCheckPayload) ([]string, error) {
+          + *payloads.ComplianceCheckPayload) ([]string, error) {
+       37      logger := activity.GetLogger(ctx)
+       38      logger.Info("checking Hazmat compliance",
+       39        "organizationId", payload.OrganizationID.String(),
+     ...
+       52      return violations, nil
+       53    }
+       54    
+       55 +  // ActivityDefinition defines an activity with its configuration
+       56 +  type ActivityDefinition struct {
+       57 +    Name        string
+       58 +    Fn          any
+       59 +    Description string
+       60 +  }
+       61 +  
+       62    // RegisterActivities registers all compliance-related activities
+       63 -  func RegisterActivities() []temporaljobs.ActivityDefinition {
+       64 -    return []temporaljobs.ActivityDefinition{
+       63 +  func RegisterActivities() []ActivityDefinition {
+       64 +    return []ActivityDefinition{
+       65        {
+       66          Name:        "CheckDOTComplianceActivity",
+       67          Fn:          CheckDOTComplianceActivity,
+  ⎿  Found 1 new diagnostic issue in 1 file (ctrl-r to expand)
+
+● Now I need to update the registration.go file to properly handle the domain-specific types:
+
+● Update(internal/infrastructure/external/temporaljobs/registration.go)
+  ⎿  Updated internal/infrastructure/external/temporaljobs/registration.go with 39 additions and 6     
+     removals
+       31    
+       32      // Register email domain workflows and activities
+       33      for _, def := range email.RegisterWorkflows() {
+       34 -      if err := p.Registry.RegisterWorkflow(&def); err != nil {
+       34 +      wfDef := &WorkflowDefinition{
+       35 +        Name:        def.Name,
+       36 +        Fn:          def.Fn,
+       37 +        TaskQueue:   def.TaskQueue,
+       38 +        Description: def.Description,
+       39 +      }
+       40 +      if err := p.Registry.RegisterWorkflow(wfDef); err != nil {
+       41          log.Error().Err(err).Str("workflow", def.Name).Msg("failed to register workflow")
+       42          return err
+       43        }
+       44      }
+       45    
+       46      for _, def := range email.RegisterActivities() {
+       47 -      if err := p.Registry.RegisterActivity(&def); err != nil {
+       47 +      actDef := &ActivityDefinition{
+       48 +        Name:        def.Name,
+       49 +        Fn:          def.Fn,
+       50 +        Description: def.Description,
+       51 +      }
+       52 +      if err := p.Registry.RegisterActivity(actDef); err != nil {
+       53          log.Error().Err(err).Str("activity", def.Name).Msg("failed to register activity")
+       54          return err
+       55        }
+     ...
+       46    
+       47      // Register pattern domain workflows and activities
+       48      for _, def := range patterns.RegisterWorkflows() {
+       49 -      if err := p.Registry.RegisterWorkflow(&def); err != nil {
+       49 +      wfDef := &WorkflowDefinition{
+       50 +        Name:        def.Name,
+       51 +        Fn:          def.Fn,
+       52 +        TaskQueue:   def.TaskQueue,
+       53 +        Description: def.Description,
+       54 +      }
+       55 +      if err := p.Registry.RegisterWorkflow(wfDef); err != nil {
+       56          log.Error().Err(err).Str("workflow", def.Name).Msg("failed to register workflow")
+       57          return err
+       58        }
+       59      }
+       60    
+       61      for _, def := range patterns.RegisterActivities() {
+       62 -      if err := p.Registry.RegisterActivity(&def); err != nil {
+       62 +      actDef := &ActivityDefinition{
+       63 +        Name:        def.Name,
+       64 +        Fn:          def.Fn,
+       65 +        Description: def.Description,
+       66 +      }
+       67 +      if err := p.Registry.RegisterActivity(actDef); err != nil {
+       68          log.Error().Err(err).Str("activity", def.Name).Msg("failed to register activity")
+       69          return err
+       70        }
+     ...
+       61    
+       62      // Register compliance domain workflows and activities
+       63      for _, def := range compliance.RegisterWorkflows() {
+       64 -      if err := p.Registry.RegisterWorkflow(&def); err != nil {
+       64 +      wfDef := &WorkflowDefinition{
+       65 +        Name:        def.Name,
+       66 +        Fn:          def.Fn,
+       67 +        TaskQueue:   def.TaskQueue,
+       68 +        Description: def.Description,
+       69 +      }
+       70 +      if err := p.Registry.RegisterWorkflow(wfDef); err != nil {
+       71          log.Error().Err(err).Str("workflow", def.Name).Msg("failed to register workflow")
+       72          return err
+       73        }
+       74      }
+       75    
+       76      for _, def := range compliance.RegisterActivities() {
+       77 -      if err := p.Registry.RegisterActivity(&def); err != nil {
+       77 +      actDef := &ActivityDefinition{
+       78 +        Name:        def.Name,
+       79 +        Fn:          def.Fn,
+       80 +        Description: def.Description,
+       81 +      }
+       82 +      if err := p.Registry.RegisterActivity(actDef); err != nil {
+       83          log.Error().Err(err).Str("activity", def.Name).Msg("failed to register activity")
+       84          return err
+       85        }
+
+● Now let's check for compilation errors:
+
+● Bash(go build ./internal/infrastructure/external/temporaljobs/...)
+  ⎿  Error: # github.com/emoss08/trenova/internal/infrastructure/external/temporaljobs/domains/email
+     internal/infrastructure/external/temporaljobs/domains/email/activities.go:62:19: cannot use 
+     payload.UserID (variable of type *pulid.ID) as pulid.ID value in struct literal
+
+● Let me fix the UserID field issue:
+
+● Update(internal/infrastructure/external/temporaljobs/domains/email/activities.go)
+  ⎿  Updated internal/infrastructure/external/temporaljobs/domains/email/activities.go with 4 additions
+     and 1 removal
+       59      emailReq := &services.SendEmailRequest{
+       60        OrganizationID: payload.OrganizationID,
+       61        BusinessUnitID: payload.BusinessUnitID,
+       62 -      UserID:         payload.UserID,
+       62        To:             payload.To,
+       63        Subject:        payload.Subject,
+       64        TextBody:       payload.Body,
+       65        HTMLBody:       payload.BodyHTML,
+       66      }
+       67 +    
+       68 +    if payload.UserID != nil {
+       69 +      emailReq.UserID = *payload.UserID
+       70 +    }
+       71    
+       72      activity.RecordHeartbeat(ctx, "sending email via service")
+       73      response, err := p.emailService.SendEmail(ctx, emailReq)
+
+● Bash(go build ./internal/infrastructure/external/temporaljobs/...)
+  ⎿  (No content)
+
+● Great! The code compiles successfully. Let me now check if the main application still builds:
+
+● Bash(task check)
+  ⎿  Error: task: [critic] if ! command -v gocritic &> /dev/null
+     then
+       echo "gocritic could not be found, installing..."
+       go install github.com/go-critic/go-critic/cmd/gocritic@latest
+     fi
+     gocritic check -enableAll -disable=sloppyReassign ./...
+
+     ./cmd/gen-trenova/main.go:135:5: emptyStringTest: replace `len(*typeNames) == 0` with `*typeNames 
+     == ""`
+     ./cmd/gen-trenova/main.go:119:4: exitAfterDefer: log.Fatal will exit, and `defer globalCancel()` 
+     will not run
+     ./cmd/gen-trenova/main.go:584:22: hugeParam: field is heavy (96 bytes); consider passing it by 
+     pointer
+     … +77 lines (ctrl+r to see all)
+
+● The static analysis checks found some style issues but these don't prevent compilation. Let me run
+  the build directly:
+
+● Bash(go build ./cmd/api)
+  ⎿  No (tell Claude what to do differently)
+

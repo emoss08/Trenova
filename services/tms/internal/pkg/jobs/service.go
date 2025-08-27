@@ -88,7 +88,6 @@ func NewJobService(p JobServiceParams) services.JobService {
 			},
 			ErrorHandler: asynq.ErrorHandlerFunc(
 				func(_ context.Context, task *asynq.Task, err error) {
-					// Extract payload information for better error context
 					var payloadInfo map[string]any
 					if unmarshalErr := sonic.Unmarshal(task.Payload(), &payloadInfo); unmarshalErr == nil {
 						log.Error().

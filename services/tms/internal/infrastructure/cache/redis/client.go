@@ -43,20 +43,20 @@ type (
 	Z = redis.Z
 )
 
-// Client wraps the Redis client with additional functionality including circuit breaker
-type Client struct {
-	*redis.Client
-	l              *zerolog.Logger
-	circuitBreaker *CircuitBreaker
-	errBuilder     oops.OopsErrorBuilder
-}
-
 type ClientParams struct {
 	fx.In
 
 	Config           *config.Manager
 	Logger           *logger.Logger
 	TelemetryMetrics *telemetry.Metrics `name:"telemetryMetrics" optional:"true"`
+}
+
+// Client wraps the Redis client with additional functionality including circuit breaker
+type Client struct {
+	*redis.Client
+	l              *zerolog.Logger
+	circuitBreaker *CircuitBreaker
+	errBuilder     oops.OopsErrorBuilder
 }
 
 // NewClient creates a new Redis client instance with the provided configuration and logger.
