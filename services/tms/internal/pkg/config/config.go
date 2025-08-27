@@ -65,6 +65,9 @@ type Config struct {
 
 	// GRPC is the gRPC server configuration.
 	GRPC GRPCServerConfig `mapstructure:"grpc"`
+
+	// Temporal is the temporal configuration.
+	Temporal TemporalConfig `mapstructure:"temporal"`
 }
 
 type LogConfig struct {
@@ -889,4 +892,13 @@ type SamplingConfig struct {
 
 	// ParentBased determines whether to use parent-based sampling
 	ParentBased bool `mapstructure:"parentBased"`
+}
+
+type TemporalConfig struct {
+	// HostPort is the temporal host port
+	HostPort string `mapstructure:"hostPort"  default:"localhost:7233"`
+	// Namespace is the temporal namespace
+	Namespace string `mapstructure:"namespace" default:"trenova"`
+	// TaskQueue is the temporal task queue
+	TaskQueue string `mapstructure:"taskQueue" default:"trenova"`
 }
