@@ -178,6 +178,11 @@ func (m *Manager) setDefaults() {
 	m.Viper.SetDefault("grpc.auth.enabled", false)
 	m.Viper.SetDefault("grpc.auth.bearerTokens", []string{})
 	m.Viper.SetDefault("grpc.auth.apiKeys", []string{})
+
+	// Temporal defaults
+	m.Viper.SetDefault("temporal.hostPort", "localhost:7233")
+	m.Viper.SetDefault("temporal.namespace", "trenova")
+	m.Viper.SetDefault("temporal.taskQueue", "trenova")
 }
 
 func (m *Manager) Get() *Config {
@@ -371,6 +376,13 @@ func (m *Manager) Streaming() *StreamingConfig {
 		return nil
 	}
 	return &m.Cfg.Streaming
+}
+
+func (m *Manager) Temporal() *TemporalConfig {
+	if m.Cfg == nil {
+		return nil
+	}
+	return &m.Cfg.Temporal
 }
 
 // GetDSN returns a formatted database connection string

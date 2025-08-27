@@ -26,7 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/cdc"
 	postgresRepos "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/encryption"
-	"github.com/emoss08/trenova/internal/infrastructure/jobs"
+	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs"
 	"github.com/emoss08/trenova/internal/infrastructure/telemetry"
 	"github.com/emoss08/trenova/internal/pkg/formula"
 	"github.com/emoss08/trenova/internal/pkg/statemachine"
@@ -58,7 +58,9 @@ func Bootstrap() error {
 		services.Module,
 		streaming.Module,
 		api.Module,
-		jobs.Module,
+		temporaljobs.ActivitiesModule,
+		temporaljobs.ClientModule,
+		temporaljobs.WorkerModule,
 	)
 
 	startCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)

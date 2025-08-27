@@ -18,15 +18,18 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	dedicatedlaneservice "github.com/emoss08/trenova/internal/core/services/dedicatedlane"
+	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/shipmentjobs"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
 	"github.com/emoss08/trenova/internal/pkg/validator"
 	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
 	"github.com/emoss08/trenova/pkg/types"
+	"github.com/emoss08/trenova/pkg/types/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog"
+	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 )
 
@@ -40,7 +43,7 @@ type ServiceParams struct {
 	AuditService               services.AuditService
 	UserRepo                   repositories.UserRepository
 	StreamingService           services.StreamingService
-	JobService                 services.JobService
+	TemporalClient             client.Client
 	NotificationService        services.NotificationService
 	EmailService               services.EmailService
 	Validator                  *shipmentvalidator.Validator
@@ -56,8 +59,8 @@ type Service struct {
 	ur            repositories.UserRepository
 	ss            services.StreamingService
 	ns            services.NotificationService
-	js            services.JobService
 	es            services.EmailService
+	tc            client.Client
 	v             *shipmentvalidator.Validator
 	dlas          *dedicatedlaneservice.AssignmentService
 }
@@ -77,8 +80,8 @@ func NewService(p ServiceParams) *Service {
 		ur:            p.UserRepo,
 		ss:            p.StreamingService,
 		ns:            p.NotificationService,
-		js:            p.JobService,
 		es:            p.EmailService,
+		tc:            p.TemporalClient,
 		v:             p.Validator,
 		dlas:          p.DedicatedLaneAssignService,
 	}
@@ -677,27 +680,34 @@ func (s *Service) Duplicate(
 		return err
 	}
 
-	payload := &services.DuplicateShipmentPayload{
-		JobBasePayload: services.JobBasePayload{
-			OrganizationID: req.OrgID,
-			BusinessUnitID: req.BuID,
-			UserID:         req.UserID,
-		},
-		ShipmentID:               req.ShipmentID,
-		Count:                    req.Count,
-		OverrideDates:            req.OverrideDates,
-		IncludeCommodities:       req.IncludeCommodities,
-		IncludeAdditionalCharges: req.IncludeAdditionalCharges,
+	workflowOptions := client.StartWorkflowOptions{
+		ID:        fmt.Sprintf("duplicate-shipment-%s", req.ShipmentID.String()),
+		TaskQueue: temporaltype.TaskQueueShipmentWorker,
 	}
 
-	if _, err = s.js.Enqueue(
-		services.JobTypeDuplicateShipment,
-		payload,
-		services.DefaultJobOptions(),
-	); err != nil {
-		log.Error().Err(err).Msg("failed to enqueue shipment duplication job")
+	we, err := s.tc.ExecuteWorkflow(
+		context.Background(), // ! It is important to execute this in the background
+		workflowOptions,
+		shipmentjobs.DuplicateShipmentWorkflow,
+		&shipmentjobs.DuplicateShipmentPayload{
+			BasePayload: temporaltype.BasePayload{
+				OrganizationID: req.OrgID,
+				BusinessUnitID: req.BuID,
+				UserID:         req.UserID,
+			},
+			ShipmentID:               req.ShipmentID,
+			Count:                    req.Count,
+			OverrideDates:            req.OverrideDates,
+			IncludeCommodities:       req.IncludeCommodities,
+			IncludeAdditionalCharges: req.IncludeAdditionalCharges,
+		},
+	)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to execute duplicate shipment workflow")
 		return err
 	}
+
+	log.Info().Str("workflowID", we.GetID()).Msg("duplicate shipment workflow executed")
 
 	return nil
 }
