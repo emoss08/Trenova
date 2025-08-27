@@ -19,7 +19,7 @@ export function getColumns(): ColumnDef<HoldReasonSchema>[] {
       cell: ({ row }) => <BooleanBadge value={row.original.active} />,
       size: 100,
       minSize: 100,
-      maxSize: 150,
+      maxSize: 100,
       meta: {
         apiField: "active",
         filterable: true,
