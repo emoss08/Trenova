@@ -145,6 +145,7 @@ export default function ShipmentControlForm() {
           <ServiceFailureForm />
           <ComplianceForm />
           <DelayShipmentForm />
+          <AutoVoidShipmentsForm />
           <DetentionForm />
           <FormSaveDock />
         </div>
@@ -667,6 +668,67 @@ function DelayShipmentForm() {
                   placeholder="Enter threshold in minutes"
                   description="Defines the time variance (in minutes) from scheduled delivery or transit milestones before a shipment is flagged as 'Delayed'."
                   sideText="minutes"
+                  className="max-w-[300px]"
+                />
+              </FormControl>
+            </>
+          )}
+        </FormGroup>
+      </CardContent>
+    </Card>
+  );
+}
+
+function AutoVoidShipmentsForm() {
+  const { control } = useFormContext<ShipmentControlSchema>();
+  const [showDelayOptions, setShowDelayOptions] = useState<boolean>(false);
+
+  const autoVoidShipments = useWatch({
+    control,
+    name: "autoVoidShipments",
+  });
+
+  useEffect(() => {
+    if (autoVoidShipments) {
+      setShowDelayOptions(true);
+    } else {
+      setShowDelayOptions(false);
+    }
+  }, [autoVoidShipments]);
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Auto Void Shipments</CardTitle>
+        <CardDescription>
+          Configure how the system automatically voids shipments that have been
+          in the &quot;New&quot; status for more than the configured threshold
+          based on the creation date. This helps maintain operational efficiency
+          and ensures that shipments are not left in a &quot;New&quot; state for
+          an extended period of time.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="max-w-prose">
+        <FormGroup cols={1}>
+          <FormControl className="min-h-[3em]">
+            <SwitchField
+              control={control}
+              name="autoVoidShipments"
+              label="Automatic Void Shipments"
+              description="When enabled, the system will automatically void shipments that have been in the 'New' status for more than the configured threshold."
+              position="left"
+            />
+          </FormControl>
+          {showDelayOptions && (
+            <>
+              <FormControl className="pl-10 min-h-[3em]">
+                <NumberField
+                  control={control}
+                  name="autoVoidShipmentsThreshold"
+                  label="Auto Void Shipments Threshold"
+                  placeholder="Enter threshold in days"
+                  description="Defines the number of days a shipment can be in the 'New' status before it is automatically voided."
+                  sideText="days"
                   className="max-w-[300px]"
                 />
               </FormControl>

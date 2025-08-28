@@ -318,13 +318,18 @@ type GetPreviousRatesRequest struct {
 	ExcludeShipmentID *pulid.ID `json:"excludeShipmentId" query:"excludeShipmentId"`
 }
 
-type DelayShipmentRequest struct{}
+type CancelShipmentsByCreatedAtRequest struct {
+	OrgID     pulid.ID `json:"orgId"`
+	BuID      pulid.ID `json:"buId"`
+	CreatedAt int64    `json:"createdAt"`
+}
 
 type ShipmentRepository interface {
 	List(
 		ctx context.Context,
 		opts *ListShipmentOptions,
 	) (*ports.ListResult[*shipment.Shipment], error)
+	GetByID(ctx context.Context, opts *GetShipmentByIDOptions) (*shipment.Shipment, error)
 	GetPreviousRates(
 		ctx context.Context,
 		req *GetPreviousRatesRequest,
@@ -335,7 +340,7 @@ type ShipmentRepository interface {
 		ctx context.Context,
 		req *GetShipmentsByDateRangeRequest,
 	) (*ports.ListResult[*shipment.Shipment], error)
-	GetByID(ctx context.Context, opts *GetShipmentByIDOptions) (*shipment.Shipment, error)
+	GetDelayedShipments(ctx context.Context) ([]*shipment.Shipment, error)
 	Create(ctx context.Context, t *shipment.Shipment, userID pulid.ID) (*shipment.Shipment, error)
 	Update(ctx context.Context, t *shipment.Shipment, userID pulid.ID) (*shipment.Shipment, error)
 	UpdateStatus(ctx context.Context, opts *UpdateShipmentStatusRequest) (*shipment.Shipment, error)
@@ -346,8 +351,11 @@ type ShipmentRepository interface {
 	) (*shipment.Shipment, error)
 	UnCancel(ctx context.Context, req *UnCancelShipmentRequest) (*shipment.Shipment, error)
 	BulkDuplicate(ctx context.Context, req *DuplicateShipmentRequest) ([]*shipment.Shipment, error)
-	GetDelayedShipments(ctx context.Context) ([]*shipment.Shipment, error)
 	DelayShipments(ctx context.Context) ([]*shipment.Shipment, error)
+	CancelShipmentsByCreatedAt(
+		ctx context.Context,
+		req *CancelShipmentsByCreatedAtRequest,
+	) ([]*shipment.Shipment, error)
 	CheckForDuplicateBOLs(
 		ctx context.Context,
 		req *DuplicateBolsRequest,

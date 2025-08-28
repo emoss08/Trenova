@@ -19,6 +19,7 @@ type GetShipmentControlRequest struct {
 }
 
 type ShipmentControlRepository interface {
+	List(ctx context.Context) ([]*shipment.ShipmentControl, error)
 	GetByOrgID(ctx context.Context, orgID pulid.ID) (*shipment.ShipmentControl, error)
 	Update(ctx context.Context, sc *shipment.ShipmentControl) (*shipment.ShipmentControl, error)
 }

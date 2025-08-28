@@ -21,3 +21,19 @@ type DuplicateShipmentResult struct {
 	Result     string         `json:"result"`
 	Data       map[string]any `json:"data"`
 }
+
+type OrgCancellationResult struct {
+	OrganizationID   pulid.ID `json:"organizationId"`
+	BusinessUnitID   pulid.ID `json:"businessUnitId"`
+	CancelledCount   int      `json:"cancelledCount"`
+	CancelledProNums []string `json:"cancelledProNums"`
+}
+
+type CancelShipmentsByCreatedAtResult struct {
+	JobID          string                  `json:"jobId"`
+	TotalCancelled int                     `json:"totalCancelled"`
+	SkippedOrgs    []pulid.ID              `json:"skippedOrgs"`
+	ProcessedOrgs  []OrgCancellationResult `json:"processedOrgs"`
+	Result         string                  `json:"result"`
+	Data           map[string]any          `json:"data"`
+}

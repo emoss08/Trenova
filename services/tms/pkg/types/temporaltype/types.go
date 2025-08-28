@@ -9,6 +9,10 @@ const (
 	NotificationTaskQueue = "notification-queue"
 )
 
+const (
+	VoidShipmentsScheduleID = "void-shipments-schedule"
+)
+
 type BasePayload struct {
 	OrganizationID pulid.ID       `json:"organizationId"`
 	BusinessUnitID pulid.ID       `json:"businessUnitId"`

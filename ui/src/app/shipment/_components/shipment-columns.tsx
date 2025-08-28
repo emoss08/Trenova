@@ -58,8 +58,8 @@ export function getColumns(): ColumnDef<ShipmentSchema>[] {
       },
       meta: {
         apiField: "holds",
-        filterable: true,
-        sortable: true,
+        filterable: false,
+        sortable: false,
         filterType: "select",
       },
     },

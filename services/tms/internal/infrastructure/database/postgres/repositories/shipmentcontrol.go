@@ -59,6 +59,25 @@ func NewShipmentControlRepository(
 	}
 }
 
+func (r shipmentControlRepository) List(ctx context.Context) ([]*shipment.ShipmentControl, error) {
+	dba, err := r.db.ReadDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	log := r.l.With().
+		Str("operation", "List").
+		Logger()
+
+	entities := make([]*shipment.ShipmentControl, 0)
+	if err = dba.NewSelect().Model(&entities).Scan(ctx); err != nil {
+		log.Error().Err(err).Msg("failed to scan shipment controls")
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 // GetByOrgID retrieves a shipment control by organization ID.
 //
 // Parameters:
@@ -135,7 +154,6 @@ func (r shipmentControlRepository) Update(
 			Model(sc).
 			WherePK().
 			Where("sc.version = ?", ov).
-			OmitZero().
 			Returning("*").
 			Exec(c)
 		if rErr != nil {
