@@ -3,9 +3,22 @@ package shipmentjobs
 import (
 	"time"
 
+	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/notificationjobs"
+	"github.com/emoss08/trenova/pkg/types/temporaltype"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 )
+
+func RegisterWorkflows() []temporaltype.WorkflowDefinition {
+	return []temporaltype.WorkflowDefinition{
+		{
+			Name:        "DuplicateShipmentWorkflow",
+			Fn:          DuplicateShipmentWorkflow,
+			TaskQueue:   temporaltype.ShipmentTaskQueue,
+			Description: "Duplicate a shipment",
+		},
+	}
+}
 
 func DuplicateShipmentWorkflow(
 	ctx workflow.Context,
@@ -24,7 +37,34 @@ func DuplicateShipmentWorkflow(
 
 	ctx = workflow.WithActivityOptions(ctx, ao)
 
-	return duplicateShipment(ctx, payload)
+	result, err := duplicateShipment(ctx, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	cwo := workflow.ChildWorkflowOptions{
+		TaskQueue: temporaltype.NotificationTaskQueue,
+	}
+	childCtx := workflow.WithChildOptions(ctx, cwo)
+	err = workflow.ExecuteChildWorkflow(
+		childCtx,
+		notificationjobs.SendJobCompleteNotificationWorkflow,
+		&notificationjobs.SendNotificationPayload{
+			UserID:         payload.UserID,
+			OrganizationID: payload.OrganizationID,
+			BusinessUnitID: payload.BusinessUnitID,
+			JobID:          result.JobID,
+			JobType:        "duplicate_shipment",
+			Success:        true,
+			Result:         result.Result,
+			Data:           result.Data,
+		},
+	).Get(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
 }
 
 func duplicateShipment(
@@ -42,7 +82,7 @@ func duplicateShipment(
 	}
 	defer workflow.CompleteSession(sessionCtx)
 
-	var a *ShipmentJobsActivities
+	var a *Activities
 	err = workflow.
 		ExecuteActivity(sessionCtx, a.DuplicateShipmentActivity, &payload).
 		Get(sessionCtx, &result)

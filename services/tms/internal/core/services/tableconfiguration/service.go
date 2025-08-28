@@ -7,6 +7,7 @@ package tableconfiguration
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
@@ -15,13 +16,16 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
+	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/notificationjobs"
 	"github.com/emoss08/trenova/internal/pkg/appctx"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/pkg/types/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"go.temporal.io/sdk/client"
 
 	"go.uber.org/fx"
 )
@@ -29,12 +33,12 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Logger              *logger.Logger
-	Repo                repositories.TableConfigurationRepository
-	UserRepo            repositories.UserRepository
-	PermService         services.PermissionService
-	AuditService        services.AuditService
-	NotificationService services.NotificationService
+	Logger         *logger.Logger
+	Repo           repositories.TableConfigurationRepository
+	UserRepo       repositories.UserRepository
+	PermService    services.PermissionService
+	AuditService   services.AuditService
+	TemporalClient client.Client
 }
 
 type Service struct {
@@ -43,7 +47,7 @@ type Service struct {
 	ur   repositories.UserRepository
 	ps   services.PermissionService
 	as   services.AuditService
-	ns   services.NotificationService
+	tc   client.Client
 }
 
 // NewService creates a new table configuration service
@@ -59,8 +63,8 @@ func NewService(p ServiceParams) *Service {
 		ps:   p.PermService,
 		as:   p.AuditService,
 		l:    &log,
-		ns:   p.NotificationService,
 		ur:   p.UserRepo,
+		tc:   p.TemporalClient,
 	}
 }
 
@@ -266,17 +270,23 @@ func (s *Service) Copy(
 		return err
 	}
 
-	// * We might want to notify the original creator that their configuration has been copied
-	notificationReq := &services.ConfigurationCopiedNotificationRequest{
-		UserID:         existing.UserID,
-		OrganizationID: req.OrgID,
-		BusinessUnitID: req.BuID,
-		ConfigID:       req.ConfigID,
-		ConfigName:     existing.Name,
-		ConfigCreator:  existing.Creator.Name,
-		ConfigCopiedBy: copiedBy.Name,
-	}
-	if err = s.ns.SendConfigurationCopiedNotification(ctx, notificationReq); err != nil {
+	if _, err = s.tc.ExecuteWorkflow(
+		context.Background(),
+		client.StartWorkflowOptions{
+			ID:        fmt.Sprintf("configuration-copied-%s", req.ConfigID.String()),
+			TaskQueue: temporaltype.NotificationTaskQueue,
+		},
+		notificationjobs.SendConfigurationCopiedNotificationWorkflow,
+		&notificationjobs.SendConfigurationCopiedNotificationPayload{
+			UserID:         existing.UserID,
+			OrganizationID: req.OrgID,
+			BusinessUnitID: req.BuID,
+			ConfigID:       req.ConfigID,
+			ConfigName:     existing.Name,
+			ConfigCreator:  existing.Creator.Name,
+			ConfigCopiedBy: copiedBy.Name,
+		},
+	); err != nil {
 		log.Error().Err(err).Msg("failed to send configuration copied notification")
 		// ! we will not return an error here because we want to continue the operation
 		// ! even if the notification fails

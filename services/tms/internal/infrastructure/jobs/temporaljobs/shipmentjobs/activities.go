@@ -12,29 +12,26 @@ import (
 	"go.uber.org/fx"
 )
 
-type ShipmentJobsActivitiesParams struct {
+type ActivitiesParams struct {
 	fx.In
 
-	ShipmentRepository  repositories.ShipmentRepository
-	AuditService        services.AuditService
-	NotificationService services.NotificationService
+	ShipmentRepository repositories.ShipmentRepository
+	AuditService       services.AuditService
 }
 
-type ShipmentJobsActivities struct {
+type Activities struct {
 	sr repositories.ShipmentRepository
 	as services.AuditService
-	ns services.NotificationService
 }
 
-func NewShipmentJobActivities(p ShipmentJobsActivitiesParams) *ShipmentJobsActivities {
-	return &ShipmentJobsActivities{
+func NewActivities(p ActivitiesParams) *Activities {
+	return &Activities{
 		sr: p.ShipmentRepository,
 		as: p.AuditService,
-		ns: p.NotificationService,
 	}
 }
 
-func (sja *ShipmentJobsActivities) DuplicateShipmentActivity(
+func (sja *Activities) DuplicateShipmentActivity(
 	ctx context.Context,
 	payload *DuplicateShipmentPayload,
 ) (*DuplicateShipmentResult, error) {
@@ -100,37 +97,13 @@ func (sja *ShipmentJobsActivities) DuplicateShipmentActivity(
 		}
 	}
 
-	activity.RecordHeartbeat(ctx, "preparing job completion notification")
-	// Send completion notification to user
-	notificationReq := &services.JobCompletionNotificationRequest{
-		JobID:          activity.GetInfo(ctx).ActivityID,
-		JobType:        "duplicate_shipment",
-		UserID:         payload.UserID,
-		OrganizationID: payload.OrganizationID,
-		BusinessUnitID: payload.BusinessUnitID,
-		Success:        true,
-		Result:         fmt.Sprintf("Successfully duplicated %d shipments", len(shipments)),
+	return &DuplicateShipmentResult{
+		Count:      len(shipments),
+		ProNumbers: proNumbers,
+		Result:     fmt.Sprintf("Successfully duplicated %d shipments", len(shipments)),
 		Data: map[string]any{
 			"shipmentCount":    len(shipments),
 			"originalShipment": payload.ShipmentID.String(),
 		},
-	}
-
-	activity.RecordHeartbeat(ctx, "sending job completion notification")
-	if err = sja.ns.SendJobCompletionNotification(ctx, notificationReq); err != nil {
-		logger.Error("Failed to send job completion notification: %v", err)
-		return nil, err
-	}
-
-	activity.RecordHeartbeat(ctx, "job completion notification sent successfully")
-
-	logger.Info(
-		"Duplicate shipment activity completed successfully. Duplicated %d shipments",
-		len(shipments),
-	)
-
-	return &DuplicateShipmentResult{
-		Count:      len(shipments),
-		ProNumbers: proNumbers,
 	}, nil
 }

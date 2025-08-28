@@ -5,7 +5,8 @@ import (
 )
 
 const (
-	TaskQueueShipmentWorker = "shipment-worker"
+	ShipmentTaskQueue     = "shipment-queue"
+	NotificationTaskQueue = "notification-queue"
 )
 
 type BasePayload struct {
@@ -14,4 +15,11 @@ type BasePayload struct {
 	UserID         pulid.ID       `json:"userId,omitempty"`
 	Timestamp      int64          `json:"timestamp"`
 	Metadata       map[string]any `json:"metadata,omitempty"`
+}
+
+type WorkflowDefinition struct {
+	Name        string
+	Fn          any
+	TaskQueue   string
+	Description string
 }

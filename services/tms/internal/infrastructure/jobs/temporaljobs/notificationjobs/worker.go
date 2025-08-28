@@ -1,4 +1,4 @@
-package shipmentjobs
+package notificationjobs
 
 import (
 	"context"
@@ -22,11 +22,11 @@ type WorkerParams struct {
 
 func NewWorker(p WorkerParams) error {
 	log := p.Logger.With().
-		Str("component", "shipment-worker").
+		Str("component", "notification-worker").
 		Logger()
 
 	w := worker.New(p.Client,
-		temporaltype.ShipmentTaskQueue,
+		temporaltype.NotificationTaskQueue,
 		worker.Options{
 			EnableSessionWorker: true,
 		})
@@ -43,7 +43,7 @@ func NewWorker(p WorkerParams) error {
 		OnStart: func(ctx context.Context) error {
 			go func() {
 				if err := w.Run(worker.InterruptCh()); err != nil {
-					log.Error().Err(err).Msg("failed to run shipment worker")
+					log.Error().Err(err).Msg("failed to run notification worker")
 				}
 			}()
 			return nil

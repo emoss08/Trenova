@@ -76,6 +76,7 @@ type ShipmentHoldReleaseNotificationRequest struct {
 	ReleasedByName string   `json:"releasedByName"`
 	TargetUserID   pulid.ID `json:"targetUserId"`
 }
+
 type NotificationService interface {
 	// SendNotification sends a notification to the specified targets
 	SendNotification(ctx context.Context, req *SendNotificationRequest) error
