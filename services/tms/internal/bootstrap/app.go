@@ -58,9 +58,7 @@ func Bootstrap() error {
 		services.Module,
 		streaming.Module,
 		api.Module,
-		temporaljobs.ActivitiesModule,
-		temporaljobs.ClientModule,
-		temporaljobs.WorkerModule,
+		temporaljobs.Module,
 	)
 
 	startCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)

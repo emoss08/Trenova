@@ -17,6 +17,12 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   temporaltype.ShipmentTaskQueue,
 			Description: "Duplicate a shipment",
 		},
+		{
+			Name:        "CancelShipmentsByCreatedAtWorkflow",
+			Fn:          CancelShipmentsByCreatedAtWorkflow,
+			TaskQueue:   temporaltype.ShipmentTaskQueue,
+			Description: "Cancel shipments by created at",
+		},
 	}
 }
 
@@ -86,6 +92,32 @@ func duplicateShipment(
 	err = workflow.
 		ExecuteActivity(sessionCtx, a.DuplicateShipmentActivity, &payload).
 		Get(sessionCtx, &result)
+	if err != nil {
+		return nil, err
+	}
+
+	return result, nil
+}
+
+func CancelShipmentsByCreatedAtWorkflow(
+	ctx workflow.Context,
+) (*CancelShipmentsByCreatedAtResult, error) {
+	ao := workflow.ActivityOptions{
+		StartToCloseTimeout: 10 * time.Second,
+		HeartbeatTimeout:    2 * time.Second,
+		RetryPolicy: &temporal.RetryPolicy{
+			InitialInterval:    time.Second,
+			BackoffCoefficient: 2.0,
+			MaximumAttempts:    3,
+			MaximumInterval:    time.Minute,
+		},
+	}
+
+	ctx = workflow.WithActivityOptions(ctx, ao)
+	var a *Activities
+	var result *CancelShipmentsByCreatedAtResult
+
+	err := workflow.ExecuteActivity(ctx, a.CancelShipmentsByCreatedAtActivity).Get(ctx, &result)
 	if err != nil {
 		return nil, err
 	}

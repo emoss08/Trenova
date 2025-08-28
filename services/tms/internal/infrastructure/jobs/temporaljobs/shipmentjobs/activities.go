@@ -8,6 +8,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
+	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
+	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
 )
@@ -15,19 +17,22 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	ShipmentRepository repositories.ShipmentRepository
-	AuditService       services.AuditService
+	ShipmentRepository        repositories.ShipmentRepository
+	ShipmentControlRepository repositories.ShipmentControlRepository
+	AuditService              services.AuditService
 }
 
 type Activities struct {
-	sr repositories.ShipmentRepository
-	as services.AuditService
+	sr  repositories.ShipmentRepository
+	scr repositories.ShipmentControlRepository
+	as  services.AuditService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		sr: p.ShipmentRepository,
-		as: p.AuditService,
+		sr:  p.ShipmentRepository,
+		scr: p.ShipmentControlRepository,
+		as:  p.AuditService,
 	}
 }
 
@@ -104,6 +109,120 @@ func (sja *Activities) DuplicateShipmentActivity(
 		Data: map[string]any{
 			"shipmentCount":    len(shipments),
 			"originalShipment": payload.ShipmentID.String(),
+		},
+	}, nil
+}
+
+func (sja *Activities) CancelShipmentsByCreatedAtActivity(
+	ctx context.Context,
+) (*CancelShipmentsByCreatedAtResult, error) {
+	now := timeutils.NowUnix()
+
+	logger := activity.GetLogger(ctx)
+	logger.Info(
+		"Starting cancel shipments by created at activity for date threshold: %d",
+		now,
+	)
+
+	activity.RecordHeartbeat(ctx, "fetching shipment controls")
+
+	scs, err := sja.scr.List(ctx)
+	if err != nil {
+		logger.Error("Failed to get shipment controls: %v", err)
+		return nil, fmt.Errorf("failed to get shipment controls: %w", err)
+	}
+
+	skippedOrgs := make([]pulid.ID, 0)
+	processedOrgs := make([]OrgCancellationResult, 0)
+	totalCancelled := 0
+
+	logger.Info("Processing %d organizations for shipment cancellation", len(scs))
+
+	for _, sc := range scs {
+		if !sc.AutoVoidShipments {
+			logger.Info(
+				"Skipping organization %s - auto void shipments is disabled",
+				sc.OrganizationID,
+			)
+			skippedOrgs = append(skippedOrgs, sc.OrganizationID)
+			continue // * skip the organization if auto void shipments is disabled
+		}
+
+		activity.RecordHeartbeat(
+			ctx,
+			fmt.Sprintf("processing organization %s", sc.OrganizationID),
+		)
+
+		logger.Info("Processing organization %s for auto void", sc.OrganizationID)
+
+		shipments, err := sja.sr.CancelShipmentsByCreatedAt(
+			ctx,
+			&repositories.CancelShipmentsByCreatedAtRequest{
+				OrgID:     sc.OrganizationID,
+				BuID:      sc.BusinessUnitID,
+				CreatedAt: now,
+			},
+		)
+		if err != nil {
+			logger.Error(
+				"Failed to cancel shipments for organization %s: %v",
+				sc.OrganizationID,
+				err,
+			)
+			continue
+		}
+
+		if len(shipments) > 0 {
+			proNumbers := make([]string, 0, len(shipments))
+			for _, shipment := range shipments {
+				proNumbers = append(proNumbers, shipment.ProNumber)
+			}
+
+			orgResult := OrgCancellationResult{
+				OrganizationID:   sc.OrganizationID,
+				BusinessUnitID:   sc.BusinessUnitID,
+				CancelledCount:   len(shipments),
+				CancelledProNums: proNumbers,
+			}
+			processedOrgs = append(processedOrgs, orgResult)
+			totalCancelled += len(shipments)
+
+			logger.Info(
+				"Cancelled %d shipments for organization %s",
+				len(shipments),
+				sc.OrganizationID,
+			)
+		}
+
+		activity.RecordHeartbeat(
+			ctx,
+			fmt.Sprintf(
+				"completed processing organization %s - cancelled %d shipments",
+				sc.OrganizationID,
+				len(shipments),
+			),
+		)
+	}
+
+	resultMessage := fmt.Sprintf(
+		"Successfully processed %d organizations: %d shipments cancelled, %d organizations skipped",
+		len(processedOrgs),
+		totalCancelled,
+		len(skippedOrgs),
+	)
+
+	logger.Info(resultMessage)
+
+	return &CancelShipmentsByCreatedAtResult{
+		TotalCancelled: totalCancelled,
+		SkippedOrgs:    skippedOrgs,
+		ProcessedOrgs:  processedOrgs,
+		Result:         resultMessage,
+		Data: map[string]any{
+			"totalOrganizations": len(scs),
+			"processedCount":     len(processedOrgs),
+			"skippedCount":       len(skippedOrgs),
+			"createdAtThreshold": now,
 		},
 	}, nil
 }

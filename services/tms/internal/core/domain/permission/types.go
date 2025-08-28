@@ -657,11 +657,11 @@ var (
 			ActionModifyField,
 		),
 		ResourceDocker: {
-			ActionRead,    // View containers, images, volumes, networks, system info
-			ActionManage,  // Start, stop, restart containers, prune system
-			ActionDelete,  // Remove containers, images, volumes
-			ActionAudit,   // View container logs and audit information
-			ActionExport,  // Export container stats and logs
+			ActionRead,   // View containers, images, volumes, networks, system info
+			ActionManage, // Start, stop, restart containers, prune system
+			ActionDelete, // Remove containers, images, volumes
+			ActionAudit,  // View container logs and audit information
+			ActionExport, // Export container stats and logs
 		},
 	}
 )

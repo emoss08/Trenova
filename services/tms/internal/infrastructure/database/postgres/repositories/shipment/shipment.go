@@ -37,6 +37,7 @@ type ShipmentRepositoryParams struct {
 	DB                          db.Connection
 	Logger                      *logger.Logger
 	ShipmentMoveRepository      repositories.ShipmentMoveRepository
+	UserRepository              repositories.UserRepository
 	ShipmentCommodityRepository repositories.ShipmentCommodityRepository
 	ShipmentCommentRepository   repositories.ShipmentCommentRepository
 	AdditionalChargeRepository  repositories.AdditionalChargeRepository
@@ -51,6 +52,7 @@ type shipmentRepository struct {
 	db                          db.Connection
 	l                           *zerolog.Logger
 	shipmentMoveRepository      repositories.ShipmentMoveRepository
+	userRepository              repositories.UserRepository
 	shipmentCommodityRepository repositories.ShipmentCommodityRepository
 	shipmentCommentRepository   repositories.ShipmentCommentRepository
 	additionalChargeRepository  repositories.AdditionalChargeRepository
@@ -76,6 +78,7 @@ func NewShipmentRepository(p ShipmentRepositoryParams) repositories.ShipmentRepo
 		db:                          p.DB,
 		l:                           &log,
 		shipmentCommodityRepository: p.ShipmentCommodityRepository,
+		userRepository:              p.UserRepository,
 		additionalChargeRepository:  p.AdditionalChargeRepository,
 		shipmentCommentRepository:   p.ShipmentCommentRepository,
 		shipmentMoveRepository:      p.ShipmentMoveRepository,
@@ -1328,4 +1331,57 @@ func (sr *shipmentRepository) GetPreviousRates(
 		Items: shipments,
 		Total: total,
 	}, nil
+}
+
+func (sr *shipmentRepository) CancelShipmentsByCreatedAt(
+	ctx context.Context,
+	req *repositories.CancelShipmentsByCreatedAtRequest,
+) ([]*shipment.Shipment, error) {
+	log := sr.l.With().
+		Str("operation", "CancelShipmentsByCreatedAt").
+		Str("orgID", req.OrgID.String()).
+		Str("buID", req.BuID.String()).
+		Int64("createdAt", req.CreatedAt).
+		Logger()
+
+	dba, err := sr.db.WriteDB(ctx)
+	if err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get database connection")
+	}
+
+	systemUser, err := sr.userRepository.GetSystemUser(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get system user")
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "get system user")
+	}
+
+	shipments := make([]*shipment.Shipment, 0)
+	query := dba.NewUpdate().
+		Model(&shipments).
+		Set("status = ?", shipment.StatusCanceled).
+		Set("canceled_at = ?", timeutils.NowUnix()).
+		Set("canceled_by_id = ?", systemUser.ID).
+		Set("cancel_reason = ?", "Automatically voided due to shipment control settings").
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return uq.Where("sp.organization_id = ?", req.OrgID).
+				Where("sp.business_unit_id = ?", req.BuID).
+				Where("sp.created_at < ?", req.CreatedAt).
+				Where("sp.status = ?", shipment.StatusNew)
+		})
+
+	if _, err = query.Exec(ctx); err != nil {
+		return nil, oops.
+			In("shipment_repository").
+			Time(time.Now()).
+			With("req", req).
+			Wrapf(err, "cancel shipments by created at")
+	}
+
+	return shipments, nil
 }

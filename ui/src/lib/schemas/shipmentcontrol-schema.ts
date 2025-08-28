@@ -63,6 +63,23 @@ export const shipmentControlSchema = z
       return isNaN(parsed) ? 0 : parsed;
     }, z.number().int("Detention threshold must be an whole number").nonnegative("Detention threshold must be non-negative")),
 
+    // Auto Void Shipment Related Fields
+    autoVoidShipments: z.boolean(),
+    autoVoidShipmentsThreshold: z.preprocess(
+      (val) => {
+        if (val === "" || val === null || val === undefined) {
+          return 0;
+        }
+        const parsed = parseInt(String(val), 10);
+        return isNaN(parsed) ? 0 : parsed;
+      },
+      z
+        .number()
+        .int("Auto void shipments threshold must be an whole number")
+        .nonnegative("Auto void shipments threshold must be non-negative")
+        .max(90, "Auto void shipments threshold must be less than 90 days"),
+    ),
+
     // Performance Metrics
     onTimeDeliveryTarget: z.preprocess((val) => {
       if (val === "" || val === null || val === undefined) {
