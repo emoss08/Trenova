@@ -15,6 +15,9 @@ type DuplicateShipmentPayload struct {
 }
 
 type DuplicateShipmentResult struct {
-	Count      int      `json:"count"`
-	ProNumbers []string `json:"proNumbers"`
+	JobID      string         `json:"jobId"`
+	Count      int            `json:"count"`
+	ProNumbers []string       `json:"proNumbers"`
+	Result     string         `json:"result"`
+	Data       map[string]any `json:"data"`
 }
