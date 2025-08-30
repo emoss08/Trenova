@@ -275,6 +275,13 @@ func (s *Service) Copy(
 		client.StartWorkflowOptions{
 			ID:        fmt.Sprintf("configuration-copied-%s", req.ConfigID.String()),
 			TaskQueue: temporaltype.NotificationTaskQueue,
+			SearchAttributes: map[string]any{
+				"OrganizationId": req.OrgID.String(),
+				"BusinessUnitId": req.BuID.String(),
+				"UserId":         existing.UserID.String(),
+				"ConfigId":       req.ConfigID.String(),
+				"WorkflowType":   "SendNotification",
+			},
 		},
 		notificationjobs.SendConfigurationCopiedNotificationWorkflow,
 		&notificationjobs.SendConfigurationCopiedNotificationPayload{

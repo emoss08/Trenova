@@ -22,9 +22,11 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 func DeleteAuditEntriesWorkflow(
 	ctx workflow.Context,
 ) error {
+	// Configure activity options for bulk deletion operations
+	// This operation may process large amounts of data across multiple organizations
 	ao := workflow.ActivityOptions{
-		StartToCloseTimeout: 10 * time.Second,
-		HeartbeatTimeout:    2 * time.Second,
+		StartToCloseTimeout: 5 * time.Minute, // Allow up to 5 minutes for bulk deletion
+		HeartbeatTimeout:    30 * time.Second, // Heartbeat every 30 seconds for long operations
 		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    time.Second,
 			BackoffCoefficient: 2.0,

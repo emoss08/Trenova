@@ -30,9 +30,11 @@ func DuplicateShipmentWorkflow(
 	ctx workflow.Context,
 	payload *DuplicateShipmentPayload,
 ) (*DuplicateShipmentResult, error) {
+	// Configure activity options for shipment duplication
+	// Duration depends on the number of shipments to duplicate
 	ao := workflow.ActivityOptions{
-		StartToCloseTimeout: 10 * time.Second,
-		HeartbeatTimeout:    2 * time.Second,
+		StartToCloseTimeout: 2 * time.Minute, // Allow up to 2 minutes for duplication (up to 100 shipments)
+		HeartbeatTimeout:    10 * time.Second, // Heartbeat every 10 seconds
 		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    time.Second,
 			BackoffCoefficient: 2.0,
@@ -107,9 +109,10 @@ func duplicateShipment(
 func CancelShipmentsByCreatedAtWorkflow(
 	ctx workflow.Context,
 ) (*CancelShipmentsByCreatedAtResult, error) {
+	// Configure activity options for bulk cancellation across multiple organizations
 	ao := workflow.ActivityOptions{
-		StartToCloseTimeout: 30 * time.Second, // Longer timeout for bulk operations
-		HeartbeatTimeout:    5 * time.Second,
+		StartToCloseTimeout: 5 * time.Minute, // Allow up to 5 minutes for processing all organizations
+		HeartbeatTimeout:    15 * time.Second, // Heartbeat every 15 seconds during bulk operations
 		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    time.Second,
 			BackoffCoefficient: 2.0,
