@@ -1,6 +1,7 @@
 package temporaljobs
 
 import (
+	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/jobscheduler"
 	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/notificationjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/shipmentjobs"
@@ -22,6 +23,7 @@ var ActivitiesModule = fx.Module(
 		shipmentjobs.NewActivities,
 		notificationjobs.NewActivities,
 		systemjobs.NewActivities,
+		auditjobs.NewActivities,
 	),
 )
 
@@ -38,6 +40,7 @@ var WorkerModule = fx.Module(
 		shipmentjobs.NewWorker,
 		notificationjobs.NewWorker,
 		systemjobs.NewWorker,
+		auditjobs.NewWorker,
 	),
 )
 

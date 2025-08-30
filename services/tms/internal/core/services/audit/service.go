@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/pkg/config"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
@@ -24,6 +25,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
+	"go.temporal.io/sdk/client"
 	"go.uber.org/atomic"
 	"go.uber.org/fx"
 )
@@ -65,25 +67,25 @@ type ServiceParams struct {
 	AuditRepository  repositories.AuditRepository
 	StreamingService services.StreamingService
 	PermService      services.PermissionService
+	TemporalClient   client.Client
 	Logger           *logger.Logger
 	Config           *config.Manager
 }
 
 // service is the improved audit service implementation
 type service struct {
-	repo          repositories.AuditRepository
-	ps            services.PermissionService
-	ss            services.StreamingService
-	logger        *zerolog.Logger
-	config        *config.AuditConfig
-	queue         *EntryQueue
-	processor     *BatchProcessor
-	sdm           *SensitiveDataManagerV2
-	mu            sync.RWMutex
-	isRunning     atomic.Bool
-	serviceState  atomic.String
-	defaultFields map[string]any
-	metrics       struct {
+	repo           repositories.AuditRepository
+	ps             services.PermissionService
+	ss             services.StreamingService
+	temporalClient client.Client
+	logger         *zerolog.Logger
+	config         *config.AuditConfig
+	sdm            *SensitiveDataManagerV2
+	mu             sync.RWMutex
+	isRunning      atomic.Bool
+	serviceState   atomic.String
+	defaultFields  map[string]any
+	metrics        struct {
 		totalEntries   atomic.Int64
 		failedEntries  atomic.Int64
 		processedBatch atomic.Int64
@@ -98,27 +100,18 @@ func NewService(p ServiceParams) services.AuditService {
 	log := p.Logger.With().Str("service", "audit").Logger()
 	cfg := p.Config.Audit()
 
-	processor := NewBatchProcessor(p.AuditRepository, p.Logger)
-
-	queueConfig := QueueConfig{
-		BufferSize:   cfg.BufferSize,
-		BatchSize:    cfg.BatchSize,
-		FlushTimeout: time.Duration(cfg.FlushInterval) * time.Second,
-		Workers:      cfg.Workers,
-	}
-
-	queue := NewEntryQueue(queueConfig, processor, p.Logger)
+	// Set the max buffer size in the audit jobs package
+	auditjobs.SetMaxBufferSize(cfg.BufferSize)
 
 	srv := &service{
-		repo:          p.AuditRepository,
-		ps:            p.PermService,
-		ss:            p.StreamingService,
-		logger:        &log,
-		config:        cfg,
-		queue:         queue,
-		processor:     processor,
-		sdm:           NewSensitiveDataManagerV2(),
-		defaultFields: make(map[string]any),
+		repo:           p.AuditRepository,
+		ps:             p.PermService,
+		ss:             p.StreamingService,
+		temporalClient: p.TemporalClient,
+		logger:         &log,
+		config:         cfg,
+		sdm:            NewSensitiveDataManagerV2(),
+		defaultFields:  make(map[string]any),
 	}
 
 	srv.serviceState.Store(string(ServiceStateInitializing))
@@ -194,23 +187,28 @@ func (s *service) LogAction(params *services.LogActionParams, opts ...services.L
 		return eris.Wrap(ErrSanitizationFailed, err.Error())
 	}
 
-	// Enqueue entry
-	var err error
-	if params.Critical {
-		// Critical entries get longer timeout
-		err = s.queue.EnqueueWithTimeout(entry, 5*time.Second)
-	} else {
-		err = s.queue.Enqueue(entry)
-	}
-
+	// Add entry to buffer for Temporal processing
+	err := auditjobs.AddToBuffer(entry)
 	if err != nil {
 		s.metrics.failedEntries.Inc()
-		if eris.Is(err, ErrQueueFull) {
-			s.logger.Warn().
-				Str("resource", string(params.Resource)).
-				Str("action", string(params.Action)).
-				Bool("critical", params.Critical).
-				Msg("audit queue full, entry dropped")
+		s.logger.Warn().
+			Str("resource", string(params.Resource)).
+			Str("action", string(params.Action)).
+			Bool("critical", params.Critical).
+			Err(err).
+			Msg("failed to buffer audit entry")
+		
+		// For critical entries, try to insert directly
+		if params.Critical {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if directErr := s.repo.InsertAuditEntries(ctx, []*audit.Entry{entry}); directErr != nil {
+				s.logger.Error().
+					Err(directErr).
+					Str("resource", string(params.Resource)).
+					Msg("failed to directly insert critical audit entry")
+				return eris.Wrap(directErr, "failed to insert critical audit entry")
+			}
 		}
 		return err
 	}
@@ -228,19 +226,12 @@ func (s *service) Start() error {
 
 	s.serviceState.Store(string(ServiceStateRunning))
 
-	workers := s.config.Workers
-	if workers == 0 {
-		workers = 2
-	}
-	s.queue.Start(workers)
-
 	s.logger.Info().
 		Int("buffer_size", s.config.BufferSize).
 		Int("batch_size", s.config.BatchSize).
 		Int("flush_interval", s.config.FlushInterval).
-		Int("workers", workers).
 		Str("audit_version", AuditVersionTag).
-		Msg("🚀 Audit service started")
+		Msg("🚀 Audit service started (using Temporal)")
 
 	return nil
 }
@@ -256,14 +247,21 @@ func (s *service) Stop() error {
 	s.serviceState.Store(string(ServiceStateStopping))
 	s.logger.Info().Msg("stopping audit service")
 
-	// Stop the queue with timeout
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
-	defer cancel()
-
-	if err := s.queue.Stop(ctx); err != nil {
-		s.logger.Error().Err(err).Msg("error stopping audit queue")
-		s.serviceState.Store(string(ServiceStateDegraded))
-		return err
+	// Flush any remaining buffered entries via Temporal
+	entries := auditjobs.GetBufferedEntries()
+	if len(entries) > 0 {
+		s.logger.Info().Int("count", len(entries)).Msg("flushing remaining audit entries")
+		
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		
+		// Try to insert directly as a fallback during shutdown
+		if err := s.repo.InsertAuditEntries(ctx, entries); err != nil {
+			s.logger.Error().Err(err).Msg("failed to flush remaining audit entries")
+			s.serviceState.Store(string(ServiceStateDegraded))
+			return err
+		}
+		auditjobs.ClearBuffer()
 	}
 
 	s.serviceState.Store(string(ServiceStateStopped))
