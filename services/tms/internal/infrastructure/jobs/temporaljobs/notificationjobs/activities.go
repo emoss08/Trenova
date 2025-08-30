@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 package notificationjobs
 
 import (
@@ -65,10 +70,10 @@ func (a *Activities) SendNotificationActivity(
 			"userID", payload.UserID,
 			"jobType", payload.JobType,
 		)
-		
+
 		// Classify the error for proper retry behavior
 		appErr := temporaltype.ClassifyError(err)
-		
+
 		// If it's a user not found or invalid recipient, don't retry
 		if appErr.Type == temporaltype.ErrorTypeResourceNotFound {
 			return temporaltype.NewNonRetryableError(
@@ -76,7 +81,7 @@ func (a *Activities) SendNotificationActivity(
 				err,
 			).ToTemporalError()
 		}
-		
+
 		return appErr.ToTemporalError()
 	}
 
@@ -138,19 +143,19 @@ func (a *Activities) SendConfigurationCopiedNotificationActivity(
 			"configID", payload.ConfigID,
 			"configName", payload.ConfigName,
 		)
-		
+
 		// Classify the error for proper retry behavior
 		appErr := temporaltype.ClassifyError(err)
-		
+
 		// Special handling for configuration-related errors
 		if appErr.Type == temporaltype.ErrorTypeResourceNotFound {
 			return temporaltype.NewNonRetryableError(
-				fmt.Sprintf("Configuration or user not found: user=%s, config=%s", 
+				fmt.Sprintf("Configuration or user not found: user=%s, config=%s",
 					payload.UserID, payload.ConfigID),
 				err,
 			).ToTemporalError()
 		}
-		
+
 		return appErr.ToTemporalError()
 	}
 

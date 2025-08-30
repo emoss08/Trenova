@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 package auditjobs
 
 import (
@@ -106,10 +111,10 @@ func (a *Activities) ProcessAuditBatchActivity(
 		BatchID:        payload.BatchID,
 		ProcessedAt:    time.Now().Unix(),
 		Metadata: map[string]any{
-			"duration":           duration.String(),
-			"avgProcessingTime":  duration.Milliseconds() / int64(len(payload.Entries)),
-			"organizationId":     payload.OrganizationID.String(),
-			"businessUnitId":     payload.BusinessUnitID.String(),
+			"duration":          duration.String(),
+			"avgProcessingTime": duration.Milliseconds() / int64(len(payload.Entries)),
+			"organizationId":    payload.OrganizationID.String(),
+			"businessUnitId":    payload.BusinessUnitID.String(),
 		},
 	}, nil
 }
@@ -148,11 +153,11 @@ func (a *Activities) GetAuditBufferStatusActivity(
 }
 
 var (
-	auditBuffer       []*audit.Entry
-	bufferMutex       = &sync.RWMutex{}
-	lastFlush         time.Time
-	overflowCount     int
-	maxBufferSize     = 10000
+	auditBuffer   []*audit.Entry
+	bufferMutex   = &sync.RWMutex{}
+	lastFlush     time.Time
+	overflowCount int
+	maxBufferSize = 10000
 )
 
 func AddToBuffer(entry *audit.Entry) error {

@@ -1,3 +1,8 @@
+/*
+ * Copyright 2023-2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 package shipmentjobs
 
 import (
@@ -30,10 +35,8 @@ func DuplicateShipmentWorkflow(
 	ctx workflow.Context,
 	payload *DuplicateShipmentPayload,
 ) (*DuplicateShipmentResult, error) {
-	// Configure activity options for shipment duplication
-	// Duration depends on the number of shipments to duplicate
 	ao := workflow.ActivityOptions{
-		StartToCloseTimeout: 2 * time.Minute, // Allow up to 2 minutes for duplication (up to 100 shipments)
+		StartToCloseTimeout: 2 * time.Minute,  // Allow up to 2 minutes for duplication (up to 100 shipments)
 		HeartbeatTimeout:    10 * time.Second, // Heartbeat every 10 seconds
 		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    time.Second,
@@ -111,7 +114,7 @@ func CancelShipmentsByCreatedAtWorkflow(
 ) (*CancelShipmentsByCreatedAtResult, error) {
 	// Configure activity options for bulk cancellation across multiple organizations
 	ao := workflow.ActivityOptions{
-		StartToCloseTimeout: 5 * time.Minute, // Allow up to 5 minutes for processing all organizations
+		StartToCloseTimeout: 5 * time.Minute,  // Allow up to 5 minutes for processing all organizations
 		HeartbeatTimeout:    15 * time.Second, // Heartbeat every 15 seconds during bulk operations
 		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    time.Second,
