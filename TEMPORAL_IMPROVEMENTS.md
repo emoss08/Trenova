@@ -41,36 +41,48 @@ This document tracks the implementation of Temporal improvements for the Trenova
 
 ## 🟢 Lower Priority (Nice to Have)
 
-### 4. Schedule Enhancements
+### 3. Schedule Enhancements
 
-- [ ] Add schedule pause/resume API
-  - [ ] Create schedule management service
-  - [ ] Add REST endpoints for schedule control
-- [ ] Implement schedule backfill
-  - [ ] Add backfill command for missed executions
-  - [ ] Create backfill UI component
-- [ ] Dynamic schedule updates
-  - [ ] Allow cron expression updates
-  - [ ] Support timezone changes
-- [ ] Add schedule monitoring dashboard
+- [x] Add schedule pause/resume API
+  - [x] Create schedule management methods (PauseSchedule, UnpauseSchedule)
+  - [x] Add manual trigger capability (TriggerSchedule)
+- [x] Dynamic schedule updates
+  - [x] Allow cron expression updates (UpdateScheduleCron)
+  - [x] Support schedule metadata and descriptions
+- [x] Add schedule monitoring methods
+  - [x] GetScheduleInfo for individual schedules
+  - [x] ListSchedules for all schedules
+- [x] Enhanced schedule configuration
+  - [x] Centralized schedule definitions
+  - [x] Auto-update existing schedules on startup
 
-### 5. Continue-As-New for Long-Running Workflows
+### 4. Continue-As-New for Long-Running Workflows
 
-- [ ] Identify workflows needing continue-as-new
-- [ ] Implement in data retention workflows
-- [ ] Add history size monitoring
-- [ ] Create continue-as-new guidelines
+- [x] Identified that current workflows don't need continue-as-new
+  - DeleteAuditEntriesWorkflow runs once per schedule
+  - CancelShipmentsByCreatedAtWorkflow runs once per schedule
+  - No workflows have long-running loops or accumulate large histories
+- Note: Continue-As-New should be implemented when:
+  - Workflows run for extended periods (days/weeks)
+  - Processing large datasets in loops
+  - History exceeds 10,000 events
 
-### 6. Data Converter for Security
+### 5. Data Converter for Security
 
-- [ ] Implement encryption data converter
-  - [ ] AES-256 encryption for payloads
-  - [ ] Key rotation support
-- [ ] Add compression data converter
-  - [ ] GZIP compression for large payloads
-  - [ ] Selective compression based on size
-- [ ] Create converter chain for multiple transformations
-- [ ] Add converter configuration management
+- [x] Implement encryption data converter
+  - [x] AES-256-GCM encryption for payloads
+  - [x] Key ID support for multiple keys
+  - [x] Environment variable based key storage
+- [x] Add compression data converter
+  - [x] GZIP compression for large payloads
+  - [x] Selective compression based on configurable threshold
+- [x] Create codec-based converter implementation
+  - [x] Uses Temporal's PayloadCodec interface
+  - [x] Chainable codecs (compression + encryption)
+- [x] Add converter configuration management
+  - [x] Configuration via config.yaml
+  - [x] Enable/disable encryption and compression
+  - [x] Configurable compression threshold
 
 ### 7. Dynamic Worker Scaling
 

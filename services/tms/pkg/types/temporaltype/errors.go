@@ -156,12 +156,10 @@ func IsRetryable(err error) bool {
 	if appErr, ok := err.(*ApplicationError); ok {
 		return appErr.Retryable
 	}
-	// Check if it's a Temporal ApplicationError
 	if temporal.IsApplicationError(err) {
 		var temporalErr *temporal.ApplicationError
 		if err, ok := err.(*temporal.ApplicationError); ok {
 			temporalErr = err
-			// Check the error type from Temporal
 			switch temporalErr.Type() {
 			case ErrorTypeNonRetryable.String(),
 				ErrorTypeInvalidInput.String(),
@@ -189,22 +187,18 @@ func ClassifyError(err error) *ApplicationError {
 		return nil
 	}
 
-	// If it's already an ApplicationError, return it
 	if appErr, ok := err.(*ApplicationError); ok {
 		return appErr
 	}
 
-	// Classify based on error message or type
-	// This can be extended based on your specific error patterns
 	errMsg := strings.ToLower(err.Error())
 
-	// Check for common patterns using lo.ContainsBy
 	connectionErrors := []string{"connection refused", "connection reset", "timeout"}
 	notFoundErrors := []string{"not found", "does not exist"}
 	permissionErrors := []string{"permission denied", "unauthorized", "forbidden"}
 	validationErrors := []string{"invalid", "malformed", "bad request"}
 	rateLimitErrors := []string{"rate limit", "too many requests"}
-	
+
 	switch {
 	case lo.ContainsBy(connectionErrors, func(pattern string) bool {
 		return strings.Contains(errMsg, pattern)
