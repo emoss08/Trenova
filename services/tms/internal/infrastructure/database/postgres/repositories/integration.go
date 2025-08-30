@@ -78,10 +78,7 @@ func (r *integrationRepository) List(
 
 	q := dba.NewSelect().Model(&entities)
 
-	// * Filter the query
 	q = r.filterQuery(q, opts)
-
-	// * Order by name and created at
 	q.Order("i.name ASC", "i.created_at DESC")
 
 	total, err := q.ScanAndCount(ctx)

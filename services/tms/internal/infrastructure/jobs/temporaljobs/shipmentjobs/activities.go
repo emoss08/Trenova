@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
+	"github.com/emoss08/trenova/pkg/types/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
@@ -46,8 +47,27 @@ func (sja *Activities) DuplicateShipmentActivity(
 		payload.Count,
 	)
 
-	activity.RecordHeartbeat(ctx, "preparing duplication request")
+	if payload.Count <= 0 {
+		return nil, temporaltype.NewInvalidInputError(
+			"Invalid duplication count",
+			map[string]any{
+				"count":      payload.Count,
+				"shipmentID": payload.ShipmentID.String(),
+			},
+		).ToTemporalError()
+	}
 
+	if payload.Count > 100 {
+		return nil, temporaltype.NewInvalidInputError(
+			"Duplication count exceeds maximum limit of 100",
+			map[string]any{
+				"requested": payload.Count,
+				"maximum":   100,
+			},
+		).ToTemporalError()
+	}
+
+	activity.RecordHeartbeat(ctx, "preparing duplication request")
 	duplicateReq := &repositories.DuplicateShipmentRequest{
 		ShipmentID:               payload.ShipmentID,
 		OrgID:                    payload.OrganizationID,
@@ -63,7 +83,14 @@ func (sja *Activities) DuplicateShipmentActivity(
 	shipments, err := sja.sr.BulkDuplicate(ctx, duplicateReq)
 	if err != nil {
 		logger.Error("Failed to duplicate shipments: %v", err)
-		return nil, err
+		appErr := temporaltype.ClassifyError(err)
+		if appErr.Type == temporaltype.ErrorTypeResourceNotFound {
+			return nil, temporaltype.NewResourceNotFoundError(
+				"Shipment",
+				payload.ShipmentID.String(),
+			).ToTemporalError()
+		}
+		return nil, appErr.ToTemporalError()
 	}
 
 	proNumbers := make([]string, 0, len(shipments))
@@ -116,20 +143,18 @@ func (sja *Activities) DuplicateShipmentActivity(
 func (sja *Activities) CancelShipmentsByCreatedAtActivity(
 	ctx context.Context,
 ) (*CancelShipmentsByCreatedAtResult, error) {
-	now := timeutils.NowUnix()
-
 	logger := activity.GetLogger(ctx)
-	logger.Info(
-		"Starting cancel shipments by created at activity for date threshold: %d",
-		now,
-	)
+	logger.Info("Starting cancel shipments by created at activity")
 
 	activity.RecordHeartbeat(ctx, "fetching shipment controls")
 
 	scs, err := sja.scr.List(ctx)
 	if err != nil {
 		logger.Error("Failed to get shipment controls: %v", err)
-		return nil, fmt.Errorf("failed to get shipment controls: %w", err)
+		return nil, temporaltype.NewRetryableError(
+			"Failed to fetch shipment controls",
+			err,
+		).ToTemporalError()
 	}
 
 	skippedOrgs := make([]pulid.ID, 0)
@@ -139,13 +164,22 @@ func (sja *Activities) CancelShipmentsByCreatedAtActivity(
 	logger.Info("Processing %d organizations for shipment cancellation", len(scs))
 
 	for _, sc := range scs {
-		if !sc.AutoVoidShipments {
+		if !sc.AutoCancelShipments {
 			logger.Info(
-				"Skipping organization %s - auto void shipments is disabled",
+				"Skipping organization %s - auto cancel shipments is disabled",
 				sc.OrganizationID,
 			)
 			skippedOrgs = append(skippedOrgs, sc.OrganizationID)
-			continue // * skip the organization if auto void shipments is disabled
+			continue // * skip the organization if auto cancel shipments is disabled
+		}
+
+		if sc.AutoCancelShipmentsThreshold == nil {
+			logger.Info(
+				"Skipping organization %s - auto cancel shipments threshold is not configured",
+				sc.OrganizationID,
+			)
+			skippedOrgs = append(skippedOrgs, sc.OrganizationID)
+			continue
 		}
 
 		activity.RecordHeartbeat(
@@ -153,14 +187,23 @@ func (sja *Activities) CancelShipmentsByCreatedAtActivity(
 			fmt.Sprintf("processing organization %s", sc.OrganizationID),
 		)
 
-		logger.Info("Processing organization %s for auto void", sc.OrganizationID)
+		now := timeutils.NowUnix()
+		daysInSeconds := int64(*sc.AutoCancelShipmentsThreshold * 24 * 60 * 60)
+		thresholdDate := now - daysInSeconds
 
-		shipments, err := sja.sr.CancelShipmentsByCreatedAt(
+		logger.Info(
+			"Processing organization %s for auto cancel with threshold %d days (created before %d)",
+			sc.OrganizationID,
+			*sc.AutoCancelShipmentsThreshold,
+			thresholdDate,
+		)
+
+		shipments, err := sja.sr.BulkCancelShipmentsByCreatedAt(
 			ctx,
-			&repositories.CancelShipmentsByCreatedAtRequest{
+			&repositories.BulkCancelShipmentsByCreatedAtRequest{
 				OrgID:     sc.OrganizationID,
 				BuID:      sc.BusinessUnitID,
-				CreatedAt: now,
+				CreatedAt: thresholdDate,
 			},
 		)
 		if err != nil {
@@ -222,7 +265,6 @@ func (sja *Activities) CancelShipmentsByCreatedAtActivity(
 			"totalOrganizations": len(scs),
 			"processedCount":     len(processedOrgs),
 			"skippedCount":       len(skippedOrgs),
-			"createdAtThreshold": now,
 		},
 	}, nil
 }

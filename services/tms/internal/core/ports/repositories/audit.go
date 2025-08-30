@@ -58,4 +58,5 @@ type AuditRepository interface {
 		req *GetAuditByResourceRequest,
 	) ([]*audit.Entry, error)
 	GetRecentEntries(ctx context.Context, req *GetRecentEntriesRequest) ([]*audit.Entry, error)
+	DeleteAuditEntries(ctx context.Context, timestamp int64) (int64, error)
 }

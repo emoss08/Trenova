@@ -728,10 +728,27 @@ func (sr *shipmentRepository) Cancel(
 // cancelShipmentComponents cancels the shipment components
 func (sr *shipmentRepository) cancelShipmentComponents(
 	ctx context.Context,
-	tx bun.Tx,
+	tx bun.IDB,
 	req *repositories.CancelShipmentRequest,
 ) error {
 	moveIDs, err := sr.getMoveIDsForShipment(ctx, tx, req.ShipmentID)
+	if err != nil {
+		return err
+	}
+
+	if len(moveIDs) == 0 {
+		return nil
+	}
+
+	return sr.bulkCancelShipmentComponents(ctx, tx, moveIDs)
+}
+
+func (sr *shipmentRepository) bulkCancelShipmentComponentsByShipmentIds(
+	ctx context.Context,
+	tx bun.IDB,
+	shipmentIds []pulid.ID,
+) error {
+	moveIDs, err := sr.getMoveIDsForShipments(ctx, tx, shipmentIds)
 	if err != nil {
 		return err
 	}
@@ -1333,9 +1350,9 @@ func (sr *shipmentRepository) GetPreviousRates(
 	}, nil
 }
 
-func (sr *shipmentRepository) CancelShipmentsByCreatedAt(
+func (sr *shipmentRepository) BulkCancelShipmentsByCreatedAt(
 	ctx context.Context,
-	req *repositories.CancelShipmentsByCreatedAtRequest,
+	req *repositories.BulkCancelShipmentsByCreatedAtRequest,
 ) ([]*shipment.Shipment, error) {
 	log := sr.l.With().
 		Str("operation", "CancelShipmentsByCreatedAt").
@@ -1362,26 +1379,37 @@ func (sr *shipmentRepository) CancelShipmentsByCreatedAt(
 	}
 
 	shipments := make([]*shipment.Shipment, 0)
-	query := dba.NewUpdate().
-		Model(&shipments).
-		Set("status = ?", shipment.StatusCanceled).
-		Set("canceled_at = ?", timeutils.NowUnix()).
-		Set("canceled_by_id = ?", systemUser.ID).
-		Set("cancel_reason = ?", "Automatically voided due to shipment control settings").
-		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return uq.Where("sp.organization_id = ?", req.OrgID).
-				Where("sp.business_unit_id = ?", req.BuID).
-				Where("sp.created_at < ?", req.CreatedAt).
-				Where("sp.status = ?", shipment.StatusNew)
-		})
 
-	if _, err = query.Exec(ctx); err != nil {
-		return nil, oops.
-			In("shipment_repository").
-			Time(time.Now()).
-			With("req", req).
-			Wrapf(err, "cancel shipments by created at")
-	}
+	err = dba.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		query := tx.NewUpdate().
+			Model(&shipments).
+			Set("status = ?", shipment.StatusCanceled).
+			Set("canceled_at = ?", timeutils.NowUnix()).
+			Set("canceled_by_id = ?", systemUser.ID).
+			Set("cancel_reason = ?", "Automatically voided due to shipment control settings").
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return uq.
+					Where("sp.organization_id = ?", req.OrgID).
+					Where("sp.business_unit_id = ?", req.BuID).
+					Where("sp.created_at <= ?", req.CreatedAt).
+					Where("sp.status = ?", shipment.StatusNew)
+			})
+
+		if _, err = query.Exec(ctx); err != nil {
+			return oops.
+				In("shipment_repository").
+				Time(time.Now()).
+				With("req", req).
+				Wrapf(err, "cancel shipments by created at")
+		}
+
+		shipmentIds := make([]pulid.ID, 0, len(shipments))
+		for _, shp := range shipments {
+			shipmentIds = append(shipmentIds, shp.ID)
+		}
+
+		return sr.bulkCancelShipmentComponentsByShipmentIds(ctx, tx, shipmentIds)
+	})
 
 	return shipments, nil
 }

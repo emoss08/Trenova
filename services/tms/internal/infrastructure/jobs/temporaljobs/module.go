@@ -4,6 +4,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/jobscheduler"
 	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/notificationjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/shipmentjobs"
+	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/systemjobs"
 	"go.uber.org/fx"
 )
 
@@ -20,6 +21,7 @@ var ActivitiesModule = fx.Module(
 	fx.Provide(
 		shipmentjobs.NewActivities,
 		notificationjobs.NewActivities,
+		systemjobs.NewActivities,
 	),
 )
 
@@ -35,14 +37,12 @@ var WorkerModule = fx.Module(
 	fx.Invoke(
 		shipmentjobs.NewWorker,
 		notificationjobs.NewWorker,
+		systemjobs.NewWorker,
 	),
 )
 
 var SchedulerModule = fx.Module(
 	"temporal-scheduler",
-	fx.Provide(
-		jobscheduler.NewScheduler,
-	),
 	fx.Invoke(
 		jobscheduler.NewScheduler,
 	),

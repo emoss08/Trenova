@@ -355,3 +355,44 @@ func (ar *auditRepository) GetRecentEntries(
 
 	return entries, nil
 }
+
+func (ar *auditRepository) DeleteAuditEntries(
+	ctx context.Context,
+	timestamp int64,
+) (int64, error) {
+	dba, err := ar.db.WriteDB(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	log := ar.l.With().
+		Str("operation", "DeleteAuditEntries").
+		Int64("timestamp", timestamp).
+		Logger()
+
+	totalDeleted := int64(0)
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		result, err := tx.NewDelete().Model((*audit.Entry)(nil)).
+			Where("ae.timestamp < ?", timestamp).
+			Exec(c)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to delete audit entries")
+			return err
+		}
+
+		totalDeleted, err = result.RowsAffected()
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get rows affected")
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to delete audit entries")
+		return 0, err
+	}
+
+	return totalDeleted, nil
+}

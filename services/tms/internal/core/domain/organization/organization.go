@@ -62,6 +62,7 @@ type Organization struct {
 	BusinessUnit          *businessunit.BusinessUnit                   `json:"businessUnit,omitempty"          bun:"rel:belongs-to,join:business_unit_id=id"`
 	State                 *usstate.UsState                             `json:"state,omitempty"                 bun:"rel:belongs-to,join:state_id=id"`
 	DocumentQualityConfig *documentqualityconfig.DocumentQualityConfig `json:"documentQualityConfig,omitempty" bun:"rel:has-one,join:id=organization_id"`
+	DataRetention         *DataRetention                               `json:"dataRetention,omitempty"         bun:"rel:has-one,join:id=organization_id"`
 }
 
 func (o *Organization) Validate(ctx context.Context, multiErr *errors.MultiError) {

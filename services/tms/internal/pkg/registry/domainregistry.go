@@ -105,5 +105,6 @@ func RegisterEntities() []any {
 		&formulatemplate.FormulaTemplate{},
 		&shipment.ShipmentHold{},
 		&shipment.HoldReason{},
+		&organization.DataRetention{},
 	}
 }

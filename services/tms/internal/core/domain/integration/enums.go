@@ -14,6 +14,9 @@ const (
 
 	// PCMilerIntegrationType represents PCMiler integration
 	PCMilerIntegrationType = Type("PCMiler")
+
+	// SamsaraIntegrationType represents Samsara integration
+	SamsaraIntegrationType = Type("Samsara")
 )
 
 type Category string

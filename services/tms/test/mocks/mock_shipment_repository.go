@@ -145,3 +145,10 @@ func (m *MockShipmentRepository) GetDelayedShipments(
 ) ([]*shipment.Shipment, error) {
 	return nil, nil
 }
+
+func (m *MockShipmentRepository) BulkCancelShipmentsByCreatedAt(
+	ctx context.Context,
+	req *repositories.BulkCancelShipmentsByCreatedAtRequest,
+) ([]*shipment.Shipment, error) {
+	return nil, nil
+}

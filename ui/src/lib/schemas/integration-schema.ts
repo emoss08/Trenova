@@ -40,6 +40,10 @@ export const integrationSchema = z.object({
   category: z.enum(IntegrationCategory),
   type: z.enum(IntegrationType),
   configuration: z.record(z.string(), z.any()),
+  docsUrl: nullableStringSchema,
+  featured: z.boolean().default(false),
+  logoUrl: nullableStringSchema,
+  websiteUrl: nullableStringSchema,
   enabledById: nullableStringSchema,
   // * Relationships
   organization: organizationSchema.nullish(),
