@@ -19,6 +19,12 @@ export class IntegrationAPI {
     return response.data;
   }
 
+  // Fetch a dynamic configuration form spec for an integration type
+  async getFormSpec(type: IntegrationSchema["type"]) {
+    const response = await http.get(`/integrations/${type}/form-spec`);
+    return response.data;
+  }
+
   async update(
     integrationId: string,
     data: Record<string, any>,

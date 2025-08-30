@@ -9,7 +9,7 @@ CREATE DOMAIN "vin_code" AS varchar(17) CONSTRAINT "vin_code_check" CHECK (VALUE
 
 CREATE DOMAIN "temperature_fahrenheit" AS smallint CONSTRAINT "temperature_fahrenheit_check" CHECK (VALUE BETWEEN -100 AND 150);
 
-CREATE DOMAIN "auto_void_shipments_threshold" AS smallint CONSTRAINT "auto_void_shipments_threshold_check" CHECK (VALUE BETWEEN 0 AND 90);
+CREATE DOMAIN "auto_cancel_shipments_threshold" AS smallint CONSTRAINT "auto_cancel_shipments_threshold_check" CHECK (VALUE BETWEEN 0 AND 90);
 
 CREATE DOMAIN "vin_code_optional" AS varchar(17) CONSTRAINT "vin_code_optional_check" CHECK (VALUE IS NULL
     OR VALUE = ''

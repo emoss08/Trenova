@@ -1,4 +1,3 @@
---
 -- Copyright 2023-2025 Eric Moss
 -- Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
 -- Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md--
@@ -48,9 +47,9 @@ CREATE TABLE IF NOT EXISTS "shipment_controls"(
     "track_detention_time" boolean NOT NULL DEFAULT TRUE,
     "auto_generate_detention_charges" boolean NOT NULL DEFAULT TRUE,
     "detention_threshold" integer NOT NULL DEFAULT 30,
-    -- Auto Void Shipment Related Fields
-    "auto_void_shipments" boolean NOT NULL DEFAULT TRUE,
-    "auto_void_shipments_threshold" "auto_void_shipments_threshold" NOT NULL DEFAULT 30,
+    -- Auto Cancel Shipment Related Fields
+    "auto_cancel_shipments" boolean NOT NULL DEFAULT TRUE,
+    "auto_cancel_shipments_threshold" "auto_cancel_shipments_threshold" NOT NULL DEFAULT 30,
     -- Performance Metrics
     "on_time_delivery_target" float,
     "service_failure_target" float,

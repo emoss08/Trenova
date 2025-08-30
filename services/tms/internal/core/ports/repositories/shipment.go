@@ -318,7 +318,7 @@ type GetPreviousRatesRequest struct {
 	ExcludeShipmentID *pulid.ID `json:"excludeShipmentId" query:"excludeShipmentId"`
 }
 
-type CancelShipmentsByCreatedAtRequest struct {
+type BulkCancelShipmentsByCreatedAtRequest struct {
 	OrgID     pulid.ID `json:"orgId"`
 	BuID      pulid.ID `json:"buId"`
 	CreatedAt int64    `json:"createdAt"`
@@ -352,9 +352,9 @@ type ShipmentRepository interface {
 	UnCancel(ctx context.Context, req *UnCancelShipmentRequest) (*shipment.Shipment, error)
 	BulkDuplicate(ctx context.Context, req *DuplicateShipmentRequest) ([]*shipment.Shipment, error)
 	DelayShipments(ctx context.Context) ([]*shipment.Shipment, error)
-	CancelShipmentsByCreatedAt(
+	BulkCancelShipmentsByCreatedAt(
 		ctx context.Context,
-		req *CancelShipmentsByCreatedAtRequest,
+		req *BulkCancelShipmentsByCreatedAtRequest,
 	) ([]*shipment.Shipment, error)
 	CheckForDuplicateBOLs(
 		ctx context.Context,

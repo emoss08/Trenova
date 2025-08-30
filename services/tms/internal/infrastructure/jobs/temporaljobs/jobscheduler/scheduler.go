@@ -53,7 +53,11 @@ func NewScheduler(p SchedulerParams) *Scheduler {
 
 func (s *Scheduler) Start() error {
 	ctx := context.Background()
-	if err := s.scheduleVoidShipmentsByCreatedAt(ctx); err != nil {
+	if err := s.scheduleCancelShipmentsByCreatedAt(ctx); err != nil {
+		return err
+	}
+
+	if err := s.scheduleDeleteAuditEntries(ctx); err != nil {
 		return err
 	}
 
@@ -83,8 +87,8 @@ func (s *Scheduler) Stop() error {
 	return nil
 }
 
-func (s *Scheduler) scheduleVoidShipmentsByCreatedAt(ctx context.Context) error {
-	scheduleID := temporaltype.VoidShipmentsScheduleID
+func (s *Scheduler) scheduleCancelShipmentsByCreatedAt(ctx context.Context) error {
+	scheduleID := temporaltype.CancelShipmentsScheduleID
 
 	// * Check if schedule already exists
 	scheduleClient := s.client.ScheduleClient()
@@ -99,14 +103,56 @@ func (s *Scheduler) scheduleVoidShipmentsByCreatedAt(ctx context.Context) error 
 	}
 
 	scheduleOptions := client.ScheduleOptions{
-		ID: temporaltype.VoidShipmentsScheduleID,
+		ID: scheduleID,
 		Spec: client.ScheduleSpec{
-			CronExpressions: []string{"* * * * *"}, // * every minute for testing
+			CronExpressions: []string{"0 0 * * *"}, // * every day at midnight
 		},
 		Action: &client.ScheduleWorkflowAction{
-			ID:        "void-shipments-scheduled-" + time.Now().Format("20060102"),
+			ID:        "cancel-shipments-scheduled-" + time.Now().Format("20060102"),
 			Workflow:  "CancelShipmentsByCreatedAtWorkflow",
 			TaskQueue: temporaltype.ShipmentTaskQueue,
+		},
+		Overlap: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
+	}
+
+	newHandle, err := s.client.ScheduleClient().Create(ctx, scheduleOptions)
+	if err != nil {
+		s.l.Error().Err(err).Msg("failed to create schedule")
+		return err
+	}
+
+	s.schedules[scheduleID] = newHandle
+	s.l.Info().
+		Str("scheduleID", newHandle.GetID()).
+		Msg("schedule created")
+
+	return nil
+}
+
+func (s *Scheduler) scheduleDeleteAuditEntries(ctx context.Context) error {
+	scheduleID := temporaltype.DeleteAuditEntriesScheduleID
+
+	// * Check if schedule already exists
+	scheduleClient := s.client.ScheduleClient()
+	handle := scheduleClient.GetHandle(ctx, scheduleID)
+	_, err := handle.Describe(ctx)
+	if err == nil {
+		s.l.Info().
+			Str("scheduleID", scheduleID).
+			Msg("schedule already exists, skipping creation")
+		s.schedules[scheduleID] = handle
+		return nil
+	}
+
+	scheduleOptions := client.ScheduleOptions{
+		ID: scheduleID,
+		Spec: client.ScheduleSpec{
+			CronExpressions: []string{"0 0 * * *"}, // * every day at midnight
+		},
+		Action: &client.ScheduleWorkflowAction{
+			ID:        "delete-audit-entries-scheduled-" + time.Now().Format("20060102"),
+			Workflow:  "DeleteAuditEntriesWorkflow",
+			TaskQueue: temporaltype.SystemTaskQueue,
 		},
 		Overlap: enums.SCHEDULE_OVERLAP_POLICY_SKIP,
 	}

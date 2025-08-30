@@ -38,6 +38,11 @@ func DuplicateShipmentWorkflow(
 			BackoffCoefficient: 2.0,
 			MaximumAttempts:    3,
 			MaximumInterval:    time.Minute,
+			NonRetryableErrorTypes: []string{
+				temporaltype.ErrorTypeInvalidInput.String(),
+				temporaltype.ErrorTypePermissionDenied.String(),
+				temporaltype.ErrorTypeResourceNotFound.String(),
+			},
 		},
 	}
 
@@ -103,8 +108,8 @@ func CancelShipmentsByCreatedAtWorkflow(
 	ctx workflow.Context,
 ) (*CancelShipmentsByCreatedAtResult, error) {
 	ao := workflow.ActivityOptions{
-		StartToCloseTimeout: 10 * time.Second,
-		HeartbeatTimeout:    2 * time.Second,
+		StartToCloseTimeout: 30 * time.Second, // Longer timeout for bulk operations
+		HeartbeatTimeout:    5 * time.Second,
 		RetryPolicy: &temporal.RetryPolicy{
 			InitialInterval:    time.Second,
 			BackoffCoefficient: 2.0,
@@ -114,6 +119,7 @@ func CancelShipmentsByCreatedAtWorkflow(
 	}
 
 	ctx = workflow.WithActivityOptions(ctx, ao)
+
 	var a *Activities
 	var result *CancelShipmentsByCreatedAtResult
 

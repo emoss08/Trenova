@@ -1,4 +1,4 @@
-package shipmentjobs
+package systemjobs
 
 import (
 	"context"
@@ -18,21 +18,21 @@ type WorkerParams struct {
 
 	LC         fx.Lifecycle
 	Client     client.Client
-	Logger     *logger.Logger
 	Config     *config.Manager
+	Logger     *logger.Logger
 	Activities *Activities
 }
 
 func NewWorker(p WorkerParams) error {
 	log := p.Logger.With().
-		Str("component", "shipment-worker").
+		Str("component", "system-worker").
 		Logger()
 
-	workerConfig := p.Config.Temporal().Workers.Shipment
+	workerConfig := p.Config.Temporal().Workers.System
 	workerOptions := temporalutils.BuildWorkerOptions(workerConfig)
 
 	w := worker.New(p.Client,
-		temporaltype.ShipmentTaskQueue,
+		temporaltype.SystemTaskQueue,
 		workerOptions)
 
 	for _, wf := range RegisterWorkflows() {
@@ -47,7 +47,7 @@ func NewWorker(p WorkerParams) error {
 		OnStart: func(ctx context.Context) error {
 			go func() {
 				if err := w.Run(worker.InterruptCh()); err != nil {
-					log.Error().Err(err).Msg("failed to run shipment worker")
+					log.Error().Err(err).Msg("failed to run system worker")
 				}
 			}()
 			return nil

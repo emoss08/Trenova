@@ -331,7 +331,10 @@ func (c *connection) initializeReadReplicas( //nolint:funlen // we need to keep 
 
 	successCount := 0
 	for _, replicaCfg := range dbCfg.ReadReplicas {
-		c.log.Info().Str("replica", replicaCfg.Name).Msg("initializing read replica")
+		c.log.
+			Debug().
+			Str("replica", replicaCfg.Name).
+			Msg("initializing read replica")
 
 		start := time.Now()
 
@@ -419,7 +422,7 @@ func (c *connection) initializeReadReplicas( //nolint:funlen // we need to keep 
 
 		metrics.RecordConnectionAttempt(replicaCfg.Name, true)
 		metrics.RecordDatabaseOperation("replica_init", replicaCfg.Name, time.Since(start))
-		c.log.Info().
+		c.log.Debug().
 			Str("replica", replicaCfg.Name).
 			Dur("duration", time.Since(start)).
 			Msg("🚀 Established connection to read replica!")
@@ -445,7 +448,7 @@ func (c *connection) monitorReplicaHealth(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			c.log.Info().Msg("stopping health check monitor")
+			c.log.Debug().Msg("stopping health check monitor")
 			return
 		case <-ticker.C:
 			c.performHealthCheck(ctx)
@@ -494,15 +497,15 @@ func (c *connection) updatePoolStats() {
 	if c.sql != nil {
 		stats := c.sql.Stats()
 
-		c.log.Info().
-			Int("max_open", stats.MaxOpenConnections).
+		c.log.Debug().
+			Int("maxOpen", stats.MaxOpenConnections).
 			Int("open", stats.OpenConnections).
-			Int("in_use", stats.InUse).
+			Int("inUse", stats.InUse).
 			Int("idle", stats.Idle).
-			Int64("wait_count", stats.WaitCount).
-			Dur("wait_duration", stats.WaitDuration).
-			Int64("max_idle_closed", stats.MaxIdleClosed).
-			Int64("max_lifetime_closed", stats.MaxLifetimeClosed).
+			Int64("waitCount", stats.WaitCount).
+			Dur("waitDuration", stats.WaitDuration).
+			Int64("maxIdleClosed", stats.MaxIdleClosed).
+			Int64("maxLifetimeClosed", stats.MaxLifetimeClosed).
 			Msg("Database connection pool stats")
 
 		metrics.UpdateConnectionPoolStats("primary",

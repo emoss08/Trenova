@@ -204,6 +204,10 @@ export const queries = createQueryKeyStore({
       queryKey: ["integrations/type", type],
       queryFn: async () => api.integrations.getByType(type),
     }),
+    getFormSpec: (type: IntegrationType) => ({
+      queryKey: ["integrations/form-spec", type],
+      queryFn: async () => api.integrations.getFormSpec(type),
+    }),
   },
   googleMaps: {
     checkAPIKey: () => ({

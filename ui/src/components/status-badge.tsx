@@ -133,6 +133,7 @@ export function IntegrationCategoryBadge({
     <Badge
       variant={integrationCategoryAttributes[category].variant}
       className="max-h-6"
+      withDot={false}
     >
       {integrationCategoryAttributes[category].text}
     </Badge>

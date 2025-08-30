@@ -13,7 +13,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/rotisserie/eris"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )
@@ -48,7 +47,7 @@ func NewUsStateRepository(p UsStateRepositoryParams) repositories.UsStateReposit
 func (r *usStateRepository) List(ctx context.Context) (*ports.ListResult[*usstate.UsState], error) {
 	dba, err := r.db.ReadDB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	log := r.l.With().
@@ -68,7 +67,7 @@ func (r *usStateRepository) List(ctx context.Context) (*ports.ListResult[*usstat
 	count, err := dba.NewSelect().Model(&dbStates).ScanAndCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list us states")
-		return nil, eris.Wrap(err, "failed to list us states")
+		return nil, err
 	}
 
 	// Set in cache for next time
@@ -100,7 +99,7 @@ func (r *usStateRepository) GetByAbbreviation(
 
 	dba, err := r.db.DB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	state = new(usstate.UsState)
@@ -110,7 +109,7 @@ func (r *usStateRepository) GetByAbbreviation(
 		Where("abbreviation = ?", abbreviation).
 		Scan(ctx); err != nil {
 		log.Error().Err(err).Msg("failed to get us state by abbreviation")
-		return nil, eris.Wrap(err, "failed to get us state by abbreviation")
+		return nil, err
 	}
 
 	// Don't need to explicitly cache this single state as it's already cached

@@ -24,7 +24,6 @@ const (
 	defaultUserOrgTTL      = 1 * time.Hour  // * 1 hour
 	defaultOrganizationTTL = 24 * time.Hour // * 24 hours
 	orgKeyPrefix           = "org:"
-	orgListKeyPrefix       = "orgs:"
 	userOrgKeyPrefix       = "user_orgs:"
 )
 
@@ -80,13 +79,7 @@ func (or *organizationRepository) GetByID(
 
 	// * get the organization from the cache
 	if err := or.cache.GetJSON(ctx, ".", key, org); err != nil {
-		// * If the organization is not found in the cache, we need to fetch it from the database
-		if eris.Is(err, redis.ErrNil) {
-			log.Debug().Str("key", key).Msg("no organization found in cache")
-			return nil, eris.New("organization not found in cache")
-		}
-
-		return nil, eris.Wrapf(err, "failed to get organization %s from cache", orgID)
+		return nil, err
 	}
 
 	log.Debug().Str("key", key).Msg("retrieved organization from cache")
@@ -171,7 +164,7 @@ func (or *organizationRepository) Set(ctx context.Context, org *organization.Org
 
 	// * Set the organization in the cache
 	if err := or.cache.SetJSON(ctx, ".", key, org, defaultOrganizationTTL); err != nil {
-		return eris.Wrapf(err, "failed to set organization %s in cache", org.ID)
+		return err
 	}
 
 	log.Debug().Str("key", key).Msg("stored organization in cache")
@@ -194,7 +187,7 @@ func (or *organizationRepository) Invalidate(ctx context.Context, orgID pulid.ID
 
 	key := or.formatKey(orgID)
 	if err := or.cache.Del(ctx, key); err != nil {
-		return eris.Wrapf(err, "failed to invalidate organization %s in cache", orgID)
+		return err
 	}
 
 	log.Debug().Str("key", key).Msg("invalidated organization in cache")
@@ -220,7 +213,7 @@ func (or *organizationRepository) InvalidateUserOrganizations(
 
 	key := or.formatUserOrgKey(userID)
 	if err := or.cache.Del(ctx, key); err != nil {
-		return eris.Wrapf(err, "failed to invalidate user organizations %s in cache", userID)
+		return err
 	}
 
 	log.Debug().Str("key", key).Msg("invalidated user organizations in cache")

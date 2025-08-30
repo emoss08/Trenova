@@ -33,16 +33,16 @@ type ShipmentControl struct {
 	OrganizationID                       pulid.ID                   `json:"organizationId"                       bun:"organization_id,type:VARCHAR(100),pk,notnull"`
 	ComplianceEnforcementLevel           ComplianceEnforcementLevel `json:"complianceEnforcementLevel"           bun:"compliance_enforcement_level,type:compliance_enforcement_level_enum,notnull,default:'Warning'"`
 	AutoAssignmentStrategy               AutoAssignmentStrategy     `json:"autoAssignmentStrategy"               bun:"auto_assignment_strategy,type:auto_assignment_strategy_enum,notnull,default:'Proximity'"`
-	ServiceFailureGracePeriod            *int16                     `json:"serviceFailureGracePeriod"            bun:"service_failure_grace_period,type:INTEGER,nullzero"`                                  // In minutes
-	AutoDelayShipmentsThreshold          *int16                     `json:"autoDelayShipmentsThreshold"          bun:"auto_delay_shipments_threshold,type:INTEGER,default:30,nullzero"`                     // In minutes
-	DetentionThreshold                   *int16                     `json:"detentionThreshold"                   bun:"detention_threshold,type:INTEGER,default:30,nullzero"`                                // In minutes
-	OnTimeDeliveryTarget                 *float32                   `json:"onTimeDeliveryTarget"                 bun:"on_time_delivery_target,type:FLOAT,nullzero"`                                         // Percentage
-	ServiceFailureTarget                 *float32                   `json:"serviceFailureTarget"                 bun:"service_failure_target,type:FLOAT,nullzero"`                                          // Percentage
-	AutoVoidShipmentsThreshold           *int8                      `json:"autoVoidShipmentsThreshold"           bun:"auto_void_shipments_threshold,type:auto_void_shipments_threshold,notnull,default:30"` // In days
+	ServiceFailureGracePeriod            *int16                     `json:"serviceFailureGracePeriod"            bun:"service_failure_grace_period,type:INTEGER,nullzero"`                                      // In minutes
+	AutoDelayShipmentsThreshold          *int16                     `json:"autoDelayShipmentsThreshold"          bun:"auto_delay_shipments_threshold,type:INTEGER,default:30,nullzero"`                         // In minutes
+	DetentionThreshold                   *int16                     `json:"detentionThreshold"                   bun:"detention_threshold,type:INTEGER,default:30,nullzero"`                                    // In minutes
+	OnTimeDeliveryTarget                 *float32                   `json:"onTimeDeliveryTarget"                 bun:"on_time_delivery_target,type:FLOAT,nullzero"`                                             // Percentage
+	ServiceFailureTarget                 *float32                   `json:"serviceFailureTarget"                 bun:"service_failure_target,type:FLOAT,nullzero"`                                              // Percentage
+	AutoCancelShipmentsThreshold         *int8                      `json:"autoCancelShipmentsThreshold"         bun:"auto_cancel_shipments_threshold,type:auto_cancel_shipments_threshold,notnull,default:30"` // In days
 	EnableAutoAssignment                 bool                       `json:"enableAutoAssignment"                 bun:"enable_auto_assignment,type:BOOLEAN,notnull,default:true"`
 	RecordServiceFailures                bool                       `json:"recordServiceFailures"                bun:"record_service_failures,type:BOOLEAN,notnull,default:false"`
 	AutoDelayShipments                   bool                       `json:"autoDelayShipments"                   bun:"auto_delay_shipments,type:BOOLEAN,notnull,default:true"`
-	AutoVoidShipments                    bool                       `json:"autoVoidShipments"                    bun:"auto_void_shipments,type:BOOLEAN,notnull,default:true"`
+	AutoCancelShipments                  bool                       `json:"autoCancelShipments"                  bun:"auto_cancel_shipments,type:BOOLEAN,notnull,default:true"`
 	EnforceHOSCompliance                 bool                       `json:"enforceHosCompliance"                 bun:"enforce_hos_compliance,type:BOOLEAN,notnull,default:true"`
 	EnforceDriverQualificationCompliance bool                       `json:"enforceDriverQualificationCompliance" bun:"enforce_driver_qualification_compliance,type:BOOLEAN,notnull,default:true"`
 	EnforceMedicalCertCompliance         bool                       `json:"enforceMedicalCertCompliance"         bun:"enforce_medical_cert_compliance,type:BOOLEAN,notnull,default:true"`
@@ -100,10 +100,10 @@ func (sc *ShipmentControl) Validate(ctx context.Context, multiErr *errors.MultiE
 		),
 
 		// * Ensure auto void shipments threshold is greater than 0
-		validation.Field(&sc.AutoVoidShipmentsThreshold,
-			validation.When(sc.AutoVoidShipments,
-				validation.Required.Error("Auto void shipments threshold is required"),
-				validation.Min(1).Error("Auto void shipments threshold must be greater than 0"),
+		validation.Field(&sc.AutoCancelShipmentsThreshold,
+			validation.When(sc.AutoCancelShipments,
+				validation.Required.Error("Auto cancel shipments threshold is required"),
+				validation.Min(1).Error("Auto cancel shipments threshold must be greater than 0"),
 			),
 		),
 	)

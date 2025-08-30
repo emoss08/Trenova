@@ -46,6 +46,12 @@ type Integration struct {
 	Category      Category       `bun:"category,type:integration_category,notnull"   json:"category"`
 	Configuration map[string]any `bun:"configuration,type:JSONB,default:'{}'::jsonb" json:"configuration"`
 
+	// Optional fields for marketplace UI
+	DocsURL    string `bun:"docs_url,type:TEXT"                          json:"docsUrl"`
+	Featured   bool   `bun:"featured,type:BOOLEAN,notnull,default:false" json:"featured"`
+	LogoURL    string `bun:"logo_url,type:TEXT"                          json:"logoUrl"`
+	WebsiteURL string `bun:"website_url,type:TEXT"                       json:"websiteUrl"`
+
 	// Metadata
 	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
 	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`

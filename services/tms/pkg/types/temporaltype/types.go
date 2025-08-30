@@ -7,10 +7,12 @@ import (
 const (
 	ShipmentTaskQueue     = "shipment-queue"
 	NotificationTaskQueue = "notification-queue"
+	SystemTaskQueue       = "system-queue"
 )
 
 const (
-	VoidShipmentsScheduleID = "void-shipments-schedule"
+	CancelShipmentsScheduleID    = "cancel-shipments-schedule"
+	DeleteAuditEntriesScheduleID = "delete-audit-entries-schedule"
 )
 
 type BasePayload struct {

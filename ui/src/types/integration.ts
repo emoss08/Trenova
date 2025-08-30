@@ -6,6 +6,8 @@
 export enum IntegrationType {
   GoogleMaps = "GoogleMaps",
   PCMiler = "PCMiler",
+  Samsara = "Samsara",
+  Motive = "Motive",
 }
 
 export enum IntegrationCategory {

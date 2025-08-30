@@ -338,7 +338,7 @@ func (sr *shipmentRepository) prepareStopForDuplication(
 // bulkCancelShipmentComponents cancels multiple shipment components in bulk
 func (sr *shipmentRepository) bulkCancelShipmentComponents(
 	ctx context.Context,
-	tx bun.Tx,
+	tx bun.IDB,
 	moveIDs []pulid.ID,
 ) error {
 	// Cancel moves
@@ -429,13 +429,45 @@ func (sr *shipmentRepository) bulkUnCancelShipmentComponents(
 // getMoveIDsForShipment retrieves all move IDs for a given shipment
 func (sr *shipmentRepository) getMoveIDsForShipment(
 	ctx context.Context,
-	tx bun.Tx,
+	tx bun.IDB,
 	shipmentID pulid.ID,
 ) ([]pulid.ID, error) {
 	moves := make([]*shipment.ShipmentMove, 0)
 	err := tx.NewSelect().
 		Model(&moves).
 		Where("sm.shipment_id = ?", shipmentID).
+		Scan(ctx)
+	if err != nil {
+		return nil, oops.In("shipment_repository").
+			Time(time.Now()).
+			Wrapf(err, "failed to fetch shipment moves")
+	}
+
+	if len(moves) == 0 {
+		return []pulid.ID{}, nil
+	}
+
+	moveIDs := make([]pulid.ID, len(moves))
+	for i, move := range moves {
+		moveIDs[i] = move.ID
+	}
+
+	return moveIDs, nil
+}
+
+func (sr *shipmentRepository) getMoveIDsForShipments(
+	ctx context.Context,
+	tx bun.IDB,
+	shipmentIds []pulid.ID,
+) ([]pulid.ID, error) {
+	if len(shipmentIds) == 0 {
+		return []pulid.ID{}, nil
+	}
+
+	moves := make([]*shipment.ShipmentMove, 0, len(shipmentIds))
+	err := tx.NewSelect().
+		Model(&moves).
+		Where("sm.shipment_id IN (?)", bun.In(shipmentIds)).
 		Scan(ctx)
 	if err != nil {
 		return nil, oops.In("shipment_repository").

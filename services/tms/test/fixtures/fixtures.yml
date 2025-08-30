@@ -368,6 +368,22 @@
       created_at: "{{ timestamp }}"
       updated_at: "{{ timestamp }}"
 
+- model: DataRetention
+  rows:
+    - _id: trenova
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      audit_retention_period: 120
+      created_at: "{{ timestamp }}"
+      updated_at: "{{ timestamp }}"
+
+    - _id: trenova_2
+      organization_id: "{{ $.Organization.trenova_2.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      audit_retention_period: 120
+      created_at: "{{ timestamp }}"
+      updated_at: "{{ timestamp }}"
+
 - model: ConsolidationSettings
   rows:
     - _id: trenova
@@ -429,6 +445,10 @@
       description: "Automatically geocode addresses using Google Maps API"
       category: MappingRouting
       built_by: "Trenova"
+      docs_url: "https://developers.google.com/maps/documentation"
+      featured: true
+      logo_url: "https://raw.githubusercontent.com/gilbarbara/logos/refs/heads/main/logos/google-maps.svg"
+      website_url: "https://mapsplatform.google.com/"
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ timestamp }}"
@@ -438,6 +458,33 @@
       description: "Automatically route shipments and get directions using PCMiler API"
       category: MappingRouting
       built_by: "Trenova"
+      docs_url: "https://developer.trimblemaps.com/"
+      logo_url: "https://www.pcmiler.com/img/alk-logos/pcmiler-logo.svg"
+      website_url: "https://www.pcmiler.com/"
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+    - _id: samsara
+      name: Samsara
+      type: Samsara
+      description: "Track and manage your fleet with Samsara"
+      category: Telematics
+      built_by: "Trenova"
+      docs_url: "https://developers.samsara.com/"
+      logo_url: "https://assets-global.website-files.com/5d62d56012f8df34311fb6c2/63b5b7f1b2ef9d22d603b808_logo-meta.png"
+      website_url: "https://www.samsara.com/"
+      organization_id: "{{ $.Organization.trenova.ID }}"
+      business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
+      created_at: "{{ timestamp }}"
+    - _id: motive
+      name: Motive
+      type: Motive
+      description: "Track and manage your fleet with Motive"
+      category: Telematics
+      built_by: "Trenova"
+      docs_url: "https://developer.gomotive.com/"
+      logo_url: "https://www.motive.com/wp-content/uploads/2021/03/motive-logo-black.png"
+      website_url: "https://gomotive.com/"
       organization_id: "{{ $.Organization.trenova.ID }}"
       business_unit_id: "{{ $.BusinessUnit.trenova.ID }}"
       created_at: "{{ timestamp }}"
