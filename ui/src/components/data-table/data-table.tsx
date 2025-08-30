@@ -46,13 +46,7 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
-import React, {
-  lazy,
-  Suspense,
-  useCallback,
-  useEffect,
-  useMemo,
-} from "react";
+import React, { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import LetterGlitch from "../ui/letter-glitch";
 import { DataTablePermissionDeniedSkeleton } from "../ui/permission-skeletons";
