@@ -683,6 +683,13 @@ func (s *Service) Duplicate(
 	workflowOptions := client.StartWorkflowOptions{
 		ID:        fmt.Sprintf("duplicate-shipment-%s", req.ShipmentID.String()),
 		TaskQueue: temporaltype.ShipmentTaskQueue,
+		SearchAttributes: map[string]any{
+			"OrganizationId": req.OrgID.String(),
+			"BusinessUnitId": req.BuID.String(),
+			"UserId":         req.UserID.String(),
+			"ShipmentId":     req.ShipmentID.String(),
+			"WorkflowType":   "DuplicateShipment",
+		},
 	}
 
 	we, err := s.tc.ExecuteWorkflow(

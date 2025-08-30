@@ -34,14 +34,13 @@ type EncryptionCodec struct {
 func NewEncryptionDataConverter(options DataConverterOptions) converter.DataConverter {
 	codecs := []converter.PayloadCodec{}
 
-	// Add compression codec if enabled (must be added after encryption codec since they're applied in reverse)
+	// ! Add compression codec if enabled (must be added after encryption codec since they're applied in reverse)
 	if options.EnableCompression {
 		codecs = append(codecs, converter.NewZlibCodec(converter.ZlibCodecOptions{
 			AlwaysEncode: options.CompressionThreshold <= 0, // Always compress if no threshold
 		}))
 	}
 
-	// Add encryption codec if enabled
 	if options.EnableEncryption && options.EncryptionKeyID != "" {
 		codecs = append(codecs, &EncryptionCodec{
 			KeyID: options.EncryptionKeyID,
@@ -49,11 +48,9 @@ func NewEncryptionDataConverter(options DataConverterOptions) converter.DataConv
 	}
 
 	if len(codecs) == 0 {
-		// No security features enabled, return default converter
 		return converter.GetDefaultDataConverter()
 	}
 
-	// Create codec data converter with our security codecs
 	return converter.NewCodecDataConverter(
 		converter.GetDefaultDataConverter(),
 		codecs...,
@@ -80,25 +77,21 @@ func (e *EncryptionCodec) Encode(payloads []*commonpb.Payload) ([]*commonpb.Payl
 	result := make([]*commonpb.Payload, len(payloads))
 
 	for i, p := range payloads {
-		// Marshal the original payload
 		origBytes, err := p.Marshal()
 		if err != nil {
 			return payloads, fmt.Errorf("failed to marshal payload: %w", err)
 		}
 
-		// Get encryption key
 		key := e.getKey(e.KeyID)
 		if key == nil {
 			return payloads, fmt.Errorf("encryption key not found for ID: %s", e.KeyID)
 		}
 
-		// Encrypt the payload
 		encrypted, err := e.encrypt(origBytes, key)
 		if err != nil {
 			return payloads, fmt.Errorf("encryption failed: %w", err)
 		}
 
-		// Create new encrypted payload
 		result[i] = &commonpb.Payload{
 			Metadata: map[string][]byte{
 				converter.MetadataEncoding: []byte(MetadataEncodingEncrypted),
@@ -116,31 +109,26 @@ func (e *EncryptionCodec) Decode(payloads []*commonpb.Payload) ([]*commonpb.Payl
 	result := make([]*commonpb.Payload, len(payloads))
 
 	for i, p := range payloads {
-		// Check if payload is encrypted
 		if string(p.Metadata[converter.MetadataEncoding]) != MetadataEncodingEncrypted {
 			result[i] = p
 			continue
 		}
 
-		// Get the key ID used for encryption
 		keyID, ok := p.Metadata[MetadataEncryptionKeyID]
 		if !ok {
 			return payloads, fmt.Errorf("no encryption key ID in metadata")
 		}
 
-		// Get decryption key
 		key := e.getKey(string(keyID))
 		if key == nil {
 			return payloads, fmt.Errorf("decryption key not found for ID: %s", string(keyID))
 		}
 
-		// Decrypt the payload
 		decrypted, err := e.decrypt(p.Data, key)
 		if err != nil {
 			return payloads, fmt.Errorf("decryption failed: %w", err)
 		}
 
-		// Unmarshal the decrypted payload
 		result[i] = &commonpb.Payload{}
 		if err := result[i].Unmarshal(decrypted); err != nil {
 			return payloads, fmt.Errorf("failed to unmarshal decrypted payload: %w", err)
@@ -156,7 +144,6 @@ func (e *EncryptionCodec) getKey(keyID string) []byte {
 	key := os.Getenv(envKey)
 
 	if key == "" {
-		// Fallback to a general key
 		key = os.Getenv("TEMPORAL_ENCRYPTION_KEY")
 	}
 
@@ -175,7 +162,7 @@ func (e *EncryptionCodec) getKey(keyID string) []byte {
 }
 
 // encrypt encrypts data using AES-GCM
-func (e *EncryptionCodec) encrypt(plainData []byte, key []byte) ([]byte, error) {
+func (e *EncryptionCodec) encrypt(plainData, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -191,12 +178,11 @@ func (e *EncryptionCodec) encrypt(plainData []byte, key []byte) ([]byte, error) 
 		return nil, err
 	}
 
-	// Prepend nonce to ciphertext
 	return gcm.Seal(nonce, nonce, plainData, nil), nil
 }
 
 // decrypt decrypts data using AES-GCM
-func (e *EncryptionCodec) decrypt(encryptedData []byte, key []byte) ([]byte, error) {
+func (e *EncryptionCodec) decrypt(encryptedData, key []byte) ([]byte, error) {
 	block, err := aes.NewCipher(key)
 	if err != nil {
 		return nil, err
@@ -236,25 +222,21 @@ func (c *CustomCompressionCodec) Encode(payloads []*commonpb.Payload) ([]*common
 	result := make([]*commonpb.Payload, len(payloads))
 
 	for i, p := range payloads {
-		// Check if payload is large enough to compress
 		if len(p.Data) < c.Threshold {
 			result[i] = p
 			continue
 		}
 
-		// Compress the data
 		compressed, err := c.compress(p.Data)
 		if err != nil {
 			return payloads, fmt.Errorf("compression failed: %w", err)
 		}
 
-		// Only use compression if it reduces size
 		if len(compressed) >= len(p.Data) {
 			result[i] = p
 			continue
 		}
 
-		// Create compressed payload
 		result[i] = &commonpb.Payload{
 			Metadata: map[string][]byte{
 				converter.MetadataEncoding: []byte("binary/gzip"),
@@ -272,25 +254,21 @@ func (c *CustomCompressionCodec) Decode(payloads []*commonpb.Payload) ([]*common
 	result := make([]*commonpb.Payload, len(payloads))
 
 	for i, p := range payloads {
-		// Check if payload is compressed
 		if string(p.Metadata[converter.MetadataEncoding]) != "binary/gzip" {
 			result[i] = p
 			continue
 		}
 
-		// Decompress the data
 		decompressed, err := c.decompress(p.Data)
 		if err != nil {
 			return payloads, fmt.Errorf("decompression failed: %w", err)
 		}
 
-		// Restore original payload
 		result[i] = &commonpb.Payload{
 			Metadata: p.Metadata,
 			Data:     decompressed,
 		}
 
-		// Remove compression encoding
 		delete(result[i].Metadata, converter.MetadataEncoding)
 		delete(result[i].Metadata, "uncompressed-size")
 	}

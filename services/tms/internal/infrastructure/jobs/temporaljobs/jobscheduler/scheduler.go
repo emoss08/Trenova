@@ -92,10 +92,10 @@ func (s *Scheduler) Start() error {
 		},
 	}
 
-	for _, config := range schedules {
-		if err := s.createOrUpdateSchedule(ctx, config); err != nil {
+	for i := range schedules {
+		if err := s.createOrUpdateSchedule(ctx, &schedules[i]); err != nil {
 			s.l.Error().
-				Str("scheduleID", config.ID).
+				Str("scheduleID", schedules[i].ID).
 				Err(err).
 				Msg("failed to create/update schedule")
 			return err
@@ -128,7 +128,7 @@ func (s *Scheduler) Stop() error {
 	return nil
 }
 
-func (s *Scheduler) createOrUpdateSchedule(ctx context.Context, config ScheduleConfig) error {
+func (s *Scheduler) createOrUpdateSchedule(ctx context.Context, config *ScheduleConfig) error {
 	scheduleClient := s.client.ScheduleClient()
 	handle := scheduleClient.GetHandle(ctx, config.ID)
 
@@ -202,7 +202,7 @@ func (s *Scheduler) createOrUpdateSchedule(ctx context.Context, config ScheduleC
 
 func (s *Scheduler) shouldUpdateSchedule(
 	existing *client.ScheduleDescription,
-	config ScheduleConfig,
+	config *ScheduleConfig,
 ) bool {
 	if len(existing.Schedule.Spec.CronExpressions) == 0 ||
 		existing.Schedule.Spec.CronExpressions[0] != config.CronExpression {
