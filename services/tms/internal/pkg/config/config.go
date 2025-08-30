@@ -901,22 +901,25 @@ type TemporalConfig struct {
 	Namespace string `mapstructure:"namespace" default:"trenova"`
 	// TaskQueue is the temporal task queue
 	TaskQueue string `mapstructure:"taskQueue" default:"trenova"`
-	
+
 	// Workers is the configuration for Temporal workers
 	Workers TemporalWorkersConfig `mapstructure:"workers"`
-	
+
 	// Workflows is the configuration for workflow defaults
 	Workflows TemporalWorkflowConfig `mapstructure:"workflows"`
+
+	// Security is the configuration for payload security
+	Security TemporalSecurityConfig `mapstructure:"security"`
 }
 
 // TemporalWorkersConfig configures Temporal worker pools
 type TemporalWorkersConfig struct {
 	// ShipmentWorker configuration
 	Shipment TemporalWorkerConfig `mapstructure:"shipment"`
-	
+
 	// NotificationWorker configuration
 	Notification TemporalWorkerConfig `mapstructure:"notification"`
-	
+
 	// SystemWorker configuration
 	System TemporalWorkerConfig `mapstructure:"system"`
 }
@@ -925,22 +928,22 @@ type TemporalWorkersConfig struct {
 type TemporalWorkerConfig struct {
 	// MaxConcurrentActivity is the maximum concurrent activity executions
 	MaxConcurrentActivity int `mapstructure:"maxConcurrentActivity" default:"20"`
-	
+
 	// MaxConcurrentWorkflow is the maximum concurrent workflow task executions
 	MaxConcurrentWorkflow int `mapstructure:"maxConcurrentWorkflow" default:"20"`
-	
+
 	// MaxConcurrentLocalActivity is the maximum concurrent local activity executions
 	MaxConcurrentLocalActivity int `mapstructure:"maxConcurrentLocalActivity" default:"20"`
-	
+
 	// WorkerActivitiesPerSecond is the rate limit for activities per second
 	WorkerActivitiesPerSecond float64 `mapstructure:"workerActivitiesPerSecond" default:"100.0"`
-	
+
 	// TaskQueueActivitiesPerSecond is the rate limit for the task queue
 	TaskQueueActivitiesPerSecond float64 `mapstructure:"taskQueueActivitiesPerSecond" default:"100.0"`
-	
+
 	// EnableSessionWorker enables session worker for this queue
 	EnableSessionWorker bool `mapstructure:"enableSessionWorker" default:"true"`
-	
+
 	// StickyScheduleToStartTimeout for sticky execution
 	StickyScheduleToStartTimeoutSeconds int `mapstructure:"stickyScheduleToStartTimeoutSeconds" default:"5"`
 }
@@ -949,19 +952,34 @@ type TemporalWorkerConfig struct {
 type TemporalWorkflowConfig struct {
 	// ActivityTimeout is the default activity timeout in seconds
 	ActivityTimeoutSeconds int `mapstructure:"activityTimeoutSeconds" default:"10"`
-	
+
 	// ActivityHeartbeatSeconds is the default heartbeat timeout
 	ActivityHeartbeatSeconds int `mapstructure:"activityHeartbeatSeconds" default:"2"`
-	
+
 	// ActivityRetryMaxAttempts is the maximum retry attempts
 	ActivityRetryMaxAttempts int `mapstructure:"activityRetryMaxAttempts" default:"3"`
-	
+
 	// ActivityRetryInitialIntervalSeconds is the initial retry interval
 	ActivityRetryInitialIntervalSeconds int `mapstructure:"activityRetryInitialIntervalSeconds" default:"1"`
-	
+
 	// ActivityRetryBackoffCoefficient is the retry backoff multiplier
 	ActivityRetryBackoffCoefficient float64 `mapstructure:"activityRetryBackoffCoefficient" default:"2.0"`
-	
+
 	// ActivityRetryMaxIntervalSeconds is the maximum retry interval
 	ActivityRetryMaxIntervalSeconds int `mapstructure:"activityRetryMaxIntervalSeconds" default:"60"`
+}
+
+// TemporalSecurityConfig configures payload encryption and compression
+type TemporalSecurityConfig struct {
+	// EnableEncryption enables payload encryption
+	EnableEncryption bool `mapstructure:"enableEncryption" default:"false"`
+
+	// EncryptionKeyID is the key ID used for encryption
+	EncryptionKeyID string `mapstructure:"encryptionKeyID" default:"default"`
+
+	// EnableCompression enables payload compression
+	EnableCompression bool `mapstructure:"enableCompression" default:"true"`
+
+	// CompressionThreshold is the minimum size in bytes before compression
+	CompressionThreshold int `mapstructure:"compressionThreshold" default:"1024"`
 }
