@@ -5,18 +5,22 @@
 
 "use no memo";
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 import { flexRender, type Table } from "@tanstack/react-table";
 
 export function DataTableHeader<TData>({ table }: { table: Table<TData> }) {
   return (
-    <TableHeader>
+    <TableHeader className="sticky top-0 z-30">
       {table.getHeaderGroups().map((headerGroup) => (
         <TableRow key={headerGroup.id}>
           {headerGroup.headers.map((header) => {
             return (
               <TableHead
                 key={header.id}
-                className="relative select-none truncate"
+                className={cn(
+                  "relative select-none truncate border-b border-border [&>.cursor-col-resize]:last:opacity-0",
+                  header.column.columnDef.meta?.headerClassName,
+                )}
                 style={{
                   width: `var(--header-${header.id.replace(".", "-")}-size)`,
                 }}
@@ -39,7 +43,10 @@ export function DataTableHeader<TData>({ table }: { table: Table<TData> }) {
                     onDoubleClick={() => header.column.resetSize()}
                     onMouseDown={header.getResizeHandler()}
                     onTouchStart={header.getResizeHandler()}
-                    className="absolute -right-2 top-0 z-10 flex h-full w-4 cursor-col-resize touch-none justify-center user-select-none before:absolute before:inset-y-0 before:w-px before:translate-x-px before:bg-border"
+                    className={cn(
+                      "user-select-none absolute -right-2 top-0 z-10 flex h-full w-4 cursor-col-resize touch-none justify-center",
+                      "before:absolute before:inset-y-0 before:w-px before:translate-x-px before:bg-border",
+                    )}
                   />
                 )}
               </TableHead>

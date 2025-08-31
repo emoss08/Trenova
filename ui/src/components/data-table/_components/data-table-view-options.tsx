@@ -28,13 +28,7 @@ import { faColumns } from "@fortawesome/pro-solid-svg-icons";
 import { ChevronDownIcon, PlusIcon, UploadIcon } from "@radix-ui/react-icons";
 import type { VisibilityState } from "@tanstack/react-table";
 import { Check, GripVertical } from "lucide-react";
-import {
-  isValidElement,
-  memo,
-  useCallback,
-  useMemo,
-  useState,
-} from "react";
+import { isValidElement, memo, useCallback, useMemo, useState } from "react";
 import { useDataTable } from "../data-table-provider";
 import { CreateTableConfigurationModal } from "./_configuration/table-configuration-create-modal";
 import { UserTableConfigurationList } from "./_configuration/table-configuration-list";

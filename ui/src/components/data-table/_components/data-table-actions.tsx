@@ -6,6 +6,7 @@
 "use no memo";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
+import { Skeleton } from "@/components/ui/skeleton";
 import { usePermissions } from "@/hooks/use-permissions";
 import type { Resource } from "@/types/audit-entry";
 import type { ExtraAction } from "@/types/data-table";
@@ -81,4 +82,15 @@ export function DataTableActionsInner({
   children: React.ReactNode;
 }) {
   return <div className="flex items-center gap-2">{children}</div>;
+}
+
+export function DataTableActionsSkeleton() {
+  return (
+    <div className="flex items-center gap-2">
+      <Skeleton className="h-7 w-44 rounded-md" />
+      <Skeleton className="h-7 w-26 rounded-md" />
+      <div className="h-6 w-px bg-border" />
+      <Skeleton className="h-7 w-18 rounded-md" />
+    </div>
+  );
 }
