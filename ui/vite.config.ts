@@ -5,7 +5,6 @@ import { sentryVitePlugin } from "@sentry/vite-plugin";
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { nodeResolve } from "@rollup/plugin-node-resolve";
-// @ts-expect-error // Module does not give types
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { createRequire } from "node:module";
@@ -17,78 +16,6 @@ import { defineConfig, normalizePath, type PluginOption } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { VitePWA } from "vite-plugin-pwa";
 import { viteStaticCopy } from "vite-plugin-static-copy";
-
-// Define vendor chunks that should be bundled separately
-const vendorChunks = {
-  // UI Framework and Core
-  "core-react": [
-    "react",
-    "react-dom",
-    "react-router-dom",
-    "react-helmet-async",
-  ],
-
-  // State Management and Data Fetching
-  "data-management": ["@tanstack/react-query", "zustand", "recharts"],
-
-  // UI Components and Styling
-  "ui-components": [
-    "@radix-ui/react-alert-dialog",
-    "@radix-ui/react-avatar",
-    "@radix-ui/react-checkbox",
-    "@radix-ui/react-collapsible",
-    "@radix-ui/react-dialog",
-    "@radix-ui/react-dropdown-menu",
-    "@radix-ui/react-label",
-    "@radix-ui/react-popover",
-    "@radix-ui/react-radio-group",
-    "@radix-ui/react-scroll-area",
-    "@radix-ui/react-select",
-    "@radix-ui/react-slot",
-    "@radix-ui/react-tooltip",
-    "@radix-ui/react-tabs",
-    "@radix-ui/react-visually-hidden",
-    "@radix-ui/react-switch",
-    "react-lazy-load-image-component",
-    "nuqs",
-    "sonner",
-    "react-day-picker",
-    "react-markdown",
-    "@ark-ui/react",
-  ],
-
-  "pdf-js": ["react-pdf"],
-
-  // Table and Query functionality
-  "data-tables": ["@tanstack/react-table"],
-
-  // Form Management
-  "form-handling": ["react-hook-form", "@hookform/resolvers", "zod"],
-
-  // Drag and Drop
-  "dnd-kit": [
-    "@dnd-kit/core",
-    "@dnd-kit/modifiers",
-    "@dnd-kit/sortable",
-    "@dnd-kit/utilities",
-  ],
-
-  // Icons and Assets
-  icons: [
-    "@radix-ui/react-icons",
-    "@fortawesome/pro-regular-svg-icons",
-    "@fortawesome/pro-solid-svg-icons",
-  ],
-
-  // Date handling
-  "date-utils": ["date-fns", "chrono-node"],
-
-  // Animation
-  animation: ["motion"],
-
-  // Utilities
-  utils: ["clsx", "tailwind-merge", "class-variance-authority"],
-};
 
 const require = createRequire(import.meta.url);
 const cMapsDir = normalizePath(
@@ -160,6 +87,7 @@ export default defineConfig({
     sentryVitePlugin({
       org: "trenova",
       project: "ui",
+      disable: true,
     }),
   ],
   resolve: {
@@ -174,38 +102,66 @@ export default defineConfig({
     chunkSizeWarningLimit: 1000, // Increase warning limit for chunks
     rollupOptions: {
       output: {
-        manualChunks: (id) => {
-          // Process other vendor chunks
-          for (const [chunkName, packages] of Object.entries(vendorChunks)) {
-            if (packages.some((pkg) => id.includes(`/node_modules/${pkg}/`))) {
-              return chunkName;
-            }
+        manualChunks: (id: string) => {
+          // Separate heavy libraries that are lazy-loaded
+          if (id.includes("recharts")) {
+            return "charts";
+          }
+          if (id.includes("react-pdf") || id.includes("pdfjs-dist")) {
+            return "pdf";
+          }
+          if (id.includes("@tiptap") || id.includes("prosemirror")) {
+            return "editor";
+          }
+          if (
+            id.includes("@vis.gl/react-google-maps") ||
+            id.includes("@googlemaps")
+          ) {
+            return "maps";
           }
 
-          // Default chunk handling
-        },
-        chunkFileNames: (chunkInfo) => {
-          const name = chunkInfo.name || "chunk";
-          if (chunkInfo.moduleIds.length > 0) {
-            const moduleId = chunkInfo.moduleIds[0];
-            if (moduleId.includes("node_modules")) {
-              const packageName = moduleId
-                .split("node_modules/")[1]
-                .split("/")[0]
-                .replace("@", "");
-              return `assets/js/vendor/${packageName}-[hash].js`;
+          // Split vendor libraries into logical groups
+          if (id.includes("node_modules")) {
+            // Core React libraries
+            if (
+              id.includes("react") &&
+              !id.includes("react-hook-form") &&
+              !id.includes("@tanstack")
+            ) {
+              return "vendor-react";
             }
-            if (moduleId.includes("src/")) {
-              const match = moduleId.match(/src\/([^/]+)/);
-              if (match) {
-                return `assets/js/app/${match[1]}-[hash].js`;
-              }
+            // UI libraries (Radix, Ark, etc)
+            if (id.includes("@radix-ui") || id.includes("@dnd-kit")) {
+              return "vendor-ui";
             }
+            // Data management (TanStack, forms, etc)
+            if (
+              id.includes("@tanstack") ||
+              id.includes("react-hook-form") ||
+              id.includes("zod") ||
+              id.includes("zustand")
+            ) {
+              return "vendor-data";
+            }
+            // Icons and assets
+            if (id.includes("lucide") || id.includes("@fortawesome")) {
+              return "vendor-icons";
+            }
+            // Everything else
+            return "vendor-utils";
           }
-          return `assets/js/${name}-[hash].js`;
+        },
+        chunkFileNames: (chunkInfo: any) => {
+          const facadeModuleId = chunkInfo.facadeModuleId
+            ? chunkInfo.facadeModuleId
+            : "";
+          if (facadeModuleId.includes("node_modules")) {
+            return "assets/js/[name]-[hash].js";
+          }
+          return "assets/js/[name]-[hash].js";
         },
         minifyInternalExports: true,
-        assetFileNames: (assetInfo) => {
+        assetFileNames: (assetInfo: any) => {
           const info = assetInfo.name?.split(".");
           const extType = info?.[info.length - 1];
           if (extType && /png|jpe?g|svg|webp|gif|tiff|bmp|ico/i.test(extType)) {

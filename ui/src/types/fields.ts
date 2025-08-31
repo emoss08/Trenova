@@ -5,7 +5,6 @@
 
 import type { InputProps } from "@/components/ui/input";
 import type { TextareaProps } from "@/components/ui/textarea";
-import { NumberInput as ArkNumberInput } from "@ark-ui/react/number-input";
 import { type IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 import { type CheckboxProps } from "@radix-ui/react-checkbox";
 import * as SelectPrimitive from "@radix-ui/react-select";
@@ -31,7 +30,7 @@ type BaseInputFieldProps = Omit<InputProps, "name"> & {
 export type InputFieldProps<T extends FieldValues> = BaseInputFieldProps &
   FormControlProps<T>;
 
-type BaseNumberFieldProps = Omit<ArkNumberInput.RootProps, "name"> & {
+type BaseNumberFieldProps = Omit<InputProps, "name"> & {
   label: string;
   description?: string;
   className?: string;
