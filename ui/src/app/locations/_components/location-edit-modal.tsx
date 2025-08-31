@@ -3,6 +3,7 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
+import { Badge } from "@/components/ui/badge";
 import { FormEditModal } from "@/components/ui/form-edit-modal";
 import {
   HoverCard,
@@ -22,9 +23,11 @@ import { faCopy } from "@fortawesome/pro-regular-svg-icons";
 import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery } from "@tanstack/react-query";
-import { AdvancedMarker, APIProvider, Map } from "@vis.gl/react-google-maps";
+import { lazy, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { LocationForm } from "./location-form";
+
+const LazyMap = lazy(() => import("./lazy-map"));
 
 export function EditLocationModal({
   currentRecord,
@@ -50,10 +53,9 @@ export function EditLocationModal({
             {currentRecord.isGeocoded ? (
               <GeocodedBadge location={currentRecord as LocationSchema} />
             ) : (
-              <span
-                title="Location is not geocoded"
-                className="size-2 rounded-full bg-red-600"
-              />
+              <Badge variant="inactive" className="text-xs">
+                Not Geocoded
+              </Badge>
             )}
           </div>
         ) : null;
@@ -75,7 +77,11 @@ function GeocodedBadge({ location }: { location: LocationSchema }) {
   return (
     <HoverCard>
       <HoverCardTrigger asChild>
-        <span className="size-2 rounded-full bg-purple-600" />
+        <div className="flex items-center justify-center">
+          <Badge variant="active" className="text-xs">
+            Geocoded
+          </Badge>
+        </div>
       </HoverCardTrigger>
       <HoverCardContent className="flex flex-col gap-2 p-2 w-auto">
         <div className="flex flex-col gap-0.5">
@@ -83,17 +89,20 @@ function GeocodedBadge({ location }: { location: LocationSchema }) {
           <Row label="Latitude" value={location.latitude} />
           <Row label="Place ID" value={location.placeId} />
         </div>
-        {googleMapsData && !isLoading && (
+        {googleMapsData?.enabled && !isLoading && (
           <div className="h-32 w-full rounded-md overflow-hidden border border-border">
-            <APIProvider apiKey={googleMapsData.configuration.apiKey}>
-              <Map
-                defaultCenter={position}
-                defaultZoom={17}
-                mapId="DEMO_MAP_ID"
-              >
-                <AdvancedMarker position={position} />
-              </Map>
-            </APIProvider>
+            <Suspense
+              fallback={
+                <div className="h-full w-full bg-muted animate-pulse flex items-center justify-center text-xs text-muted-foreground">
+                  Loading map...
+                </div>
+              }
+            >
+              <LazyMap
+                apiKey={googleMapsData.configuration.apiKey}
+                position={position}
+              />
+            </Suspense>
           </div>
         )}
       </HoverCardContent>

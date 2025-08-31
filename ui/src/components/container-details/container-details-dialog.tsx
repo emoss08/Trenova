@@ -35,6 +35,7 @@ import { useContainerLogStore } from "@/stores/docker-store";
 import { ContainerStats } from "@/types/docker";
 import { Activity, Download } from "lucide-react";
 
+import { lazy, Suspense } from "react";
 import { OverviewTabContent } from "./contailer-overview";
 import {
   CommandDetails,
@@ -42,7 +43,12 @@ import {
   EnvironmentVariables,
 } from "./container-detail-components";
 import { NetworkTabContent } from "./container-network";
-import { StatsTabContent } from "./container-stats";
+
+const StatsTabContent = lazy(() => 
+  import("./container-stats").then(module => ({ 
+    default: module.StatsTabContent 
+  }))
+);
 
 interface ContainerDetailsDialogProps {
   open: boolean;
@@ -253,13 +259,19 @@ export function ContainerDetailsDialog({
             </TabsContent>
 
             <TabsContent value="stats" className="space-y-4">
-              <StatsTabContent
-                stats={stats}
-                cpuHistory={cpuHistory}
-                memHistory={memHistory}
-                prevStatsRef={prevStatsRef}
-                live={live}
-              />
+              <Suspense fallback={
+                <div className="flex items-center justify-center h-[400px]">
+                  <div className="animate-pulse text-muted-foreground">Loading stats...</div>
+                </div>
+              }>
+                <StatsTabContent
+                  stats={stats}
+                  cpuHistory={cpuHistory}
+                  memHistory={memHistory}
+                  prevStatsRef={prevStatsRef}
+                  live={live}
+                />
+              </Suspense>
             </TabsContent>
 
             {/* CONFIG */}

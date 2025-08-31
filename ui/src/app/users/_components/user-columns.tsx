@@ -26,7 +26,9 @@ export function getUserColumns(): ColumnDef<UserSchema>[] {
     },
     {
       id: "fullName",
+      accessorKey: "name",
       header: "Full Name",
+      minSize: 150,
       cell: ({ row }) => {
         const { profilePicUrl, name, username } = row.original;
         return (
@@ -78,6 +80,8 @@ export function getUserColumns(): ColumnDef<UserSchema>[] {
     },
     {
       id: "lastLoginAt",
+      accessorKey: "lastLoginAt",
+      minSize: 150,
       header: "Last Login",
       cell: ({ row }) => {
         const { lastLoginAt } = row.original;
