@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
-	"github.com/emoss08/trenova/internal/core/services/email/providers"
+	"github.com/emoss08/trenova/internal/pkg/email/providers"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rs/zerolog"

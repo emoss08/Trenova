@@ -7,7 +7,7 @@ package email
 
 import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/core/services/email/providers"
+	"github.com/emoss08/trenova/internal/pkg/email/providers"
 	"go.uber.org/fx"
 )
 
