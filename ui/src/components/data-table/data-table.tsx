@@ -46,11 +46,13 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
-import React, { lazy, Suspense, useCallback, useEffect, useMemo } from "react";
+import React, { lazy, useCallback, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { LazyLoader } from "../error-boundary";
 import LetterGlitch from "../ui/letter-glitch";
 import { DataTablePermissionDeniedSkeleton } from "../ui/permission-skeletons";
 import { Table } from "../ui/table";
+import { DataTableActionsSkeleton } from "./_components/data-table-actions";
 import { DataTableBody } from "./_components/data-table-body";
 import { DataTableHeader } from "./_components/data-table-header";
 import { DataTableOptions } from "./_components/data-table-options";
@@ -129,6 +131,23 @@ export function DataTable<TData extends Record<string, any>>({
       `trenova-${resource.toLowerCase()}-column-visibility`,
       {},
     );
+  const topBarRef = React.useRef<HTMLDivElement>(null);
+  const [topBarHeight, setTopBarHeight] = React.useState(0);
+
+  React.useEffect(() => {
+    const observer = new ResizeObserver(() => {
+      const rect = topBarRef.current?.getBoundingClientRect();
+      if (rect) {
+        setTopBarHeight(rect.height);
+      }
+    });
+
+    const topBar = topBarRef.current;
+    if (!topBar) return;
+
+    observer.observe(topBar);
+    return () => observer.unobserve(topBar);
+  }, [topBarRef]);
 
   // Derive filter state from URL parameters
   const filterState = useMemo<FilterStateSchema>(() => {
@@ -420,7 +439,12 @@ export function DataTable<TData extends Record<string, any>>({
     >
       <div
         className="flex flex-col gap-2 size-full"
-        style={columnSizeVars as React.CSSProperties}
+        style={
+          {
+            ...columnSizeVars,
+            "--top-bar-height": `${topBarHeight}px`,
+          } as React.CSSProperties
+        }
       >
         {can(resource, Action.Read) ? (
           <>
@@ -463,7 +487,7 @@ export function DataTable<TData extends Record<string, any>>({
                         )}
                       </div>
                     )}
-                    <Suspense fallback={<div>Loading...</div>}>
+                    <LazyLoader fallback={<DataTableActionsSkeleton />}>
                       <DataTableActions
                         name={name}
                         resource={resource}
@@ -474,7 +498,7 @@ export function DataTable<TData extends Record<string, any>>({
                         liveModeEnabled={liveModeEnabled}
                         onLiveModeToggle={setLiveModeEnabled}
                       />
-                    </Suspense>
+                    </LazyLoader>
                   </div>
                 </div>
               </DataTableOptions>
@@ -509,7 +533,10 @@ export function DataTable<TData extends Record<string, any>>({
                 </div>
               </div>
             ) : (
-              <Table>
+              <Table
+                className="border-separate border-spacing-0"
+                containerClassName="max-h-[calc(65vh_-_var(--top-bar-height))] border border-border rounded-md"
+              >
                 {includeHeader && <DataTableHeader table={table} />}
                 <DataTableBody
                   table={table}

@@ -32,7 +32,11 @@ function LiveModeTableRow({
   };
 }) {
   return (
-    <TableRow className="bg-blue-500/10 hover:!bg-blue-500/20 [&:hover_td]:md:!bg-blue-500/10 [&_td]:md:border-blue-500/10">
+    <TableRow
+      className="bg-blue-500/10 hover:!bg-blue-500/20 [&:hover_td]:md:!bg-blue-500/10 [&_td]:md:border-blue-500/10"
+      // Respect header presence using CSS var set on the scroll container
+      style={{ top: "var(--header-h, 0px)" }}
+    >
       <TableCell colSpan={columns.length} className="p-3 select-none">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-3 text-blue-600">
@@ -97,7 +101,7 @@ function DataTableRow<TData>({
     >
       {row.getVisibleCells().map((cell) => (
         <TableCell
-          className="font-sans truncate"
+          className="font-sans truncate border-b border-border"
           key={cell.id}
           role="cell"
           aria-label={`${cell.column.id} cell`}
@@ -132,7 +136,14 @@ export function DataTableBody<TData extends Record<string, any>>({
   contextMenuActions?: ContextMenuAction<TData>[];
 }) {
   return (
-    <TableBody id="content" tabIndex={-1}>
+    <TableBody
+      id="content"
+      tabIndex={-1}
+      // REMINDER: avoids scroll (skipping the table header) when using skip to content
+      style={{
+        scrollMarginTop: "calc(var(--top-bar-height) + 40px)",
+      }}
+    >
       {liveMode?.enabled && (
         <LiveModeTableRow columns={columns} liveMode={liveMode} />
       )}
