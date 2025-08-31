@@ -3,6 +3,7 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
+import { LazyLoader } from "@/components/error-boundary";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -12,9 +13,14 @@ import { UserSchema } from "@/lib/schemas/user-schema";
 import { api } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircleIcon } from "lucide-react";
-import { useEffect, useRef } from "react";
+import { lazy, useEffect, useRef } from "react";
 import { CommentContent } from "./comment-content";
-import { CommentForm } from "./comment-form";
+
+const CommentForm = lazy(() =>
+  import("./comment-form").then((module) => ({
+    default: module.CommentForm,
+  })),
+);
 
 export function ShipmentCommentDetails({
   shipmentId,
@@ -118,7 +124,21 @@ export function ShipmentCommentDetails({
         </ScrollArea>
       )}
 
-      <CommentForm searchUsers={searchUsers} shipmentId={shipmentId} />
+      <LazyLoader fallback={<CommentFormSkeleton />}>
+        <CommentForm searchUsers={searchUsers} shipmentId={shipmentId} />
+      </LazyLoader>
+    </div>
+  );
+}
+
+function CommentFormSkeleton() {
+  return (
+    <div className="flex flex-col px-2">
+      <Skeleton className="h-26 w-full rounded-md" />
+      <div className="flex justify-end pt-2 gap-2">
+        <Skeleton className="h-6 w-14 rounded-md" />
+        <Skeleton className="h-6 w-24 rounded-md" />
+      </div>
     </div>
   );
 }

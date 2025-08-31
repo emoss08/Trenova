@@ -1,4 +1,3 @@
-"use no memo";
 /*
  * Copyright 2023-2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
@@ -6,99 +5,9 @@
 
 import { cn } from "@/lib/utils";
 import type { NumberFieldProps } from "@/types/fields";
-import { ark } from "@ark-ui/react/factory";
-import { NumberInput as ArkNumberInput } from "@ark-ui/react/number-input";
-import { ChevronDownIcon, ChevronUpIcon } from "@radix-ui/react-icons";
 import { Controller, type FieldValues } from "react-hook-form";
 import { FieldWrapper } from "../fields/field-components";
-
-function NumberInputRoot({
-  className,
-  readOnly,
-  ...props
-}: ArkNumberInput.RootProps & { readOnly?: boolean }) {
-  return (
-    <ArkNumberInput.Root
-      data-slot="number-input-root"
-      aria-readonly={readOnly}
-      className={cn(
-        "flex flex-col",
-        readOnly && "cursor-not-allowed opacity-60 pointer-events-none",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-function NumberInputControl({
-  className,
-  ...props
-}: ArkNumberInput.ControlProps) {
-  return (
-    <ArkNumberInput.Control
-      data-slot="number-input-control"
-      className={cn(
-        "relative bg-muted rounded-md border border-muted-foreground/20 h-7 w-full px-2 py-1 text-xs",
-        "placeholder:text-muted-foreground",
-        "focus-visible:border-blue-600 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-blue-600/20",
-        "focus-visible:outline-none focus-visible:ring-1 [&[data-focus]]:ring-4 [&[data-focus]]:border-blue-600 [&[data-focus]]:ring-blue-600/20",
-        "[&[data-invalid]]:border-red-500 [&[data-invalid]]:ring-4 [&[data-invalid]]:ring-red-500/20 [&[data-invalid]]:bg-red-500/20",
-        "transition-[border-color,box-shadow] duration-200 ease-in-out",
-        "disabled:cursor-not-allowed disabled:opacity-50",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-function NumberInputField({ className, ...props }: ArkNumberInput.InputProps) {
-  return (
-    <ArkNumberInput.Input
-      data-slot="number-input-input"
-      className={cn(
-        "border-transparent border-none bg-transparent outline-none w-full",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-function NumberInputIncrementTrigger({
-  className,
-  ...props
-}: ArkNumberInput.IncrementTriggerProps) {
-  return (
-    <ArkNumberInput.IncrementTrigger
-      data-slot="number-input-increment-trigger"
-      className={cn(
-        "absolute right-0 top-0 h-1/2 w-7 inline-flex items-center justify-center",
-        "bg-background border-l border-border",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
-
-function NumberInputDecrementTrigger({
-  className,
-  ...props
-}: ArkNumberInput.DecrementTriggerProps) {
-  return (
-    <ArkNumberInput.DecrementTrigger
-      data-slot="number-input-decrement-trigger"
-      className={cn(
-        "absolute right-0 bottom-0 h-1/2 w-7 inline-flex items-center justify-center",
-        "bg-background border-l border-t border-border",
-        className,
-      )}
-      {...props}
-    />
-  );
-}
+import { Input } from "./input";
 
 export function NumberField<T extends FieldValues>({
   name,
@@ -106,8 +15,6 @@ export function NumberField<T extends FieldValues>({
   description,
   label,
   className,
-  formattedOptions,
-  inputMode = "numeric",
   placeholder = "Enter Valid Number",
   sideText,
   rules,
@@ -131,56 +38,30 @@ export function NumberField<T extends FieldValues>({
           error={fieldState.error?.message}
           className={className}
         >
-          <NumberInputRoot
+          <Input
+            {...field}
             {...props}
-            formatOptions={formattedOptions}
-            className={cn(className)}
-            inputMode={inputMode}
-            allowMouseWheel
-            value={field.value ?? undefined}
-            invalid={fieldState.invalid}
-            onValueChange={(details) => {
-              // * This will add a decimal point to the number if inputMode is "decimal"
-              if (inputMode === "numeric") {
-                field.onChange(details.valueAsNumber);
-              } else {
-                field.onChange(details.value);
-              }
-            }}
-          >
-            <NumberInputControl defaultValue={field.value}>
-              <NumberInputField
-                tabIndex={tabIndex}
-                id={inputId}
-                placeholder={placeholder}
-                aria-label={label}
-                value={field.value ?? undefined}
-                defaultValue={field.value ?? undefined}
-                onChange={(e) => {
-                  field.onChange(e.target.value);
-                }}
-                aria-describedby={cn(
-                  description && descriptionId,
-                  fieldState.error && errorId,
-                )}
-              />
-              {sideText && (
-                <div className="pointer-events-none absolute inset-y-0 right-6 flex items-center pr-3 text-xs text-muted-foreground">
+            tabIndex={tabIndex}
+            type="number"
+            placeholder={placeholder}
+            id={inputId}
+            className={className}
+            disabled={props.disabled}
+            aria-label={props["aria-label"] || label}
+            aria-describedby={cn(
+              description && descriptionId,
+              fieldState.error && errorId,
+              props["aria-describedby"],
+            )}
+            isInvalid={fieldState.invalid}
+            rightElement={
+              sideText && (
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3 text-xs text-muted-foreground">
                   {sideText}
                 </div>
-              )}
-              <NumberInputIncrementTrigger asChild>
-                <ark.button className="hover:bg-muted max-w-5 focus:bg-muted cursor-pointer rounded-tr-md">
-                  <ChevronUpIcon className="size-3" />
-                </ark.button>
-              </NumberInputIncrementTrigger>
-              <NumberInputDecrementTrigger asChild>
-                <ark.button className="hover:bg-muted max-w-5 focus:bg-muted cursor-pointer rounded-br-md">
-                  <ChevronDownIcon className="size-3" />
-                </ark.button>
-              </NumberInputDecrementTrigger>
-            </NumberInputControl>
-          </NumberInputRoot>
+              )
+            }
+          />
         </FieldWrapper>
       )}
     />

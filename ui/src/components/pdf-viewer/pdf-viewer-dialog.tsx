@@ -4,6 +4,7 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { TableSheetProps } from "@/types/data-table";
+import { lazy } from "react";
 import { LazyComponent } from "../error-boundary";
 import {
   Dialog,
@@ -14,7 +15,8 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { VisuallyHidden } from "../ui/visually-hidden";
-import PDFViewer from "./pdf-viewer";
+
+const PDFViewer = lazy(() => import("./pdf-viewer"));
 
 type PDFViewerDialogProps = {
   fileUrl: string;

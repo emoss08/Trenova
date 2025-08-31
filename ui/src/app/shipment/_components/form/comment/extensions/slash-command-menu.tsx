@@ -179,12 +179,6 @@ export function SlashCommandMenu({
         flip: true,
         shift: true,
         arrow: false,
-        getBoundingClientRect: () => {
-          const { view, state } = editor;
-          const { from } = state.selection;
-          const coords = view.coordsAtPos(from);
-          return new DOMRect(coords.left, coords.top, 0, 0);
-        },
       }}
       shouldShow={({ state }) => {
         if (!editor) return false;
