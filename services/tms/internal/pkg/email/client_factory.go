@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/email"
-	"github.com/emoss08/trenova/internal/core/services/email/providers"
 	"github.com/emoss08/trenova/internal/infrastructure/encryption"
+	"github.com/emoss08/trenova/internal/pkg/email/providers"
 	"github.com/samber/oops"
 	"go.uber.org/fx"
 )
