@@ -1,9 +1,6 @@
 go 1.25.0
 
 use (
-	./services/email
-	./services/jobs
-	./services/routing
 	./services/tms
 	./shared/cdctypes
 	./shared/payload
