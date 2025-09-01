@@ -19,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/consolidation"
 	"github.com/emoss08/trenova/internal/core/services/consolidationsetting"
 	"github.com/emoss08/trenova/internal/core/services/customer"
+	"github.com/emoss08/trenova/internal/core/services/dataretention"
 	"github.com/emoss08/trenova/internal/core/services/dbbackup"
 	"github.com/emoss08/trenova/internal/core/services/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/services/docker"
@@ -125,6 +126,7 @@ var Module = fx.Module("services", fx.Provide(
 	shipmenthold.NewService,
 	holdreason.NewService,
 	docker.NewService,
+	dataretention.NewService,
 ),
 	fx.Invoke(func(s services.WebSocketService) { //nolint:revive // required for fx
 		log.Info().Msg("websocket service initialized")

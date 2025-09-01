@@ -77,6 +77,9 @@ const (
 	ResourceDocker = Resource(
 		"docker",
 	) // Represents resources for managing docker.
+	ResourceDataRetention = Resource(
+		"data_retention",
+	) // Represents resources for managing data retention.
 	ResourceShipment = Resource(
 		"shipment",
 	) // Represents resources for managing shipments.
@@ -437,6 +440,12 @@ var (
 			ActionModifyField,
 		),
 		ResourceShipmentControl: append(
+			BaseActions,
+			ActionConfigure,
+			ActionAudit,
+			ActionModifyField,
+		),
+		ResourceDataRetention: append(
 			BaseActions,
 			ActionConfigure,
 			ActionAudit,

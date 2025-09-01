@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories/common"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/querybuilder"
@@ -517,22 +518,31 @@ func (wr *workerRepository) handlePTOOperations( //nolint:funlen,gocognit,cyclop
 
 func (wr *workerRepository) GetWorkerPTO(
 	ctx context.Context,
-	ptoID, workerID, buID, orgID pulid.ID,
+	req *repositories.GetWorkerPTORequest,
 ) (*worker.WorkerPTO, error) {
 	dba, err := wr.db.ReadDB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
+
+	log := wr.l.With().
+		Str("operation", "GetWorkerPTO").
+		Interface("req", req).
+		Logger()
 
 	pto := new(worker.WorkerPTO)
 	err = dba.NewSelect().Model(pto).
-		Where("wpto.id = ?", ptoID).
-		Where("wpto.worker_id = ?", workerID).
-		Where("wpto.business_unit_id = ?", buID).
-		Where("wpto.organization_id = ?", orgID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("wpto.id = ?", req.PtoID).
+				Where("wpto.worker_id = ?", req.WorkerID).
+				Where("wpto.business_unit_id = ?", req.BuID).
+				Where("wpto.organization_id = ?", req.OrgID)
+		}).
 		Scan(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get worker PTO")
+		log.Error().Err(err).Msg("failed to get worker PTO")
+		return nil, common.HandleNotFoundError(err, "Worker PTO")
 	}
 
 	return pto, nil
