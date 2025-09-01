@@ -70,6 +70,13 @@ type UpdateWorkerOptions struct {
 	BuID  pulid.ID
 }
 
+type GetWorkerPTORequest struct {
+	PtoID    pulid.ID `json:"ptoID"    query:"ptoID"`
+	WorkerID pulid.ID `json:"workerID" query:"workerID"`
+	BuID     pulid.ID `json:"buID"     query:"buID"`
+	OrgID    pulid.ID `json:"orgID"    query:"orgID"`
+}
+
 type WorkerRepository interface {
 	List(ctx context.Context, req *ListWorkerRequest) (*ports.ListResult[*worker.Worker], error)
 	GetByID(ctx context.Context, req *GetWorkerByIDRequest) (*worker.Worker, error)
@@ -77,6 +84,6 @@ type WorkerRepository interface {
 	Update(ctx context.Context, wrk *worker.Worker) (*worker.Worker, error)
 	GetWorkerPTO(
 		ctx context.Context,
-		ptoID, workerID, buID, orgID pulid.ID,
+		req *GetWorkerPTORequest,
 	) (*worker.WorkerPTO, error)
 }

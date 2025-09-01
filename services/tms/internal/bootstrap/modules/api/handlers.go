@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/consolidation"
 	"github.com/emoss08/trenova/internal/api/handlers/consolidationsetting"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
+	"github.com/emoss08/trenova/internal/api/handlers/dataretention"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlane"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlanesuggestion"
 	"github.com/emoss08/trenova/internal/api/handlers/docker"
@@ -124,4 +125,5 @@ var HandlersModule = fx.Module("api.Handlers", fx.Provide(
 	holdreason.NewHandler,
 	shipmenthold.NewHandler,
 	docker.NewHandler,
+	dataretention.NewHandler,
 ))

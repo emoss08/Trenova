@@ -55,7 +55,7 @@ export default function BillingControlForm() {
     resourceName: "Billing Control",
     setFormError: setError,
     resetForm: reset,
-    invalidateQueries: [queries.organization.getShipmentControl._def],
+    invalidateQueries: [queries.organization.getBillingControl._def],
   });
 
   const onSubmit = useCallback(

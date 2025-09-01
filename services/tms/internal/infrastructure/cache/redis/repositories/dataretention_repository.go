@@ -10,7 +10,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/cache/redis"
 	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rs/zerolog"
 	"go.uber.org/fx"
 )
@@ -119,27 +118,27 @@ func (dr *dataRetentionRepository) InvalidateAll(
 	return nil
 }
 
-// GetByID retrieves a data retention entity from the cache by its ID
+// Get retrieves a data retention entity from the cache
 //
 // Parameters:
 //   - ctx: The context of the request
-//   - drID: The ID of the data retention entity
+//   - req: The request object
 //
 // Returns:
 //   - *organization.DataRetention: The data retention entity
 //   - error: An error if the data retention entity is not retrieved from the cache
-func (dr *dataRetentionRepository) GetByID(
+func (dr *dataRetentionRepository) Get(
 	ctx context.Context,
-	entityID pulid.ID,
+	req repositories.GetDataRetentionRequest,
 ) (*organization.DataRetention, error) {
 	log := dr.l.With().
-		Str("operation", "GetByID").
-		Str("entityID", entityID.String()).
+		Str("operation", "Get").
+		Interface("req", req).
 		Logger()
 
 	entity := new(organization.DataRetention)
 
-	key := fmt.Sprintf("%s:%s", drKeyPrefix, entityID)
+	key := dr.formatKey(req)
 
 	if err := dr.cache.GetJSON(ctx, ".", key, entity); err != nil {
 		return nil, err
@@ -163,10 +162,13 @@ func (dr *dataRetentionRepository) Set(
 ) error {
 	log := dr.l.With().
 		Str("operation", "Set").
-		Str("drID", entity.ID.String()).
+		Interface("entity", entity).
 		Logger()
 
-	key := fmt.Sprintf("%s:%s", drKeyPrefix, entity.ID)
+	key := dr.formatKey(repositories.GetDataRetentionRequest{
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
+	})
 
 	if err := dr.cache.SetJSON(ctx, ".", key, entity, defaultDrTTL); err != nil {
 		return err
@@ -178,14 +180,17 @@ func (dr *dataRetentionRepository) Set(
 
 func (dr *dataRetentionRepository) Invalidate(
 	ctx context.Context,
-	entityID pulid.ID,
+	req repositories.GetDataRetentionRequest,
 ) error {
 	log := dr.l.With().
 		Str("operation", "Invalidate").
-		Str("entityID", entityID.String()).
+		Interface("req", req).
 		Logger()
 
-	key := fmt.Sprintf("%s:%s", drKeyPrefix, entityID)
+	key := dr.formatKey(repositories.GetDataRetentionRequest{
+		OrgID: req.OrgID,
+		BuID:  req.BuID,
+	})
 
 	if err := dr.cache.Del(ctx, key); err != nil {
 		return err
@@ -193,4 +198,13 @@ func (dr *dataRetentionRepository) Invalidate(
 
 	log.Debug().Str("key", key).Msg("invalidated data retention entity in cache")
 	return nil
+}
+
+func (dr *dataRetentionRepository) formatKey(req repositories.GetDataRetentionRequest) string {
+	return fmt.Sprintf(
+		"%s:%s:%s",
+		drKeyPrefix,
+		req.OrgID.String(),
+		req.BuID.String(),
+	)
 }

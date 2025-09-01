@@ -8,9 +8,8 @@ package workervalidator
 import (
 	"context"
 	"fmt"
-	"time"
-
 	"slices"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -150,7 +149,12 @@ func (v *WorkerPTOValidator) validatePTOStatusTransition(
 	pto *worker.WorkerPTO,
 	multiErr *errors.MultiError,
 ) {
-	oldPTO, err := v.repo.GetWorkerPTO(ctx, pto.ID, wrk.ID, wrk.BusinessUnitID, wrk.OrganizationID)
+	oldPTO, err := v.repo.GetWorkerPTO(ctx, &repositories.GetWorkerPTORequest{
+		PtoID:    pto.ID,
+		WorkerID: wrk.ID,
+		BuID:     wrk.BusinessUnitID,
+		OrgID:    wrk.OrganizationID,
+	})
 	if err != nil {
 		return
 	}

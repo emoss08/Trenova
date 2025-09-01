@@ -29,6 +29,15 @@ import {
   useWatch,
 } from "react-hook-form";
 
+const cancellationStatus = [PTOStatus.Rejected, PTOStatus.Cancelled];
+function mapStatusToHumanReadable(status: PTOStatus) {
+  return {
+    [PTOStatus.Rejected]: "Rejection",
+    [PTOStatus.Cancelled]: "Cancellation",
+    [PTOStatus.Requested]: "Request",
+    [PTOStatus.Approved]: "Approval",
+  }[status];
+}
 function WorkerPTOContent({
   index,
   remove,
@@ -49,7 +58,7 @@ function WorkerPTOContent({
 
   // Watch for status changes
   useEffect(() => {
-    if (status === PTOStatus.Cancelled && !reason) {
+    if (cancellationStatus.includes(status) && !reason) {
       setShowCancelForm(true);
     }
   }, [status, reason]);
@@ -122,7 +131,7 @@ function PTOCancelForm({
   index: number;
   onComplete: () => void;
 }) {
-  const { control, setValue } = useFormContext<WorkerSchema>();
+  const { control, setValue, getValues } = useFormContext<WorkerSchema>();
 
   const handleCancel = () => {
     setValue(`pto.${index}.status`, PTOStatus.Requested);
@@ -142,7 +151,9 @@ function PTOCancelForm({
           control={control}
           name={`pto.${index}.reason`}
           label="Reason"
-          placeholder="Reason for cancellation"
+          placeholder={`Reason for ${mapStatusToHumanReadable(
+            getValues(`pto.${index}.status`),
+          )}`}
           rules={{ required: true }}
         />
       </FormControl>

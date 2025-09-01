@@ -16,6 +16,7 @@ import { BillingControlAPI } from "./billing-control";
 import { ConsolidationAPI } from "./consolidation";
 import { ConsolidationSettingsAPI } from "./consolidation-setting";
 import { CustomerAPI } from "./customer";
+import { DataRetentionAPI } from "./data-retention";
 import { DatabaseBackupAPI } from "./database-backups";
 import { DedicatedLaneAPI, DedicatedLaneSuggestionAPI } from "./dedicated-lane";
 import { DockerAPI } from "./docker";
@@ -77,6 +78,7 @@ class API {
   ai: AIAPI;
   holdReasons: HoldReasonAPI;
   docker: DockerAPI;
+  dataRetention: DataRetentionAPI;
 
   constructor() {
     this.assignments = new AssignmentsAPI();
@@ -109,6 +111,7 @@ class API {
     this.ai = new AIAPI();
     this.holdReasons = new HoldReasonAPI();
     this.docker = new DockerAPI();
+    this.dataRetention = new DataRetentionAPI();
   }
 }
 

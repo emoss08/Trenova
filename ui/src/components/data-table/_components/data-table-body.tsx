@@ -101,7 +101,10 @@ function DataTableRow<TData>({
     >
       {row.getVisibleCells().map((cell) => (
         <TableCell
-          className="font-sans truncate border-b border-border"
+          className={cn("font-sans truncate border-b border-border", {
+            // If the last row remove the border
+            "border-b-0": row.index === table.getRowModel().rows.length - 1,
+          })}
           key={cell.id}
           role="cell"
           aria-label={`${cell.column.id} cell`}

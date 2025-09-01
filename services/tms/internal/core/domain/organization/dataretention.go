@@ -9,12 +9,16 @@ import (
 	"context"
 
 	businessunit "github.com/emoss08/trenova/internal/core/domain/businessunit"
+	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories/common"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*DataRetention)(nil)
+var (
+	_ bun.BeforeAppendModelHook = (*DataRetention)(nil)
+	_ common.VersionedEntity    = (*DataRetention)(nil)
+)
 
 type DataRetention struct {
 	bun.BaseModel `bun:"table:data_retention,alias:dr" json:"-"`
@@ -30,6 +34,22 @@ type DataRetention struct {
 	// Relationships
 	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *Organization              `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+}
+
+func (dr *DataRetention) GetID() string {
+	return dr.ID.String()
+}
+
+func (dr *DataRetention) GetTableName() string {
+	return "data_retention"
+}
+
+func (dr *DataRetention) GetVersion() int64 {
+	return dr.Version
+}
+
+func (dr *DataRetention) IncrementVersion() {
+	dr.Version++
 }
 
 func (dr *DataRetention) BeforeAppendModel(_ context.Context, query bun.Query) error {

@@ -109,14 +109,7 @@ func (s *Service) Get(
 		)
 	}
 
-	// * Get the shipment control by organization ID
-	entity, err := s.repo.GetByOrgID(ctx, req.OrgID)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get shipment control")
-		return nil, err
-	}
-
-	return entity, nil
+	return s.repo.GetByOrgID(ctx, req.OrgID)
 }
 
 // Update updates a shipment control

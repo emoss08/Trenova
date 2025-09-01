@@ -18,18 +18,18 @@ echo "🧹 Starting Kafka cleanup..."
 
 # Stop Kafka-related services
 echo "📦 Stopping Kafka services..."
-docker-compose -f docker-compose-local.yml stop kafka-ui kafka-connect kafka zookeeper schema-registry || echo "Some services may not be running"
+docker-compose -f docker-compose-local.yml stop kafka-connect kafka zookeeper schema-registry || echo "Some services may not be running"
 
 # Remove containers to ensure clean state
 echo "🗑️  Removing containers..."
-docker-compose -f docker-compose-local.yml rm -f kafka-ui kafka-connect kafka zookeeper schema-registry || echo "Some containers may not exist"
+docker-compose -f docker-compose-local.yml rm -f kafka-connect kafka zookeeper schema-registry || echo "Some containers may not exist"
 
 # Remove Kafka data volumes
 echo "💾 Removing Kafka data volumes..."
-docker volume rm -f trenova_kafka_data || echo "Kafka data volume not found"
-docker volume rm -f trenova_zookeeper_data || echo "Zookeeper data volume not found"  
-docker volume rm -f trenova_zookeeper_logs || echo "Zookeeper logs volume not found"
-docker volume rm -f trenova_kafka_connect_data || echo "Kafka connect data volume not found"
+docker volume rm -f tms_kafka_data || echo "Kafka data volume not found"
+docker volume rm -f tms_zookeeper_data || echo "Zookeeper data volume not found"  
+docker volume rm -f tms_zookeeper_logs || echo "Zookeeper logs volume not found"
+docker volume rm -f tms_kafka_connect_data || echo "Kafka connect data volume not found"
 
 # Remove any orphaned Kafka networks
 echo "🌐 Cleaning up networks..."
@@ -37,7 +37,7 @@ docker network prune -f
 
 # Restart services
 echo "🚀 Starting Kafka services..."
-docker-compose -f docker-compose-local.yml up -d zookeeper kafka schema-registry kafka-connect kafka-ui
+docker-compose -f docker-compose-local.yml up -d zookeeper kafka schema-registry kafka-connect
 
 # Check if Debezium Connect is ready
 echo "🔍 Checking Debezium Connect status..."

@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/consolidation"
 	"github.com/emoss08/trenova/internal/api/handlers/consolidationsetting"
 	"github.com/emoss08/trenova/internal/api/handlers/customer"
+	"github.com/emoss08/trenova/internal/api/handlers/dataretention"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlane"
 	"github.com/emoss08/trenova/internal/api/handlers/dedicatedlanesuggestion"
 	"github.com/emoss08/trenova/internal/api/handlers/docker"
@@ -157,6 +158,7 @@ type RouterParams struct {
 	HoldReasonHandler              *holdreason.Handler
 	ShipmentHoldHandler            *shipmenthold.Handler
 	DockerHandler                  *docker.Handler
+	DataRetentionHandler           *dataretention.Handler
 }
 
 type Router struct {
@@ -389,4 +391,7 @@ func (r *Router) setupProtectedRoutes( //nolint:funlen // this is to setup prote
 
 	// Docker Management
 	r.p.DockerHandler.RegisterRoutes(router, rl)
+
+	// Data Retention
+	r.p.DataRetentionHandler.RegisterRoutes(router, rl)
 }

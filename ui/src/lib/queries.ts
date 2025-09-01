@@ -68,6 +68,12 @@ export const queries = createQueryKeyStore({
         return await api.databaseBackups.get();
       },
     }),
+    getDataRetention: () => ({
+      queryKey: ["dataRetention"],
+      queryFn: async () => {
+        return await api.dataRetention.get();
+      },
+    }),
   },
   accessorialCharge: {
     getById: (accId: AccessorialChargeSchema["id"]) => ({
