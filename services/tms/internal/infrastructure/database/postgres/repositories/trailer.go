@@ -7,7 +7,6 @@ package repositories
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"time"
 
@@ -16,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/db"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories/common"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/postgressearch"
@@ -159,7 +159,7 @@ func (tr *trailerRepository) List(
 		Str("userID", opts.Filter.TenantOpts.UserID.String()).
 		Logger()
 
-	entities := make([]*trailer.Trailer, 0)
+	entities := make([]*trailer.Trailer, 0, opts.Filter.Limit)
 
 	q := dba.NewSelect().Model(&entities)
 	q = tr.filterQuery(q, opts)
@@ -212,12 +212,8 @@ func (tr *trailerRepository) GetByID(
 	query = tr.addOptions(query, opts.FilterOptions)
 
 	if err = query.Scan(ctx); err != nil {
-		if eris.Is(err, sql.ErrNoRows) {
-			return nil, errors.NewNotFoundError("Trailer not found within your organization")
-		}
-
 		log.Error().Err(err).Msg("failed to get trailer")
-		return nil, err
+		return nil, common.HandleNotFoundError(err, "Trailer")
 	}
 
 	return entity, nil

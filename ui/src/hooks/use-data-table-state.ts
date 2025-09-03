@@ -3,13 +3,7 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-import {
-  createSerializer,
-  parseAsInteger,
-  parseAsString,
-  parseAsStringLiteral,
-  type inferParserType,
-} from "nuqs";
+import { parseAsInteger, parseAsString, parseAsStringLiteral } from "nuqs";
 
 export const searchParamsParser = {
   // * Required for selection of entity
@@ -41,7 +35,3 @@ export const searchParamsParser = {
     shallow: false,
   }),
 };
-
-export const searchParamsSerializer = createSerializer(searchParamsParser);
-
-export type SearchParamsType = inferParserType<typeof searchParamsParser>;

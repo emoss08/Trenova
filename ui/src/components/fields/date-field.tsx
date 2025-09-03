@@ -88,7 +88,7 @@ export function DateField<T extends FieldValues>({
                   onSelect={(date) => {
                     field.onChange(toUnixTimeStamp(date));
                   }}
-                  initialFocus
+                  autoFocus
                 />
               </PopoverContent>
             </Popover>
@@ -115,13 +115,10 @@ export function DoubleClickEditDate<T extends FieldValues>({
       rules={rules}
       render={({ field, fieldState }) => {
         const dateValue = toDate(field.value);
-        const handleSelect = useCallback(
-          (date: Date | undefined) => {
-            field.onChange(toUnixTimeStamp(date));
-            setIsOpen(false);
-          },
-          [field],
-        );
+        const handleSelect = (date: Date | undefined) => {
+          field.onChange(toUnixTimeStamp(date));
+          setIsOpen(false);
+        };
 
         return (
           <Popover open={isOpen} onOpenChange={setIsOpen}>

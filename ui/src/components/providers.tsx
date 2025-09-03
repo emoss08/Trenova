@@ -7,7 +7,7 @@ import { APIError } from "@/types/errors";
 import { HelmetProvider } from "@dr.pogodin/react-helmet";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 // import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
-import { NuqsAdapter } from "nuqs/adapters/react-router";
+import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import { ThemeProvider } from "./theme-provider";
 import { Toaster } from "./ui/sonner";
 import { WebSocketProvider } from "./websocket-provider";

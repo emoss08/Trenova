@@ -7,7 +7,6 @@ import { Status } from "@/types/common";
 import * as z from "zod/v4";
 import {
   decimalStringSchema,
-  nullableStringSchema,
   optionalStringSchema,
   timestampSchema,
   versionSchema,
@@ -29,7 +28,9 @@ export const fleetCodeSchema = z.object({
   revenueGoal: decimalStringSchema,
   deadheadGoal: decimalStringSchema,
   color: optionalStringSchema,
-  managerId: nullableStringSchema,
+  managerId: z.string().min(1, {
+    error: "Manager is required",
+  }),
   manager: userSchema.nullish(),
 });
 

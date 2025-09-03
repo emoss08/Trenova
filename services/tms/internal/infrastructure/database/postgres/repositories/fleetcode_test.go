@@ -119,7 +119,7 @@ func TestFleetCodeRepository(t *testing.T) {
 			Status:         domain.StatusActive,
 			BusinessUnitID: bu.ID,
 			OrganizationID: org.ID,
-			ManagerID:      pulid.Must("invalid-id"),
+			ManagerID:      pulid.MustNew("invalid-id"),
 		}
 
 		results, err := repo.Create(ctx, newEntity)
@@ -145,7 +145,7 @@ func TestFleetCodeRepository(t *testing.T) {
 
 	t.Run("update fleet code with invalid information", func(t *testing.T) {
 		fc.Description = "Test Fleet Code 4"
-		fc.ManagerID = pulid.Must("invalid-id")
+		fc.ManagerID = pulid.MustNew("invalid-id")
 
 		results, err := repo.Update(ctx, fc)
 

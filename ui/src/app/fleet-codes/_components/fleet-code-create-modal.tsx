@@ -18,7 +18,7 @@ export function CreateFleetCodeModal({ open, onOpenChange }: TableSheetProps) {
       name: "",
       status: Status.Active,
       description: "",
-      managerId: undefined,
+      managerId: "",
       revenueGoal: undefined,
       deadheadGoal: undefined,
       color: "",
