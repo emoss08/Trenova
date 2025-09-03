@@ -4,5 +4,4 @@ ignoredBuiltDependencies:
   - sharp
 
 onlyBuiltDependencies:
-  - '@sentry/cli'
   - '@swc/core'

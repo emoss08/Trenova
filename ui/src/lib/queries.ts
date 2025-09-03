@@ -6,7 +6,7 @@
 import { api } from "@/services/api";
 import type { GetDedicatedLaneByShipmentRequest } from "@/services/dedicated-lane";
 import type { GetPreviousRatesRequest } from "@/services/shipment";
-import { ListUpcomingPTORequest } from "@/services/worker";
+import { ListUpcomingPTORequest, PTOChartDataRequest } from "@/services/worker";
 import type { AnalyticsPage } from "@/types/analytics";
 import { Resource } from "@/types/audit-entry";
 import type { GetCustomerByIDParams } from "@/types/customer";
@@ -335,6 +335,10 @@ export const queries = createQueryKeyStore({
     listUpcomingPTO: (req: ListUpcomingPTORequest) => ({
       queryKey: ["worker", "upcoming-pto", req],
       queryFn: async () => api.worker.listUpcomingPTO(req),
+    }),
+    getPTOChartData: (req: PTOChartDataRequest) => ({
+      queryKey: ["worker", "pto-chart-data", req],
+      queryFn: async () => api.worker.getPTOChartData(req),
     }),
   },
 });

@@ -36,6 +36,61 @@ var WorkerFieldConfig = &ports.FieldConfiguration{
 	},
 }
 
+var WorkerPTOFieldConfig = &ports.FieldConfiguration{
+	FilterableFields: map[string]bool{
+		"status":           true,
+		"type":             true,
+		"startDate":        true,
+		"endDate":          true,
+		"worker.firstName": true,
+		"worker.lastName":  true,
+	},
+	SortableFields: map[string]bool{
+		"status":           true,
+		"type":             true,
+		"startDate":        true,
+		"endDate":          true,
+		"worker.firstName": true,
+		"worker.lastName":  true,
+	},
+	FieldMap: map[string]string{
+		"status":    "status",
+		"type":      "type",
+		"startDate": "start_date",
+		"endDate":   "end_date",
+	},
+	EnumMap: map[string]bool{
+		"status": true,
+		"type":   true,
+	},
+	NestedFields: map[string]ports.NestedFieldDefinition{
+		"worker.firstName": {
+			DatabaseField: "wrk.first_name",
+			RequiredJoins: []ports.JoinDefinition{
+				{
+					Table:     "workers",
+					Alias:     "wrk",
+					Condition: "wpto.worker_id = wrk.id",
+					JoinType:  ports.JoinTypeLeft,
+				},
+			},
+			IsEnum: false,
+		},
+		"worker.lastName": {
+			DatabaseField: "wrk.last_name",
+			RequiredJoins: []ports.JoinDefinition{
+				{
+					Table:     "workers",
+					Alias:     "wrk",
+					Condition: "wpto.worker_id = wrk.id",
+					JoinType:  ports.JoinTypeLeft,
+				},
+			},
+			IsEnum: false,
+		},
+	},
+}
+
 type WorkerFilterOptions struct {
 	Status         string `query:"status"`
 	IncludeProfile bool   `query:"includeProfile"`
@@ -52,17 +107,29 @@ func BuildWorkerListOptions(
 	}
 }
 
+type ListWorkerRequest struct {
+	Filter              *ports.QueryOptions `json:"filter"              query:"filter"`
+	WorkerFilterOptions `json:"workerFilterOptions" query:"workerFilterOptions"`
+}
+
+func BuildWorkerPTOListOptions(
+	filter *ports.QueryOptions,
+) *ListWorkerPTORequest {
+	return &ListWorkerPTORequest{
+		Filter: filter,
+	}
+}
+
+type ListWorkerPTORequest struct {
+	Filter *ports.QueryOptions `json:"filter" query:"filter"`
+}
+
 type GetWorkerByIDRequest struct {
 	WorkerID      pulid.ID            `json:"workerId"      query:"workerId"`
 	BuID          pulid.ID            `json:"buId"          query:"buId"`
 	OrgID         pulid.ID            `json:"orgId"         query:"orgId"`
 	UserID        pulid.ID            `json:"userId"        query:"userId"`
 	FilterOptions WorkerFilterOptions `json:"filterOptions" query:"filterOptions"`
-}
-
-type ListWorkerRequest struct {
-	Filter              *ports.QueryOptions `json:"filter"              query:"filter"`
-	WorkerFilterOptions `json:"workerFilterOptions" query:"workerFilterOptions"`
 }
 
 type UpdateWorkerOptions struct {
@@ -104,6 +171,31 @@ type RejectPTORequest struct {
 	Reason     string   `json:"reason"     query:"reason"`
 }
 
+type PTOChartDataRequest struct {
+	Filter    *ports.LimitOffsetQueryOptions `json:"filter"    query:"filter"`
+	StartDate int64                          `json:"startDate" query:"startDate"`
+	EndDate   int64                          `json:"endDate"   query:"endDate"`
+	Type      string                         `json:"type"      query:"type"`
+}
+
+type PTOChartDataPoint struct {
+	Date        string                    `json:"date"`
+	Vacation    int                       `json:"vacation"`
+	Sick        int                       `json:"sick"`
+	Holiday     int                       `json:"holiday"`
+	Bereavement int                       `json:"bereavement"`
+	Maternity   int                       `json:"maternity"`
+	Paternity   int                       `json:"paternity"`
+	Workers     map[string][]WorkerDetail `json:"workers"`
+}
+
+type WorkerDetail struct {
+	ID        string `json:"id"`
+	FirstName string `json:"firstName"`
+	LastName  string `json:"lastName"`
+	PTOType   string `json:"ptoType"`
+}
+
 type WorkerRepository interface {
 	List(ctx context.Context, req *ListWorkerRequest) (*ports.ListResult[*worker.Worker], error)
 	GetByID(ctx context.Context, req *GetWorkerByIDRequest) (*worker.Worker, error)
@@ -119,4 +211,12 @@ type WorkerRepository interface {
 	) (*ports.ListResult[*worker.WorkerPTO], error)
 	ApprovePTO(ctx context.Context, req *ApprovePTORequest) error
 	RejectPTO(ctx context.Context, req *RejectPTORequest) error
+	ListWorkerPTO(
+		ctx context.Context,
+		req *ListWorkerPTORequest,
+	) (*ports.ListResult[*worker.WorkerPTO], error)
+	GetPTOChartData(
+		ctx context.Context,
+		req *PTOChartDataRequest,
+	) ([]*PTOChartDataPoint, error)
 }

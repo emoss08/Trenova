@@ -191,6 +191,10 @@ export function getDataTableEndpoint(
       legacy: "/consolidations/",
       enhanced: "/consolidations/",
     },
+    worker_pto: {
+      legacy: "/workers/pto/",
+      enhanced: "/workers/pto/",
+    },
     email_profile: {
       legacy: "/email-profiles/",
       enhanced: "/email-profiles/",

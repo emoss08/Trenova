@@ -36,6 +36,30 @@ export const LazyTooltip = lazy(() =>
   import("recharts").then((module) => ({ default: module.Tooltip })),
 );
 
+export const LazyBarChart = lazy(() =>
+  import("recharts").then((module) => ({ default: module.BarChart })),
+);
+
+export const LazyBar = lazy(() =>
+  import("recharts").then((module) => ({ default: module.Bar })),
+);
+
+export const LazyXAxis = lazy(() =>
+  import("recharts").then((module) => ({ default: module.XAxis })),
+);
+
+export const LazyYAxis = lazy(() =>
+  import("recharts").then((module) => ({ default: module.YAxis })),
+);
+
+export const LazyLegend = lazy(() =>
+  import("recharts").then((module) => ({ default: module.Legend })),
+);
+
+export const LazyCartesianGrid = lazy(() =>
+  import("recharts").then((module) => ({ default: module.CartesianGrid })),
+);
+
 // Chart wrapper component
 export function ChartWrapper({ children }: { children: React.ReactNode }) {
   return (

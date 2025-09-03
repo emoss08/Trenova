@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/user"
+	"github.com/emoss08/trenova/internal/core/ports/infra"
 	"github.com/emoss08/trenova/internal/pkg/errors"
 	"github.com/emoss08/trenova/shared/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -19,7 +20,10 @@ import (
 	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*WorkerPTO)(nil)
+var (
+	_ bun.BeforeAppendModelHook = (*WorkerPTO)(nil)
+	_ infra.PostgresSearchable  = (*WorkerPTO)(nil)
+)
 
 //nolint:revive // struct should keep this name
 type WorkerPTO struct {
@@ -121,6 +125,42 @@ func (w *WorkerPTO) Validate(ctx context.Context, multiErr *errors.MultiError) {
 		if eris.As(err, &validationErrs) {
 			errors.FromOzzoErrors(validationErrs, multiErr)
 		}
+	}
+}
+
+func (w *WorkerPTO) GetTableName() string {
+	return "worker_pto"
+}
+
+func (w *WorkerPTO) GetID() string {
+	return w.ID.String()
+}
+
+func (w *WorkerPTO) GetPostgresSearchConfig() infra.PostgresSearchConfig {
+	return infra.PostgresSearchConfig{
+		TableAlias: "wpto",
+		Fields: []infra.PostgresSearchableField{
+			{
+				Name:       "type",
+				Weight:     "A",
+				Type:       infra.PostgresSearchTypeEnum,
+				Dictionary: "english",
+			},
+			{
+				Name:       "status",
+				Weight:     "B",
+				Type:       infra.PostgresSearchTypeEnum,
+				Dictionary: "english",
+			},
+			{
+				Name:   "start_date",
+				Weight: "C",
+				Type:   infra.PostgresSearchTypeNumber,
+			},
+		},
+		MinLength:       2,
+		MaxTerms:        6,
+		UsePartialMatch: true,
 	}
 }
 

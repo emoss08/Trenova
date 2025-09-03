@@ -11,6 +11,31 @@ export type ListUpcomingPTORequest = {
   endDate?: number;
 };
 
+export type PTOChartDataRequest = {
+  startDate: number;
+  endDate: number;
+  type?: string;
+};
+
+export type PTOChartDataPoint = {
+  date: string;
+  vacation: number;
+  sick: number;
+  holiday: number;
+  bereavement: number;
+  maternity: number;
+  paternity: number;
+  workers: Record<
+    string,
+    Array<{
+      id: string;
+      firstName: string;
+      lastName: string;
+      ptoType: string;
+    }>
+  >;
+};
+
 export class WorkerAPI {
   async listUpcomingPTO(req: ListUpcomingPTORequest) {
     const response = await http.get<LimitOffsetResponse<WorkerPTOSchema>>(
@@ -22,6 +47,20 @@ export class WorkerAPI {
           startDate: req.startDate,
           endDate: req.endDate,
           ...req.filter,
+        },
+      },
+    );
+    return response.data;
+  }
+
+  async getPTOChartData(req: PTOChartDataRequest) {
+    const response = await http.get<PTOChartDataPoint[]>(
+      `/workers/pto-chart-data/`,
+      {
+        params: {
+          startDate: req.startDate,
+          endDate: req.endDate,
+          type: req.type,
         },
       },
     );

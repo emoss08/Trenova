@@ -221,10 +221,6 @@ function AdditionalChargeForm({ index }: { index: number }) {
       </FormControl>
       <FormControl cols="full">
         <NumberField
-          formatOptions={{
-            style: "currency",
-            currency: "USD",
-          }}
           control={control}
           name={`additionalCharges.${index}.amount`}
           label="Amount"

@@ -381,3 +381,65 @@ func (s *Service) RejectPTO(
 
 	return s.repo.RejectPTO(ctx, req)
 }
+
+func (s *Service) ListWorkerPTO(
+	ctx context.Context,
+	req *repositories.ListWorkerPTORequest,
+) (*ports.ListResult[*worker.WorkerPTO], error) {
+	log := s.l.With().
+		Str("operation", "ListWorkerPTO").
+		Interface("req", req).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.Filter.TenantOpts.UserID,
+				Resource:       permission.ResourceWorkerPTO,
+				Action:         permission.ActionRead,
+				BusinessUnitID: req.Filter.TenantOpts.BuID,
+				OrganizationID: req.Filter.TenantOpts.OrgID,
+			},
+		})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, eris.Wrap(err, "failed to check permissions")
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to read worker PTOs")
+	}
+
+	return s.repo.ListWorkerPTO(ctx, req)
+}
+
+func (s *Service) GetPTOChartData(
+	ctx context.Context,
+	req *repositories.PTOChartDataRequest,
+) ([]*repositories.PTOChartDataPoint, error) {
+	log := s.l.With().
+		Str("operation", "GetPTOChartData").
+		Interface("req", req).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.Filter.TenantOpts.UserID,
+				Resource:       permission.ResourceWorkerPTO,
+				Action:         permission.ActionRead,
+				BusinessUnitID: req.Filter.TenantOpts.BuID,
+				OrganizationID: req.Filter.TenantOpts.OrgID,
+			},
+		})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, eris.Wrap(err, "failed to check permissions")
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to read PTO chart data")
+	}
+
+	return s.repo.GetPTOChartData(ctx, req)
+}

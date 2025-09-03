@@ -50,8 +50,18 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(300), // 120 reads per minute
 	)...)
 
+	api.Get("/pto/", rl.WithRateLimit(
+		[]fiber.Handler{h.listWorkerPTO},
+		middleware.PerMinute(300), // 120 reads per minute
+	)...)
+
 	api.Get("/upcoming-pto/", rl.WithRateLimit(
 		[]fiber.Handler{h.listUpcomingPTO},
+		middleware.PerMinute(300), // 120 reads per minute
+	)...)
+
+	api.Get("/pto-chart-data/", rl.WithRateLimit(
+		[]fiber.Handler{h.getPTOChartData},
 		middleware.PerMinute(300), // 120 reads per minute
 	)...)
 
@@ -297,4 +307,56 @@ func (h *Handler) rejectPTO(c *fiber.Ctx) error {
 	}
 
 	return c.SendStatus(fiber.StatusNoContent)
+}
+
+func (h *Handler) listWorkerPTO(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	eo, err := paginationutils.ParseEnhancedQueryFromJSON(c, reqCtx)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	listOpts := repositories.BuildWorkerPTOListOptions(eo)
+
+	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*workerdomain.WorkerPTO], error) {
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
+		return h.ws.ListWorkerPTO(fc.UserContext(), listOpts)
+	}
+
+	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
+}
+
+func (h *Handler) getPTOChartData(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := &repositories.PTOChartDataRequest{
+		Filter: &ports.LimitOffsetQueryOptions{
+			TenantOpts: ports.TenantOptions{
+				OrgID:  reqCtx.OrgID,
+				BuID:   reqCtx.BuID,
+				UserID: reqCtx.UserID,
+			},
+		},
+	}
+
+	if err := c.QueryParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	chartData, err := h.ws.GetPTOChartData(c.UserContext(), req)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(chartData)
 }

@@ -63,7 +63,15 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
     <>
       <Popover open={isPopoverOpen} onOpenChange={setIsPopoverOpen}>
         <PopoverTrigger asChild>
-          <Button variant="default" disabled={isDisabled}>
+          <Button
+            title={
+              isDisabled
+                ? `You do not have permissions to create ${name}s`
+                : `Create a new ${name}`
+            }
+            variant="default"
+            disabled={isDisabled}
+          >
             <Icon icon={faPlus} className="size-4 text-background" />
             <span>New</span>
           </Button>
@@ -71,6 +79,7 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
         <PopoverContent align="end" side="bottom" className="w-auto p-1">
           <div className="flex w-full flex-col gap-1">
             <Button
+              title={`Create a new ${name} from scratch`}
               variant="ghost"
               className="flex size-full flex-col items-start gap-0.5 text-left"
               onClick={handleCreateClick}
@@ -86,6 +95,7 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
               </div>
             </Button>
             <Button
+              title={`Import existing ${name}s from a file`}
               variant="ghost"
               className="flex size-full flex-col items-start gap-0.5 text-left"
               onClick={handleImportClick}
@@ -103,6 +113,7 @@ export const DataTableCreateButton = memo(function DataTableCreateButton({
             {extraActions?.map((option) => (
               <Button
                 key={option.label}
+                title={option.description}
                 variant="ghost"
                 className="flex size-full flex-col items-start gap-0.5 text-left"
                 onClick={option.onClick}

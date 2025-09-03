@@ -21,6 +21,7 @@ func HandleNotFoundError(err error, entityName string) error {
 			fmt.Sprintf("%s not found within your organization", entityName),
 		)
 	}
+
 	return err
 }
 

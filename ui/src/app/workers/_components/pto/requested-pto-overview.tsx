@@ -29,7 +29,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Skeleton } from "@/components/ui/skeleton";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { dateToUnixTimestamp, formatRange, inclusiveDays } from "@/lib/date";
 import { queries } from "@/lib/queries";
@@ -44,7 +43,7 @@ import { memo, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { PTORejectionDialog } from "./pto-rejection-dialog";
 
-export default function UpcomingPTOContent() {
+export default function RequestedPTOOverview() {
   const defaultStart = dateToUnixTimestamp(new Date());
 
   const [type, setType] = useState<WorkerPTOSchema["type"] | undefined>(
@@ -55,7 +54,6 @@ export default function UpcomingPTOContent() {
   const [endDate, setEndDate] = useState<number | undefined>(undefined);
 
   const hasActiveFilters = Boolean(type || endDate);
-
   const toInput = (unix?: number) => {
     if (!unix) return "";
     const d = new Date(unix * 1000);
@@ -76,127 +74,118 @@ export default function UpcomingPTOContent() {
   });
 
   return (
-    <div className="grid grid-cols-12 gap-4">
-      <div className="flex flex-col gap-1 col-span-8 size-full">
-        <h3 className="text-lg font-medium font-table">Upcoming PTO (WIP)</h3>
-        <Skeleton className="size-full" />
-      </div>
-      <div className="flex flex-col gap-1 size-full col-span-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-lg font-medium font-table">Requested PTO</h3>
-          <div className="flex items-center gap-1">
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button variant="outline" size="sm" className="relative w-4">
-                  <FilterIcon className="size-4" />
-                  {hasActiveFilters && (
-                    <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-primary" />
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent align="end" className="w-72 p-3">
-                <div className="grid gap-3">
+    <div className="flex flex-col gap-1 h-fit col-span-4 w-full">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-medium font-table">Requested PTO</h3>
+        <div className="flex items-center gap-1">
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className="relative size-6">
+                <FilterIcon className="size-4" />
+                {hasActiveFilters && (
+                  <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-primary" />
+                )}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-72 p-3">
+              <div className="grid gap-3">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="pto-type">Type</Label>
+                  <Select
+                    value={(type as string) ?? ""}
+                    onValueChange={(v) =>
+                      setType(
+                        (v || undefined) as WorkerPTOSchema["type"] | undefined,
+                      )
+                    }
+                  >
+                    <SelectTrigger id="pto-type">
+                      <SelectValue placeholder="All types" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All</SelectItem>
+                      <SelectItem value="Vacation">Vacation</SelectItem>
+                      <SelectItem value="Sick">Sick</SelectItem>
+                      <SelectItem value="Holiday">Holiday</SelectItem>
+                      <SelectItem value="Bereavement">Bereavement</SelectItem>
+                      <SelectItem value="Maternity">Maternity</SelectItem>
+                      <SelectItem value="Paternity">Paternity</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
                   <div className="grid gap-1.5">
-                    <Label htmlFor="pto-type">Type</Label>
-                    <Select
-                      value={(type as string) ?? ""}
-                      onValueChange={(v) =>
-                        setType(
-                          (v || undefined) as
-                            | WorkerPTOSchema["type"]
-                            | undefined,
+                    <Label htmlFor="start-date">Start</Label>
+                    <Input
+                      id="start-date"
+                      type="date"
+                      value={toInput(startDate)}
+                      onChange={(e) =>
+                        setStartDate(
+                          e.target.value
+                            ? dateToUnixTimestamp(
+                                new Date(`${e.target.value}T00:00:00`),
+                              )
+                            : undefined,
                         )
                       }
-                    >
-                      <SelectTrigger id="pto-type">
-                        <SelectValue placeholder="All types" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All</SelectItem>
-                        <SelectItem value="Vacation">Vacation</SelectItem>
-                        <SelectItem value="Sick">Sick</SelectItem>
-                        <SelectItem value="Holiday">Holiday</SelectItem>
-                        <SelectItem value="Bereavement">Bereavement</SelectItem>
-                        <SelectItem value="Maternity">Maternity</SelectItem>
-                        <SelectItem value="Paternity">Paternity</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    />
                   </div>
-
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="start-date">Start</Label>
-                      <Input
-                        id="start-date"
-                        type="date"
-                        value={toInput(startDate)}
-                        onChange={(e) =>
-                          setStartDate(
-                            e.target.value
-                              ? dateToUnixTimestamp(
-                                  new Date(`${e.target.value}T00:00:00`),
-                                )
-                              : undefined,
-                          )
-                        }
-                      />
-                    </div>
-                    <div className="grid gap-1.5">
-                      <Label htmlFor="end-date">End</Label>
-                      <Input
-                        id="end-date"
-                        type="date"
-                        value={toInput(endDate)}
-                        onChange={(e) =>
-                          setEndDate(
-                            e.target.value
-                              ? dateToUnixTimestamp(
-                                  new Date(`${e.target.value}T23:59:59`),
-                                ) // inclusive
-                              : undefined,
-                          )
-                        }
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-end gap-2 pt-1 border-t border-border/60">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => {
-                        setType(undefined);
-                        setEndDate(undefined);
-                        setStartDate(defaultStart);
-                      }}
-                    >
-                      Reset
-                    </Button>
+                  <div className="grid gap-1.5">
+                    <Label htmlFor="end-date">End</Label>
+                    <Input
+                      id="end-date"
+                      type="date"
+                      value={toInput(endDate)}
+                      onChange={(e) =>
+                        setEndDate(
+                          e.target.value
+                            ? dateToUnixTimestamp(
+                                new Date(`${e.target.value}T23:59:59`),
+                              ) // inclusive
+                            : undefined,
+                        )
+                      }
+                    />
                   </div>
                 </div>
-              </PopoverContent>
-            </Popover>
-            <Button size="sm">Add PTO</Button>
-          </div>
-        </div>
 
-        <ScrollArea className="border border-border rounded-md p-3 h-[300px]">
-          <div className="flex flex-col gap-2">
-            {query.data?.results.map((workerPTO) => (
-              <UpcomingPTOCard key={workerPTO.id} workerPTO={workerPTO} />
-            ))}
-            {query.data?.count === 0 && (
-              <div className="flex flex-col text-center items-center justify-center h-[250px]">
-                <p className="text-sm font-medium">No PTOs found</p>
-                <p className="text-2xs text-muted-foreground">
-                  Try adjusting your filters or search query.
-                </p>
+                <div className="flex justify-end gap-2 pt-1 border-t border-border/60">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setType(undefined);
+                      setEndDate(undefined);
+                      setStartDate(defaultStart);
+                    }}
+                  >
+                    Reset
+                  </Button>
+                </div>
               </div>
-            )}
-          </div>
-          <ScrollAreaShadow />
-        </ScrollArea>
+            </PopoverContent>
+          </Popover>
+        </div>
       </div>
+
+      <ScrollArea className="border border-border rounded-md p-3 h-[300px]">
+        <div className="flex flex-col gap-2">
+          {query.data?.results.map((workerPTO) => (
+            <UpcomingPTOCard key={workerPTO.id} workerPTO={workerPTO} />
+          ))}
+          {query.data?.count === 0 && (
+            <div className="flex flex-col text-center items-center justify-center h-[250px]">
+              <p className="text-sm font-medium">No PTOs found</p>
+              <p className="text-2xs text-muted-foreground">
+                Try adjusting your filters or search query.
+              </p>
+            </div>
+          )}
+        </div>
+        <ScrollAreaShadow />
+      </ScrollArea>
     </div>
   );
 }
