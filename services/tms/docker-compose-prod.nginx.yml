@@ -1,0 +1,49 @@
+##
+## Copyright 2023-2025 Eric Moss
+## Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+## Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md##
+
+# Nginx overlay for production deployment
+# Usage: docker-compose -f docker-compose-prod.yml -f docker-compose-prod.nginx.yml up -d
+
+services:
+  tren-nginx:
+    container_name: tren-nginx
+    build:
+      context: .
+      dockerfile: nginx/Dockerfile
+    image: trenova-nginx:latest
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/locations.conf:/etc/nginx/conf.d/locations.conf:ro
+      - ./logs/nginx:/var/log/nginx
+      - nginx_cache:/var/cache/nginx
+      - ./certs:/etc/nginx/ssl:ro
+      - ./certbot/www:/var/www/certbot:ro
+    environment:
+      - DOMAIN=${DOMAIN:-localhost}
+    networks:
+      - app-network
+    depends_on:
+      - tren-api
+      - tren-client
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+          cpus: "1"
+        reservations:
+          memory: 256M
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  nginx_cache:
