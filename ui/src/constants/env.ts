@@ -42,7 +42,3 @@ export const TURNSTILE_SITE_KEY = import.meta.env
   .VITE_TURNSTILE_SITE_KEY as string;
 export const SHOW_FAVORITES_KEY = import.meta.env
   .VITE_SHOW_FAVORITES_KEY as string;
-
-export const SENTRY_DSN = import.meta.env.VITE_SENTRY_DSN as string;
-
-export const ENABLE_SENTRY = import.meta.env.VITE_ENABLE_SENTRY as boolean;

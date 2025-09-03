@@ -56,22 +56,14 @@ export default function DataTableActions({
           Live Mode
         </Button>
       )}
-
-      {can(resource, Action.Create) ? (
-        <>
-          <div className="h-6 w-px bg-border" />
-          <DataTableCreateButton
-            name={name}
-            exportModelName={exportModelName}
-            extraActions={extraActions}
-            onCreateClick={handleCreateClick}
-          />
-        </>
-      ) : (
-        <p className="text-xs text-destructive">
-          You do not have permissions to create {resource}s
-        </p>
-      )}
+      <div className="h-6 w-px bg-border" />
+      <DataTableCreateButton
+        name={name}
+        exportModelName={exportModelName}
+        extraActions={extraActions}
+        isDisabled={!can(resource, Action.Create)}
+        onCreateClick={handleCreateClick}
+      />
     </DataTableActionsInner>
   );
 }

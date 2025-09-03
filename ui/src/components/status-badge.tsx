@@ -16,13 +16,17 @@ import {
 } from "@/lib/schemas/shipment-schema";
 import { StopStatus, type StopSchema } from "@/lib/schemas/stop-schema";
 import { EquipmentStatus } from "@/lib/schemas/tractor-schema";
-import { type WorkerSchema } from "@/lib/schemas/worker-schema";
+import {
+  WorkerPTOSchema,
+  type WorkerSchema,
+} from "@/lib/schemas/worker-schema";
 import { cn } from "@/lib/utils";
 import { badgeVariants } from "@/lib/variants/badge";
 import { type Status } from "@/types/common";
 import { DocumentStatus, DocumentType } from "@/types/document";
 import { type PackingGroupChoiceProps } from "@/types/hazardous-material";
 import { IntegrationCategory } from "@/types/integration";
+import { PTOStatus, PTOType } from "@/types/worker";
 import {
   faBadgeCheck,
   faCheck,
@@ -106,6 +110,71 @@ export function StopStatusBadge({ status }: { status: StopSchema["status"] }) {
   );
 }
 
+export function PTOStatusBadge({
+  status,
+}: {
+  status: WorkerPTOSchema["status"];
+}) {
+  const ptoStatusAttributes: Record<WorkerPTOSchema["status"], BadgeAttrProps> =
+    {
+      [PTOStatus.Requested]: {
+        variant: "purple",
+        text: "Requested",
+      },
+      [PTOStatus.Approved]: {
+        variant: "active",
+        text: "Approved",
+      },
+      [PTOStatus.Rejected]: {
+        variant: "inactive",
+        text: "Rejected",
+      },
+      [PTOStatus.Cancelled]: {
+        variant: "warning",
+        text: "Cancelled",
+      },
+    };
+
+  return (
+    <Badge variant={ptoStatusAttributes[status].variant} className="max-h-6">
+      {ptoStatusAttributes[status].text}
+    </Badge>
+  );
+}
+export function PTOTypeBadge({ type }: { type: WorkerPTOSchema["type"] }) {
+  const ptoTypeAttributes: Record<WorkerPTOSchema["type"], BadgeAttrProps> = {
+    [PTOType.Vacation]: {
+      variant: "purple",
+      text: "Vacation",
+    },
+    [PTOType.Sick]: {
+      variant: "active",
+      text: "Sick",
+    },
+    [PTOType.Holiday]: {
+      variant: "inactive",
+      text: "Holiday",
+    },
+    [PTOType.Bereavement]: {
+      variant: "warning",
+      text: "Bereavement",
+    },
+    [PTOType.Maternity]: {
+      variant: "warning",
+      text: "Maternity",
+    },
+    [PTOType.Paternity]: {
+      variant: "warning",
+      text: "Paternity",
+    },
+  };
+
+  return (
+    <Badge variant={ptoTypeAttributes[type].variant} className="max-h-6">
+      {ptoTypeAttributes[type].text}
+    </Badge>
+  );
+}
 export function IntegrationCategoryBadge({
   category,
 }: {

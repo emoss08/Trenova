@@ -375,6 +375,7 @@ export function DataTable<TData extends Record<string, any>>({
     return table
       .getCoreRowModel()
       .flatRows.find((row) => row.id === selectedRowKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     rowSelection,
     dataQuery.isLoading,

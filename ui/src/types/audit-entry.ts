@@ -56,6 +56,7 @@ export enum Resource {
 
   // Operations resources
   Worker = "worker", // Represents resources related to workers.
+  WorkerPTO = "worker_pto", // Represents resources related to worker PTOs.
   Consolidation = "consolidation", // Represents resources related to consolidation groups.
   Tractor = "tractor", // Represents resources for managing tractors.
   Trailer = "trailer", // Represents resources for managing trailers.

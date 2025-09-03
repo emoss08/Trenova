@@ -116,13 +116,12 @@ func (wr *workerRepository) List(
 ) (*ports.ListResult[*worker.Worker], error) {
 	dba, err := wr.db.ReadDB(ctx)
 	if err != nil {
-		return nil, eris.Wrap(err, "get database connection")
+		return nil, err
 	}
 
 	log := wr.l.With().
 		Str("operation", "List").
-		Str("buID", req.Filter.TenantOpts.BuID.String()).
-		Str("userID", req.Filter.TenantOpts.UserID.String()).
+		Interface("req", req).
 		Logger()
 
 	workers := make([]*worker.Worker, 0, req.Filter.Limit)
@@ -133,7 +132,7 @@ func (wr *workerRepository) List(
 	total, err := q.ScanAndCount(ctx)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to scan workers")
-		return nil, eris.Wrap(err, "failed to scan workers")
+		return nil, common.HandleNotFoundError(err, "Worker")
 	}
 
 	return &ports.ListResult[*worker.Worker]{
@@ -513,6 +512,69 @@ func (wr *workerRepository) handlePTOOperations( //nolint:funlen,gocognit,cyclop
 	}
 
 	return nil
+}
+
+func (wr *workerRepository) filterWorkerPTOQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListWorkerPTORequest,
+) *bun.SelectQuery {
+	qb := querybuilder.NewWithPostgresSearch(
+		q,
+		"wpto",
+		repositories.WorkerPTOFieldConfig,
+		(*worker.WorkerPTO)(nil),
+	)
+
+	qb.ApplyTenantFilters(req.Filter.TenantOpts)
+
+	if req.Filter != nil {
+		qb.ApplyFilters(req.Filter.FieldFilters)
+
+		if len(req.Filter.Sort) > 0 {
+			qb.ApplySort(req.Filter.Sort)
+		}
+
+		if req.Filter.Query != "" {
+			qb.ApplyTextSearch(req.Filter.Query, []string{"type", "status"})
+		}
+
+		q = q.Relation("Worker")
+
+		q = qb.GetQuery()
+	}
+
+	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
+}
+
+func (wr *workerRepository) ListWorkerPTO(
+	ctx context.Context,
+	req *repositories.ListWorkerPTORequest,
+) (*ports.ListResult[*worker.WorkerPTO], error) {
+	dba, err := wr.db.WriteDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	log := wr.l.With().
+		Str("operation", "ListWorkerPTO").
+		Interface("req", req).
+		Logger()
+
+	entities := make([]*worker.WorkerPTO, 0, req.Filter.Limit)
+
+	q := dba.NewSelect().Model(&entities)
+	q = wr.filterWorkerPTOQuery(q, req)
+
+	total, err := q.ScanAndCount(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to scan worker PTOs")
+		return nil, common.HandleNotFoundError(err, "Worker PTO")
+	}
+
+	return &ports.ListResult[*worker.WorkerPTO]{
+		Items: entities,
+		Total: total,
+	}, nil
 }
 
 func (wr *workerRepository) GetWorkerPTO(

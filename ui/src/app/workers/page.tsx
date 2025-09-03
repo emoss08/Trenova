@@ -10,22 +10,26 @@ import { queries } from "@/lib/queries";
 import { lazy } from "react";
 
 const WorkersDataTable = lazy(() => import("./_components/workers-table"));
-const UpcomingPTOContent = lazy(
-  () => import("./_components/pto/upcoming-pto-content"),
-);
+const UpcomingPTOContent = lazy(() => import("./_components/pto/pto-content"));
 
 export function Workers() {
   return (
     <>
       <MetaTags title="Workers" description="Workers" />
       <FormSaveProvider>
-        <QueryLazyComponent queryKey={queries.worker.listUpcomingPTO._def}>
-          <UpcomingPTOContent />
-        </QueryLazyComponent>
-        <LazyComponent>
-          <WorkersDataTable />
-        </LazyComponent>
+        <WorkersContent>
+          <QueryLazyComponent queryKey={queries.worker.listUpcomingPTO._def}>
+            <UpcomingPTOContent />
+          </QueryLazyComponent>
+          <LazyComponent>
+            <WorkersDataTable />
+          </LazyComponent>
+        </WorkersContent>
       </FormSaveProvider>
     </>
   );
+}
+
+function WorkersContent({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col gap-4">{children}</div>;
 }
