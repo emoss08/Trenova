@@ -3,24 +3,13 @@
 ## Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
 ## Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md##
 
-FROM golang:1.24-bookworm AS builder
+FROM golang:1.25.0-bookworm AS builder
 
 # Install necessary packages
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
-    bash \
     ca-certificates \
-    libssl-dev \
-    tar \
     git \
-    openssh-client \
-    openssl \
-    libyajl-dev \
-    zlib1g-dev \
-    libsasl2-dev \
-    pkg-config \
-    tzdata \
-    libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Set the working directory
@@ -31,49 +20,52 @@ ENV GOOS=linux
 ENV GOARCH=amd64
 ENV APP_ENV=production
 
-
-# Copy go.mod and go.sum files
+# Copy go mod files first for better caching
 COPY go.mod go.sum ./
 
-# Download all dependencies
+# Copy shared modules
+COPY ../../shared /shared
+
+# Download dependencies
 RUN go mod download
 
-# Copy the entire source code
+# Copy the source code
 COPY . .
 
-# Build the binary
-RUN go build -o apiserver cmd/api/main.go
+# Build the binary with optimizations
+RUN CGO_ENABLED=0 go build -ldflags="-w -s" -o apiserver cmd/api/main.go
 
-FROM debian:bookworm-slim AS final
+# Final stage - minimal image
+FROM alpine:latest
 
-# Install runtime dependencies and PostgreSQL client
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    ca-certificates \
-    libffi8 \
-    wget \
-    gnupg \
-    lsb-release \
-    && wget --quiet -O - https://www.postgresql.org/media/keys/ACCC4CF8.asc | apt-key add - \
-    && echo "deb http://apt.postgresql.org/pub/repos/apt/ $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list \
-    && apt-get update \
-    && apt-get install -y --no-install-recommends postgresql-client-17 \
-    && apt-get remove -y wget gnupg lsb-release \
-    && apt-get autoremove -y \
-    && rm -rf /var/lib/apt/lists/*
-
+# Install runtime dependencies
+RUN apk add --no-cache ca-certificates tzdata
 
 # Set the environment variable
 ENV APP_ENV=production
+ENV TRENOVA_APP_ENVIRONMENT=production
+ENV TRENOVA_CONFIG_PATH=/app/config/production/config.production.yaml
 
 WORKDIR /app
 
-# Copy binary and config files from the builder stage
+# Copy binary and config from builder
 COPY --from=builder /app/apiserver .
-COPY --from=builder /app/config/production/config.production.yaml ./config/production/config.production.yaml
-# COPY --from=builder /app/config/development/config.development.yaml ./config/development/config.development.yaml
+COPY config/production/config.production.yaml ./config/production/
+
+# Create logs directory
+RUN mkdir -p /app/logs
 
 # Make sure the binary is executable
 RUN chmod +x /app/apiserver
 
-# Command to run when starting the container
+# Run as non-root user
+RUN adduser -D -H -s /bin/sh appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Health check
+HEALTHCHECK --interval=10s --timeout=3s --start-period=30s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3001/health || exit 1
+
+EXPOSE 3001
+
 ENTRYPOINT ["/app/apiserver", "serve"]
