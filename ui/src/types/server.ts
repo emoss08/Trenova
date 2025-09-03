@@ -24,9 +24,9 @@ type TenantOptions = {
 };
 
 export type LimitOffsetOptions = {
-  tenantOpts: TenantOptions;
-  limit: number;
-  offset: number;
+  tenantOpts?: TenantOptions;
+  limit?: number;
+  offset?: number;
 };
 
 export type ListResult<TData> = {

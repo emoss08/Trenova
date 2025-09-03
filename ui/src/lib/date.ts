@@ -390,3 +390,44 @@ export function formatDurationFromSeconds(durationInSeconds: number): string {
 
   return parts.join(" ");
 }
+
+export const toDateFromUnixSeconds = (unixSeconds: number) =>
+  new Date(unixSeconds * 1000);
+
+const startOfLocalDay = (d: Date) =>
+  new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+export const inclusiveDays = (startUnix: number, endUnix: number) => {
+  const s = startOfLocalDay(toDateFromUnixSeconds(startUnix));
+  const e = startOfLocalDay(toDateFromUnixSeconds(endUnix));
+  const MS_PER_DAY = 86_400_000;
+  return Math.max(1, Math.floor((e.getTime() - s.getTime()) / MS_PER_DAY) + 1);
+};
+
+export const formatRange = (startUnix: number, endUnix: number) => {
+  const s = toDateFromUnixSeconds(startUnix);
+  const e = toDateFromUnixSeconds(endUnix);
+
+  const sameYear = s.getFullYear() === e.getFullYear();
+  const sameMonth = sameYear && s.getMonth() === e.getMonth();
+  const now = new Date();
+
+  const showYear =
+    !sameYear ||
+    s.getFullYear() !== now.getFullYear() ||
+    e.getFullYear() !== now.getFullYear();
+
+  const sFmt = new Intl.DateTimeFormat(undefined, {
+    month: "short",
+    day: "numeric",
+    ...(showYear ? { year: "numeric" } : {}),
+  }).format(s);
+
+  const eFmt = new Intl.DateTimeFormat(undefined, {
+    ...(sameMonth ? {} : { month: "short" }),
+    day: "numeric",
+    ...(showYear ? { year: "numeric" } : {}),
+  }).format(e);
+
+  return sFmt === eFmt ? sFmt : `${sFmt}–${eFmt}`;
+};

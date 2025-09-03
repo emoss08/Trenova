@@ -68,6 +68,9 @@ const (
 	ResourceWorker = Resource(
 		"worker",
 	) // Represents resources related to workers.
+	ResourceWorkerPTO = Resource(
+		"worker_pto",
+	) // Represents resources related to worker PTOs.
 	ResourceTractor = Resource(
 		"tractor",
 	) // Represents resources for managing tractors.
@@ -427,6 +430,14 @@ var (
 			BaseActions,
 			ActionConfigure,
 		),
+		ResourceWorkerPTO: {
+			ActionApprove,
+			ActionReject,
+			ActionRead,
+			ActionManage,
+			ActionCancel,
+			ActionAudit,
+		},
 		ResourceDedicatedLaneSuggestion: append(
 			BaseActions,
 			ActionConfigure,

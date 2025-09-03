@@ -50,6 +50,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(300), // 120 reads per minute
 	)...)
 
+	api.Get("/upcoming-pto/", rl.WithRateLimit(
+		[]fiber.Handler{h.listUpcomingPTO},
+		middleware.PerMinute(300), // 120 reads per minute
+	)...)
+
 	api.Post("/", rl.WithRateLimit(
 		[]fiber.Handler{h.create},
 		middleware.PerMinute(300), // 60 reads per minute
@@ -62,6 +67,16 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 
 	api.Put("/:workerID/", rl.WithRateLimit(
 		[]fiber.Handler{h.update},
+		middleware.PerMinute(60), // 60 writes per minute
+	)...)
+
+	api.Post("/pto/:ptoID/approve/", rl.WithRateLimit(
+		[]fiber.Handler{h.approvePTO},
+		middleware.PerMinute(60), // 60 writes per minute
+	)...)
+
+	api.Post("/pto/:ptoID/reject/", rl.WithRateLimit(
+		[]fiber.Handler{h.rejectPTO},
 		middleware.PerMinute(60), // 60 writes per minute
 	)...)
 }
@@ -188,13 +203,13 @@ func (h *Handler) update(c *fiber.Ctx) error {
 	}
 
 	wkr := new(workerdomain.Worker)
-	wkr.ID = wkrID
-	wkr.OrganizationID = reqCtx.OrgID
-	wkr.BusinessUnitID = reqCtx.BuID
-
 	if err = c.BodyParser(wkr); err != nil {
 		return h.eh.HandleError(c, err)
 	}
+
+	wkr.ID = wkrID
+	wkr.OrganizationID = reqCtx.OrgID
+	wkr.BusinessUnitID = reqCtx.BuID
 
 	entity, err := h.ws.Update(c.UserContext(), wkr, reqCtx.UserID)
 	if err != nil {
@@ -202,4 +217,84 @@ func (h *Handler) update(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(entity)
+}
+
+func (h *Handler) listUpcomingPTO(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	handler := func(fc *fiber.Ctx, filter *ports.LimitOffsetQueryOptions) (*ports.ListResult[*workerdomain.WorkerPTO], error) {
+		if err = fc.QueryParser(filter); err != nil {
+			return nil, h.eh.HandleError(fc, err)
+		}
+
+		listOpts := &repositories.ListUpcomingWorkerPTORequest{
+			Filter: filter,
+			ListWorkerPTOFilterOptions: repositories.ListWorkerPTOFilterOptions{
+				Type:      fc.Query("type"),
+				Status:    fc.Query("status"),
+				StartDate: int64(fc.QueryInt("startDate")),
+				EndDate:   int64(fc.QueryInt("endDate")),
+			},
+		}
+
+		return h.ws.ListUpcomingPTO(fc.UserContext(), listOpts)
+	}
+
+	return limitoffsetpagination.HandlePaginatedRequest(c, h.eh, reqCtx, handler)
+}
+
+func (h *Handler) approvePTO(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	ptoID, err := pulid.MustParse(c.Params("ptoID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	err = h.ws.ApprovePTO(c.UserContext(), &repositories.ApprovePTORequest{
+		PtoID:      ptoID,
+		BuID:       reqCtx.BuID,
+		OrgID:      reqCtx.OrgID,
+		ApproverID: reqCtx.UserID,
+	})
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
+}
+
+func (h *Handler) rejectPTO(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	ptoID, err := pulid.MustParse(c.Params("ptoID"))
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := new(repositories.RejectPTORequest)
+	if err = c.BodyParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req.PtoID = ptoID
+	req.BuID = reqCtx.BuID
+	req.OrgID = reqCtx.OrgID
+	req.RejectorID = reqCtx.UserID
+
+	err = h.ws.RejectPTO(c.UserContext(), req)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.SendStatus(fiber.StatusNoContent)
 }

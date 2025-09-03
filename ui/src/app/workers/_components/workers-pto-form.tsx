@@ -14,6 +14,7 @@ import { Separator } from "@/components/ui/separator";
 import { ptoStatusChoices, ptoTypeChoices } from "@/lib/choices";
 import { WorkerSchema } from "@/lib/schemas/worker-schema";
 import { cn } from "@/lib/utils";
+import { useUser } from "@/stores/user-store";
 import { PTOStatus, PTOType } from "@/types/worker";
 import {
   faCalendar,
@@ -45,7 +46,8 @@ function WorkerPTOContent({
   index: number;
   remove: UseFieldArrayRemove;
 }) {
-  const { control } = useFormContext<WorkerSchema>();
+  const user = useUser();
+  const { control, setValue } = useFormContext<WorkerSchema>();
   const [showCancelForm, setShowCancelForm] = useState(false);
   const status = useWatch({
     control,
@@ -54,6 +56,12 @@ function WorkerPTOContent({
   const reason = useWatch({
     control,
     name: `pto.${index}.reason`,
+  });
+
+  useEffect(() => {
+    if (status === PTOStatus.Approved) {
+      setValue(`pto.${index}.approverId`, user?.id);
+    }
   });
 
   // Watch for status changes

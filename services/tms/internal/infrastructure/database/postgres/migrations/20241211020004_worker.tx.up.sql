@@ -2,7 +2,6 @@
 -- Copyright 2023-2025 Eric Moss
 -- Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
 -- Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md--
-
 -- Worker type enum with descriptions
 CREATE TYPE worker_type_enum AS ENUM(
     'Employee', -- Full-time company employee
@@ -209,6 +208,7 @@ CREATE TABLE IF NOT EXISTS "worker_pto"(
     "business_unit_id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
     "approver_id" varchar(100),
+    "rejector_id" varchar(100),
     -- Core Fields
     "status" worker_pto_status_enum NOT NULL DEFAULT 'Requested',
     "type" worker_pto_type_enum NOT NULL DEFAULT 'Vacation',
@@ -224,6 +224,7 @@ CREATE TABLE IF NOT EXISTS "worker_pto"(
     CONSTRAINT "fk_worker_pto_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_worker_pto_worker" FOREIGN KEY ("worker_id", "organization_id", "business_unit_id") REFERENCES "workers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_worker_pto_approver" FOREIGN KEY ("approver_id") REFERENCES "users"("id") ON UPDATE NO ACTION ON DELETE SET NULL,
+    CONSTRAINT "fk_worker_pto_rejector" FOREIGN KEY ("rejector_id") REFERENCES "users"("id") ON UPDATE NO ACTION ON DELETE SET NULL,
     CONSTRAINT "check_end_date_after_start_date" CHECK ("end_date" > "start_date")
 );
 
