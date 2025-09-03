@@ -23,9 +23,6 @@ ENV APP_ENV=production
 # Copy go mod files first for better caching
 COPY go.mod go.sum ./
 
-# Copy shared modules
-COPY ../../shared /shared
-
 # Download dependencies
 RUN go mod download
 
