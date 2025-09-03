@@ -102,7 +102,7 @@ func SafeInt64PtrNonNil(i int) *int64 {
 
 func ToInt16(i *int16) int16 {
 	if i == nil {
-		return 0
+		return minInt16
 	}
 	return *i
 }

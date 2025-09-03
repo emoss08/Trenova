@@ -36,7 +36,7 @@ type FleetCode struct {
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,pk,type:VARCHAR(100),notnull"`
 
 	// Relationship identifiers (Non-Primary-Keys)
-	ManagerID *pulid.ID `json:"managerId" bun:"manager_id,type:VARCHAR(100),nullzero"`
+	ManagerID pulid.ID `json:"managerId" bun:"manager_id,type:VARCHAR(100),notnull"`
 
 	// Core fields
 	Status       domain.Status       `json:"status"       bun:"status,type:status_enum,notnull,default:'Active'"`
@@ -74,6 +74,11 @@ func (fc *FleetCode) Validate(ctx context.Context, multiErr *errors.MultiError) 
 		),
 		validation.Field(&fc.DeadheadGoal,
 			validation.Min(0).Error("Deadhead goal must be greater than or equal to 0"),
+		),
+
+		// Manager is required
+		validation.Field(&fc.ManagerID,
+			validation.Required.Error("Manager is required"),
 		),
 
 		// Color must be a valid hex color

@@ -78,6 +78,7 @@ export function FleetCodeForm() {
       </FormControl>
       <FormControl>
         <UserAutocompleteField<FleetCodeSchema>
+          rules={{ required: true }}
           name="managerId"
           control={control}
           label="Manager"
