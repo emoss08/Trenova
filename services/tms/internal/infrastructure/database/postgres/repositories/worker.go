@@ -60,7 +60,6 @@ func (wr *workerRepository) addOptions(
 
 	// * Include the PTO if requested
 	if opts.IncludePTO {
-		wr.l.Info().Msg("Including Paid Time Off")
 		q = q.Relation("PTO", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Order("start_date ASC")
 		})
@@ -546,4 +545,163 @@ func (wr *workerRepository) GetWorkerPTO(
 	}
 
 	return pto, nil
+}
+
+func (wr *workerRepository) addUpcomingPTOOptions(
+	q *bun.SelectQuery,
+	opts *repositories.ListUpcomingWorkerPTORequest,
+) *bun.SelectQuery {
+	if opts.StartDate > 0 {
+		q = q.Where("wpto.start_date >= ?", opts.StartDate)
+	}
+
+	if opts.EndDate > 0 {
+		q = q.Where("wpto.end_date <= ?", opts.EndDate)
+	}
+
+	if opts.Type != "" {
+		ptoType, err := worker.PTOTypeFromString(opts.Type)
+		if err != nil {
+			wr.l.Error().
+				Err(err).
+				Str("type", opts.Type).
+				Msg("failed to convert type to PTO type")
+			return q
+		}
+
+		q = q.Where("wpto.type = ?", ptoType)
+	}
+
+	if opts.Status != "" {
+		ptoStatus, err := worker.PTOStatusFromString(opts.Status)
+		if err != nil {
+			wr.l.Error().
+				Err(err).
+				Str("status", opts.Status).
+				Msg("failed to convert status to PTO status")
+			return q
+		}
+
+		q = q.Where("wpto.status = ?", ptoStatus)
+	}
+
+	q = q.Order("wpto.start_date ASC", "wpto.end_date ASC")
+	q = q.Relation("Worker")
+
+	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
+}
+
+func (wr *workerRepository) ListUpcomingPTO(
+	ctx context.Context,
+	req *repositories.ListUpcomingWorkerPTORequest,
+) (*ports.ListResult[*worker.WorkerPTO], error) {
+	dba, err := wr.db.ReadDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	log := wr.l.With().
+		Str("operation", "ListUpcomingPTO").
+		Interface("req", req).
+		Logger()
+
+	entities := make([]*worker.WorkerPTO, 0, req.Filter.Limit)
+
+	q := dba.NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("wpto.organization_id = ?", req.Filter.TenantOpts.OrgID).
+				Where("wpto.business_unit_id = ?", req.Filter.TenantOpts.BuID)
+		})
+
+	q = wr.addUpcomingPTOOptions(q, req)
+
+	total, err := q.ScanAndCount(ctx)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get upcoming PTOs")
+		return nil, err
+	}
+
+	return &ports.ListResult[*worker.WorkerPTO]{
+		Items: entities,
+		Total: total,
+	}, nil
+}
+
+func (wr *workerRepository) ApprovePTO(
+	ctx context.Context,
+	req *repositories.ApprovePTORequest,
+) error {
+	dba, err := wr.db.WriteDB(ctx)
+	if err != nil {
+		return err
+	}
+
+	log := wr.l.With().
+		Str("operation", "ApprovePTO").
+		Interface("req", req).
+		Logger()
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		_, err = tx.NewUpdate().
+			Model((*worker.WorkerPTO)(nil)).
+			Set("status = ?", worker.PTOStatusApproved).
+			Set("approver_id = ?", req.ApproverID).
+			Set("version = version + 1").
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return uq.Where("wpto.id = ?", req.PtoID).
+					Where("wpto.business_unit_id = ?", req.BuID).
+					Where("wpto.organization_id = ?", req.OrgID).
+					Where("wpto.status = ?", worker.PTOStatusRequested)
+			}).
+			Exec(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to approve PTO")
+			return err
+		}
+
+		return nil
+	})
+
+	return nil
+}
+
+func (wr *workerRepository) RejectPTO(
+	ctx context.Context,
+	req *repositories.RejectPTORequest,
+) error {
+	dba, err := wr.db.WriteDB(ctx)
+	if err != nil {
+		return err
+	}
+
+	log := wr.l.With().
+		Str("operation", "RejectPTO").
+		Interface("req", req).
+		Logger()
+
+	err = dba.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
+		_, err = tx.NewUpdate().
+			Model((*worker.WorkerPTO)(nil)).
+			Set("status = ?", worker.PTOStatusRejected).
+			Set("rejector_id = ?", req.RejectorID).
+			Set("reason = ?", req.Reason).
+			Set("version = version + 1").
+			WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+				return uq.Where("wpto.id = ?", req.PtoID).
+					Where("wpto.business_unit_id = ?", req.BuID).
+					Where("wpto.organization_id = ?", req.OrgID).
+					Where("wpto.status = ?", worker.PTOStatusRequested)
+			}).
+			Exec(ctx)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to reject PTO")
+			return err
+		}
+
+		return nil
+	})
+
+	return nil
 }

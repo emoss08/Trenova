@@ -14,6 +14,7 @@ import {
 import * as z from "zod/v4";
 import {
   nullableIntegerSchema,
+  nullablePulidSchema,
   nullableStringSchema,
   nullableTimestampSchema,
   optionalStringSchema,
@@ -64,6 +65,10 @@ const workerPTOSchema = z.object({
   startDate: z.number().min(1, { error: "Start date is required" }),
   endDate: z.number().min(1, { error: "End date is required" }),
   reason: z.string().optional(),
+  approverId: nullablePulidSchema,
+  get worker() {
+    return workerSchema.nullish();
+  },
 });
 
 /* Worker Schema */
@@ -113,4 +118,14 @@ export const workerSchema = z
     },
   );
 
+export const ptoRejectionRequestSchema = z.object({
+  ptoId: z.string().min(1, { message: "PTO ID is required" }),
+  reason: z.string(),
+});
+
 export type WorkerSchema = z.infer<typeof workerSchema>;
+export type WorkerPTOSchema = z.infer<typeof workerPTOSchema>;
+
+export type PTORejectionRequestSchema = z.infer<
+  typeof ptoRejectionRequestSchema
+>;

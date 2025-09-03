@@ -106,6 +106,8 @@ export function WorkerForm() {
     (item) => item.id === activeSection,
   )?.component;
 
+  console.info("Errors", errors);
+
   return (
     <div className="flex size-full flex-1">
       <SidebarProvider className="h-[550px] min-h-full w-48 shrink-0 items-start">

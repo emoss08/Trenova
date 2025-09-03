@@ -5,6 +5,8 @@
 
 package worker
 
+import "github.com/rotisserie/eris"
+
 //nolint:revive // This is a custom type for the worker type
 type WorkerType string
 
@@ -63,6 +65,27 @@ const (
 	PTOTypePaternity = PTOType("Paternity")
 )
 
+func PTOTypeFromString(s string) (PTOType, error) {
+	switch s {
+	case "Personal":
+		return PTOTypePersonal, nil
+	case "Vacation":
+		return PTOTypeVacation, nil
+	case "Sick":
+		return PTOTypeSick, nil
+	case "Holiday":
+		return PTOTypeHoliday, nil
+	case "Bereavement":
+		return PTOTypeBereavement, nil
+	case "Maternity":
+		return PTOTypeMaternity, nil
+	case "Paternity":
+		return PTOTypePaternity, nil
+	default:
+		return "", eris.New("invalid PTO type")
+	}
+}
+
 type PTOStatus string
 
 const (
@@ -82,6 +105,21 @@ const (
 	// This is typically used when the PTO request is cancelled by the worker themselves
 	PTOStatusCancelled = PTOStatus("Cancelled")
 )
+
+func PTOStatusFromString(s string) (PTOStatus, error) {
+	switch s {
+	case "Requested":
+		return PTOStatusRequested, nil
+	case "Approved":
+		return PTOStatusApproved, nil
+	case "Rejected":
+		return PTOStatusRejected, nil
+	case "Cancelled":
+		return PTOStatusCancelled, nil
+	default:
+		return "", eris.New("invalid PTO status")
+	}
+}
 
 // DocumentType represents different types of required driver documents
 type DocumentType string

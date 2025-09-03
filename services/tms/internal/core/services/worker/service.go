@@ -95,7 +95,7 @@ func (s *Service) List(
 			},
 		})
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to check permissions")
+		log.Error().Err(err).Msg("failed to check permissions")
 		return nil, eris.Wrap(err, "failed to check permissions")
 	}
 
@@ -290,4 +290,94 @@ func (s *Service) Update(
 	}
 
 	return updatedWorker, nil
+}
+
+func (s *Service) ListUpcomingPTO(
+	ctx context.Context,
+	req *repositories.ListUpcomingWorkerPTORequest,
+) (*ports.ListResult[*worker.WorkerPTO], error) {
+	log := s.l.With().Str("operation", "ListUpcomingPTO").Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.Filter.TenantOpts.UserID,
+				Resource:       permission.ResourceWorkerPTO,
+				Action:         permission.ActionRead,
+				BusinessUnitID: req.Filter.TenantOpts.BuID,
+				OrganizationID: req.Filter.TenantOpts.OrgID,
+			},
+		})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, eris.Wrap(err, "failed to check permissions")
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to read upcoming PTOs")
+	}
+
+	return s.repo.ListUpcomingPTO(ctx, req)
+}
+
+func (s *Service) ApprovePTO(
+	ctx context.Context,
+	req *repositories.ApprovePTORequest,
+) error {
+	log := s.l.With().
+		Str("operation", "ApprovePTO").
+		Interface("req", req).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.ApproverID,
+				Resource:       permission.ResourceWorkerPTO,
+				Action:         permission.ActionApprove,
+				BusinessUnitID: req.BuID,
+				OrganizationID: req.OrgID,
+			},
+		})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return eris.Wrap(err, "failed to check permissions")
+	}
+
+	if !result.Allowed {
+		return errors.NewAuthorizationError("You do not have permission to approve this PTO")
+	}
+
+	return s.repo.ApprovePTO(ctx, req)
+}
+
+func (s *Service) RejectPTO(
+	ctx context.Context,
+	req *repositories.RejectPTORequest,
+) error {
+	log := s.l.With().
+		Str("operation", "RejectPTO").
+		Interface("req", req).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.RejectorID,
+				Resource:       permission.ResourceWorkerPTO,
+				Action:         permission.ActionReject,
+				BusinessUnitID: req.BuID,
+				OrganizationID: req.OrgID,
+			},
+		})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return eris.Wrap(err, "failed to check permissions")
+	}
+
+	if !result.Allowed {
+		return errors.NewAuthorizationError("You do not have permission to reject this PTO")
+	}
+
+	return s.repo.RejectPTO(ctx, req)
 }

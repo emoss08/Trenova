@@ -33,6 +33,7 @@ type WorkerPTO struct {
 
 	// Relationship identifiers (Non-Primary-Keys)
 	ApproverID *pulid.ID `bun:"approver_id,type:VARCHAR(100),nullzero" json:"approverId"`
+	RejectorID *pulid.ID `bun:"rejector_id,type:VARCHAR(100),nullzero" json:"rejectorId"`
 
 	// Core Fields
 	Status    PTOStatus `json:"status"    bun:"status,type:worker_pto_status_enum,notnull,default:'Requested'"`
@@ -51,6 +52,7 @@ type WorkerPTO struct {
 	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	Worker       *Worker                    `json:"worker,omitempty"       bun:"rel:belongs-to,join:worker_id=id"`
 	Approver     *user.User                 `json:"approver,omitempty"     bun:"rel:belongs-to,join:approver_id=id"`
+	Rejector     *user.User                 `json:"rejector,omitempty"     bun:"rel:belongs-to,join:rejector_id=id"`
 }
 
 // Validation

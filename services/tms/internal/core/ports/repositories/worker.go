@@ -53,11 +53,11 @@ func BuildWorkerListOptions(
 }
 
 type GetWorkerByIDRequest struct {
-	WorkerID      pulid.ID
-	BuID          pulid.ID
-	OrgID         pulid.ID
-	UserID        pulid.ID
-	FilterOptions WorkerFilterOptions `query:"filterOptions"`
+	WorkerID      pulid.ID            `json:"workerId"      query:"workerId"`
+	BuID          pulid.ID            `json:"buId"          query:"buId"`
+	OrgID         pulid.ID            `json:"orgId"         query:"orgId"`
+	UserID        pulid.ID            `json:"userId"        query:"userId"`
+	FilterOptions WorkerFilterOptions `json:"filterOptions" query:"filterOptions"`
 }
 
 type ListWorkerRequest struct {
@@ -66,15 +66,42 @@ type ListWorkerRequest struct {
 }
 
 type UpdateWorkerOptions struct {
-	OrgID pulid.ID
-	BuID  pulid.ID
+	OrgID pulid.ID `json:"orgId" query:"orgId"`
+	BuID  pulid.ID `json:"buId"  query:"buId"`
 }
 
 type GetWorkerPTORequest struct {
-	PtoID    pulid.ID `json:"ptoID"    query:"ptoID"`
-	WorkerID pulid.ID `json:"workerID" query:"workerID"`
-	BuID     pulid.ID `json:"buID"     query:"buID"`
-	OrgID    pulid.ID `json:"orgID"    query:"orgID"`
+	PtoID    pulid.ID `json:"ptoId"    query:"ptoId"`
+	WorkerID pulid.ID `json:"workerId" query:"workerId"`
+	BuID     pulid.ID `json:"buId"     query:"buId"`
+	OrgID    pulid.ID `json:"orgId"    query:"orgId"`
+}
+
+type ListWorkerPTOFilterOptions struct {
+	Status    string `json:"status"    query:"status"`
+	Type      string `json:"type"      query:"type"`
+	StartDate int64  `json:"startDate" query:"startDate"`
+	EndDate   int64  `json:"endDate"   query:"endDate"`
+}
+
+type ListUpcomingWorkerPTORequest struct {
+	Filter                     *ports.LimitOffsetQueryOptions `json:"filter"        query:"filter"`
+	ListWorkerPTOFilterOptions `json:"filterOptions" query:"filterOptions"`
+}
+
+type ApprovePTORequest struct {
+	PtoID      pulid.ID `json:"ptoId"      query:"ptoId"`
+	BuID       pulid.ID `json:"buId"       query:"buId"`
+	OrgID      pulid.ID `json:"orgId"      query:"orgId"`
+	ApproverID pulid.ID `json:"approverId" query:"approverId"`
+}
+
+type RejectPTORequest struct {
+	PtoID      pulid.ID `json:"ptoId"      query:"ptoId"`
+	BuID       pulid.ID `json:"buId"       query:"buId"`
+	OrgID      pulid.ID `json:"orgId"      query:"orgId"`
+	RejectorID pulid.ID `json:"rejectorId" query:"rejectorId"`
+	Reason     string   `json:"reason"     query:"reason"`
 }
 
 type WorkerRepository interface {
@@ -86,4 +113,10 @@ type WorkerRepository interface {
 		ctx context.Context,
 		req *GetWorkerPTORequest,
 	) (*worker.WorkerPTO, error)
+	ListUpcomingPTO(
+		ctx context.Context,
+		req *ListUpcomingWorkerPTORequest,
+	) (*ports.ListResult[*worker.WorkerPTO], error)
+	ApprovePTO(ctx context.Context, req *ApprovePTORequest) error
+	RejectPTO(ctx context.Context, req *RejectPTORequest) error
 }

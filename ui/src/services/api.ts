@@ -35,6 +35,7 @@ import { ShipmentControlAPI } from "./shipment-control";
 import { TableConfigurationAPI } from "./table-configuration";
 import { UsStateAPI } from "./us-state";
 import { UserAPI } from "./user";
+import { WorkerAPI } from "./worker";
 
 class AssignmentsAPI {
   // Get a tractor's assignments from the API
@@ -79,6 +80,7 @@ class API {
   holdReasons: HoldReasonAPI;
   docker: DockerAPI;
   dataRetention: DataRetentionAPI;
+  worker: WorkerAPI;
 
   constructor() {
     this.assignments = new AssignmentsAPI();
@@ -112,6 +114,7 @@ class API {
     this.holdReasons = new HoldReasonAPI();
     this.docker = new DockerAPI();
     this.dataRetention = new DataRetentionAPI();
+    this.worker = new WorkerAPI();
   }
 }
 

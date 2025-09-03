@@ -16,7 +16,7 @@ export type HttpClientResponse<T> = {
 };
 
 export interface RequestConfig extends Omit<RequestInit, "method" | "body"> {
-  params?: Record<string, string | undefined>;
+  params?: Record<string, any>;
   timeout?: number;
   retries?: number;
   isFormData?: boolean;

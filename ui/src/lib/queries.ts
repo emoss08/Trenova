@@ -6,6 +6,7 @@
 import { api } from "@/services/api";
 import type { GetDedicatedLaneByShipmentRequest } from "@/services/dedicated-lane";
 import type { GetPreviousRatesRequest } from "@/services/shipment";
+import { ListUpcomingPTORequest } from "@/services/worker";
 import type { AnalyticsPage } from "@/types/analytics";
 import { Resource } from "@/types/audit-entry";
 import type { GetCustomerByIDParams } from "@/types/customer";
@@ -17,7 +18,6 @@ import type { AccessorialChargeSchema } from "./schemas/accessorial-charge-schem
 import { HoldReasonSchema } from "./schemas/hold-reason-schema";
 import type { PatternConfigSchema } from "./schemas/pattern-config-schema";
 import { ShipmentSchema } from "./schemas/shipment-schema";
-import type { TableConfigurationSchema } from "./schemas/table-configuration-schema";
 
 export const queries = createQueryKeyStore({
   organization: {
@@ -253,10 +253,6 @@ export const queries = createQueryKeyStore({
       queryFn: async () =>
         api.tableConfigurations.getDefaultOrLatestConfiguration(resource),
     }),
-    create: (payload: TableConfigurationSchema) => ({
-      queryKey: ["table-configurations", payload],
-      queryFn: async () => api.tableConfigurations.create(payload),
-    }),
   },
   favorite: {
     list: () => ({
@@ -333,6 +329,12 @@ export const queries = createQueryKeyStore({
     listNetworks: () => ({
       queryKey: ["docker", "networks"],
       queryFn: async () => api.docker.listNetworks(),
+    }),
+  },
+  worker: {
+    listUpcomingPTO: (req: ListUpcomingPTORequest) => ({
+      queryKey: ["worker", "upcoming-pto", req],
+      queryFn: async () => api.worker.listUpcomingPTO(req),
     }),
   },
 });
