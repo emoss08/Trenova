@@ -1,7 +1,3 @@
-<!--
-Copyright 2023-2025 Eric Moss
-Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
-Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md-->
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
@@ -51,16 +47,6 @@ cd ui && npm run dev       # Terminal 1
 task run                   # Terminal 2
 ```
 
-### Microservices
-
-```bash
-# Email service (Go + Svelte UI)
-cd microservices/email/
-make dev                   # Development
-make build                 # Build
-make test                  # Test
-```
-
 ## Architecture
 
 ### Hexagonal Architecture Structure
@@ -77,7 +63,7 @@ make test                  # Test
 - **Dependency Injection**: Uses `uber-go/fx` for container management
 - **Repository Pattern**: Database abstraction via interfaces
 - **Service Layer**: Business logic separation
-- **Event-Driven**: RabbitMQ for inter-service communication
+- **Event-Driven**: Kafka for inter-service communication
 - **Microservices**: Separate email and workflow services
 
 ### Frontend Architecture
@@ -103,30 +89,31 @@ The system manages transportation logistics including:
 ### Backend
 
 - **Framework**: Go Fiber (HTTP), Bun (ORM)
-- **Database**: PostgreSQL with PGBouncer connection pooling
+- **Database**: PostgreSQL
 - **Cache**: Redis
-- **Messaging**: RabbitMQ
+- **Messaging**: Kafka
 - **Storage**: MinIO (S3-compatible)
+- **Workflow Orchestration & Background Jobs**: Temporal
 - **Monitoring**: Prometheus, OpenTelemetry
 
 ### Frontend
 
-- **Framework**: React 19 with TypeScript
+- **Framework**: React 19 with TypeScript & React Compiler
 - **Build**: Vite
-- **UI**: Radix UI, Tailwind CSS, Lucide icons
+- **UI**: Radix UI, Tailwind CSS, Lucide icons, Fontawesome icons
 - **Data**: TanStack Query, React Hook Form
 - **Charts**: Recharts
 
 ### Infrastructure
 
 - **Containerization**: Docker with multi-stage builds
-- **Reverse Proxy**: Caddy with automatic HTTPS
+- **Reverse Proxy**: Traefik with automatic HTTPS
 - **Orchestration**: Docker Compose for local development
 
 ## Development Best Practices
 
-- Always follow golang best practices for go 1.24+
-- Ensure using correct syntax for go 1.24+ for example `interface{}` is `any` you can also discover this with the modernize tool that is in the editor
+- Always follow golang best practices for go 1.25+
+- Ensure using correct syntax for go 1.25+ for example `interface{}` is `any` you can also discover this with the modernize tool that is in the editor
 
 ## Code Optimization Recommendations
 
@@ -140,8 +127,9 @@ The system manages transportation logistics including:
 ## Implementation Guidelines
 
 - Do not put in a placeholder note for implementation. If something needs to be done, implement the actual feature or functionality directly
-- Avoid comments like "//! Note: In a real implementation, you'd sort by Priority field" - instead, actually implement the sorting functionality
 
 ## Development Warnings
 
 - Never run npm run dev
+- Never build the frontend with npm run buildj
+- Never run npm run preview

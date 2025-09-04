@@ -94,6 +94,7 @@ enableReadWriteSeparation: false
 ```
 
 Verify:
+
 - Application starts successfully
 - All queries work correctly
 - No performance degradation
@@ -106,6 +107,7 @@ enableReadWriteSeparation: true
 ```
 
 Monitor for 24 hours:
+
 - Check metrics show read distribution
 - Verify no increase in errors
 - Confirm performance improvement
@@ -129,6 +131,7 @@ if featureFlags.IsEnabled("read_write_separation") {
 1. Configure new replica in database
 2. Test connectivity from application servers
 3. Add to configuration:
+
    ```yaml
    readReplicas:
      - name: "prod-replica-new"
@@ -136,6 +139,7 @@ if featureFlags.IsEnabled("read_write_separation") {
        port: 5432
        weight: 1
    ```
+
 4. Deploy configuration change
 5. Monitor metrics for proper distribution
 
@@ -151,11 +155,13 @@ if featureFlags.IsEnabled("read_write_separation") {
 #### All Replicas Down
 
 The system automatically falls back to primary:
+
 ```
 WARN: no healthy read replicas available, falling back to primary
 ```
 
 **Actions:**
+
 1. Check replica health
 2. Investigate root cause
 3. No application changes needed (automatic failover)
@@ -163,6 +169,7 @@ WARN: no healthy read replicas available, falling back to primary
 #### Primary Database Issues
 
 **Actions:**
+
 1. Promote a replica to primary
 2. Update configuration to point to new primary
 3. Reconfigure other replicas to follow new primary
@@ -189,6 +196,7 @@ Distribute across databases:
 ### Optimal Replica Weights
 
 Based on server capacity:
+
 ```yaml
 # 16 CPU, 64GB RAM server
 weight: 4
@@ -263,11 +271,13 @@ After enabling read/write separation, you should see:
 ### Issue: Uneven replica distribution
 
 **Check:**
+
 ```bash
 curl http://localhost:9090/metrics | grep trenova_database_read_write_distribution_total
 ```
 
 **Fix:**
+
 - Adjust replica weights
 - Check replica health status
 - Verify round-robin is working
@@ -275,11 +285,13 @@ curl http://localhost:9090/metrics | grep trenova_database_read_write_distributi
 ### Issue: High replication lag
 
 **Check:**
+
 ```sql
 SELECT replay_lag FROM pg_stat_replication;
 ```
 
 **Fix:**
+
 - Increase `replicaLagThreshold`
 - Add more replica resources
 - Optimize primary write load
@@ -287,11 +299,13 @@ SELECT replay_lag FROM pg_stat_replication;
 ### Issue: Connection pool exhaustion
 
 **Check:**
+
 ```bash
 curl http://localhost:9090/metrics | grep trenova_database_connection_pool_stats
 ```
 
 **Fix:**
+
 - Increase `maxConnections`
 - Add more replicas
 - Optimize query performance

@@ -438,8 +438,43 @@ func (s *Service) GetPTOChartData(
 	}
 
 	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read PTO chart data")
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read PTO chart data",
+		)
 	}
 
 	return s.repo.GetPTOChartData(ctx, req)
+}
+
+func (s *Service) GetPTOCalendarData(
+	ctx context.Context,
+	req *repositories.PTOCalendarDataRequest,
+) ([]*repositories.PTOCalendarEvent, error) {
+	log := s.l.With().
+		Str("operation", "GetPTOCalendarData").
+		Interface("req", req).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         req.Filter.TenantOpts.UserID,
+				Resource:       permission.ResourceWorkerPTO,
+				Action:         permission.ActionRead,
+				BusinessUnitID: req.Filter.TenantOpts.BuID,
+				OrganizationID: req.Filter.TenantOpts.OrgID,
+			},
+		})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, eris.Wrap(err, "failed to check permissions")
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError(
+			"You do not have permission to read PTO calendar data",
+		)
+	}
+
+	return s.repo.GetPTOCalendarData(ctx, req)
 }

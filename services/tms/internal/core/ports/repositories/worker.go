@@ -196,6 +196,24 @@ type WorkerDetail struct {
 	PTOType   string `json:"ptoType"`
 }
 
+type PTOCalendarDataRequest struct {
+	Filter    *ports.LimitOffsetQueryOptions `json:"filter"    query:"filter"`
+	StartDate int64                          `json:"startDate" query:"startDate"`
+	EndDate   int64                          `json:"endDate"   query:"endDate"`
+	Type      string                         `json:"type"      query:"type"`
+}
+
+type PTOCalendarEvent struct {
+	ID         string `json:"id"               bun:"id"`
+	WorkerID   string `json:"workerId"         bun:"worker_id"`
+	WorkerName string `json:"workerName"       bun:"worker_name"`
+	StartDate  int64  `json:"startDate"        bun:"start_date"`
+	EndDate    int64  `json:"endDate"          bun:"end_date"`
+	Type       string `json:"type"             bun:"type"`
+	Status     string `json:"status"           bun:"status"`
+	Reason     string `json:"reason,omitempty" bun:"reason"`
+}
+
 type WorkerRepository interface {
 	List(ctx context.Context, req *ListWorkerRequest) (*ports.ListResult[*worker.Worker], error)
 	GetByID(ctx context.Context, req *GetWorkerByIDRequest) (*worker.Worker, error)
@@ -219,4 +237,8 @@ type WorkerRepository interface {
 		ctx context.Context,
 		req *PTOChartDataRequest,
 	) ([]*PTOChartDataPoint, error)
+	GetPTOCalendarData(
+		ctx context.Context,
+		req *PTOCalendarDataRequest,
+	) ([]*PTOCalendarEvent, error)
 }

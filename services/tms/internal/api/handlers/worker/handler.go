@@ -65,6 +65,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(300), // 120 reads per minute
 	)...)
 
+	api.Get("/pto-calendar-data/", rl.WithRateLimit(
+		[]fiber.Handler{h.getPTOCalendarData},
+		middleware.PerMinute(300), // 120 reads per minute
+	)...)
+
 	api.Post("/", rl.WithRateLimit(
 		[]fiber.Handler{h.create},
 		middleware.PerMinute(300), // 60 reads per minute
@@ -359,4 +364,32 @@ func (h *Handler) getPTOChartData(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(chartData)
+}
+
+func (h *Handler) getPTOCalendarData(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	req := &repositories.PTOCalendarDataRequest{
+		Filter: &ports.LimitOffsetQueryOptions{
+			TenantOpts: ports.TenantOptions{
+				OrgID:  reqCtx.OrgID,
+				BuID:   reqCtx.BuID,
+				UserID: reqCtx.UserID,
+			},
+		},
+	}
+
+	if err := c.QueryParser(req); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	calendarData, err := h.ws.GetPTOCalendarData(c.UserContext(), req)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(calendarData)
 }

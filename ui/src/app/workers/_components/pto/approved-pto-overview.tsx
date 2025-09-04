@@ -21,13 +21,16 @@ import {
 } from "@/components/ui/select";
 import { dateToUnixTimestamp } from "@/lib/date";
 import { WorkerPTOSchema } from "@/lib/schemas/worker-schema";
-import { FilterIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { Calendar, ChartColumn, FilterIcon } from "lucide-react";
 import { lazy, useMemo, useState } from "react";
 
 const PTOChart = lazy(() => import("./approved-pto-chart"));
+const PTOCalendar = lazy(() => import("./approved-pto-calendar"));
 
 export default function ApprovePTOOverview() {
   const defaultStart = dateToUnixTimestamp(new Date());
+  const [viewType, setViewType] = useState<"chart" | "calendar">("chart");
 
   const [chartType, setChartType] = useState<
     WorkerPTOSchema["type"] | undefined
@@ -58,7 +61,33 @@ export default function ApprovePTOOverview() {
         <h3 className="text-lg font-medium font-table">
           Approved PTO Overview
         </h3>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
+          <div className="flex items-center p-0.5 bg-muted rounded-md">
+            <button
+              onClick={() => setViewType("chart")}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-sm transition-colors",
+                viewType === "chart"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <ChartColumn className="size-3.5" />
+              <span>Chart</span>
+            </button>
+            <button
+              onClick={() => setViewType("calendar")}
+              className={cn(
+                "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-sm transition-colors",
+                viewType === "calendar"
+                  ? "bg-background shadow-sm text-foreground"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              <Calendar className="size-3.5" />
+              <span>Calendar</span>
+            </button>
+          </div>
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline" size="sm">
@@ -148,11 +177,19 @@ export default function ApprovePTOOverview() {
       </div>
       <div className="border border-border rounded-md p-3">
         <LazyComponent>
-          <PTOChart
-            startDate={chartStartDate}
-            endDate={chartEndDate}
-            type={chartType}
-          />
+          {viewType === "chart" ? (
+            <PTOChart
+              startDate={chartStartDate}
+              endDate={chartEndDate}
+              type={chartType}
+            />
+          ) : (
+            <PTOCalendar
+              startDate={chartStartDate}
+              endDate={chartEndDate}
+              type={chartType}
+            />
+          )}
         </LazyComponent>
       </div>
     </div>
