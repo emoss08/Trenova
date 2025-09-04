@@ -8,6 +8,7 @@ package repositories
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories/resourceeditorrepo"
 	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories/shipment"
+	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories/worker"
 	"go.uber.org/fx"
 )
 
@@ -18,7 +19,7 @@ var Module = fx.Module("postgres-repositories", fx.Provide(
 	NewOrganizationRepository,
 	NewUsStateRepository,
 	NewDocumentRepository,
-	NewWorkerRepository,
+	worker.NewWorkerRepository,
 	NewHazmatExpirationRepository,
 	NewTableConfigurationRepository,
 	NewFleetCodeRepository,

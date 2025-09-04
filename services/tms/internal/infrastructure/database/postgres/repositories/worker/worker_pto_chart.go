@@ -3,13 +3,13 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-package repositories
+package worker
 
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 )
 
 func (wr *workerRepository) GetPTOChartData(
@@ -48,10 +48,10 @@ func (wr *workerRepository) GetPTOChartData(
 
 	// Get PTO data aggregated by date and type with worker details
 	type ptoAggregateRow struct {
-		Date      string `bun:"date"`
-		Type      string `bun:"type"`
-		Count     int    `bun:"count"`
-		Workers   string `bun:"workers"` // JSON array of worker details
+		Date    string `bun:"date"`
+		Type    string `bun:"type"`
+		Count   int    `bun:"count"`
+		Workers string `bun:"workers"` // JSON array of worker details
 	}
 
 	var ptoData []ptoAggregateRow
@@ -75,7 +75,13 @@ func (wr *workerRepository) GetPTOChartData(
 			AND wpto.start_date <= ?
 			AND wpto.status = 'Approved'`
 
-	queryArgs = append(queryArgs, req.Filter.TenantOpts.OrgID, req.Filter.TenantOpts.BuID, req.StartDate, req.EndDate)
+	queryArgs = append(
+		queryArgs,
+		req.Filter.TenantOpts.OrgID,
+		req.Filter.TenantOpts.BuID,
+		req.StartDate,
+		req.EndDate,
+	)
 
 	// Add type filter if specified
 	if req.Type != "" && req.Type != "all" {
@@ -116,7 +122,11 @@ func (wr *workerRepository) GetPTOChartData(
 				// Parse workers JSON - using sonic for better performance
 				var workers []repositories.WorkerDetail
 				if err := sonic.UnmarshalString(row.Workers, &workers); err != nil {
-					log.Warn().Err(err).Str("date", date).Str("type", ptoType).Msg("failed to parse worker details")
+					log.Warn().
+						Err(err).
+						Str("date", date).
+						Str("type", ptoType).
+						Msg("failed to parse worker details")
 					workers = []repositories.WorkerDetail{}
 				}
 

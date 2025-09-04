@@ -16,7 +16,14 @@ import type { PTOChartDataPoint } from "@/services/worker";
 import { useQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { memo, useCallback, useMemo } from "react";
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts";
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Rectangle,
+  XAxis,
+  YAxis,
+} from "recharts";
 
 const PTO_COLORS = {
   vacation: "#9333ea", // purple-600
@@ -162,49 +169,68 @@ const STACK_ORDER = [
 ];
 
 const getBarRadius = (
-  data: PTOChartDataPoint[],
+  dataPoint: PTOChartDataPoint,
   dataKey: string,
 ): [number, number, number, number] => {
-  let isBottomInAnyStack = false;
-  let isTopInAnyStack = false;
-  let isMiddleInAnyStack = false;
-  let isAloneInAnyStack = false;
+  const activeBars = STACK_ORDER.filter(
+    (key) => (dataPoint[key as keyof PTOChartDataPoint] as number) > 0,
+  );
 
-  data.forEach((point) => {
-    const activeBars = STACK_ORDER.filter(
-      (key) => (point[key as keyof PTOChartDataPoint] as number) > 0,
-    );
-
-    const currentIndex = activeBars.indexOf(dataKey);
-    if (currentIndex !== -1) {
-      if (activeBars.length === 1) {
-        isAloneInAnyStack = true;
-      } else if (currentIndex === 0) {
-        isBottomInAnyStack = true;
-      } else if (currentIndex === activeBars.length - 1) {
-        isTopInAnyStack = true;
-      } else {
-        isMiddleInAnyStack = true;
-      }
-    }
-  });
-
-  if (
-    isAloneInAnyStack &&
-    !isBottomInAnyStack &&
-    !isTopInAnyStack &&
-    !isMiddleInAnyStack
-  ) {
-    return [4, 4, 4, 4];
-  } else if (isBottomInAnyStack && isTopInAnyStack) {
-    return [0, 0, 0, 0];
-  } else if (isBottomInAnyStack) {
-    return [0, 0, 4, 4];
-  } else if (isTopInAnyStack) {
-    return [4, 4, 0, 0];
-  } else {
+  const currentIndex = activeBars.indexOf(dataKey);
+  
+  // If this bar type isn't active for this data point, no radius
+  if (currentIndex === -1) {
     return [0, 0, 0, 0];
   }
+
+  // Single bar - fully rounded
+  if (activeBars.length === 1) {
+    return [4, 4, 4, 4];
+  }
+
+  // First bar in stack - rounded bottom
+  if (currentIndex === 0) {
+    return [0, 0, 4, 4];
+  }
+
+  // Last bar in stack - rounded top
+  if (currentIndex === activeBars.length - 1) {
+    return [4, 4, 0, 0];
+  }
+
+  // Middle bar - no rounding
+  return [0, 0, 0, 0];
+};
+
+interface CustomBarProps {
+  fill?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  payload?: PTOChartDataPoint;
+  dataKey?: string;
+}
+
+const CustomBar = (props: CustomBarProps) => {
+  const { fill, x, y, width, height, payload, dataKey } = props;
+
+  if (!payload || !dataKey || !x || !y || !width || !height) {
+    return null;
+  }
+
+  const radius = getBarRadius(payload, dataKey);
+
+  return (
+    <Rectangle
+      x={x}
+      y={y}
+      width={width}
+      height={height}
+      fill={fill}
+      radius={radius}
+    />
+  );
 };
 
 const ChartInner = memo(function ChartInner({
@@ -241,42 +267,42 @@ const ChartInner = memo(function ChartInner({
           stackId="pto"
           name="Vacation"
           fill={PTO_COLORS.vacation}
-          radius={getBarRadius(data, "vacation")}
+          shape={(props: any) => <CustomBar {...props} dataKey="vacation" />}
         />
         <Bar
           dataKey="sick"
           stackId="pto"
           name="Sick"
           fill={PTO_COLORS.sick}
-          radius={getBarRadius(data, "sick")}
+          shape={(props: any) => <CustomBar {...props} dataKey="sick" />}
         />
         <Bar
           dataKey="holiday"
           stackId="pto"
           name="Holiday"
           fill={PTO_COLORS.holiday}
-          radius={getBarRadius(data, "holiday")}
+          shape={(props: any) => <CustomBar {...props} dataKey="holiday" />}
         />
         <Bar
           dataKey="bereavement"
           stackId="pto"
           name="Bereavement"
           fill={PTO_COLORS.bereavement}
-          radius={getBarRadius(data, "bereavement")}
+          shape={(props: any) => <CustomBar {...props} dataKey="bereavement" />}
         />
         <Bar
           dataKey="maternity"
           stackId="pto"
           name="Maternity"
           fill={PTO_COLORS.maternity}
-          radius={getBarRadius(data, "maternity")}
+          shape={(props: any) => <CustomBar {...props} dataKey="maternity" />}
         />
         <Bar
           dataKey="paternity"
           stackId="pto"
           name="Paternity"
           fill={PTO_COLORS.paternity}
-          radius={getBarRadius(data, "paternity")}
+          shape={(props: any) => <CustomBar {...props} dataKey="paternity" />}
         />
       </BarChart>
     </ChartContainer>
