@@ -15,6 +15,7 @@ export type PTOChartDataRequest = {
   startDate: number;
   endDate: number;
   type?: string;
+  timezone?: string;
 };
 
 export type PTOChartDataPoint = {
@@ -41,6 +42,7 @@ export type PTOCalendarDataRequest = {
   startDate: number;
   endDate: number;
   type?: string;
+  timezone?: string;
 };
 
 export type PTOCalendarEvent = {
@@ -79,6 +81,7 @@ export class WorkerAPI {
           startDate: req.startDate,
           endDate: req.endDate,
           type: req.type,
+          timezone: req.timezone,
         },
       },
     );
@@ -101,6 +104,7 @@ export class WorkerAPI {
           startDate: req.startDate,
           endDate: req.endDate,
           type: req.type,
+          timezone: req.timezone,
         },
       },
     );

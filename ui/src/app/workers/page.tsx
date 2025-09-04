@@ -3,14 +3,15 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-import { LazyComponent, QueryLazyComponent } from "@/components/error-boundary";
+import { LazyLoader, QueryLazyComponent } from "@/components/error-boundary";
 import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
+import { Skeleton } from "@/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import { lazy } from "react";
 
 const WorkersDataTable = lazy(() => import("./_components/workers-table"));
-const UpcomingPTOContent = lazy(() => import("./_components/pto/pto-content"));
+const PTOContent = lazy(() => import("./_components/pto/pto-content"));
 
 export function Workers() {
   return (
@@ -19,11 +20,11 @@ export function Workers() {
       <FormSaveProvider>
         <WorkersContent>
           <QueryLazyComponent queryKey={queries.worker.listUpcomingPTO._def}>
-            <UpcomingPTOContent />
+            <PTOContent />
           </QueryLazyComponent>
-          <LazyComponent>
+          <LazyLoader fallback={<Skeleton className="h-[300px]" />}>
             <WorkersDataTable />
-          </LazyComponent>
+          </LazyLoader>
         </WorkersContent>
       </FormSaveProvider>
     </>

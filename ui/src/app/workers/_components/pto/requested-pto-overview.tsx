@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
 import { APIError } from "@/types/errors";
 import { PTOStatus } from "@/types/worker";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
 import { CalendarRange, EllipsisIcon, FilterIcon } from "lucide-react";
 import { memo, useMemo, useState } from "react";
 import { toast } from "sonner";
@@ -53,7 +53,6 @@ export default function RequestedPTOOverview() {
   const [startDate, setStartDate] = useState<number | undefined>(defaultStart);
   const [endDate, setEndDate] = useState<number | undefined>(undefined);
 
-  const hasActiveFilters = Boolean(type || endDate);
   const toInput = (unix?: number) => {
     if (!unix) return "";
     const d = new Date(unix * 1000);
@@ -63,7 +62,7 @@ export default function RequestedPTOOverview() {
     return `${yyyy}-${mm}-${dd}`;
   };
 
-  const query = useQuery({
+  const query = useSuspenseQuery({
     ...queries.worker.listUpcomingPTO({
       filter: { limit: 20, offset: 0 },
       type,
@@ -71,20 +70,20 @@ export default function RequestedPTOOverview() {
       startDate,
       endDate,
     }),
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 
   return (
-    <div className="flex flex-col gap-1 h-fit col-span-4 w-full">
+    <div className="flex flex-col gap-1 flex-1">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium font-table">Requested PTO</h3>
         <div className="flex items-center gap-1">
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" className="relative size-6">
+              <Button variant="outline" className="h-full">
                 <FilterIcon className="size-4" />
-                {hasActiveFilters && (
-                  <span className="absolute -right-1 -top-1 h-2 w-2 rounded-full bg-primary" />
-                )}
+                <span className="text-xs">Filter</span>
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-72 p-3">
@@ -113,7 +112,6 @@ export default function RequestedPTOOverview() {
                     </SelectContent>
                   </Select>
                 </div>
-
                 <div className="grid grid-cols-2 gap-2">
                   <div className="grid gap-1.5">
                     <Label htmlFor="start-date">Start</Label>
@@ -170,7 +168,7 @@ export default function RequestedPTOOverview() {
         </div>
       </div>
 
-      <ScrollArea className="border border-border rounded-md p-3 h-[300px]">
+      <ScrollArea className="border border-border rounded-md p-3 flex-1 min-h-0">
         <div className="flex flex-col gap-2">
           {query.data?.results.map((workerPTO) => (
             <UpcomingPTOCard key={workerPTO.id} workerPTO={workerPTO} />

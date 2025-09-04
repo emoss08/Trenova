@@ -176,6 +176,7 @@ type PTOChartDataRequest struct {
 	StartDate int64                          `json:"startDate" query:"startDate"`
 	EndDate   int64                          `json:"endDate"   query:"endDate"`
 	Type      string                         `json:"type"      query:"type"`
+	Timezone  string                         `json:"timezone"  query:"timezone"`
 }
 
 type PTOChartDataPoint struct {

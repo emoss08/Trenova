@@ -36,16 +36,22 @@ func (wr *workerRepository) GetPTOChartData(
 		Interface("req", req).
 		Logger()
 
+	// Default to UTC if no timezone provided
+	timezone := req.Timezone
+	if timezone == "" {
+		timezone = "UTC"
+	}
+
 	var dateSeries []string
 	cte := dba.NewSelect().
 		WithRecursive("date_series",
 			dba.NewSelect().
-				ColumnExpr("to_timestamp(?::bigint) AT TIME ZONE 'UTC' AS date", req.StartDate).
+				ColumnExpr("date_trunc('day', to_timestamp(?::bigint) AT TIME ZONE ?) AS date", req.StartDate, timezone).
 				UnionAll(
 					dba.NewSelect().
 						ColumnExpr("date + INTERVAL '1 day' AS date").
 						TableExpr("date_series").
-						Where("date < to_timestamp(?::bigint) AT TIME ZONE 'UTC'", req.EndDate),
+						Where("date < date_trunc('day', to_timestamp(?::bigint) AT TIME ZONE ?)", req.EndDate, timezone),
 				),
 		).
 		ColumnExpr("to_char(date, 'YYYY-MM-DD') AS date_str").
@@ -59,7 +65,7 @@ func (wr *workerRepository) GetPTOChartData(
 
 	var ptoData []ptoAggregateRow
 	q := dba.NewSelect().
-		ColumnExpr("to_char(to_timestamp(wpto.start_date) AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date").
+		ColumnExpr("to_char(to_timestamp(wpto.start_date) AT TIME ZONE ?, 'YYYY-MM-DD') as date", timezone).
 		ColumnExpr("wpto.type::text as type").
 		ColumnExpr("COUNT(*)::int as count").
 		ColumnExpr("json_agg(json_build_object('id', wrk.id, 'firstName', wrk.first_name, 'lastName', wrk.last_name, 'ptoType', wpto.type::text)) as workers").
@@ -70,8 +76,17 @@ func (wr *workerRepository) GetPTOChartData(
 				Where("wpto.organization_id = ?", req.Filter.TenantOpts.OrgID).
 				Where("wpto.business_unit_id = ?", req.Filter.TenantOpts.BuID).
 				Where("wpto.status = ?", worker.PTOStatusApproved).
-				Where("wpto.start_date >= ?", req.StartDate).
-				Where("wpto.start_date <= ?", req.EndDate)
+				// Only include PTOs whose start date falls within the date range when converted to the user's timezone
+				WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+					return sq.Where(`
+						date_trunc('day', to_timestamp(wpto.start_date) AT TIME ZONE ?) >= 
+						date_trunc('day', to_timestamp(?) AT TIME ZONE ?)`,
+						timezone, req.StartDate, timezone).
+						Where(`
+						date_trunc('day', to_timestamp(wpto.start_date) AT TIME ZONE ?) <= 
+						date_trunc('day', to_timestamp(?) AT TIME ZONE ?)`,
+							timezone, req.EndDate, timezone)
+				})
 		})
 
 	if req.Type != "" && req.Type != "all" {

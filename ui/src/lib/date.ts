@@ -5,7 +5,15 @@
 
 import { TimeFormat } from "@/types/user";
 import * as chrono from "chrono-node";
-import { format, fromUnixTime } from "date-fns";
+import {
+  endOfDay,
+  endOfMonth,
+  format,
+  fromUnixTime,
+  startOfDay,
+  startOfMonth,
+} from "date-fns";
+import { fromZonedTime, toZonedTime } from "date-fns-tz";
 
 type DateFormatOptions = {
   /**
@@ -431,3 +439,222 @@ export const formatRange = (startUnix: number, endUnix: number) => {
 
   return sFmt === eFmt ? sFmt : `${sFmt}–${eFmt}`;
 };
+
+/**
+ * Date range preset configuration for filter components
+ */
+export type DateRangePreset = {
+  label: string;
+  getValue: () => { startDate: number; endDate: number };
+};
+
+/**
+ * Gets the start of day in a specific timezone as Unix timestamp
+ * @param date Date object (defaults to today)
+ * @param timezone IANA timezone string (e.g., "America/New_York")
+ * @returns Unix timestamp for start of day (00:00:00.000) in the specified timezone
+ */
+export function getStartOfDay(
+  date: Date = new Date(),
+  timezone?: string,
+): number {
+  if (!timezone) {
+    // Fallback to browser local timezone
+    return dateToUnixTimestamp(startOfDay(date));
+  }
+
+  // Convert the date to the target timezone
+  const zonedDate = toZonedTime(date, timezone);
+  // Get start of day in that timezone
+  const startOfDayInZone = startOfDay(zonedDate);
+  // Convert back to UTC for Unix timestamp
+  const utcDate = fromZonedTime(startOfDayInZone, timezone);
+  return dateToUnixTimestamp(utcDate);
+}
+
+/**
+ * Gets the end of day in a specific timezone as Unix timestamp
+ * @param date Date object (defaults to today)
+ * @param timezone IANA timezone string (e.g., "America/New_York")
+ * @returns Unix timestamp for end of day (23:59:59.999) in the specified timezone
+ */
+export function getEndOfDay(
+  date: Date = new Date(),
+  timezone?: string,
+): number {
+  if (!timezone) {
+    // Fallback to browser local timezone
+    return dateToUnixTimestamp(endOfDay(date));
+  }
+
+  // Convert the date to the target timezone
+  const zonedDate = toZonedTime(date, timezone);
+  // Get end of day in that timezone
+  const endOfDayInZone = endOfDay(zonedDate);
+  // Convert back to UTC for Unix timestamp
+  const utcDate = fromZonedTime(endOfDayInZone, timezone);
+  return dateToUnixTimestamp(utcDate);
+}
+
+/**
+ * Gets the start of month in a specific timezone as Unix timestamp
+ * @param date Date object to get month from (defaults to today)
+ * @param timezone IANA timezone string (e.g., "America/New_York")
+ * @returns Unix timestamp for first day of month at 00:00:00.000 in the specified timezone
+ */
+export function getStartOfMonth(
+  date: Date = new Date(),
+  timezone?: string,
+): number {
+  if (!timezone) {
+    return dateToUnixTimestamp(startOfMonth(date));
+  }
+
+  // Convert the date to the target timezone
+  const zonedDate = toZonedTime(date, timezone);
+  // Get start of month in that timezone
+  const startOfMonthInZone = startOfMonth(zonedDate);
+  // Convert back to UTC for Unix timestamp
+  const utcDate = fromZonedTime(startOfMonthInZone, timezone);
+  return dateToUnixTimestamp(utcDate);
+}
+
+/**
+ * Gets the end of month in a specific timezone as Unix timestamp
+ * @param date Date object to get month from (defaults to today)
+ * @param timezone IANA timezone string (e.g., "America/New_York")
+ * @returns Unix timestamp for last day of month at 23:59:59.999 in the specified timezone
+ */
+export function getEndOfMonth(
+  date: Date = new Date(),
+  timezone?: string,
+): number {
+  if (!timezone) {
+    return dateToUnixTimestamp(endOfMonth(date));
+  }
+
+  // Convert the date to the target timezone
+  const zonedDate = toZonedTime(date, timezone);
+  // Get end of month in that timezone
+  const endOfMonthInZone = endOfMonth(zonedDate);
+  // Convert back to UTC for Unix timestamp
+  const utcDate = fromZonedTime(endOfMonthInZone, timezone);
+  return dateToUnixTimestamp(utcDate);
+}
+
+/**
+ * Gets the start of quarter in a specific timezone as Unix timestamp
+ * @param date Date object to get quarter from (defaults to today)
+ * @param timezone IANA timezone string (e.g., "America/New_York")
+ * @returns Unix timestamp for first day of quarter at 00:00:00.000 in the specified timezone
+ */
+export function getStartOfQuarter(date: Date = new Date()): Date {
+  const month = date.getMonth();
+  const quarter = Math.floor(month / 3) * 3; // 0 for Q1, 3 for Q2, 6 for Q3, 9 for Q4
+  return new Date(date.getFullYear(), quarter, 1);
+}
+
+/**
+ * Gets the end of quarter in a specific timezone as Unix timestamp
+ * @param date Date object to get quarter from (defaults to today)
+ * @param timezone IANA timezone string (e.g., "America/New_York")
+ * @returns Unix timestamp for last day of quarter at 23:59:59.999 in the specified timezone
+ */
+export function getEndOfQuarter(date: Date = new Date()): Date {
+  const month = date.getMonth();
+  const quarter = Math.floor(month / 3) * 3 + 2; // 2 for Q1, 5 for Q2, 8 for Q3, 11 for Q4
+  const lastDay = new Date(date.getFullYear(), quarter + 1, 0); // Day 0 of next month = last day of current month
+  return lastDay;
+}
+
+/**
+ * Adds days to a date
+ * @param date Base date
+ * @param days Number of days to add
+ * @returns New Date object with days added
+ */
+export function addDays(date: Date, days: number): Date {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+/**
+ * Common date range presets for PTO and other date filters
+ * Uses the specified timezone to ensure proper date boundaries
+ * @param timezone IANA timezone string (e.g., "America/New_York") - if not provided, uses browser's local timezone
+ * @returns Array of date range preset configurations
+ */
+export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
+  return [
+    {
+      label: "Today",
+      getValue: () => {
+        const today = new Date();
+        return {
+          startDate: getStartOfDay(today, timezone),
+          endDate: getEndOfDay(today, timezone),
+        };
+      },
+    },
+    {
+      label: "Next 7 days",
+      getValue: () => {
+        const today = new Date();
+        const endDate = addDays(today, 6); // Include today
+        return {
+          startDate: getStartOfDay(today, timezone),
+          endDate: getEndOfDay(endDate, timezone),
+        };
+      },
+    },
+    {
+      label: "Next 30 days",
+      getValue: () => {
+        const today = new Date();
+        const endDate = addDays(today, 29); // Include today
+        return {
+          startDate: getStartOfDay(today, timezone),
+          endDate: getEndOfDay(endDate, timezone),
+        };
+      },
+    },
+    {
+      label: "This month",
+      getValue: () => {
+        const today = new Date();
+        return {
+          startDate: getStartOfMonth(today, timezone),
+          endDate: getEndOfMonth(today, timezone),
+        };
+      },
+    },
+    {
+      label: "Next month",
+      getValue: () => {
+        const today = new Date();
+        const nextMonth = new Date(
+          today.getFullYear(),
+          today.getMonth() + 1,
+          1,
+        );
+        return {
+          startDate: getStartOfMonth(nextMonth, timezone),
+          endDate: getEndOfMonth(nextMonth, timezone),
+        };
+      },
+    },
+    {
+      label: "This Quarter",
+      getValue: () => {
+        const today = new Date();
+        const startOfQuarter = getStartOfQuarter(today);
+        const endOfQuarter = getEndOfQuarter(today);
+        return {
+          startDate: getStartOfDay(startOfQuarter, timezone),
+          endDate: getEndOfDay(endOfQuarter, timezone),
+        };
+      },
+    },
+  ];
+}

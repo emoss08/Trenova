@@ -34,11 +34,8 @@ export const ADDITIONAL_CHARGE_DELETE_DIALOG_KEY = import.meta.env
 export const SITE_SEARCH_RECENT_SEARCHES_KEY = import.meta.env
   .VITE_SITE_SEARCH_RECENT_SEARCHES_KEY as string;
 
-export const PDF_STORAGE_KEY = import.meta.env.VITE_PDF_STORAGE_KEY as string;
-
-export const DEBUG_TABLE = import.meta.env.VITE_DEBUG_TABLE as boolean;
-
-export const TURNSTILE_SITE_KEY = import.meta.env
-  .VITE_TURNSTILE_SITE_KEY as string;
 export const SHOW_FAVORITES_KEY = import.meta.env
   .VITE_SHOW_FAVORITES_KEY as string;
+
+export const PTO_COLOR_SCHEME_KEY = import.meta.env
+  .VITE_PTO_COLOR_SCHEME_KEY as string;
