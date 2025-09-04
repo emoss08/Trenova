@@ -338,9 +338,7 @@ export default function PTOCalendar({ type }: PTOCalendarProps) {
     const today = new Date();
     const todayTimestamp = Math.floor(today.getTime() / 1000);
 
-    // Check if we have any PTOs in the current month
     if (query.data && query.data.length > 0) {
-      // Find if today falls within any PTO range
       const hasTodayPTO = query.data.some(
         (event) =>
           event.startDate <= todayTimestamp && event.endDate >= todayTimestamp,
@@ -349,7 +347,6 @@ export default function PTOCalendar({ type }: PTOCalendarProps) {
       if (hasTodayPTO) {
         setCurrentMonth(today);
       } else {
-        // Navigate to the month of the first PTO
         const firstPTO = query.data.reduce((earliest, current) =>
           current.startDate < earliest.startDate ? current : earliest,
         );
@@ -387,7 +384,7 @@ export default function PTOCalendar({ type }: PTOCalendarProps) {
             variant="ghost"
             size="icon"
             onClick={handlePreviousMonth}
-            className="h-8 w-8 hover:bg-accent"
+            className="size-8 hover:bg-accent"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -395,7 +392,7 @@ export default function PTOCalendar({ type }: PTOCalendarProps) {
             variant="ghost"
             size="icon"
             onClick={handleNextMonth}
-            className="h-8 w-8 hover:bg-accent"
+            className="size-8 hover:bg-accent"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
@@ -424,7 +421,7 @@ export default function PTOCalendar({ type }: PTOCalendarProps) {
           const baseClasses = classes.split(" ").slice(0, 2).join(" ");
           return (
             <div key={type} className="flex items-center gap-2">
-              <div className={cn("w-3 h-3 rounded-sm border", baseClasses)} />
+              <div className={cn("size-3 rounded-sm border", baseClasses)} />
               <span className="text-muted-foreground font-medium">{type}</span>
             </div>
           );

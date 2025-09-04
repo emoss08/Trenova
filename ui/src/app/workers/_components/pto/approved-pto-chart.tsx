@@ -4,11 +4,22 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PTO_COLOR_SCHEME_KEY } from "@/constants/env";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 import { queries } from "@/lib/queries";
 import type { PTOChartDataPoint } from "@/services/worker";
+import { useUser } from "@/stores/user-store";
 import { ResponsiveBar } from "@nivo/bar";
-import { useQuery } from "@tanstack/react-query";
+import { ColorSchemeId, colorSchemes } from "@nivo/colors";
+import { useSuspenseQuery } from "@tanstack/react-query";
 import { format, parseISO } from "date-fns";
 import { memo, useMemo } from "react";
 
@@ -44,11 +55,21 @@ const CustomTooltip = memo(({ data, id, value }: any) => {
 });
 
 export default function PTOChart({ startDate, endDate, type }: PTOChartProps) {
-  const query = useQuery({
-    ...queries.worker.getPTOChartData({ startDate, endDate, type }),
+  const user = useUser();
+  const [colorScheme, setColorScheme] = useLocalStorage(
+    PTO_COLOR_SCHEME_KEY,
+    "nivo",
+  );
+
+  const query = useSuspenseQuery({
+    ...queries.worker.getPTOChartData({
+      startDate,
+      endDate,
+      type,
+      timezone: user?.timezone,
+    }),
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    enabled: Boolean(startDate && endDate),
   });
 
   const chartData = useMemo(() => {
@@ -97,7 +118,27 @@ export default function PTOChart({ startDate, endDate, type }: PTOChartProps) {
   }
 
   return (
-    <div className="h-[400px] w-full">
+    <div className="relative size-full">
+      <div className="absolute top-0 right-0 z-10">
+        <div className="flex items-center gap-2">
+          <div className="text-xs font-medium">Color Scheme:</div>
+          <Select
+            value={colorScheme}
+            onValueChange={(v) => setColorScheme(v as ColorSchemeId)}
+          >
+            <SelectTrigger className="w-[120px] h-8 text-xs">
+              <SelectValue placeholder="Color" />
+            </SelectTrigger>
+            <SelectContent className="min-w-[170px]">
+              {Object.keys(colorSchemes).map((scheme) => (
+                <SelectItem key={scheme} value={scheme} className="text-xs">
+                  {scheme}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
       <ResponsiveBar
         data={chartData as any}
         keys={[
@@ -114,7 +155,7 @@ export default function PTOChart({ startDate, endDate, type }: PTOChartProps) {
         padding={0.3}
         valueScale={{ type: "linear" }}
         indexScale={{ type: "band", round: true }}
-        colors={{ scheme: "nivo" }}
+        colors={{ scheme: colorScheme as ColorSchemeId }}
         borderColor={{ from: "color", modifiers: [["darker", 0.6]] }}
         axisTop={null}
         axisRight={null}

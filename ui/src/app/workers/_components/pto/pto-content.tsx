@@ -6,16 +6,14 @@
 import { LazyLoader } from "@/components/error-boundary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { lazy } from "react";
+import { ApprovedPTOOverview } from "./approved-pto-overview";
 
-const ApprovePTOOverview = lazy(() => import("./approved-pto-overview"));
 const RequestedPTOOverview = lazy(() => import("./requested-pto-overview"));
 
 export default function PTOContent() {
   return (
     <PTOContentInner>
-      <LazyLoader fallback={<Skeleton className="h-[300px]" />}>
-        <ApprovePTOOverview />
-      </LazyLoader>
+      <ApprovedPTOOverview />
       <LazyLoader fallback={<Skeleton className="h-[300px]" />}>
         <RequestedPTOOverview />
       </LazyLoader>
@@ -24,5 +22,5 @@ export default function PTOContent() {
 }
 
 function PTOContentInner({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-12 gap-4">{children}</div>;
+  return <div className="flex flex-row gap-4 max-h-[400px]">{children}</div>;
 }

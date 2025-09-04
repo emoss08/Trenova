@@ -65,6 +65,12 @@ export const licenseConfig = {
       copyright: "Copyright (c) 2022 Fonticons, Inc.",
       url: "https://fontawesome.com/license",
     },
+    {
+      name: "Nivo Charts",
+      license: "MIT License",
+      copyright: "Copyright (c) Raphaël Benitte",
+      url: "https://github.com/plouc/nivo/blob/master/LICENSE.md",
+    },
   ],
 };
 
