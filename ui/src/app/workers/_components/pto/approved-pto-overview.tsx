@@ -4,56 +4,102 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { LazyComponent } from "@/components/error-boundary";
+import { AutoCompleteDateField } from "@/components/fields/date-field";
+import { SelectField } from "@/components/fields/select-field";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { FormControl, FormGroup } from "@/components/ui/form";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { dateToUnixTimestamp } from "@/lib/date";
-import { WorkerPTOSchema } from "@/lib/schemas/worker-schema";
-import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Calendar, ChartColumn, FilterIcon } from "lucide-react";
-import { lazy, useMemo, useState } from "react";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
+import { lazy, useEffect, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 const PTOChart = lazy(() => import("./approved-pto-chart"));
 const PTOCalendar = lazy(() => import("./approved-pto-calendar"));
 
+const viewTypeChoices = ["chart", "calendar"] as const;
+
+const filterSchema = z
+  .object({
+    type: z.string().optional(),
+    startDate: z.number().min(1, { error: "Start date is required" }),
+    endDate: z.number().min(1, { error: "End date is required" }),
+  })
+  .refine((data) => data.startDate < data.endDate, {
+    message: "Start date must be before end date",
+    path: ["endDate"],
+  });
+
+type FilterFormData = z.infer<typeof filterSchema>;
+
+const ptoTypeOptions = [
+  { value: "All", label: "All Types" },
+  { value: "Vacation", label: "Vacation" },
+  { value: "Sick", label: "Sick" },
+  { value: "Holiday", label: "Holiday" },
+  { value: "Bereavement", label: "Bereavement" },
+  { value: "Maternity", label: "Maternity" },
+  { value: "Paternity", label: "Paternity" },
+];
+
 export default function ApprovePTOOverview() {
-  const defaultStart = dateToUnixTimestamp(new Date());
-  const [viewType, setViewType] = useState<"chart" | "calendar">("chart");
+  const [viewType, setViewType] = useQueryState(
+    "viewType",
+    parseAsStringLiteral(viewTypeChoices)
+      .withOptions({
+        shallow: true,
+      })
+      .withDefault("chart"),
+  );
 
-  const [chartType, setChartType] = useState<
-    WorkerPTOSchema["type"] | undefined
-  >(undefined);
+  const now = useMemo(() => new Date(), []);
+  const defaultValues = useMemo(
+    () => ({
+      type: "All",
+      startDate: dateToUnixTimestamp(
+        new Date(now.getFullYear(), now.getMonth(), 1),
+      ),
+      endDate: dateToUnixTimestamp(
+        new Date(now.getFullYear(), now.getMonth() + 1, 0),
+      ),
+    }),
+    [now],
+  );
 
-  const defaultChartEnd = useMemo(() => {
-    const now = new Date();
-    return dateToUnixTimestamp(
-      new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59),
-    );
-  }, []);
+  const form = useForm<FilterFormData>({
+    resolver: zodResolver(filterSchema),
+    defaultValues,
+  });
 
-  const [chartStartDate, setChartStartDate] = useState<number>(defaultStart);
-  const [chartEndDate, setChartEndDate] = useState<number>(defaultChartEnd);
+  const [chartFilters, setChartFilters] = useState({
+    startDate: defaultValues.startDate,
+    endDate: defaultValues.endDate,
+    type: undefined as FilterFormData["type"],
+  });
 
-  const toInput = (unix?: number) => {
-    if (!unix) return "";
-    const d = new Date(unix * 1000);
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
+  const onSubmit = (data: FilterFormData) => {
+    setChartFilters({
+      startDate: data.startDate,
+      endDate: data.endDate,
+      type: data.type === "All" ? undefined : data.type,
+    });
   };
+
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      if (form.formState.isValid) {
+        form.handleSubmit(onSubmit)();
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [form]);
 
   return (
     <div className="flex flex-col gap-1 col-span-8 size-full">
@@ -62,115 +108,82 @@ export default function ApprovePTOOverview() {
           Approved PTO Overview
         </h3>
         <div className="flex items-center gap-2">
-          <div className="flex items-center p-0.5 bg-muted rounded-md">
-            <button
+          <div className="flex flex-row gap-0.5 items-center p-0.5 bg-sidebar border border-border rounded-md">
+            <Button
+              variant={viewType === "chart" ? "default" : "ghost"}
               onClick={() => setViewType("chart")}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-sm transition-colors",
-                viewType === "chart"
-                  ? "bg-background shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
             >
               <ChartColumn className="size-3.5" />
               <span>Chart</span>
-            </button>
-            <button
+            </Button>
+            <Button
+              variant={viewType === "calendar" ? "default" : "ghost"}
               onClick={() => setViewType("calendar")}
-              className={cn(
-                "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-sm transition-colors",
-                viewType === "calendar"
-                  ? "bg-background shadow-sm text-foreground"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
             >
               <Calendar className="size-3.5" />
               <span>Calendar</span>
-            </button>
+            </Button>
           </div>
           <Popover>
             <PopoverTrigger asChild>
-              <Button variant="outline" size="sm">
+              <Button variant="outline" className="h-full">
                 <FilterIcon className="size-4" />
                 <span className="text-xs">Filter</span>
               </Button>
             </PopoverTrigger>
-            <PopoverContent align="end" className="w-72 p-3">
-              <div className="grid gap-3">
-                <div className="grid gap-1.5">
-                  <Label htmlFor="chart-pto-type">Type</Label>
-                  <Select
-                    value={(chartType as string) ?? ""}
-                    onValueChange={(v) =>
-                      setChartType(
-                        (v || undefined) as WorkerPTOSchema["type"] | undefined,
-                      )
-                    }
-                  >
-                    <SelectTrigger id="chart-pto-type">
-                      <SelectValue placeholder="All types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="Vacation">Vacation</SelectItem>
-                      <SelectItem value="Sick">Sick</SelectItem>
-                      <SelectItem value="Holiday">Holiday</SelectItem>
-                      <SelectItem value="Bereavement">Bereavement</SelectItem>
-                      <SelectItem value="Maternity">Maternity</SelectItem>
-                      <SelectItem value="Paternity">Paternity</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+            <PopoverContent align="end" className="w-80 p-4">
+              <FormGroup cols={1}>
+                <FormControl>
+                  <SelectField
+                    control={form.control}
+                    name="type"
+                    label="PTO Type"
+                    placeholder="Select type"
+                    options={ptoTypeOptions}
+                  />
+                </FormControl>
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="chart-start-date">Start</Label>
-                    <Input
-                      id="chart-start-date"
-                      type="date"
-                      value={toInput(chartStartDate)}
-                      onChange={(e) =>
-                        setChartStartDate(
-                          e.target.value
-                            ? dateToUnixTimestamp(
-                                new Date(`${e.target.value}T00:00:00`),
-                              )
-                            : defaultStart,
-                        )
-                      }
+                  <FormControl>
+                    <AutoCompleteDateField
+                      control={form.control}
+                      name="startDate"
+                      label="Start Date"
+                      placeholder="Start date"
+                      rules={{ required: true }}
                     />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="chart-end-date">End</Label>
-                    <Input
-                      id="chart-end-date"
-                      type="date"
-                      value={toInput(chartEndDate)}
-                      onChange={(e) =>
-                        setChartEndDate(
-                          e.target.value
-                            ? dateToUnixTimestamp(
-                                new Date(`${e.target.value}T23:59:59`),
-                              )
-                            : defaultChartEnd,
-                        )
-                      }
+                  </FormControl>
+                  <FormControl>
+                    <AutoCompleteDateField
+                      control={form.control}
+                      name="endDate"
+                      label="End Date"
+                      placeholder="End date"
+                      rules={{ required: true }}
                     />
-                  </div>
+                  </FormControl>
                 </div>
-                <div className="flex justify-end gap-2 pt-1 border-t border-border/60">
+                {form.formState.errors.endDate && (
+                  <div className="text-xs text-destructive">
+                    {form.formState.errors.endDate.message}
+                  </div>
+                )}
+                <div className="flex justify-end gap-2 pt-2 border-t border-border/60">
                   <Button
                     variant="ghost"
                     size="sm"
                     onClick={() => {
-                      setChartType(undefined);
-                      setChartStartDate(defaultStart);
-                      setChartEndDate(defaultChartEnd);
+                      form.reset();
+                      setChartFilters({
+                        startDate: defaultValues.startDate,
+                        endDate: defaultValues.endDate,
+                        type: undefined,
+                      });
                     }}
                   >
                     Reset
                   </Button>
                 </div>
-              </div>
+              </FormGroup>
             </PopoverContent>
           </Popover>
         </div>
@@ -179,15 +192,15 @@ export default function ApprovePTOOverview() {
         <LazyComponent>
           {viewType === "chart" ? (
             <PTOChart
-              startDate={chartStartDate}
-              endDate={chartEndDate}
-              type={chartType}
+              startDate={chartFilters.startDate}
+              endDate={chartFilters.endDate}
+              type={chartFilters.type}
             />
           ) : (
             <PTOCalendar
-              startDate={chartStartDate}
-              endDate={chartEndDate}
-              type={chartType}
+              startDate={chartFilters.startDate}
+              endDate={chartFilters.endDate}
+              type={chartFilters.type}
             />
           )}
         </LazyComponent>
