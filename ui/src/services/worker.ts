@@ -25,6 +25,7 @@ export type PTOChartDataPoint = {
   bereavement: number;
   maternity: number;
   paternity: number;
+  personal: number;
   workers: Record<
     string,
     Array<{

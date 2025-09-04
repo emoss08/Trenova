@@ -186,6 +186,7 @@ type PTOChartDataPoint struct {
 	Bereavement int                       `json:"bereavement"`
 	Maternity   int                       `json:"maternity"`
 	Paternity   int                       `json:"paternity"`
+	Personal    int                       `json:"personal"`
 	Workers     map[string][]WorkerDetail `json:"workers"`
 }
 

@@ -69,7 +69,7 @@ func (wr *workerRepository) GetPTOChartData(
 			return sq.
 				Where("wpto.organization_id = ?", req.Filter.TenantOpts.OrgID).
 				Where("wpto.business_unit_id = ?", req.Filter.TenantOpts.BuID).
-				Where("wpto.status = 'Approved'").
+				Where("wpto.status = ?", worker.PTOStatusApproved).
 				Where("wpto.start_date >= ?", req.StartDate).
 				Where("wpto.start_date <= ?", req.EndDate)
 		})
@@ -157,6 +157,9 @@ func (wr *workerRepository) buildPTOChartDataQuery(
 				case "Paternity":
 					dataPoint.Paternity = row.Count
 					dataPoint.Workers["Paternity"] = workers
+				case "Personal":
+					dataPoint.Personal = row.Count
+					dataPoint.Workers["Personal"] = workers
 				}
 			}
 		}

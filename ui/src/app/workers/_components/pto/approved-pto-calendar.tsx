@@ -151,7 +151,6 @@ const CalendarGrid = memo(function CalendarGrid({
 
   return (
     <div className="border border-border rounded-lg overflow-hidden bg-background">
-      {/* Header */}
       <div className="grid grid-cols-7 border-b border-border">
         {weekDays.map((day) => (
           <div
@@ -162,7 +161,6 @@ const CalendarGrid = memo(function CalendarGrid({
           </div>
         ))}
       </div>
-      {/* Calendar Grid */}
       <div className="grid grid-cols-7">
         {days.map((day, index) => (
           <div
@@ -248,7 +246,6 @@ const CalendarGrid = memo(function CalendarGrid({
 });
 
 export default function PTOCalendar({ type }: PTOCalendarProps) {
-  // Start with current month
   const [currentMonth, setCurrentMonth] = useState(() => {
     const today = new Date();
     return new Date(today.getFullYear(), today.getMonth(), 1);

@@ -43,7 +43,7 @@ func (wr *workerRepository) GetPTOCalendarData(
 			return sq.
 				Where("wpto.organization_id = ?", req.Filter.TenantOpts.OrgID).
 				Where("wpto.business_unit_id = ?", req.Filter.TenantOpts.BuID).
-				Where("wpto.status = 'Approved'").
+				Where("wpto.status = ?", worker.PTOStatusApproved).
 				WhereOr("wpto.start_date <= ? AND wpto.end_date >= ?", req.StartDate, req.EndDate).
 				WhereOr("wpto.start_date >= ? AND wpto.start_date <= ?", req.StartDate, req.EndDate).
 				WhereOr("wpto.end_date >= ? AND wpto.end_date <= ?", req.StartDate, req.EndDate)
@@ -69,17 +69,6 @@ func (wr *workerRepository) GetPTOCalendarData(
 		log.Error().Err(err).Msg("failed to get PTO calendar data")
 		return nil, err
 	}
-
-	// for _, event := range events {
-	// 	log.Debug().
-	// 		Str("workerName", event.WorkerName).
-	// 		Int64("startDate", event.StartDate).
-	// 		Int64("endDate", event.EndDate).
-	// 		Str("startFormatted", time.Unix(event.StartDate, 0).Format("2006-01-02")).
-	// 		Str("endFormatted", time.Unix(event.EndDate, 0).Format("2006-01-02")).
-	// 		Str("type", event.Type).
-	// 		Msg("Sample event")
-	// }
 
 	return events, nil
 }
