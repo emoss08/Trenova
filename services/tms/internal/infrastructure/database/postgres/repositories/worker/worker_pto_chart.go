@@ -9,8 +9,18 @@ import (
 	"context"
 
 	"github.com/bytedance/sonic"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/rs/zerolog"
+	"github.com/uptrace/bun"
 )
+
+type ptoAggregateRow struct {
+	Date    string `bun:"date"`
+	Type    string `bun:"type"`
+	Count   int    `bun:"count"`
+	Workers string `bun:"workers"`
+}
 
 func (wr *workerRepository) GetPTOChartData(
 	ctx context.Context,
@@ -26,81 +36,66 @@ func (wr *workerRepository) GetPTOChartData(
 		Interface("req", req).
 		Logger()
 
-	// Generate date series first to ensure we have all dates in the range
 	var dateSeries []string
-	_, err = dba.NewRaw(`
-		WITH RECURSIVE date_series AS (
-			SELECT to_timestamp(?::bigint) AT TIME ZONE 'UTC' AS date
-			UNION ALL
-			SELECT date + INTERVAL '1 day'
-			FROM date_series
-			WHERE date < to_timestamp(?::bigint) AT TIME ZONE 'UTC'
-		)
-		SELECT to_char(date, 'YYYY-MM-DD') as date_str
-		FROM date_series
-		ORDER BY date
-	`, req.StartDate, req.EndDate).
-		Exec(ctx, &dateSeries)
+	cte := dba.NewSelect().
+		WithRecursive("date_series",
+			dba.NewSelect().
+				ColumnExpr("to_timestamp(?::bigint) AT TIME ZONE 'UTC' AS date", req.StartDate).
+				UnionAll(
+					dba.NewSelect().
+						ColumnExpr("date + INTERVAL '1 day' AS date").
+						TableExpr("date_series").
+						Where("date < to_timestamp(?::bigint) AT TIME ZONE 'UTC'", req.EndDate),
+				),
+		).
+		ColumnExpr("to_char(date, 'YYYY-MM-DD') AS date_str").
+		Order("date").
+		Table("date_series")
+	_, err = cte.Exec(ctx, &dateSeries)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to generate date series")
 		return nil, err
 	}
 
-	// Get PTO data aggregated by date and type with worker details
-	type ptoAggregateRow struct {
-		Date    string `bun:"date"`
-		Type    string `bun:"type"`
-		Count   int    `bun:"count"`
-		Workers string `bun:"workers"` // JSON array of worker details
-	}
-
 	var ptoData []ptoAggregateRow
-	var queryArgs []interface{}
-	baseQuery := `
-		SELECT 
-			to_char(to_timestamp(wpto.start_date) AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date,
-			wpto.type::text as type,
-			COUNT(*)::int as count,
-			json_agg(json_build_object(
-				'id', wrk.id,
-				'firstName', wrk.first_name,
-				'lastName', wrk.last_name,
-				'ptoType', wpto.type::text
-			)) as workers
-		FROM worker_pto wpto
-		INNER JOIN workers wrk ON wpto.worker_id = wrk.id
-		WHERE wpto.organization_id = ?
-			AND wpto.business_unit_id = ?
-			AND wpto.start_date >= ?
-			AND wpto.start_date <= ?
-			AND wpto.status = 'Approved'`
+	q := dba.NewSelect().
+		ColumnExpr("to_char(to_timestamp(wpto.start_date) AT TIME ZONE 'UTC', 'YYYY-MM-DD') as date").
+		ColumnExpr("wpto.type::text as type").
+		ColumnExpr("COUNT(*)::int as count").
+		ColumnExpr("json_agg(json_build_object('id', wrk.id, 'firstName', wrk.first_name, 'lastName', wrk.last_name, 'ptoType', wpto.type::text)) as workers").
+		TableExpr("worker_pto wpto").
+		Join("INNER JOIN workers wrk ON wpto.worker_id = wrk.id").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("wpto.organization_id = ?", req.Filter.TenantOpts.OrgID).
+				Where("wpto.business_unit_id = ?", req.Filter.TenantOpts.BuID).
+				Where("wpto.status = 'Approved'").
+				Where("wpto.start_date >= ?", req.StartDate).
+				Where("wpto.start_date <= ?", req.EndDate)
+		})
 
-	queryArgs = append(
-		queryArgs,
-		req.Filter.TenantOpts.OrgID,
-		req.Filter.TenantOpts.BuID,
-		req.StartDate,
-		req.EndDate,
-	)
-
-	// Add type filter if specified
 	if req.Type != "" && req.Type != "all" {
-		baseQuery += " AND wpto.type = ?"
-		queryArgs = append(queryArgs, req.Type)
+		ptoType, err := worker.PTOTypeFromString(req.Type)
+		if err != nil {
+			log.Error().
+				Err(err).
+				Str("type", req.Type).
+				Msg("invalid PTO type")
+			return nil, err
+		}
+
+		q = q.Where("wpto.type = ?", ptoType)
 	}
 
-	baseQuery += `
-		GROUP BY date, wpto.type
-		ORDER BY date, wpto.type`
+	q = q.Group("date", "wpto.type")
+	q = q.Order("date", "wpto.type")
 
-	err = dba.NewRaw(baseQuery, queryArgs...).
-		Scan(ctx, &ptoData)
+	err = q.Scan(ctx, &ptoData)
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get PTO chart data")
 		return nil, err
 	}
 
-	// Create a map for quick lookup of PTO data by date and type
 	ptoMap := make(map[string]map[string]ptoAggregateRow)
 	for _, row := range ptoData {
 		if ptoMap[row.Date] == nil {
@@ -109,7 +104,21 @@ func (wr *workerRepository) GetPTOChartData(
 		ptoMap[row.Date][row.Type] = row
 	}
 
-	// Build the result with all dates, filling in zeros where no data exists
+	result, err := wr.buildPTOChartDataQuery(dateSeries, ptoMap, &log)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to build PTO chart data")
+		return nil, err
+	}
+
+	log.Debug().Int("count", len(result)).Msg("retrieved PTO chart data")
+	return result, nil
+}
+
+func (wr *workerRepository) buildPTOChartDataQuery(
+	dateSeries []string,
+	ptoMap map[string]map[string]ptoAggregateRow,
+	log *zerolog.Logger,
+) ([]*repositories.PTOChartDataPoint, error) {
 	result := make([]*repositories.PTOChartDataPoint, 0, len(dateSeries))
 	for _, date := range dateSeries {
 		dataPoint := &repositories.PTOChartDataPoint{
@@ -119,7 +128,6 @@ func (wr *workerRepository) GetPTOChartData(
 
 		if dayData, exists := ptoMap[date]; exists {
 			for ptoType, row := range dayData {
-				// Parse workers JSON - using sonic for better performance
 				var workers []repositories.WorkerDetail
 				if err := sonic.UnmarshalString(row.Workers, &workers); err != nil {
 					log.Warn().
@@ -130,7 +138,6 @@ func (wr *workerRepository) GetPTOChartData(
 					workers = []repositories.WorkerDetail{}
 				}
 
-				// Set count and workers for this PTO type
 				switch ptoType {
 				case "Vacation":
 					dataPoint.Vacation = row.Count
@@ -157,6 +164,5 @@ func (wr *workerRepository) GetPTOChartData(
 		result = append(result, dataPoint)
 	}
 
-	log.Debug().Int("count", len(result)).Msg("retrieved PTO chart data")
 	return result, nil
 }

@@ -143,6 +143,10 @@ export function PTOStatusBadge({
 }
 export function PTOTypeBadge({ type }: { type: WorkerPTOSchema["type"] }) {
   const ptoTypeAttributes: Record<WorkerPTOSchema["type"], BadgeAttrProps> = {
+    [PTOType.Personal]: {
+      variant: "secondary",
+      text: "Personal",
+    },
     [PTOType.Vacation]: {
       variant: "purple",
       text: "Vacation",

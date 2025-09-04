@@ -36,6 +36,23 @@ export type PTOChartDataPoint = {
   >;
 };
 
+export type PTOCalendarDataRequest = {
+  startDate: number;
+  endDate: number;
+  type?: string;
+};
+
+export type PTOCalendarEvent = {
+  id: string;
+  workerId: string;
+  workerName: string;
+  startDate: number;
+  endDate: number;
+  type: string;
+  status: string;
+  reason?: string;
+};
+
 export class WorkerAPI {
   async listUpcomingPTO(req: ListUpcomingPTORequest) {
     const response = await http.get<LimitOffsetResponse<WorkerPTOSchema>>(
@@ -73,5 +90,19 @@ export class WorkerAPI {
 
   async rejectPTO(ptoID: WorkerPTOSchema["id"], reason: string) {
     await http.post(`/workers/pto/${ptoID}/reject/`, { reason });
+  }
+
+  async getPTOCalendarData(req: PTOCalendarDataRequest) {
+    const response = await http.get<PTOCalendarEvent[]>(
+      `/workers/pto-calendar-data/`,
+      {
+        params: {
+          startDate: req.startDate,
+          endDate: req.endDate,
+          type: req.type,
+        },
+      },
+    );
+    return response.data;
   }
 }

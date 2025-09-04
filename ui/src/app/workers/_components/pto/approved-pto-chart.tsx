@@ -32,6 +32,7 @@ const PTO_COLORS = {
   bereavement: "#16a34a", // green-600
   maternity: "#db2777", // pink-600
   paternity: "#0d9488", // teal-600
+  personal: "#6b7280", // gray-600
 } as const;
 
 const PTO_LABELS = {
@@ -41,6 +42,7 @@ const PTO_LABELS = {
   bereavement: "Bereavement",
   maternity: "Maternity",
   paternity: "Paternity",
+  personal: "Personal",
 } as const;
 
 interface PTOChartProps {
@@ -157,6 +159,10 @@ const chartConfig = {
     label: PTO_LABELS.paternity,
     color: PTO_COLORS.paternity,
   },
+  personal: {
+    label: PTO_LABELS.personal,
+    color: PTO_COLORS.personal,
+  },
 } satisfies ChartConfig;
 
 const STACK_ORDER = [
@@ -166,6 +172,7 @@ const STACK_ORDER = [
   "bereavement",
   "maternity",
   "paternity",
+  "personal",
 ];
 
 const getBarRadius = (
@@ -177,7 +184,7 @@ const getBarRadius = (
   );
 
   const currentIndex = activeBars.indexOf(dataKey);
-  
+
   // If this bar type isn't active for this data point, no radius
   if (currentIndex === -1) {
     return [0, 0, 0, 0];
@@ -282,6 +289,13 @@ const ChartInner = memo(function ChartInner({
           name="Holiday"
           fill={PTO_COLORS.holiday}
           shape={(props: any) => <CustomBar {...props} dataKey="holiday" />}
+        />
+        <Bar
+          dataKey="personal"
+          stackId="pto"
+          name="Personal"
+          fill={PTO_COLORS.personal}
+          shape={(props: any) => <CustomBar {...props} dataKey="personal" />}
         />
         <Bar
           dataKey="bereavement"

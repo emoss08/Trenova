@@ -72,70 +72,77 @@ func getRandomPTOStatus() worker.PTOStatus {
 	}
 	// Weight towards approved and requested statuses (more common)
 	weights := []int{30, 50, 10, 10} // Requested: 30%, Approved: 50%, Rejected: 10%, Cancelled: 10%
-	
+
 	totalWeight := 0
 	for _, weight := range weights {
 		totalWeight += weight
 	}
-	
+
 	randomValue := rand.Intn(totalWeight)
 	cumulativeWeight := 0
-	
+
 	for i, weight := range weights {
 		cumulativeWeight += weight
 		if randomValue < cumulativeWeight {
 			return ptoStatuses[i]
 		}
 	}
-	
+
 	return worker.PTOStatusRequested // fallback
 }
 
-func generatePTOsForWorker(workerID pulid.ID, orgID, buID pulid.ID, now time.Time) []*worker.WorkerPTO {
+func generatePTOsForWorker(
+	workerID pulid.ID,
+	orgID, buID pulid.ID,
+	now time.Time,
+) []*worker.WorkerPTO {
 	// Generate 0-5 PTOs per worker (weighted towards fewer PTOs)
 	numPTOs := rand.Intn(6) // 0-5 PTOs
 	if numPTOs == 0 {
 		return nil
 	}
-	
+
 	ptos := make([]*worker.WorkerPTO, 0, numPTOs)
-	
+
 	for i := 0; i < numPTOs; i++ {
 		ptoType := getRandomPTOType()
 		status := getRandomPTOStatus()
-		
+
 		// Generate random start date (can be past, present, or future)
-		startDate := generateRandomDate(now.AddDate(-1, 0, 0), now.AddDate(1, 0, 0))
-		
+		startDate := generateRandomDate(
+			now.AddDate(0, 0, 0),
+			now.AddDate(0, 1, 0),
+		)
+
 		// Generate duration based on PTO type
 		var duration int64
 		switch ptoType {
 		case worker.PTOTypeMaternity:
-			duration = int64(rand.Intn(84) + 42) * 24 * 60 * 60 // 6-18 weeks
+			duration = int64(rand.Intn(84)+42) * 24 * 60 * 60 // 6-18 weeks
 		case worker.PTOTypePaternity:
-			duration = int64(rand.Intn(14) + 7) * 24 * 60 * 60 // 1-3 weeks
+			duration = int64(rand.Intn(14)+7) * 24 * 60 * 60 // 1-3 weeks
 		case worker.PTOTypeBereavement:
-			duration = int64(rand.Intn(3) + 1) * 24 * 60 * 60 // 1-3 days
+			duration = int64(rand.Intn(3)+1) * 24 * 60 * 60 // 1-3 days
 		case worker.PTOTypeVacation:
-			duration = int64(rand.Intn(10) + 1) * 24 * 60 * 60 // 1-10 days
+			duration = int64(rand.Intn(10)+1) * 24 * 60 * 60 // 1-10 days
 		case worker.PTOTypeSick:
-			duration = int64(rand.Intn(5) + 1) * 24 * 60 * 60 // 1-5 days
+			duration = int64(rand.Intn(5)+1) * 24 * 60 * 60 // 1-5 days
 		case worker.PTOTypePersonal:
-			duration = int64(rand.Intn(3) + 1) * 24 * 60 * 60 // 1-3 days
+			duration = int64(rand.Intn(3)+1) * 24 * 60 * 60 // 1-3 days
 		case worker.PTOTypeHoliday:
 			duration = int64(1) * 24 * 60 * 60 // 1 day
 		default:
 			duration = int64(1) * 24 * 60 * 60 // 1 day fallback
 		}
-		
+
 		endDate := startDate + duration
-		
+
 		// Generate reason for rejected/cancelled statuses
 		var reason string
 		if status == worker.PTOStatusRejected || status == worker.PTOStatusCancelled {
 			reasons := []string{
 				"Insufficient staffing during peak season",
-				"Conflicting mandatory training scheduled", 
+				"Conflicting mandatory training scheduled",
 				"Business critical project deadline",
 				"Family emergency resolved",
 				"Medical appointment rescheduled",
@@ -145,7 +152,7 @@ func generatePTOsForWorker(workerID pulid.ID, orgID, buID pulid.ID, now time.Tim
 			}
 			reason = reasons[rand.Intn(len(reasons))]
 		}
-		
+
 		pto := &worker.WorkerPTO{
 			ID:             pulid.MustNew("pto_"),
 			BusinessUnitID: buID,
@@ -157,7 +164,7 @@ func generatePTOsForWorker(workerID pulid.ID, orgID, buID pulid.ID, now time.Tim
 			EndDate:        endDate,
 			Reason:         reason,
 		}
-		
+
 		// Add approver/rejector for approved/rejected status
 		if status == worker.PTOStatusApproved {
 			// In a real system, this would be a manager ID
@@ -167,10 +174,10 @@ func generatePTOsForWorker(workerID pulid.ID, orgID, buID pulid.ID, now time.Tim
 		if status == worker.PTOStatusRejected {
 			pto.RejectorID = nil
 		}
-		
+
 		ptos = append(ptos, pto)
 	}
-	
+
 	return ptos
 }
 
@@ -251,7 +258,7 @@ func LoadWorkers(ctx context.Context, db *bun.DB, fixture *dbfixture.Fixture) er
 
 		workers = append(workers, wrk)
 		profiles = append(profiles, profile)
-		
+
 		// Generate PTOs for this worker
 		workerPTOs := generatePTOsForWorker(workerID, org.ID, bu.ID, now)
 		ptos = append(ptos, workerPTOs...)
@@ -268,7 +275,7 @@ func LoadWorkers(ctx context.Context, db *bun.DB, fixture *dbfixture.Fixture) er
 		if _, err := tx.NewInsert().Model(&profiles).Exec(c); err != nil {
 			return eris.Wrap(err, "failed to bulk insert worker profiles")
 		}
-		
+
 		// Bulk insert worker PTOs (only if we have any)
 		if len(ptos) > 0 {
 			if _, err := tx.NewInsert().Model(&ptos).Exec(c); err != nil {

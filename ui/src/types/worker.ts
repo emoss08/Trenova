@@ -45,6 +45,7 @@ export enum PTOStatus {
 }
 
 export enum PTOType {
+  Personal = "Personal",
   Vacation = "Vacation",
   Sick = "Sick",
   Holiday = "Holiday",
