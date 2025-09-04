@@ -23,6 +23,7 @@ This guide provides comprehensive instructions for deploying Trenova TMS in a pr
 The production deployment consists of:
 
 ### Core Services
+
 - **API Server** (Go/Fiber) - Main application backend
 - **UI Client** (React/Vite) - Frontend application
 - **PostgreSQL** - Primary database with read replicas
@@ -31,18 +32,21 @@ The production deployment consists of:
 - **MinIO** - S3-compatible object storage
 
 ### Message Queue & Streaming
+
 - **Apache Kafka** - Event streaming and CDC
 - **Zookeeper** - Kafka coordination
 - **Schema Registry** - Avro schema management
 - **Kafka Connect** - Database change data capture
 
 ### Reverse Proxy Options
+
 - **Nginx** - High-performance web server and reverse proxy
 - **Traefik** - Cloud-native proxy with automatic SSL
 
 ## Prerequisites
 
 ### System Requirements
+
 - **OS**: Ubuntu 20.04+ / CentOS 8+ / RHEL 8+
 - **RAM**: Minimum 8GB, Recommended 16GB+
 - **CPU**: Minimum 4 cores, Recommended 8+ cores
@@ -50,6 +54,7 @@ The production deployment consists of:
 - **Network**: Static IP address and domain name (for production SSL)
 
 ### Software Requirements
+
 - Docker 24.0+
 - Docker Compose 2.20+
 - Git
@@ -57,6 +62,7 @@ The production deployment consists of:
 - curl/wget
 
 ### Installation
+
 ```bash
 # Update system
 sudo apt update && sudo apt upgrade -y
@@ -132,11 +138,13 @@ OPENAI_API_KEY=sk-proj-your-openai-key
 ### 2. SSL Certificate Setup
 
 #### Option A: Self-Signed Certificates (Development/Testing)
+
 ```bash
 ./scripts/generate-certs.sh
 ```
 
 #### Option B: Let's Encrypt (Production)
+
 ```bash
 DOMAIN=yourdomain.com ./scripts/generate-certs.sh --letsencrypt
 ```
@@ -179,6 +187,7 @@ Production uses different ports to avoid conflicts with development:
 ### Database Configuration
 
 The production setup includes:
+
 - Primary PostgreSQL instance
 - Two read replicas for load distribution
 - PgBouncer connection pooling
@@ -187,6 +196,7 @@ The production setup includes:
 ### Redis Configuration
 
 Redis is configured with:
+
 - Password authentication
 - Memory optimization (2GB limit)
 - Persistence enabled
@@ -197,6 +207,7 @@ Redis is configured with:
 ### Nginx SSL Configuration
 
 Nginx is configured with:
+
 - Modern TLS 1.2/1.3 support
 - Strong cipher suites
 - HSTS headers
@@ -205,6 +216,7 @@ Nginx is configured with:
 ### Traefik SSL Configuration
 
 Traefik provides:
+
 - Automatic Let's Encrypt certificates
 - Certificate renewal
 - Advanced routing rules
@@ -230,6 +242,7 @@ docker-compose exec tren-api wget -q --spider http://localhost:3001/health
 ### Log Management
 
 Logs are organized by service:
+
 - `logs/api/` - Application logs
 - `logs/nginx/` - Nginx access/error logs  
 - `logs/traefik/` - Traefik logs
@@ -252,6 +265,7 @@ crontab -e
 ### Common Issues
 
 #### 1. Services Not Starting
+
 ```bash
 # Check logs
 docker-compose logs [service_name]
@@ -264,6 +278,7 @@ docker-compose restart [service_name]
 ```
 
 #### 2. Database Connection Issues
+
 ```bash
 # Check PgBouncer status
 docker-compose exec tren-pgbouncer psql -h localhost -U postgres -d trenova_go_db -c "SHOW POOLS;"
@@ -273,6 +288,7 @@ docker-compose exec tren-db psql -U postgres -d trenova_go_db -c "SELECT 1;"
 ```
 
 #### 3. SSL Certificate Issues
+
 ```bash
 # Verify certificates
 ./scripts/generate-certs.sh --verify
@@ -282,6 +298,7 @@ openssl x509 -in certs/cert.pem -noout -dates
 ```
 
 #### 4. Memory Issues
+
 ```bash
 # Check container memory usage
 docker stats --no-stream
@@ -296,6 +313,7 @@ sudo swapon /swapfile
 ### Performance Tuning
 
 #### PostgreSQL Optimization
+
 ```bash
 # Edit config/postgresql.conf
 shared_buffers = 256MB              # 25% of RAM
@@ -305,6 +323,7 @@ maintenance_work_mem = 64MB
 ```
 
 #### Redis Optimization
+
 ```bash
 # Adjust Redis memory in .env.production
 REDIS_MAX_MEMORY=2gb
@@ -313,21 +332,25 @@ REDIS_MAX_MEMORY=2gb
 ## Security Considerations
 
 ### Network Security
+
 - Use a firewall to restrict access to service ports
 - Only expose ports 80 and 443 to the internet
 - Consider VPN access for administration
 
 ### Container Security
+
 - Run containers as non-root users where possible
 - Use Docker secrets for sensitive data
 - Regularly update base images
 
 ### Database Security
+
 - Use strong passwords for all database users
 - Enable SSL for database connections in production
 - Regularly backup and test restoration procedures
 
 ### Application Security
+
 - Change all default passwords
 - Use environment variables for all secrets
 - Enable rate limiting in reverse proxy
@@ -350,6 +373,7 @@ docker-compose up -d --scale tren-client=2
 ### Database Scaling
 
 The setup includes read replicas:
+
 - Primary: Write operations
 - Replica 1: Read operations
 - Replica 2: Analytics/reporting
@@ -357,6 +381,7 @@ The setup includes read replicas:
 ### Load Balancing
 
 Both Nginx and Traefik support load balancing:
+
 - Round-robin distribution
 - Health check integration
 - Session affinity (sticky sessions)
@@ -366,11 +391,13 @@ Both Nginx and Traefik support load balancing:
 ### Database Backups
 
 Automated backups are configured in the application:
+
 - Daily full backups
 - 30-day retention
 - Compressed storage
 
 Manual backup:
+
 ```bash
 # Create backup
 docker-compose exec tren-db pg_dump -U postgres trenova_go_db > backup_$(date +%Y%m%d_%H%M%S).sql
@@ -382,6 +409,7 @@ docker-compose exec -T tren-db psql -U postgres trenova_go_db < backup_file.sql
 ### File Storage Backups
 
 MinIO data should be backed up regularly:
+
 ```bash
 # Sync MinIO data
 docker-compose exec tren-minio mc mirror /data /backup/minio/
@@ -390,6 +418,7 @@ docker-compose exec tren-minio mc mirror /data /backup/minio/
 ### Configuration Backups
 
 Backup configuration files:
+
 ```bash
 # Backup configurations
 tar -czf trenova_config_$(date +%Y%m%d).tar.gz \
@@ -402,6 +431,7 @@ tar -czf trenova_config_$(date +%Y%m%d).tar.gz \
 ## Support
 
 For additional support:
+
 - Check the [GitHub Issues](https://github.com/emoss08/Trenova/issues)
 - Join the [Discord Community](https://discord.gg/XDBqyvrryq)
 - Review the [Documentation](https://docs.trenova.com)

@@ -16,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	repoports "github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories"
+	workerrepo "github.com/emoss08/trenova/internal/infrastructure/database/postgres/repositories/worker"
 	"github.com/emoss08/trenova/internal/pkg/logger"
 	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -29,7 +29,7 @@ func TestWorkerRepository(t *testing.T) {
 	wrk := ts.Fixture.MustRow("Worker.worker_1").(*worker.Worker)
 	usState := ts.Fixture.MustRow("UsState.ca").(*usstate.UsState)
 
-	repo := repositories.NewWorkerRepository(repositories.WorkerRepositoryParams{
+	repo := workerrepo.NewWorkerRepository(workerrepo.WorkerRepositoryParams{
 		Logger: logger.NewLogger(testutils.NewTestConfig()),
 		DB:     ts.DB,
 	})
