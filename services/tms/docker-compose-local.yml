@@ -62,21 +62,6 @@ services:
       timeout: 5s
       retries: 5
 
-  asynqmon:
-    image: hibiken/asynqmon:latest
-    ports:
-      - "8080:8080"
-    networks:
-      - app-network
-    environment:
-      REDIS_URL: redis://redis:6379
-    depends_on:
-      - redis
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-
   minio:
     image: quay.io/minio/minio
     command: server /data --console-address ":9001"

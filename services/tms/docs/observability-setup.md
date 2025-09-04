@@ -120,15 +120,16 @@ func NewRedisClient(
 ## Running the Stack
 
 1. Start the infrastructure:
+
    ```bash
    docker-compose -f docker-compose-local.yml up -d
    ```
 
 2. Access the services:
-   - Grafana: http://localhost:3000 (admin/admin)
-   - Loki: http://localhost:3100
-   - Tempo: http://localhost:3200
-   - Mimir: http://localhost:9009
+   - Grafana: <http://localhost:3000> (admin/admin)
+   - Loki: <http://localhost:3100>
+   - Tempo: <http://localhost:3200>
+   - Mimir: <http://localhost:9009>
 
 3. View dashboards:
    - Navigate to Grafana
@@ -156,6 +157,7 @@ func (s *MyService) ProcessOrder(ctx context.Context, order Order) error {
 ## Tracing Best Practices
 
 1. **Add spans for important operations:**
+
    ```go
    func (s *Service) ImportantOperation(ctx context.Context) error {
        ctx, span := otel.Tracer("service").Start(ctx, "ImportantOperation")
@@ -168,6 +170,7 @@ func (s *MyService) ProcessOrder(ctx context.Context, order Order) error {
    ```
 
 2. **Add attributes to spans:**
+
    ```go
    span.SetAttributes(
        attribute.String("user.id", userID),
@@ -176,6 +179,7 @@ func (s *MyService) ProcessOrder(ctx context.Context, order Order) error {
    ```
 
 3. **Record errors:**
+
    ```go
    if err != nil {
        span.RecordError(err)

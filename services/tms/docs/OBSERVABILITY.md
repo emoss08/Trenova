@@ -31,21 +31,23 @@ graph LR
 ## Accessing the Dashboard
 
 1. **Start the LGTM stack**:
+
    ```bash
    docker-compose -f docker-compose-local.yml up -d
    ```
 
 2. **Access Grafana**:
-   - URL: http://localhost:3000
+   - URL: <http://localhost:3000>
    - Default credentials: admin/admin
 
 3. **View the Enterprise Dashboard**:
    - Navigate to Dashboards → Trenova → Enterprise Metrics Dashboard
-   - Or direct link: http://localhost:3000/d/trenova-comprehensive
+   - Or direct link: <http://localhost:3000/d/trenova-comprehensive>
 
 ## Dashboard Sections
 
 ### System Overview
+
 - Service status indicator
 - Request rate (requests/second)
 - Error rate percentage
@@ -56,30 +58,35 @@ graph LR
 - Memory usage
 
 ### HTTP Metrics
+
 - Request rate by status code
 - Response time percentiles (P50, P90, P95, P99)
 - Requests by endpoint (pie chart)
 - Error rate by endpoint (table)
 
 ### Database Metrics
+
 - Database operations rate by type
 - Query duration percentiles
 - Connection pool utilization
 - Database errors by operation
 
 ### Cache Metrics
+
 - Cache hit rate over time
 - Cache operations by type
 - Hits vs misses comparison
 - Cache operation latency
 
 ### System Resources
+
 - Memory usage (heap, system)
 - Goroutine count
 - CPU usage percentage
 - GC pause time
 
 ### Queue Metrics
+
 - Job processing rate by type
 - Job duration percentiles
 
@@ -88,11 +95,13 @@ graph LR
 The system includes comprehensive alerting rules:
 
 ### Critical Alerts
+
 - Service down (> 5 minutes)
 - Very high latency (P95 > 5s)
 - Very high memory usage (> 2GB)
 
 ### Warning Alerts
+
 - High error rate (> 5%)
 - High latency (P95 > 1s)
 - Database connection pool exhaustion (> 90%)
@@ -101,11 +110,11 @@ The system includes comprehensive alerting rules:
 
 ## Metrics Endpoints
 
-- **Application Metrics**: http://localhost:2222/metrics
-- **OTEL Collector Metrics**: http://localhost:8888/metrics
-- **Mimir API**: http://localhost:9009
-- **Tempo API**: http://localhost:3200
-- **Loki API**: http://localhost:3100
+- **Application Metrics**: <http://localhost:2222/metrics>
+- **OTEL Collector Metrics**: <http://localhost:8888/metrics>
+- **Mimir API**: <http://localhost:9009>
+- **Tempo API**: <http://localhost:3200>
+- **Loki API**: <http://localhost:3100>
 
 ## Configuration Files
 
@@ -118,23 +127,29 @@ The system includes comprehensive alerting rules:
 ## Troubleshooting
 
 ### No metrics showing up
+
 1. Check if the application is exposing metrics:
+
    ```bash
    curl http://localhost:2222/metrics
    ```
 
 2. Verify OTEL collector is running:
+
    ```bash
    docker logs otel-collector
    ```
 
 3. Check Mimir ingestion:
+
    ```bash
    curl http://localhost:9009/api/v1/query?query=up
    ```
 
 ### Dashboard not loading
+
 1. Check Grafana logs:
+
    ```bash
    docker logs grafana
    ```
@@ -144,6 +159,7 @@ The system includes comprehensive alerting rules:
    - Should see Prometheus, Tempo, and Loki
 
 ### High memory usage
+
 - Adjust retention periods in Mimir configuration
 - Reduce scrape intervals in OTEL collector
 - Enable sampling in application telemetry
@@ -159,6 +175,7 @@ The system includes comprehensive alerting rules:
 ## Extending Observability
 
 ### Adding Custom Metrics
+
 ```go
 // In your code
 counter := metrics.Meter.Int64Counter(
@@ -171,12 +188,14 @@ counter.Add(ctx, 1, metric.WithAttributes(
 ```
 
 ### Adding Custom Dashboards
+
 1. Create dashboard in Grafana UI
 2. Export as JSON
 3. Save to `config/grafana/provisioning/dashboards/`
 4. Restart Grafana
 
 ### Adding Alert Rules
+
 1. Edit `config/mimir/rules/trenova-alerts.yml`
 2. Add new rule following Prometheus format
 3. Restart Mimir to reload rules
