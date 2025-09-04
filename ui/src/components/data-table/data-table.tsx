@@ -21,7 +21,6 @@
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
 import { useLiveDataTable } from "@/hooks/use-live-data-table";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 import { usePermissions } from "@/hooks/use-permissions";
 import {
   convertFilterStateToAPIParams,
@@ -119,18 +118,13 @@ export function DataTable<TData extends Record<string, any>>({
     [entityId],
   );
 
-  // Initialize column order with empty array like infinite table
-  const [columnOrder, setColumnOrder] = useLocalStorage<string[]>(
-    `trenova-${resource.toLowerCase()}-column-order`,
-    [],
-  );
+  // Initialize column order and visibility with React state
+  // These will be populated from server-side table configuration
+  const [columnOrder, setColumnOrder] = React.useState<string[]>([]);
+  const [columnVisibility, setColumnVisibility] =
+    React.useState<VisibilityState>({});
 
   const { can } = usePermissions();
-  const [columnVisibility, setColumnVisibility] =
-    useLocalStorage<VisibilityState>(
-      `trenova-${resource.toLowerCase()}-column-visibility`,
-      {},
-    );
   const topBarRef = React.useRef<HTMLDivElement>(null);
   const [topBarHeight, setTopBarHeight] = React.useState(0);
 
@@ -206,13 +200,12 @@ export function DataTable<TData extends Record<string, any>>({
     return link;
   }, [resource, link, useEnhancedBackend]);
 
-  // Live mode state management
-  const [liveModeEnabled, setLiveModeEnabled] = useLocalStorage(
-    `trenova-${resource.toLowerCase()}-live-mode-enabled`,
+  // Live mode state management - using React state instead of localStorage
+  // Live mode preferences should be session-based, not persisted
+  const [liveModeEnabled, setLiveModeEnabled] = React.useState(
     liveMode?.enabled || false,
   );
-  const [autoRefreshEnabled, setAutoRefreshEnabled] = useLocalStorage(
-    `trenova-${resource.toLowerCase()}-auto-refresh-enabled`,
+  const [autoRefreshEnabled, setAutoRefreshEnabled] = React.useState(
     liveMode?.autoRefresh || false,
   );
 
