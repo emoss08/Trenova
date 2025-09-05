@@ -430,14 +430,12 @@ var (
 			BaseActions,
 			ActionConfigure,
 		),
-		ResourceWorkerPTO: {
+		ResourceWorkerPTO: append(
+			BaseActions,
+			ActionSubmit,
 			ActionApprove,
 			ActionReject,
-			ActionRead,
-			ActionManage,
-			ActionCancel,
-			ActionAudit,
-		},
+		),
 		ResourceDedicatedLaneSuggestion: append(
 			BaseActions,
 			ActionConfigure,
