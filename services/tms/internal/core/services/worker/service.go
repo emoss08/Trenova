@@ -478,3 +478,57 @@ func (s *Service) GetPTOCalendarData(
 
 	return s.repo.GetPTOCalendarData(ctx, req)
 }
+
+func (s *Service) CreateWorkerPTO(
+	ctx context.Context,
+	pto *worker.WorkerPTO,
+	userID pulid.ID,
+) (*worker.WorkerPTO, error) {
+	log := s.l.With().
+		Str("operation", "CreateWorkerPTO").
+		Interface("pto", pto).
+		Logger()
+
+	result, err := s.ps.HasAnyPermissions(ctx,
+		[]*services.PermissionCheck{
+			{
+				UserID:         userID,
+				Resource:       permission.ResourceWorkerPTO,
+				Action:         permission.ActionCreate,
+				BusinessUnitID: pto.BusinessUnitID,
+				OrganizationID: pto.OrganizationID,
+			},
+			{
+				UserID:         userID,
+				Resource:       permission.ResourceWorkerPTO,
+				Action:         permission.ActionSubmit,
+				BusinessUnitID: pto.BusinessUnitID,
+				OrganizationID: pto.OrganizationID,
+			},
+		})
+	if err != nil {
+		log.Error().Err(err).Msg("failed to check permissions")
+		return nil, eris.Wrap(err, "failed to check permissions")
+	}
+
+	if !result.Allowed {
+		return nil, errors.NewAuthorizationError("You do not have permission to submit this PTO")
+	}
+
+	// valCtx := &validator.ValidationContext{
+	// 	IsCreate: true,
+	// 	IsUpdate: false,
+	// }
+
+	// if err := s.v.Validate(ctx, valCtx, pto.Worker); err != nil {
+	// 	return nil, err
+	// }
+
+	createdPTO, err := s.repo.CreateWorkerPTO(ctx, pto)
+	if err != nil {
+		log.Error().Err(err).Msg("failed to create worker PTO")
+		return nil, eris.Wrap(err, "create worker PTO")
+	}
+
+	return createdPTO, nil
+}

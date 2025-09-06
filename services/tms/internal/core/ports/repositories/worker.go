@@ -149,6 +149,7 @@ type ListWorkerPTOFilterOptions struct {
 	Type      string `json:"type"      query:"type"`
 	StartDate int64  `json:"startDate" query:"startDate"`
 	EndDate   int64  `json:"endDate"   query:"endDate"`
+	WorkerID  string `json:"workerId"  query:"workerId"`
 }
 
 type ListUpcomingWorkerPTORequest struct {
@@ -177,6 +178,7 @@ type PTOChartDataRequest struct {
 	EndDate   int64                          `json:"endDate"   query:"endDate"`
 	Type      string                         `json:"type"      query:"type"`
 	Timezone  string                         `json:"timezone"  query:"timezone"`
+	WorkerID  string                         `json:"workerId"  query:"workerId"`
 }
 
 type PTOChartDataPoint struct {
@@ -243,4 +245,8 @@ type WorkerRepository interface {
 		ctx context.Context,
 		req *PTOCalendarDataRequest,
 	) ([]*PTOCalendarEvent, error)
+	CreateWorkerPTO(
+		ctx context.Context,
+		pto *worker.WorkerPTO,
+	) (*worker.WorkerPTO, error)
 }

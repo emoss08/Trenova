@@ -647,6 +647,19 @@ func (wr *workerRepository) addUpcomingPTOOptions(
 		q = q.Where("wpto.status = ?", ptoStatus)
 	}
 
+	if opts.WorkerID != "" {
+		wrkID, err := pulid.MustParse(opts.WorkerID)
+		if err != nil {
+			wr.l.Error().
+				Err(err).
+				Str("workerId", opts.WorkerID).
+				Msg("failed to parse worker ID")
+			return q
+		}
+
+		q = q.Where("wpto.worker_id = ?", wrkID)
+	}
+
 	q = q.Order("wpto.start_date ASC", "wpto.end_date ASC")
 	q = q.Relation("Worker")
 
@@ -766,4 +779,30 @@ func (wr *workerRepository) RejectPTO(
 	})
 
 	return nil
+}
+
+func (wr *workerRepository) CreateWorkerPTO(
+	ctx context.Context,
+	pto *worker.WorkerPTO,
+) (*worker.WorkerPTO, error) {
+	dba, err := wr.db.WriteDB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	log := wr.l.With().
+		Str("operation", "CreateWorkerPTO").
+		Interface("pto", pto).
+		Logger()
+
+	_, err = dba.NewInsert().Model(pto).Exec(ctx)
+	if err != nil {
+		log.Error().
+			Err(err).
+			Interface("pto", pto).
+			Msg("failed to create worker PTO")
+		return nil, err
+	}
+
+	return pto, nil
 }

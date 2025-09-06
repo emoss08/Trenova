@@ -11,6 +11,7 @@ import (
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/rs/zerolog"
 	"github.com/uptrace/bun"
 )
@@ -36,7 +37,6 @@ func (wr *workerRepository) GetPTOChartData(
 		Interface("req", req).
 		Logger()
 
-	// Default to UTC if no timezone provided
 	timezone := req.Timezone
 	if timezone == "" {
 		timezone = "UTC"
@@ -100,6 +100,19 @@ func (wr *workerRepository) GetPTOChartData(
 		}
 
 		q = q.Where("wpto.type = ?", ptoType)
+	}
+
+	if req.WorkerID != "" {
+		wrkID, err := pulid.MustParse(req.WorkerID)
+		if err != nil {
+			wr.l.Error().
+				Err(err).
+				Str("workerId", req.WorkerID).
+				Msg("failed to parse worker ID")
+			return nil, err
+		}
+
+		q = q.Where("wpto.worker_id = ?", wrkID)
 	}
 
 	q = q.Group("date", "wpto.type")

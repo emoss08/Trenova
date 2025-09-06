@@ -50,26 +50,43 @@ const workerProfileSchema = z.object({
 });
 
 /* Worker PTO Schema */
-const workerPTOSchema = z.object({
-  id: optionalStringSchema,
-  version: versionSchema,
-  createdAt: timestampSchema,
-  updatedAt: timestampSchema,
-  organizationId: optionalStringSchema,
-  businessUnitId: optionalStringSchema,
-  workerId: optionalStringSchema,
+export const workerPTOSchema = z
+  .object({
+    id: optionalStringSchema,
+    version: versionSchema,
+    createdAt: timestampSchema,
+    updatedAt: timestampSchema,
+    organizationId: optionalStringSchema,
+    businessUnitId: optionalStringSchema,
+    workerId: optionalStringSchema,
 
-  // * Core Fields
-  status: z.enum(PTOStatus),
-  type: z.enum(PTOType),
-  startDate: z.number().min(1, { error: "Start date is required" }),
-  endDate: z.number().min(1, { error: "End date is required" }),
-  reason: z.string().optional(),
-  approverId: nullablePulidSchema,
-  get worker() {
-    return workerSchema.nullish();
-  },
-});
+    // * Core Fields
+    status: z.enum(PTOStatus),
+    type: z.enum(PTOType),
+    startDate: z
+      .number({ error: "Start date is required" })
+      .min(1, { error: "Start date is required" }),
+    endDate: z
+      .number({ error: "End date is required" })
+      .min(1, { error: "End date is required" }),
+    reason: z.string().optional(),
+    approverId: nullablePulidSchema,
+    rejectorId: nullablePulidSchema,
+    get worker() {
+      return workerSchema.nullish();
+    },
+  })
+  .refine(
+    (data) => {
+      return (
+        data.startDate < data.endDate && data.startDate > 0 && data.endDate > 0
+      );
+    },
+    {
+      message: "Start date must be before end date",
+      path: ["endDate"],
+    },
+  );
 
 /* Worker Schema */
 export const workerSchema = z
@@ -123,9 +140,33 @@ export const ptoRejectionRequestSchema = z.object({
   reason: z.string(),
 });
 
+export const ptoFilterSchema = z
+  .object({
+    type: z.string().optional(),
+    startDate: z.number().min(1, { error: "Start date is required" }),
+    endDate: z.number().min(1, { error: "End date is required" }),
+    workerId: z.string().optional(),
+  })
+  .refine((data) => data.startDate <= data.endDate, {
+    message: "Start date must be before end date",
+    path: ["endDate"],
+  })
+  .refine(
+    (data) => {
+      const diffInMs = (data.endDate - data.startDate) * 1000;
+      const ninetyDaysInMs = 90 * 24 * 60 * 60 * 1000;
+      return diffInMs <= ninetyDaysInMs;
+    },
+    {
+      message: "Date range cannot exceed 3 months",
+      path: ["endDate"],
+    },
+  );
+
 export type WorkerSchema = z.infer<typeof workerSchema>;
 export type WorkerPTOSchema = z.infer<typeof workerPTOSchema>;
 
 export type PTORejectionRequestSchema = z.infer<
   typeof ptoRejectionRequestSchema
 >;
+export type PTOFilterSchema = z.infer<typeof ptoFilterSchema>;
