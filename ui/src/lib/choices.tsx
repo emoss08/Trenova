@@ -258,8 +258,8 @@ export const genderChoices = [
 ] satisfies ReadonlyArray<ChoiceProps<Gender>>;
 
 export const ptoStatusChoices = [
-  { value: PTOStatus.Requested, label: "Requested", color: "#15803d" },
-  { value: PTOStatus.Approved, label: "Approved", color: "#7e22ce" },
+  { value: PTOStatus.Requested, label: "Requested", color: "#7e22ce" },
+  { value: PTOStatus.Approved, label: "Approved", color: "#15803d" },
   { value: PTOStatus.Rejected, label: "Rejected", color: "#b91c1c" },
   { value: PTOStatus.Cancelled, label: "Cancelled", color: "#f59e0b" },
 ] satisfies ReadonlyArray<ChoiceProps<PTOStatus>>;

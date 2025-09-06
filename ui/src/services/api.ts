@@ -38,7 +38,6 @@ import { UserAPI } from "./user";
 import { WorkerAPI } from "./worker";
 
 class AssignmentsAPI {
-  // Get a tractor's assignments from the API
   async getTractorAssignments(tractorId?: TractorSchema["id"]) {
     const response = await http.get<TractorAssignment>(
       `/tractors/${tractorId}/assignment/`,

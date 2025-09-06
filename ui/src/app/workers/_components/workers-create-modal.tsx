@@ -105,7 +105,7 @@ export function CreateWorkerModal({ open, onOpenChange }: TableSheetProps) {
   // This is recommended by react-hook-form - https://react-hook-form.com/docs/useform/reset
   useEffect(() => {
     reset();
-  }, [isSubmitSuccessful, reset, onOpenChange]);
+  }, [isSubmitSuccessful, reset]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

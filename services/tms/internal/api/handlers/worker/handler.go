@@ -75,6 +75,11 @@ func (h *Handler) RegisterRoutes(r fiber.Router, rl *middleware.RateLimiter) {
 		middleware.PerMinute(300), // 60 reads per minute
 	)...)
 
+	api.Post("/pto/create/", rl.WithRateLimit(
+		[]fiber.Handler{h.createWorkerPTO},
+		middleware.PerMinute(300), // 60 reads per minute
+	)...)
+
 	api.Get("/:workerID/", rl.WithRateLimit(
 		[]fiber.Handler{h.get},
 		middleware.PerMinute(300), // 60 reads per minute
@@ -252,6 +257,7 @@ func (h *Handler) listUpcomingPTO(c *fiber.Ctx) error {
 				Status:    fc.Query("status"),
 				StartDate: int64(fc.QueryInt("startDate")),
 				EndDate:   int64(fc.QueryInt("endDate")),
+				WorkerID:  fc.Query("workerId"),
 			},
 		}
 
@@ -392,4 +398,26 @@ func (h *Handler) getPTOCalendarData(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(calendarData)
+}
+
+func (h *Handler) createWorkerPTO(c *fiber.Ctx) error {
+	reqCtx, err := appctx.WithRequestContext(c)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	pto := new(workerdomain.WorkerPTO)
+	pto.OrganizationID = reqCtx.OrgID
+	pto.BusinessUnitID = reqCtx.BuID
+
+	if err = c.BodyParser(pto); err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	entity, err := h.ws.CreateWorkerPTO(c.UserContext(), pto, reqCtx.UserID)
+	if err != nil {
+		return h.eh.HandleError(c, err)
+	}
+
+	return c.Status(fiber.StatusOK).JSON(entity)
 }

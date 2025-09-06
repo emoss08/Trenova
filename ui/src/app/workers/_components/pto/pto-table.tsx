@@ -3,6 +3,8 @@ import { WorkerPTOSchema } from "@/lib/schemas/worker-schema";
 import { Resource } from "@/types/audit-entry";
 import { useMemo } from "react";
 import { getColumns } from "./pto-columns";
+import { PTOCreateModal } from "./pto-create-modal";
+import { EditPTOModal } from "./pto-edit-modal";
 
 export function PtoDataTable() {
   const columns = useMemo(() => getColumns(), []);
@@ -26,6 +28,8 @@ export function PtoDataTable() {
         showSortUI: true,
       }}
       useEnhancedBackend={true}
+      TableModal={PTOCreateModal}
+      TableEditModal={EditPTOModal}
     />
   );
 }

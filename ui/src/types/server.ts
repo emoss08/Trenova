@@ -139,6 +139,7 @@ export type BaseEndpoint =
   | "/consolidations/"
   | "/document-types/"
   | "/hold-reasons/"
-  | "/workers/pto/";
+  | "/workers/pto/"
+  | "/workers/pto/create/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;

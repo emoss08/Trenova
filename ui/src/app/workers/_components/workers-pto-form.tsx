@@ -39,6 +39,7 @@ function mapStatusToHumanReadable(status: PTOStatus) {
     [PTOStatus.Approved]: "Approval",
   }[status];
 }
+
 function WorkerPTOContent({
   index,
   remove,

@@ -9,6 +9,7 @@ export type ListUpcomingPTORequest = {
   status?: PTOStatus;
   startDate?: number;
   endDate?: number;
+  workerId?: string;
 };
 
 export type PTOChartDataRequest = {
@@ -16,6 +17,7 @@ export type PTOChartDataRequest = {
   endDate: number;
   type?: string;
   timezone?: string;
+  workerId?: string;
 };
 
 export type PTOChartDataPoint = {
@@ -66,6 +68,7 @@ export class WorkerAPI {
           status: req.status,
           startDate: req.startDate,
           endDate: req.endDate,
+          workerId: req.workerId,
           ...req.filter,
         },
       },
@@ -82,6 +85,7 @@ export class WorkerAPI {
           endDate: req.endDate,
           type: req.type,
           timezone: req.timezone,
+          workerId: req.workerId,
         },
       },
     );
@@ -107,6 +111,22 @@ export class WorkerAPI {
           timezone: req.timezone,
         },
       },
+    );
+    return response.data;
+  }
+
+  async createPTO(req: WorkerPTOSchema) {
+    const response = await http.post<WorkerPTOSchema>(
+      "/workers/pto/create/",
+      req,
+    );
+    return response.data;
+  }
+
+  async updatePTO(ptoID: string, req: WorkerPTOSchema) {
+    const response = await http.put<WorkerPTOSchema>(
+      `/workers/pto/${ptoID}/edit/`,
+      req,
     );
     return response.data;
   }
