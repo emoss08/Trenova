@@ -26,6 +26,7 @@ func EncodeCursor(pk PrimaryKey) (string, error) {
 	if err != nil {
 		return "", eris.Wrap(err, "marshal cursor")
 	}
+
 	return base64.RawURLEncoding.EncodeToString(bytes), nil
 }
 
