@@ -22,5 +22,5 @@ export default function PTOContent() {
 }
 
 function PTOContentInner({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-row gap-4 max-h-[400px]">{children}</div>;
+  return <div className="flex flex-row gap-4 h-[400px]">{children}</div>;
 }

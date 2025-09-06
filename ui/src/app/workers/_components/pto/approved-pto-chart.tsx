@@ -27,6 +27,7 @@ interface PTOChartProps {
   startDate: number;
   endDate: number;
   type?: string;
+  workerId?: string;
 }
 
 const CustomTooltip = memo(({ data, id, value }: any) => {
@@ -54,7 +55,12 @@ const CustomTooltip = memo(({ data, id, value }: any) => {
   );
 });
 
-export default function PTOChart({ startDate, endDate, type }: PTOChartProps) {
+export default function PTOChart({
+  startDate,
+  endDate,
+  type,
+  workerId,
+}: PTOChartProps) {
   const user = useUser();
   const [colorScheme, setColorScheme] = useLocalStorage(
     PTO_COLOR_SCHEME_KEY,
@@ -66,6 +72,7 @@ export default function PTOChart({ startDate, endDate, type }: PTOChartProps) {
       startDate,
       endDate,
       type,
+      workerId,
       timezone: user?.timezone,
     }),
     staleTime: 5 * 60 * 1000,
@@ -192,9 +199,6 @@ export default function PTOChart({ startDate, endDate, type }: PTOChartProps) {
           },
         ]}
         theme={{
-          text: {
-            fill: "var(--foreground)",
-          },
           axis: {
             ticks: {
               text: {
@@ -227,11 +231,6 @@ export default function PTOChart({ startDate, endDate, type }: PTOChartProps) {
               fontSize: 11,
               fill: "var(--foreground)",
               fontFamily: "var(--font-table)",
-            },
-          },
-          labels: {
-            text: {
-              fill: "var(--foreground)",
             },
           },
         }}

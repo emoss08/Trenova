@@ -14,176 +14,238 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import LetterGlitch from "@/components/ui/letter-glitch";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { ScrollArea, ScrollAreaShadow } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  ScrollAreaShadow,
+  VirtualCompatibleScrollArea,
+} from "@/components/ui/scroll-area";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
-import { dateToUnixTimestamp, formatRange, inclusiveDays } from "@/lib/date";
+import { formatRange, inclusiveDays } from "@/lib/date";
 import { queries } from "@/lib/queries";
-import { WorkerPTOSchema } from "@/lib/schemas/worker-schema";
+import { PTOFilterSchema, WorkerPTOSchema } from "@/lib/schemas/worker-schema";
 import { cn } from "@/lib/utils";
 import { api } from "@/services/api";
 import { APIError } from "@/types/errors";
-import { PTOStatus } from "@/types/worker";
-import { useMutation, useSuspenseQuery } from "@tanstack/react-query";
-import { CalendarRange, EllipsisIcon, FilterIcon } from "lucide-react";
-import { memo, useMemo, useState } from "react";
+import { PTOStatus, PTOType } from "@/types/worker";
+import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
+import { useVirtualizer } from "@tanstack/react-virtual";
+import { CalendarRange, EllipsisIcon, Loader2 } from "lucide-react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
+import { PTOFilterPopover } from "./pto-filter-popover";
 import { PTORejectionDialog } from "./pto-rejection-dialog";
+import { usePTOFilters } from "./use-pto-filters";
 
 export default function RequestedPTOOverview() {
-  const defaultStart = dateToUnixTimestamp(new Date());
+  // Use the hook to get default values only, but maintain local state
+  const { defaultValues } = usePTOFilters();
 
-  const [type, setType] = useState<WorkerPTOSchema["type"] | undefined>(
-    undefined,
-  );
+  // Local filter state for this component only
+  const [filters, setFilters] = useState({
+    startDate: defaultValues.startDate,
+    endDate: defaultValues.endDate,
+    type: undefined as PTOType | undefined,
+    workerId: undefined as string | undefined,
+  });
 
-  const [startDate, setStartDate] = useState<number | undefined>(defaultStart);
-  const [endDate, setEndDate] = useState<number | undefined>(undefined);
+  const handleFilterSubmit = useCallback((data: PTOFilterSchema) => {
+    setFilters({
+      startDate: data.startDate,
+      endDate: data.endDate,
+      type: data.type as PTOType | undefined,
+      workerId: data.workerId,
+    });
+  }, []);
 
-  const toInput = (unix?: number) => {
-    if (!unix) return "";
-    const d = new Date(unix * 1000);
-    const yyyy = d.getFullYear();
-    const mm = String(d.getMonth() + 1).padStart(2, "0");
-    const dd = String(d.getDate()).padStart(2, "0");
-    return `${yyyy}-${mm}-${dd}`;
-  };
+  const resetFilters = useCallback(() => {
+    setFilters({
+      startDate: defaultValues.startDate,
+      endDate: defaultValues.endDate,
+      type: undefined,
+      workerId: undefined,
+    });
+  }, [defaultValues]);
 
-  const query = useSuspenseQuery({
-    ...queries.worker.listUpcomingPTO({
-      filter: { limit: 20, offset: 0 },
-      type,
-      status: PTOStatus.Requested,
-      startDate,
-      endDate,
-    }),
+  const query = useInfiniteQuery({
+    queryKey: [
+      ...queries.worker.listUpcomingPTO._def,
+      {
+        type: filters.type,
+        status: PTOStatus.Requested,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        workerId: filters.workerId,
+      },
+    ],
+    queryFn: async ({ pageParam }) => {
+      return await api.worker.listUpcomingPTO({
+        filter: { limit: 20, offset: pageParam },
+        type: filters.type,
+        status: PTOStatus.Requested,
+        startDate: filters.startDate,
+        endDate: filters.endDate,
+        workerId: filters.workerId,
+      });
+    },
+    initialPageParam: 0,
+    getNextPageParam: (lastPage, _, lastPageParam) => {
+      if (lastPage.next || lastPage.results.length === 20) {
+        return lastPageParam + 20;
+      }
+      return undefined;
+    },
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
   });
+  const { hasNextPage, isFetchingNextPage, fetchNextPage } = query;
+
+  const allPTOItems = useMemo(
+    () => query.data?.pages.flatMap((page) => page.results) ?? [],
+    [query.data?.pages],
+  );
+
+  const scrollAreaRef = useRef<HTMLDivElement>(null);
+  const observerTarget = useRef<HTMLDivElement>(null);
+
+  const virtualizer = useVirtualizer({
+    count: allPTOItems.length,
+    getScrollElement: () => scrollAreaRef.current,
+    estimateSize: () => 75,
+    overscan: 5,
+  });
+
+  const virtualItems = virtualizer.getVirtualItems();
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { threshold: 0.1 },
+    );
+
+    const currentTarget = observerTarget.current;
+    if (currentTarget) {
+      observer.observe(currentTarget);
+    }
+
+    return () => {
+      if (currentTarget) {
+        observer.unobserve(currentTarget);
+      }
+    };
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return (
     <div className="flex flex-col gap-1 flex-1">
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-medium font-table">Requested PTO</h3>
-        <div className="flex items-center gap-1">
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className="h-full">
-                <FilterIcon className="size-4" />
-                <span className="text-xs">Filter</span>
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent align="end" className="w-72 p-3">
-              <div className="grid gap-3">
-                <div className="grid gap-1.5">
-                  <Label htmlFor="pto-type">Type</Label>
-                  <Select
-                    value={(type as string) ?? ""}
-                    onValueChange={(v) =>
-                      setType(
-                        (v || undefined) as WorkerPTOSchema["type"] | undefined,
-                      )
-                    }
-                  >
-                    <SelectTrigger id="pto-type">
-                      <SelectValue placeholder="All types" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All</SelectItem>
-                      <SelectItem value="Vacation">Vacation</SelectItem>
-                      <SelectItem value="Sick">Sick</SelectItem>
-                      <SelectItem value="Holiday">Holiday</SelectItem>
-                      <SelectItem value="Bereavement">Bereavement</SelectItem>
-                      <SelectItem value="Maternity">Maternity</SelectItem>
-                      <SelectItem value="Paternity">Paternity</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="start-date">Start</Label>
-                    <Input
-                      id="start-date"
-                      type="date"
-                      value={toInput(startDate)}
-                      onChange={(e) =>
-                        setStartDate(
-                          e.target.value
-                            ? dateToUnixTimestamp(
-                                new Date(`${e.target.value}T00:00:00`),
-                              )
-                            : undefined,
-                        )
-                      }
-                    />
-                  </div>
-                  <div className="grid gap-1.5">
-                    <Label htmlFor="end-date">End</Label>
-                    <Input
-                      id="end-date"
-                      type="date"
-                      value={toInput(endDate)}
-                      onChange={(e) =>
-                        setEndDate(
-                          e.target.value
-                            ? dateToUnixTimestamp(
-                                new Date(`${e.target.value}T23:59:59`),
-                              ) // inclusive
-                            : undefined,
-                        )
-                      }
-                    />
-                  </div>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-1 border-t border-border/60">
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setType(undefined);
-                      setEndDate(undefined);
-                      setStartDate(defaultStart);
-                    }}
-                  >
-                    Reset
-                  </Button>
-                </div>
-              </div>
-            </PopoverContent>
-          </Popover>
+        <div className="flex items-center gap-2">
+          <PTOFilterPopover
+            defaultValues={defaultValues}
+            onSubmit={handleFilterSubmit}
+            onReset={resetFilters}
+          />
         </div>
       </div>
-
-      <ScrollArea className="border border-border rounded-md p-3 flex-1 min-h-0">
-        <div className="flex flex-col gap-2">
-          {query.data?.results.map((workerPTO) => (
-            <UpcomingPTOCard key={workerPTO.id} workerPTO={workerPTO} />
-          ))}
-          {query.data?.count === 0 && (
-            <div className="flex flex-col text-center items-center justify-center h-[250px]">
-              <p className="text-sm font-medium">No PTOs found</p>
-              <p className="text-2xs text-muted-foreground">
-                Try adjusting your filters or search query.
+      {!query.isLoading && allPTOItems.length === 0 && (
+        <div className="flex flex-col items-center size-full justify-center overflow-hidden border border-border rounded-md">
+          <div className="relative size-full">
+            <LetterGlitch
+              glitchColors={["#9c9c9c", "#696969", "#424242"]}
+              glitchSpeed={50}
+              centerVignette={true}
+              outerVignette={true}
+              smooth={true}
+              className="size-full"
+              canvasClassName="size-full"
+            />
+            <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center pointer-events-none">
+              <p className="text-sm/none px-1 py-0.5 text-center font-medium uppercase select-none font-table dark:text-neutral-900 bg-amber-300 text-amber-950 dark:bg-amber-400">
+                No data available
+              </p>
+              <p className="text-sm/none px-1 py-0.5 text-center font-medium uppercase select-none font-table dark:text-neutral-900 bg-neutral-900 text-white dark:bg-neutral-500">
+                Try adjusting your filters or search query
               </p>
             </div>
-          )}
+          </div>
         </div>
-        <ScrollAreaShadow />
-      </ScrollArea>
+      )}
+      {!query.isLoading && allPTOItems.length > 0 && (
+        <VirtualCompatibleScrollArea
+          viewPortRef={scrollAreaRef}
+          className="border border-border rounded-md flex-1"
+          viewPortClassName="p-3"
+        >
+          {query.isLoading && (
+            <div className="flex items-center justify-center h-[250px]">
+              <Loader2 className="size-5 animate-spin text-muted-foreground" />
+            </div>
+          )}
+
+          {allPTOItems.length > 0 && (
+            <div
+              style={{
+                height: `${virtualizer.getTotalSize()}px`,
+                width: "100%",
+                position: "relative",
+              }}
+            >
+              {virtualItems.map((virtualItem) => {
+                const workerPTO = allPTOItems[virtualItem.index];
+                return (
+                  <div
+                    key={virtualItem.key}
+                    style={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: `${virtualItem.size}px`,
+                      transform: `translateY(${virtualItem.start}px)`,
+                    }}
+                  >
+                    <div className="pb-1">
+                      <UpcomingPTOCard workerPTO={workerPTO} />
+                    </div>
+                  </div>
+                );
+              })}
+
+              {query.isFetchingNextPage && (
+                <div
+                  style={{
+                    position: "absolute",
+                    top: `${virtualizer.getTotalSize()}px`,
+                    left: 0,
+                    width: "100%",
+                  }}
+                  className="flex items-center justify-center py-4"
+                >
+                  <Loader2 className="size-4 animate-spin text-muted-foreground" />
+                  <span className="ml-2 text-sm text-muted-foreground">
+                    Loading more...
+                  </span>
+                </div>
+              )}
+
+              <div
+                ref={observerTarget}
+                style={{
+                  position: "absolute",
+                  top: `${virtualizer.getTotalSize()}px`,
+                  left: 0,
+                  width: "100%",
+                  height: "1px",
+                }}
+              />
+            </div>
+          )}
+          <ScrollAreaShadow />
+        </VirtualCompatibleScrollArea>
+      )}
     </div>
   );
 }
