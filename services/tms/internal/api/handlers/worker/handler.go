@@ -253,11 +253,12 @@ func (h *Handler) listUpcomingPTO(c *fiber.Ctx) error {
 		listOpts := &repositories.ListUpcomingWorkerPTORequest{
 			Filter: filter,
 			ListWorkerPTOFilterOptions: repositories.ListWorkerPTOFilterOptions{
-				Type:      fc.Query("type"),
-				Status:    fc.Query("status"),
-				StartDate: int64(fc.QueryInt("startDate")),
-				EndDate:   int64(fc.QueryInt("endDate")),
-				WorkerID:  fc.Query("workerId"),
+				Type:        fc.Query("type"),
+				Status:      fc.Query("status"),
+				StartDate:   int64(fc.QueryInt("startDate")),
+				EndDate:     int64(fc.QueryInt("endDate")),
+				WorkerID:    fc.Query("workerId"),
+				FleetCodeID: fc.Query("fleetCodeId"),
 			},
 		}
 

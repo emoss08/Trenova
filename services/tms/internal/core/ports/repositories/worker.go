@@ -145,11 +145,12 @@ type GetWorkerPTORequest struct {
 }
 
 type ListWorkerPTOFilterOptions struct {
-	Status    string `json:"status"    query:"status"`
-	Type      string `json:"type"      query:"type"`
-	StartDate int64  `json:"startDate" query:"startDate"`
-	EndDate   int64  `json:"endDate"   query:"endDate"`
-	WorkerID  string `json:"workerId"  query:"workerId"`
+	Status      string `json:"status"      query:"status"`
+	Type        string `json:"type"        query:"type"`
+	StartDate   int64  `json:"startDate"   query:"startDate"`
+	EndDate     int64  `json:"endDate"     query:"endDate"`
+	WorkerID    string `json:"workerId"    query:"workerId"`
+	FleetCodeID string `json:"fleetCodeId" query:"fleetCodeId"`
 }
 
 type ListUpcomingWorkerPTORequest struct {

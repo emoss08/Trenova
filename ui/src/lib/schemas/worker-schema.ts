@@ -146,6 +146,7 @@ export const ptoFilterSchema = z
     startDate: z.number().min(1, { error: "Start date is required" }),
     endDate: z.number().min(1, { error: "End date is required" }),
     workerId: z.string().optional(),
+    fleetCodeId: z.string().optional(),
   })
   .refine((data) => data.startDate <= data.endDate, {
     message: "Start date must be before end date",

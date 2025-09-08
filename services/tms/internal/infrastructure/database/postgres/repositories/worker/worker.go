@@ -661,7 +661,23 @@ func (wr *workerRepository) addUpcomingPTOOptions(
 	}
 
 	q = q.Order("wpto.start_date ASC", "wpto.end_date ASC")
-	q = q.Relation("Worker")
+	q = q.RelationWithOpts("Worker", bun.RelationOpts{
+		Apply: func(sq *bun.SelectQuery) *bun.SelectQuery {
+			if opts.FleetCodeID != "" {
+				fleetCodeID, err := pulid.MustParse(opts.FleetCodeID)
+				if err != nil {
+					wr.l.Error().
+						Err(err).
+						Str("fleetCodeId", opts.FleetCodeID).
+						Msg("failed to parse fleet code ID")
+					return q
+				}
+				sq = sq.Where("wrk.fleet_code_id = ?", fleetCodeID)
+			}
+
+			return sq
+		},
+	})
 
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }
