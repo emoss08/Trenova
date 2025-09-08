@@ -3,10 +3,6 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md
  */
-import {
-  ScrollAreaShadow,
-  VirtualCompatibleScrollArea,
-} from "@/components/ui/scroll-area";
 import { classifyLevel, escapeRegex } from "@/lib/docker-utils";
 
 import { cn } from "@/lib/utils";
@@ -14,6 +10,7 @@ import { useContainerLogStore } from "@/stores/docker-store";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Activity, AlertCircle } from "lucide-react";
 import { useCallback } from "react";
+import { VirtualCompatibleScrollArea } from "../ui/virtual-scroll-area";
 
 export default function ContainerLogContent({
   filteredCount,
@@ -50,9 +47,9 @@ export default function ContainerLogContent({
 
   return (
     <VirtualCompatibleScrollArea
-      viewPortRef={scrollAreaRef}
+      viewportRef={scrollAreaRef}
       className="h-[520px]"
-      viewPortClassName="h-[520px]"
+      viewportClassName="h-[520px]"
     >
       <div
         className={cn(
@@ -132,7 +129,6 @@ export default function ContainerLogContent({
           </div>
         )}
       </div>
-      <ScrollAreaShadow />
     </VirtualCompatibleScrollArea>
   );
 }

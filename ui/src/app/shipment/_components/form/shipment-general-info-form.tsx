@@ -1,4 +1,4 @@
-import { ScrollArea, ScrollAreaShadow } from "@/components/ui/scroll-area";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAutoCalculateTotals } from "@/hooks/shipment/use-auto-calculate-totals";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
@@ -52,7 +52,6 @@ function ShipmentGeneralInfoFormComponent({
         <ShipmentCommodityDetails />
         <ShipmentMovesDetails />
       </div>
-      <ScrollAreaShadow />
     </ScrollArea>
   );
 }

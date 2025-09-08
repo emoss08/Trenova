@@ -15,10 +15,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import LetterGlitch from "@/components/ui/letter-glitch";
-import {
-  ScrollAreaShadow,
-  VirtualCompatibleScrollArea,
-} from "@/components/ui/scroll-area";
+import { VirtualCompatibleScrollArea } from "@/components/ui/virtual-scroll-area";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { formatRange, inclusiveDays } from "@/lib/date";
 import { queries } from "@/lib/queries";
@@ -175,9 +172,9 @@ export default function RequestedPTOOverview() {
       )}
       {!query.isLoading && allPTOItems.length > 0 && (
         <VirtualCompatibleScrollArea
-          viewPortRef={scrollAreaRef}
+          viewportRef={scrollAreaRef}
           className="border border-border rounded-md flex-1"
-          viewPortClassName="p-3"
+          viewportClassName="p-3"
         >
           {query.isLoading && (
             <div className="flex items-center justify-center h-[250px]">
@@ -243,7 +240,6 @@ export default function RequestedPTOOverview() {
               />
             </div>
           )}
-          <ScrollAreaShadow />
         </VirtualCompatibleScrollArea>
       )}
     </div>
