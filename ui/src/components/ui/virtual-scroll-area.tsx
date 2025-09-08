@@ -16,10 +16,9 @@ type Mask = {
   right: boolean;
 };
 
-const ScrollArea = React.forwardRef<
+const VirtualCompatibleScrollArea = React.forwardRef<
   React.ComponentRef<typeof ScrollAreaPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root> & {
-    viewportClassName?: string;
     /**
      * `maskHeight` is the height of the mask in pixels.
      * pass `0` to disable the mask
@@ -27,6 +26,8 @@ const ScrollArea = React.forwardRef<
      */
     maskHeight?: number;
     maskClassName?: string;
+    viewportClassName?: string;
+    viewportRef: React.RefObject<HTMLDivElement | null>;
   }
 >(
   (
@@ -37,6 +38,7 @@ const ScrollArea = React.forwardRef<
       viewportClassName,
       maskClassName,
       maskHeight = 30,
+      viewportRef,
       ...props
     },
     ref,
@@ -47,11 +49,10 @@ const ScrollArea = React.forwardRef<
       left: false,
       right: false,
     });
-    const viewportRef = React.useRef<HTMLDivElement>(null);
     const isTouch = useTouchPrimary();
 
     const checkScrollability = React.useCallback(() => {
-      const element = viewportRef.current;
+      const element = viewportRef?.current;
       if (!element) return;
 
       const {
@@ -69,12 +70,12 @@ const ScrollArea = React.forwardRef<
         left: scrollLeft > 0,
         right: scrollLeft + clientWidth < scrollWidth - 1,
       }));
-    }, []);
+    }, [viewportRef]);
 
     React.useEffect(() => {
       if (typeof window === "undefined") return;
 
-      const element = viewportRef.current;
+      const element = viewportRef?.current;
       if (!element) return;
 
       const controller = new AbortController();
@@ -93,7 +94,7 @@ const ScrollArea = React.forwardRef<
         controller.abort();
         resizeObserver.disconnect();
       };
-    }, [checkScrollability, isTouch]);
+    }, [checkScrollability, isTouch, viewportRef]);
 
     return (
       <ScrollAreaContext.Provider value={isTouch}>
@@ -158,7 +159,7 @@ const ScrollArea = React.forwardRef<
   },
 );
 
-ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
+VirtualCompatibleScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
 
 const ScrollBar = React.forwardRef<
   React.ComponentRef<typeof ScrollAreaPrimitive.ScrollAreaScrollbar>,
@@ -254,5 +255,4 @@ const ScrollMask = ({
   );
 };
 
-export { ScrollArea, ScrollBar };
-
+export { ScrollBar, VirtualCompatibleScrollArea };

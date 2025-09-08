@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "../ui/card";
-import { ScrollArea, ScrollAreaShadow } from "../ui/scroll-area";
+import { ScrollArea } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
 import { CopyIcon, KV, Mono } from "./container-detail-components";
 
@@ -215,7 +215,6 @@ export function OverviewTabContent({
                   </div>
                 ))}
               </div>
-              <ScrollAreaShadow />
             </ScrollArea>
           </CardContent>
         </Card>
@@ -299,7 +298,6 @@ export function OverviewTabContent({
                   </div>
                 ))}
               </div>
-              <ScrollAreaShadow />
             </ScrollArea>
           </CardContent>
         </Card>
