@@ -29,15 +29,14 @@ export function ApprovedPTOOverview() {
       .withDefault("chart"),
   );
 
-  // Use the hook to get default values only
   const { defaultValues } = usePTOFilters();
 
-  // Local filter state for this component only
   const [filters, setFilters] = useState({
     startDate: defaultValues.startDate,
     endDate: defaultValues.endDate,
     type: undefined as PTOType | undefined,
     workerId: undefined as string | undefined,
+    fleetCodeId: undefined as string | undefined,
   });
 
   const handleFilterSubmit = useCallback((data: PTOFilterSchema) => {
@@ -46,6 +45,7 @@ export function ApprovedPTOOverview() {
       endDate: data.endDate,
       type: data.type as PTOType | undefined,
       workerId: data.workerId,
+      fleetCodeId: data.fleetCodeId,
     });
   }, []);
 
@@ -55,6 +55,7 @@ export function ApprovedPTOOverview() {
       endDate: defaultValues.endDate,
       type: undefined,
       workerId: undefined,
+      fleetCodeId: undefined,
     });
   }, [defaultValues]);
 

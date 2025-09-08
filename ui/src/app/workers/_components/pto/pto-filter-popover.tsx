@@ -5,7 +5,10 @@
 
 import { AutoCompleteDateField } from "@/components/fields/date-field";
 import { SelectField } from "@/components/fields/select-field";
-import { WorkerAutocompleteField } from "@/components/ui/autocomplete-fields";
+import {
+  FleetCodeAutocompleteField,
+  WorkerAutocompleteField,
+} from "@/components/ui/autocomplete-fields";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import {
@@ -29,6 +32,7 @@ interface PTOFilterPopoverProps {
     endDate: number;
     type?: PTOType;
     workerId?: string;
+    fleetCodeId?: string;
   };
   onSubmit: (data: PTOFilterSchema) => void;
   onReset: () => void;
@@ -52,6 +56,7 @@ export function PTOFilterPopover({
       startDate: defaultValues.startDate,
       endDate: defaultValues.endDate,
       workerId: defaultValues.workerId,
+      fleetCodeId: defaultValues.fleetCodeId,
     },
   });
 
@@ -69,6 +74,7 @@ export function PTOFilterPopover({
       startDate: defaultValues.startDate,
       endDate: defaultValues.endDate,
       workerId: undefined,
+      fleetCodeId: undefined,
     });
     onReset();
   };
@@ -81,7 +87,7 @@ export function PTOFilterPopover({
           <span className="text-xs">Filter</span>
         </Button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-[400px] p-0">
+      <PopoverContent align="end" className="w-[500px] p-0">
         <div className="flex">
           <div>
             <FormGroup dense cols={2} className="p-2">
@@ -94,12 +100,21 @@ export function PTOFilterPopover({
                   options={ptoTypeOptions}
                 />
               </FormControl>
-              <FormControl className="min-h-[2em]" cols="full">
+              <FormControl className="min-h-[2em]">
                 <WorkerAutocompleteField
                   control={form.control}
                   name="workerId"
                   label="Worker"
                   placeholder="Select worker"
+                  clearable
+                />
+              </FormControl>
+              <FormControl className="min-h-[2em]">
+                <FleetCodeAutocompleteField
+                  control={form.control}
+                  name="fleetCodeId"
+                  label="Fleet Code"
+                  placeholder="Select fleet code"
                   clearable
                 />
               </FormControl>
@@ -144,12 +159,13 @@ export function PTOFilterPopover({
                   form.setValue("startDate", startDate);
                   form.setValue("endDate", endDate);
                   form.setValue("workerId", undefined);
-
+                  form.setValue("fleetCodeId", undefined);
                   handleSubmit({
                     startDate,
                     endDate,
                     type: form.getValues("type"),
                     workerId: form.getValues("workerId"),
+                    fleetCodeId: form.getValues("fleetCodeId"),
                   });
                 }}
               >
