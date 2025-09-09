@@ -152,7 +152,7 @@ export function PTOEditForm({
     <FormProvider {...form}>
       <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
         <DialogBody>
-          <PTOForm isCreate={false} />
+          <PTOForm />
         </DialogBody>
         <DialogFooter>
           <Button type="button" variant="outline" onClick={onClose}>
