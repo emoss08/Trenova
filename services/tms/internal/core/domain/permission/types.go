@@ -170,6 +170,9 @@ const (
 	ResourceAuditEntry = Resource(
 		"audit_entry",
 	) // Represents resources for tracking and auditing logs.
+	ResourceDashboard = Resource(
+		"dashboard",
+	) // Represents resources for managing dashboards.
 
 	// System resources
 	ResourceTableConfiguration = Resource(
@@ -680,6 +683,9 @@ var (
 			ActionDelete, // Remove containers, images, volumes
 			ActionAudit,  // View container logs and audit information
 			ActionExport, // Export container stats and logs
+		},
+		ResourceDashboard: {
+			ActionRead,
 		},
 	}
 )
