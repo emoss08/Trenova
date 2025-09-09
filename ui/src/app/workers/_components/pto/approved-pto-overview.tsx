@@ -77,6 +77,7 @@ export function ApprovedPTOOverview() {
             <Button
               variant={viewType === "calendar" ? "default" : "ghost"}
               onClick={() => setViewType("calendar")}
+              disabled
             >
               <Calendar className="size-3.5" />
               <span>Calendar</span>
