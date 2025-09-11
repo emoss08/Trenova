@@ -6,7 +6,7 @@ FSL-1.1-ALv2
 
 ## Notice
 
-Copyright 2023-2025 Eric Moss
+Copyright 2025 Eric Moss
 
 ## Terms and Conditions
 
