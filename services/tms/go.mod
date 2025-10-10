@@ -184,7 +184,7 @@ require (
 	github.com/prometheus/procfs v0.17.0 // indirect
 	github.com/puzpuzpuz/xsync/v3 v3.5.1 // indirect
 	github.com/quic-go/qpack v0.5.1 // indirect
-	github.com/quic-go/quic-go v0.54.0 // indirect
+	github.com/quic-go/quic-go v0.54.1 // indirect
 	github.com/radovskyb/watcher v1.0.7 // indirect
 	github.com/refraction-networking/utls v1.8.0 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
