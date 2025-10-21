@@ -1,60 +1,54 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package formulatemplate
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain"
-	"github.com/emoss08/trenova/internal/core/domain/businessunit"
-	"github.com/emoss08/trenova/internal/core/domain/organization"
-	"github.com/emoss08/trenova/internal/core/types/formula"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/formulatypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*FormulaTemplate)(nil)
-	_ domain.Validatable        = (*FormulaTemplate)(nil)
+	_ bun.BeforeAppendModelHook      = (*FormulaTemplate)(nil)
+	_ domaintypes.PostgresSearchable = (*FormulaTemplate)(nil)
+	_ domain.Validatable             = (*FormulaTemplate)(nil)
+	_ framework.TenantedEntity       = (*FormulaTemplate)(nil)
 )
 
-// TemplateVariable represents a variable used in a formula template
 type TemplateVariable struct {
-	Name         string            `json:"name"`
-	Type         formula.ValueType `json:"type"`
-	Description  string            `json:"description"`
-	Required     bool              `json:"required"`
-	DefaultValue any               `json:"defaultValue,omitempty"`
-	Source       string            `json:"source"` // e.g., "shipment.weight", "shipment.distance"
+	Name         string                 `json:"name"`
+	Type         formulatypes.ValueType `json:"type"`
+	Description  string                 `json:"description"`
+	Required     bool                   `json:"required"`
+	DefaultValue any                    `json:"defaultValue,omitempty"`
+	Source       string                 `json:"source"` // e.g., "shipment.weight", "shipment.distance"
 }
 
-// TemplateParameter represents a configurable parameter in a template
 type TemplateParameter struct {
-	Name         string            `json:"name"`
-	Type         formula.ValueType `json:"type"`
-	Description  string            `json:"description"`
-	DefaultValue any               `json:"defaultValue"`
-	Required     bool              `json:"required"`
-	MinValue     *float64          `json:"minValue,omitempty"`
-	MaxValue     *float64          `json:"maxValue,omitempty"`
-	Options      []ParameterOption `json:"options,omitempty"`
+	Name         string                 `json:"name"`
+	Type         formulatypes.ValueType `json:"type"`
+	Description  string                 `json:"description"`
+	DefaultValue any                    `json:"defaultValue"`
+	Required     bool                   `json:"required"`
+	MinValue     *float64               `json:"minValue,omitempty"`
+	MaxValue     *float64               `json:"maxValue,omitempty"`
+	Options      []ParameterOption      `json:"options,omitempty"`
 }
 
-// ParameterOption represents an option for a parameter
 type ParameterOption struct {
 	Value       any    `json:"value"`
 	Label       string `json:"label"`
 	Description string `json:"description,omitempty"`
 }
 
-// TemplateExample shows how to use a template for rate calculation
 type TemplateExample struct {
 	Name         string         `json:"name"`
 	Description  string         `json:"description"`
@@ -63,14 +57,12 @@ type TemplateExample struct {
 	ExpectedRate float64        `json:"expectedRate"`
 }
 
-// TemplateRequirement specifies what's needed for a template
 type TemplateRequirement struct {
 	Type        string `json:"type"` // "variable", "field", "function"
 	Name        string `json:"name"`
 	Description string `json:"description"`
 }
 
-// FormulaTemplate represents a formula template for shipment rate calculations
 type FormulaTemplate struct {
 	bun.BaseModel `bun:"table:formula_templates,alias:ft" json:"-"`
 
@@ -96,25 +88,20 @@ type FormulaTemplate struct {
 	UpdatedAt      int64                 `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
-func (ft *FormulaTemplate) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(ctx, ft,
-		// Name is required and must be between 3 and 255 characters
+func (ft *FormulaTemplate) Validate(multiErr *errortypes.MultiError) {
+	err := validation.ValidateStruct(ft,
 		validation.Field(&ft.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(3, 255).Error("Name must be between 3 and 255 characters"),
 		),
-
-		// Expression is required
 		validation.Field(&ft.Expression,
 			validation.Required.Error("Expression is required"),
 			validation.Length(1, 0).Error("Expression cannot be empty"),
 		),
-
-		// Category is required and must be valid
 		validation.Field(&ft.Category,
 			validation.Required.Error("Category is required"),
 			validation.In(
@@ -129,32 +116,20 @@ func (ft *FormulaTemplate) Validate(ctx context.Context, multiErr *errors.MultiE
 				CategoryCustom,
 			).Error("Category must be valid"),
 		),
-
-		// OutputUnit defaults to USD but can be customized
 		validation.Field(&ft.OutputUnit,
 			validation.Length(0, 50).Error("Output unit must be less than 50 characters"),
 		),
-
-		// MinRate must be less than MaxRate if both are specified
 		validation.Field(&ft.MaxRate,
 			validation.When(
 				ft.MinRate != nil && ft.MaxRate != nil,
-				validation.By(func(value interface{}) error {
-					if *ft.MinRate > *ft.MaxRate {
-						return validation.NewError(
-							"validation_max_rate",
-							"Maximum rate must be greater than minimum rate",
-						)
-					}
-					return nil
-				}),
+				validation.Min(ft.MaxRate).Error("Maximum rate must be greater than minimum rate"),
 			),
 		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
-		if eris.As(err, &validationErrs) {
-			errors.FromOzzoErrors(validationErrs, multiErr)
+		if errors.As(err, &validationErrs) {
+			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
@@ -167,8 +142,32 @@ func (ft *FormulaTemplate) GetTableName() string {
 	return "formula_templates"
 }
 
+func (ft *FormulaTemplate) GetOrganizationID() pulid.ID {
+	return ft.OrganizationID
+}
+
+func (ft *FormulaTemplate) GetBusinessUnitID() pulid.ID {
+	return ft.BusinessUnitID
+}
+
+func (ft *FormulaTemplate) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "ft",
+		UseSearchVector: true,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "description",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+			{Name: "category", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightB},
+		},
+	}
+}
+
 func (ft *FormulaTemplate) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:
@@ -184,27 +183,22 @@ func (ft *FormulaTemplate) BeforeAppendModel(_ context.Context, query bun.Query)
 	return nil
 }
 
-// HasParameters returns true if the template has configurable parameters
 func (ft *FormulaTemplate) HasParameters() bool {
 	return len(ft.Parameters) > 0
 }
 
-// HasRequirements returns true if the template has requirements
 func (ft *FormulaTemplate) HasRequirements() bool {
 	return len(ft.Requirements) > 0
 }
 
-// HasExamples returns true if the template has examples
 func (ft *FormulaTemplate) HasExamples() bool {
 	return len(ft.Examples) > 0
 }
 
-// IsValid checks if the template is valid for use
 func (ft *FormulaTemplate) IsValid() bool {
 	return ft.IsActive
 }
 
-// GetRequiredVariables returns all required variables
 func (ft *FormulaTemplate) GetRequiredVariables() []TemplateVariable {
 	var required []TemplateVariable
 	for _, v := range ft.Variables {

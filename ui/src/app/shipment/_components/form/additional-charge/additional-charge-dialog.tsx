@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 "use no memo";
 import { SelectField } from "@/components/fields/select-field";
 import { AccessorialChargeAutocompleteField } from "@/components/ui/autocomplete-fields";
@@ -28,6 +23,7 @@ import {
   type UseFieldArrayRemove,
   type UseFieldArrayUpdate,
   useFormContext,
+  useWatch,
 } from "react-hook-form";
 
 interface AdditionalChargeDialogProps extends TableSheetProps {
@@ -57,7 +53,6 @@ export function AdditionalChargeDialog({
         unit: additionalCharge.unit,
         method: additionalCharge.method,
         amount: additionalCharge.amount,
-        // Preserve the existing ID if editing, otherwise it will be handled by the backend
         id: isEditing ? additionalCharge.id : undefined,
         shipmentId: formValues?.id || "",
       };
@@ -92,17 +87,16 @@ export function AdditionalChargeDialog({
     }
   }, [onOpenChange, remove, index, isEditing, reset, getValues]);
 
-  // Handle keyboard shortcut (Ctrl+Enter) to save
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === "Enter" && open) {
-        handleSave();
-      }
-    };
+  // useEffect(() => {
+  //   const handleKeyDown = (e: KeyboardEvent) => {
+  //     if (e.ctrlKey && e.key === "Enter" && open) {
+  //       handleSave();
+  //     }
+  //   };
 
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [open, handleSave]);
+  //   window.addEventListener("keydown", handleKeyDown);
+  //   return () => window.removeEventListener("keydown", handleKeyDown);
+  // }, [open, handleSave]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -132,8 +126,11 @@ export function AdditionalChargeDialog({
 }
 
 function AdditionalChargeForm({ index }: { index: number }) {
-  const { control, setValue, watch } = useFormContext<ShipmentSchema>();
-  const additionalCharge = watch(`additionalCharges.${index}`);
+  const { control, setValue } = useFormContext<ShipmentSchema>();
+  const additionalCharge = useWatch({
+    control,
+    name: `additionalCharges.${index}`,
+  });
 
   const { data: accessorialChargeData, isLoading: isLoadingAccessorialCharge } =
     useQuery({
@@ -143,13 +140,11 @@ function AdditionalChargeForm({ index }: { index: number }) {
       enabled: !!additionalCharge?.accessorialChargeId,
     });
 
-  // Add a ref to track previous accessorialChargeId to detect changes
   const prevAccessorialChargeIdRef = useRef<string | undefined>(
     additionalCharge?.accessorialChargeId,
   );
 
   useEffect(() => {
-    // Only set default values when the accessorialChargeId changes or when it's first selected
     const currentAccessorialChargeId = additionalCharge?.accessorialChargeId;
     const accessorialCharge = accessorialChargeData;
 
@@ -159,12 +154,10 @@ function AdditionalChargeForm({ index }: { index: number }) {
       accessorialCharge.id === currentAccessorialChargeId &&
       !isLoadingAccessorialCharge
     ) {
-      // Only set default values from the accessorial charge when it's newly selected
       setValue(`additionalCharges.${index}.unit`, accessorialCharge.unit);
       setValue(`additionalCharges.${index}.method`, accessorialCharge.method);
       setValue(`additionalCharges.${index}.amount`, accessorialCharge.amount);
 
-      // Update the ref to the current ID
       prevAccessorialChargeIdRef.current = currentAccessorialChargeId;
     }
   }, [
@@ -176,7 +169,7 @@ function AdditionalChargeForm({ index }: { index: number }) {
   ]);
 
   return (
-    <AdditionalChargeFormInner>
+    <FormGroup cols={2}>
       <FormControl cols="full">
         <AccessorialChargeAutocompleteField<ShipmentSchema>
           name={`additionalCharges.${index}.accessorialChargeId`}
@@ -229,14 +222,6 @@ function AdditionalChargeForm({ index }: { index: number }) {
           description="Dollar value per unit for this accessorial service, used to calculate total charges for billing and settlement"
         />
       </FormControl>
-    </AdditionalChargeFormInner>
+    </FormGroup>
   );
-}
-
-function AdditionalChargeFormInner({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <FormGroup cols={2}>{children}</FormGroup>;
 }

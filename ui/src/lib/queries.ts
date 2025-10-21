@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { api } from "@/services/api";
 import type { GetDedicatedLaneByShipmentRequest } from "@/services/dedicated-lane";
 import type { GetPreviousRatesRequest } from "@/services/shipment";
@@ -13,13 +8,14 @@ import {
 } from "@/services/worker";
 import type { AnalyticsPage } from "@/types/analytics";
 import { Resource } from "@/types/audit-entry";
+import { QueryOptions } from "@/types/common";
 import type { GetCustomerByIDParams } from "@/types/customer";
-import type { IntegrationType } from "@/types/integration";
 import type { NotificationQueryParams } from "@/types/notification";
 import type { ShipmentQueryParams } from "@/types/shipment";
 import { createQueryKeyStore } from "@lukemorales/query-key-factory";
 import type { AccessorialChargeSchema } from "./schemas/accessorial-charge-schema";
 import { HoldReasonSchema } from "./schemas/hold-reason-schema";
+import { LocationSchema } from "./schemas/location-schema";
 import type { PatternConfigSchema } from "./schemas/pattern-config-schema";
 import { ShipmentSchema } from "./schemas/shipment-schema";
 
@@ -49,6 +45,12 @@ export const queries = createQueryKeyStore({
       queryKey: ["shipmentControl"],
       queryFn: async () => {
         return await api.shipmentControl.get();
+      },
+    }),
+    getDispatchControl: () => ({
+      queryKey: ["dispatchControl"],
+      queryFn: async () => {
+        return await api.dispatchControl.get();
       },
     }),
     getBillingControl: (
@@ -189,6 +191,12 @@ export const queries = createQueryKeyStore({
       queryFn: async () => api.shipments.getHolds(shipmentId),
     }),
   },
+  location: {
+    getById: (id: LocationSchema["id"]) => ({
+      queryKey: ["location", id],
+      queryFn: async () => api.locations.getById(id),
+    }),
+  },
   customer: {
     getDocumentRequirements: (customerId: string) => ({
       queryKey: ["customer/document-requirements", customerId],
@@ -205,34 +213,16 @@ export const queries = createQueryKeyStore({
       enabled,
     }),
   },
-  integration: {
-    getIntegrations: () => ({
-      queryKey: ["integrations"],
-      queryFn: async () => api.integrations.get(),
-    }),
-    getIntegrationByType: (type: IntegrationType) => ({
-      queryKey: ["integrations/type", type],
-      queryFn: async () => api.integrations.getByType(type),
-    }),
-    getFormSpec: (type: IntegrationType) => ({
-      queryKey: ["integrations/form-spec", type],
-      queryFn: async () => api.integrations.getFormSpec(type),
-    }),
-  },
   googleMaps: {
-    checkAPIKey: () => ({
-      queryKey: ["google-maps/check-api-key"],
-      queryFn: async () => api.googleMaps.checkAPIKey(),
+    getAPIKey: () => ({
+      queryKey: ["google-maps/api-key"],
+      queryFn: async () => api.googleMaps.getAPIKey(),
     }),
     locationAutocomplete: (input: string) => ({
       queryKey: ["google-maps/location-autocomplete", input],
       queryFn: async () => {
-        if (!input || input.length < 3) {
-          return { data: { details: [], count: 0 } };
-        }
         return api.googleMaps.locationAutocomplete(input);
       },
-      enabled: input.length >= 3,
     }),
   },
   analytics: {
@@ -259,9 +249,9 @@ export const queries = createQueryKeyStore({
     }),
   },
   favorite: {
-    list: () => ({
-      queryKey: ["favorites"],
-      queryFn: async () => api.favorites.list(),
+    list: (req?: QueryOptions) => ({
+      queryKey: ["favorites", req],
+      queryFn: async () => api.favorites.list(req),
     }),
     check: (pageUrl: string) => ({
       queryKey: ["favorite", pageUrl],

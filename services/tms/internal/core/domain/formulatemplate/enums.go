@@ -1,31 +1,23 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package formulatemplate
 
-// * Category represents the type of rate calculation formula
 type Category string
 
 const (
-	CategoryBaseRate          Category = "BaseRate"
-	CategoryDistanceBased     Category = "DistanceBased"
-	CategoryWeightBased       Category = "WeightBased"
-	CategoryDimensionalWeight Category = "DimensionalWeight"
-	CategoryFuelSurcharge     Category = "FuelSurcharge"
-	CategoryAccessorial       Category = "Accessorial"
-	CategoryTimeBasedRate     Category = "TimeBasedRate"
-	CategoryZoneBased         Category = "ZoneBased"
-	CategoryCustom            Category = "Custom"
+	CategoryBaseRate          = Category("BaseRate")
+	CategoryDistanceBased     = Category("DistanceBased")
+	CategoryWeightBased       = Category("WeightBased")
+	CategoryDimensionalWeight = Category("DimensionalWeight")
+	CategoryFuelSurcharge     = Category("FuelSurcharge")
+	CategoryAccessorial       = Category("Accessorial")
+	CategoryTimeBasedRate     = Category("TimeBasedRate")
+	CategoryZoneBased         = Category("ZoneBased")
+	CategoryCustom            = Category("Custom")
 )
 
-// * String returns the string representation of the category
 func (c Category) String() string {
 	return string(c)
 }
 
-// * IsValid checks if the category is valid
 func (c Category) IsValid() bool {
 	switch c {
 	case CategoryBaseRate, CategoryDistanceBased, CategoryWeightBased,
@@ -36,7 +28,6 @@ func (c Category) IsValid() bool {
 	return false
 }
 
-// * GetDescription returns a human-readable description of the category
 func (c Category) GetDescription() string {
 	switch c {
 	case CategoryBaseRate:

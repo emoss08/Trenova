@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
@@ -10,8 +10,7 @@ export const integrationImages: Record<IntegrationType, string> = {
     "https://raw.githubusercontent.com/gilbarbara/logos/refs/heads/main/logos/google-maps.svg",
   [IntegrationType.PCMiler]:
     "https://www.pcmiler.com/img/alk-logos/pcmiler-logo.svg",
-  [IntegrationType.Samsara]:
-    "https://www.samsara.com/static/images/logo.svg",
+  [IntegrationType.Samsara]: "https://www.samsara.com/static/images/logo.svg",
   [IntegrationType.Motive]:
     "https://gomotive.com/wp-content/uploads/2023/03/motive-logo.svg",
 };

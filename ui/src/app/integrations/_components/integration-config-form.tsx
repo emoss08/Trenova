@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
@@ -7,8 +7,6 @@ import { Button, FormSaveButton } from "@/components/ui/button";
 import { DialogBody, DialogFooter } from "@/components/ui/dialog";
 import { Form } from "@/components/ui/form";
 import { useFormWithSave } from "@/hooks/use-form-with-save";
-import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
-import { queries } from "@/lib/queries";
 import type { IntegrationSchema } from "@/lib/schemas/integration-schema";
 import { upperFirst } from "@/lib/utils";
 import { api } from "@/services/api";
@@ -65,16 +63,15 @@ export function IntegrationConfigForm({
     },
     onSuccess: () => {
       onOpenChange(false);
-      broadcastQueryInvalidation({
-        queryKey: [...queries.integration.getIntegrations._def],
-        options: {
-          correlationId: `update-integration-${Date.now()}`,
-        },
-        config: {
-          predicate: true,
-          refetchType: "all",
-        },
-      });
+      // broadcastQueryInvalidation({
+      //   options: {
+      //     correlationId: `update-integration-${Date.now()}`,
+      //   },
+      //   config: {
+      //     predicate: true,
+      //     refetchType: "all",
+      //   },
+      // });
     },
   });
 

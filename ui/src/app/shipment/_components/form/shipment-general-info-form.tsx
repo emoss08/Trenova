@@ -2,7 +2,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useAutoCalculateTotals } from "@/hooks/shipment/use-auto-calculate-totals";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { cn } from "@/lib/utils";
-import { lazy, memo } from "react";
+import { lazy } from "react";
 import { useFormContext } from "react-hook-form";
 
 const ShipmentBillingDetails = lazy(
@@ -19,11 +19,7 @@ const ShipmentServiceDetails = lazy(
   () => import("./service-details/shipment-service-details"),
 );
 
-function ShipmentGeneralInfoFormComponent({
-  className,
-}: {
-  className?: string;
-}) {
+export function ShipmentGeneralInfoForm({ className }: { className?: string }) {
   const form = useFormContext<ShipmentSchema>();
 
   if (!form) {
@@ -32,28 +28,28 @@ function ShipmentGeneralInfoFormComponent({
     );
   }
 
-  // Enable automatic billing calculations
   useAutoCalculateTotals({
     enabled: true,
     debounceMs: 1000,
   });
 
   return (
-    <ScrollArea
-      className={cn(
-        "flex flex-col overflow-y-auto px-4 max-h-[calc(100vh-8rem)]",
-        className,
-      )}
-    >
-      <div className="space-y-4 pb-16 pt-2">
+    <ScrollArea className={cn("flex flex-col px-4 h-full", className)}>
+      <ShipmentGeneralInfoFormInner>
         <ShipmentServiceDetails />
         <ShipmentBillingDetails />
         <ShipmentGeneralInformation />
         <ShipmentCommodityDetails />
         <ShipmentMovesDetails />
-      </div>
+      </ShipmentGeneralInfoFormInner>
     </ScrollArea>
   );
 }
 
-export const ShipmentGeneralInfoForm = memo(ShipmentGeneralInfoFormComponent);
+function ShipmentGeneralInfoFormInner({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <div className="space-y-4 pb-16 pt-2">{children}</div>;
+}

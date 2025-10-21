@@ -1,15 +1,9 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { cn } from "@/lib/utils";
 import type { NumberFieldProps } from "@/types/fields";
-import { Controller, type FieldValues } from "react-hook-form";
-import { FieldWrapper } from "../fields/field-components";
-// Using a native input here for finer-grained styling control
 import { ChevronDown, ChevronUp } from "lucide-react";
 import * as React from "react";
+import { Controller, type FieldValues } from "react-hook-form";
+import { FieldWrapper } from "../fields/field-components";
 
 export function NumberField<T extends FieldValues>({
   name,
@@ -80,12 +74,12 @@ export function NumberField<T extends FieldValues>({
                 props["aria-describedby"],
               )}
               className={cn(
-                "border-muted-foreground/20 bg-muted flex h-7 w-full rounded-md border px-2 py-1 text-xs",
+                "border-muted-foreground/20 bg-primary/5 flex h-7 w-full rounded-md border px-2 py-1 text-xs",
                 "file:border-0 file:bg-transparent file:text-sm file:font-medium",
                 "placeholder:text-muted-foreground",
                 "disabled:cursor-not-allowed disabled:opacity-50",
                 "read-only:cursor-default read-only:text-muted-foreground",
-                "focus-visible:border-blue-600 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-blue-600/20",
+                "focus-visible:border-foreground focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-foreground/20",
                 "transition-[border-color,box-shadow] duration-200 ease-in-out",
                 props.readOnly &&
                   "cursor-not-allowed opacity-60 pointer-events-none",

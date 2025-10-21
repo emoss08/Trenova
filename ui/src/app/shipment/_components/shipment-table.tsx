@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { DataTable } from "@/components/data-table/data-table";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
 import { shipmentActionsParser } from "@/hooks/use-shipment-actions-state";
@@ -18,9 +13,9 @@ import type { ContextMenuAction } from "@/types/data-table";
 import { useQueryStates } from "nuqs";
 import { useMemo } from "react";
 import { toast } from "sonner";
+import { ShipmentEditSheet } from "./form/edit-sheet/shipment-edit-sheet";
 import { getColumns } from "./shipment-columns";
 import { ShipmentCreateSheet } from "./shipment-create-sheet";
-import { ShipmentEditSheet } from "./shipment-edit-sheet";
 
 export default function ShipmentTable() {
   const columns = useMemo(() => getColumns(), []);

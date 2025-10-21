@@ -1,215 +1,131 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package user
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/user"
-	"github.com/emoss08/trenova/internal/core/ports"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/core/services/auth"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/internal/pkg/utils/stringutils"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/pkg/types"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/rotisserie/eris"
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/utils/jsonutils"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	Logger       *logger.Logger
+	Logger       *zap.Logger
 	Repo         repositories.UserRepository
 	AuditService services.AuditService
-	PermService  services.PermissionService
-	AuthService  *auth.Service
+	AuthService  services.AuthService
 	EmailService services.EmailService
 }
 
 type Service struct {
+	l    *zap.Logger
 	repo repositories.UserRepository
-	l    *zerolog.Logger
-	ps   services.PermissionService
 	as   services.AuditService
-	auth *auth.Service
+	auth services.AuthService
 	es   services.EmailService
 }
 
-// NewService creates a new user service
-//
-//nolint:gocritic // params are dependency injected
+//nolint:gocritic // This is a constructor
 func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().
-		Str("service", "user").
-		Logger()
-
 	return &Service{
+		l:    p.Logger.Named("service.user"),
 		repo: p.Repo,
-		l:    &log,
-		ps:   p.PermService,
 		as:   p.AuditService,
 		auth: p.AuthService,
 		es:   p.EmailService,
 	}
 }
 
+func (s *Service) GetOption(
+	ctx context.Context,
+	req repositories.GetUserByIDRequest,
+) (*tenant.User, error) {
+	return s.repo.GetOption(ctx, req)
+}
+
 func (s *Service) SelectOptions(
 	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
-) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, repositories.ListUserRequest{
-		Filter: opts,
-	})
-	if err != nil {
-		return nil, eris.Wrap(err, "select users")
-	}
-
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, u := range result.Items {
-		options[i] = &types.SelectOption{
-			Value: u.ID.String(),
-			Label: u.Name,
-		}
-	}
-
-	return options, nil
+	req repositories.UserSelectOptionsRequest,
+) ([]*repositories.UserSelectOptionResponse, error) {
+	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) List(
 	ctx context.Context,
-	opts repositories.ListUserRequest,
-) (*ports.ListResult[*user.User], error) {
-	log := s.l.With().Str("operation", "List").Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         opts.Filter.TenantOpts.UserID,
-				Resource:       permission.ResourceUser,
-				Action:         permission.ActionRead,
-				BusinessUnitID: opts.Filter.TenantOpts.BuID,
-				OrganizationID: opts.Filter.TenantOpts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read users")
-	}
-
-	entities, err := s.repo.List(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to list users")
-		return nil, err
-	}
-
-	return &ports.ListResult[*user.User]{
-		Items: entities.Items,
-		Total: entities.Total,
-	}, nil
+	req *repositories.ListUserRequest,
+) (*pagination.ListResult[*tenant.User], error) {
+	return s.repo.List(ctx, req)
 }
 
-func (s *Service) Get(
+func (s *Service) GetByID(
 	ctx context.Context,
-	opts repositories.GetUserByIDOptions,
-) (*user.User, error) {
-	log := s.l.With().
-		Str("operation", "GetByID").
-		Str("shipmentID", opts.UserID.String()).
-		Logger()
-
-	entity, err := s.repo.GetByID(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get user")
-		return nil, err
-	}
-
-	return entity, nil
+	req repositories.GetUserByIDRequest,
+) (*tenant.User, error) {
+	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) Create(
 	ctx context.Context,
-	u *user.User,
+	entity *tenant.User,
 	userID pulid.ID,
-) (*user.User, error) {
-	log := s.l.With().
-		Str("operation", "Create").
-		Interface("user", u).
-		Logger()
+) (*tenant.User, error) {
+	log := s.l.With(
+		zap.String("operation", "Create"),
+		zap.String("buID", entity.BusinessUnitID.String()),
+		zap.String("orgID", entity.CurrentOrganizationID.String()),
+		zap.String("userID", userID.String()),
+	)
 
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
-			UserID:         userID,
-			Resource:       permission.ResourceUser,
-			Action:         permission.ActionCreate,
-			BusinessUnitID: u.BusinessUnitID,
-			OrganizationID: u.CurrentOrganizationID,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
+	temporaryPassword := utils.GenerateSecurePassword(12)
 
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a user")
-	}
-
-	temporaryPassword := stringutils.GenerateSecurePassword(12)
-
-	hashed, err := u.GeneratePassword(temporaryPassword)
+	hashed, err := entity.GeneratePassword(temporaryPassword)
 	if err != nil {
 		return nil, err
 	}
 
-	u.Password = hashed
-	u.MustChangePassword = true
+	entity.Password = hashed
+	entity.MustChangePassword = true
 
-	createdEntity, err := s.repo.Create(ctx, u)
+	createdEntity, err := s.repo.Create(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = s.es.SendSystemEmail(
+	err = s.es.SendSystemEmail(
 		ctx,
-		services.TemplateUserWelcome,
-		[]string{u.EmailAddress},
-		map[string]any{
-			"UserName":          u.Name,
-			"EmailAddress":      u.EmailAddress,
-			"TemporaryPassword": temporaryPassword,
-			"Year":              timeutils.CurrentYear(),
+		&services.SendSystemEmailRequest{
+			TemplateKey: services.TemplateUserWelcome,
+			To:          []string{entity.EmailAddress},
+			Variables: map[string]any{
+				"UserName":          entity.Name,
+				"EmailAddress":      entity.EmailAddress,
+				"TemporaryPassword": temporaryPassword,
+				"Year":              utils.GetCurrentYear(),
+			},
+			OrgID:  entity.CurrentOrganizationID,
+			BuID:   entity.BusinessUnitID,
+			UserID: userID,
 		},
-		createdEntity.CurrentOrganizationID,
-		createdEntity.BusinessUnitID,
-		userID,
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to send welcome email")
-		return nil, err
+		log.Error("failed to send welcome email", zap.Error(err))
 	}
 
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceUser,
 			ResourceID:     createdEntity.GetID(),
-			Action:         permission.ActionCreate,
+			Operation:      permission.OpCreate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(createdEntity),
 			OrganizationID: createdEntity.CurrentOrganizationID,
@@ -218,7 +134,7 @@ func (s *Service) Create(
 		audit.WithComment("User created"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log user creation")
+		log.Error("failed to log user creation", zap.Error(err))
 	}
 
 	return createdEntity, nil
@@ -226,57 +142,39 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	u *user.User,
+	u *tenant.User,
 	userID pulid.ID,
-) (*user.User, error) {
-	log := s.l.With().
-		Str("operation", "Update").
-		Str("userID", u.ID.String()).
-		Logger()
+) (*tenant.User, error) {
+	log := s.l.With(
+		zap.String("operation", "Update"),
+		zap.String("buID", u.BusinessUnitID.String()),
+		zap.String("orgID", u.CurrentOrganizationID.String()),
+		zap.String("userID", userID.String()),
+	)
 
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
-			UserID:         userID,
-			Resource:       permission.ResourceUser,
-			Action:         permission.ActionUpdate,
-			BusinessUnitID: u.BusinessUnitID,
-			OrganizationID: u.CurrentOrganizationID,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to update this user",
-		)
-	}
-
-	original, err := s.repo.GetByID(ctx, repositories.GetUserByIDOptions{
+	original, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
 		OrgID:        u.CurrentOrganizationID,
 		BuID:         u.BusinessUnitID,
-		UserID:       u.ID,
+		UserID:       userID,
 		IncludeRoles: true,
+		IncludeOrgs:  true,
 	})
 	if err != nil {
-		log.Error().Err(err).Str("userID", u.ID.String()).Msg("failed to get user")
+		log.Error("failed to get user", zap.Error(err))
 		return nil, err
 	}
 
 	updatedEntity, err := s.repo.Update(ctx, u)
 	if err != nil {
-		log.Error().Err(err).Interface("user", u).Msg("failed to update user")
+		log.Error("failed to update user", zap.Error(err))
 		return nil, err
 	}
 
-	// Log the update if the insert was successful
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceUser,
 			ResourceID:     updatedEntity.GetID(),
-			Action:         permission.ActionUpdate,
+			Operation:      permission.OpUpdate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(updatedEntity),
 			PreviousState:  jsonutils.MustToJSON(original),
@@ -288,7 +186,7 @@ func (s *Service) Update(
 		audit.WithDiff(original, updatedEntity),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log user update")
+		log.Error("failed to log user update", zap.Error(err))
 	}
 
 	return updatedEntity, nil
@@ -297,42 +195,43 @@ func (s *Service) Update(
 func (s *Service) ChangePassword(
 	ctx context.Context,
 	req *repositories.ChangePasswordRequest,
-) (*user.User, error) {
-	log := s.l.With().
-		Str("operation", "ChangePassword").
-		Str("userID", req.UserID.String()).
-		Logger()
+) (*tenant.User, error) {
+	log := s.l.With(
+		zap.String("operation", "ChangePassword"),
+		zap.String("userID", req.UserID.String()),
+	)
 
-	currentUser, err := s.repo.GetByID(ctx, repositories.GetUserByIDOptions{
+	currentUser, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
 		OrgID:        req.OrgID,
 		BuID:         req.BuID,
 		UserID:       req.UserID,
 		IncludeRoles: true,
+		IncludeOrgs:  true,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get user")
+		log.Error("failed to get user", zap.Error(err))
 		return nil, err
 	}
 
 	if err = currentUser.VerifyPassword(req.CurrentPassword); err != nil {
-		return nil, errors.NewValidationError(
+		return nil, errortypes.NewValidationError(
 			"currentPassword",
-			errors.ErrInvalid,
+			errortypes.ErrInvalid,
 			"Current password is incorrect",
 		)
 	}
 
 	if req.NewPassword != req.ConfirmPassword {
-		return nil, errors.NewValidationError(
+		return nil, errortypes.NewValidationError(
 			"confirmPassword",
-			errors.ErrInvalid,
+			errortypes.ErrInvalid,
 			"New password and confirm password do not match",
 		)
 	}
 
 	hashedPassword, err := currentUser.GeneratePassword(req.NewPassword)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to generate password")
+		log.Error("failed to generate password", zap.Error(err))
 		return nil, err
 	}
 
@@ -340,7 +239,7 @@ func (s *Service) ChangePassword(
 
 	updatedUser, err := s.repo.ChangePassword(ctx, req)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update user")
+		log.Error("failed to update user", zap.Error(err))
 		return nil, err
 	}
 
@@ -350,42 +249,37 @@ func (s *Service) ChangePassword(
 func (s *Service) SwitchOrganization(
 	ctx context.Context,
 	userID, newOrgID, sessionID pulid.ID,
-) (*user.User, error) {
-	log := s.l.With().
-		Str("operation", "SwitchOrganization").
-		Str("userID", userID.String()).
-		Str("newOrgID", newOrgID.String()).
-		Str("sessionID", sessionID.String()).
-		Logger()
+) (*tenant.User, error) {
+	log := s.l.With(
+		zap.String("operation", "SwitchOrganization"),
+		zap.String("userID", userID.String()),
+		zap.String("newOrgID", newOrgID.String()),
+		zap.String("sessionID", sessionID.String()),
+	)
 
-	// * Get the original user for audit logging
-	originalUser, err := s.repo.GetByID(ctx, repositories.GetUserByIDOptions{
-		UserID:      userID,
-		IncludeOrgs: true,
+	originalUser, err := s.repo.GetByID(ctx, repositories.GetUserByIDRequest{
+		UserID:       userID,
+		OrgID:        newOrgID,
+		BuID:         userID,
+		IncludeOrgs:  true,
+		IncludeRoles: true,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get original user")
+		log.Error("failed to get original user", zap.Error(err))
 		return nil, err
 	}
 
-	// * Switch the organization
 	updatedUser, err := s.repo.SwitchOrganization(ctx, userID, newOrgID)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to switch organization")
+		log.Error("failed to switch organization", zap.Error(err))
 		return nil, err
 	}
 
-	log.Info().
-		Str("userID", userID.String()).
-		Str("newOrgID", newOrgID.String()).
-		Msg("organization switched successfully")
-
-	// * Log the organization switch
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceUser,
 			ResourceID:     updatedUser.GetID(),
-			Action:         permission.ActionUpdate,
+			Operation:      permission.OpUpdate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(updatedUser),
 			PreviousState:  jsonutils.MustToJSON(originalUser),
@@ -396,24 +290,16 @@ func (s *Service) SwitchOrganization(
 		audit.WithCritical(),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log organization switch")
+		log.Error("failed to log organization switch", zap.Error(err))
 		// ! Don't fail the operation if audit logging fails
 	}
 
-	// * Update the session with the new organization ID
 	if sessionID.IsNotNil() {
 		if err = s.auth.UpdateSessionOrganization(ctx, sessionID, newOrgID); err != nil {
-			log.Error().Err(err).Msg("failed to update session organization")
+			log.Error("failed to update session organization", zap.Error(err))
 			// ! Don't fail the operation if session update fails, but log it
-		} else {
-			log.Debug().Msg("session organization updated successfully")
 		}
 	}
-
-	log.Info().
-		Str("previousOrgID", originalUser.CurrentOrganizationID.String()).
-		Str("newOrgID", updatedUser.CurrentOrganizationID.String()).
-		Msg("organization switched successfully")
 
 	return updatedUser, nil
 }

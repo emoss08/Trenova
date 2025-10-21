@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import type { SidebarLink } from "@/components/sidebar-nav";
 import { Resource } from "@/types/audit-entry";
 import { RouteInfo } from "@/types/nav-links";
@@ -38,11 +33,15 @@ export const adminLinks: SidebarLink[] = [
     href: "/organization/dispatch-controls/",
     title: "Dispatch Controls",
     group: "Organization",
-    disabled: true,
   },
   {
     href: "/organization/shipment-controls/",
     title: "Shipment Controls",
+    group: "Organization",
+  },
+  {
+    href: "/organization/distance-overrides/",
+    title: "Distance Overrides",
     group: "Organization",
   },
   {
@@ -115,6 +114,11 @@ export const adminLinks: SidebarLink[] = [
   {
     href: "/organization/audit-entries/",
     title: "Audit Entries",
+    group: "Data & Integrations",
+  },
+  {
+    href: "/organization/ai-logs/",
+    title: "AI Logs",
     group: "Data & Integrations",
   },
   {
@@ -439,6 +443,18 @@ export const routes: RouteInfo[] = [
         supportsModal: false,
       },
       {
+        key: Resource.DispatchControl,
+        label: "Dispatch Controls",
+        link: "/organization/dispatch-controls/",
+        supportsModal: false,
+      },
+      {
+        key: Resource.DistanceOverride,
+        label: "Distance Overrides",
+        link: "/organization/distance-overrides/",
+        supportsModal: true,
+      },
+      {
         key: Resource.BillingControl,
         label: "Billing Controls",
         link: "/organization/billing-controls/",
@@ -484,6 +500,12 @@ export const routes: RouteInfo[] = [
         key: Resource.AuditEntry,
         label: "Audit Entries",
         link: "/organization/audit-entries/",
+        supportsModal: false,
+      },
+      {
+        key: Resource.AILog,
+        label: "AI Logs",
+        link: "/organization/ai-logs/",
         supportsModal: false,
       },
     ],

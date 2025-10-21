@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package hazmatsegregationrule
 
 import (
@@ -10,47 +5,38 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/internal/pkg/validator"
-	"github.com/emoss08/trenova/internal/pkg/validator/hazmatsegreationrulevalidator"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/pkg/validator"
+	"github.com/emoss08/trenova/pkg/validator/hazmatsegregationrulevalidator"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	Logger       *logger.Logger
+	Logger       *zap.Logger
 	Repo         repositories.HazmatSegregationRuleRepository
-	PermService  services.PermissionService
 	AuditService services.AuditService
-	Validator    *hazmatsegreationrulevalidator.Validator
+	Validator    *hazmatsegregationrulevalidator.Validator
 }
 
 type Service struct {
-	l    *zerolog.Logger
+	l    *zap.Logger
 	repo repositories.HazmatSegregationRuleRepository
-	ps   services.PermissionService
 	as   services.AuditService
-	v    *hazmatsegreationrulevalidator.Validator
+	v    *hazmatsegregationrulevalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().
-		Str("service", "hazmatsegregationrule").
-		Logger()
-
 	return &Service{
-		l:    &log,
+		l:    p.Logger.Named("service.hazmatsegregationrule"),
 		repo: p.Repo,
-		ps:   p.PermService,
 		as:   p.AuditService,
 		v:    p.Validator,
 	}
@@ -59,81 +45,15 @@ func NewService(p ServiceParams) *Service {
 func (s *Service) List(
 	ctx context.Context,
 	opts *repositories.ListHazmatSegregationRuleRequest,
-) (*ports.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
-	log := s.l.With().Str("operation", "List").Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         opts.Filter.TenantOpts.UserID,
-				Resource:       permission.ResourceHazmatSegregationRule,
-				Action:         permission.ActionRead,
-				BusinessUnitID: opts.Filter.TenantOpts.BuID,
-				OrganizationID: opts.Filter.TenantOpts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		s.l.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to read hazmat segregation rules",
-		)
-	}
-
-	entities, err := s.repo.List(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to list hazmat segregation rules")
-		return nil, err
-	}
-
-	return &ports.ListResult[*hazmatsegregationrule.HazmatSegregationRule]{
-		Items: entities.Items,
-		Total: entities.Total,
-	}, nil
+) (*pagination.ListResult[*hazmatsegregationrule.HazmatSegregationRule], error) {
+	return s.repo.List(ctx, opts)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
 	opts *repositories.GetHazmatSegregationRuleByIDRequest,
 ) (*hazmatsegregationrule.HazmatSegregationRule, error) {
-	log := s.l.With().
-		Str("operation", "Get").
-		Str("hazmatSegregationRuleID", opts.ID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         opts.UserID,
-				Resource:       permission.ResourceHazmatSegregationRule,
-				Action:         permission.ActionRead,
-				BusinessUnitID: opts.BuID,
-				OrganizationID: opts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to read this hazmat segregation rule",
-		)
-	}
-
-	entity, err := s.repo.GetByID(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get hazmat segregation rule")
-		return nil, err
-	}
-
-	return entity, nil
+	return s.repo.GetByID(ctx, opts)
 }
 
 func (s *Service) Create(
@@ -141,32 +61,13 @@ func (s *Service) Create(
 	hsr *hazmatsegregationrule.HazmatSegregationRule,
 	userID pulid.ID,
 ) (*hazmatsegregationrule.HazmatSegregationRule, error) {
-	log := s.l.With().
-		Str("operation", "Create").
-		Str("hazmatSegregationRuleID", hsr.ID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceHazmatSegregationRule,
-				Action:         permission.ActionCreate,
-				BusinessUnitID: hsr.BusinessUnitID,
-				OrganizationID: hsr.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Create"),
+		zap.String("hazmatSegregationRuleID", hsr.ID.String()),
+		zap.String("buID", hsr.BusinessUnitID.String()),
+		zap.String("orgID", hsr.OrganizationID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to create a hazmat segregation rule",
-		)
-	}
 
 	valCtx := &validator.ValidationContext{
 		IsCreate: true,
@@ -186,7 +87,7 @@ func (s *Service) Create(
 		&services.LogActionParams{
 			Resource:       permission.ResourceHazmatSegregationRule,
 			ResourceID:     createdEntity.GetID(),
-			Action:         permission.ActionCreate,
+			Operation:      permission.OpCreate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(createdEntity),
 			OrganizationID: createdEntity.OrganizationID,
@@ -195,7 +96,7 @@ func (s *Service) Create(
 		audit.WithComment("Hazmat Segregation Rule created"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log action")
+		log.Error("failed to log action", zap.Error(err))
 		return nil, err
 	}
 
@@ -207,32 +108,13 @@ func (s *Service) Update(
 	hsr *hazmatsegregationrule.HazmatSegregationRule,
 	userID pulid.ID,
 ) (*hazmatsegregationrule.HazmatSegregationRule, error) {
-	log := s.l.With().
-		Str("operation", "Update").
-		Str("hazmatSegregationRuleID", hsr.ID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceHazmatSegregationRule,
-				Action:         permission.ActionUpdate,
-				BusinessUnitID: hsr.BusinessUnitID,
-				OrganizationID: hsr.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Update"),
+		zap.String("hazmatSegregationRuleID", hsr.ID.String()),
+		zap.String("buID", hsr.BusinessUnitID.String()),
+		zap.String("orgID", hsr.OrganizationID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to update this hazmat segregation rule",
-		)
-	}
 
 	valCtx := &validator.ValidationContext{
 		IsCreate: false,
@@ -261,7 +143,7 @@ func (s *Service) Update(
 		&services.LogActionParams{
 			Resource:       permission.ResourceHazmatSegregationRule,
 			ResourceID:     updatedEntity.GetID(),
-			Action:         permission.ActionUpdate,
+			Operation:      permission.OpUpdate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(updatedEntity),
 			PreviousState:  jsonutils.MustToJSON(original),
@@ -272,7 +154,7 @@ func (s *Service) Update(
 		audit.WithDiff(original, updatedEntity),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log action")
+		log.Error("failed to log action", zap.Error(err))
 		return nil, err
 	}
 

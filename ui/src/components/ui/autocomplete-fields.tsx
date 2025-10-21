@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { holdTypeChoices } from "@/lib/choices";
 import type { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
 import type { CommoditySchema } from "@/lib/schemas/commodity-schema";
@@ -23,9 +18,11 @@ import {
   type TractorSchema,
 } from "@/lib/schemas/tractor-schema";
 import type { TrailerSchema } from "@/lib/schemas/trailer-schema";
-import type { RoleSchema, UserSchema } from "@/lib/schemas/user-schema";
+import type { RoleSchema } from "@/lib/schemas/user-schema";
 import type { WorkerSchema } from "@/lib/schemas/worker-schema";
-import { formatLocation, truncateText } from "@/lib/utils";
+import { formatLocation, truncateText, USDollarFormat } from "@/lib/utils";
+import { UserSelectOptionResponse } from "@/types/auto-complete-fields";
+import { AccessorialChargeMethod } from "@/types/billing";
 import { Status } from "@/types/common";
 import type {
   Control,
@@ -79,7 +76,7 @@ export function HazardousMaterialAutocompleteField<T extends FieldValues>({
   return (
     <AutocompleteField<HazardousMaterialSchema, T>
       link="/hazardous-materials/"
-      getOptionValue={(option) => option.id || ""}
+      getOptionValue={(option) => option.id ?? ""}
       getDisplayValue={(option) => `${option.name}`}
       placeholder="Select a hazardous material"
       renderOption={(option) => (
@@ -107,20 +104,20 @@ export function HazardousMaterialAutocompleteField<T extends FieldValues>({
 
 export function UserAutocompleteField<T extends FieldValues>({
   ...props
-}: BaseAutocompleteFieldProps<UserSchema, T>) {
+}: BaseAutocompleteFieldProps<UserSelectOptionResponse, T>) {
   return (
-    <AutocompleteField<UserSchema, T>
-      link="/users/"
-      getOptionValue={(option) => option.id || ""}
+    <AutocompleteField<UserSelectOptionResponse, T>
+      link="/users/select-options/"
+      getOptionValue={(option) => option.id ?? ""}
       getDisplayValue={(option) => (
-        <div className="flex flex-row items-center gap-1.5">
+        <div className="flex flex-row items-center gap-1.5 shrink-0">
           <LazyImage
             src={
               option.profilePicUrl ||
               `https://avatar.vercel.sh/${option.name}.svg`
             }
             alt={option.name}
-            className="size-3 rounded-full"
+            className="size-3 shrink-0 rounded-full"
           />
           <span className="text-xs font-medium">
             {truncateText(option.name, 20)}
@@ -128,15 +125,15 @@ export function UserAutocompleteField<T extends FieldValues>({
         </div>
       )}
       renderOption={(option) => (
-        <div className="flex flex-col gap-1 items-start size-full">
-          <div className="flex flex-row items-center gap-1.5 w-full shrink-0">
+        <div className="flex flex-col items-start size-full">
+          <div className="flex flex-row items-center gap-1.5 w-full">
             <LazyImage
               src={
                 option.profilePicUrl ||
                 `https://avatar.vercel.sh/${option.name}.svg`
               }
               alt={option.name}
-              className="size-4 rounded-full shrink-0"
+              className="size-4 shrink-0 rounded-full"
             />
             <span className="w-full truncate text-xs font-medium">
               {option.name}
@@ -229,11 +226,11 @@ export function FleetCodeAutocompleteField<T extends FieldValues>({
       link="/fleet-codes/"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
-        <ColorOptionValue color={option.color} value={option.name} />
+        <ColorOptionValue color={option.color} value={option.code} />
       )}
       renderOption={(option) => (
         <div className="flex flex-col items-start size-full">
-          <ColorOptionValue color={option.color} value={option.name} />
+          <ColorOptionValue color={option.color} value={option.code} />
           {option?.description && (
             <span className="text-2xs text-muted-foreground truncate w-full">
               {option?.description}
@@ -365,7 +362,7 @@ export function LocationAutocompleteField<T extends FieldValues>({
       )}
       renderOption={(option) => (
         <div className="flex flex-col gap-0.5 items-start size-full">
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 w-full">
             <span className="text-sm font-normal truncate w-prose">
               {option.name}
             </span>
@@ -391,14 +388,30 @@ export function LocationAutocompleteField<T extends FieldValues>({
 export function AccessorialChargeAutocompleteField<T extends FieldValues>({
   ...props
 }: BaseAutocompleteFieldProps<AccessorialChargeSchema, T>) {
+  const mapAmount = (method: AccessorialChargeMethod, amount: number) => {
+    switch (method) {
+      case AccessorialChargeMethod.Flat:
+        return USDollarFormat(amount);
+      case AccessorialChargeMethod.Distance:
+        return `${USDollarFormat(amount)} per mile`;
+      case AccessorialChargeMethod.Percentage:
+        return `${amount}%`;
+    }
+  };
   return (
     <AutocompleteField<AccessorialChargeSchema, T>
       link="/accessorial-charges/"
       getOptionValue={(option) => option.id || ""}
+      placeholder="Select Accessorial Charge"
       getDisplayValue={(option) => option.code}
       renderOption={(option) => (
         <div className="flex flex-col gap-0.5 items-start size-full">
-          <p className="text-sm font-medium">{option.code}</p>
+          <div className="flex flex-row items-left gap-1 w-full">
+            <p className="text-sm font-medium">{option.code}</p>
+            <p className="text-sm font-medium text-muted-foreground">
+              {mapAmount(option.method, option.amount)}
+            </p>
+          </div>
           {option.description && (
             <p className="text-xs text-muted-foreground truncate w-full">
               {option.description}

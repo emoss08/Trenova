@@ -1,163 +1,61 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { BadgeAttrProps } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import {
+  PermissionOperation,
+  PermissionOperations,
+} from "@/types/_gen/permissions";
 import { Resource } from "@/types/audit-entry";
-import { Action } from "@/types/roles-permissions";
 
 export function ActionBadge({
-  action,
+  operation,
   withDot,
   className,
 }: {
-  action?: Action;
+  operation?: PermissionOperation;
   withDot?: boolean;
   className?: string;
 }) {
-  if (!action) return null;
+  if (!operation) return null;
 
-  const actionAttributes: Record<Action, BadgeAttrProps> = {
-    [Action.Create]: {
+  const actionAttributes: Record<PermissionOperation, BadgeAttrProps> = {
+    [PermissionOperations.CREATE]: {
       variant: "active",
       text: "Created",
     },
-    [Action.Update]: {
+    [PermissionOperations.UPDATE]: {
       variant: "purple",
       text: "Updated",
     },
-    [Action.Delete]: {
+    [PermissionOperations.DELETE]: {
       variant: "inactive",
       text: "Deleted",
     },
-    [Action.Read]: {
+    [PermissionOperations.READ]: {
       variant: "pink",
       text: "Viewed",
     },
-    [Action.Approve]: {
-      variant: "active",
-      text: "Approved",
-    },
-    [Action.Classify]: {
-      variant: "purple",
-      text: "Classified",
-    },
-    [Action.Release]: {
-      variant: "purple",
-      text: "Released",
-    },
-    [Action.Reject]: {
-      variant: "inactive",
-      text: "Rejected",
-    },
-    [Action.Submit]: {
-      variant: "active",
-      text: "Submitted",
-    },
-    [Action.Cancel]: {
-      variant: "inactive",
-      text: "Cancelled",
-    },
-    [Action.Assign]: {
-      variant: "active",
-      text: "Assigned",
-    },
-    [Action.Reassign]: {
-      variant: "warning",
-      text: "Reassigned",
-    },
-    [Action.Complete]: {
-      variant: "active",
-      text: "Completed",
-    },
-    [Action.Duplicate]: {
-      variant: "orange",
-      text: "Duplicated",
-    },
-    [Action.ManageDefaults]: {
-      variant: "active",
-      text: "Managed Defaults",
-    },
-    [Action.Share]: {
-      variant: "warning",
-      text: "Shared",
-    },
-    [Action.Export]: {
-      variant: "orange",
+    [PermissionOperations.EXPORT]: {
+      variant: "pink",
       text: "Exported",
     },
-    [Action.Import]: {
-      variant: "orange",
+    [PermissionOperations.IMPORT]: {
+      variant: "pink",
       text: "Imported",
     },
-    [Action.Archive]: {
-      variant: "inactive",
-      text: "Archived",
-    },
-    [Action.Restore]: {
-      variant: "active",
-      text: "Restored",
-    },
-    [Action.Manage]: {
-      variant: "active",
-      text: "Managed",
-    },
-    [Action.Audit]: {
-      variant: "active",
-      text: "Audited",
-    },
-    [Action.Delegate]: {
-      variant: "warning",
-      text: "Delegated",
-    },
-    [Action.Configure]: {
-      variant: "active",
-      text: "Configured",
-    },
-    [Action.Split]: {
-      variant: "orange",
-      text: "Split",
-    },
-    [Action.ModifyField]: {
-      variant: "purple",
-      text: "Modified Field",
-    },
-    [Action.ViewField]: {
+    [PermissionOperations.DUPLICATE]: {
       variant: "pink",
-      text: "Viewed Field",
-    },
-    [Action.ReadyToBill]: {
-      variant: "active",
-      text: "Ready to Bill",
-    },
-    [Action.ReleaseToBilling]: {
-      variant: "active",
-      text: "Released to Billing",
-    },
-    [Action.BulkTransfer]: {
-      variant: "orange",
-      text: "Bulk Transfer",
-    },
-    [Action.ReviewInvoice]: {
-      variant: "orange",
-      text: "Reviewed Invoice",
-    },
-    [Action.PostInvoice]: {
-      variant: "orange",
-      text: "Posted Invoice",
+      text: "Duplicated",
     },
   };
 
   return (
     <Badge
       withDot={withDot}
-      variant={actionAttributes[action].variant}
+      variant={actionAttributes[operation].variant}
       className={cn(className, "max-h-6")}
     >
-      {actionAttributes[action].text}
+      {actionAttributes[operation].text}
     </Badge>
   );
 }
@@ -207,6 +105,18 @@ export function AuditEntryResourceBadge({
     [Resource.DocumentQualityConfig]: {
       variant: "orange",
       text: "Document Quality Config",
+    },
+    [Resource.AILog]: {
+      variant: "orange",
+      text: "AI Log",
+    },
+    [Resource.Variable]: {
+      variant: "orange",
+      text: "Variable",
+    },
+    [Resource.VariableFormat]: {
+      variant: "orange",
+      text: "Format",
     },
     [Resource.ResourceEditor]: {
       variant: "orange",

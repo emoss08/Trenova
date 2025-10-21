@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Status } from "@/types/common";
 import { z } from "zod/v4";
 import {
@@ -14,15 +9,7 @@ import {
   versionSchema,
 } from "./helpers";
 
-export const ProviderType = z.enum([
-  "SMTP",
-  "SendGrid",
-  "AWS_SES",
-  "Mailgun",
-  "Postmark",
-  "Exchange",
-  "Office365",
-]);
+export const ProviderType = z.enum(["SMTP", "Resend"]);
 
 export const AuthType = z.enum([
   "Plain",
@@ -207,10 +194,17 @@ export const logSchema = z.object({
   queue: queueSchema.nullish(),
 });
 
+export const testConnectionSchema = z.object({
+  providerType: ProviderType,
+  host: z.string().min(1, { error: "Host is required" }),
+  port: z.number().min(1, { error: "Port is required" }),
+  username: z.string().min(1, { error: "Username is required" }),
+  password: z.string().min(1, { error: "Password is required" }),
+  apiKey: z.string().min(1, { error: "API Key is required" }),
+});
+
 export type EmailProfileSchema = z.infer<typeof emailProfileSchema>;
-
 export type TemplateSchema = z.infer<typeof templateSchema>;
-
 export type QueueSchema = z.infer<typeof queueSchema>;
-
 export type LogSchema = z.infer<typeof logSchema>;
+export type TestConnectionSchema = z.infer<typeof testConnectionSchema>;

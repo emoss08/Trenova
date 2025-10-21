@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { SelectField } from "@/components/fields/select-field";
 import { DocumentTypeAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
@@ -12,7 +7,7 @@ import { type CustomerSchema } from "@/lib/schemas/customer-schema";
 import { useFormContext } from "react-hook-form";
 import { BillingControlOverrides } from "./customer-billing-control-override";
 
-export default function CustomerBillingProfile() {
+export function CustomerBillingProfile() {
   const { control } = useFormContext<CustomerSchema>();
 
   return (
@@ -41,7 +36,6 @@ export default function CustomerBillingProfile() {
               control={control}
               name="billingProfile.documentTypes"
               label="Document Types"
-              rules={{ required: true }}
               placeholder="Select Document Types"
               description="Select the document types that are required for this customer billing profile."
             />

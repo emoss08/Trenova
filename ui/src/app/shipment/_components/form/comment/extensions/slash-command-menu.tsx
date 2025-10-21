@@ -1,8 +1,4 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
+"use no memo";
 import {
   Command,
   CommandEmpty,
@@ -147,9 +143,11 @@ export function SlashCommandMenu({
       }
     };
 
-    editorElement.addEventListener("keydown", handleEditorKeyDown, true);
-    return () =>
-      editorElement.removeEventListener("keydown", handleEditorKeyDown, true);
+    if (editorElement instanceof HTMLElement) {
+      editorElement.addEventListener("keydown", handleEditorKeyDown, true);
+      return () =>
+        editorElement.removeEventListener("keydown", handleEditorKeyDown, true);
+    }
   }, [handleKeyDown, editor, isOpen]);
 
   useEffect(() => {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
@@ -13,13 +13,14 @@ import { FormControl, FormGroup } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
 import { NumberField } from "@/components/ui/number-input";
 import { stopStatusChoices, stopTypeChoices } from "@/lib/choices";
+import { queries } from "@/lib/queries";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { StopType } from "@/lib/schemas/stop-schema";
 import { cn, formatLocation } from "@/lib/utils";
 import { faInfoCircle, faLocationDot } from "@fortawesome/pro-solid-svg-icons";
+import { useQuery } from "@tanstack/react-query";
 import { memo, useEffect, useMemo } from "react";
 import { useFormContext } from "react-hook-form";
-import { useLocationData } from "../../sidebar/stop-details/queries";
 
 type CompactStopFormProps = {
   moveIdx: number;
@@ -55,8 +56,9 @@ const CompactStopFormComponent = ({
     return `Intermediate Stop ${stopIdx + 1}`;
   }, [isFirstStop, isLastStop, stopIdx]);
 
-  const { data: locationData, isLoading: isLoadingLocation } =
-    useLocationData(locationId);
+  const { data: locationData, isLoading: isLoadingLocation } = useQuery({
+    ...queries.location.getById(locationId),
+  });
 
   // Set address when location changes
   useEffect(() => {

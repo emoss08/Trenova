@@ -1,9 +1,3 @@
-/* eslint-disable react/display-name */
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { queries } from "@/lib/queries";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
 import { ShipmentLocations } from "@/lib/shipment/utils";
@@ -14,7 +8,6 @@ import { useFormContext, useWatch } from "react-hook-form";
 export const DedicatedLaneBanner = memo(() => {
   const { control } = useFormContext<ShipmentSchema>();
 
-  // Only watch specific fields needed for the dedicated lane query
   const customerId = useWatch({ control, name: "customerId" });
   const serviceTypeId = useWatch({ control, name: "serviceTypeId" });
   const shipmentTypeId = useWatch({ control, name: "shipmentTypeId" });
@@ -22,7 +15,6 @@ export const DedicatedLaneBanner = memo(() => {
   const trailerTypeId = useWatch({ control, name: "trailerTypeId" });
   const moves = useWatch({ control, name: "moves" });
 
-  // Create a minimal shipment object with only the fields we need
   const shipmentForLocations = useMemo(
     () =>
       ({

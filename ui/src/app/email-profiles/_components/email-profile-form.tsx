@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -14,12 +9,15 @@ import {
   type EmailProfileSchema,
 } from "@/lib/schemas/email-profile-schema";
 import { useFormContext, useWatch } from "react-hook-form";
+import { ResendFormFields } from "./_providers/resend-form-fields";
 import { SmtpFormFields } from "./_providers/smtp-form-fields";
 
 const renderProviderForm = (provider: EmailProfileSchema["providerType"]) => {
   switch (provider) {
     case ProviderType.enum.SMTP:
       return <SmtpFormFields />;
+    case ProviderType.enum.Resend:
+      return <ResendFormFields />;
     default:
       return <div>No provider form found</div>;
   }

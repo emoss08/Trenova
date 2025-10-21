@@ -1,4 +1,4 @@
-import { LazyComponent } from "@/components/error-boundary";
+import { DataTableLazyComponent } from "@/components/error-boundary";
 import { MetaTags } from "@/components/meta-tags";
 import { lazy } from "react";
 
@@ -8,10 +8,12 @@ export function HoldReasons() {
   return (
     <>
       <MetaTags title="Hold Reasons" description="Hold Reasons" />
-      <Header />
-      <LazyComponent>
-        <HoldReasonTable />
-      </LazyComponent>
+      <div className="flex flex-col gap-y-3">
+        <Header />
+        <DataTableLazyComponent>
+          <HoldReasonTable />
+        </DataTableLazyComponent>
+      </div>
     </>
   );
 }

@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package services
 
 import (
@@ -10,16 +5,15 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/gofiber/fiber/v2"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
 type LogActionParams struct {
 	Resource       permission.Resource
 	ResourceID     string
-	Action         permission.Action
+	Operation      permission.Operation
 	CurrentState   map[string]any
 	PreviousState  map[string]any
 	UserID         pulid.ID
@@ -39,7 +33,6 @@ const (
 	SensitiveFieldEncrypt // New action for field-level encryption
 )
 
-// SensitiveField defines a sensitive field and the action to take.
 type SensitiveField struct {
 	Name    string               // Name of the field
 	Path    string               // Optional dot-separated path to the field relative to current context. e.g. "parent.child"
@@ -48,25 +41,18 @@ type SensitiveField struct {
 }
 
 type AuditService interface {
-	// API functionality
 	List(
 		ctx context.Context,
-		opts *ports.LimitOffsetQueryOptions,
-	) (*ports.ListResult[*audit.Entry], error)
+		opts *pagination.QueryOptions,
+	) (*pagination.ListResult[*audit.Entry], error)
 	ListByResourceID(
 		ctx context.Context,
 		opts repositories.ListByResourceIDRequest,
-	) (*ports.ListResult[*audit.Entry], error)
+	) (*pagination.ListResult[*audit.Entry], error)
 	GetByID(ctx context.Context, opts repositories.GetAuditEntryByIDOptions) (*audit.Entry, error)
-	LiveStream(c *fiber.Ctx) error
+	// LiveStream(c *gin.Context) error
 
-	// Core functionality
 	LogAction(params *LogActionParams, opts ...LogOption) error
-	Start() error
-	Stop() error
 
-	// New methods for enhanced functionality
 	RegisterSensitiveFields(resource permission.Resource, fields []SensitiveField) error
-	SetDefaultField(key string, value any)
-	GetServiceStatus() string
 }

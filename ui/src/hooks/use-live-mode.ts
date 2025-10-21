@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { API_URL } from "@/constants/env";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -51,6 +46,7 @@ export function useLiveMode({
   const reconnectAttempts = useRef(0);
   const isIntentionalDisconnect = useRef(false);
   const lastEventTime = useRef<Date>(new Date());
+  const connectRef = useRef<(() => void) | null>(null);
 
   const handlersRef = useRef<{
     connected?: (event: MessageEvent) => void;
@@ -125,37 +121,70 @@ export function useLiveMode({
   }, [startHeartbeatMonitor]);
 
   const connect = useCallback(() => {
-    if (!enabled || eventSourceRef.current) return;
+    if (!enabled || eventSourceRef.current) {
+      console.log(
+        "[LiveMode] Connect skipped - enabled:",
+        enabled,
+        "existing connection:",
+        !!eventSourceRef.current,
+      );
+      return;
+    }
 
     try {
       const url = `${API_URL}${endpoint}`;
+      console.log("[LiveMode] Attempting to connect to:", url);
+      console.log("[LiveMode] API_URL:", API_URL);
+      console.log("[LiveMode] Endpoint:", endpoint);
+      console.log("[LiveMode] Full URL:", url);
+      console.log("[LiveMode] withCredentials: true");
+
       const eventSource = new EventSource(url, {
         withCredentials: true,
       });
 
+      console.log(
+        "[LiveMode] EventSource created, readyState:",
+        eventSource.readyState,
+      );
+      console.log("[LiveMode] EventSource.CONNECTING:", EventSource.CONNECTING);
+      console.log("[LiveMode] EventSource.OPEN:", EventSource.OPEN);
+      console.log("[LiveMode] EventSource.CLOSED:", EventSource.CLOSED);
+
       eventSourceRef.current = eventSource;
 
       eventSource.onopen = () => {
+        console.log(
+          "[LiveMode] ✅ Connection opened! readyState:",
+          eventSource.readyState,
+        );
         setState((prev) => ({ ...prev, connected: true, error: null }));
         onConnectionChange?.(true);
         reconnectAttempts.current = 0;
       };
 
-      eventSource.onerror = () => {
+      eventSource.onerror = (e) => {
+        console.error("[LiveMode] ❌ EventSource error event:", e);
+        console.error("[LiveMode] ReadyState:", eventSource.readyState);
+        console.error("[LiveMode] URL:", eventSource.url);
+
         // ! SSE error events don't have useful error information
         // ! Check readyState to determine the actual state
         if (eventSource.readyState === EventSource.CLOSED) {
+          console.error("[LiveMode] Connection closed - readyState is CLOSED");
           // ! Check if this is likely a page unload/navigation event
           const isPageUnloading =
             document.readyState === "loading" ||
             window.performance.navigation.type === 1; // Page reload
 
           if (isPageUnloading) {
+            console.log("[LiveMode] Page unloading - skipping reconnect");
             // ! Don't log errors or attempt reconnection during page unload
             cleanup();
             return;
           }
 
+          console.error("[LiveMode] Connection failed - not page unloading");
           setState((prev) => ({ ...prev, connected: false }));
           onConnectionChange?.(false);
 
@@ -168,18 +197,25 @@ export function useLiveMode({
               reconnectDelay * Math.pow(2, reconnectAttempts.current),
               maxReconnectDelay,
             );
+            console.log(
+              `[LiveMode] Reconnecting in ${delay}ms (attempt ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`,
+            );
             reconnectTimeoutRef.current = setTimeout(() => {
               reconnectAttempts.current++;
               cleanup();
-              connect();
+              connectRef.current?.();
             }, delay);
           } else if (reconnectAttempts.current >= maxReconnectAttempts) {
             const errorMsg =
               "Failed to connect to live updates after multiple attempts";
+            console.error("[LiveMode]", errorMsg);
             setState((prev) => ({ ...prev, error: errorMsg }));
             onError?.(errorMsg);
           }
         } else if (eventSource.readyState === EventSource.CONNECTING) {
+          console.log(
+            "[LiveMode] Currently connecting... readyState: CONNECTING",
+          );
           setState((prev) => ({
             ...prev,
             connected: false,
@@ -188,23 +224,26 @@ export function useLiveMode({
         }
       };
 
-      const handleConnected = () => {
+      const handleConnected = (event: MessageEvent) => {
+        console.log("[LiveMode] ✅ 'connected' event received:", event.data);
         lastEventTime.current = new Date();
         startHeartbeatMonitor();
       };
 
       const handleNewEntry = (event: MessageEvent) => {
+        console.log("[LiveMode] 📦 'new-entry' event received:", event.data);
         lastEventTime.current = new Date();
         updateConnectionQuality();
         try {
           const data = JSON.parse(event.data);
           onNewData?.(data);
         } catch (error) {
-          console.error("Failed to parse new entry data:", error);
+          console.error("[LiveMode] Failed to parse new entry data:", error);
         }
       };
 
       const handleHeartbeat = (event: MessageEvent) => {
+        console.log("[LiveMode] 💓 'heartbeat' event received:", event.data);
         lastEventTime.current = new Date();
         updateConnectionQuality();
         try {
@@ -215,30 +254,33 @@ export function useLiveMode({
             connectionQuality: "good",
           }));
         } catch (error) {
-          console.error("Failed to parse heartbeat data:", error);
+          console.error("[LiveMode] Failed to parse heartbeat data:", error);
         }
         resetHeartbeatMonitor();
       };
 
-      const handlePing = () => {
+      const handlePing = (event: MessageEvent) => {
+        console.log("[LiveMode] 🏓 'ping' event received:", event.data);
         lastEventTime.current = new Date();
         updateConnectionQuality();
         resetHeartbeatMonitor();
       };
 
       const handleServerError = (event: MessageEvent) => {
+        console.error("[LiveMode] ⚠️ Server error event received:", event);
         try {
           if (!event.data) {
-            console.warn("Received error event without data");
+            console.warn("[LiveMode] Received error event without data");
             return;
           }
 
           const data = JSON.parse(event.data);
           const error = data.error || "Unknown server error";
+          console.error("[LiveMode] Server error:", error);
           setState((prev) => ({ ...prev, error }));
           onError?.(error);
         } catch (error) {
-          console.error("Failed to parse error data:", error);
+          console.error("[LiveMode] Failed to parse error data:", error);
         }
       };
 
@@ -250,12 +292,15 @@ export function useLiveMode({
         error: handleServerError,
       };
 
+      console.log("[LiveMode] Registering event listeners...");
       eventSource.addEventListener("connected", handleConnected);
       eventSource.addEventListener("new-entry", handleNewEntry);
       eventSource.addEventListener("heartbeat", handleHeartbeat);
       eventSource.addEventListener("ping", handlePing);
       eventSource.addEventListener("error", handleServerError);
+      console.log("[LiveMode] Event listeners registered");
     } catch (error) {
+      console.error("[LiveMode] Exception during connect:", error);
       const errorMessage =
         error instanceof Error
           ? error.message
@@ -292,14 +337,22 @@ export function useLiveMode({
   }, [cleanup, onConnectionChange]);
 
   useEffect(() => {
+    connectRef.current = connect;
+  });
+
+  useEffect(() => {
+    console.log("[LiveMode] Effect triggered - enabled:", enabled);
     if (enabled) {
+      console.log("[LiveMode] Enabled is true, attempting to connect...");
       isIntentionalDisconnect.current = false;
       connect();
     } else {
+      console.log("[LiveMode] Enabled is false, disconnecting...");
       disconnect();
     }
 
     return () => {
+      console.log("[LiveMode] Effect cleanup");
       isIntentionalDisconnect.current = true;
       cleanup();
     };
@@ -322,6 +375,7 @@ export function useLiveMode({
 
   useEffect(() => {
     const handleBeforeUnload = () => {
+      console.log("Before unload");
       isIntentionalDisconnect.current = true;
       cleanup();
     };
@@ -336,6 +390,5 @@ export function useLiveMode({
     ...state,
     connect,
     disconnect,
-    reconnectAttempts: reconnectAttempts.current,
   };
 }

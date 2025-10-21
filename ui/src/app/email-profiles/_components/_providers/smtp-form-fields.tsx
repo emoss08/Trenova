@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { InputField } from "@/components/fields/input-field";
 import { SensitiveInputField } from "@/components/fields/sensitive-input-field";
 import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
@@ -16,7 +11,7 @@ export function SmtpFormFields() {
     <FormSection
       title="SMTP Configuration"
       description="Configure SMTP server settings for direct email delivery"
-      className="border-t pt-4"
+      className="pt-4"
     >
       <FormGroup cols={2}>
         <FormControl>

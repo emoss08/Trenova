@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { dateToUnixTimestamp } from "@/lib/date";
 import { PTOType } from "@/types/worker";
 import { useMemo } from "react";
@@ -20,7 +15,7 @@ export const ptoTypeOptions = [
 
 export function usePTOFilters() {
   const now = useMemo(() => new Date(), []);
-  
+
   const defaultValues = useMemo(
     () => ({
       startDate: dateToUnixTimestamp(

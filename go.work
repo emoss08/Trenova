@@ -1,7 +1,3 @@
 go 1.25.0
 
-use (
-	./services/tms
-	./shared/cdctypes
-	./shared/pulid
-)
+use ./services/tms

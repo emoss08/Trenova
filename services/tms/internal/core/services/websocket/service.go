@@ -1,40 +1,41 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package websocket
 
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
+	"time"
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/infrastructure/cache/redis"
-	"github.com/emoss08/trenova/internal/pkg/appctx"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/gofiber/contrib/websocket"
-	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/internal/infrastructure/redis"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/gin-gonic/gin"
+	"github.com/gorilla/websocket"
+
+	authcontext "github.com/emoss08/trenova/internal/api/context"
+
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	LC     fx.Lifecycle
-	Logger *logger.Logger
-	Redis  *redis.Client
+	LC      fx.Lifecycle
+	Logger  *zap.Logger
+	Redis   *redis.Connection
+	Metrics *observability.MetricsRegistry
 }
 
 type Service struct {
-	l          *zerolog.Logger
-	redis      *redis.Client
-	serverID   string // Unique ID for this server instance
+	l          *zap.Logger
+	redis      *redis.Connection
+	metrics    *observability.MetricsRegistry
+	serverID   string
 	clients    map[*Client]bool
 	userIndex  map[string]map[*Client]bool // userID -> multiple clients for multi-tab support
 	orgIndex   map[string]map[*Client]bool // orgID -> clients for org broadcasts
@@ -43,15 +44,17 @@ type Service struct {
 	unregister chan *Client
 	broadcast  chan []byte
 	mu         sync.RWMutex
+	upgrader   websocket.Upgrader
 }
 
 type Client struct {
-	service *Service
-	conn    *websocket.Conn
-	send    chan []byte
-	userID  pulid.ID
-	orgID   pulid.ID
-	roomID  string
+	service     *Service
+	conn        *websocket.Conn
+	send        chan []byte
+	userID      pulid.ID
+	orgID       pulid.ID
+	roomID      string
+	connectedAt time.Time
 }
 
 type Message struct {
@@ -71,13 +74,10 @@ type BroadcastRequest struct {
 }
 
 func NewService(p ServiceParams) services.WebSocketService {
-	log := p.Logger.With().
-		Str("service", "websocket").
-		Logger()
-
 	s := &Service{
-		l:          &log,
+		l:          p.Logger.Named("service.websocket"),
 		redis:      p.Redis,
+		metrics:    p.Metrics,
 		serverID:   pulid.MustNew("srv_").String(), // Unique server ID
 		clients:    make(map[*Client]bool),
 		userIndex:  make(map[string]map[*Client]bool),
@@ -86,18 +86,26 @@ func NewService(p ServiceParams) services.WebSocketService {
 		register:   make(chan *Client),
 		unregister: make(chan *Client),
 		broadcast:  make(chan []byte, 1000), // Buffered channel for better performance
+		upgrader: websocket.Upgrader{
+			CheckOrigin: func(_ *http.Request) bool {
+				// TODO: Implement proper origin checking in production
+				return true
+			},
+			ReadBufferSize:  1024,
+			WriteBufferSize: 1024,
+		},
 	}
 
 	p.LC.Append(fx.Hook{
 		OnStart: func(context.Context) error {
 			go s.run()
 			go s.ListenToRedis()
-			s.l.Info().Msg("🚀 websocket service started")
+			s.l.Info("🚀 websocket service started")
 			return nil
 		},
 		OnStop: func(context.Context) error {
 			s.disconnectAllClients()
-			s.l.Info().Msg("🔴 websocket service stopped")
+			s.l.Info("🔴 websocket service stopped")
 			return nil
 		},
 	})
@@ -105,7 +113,6 @@ func NewService(p ServiceParams) services.WebSocketService {
 	return s
 }
 
-// Main service loop to handle client registration/unregistration and broadcasts
 func (s *Service) run() {
 	for {
 		select {
@@ -127,32 +134,33 @@ func (s *Service) registerClient(c *Client) {
 
 	s.clients[c] = true
 
-	// Add to user index (support multiple clients per user)
+	s.metrics.RecordWSConnection(c.orgID.String(), c.userID.String())
+
 	if s.userIndex[c.userID.String()] == nil {
 		s.userIndex[c.userID.String()] = make(map[*Client]bool)
 	}
 	s.userIndex[c.userID.String()][c] = true
 
-	// Add to org index
 	if s.orgIndex[c.orgID.String()] == nil {
 		s.orgIndex[c.orgID.String()] = make(map[*Client]bool)
 	}
 	s.orgIndex[c.orgID.String()][c] = true
 
-	// Add to room index if room ID is provided
 	if c.roomID != "" {
 		if s.roomIndex[c.roomID] == nil {
 			s.roomIndex[c.roomID] = make(map[*Client]bool)
 		}
 		s.roomIndex[c.roomID][c] = true
 
-		// Store room membership in Redis
+		s.metrics.RecordWSRoomSize(c.roomID, len(s.roomIndex[c.roomID]))
+
 		if err := s.redis.SAdd(context.Background(), "room:"+c.roomID+":users", c.userID.String()); err != nil {
-			s.l.Error().Err(err).Msg("failed to add user to room in Redis")
+			s.l.Error("failed to add user to room in Redis", zap.Error(err))
 		}
 	}
 
-	// Store in Redis for cross-service coordination
+	s.metrics.UpdateWSRooms(len(s.roomIndex))
+
 	var remoteAddr string
 	if c.conn != nil && c.conn.RemoteAddr() != nil {
 		remoteAddr = c.conn.RemoteAddr().String()
@@ -165,7 +173,7 @@ func (s *Service) registerClient(c *Client) {
 		fmt.Sprintf("user:%s:connections", c.userID.String()),
 		remoteAddr,
 	); err != nil {
-		s.l.Error().Err(err).Msg("failed to add user connection to Redis")
+		s.l.Error("failed to add user connection to Redis", zap.Error(err))
 	}
 
 	if err := s.redis.SAdd(
@@ -173,18 +181,18 @@ func (s *Service) registerClient(c *Client) {
 		fmt.Sprintf("org:%s:clients", c.orgID.String()),
 		c.userID.String(),
 	); err != nil {
-		s.l.Error().Err(err).Msg("failed to add user to org in Redis")
+		s.l.Error("failed to add user to org in Redis", zap.Error(err))
 	}
 
-	s.l.Info().
-		Str("user_id", c.userID.String()).
-		Str("org_id", c.orgID.String()).
-		Str("room_id", c.roomID).
-		Int("user_connections", len(s.userIndex[c.userID.String()])).
-		Msg("client registered")
+	s.l.Info("client registered",
+		zap.String("user_id", c.userID.String()),
+		zap.String("org_id", c.orgID.String()),
+		zap.String("room_id", c.roomID),
+		zap.Int("user_connections", len(s.userIndex[c.userID.String()])),
+	)
 }
 
-func (s *Service) unregisterClient(c *Client) { //nolint:gocognit // this is fine
+func (s *Service) unregisterClient(c *Client) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -194,36 +202,32 @@ func (s *Service) unregisterClient(c *Client) { //nolint:gocognit // this is fin
 
 	delete(s.clients, c)
 
-	// Only close the channel if it's not already closed
+	s.metrics.RecordWSDisconnection(c.orgID.String(), c.connectedAt)
+
 	select {
 	case <-c.send:
-		// Channel already closed
 	default:
 		close(c.send)
 	}
 
-	// Track remaining connections before removing
 	remainingConnections := 0
 
-	// Remove from user index
 	userClients := s.userIndex[c.userID.String()]
 	if userClients != nil {
 		delete(userClients, c)
 		remainingConnections = len(userClients)
 		if remainingConnections == 0 {
 			delete(s.userIndex, c.userID.String())
-			// Only remove from Redis if this was the last connection
 			if err := s.redis.SRem(
 				context.Background(),
 				fmt.Sprintf("org:%s:clients", c.orgID.String()),
 				c.userID.String(),
 			); err != nil {
-				s.l.Error().Err(err).Msg("failed to remove user from org in Redis")
+				s.l.Error("failed to remove user from org in Redis", zap.Error(err))
 			}
 		}
 	}
 
-	// Remove from org index
 	orgClients := s.orgIndex[c.orgID.String()]
 	if orgClients != nil {
 		delete(orgClients, c)
@@ -232,7 +236,6 @@ func (s *Service) unregisterClient(c *Client) { //nolint:gocognit // this is fin
 		}
 	}
 
-	// Remove from room index
 	if c.roomID != "" { //nolint:nestif // this is fine
 		roomClients := s.roomIndex[c.roomID]
 		if roomClients != nil {
@@ -240,58 +243,59 @@ func (s *Service) unregisterClient(c *Client) { //nolint:gocognit // this is fin
 			if len(roomClients) == 0 {
 				delete(s.roomIndex, c.roomID)
 				if err := s.redis.SRem(context.Background(), "room:"+c.roomID+":users", c.userID.String()); err != nil {
-					s.l.Error().Err(err).Msg("failed to remove user from room in Redis")
+					s.l.Error("failed to remove user from room in Redis", zap.Error(err))
 				}
+			} else {
+				s.metrics.RecordWSRoomSize(c.roomID, len(roomClients))
 			}
 		}
 	}
 
-	// Remove connection from Redis
+	s.metrics.UpdateWSRooms(len(s.roomIndex))
+
 	if c.conn != nil && c.conn.RemoteAddr() != nil {
 		if err := s.redis.SRem(
 			context.Background(),
 			fmt.Sprintf("user:%s:connections", c.userID.String()),
 			c.conn.RemoteAddr().String(),
 		); err != nil {
-			s.l.Error().Err(err).Msg("failed to remove user connection from Redis")
+			s.l.Error("failed to remove user connection from Redis", zap.Error(err))
 		}
 	}
 
-	s.l.Info().
-		Str("user_id", c.userID.String()).
-		Str("org_id", c.orgID.String()).
-		Str("room_id", c.roomID).
-		Int("remaining_connections", remainingConnections).
-		Msg("client unregistered")
+	s.l.Info("client unregistered",
+		zap.String("user_id", c.userID.String()),
+		zap.String("org_id", c.orgID.String()),
+		zap.String("room_id", c.roomID),
+		zap.Int("remaining_connections", remainingConnections),
+	)
 }
 
 func (s *Service) handleBroadcast(message []byte) {
 	var msg Message
 	if err := sonic.Unmarshal(message, &msg); err != nil {
-		s.l.Error().Err(err).Msg("failed to unmarshal message")
+		s.l.Error("failed to unmarshal message", zap.Error(err))
 		return
 	}
 
-	// Skip messages from our own server to prevent duplicates
 	if msg.ServerID == s.serverID {
-		s.l.Debug().
-			Str("server_id", msg.ServerID).
-			Str("target", msg.Target).
-			Str("target_id", msg.TargetID).
-			Msg("skipping message from own server")
+		s.l.Debug("skipping message from own server",
+			zap.String("server_id", msg.ServerID),
+			zap.String("target", msg.Target),
+			zap.String("target_id", msg.TargetID),
+		)
 		return
 	}
 
-	// Wrap the content in the format expected by the frontend
 	wrappedForClient := map[string]any{
 		"type":      "notification",
 		"data":      msg.Content,
-		"timestamp": timeutils.NowUnix(),
+		"timestamp": utils.NowUnix(),
 	}
 
 	contentBytes, err := sonic.Marshal(wrappedForClient)
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to marshal content")
+		s.l.Error("failed to marshal content", zap.Error(err))
 		return
 	}
 
@@ -310,13 +314,18 @@ func (s *Service) sendToUser(userID string, message []byte) {
 	clients := s.userIndex[userID]
 	s.mu.RUnlock()
 
+	recipientCount := 0
 	for client := range clients {
 		select {
 		case client.send <- message:
+			recipientCount++
 		default:
-			// Channel full, remove client
 			go s.unregisterClient(client)
 		}
+	}
+
+	if recipientCount > 0 {
+		s.metrics.RecordWSBroadcast("user", recipientCount)
 	}
 }
 
@@ -325,13 +334,18 @@ func (s *Service) sendToOrg(orgID string, message []byte) {
 	clients := s.orgIndex[orgID]
 	s.mu.RUnlock()
 
+	recipientCount := 0
 	for client := range clients {
 		select {
 		case client.send <- message:
+			recipientCount++
 		default:
-			// Channel full, remove client
 			go s.unregisterClient(client)
 		}
+	}
+
+	if recipientCount > 0 {
+		s.metrics.RecordWSBroadcast("org", recipientCount)
 	}
 }
 
@@ -340,145 +354,133 @@ func (s *Service) sendToRoom(roomID string, message []byte) {
 	clients := s.roomIndex[roomID]
 	s.mu.RUnlock()
 
+	recipientCount := 0
 	for client := range clients {
 		select {
 		case client.send <- message:
+			recipientCount++
 		default:
-			// Channel full, remove client
 			go s.unregisterClient(client)
 		}
 	}
+
+	if recipientCount > 0 {
+		s.metrics.RecordWSBroadcast("room", recipientCount)
+	}
 }
 
-// Public methods for external broadcasting
 func (s *Service) BroadcastToUser(userID string, content any) {
-	// The content should already be a notification object
-	// Just wrap it for internal routing
 	msg := Message{
 		Type:     "notification",
 		Target:   "user",
 		TargetID: userID,
-		ServerID: s.serverID, // Add server ID to prevent processing our own messages
+		ServerID: s.serverID,
 		Content:  content,
 	}
 
-	s.l.Info().
-		Str("user_id", userID).
-		Str("server_id", s.serverID).
-		Interface("content", content).
-		Msg("broadcasting to user")
+	s.l.Info("broadcasting to user",
+		zap.String("user_id", userID),
+		zap.String("server_id", s.serverID),
+		zap.Any("content", content),
+	)
 
-	// Check if we have local connections for this user
 	s.mu.RLock()
 	hasLocalConnections := len(s.userIndex[userID]) > 0
 	s.mu.RUnlock()
 
 	if hasLocalConnections {
-		// Send directly to local connections
 		wrappedForClient := map[string]any{
 			"type":      "notification",
 			"data":      content,
-			"timestamp": timeutils.NowUnix(),
+			"timestamp": utils.NowUnix(),
 		}
 
 		clientData, _ := sonic.Marshal(wrappedForClient)
 		s.sendToUser(userID, clientData)
 	}
 
-	// Always publish to Redis for other instances
 	data, err := sonic.Marshal(msg)
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to marshal broadcast message")
+		s.l.Error("failed to marshal broadcast message", zap.Error(err))
 		return
 	}
 
-	if pubErr := s.redis.Publish(context.Background(), "broadcast:user:"+userID, data).Err(); pubErr != nil {
-		s.l.Error().Err(pubErr).Msg("failed to publish to Redis")
+	if pubErr := s.redis.Publish(context.Background(), "broadcast:user:"+userID, data); pubErr != nil {
+		s.l.Error("failed to publish to Redis", zap.Error(pubErr))
 	}
 }
 
 func (s *Service) BroadcastToRoom(roomID string, content any) {
-	// The content should already be a notification object
-	// Just wrap it for internal routing
 	msg := Message{
 		Type:     "notification",
 		Target:   "room",
 		TargetID: roomID,
-		ServerID: s.serverID, // Add server ID to prevent processing our own messages
+		ServerID: s.serverID,
 		Content:  content,
 	}
 
-	// Check if we have local connections for this room
 	s.mu.RLock()
 	hasLocalConnections := len(s.roomIndex[roomID]) > 0
 	s.mu.RUnlock()
 
 	if hasLocalConnections {
-		// Send directly to local connections
 		wrappedForClient := map[string]any{
 			"type":      "notification",
 			"data":      content,
-			"timestamp": timeutils.NowUnix(),
+			"timestamp": utils.NowUnix(),
 		}
 
 		clientData, _ := sonic.Marshal(wrappedForClient)
 		s.sendToRoom(roomID, clientData)
 	}
 
-	// Always publish to Redis for other instances
 	data, err := sonic.Marshal(msg)
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to marshal broadcast message")
+		s.l.Error("failed to marshal broadcast message", zap.Error(err))
 		return
 	}
 
-	if pubErr := s.redis.Publish(context.Background(), "broadcast:room:"+roomID, data).Err(); pubErr != nil {
-		s.l.Error().Err(pubErr).Msg("failed to publish to Redis")
+	if pubErr := s.redis.Publish(context.Background(), "broadcast:room:"+roomID, data); pubErr != nil {
+		s.l.Error("failed to publish to Redis", zap.Error(pubErr))
 	}
 }
 
 func (s *Service) BroadcastToOrg(orgID string, content any) {
-	// The content should already be a notification object
-	// Just wrap it for internal routing
 	msg := Message{
 		Type:     "notification",
 		Target:   "org",
 		TargetID: orgID,
-		ServerID: s.serverID, // Add server ID to prevent processing our own messages
+		ServerID: s.serverID,
 		Content:  content,
 	}
 
-	// Check if we have local connections for this org
 	s.mu.RLock()
 	hasLocalConnections := len(s.orgIndex[orgID]) > 0
 	s.mu.RUnlock()
 
 	if hasLocalConnections {
-		// Send directly to local connections
 		wrappedForClient := map[string]any{
 			"type":      "notification",
 			"data":      content,
-			"timestamp": timeutils.NowUnix(),
+			"timestamp": utils.NowUnix(),
 		}
 
 		clientData, _ := sonic.Marshal(wrappedForClient)
 		s.sendToOrg(orgID, clientData)
 	}
 
-	// Always publish to Redis for other instances
 	data, err := sonic.Marshal(msg)
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to marshal broadcast message")
+		s.l.Error("failed to marshal broadcast message", zap.Error(err))
 		return
 	}
 
-	if pubErr := s.redis.Publish(context.Background(), "broadcast:org:"+orgID, data).Err(); pubErr != nil {
-		s.l.Error().Err(pubErr).Msg("failed to publish to Redis")
+	if pubErr := s.redis.Publish(context.Background(), "broadcast:org:"+orgID, data); pubErr != nil {
+		s.l.Error("failed to publish to Redis", zap.Error(pubErr))
 	}
 }
 
 func (s *Service) ListenToRedis() {
-	// Use PSubscribe for pattern matching on broadcast channels
 	pubsub := s.redis.PSubscribe(context.Background(), "broadcast:*")
 	defer pubsub.Close()
 
@@ -488,85 +490,34 @@ func (s *Service) ListenToRedis() {
 	}
 }
 
-// WebSocket connection handler
-func (s *Service) HandleWebSocket(c *fiber.Ctx) error {
-	// Check if this is a websocket upgrade request
-	if websocket.IsWebSocketUpgrade(c) {
-		reqCtx, err := appctx.WithRequestContext(c)
-		if err != nil {
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to get request context",
-			})
-		}
+func (s *Service) HandleWebSocket(c *gin.Context) {
+	reqCtx := authcontext.GetAuthContext(c)
 
-		// Optional room ID from query param (for joining specific rooms)
-		roomID := c.Query("room", "")
+	roomID := c.Query("room")
 
-		c.Locals("userID", reqCtx.UserID.String())
-		c.Locals("orgID", reqCtx.OrgID.String())
-		c.Locals("roomID", roomID)
+	s.l.Info("upgrading to websocket",
+		zap.String("user_id", reqCtx.UserID.String()),
+		zap.String("org_id", reqCtx.OrganizationID.String()),
+		zap.String("room_id", roomID),
+	)
 
-		s.l.Info().
-			Str("user_id", reqCtx.UserID.String()).
-			Str("org_id", reqCtx.OrgID.String()).
-			Str("room_id", roomID).
-			Msg("upgrading to websocket")
-
-		return c.Next()
-	}
-
-	return fiber.ErrUpgradeRequired
-}
-
-func (s *Service) HandleConnection(conn *websocket.Conn) {
-	// Extract parameters from query string
-	userIDStr, ok := conn.Locals("userID").(string)
-	if !ok {
-		s.l.Error().Msg("userID not found in locals")
-		_ = conn.Close()
-		return
-	}
-
-	orgIDStr, ok := conn.Locals("orgID").(string)
-	if !ok {
-		s.l.Error().Msg("orgID not found in locals")
-		_ = conn.Close()
-		return
-	}
-
-	roomID, _ := conn.Locals("roomID").(string) // Optional
-
-	if userIDStr == "" || orgIDStr == "" {
-		s.l.Error().Msg("missing required parameters: user_id and org_id")
-		_ = conn.Close()
-		return
-	}
-
-	// Parse PULID strings
-	userID, err := pulid.Parse(userIDStr)
+	conn, err := s.upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		s.l.Error().Err(err).Msg("invalid user_id format")
-		_ = conn.Close()
-		return
-	}
-
-	orgID, err := pulid.Parse(orgIDStr)
-	if err != nil {
-		s.l.Error().Err(err).Msg("invalid org_id format")
-		_ = conn.Close()
+		s.l.Error("failed to upgrade connection", zap.Error(err))
+		s.metrics.RecordWSError("upgrade_failed")
 		return
 	}
 
 	client := &Client{
-		service: s,
-		conn:    conn,
-		send:    make(chan []byte, 256),
-		userID:  userID,
-		orgID:   orgID,
-		roomID:  roomID,
+		service:     s,
+		conn:        conn,
+		send:        make(chan []byte, 256),
+		userID:      reqCtx.UserID,
+		orgID:       reqCtx.OrganizationID,
+		roomID:      roomID,
+		connectedAt: time.Now(),
 	}
 
-	// Register client and start pumps
 	s.register <- client
 	go s.writePump(client)
 	s.readPump(client) // This blocks until connection closes
@@ -586,44 +537,44 @@ func (s *Service) readPump(c *Client) {
 				websocket.CloseGoingAway,
 				websocket.CloseAbnormalClosure,
 			) {
-				s.l.Error().Err(err).Msg("websocket error")
+				s.l.Error("websocket error", zap.Error(err))
+				s.metrics.RecordWSError("read_error")
 			}
 			break
 		}
 
+		s.metrics.RecordWSMessage("received", "client_message", len(messageData))
+
 		msg := new(Message)
 		if err = sonic.Unmarshal(messageData, &msg); err != nil {
-			s.l.Error().Err(err).Msg("failed to unmarshal client message")
+			s.l.Error("failed to unmarshal client message", zap.Error(err))
 			continue
 		}
 
-		// Handle ping/pong messages
 		if msg.Type == "ping" {
-			// Respond with pong immediately
+			pingTime := time.Now()
 			pongMsg := map[string]any{
 				"type": "pong",
 				"data": map[string]any{
-					"timestamp": timeutils.NowUnix(),
+					"timestamp": utils.NowUnix(),
 					"received":  msg.Content,
 				},
 			}
 			pongBytes, _ := sonic.Marshal(pongMsg)
 			select {
 			case c.send <- pongBytes:
+				s.metrics.RecordWSPingLatency(c.userID.String(), time.Since(pingTime).Seconds())
 			default:
-				// Channel full, client is not reading
-				s.l.Warn().
-					Str("user_id", c.userID.String()).
-					Msg("failed to send pong, client send channel full")
+				s.l.Warn("failed to send pong, client send channel full",
+					zap.String("user_id", c.userID.String()),
+				)
 			}
 			continue
 		}
 
-		// Set sender info
 		msg.UserID = c.userID.String()
 		msg.OrgID = c.orgID.String()
 
-		// Handle different message types
 		switch msg.Target {
 		case "room":
 			if c.roomID != "" {
@@ -634,7 +585,6 @@ func (s *Service) readPump(c *Client) {
 			msg.TargetID = c.orgID.String()
 			s.BroadcastToOrg(c.orgID.String(), msg.Content)
 		case "user":
-			// Allow users to send direct messages to other users
 			if msg.TargetID != "" {
 				s.BroadcastToUser(msg.TargetID, msg.Content)
 			}
@@ -648,9 +598,13 @@ func (s *Service) writePump(c *Client) {
 	}()
 
 	for message := range c.send {
-		_ = c.conn.WriteMessage(websocket.TextMessage, message)
+		if err := c.conn.WriteMessage(websocket.TextMessage, message); err != nil {
+			s.l.Error("failed to write message", zap.Error(err))
+			s.metrics.RecordWSError("write_error")
+			break
+		}
+		s.metrics.RecordWSMessage("sent", "server_message", len(message))
 	}
-	// Channel closed, send close message
 	_ = c.conn.WriteMessage(websocket.CloseMessage, []byte{})
 }
 
@@ -666,88 +620,90 @@ func (s *Service) disconnectAllClients() {
 	s.userIndex = make(map[string]map[*Client]bool)
 	s.orgIndex = make(map[string]map[*Client]bool)
 	s.roomIndex = make(map[string]map[*Client]bool)
-	s.l.Info().Msg("all clients disconnected")
+	s.l.Info("all clients disconnected")
 }
 
-// HTTP API handlers for server-side broadcasting
-func (s *Service) HandleBroadcast(c *fiber.Ctx) error {
+func (s *Service) HandleBroadcast(c *gin.Context) {
 	var req BroadcastRequest
-	if err := c.BodyParser(&req); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid JSON payload",
 		})
+		return
 	}
 
 	switch req.Type {
 	case "user_broadcast":
 		s.BroadcastToUser(req.TargetID, req.Message)
-		return c.JSON(fiber.Map{
+		c.JSON(http.StatusOK, gin.H{
 			"status":  "success",
 			"message": fmt.Sprintf("Message sent to user %s", req.TargetID),
 		})
 
 	case "org_broadcast":
 		s.BroadcastToOrg(req.TargetID, req.Message)
-		return c.JSON(fiber.Map{
+		c.JSON(http.StatusOK, gin.H{
 			"status":  "success",
 			"message": fmt.Sprintf("Message sent to organization %s", req.TargetID),
 		})
 
 	case "room_broadcast":
 		s.BroadcastToRoom(req.TargetID, req.Message)
-		return c.JSON(fiber.Map{
+		c.JSON(http.StatusOK, gin.H{
 			"status":  "success",
 			"message": fmt.Sprintf("Message sent to room %s", req.TargetID),
 		})
 
 	default:
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "Invalid broadcast type. Use 'user_broadcast', 'org_broadcast', or 'room_broadcast'",
 		})
 	}
 }
 
-// Get organization members
-func (s *Service) HandleOrgMembers(c *fiber.Ctx) error {
+func (s *Service) GetOrgMembers(c *gin.Context) {
 	orgID := c.Query("org_id")
 	if orgID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "org_id query parameter is required",
 		})
+		return
 	}
 
 	members, err := s.redis.SMembers(context.Background(), fmt.Sprintf("org:%s:clients", orgID))
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to get organization members")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		s.l.Error("failed to get organization members", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to fetch organization members",
 		})
+		return
 	}
 
-	return c.JSON(fiber.Map{
+	c.JSON(http.StatusOK, gin.H{
 		"org_id":  orgID,
 		"members": members,
 	})
 }
 
-// Get room members
-func (s *Service) HandleRoomMembers(c *fiber.Ctx) error {
+func (s *Service) GetRoomMembers(c *gin.Context) {
 	roomID := c.Query("room_id")
 	if roomID == "" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"error": "room_id query parameter is required",
 		})
+		return
 	}
 
 	members, err := s.redis.SMembers(context.Background(), "room:"+roomID+":users")
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to get room members")
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+		s.l.Error("failed to get room members", zap.Error(err))
+		c.JSON(http.StatusInternalServerError, gin.H{
 			"error": "Failed to fetch room members",
 		})
+		return
 	}
 
-	return c.JSON(fiber.Map{
+	c.JSON(http.StatusOK, gin.H{
 		"room_id": roomID,
 		"members": members,
 	})

@@ -1,45 +1,40 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
 type ListEquipmentTypeRequest struct {
-	Filter  *ports.LimitOffsetQueryOptions
-	Classes []string `query:"classes"`
+	Filter  *pagination.QueryOptions `json:"filter"  form:"filter"`
+	Classes []string                 `json:"classes" form:"classes"`
 }
 
-type GetEquipmentTypeByIDOptions struct {
-	ID     pulid.ID
-	OrgID  pulid.ID
-	BuID   pulid.ID
-	UserID pulid.ID
+type GetEquipmentTypeByIDRequest struct {
+	ID     pulid.ID `json:"id"     form:"id"`
+	OrgID  pulid.ID `json:"orgId"  form:"orgId"`
+	BuID   pulid.ID `json:"buId"   form:"buId"`
+	UserID pulid.ID `json:"userId" form:"userId"`
 }
 
 type EquipmentTypeRepository interface {
 	List(
 		ctx context.Context,
-		opts *ListEquipmentTypeRequest,
-	) (*ports.ListResult[*equipmenttype.EquipmentType], error)
+		req *ListEquipmentTypeRequest,
+	) (*pagination.ListResult[*equipmenttype.EquipmentType], error)
 	GetByID(
 		ctx context.Context,
-		opts GetEquipmentTypeByIDOptions,
+		req GetEquipmentTypeByIDRequest,
 	) (*equipmenttype.EquipmentType, error)
 	Create(
 		ctx context.Context,
-		et *equipmenttype.EquipmentType,
+		entity *equipmenttype.EquipmentType,
 	) (*equipmenttype.EquipmentType, error)
 	Update(
 		ctx context.Context,
-		et *equipmenttype.EquipmentType,
+		entity *equipmenttype.EquipmentType,
 	) (*equipmenttype.EquipmentType, error)
 }

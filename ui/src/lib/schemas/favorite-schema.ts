@@ -1,9 +1,27 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import * as z from "zod/v4";
+import {
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
+} from "./helpers";
+
+export const favoriteSchema = z.object({
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+  organizationId: optionalStringSchema,
+  businessUnitId: optionalStringSchema,
+
+  userId: optionalStringSchema,
+  pageUrl: z.string().url({ error: "Invalid URL format" }),
+  pageTitle: z.string().min(1, { error: "Page title is required" }),
+});
 
 export const createFavoriteSchema = z.object({
   pageUrl: z
@@ -28,8 +46,6 @@ export const createFavoriteSchema = z.object({
     .optional(),
 });
 
-export type CreateFavoriteSchema = z.infer<typeof createFavoriteSchema>;
-
 export const updateFavoriteSchema = z.object({
   pageTitle: z
     .string()
@@ -48,8 +64,6 @@ export const updateFavoriteSchema = z.object({
     .max(1000, { error: "Description must be 1000 characters or less" })
     .optional(),
 });
-
-export type UpdateFavoriteSchema = z.infer<typeof updateFavoriteSchema>;
 
 export const toggleFavoriteSchema = z.object({
   pageUrl: z
@@ -75,3 +89,6 @@ export const toggleFavoriteSchema = z.object({
 });
 
 export type ToggleFavoriteSchema = z.infer<typeof toggleFavoriteSchema>;
+export type FavoriteSchema = z.infer<typeof favoriteSchema>;
+export type UpdateFavoriteSchema = z.infer<typeof updateFavoriteSchema>;
+export type CreateFavoriteSchema = z.infer<typeof createFavoriteSchema>;

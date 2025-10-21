@@ -1,22 +1,16 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package shipment
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/domain/businessunit"
-	"github.com/emoss08/trenova/internal/core/domain/organization"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/rotisserie/eris"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
@@ -42,25 +36,20 @@ type AdditionalCharge struct {
 	UpdatedAt           int64                    `json:"updatedAt"           bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit      *businessunit.BusinessUnit           `json:"-"                           bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization      *organization.Organization           `json:"-"                           bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit      *tenant.BusinessUnit                 `json:"-"                           bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization      *tenant.Organization                 `json:"-"                           bun:"rel:belongs-to,join:organization_id=id"`
 	Shipment          *Shipment                            `json:"-"                           bun:"rel:belongs-to,join:shipment_id=id"`
 	AccessorialCharge *accessorialcharge.AccessorialCharge `json:"accessorialCharge,omitempty" bun:"rel:belongs-to,join:accessorial_charge_id=id"`
 }
 
-func (a *AdditionalCharge) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(ctx, a,
-		// * Ensure code is populated and is the proper length
+func (a *AdditionalCharge) Validate(multiErr *errortypes.MultiError) {
+	err := validation.ValidateStruct(a,
 		validation.Field(&a.AccessorialChargeID,
 			validation.Required.Error("Accessorial charge is required"),
 		),
-
-		// * Ensure unit is greater than or equal to 1
 		validation.Field(&a.Unit,
 			validation.Min(1).Error("Unit must be greater than or equal to 1"),
 		),
-
-		// * Ensure method is populated and is valid
 		validation.Field(&a.Method,
 			validation.Required.Error("Method is required"),
 			validation.In(
@@ -69,21 +58,18 @@ func (a *AdditionalCharge) Validate(ctx context.Context, multiErr *errors.MultiE
 				accessorialcharge.MethodPercentage,
 			).Error("Invalid method"),
 		),
-
-		// * Ensure amount is populated
 		validation.Field(&a.Amount,
 			validation.Required.Error("Amount is required"),
 		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
-		if eris.As(err, &validationErrs) {
-			errors.FromOzzoErrors(validationErrs, multiErr)
+		if errors.As(err, &validationErrs) {
+			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
 
-// Pagination Configuration
 func (a *AdditionalCharge) GetID() string {
 	return a.ID.String()
 }
@@ -93,7 +79,7 @@ func (a *AdditionalCharge) GetTableName() string {
 }
 
 func (a *AdditionalCharge) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 
 	if _, ok := query.(*bun.InsertQuery); ok {
 		if a.ID.IsNil() {

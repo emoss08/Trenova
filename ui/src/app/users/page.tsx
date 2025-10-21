@@ -1,9 +1,4 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import { QueryLazyComponent } from "@/components/error-boundary";
+import { DataTableLazyComponent } from "@/components/error-boundary";
 import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
 import { lazy, memo } from "react";
@@ -13,12 +8,12 @@ const UserTable = lazy(() => import("./_components/user-table"));
 export function Users() {
   return (
     <FormSaveProvider>
-      <div className="space-y-6 p-6">
+      <div className="flex flex-col gap-y-3">
         <MetaTags title="Users" description="Users" />
         <Header />
-        <QueryLazyComponent queryKey={["user-list", "role-list"]}>
+        <DataTableLazyComponent>
           <UserTable />
-        </QueryLazyComponent>
+        </DataTableLazyComponent>
       </div>
     </FormSaveProvider>
   );

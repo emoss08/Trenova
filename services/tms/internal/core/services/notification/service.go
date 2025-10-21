@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package notification
 
 import (
@@ -10,37 +5,33 @@ import (
 	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/sourcegraph/conc"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	Logger                 *logger.Logger
+	Logger                 *zap.Logger
 	NotificationRepository repositories.NotificationRepository
 	WebSocketService       services.WebSocketService
 }
 
 type Service struct {
-	l                      *zerolog.Logger
+	l                      *zap.Logger
 	notificationRepository repositories.NotificationRepository
 	webSocketService       services.WebSocketService
 }
 
 func NewService(p ServiceParams) services.NotificationService {
-	log := p.Logger.With().
-		Str("service", "notification").
-		Logger()
-
 	return &Service{
-		l:                      &log,
+		l:                      p.Logger.Named("service.notification"),
 		notificationRepository: p.NotificationRepository,
 		webSocketService:       p.WebSocketService,
 	}
@@ -50,13 +41,12 @@ func (s *Service) SendNotification(
 	ctx context.Context,
 	req *services.SendNotificationRequest,
 ) error {
-	s.l.Info().
-		Str("event_type", string(req.EventType)).
-		Str("priority", string(req.Priority)).
-		Str("channel", string(req.Targeting.Channel)).
-		Msg("sending notification")
+	s.l.Info("sending notification",
+		zap.String("event_type", string(req.EventType)),
+		zap.String("priority", string(req.Priority)),
+		zap.String("channel", string(req.Targeting.Channel)),
+	)
 
-	// Create notification entity
 	notif := &notification.Notification{
 		EventType:       req.EventType,
 		Priority:        req.Priority,
@@ -64,7 +54,6 @@ func (s *Service) SendNotification(
 		OrganizationID:  req.Targeting.OrganizationID,
 		BusinessUnitID:  req.Targeting.BusinessUnitID,
 		TargetUserID:    req.Targeting.TargetUserID,
-		TargetRoleID:    req.Targeting.TargetRoleID,
 		Title:           req.Title,
 		Message:         req.Message,
 		Data:            req.Data,
@@ -78,29 +67,25 @@ func (s *Service) SendNotification(
 		DeliveryStatus:  notification.DeliveryStatusPending,
 	}
 
-	// Persist notification
 	if err := s.notificationRepository.Create(ctx, notif); err != nil {
-		s.l.Error().Err(err).Msg("failed to create notification")
+		s.l.Error("failed to create notification", zap.Error(err))
 		return fmt.Errorf("failed to create notification: %w", err)
 	}
 
-	// Mark as delivered before sending
-	now := timeutils.NowUnix()
+	s.webSocketService.BroadcastToUser(notif.TargetUserID.String(), notif)
+
+	now := utils.NowUnix()
 	notif.DeliveryStatus = notification.DeliveryStatusDelivered
 	notif.DeliveredAt = &now
 
-	// Update in database first
 	if err := s.notificationRepository.Update(ctx, notif); err != nil {
-		s.l.Error().Err(err).Msg("failed to update notification delivery status")
-		return fmt.Errorf("failed to update notification delivery status: %w", err)
+		s.l.Error("failed to update notification delivery status", zap.Error(err))
+		// ! Don't return error here as the notification was already sent
 	}
 
-	// Send via WebSocket with delivered status
-	s.webSocketService.BroadcastToUser(notif.TargetUserID.String(), notif)
-
-	s.l.Info().
-		Str("notification_id", notif.ID.String()).
-		Msg("notification sent successfully")
+	s.l.Info("notification sent successfully",
+		zap.String("notificationID", notif.ID.String()),
+	)
 
 	return nil
 }
@@ -109,20 +94,18 @@ func (s *Service) SendJobCompletionNotification(
 	ctx context.Context,
 	req *services.JobCompletionNotificationRequest,
 ) error {
-	s.l.Info().
-		Str("job_id", req.JobID).
-		Str("job_type", req.JobType).
-		Bool("success", req.Success).
-		Msg("sending job completion notification")
+	s.l.Info("sending job completion notification",
+		zap.String("job_id", req.JobID),
+		zap.String("job_type", req.JobType),
+		zap.Bool("success", req.Success),
+	)
 
-	// Use registry to get notification details
 	eventType := GetEventType(req.JobType)
 	priority := GetPriority(req.JobType, req.Success)
 	title := GetTitle(req.JobType, req.Success)
 	message := GetMessage(req.Success, req.JobType, req.JobID, req.Result)
 	tags := GetTags(req.JobType)
 
-	// Create notification request
 	notifReq := &services.SendNotificationRequest{
 		EventType: eventType,
 		Priority:  priority,
@@ -149,9 +132,9 @@ func (s *Service) SendConfigurationCopiedNotification(
 	ctx context.Context,
 	req *services.ConfigurationCopiedNotificationRequest,
 ) error {
-	s.l.Info().
-		Interface("req", req).
-		Msg("sending configuration copied notification")
+	s.l.Info("sending configuration copied notification",
+		zap.Any("req", req),
+	)
 
 	notifReq := &services.SendNotificationRequest{
 		EventType: notification.EventConfigurationCopied,
@@ -183,9 +166,9 @@ func (s *Service) SendOwnershipTransferNotification(
 	ctx context.Context,
 	req *services.OwnershipTransferNotificationRequest,
 ) error {
-	s.l.Debug().
-		Interface("req", req).
-		Msg("sending configuration copied notification")
+	s.l.Debug("sending configuration copied notification",
+		zap.Any("req", req),
+	)
 
 	notifReq := &services.SendNotificationRequest{
 		EventType: notification.EventShipmentOwnershipTransferred,
@@ -215,9 +198,9 @@ func (s *Service) SendShipmentHoldReleaseNotification(
 	ctx context.Context,
 	req *services.ShipmentHoldReleaseNotificationRequest,
 ) error {
-	s.l.Debug().
-		Interface("req", req).
-		Msg("sending shipment hold release notification")
+	s.l.Debug("sending shipment hold release notification",
+		zap.Any("req", req),
+	)
 
 	notifReq := &services.SendNotificationRequest{
 		EventType: notification.EventShipmentHoldRelease,
@@ -247,9 +230,11 @@ func (s *Service) SendCommentNotification(
 	ctx context.Context,
 	req *services.ShipmentCommentNotificationRequest,
 ) error {
-	s.l.Info().
-		Interface("req", req).
-		Msg("sending comment notification")
+	s.l.Info("sending comment notification",
+		zap.Any("req", req),
+	)
+
+	title := s.buildNotificationTitle(req)
 
 	notifReq := &services.SendNotificationRequest{
 		EventType: notification.EventShipmentComment,
@@ -260,7 +245,7 @@ func (s *Service) SendCommentNotification(
 			BusinessUnitID: &req.BusinessUnitID,
 			TargetUserID:   &req.MentionedUserID,
 		},
-		Title: "You've been mentioned in a comment",
+		Title: title,
 		Message: fmt.Sprintf(
 			"%s mentioned you in a comment",
 			req.OwnerName,
@@ -268,10 +253,23 @@ func (s *Service) SendCommentNotification(
 		Data: map[string]any{
 			"commentId": req.CommentID.String(),
 			"ownerName": req.OwnerName,
+			"ownerId":   req.OwnerID.String(),
 		},
 	}
 
 	return s.SendNotification(ctx, notifReq)
+}
+
+func (s *Service) buildNotificationTitle(
+	req *services.ShipmentCommentNotificationRequest,
+) (title string) {
+	if req.OwnerID == req.MentionedUserID {
+		title = "You mentioned yourself in a comment"
+	} else {
+		title = fmt.Sprintf("%s mentioned you in a comment", req.OwnerName)
+	}
+
+	return title
 }
 
 func (s *Service) SendBulkCommentNotifications(
@@ -282,44 +280,55 @@ func (s *Service) SendBulkCommentNotifications(
 		return nil
 	}
 
-	s.l.Info().
-		Int("count", len(reqs)).
-		Msg("sending bulk comment notifications")
+	s.l.Info("sending bulk comment notifications",
+		zap.Int("count", len(reqs)),
+	)
 
-	// Send notifications concurrently for better performance
-	errChan := make(chan error, len(reqs))
+	var wg conc.WaitGroup
+	var errors []error
+	errorChan := make(chan error, len(reqs))
+
 	for _, req := range reqs {
-		go func(r *services.ShipmentCommentNotificationRequest) {
-			errChan <- s.SendCommentNotification(ctx, r)
-		}(req)
+		wg.Go(func() {
+			if err := s.SendCommentNotification(ctx, req); err != nil {
+				errorChan <- err
+			}
+		})
 	}
 
-	// Collect errors
-	var firstErr error
-	for range len(reqs) {
-		if err := <-errChan; err != nil && firstErr == nil {
-			firstErr = err
+	wg.Wait()
+	close(errorChan)
+
+	for err := range errorChan {
+		if err != nil {
+			errors = append(errors, err)
 		}
 	}
 
-	if firstErr != nil {
-		s.l.Error().
-			Err(firstErr).
-			Int("totalRequests", len(reqs)).
-			Msg("failed to send some comment notifications")
+	if len(errors) > 0 {
+		s.l.Error("failed to send some comment notifications",
+			zap.Error(errors[0]),
+			zap.Int("totalRequests", len(reqs)),
+			zap.Int("failedRequests", len(errors)),
+		)
+		return fmt.Errorf("failed to send %d out of %d notifications", len(errors), len(reqs))
 	}
 
-	return firstErr
+	s.l.Info("all bulk comment notifications sent successfully",
+		zap.Int("count", len(reqs)),
+	)
+
+	return nil
 }
 
 func (s *Service) MarkAsRead(ctx context.Context, req repositories.MarkAsReadRequest) error {
-	s.l.Info().
-		Str("notification_id", req.NotificationID.String()).
-		Str("user_id", req.UserID.String()).
-		Msg("marking notification as read")
+	s.l.Info("marking notification as read",
+		zap.String("notification_id", req.NotificationID.String()),
+		zap.String("user_id", req.UserID.String()),
+	)
 
 	if err := s.notificationRepository.MarkAsRead(ctx, req); err != nil {
-		s.l.Error().Err(err).Msg("failed to mark notification as read")
+		s.l.Error("failed to mark notification as read", zap.Error(err))
 		return fmt.Errorf("failed to mark notification as read: %w", err)
 	}
 
@@ -330,13 +339,13 @@ func (s *Service) MarkAsDismissed(
 	ctx context.Context,
 	req repositories.MarkAsDismissedRequest,
 ) error {
-	s.l.Info().
-		Str("notification_id", req.NotificationID.String()).
-		Str("user_id", req.UserID.String()).
-		Msg("marking notification as dismissed")
+	s.l.Info("marking notification as dismissed",
+		zap.String("notification_id", req.NotificationID.String()),
+		zap.String("user_id", req.UserID.String()),
+	)
 
 	if err := s.notificationRepository.MarkAsDismissed(ctx, req); err != nil {
-		s.l.Error().Err(err).Msg("failed to mark notification as dismissed")
+		s.l.Error("failed to mark notification as dismissed", zap.Error(err))
 		return fmt.Errorf("failed to mark notification as dismissed: %w", err)
 	}
 
@@ -346,14 +355,8 @@ func (s *Service) MarkAsDismissed(
 func (s *Service) GetUserNotifications(
 	ctx context.Context,
 	req *repositories.GetUserNotificationsRequest,
-) (*ports.ListResult[*notification.Notification], error) {
-	notifications, err := s.notificationRepository.GetUserNotifications(ctx, req)
-	if err != nil {
-		s.l.Error().Err(err).Msg("failed to get user notifications")
-		return nil, fmt.Errorf("failed to get user notifications: %w", err)
-	}
-
-	return notifications, nil
+) (*pagination.ListResult[*notification.Notification], error) {
+	return s.notificationRepository.GetUserNotifications(ctx, req)
 }
 
 func (s *Service) GetUnreadCount(
@@ -361,14 +364,14 @@ func (s *Service) GetUnreadCount(
 	userID pulid.ID,
 	organizationID pulid.ID,
 ) (int, error) {
-	s.l.Info().
-		Str("user_id", userID.String()).
-		Str("organization_id", organizationID.String()).
-		Msg("getting unread notification count")
+	s.l.Info("getting unread notification count",
+		zap.String("user_id", userID.String()),
+		zap.String("organization_id", organizationID.String()),
+	)
 
 	count, err := s.notificationRepository.GetUnreadCount(ctx, userID, organizationID)
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to get unread notification count")
+		s.l.Error("failed to get unread notification count", zap.Error(err))
 		return 0, fmt.Errorf("failed to get unread notification count: %w", err)
 	}
 
@@ -379,14 +382,14 @@ func (s *Service) ReadAllNotifications(
 	ctx context.Context,
 	req repositories.ReadAllNotificationsRequest,
 ) error {
-	s.l.Info().
-		Str("user_id", req.UserID.String()).
-		Str("organization_id", req.OrgID.String()).
-		Str("business_unit_id", req.BuID.String()).
-		Msg("reading all notifications")
+	s.l.Info("reading all notifications",
+		zap.String("user_id", req.UserID.String()),
+		zap.String("organization_id", req.OrgID.String()),
+		zap.String("business_unit_id", req.BuID.String()),
+	)
 
 	if err := s.notificationRepository.ReadAllNotifications(ctx, req); err != nil {
-		s.l.Error().Err(err).Msg("failed to read all notifications")
+		s.l.Error("failed to read all notifications", zap.Error(err))
 		return fmt.Errorf("failed to read all notifications: %w", err)
 	}
 

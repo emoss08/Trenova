@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package trailer
 
 import (
@@ -10,175 +5,79 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/internal/pkg/validator"
-	"github.com/emoss08/trenova/internal/pkg/validator/trailervalidator"
-	"github.com/emoss08/trenova/pkg/types"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/rotisserie/eris"
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/pkg/validator"
+	"github.com/emoss08/trenova/pkg/validator/trailervalidator"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	Logger       *logger.Logger
+	Logger       *zap.Logger
 	Repo         repositories.TrailerRepository
-	PermService  services.PermissionService
 	AuditService services.AuditService
 	Validator    *trailervalidator.Validator
 }
 
 type Service struct {
-	l    *zerolog.Logger
+	l    *zap.Logger
 	repo repositories.TrailerRepository
-	ps   services.PermissionService
 	as   services.AuditService
 	v    *trailervalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().
-		Str("service", "trailer").
-		Logger()
-
 	return &Service{
-		l:    &log,
+		l:    p.Logger.Named("service.trailer"),
 		repo: p.Repo,
-		ps:   p.PermService,
 		as:   p.AuditService,
 		v:    p.Validator,
 	}
 }
 
-func (s *Service) SelectOptions(
-	ctx context.Context,
-	opts *repositories.ListTrailerOptions,
-) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	options := make([]*types.SelectOption, 0, len(result.Items))
-	for _, t := range result.Items {
-		options = append(options, &types.SelectOption{
-			Value: t.GetID(),
-			Label: t.Code,
-		})
-	}
-
-	return options, nil
-}
-
 func (s *Service) List(
 	ctx context.Context,
-	opts *repositories.ListTrailerOptions,
-) (*ports.ListResult[*trailer.Trailer], error) {
-	log := s.l.With().Str("operation", "List").Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         opts.Filter.TenantOpts.UserID,
-				Resource:       permission.ResourceTrailer,
-				Action:         permission.ActionRead,
-				BusinessUnitID: opts.Filter.TenantOpts.BuID,
-				OrganizationID: opts.Filter.TenantOpts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check permissions")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read trailers")
-	}
-
-	return s.repo.List(ctx, opts)
+	req *repositories.ListTrailerRequest,
+) (*pagination.ListResult[*trailer.Trailer], error) {
+	return s.repo.List(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	opts *repositories.GetTrailerByIDOptions,
+	req *repositories.GetTrailerByIDRequest,
 ) (*trailer.Trailer, error) {
-	log := s.l.With().
-		Str("operation", "GetByID").
-		Str("trailerID", opts.ID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         opts.UserID,
-				Resource:       permission.ResourceTrailer,
-				Action:         permission.ActionRead,
-				BusinessUnitID: opts.BuID,
-				OrganizationID: opts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this trailer")
-	}
-
-	return s.repo.GetByID(ctx, opts)
+	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) Create(
 	ctx context.Context,
-	tr *trailer.Trailer,
+	entity *trailer.Trailer,
 	userID pulid.ID,
 ) (*trailer.Trailer, error) {
-	log := s.l.With().
-		Str("operation", "Create").
-		Str("code", tr.Code).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceTrailer,
-				Action:         permission.ActionCreate,
-				BusinessUnitID: tr.BusinessUnitID,
-				OrganizationID: tr.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Create"),
+		zap.String("buID", entity.BusinessUnitID.String()),
+		zap.String("orgID", entity.OrganizationID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a trailer")
-	}
 
 	valCtx := &validator.ValidationContext{
 		IsCreate: true,
 		IsUpdate: false,
 	}
 
-	if err := s.v.Validate(ctx, valCtx, tr); err != nil {
+	if err := s.v.Validate(ctx, valCtx, entity); err != nil {
 		return nil, err
 	}
 
-	createdEntity, err := s.repo.Create(ctx, tr)
+	createdEntity, err := s.repo.Create(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
@@ -187,7 +86,7 @@ func (s *Service) Create(
 		&services.LogActionParams{
 			Resource:       permission.ResourceTrailer,
 			ResourceID:     createdEntity.GetID(),
-			Action:         permission.ActionCreate,
+			Operation:      permission.OpCreate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(createdEntity),
 			OrganizationID: createdEntity.OrganizationID,
@@ -196,7 +95,7 @@ func (s *Service) Create(
 		audit.WithComment("Trailer created"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log trailer creation")
+		log.Error("failed to log trailer creation", zap.Error(err))
 	}
 
 	return createdEntity, nil
@@ -204,66 +103,45 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	t *trailer.Trailer,
+	entity *trailer.Trailer,
 	userID pulid.ID,
 ) (*trailer.Trailer, error) {
-	log := s.l.With().
-		Str("operation", "Update").
-		Str("code", t.Code).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceTrailer,
-				Action:         permission.ActionUpdate,
-				BusinessUnitID: t.BusinessUnitID,
-				OrganizationID: t.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Update"),
+		zap.String("buID", entity.BusinessUnitID.String()),
+		zap.String("orgID", entity.OrganizationID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to update this trailer",
-		)
-	}
 
 	valCtx := &validator.ValidationContext{
-		IsUpdate: true,
 		IsCreate: false,
+		IsUpdate: true,
 	}
 
-	if err := s.v.Validate(ctx, valCtx, t); err != nil {
+	if err := s.v.Validate(ctx, valCtx, entity); err != nil {
 		return nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetTrailerByIDOptions{
-		ID:    t.ID,
-		OrgID: t.OrganizationID,
-		BuID:  t.BusinessUnitID,
+	original, err := s.repo.GetByID(ctx, &repositories.GetTrailerByIDRequest{
+		ID:    entity.ID,
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	updatedEntity, err := s.repo.Update(ctx, t)
+	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update trailer")
+		log.Error("failed to update trailer", zap.Error(err))
 		return nil, err
 	}
 
-	// Log the update if the insert was successful
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceTrailer,
 			ResourceID:     updatedEntity.GetID(),
-			Action:         permission.ActionUpdate,
+			Operation:      permission.OpUpdate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(updatedEntity),
 			PreviousState:  jsonutils.MustToJSON(original),
@@ -274,7 +152,7 @@ func (s *Service) Update(
 		audit.WithDiff(original, updatedEntity),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log trailer update")
+		log.Error("failed to log trailer update", zap.Error(err))
 	}
 
 	return updatedEntity, nil

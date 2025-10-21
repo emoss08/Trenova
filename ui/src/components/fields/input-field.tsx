@@ -1,9 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import { useCharacterLimit } from "@/hooks/use-character-limit";
 import { cn } from "@/lib/utils";
 import { InputFieldProps } from "@/types/fields";
 import { faPencil } from "@fortawesome/pro-regular-svg-icons";
@@ -37,19 +31,13 @@ export function InputField<T extends FieldValues>({
   "aria-describedby": ariaDescribedBy,
   readOnly,
   maxLength,
+  warning,
   ...props
-}: InputFieldProps<T>) {
+}: InputFieldProps<T> & { warning?: string }) {
   const inputId = `input-${name}`;
   const descriptionId = `${inputId}-description`;
   const errorId = `${inputId}-error`;
 
-  // * Always call the hook to satisfy React's rules of hooks
-  const characterLimit = useCharacterLimit({
-    maxLength: maxLength || Infinity,
-    initialValue: "",
-  });
-
-  // * Determine if we should show character limit UI
   const showCharacterLimit = maxLength !== undefined;
 
   return (
@@ -58,13 +46,16 @@ export function InputField<T extends FieldValues>({
       control={control}
       rules={rules}
       render={({ field, fieldState }) => {
-        // * Update character count when field value changes
-        if (showCharacterLimit && field.value !== characterLimit.value) {
-          const event = {
-            target: { value: field.value || "" },
-          } as React.ChangeEvent<HTMLInputElement>;
-          characterLimit.handleChange(event);
-        }
+        const characterCount = (field.value || "").length;
+
+        const handleChange = (
+          e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+        ) => {
+          const newValue = e.target.value;
+          if (!maxLength || newValue.length <= maxLength) {
+            field.onChange(newValue);
+          }
+        };
 
         return (
           <FieldWrapper
@@ -72,6 +63,7 @@ export function InputField<T extends FieldValues>({
             description={description}
             required={!!rules?.required}
             error={fieldState.error?.message}
+            warning={warning}
             className={className}
           >
             <Input
@@ -85,8 +77,7 @@ export function InputField<T extends FieldValues>({
               value={field.value ?? ""}
               onChange={(e) => {
                 if (showCharacterLimit) {
-                  characterLimit.handleChange(e);
-                  field.onChange(e.target.value);
+                  handleChange(e);
                 } else {
                   field.onChange(e);
                 }
@@ -96,6 +87,7 @@ export function InputField<T extends FieldValues>({
               aria-label={ariaLabel || label}
               className={inputClassProps}
               isInvalid={fieldState.invalid}
+              hasWarning={!!warning && !fieldState.invalid}
               icon={icon}
               rightElement={
                 showCharacterLimit ? (
@@ -105,7 +97,7 @@ export function InputField<T extends FieldValues>({
                     aria-live="polite"
                     role="status"
                   >
-                    {characterLimit.characterCount}/{maxLength}
+                    {characterCount}/{maxLength}
                   </div>
                 ) : rightElement ? (
                   rightElement
@@ -182,7 +174,7 @@ export function DoubleClickInput<T extends Record<string, any>>({
             "outline-none h-5 border-muted-foreground/20 flex w-full rounded-md border px-2 py-1 text-sm",
             "placeholder:text-muted-foreground",
             "disabled:cursor-not-allowed disabled:opacity-50",
-            "focus-visible:border-blue-600 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-blue-600/20",
+            "focus-visible:border-foreground focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-foreground/20",
             "transition-[border-color,box-shadow] duration-200 ease-in-out",
             inputClassName,
           )}

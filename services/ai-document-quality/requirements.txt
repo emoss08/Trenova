@@ -1,0 +1,67 @@
+# Document Quality Assessment - Requirements
+# Python 3.11+
+
+# Core ML/DL
+torch>=2.1.0
+torchvision>=0.16.0
+numpy>=1.24.0
+
+# Computer Vision
+opencv-python>=4.8.0
+Pillow>=10.0.0
+
+# Data Processing
+pandas>=2.0.0
+scikit-learn>=1.3.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+
+# Model Training & Tracking
+mlflow>=2.8.0
+tensorboard>=2.14.0
+
+# Progress Bars
+tqdm>=4.66.0
+
+# Configuration
+PyYAML>=6.0
+
+# Image Augmentation (optional but recommended)
+albumentations>=1.3.0
+
+# Web Framework (for API)
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+python-multipart>=0.0.6
+
+# Interactive Demos
+gradio>=4.0.0
+streamlit>=1.28.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0
+pytest-asyncio>=0.21.0
+httpx>=0.25.0
+
+# Utilities
+python-dotenv>=1.0.0
+
+# Development
+black>=23.0.0
+flake8>=6.1.0
+mypy>=1.5.0
+
+# Documentation
+jupyter>=1.0.0
+ipykernel>=6.25.0
+ipywidgets>=8.1.0
+
+# Distributed Training (optional)
+# accelerate>=0.24.0
+
+# Model Optimization (optional)
+# onnx>=1.15.0
+# onnxruntime>=1.16.0

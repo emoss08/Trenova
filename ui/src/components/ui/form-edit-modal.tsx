@@ -1,9 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-"use no memo";
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
@@ -25,11 +19,6 @@ import { cn } from "@/lib/utils";
 import { useUser } from "@/stores/user-store";
 import { type EditTableSheetProps } from "@/types/data-table";
 import { type API_ENDPOINTS } from "@/types/server";
-import {
-  faChevronDown,
-  faChevronUp,
-  faX,
-} from "@fortawesome/pro-solid-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
 import React, { useCallback, useEffect, useRef, useTransition } from "react";
@@ -40,17 +29,12 @@ import {
 } from "react-hook-form";
 import { toast } from "sonner";
 import { useDataTable } from "../data-table/data-table-provider";
-import { Kbd } from "../kbd";
+import { ChevronDownIcon, ChevronUpIcon, XIcon } from "./animate-icons";
 import { ComponentLoader } from "./component-loader";
 import { Form } from "./form";
-import { Icon } from "./icons";
+import { Kbd } from "./kbd";
 import { Separator } from "./separator";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 type FormEditModalProps<T extends FieldValues> = EditTableSheetProps<T> & {
   url: API_ENDPOINTS;
@@ -78,9 +62,8 @@ export function FormEditModal<T extends FieldValues>({
   const { isPopout, closePopout } = usePopoutWindow();
   const [isPending, startTransition] = useTransition();
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser, {
-    // Use replace to avoid history stacking and reduce throttling
     history: "replace",
-    throttleMs: 50, // Minimum allowed value
+    throttleMs: 50,
   });
   const queryClient = useQueryClient();
   const user = useUser();
@@ -118,7 +101,6 @@ export function FormEditModal<T extends FieldValues>({
     [index, table],
   );
 
-  // Fetch individual record when currentRecord is undefined but entityId exists in URL
   const {
     data: fetchedRecord,
     isLoading: isFetchingRecord,
@@ -129,13 +111,12 @@ export function FormEditModal<T extends FieldValues>({
       if (!searchParams.entityId) {
         throw new Error("No entity ID provided");
       }
-      const response = await http.get<T>(`${url}${searchParams.entityId}`);
+      const response = await http.get<T>(`${url}${searchParams.entityId}/`);
       return response.data;
     },
     enabled: !currentRecord && !!searchParams.entityId && !isLoading,
-    staleTime: 5 * 60 * 1000, // Consider data fresh for 5 minutes
+    staleTime: 5 * 60 * 1000,
     retry: (failureCount, error) => {
-      // Don't retry on 404 errors
       if (error instanceof Error && error.message.includes("404")) {
         return false;
       }
@@ -158,7 +139,6 @@ export function FormEditModal<T extends FieldValues>({
       !isLoading &&
       fetchError
     ) {
-      // Record not found, clean up URL
       console.warn(`Record with ID ${searchParams.entityId} not found`);
     }
   }, [
@@ -240,20 +220,17 @@ export function FormEditModal<T extends FieldValues>({
     return () => document.removeEventListener("keydown", down);
   }, [selectedRowKey, onNext, onPrev]);
 
-  // Update form values when effectiveRecord changes and is not loading
   useEffect(() => {
     if (
       !isLoadingRecord &&
       effectiveRecord &&
       effectiveRecord.id !== previousRecordIdRef.current
     ) {
-      // Ensure all form fields have explicit values, including empty arrays for missing fields
       const formData = {
         ...effectiveRecord,
         roles: effectiveRecord.roles || [], // Ensure roles is always an array
       };
 
-      // Use setTimeout to ensure reset happens after any potential race conditions
       setTimeout(() => {
         reset(formData, { keepDefaultValues: false });
       }, 0);
@@ -264,33 +241,24 @@ export function FormEditModal<T extends FieldValues>({
 
   const handleClose = useCallback(() => {
     reset();
-    // Just clear the URL - no need to reset row selection separately
     setSearchParams({ modalType: null, entityId: null });
   }, [reset, setSearchParams]);
 
-  const { mutateAsync } = useApiMutation<
-    T, // The response data type
-    T, // The variables type
-    unknown, // The context type
-    T // The form values type for error handling
-  >({
+  const { mutateAsync } = useApiMutation<T, T, unknown, T>({
     mutationFn: async (values: T) => {
       const response = await http.put<T>(
-        `${url}${effectiveRecord?.id}`,
+        `${url}${effectiveRecord?.id}/`,
         values,
       );
       return response.data;
     },
     onMutate: async (newValues) => {
-      // * Cancel any outgoing refetches so they don't overwrite our optmistic update
       await queryClient.cancelQueries({
         queryKey: [queryKey],
       });
 
-      // * Snapshot the previous value
       const previousRecord = queryClient.getQueryData([queryKey]);
 
-      // * Optimistically update to the new value
       queryClient.setQueryData([queryKey], newValues);
 
       return { previousRecord, newValues };
@@ -300,7 +268,6 @@ export function FormEditModal<T extends FieldValues>({
         description: `${title} updated successfully`,
       });
 
-      // * Invalidate the query
       broadcastQueryInvalidation({
         queryKey: [queryKey],
         options: {
@@ -312,20 +279,15 @@ export function FormEditModal<T extends FieldValues>({
         },
       });
 
-      // Also invalidate the single record query if it was fetched
       if (isFetchedRecord) {
         queryClient.invalidateQueries({
           queryKey: [queryKey, "single", searchParams.entityId, url],
         });
       }
 
-      // * Reset the form to the new values
       reset(newValues);
-
-      // * Close the modal (which also clears row selection via URL)
       setSearchParams({ modalType: null, entityId: null });
 
-      // * If the page is a popout, close it
       if (isPopout) {
         closePopout();
       }
@@ -357,48 +319,61 @@ export function FormEditModal<T extends FieldValues>({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [isSubmitting, handleSubmit, onSubmit]);
 
-  const dialogContent = (
-    <DialogContent withClose={false} className={cn("max-w-[450px]", className)}>
-      <DialogHeader>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex flex-col">
-            <DialogTitle>
-              {titleComponent ? (
-                titleComponent(effectiveRecord as T)
-              ) : (
-                <div>
-                  {isLoadingRecord
-                    ? "Loading record..."
-                    : fieldKey && effectiveRecord
-                      ? effectiveRecord[fieldKey]
-                      : title}
-                </div>
+  return (
+    <Dialog
+      open={!!selectedRowKey}
+      onOpenChange={(open) => {
+        if (!open) {
+          const el = selectedRowKey
+            ? document.getElementById(selectedRowKey)
+            : null;
+          setSearchParams({ modalType: null, entityId: null });
+
+          setTimeout(() => el?.focus(), 0);
+        }
+      }}
+    >
+      <DialogContent
+        withClose={false}
+        className={cn("max-w-[450px]", className)}
+      >
+        <DialogHeader>
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex flex-col">
+              <DialogTitle>
+                {titleComponent ? (
+                  titleComponent(effectiveRecord as T)
+                ) : (
+                  <div>
+                    {isLoadingRecord
+                      ? "Loading record..."
+                      : fieldKey && effectiveRecord
+                        ? effectiveRecord[fieldKey]
+                        : title}
+                  </div>
+                )}
+              </DialogTitle>
+              {!isLoadingRecord && effectiveRecord && (
+                <DialogDescription>
+                  Last updated on{" "}
+                  {formatToUserTimezone(effectiveRecord.updatedAt, {
+                    timeFormat: user?.timeFormat,
+                  })}
+                </DialogDescription>
               )}
-            </DialogTitle>
-            {!isLoadingRecord && effectiveRecord && (
-              <DialogDescription>
-                Last updated on{" "}
-                {formatToUserTimezone(effectiveRecord.updatedAt, {
-                  timeFormat: user?.timeFormat,
-                })}
-              </DialogDescription>
-            )}
-          </div>
-          <div className="flex h-7 items-center gap-1">
-            <TooltipProvider>
+            </div>
+            <div className="flex h-7 items-center gap-1">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7"
+                    className="size-7 [&_svg]:size-5"
                     disabled={!prevId || isPending || isFetchedRecord}
                     onClick={onPrev}
                   >
-                    <Icon
-                      icon={faChevronUp}
+                    <ChevronUpIcon
                       className={cn(
-                        "size-5",
                         (isPending || isFetchedRecord) && "opacity-50",
                       )}
                     />
@@ -410,7 +385,7 @@ export function FormEditModal<T extends FieldValues>({
                     <p>Navigation unavailable when viewing record directly</p>
                   ) : (
                     <p>
-                      Navigate <Kbd variant="outline">↑</Kbd>
+                      Navigate <Kbd>↑</Kbd>
                     </p>
                   )}
                 </TooltipContent>
@@ -420,14 +395,12 @@ export function FormEditModal<T extends FieldValues>({
                   <Button
                     size="icon"
                     variant="ghost"
-                    className="h-7 w-7"
+                    className="size-7 [&_svg]:size-5"
                     disabled={!nextId || isPending || isFetchedRecord}
                     onClick={onNext}
                   >
-                    <Icon
-                      icon={faChevronDown}
+                    <ChevronDownIcon
                       className={cn(
-                        "h-5 w-5",
                         (isPending || isFetchedRecord) && "opacity-50",
                       )}
                     />
@@ -439,84 +412,69 @@ export function FormEditModal<T extends FieldValues>({
                     <p>Navigation unavailable when viewing record directly</p>
                   ) : (
                     <p>
-                      Navigate <Kbd variant="outline">↓</Kbd>
+                      Navigate <Kbd>↓</Kbd>
                     </p>
                   )}
                 </TooltipContent>
               </Tooltip>
-            </TooltipProvider>
-            <Separator orientation="vertical" className="mx-1" />
-            <DialogClose autoFocus={true} asChild>
-              <Button size="icon" variant="ghost" className="h-7 w-7">
-                <Icon icon={faX} className="size-5" />
-                <span className="sr-only">Close</span>
-              </Button>
-            </DialogClose>
-          </div>
-        </div>
-      </DialogHeader>
-      <FormProvider {...form}>
-        <Form onSubmit={handleSubmit(onSubmit)}>
-          <DialogBody>
-            {isLoadingRecord ? (
-              <ComponentLoader message={`Loading ${title}...`} />
-            ) : fetchError ? (
-              <div className="flex flex-col items-center justify-center space-y-3 py-8">
-                <p className="text-sm text-muted-foreground">
-                  {fetchError instanceof Error &&
-                  fetchError.message.includes("404")
-                    ? "Record not found. It may have been deleted."
-                    : "Failed to load record. Please try again."}
-                </p>
+              <Separator orientation="vertical" className="mx-1" />
+              <DialogClose autoFocus={true} asChild>
                 <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    // Close modal and navigate back
-                    setSearchParams({ modalType: null, entityId: null });
-                  }}
+                  size="icon"
+                  variant="ghost"
+                  className="size-7 [&_svg]:size-4"
                 >
-                  Close
+                  <XIcon />
+                  <span className="sr-only">Close</span>
                 </Button>
-              </div>
-            ) : (
-              formComponent
-            )}
-          </DialogBody>
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={handleClose}>
-              Cancel
-            </Button>
-            {!fetchError && (
-              <FormSaveButton
-                isPopout={isPopout}
-                isSubmitting={isSubmitting}
-                title={title}
-              />
-            )}
-          </DialogFooter>
-        </Form>
-      </FormProvider>
-    </DialogContent>
-  );
-
-  return (
-    <Dialog
-      open={!!selectedRowKey}
-      onOpenChange={(open) => {
-        if (!open) {
-          // When closing, clear the URL selection
-          const el = selectedRowKey
-            ? document.getElementById(selectedRowKey)
-            : null;
-          setSearchParams({ modalType: null, entityId: null });
-
-          // Focus back to the row after closing
-          setTimeout(() => el?.focus(), 0);
-        }
-      }}
-    >
-      {dialogContent}
+              </DialogClose>
+            </div>
+          </div>
+        </DialogHeader>
+        <FormProvider {...form}>
+          <Form onSubmit={handleSubmit(onSubmit)}>
+            <DialogBody>
+              {isLoadingRecord ? (
+                <ComponentLoader message={`Loading ${title}...`} />
+              ) : fetchError ? (
+                <div className="flex flex-col items-center justify-center space-y-3 py-8">
+                  <p className="text-sm text-muted-foreground">
+                    {fetchError instanceof Error &&
+                    fetchError.message.includes("404")
+                      ? "Record not found. It may have been deleted."
+                      : "Failed to load record. Please try again."}
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      // Close modal and navigate back
+                      setSearchParams({ modalType: null, entityId: null });
+                    }}
+                  >
+                    Close
+                  </Button>
+                </div>
+              ) : (
+                formComponent
+              )}
+            </DialogBody>
+            <DialogFooter>
+              <Button type="button" variant="outline" onClick={handleClose}>
+                Cancel
+              </Button>
+              {!fetchError && (
+                <FormSaveButton
+                  isPopout={isPopout}
+                  isSubmitting={isSubmitting}
+                  title={title}
+                  text="Save and Close"
+                />
+              )}
+            </DialogFooter>
+          </Form>
+        </FormProvider>
+      </DialogContent>
     </Dialog>
   );
 }

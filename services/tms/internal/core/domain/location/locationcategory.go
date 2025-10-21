@@ -1,31 +1,28 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package location
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain"
-	"github.com/emoss08/trenova/internal/core/domain/businessunit"
-	"github.com/emoss08/trenova/internal/core/domain/organization"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*LocationCategory)(nil)
-	_ domain.Validatable        = (*LocationCategory)(nil)
+	_ bun.BeforeAppendModelHook      = (*LocationCategory)(nil)
+	_ domaintypes.PostgresSearchable = (*LocationCategory)(nil)
+	_ domain.Validatable             = (*LocationCategory)(nil)
+	_ framework.TenantedEntity       = (*LocationCategory)(nil)
 )
 
-//nolint:revive // validate struct name
 type LocationCategory struct {
 	bun.BaseModel `bun:"table:location_categories,alias:lc" json:"-"`
 
@@ -48,18 +45,16 @@ type LocationCategory struct {
 	Rank                string       `json:"-"                   bun:"rank,type:VARCHAR(100),scanonly"`
 
 	// Relationships
-	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
+	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
 }
 
-func (lc *LocationCategory) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(ctx, lc,
-		// Name is required and must be between 1 and 100 characters
+func (lc *LocationCategory) Validate(multiErr *errortypes.MultiError) {
+	err := validation.ValidateStruct(lc,
 		validation.Field(&lc.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
 		),
-
 		validation.Field(&lc.Type,
 			validation.Required.Error("Type is required"),
 			validation.In(
@@ -74,7 +69,6 @@ func (lc *LocationCategory) Validate(ctx context.Context, multiErr *errors.Multi
 				CategoryMaintenanceFacility,
 			).Error("Invalid type"),
 		),
-
 		validation.Field(&lc.FacilityType,
 			validation.In(
 				FacilityTypeCrossDock,
@@ -84,21 +78,18 @@ func (lc *LocationCategory) Validate(ctx context.Context, multiErr *errors.Multi
 				FacilityTypeIntermodalFacility,
 			).Error("Invalid facility type"),
 		),
-
-		// Color must be a valid hex color
 		validation.Field(&lc.Color,
 			is.HexColor.Error("Color must be a valid hex color"),
 		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
-		if eris.As(err, &validationErrs) {
-			errors.FromOzzoErrors(validationErrs, multiErr)
+		if errors.As(err, &validationErrs) {
+			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
 
-// Pagination Configuration
 func (lc *LocationCategory) GetID() string {
 	return lc.ID.String()
 }
@@ -107,8 +98,45 @@ func (lc *LocationCategory) GetTableName() string {
 	return "location_categories"
 }
 
+func (lc *LocationCategory) GetOrganizationID() pulid.ID {
+	return lc.OrganizationID
+}
+
+func (lc *LocationCategory) GetBusinessUnitID() pulid.ID {
+	return lc.BusinessUnitID
+}
+
+func (lc *LocationCategory) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "lc",
+		UseSearchVector: true,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "description",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+			{Name: "type", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightB},
+			{
+				Name:   "facility_type",
+				Type:   domaintypes.FieldTypeEnum,
+				Weight: domaintypes.SearchWeightB,
+			},
+		},
+	}
+}
+
+func (lc *LocationCategory) GetVersion() int64 {
+	return lc.Version
+}
+
+func (lc *LocationCategory) IncrementVersion() {
+	lc.Version++
+}
+
 func (lc *LocationCategory) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:

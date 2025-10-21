@@ -1,12 +1,7 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
+import { FieldWrapper } from "@/components/fields/field-components";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { getTodayDate } from "@/lib/date";
 import { queries } from "@/lib/queries";
 import {
@@ -14,7 +9,6 @@ import {
   shipmentCommentSchema,
 } from "@/lib/schemas/shipment-comment-schema";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { UserSchema } from "@/lib/schemas/user-schema";
 import { api } from "@/services/api";
 import { useCommentEditStore } from "@/stores/comment-edit-store";
 import { useUser } from "@/stores/user-store";
@@ -22,17 +16,16 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
 import { nanoid } from "nanoid";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Controller, FormProvider, useForm } from "react-hook-form";
+import { Controller, FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { TiptapEditor } from "./tiptap-editor";
 import { type CommentType, COMMENT_TYPES } from "./utils";
 
 interface CommentFormProps {
-  searchUsers: (query: string) => Promise<UserSchema[]>;
   shipmentId: ShipmentSchema["id"];
 }
 
-export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
+export function CommentForm({ shipmentId }: CommentFormProps) {
   const queryClient = useQueryClient();
   const user = useUser();
   const { editingComment, isEditMode, clearEditMode } = useCommentEditStore();
@@ -75,7 +68,6 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
     control,
     handleSubmit,
     reset,
-    watch,
     setError,
     formState: { isSubmitting, errors, isSubmitSuccessful },
   } = form;
@@ -165,6 +157,13 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
         );
       }
 
+      queryClient.invalidateQueries({
+        queryKey: [
+          ...queries.shipment.getCommentCount(shipmentId).queryKey,
+          ...queries.shipment.listComments(shipmentId).queryKey,
+        ],
+      });
+
       return { previousComments, previousCount };
     },
     onError: (_err, _values, context) => {
@@ -196,27 +195,13 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
           : "Comment added successfully",
       );
 
-      broadcastQueryInvalidation({
-        queryKey: [
-          ...queries.shipment.getCommentCount(shipmentId).queryKey,
-          ...queries.shipment.listComments(shipmentId).queryKey,
-        ] as unknown as string[],
-        options: {
-          correlationId: `update-shipment-comment-${Date.now()}`,
-        },
-        config: {
-          predicate: true,
-          refetchType: "all",
-        },
-      });
-
       if (isEditMode) {
         clearEditMode();
       }
     },
   });
 
-  const commentValue = watch("comment");
+  const commentValue = useWatch({ control, name: "comment" });
   const hasContent = commentValue.trim().length > 0;
 
   const hasIncompleteSlashCommand = useMemo(() => {
@@ -292,25 +277,26 @@ export function CommentForm({ searchUsers, shipmentId }: CommentFormProps) {
               name="comment"
               control={control}
               render={({ field, fieldState }) => (
-                <TiptapEditor
-                  value={field.value}
-                  onChange={field.onChange}
-                  onJsonChange={setCommentJson}
-                  onMentionedUsersChange={setMentionedUserIds}
-                  onCommentTypeChange={setCommentType}
-                  searchUsers={searchUsers}
-                  hasIncompleteSlashCommand={hasIncompleteSlashCommand}
-                  placeholder="Add a comment... Use @ to mention users, / for comment types"
-                  disabled={isSubmitting}
-                  isInvalid={!!fieldState.error}
-                />
+                <FieldWrapper
+                  label="Comment"
+                  description="Add a comment... Use @ to mention users, / for comment types"
+                  error={fieldState.error?.message}
+                  required
+                >
+                  <TiptapEditor
+                    value={field.value}
+                    onChange={field.onChange}
+                    onJsonChange={setCommentJson}
+                    onMentionedUsersChange={setMentionedUserIds}
+                    onCommentTypeChange={setCommentType}
+                    hasIncompleteSlashCommand={hasIncompleteSlashCommand}
+                    placeholder="Add a comment... Use @ to mention users, / for comment types"
+                    disabled={isSubmitting}
+                    isInvalid={!!fieldState.error}
+                  />
+                </FieldWrapper>
               )}
             />
-            {errors.comment && (
-              <p className="text-sm text-red-500 mt-1">
-                {errors.comment.message}
-              </p>
-            )}
           </FormControl>
         </FormGroup>
         <div className="flex justify-end gap-2">

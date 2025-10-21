@@ -1,19 +1,14 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/user"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
-type GetUserByIDOptions struct {
+type GetUserByIDRequest struct {
 	OrgID        pulid.ID
 	BuID         pulid.ID
 	UserID       pulid.ID
@@ -21,9 +16,16 @@ type GetUserByIDOptions struct {
 	IncludeOrgs  bool
 }
 
-type ListUserRequest struct {
-	Filter       *ports.LimitOffsetQueryOptions
-	IncludeRoles bool
+type UserSelectOptionsRequest struct {
+	*pagination.SelectQueryOptions
+}
+
+type UserSelectOptionResponse struct {
+	ID            pulid.ID `json:"id"            form:"id"            bun:"id"`
+	Name          string   `json:"name"          form:"name"          bun:"name"`
+	Username      string   `json:"username"      form:"username"      bun:"username"`
+	ProfilePicURL string   `json:"profilePicUrl" form:"profilePicUrl" bun:"profile_pic_url"`
+	EmailAddress  string   `json:"emailAddress"  form:"emailAddress"  bun:"email_address"`
 }
 
 type ChangePasswordRequest struct {
@@ -36,25 +38,32 @@ type ChangePasswordRequest struct {
 	HashedPassword  string   `json:"-"`
 }
 
-type GetUsersByIDsOptions struct {
+type GetUsersByIDsRequest struct {
 	OrgID   pulid.ID
 	BuID    pulid.ID
 	UserIDs []pulid.ID
 }
 
+type ListUserRequest struct {
+	Filter       *pagination.QueryOptions
+	IncludeRoles bool
+}
+
 type UserRepository interface {
-	List(
+	GetOption(ctx context.Context, req GetUserByIDRequest) (*tenant.User, error)
+	SelectOptions(
 		ctx context.Context,
-		req ListUserRequest,
-	) (*ports.ListResult[*user.User], error)
-	FindByEmail(ctx context.Context, email string) (*user.User, error)
+		req UserSelectOptionsRequest,
+	) ([]*UserSelectOptionResponse, error)
+	List(ctx context.Context, req *ListUserRequest) (*pagination.ListResult[*tenant.User], error)
+	FindByEmail(ctx context.Context, email string) (*tenant.User, error)
 	GetNameByID(ctx context.Context, userID pulid.ID) (string, error)
-	GetByID(ctx context.Context, opts GetUserByIDOptions) (*user.User, error)
-	GetByIDs(ctx context.Context, opts GetUsersByIDsOptions) ([]*user.User, error)
-	GetSystemUser(ctx context.Context) (*user.User, error)
+	GetByID(ctx context.Context, opts GetUserByIDRequest) (*tenant.User, error)
+	GetByIDs(ctx context.Context, opts GetUsersByIDsRequest) ([]*tenant.User, error)
+	GetSystemUser(ctx context.Context) (*tenant.User, error)
 	UpdateLastLogin(ctx context.Context, userID pulid.ID) error
-	Create(ctx context.Context, u *user.User) (*user.User, error)
-	Update(ctx context.Context, u *user.User) (*user.User, error)
-	SwitchOrganization(ctx context.Context, userID, newOrgID pulid.ID) (*user.User, error)
-	ChangePassword(ctx context.Context, req *ChangePasswordRequest) (*user.User, error)
+	Create(ctx context.Context, u *tenant.User) (*tenant.User, error)
+	Update(ctx context.Context, u *tenant.User) (*tenant.User, error)
+	SwitchOrganization(ctx context.Context, userID, newOrgID pulid.ID) (*tenant.User, error)
+	ChangePassword(ctx context.Context, req *ChangePasswordRequest) (*tenant.User, error)
 }

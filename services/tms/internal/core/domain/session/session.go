@@ -1,99 +1,99 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package session
 
 import (
-	"github.com/emoss08/trenova/internal/core/domain/user"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
 )
 
-// Session represents a user session
-type Session struct {
-	// Primary identifiers
-	ID             pulid.ID `json:"id"`
-	UserID         pulid.ID `json:"userId"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"`
-	OrganizationID pulid.ID `json:"organizationId"`
-
-	// Core fields
-	Status         Status `json:"status"`
-	IP             string `json:"ip"`
-	UserAgent      string `json:"userAgent"`
-	LastAccessedAt int64  `json:"lastAccessedAt"`
-	ExpiresAt      int64  `json:"expiresAt"`
-	RevokedAt      *int64 `json:"revokedAt,omitempty"`
-	CreatedAt      int64  `json:"createdAt"`
-	UpdatedAt      int64  `json:"updatedAt"`
-
-	// Related entities
-	User   *user.User `json:"user,omitempty"`
-	Events []Event    `json:"events,omitempty"`
+type Event struct {
+	ID        pulid.ID       `json:"id"`
+	SessionID pulid.ID       `json:"sessionId"`
+	Type      EventType      `json:"type"`
+	IP        string         `json:"ip"`
+	UserAgent string         `json:"userAgent"`
+	Metadata  map[string]any `json:"metadata,omitempty"`
+	CreatedAt int64          `json:"createdAt"`
 }
 
-// NewSession creates a new session
+type Session struct {
+	ID             pulid.ID     `json:"id"`
+	UserID         pulid.ID     `json:"userId"`
+	BusinessUnitID pulid.ID     `json:"businessUnitId"`
+	OrganizationID pulid.ID     `json:"organizationId"`
+	Status         Status       `json:"status"`
+	IP             string       `json:"ip"`
+	UserAgent      string       `json:"userAgent"`
+	LastAccessedAt int64        `json:"lastAccessedAt"`
+	ExpiresAt      int64        `json:"expiresAt"`
+	RevokedAt      *int64       `json:"revokedAt,omitempty"`
+	CreatedAt      int64        `json:"createdAt"`
+	UpdatedAt      int64        `json:"updatedAt"`
+	User           *tenant.User `json:"user,omitempty"`
+	Events         []Event      `json:"events,omitempty"`
+}
+
+type NewSessionRequest struct {
+	UserID                pulid.ID
+	BusinessUnitID        pulid.ID
+	CurrentOrganizationID pulid.ID
+	IP                    string
+	UserAgent             string
+	ExpiresAt             int64
+}
+
 func NewSession(
-	userID, businessUnitID, organizationID pulid.ID,
-	ip, userAgent string,
-	expiresAt int64,
+	req NewSessionRequest,
 ) *Session {
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 	return &Session{
 		ID:             pulid.MustNew("ses_"),
-		UserID:         userID,
-		BusinessUnitID: businessUnitID,
-		OrganizationID: organizationID,
+		UserID:         req.UserID,
+		BusinessUnitID: req.BusinessUnitID,
+		OrganizationID: req.CurrentOrganizationID,
 		Status:         StatusActive,
-		IP:             ip,
-		UserAgent:      userAgent,
+		IP:             req.IP,
+		UserAgent:      req.UserAgent,
 		LastAccessedAt: now,
-		ExpiresAt:      expiresAt,
+		ExpiresAt:      req.ExpiresAt,
 		CreatedAt:      now,
 		UpdatedAt:      now,
 	}
 }
 
-// IsValid checks if the session is valid
 func (s *Session) IsValid() bool {
 	if s.Status != StatusActive {
 		return false
 	}
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 	return s.ExpiresAt > now && (s.RevokedAt == nil || *s.RevokedAt > now)
 }
 
-// IsExpired returns true if the session is expired
 func (s *Session) IsExpired() bool {
-	return s.ExpiresAt < timeutils.NowUnix()
+	return s.ExpiresAt < utils.NowUnix()
 }
 
-// Validate validates the session
 func (s *Session) Validate(clientIP string) error {
 	if !s.IsValid() {
-		return errors.NewBusinessError("session is not valid")
+		return errortypes.NewBusinessError("Session is no longer valid. Please login again.")
 	}
 	if s.IsExpired() {
-		return errors.NewBusinessError("session is expired")
+		return errortypes.NewBusinessError("Session has expired. Please login again.")
 	}
 	if s.IP != clientIP {
-		return errors.NewBusinessError("session IP mismatch")
+		return errortypes.NewBusinessError("Session IP mismatch. Please login again.")
 	}
 	return nil
 }
 
-// UpdateLastAccessedAt updates the last accessed at timestamp
 func (s *Session) UpdateLastAccessedAt() {
-	s.LastAccessedAt = timeutils.NowUnix()
+	s.LastAccessedAt = utils.NowUnix()
 	s.UpdatedAt = s.LastAccessedAt
 }
 
-// Revoke revokes the session
 func (s *Session) Revoke() {
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 	s.Status = StatusRevoked
 	s.RevokedAt = &now
 	s.UpdatedAt = now

@@ -1,27 +1,15 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package email
 
-// ProviderType represents the type of email provider
 type ProviderType string
 
 const (
-	ProviderTypeSMTP      = ProviderType("SMTP")
-	ProviderTypeSendGrid  = ProviderType("SendGrid")
-	ProviderTypeAWSSES    = ProviderType("AWS_SES")
-	ProviderTypeMailgun   = ProviderType("Mailgun")
-	ProviderTypePostmark  = ProviderType("Postmark")
-	ProviderTypeExchange  = ProviderType("Exchange")
-	ProviderTypeOffice365 = ProviderType("Office365")
-	ProviderTypeMailHog   = ProviderType(
+	ProviderTypeSMTP    = ProviderType("SMTP")
+	ProviderTypeResend  = ProviderType("Resend")
+	ProviderTypeMailHog = ProviderType(
 		"MailHog",
 	) // * For testing purposes only or local development
 )
 
-// AuthType represents the authentication method for email providers
 type AuthType string
 
 const (
@@ -33,7 +21,6 @@ const (
 	AuthTypeAPIKey  = AuthType("APIKey")
 )
 
-// EncryptionType represents the encryption method for email connections
 type EncryptionType string
 
 const (
@@ -42,7 +29,6 @@ const (
 	EncryptionTypeSTARTTLS = EncryptionType("StartTLS")
 )
 
-// TemplateCategory represents the category of an email template
 type TemplateCategory string
 
 const (
@@ -52,7 +38,6 @@ const (
 	TemplateCategoryCustom       = TemplateCategory("Custom")
 )
 
-// QueueStatus represents the status of an email in the queue
 type QueueStatus string
 
 const (
@@ -64,7 +49,6 @@ const (
 	QueueStatusCancelled  = QueueStatus("Cancelled")
 )
 
-// Priority represents the priority level of an email
 type Priority string
 
 const (
@@ -73,7 +57,6 @@ const (
 	PriorityLow    = Priority("Low")
 )
 
-// LogStatus represents the delivery status in email logs
 type LogStatus string
 
 const (
@@ -86,7 +69,6 @@ const (
 	LogStatusRejected     = LogStatus("Rejected")
 )
 
-// TLSPolicy represents the TLS policy for SMTP connections
 type TLSPolicy string
 
 const (
@@ -95,7 +77,6 @@ const (
 	TLSPolicyNone          = TLSPolicy("None")
 )
 
-// BounceType represents the type of email bounce
 type BounceType string
 
 const (

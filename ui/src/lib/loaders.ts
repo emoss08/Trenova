@@ -1,13 +1,22 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
+import { PermissionAPI } from "@/lib/permissions/permission-api";
+import { PermissionClient } from "@/lib/permissions/permission-client";
 import { api } from "@/services/api";
 import { useAuthStore } from "@/stores/user-store";
-import type { Resource } from "@/types/audit-entry";
-import type { Action } from "@/types/roles-permissions";
+import type { PermissionManifest } from "@/types/permission";
 import { LoaderFunctionArgs, redirect } from "react-router";
+
+// Cache for permission manifest to avoid fetching on every route change
+let permissionManifestCache: {
+  manifest: PermissionManifest;
+  timestamp: number;
+} | null = null;
+
+const MANIFEST_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 export async function checkAuthStatus() {
   try {
@@ -66,9 +75,44 @@ export async function protectedLoader({ request }: LoaderFunctionArgs) {
   return null;
 }
 
+/**
+ * Get or fetch the permission manifest with caching
+ */
+async function getPermissionManifest() {
+  const now = Date.now();
+
+  // Check if cache is valid
+  if (
+    permissionManifestCache &&
+    now - permissionManifestCache.timestamp < MANIFEST_CACHE_TTL
+  ) {
+    return permissionManifestCache.manifest;
+  }
+
+  // Fetch new manifest
+  try {
+    const manifest = await PermissionAPI.getManifest();
+    permissionManifestCache = {
+      manifest,
+      timestamp: now,
+    };
+    return manifest;
+  } catch (error) {
+    console.error("Failed to fetch permission manifest:", error);
+    // Fall back to old permission system if new system fails
+    return null;
+  }
+}
+
+/**
+ * Create a loader that checks permissions using the v2 permission system
+ *
+ * @param resource - The resource to check (e.g., 'shipment', 'user')
+ * @param action - The action to check (e.g., 'read', 'create', 'update')
+ */
 export function createPermissionLoader(
-  resource: Resource,
-  action: Action = "read" as Action,
+  resource: string,
+  action: string = "read",
 ) {
   return async (args: LoaderFunctionArgs) => {
     // First check authentication
@@ -77,10 +121,18 @@ export function createPermissionLoader(
       return authResult;
     }
 
-    // Then check permissions
-    const { hasPermission } = useAuthStore.getState();
+    // Check permissions using v2 system
+    const manifest = await getPermissionManifest();
 
-    if (!hasPermission(resource, action)) {
+    if (!manifest) {
+      console.error("Failed to load permission manifest");
+      return redirect("/permission-denied");
+    }
+
+    const client = new PermissionClient(manifest);
+
+    // Check permission
+    if (!client.can(resource, action)) {
       // User is authenticated but doesn't have permission
       const params = new URLSearchParams({
         resource,
@@ -91,4 +143,11 @@ export function createPermissionLoader(
 
     return null;
   };
+}
+
+/**
+ * Clear the permission manifest cache (useful after org switch or logout)
+ */
+export function clearPermissionCache() {
+  permissionManifestCache = null;
 }

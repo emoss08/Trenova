@@ -1,0 +1,84 @@
+# Document Quality Assessment Service - Docker Compose
+# Copyright 2023-2025 Eric Moss
+
+version: '3.8'
+
+services:
+  # Main API service
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: doc-quality-api
+    ports:
+      - "${PORT:-8000}:8000"
+    volumes:
+      - ./models:/app/models:ro  # Read-only model files
+      - ./config:/app/config:ro  # Read-only config
+      - ./uploads:/app/uploads    # Temporary uploads
+      - ./logs:/app/logs          # Logs
+    environment:
+      - MODEL_PATH=/app/models/best_model.pth
+      - CONFIG_PATH=/app/config/best_training.yaml
+      - DEVICE=${DEVICE:-auto}
+      - WORKERS=${WORKERS:-1}
+      - CORS_ORIGINS=${CORS_ORIGINS:-*}
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '${CPU_LIMIT:-2.0}'
+          memory: ${MEMORY_LIMIT:-4G}
+        reservations:
+          cpus: '${CPU_RESERVATION:-1.0}'
+          memory: ${MEMORY_RESERVATION:-2G}
+
+  # Development API service (with auto-reload)
+  api-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: doc-quality-api-dev
+    ports:
+      - "${DEV_PORT:-8001}:8000"
+    volumes:
+      - .:/app                    # Mount entire directory for hot-reload
+      - ./models:/app/models:ro
+    environment:
+      - MODEL_PATH=/app/models/best_model.pth
+      - CONFIG_PATH=/app/config/best_training.yaml
+      - DEVICE=${DEVICE:-auto}
+      - RELOAD=true
+    profiles:
+      - dev
+
+  # MLflow tracking server (optional)
+  mlflow:
+    image: python:3.11-slim
+    container_name: doc-quality-mlflow
+    ports:
+      - "${MLFLOW_PORT:-5000}:5000"
+    volumes:
+      - ./mlruns:/mlruns
+    command: >
+      sh -c "pip install mlflow &&
+             mlflow server
+             --backend-store-uri sqlite:///mlruns/mlflow.db
+             --default-artifact-root /mlruns/artifacts
+             --host 0.0.0.0
+             --port 5000"
+    profiles:
+      - mlflow
+    restart: unless-stopped
+
+networks:
+  default:
+    name: doc-quality-network

@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/lib/variants/button";
 import React, { useMemo } from "react";
@@ -36,9 +31,9 @@ export function SidebarNav({ links, className, ...props }: SidebarNavProps) {
   }, [links]);
 
   return (
-    <aside className="sticky top-0 z-30 -ml-2 w-full shrink-0 transition-spacing duration-500 md:block md:gap-y-2 h-screen">
+    <SidebarNavOuter>
       <ScrollArea className="h-full bg-sidebar text-card-foreground rounded-lg border p-3">
-        <nav className={cn("lg:flex-col", className)} {...props}>
+        <SidebarNavInner className={cn("lg:flex-col", className)} {...props}>
           {Object.entries(groupedLinks).map(
             ([group, groupLinks], index, array) => (
               <div key={group} className="space-y-2">
@@ -72,8 +67,33 @@ export function SidebarNav({ links, className, ...props }: SidebarNavProps) {
               </div>
             ),
           )}
-        </nav>
+        </SidebarNavInner>
       </ScrollArea>
+    </SidebarNavOuter>
+  );
+}
+
+function SidebarNavOuter({ children }: { children: React.ReactNode }) {
+  return (
+    <aside className="sticky top-0 z-30 -ml-2 w-full shrink-0 transition-spacing duration-500 md:block md:gap-y-2 h-screen">
+      {children}
     </aside>
+  );
+}
+
+type SidebarNavInnerProps = React.HTMLAttributes<HTMLElement> & {
+  children: React.ReactNode;
+  className?: string;
+};
+
+function SidebarNavInner({
+  children,
+  className,
+  ...props
+}: SidebarNavInnerProps) {
+  return (
+    <nav className={cn("lg:flex-col", className)} {...props}>
+      {children}
+    </nav>
   );
 }

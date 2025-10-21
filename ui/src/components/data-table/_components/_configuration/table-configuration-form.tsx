@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -19,12 +14,11 @@ import { visibilityChoices } from "@/lib/choices";
 import {
   getFilterOperatorLabel,
   getSortDirectionLabel,
-} from "@/lib/enhanced-data-table-utils";
+} from "@/lib/data-table-utils";
 import { TableConfigurationSchema } from "@/lib/schemas/table-configuration-schema";
 import { GripVertical } from "lucide-react";
 import { Controller, useFormContext, useWatch } from "react-hook-form";
 
-// Helper function to format column names for display
 function formatColumnName(name: string) {
   const result = name.replace(/([A-Z])/g, " $1");
   return result.charAt(0).toUpperCase() + result.slice(1);

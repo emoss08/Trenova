@@ -1,27 +1,25 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package hazardousmaterial
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain"
-	"github.com/emoss08/trenova/internal/core/domain/businessunit"
-	"github.com/emoss08/trenova/internal/core/domain/organization"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*HazardousMaterial)(nil)
-	_ domain.Validatable        = (*HazardousMaterial)(nil)
+	_ bun.BeforeAppendModelHook      = (*HazardousMaterial)(nil)
+	_ domain.Validatable             = (*HazardousMaterial)(nil)
+	_ domaintypes.PostgresSearchable = (*HazardousMaterial)(nil)
+	_ framework.TenantedEntity       = (*HazardousMaterial)(nil)
 )
 
 type HazardousMaterial struct {
@@ -38,6 +36,7 @@ type HazardousMaterial struct {
 	UNNumber                    string         `json:"unNumber"                    bun:"un_number,type:VARCHAR(4)"`
 	CASNumber                   string         `json:"casNumber"                   bun:"cas_number,type:VARCHAR(10)"`
 	PackingGroup                PackingGroup   `json:"packingGroup"                bun:"packing_group,type:packing_group_enum,notnull"`
+	SpecialProvisions           string         `json:"specialProvisions"           bun:"special_provisions,type:TEXT"`
 	ProperShippingName          string         `json:"properShippingName"          bun:"proper_shipping_name,type:TEXT"`
 	HandlingInstructions        string         `json:"handlingInstructions"        bun:"handling_instructions,type:TEXT"`
 	EmergencyContact            string         `json:"emergencyContact"            bun:"emergency_contact,type:TEXT"`
@@ -51,47 +50,36 @@ type HazardousMaterial struct {
 	UpdatedAt                   int64          `json:"updatedAt"                   bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
-func (hm *HazardousMaterial) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(ctx, hm,
-
-		// Code is required and must be between 1 and 100 characters
-		validation.Field(&hm.Code,
-			validation.Required.Error("Code is required"),
-			validation.Length(1, 100).Error("Code must be between 1 and 100 characters"),
-		),
-
-		// UN Number must be between 1 and 4 characters
+func (hm *HazardousMaterial) Validate(multiErr *errortypes.MultiError) {
+	err := validation.ValidateStruct(hm,
+		// validation.Field(&hm.Code,
+		// 	validation.Required.Error("Code is required"),
+		// 	validation.Length(4, 10).Error("Code must be between 1 and 100 characters"),
+		// ),
 		validation.Field(&hm.UNNumber,
 			validation.Length(1, 4).Error("UN Number must be between 1 and 4 characters"),
 		),
-
-		// CAS Number must be between 1 and 10 characters
 		validation.Field(&hm.CASNumber,
 			validation.Length(1, 10).Error("CAS Number must be between 1 and 10 characters"),
 		),
-
-		// Name is required and must be between 1 and 100 characters
 		validation.Field(&hm.Name,
 			validation.Required.Error("Name is required"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters"),
 		),
-
-		// Packing Group must be a valid packing group
 		validation.Field(
 			&hm.PackingGroup,
 			validation.Required.Error("Packing Group is required"),
 			validation.In(PackingGroupI, PackingGroupII, PackingGroupIII).
 				Error("Packing Group must be a valid packing group"),
 		),
-
-		// Class is required
 		validation.Field(&hm.Class,
 			validation.Required.Error("Class is required"),
 			validation.In(
+				HazardousClass1,
 				HazardousClass1And1,
 				HazardousClass1And2,
 				HazardousClass1And3,
@@ -114,21 +102,24 @@ func (hm *HazardousMaterial) Validate(ctx context.Context, multiErr *errors.Mult
 				HazardousClass9,
 			).Error("Class is invalid"),
 		),
-
-		// Description is required
 		validation.Field(&hm.Description,
 			validation.Required.Error("Description is required"),
+		),
+		validation.Field(&hm.SpecialProvisions,
+			validation.When(
+				hm.SpecialProvisions != "",
+				validation.By(domain.ValidateStringOrCommaSeparated),
+			),
 		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
-		if eris.As(err, &validationErrs) {
-			errors.FromOzzoErrors(validationErrs, multiErr)
+		if errors.As(err, &validationErrs) {
+			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
 
-// Pagination Configuration
 func (hm *HazardousMaterial) GetID() string {
 	return hm.ID.String()
 }
@@ -137,8 +128,37 @@ func (hm *HazardousMaterial) GetTableName() string {
 	return "hazardous_materials"
 }
 
+func (hm *HazardousMaterial) GetOrganizationID() pulid.ID {
+	return hm.OrganizationID
+}
+
+func (hm *HazardousMaterial) GetBusinessUnitID() pulid.ID {
+	return hm.BusinessUnitID
+}
+
+func (hm *HazardousMaterial) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "hm",
+		UseSearchVector: false,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "description",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+			{Name: "class", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightB},
+			{
+				Name:   "packing_group",
+				Type:   domaintypes.FieldTypeEnum,
+				Weight: domaintypes.SearchWeightB,
+			},
+		},
+	}
+}
+
 func (hm *HazardousMaterial) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:

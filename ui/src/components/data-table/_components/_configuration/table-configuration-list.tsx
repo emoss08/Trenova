@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -106,16 +101,16 @@ export function UserTableConfigurationList({
         userConfigurations={userConfigurations?.results ?? []}
       />
       {(userConfigurations?.results?.length ?? 0) > 0 && (
-          <Input
-            icon={
-              <Icon icon={faSearch} className="size-3 text-muted-foreground" />
-            }
-            placeholder="Search configurations..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-7 text-sm bg-background"
-          />
-        )}
+        <Input
+          icon={
+            <Icon icon={faSearch} className="size-3 text-muted-foreground" />
+          }
+          placeholder="Search configurations..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="h-7 text-sm bg-background"
+        />
+      )}
       <TableConfigurationContent
         isLoadingUserConfigurations={isLoadingUserConfigurations}
         userConfigurations={userConfigurations?.results ?? []}

@@ -1,61 +1,51 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/organization"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
-type GetOrgByIDOptions struct {
-	// ID of the organization
-	OrgID pulid.ID
-
-	// ID of the business unit
-	BuID pulid.ID
-
-	// IncludeState includes the state in the response
+type GetOrganizationByIDRequest struct {
+	OrgID        pulid.ID
+	BuID         pulid.ID
 	IncludeState bool
-
-	// IncludeBu includes the business unit in the response
-	IncludeBu bool
+	IncludeBu    bool
 }
 
 type OrganizationRepository interface {
-	List(
-		ctx context.Context,
-		opts *ports.LimitOffsetQueryOptions,
-	) (*ports.ListResult[*organization.Organization], error)
-	GetByID(ctx context.Context, opts GetOrgByIDOptions) (*organization.Organization, error)
-	Create(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
-	Update(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
-	SetLogo(ctx context.Context, org *organization.Organization) (*organization.Organization, error)
-	ClearLogo(
-		ctx context.Context,
-		org *organization.Organization,
-	) (*organization.Organization, error)
+	// List(
+	// 	ctx context.Context,
+	// 	opts *pagination.QueryOptions,
+	// ) (*pagination.ListResult[*tenant.Organization], error)
+	GetByID(ctx context.Context, opts GetOrganizationByIDRequest) (*tenant.Organization, error)
 	GetUserOrganizations(
 		ctx context.Context,
-		opts *ports.LimitOffsetQueryOptions,
-	) (*ports.ListResult[*organization.Organization], error)
-	GetOrganizationBucketName(ctx context.Context, orgID pulid.ID) (string, error)
+		opts *pagination.QueryOptions,
+	) (*pagination.ListResult[*tenant.Organization], error)
+	// Create(ctx context.Context, org *tenant.Organization) (*tenant.Organization, error)
+	Update(ctx context.Context, org *tenant.Organization) (*tenant.Organization, error)
+	// SetLogo(ctx context.Context, org *tenant.Organization) (*tenant.Organization, error)
+	// ClearLogo(
+	// 	ctx context.Context,
+	// 	org *tenant.Organization,
+	// ) (*tenant.Organization, error)
+
+	// GetOrganizationBucketName(ctx context.Context, orgID pulid.ID) (string, error)
 }
 
 type OrganizationCacheRepository interface {
-	GetByID(ctx context.Context, orgID pulid.ID) (*organization.Organization, error)
-	GetUserOrganizations(ctx context.Context, userID pulid.ID) ([]*organization.Organization, error)
+	GetByID(ctx context.Context, orgID pulid.ID) (*tenant.Organization, error)
+	GetUserOrganizations(ctx context.Context, userID pulid.ID) ([]*tenant.Organization, error)
 	SetUserOrganizations(
 		ctx context.Context,
 		userID pulid.ID,
-		orgs []*organization.Organization,
+		orgs []*tenant.Organization,
 	) error
-	Set(ctx context.Context, org *organization.Organization) error
+	Set(ctx context.Context, org *tenant.Organization) error
 	Invalidate(ctx context.Context, orgID pulid.ID) error
 	InvalidateUserOrganizations(ctx context.Context, userID pulid.ID) error
+	InvalidateOrganizationForAllUsers(ctx context.Context, orgID pulid.ID) error
 }

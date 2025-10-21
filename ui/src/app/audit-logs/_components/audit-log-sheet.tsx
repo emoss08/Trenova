@@ -1,14 +1,9 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useDataTable } from "@/components/data-table/data-table-provider";
-import { Kbd } from "@/components/kbd";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { JsonViewer } from "@/components/ui/json-viewer";
+import { Kbd } from "@/components/ui/kbd";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -156,7 +151,7 @@ export function AuditLogDetailsSheet({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
-                      Navigate <Kbd variant="outline">↑</Kbd>
+                      Navigate <Kbd>↑</Kbd>
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -175,7 +170,7 @@ export function AuditLogDetailsSheet({
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>
-                      Navigate <Kbd variant="outline">↓</Kbd>
+                      Navigate <Kbd>↓</Kbd>
                     </p>
                   </TooltipContent>
                 </Tooltip>
@@ -284,7 +279,7 @@ function AuditDetailsHeader({ entry }: { entry?: AuditEntry }) {
     return null;
   }
 
-  const { timestamp, comment, action } = entry;
+  const { timestamp, comment, operation } = entry;
 
   return (
     <div className="flex flex-col px-4 pb-2 border-b border-bg-sidebar-border">
@@ -292,7 +287,7 @@ function AuditDetailsHeader({ entry }: { entry?: AuditEntry }) {
         <h2 className="font-semibold leading-none tracking-tight flex items-center gap-x-2">
           {comment || "-"}
         </h2>
-        <ActionBadge action={action} />
+        <ActionBadge operation={operation} />
       </div>
       <p className="text-2xs text-muted-foreground font-normal">
         Entry created on{" "}

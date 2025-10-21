@@ -1,53 +1,45 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package usstate
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/pkg/types"
-	"github.com/rotisserie/eris"
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	Logger *logger.Logger
+	Logger *zap.Logger
 	Repo   repositories.UsStateRepository
 }
 
 type Service struct {
 	repo repositories.UsStateRepository
-	l    *zerolog.Logger
+	l    *zap.Logger
 }
 
 func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().Str("service", "state").Logger()
-
 	return &Service{
 		repo: p.Repo,
-		l:    &log,
+		l:    p.Logger.Named("service.usstate"),
 	}
 }
 
 // SelectOptions returns a list of select options for us states.
-func (s *Service) SelectOptions(ctx context.Context) ([]*types.SelectOption, error) {
+func (s *Service) SelectOptions(ctx context.Context) ([]*domaintypes.SelectOption, error) {
 	result, err := s.repo.List(ctx)
 	if err != nil {
-		s.l.Error().Err(err).Msg("failed to list us states")
-		return nil, eris.Wrap(err, "failed to list us states")
+		s.l.Error("failed to list us states", zap.Error(err))
+		return nil, err
 	}
 
-	options := make([]*types.SelectOption, len(result.Items))
+	options := make([]*domaintypes.SelectOption, len(result.Items))
 	for i, state := range result.Items {
-		options[i] = &types.SelectOption{
+		options[i] = &domaintypes.SelectOption{
 			Label: state.Name,
 			Value: state.ID.String(),
 		}

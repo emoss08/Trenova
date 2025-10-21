@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { HoverCardTimestamp } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
 import { statusChoices } from "@/lib/choices";
@@ -28,20 +23,6 @@ export function getColumns(): ColumnDef<CustomerSchema>[] {
       },
     },
     {
-      accessorKey: "code",
-      header: "Code",
-      meta: {
-        apiField: "code",
-        filterable: true,
-        sortable: true,
-        filterType: "text",
-        defaultFilterOperator: "contains",
-      },
-      cell: ({ row }) => (
-        <span className="font-mono text-sm">{row.original.code}</span>
-      ),
-    },
-    {
       accessorKey: "name",
       header: "Name",
       meta: {
@@ -52,14 +33,33 @@ export function getColumns(): ColumnDef<CustomerSchema>[] {
         defaultFilterOperator: "contains",
       },
       cell: ({ row }) => (
-        <div>
-          <p className="font-medium">{row.original.name}</p>
-          <p className="text-sm text-muted-foreground">
-            {row.original.addressLine1}, {row.original.city}{" "}
-            {row.original.state?.abbreviation} {row.original.postalCode}
-          </p>
+        <div className="flex flex-col gap-0.5 leading-tight">
+          <p className="font-mono text-sm">{row.original.code}</p>
+          <p className="text-sm text-muted-foreground">{row.original.name}</p>
         </div>
       ),
+    },
+    {
+      id: "addressLine",
+      header: "Address Line",
+      size: 200,
+      minSize: 200,
+      maxSize: 250,
+      meta: {
+        apiField: "addressLine1",
+        filterable: true,
+        sortable: true,
+        filterType: "text",
+        defaultFilterOperator: "contains",
+      },
+      cell: ({ row }) => {
+        return (
+          <p>
+            {row.original.addressLine1}, {row.original.city}{" "}
+            {row.original.state?.abbreviation}, {row.original.postalCode}
+          </p>
+        );
+      },
     },
     {
       accessorKey: "createdAt",

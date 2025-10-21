@@ -1,16 +1,36 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { MetaTags } from "@/components/meta-tags";
+import { Button } from "@/components/ui/button";
+import { http } from "@/lib/http-client";
 import { version } from "react";
+import { toast } from "sonner";
 
 export function Dashboard() {
+  const refreshPermissionCache = () => {
+    http.post("/permissions/refresh/").then(() => {
+      toast.success("Permission cache refreshed");
+    });
+  };
+
+  const clearPermissionCache = () => {
+    http.post("/permissions/invalidate-cache/").then(() => {
+      toast.success("Permission cache cleared");
+    });
+  };
+
   return (
     <>
       <MetaTags title="Dashboard" description="Dashboard" />
-      <span>{`${version}`}</span>
+      <span>React Version: {`${version}`}</span>
+
+      <h3>Permission Cache (Removed in production)</h3>
+      <div className="flex flex-col gap-2">
+        <Button className="w-[200px]" onClick={refreshPermissionCache}>
+          Refresh Permission Cache
+        </Button>
+        <Button className="w-[200px]" onClick={clearPermissionCache}>
+          Clear Permission Cache
+        </Button>
+      </div>
     </>
   );
 }

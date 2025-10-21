@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
@@ -31,16 +31,17 @@ export enum Gender {
 
 export type HasField<T, K extends keyof T> = K extends keyof T ? true : false;
 
+export type TenantOptions = {
+  buId: string;
+  orgId: string;
+  userId: string;
+};
+
 export type QueryOptions = {
-  id?: string;
-  tenantOpts?: {
-    buId: string;
-    orgId: string;
-    userId: string;
-  };
+  tenantOpts?: TenantOptions;
   query?: string;
-  sort?: SortField[];
   filters?: FieldFilter[];
+  sort?: SortField[];
   limit?: number;
   offset?: number;
 };

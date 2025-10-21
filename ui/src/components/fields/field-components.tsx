@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import React, { memo, useMemo } from "react";
@@ -20,6 +15,21 @@ const ErrorMessage = memo(
     );
   },
   (prevProps, nextProps) => prevProps.formError === nextProps.formError,
+);
+
+const WarningMessage = memo(
+  function WarningMessage({ warning }: { warning?: string }) {
+    if (!warning) return null;
+    return (
+      <span
+        role="status"
+        className="mt-1 inline-block rounded bg-yellow-50 px-2 py-1 text-left text-2xs leading-tight text-yellow-600 dark:bg-yellow-500/20 dark:text-yellow-400"
+      >
+        {warning}
+      </span>
+    );
+  },
+  (prevProps, nextProps) => prevProps.warning === nextProps.warning,
 );
 
 export const FieldDescription = memo(
@@ -53,6 +63,7 @@ type FieldWrapperProps = {
   className?: string;
   children: React.ReactNode;
   error?: string;
+  warning?: string;
 };
 
 const FieldLabel = memo(
@@ -65,7 +76,7 @@ const FieldLabel = memo(
   }) {
     return label ? (
       <Label className="block text-xs font-medium">
-        {label} {required && <span className="text-red-500">(required)</span>}
+        {label} {required && <span className="required" />}
       </Label>
     ) : null;
   },
@@ -82,16 +93,21 @@ export const FieldWrapper = memo(function FieldWrapper({
   className,
   children,
   error,
+  warning,
 }: FieldWrapperProps) {
   const descriptionElement = useMemo(() => {
-    return description && !error ? (
+    return description && !error && !warning ? (
       <FieldDescription description={description} />
     ) : null;
-  }, [description, error]);
+  }, [description, error, warning]);
 
   const errorElement = useMemo(() => {
     return error ? <ErrorMessage formError={error} /> : null;
   }, [error]);
+
+  const warningElement = useMemo(() => {
+    return !error && warning ? <WarningMessage warning={warning} /> : null;
+  }, [error, warning]);
 
   return (
     <div className={className}>
@@ -104,6 +120,7 @@ export const FieldWrapper = memo(function FieldWrapper({
       <FieldWrapperDescriptionInner>
         {descriptionElement}
         {errorElement}
+        {warningElement}
       </FieldWrapperDescriptionInner>
     </div>
   );
@@ -134,18 +151,23 @@ export const PasswordFieldWrapper = memo(
     className,
     children,
     error,
+    warning,
     onPasswordReset,
   }: PasswordFieldWrapperProps) {
     // Use useMemo for the description and error components to avoid unnecessary re-renders
     const descriptionElement = useMemo(() => {
-      return description && !error ? (
+      return description && !error && !warning ? (
         <FieldDescription description={description} />
       ) : null;
-    }, [description, error]);
+    }, [description, error, warning]);
 
     const errorElement = useMemo(() => {
       return error ? <ErrorMessage formError={error} /> : null;
     }, [error]);
+
+    const warningElement = useMemo(() => {
+      return !error && warning ? <WarningMessage warning={warning} /> : null;
+    }, [error, warning]);
 
     return (
       <div className={className}>
@@ -176,6 +198,7 @@ export const PasswordFieldWrapper = memo(
         <div className="flex justify-start">
           {descriptionElement}
           {errorElement}
+          {warningElement}
         </div>
       </div>
     );
@@ -188,6 +211,7 @@ export const PasswordFieldWrapper = memo(
       prevProps.required === nextProps.required &&
       prevProps.className === nextProps.className &&
       prevProps.error === nextProps.error &&
+      prevProps.warning === nextProps.warning &&
       prevProps.children === nextProps.children &&
       prevProps.onPasswordReset === nextProps.onPasswordReset
     );

@@ -1,33 +1,20 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { LazyLoader } from "@/components/error-boundary";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
 import { queries } from "@/lib/queries";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { UserSchema } from "@/lib/schemas/user-schema";
-import { api } from "@/services/api";
 import { useQuery } from "@tanstack/react-query";
 import { AlertCircleIcon } from "lucide-react";
-import { lazy, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { CommentContent } from "./comment-content";
-
-const CommentForm = lazy(() =>
-  import("./comment-form").then((module) => ({
-    default: module.CommentForm,
-  })),
-);
+import { CommentForm } from "./comment-form";
 
 export function ShipmentCommentDetails({
   shipmentId,
 }: {
   shipmentId: ShipmentSchema["id"];
 }) {
-  const scrollAreaRef = useRef<HTMLDivElement>(null);
   const lastCommentRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -50,20 +37,6 @@ export function ShipmentCommentDetails({
       });
     }
   }, [comments.length]);
-
-  const searchUsers = async (query: string): Promise<UserSchema[]> => {
-    try {
-      if (!query || query.length < 2) {
-        return [];
-      }
-
-      const result = await api.user.searchUsers(query);
-      return result.results || [];
-    } catch (error) {
-      console.error("Failed to search users:", error);
-      return [];
-    }
-  };
 
   if (isLoading) {
     return (
@@ -100,16 +73,13 @@ export function ShipmentCommentDetails({
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-10">
+    <CommentDetailsOuter>
       {comments.length === 0 ? (
         <div className="text-center py-8 text-sm text-muted-foreground">
           No comments yet. Be the first to add one!
         </div>
       ) : (
-        <ScrollArea
-          ref={scrollAreaRef}
-          className="flex flex-col overflow-y-auto px-4 max-h-[calc(100vh-24rem)]"
-        >
+        <CommentDetailsInner>
           {comments.map((comment, index) => (
             <div
               key={comment.id || index}
@@ -121,13 +91,25 @@ export function ShipmentCommentDetails({
               />
             </div>
           ))}
-        </ScrollArea>
+        </CommentDetailsInner>
       )}
 
       <LazyLoader fallback={<CommentFormSkeleton />}>
-        <CommentForm searchUsers={searchUsers} shipmentId={shipmentId} />
+        <CommentForm shipmentId={shipmentId} />
       </LazyLoader>
-    </div>
+    </CommentDetailsOuter>
+  );
+}
+
+function CommentDetailsOuter({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col gap-4 pb-10">{children}</div>;
+}
+
+function CommentDetailsInner({ children }: { children: React.ReactNode }) {
+  return (
+    <ScrollArea className="flex flex-col px-4 max-h-[calc(100vh-24rem)]">
+      {children}
+    </ScrollArea>
   );
 }
 

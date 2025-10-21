@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 /* eslint-disable prefer-const */
 import { AdminLayout } from "@/components/admin-layout";
 import { RootErrorBoundary } from "@/components/error-boundary";
@@ -20,7 +15,6 @@ const routes: RouteObject[] = [
   {
     errorElement: <RootErrorBoundary />,
     children: [
-      // Protected routes with MainLayout
       {
         Component: MainLayout,
         HydrateFallback: LoadingSkeleton,
@@ -394,6 +388,34 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "dispatch-controls",
+                loader: createPermissionLoader(Resource.DispatchControl),
+                async lazy() {
+                  let { DispatchControl } = await import(
+                    "@/app/dispatch-control/page"
+                  );
+                  return { Component: DispatchControl };
+                },
+                handle: {
+                  crumb: "Dispatch Controls",
+                  title: "Dispatch Controls",
+                },
+              },
+              {
+                path: "distance-overrides",
+                loader: createPermissionLoader(Resource.DistanceOverride),
+                async lazy() {
+                  let { DistanceOverrides } = await import(
+                    "@/app/distance-overrides/page"
+                  );
+                  return { Component: DistanceOverrides };
+                },
+                handle: {
+                  crumb: "Distance Overrides",
+                  title: "Distance Overrides",
+                },
+              },
+              {
                 path: "consolidation-settings",
                 loader: createPermissionLoader(Resource.ConsolidationSettings),
                 async lazy() {
@@ -553,6 +575,30 @@ const routes: RouteObject[] = [
                   title: "Email Profiles",
                 },
               },
+              {
+                path: "ai-logs",
+                loader: createPermissionLoader(Resource.AILog),
+                async lazy() {
+                  let { AILogs } = await import("@/app/ai-logs/page");
+                  return { Component: AILogs };
+                },
+                handle: {
+                  crumb: "AI Logs",
+                  title: "AI Logs",
+                },
+              },
+              {
+                path: "variables",
+                loader: createPermissionLoader(Resource.Variable),
+                async lazy() {
+                  let { Variables } = await import("@/app/variables/page");
+                  return { Component: Variables };
+                },
+                handle: {
+                  crumb: "AI Logs",
+                  title: "AI Logs",
+                },
+              },
             ],
           },
         ],
@@ -592,4 +638,3 @@ const routes: RouteObject[] = [
 const router = createBrowserRouter(routes);
 
 export { router, routes };
-

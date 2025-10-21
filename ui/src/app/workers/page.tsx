@@ -1,31 +1,25 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import { LazyLoader, QueryLazyComponent } from "@/components/error-boundary";
+import { DataTableLazyComponent } from "@/components/error-boundary";
 import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
-import { Skeleton } from "@/components/ui/skeleton";
-import { queries } from "@/lib/queries";
-import { lazy } from "react";
+import { lazy, memo } from "react";
+import { PTOContent } from "./_components/pto/pto-content";
 
 const WorkersDataTable = lazy(() => import("./_components/workers-table"));
-const PTOContent = lazy(() => import("./_components/pto/pto-content"));
 
 export function Workers() {
   return (
     <>
       <MetaTags title="Workers" description="Workers" />
       <FormSaveProvider>
-        <WorkersContent>
-          <QueryLazyComponent queryKey={queries.worker.listUpcomingPTO._def}>
+        <div className="flex flex-col gap-4">
+          <Header />
+          <WorkersContent>
             <PTOContent />
-          </QueryLazyComponent>
-          <LazyLoader fallback={<Skeleton className="h-[300px]" />}>
-            <WorkersDataTable />
-          </LazyLoader>
-        </WorkersContent>
+            <DataTableLazyComponent>
+              <WorkersDataTable />
+            </DataTableLazyComponent>
+          </WorkersContent>
+        </div>
       </FormSaveProvider>
     </>
   );
@@ -34,3 +28,17 @@ export function Workers() {
 function WorkersContent({ children }: { children: React.ReactNode }) {
   return <div className="flex flex-col gap-4">{children}</div>;
 }
+
+const Header = memo(() => {
+  return (
+    <div className="flex justify-between items-center">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">Workers</h1>
+        <p className="text-muted-foreground">
+          Manage and track all worker along with their paid time off records
+        </p>
+      </div>
+    </div>
+  );
+});
+Header.displayName = "Header";

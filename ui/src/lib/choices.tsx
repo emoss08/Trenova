@@ -1,14 +1,4 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import {
-  AWSIcon,
-  GolangIcon,
-  MicrosoftIcon,
-  TwilioIcon,
-} from "@/components/brand-icons";
+import { GolangIcon, ResendIcon } from "@/components/brand-icons";
 import {
   AccessorialChargeMethod,
   BillingCycleType,
@@ -36,6 +26,10 @@ import { Visibility } from "@/types/table-configuration";
 import { Endorsement, PTOStatus, PTOType, WorkerType } from "@/types/worker";
 import { ConsolidationStatus } from "./schemas/consolidation-schema";
 import {
+  DispatchControlSchema,
+  ServiceIncidentType,
+} from "./schemas/dispatchcontrol-schema";
+import {
   ProviderType,
   type EmailProfileSchema,
 } from "./schemas/email-profile-schema";
@@ -48,6 +42,11 @@ import {
 } from "./schemas/shipment-schema";
 import { StopSchema, StopStatus, StopType } from "./schemas/stop-schema";
 import { EquipmentStatus } from "./schemas/tractor-schema";
+import {
+  VariableContext,
+  VariableSchema,
+  VariableValueType,
+} from "./schemas/variable-schema";
 
 /**
  * Returns status choices for a select input.
@@ -295,6 +294,10 @@ export const visibilityChoices = [
 ] satisfies ReadonlyArray<ChoiceProps<Visibility>>;
 
 export const hazardousClassChoices = [
+  {
+    value: HazardousClassChoiceProps.HazardClass1,
+    label: "Division 1: Explosive Hazard",
+  },
   {
     value: HazardousClassChoiceProps.HazardClass1And1,
     label: "Division 1.1: Mass Explosive Hazard",
@@ -817,27 +820,64 @@ export const providerTypeChoices = [
     icon: <GolangIcon className="fill-foreground" />,
   },
   {
-    value: ProviderType.enum.SendGrid,
-    label: "SendGrid",
+    value: ProviderType.enum.Resend,
+    label: "Resend",
     description:
-      "Cloud-based email delivery service by Twilio with advanced analytics and deliverability",
-    icon: <TwilioIcon />,
-    disabled: true,
-  },
-  {
-    value: ProviderType.enum.AWS_SES,
-    label: "AWS SES",
-    description:
-      "Amazon Simple Email Service for scalable email delivery with AWS integration",
-    icon: <AWSIcon className="fill-foreground" />,
-    disabled: true,
-  },
-  {
-    value: ProviderType.enum.Exchange,
-    label: "Microsoft Exchange",
-    description:
-      "Microsoft Exchange Server for enterprise email with Active Directory integration",
-    icon: <MicrosoftIcon />,
-    disabled: true,
+      "Cloud-based email delivery service with advanced analytics and deliverability",
+    icon: <ResendIcon className="fill-foreground" />,
   },
 ] satisfies ReadonlyArray<ChoiceProps<EmailProfileSchema["providerType"]>>;
+
+export const variableContextChoices = [
+  { value: VariableContext.enum.Customer, label: "Customer", color: "#9333ea" },
+  {
+    value: VariableContext.enum.Shipment,
+    label: "Shipment",
+    color: "#4f46e5",
+  },
+  {
+    value: VariableContext.enum.Invoice,
+    label: "Invoice",
+    color: "#ea580c",
+  },
+  {
+    value: VariableContext.enum.Organization,
+    label: "Organization",
+    color: "#ca8a04",
+  },
+  { value: VariableContext.enum.System, label: "System", color: "#2563eb" },
+] satisfies ReadonlyArray<ChoiceProps<VariableSchema["appliesTo"]>>;
+
+export const variableValueTypeChoices = [
+  { value: VariableValueType.enum.String, label: "String", color: "#9333ea" },
+  { value: VariableValueType.enum.Number, label: "Number", color: "#4f46e5" },
+  { value: VariableValueType.enum.Date, label: "Date", color: "#ea580c" },
+  { value: VariableValueType.enum.Boolean, label: "Boolean", color: "#ca8a04" },
+  {
+    value: VariableValueType.enum.Currency,
+    label: "Currency",
+    color: "#2563eb",
+  },
+] satisfies ReadonlyArray<ChoiceProps<VariableSchema["valueType"]>>;
+
+export const serviceIncidentTypeChoices = [
+  { value: ServiceIncidentType.enum.Never, label: "Never", color: "#15803d" },
+  { value: ServiceIncidentType.enum.Pickup, label: "Pickup", color: "#7e22ce" },
+  {
+    value: ServiceIncidentType.enum.Delivery,
+    label: "Delivery",
+    color: "#f59e0b",
+  },
+  {
+    value: ServiceIncidentType.enum.PickupDelivery,
+    label: "Pickup/Delivery",
+    color: "#0369a1",
+  },
+  {
+    value: ServiceIncidentType.enum.AllExceptShipper,
+    label: "All Except Shipper",
+    color: "#10b981",
+  },
+] satisfies ReadonlyArray<
+  ChoiceProps<DispatchControlSchema["recordServiceFailures"]>
+>;

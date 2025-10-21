@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { DataTableColumnHeaderWithTooltip } from "@/components/data-table/_components/data-table-column-header";
 import { UserAvatar } from "@/components/nav-user";
 import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
@@ -50,7 +45,8 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
       },
     },
     {
-      accessorKey: "action",
+      id: "operation",
+      accessorKey: "operation",
       header: ({ column }) => (
         <DataTableColumnHeaderWithTooltip
           column={column}
@@ -61,7 +57,7 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
       cell: ({ row }) => {
         const entry = row.original;
 
-        return <ActionBadge withDot={false} action={entry.action} />;
+        return <ActionBadge withDot={false} operation={entry.operation} />;
       },
     },
     {

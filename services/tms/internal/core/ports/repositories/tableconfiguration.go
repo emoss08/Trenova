@@ -1,51 +1,42 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
-// TableConfigurationFilters defines filters for querying configurations
 type TableConfigurationFilters struct {
-	Base       *ports.FilterQueryOptions
-	Resource   string
-	CreatedBy  pulid.ID
-	Visibility *tableconfiguration.Visibility
-	IsDefault  *bool
-	Search     string
-	UserID     pulid.ID
-	// Include relationships
-	IncludeShares  bool
-	IncludeCreator bool
+	Filter         *pagination.QueryOptions       `json:"filter"         form:"filter"`
+	Visibility     *tableconfiguration.Visibility `json:"visibility"     form:"visibility"`
+	Resource       string                         `json:"resource"       form:"resource"`
+	Search         string                         `json:"search"         form:"search"`
+	CreatedBy      pulid.ID                       `json:"createdBy"      form:"createdBy"`
+	UserID         pulid.ID                       `json:"userId"         form:"userId"`
+	IncludeShares  bool                           `json:"includeShares"  form:"includeShares"`
+	IncludeCreator bool                           `json:"includeCreator" form:"includeCreator"`
+	IsDefault      bool                           `json:"isDefault"      form:"isDefault"`
 }
 
-// CopyTableConfigurationRequest defines a request for copying a table configuration
 type CopyTableConfigurationRequest struct {
-	ConfigID pulid.ID
-	UserID   pulid.ID
-	OrgID    pulid.ID
-	BuID     pulid.ID
+	ConfigID pulid.ID `json:"configId" form:"configId"`
+	UserID   pulid.ID `json:"userId"   form:"userId"`
+	OrgID    pulid.ID `json:"orgId"    form:"orgId"`
+	BuID     pulid.ID `json:"buId"     form:"buId"`
 }
 
-// ListUserConfigurationRequest defines a request for listing user configurations
 type ListUserConfigurationRequest struct {
-	Filter   *ports.LimitOffsetQueryOptions `query:"filter"`
-	Resource string
+	Filter   *pagination.QueryOptions `json:"filter"   form:"filter"`
+	Resource string                   `json:"resource" form:"resource"`
 }
 
 type DeleteUserConfigurationRequest struct {
-	ConfigID pulid.ID `json:"configId"`
-	UserID   pulid.ID `json:"userId"`
-	OrgID    pulid.ID `json:"orgId"`
-	BuID     pulid.ID `json:"buId"`
+	ConfigID pulid.ID `json:"configId" form:"configId"`
+	UserID   pulid.ID `json:"userId"   form:"userId"`
+	OrgID    pulid.ID `json:"orgId"    form:"orgId"`
+	BuID     pulid.ID `json:"buId"     form:"buId"`
 }
 
 type TableConfigurationRepository interface {
@@ -57,11 +48,11 @@ type TableConfigurationRepository interface {
 	List(
 		ctx context.Context,
 		filters *TableConfigurationFilters,
-	) (*ports.ListResult[*tableconfiguration.Configuration], error)
+	) (*pagination.ListResult[*tableconfiguration.Configuration], error)
 	ListPublicConfigurations(
 		ctx context.Context,
 		opts *TableConfigurationFilters,
-	) (*ports.ListResult[*tableconfiguration.Configuration], error)
+	) (*pagination.ListResult[*tableconfiguration.Configuration], error)
 	Create(
 		ctx context.Context,
 		config *tableconfiguration.Configuration,
@@ -76,13 +67,13 @@ type TableConfigurationRepository interface {
 	ListUserConfigurations(
 		ctx context.Context,
 		opts *ListUserConfigurationRequest,
-	) (*ports.ListResult[*tableconfiguration.Configuration], error)
-	GetDefaultOrLatestConfiguration(
+	) (*pagination.ListResult[*tableconfiguration.Configuration], error)
+	GetDefaultOrLatest(
 		ctx context.Context,
 		resource string,
 		opts *TableConfigurationFilters,
 	) (*tableconfiguration.Configuration, error)
 	Copy(ctx context.Context, req *CopyTableConfigurationRequest) error
-	ShareConfiguration(ctx context.Context, share *tableconfiguration.ConfigurationShare) error
+	Share(ctx context.Context, share *tableconfiguration.ConfigurationShare) error
 	RemoveShare(ctx context.Context, configID pulid.ID, sharedWithID pulid.ID) error
 }

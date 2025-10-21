@@ -1,10 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-"use no memo";
-import googleLogo from "@/assets/brand-icons/google-ar21.svg";
 import { InputField } from "@/components/fields/input-field";
 import {
   Command,
@@ -15,7 +8,6 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Icon } from "@/components/ui/icons";
-import { LazyImage } from "@/components/ui/image";
 import {
   Popover,
   PopoverContent,
@@ -26,11 +18,10 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import type { APIError } from "@/types/errors";
-import { IntegrationType } from "@/types/integration";
 import { faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { CheckIcon } from "@radix-ui/react-icons";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   type Control,
   type RegisterOptions,
@@ -87,22 +78,15 @@ export function AddressField({
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
   const debouncedInput = useDebounce(searchValue, 400);
 
-  // Get integration by type
-  const { data: integration, isLoading: integrationLoading } = useQuery({
-    ...queries.integration.getIntegrationByType(IntegrationType.GoogleMaps),
-  });
-
-  // Fetch locations when search changes using React Query
   const {
     data: locationsData,
     isLoading,
     error,
   } = useQuery({
     ...queries.googleMaps.locationAutocomplete(debouncedInput),
-    placeholderData: (previousData) => previousData,
+    enabled: debouncedInput.length > 3,
   });
 
-  // Parse locations data and filter out invalid locations
   const locations = useMemo(() => {
     if (!locationsData?.data?.details) return [] as AddressLocationData[];
 
@@ -118,7 +102,6 @@ export function AddressField({
     return filtered;
   }, [locationsData]);
 
-  // Fill in address details when a location is selected
   const handleSelect = (locationId: string) => {
     if (!locationId) return;
 
@@ -171,23 +154,16 @@ export function AddressField({
     }
 
     if (onLocationSelect) {
-      onLocationSelect(location);
+      onLocationSelect(location as AddressLocationData);
     }
 
     setSelectedLocation(locationId);
     setOpen(false);
   };
 
-  // Get API key error message if there's an error
   const apiKeyError = error
     ? (error as APIError)?.data?.detail || "Unknown error"
     : null;
-
-  // Trigger a render if searchValue or locations change
-  useEffect(() => {
-    // This empty effect ensures the component re-renders when
-    // searchValue or locations change
-  }, [searchValue, locations]);
 
   return (
     <div className="flex flex-col space-y-1.5">
@@ -200,98 +176,91 @@ export function AddressField({
           placeholder="Address Line 1"
           description="The primary address line."
         />
-        {integrationLoading ? (
-          <div className="absolute right-3.5 top-1/2 -translate-y-1/2">
-            <PulsatingDots size={1} color="foreground" />
-          </div>
-        ) : integration?.enabled ? (
-          <Popover open={open} onOpenChange={setOpen}>
-            <PopoverTrigger asChild>
-              <div className="absolute right-2 top-1/2 mt-0.5 -translate-y-1/2">
-                <button
-                  id="address-search-button"
-                  className="flex items-center gap-1 text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10 p-1 rounded-md cursor-pointer"
-                  type="button"
-                >
-                  <Icon
-                    icon={faSearch}
-                    className="text-muted-foreground size-3"
-                  />
-                  <span className="sr-only">Search addresses</span>
-                </button>
-              </div>
-            </PopoverTrigger>
-            <PopoverContent className="w-96 p-0">
-              <Command shouldFilter={false}>
-                <CommandInput
-                  placeholder="Search for an address..."
-                  value={searchValue}
-                  onValueChange={setSearchValue}
-                  className="h-9"
+
+        <Popover open={open} onOpenChange={setOpen}>
+          <PopoverTrigger asChild>
+            <div className="absolute right-2 top-1/2 mt-0.5 -translate-y-1/2">
+              <button
+                id="address-search-button"
+                className="flex items-center gap-1 text-muted-foreground hover:text-foreground hover:bg-muted-foreground/10 p-1 rounded-md cursor-pointer"
+                type="button"
+              >
+                <Icon
+                  icon={faSearch}
+                  className="text-muted-foreground size-3"
                 />
-                <CommandList>
-                  {isLoading ? (
-                    <div className="flex justify-center py-4">
-                      <PulsatingDots size={2} color="foreground" />
-                    </div>
-                  ) : locations.length === 0 ? (
-                    <CommandEmpty>
-                      {apiKeyError ? (
-                        <LocationSearchError error={apiKeyError} />
-                      ) : (
-                        <div className="flex flex-col gap-1 min-h-[100px] justify-center text-center text-sm text-muted-foreground">
-                          <span>No locations found.</span>
-                          <span>Please try a different search.</span>
+                <span className="sr-only">Search addresses</span>
+              </button>
+            </div>
+          </PopoverTrigger>
+          <PopoverContent className="w-96 p-0">
+            <Command shouldFilter={false}>
+              <CommandInput
+                placeholder="Search for an address..."
+                value={searchValue}
+                onValueChange={setSearchValue}
+                className="h-9"
+              />
+              <CommandList>
+                {isLoading ? (
+                  <div className="flex justify-center py-4">
+                    <PulsatingDots size={2} color="foreground" />
+                  </div>
+                ) : locations.length === 0 ? (
+                  <CommandEmpty>
+                    {apiKeyError ? (
+                      <LocationSearchError error={apiKeyError} />
+                    ) : (
+                      <div className="flex flex-col gap-1 min-h-[100px] justify-center text-center text-sm text-muted-foreground">
+                        <span>No locations found.</span>
+                        <span>Please try a different search.</span>
+                      </div>
+                    )}
+                  </CommandEmpty>
+                ) : (
+                  <CommandGroup>
+                    {locations.map((location) => (
+                      <CommandItem
+                        key={location.placeId}
+                        value={location.placeId}
+                        className="py-1 justify-between"
+                        onSelect={() => {
+                          if (location.placeId) handleSelect(location.placeId);
+                        }}
+                      >
+                        <div className="flex flex-col">
+                          <span>{location.name || "Unknown Location"}</span>
+                          <span className="text-2xs text-muted-foreground">
+                            {location.addressLine1}
+                            {location.city ? `, ${location.city}` : ""}
+                            {location.state ? `, ${location.state}` : ""}
+                            {location.postalCode
+                              ? ` ${location.postalCode}`
+                              : ""}
+                          </span>
                         </div>
-                      )}
-                    </CommandEmpty>
-                  ) : (
-                    <CommandGroup>
-                      {locations.map((location) => (
-                        <CommandItem
-                          key={location.placeId}
-                          value={location.placeId}
-                          className="py-1 justify-between"
-                          onSelect={() => {
-                            if (location.placeId)
-                              handleSelect(location.placeId);
-                          }}
-                        >
-                          <div className="flex flex-col">
-                            <span>{location.name || "Unknown Location"}</span>
-                            <span className="text-2xs text-muted-foreground">
-                              {location.addressLine1}
-                              {location.city ? `, ${location.city}` : ""}
-                              {location.state ? `, ${location.state}` : ""}
-                              {location.postalCode
-                                ? ` ${location.postalCode}`
-                                : ""}
-                            </span>
-                          </div>
-                          <CheckIcon
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedLocation === location.placeId
-                                ? "opacity-100"
-                                : "opacity-0",
-                            )}
-                          />
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  )}
-                </CommandList>
-              </Command>
-              <div className="flex justify-between py-0.5 px-2 items-center gap-0.5 text-2xs text-muted-foreground border-t">
+                        <CheckIcon
+                          className={cn(
+                            "mr-2 h-4 w-4",
+                            selectedLocation === location.placeId
+                              ? "opacity-100"
+                              : "opacity-0",
+                          )}
+                        />
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                )}
+              </CommandList>
+              <div className="flex justify-between py-0.5 px-2 items-center gap-0.5 text-2xs text-muted-foreground border-t bg-muted">
                 <div className="flex items-center gap-0.5">
-                  Powered by{" "}
-                  <LazyImage src={googleLogo} className="max-w-[45px]" />
+                  Powered by Google Maps
                 </div>
                 <div>Found {locations.length} locations</div>
               </div>
-            </PopoverContent>
-          </Popover>
-        ) : null}
+            </Command>
+          </PopoverContent>
+        </Popover>
       </div>
     </div>
   );

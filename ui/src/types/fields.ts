@@ -1,15 +1,11 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import type { InputProps } from "@/components/ui/input";
 import type { TextareaProps } from "@/components/ui/textarea";
 import { type IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 import { type CheckboxProps } from "@radix-ui/react-checkbox";
 import * as SelectPrimitive from "@radix-ui/react-select";
 import { SwitchProps } from "@radix-ui/react-switch";
-import { ComponentPropsWithoutRef, type ReactNode } from "react";
+import { Command as CommandPrimitive } from "cmdk";
+import React, { ComponentPropsWithoutRef, type ReactNode } from "react";
 import type {
   Control,
   FieldValues,
@@ -17,7 +13,7 @@ import type {
   RegisterOptions,
 } from "react-hook-form";
 import { FieldPath } from "react-hook-form";
-import { type API_ENDPOINTS } from "./server";
+import { SELECT_OPTIONS_ENDPOINTS } from "./server";
 
 type BaseInputFieldProps = Omit<InputProps, "name"> & {
   label?: string;
@@ -112,6 +108,15 @@ export type SelectOption = React.ComponentProps<typeof SelectPrimitive.Item> & {
   disabled?: boolean;
 };
 
+export type CommandItemProps = React.ComponentProps<
+  typeof CommandPrimitive.Item
+> & {
+  value: string | boolean | number;
+  color?: string;
+  icon?: IconDefinition | ReactNode;
+  disabled?: boolean;
+};
+
 export type AddNewButtonProps = {
   label: string;
   popoutLink: string;
@@ -122,9 +127,11 @@ export type BaseSelectFieldProps = {
   label?: string;
   description?: string;
   isReadOnly?: boolean;
+  isBoolean?: boolean;
   isInvalid?: boolean;
   className?: string;
   placeholder?: string;
+  isClearable?: boolean;
 };
 
 export type SelectFieldProps<T extends FieldValues> = BaseSelectFieldProps &
@@ -143,6 +150,7 @@ export type DoubleClickSelectFieldProps<T extends FieldValues> = {
   rules?: RegisterOptions<T, Path<T>>;
   placeholder?: string;
   options: SelectOption[];
+  isClearable?: boolean;
 };
 
 export type Suggestion = {
@@ -191,7 +199,7 @@ export interface BaseAutocompleteFieldProps<
   _TForm extends FieldValues,
 > {
   /** Link to fetch options */
-  link: API_ENDPOINTS;
+  link: SELECT_OPTIONS_ENDPOINTS;
   /** Preload all data ahead of time */
   preload?: boolean;
   /** Function to filter options */

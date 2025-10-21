@@ -7,23 +7,26 @@ import { holdSeverityChoices, holdTypeChoices } from "@/lib/choices";
 import { HoldReasonSchema } from "@/lib/schemas/hold-reason-schema";
 import { useFormContext } from "react-hook-form";
 
+function HoldReasonFormOuter({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col gap-4">{children}</div>;
+}
+
 export function HoldReasonForm() {
   const { control } = useFormContext<HoldReasonSchema>();
 
   return (
-    <>
+    <HoldReasonFormOuter>
       <FormGroup cols={2}>
         <FormControl cols="full">
           <SwitchField
             control={control}
             name="active"
-            label="Enabled"
-            description="Turn on to make this reason selectable for new holds across the app."
-            position="left"
+            label="Active"
+            description="Toggles whether this hold reason is available for use in the system."
             outlined
+            position="left"
           />
         </FormControl>
-
         <FormControl>
           <SelectField
             control={control}
@@ -35,7 +38,6 @@ export function HoldReasonForm() {
             options={holdTypeChoices}
           />
         </FormControl>
-
         <FormControl>
           <InputField
             control={control}
@@ -81,7 +83,6 @@ export function HoldReasonForm() {
           />
         </FormControl>
       </FormGroup>
-
       <FormSection
         title="Gating Rules"
         description="Select which actions this reason blocks by default; multiple can apply and stack."
@@ -125,6 +126,6 @@ export function HoldReasonForm() {
           </FormControl>
         </FormGroup>
       </FormSection>
-    </>
+    </HoldReasonFormOuter>
   );
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
@@ -424,8 +424,8 @@ export function MultiSelectAutocomplete<T>({
             role="combobox"
             aria-expanded={open}
             className={cn(
-              "w-full font-normal gap-2 cursor-auto rounded-md border-muted-foreground/20 bg-muted px-2 py-1.5 h-7",
-              "data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
+              "w-full font-normal gap-2 cursor-auto rounded-md border-muted-foreground/20 bg-primary/5 px-2 py-1.5 h-7",
+              "data-[state=open]:border-foreground data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-foreground/20",
               "justify-between [&_svg]:size-3 [&_svg]:shrink-0 cursor-pointer hover:bg-muted",
               "transition-[border-color,box-shadow] duration-200 ease-in-out",
               "whitespace-nowrap",

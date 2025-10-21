@@ -1,52 +1,47 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
 type DedicatedLaneFilterOptions struct {
-	ExpandDetails bool `query:"expandDetails"`
+	ExpandDetails bool `json:"expandDetails" form:"expandDetails"`
 }
 
 type ListDedicatedLaneRequest struct {
-	Filter        *ports.LimitOffsetQueryOptions
-	FilterOptions DedicatedLaneFilterOptions `query:"filterOptions"`
+	Filter        *pagination.QueryOptions   `json:"filter"        form:"filter"`
+	FilterOptions DedicatedLaneFilterOptions `json:"filterOptions" form:"filterOptions"`
 }
 
 type GetDedicatedLaneByIDRequest struct {
-	ID            pulid.ID
-	OrgID         pulid.ID
-	BuID          pulid.ID
-	UserID        pulid.ID
-	FilterOptions DedicatedLaneFilterOptions `query:"filterOptions"`
+	ID            pulid.ID                   `json:"id"            form:"id"`
+	OrgID         pulid.ID                   `json:"orgId"         form:"orgId"`
+	BuID          pulid.ID                   `json:"buId"          form:"buId"`
+	UserID        pulid.ID                   `json:"userId"        form:"userId"`
+	FilterOptions DedicatedLaneFilterOptions `json:"filterOptions" form:"filterOptions"`
 }
 
 type FindDedicatedLaneByShipmentRequest struct {
-	OrganizationID        pulid.ID
-	BusinessUnitID        pulid.ID
-	CustomerID            pulid.ID
-	OriginLocationID      pulid.ID
-	DestinationLocationID pulid.ID
-	TrailerTypeID         *pulid.ID
-	TractorTypeID         *pulid.ID
-	ServiceTypeID         *pulid.ID
-	ShipmentTypeID        *pulid.ID
+	OrganizationID        pulid.ID  `json:"organizationId"        form:"organizationId"`
+	BusinessUnitID        pulid.ID  `json:"businessUnitId"        form:"businessUnitId"`
+	CustomerID            pulid.ID  `json:"customerId"            form:"customerId"`
+	OriginLocationID      pulid.ID  `json:"originLocationId"      form:"originLocationId"`
+	DestinationLocationID pulid.ID  `json:"destinationLocationId" form:"destinationLocationId"`
+	TrailerTypeID         *pulid.ID `json:"trailerTypeId"         form:"trailerTypeId"`
+	TractorTypeID         *pulid.ID `json:"tractorTypeId"         form:"tractorTypeId"`
+	ServiceTypeID         *pulid.ID `json:"serviceTypeId"         form:"serviceTypeId"`
+	ShipmentTypeID        *pulid.ID `json:"shipmentTypeId"        form:"shipmentTypeId"`
 }
 
 type DedicatedLaneRepository interface {
 	List(
 		ctx context.Context,
 		req *ListDedicatedLaneRequest,
-	) (*ports.ListResult[*dedicatedlane.DedicatedLane], error)
+	) (*pagination.ListResult[*dedicatedlane.DedicatedLane], error)
 	GetByID(
 		ctx context.Context,
 		req *GetDedicatedLaneByIDRequest,

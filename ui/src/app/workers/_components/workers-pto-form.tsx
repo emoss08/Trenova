@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
@@ -22,7 +22,7 @@ import {
   faTrash,
   faUser,
 } from "@fortawesome/pro-regular-svg-icons";
-import { useEffect, useState } from "react";
+import { useEffect, useEffectEvent, useState } from "react";
 import {
   useFieldArray,
   UseFieldArrayRemove,
@@ -66,11 +66,11 @@ function WorkerPTOContent({
   });
 
   // Watch for status changes
-  useEffect(() => {
-    if (cancellationStatus.includes(status) && !reason) {
+  useEffectEvent(() => {
+    if (cancellationStatus.includes(status as PTOStatus) && !reason) {
       setShowCancelForm(true);
     }
-  }, [status, reason]);
+  });
 
   if (showCancelForm) {
     return (
@@ -161,7 +161,7 @@ function PTOCancelForm({
           name={`pto.${index}.reason`}
           label="Reason"
           placeholder={`Reason for ${mapStatusToHumanReadable(
-            getValues(`pto.${index}.status`),
+            getValues(`pto.${index}.status`) as PTOStatus,
           )}`}
           rules={{ required: true }}
         />

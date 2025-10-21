@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
@@ -27,19 +22,19 @@ export function HazardousMaterialForm() {
           rules={{ required: true }}
           name="status"
           label="Status"
-          placeholder="Status"
-          description="The status of the hazardous material"
+          placeholder="Select Status"
+          description="The status of the hazardous material (e.g., 'Active')"
           options={statusChoices}
         />
       </FormControl>
       <FormControl>
         <InputField
           control={control}
-          rules={{ required: true }}
+          readOnly
           name="code"
           label="Code"
           placeholder="Code"
-          description="The code of the hazardous material"
+          description="The code of the hazardous material (e.g., 'H2O2')"
           maxLength={10}
         />
       </FormControl>
@@ -50,7 +45,7 @@ export function HazardousMaterialForm() {
           name="name"
           label="Name"
           placeholder="Name"
-          description="The name of the hazardous material"
+          description="The name of the hazardous material (e.g., 'Hydrogen Peroxide')"
           maxLength={100}
         />
       </FormControl>
@@ -61,7 +56,7 @@ export function HazardousMaterialForm() {
           name="description"
           label="Description"
           placeholder="Description"
-          description="The description of the hazardous material"
+          description="The description of the hazardous material (e.g., 'Hydrogen Peroxide is a chemical compound')"
         />
       </FormControl>
       <FormControl>
@@ -70,7 +65,7 @@ export function HazardousMaterialForm() {
           name="unNumber"
           label="UN Number"
           placeholder="UN Number"
-          description="The UN number of the hazardous material"
+          description="The UN number of the hazardous material (e.g., '12345')"
           maxLength={4}
         />
       </FormControl>
@@ -80,7 +75,7 @@ export function HazardousMaterialForm() {
           name="casNumber"
           label="CAS Number"
           placeholder="CAS Number"
-          description="The CAS number of the hazardous material"
+          description="The CAS number of the hazardous material (e.g., '123-456-7890')"
           maxLength={10}
         />
       </FormControl>
@@ -91,7 +86,7 @@ export function HazardousMaterialForm() {
           name="packingGroup"
           label="Packing Group"
           placeholder="Packing Group"
-          description="The packing group of the hazardous material"
+          description="The packing group of the hazardous material (e.g., '1')"
           options={packingGroupChoices}
         />
       </FormControl>
@@ -102,7 +97,7 @@ export function HazardousMaterialForm() {
           name="class"
           label="Class"
           placeholder="Class"
-          description="The class of the hazardous material"
+          description="The class of the hazardous material (e.g., '1')"
           options={hazardousClassChoices}
         />
       </FormControl>
@@ -112,7 +107,16 @@ export function HazardousMaterialForm() {
           name="properShippingName"
           label="Proper Shipping Name"
           placeholder="Proper Shipping Name"
-          description="The proper shipping name of the hazardous material"
+          description="The proper shipping name of the hazardous material (e.g., 'Hydrogen Peroxide')"
+        />
+      </FormControl>
+      <FormControl cols="full">
+        <TextareaField
+          control={control}
+          name="specialProvisions"
+          label="Special Provisions"
+          placeholder="Special Provisions"
+          description="Comma separated special provisions of the hazardous material per CFR § 172.102 (e.g., 'B1,IB3,T4,TP1')"
         />
       </FormControl>
       <FormControl cols="full">
@@ -121,7 +125,7 @@ export function HazardousMaterialForm() {
           name="handlingInstructions"
           label="Handling Instructions"
           placeholder="Handling Instructions"
-          description="The handling instructions of the hazardous material"
+          description="The handling instructions of the hazardous material (e.g., 'Handle with care')"
         />
       </FormControl>
       <FormControl>
@@ -130,7 +134,7 @@ export function HazardousMaterialForm() {
           name="emergencyContact"
           label="Emergency Contact"
           placeholder="Emergency Contact"
-          description="The emergency contact of the hazardous material"
+          description="The emergency contact of the hazardous material (e.g., 'John Doe')"
         />
       </FormControl>
       <FormControl>
@@ -139,7 +143,7 @@ export function HazardousMaterialForm() {
           name="emergencyContactPhoneNumber"
           label="Emergency Contact Phone Number"
           placeholder="Emergency Contact Phone Number"
-          description="The emergency contact phone number of the hazardous material"
+          description="The emergency contact phone number of the hazardous material (e.g., '123-456-7890')"
         />
       </FormControl>
       <FormControl>
@@ -149,7 +153,7 @@ export function HazardousMaterialForm() {
           control={control}
           name="placardRequired"
           label="Placard Required"
-          description="Whether the hazardous material requires a placard"
+          description="Whether the hazardous material requires a placard (e.g., 'Yes')"
         />
       </FormControl>
       <FormControl>
@@ -159,7 +163,7 @@ export function HazardousMaterialForm() {
           control={control}
           name="isReportableQuantity"
           label="Is Reportable Quantity"
-          description="Whether the hazardous material is a reportable quantity"
+          description="Whether the hazardous material is a reportable quantity (e.g., 'Yes')"
         />
       </FormControl>
     </FormGroup>

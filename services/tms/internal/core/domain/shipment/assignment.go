@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package shipment
 
 import (
@@ -11,8 +6,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/uptrace/bun"
 )
 
@@ -42,7 +37,6 @@ type Assignment struct {
 	ShipmentMove    *ShipmentMove    `json:"shipmentMove,omitzero"    bun:"rel:belongs-to,join:shipment_move_id=id"`
 }
 
-// Pagination Configuration
 func (a *Assignment) GetID() string {
 	return a.ID.String()
 }
@@ -52,7 +46,7 @@ func (a *Assignment) GetTableName() string {
 }
 
 func (a *Assignment) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:

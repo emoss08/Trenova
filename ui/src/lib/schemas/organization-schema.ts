@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { OrganizationType } from "@/types/organization";
 import * as z from "zod/v4";
 import {
@@ -24,7 +19,6 @@ export const organizationSchema = z.object({
   bucketName: optionalStringSchema,
   businessUnitId: optionalStringSchema,
 
-  // * Core Fields
   name: z.string().min(1, {
     error: "Name is required",
   }),
@@ -59,4 +53,25 @@ export const organizationSchema = z.object({
   metadata: organizationMetadataSchema.optional(),
 });
 
+export const organizationMembershipSchema = z.object({
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+  businessUnitId: optionalStringSchema,
+  userId: optionalStringSchema,
+  organizationId: optionalStringSchema,
+
+  roleIds: optionalStringSchema.array(),
+  directPolicies: optionalStringSchema.array(),
+  joinedAt: timestampSchema,
+  grantedById: optionalStringSchema,
+  expiresAt: timestampSchema.optional(),
+  isDefault: z.boolean(),
+});
+
 export type OrganizationSchema = z.infer<typeof organizationSchema>;
+
+export type OrganizationMembershipSchema = z.infer<
+  typeof organizationMembershipSchema
+>;

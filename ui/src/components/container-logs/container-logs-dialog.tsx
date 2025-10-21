@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md
  */
@@ -30,6 +30,7 @@ import { api } from "@/services/api";
 import { useContainerLogStore } from "@/stores/docker-store";
 import { ArrowDown } from "lucide-react";
 import { LazyLoader } from "../error-boundary";
+import { Kbd } from "../ui/kbd";
 import { Skeleton } from "../ui/skeleton";
 import { ContainerLogActions } from "./container-log-actions";
 import { ContainerLogControls } from "./container-log-controls";
@@ -205,8 +206,7 @@ export function ContainerLogsDialog({
             )}
           </div>
           <div className="opacity-70">
-            Tip: Press <kbd className="rounded border px-1.5">Esc</kbd> to clear
-            search.
+            Tip: Press <Kbd>Esc</Kbd> to clear search.
           </div>
         </DialogFooter>
       </DialogContent>

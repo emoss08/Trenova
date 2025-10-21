@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { useAutoResizeTextarea } from "@/hooks/use-auto-resize-textarea";
 import { cn } from "@/lib/utils";
 import {
@@ -11,24 +6,25 @@ import {
   faText,
 } from "@fortawesome/pro-regular-svg-icons";
 import * as React from "react";
-
 import { useState } from "react";
+import TextareaAutosizeComponent from "react-textarea-autosize";
 import { Icon } from "./icons";
 
-export type TextareaProps = React.ComponentProps<"textarea"> & {
+export type TextareaProps = React.ComponentProps<
+  typeof TextareaAutosizeComponent
+> & {
   isInvalid?: boolean;
 };
 
-function Textarea({ className, isInvalid, rows = 3, ...props }: TextareaProps) {
+function Textarea({ className, isInvalid, ...props }: TextareaProps) {
   return (
-    <textarea
+    <TextareaAutosizeComponent
       data-slot="textarea"
-      rows={rows}
       className={cn(
-        "flex w-full rounded-md border border-muted-foreground/20 bg-muted px-2 py-1 text-base",
+        "flex w-full rounded-md border border-muted-foreground/20 bg-primary/5 px-2 py-1 text-base",
         "shadow-xs placeholder:text-muted-foreground focus-visible:outline-hidden",
         "focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 md:text-xs",
-        "focus-visible:border-blue-600 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-blue-600/20",
+        "focus-visible:border-foreground focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-foreground/20",
         "transition-[border-color,box-shadow] duration-200 ease-in-out",
         isInvalid &&
           "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
@@ -38,37 +34,6 @@ function Textarea({ className, isInvalid, rows = 3, ...props }: TextareaProps) {
     />
   );
 }
-
-export { Textarea };
-
-function AutoResizeTextarea({
-  className,
-  isInvalid,
-  onChange,
-  ...props
-}: TextareaProps) {
-  const { textareaRef, adjustHeight } = useAutoResizeTextarea({
-    minHeight: 70,
-    maxHeight: 200,
-  });
-
-  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-    adjustHeight();
-    onChange?.(e);
-  };
-
-  return (
-    <Textarea
-      ref={textareaRef}
-      className={cn("resize-none min-h-[70px] max-h-[200px]", className)}
-      isInvalid={isInvalid}
-      onChange={handleChange}
-      {...props}
-    />
-  );
-}
-
-export { AutoResizeTextarea };
 
 const ITEMS = [
   {
@@ -137,7 +102,7 @@ function AITextarea({
         <div
           className={cn(
             "relative border border-muted-foreground/20 rounded-md bg-muted",
-            "focus-within:border-blue-600 focus-within:outline-hidden focus-within:ring-4 focus-within:ring-blue-600/20",
+            "focus-within:border-foreground focus-within:outline-hidden focus-within:ring-4 focus-within:ring-foreground/20",
             "transition-[border-color,box-shadow] duration-200 ease-in-out",
             isInvalid &&
               "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
@@ -224,5 +189,5 @@ function AITextarea({
     </>
   );
 }
+export { AITextarea, Textarea };
 
-export { AITextarea };

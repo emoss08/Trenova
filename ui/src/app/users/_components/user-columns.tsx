@@ -1,15 +1,8 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import {
-  HoverCardTimestamp,
-  RandomColoredBadge,
-} from "@/components/data-table/_components/data-table-components";
+import { HoverCardTimestamp } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
 import { Badge } from "@/components/ui/badge";
 import { LazyImage } from "@/components/ui/image";
+import { statusChoices } from "@/lib/choices";
 import type { RoleSchema, UserSchema } from "@/lib/schemas/user-schema";
 import { RoleType } from "@/types/roles-permissions";
 import { type ColumnDef } from "@tanstack/react-table";
@@ -23,12 +16,22 @@ export function getUserColumns(): ColumnDef<UserSchema>[] {
         const { status } = row.original;
         return <StatusBadge status={status} />;
       },
+      size: 120,
+      minSize: 100,
+      maxSize: 150,
+      meta: {
+        apiField: "status",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: statusChoices,
+        defaultFilterOperator: "eq",
+      },
     },
     {
       id: "fullName",
       accessorKey: "name",
       header: "Full Name",
-      minSize: 150,
       cell: ({ row }) => {
         const { profilePicUrl, name, username } = row.original;
         return (
@@ -45,12 +48,21 @@ export function getUserColumns(): ColumnDef<UserSchema>[] {
           </div>
         );
       },
+      size: 200,
+      minSize: 200,
+      maxSize: 250,
+      meta: {
+        apiField: "name",
+        filterable: true,
+        sortable: true,
+        filterType: "text",
+        defaultFilterOperator: "contains",
+      },
     },
     {
       accessorKey: "emailAddress",
       header: "Email",
       cell: ({ row }) => {
-        // We should do mailto: link here
         const { emailAddress } = row.original;
         return (
           <a
@@ -61,32 +73,52 @@ export function getUserColumns(): ColumnDef<UserSchema>[] {
           </a>
         );
       },
-    },
-    {
-      accessorKey: "roles",
-      header: "Roles",
-      cell: ({ row }) => {
-        const { roles } = row.original;
-        if (!roles) return <p>-</p>;
-
-        return (
-          <div className="flex flex-wrap gap-1">
-            {roles.map((role) => (
-              <RandomColoredBadge key={role.id}>{role.name}</RandomColoredBadge>
-            ))}
-          </div>
-        );
+      meta: {
+        apiField: "emailAddress",
+        filterable: true,
+        sortable: true,
+        filterType: "text",
+        defaultFilterOperator: "contains",
       },
+      size: 200,
+      minSize: 200,
+      maxSize: 250,
     },
     {
       id: "lastLoginAt",
       accessorKey: "lastLoginAt",
-      minSize: 150,
       header: "Last Login",
       cell: ({ row }) => {
         const { lastLoginAt } = row.original;
         return <HoverCardTimestamp timestamp={lastLoginAt} />;
       },
+      meta: {
+        apiField: "lastLoginAt",
+        filterable: false,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "daterange",
+      },
+      size: 200,
+      minSize: 200,
+      maxSize: 250,
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created At",
+      cell: ({ row }) => {
+        return <HoverCardTimestamp timestamp={row.original.createdAt} />;
+      },
+      meta: {
+        apiField: "createdAt",
+        filterable: false,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "daterange",
+      },
+      size: 200,
+      minSize: 200,
+      maxSize: 250,
     },
   ];
 }
@@ -120,6 +152,23 @@ export function getRoleColumns(): ColumnDef<RoleSchema>[] {
     {
       accessorKey: "description",
       header: "Description",
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created At",
+      cell: ({ row }) => {
+        return <HoverCardTimestamp timestamp={row.original.createdAt} />;
+      },
+      meta: {
+        apiField: "createdAt",
+        filterable: false,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "daterange",
+      },
+      size: 200,
+      minSize: 200,
+      maxSize: 250,
     },
   ];
 }

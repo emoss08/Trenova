@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { http } from "@/lib/http-client";
 import type {
   CopyTableConfigurationSchema,
@@ -33,7 +28,7 @@ export class TableConfigurationAPI {
   async listUserConfigurations(resource: Resource) {
     const { data } = await http.get<
       LimitOffsetResponse<TableConfigurationSchema>
-    >(`/table-configurations/me/${resource}`);
+    >(`/table-configurations/me/${resource}/`);
 
     return data;
   }
@@ -41,7 +36,7 @@ export class TableConfigurationAPI {
   async listPublicConfigurations(resource: Resource) {
     const { data } = await http.get<
       LimitOffsetResponse<TableConfigurationSchema>
-    >(`/table-configurations/public/${resource}`);
+    >(`/table-configurations/public/${resource}/`);
 
     return data;
   }

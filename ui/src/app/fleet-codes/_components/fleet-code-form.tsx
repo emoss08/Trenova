@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { ColorField } from "@/components/fields/color-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -34,11 +29,11 @@ export function FleetCodeForm() {
         <InputField
           control={control}
           rules={{ required: true }}
-          name="name"
-          label="Name"
-          placeholder="Name"
-          description="The name of the fleet code"
-          maxLength={100}
+          name="code"
+          label="Code"
+          placeholder="Code"
+          description="The code of the fleet code"
+          maxLength={10}
         />
       </FormControl>
       <FormControl cols="full">

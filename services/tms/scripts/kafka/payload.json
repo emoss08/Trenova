@@ -1,0 +1,28 @@
+{
+    "name": "trenova-postgres-connector",
+    "config": {
+        "connector.class": "io.debezium.connector.postgresql.PostgresConnector",
+        "database.hostname": "db",
+        "database.port": "5432",
+        "database.user": "postgres",
+        "database.password": "postgres",
+        "database.dbname": "trenova_go_db",
+        "database.server.name": "trenova",
+        "plugin.name": "pgoutput",
+        "slot.name": "trenova_slot",
+        "publication.name": "trenova_publication",
+        "schema.include.list": "public",
+        "topic.prefix": "trenova",
+        "key.converter": "io.confluent.connect.avro.AvroConverter",
+        "value.converter": "io.confluent.connect.avro.AvroConverter",
+        "key.converter.schema.registry.url": "http://schema-registry:8081",
+        "value.converter.schema.registry.url": "http://schema-registry:8081",
+        "snapshot.mode": "initial",
+        "decimal.handling.mode": "string",
+        "time.precision.mode": "adaptive",
+        "tombstones.on.delete": "true",
+        "heartbeat.interval.ms": "30000",
+        "max.batch.size": "2048",
+        "max.queue.size": "8192"
+    }
+}

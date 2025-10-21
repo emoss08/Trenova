@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
@@ -130,8 +130,8 @@ export interface LiveUpdateStrategy {
  * Add new endpoints here as you implement live mode for other tables
  */
 export const LIVE_MODE_ENDPOINTS = {
-  AUDIT_LOGS: "/audit-logs/live",
-  SHIPMENTS: "/shipments/live",
+  AUDIT_ENTRIES: "/audit-entries/live/",
+  SHIPMENTS: "/shipments/live/",
 } as const;
 
 /**

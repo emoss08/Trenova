@@ -1,7 +1,7 @@
-import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
 import {
   BooleanBadge,
   DataTableDescription,
+  HoverCardTimestamp,
 } from "@/components/data-table/_components/data-table-components";
 import { HoldSeverityBadge, HoldTypeBadge } from "@/components/status-badge";
 import { holdSeverityChoices, holdTypeChoices } from "@/lib/choices";
@@ -9,8 +9,6 @@ import { HoldReasonSchema } from "@/lib/schemas/hold-reason-schema";
 import { ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<HoldReasonSchema>[] {
-  const commonColumns = createCommonColumns<HoldReasonSchema>();
-
   return [
     {
       id: "active",
@@ -88,7 +86,7 @@ export function getColumns(): ColumnDef<HoldReasonSchema>[] {
         />
       ),
       size: 400,
-      minSize: 400,
+      minSize: 300,
       maxSize: 500,
       meta: {
         apiField: "description",
@@ -186,6 +184,23 @@ export function getColumns(): ColumnDef<HoldReasonSchema>[] {
         defaultFilterOperator: "eq",
       },
     },
-    commonColumns.createdAt,
+    {
+      accessorKey: "createdAt",
+      header: "Created At",
+      cell: ({ row }) => {
+        return <HoverCardTimestamp timestamp={row.original.createdAt} />;
+      },
+      size: 200,
+      minSize: 200,
+      maxSize: 250,
+      meta: {
+        apiField: "createdAt",
+        label: "Created At",
+        filterable: false,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "daterange",
+      },
+    },
   ];
 }

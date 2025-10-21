@@ -1,8 +1,9 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
+import { formatJsonWithSpaces } from "@/lib/json-sensitive-utils";
 import { isLineAdded, isLineRemoved } from "@/lib/json-viewer-utils";
 import { cn } from "@/lib/utils";
 import type { JsonDiffViewerProps, JsonViewerType } from "@/types/json-viewer";
@@ -17,7 +18,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./dialog";
-import { formatJsonWithSpaces } from "@/lib/json-sensitive-utils";
 import { JsonSmartDiff } from "./json-smart-diff";
 
 export function JsonCodeDiffViewer({

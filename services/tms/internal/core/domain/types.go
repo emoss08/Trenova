@@ -1,15 +1,7 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package domain
 
 import (
-	"context"
-
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/rotisserie/eris"
+	"errors"
 )
 
 type Status string
@@ -26,34 +18,24 @@ func StatusFromString(s string) (Status, error) {
 	case "Inactive":
 		return StatusInactive, nil
 	default:
-		return "", eris.New("invalid status")
+		return "", errors.New("invalid status")
 	}
 }
 
 type Gender string
 
 const (
-	// GenderMale is the male gender
-	GenderMale = Gender("Male")
-
-	// GenderFemale is the female gender
+	GenderMale   = Gender("Male")
 	GenderFemale = Gender("Female")
 )
 
 type EquipmentStatus string
 
 const (
-	// EquipmentStatusAvailable is the equipment is available for use
-	EquipmentStatusAvailable = EquipmentStatus("Available")
-
-	// EquipmentStatusOOS is the equipment is out of service
-	EquipmentStatusOOS = EquipmentStatus("OutOfService")
-
-	// EquipmentStatusAtMaintenance is the equipment is at maintenance
+	EquipmentStatusAvailable     = EquipmentStatus("Available")
+	EquipmentStatusOOS           = EquipmentStatus("OutOfService")
 	EquipmentStatusAtMaintenance = EquipmentStatus("AtMaintenance")
-
-	// EquipmentStatusSold is the equipment is sold
-	EquipmentStatusSold = EquipmentStatus("Sold")
+	EquipmentStatusSold          = EquipmentStatus("Sold")
 )
 
 func EquipmentStatusFromString(s string) (EquipmentStatus, error) {
@@ -67,18 +49,6 @@ func EquipmentStatusFromString(s string) (EquipmentStatus, error) {
 	case "Sold":
 		return EquipmentStatusSold, nil
 	default:
-		return "", eris.New("invalid equipment status")
+		return "", errors.New("invalid equipment status")
 	}
-}
-
-type RoutingProvider string
-
-const (
-	// PCMiler is the provider for PCMiler
-	RoutingProviderPCMiler = RoutingProvider("PCMiler")
-)
-
-type Validatable interface {
-	Validate(ctx context.Context, multiErr *errors.MultiError)
-	GetTableName() string
 }

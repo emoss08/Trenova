@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import {
@@ -28,9 +23,9 @@ const styles = {
   base: "w-full h-8 text-sm justify-start text-left font-normal border border-muted-foreground/20 bg-muted rounded-md",
   invalid:
     "border-red-500 bg-red-500/20 text-red-500 hover:text-red-500 hover:bg-red-500/20 data-[state=open]:border-red-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-red-400/20",
-  open: "text-sm data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
+  open: "text-sm data-[state=open]:border-foreground data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-foreground/20",
   focusVisible:
-    "focus-visible:border-blue-600 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-blue-600/20",
+    "focus-visible:border-foreground focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-foreground/20",
   hover:
     "transition-[border-color,box-shadow] duration-200 ease-in-out hover:bg-none",
   disabled: "text-muted-foreground hover:text-muted-foreground",
@@ -99,7 +94,6 @@ export function DateField<T extends FieldValues>({
   );
 }
 
-// TODO(Wolfred): Change this to useController
 export function DoubleClickEditDate<T extends FieldValues>({
   name,
   control,

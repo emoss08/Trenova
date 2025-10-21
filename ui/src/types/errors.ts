@@ -1,12 +1,15 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
+export type ValidationPriority = "HIGH" | "MEDIUM" | "LOW";
 
 export interface InvalidParam {
   name: string;
   reason: string;
   code: string;
+  priority?: ValidationPriority;
   location?:
     | "body"
     | "query"
@@ -79,5 +82,31 @@ export class APIError extends Error {
 
   getFieldErrors(): InvalidParam[] {
     return this.data?.invalidParams || [];
+  }
+
+  getFieldErrorsByPriority(priority: ValidationPriority): InvalidParam[] {
+    return this.getFieldErrors().filter((error) => error.priority === priority);
+  }
+
+  hasHighPriorityErrors(): boolean {
+    return this.getFieldErrors().some((error) => error.priority === "HIGH");
+  }
+
+  hasMediumPriorityErrors(): boolean {
+    return this.getFieldErrors().some((error) => error.priority === "MEDIUM");
+  }
+
+  hasOnlyLowPriorityErrors(): boolean {
+    const errors = this.getFieldErrors();
+    return (
+      errors.length > 0 &&
+      errors.every((error) => error.priority === "LOW" || !error.priority)
+    );
+  }
+
+  hasBlockingErrors(): boolean {
+    return this.getFieldErrors().some(
+      (error) => error.priority === "HIGH" || error.priority === "MEDIUM",
+    );
   }
 }

@@ -1,13 +1,15 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-// src/hooks/use-api-mutation.ts
-import { APIError } from "@/types/errors";
+import { APIError, InvalidParam } from "@/types/errors";
 import { UseMutationOptions, useMutation } from "@tanstack/react-query";
 import { FieldValues, Path, UseFormSetError } from "react-hook-form";
 import { toast } from "sonner";
+
+interface MutationErrorOptions<TFormValues extends FieldValues> {
+  error: APIError;
+  setFormError?: UseFormSetError<TFormValues>;
+  resourceName?: string;
+  allowLowPrioritySubmission?: boolean;
+  onLowPriorityErrors?: (errors: InvalidParam[]) => void;
+}
 
 /**
  * Handles common API errors in mutations
@@ -16,16 +18,12 @@ export function handleMutationError<TFormValues extends FieldValues>({
   error,
   setFormError,
   resourceName,
-}: {
-  error: APIError;
-  setFormError?: UseFormSetError<TFormValues>;
-  resourceName?: string;
-}): void {
+  allowLowPrioritySubmission = false,
+  onLowPriorityErrors,
+}: MutationErrorOptions<TFormValues>): void {
   const apiError = error instanceof APIError ? error : null;
 
-  // Handle validation errors by setting form errors
   if (apiError?.isValidationError() && setFormError) {
-    // * if it is a version mismatch error, we don't need to set the form error
     if (apiError.isVersionMismatchError()) {
       toast.error("Version mismatch", {
         description:
@@ -34,10 +32,15 @@ export function handleMutationError<TFormValues extends FieldValues>({
       return;
     }
 
-    apiError.getFieldErrors().forEach((fieldError) => {
+    const highPriorityErrors = apiError.getFieldErrorsByPriority("HIGH");
+    const mediumPriorityErrors = apiError.getFieldErrorsByPriority("MEDIUM");
+    const lowPriorityErrors = apiError.getFieldErrorsByPriority("LOW");
+
+    [...highPriorityErrors, ...mediumPriorityErrors].forEach((fieldError) => {
       try {
         setFormError(fieldError.name as Path<TFormValues>, {
           message: fieldError.reason,
+          type: "validation",
         });
       } catch (e) {
         console.error(
@@ -46,23 +49,49 @@ export function handleMutationError<TFormValues extends FieldValues>({
         );
       }
     });
+
+    if (lowPriorityErrors.length > 0) {
+      if (allowLowPrioritySubmission && onLowPriorityErrors) {
+        onLowPriorityErrors(lowPriorityErrors);
+      } else {
+        lowPriorityErrors.forEach((warning) => {
+          toast.warning("Validation Warning", {
+            description: `${warning.name}: ${warning.reason}`,
+          });
+        });
+      }
+    }
+
+    apiError
+      .getFieldErrors()
+      .filter((e) => !e.priority)
+      .forEach((fieldError) => {
+        try {
+          setFormError(fieldError.name as Path<TFormValues>, {
+            message: fieldError.reason,
+            type: "validation",
+          });
+        } catch (e) {
+          console.error(
+            `Error setting form error for field ${fieldError.name}:`,
+            e,
+          );
+        }
+      });
   }
 
-  // Handle rate limit errors
   if (apiError?.isRateLimitError()) {
     toast.error("Rate limit exceeded", {
       description: "You have exceeded the rate limit. Please try again later.",
     });
   }
 
-  // Handle business errors
   if (apiError?.isBusinessError()) {
     toast.error("Invalid Operation", {
       description: apiError.data?.detail,
     });
   }
 
-  // Log with context if resourceName is provided
   if (resourceName) {
     console.error(`Error handling ${resourceName}:`, apiError);
   }
@@ -80,10 +109,14 @@ export function useApiMutation<
   setFormError,
   resourceName,
   onError,
+  allowLowPrioritySubmission = false,
+  onLowPriorityErrors,
   ...options
 }: {
   setFormError?: UseFormSetError<TFormValues>;
   resourceName?: string;
+  allowLowPrioritySubmission?: boolean;
+  onLowPriorityErrors?: (errors: InvalidParam[]) => void;
   onError?: (
     error: APIError,
     variables: TVariables,
@@ -101,6 +134,8 @@ export function useApiMutation<
         error,
         setFormError,
         resourceName,
+        allowLowPrioritySubmission,
+        onLowPriorityErrors,
       });
 
       // Custom error handling if provided

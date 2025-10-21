@@ -1,8 +1,4 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
+import { TourProvider } from "@/components/tour/tour-provider";
 import { FormCreateModal } from "@/components/ui/form-create-modal";
 import { locationSchema } from "@/lib/schemas/location-schema";
 import { Status } from "@/types/common";
@@ -35,14 +31,17 @@ export function CreateLocationModal({ open, onOpenChange }: TableSheetProps) {
   });
 
   return (
-    <FormCreateModal
-      open={open}
-      onOpenChange={onOpenChange}
-      title="Location"
-      formComponent={<LocationForm />}
-      form={form}
-      url="/locations/"
-      queryKey="location-list"
-    />
+    <TourProvider>
+      <FormCreateModal
+        open={open}
+        onOpenChange={onOpenChange}
+        title="Location"
+        formComponent={<LocationForm />}
+        form={form}
+        className="sm:max-w-[500px]"
+        url="/locations/"
+        queryKey="location-list"
+      />
+    </TourProvider>
   );
 }

@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { BetaTag } from "@/components/ui/beta-tag";
 import { Button } from "@/components/ui/button";
 import {
@@ -92,7 +87,7 @@ export function PreviousRatesDialog() {
                   glitchColors={["#9c9c9c", "#696969", "#424242"]}
                   glitchSpeed={50}
                   centerVignette={true}
-                  outerVignette={true}
+                  outerVignette={false}
                   smooth={true}
                   className="max-h-[300px]"
                   canvasClassName="max-h-[300px]"

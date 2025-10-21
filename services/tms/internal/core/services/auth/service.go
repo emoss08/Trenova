@@ -1,89 +1,59 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package auth
 
 import (
 	"context"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/session"
-	"github.com/emoss08/trenova/internal/core/domain/user"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/infrastructure/cache/redis"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/rotisserie/eris"
-	"github.com/rs/zerolog"
-	"github.com/samber/oops"
+	"github.com/emoss08/trenova/internal/infrastructure/redis"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
 	"go.uber.org/fx"
-)
-
-const (
-	loginRateLimitWindow = 15 * time.Minute
-	maxLoginAttempts     = 5
+	"go.uber.org/zap"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	Cache       *redis.Client
-	Logger      *logger.Logger
-	UserRepo    repositories.UserRepository
-	SessionRepo repositories.SessionRepository
+	UserRepository     repositories.UserRepository
+	SessionRepository  repositories.SessionRepository
+	APITokenRepository repositories.APITokenRepository
+	Cache              *redis.Connection
+	Logger             *zap.Logger
 }
 
 type Service struct {
-	userRepo    repositories.UserRepository
-	sessionRepo repositories.SessionRepository
-	cache       *redis.Client
-	l           *zerolog.Logger
+	userRepository     repositories.UserRepository
+	sessionRepository  repositories.SessionRepository
+	apiTokenRepository repositories.APITokenRepository
+	cache              *redis.Connection
+	l                  *zap.Logger
 }
 
-func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().
-		Str("service", "auth").
-		Logger()
-
+func NewService(p ServiceParams) services.AuthService {
 	return &Service{
-		userRepo:    p.UserRepo,
-		sessionRepo: p.SessionRepo,
-		cache:       p.Cache,
-		l:           &log,
+		userRepository:     p.UserRepository,
+		sessionRepository:  p.SessionRepository,
+		apiTokenRepository: p.APITokenRepository,
+		cache:              p.Cache,
+		l:                  p.Logger.Named("service.auth"),
 	}
 }
 
-// createSessionRequest is the request for the createSession method.
-type createSessionRequest struct {
-	User      *user.User
-	IP        string
-	UserAgent string
-}
-
-// Login logs a user in and returns a session ID.
 func (s *Service) Login(
 	ctx context.Context,
-	ip, userAgent string,
-	req *services.LoginRequest,
+	req services.LoginRequest,
 ) (*services.LoginResponse, error) {
 	if err := req.Validate(); err != nil {
-		return nil, eris.Wrap(err, "invalid login request")
+		return nil, err
 	}
 
-	usr, err := s.userRepo.FindByEmail(ctx, req.EmailAddress)
+	usr, err := s.userRepository.FindByEmail(ctx, req.EmailAddress)
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to find user by email")
-	}
-
-	if err = s.checkLoginRateLimit(ctx, ip, usr.ID); err != nil {
-		s.l.Warn().Err(err).Msg("login rate limit exceeded")
 		return nil, err
 	}
 
@@ -91,130 +61,81 @@ func (s *Service) Login(
 		return nil, err
 	}
 
-	sess, err := s.createSession(ctx, createSessionRequest{
+	sess, err := s.createSession(ctx, &createSessionRequest{
 		User:      usr,
-		IP:        ip,
-		UserAgent: userAgent,
+		ClientIP:  req.ClientIP,
+		UserAgent: req.UserAgent,
 	})
 	if err != nil {
-		return nil, eris.Wrap(err, "failed to create session")
+		return nil, err
 	}
 
-	if err = s.userRepo.UpdateLastLogin(ctx, usr.ID); err != nil {
-		s.l.Error().
-			Str("userID", usr.ID.String()).
-			Msg("failed to update last login")
+	if err = s.userRepository.UpdateLastLogin(ctx, usr.ID); err != nil {
+		// ! we're not going to return an error here because we want to return the session to the user
+		s.l.Error("failed to update last login", zap.Error(err))
 	}
 
-	// Reset the login attempts for the user
-	if err = s.resetLoginAttempts(ctx, ip, usr.ID); err != nil {
-		s.l.Error().
-			Str("ip", ip).
-			Str("userID", usr.ID.String()).
-			Msg("failed to reset login attempts")
+	if err = s.resetLoginAttempts(ctx, req.ClientIP, usr.ID); err != nil {
+		// ! we're not going to return an error here because we want to return the session to the user
+		s.l.Error("failed to reset login attempts", zap.Error(err))
 	}
-
-	s.l.Debug().
-		Str("session_id", sess.ID.String()).
-		Msg("successful login")
 
 	return &services.LoginResponse{
 		User:      usr,
-		SessionID: sess.ID.String(),
 		ExpiresAt: sess.ExpiresAt,
+		SessionID: sess.ID.String(),
 	}, nil
 }
 
 func (s *Service) ValidateSession(
 	ctx context.Context,
-	sessionID pulid.ID,
-	clientIP string,
+	req services.ValidateSessionRequest,
 ) (bool, error) {
-	_, err := s.sessionRepo.GetValidSession(ctx, sessionID, clientIP)
+	_, err := s.sessionRepository.GetValidSession(ctx, repositories.GetValidSessionRequest{
+		SessionID: req.SessionID,
+		ClientIP:  req.ClientIP,
+	})
 	if err != nil {
-		s.l.Error().
-			Str("sessionID", sessionID.String()).
-			Str("clientIP", clientIP).
-			Err(err).
-			Msg("failed to validate session")
-		return false, oops.In("auth_service").
-			Tags("validate_session").
-			With("sessionID", sessionID.String()).
-			With("clientIP", clientIP).
-			Time(time.Now()).
-			Wrapf(err, "failed to validate session")
+		return false, err
 	}
 
 	return true, nil
 }
 
-// checkLoginRateLimit checks if a user has exceeded the login rate limit.
-func (s *Service) checkLoginRateLimit(ctx context.Context, ip string, userID pulid.ID) error {
-	// First increment, then check if the count is greater than the limit
-	count, err := s.incrementLoginAttempts(ctx, ip, userID)
-	if err != nil {
-		// On redis errors, allow the request ,but log the error
-		s.l.Error().
-			Str("ip", ip).
-			Str("userID", userID.String()).
-			Msg("failed to increment login attempts")
-	}
-
-	if count > maxLoginAttempts {
-		// * Ensure we include the email address in the error message
-		// * because this will be shown to the user on the frontend
-		// * TODO(Wolfred): Lock the users account after a certain number of failed attempts
-		return errors.NewRateLimitError(
-			"emailAddress",
-			"Too many login attempts, please try again later",
-		)
-	}
-
-	return nil
-}
-
-// incrementLoginAttempts increments the login attempts for a user.
-func (s *Service) incrementLoginAttempts(
+func (s *Service) RefreshSession(
 	ctx context.Context,
-	ip string,
-	userID pulid.ID,
-) (int64, error) {
-	key := fmt.Sprintf("login_attempts:%s:%s", ip, userID.String())
-	count, err := s.cache.IncreaseWithExpiry(ctx, key, loginRateLimitWindow)
+	req services.RefreshSessionRequest,
+) (*session.Session, error) {
+	sess, err := s.sessionRepository.GetValidSession(ctx, repositories.GetValidSessionRequest{
+		SessionID: req.SessionID,
+		ClientIP:  req.ClientIP,
+	})
 	if err != nil {
-		s.l.Error().
-			Str("ip", ip).
-			Str("userID", userID.String()).
-			Msg("failed to increment login attempts")
-		return 0, eris.Wrap(err, "failed to increment login attempts")
+		return nil, err
 	}
 
-	return count, nil
+	if err = s.sessionRepository.UpdateSessionActivity(
+		ctx,
+		&repositories.UpdateSessionActivityRequest{
+			SessionID: req.SessionID,
+			ClientIP:  req.ClientIP,
+			UserAgent: req.UserAgent,
+			EventType: session.EventTypeAccessed,
+			Metadata:  req.Metadata,
+		},
+	); err != nil {
+		s.l.Warn("failed to update session activity", zap.Error(err))
+	}
+
+	return sess, nil
 }
 
-// resetLoginAttempts resets the login attempts for a user.
-func (s *Service) resetLoginAttempts(ctx context.Context, ip string, userID pulid.ID) error {
-	key := fmt.Sprintf("login_attempts:%s:%s", ip, userID.String())
-	err := s.cache.Del(ctx, key)
+func (s *Service) CheckEmail(ctx context.Context, req services.CheckEmailRequest) (bool, error) {
+	usr, err := s.userRepository.FindByEmail(ctx, req.EmailAddress)
 	if err != nil {
-		s.l.Error().
-			Str("ip", ip).
-			Str("userID", userID.String()).
-			Msg("failed to reset login attempts")
-		return eris.Wrap(err, "failed to reset login attempts")
+		return false, err
 	}
 
-	return nil
-}
-
-// CheckEmail checks if an email address is valid and returns a message.
-func (s *Service) CheckEmail(ctx context.Context, req *services.CheckEmailRequest) (bool, error) {
-	usr, err := s.userRepo.FindByEmail(ctx, req.EmailAddress)
-	if err != nil {
-		return false, eris.Wrap(err, "failed to find user by email")
-	}
-
-	// Verify the user status
 	if err = usr.ValidateStatus(); err != nil {
 		return false, err
 	}
@@ -222,118 +143,260 @@ func (s *Service) CheckEmail(ctx context.Context, req *services.CheckEmailReques
 	return true, nil
 }
 
-// RefreshSession updates the session activity and extends the session expiration time.
-func (s *Service) RefreshSession(
-	ctx context.Context,
-	sessionID pulid.ID,
-	ip, userAgent string,
-) (*session.Session, error) {
-	// First get and validate the session
-	sess, err := s.sessionRepo.GetValidSession(ctx, sessionID, ip)
+func (s *Service) Logout(ctx context.Context, req services.LogoutRequest) error {
+	_, err := s.sessionRepository.GetValidSession(ctx, repositories.GetValidSessionRequest{
+		SessionID: req.SessionID,
+		ClientIP:  req.ClientIP,
+	})
 	if err != nil {
-		return nil, err
+		s.l.Error(
+			"invalid session during logout",
+			zap.Error(err),
+			zap.String("sessionId", req.SessionID.String()),
+			zap.String("ip", req.ClientIP),
+		)
+		return err
 	}
 
-	// Update session activity
-	if err = s.sessionRepo.UpdateSessionActivity(
-		ctx,
-		sessionID,
-		ip,
-		userAgent,
-		session.EventTypeAccessed,
-		nil,
-	); err != nil {
-		// Check if this is a Redis circuit breaker error
-		if strings.Contains(err.Error(), "circuit breaker is open") {
-			s.l.Warn().
-				Err(err).
-				Str("sessionId", sessionID.String()).
-				Msg("session activity update skipped due to Redis circuit breaker")
-		} else {
-			s.l.Warn().Err(err).Msg("failed to update session activity")
-		}
-	}
-
-	return sess, nil
-}
-
-// Logout revokes a session and logs a user out.
-func (s *Service) Logout(ctx context.Context, sessionID pulid.ID, ip, userAgent string) error {
-	// First verify the session is valid for this IP
-	_, err := s.sessionRepo.GetValidSession(ctx, sessionID, ip)
+	err = s.sessionRepository.RevokeSession(ctx, repositories.RevokeSessionRequest{
+		SessionID: req.SessionID,
+		ClientIP:  req.ClientIP,
+		UserAgent: req.UserAgent,
+		Reason:    req.Reason,
+	})
 	if err != nil {
-		s.l.Error().
-			Str("sessionId", sessionID.String()).
-			Str("ip", ip).
-			Err(err).
-			Msg("invalid session during logout")
-		return eris.Wrap(err, "invalid session")
-	}
-
-	err = s.sessionRepo.RevokeSession(ctx, sessionID, ip, userAgent, "User logged out")
-	if err != nil {
-		s.l.Error().
-			Str("sessionId", sessionID.String()).
-			Err(err).
-			Msg("failed to revoke session")
-		return eris.Wrap(err, "failed to revoke session")
+		s.l.Error(
+			"failed to revoke session",
+			zap.Error(err),
+			zap.String("sessionId", req.SessionID.String()),
+			zap.String("ip", req.ClientIP),
+		)
+		return err
 	}
 
 	return nil
 }
 
-// createSession creates a session for a user.
-func (s *Service) createSession(
-	ctx context.Context,
-	p createSessionRequest,
-) (*session.Session, error) {
-	expiresAt := timeutils.NowUnix() + 30*24*60*60 // * 30 days
-	sess := session.NewSession(
-		p.User.ID,
-		p.User.BusinessUnitID,
-		p.User.CurrentOrganizationID,
-		p.IP,
-		p.UserAgent,
-		expiresAt,
-	)
-
-	if err := sess.Validate(p.IP); err != nil {
-		return nil, eris.Wrap(err, "failed to validate session")
-	}
-
-	if err := s.sessionRepo.Create(ctx, sess); err != nil {
-		return nil, eris.Wrap(err, "failed to create session")
-	}
-
-	return sess, nil
-}
-
-// UpdateSessionOrganization updates the organization ID in a user's session
-//
-// Parameters:
-//   - ctx: The context for the operation.
-//   - sessionID: The ID of the session to update.
-//   - newOrgID: The new organization ID.
-//
-// Returns:
-//   - error: An error if the operation fails.
 func (s *Service) UpdateSessionOrganization(
 	ctx context.Context,
 	sessionID pulid.ID,
 	newOrgID pulid.ID,
 ) error {
-	log := s.l.With().
-		Str("operation", "UpdateSessionOrganization").
-		Str("sessionID", sessionID.String()).
-		Str("newOrgID", newOrgID.String()).
-		Logger()
+	log := s.l.With(
+		zap.String("operation", "UpdateSessionOrganization"),
+		zap.String("sessionID", sessionID.String()),
+		zap.String("newOrgID", newOrgID.String()),
+	)
 
-	err := s.sessionRepo.UpdateSessionOrganization(ctx, sessionID, newOrgID)
+	err := s.sessionRepository.UpdateSessionOrganization(
+		ctx,
+		repositories.UpdateSessionOrganizationRequest{
+			SessionID: sessionID,
+			NewOrgID:  newOrgID,
+		},
+	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update session organization")
-		return eris.Wrap(err, "failed to update session organization")
+		log.Error("failed to update session organization", zap.Error(err))
+		return err
 	}
 
-	log.Info().Msg("session organization updated successfully")
+	log.Info("session organization updated successfully")
 	return nil
+}
+
+type createSessionRequest struct {
+	User      *tenant.User
+	ClientIP  string
+	UserAgent string
+}
+
+func (s *Service) createSession(
+	ctx context.Context,
+	req *createSessionRequest,
+) (*session.Session, error) {
+	expiresAt := utils.NowUnix() + 30*24*60*60 // 30 days
+
+	sess := session.NewSession(
+		session.NewSessionRequest{
+			UserID:                req.User.ID,
+			BusinessUnitID:        req.User.BusinessUnitID,
+			CurrentOrganizationID: req.User.CurrentOrganizationID,
+			IP:                    req.ClientIP,
+			UserAgent:             req.UserAgent,
+			ExpiresAt:             expiresAt,
+		},
+	)
+
+	if err := sess.Validate(req.ClientIP); err != nil {
+		return nil, err
+	}
+
+	if err := s.sessionRepository.Create(ctx, sess); err != nil {
+		return nil, err
+	}
+
+	return sess, nil
+}
+
+func (s *Service) resetLoginAttempts(ctx context.Context, clientIP string, userID pulid.ID) error {
+	key := fmt.Sprintf("login_attempts:%s:%s", clientIP, userID.String())
+
+	if err := s.cache.Delete(ctx, key); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Service) CreateAPIToken(
+	ctx context.Context,
+	req *services.CreateAPITokenRequest,
+) (*services.CreateAPITokenResponse, error) {
+	if err := req.Validate(); err != nil {
+		return nil, err
+	}
+
+	token, err := tenant.NewAPIToken(tenant.NewAPITokenRequest{
+		UserID:         req.UserID,
+		BusinessUnitID: req.BusinessUnitID,
+		OrganizationID: req.OrganizationID,
+		Name:           req.Name,
+		Description:    req.Description,
+		Scopes:         req.Scopes,
+		ExpiresAt:      req.ExpiresAt,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.apiTokenRepository.Create(ctx, repositories.CreateAPITokenRequest{
+		Token: token,
+	}); err != nil {
+		return nil, err
+	}
+
+	if err = s.cacheAPIToken(ctx, token); err != nil {
+		s.l.Warn("failed to cache API token", zap.Error(err))
+	}
+
+	return &services.CreateAPITokenResponse{
+		Token:      token,
+		PlainToken: token.PlainToken, // This is the only time we return the plain token
+	}, nil
+}
+
+func (s *Service) ValidateAPIToken(
+	ctx context.Context,
+	req services.ValidateAPITokenRequest,
+) (*tenant.APIToken, error) {
+	tokenPrefix := req.Token
+	if len(tokenPrefix) > tenant.TokenPrefixLength {
+		tokenPrefix = tokenPrefix[:tenant.TokenPrefixLength]
+	}
+
+	token, err := s.getCachedAPIToken(ctx, tokenPrefix)
+	if err == nil && token != nil {
+		if err = token.VerifyToken(req.Token); err != nil {
+			return nil, err
+		}
+
+		go func() {
+			updateCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+
+			if err = s.apiTokenRepository.UpdateLastUsed(updateCtx, repositories.UpdateAPITokenLastUsedRequest{
+				TokenID: token.ID,
+				IP:      req.ClientIP,
+			}); err != nil {
+				s.l.Warn("failed to update API token last used", zap.Error(err))
+			}
+		}()
+
+		return token, nil
+	}
+
+	token, err = s.apiTokenRepository.FindByToken(ctx, repositories.FindAPITokenByTokenRequest{
+		TokenPrefix: tokenPrefix,
+		PlainToken:  req.Token,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if err = s.cacheAPIToken(ctx, token); err != nil {
+		s.l.Warn("failed to cache API token", zap.Error(err))
+	}
+
+	go func() {
+		updateCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		defer cancel()
+
+		if err = s.apiTokenRepository.UpdateLastUsed(updateCtx, repositories.UpdateAPITokenLastUsedRequest{
+			TokenID: token.ID,
+			IP:      req.ClientIP,
+		}); err != nil {
+			s.l.Warn("failed to update API token last used", zap.Error(err))
+		}
+	}()
+
+	return token, nil
+}
+
+func (s *Service) RevokeAPIToken(
+	ctx context.Context,
+	req services.RevokeAPITokenRequest,
+) error {
+	if err := s.apiTokenRepository.Revoke(ctx, req.TokenID); err != nil {
+		return err
+	}
+
+	token, err := s.apiTokenRepository.FindByID(ctx, req.TokenID)
+	if err == nil && token != nil {
+		if err = s.clearCachedAPIToken(ctx, token.TokenPrefix); err != nil {
+			s.l.Warn("failed to clear API token from cache", zap.Error(err))
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) ListUserAPITokens(
+	ctx context.Context,
+	userID pulid.ID,
+) ([]*tenant.APIToken, error) {
+	tokens, err := s.apiTokenRepository.FindByUserID(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, token := range tokens {
+		token.SanitizeForResponse()
+	}
+
+	return tokens, nil
+}
+
+func (s *Service) cacheAPIToken(ctx context.Context, token *tenant.APIToken) error {
+	key := fmt.Sprintf("api_token:%s", token.TokenPrefix)
+
+	return s.cache.SetJSON(ctx, key, token, 5*time.Minute)
+}
+
+func (s *Service) getCachedAPIToken(
+	ctx context.Context,
+	tokenPrefix string,
+) (*tenant.APIToken, error) {
+	key := fmt.Sprintf("api_token:%s", tokenPrefix)
+
+	var token tenant.APIToken
+	if err := s.cache.GetJSON(ctx, key, &token); err != nil {
+		return nil, err
+	}
+
+	return &token, nil
+}
+
+func (s *Service) clearCachedAPIToken(ctx context.Context, tokenPrefix string) error {
+	key := fmt.Sprintf("api_token:%s", tokenPrefix)
+	return s.cache.Delete(ctx, key)
 }

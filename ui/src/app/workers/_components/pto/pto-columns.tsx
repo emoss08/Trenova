@@ -1,17 +1,10 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
+import { HoverCardTimestamp } from "@/components/data-table/_components/data-table-components";
 import { PTOStatusBadge, PTOTypeBadge } from "@/components/status-badge";
 import { ptoStatusChoices, ptoTypeChoices } from "@/lib/choices";
 import { type WorkerPTOSchema } from "@/lib/schemas/worker-schema";
 import { type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<WorkerPTOSchema>[] {
-  const commonColumns = createCommonColumns<WorkerPTOSchema>();
-
   return [
     {
       accessorKey: "status",
@@ -73,6 +66,26 @@ export function getColumns(): ColumnDef<WorkerPTOSchema>[] {
         defaultFilterOperator: "eq",
       },
     },
-    commonColumns.createdAt,
+    {
+      accessorKey: "createdAt",
+      header: "Created",
+      meta: {
+        apiField: "createdAt",
+        filterable: false,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "daterange",
+      },
+      cell: ({ row }) => {
+        if (!row.original.createdAt) return "-";
+
+        return (
+          <HoverCardTimestamp
+            className="font-table tracking-tight"
+            timestamp={row.original.createdAt}
+          />
+        );
+      },
+    },
   ];
 }

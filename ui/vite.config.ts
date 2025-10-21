@@ -1,20 +1,14 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { nodeResolve } from "@rollup/plugin-node-resolve";
 import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { createRequire } from "node:module";
 import path from "path";
 import { visualizer } from "rollup-plugin-visualizer";
-import tsconfigPaths from "vite-tsconfig-paths";
-
 import { defineConfig, normalizePath, type PluginOption } from "vite";
 import { compression } from "vite-plugin-compression2";
 import { VitePWA } from "vite-plugin-pwa";
 import { viteStaticCopy } from "vite-plugin-static-copy";
+import tsconfigPaths from "vite-tsconfig-paths";
 
 const require = createRequire(import.meta.url);
 const cMapsDir = normalizePath(
@@ -93,11 +87,10 @@ export default defineConfig({
     target: ["es2020", "edge88", "firefox78", "chrome87", "safari14"],
     sourcemap: true,
     reportCompressedSize: true,
-    chunkSizeWarningLimit: 1000, // Increase warning limit for chunks
+    chunkSizeWarningLimit: 1000,
     rollupOptions: {
       output: {
         manualChunks: (id: string) => {
-          // Separate heavy libraries that are lazy-loaded
           if (id.includes("recharts")) {
             return "charts";
           }
@@ -114,9 +107,7 @@ export default defineConfig({
             return "maps";
           }
 
-          // Split vendor libraries into logical groups
           if (id.includes("node_modules")) {
-            // Core React libraries
             if (
               id.includes("react") &&
               !id.includes("react-hook-form") &&
@@ -124,11 +115,9 @@ export default defineConfig({
             ) {
               return "vendor-react";
             }
-            // UI libraries (Radix, Ark, etc)
             if (id.includes("@radix-ui") || id.includes("@dnd-kit")) {
               return "vendor-ui";
             }
-            // Data management (TanStack, forms, etc)
             if (
               id.includes("@tanstack") ||
               id.includes("react-hook-form") ||
@@ -137,11 +126,16 @@ export default defineConfig({
             ) {
               return "vendor-data";
             }
-            // Icons and assets
             if (id.includes("lucide") || id.includes("@fortawesome")) {
               return "vendor-icons";
             }
-            // Everything else
+
+            if (
+              id.includes("@codemirror") ||
+              id.includes("@replit/codemirror-vim")
+            ) {
+              return "vendor-codemirror";
+            }
             return "vendor-utils";
           }
         },

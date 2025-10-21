@@ -1,185 +1,84 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
-var WorkerFieldConfig = &ports.FieldConfiguration{
-	FilterableFields: map[string]bool{
-		"status":    true,
-		"firstName": true,
-		"lastName":  true,
-		"type":      true,
-	},
-	SortableFields: map[string]bool{
-		"status":    true,
-		"firstName": true,
-		"lastName":  true,
-	},
-	FieldMap: map[string]string{
-		"firstName": "first_name",
-		"lastName":  "last_name",
-		"status":    "status",
-	},
-	EnumMap: map[string]bool{
-		"status": true,
-		"type":   true,
-	},
-}
-
-var WorkerPTOFieldConfig = &ports.FieldConfiguration{
-	FilterableFields: map[string]bool{
-		"status":           true,
-		"type":             true,
-		"startDate":        true,
-		"endDate":          true,
-		"worker.firstName": true,
-		"worker.lastName":  true,
-	},
-	SortableFields: map[string]bool{
-		"status":           true,
-		"type":             true,
-		"startDate":        true,
-		"endDate":          true,
-		"worker.firstName": true,
-		"worker.lastName":  true,
-	},
-	FieldMap: map[string]string{
-		"status":    "status",
-		"type":      "type",
-		"startDate": "start_date",
-		"endDate":   "end_date",
-	},
-	EnumMap: map[string]bool{
-		"status": true,
-		"type":   true,
-	},
-	NestedFields: map[string]ports.NestedFieldDefinition{
-		"worker.firstName": {
-			DatabaseField: "wrk.first_name",
-			RequiredJoins: []ports.JoinDefinition{
-				{
-					Table:     "workers",
-					Alias:     "wrk",
-					Condition: "wpto.worker_id = wrk.id",
-					JoinType:  ports.JoinTypeLeft,
-				},
-			},
-			IsEnum: false,
-		},
-		"worker.lastName": {
-			DatabaseField: "wrk.last_name",
-			RequiredJoins: []ports.JoinDefinition{
-				{
-					Table:     "workers",
-					Alias:     "wrk",
-					Condition: "wpto.worker_id = wrk.id",
-					JoinType:  ports.JoinTypeLeft,
-				},
-			},
-			IsEnum: false,
-		},
-	},
-}
-
 type WorkerFilterOptions struct {
-	Status         string `query:"status"`
-	IncludeProfile bool   `query:"includeProfile"`
-	IncludePTO     bool   `query:"includePTO"`
-}
-
-func BuildWorkerListOptions(
-	filter *ports.QueryOptions,
-	additionalOpts *ListWorkerRequest,
-) *ListWorkerRequest {
-	return &ListWorkerRequest{
-		Filter:              filter,
-		WorkerFilterOptions: additionalOpts.WorkerFilterOptions,
-	}
+	Status         string `form:"status"`
+	IncludeProfile bool   `form:"includeProfile"`
+	IncludePTO     bool   `form:"includePTO"`
 }
 
 type ListWorkerRequest struct {
-	Filter              *ports.QueryOptions `json:"filter"              query:"filter"`
-	WorkerFilterOptions `json:"workerFilterOptions" query:"workerFilterOptions"`
-}
-
-func BuildWorkerPTOListOptions(
-	filter *ports.QueryOptions,
-) *ListWorkerPTORequest {
-	return &ListWorkerPTORequest{
-		Filter: filter,
-	}
+	Filter              *pagination.QueryOptions `json:"filter"              form:"filter"`
+	WorkerFilterOptions `json:"workerFilterOptions" form:"workerFilterOptions"`
 }
 
 type ListWorkerPTORequest struct {
-	Filter *ports.QueryOptions `json:"filter" query:"filter"`
+	Filter *pagination.QueryOptions `json:"filter" form:"filter"`
 }
 
 type GetWorkerByIDRequest struct {
-	WorkerID      pulid.ID            `json:"workerId"      query:"workerId"`
-	BuID          pulid.ID            `json:"buId"          query:"buId"`
-	OrgID         pulid.ID            `json:"orgId"         query:"orgId"`
-	UserID        pulid.ID            `json:"userId"        query:"userId"`
-	FilterOptions WorkerFilterOptions `json:"filterOptions" query:"filterOptions"`
+	WorkerID      pulid.ID            `json:"workerId"      form:"worker_id"`
+	BuID          pulid.ID            `json:"buId"          form:"bu_id"`
+	OrgID         pulid.ID            `json:"orgId"         form:"org_id"`
+	UserID        pulid.ID            `json:"userId"        form:"user_id"`
+	FilterOptions WorkerFilterOptions `json:"filterOptions" form:"filterOptions"`
 }
 
 type UpdateWorkerOptions struct {
-	OrgID pulid.ID `json:"orgId" query:"orgId"`
-	BuID  pulid.ID `json:"buId"  query:"buId"`
+	OrgID pulid.ID `json:"orgId" form:"org_id"`
+	BuID  pulid.ID `json:"buId"  form:"bu_id"`
 }
 
 type GetWorkerPTORequest struct {
-	PtoID    pulid.ID `json:"ptoId"    query:"ptoId"`
-	WorkerID pulid.ID `json:"workerId" query:"workerId"`
-	BuID     pulid.ID `json:"buId"     query:"buId"`
-	OrgID    pulid.ID `json:"orgId"    query:"orgId"`
+	PtoID    pulid.ID `json:"ptoId"    form:"ptoId"`
+	WorkerID pulid.ID `json:"workerId" form:"workerId"`
+	BuID     pulid.ID `json:"buId"     form:"buId"`
+	OrgID    pulid.ID `json:"orgId"    form:"orgId"`
 }
 
 type ListWorkerPTOFilterOptions struct {
-	Status      string `json:"status"      query:"status"`
-	Type        string `json:"type"        query:"type"`
-	StartDate   int64  `json:"startDate"   query:"startDate"`
-	EndDate     int64  `json:"endDate"     query:"endDate"`
-	WorkerID    string `json:"workerId"    query:"workerId"`
-	FleetCodeID string `json:"fleetCodeId" query:"fleetCodeId"`
+	Status      string `json:"status"      form:"status"`
+	Type        string `json:"type"        form:"type"`
+	StartDate   int64  `json:"startDate"   form:"startDate"`
+	EndDate     int64  `json:"endDate"     form:"endDate"`
+	WorkerID    string `json:"workerId"    form:"workerId"`
+	FleetCodeID string `json:"fleetCodeId" form:"fleetCodeId"`
 }
 
 type ListUpcomingWorkerPTORequest struct {
-	Filter                     *ports.LimitOffsetQueryOptions `json:"filter"        query:"filter"`
-	ListWorkerPTOFilterOptions `json:"filterOptions" query:"filterOptions"`
+	Filter                     *pagination.QueryOptions `json:"filter"        form:"filter"`
+	ListWorkerPTOFilterOptions `json:"filterOptions" form:"filterOptions"`
 }
 
 type ApprovePTORequest struct {
-	PtoID      pulid.ID `json:"ptoId"      query:"ptoId"`
-	BuID       pulid.ID `json:"buId"       query:"buId"`
-	OrgID      pulid.ID `json:"orgId"      query:"orgId"`
-	ApproverID pulid.ID `json:"approverId" query:"approverId"`
+	PtoID      pulid.ID `json:"ptoId"      form:"ptoId"`
+	BuID       pulid.ID `json:"buId"       form:"buId"`
+	OrgID      pulid.ID `json:"orgId"      form:"orgId"`
+	ApproverID pulid.ID `json:"approverId" form:"approverId"`
 }
 
 type RejectPTORequest struct {
-	PtoID      pulid.ID `json:"ptoId"      query:"ptoId"`
-	BuID       pulid.ID `json:"buId"       query:"buId"`
-	OrgID      pulid.ID `json:"orgId"      query:"orgId"`
-	RejectorID pulid.ID `json:"rejectorId" query:"rejectorId"`
-	Reason     string   `json:"reason"     query:"reason"`
+	PtoID      pulid.ID `json:"ptoId"      form:"ptoId"`
+	BuID       pulid.ID `json:"buId"       form:"buId"`
+	OrgID      pulid.ID `json:"orgId"      form:"orgId"`
+	RejectorID pulid.ID `json:"rejectorId" form:"rejectorId"`
+	Reason     string   `json:"reason"     form:"reason"`
 }
 
 type PTOChartDataRequest struct {
-	Filter    *ports.LimitOffsetQueryOptions `json:"filter"    query:"filter"`
-	StartDate int64                          `json:"startDate" query:"startDate"`
-	EndDate   int64                          `json:"endDate"   query:"endDate"`
-	Type      string                         `json:"type"      query:"type"`
-	Timezone  string                         `json:"timezone"  query:"timezone"`
-	WorkerID  string                         `json:"workerId"  query:"workerId"`
+	Filter    *pagination.QueryOptions `json:"filter"    form:"filter"`
+	StartDate int64                    `json:"startDate" form:"startDate"`
+	EndDate   int64                    `json:"endDate"   form:"endDate"`
+	Type      string                   `json:"type"      form:"type"`
+	Timezone  string                   `json:"timezone"  form:"timezone"`
+	WorkerID  string                   `json:"workerId"  form:"workerId"`
 }
 
 type PTOChartDataPoint struct {
@@ -202,25 +101,28 @@ type WorkerDetail struct {
 }
 
 type PTOCalendarDataRequest struct {
-	Filter    *ports.LimitOffsetQueryOptions `json:"filter"    query:"filter"`
-	StartDate int64                          `json:"startDate" query:"startDate"`
-	EndDate   int64                          `json:"endDate"   query:"endDate"`
-	Type      string                         `json:"type"      query:"type"`
+	Filter    *pagination.QueryOptions `json:"filter"    form:"filter"`
+	StartDate int64                    `json:"startDate" form:"startDate"`
+	EndDate   int64                    `json:"endDate"   form:"endDate"`
+	Type      string                   `json:"type"      form:"type"`
 }
 
 type PTOCalendarEvent struct {
-	ID         string `json:"id"               bun:"id"`
-	WorkerID   string `json:"workerId"         bun:"worker_id"`
-	WorkerName string `json:"workerName"       bun:"worker_name"`
-	StartDate  int64  `json:"startDate"        bun:"start_date"`
-	EndDate    int64  `json:"endDate"          bun:"end_date"`
-	Type       string `json:"type"             bun:"type"`
-	Status     string `json:"status"           bun:"status"`
-	Reason     string `json:"reason,omitempty" bun:"reason"`
+	ID         string `json:"id"               bun:"id"          form:"id"`
+	WorkerID   string `json:"workerId"         bun:"worker_id"   form:"workerId"`
+	WorkerName string `json:"workerName"       bun:"worker_name" form:"workerName"`
+	StartDate  int64  `json:"startDate"        bun:"start_date"  form:"startDate"`
+	EndDate    int64  `json:"endDate"          bun:"end_date"    form:"endDate"`
+	Type       string `json:"type"             bun:"type"        form:"type"`
+	Status     string `json:"status"           bun:"status"      form:"status"`
+	Reason     string `json:"reason,omitempty" bun:"reason"      form:"reason"`
 }
 
 type WorkerRepository interface {
-	List(ctx context.Context, req *ListWorkerRequest) (*ports.ListResult[*worker.Worker], error)
+	List(
+		ctx context.Context,
+		req *ListWorkerRequest,
+	) (*pagination.ListResult[*worker.Worker], error)
 	GetByID(ctx context.Context, req *GetWorkerByIDRequest) (*worker.Worker, error)
 	Create(ctx context.Context, wrk *worker.Worker) (*worker.Worker, error)
 	Update(ctx context.Context, wrk *worker.Worker) (*worker.Worker, error)
@@ -231,13 +133,13 @@ type WorkerRepository interface {
 	ListUpcomingPTO(
 		ctx context.Context,
 		req *ListUpcomingWorkerPTORequest,
-	) (*ports.ListResult[*worker.WorkerPTO], error)
+	) (*pagination.ListResult[*worker.WorkerPTO], error)
 	ApprovePTO(ctx context.Context, req *ApprovePTORequest) error
 	RejectPTO(ctx context.Context, req *RejectPTORequest) error
 	ListWorkerPTO(
 		ctx context.Context,
 		req *ListWorkerPTORequest,
-	) (*ports.ListResult[*worker.WorkerPTO], error)
+	) (*pagination.ListResult[*worker.WorkerPTO], error)
 	GetPTOChartData(
 		ctx context.Context,
 		req *PTOChartDataRequest,

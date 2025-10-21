@@ -1,33 +1,18 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import { Badge } from "@/components/ui/badge";
+import { GeocodedBadge } from "@/components/geocode-badge";
 import { FormEditModal } from "@/components/ui/form-edit-modal";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
-import { Icon } from "@/components/ui/icons";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { queries } from "@/lib/queries";
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import {
   locationSchema,
   type LocationSchema,
 } from "@/lib/schemas/location-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
-import { IntegrationType } from "@/types/integration";
-import { faCopy } from "@fortawesome/pro-regular-svg-icons";
-import { faCheck } from "@fortawesome/pro-solid-svg-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery } from "@tanstack/react-query";
-import { lazy, Suspense } from "react";
 import { useForm } from "react-hook-form";
 import { LocationForm } from "./location-form";
-
-const LazyMap = lazy(() => import("./lazy-map"));
 
 export function EditLocationModal({
   currentRecord,
@@ -42,6 +27,7 @@ export function EditLocationModal({
       currentRecord={currentRecord}
       title="Location"
       formComponent={<LocationForm />}
+      className="sm:max-w-[500px]"
       form={form}
       url="/locations/"
       queryKey="location-list"
@@ -49,89 +35,26 @@ export function EditLocationModal({
       titleComponent={(currentRecord) => {
         return currentRecord ? (
           <div className="flex items-center gap-x-2">
-            <span className="truncate max-w-[200px]">{currentRecord.name}</span>
+            <span className="truncate size-full">{currentRecord.name}</span>
             {currentRecord.isGeocoded ? (
-              <GeocodedBadge location={currentRecord as LocationSchema} />
+              <GeocodedBadge
+                longitude={currentRecord.longitude as unknown as number}
+                latitude={currentRecord.latitude as unknown as number}
+                placeId={currentRecord.placeId}
+              />
             ) : (
-              <Badge variant="inactive" className="text-xs">
-                Not Geocoded
-              </Badge>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="rounded-full bg-red-500 size-2 animate-pulse" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Not Geocoded</p>
+                </TooltipContent>
+              </Tooltip>
             )}
           </div>
         ) : null;
       }}
     />
-  );
-}
-function GeocodedBadge({ location }: { location: LocationSchema }) {
-  const { data: googleMapsData, isLoading } = useQuery({
-    ...queries.integration.getIntegrationByType(IntegrationType.GoogleMaps),
-    enabled: !!location.placeId,
-  });
-
-  const position = {
-    lat: location.latitude || 0,
-    lng: location.longitude || 0,
-  };
-
-  return (
-    <HoverCard>
-      <HoverCardTrigger asChild>
-        <div className="flex items-center justify-center">
-          <Badge variant="active" className="text-xs">
-            Geocoded
-          </Badge>
-        </div>
-      </HoverCardTrigger>
-      <HoverCardContent className="flex flex-col gap-2 p-2 w-auto">
-        <div className="flex flex-col gap-0.5">
-          <Row label="Longitude" value={location.longitude} />
-          <Row label="Latitude" value={location.latitude} />
-          <Row label="Place ID" value={location.placeId} />
-        </div>
-        {googleMapsData?.enabled && !isLoading && (
-          <div className="h-32 w-full rounded-md overflow-hidden border border-border">
-            <Suspense
-              fallback={
-                <div className="h-full w-full bg-muted animate-pulse flex items-center justify-center text-xs text-muted-foreground">
-                  Loading map...
-                </div>
-              }
-            >
-              <LazyMap
-                apiKey={googleMapsData.configuration.apiKey}
-                position={position}
-              />
-            </Suspense>
-          </div>
-        )}
-      </HoverCardContent>
-    </HoverCard>
-  );
-}
-
-function Row({ label, value }: { label: string; value: any }) {
-  const { copy, isCopied } = useCopyToClipboard();
-
-  return (
-    <div
-      className="group flex gap-4 text-sm justify-between items-center cursor-pointer"
-      onClick={(e) => {
-        e.stopPropagation();
-        copy(value);
-      }}
-    >
-      <span className="text-muted-foreground">{label}</span>
-      <span className="font-mono truncate flex items-center gap-1">
-        <span className="invisible group-hover:visible">
-          {!isCopied ? (
-            <Icon icon={faCopy} className="size-3" />
-          ) : (
-            <Icon icon={faCheck} className="size-3" />
-          )}
-        </span>
-        {value}
-      </span>
-    </div>
   );
 }

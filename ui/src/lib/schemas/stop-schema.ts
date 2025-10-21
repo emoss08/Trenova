@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import * as z from "zod/v4";
 import {
   optionalIntegerSchema,
@@ -39,8 +34,6 @@ export const stopSchema = z
     updatedAt: timestampSchema,
     organizationId: optionalStringSchema,
     businessUnitId: optionalStringSchema,
-
-    // * Core Fields
     locationId: z.string().min(1, {
       error: "Location is required",
     }),
@@ -52,12 +45,14 @@ export const stopSchema = z
     }),
     pieces: optionalIntegerSchema,
     weight: optionalIntegerSchema,
-    plannedArrival: z.number().min(1, {
+    plannedArrival: z.number({ error: "Planned arrival is required" }).min(1, {
       error: "Planned arrival is required",
     }),
-    plannedDeparture: z.number().min(1, {
-      error: "Planned departure is required",
-    }),
+    plannedDeparture: z
+      .number({ error: "Planned departure is required" })
+      .min(1, {
+        error: "Planned departure is required",
+      }),
 
     actualArrival: optionalIntegerSchema,
     actualDeparture: optionalIntegerSchema,

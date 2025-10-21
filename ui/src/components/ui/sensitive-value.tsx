@@ -1,10 +1,10 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-import { cn } from "@/lib/utils";
 import { detectSensitiveDataType } from "@/lib/json-sensitive-utils";
+import { cn } from "@/lib/utils";
 import { SensitiveBadge } from "./sensitive-badge";
 
 interface SensitiveValueProps {
@@ -14,14 +14,14 @@ interface SensitiveValueProps {
   prefix?: string;
 }
 
-export function SensitiveValue({ 
-  value, 
-  className, 
+export function SensitiveValue({
+  value,
+  className,
   showQuotes = true,
-  prefix = "" 
+  prefix = "",
 }: SensitiveValueProps) {
   const sensitiveInfo = detectSensitiveDataType(value);
-  
+
   // Format the display value
   const displayValue = (() => {
     if (typeof value === "string" && showQuotes) {
@@ -39,11 +39,12 @@ export function SensitiveValue({
             sensitiveInfo.type === "redacted"
               ? "text-red-600 dark:text-red-400 font-medium"
               : "text-orange-600 dark:text-orange-400",
-            className
+            className,
           )}
           title={`${value}`}
         >
-          {prefix}{displayValue}
+          {prefix}
+          {displayValue}
         </span>
         <SensitiveBadge
           variant={
@@ -74,7 +75,8 @@ export function SensitiveValue({
       className={cn("font-mono", valueClassName, className)}
       title={typeof value === "string" ? value : undefined}
     >
-      {prefix}{displayValue}
+      {prefix}
+      {displayValue}
     </span>
   );
 }

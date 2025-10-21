@@ -1,28 +1,85 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
-import { DataTableColorColumn } from "@/components/data-table/_components/data-table-components";
+import {
+  DataTableColorColumn,
+  DataTableDescription,
+  HoverCardTimestamp,
+} from "@/components/data-table/_components/data-table-components";
+import { StatusBadge } from "@/components/status-badge";
+import { statusChoices } from "@/lib/choices";
 import { type ServiceTypeSchema } from "@/lib/schemas/service-type-schema";
-import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<ServiceTypeSchema>[] {
-  const columnHelper = createColumnHelper<ServiceTypeSchema>();
-  const commonColumns = createCommonColumns<ServiceTypeSchema>();
-
   return [
-    commonColumns.status,
-    columnHelper.display({
-      id: "code",
+    {
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const status = row.original.status;
+        return <StatusBadge status={status} />;
+      },
+      size: 120,
+      minSize: 100,
+      maxSize: 150,
+      meta: {
+        apiField: "status",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: statusChoices,
+        defaultFilterOperator: "eq",
+      },
+    },
+    {
+      accessorKey: "code",
       header: "Code",
       cell: ({ row }) => {
-        const { color, code } = row.original;
+        const { code, color } = row.original;
         return <DataTableColorColumn text={code} color={color} />;
       },
-    }),
-    commonColumns.description,
-    commonColumns.createdAt,
+      meta: {
+        apiField: "code",
+        filterable: true,
+        sortable: true,
+        filterType: "text",
+        defaultFilterOperator: "contains",
+      },
+    },
+    {
+      accessorKey: "description",
+      header: "Description",
+      cell: ({ row }) => (
+        <DataTableDescription
+          description={row.original.description}
+          truncateLength={100}
+        />
+      ),
+      size: 400,
+      minSize: 300,
+      maxSize: 500,
+      meta: {
+        apiField: "description",
+        filterable: true,
+        sortable: true,
+        filterType: "text",
+        defaultFilterOperator: "contains",
+      },
+    },
+    {
+      accessorKey: "createdAt",
+      header: "Created At",
+      cell: ({ row }) => {
+        return <HoverCardTimestamp timestamp={row.original.createdAt} />;
+      },
+      meta: {
+        apiField: "createdAt",
+        filterable: false,
+        sortable: true,
+        filterType: "date",
+        defaultFilterOperator: "daterange",
+      },
+      size: 200,
+      minSize: 200,
+      maxSize: 250,
+    },
   ];
 }

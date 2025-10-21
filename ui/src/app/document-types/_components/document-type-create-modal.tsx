@@ -1,13 +1,9 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { FormCreateModal } from "@/components/ui/form-create-modal";
 import {
   DocumentTypeSchema,
   documentTypeSchema,
 } from "@/lib/schemas/document-type-schema";
+import { DocumentCategory, DocumentClassification } from "@/types/billing";
 import { TableSheetProps } from "@/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -24,6 +20,8 @@ export function DocumentTypeCreateModal({
       description: "",
       code: "",
       color: "",
+      documentCategory: DocumentCategory.Shipment,
+      documentClassification: DocumentClassification.Public,
     },
   });
 

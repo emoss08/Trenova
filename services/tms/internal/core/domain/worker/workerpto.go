@@ -1,68 +1,56 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package worker
 
 import (
 	"context"
-	"time"
+	"errors"
 
-	"github.com/emoss08/trenova/internal/core/domain/businessunit"
-	"github.com/emoss08/trenova/internal/core/domain/organization"
-	"github.com/emoss08/trenova/internal/core/domain/user"
-	"github.com/emoss08/trenova/internal/core/ports/infra"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*WorkerPTO)(nil)
-	_ infra.PostgresSearchable  = (*WorkerPTO)(nil)
+	_ bun.BeforeAppendModelHook      = (*WorkerPTO)(nil)
+	_ domaintypes.PostgresSearchable = (*WorkerPTO)(nil)
+	_ domain.Validatable             = (*WorkerPTO)(nil)
+	_ framework.TenantedEntity       = (*WorkerPTO)(nil)
 )
 
 //nolint:revive // struct should keep this name
 type WorkerPTO struct {
 	bun.BaseModel `bun:"table:worker_pto,alias:wpto" json:"-"`
 
-	// Primary identifiers
-	ID             pulid.ID `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
-	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	WorkerID       pulid.ID `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull,pk"`
-
-	// Relationship identifiers (Non-Primary-Keys)
-	ApproverID *pulid.ID `bun:"approver_id,type:VARCHAR(100),nullzero" json:"approverId"`
-	RejectorID *pulid.ID `bun:"rejector_id,type:VARCHAR(100),nullzero" json:"rejectorId"`
-
-	// Core Fields
-	Status    PTOStatus `json:"status"    bun:"status,type:worker_pto_status_enum,notnull,default:'Requested'"`
-	Type      PTOType   `json:"type"      bun:"type,type:worker_pto_type_enum,notnull,default:'Vacation'"`
-	StartDate int64     `json:"startDate" bun:"start_date,type:BIGINT,notnull"`
-	EndDate   int64     `json:"endDate"   bun:"end_date,type:BIGINT,notnull"`
-	Reason    string    `json:"reason"    bun:"reason,type:VARCHAR(255),notnull"`
-
-	// Metadata
-	Version   int64 `json:"version"   bun:"version,type:BIGINT"`
-	CreatedAt int64 `json:"createdAt" bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID             pulid.ID  `json:"id"             bun:"id,pk,type:VARCHAR(100)"`
+	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
+	OrganizationID pulid.ID  `json:"organizationId" bun:"organization_id,type:VARCHAR(100),notnull,pk"`
+	WorkerID       pulid.ID  `json:"workerId"       bun:"worker_id,type:VARCHAR(100),notnull,pk"`
+	ApproverID     *pulid.ID `json:"approverId"     bun:"approver_id,type:VARCHAR(100),nullzero"`
+	RejectorID     *pulid.ID `json:"rejectorId"     bun:"rejector_id,type:VARCHAR(100),nullzero"`
+	Status         PTOStatus `json:"status"         bun:"status,type:worker_pto_status_enum,notnull,default:'Requested'"`
+	Type           PTOType   `json:"type"           bun:"type,type:worker_pto_type_enum,notnull,default:'Vacation'"`
+	StartDate      int64     `json:"startDate"      bun:"start_date,type:BIGINT,notnull"`
+	EndDate        int64     `json:"endDate"        bun:"end_date,type:BIGINT,notnull"`
+	Reason         string    `json:"reason"         bun:"reason,type:VARCHAR(255),notnull"`
+	Version        int64     `json:"version"        bun:"version,type:BIGINT"`
+	CreatedAt      int64     `json:"createdAt"      bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt      int64     `json:"updatedAt"      bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	Worker       *Worker                    `json:"worker,omitempty"       bun:"rel:belongs-to,join:worker_id=id"`
-	Approver     *user.User                 `json:"approver,omitempty"     bun:"rel:belongs-to,join:approver_id=id"`
-	Rejector     *user.User                 `json:"rejector,omitempty"     bun:"rel:belongs-to,join:rejector_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	Worker       *Worker              `json:"worker,omitempty"       bun:"rel:belongs-to,join:worker_id=id"`
+	Approver     *tenant.User         `json:"approver,omitempty"     bun:"rel:belongs-to,join:approver_id=id"`
+	Rejector     *tenant.User         `json:"rejector,omitempty"     bun:"rel:belongs-to,join:rejector_id=id"`
 }
 
-// Validation
-func (w *WorkerPTO) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(ctx, w,
-		// Status is required and must be a valid PTO status
+func (w *WorkerPTO) Validate(multiErr *errortypes.MultiError) {
+	err := validation.ValidateStruct(w,
 		validation.Field(&w.Status,
 			validation.Required.Error("Status is required"),
 			validation.In(
@@ -72,14 +60,10 @@ func (w *WorkerPTO) Validate(ctx context.Context, multiErr *errors.MultiError) {
 				PTOStatusCancelled,
 			).Error("Status must be a valid PTO status"),
 		),
-
-		// Approver ID is required when the status is approved.
 		validation.Field(&w.ApproverID,
 			validation.When(w.Status == PTOStatusApproved,
 				validation.Required.Error("Approver ID is required when the status is approved")),
 		),
-
-		// Type is required and must be a valid PTO type
 		validation.Field(&w.Type,
 			validation.Required.Error("Type is required"),
 			validation.In(
@@ -91,20 +75,14 @@ func (w *WorkerPTO) Validate(ctx context.Context, multiErr *errors.MultiError) {
 				PTOTypePaternity,
 			).Error("Type must be a valid PTO type"),
 		),
-
-		// Start date is required and must be before the end date
 		validation.Field(&w.StartDate,
 			validation.Required.Error("Start date is required"),
 			validation.Max(w.EndDate).Error("Start date cannot be after end date"),
 		),
-
-		// End date is required and must be after the start date
 		validation.Field(&w.EndDate,
 			validation.Required.Error("End date is required"),
 			validation.Min(w.StartDate).Error("End date must be after start date"),
 		),
-
-		// Reason is required when the status is cancelled or rejected and Cannot input reason if the status is not cancelled or rejected
 		validation.Field(&w.Reason,
 			validation.When(
 				w.Status == PTOStatusCancelled || w.Status == PTOStatusRejected,
@@ -122,8 +100,8 @@ func (w *WorkerPTO) Validate(ctx context.Context, multiErr *errors.MultiError) {
 	)
 	if err != nil {
 		var validationErrs validation.Errors
-		if eris.As(err, &validationErrs) {
-			errors.FromOzzoErrors(validationErrs, multiErr)
+		if errors.As(err, &validationErrs) {
+			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
@@ -136,54 +114,38 @@ func (w *WorkerPTO) GetID() string {
 	return w.ID.String()
 }
 
-func (w *WorkerPTO) GetPostgresSearchConfig() infra.PostgresSearchConfig {
-	return infra.PostgresSearchConfig{
-		TableAlias: "wpto",
-		Fields: []infra.PostgresSearchableField{
-			{
-				Name:       "type",
-				Weight:     "A",
-				Type:       infra.PostgresSearchTypeEnum,
-				Dictionary: "english",
-			},
-			{
-				Name:       "status",
-				Weight:     "B",
-				Type:       infra.PostgresSearchTypeEnum,
-				Dictionary: "english",
-			},
+func (w *WorkerPTO) GetBusinessUnitID() pulid.ID {
+	return w.BusinessUnitID
+}
+
+func (w *WorkerPTO) GetOrganizationID() pulid.ID {
+	return w.OrganizationID
+}
+
+func (w *WorkerPTO) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "wpto",
+		UseSearchVector: true,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightA},
+			{Name: "type", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightB},
 			{
 				Name:   "start_date",
-				Weight: "C",
-				Type:   infra.PostgresSearchTypeNumber,
+				Type:   domaintypes.FieldTypeDate,
+				Weight: domaintypes.SearchWeightB,
 			},
+			{Name: "end_date", Type: domaintypes.FieldTypeDate, Weight: domaintypes.SearchWeightB},
+			{Name: "reason", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightC},
 		},
-		MinLength:       2,
-		MaxTerms:        6,
-		UsePartialMatch: true,
 	}
 }
 
-// IsInvalid returns true if the PTO is cancelled, rejected, or both
-// This indicates the PTO should not be considered for operations like overlap validation
-func (w *WorkerPTO) IsInvalid() bool {
-	return w.IsCancelled() || w.IsRejected()
-}
-
-func (w *WorkerPTO) IsCancelled() bool {
-	return w.Status == PTOStatusCancelled
-}
-
-func (w *WorkerPTO) IsRejected() bool {
-	return w.Status == PTOStatusRejected
-}
-
 func (w *WorkerPTO) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := time.Now().Unix()
+	now := utils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:
-		if w.ID == "" {
+		if w.ID.IsNil() {
 			w.ID = pulid.MustNew("pto_")
 		}
 

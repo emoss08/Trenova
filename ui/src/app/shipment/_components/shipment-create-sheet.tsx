@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-"use no memo";
 import { FormSaveDock } from "@/components/form/form-save-dock";
 import {
   Sheet,
@@ -15,7 +10,6 @@ import {
 import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
-import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
 import { MoveStatus } from "@/lib/schemas/move-schema";
 import {
   RatingMethod,
@@ -28,14 +22,13 @@ import { api } from "@/services/api";
 import { TableSheetProps } from "@/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ShipmentCreateForm } from "./form/shipment-form";
 import { ShipmentFormWrapper } from "./form/shipment-form-wrapper";
 
 export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
-  const sheetRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
   const { isPopout, closePopout } = usePopoutWindow();
 
@@ -116,10 +109,8 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
     setError,
     reset,
     handleSubmit,
-    formState: { isSubmitting, isSubmitSuccessful, errors },
+    formState: { isSubmitting, isSubmitSuccessful },
   } = form;
-
-  console.log("errors", errors);
 
   useEffect(() => {
     reset();
@@ -140,17 +131,11 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
       });
       handleClose();
 
-      broadcastQueryInvalidation({
-        queryKey: ["shipment", "shipment-list", "stop", "assignment"],
-        options: { correlationId: `create-shipment-${Date.now()}` },
-        config: {
-          predicate: true,
-          refetchType: "all",
-        },
+      queryClient.invalidateQueries({
+        queryKey: ["shipment-list"],
       });
 
       queryClient.setQueryData(["shipments", newData.data.id], newData.data);
-      reset();
 
       if (isPopout) {
         closePopout();
@@ -194,7 +179,6 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
       <SheetContent
         className="w-[500px] sm:max-w-[540px] p-0"
         withClose={false}
-        ref={sheetRef}
       >
         <VisuallyHidden>
           <SheetHeader>
@@ -204,7 +188,6 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
             Create a new shipment by filling out the form below.
           </SheetDescription>
         </VisuallyHidden>
-
         <FormProvider {...form}>
           <ShipmentFormWrapper onSubmit={onSubmit}>
             <SheetBody className="p-0">

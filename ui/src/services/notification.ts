@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { http } from "@/lib/http-client";
 import type { NotificationSchema } from "@/lib/schemas/notification-schema";
 import type { NotificationQueryParams } from "@/types/notification";
@@ -31,10 +26,10 @@ export class NotificationAPI {
   }
 
   async markAllAsRead() {
-    await http.post("/notifications/read-all");
+    await http.post("/notifications/read-all/");
   }
 
   async dismiss(notificationId: string) {
-    await http.post(`/notifications/${notificationId}/dismiss`);
+    await http.post(`/notifications/${notificationId}/dismiss/`);
   }
 }

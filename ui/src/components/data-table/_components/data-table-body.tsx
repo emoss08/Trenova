@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 /* eslint-disable @typescript-eslint/no-unused-vars */
 "use no memo";
 import { Icon } from "@/components/ui/icons";
@@ -10,6 +5,7 @@ import { Switch } from "@/components/ui/switch";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { DataTableBodyProps } from "@/types/data-table";
+import { faSpinnerThird } from "@fortawesome/pro-regular-svg-icons";
 import { faPlay } from "@fortawesome/pro-solid-svg-icons";
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
 import {
@@ -134,8 +130,10 @@ export function DataTableBody<TData extends Record<string, any>>({
   table,
   columns,
   liveMode,
+  isLoading,
   contextMenuActions,
 }: DataTableBodyProps<TData> & {
+  isLoading?: boolean;
   contextMenuActions?: ContextMenuAction<TData>[];
 }) {
   return (
@@ -163,6 +161,21 @@ export function DataTableBody<TData extends Record<string, any>>({
             />
           );
         })
+      ) : isLoading ? (
+        <TableRow>
+          <TableCell
+            colSpan={columns.length}
+            className="h-24 text-center border-b rounded-b-md"
+          >
+            <div className="flex flex-row items-center justify-center text-sm font-medium text-foreground bg-muted-foreground/10 rounded-md p-2 w-fit mx-auto border border-border">
+              <Icon
+                icon={faSpinnerThird}
+                className="size-3 text-primary motion-safe:animate-spin mr-2"
+              />
+              <p className="text-xs text-foreground">Loading data...</p>
+            </div>
+          </TableCell>
+        </TableRow>
       ) : (
         <TableRow>
           <TableCell

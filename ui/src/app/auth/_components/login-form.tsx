@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { PasswordField } from "@/components/fields/sensitive-input-field";
 import { FormSaveButton } from "@/components/ui/button";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
@@ -16,7 +11,7 @@ import { faLock } from "@fortawesome/pro-regular-svg-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useCallback, useEffect } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 
@@ -38,7 +33,6 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
     onSuccess: (data) => {
       setUser(data.user);
 
-      // Redirect to the original destination or dashboard
       const from = searchParams.get("from") || "/";
       navigate(from, { replace: true });
     },
@@ -67,6 +61,11 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
       password: "",
       rememberMe: false,
     },
+  });
+
+  const passwordValue = useWatch({
+    control,
+    name: "password",
   });
 
   const onSubmit = useCallback(
@@ -119,7 +118,7 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
           title="Login"
           text="Sign In"
           isSubmitting={isSubmitting}
-          disabled={isSubmitting}
+          disabled={isSubmitting || !passwordValue}
         />
       </FormGroup>
     </Form>

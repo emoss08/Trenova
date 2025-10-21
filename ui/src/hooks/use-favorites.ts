@@ -1,27 +1,31 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { queries } from "@/lib/queries";
 import { getPageTitle } from "@/lib/route-utils";
+import { ToggleFavoriteSchema } from "@/lib/schemas/favorite-schema";
 import { api } from "@/services/api";
-import type { ToggleFavoriteRequest } from "@/types/favorite";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation } from "react-router";
 import { toast } from "sonner";
+import { broadcastQueryInvalidation } from "./use-invalidate-query";
 
 export function useToggleFavorite() {
-  const queryClient = useQueryClient();
-
   return useMutation({
-    mutationFn: (request: ToggleFavoriteRequest) =>
+    mutationFn: (request: ToggleFavoriteSchema) =>
       api.favorites.toggle(request),
-    onSuccess: (data) => {
-      // Invalidate and refetch favorites
-      queryClient.invalidateQueries({ queryKey: queries.favorite.list._def });
-      queryClient.invalidateQueries({
-        queryKey: queries.favorite.check._def,
+    onSuccess: async (data) => {
+      await broadcastQueryInvalidation({
+        queryKey: ["favorite"],
+        options: {
+          correlationId: `toggle-favorite-${Date.now()}`,
+        },
+        config: {
+          predicate: true,
+          refetchType: "all",
+        },
       });
 
       // Show success toast

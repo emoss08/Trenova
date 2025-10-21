@@ -1,30 +1,26 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package accessorialcharge
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain"
-	"github.com/emoss08/trenova/internal/core/domain/businessunit"
-	"github.com/emoss08/trenova/internal/core/domain/organization"
-	"github.com/emoss08/trenova/internal/core/ports/infra"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/rotisserie/eris"
 	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*AccessorialCharge)(nil)
-	_ domain.Validatable        = (*AccessorialCharge)(nil)
-	_ infra.PostgresSearchable  = (*AccessorialCharge)(nil)
+	_ bun.BeforeAppendModelHook      = (*AccessorialCharge)(nil)
+	_ domaintypes.PostgresSearchable = (*AccessorialCharge)(nil)
+	_ domain.Validatable             = (*AccessorialCharge)(nil)
+	_ framework.TenantedEntity       = (*AccessorialCharge)(nil)
 )
 
 type AccessorialCharge struct {
@@ -46,35 +42,27 @@ type AccessorialCharge struct {
 	UpdatedAt      int64           `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
+	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
 }
 
-func (a *AccessorialCharge) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(ctx, a,
-		// * Ensure code is populated and is the proper length
+func (a *AccessorialCharge) Validate(multiErr *errortypes.MultiError) {
+	err := validation.ValidateStruct(a,
 		validation.Field(&a.Code,
 			validation.Required.Error("Code is required"),
 			validation.Length(3, 10).Error("Code must be between 3 and 10 characters"),
 		),
-
-		// * Ensure description is populated
 		validation.Field(&a.Description,
 			validation.Required.Error("Description is required"),
 		),
-
-		// * Ensure unit is greater than or equal to 1
 		validation.Field(&a.Unit,
+			validation.Required.Error("Unit is required"),
 			validation.Min(1).Error("Unit must be greater than or equal to 1"),
 		),
-
-		// * Ensure method is populated and is valid
 		validation.Field(&a.Method,
 			validation.Required.Error("Method is required"),
 			validation.In(MethodFlat, MethodDistance, MethodPercentage).Error("Invalid method"),
 		),
-
-		// * Ensure amount is populated and is greater than 0
 		validation.Field(a.Amount.IntPart,
 			validation.Required.Error("Amount is required"),
 			validation.Min(1).Error("Amount must be greater than 1"),
@@ -82,15 +70,37 @@ func (a *AccessorialCharge) Validate(ctx context.Context, multiErr *errors.Multi
 	)
 	if err != nil {
 		var validationErrs validation.Errors
-		if eris.As(err, &validationErrs) {
-			errors.FromOzzoErrors(validationErrs, multiErr)
+		if errors.As(err, &validationErrs) {
+			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
 
-// Pagination Configuration
 func (a *AccessorialCharge) GetID() string {
 	return a.ID.String()
+}
+
+func (a *AccessorialCharge) GetOrganizationID() pulid.ID {
+	return a.OrganizationID
+}
+
+func (a *AccessorialCharge) GetBusinessUnitID() pulid.ID {
+	return a.BusinessUnitID
+}
+
+func (a *AccessorialCharge) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "acc",
+		UseSearchVector: true,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "code", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{
+				Name:   "description",
+				Type:   domaintypes.FieldTypeText,
+				Weight: domaintypes.SearchWeightB,
+			},
+		},
+	}
 }
 
 func (a *AccessorialCharge) GetTableName() string {
@@ -98,7 +108,7 @@ func (a *AccessorialCharge) GetTableName() string {
 }
 
 func (a *AccessorialCharge) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:
@@ -112,25 +122,4 @@ func (a *AccessorialCharge) BeforeAppendModel(_ context.Context, query bun.Query
 	}
 
 	return nil
-}
-
-func (a *AccessorialCharge) GetPostgresSearchConfig() infra.PostgresSearchConfig {
-	return infra.PostgresSearchConfig{
-		TableAlias: "acc",
-		Fields: []infra.PostgresSearchableField{
-			{
-				Name:   "code",
-				Weight: "A",
-				Type:   infra.PostgresSearchTypeText,
-			},
-			{
-				Name:   "description",
-				Weight: "B",
-				Type:   infra.PostgresSearchTypeText,
-			},
-		},
-		MinLength:       2,
-		MaxTerms:        6,
-		UsePartialMatch: true,
-	}
 }

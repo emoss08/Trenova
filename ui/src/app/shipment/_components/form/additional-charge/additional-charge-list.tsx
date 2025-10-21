@@ -1,8 +1,4 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
+"use no memo";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
@@ -34,7 +30,6 @@ export function AdditionalChargeList({
   handleEdit: (index: number) => void;
   handleDelete: (index: number) => void;
 }) {
-  // Find duplicate charges by creating a frequency map
   const duplicateIndices = useMemo(() => {
     const chargeFrequency = new Map<string, number[]>();
     const duplicates = new Set<number>();
@@ -45,7 +40,6 @@ export function AdditionalChargeList({
       const key = `${charge.accessorialChargeId}-${charge.unit}-${charge.method}-${charge.amount}`;
       const indices = chargeFrequency.get(key) || [];
 
-      // If this is the second or later occurrence, mark all occurrences as duplicates
       if (indices.length > 0) {
         indices.forEach((idx) => duplicates.add(idx));
         duplicates.add(index);

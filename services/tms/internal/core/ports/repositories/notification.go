@@ -1,21 +1,16 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
 type GetUserNotificationsRequest struct {
-	Filter     *ports.LimitOffsetQueryOptions
-	UnreadOnly bool `query:"unreadOnly"`
+	Filter     *pagination.QueryOptions
+	UnreadOnly bool `form:"unreadOnly"`
 }
 
 type MarkAsReadRequest struct {
@@ -52,7 +47,7 @@ type NotificationRepository interface {
 	GetUserNotifications(
 		ctx context.Context,
 		req *GetUserNotificationsRequest,
-	) (*ports.ListResult[*notification.Notification], error)
+	) (*pagination.ListResult[*notification.Notification], error)
 
 	// GetUnreadCount gets the count of unread notifications for a user
 	GetUnreadCount(ctx context.Context, userID pulid.ID, organizationID pulid.ID) (int, error)

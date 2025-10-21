@@ -1,33 +1,9 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { SelectOption } from "./fields";
-
-export type PaginationResponse<TData> = {
-  data: TData[];
-  meta: {
-    totalCount: number;
-    hasMore: boolean;
-  };
-  cursors: {
-    next?: string;
-    previous?: string;
-  };
-};
-
-type TenantOptions = {
-  orgId: string;
-  buId: string;
-  userId: string;
-};
-
-export type LimitOffsetOptions = {
-  tenantOpts?: TenantOptions;
-  limit?: number;
-  offset?: number;
-};
 
 export type ListResult<TData> = {
   items: TData[];
@@ -132,14 +108,22 @@ export type BaseEndpoint =
   | "/roles/"
   | "/us-states/"
   | "/analytics/new-shipment-count/"
-  | "/audit-logs/"
+  | "/audit-entries/"
   | "/accounting-control/"
   | "/table-configurations/"
   | "/dedicated-lanes/"
   | "/consolidations/"
   | "/document-types/"
   | "/hold-reasons/"
+  | "/ai-logs/"
   | "/workers/pto/"
+  | "/variables/"
+  | "/distance-overrides/"
+  | "/variable-formats/"
   | "/workers/pto/create/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;
+
+export type SELECT_OPTIONS_ENDPOINTS =
+  | API_ENDPOINTS
+  | `${API_ENDPOINTS}select-options/`;

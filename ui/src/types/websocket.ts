@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
@@ -16,8 +16,8 @@ export interface NotificationMessage {
   targetUserId?: string;
   targetRoleId?: string;
   eventType: string;
-  priority: 'critical' | 'high' | 'medium' | 'low';
-  channel: 'global' | 'user' | 'role';
+  priority: "critical" | "high" | "medium" | "low";
+  channel: "global" | "user" | "role";
   title: string;
   message: string;
   data?: Record<string, any>;
@@ -29,7 +29,7 @@ export interface NotificationMessage {
   dismissedAt?: number;
   createdAt: number;
   updatedAt: number;
-  deliveryStatus: 'pending' | 'delivered' | 'failed' | 'expired';
+  deliveryStatus: "pending" | "delivered" | "failed" | "expired";
   retryCount: number;
   maxRetries: number;
   source: string;
@@ -46,17 +46,17 @@ export interface RelatedEntity {
 }
 
 export interface NotificationAction {
-  type: 'link' | 'button' | 'dismiss';
+  type: "link" | "button" | "dismiss";
   label: string;
   url?: string;
   action?: string;
-  variant?: 'default' | 'destructive' | 'outline' | 'secondary';
+  variant?: "default" | "destructive" | "outline" | "secondary";
 }
 
 export interface WebSocketConnectionState {
   socket: WebSocket | null;
   isConnected: boolean;
-  connectionState: 'disconnected' | 'connecting' | 'connected' | 'reconnecting';
+  connectionState: "disconnected" | "connecting" | "connected" | "reconnecting";
   reconnectAttempts: number;
   lastError?: string;
 }
@@ -66,7 +66,6 @@ export interface WebSocketSubscription {
   userId: string;
   organizationId: string;
   businessUnitId?: string;
-  roles: string[];
 }
 
 export interface WebSocketConfig {

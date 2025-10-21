@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
@@ -26,20 +26,6 @@ interface DataTableSkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
    * @type number | undefined
    */
   rowCount?: number;
-
-  /**
-   * The number of searchable columns in the table.
-   * @default 0
-   * @type number | undefined
-   */
-  searchableColumnCount?: number;
-
-  /**
-   * The number of filterable columns in the table.
-   * @default 0
-   * @type number | undefined
-   */
-  filterableColumnCount?: number;
 
   /**
    * Flag to show the table view options.
@@ -76,8 +62,6 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
   const {
     columnCount,
     rowCount = 10,
-    searchableColumnCount = 0,
-    filterableColumnCount = 0,
     showViewOptions = true,
     cellWidths = ["auto"],
     withPagination = true,
@@ -88,24 +72,20 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
 
   return (
     <div
-      className={cn("w-full space-y-2.5 overflow-auto", className)}
+      className={cn("w-full space-y-0.5 overflow-auto", className)}
       {...skeletonProps}
     >
       <div className="flex w-full items-center justify-between space-x-2 overflow-auto p-1">
         <div className="flex flex-1 items-center space-x-2">
-          {searchableColumnCount > 0
-            ? Array.from({ length: searchableColumnCount }).map((_, i) => (
-                <Skeleton key={i} className="h-7 w-40 lg:w-60" />
-              ))
-            : null}
-          {filterableColumnCount > 0
-            ? Array.from({ length: filterableColumnCount }).map((_, i) => (
-                <Skeleton key={i} className="h-7 w-[4.5rem] border-dashed" />
-              ))
-            : null}
+          <Skeleton className="h-7 w-40 lg:w-56" />
+          <Skeleton className="h-7 w-[4.5rem] border-dashed" />
+          <Skeleton className="h-7 w-[4.5rem] border-dashed" />
         </div>
         {showViewOptions ? (
-          <Skeleton className="ml-auto hidden h-7 w-[4.5rem] lg:flex" />
+          <>
+            <Skeleton className="ml-auto hidden h-7 w-[11rem] lg:flex" />
+            <Skeleton className="ml-auto hidden h-7 w-[4.5rem] lg:flex" />
+          </>
         ) : null}
       </div>
       <div className="rounded-md border">
@@ -148,7 +128,7 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
       </div>
       {withPagination ? (
         <div className="flex w-full items-center justify-between gap-4 overflow-auto p-1 sm:gap-8">
-          <Skeleton className="h-7 w-40 shrink-0" />
+          <Skeleton className="h-7 w-44 shrink-0" />
           <div className="flex items-center gap-4 sm:gap-6 lg:gap-8">
             <div className="flex items-center space-x-2">
               <Skeleton className="h-7 w-24" />

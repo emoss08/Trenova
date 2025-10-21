@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
@@ -39,7 +39,7 @@ export function SwitchField<T extends FieldValues>({
           className={cn(
             "relative flex w-full items-start gap-2 rounded-md p-3",
             outlined &&
-              "border border-muted-foreground/20 has-data-[state=checked]:border-blue-600 has-data-[state=checked]:ring-4 has-data-[state=checked]:ring-blue-600/20 bg-muted transition-[border-color,box-shadow] duration-200 ease-in-out",
+              "border border-muted-foreground/20 has-data-[state=checked]:border-foreground has-data-[state=checked]:ring-4 has-data-[state=checked]:ring-foreground/20 bg-primary/5 transition-[border-color,box-shadow] duration-200 ease-in-out",
           )}
         >
           {position === "left" && (

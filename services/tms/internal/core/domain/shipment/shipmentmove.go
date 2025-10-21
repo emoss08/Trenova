@@ -1,24 +1,24 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package shipment
 
 import (
 	"context"
+	"errors"
 
-	"github.com/emoss08/trenova/internal/core/domain/businessunit"
-	"github.com/emoss08/trenova/internal/core/domain/organization"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*ShipmentMove)(nil)
+var (
+	_ bun.BeforeAppendModelHook = (*ShipmentMove)(nil)
+	_ domain.Validatable        = (*ShipmentMove)(nil)
+	_ framework.TenantedEntity  = (*ShipmentMove)(nil)
+)
 
 //nolint:revive // valid struct name
 type ShipmentMove struct {
@@ -37,16 +37,15 @@ type ShipmentMove struct {
 	UpdatedAt      int64      `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
-	Shipment     *Shipment                  `bun:"rel:belongs-to,join:shipment_id=id"      json:"shipment,omitempty"`
-	Assignment   *Assignment                `bun:"rel:has-one,join:id=shipment_move_id"    json:"assignment,omitempty"`
-	Stops        []*Stop                    `bun:"rel:has-many,join:id=shipment_move_id"   json:"stops,omitempty"`
+	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
+	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	Shipment     *Shipment            `bun:"rel:belongs-to,join:shipment_id=id"      json:"shipment,omitempty"`
+	Assignment   *Assignment          `bun:"rel:has-one,join:id=shipment_move_id"    json:"assignment,omitempty"`
+	Stops        []*Stop              `bun:"rel:has-many,join:id=shipment_move_id"   json:"stops,omitempty"`
 }
 
-func (sm *ShipmentMove) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(ctx, sm,
-		// Status is required and must be a valid move status
+func (sm *ShipmentMove) Validate(multiErr *errortypes.MultiError) {
+	err := validation.ValidateStruct(sm,
 		validation.Field(&sm.Status,
 			validation.Required.Error("Status is required"),
 			validation.In(
@@ -60,15 +59,22 @@ func (sm *ShipmentMove) Validate(ctx context.Context, multiErr *errors.MultiErro
 	)
 	if err != nil {
 		var validationErrs validation.Errors
-		if eris.As(err, &validationErrs) {
-			errors.FromOzzoErrors(validationErrs, multiErr)
+		if errors.As(err, &validationErrs) {
+			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
 
-// Pagination Configuration
 func (sm *ShipmentMove) GetID() string {
 	return sm.ID.String()
+}
+
+func (sm *ShipmentMove) GetOrganizationID() pulid.ID {
+	return sm.OrganizationID
+}
+
+func (sm *ShipmentMove) GetBusinessUnitID() pulid.ID {
+	return sm.BusinessUnitID
 }
 
 func (sm *ShipmentMove) GetTableName() string {
@@ -76,7 +82,7 @@ func (sm *ShipmentMove) GetTableName() string {
 }
 
 func (sm *ShipmentMove) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 
 	if _, ok := query.(*bun.InsertQuery); ok {
 		if sm.ID.IsNil() {
@@ -87,4 +93,24 @@ func (sm *ShipmentMove) BeforeAppendModel(_ context.Context, query bun.Query) er
 	}
 
 	return nil
+}
+
+func (sm *ShipmentMove) IsCompleted() bool {
+	return sm.Status == MoveStatusCompleted
+}
+
+func (sm *ShipmentMove) IsInTransit() bool {
+	return sm.Status == MoveStatusInTransit
+}
+
+func (sm *ShipmentMove) IsAssigned() bool {
+	return sm.Status == MoveStatusAssigned
+}
+
+func (sm *ShipmentMove) IsNew() bool {
+	return sm.Status == MoveStatusNew
+}
+
+func (sm *ShipmentMove) IsCanceled() bool {
+	return sm.Status == MoveStatusCanceled
 }
