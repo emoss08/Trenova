@@ -6,7 +6,6 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
-.npmrc
 
 node_modules
 dist
@@ -29,8 +28,4 @@ tsconfig.app.tsbuildinfo
 *.sw?
 /dev-dist
 stats.html
-# Million Lint
-.million
-.env
-# Sentry Config File
-.env.sentry-build-plugin
+

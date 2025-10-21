@@ -1,15 +1,10 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
 type GetShipmentControlRequest struct {
@@ -19,7 +14,11 @@ type GetShipmentControlRequest struct {
 }
 
 type ShipmentControlRepository interface {
-	List(ctx context.Context) ([]*shipment.ShipmentControl, error)
-	GetByOrgID(ctx context.Context, orgID pulid.ID) (*shipment.ShipmentControl, error)
-	Update(ctx context.Context, sc *shipment.ShipmentControl) (*shipment.ShipmentControl, error)
+	GetByOrgID(ctx context.Context, orgID pulid.ID) (*tenant.ShipmentControl, error)
+	Update(ctx context.Context, sc *tenant.ShipmentControl) (*tenant.ShipmentControl, error)
+}
+type ShipmentControlCacheRepository interface {
+	GetByOrgID(ctx context.Context, orgID pulid.ID) (*tenant.ShipmentControl, error)
+	Set(ctx context.Context, sc *tenant.ShipmentControl) error
+	Invalidate(ctx context.Context, orgID pulid.ID) error
 }

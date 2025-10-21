@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md
  */
@@ -44,10 +44,10 @@ import {
 } from "./container-detail-components";
 import { NetworkTabContent } from "./container-network";
 
-const StatsTabContent = lazy(() => 
-  import("./container-stats").then(module => ({ 
-    default: module.StatsTabContent 
-  }))
+const StatsTabContent = lazy(() =>
+  import("./container-stats").then((module) => ({
+    default: module.StatsTabContent,
+  })),
 );
 
 interface ContainerDetailsDialogProps {
@@ -259,11 +259,15 @@ export function ContainerDetailsDialog({
             </TabsContent>
 
             <TabsContent value="stats" className="space-y-4">
-              <Suspense fallback={
-                <div className="flex items-center justify-center h-[400px]">
-                  <div className="animate-pulse text-muted-foreground">Loading stats...</div>
-                </div>
-              }>
+              <Suspense
+                fallback={
+                  <div className="flex items-center justify-center h-[400px]">
+                    <div className="animate-pulse text-muted-foreground">
+                      Loading stats...
+                    </div>
+                  </div>
+                }
+              >
                 <StatsTabContent
                   stats={stats}
                   cpuHistory={cpuHistory}

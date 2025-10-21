@@ -1,0 +1,34 @@
+app:
+  env: production
+  debug: false
+
+server:
+  mode: release
+  cors:
+    allowed_origins:
+      - https://app.trenova.io
+      - https://trenova.io
+
+database:
+  sslmode: require
+  max_idle_conns: 25
+  max_open_conns: 200
+
+redis:
+  pool_size: 50
+  min_idle_conns: 10
+
+security:
+  session:
+    secure: true # Force HTTPS cookies in production
+    same_site: strict # Stricter CSRF protection
+  rate_limit:
+    requests_per_minute: 30
+
+logging:
+  level: info
+  output: file
+
+monitoring:
+  opentelemetry:
+    enabled: true

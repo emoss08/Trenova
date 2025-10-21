@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { queries } from "@/lib/queries";
 import { webSocketService } from "@/services/websocket";
 import { useIsAuthenticated, useUser } from "@/stores/user-store";
@@ -65,13 +60,11 @@ export function useWebSocket({
       organizationId: org.id!,
       businessUnitId: org.businessUnitId,
       room: `org_${org.id}_user_${user.id}`,
-      roles: user.roles?.map((role) => role.id!) || [],
     };
   }, [user, org, isAuthenticated]);
 
   const handleMessage = useCallback(
     (message: WebSocketMessage) => {
-      // Deduplicate messages by ID for notifications
       if (message.type === "notification" && message.data?.id) {
         const messageId = message.data.id;
         if (processedMessagesRef.current.has(messageId)) {
@@ -79,7 +72,6 @@ export function useWebSocket({
         }
         processedMessagesRef.current.add(messageId);
 
-        // Clean up old message IDs to prevent memory leak (keep last 100)
         if (processedMessagesRef.current.size > 100) {
           const idsArray = Array.from(processedMessagesRef.current);
           processedMessagesRef.current = new Set(idsArray.slice(-100));
@@ -97,7 +89,7 @@ export function useWebSocket({
             },
             onClick: () => {
               // * TODO(wolfred): we need to make a master event handler for this rather than hardcoding it here.
-              // We will not send notification for every event type, but we will have a master event handler for all of them.
+              // * We will not send notification for every event type, but we will have a master event handler for all of them.
               if (
                 message.data.eventType === "job.shipment.duplicate_complete"
               ) {
@@ -108,10 +100,8 @@ export function useWebSocket({
 
           break;
         case "entity_update_notification": {
-          // Handle entity update notifications
           addNotification(message.data);
 
-          // Show toast with action based on entity type
           const entityLink =
             message.data?.data?.entityId && message.data?.data?.entityType
               ? `/${message.data.data.entityType}/${message.data.data.entityId}`
@@ -187,7 +177,6 @@ export function useWebSocket({
       subscriptionRef.current?.userId === subscription.userId &&
       subscriptionRef.current?.organizationId === subscription.organizationId
     ) {
-      // Already connected with same subscription
       return;
     }
 
@@ -195,7 +184,6 @@ export function useWebSocket({
       isConnectingRef.current = true;
       setConnectionState("connecting");
 
-      // Set up event handlers
       webSocketService.setEventHandlers({
         onMessage: handleMessage,
         onConnectionChange: handleConnectionChange,
@@ -240,7 +228,6 @@ export function useWebSocket({
     setConnectionState("disconnected");
   }, [setSocket, setSubscription, setConnectionState]);
 
-  // Connect/disconnect based on authentication and enabled state
   useEffect(() => {
     const shouldConnect = enabled && isAuthenticated && user && org;
 
@@ -267,11 +254,9 @@ export function useWebSocket({
     setConnectionState,
   ]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       webSocketService.disconnect();
-      // Don't update state during unmount to avoid state update warnings
     };
   }, []);
 

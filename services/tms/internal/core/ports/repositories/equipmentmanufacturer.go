@@ -1,49 +1,39 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
-type EquipmentManufacturerFilterOptions struct {
-	Status string `query:"status"`
+type ListEquipmentManufacturerRequest struct {
+	Filter *pagination.QueryOptions `json:"filter" form:"filter"`
 }
 
-type ListEquipmentManufacturerOptions struct {
-	Filter        *ports.LimitOffsetQueryOptions
-	FilterOptions EquipmentManufacturerFilterOptions `query:"filterOptions"`
-}
-
-type GetEquipmentManufacturerByIDOptions struct {
-	ID     pulid.ID
-	OrgID  pulid.ID
-	BuID   pulid.ID
-	UserID pulid.ID
+type GetEquipmentManufacturerByIDRequest struct {
+	ID     pulid.ID `json:"id"     form:"id"`
+	OrgID  pulid.ID `json:"orgId"  form:"orgId"`
+	BuID   pulid.ID `json:"buId"   form:"buId"`
+	UserID pulid.ID `json:"userId" form:"userId"`
 }
 
 type EquipmentManufacturerRepository interface {
 	List(
 		ctx context.Context,
-		opts ListEquipmentManufacturerOptions,
-	) (*ports.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error)
+		req *ListEquipmentManufacturerRequest,
+	) (*pagination.ListResult[*equipmentmanufacturer.EquipmentManufacturer], error)
 	GetByID(
 		ctx context.Context,
-		opts GetEquipmentManufacturerByIDOptions,
+		req GetEquipmentManufacturerByIDRequest,
 	) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	Create(
 		ctx context.Context,
-		em *equipmentmanufacturer.EquipmentManufacturer,
+		entity *equipmentmanufacturer.EquipmentManufacturer,
 	) (*equipmentmanufacturer.EquipmentManufacturer, error)
 	Update(
 		ctx context.Context,
-		em *equipmentmanufacturer.EquipmentManufacturer,
+		entity *equipmentmanufacturer.EquipmentManufacturer,
 	) (*equipmentmanufacturer.EquipmentManufacturer, error)
 }

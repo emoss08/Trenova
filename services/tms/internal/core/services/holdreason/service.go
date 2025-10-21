@@ -3,49 +3,40 @@ package holdreason
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/holdreason"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/domain/shipment"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/internal/pkg/validator"
-	"github.com/emoss08/trenova/internal/pkg/validator/holdreasonvalidator"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/pkg/validator"
+	"github.com/emoss08/trenova/pkg/validator/holdreasonvalidator"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	Logger       *logger.Logger
+	Logger       *zap.Logger
 	Repo         repositories.HoldReasonRepository
-	PermService  services.PermissionService
 	AuditService services.AuditService
 	Validator    *holdreasonvalidator.Validator
 }
 
 type Service struct {
-	l    *zerolog.Logger
+	l    *zap.Logger
 	repo repositories.HoldReasonRepository
-	ps   services.PermissionService
 	as   services.AuditService
 	v    *holdreasonvalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().
-		Str("service", "hold_reason").
-		Logger()
-
 	return &Service{
-		l:    &log,
+		l:    p.Logger.Named("service.hold_reason"),
 		repo: p.Repo,
-		ps:   p.PermService,
 		as:   p.AuditService,
 		v:    p.Validator,
 	}
@@ -54,94 +45,29 @@ func NewService(p ServiceParams) *Service {
 func (s *Service) List(
 	ctx context.Context,
 	req *repositories.ListHoldReasonRequest,
-) (*ports.ListResult[*shipment.HoldReason], error) {
-	log := s.l.With().
-		Str("operation", "List").
-		Str("buID", req.Filter.TenantOpts.BuID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
-			UserID:         req.Filter.TenantOpts.UserID,
-			OrganizationID: req.Filter.TenantOpts.OrgID,
-			BusinessUnitID: req.Filter.TenantOpts.BuID,
-			Resource:       permission.ResourceHoldReason,
-			Action:         permission.ActionRead,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read hold reasons")
-	}
-
+) (*pagination.ListResult[*holdreason.HoldReason], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	req *repositories.GetHoldReasonByIDRequest,
-) (*shipment.HoldReason, error) {
-	log := s.l.With().
-		Str("operation", "get").
-		Str("holdReasonID", req.ID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
-			UserID:         req.UserID,
-			OrganizationID: req.OrgID,
-			BusinessUnitID: req.BuID,
-			Resource:       permission.ResourceHoldReason,
-			Action:         permission.ActionRead,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to read this hold reason",
-		)
-	}
-
+	req repositories.GetHoldReasonByIDRequest,
+) (*holdreason.HoldReason, error) {
 	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) Create(
 	ctx context.Context,
-	hr *shipment.HoldReason,
+	hr *holdreason.HoldReason,
 	userID pulid.ID,
-) (*shipment.HoldReason, error) {
-	log := s.l.With().
-		Str("operation", "create").
-		Str("code", hr.Code).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
-			UserID:         userID,
-			OrganizationID: hr.OrganizationID,
-			BusinessUnitID: hr.BusinessUnitID,
-			Resource:       permission.ResourceHoldReason,
-			Action:         permission.ActionCreate,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to create a hold reason",
-		)
-	}
+) (*holdreason.HoldReason, error) {
+	log := s.l.With(
+		zap.String("operation", "Create"),
+		zap.String("code", hr.Code),
+		zap.String("buID", hr.BusinessUnitID.String()),
+		zap.String("orgID", hr.OrganizationID.String()),
+		zap.String("userID", userID.String()),
+	)
 
 	valCtx := &validator.ValidationContext{
 		IsCreate: true,
@@ -161,7 +87,7 @@ func (s *Service) Create(
 		&services.LogActionParams{
 			Resource:       permission.ResourceHoldReason,
 			ResourceID:     createdEntity.GetID(),
-			Action:         permission.ActionCreate,
+			Operation:      permission.OpCreate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(createdEntity),
 			OrganizationID: createdEntity.OrganizationID,
@@ -170,7 +96,7 @@ func (s *Service) Create(
 		audit.WithComment("Hold reason created"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log hold reason creation")
+		log.Error("failed to log hold reason creation", zap.Error(err))
 	}
 
 	return createdEntity, nil
@@ -178,33 +104,16 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	hr *shipment.HoldReason,
+	hr *holdreason.HoldReason,
 	userID pulid.ID,
-) (*shipment.HoldReason, error) {
-	log := s.l.With().
-		Str("operation", "update").
-		Str("code", hr.Code).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
-			UserID:         userID,
-			OrganizationID: hr.OrganizationID,
-			BusinessUnitID: hr.BusinessUnitID,
-			Resource:       permission.ResourceHoldReason,
-			Action:         permission.ActionUpdate,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to update this hold reason",
-		)
-	}
+) (*holdreason.HoldReason, error) {
+	log := s.l.With(
+		zap.String("operation", "Update"),
+		zap.String("code", hr.Code),
+		zap.String("buID", hr.BusinessUnitID.String()),
+		zap.String("orgID", hr.OrganizationID.String()),
+		zap.String("userID", userID.String()),
+	)
 
 	valCtx := &validator.ValidationContext{
 		IsCreate: false,
@@ -215,7 +124,7 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetHoldReasonByIDRequest{
+	original, err := s.repo.GetByID(ctx, repositories.GetHoldReasonByIDRequest{
 		ID:    hr.ID,
 		OrgID: hr.OrganizationID,
 		BuID:  hr.BusinessUnitID,
@@ -226,7 +135,7 @@ func (s *Service) Update(
 
 	updatedEntity, err := s.repo.Update(ctx, hr)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update hold reason")
+		log.Error("failed to update hold reason", zap.Error(err))
 		return nil, err
 	}
 
@@ -234,7 +143,7 @@ func (s *Service) Update(
 		&services.LogActionParams{
 			Resource:       permission.ResourceHoldReason,
 			ResourceID:     updatedEntity.GetID(),
-			Action:         permission.ActionUpdate,
+			Operation:      permission.OpUpdate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(updatedEntity),
 			PreviousState:  jsonutils.MustToJSON(original),
@@ -245,7 +154,7 @@ func (s *Service) Update(
 		audit.WithDiff(original, updatedEntity),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log hold reason update")
+		log.Error("failed to log hold reason update", zap.Error(err))
 	}
 
 	return updatedEntity, nil

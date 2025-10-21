@@ -1,14 +1,9 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { QueryLazyComponent } from "@/components/error-boundary";
 import { MetaTags } from "@/components/meta-tags";
 import { Separator } from "@/components/ui/separator";
 import { queries } from "@/lib/queries";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { lazy, memo } from "react";
+import { lazy } from "react";
 import { DedicatedLaneSuggestions } from "./_components/dedicated-lane-suggestions";
 
 const DedicatedLaneTable = lazy(
@@ -22,7 +17,7 @@ export function DedicatedLane() {
     });
 
   return (
-    <div className="flex flex-col space-y-6">
+    <div className="flex flex-col gap-y-3">
       <MetaTags title="Dedicated Lanes" description="Dedicated Lanes" />
       <Header />
       <QueryLazyComponent
@@ -43,17 +38,14 @@ export function DedicatedLane() {
   );
 }
 
-const Header = memo(() => {
+function Header() {
   return (
-    <div className="flex justify-between items-center">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Dedicated Lanes</h1>
-        <p className="text-muted-foreground">
-          Dedicated lanes are a feature that allows you to assign a lane to a
-          specific customer for a specific period of time.
-        </p>
-      </div>
+    <div className="flex flex-col items-start">
+      <h1 className="text-3xl font-bold tracking-tight">Dedicated Lanes</h1>
+      <p className="text-muted-foreground">
+        Dedicated lanes are a feature that allows you to assign a lane to a
+        specific customer for a specific period of time.
+      </p>
     </div>
   );
-});
-Header.displayName = "Header";
+}

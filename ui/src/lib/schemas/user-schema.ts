@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Status } from "@/types/common";
 import { ConditionType } from "@/types/roles-permissions";
 import { TimeFormat } from "@/types/user";
@@ -12,7 +7,10 @@ import {
   timestampSchema,
   versionSchema,
 } from "./helpers";
-import { organizationSchema } from "./organization-schema";
+import {
+  organizationMembershipSchema,
+  organizationSchema,
+} from "./organization-schema";
 
 const fieldPermissionSchema = z.object({
   field: z.string().min(1, {
@@ -144,10 +142,8 @@ export const userSchema = z.object({
   lastLoginAt: z.number().optional(),
   mustChangePassword: z.boolean(),
 
-  // Relationships
-  currentOrganization: organizationSchema.optional(),
   organizations: organizationSchema.array().optional(),
-  roles: roleSchema.array().optional(),
+  organizationMemberships: organizationMembershipSchema.array().optional(), // Relationships
 });
 
 export type UserSchema = z.infer<typeof userSchema>;

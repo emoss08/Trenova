@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import type { APIError } from "@/types/errors";
 import {
   useMutation,
@@ -36,11 +31,8 @@ export type OptimisticMutationOptions<
   resourceName: string;
   setFormError?: UseFormSetError<TFormValues>;
   resetForm?: UseFormReset<TFormValues>;
-  // * Optional: Additional query keys to invalidate on success/settle
   invalidateQueries?: QueryKey[];
-  // * Optional: Override default optimistic update behavior
   optimisticUpdate?: (variables: TVariables, currentData: unknown) => unknown;
-  // * Optional: Additional callbacks for custom behavior
   onMutate?: (
     variables: TVariables,
   ) => Promise<TContext | undefined> | TContext | undefined;
@@ -87,7 +79,6 @@ export function useOptimisticMutation<
   return useMutation<TData, APIError, TVariables, any>({
     mutationFn: options.mutationFn,
     onMutate: async (variables) => {
-      // * Call custom onMutate if provided - allows complete override
       if (onMutate) {
         const customContext = await onMutate(variables);
         if (customContext !== undefined) {
@@ -95,32 +86,24 @@ export function useOptimisticMutation<
         }
       }
 
-      // * Default optimistic update behavior
-      // * Cancel any outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({
         queryKey: options.queryKey,
       });
 
-      // * Snapshot the previous value
       const previousData = queryClient.getQueryData(options.queryKey);
 
-      // * Optimistically update to the new value
       if (optimisticUpdate) {
-        // * Use custom optimistic update function if provided
         const newData = optimisticUpdate(variables, previousData);
         queryClient.setQueryData(options.queryKey, newData);
       } else {
-        // * Default: replace entire data with new values
         queryClient.setQueryData(options.queryKey, variables);
       }
 
       return { previousData, newValues: variables } as any;
     },
     onSuccess: async (data: TData, variables, context) => {
-      // * Always show success toast
       toast.success(options.successMessage);
 
-      // * Always broadcast query invalidation for the main query
       broadcastQueryInvalidation({
         queryKey: options.queryKey as unknown as string[],
         options: {
@@ -132,39 +115,32 @@ export function useOptimisticMutation<
         },
       });
 
-      // * Reset the form to the new values if resetForm is provided
       resetForm?.(data as DefaultValues<TFormValues>);
 
-      // * Call custom onSuccess if provided
       if (onSuccess) {
         await onSuccess(data, variables, context as TContext);
       }
     },
     onError: async (error: APIError, variables, context) => {
-      // * Rollback optimistic update on error
       if (context && typeof context === "object" && "previousData" in context) {
         queryClient.setQueryData(options.queryKey, context.previousData);
       }
 
-      // * Standard error handling
       handleMutationError({
         error,
         setFormError,
         resourceName,
       });
 
-      // * Custom error handling if provided
       if (onError) {
         await onError(error, variables, context as TContext);
       }
     },
     onSettled: async (data, error, variables, context) => {
-      // * Invalidate the main query to ensure fresh data
       await queryClient.invalidateQueries({
         queryKey: options.queryKey,
       });
 
-      // * Invalidate any additional queries specified
       if (invalidateQueries && invalidateQueries.length > 0) {
         await Promise.all(
           invalidateQueries.map((queryKey) =>
@@ -173,7 +149,6 @@ export function useOptimisticMutation<
         );
       }
 
-      // * Call custom onSettled if provided
       if (onSettled) {
         await onSettled(data, error, variables, context as TContext);
       }

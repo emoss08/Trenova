@@ -1,9 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import { LazyComponent } from "@/components/error-boundary";
 import { TourProvider } from "@/components/tour/tour-provider";
 import { Icon } from "@/components/ui/icons";
 import {
@@ -24,23 +18,24 @@ import {
   faEnvelope,
   faUser,
 } from "@fortawesome/pro-regular-svg-icons";
-import { lazy, useState } from "react";
+import { useState } from "react";
 import { type FieldValues, type Path, useFormContext } from "react-hook-form";
+import { CustomerBillingProfile } from "./customer-billing-profile";
+import { CustomerEmailProfile } from "./customer-email-profile";
+import { CustomerGeneralInformation } from "./customer-general-information";
 
-const GeneralInformationForm = lazy(
-  () => import("./customer-general-information"),
-);
-const BillingProfileForm = lazy(() => import("./customer-billing-profile"));
-const CustomerEmailProfile = lazy(() => import("./customer-email-profile"));
-
-function createNavigationItems<T extends FieldValues>() {
+function createNavigationItems<T extends FieldValues>({
+  isEdit = false,
+}: {
+  isEdit?: boolean;
+}) {
   return [
     {
       id: "general",
       name: "General Information",
       description: "Essential customer identification details.",
       icon: <Icon icon={faUser} />,
-      component: <GeneralInformationForm />,
+      component: <CustomerGeneralInformation isEdit={isEdit} />,
       validateSection: (errors: Partial<T>) =>
         checkSectionErrors(errors, [
           "status",
@@ -52,6 +47,7 @@ function createNavigationItems<T extends FieldValues>() {
           "city",
           "stateId",
           "postalCode",
+          "externalId",
         ] as Path<T>[]),
     },
     {
@@ -59,7 +55,7 @@ function createNavigationItems<T extends FieldValues>() {
       name: "Billing Profile",
       description: "Configure billing settings for the customer.",
       icon: <Icon icon={faCreditCard} />,
-      component: <BillingProfileForm />,
+      component: <CustomerBillingProfile />,
       validateSection: (errors: Partial<T>) =>
         checkSectionErrors(errors, [
           "billingProfile.billingCycleType",
@@ -93,20 +89,20 @@ function createNavigationItems<T extends FieldValues>() {
   ];
 }
 
-export function CustomerForm() {
+export function CustomerForm({ isEdit = false }: { isEdit?: boolean }) {
   const {
     formState: { errors },
   } = useFormContext<CustomerSchema>();
 
   const [activeSection, setActiveSection] = useState("general");
-  const navigationItems = createNavigationItems<CustomerSchema>();
+  const navigationItems = createNavigationItems<CustomerSchema>({ isEdit });
   const activeComponent = navigationItems.find(
     (item) => item.id === activeSection,
   )?.component;
 
   return (
     <TourProvider>
-      <div className="flex size-full flex-1">
+      <CustomerFormOuter>
         <SidebarProvider className="h-auto min-h-[750px] w-56 shrink-0 items-start">
           <Sidebar
             collapsible="none"
@@ -149,10 +145,16 @@ export function CustomerForm() {
             </SidebarContent>
           </Sidebar>
         </SidebarProvider>
-        <main className="flex size-full">
-          <LazyComponent>{activeComponent}</LazyComponent>
-        </main>
-      </div>
+        <CustomerFormContent>{activeComponent}</CustomerFormContent>
+      </CustomerFormOuter>
     </TourProvider>
   );
+}
+
+function CustomerFormOuter({ children }: { children: React.ReactNode }) {
+  return <div className="flex size-full flex-1">{children}</div>;
+}
+
+function CustomerFormContent({ children }: { children: React.ReactNode }) {
+  return <main className="flex size-full">{children}</main>;
 }

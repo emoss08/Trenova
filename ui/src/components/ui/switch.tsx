@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import * as SwitchPrimitive from "@radix-ui/react-switch";
 import * as React from "react";
 
@@ -23,9 +18,9 @@ function Switch({
     <SwitchPrimitive.Root
       data-slot="switch"
       className={cn(
-        "peer cursor-pointer data-[state=checked]:bg-blue-700 data-[state=unchecked]:bg-muted-foreground/40",
-        "focus-visible:border-blue-600 focus-visible:ring-blue-600/20",
-        "inline-flex shrink-0 items-center rounded-full border-2 border-transparent shadow-xs transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+        "peer data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:border-ring focus-visible:ring-ring/50",
+        "dark:data-[state=unchecked]:bg-input/80 inline-flex h-[1.15rem] w-8 shrink-0 items-center rounded-full border border-transparent",
+        "shadow-xs transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
         // Size variations
         size === "xs" && "h-3.5 w-6",
         size === "sm" && "h-4 w-7",
@@ -38,7 +33,8 @@ function Switch({
       <SwitchPrimitive.Thumb
         data-slot="switch-thumb"
         className={cn(
-          "bg-white pointer-events-none block rounded-full ring-0 shadow-lg transition-transform",
+          "bg-background dark:data-[state=unchecked]:bg-foreground dark:data-[state=checked]:bg-primary-foreground pointer-events-none block",
+          "size-3 rounded-full ring-0 transition-transform data-[state=checked]:translate-x-[calc(100%-2px)] data-[state=unchecked]:translate-x-0",
           // Size variations for thumb
           size === "xs" &&
             "size-2.5 data-[state=checked]:translate-x-2.5 data-[state=unchecked]:translate-x-0",

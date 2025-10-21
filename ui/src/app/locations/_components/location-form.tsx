@@ -1,44 +1,60 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 "use no memo";
-import { AnthropicIcon } from "@/components/brand-icons";
 import { AddressField } from "@/components/fields/address-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
+import { GoogleMapsNotice } from "@/components/google-maps-tour";
+import { Tour } from "@/components/tour/tour";
+import { TourProvider } from "@/components/tour/tour-provider";
 import { LocationCategoryAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { FormControl, FormGroup } from "@/components/ui/form";
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from "@/components/ui/hover-card";
 import { Icon } from "@/components/ui/icons";
+import { Spinner } from "@/components/ui/shadcn-io/spinner";
 import { statusChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { type LocationSchema } from "@/lib/schemas/location-schema";
+import { cn } from "@/lib/utils";
 import { aiAPI } from "@/services/ai";
-import { faSparkle } from "@fortawesome/pro-solid-svg-icons";
+import { faCheck, faSparkle } from "@fortawesome/pro-solid-svg-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { Bot } from "lucide-react";
+import { useEffect, useState } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
 export function LocationForm() {
   const { control, setValue } = useFormContext<LocationSchema>();
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const usStates = useQuery({
     ...queries.usState.options(),
   });
-  const usStateOptions = usStates.data?.results ?? [];
-  const [locationName, locationDescription, locationAddress] = useWatch({
+  const usStateOptions = usStates.data ?? [];
+  const [
+    locationName,
+    locationDescription,
+    locationAddress,
+    locationCity,
+    locationState,
+    locationPostalCode,
+    locationLatitude,
+    locationLongitude,
+    locationPlaceId,
+    locationCode,
+  ] = useWatch({
     control,
-    name: ["name", "description", "addressLine1"],
+    name: [
+      "name",
+      "description",
+      "addressLine1",
+      "city",
+      "state",
+      "postalCode",
+      "latitude",
+      "longitude",
+      "placeId",
+      "code",
+    ],
   });
 
-  // AI classification mutation
   const classifyMutation = useMutation({
     mutationFn: aiAPI.classifyLocation,
     onSuccess: (data) => {
@@ -46,6 +62,8 @@ export function LocationForm() {
         setValue("locationCategoryId", data.categoryId, {
           shouldValidate: true,
         });
+        setShowSuccess(true);
+        setTimeout(() => setShowSuccess(false), 3000);
       }
     },
     onError: (error) => {
@@ -53,180 +71,173 @@ export function LocationForm() {
     },
   });
 
+  useEffect(() => {
+    if (showSuccess) {
+      setShowSuccess(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [locationName]);
+
   const handleGetAISuggestion = () => {
     if (!locationName) return;
 
+    setShowSuccess(false);
     classifyMutation.mutate({
       name: locationName,
       description: locationDescription,
       address: locationAddress,
+      city: locationCity,
+      state: locationState?.name ?? undefined,
+      postalCode: locationPostalCode,
+      latitude: locationLatitude ?? undefined,
+      longitude: locationLongitude ?? undefined,
+      placeId: locationPlaceId,
+      code: locationCode,
     });
   };
 
   return (
-    <FormGroup cols={2}>
-      <FormControl>
-        <SelectField
-          control={control}
-          rules={{ required: true }}
-          name="status"
-          label="Status"
-          placeholder="Status"
-          description="Defines the current operational status of the location."
-          options={statusChoices}
-        />
-      </FormControl>
-      <FormControl>
-        <InputField
-          control={control}
-          rules={{ required: true }}
-          name="code"
-          label="Code"
-          placeholder="Code"
-          description="A unique identifier for the location."
-          maxLength={10}
-        />
-      </FormControl>
-      <FormControl cols="full">
-        <InputField
-          control={control}
-          rules={{ required: true }}
-          name="name"
-          label="Name"
-          placeholder="Name"
-          description="The official name of the location."
-          maxLength={100}
-        />
-      </FormControl>
-      <FormControl cols="full">
-        <div className="relative">
-          <LocationCategoryAutocompleteField<LocationSchema>
-            name="locationCategoryId"
-            control={control}
-            rules={{ required: true }}
-            label="Location Category"
-            placeholder="Select Location Category"
-            description="Select the location category for the location."
-          />
-          <div className="absolute top-6 right-5 flex items-center">
-            <HoverCard>
-              <HoverCardTrigger asChild>
+    <TourProvider>
+      <div className="flex flex-col gap-2">
+        <GoogleMapsNotice />
+        <FormGroup cols={2}>
+          <FormControl>
+            <SelectField
+              control={control}
+              rules={{ required: true }}
+              name="status"
+              label="Status"
+              placeholder="Status"
+              description="Defines the current operational status of the location."
+              options={statusChoices}
+            />
+          </FormControl>
+          <FormControl>
+            <InputField
+              control={control}
+              rules={{ required: true }}
+              name="code"
+              label="Code"
+              placeholder="Code"
+              description="A unique identifier for the location."
+              maxLength={10}
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <InputField
+              control={control}
+              rules={{ required: true }}
+              name="name"
+              label="Name"
+              placeholder="Name"
+              description="The official name of the location."
+              maxLength={100}
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <div className="relative">
+              <LocationCategoryAutocompleteField<LocationSchema>
+                name="locationCategoryId"
+                control={control}
+                rules={{ required: true }}
+                label="Location Category"
+                placeholder="Select Location Category"
+                description="Select the location category for the location."
+              />
+              <div className="absolute top-6 right-5 flex items-center">
                 <button
                   type="button"
                   onClick={handleGetAISuggestion}
-                  disabled={!locationName || classifyMutation.isPending}
-                  className="[&>svg]:size-3 size-5 mr-1 disabled:cursor-not-allowed disabled:opacity-50 rounded-md flex items-center justify-center hover:bg-purple-500/30 text-muted-foreground hover:text-foreground transition-colors duration-200 ease-in-out cursor-pointer"
-                  title="Get AI category suggestion"
+                  disabled={!locationName || showSuccess}
+                  className={cn(
+                    "size-5 mr-1 rounded-md flex items-center justify-center",
+                    "transition-all duration-300 ease-in-out cursor-pointer",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
+                    "text-muted-foreground hover:text-foreground",
+                    classifyMutation.isPending && "cursor-wait",
+                    showSuccess
+                      ? "bg-green-500/20 hover:bg-green-500/30"
+                      : "hover:bg-purple-500/30",
+                  )}
+                  title={
+                    showSuccess ? "Category set!" : "Get AI category suggestion"
+                  }
                 >
                   {classifyMutation.isPending ? (
-                    <Bot className="h-4 w-4" />
+                    <Spinner variant="ring" className="size-4" />
+                  ) : showSuccess ? (
+                    <Icon
+                      icon={faCheck}
+                      className="size-3 text-green-500 animate-in fade-in zoom-in duration-300"
+                    />
                   ) : (
-                    <Icon icon={faSparkle} className="size-4 text-purple-500" />
+                    <Icon
+                      icon={faSparkle}
+                      className="size-3 text-purple-500 animate-in fade-in duration-200"
+                    />
                   )}
                 </button>
-              </HoverCardTrigger>
-              <HoverCardContent className="p-0 w-auto max-w-sm text-sm border shadow-lg">
-                <div className="p-4 space-y-3">
-                  <div className="space-y-2">
-                    <h4 className="font-medium text-foreground">
-                      AI Category Suggestions
-                    </h4>
-                    <p className="text-muted-foreground leading-relaxed">
-                      Get intelligent category suggestions for your location
-                      using advanced AI analysis.
-                    </p>
-                  </div>
-
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <div className="w-1.5 h-1.5 bg-blue-500 rounded-full"></div>
-                      <span>Processing time: ~2-5 seconds</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div>
-                      <span>Cost: ~500 tokens per suggestion</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-muted-foreground">
-                      <div className="w-1.5 h-1.5 bg-purple-500 rounded-full"></div>
-                      <span>Model: Claude 3 Haiku</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-center justify-center gap-0.5 border-t bg-muted/30 px-4 py-2 rounded-b-md">
-                  <span className="text-xs text-muted-foreground">
-                    Powered by
-                  </span>
-                  <button
-                    onClick={() =>
-                      window.open("https://www.anthropic.com", "_blank")
-                    }
-                    className="flex items-center gap-1 text-xs font-medium text-foreground hover:text-primary transition-colors cursor-pointer"
-                  >
-                    <AnthropicIcon className="size-4 fill-current" />
-                    Anthropic
-                  </button>
-                </div>
-              </HoverCardContent>
-            </HoverCard>
-          </div>
-        </div>
-      </FormControl>
-      <FormControl cols="full">
-        <TextareaField
-          control={control}
-          name="description"
-          label="Description"
-          placeholder="Description"
-          description="Additional details or notes about the location."
-        />
-      </FormControl>
-      <FormControl cols="full">
-        <AddressField control={control} rules={{ required: true }} />
-      </FormControl>
-      <FormControl cols="full">
-        <InputField
-          control={control}
-          name="addressLine2"
-          label="Address Line 2"
-          placeholder="Address Line 2"
-          description="Additional address details, if applicable."
-          maxLength={150}
-        />
-      </FormControl>
-      <FormControl>
-        <InputField
-          control={control}
-          name="city"
-          rules={{ required: true }}
-          label="City"
-          placeholder="City"
-          description="The city where the location is situated."
-          maxLength={100}
-        />
-      </FormControl>
-      <FormControl>
-        <SelectField
-          control={control}
-          rules={{ required: true }}
-          name="stateId"
-          label="State"
-          placeholder="State"
-          description="The U.S. state where the location is situated."
-          options={usStateOptions}
-        />
-      </FormControl>
-      <FormControl cols="full">
-        <InputField
-          control={control}
-          name="postalCode"
-          label="Postal Code"
-          placeholder="Postal Code"
-          description="The ZIP code for the location."
-          rules={{ required: true }}
-          maxLength={150}
-        />
-      </FormControl>
-    </FormGroup>
+              </div>
+            </div>
+          </FormControl>
+          <FormControl cols="full">
+            <TextareaField
+              control={control}
+              name="description"
+              label="Description"
+              placeholder="Description"
+              description="Additional details or notes about the location."
+            />
+          </FormControl>
+          <FormControl cols="full" id="address-field-container">
+            <AddressField control={control} rules={{ required: true }} />
+          </FormControl>
+          <FormControl cols="full">
+            <InputField
+              control={control}
+              name="addressLine2"
+              label="Address Line 2"
+              placeholder="Address Line 2"
+              description="Additional address details, if applicable."
+              maxLength={150}
+            />
+          </FormControl>
+          <FormControl>
+            <InputField
+              control={control}
+              name="city"
+              rules={{ required: true }}
+              label="City"
+              placeholder="City"
+              description="The city where the location is situated."
+              maxLength={100}
+            />
+          </FormControl>
+          <FormControl>
+            <SelectField
+              control={control}
+              rules={{ required: true }}
+              name="stateId"
+              label="State"
+              placeholder="State"
+              description="The U.S. state where the location is situated."
+              options={usStateOptions}
+            />
+          </FormControl>
+          <FormControl cols="full">
+            <InputField
+              control={control}
+              name="postalCode"
+              label="Postal Code"
+              placeholder="Postal Code"
+              description="The ZIP code for the location."
+              rules={{ required: true }}
+              maxLength={150}
+            />
+          </FormControl>
+        </FormGroup>
+        <Tour />
+      </div>
+    </TourProvider>
   );
 }

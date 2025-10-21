@@ -1,7 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { MoveSchema } from "@/lib/schemas/move-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
@@ -9,13 +5,12 @@ import { nanoid } from "nanoid";
 import React from "react";
 import type { UseFieldArrayRemove, UseFieldArrayUpdate } from "react-hook-form";
 import { toast } from "sonner";
-import { StopTimeline } from "../../sidebar/stop-details/stop-timeline-content";
+import { StopTimeline } from "../stop-details/stop-timeline-content";
 
 function MoveListScrollArea({ children }: { children: React.ReactNode }) {
   return (
     <ScrollArea className="flex max-h-[250px] flex-col overflow-y-auto px-4 py-2 rounded-b-lg">
       {children}
-      <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-8 bg-gradient-to-t from-background to-transparent z-50" />
     </ScrollArea>
   );
 }
@@ -37,6 +32,7 @@ export function MoveList({
   update: UseFieldArrayUpdate<ShipmentSchema, "moves">;
   remove: UseFieldArrayRemove;
 }) {
+  "use no memo";
   return (
     <MoveListScrollArea>
       <MoveListScrollAreaInner>

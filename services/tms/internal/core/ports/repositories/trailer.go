@@ -1,16 +1,11 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
 type TrailerFilterOptions struct {
@@ -19,12 +14,12 @@ type TrailerFilterOptions struct {
 	Status                  string `query:"status"`
 }
 
-type ListTrailerOptions struct {
-	Filter        *ports.LimitOffsetQueryOptions
+type ListTrailerRequest struct {
+	Filter        *pagination.QueryOptions
 	FilterOptions TrailerFilterOptions `query:"filterOptions"`
 }
 
-type GetTrailerByIDOptions struct {
+type GetTrailerByIDRequest struct {
 	ID            pulid.ID
 	OrgID         pulid.ID
 	BuID          pulid.ID
@@ -33,8 +28,14 @@ type GetTrailerByIDOptions struct {
 }
 
 type TrailerRepository interface {
-	List(ctx context.Context, opts *ListTrailerOptions) (*ports.ListResult[*trailer.Trailer], error)
-	GetByID(ctx context.Context, opts *GetTrailerByIDOptions) (*trailer.Trailer, error)
+	List(
+		ctx context.Context,
+		opts *ListTrailerRequest,
+	) (*pagination.ListResult[*trailer.Trailer], error)
+	GetByID(
+		ctx context.Context,
+		opts *GetTrailerByIDRequest,
+	) (*trailer.Trailer, error)
 	Create(ctx context.Context, t *trailer.Trailer) (*trailer.Trailer, error)
 	Update(ctx context.Context, t *trailer.Trailer) (*trailer.Trailer, error)
 }

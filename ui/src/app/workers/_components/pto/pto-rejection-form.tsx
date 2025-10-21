@@ -1,9 +1,4 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import { AutoResizeTextareaField } from "@/components/fields/textarea-field";
+import { TextareaField } from "@/components/fields/textarea-field";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -49,7 +44,7 @@ export function PTORejectionForm() {
     <FormGroup cols={1}>
       <FormControl cols="full">
         <div className="relative">
-          <AutoResizeTextareaField
+          <TextareaField
             control={control}
             rules={{ required: true }}
             name="reason"

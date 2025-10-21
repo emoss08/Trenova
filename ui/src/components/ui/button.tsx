@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Slot } from "@radix-ui/react-slot";
 import { type VariantProps } from "class-variance-authority";
 import * as React from "react";
@@ -11,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/lib/variants/button";
 import { Check, Clipboard } from "lucide-react";
 import { isMacOs } from "react-device-detect";
+import { Kbd } from "./kbd";
 import { PulsatingDots } from "./pulsating-dots";
 import {
   Tooltip,
@@ -92,12 +88,7 @@ function FormSaveButton({
           side={tooltipPosition}
           className="flex items-center gap-2 text-xs"
         >
-          <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-            {isMacOs ? "⌘" : "Ctrl"}
-          </kbd>
-          <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-            Enter
-          </kbd>
+          <Kbd>{isMacOs ? "⌘" : "Ctrl"} + Enter</Kbd>
           <p>to save and close the {title}</p>
         </TooltipContent>
       </Tooltip>
@@ -127,4 +118,3 @@ function CopyButton({
 }
 
 export { Button, CopyButton, FormSaveButton };
-

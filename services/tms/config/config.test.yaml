@@ -1,0 +1,57 @@
+app:
+  env: test
+  debug: true
+
+server:
+  port: 8081
+  mode: test
+
+database:
+  host: localhost
+  port: 5433
+  name: trenova_test
+  user: postgres
+  password: postgres
+  max_idle_conns: 5
+  max_open_conns: 10
+
+redis:
+  host: localhost
+  port: 6380
+  db: 1
+  pool_size: 5
+
+kafka:
+  brokers:
+    - localhost:9093
+
+minio:
+  endpoint: localhost:9001
+  bucket: trenova-test
+
+temporal:
+  namespace: test
+  task_queue: trenova-test-queue
+
+security:
+  session:
+    secret: test-secret-key-for-testing-only-32chars
+    name: trenova_test_session
+    max_age: 3600 # 1 hour for tests
+    http_only: true
+    secure: false
+    same_site: lax
+    token_name: test_csrf_token
+    refresh_window: 300
+  rate_limit:
+    enabled: false
+
+logging:
+  level: debug
+  format: text
+
+monitoring:
+  prometheus:
+    enabled: false
+  opentelemetry:
+    enabled: false

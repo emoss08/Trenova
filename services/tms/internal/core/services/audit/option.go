@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package audit
 
 import (
@@ -12,9 +7,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/rotisserie/eris"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils/jsonutils"
 )
 
 // WithComment adds a comment to the audit entry
@@ -34,7 +28,7 @@ func WithDiff(before, after any) services.LogOption {
 
 		diff, err := jsonutils.JSONDiff(before, after, opts)
 		if err != nil {
-			return eris.Wrap(err, "failed to compute diff")
+			return err
 		}
 
 		// Convert the structured diff to a simple map[string]any
@@ -60,10 +54,9 @@ func WithCompactDiff(before, after any) services.LogOption {
 	return func(entry *audit.Entry) error {
 		results, err := jsonutils.JSONDiff(before, after, jsonutils.DefaultOptions())
 		if err != nil {
-			return eris.Wrap(err, "failed to compute diff")
+			return err
 		}
 
-		// Find changed fields
 		changes := make(map[string]any)
 		for key, change := range results {
 			changes[key] = map[string]any{
@@ -117,7 +110,7 @@ func WithCustomCorrelationID(id string) services.LogOption {
 }
 
 // WithCategory sets the category for the audit entry
-func WithCategory(category string) services.LogOption {
+func WithCategory(category audit.Category) services.LogOption {
 	return func(entry *audit.Entry) error {
 		entry.Category = category
 		return nil

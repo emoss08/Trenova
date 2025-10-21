@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -27,7 +22,12 @@ import {
 import { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { Icon } from "../ui/icons";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "../ui/tooltip";
 import { NotificationItem } from "./navigation-item";
 
 export function NotificationCenter() {
@@ -69,140 +69,142 @@ export function NotificationCenter() {
   }, [isEnabled, enableNotifications, disableNotifications]);
 
   return (
-    <Popover open={isOpen} onOpenChange={setIsOpen}>
-      <Tooltip>
-        <PopoverTrigger asChild>
-          <TooltipTrigger asChild>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="size-7 items-center relative"
-            >
-              <Icon icon={faBell} className="text-muted-foreground" />
-              {unreadNotifications.length > 0 && (
-                <span className="absolute -right-1 -top-0.5 flex size-2">
-                  <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-100"></span>
-                  <span className="ring-background relative inline-flex size-2 rounded-full bg-green-600 ring-1"></span>
-                </span>
-              )}
-            </Button>
-          </TooltipTrigger>
-        </PopoverTrigger>
-        <TooltipContent>
-          <p>Notifications</p>
-        </TooltipContent>
-      </Tooltip>
-      <PopoverContent className="w-96 p-0" align="end">
-        <div className="flex items-center justify-between px-4 py-2">
-          <h3 className="font-semibold">Notifications</h3>
-          <div className="flex items-center gap-2">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="secondary"
-                  size="icon"
-                  onClick={handlePermissionChange}
-                >
-                  <Icon icon={isEnabled ? faBellOn : faBellRing} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>
-                {isEnabled ? "Disable notifications" : "Enable notifications"}
-              </TooltipContent>
-            </Tooltip>
-            {unreadNotifications.length > 0 && (
+    <TooltipProvider>
+      <Popover open={isOpen} onOpenChange={setIsOpen}>
+        <Tooltip>
+          <PopoverTrigger asChild>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 items-center relative"
+              >
+                <Icon icon={faBell} className="text-muted-foreground" />
+                {unreadNotifications.length > 0 && (
+                  <span className="absolute -right-1 -top-0.5 flex size-2">
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-100"></span>
+                    <span className="ring-background relative inline-flex size-2 rounded-full bg-green-600 ring-1"></span>
+                  </span>
+                )}
+              </Button>
+            </TooltipTrigger>
+          </PopoverTrigger>
+          <TooltipContent>
+            <p>Notifications</p>
+          </TooltipContent>
+        </Tooltip>
+        <PopoverContent className="w-96 p-0" align="end">
+          <div className="flex items-center justify-between px-4 py-2">
+            <h3 className="font-semibold">Notifications</h3>
+            <div className="flex items-center gap-2">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
                     variant="secondary"
                     size="icon"
-                    onClick={() => markAllAsRead.mutate()}
-                    className="size-8 [&_svg]:size-4"
+                    onClick={handlePermissionChange}
                   >
-                    <Icon icon={faCheckDouble} />
+                    <Icon icon={isEnabled ? faBellOn : faBellRing} />
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent>Mark all as read</TooltipContent>
+                <TooltipContent>
+                  {isEnabled ? "Disable notifications" : "Enable notifications"}
+                </TooltipContent>
               </Tooltip>
-            )}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Link to="/settings/notifications">
-                  <Button variant="secondary" size="icon" className="size-8">
-                    <Icon icon={faGear} />
-                  </Button>
-                </Link>
-              </TooltipTrigger>
-              <TooltipContent>Settings</TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
-        <Tabs defaultValue="unread" className="w-full">
-          <TabsList className="h-auto rounded-none border-b gap-6 bg-transparent p-0 w-full justify-start">
-            <TabsTrigger
-              value="unread"
-              className="group data-[state=active]:after:bg-primary data-[state=active]:text-primary relative rounded-none px-4 py-2 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
-              Unread
               {unreadNotifications.length > 0 && (
-                <div className="text-xs text-muted-foreground bg-muted border border-border rounded-md px-1.5 items-center justify-center py-0.5 size-full group-data-[state=active]:bg-primary group-data-[state=active]:text-background">
-                  {unreadNotifications.length}
-                </div>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="secondary"
+                      size="icon"
+                      onClick={() => markAllAsRead.mutate()}
+                      className="size-8 [&_svg]:size-4"
+                    >
+                      <Icon icon={faCheckDouble} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Mark all as read</TooltipContent>
+                </Tooltip>
               )}
-            </TabsTrigger>
-            <TabsTrigger
-              value="all"
-              className="group data-[state=active]:after:bg-primary data-[state=active]:text-primary relative rounded-none px-4 py-2 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
-            >
-              All
-            </TabsTrigger>
-          </TabsList>
-          <TabsContent value="unread" className="m-0">
-            <ScrollArea className="h-[400px]">
-              {unreadNotifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
-                  <Icon icon={faBell} className="size-12 mb-2 opacity-20" />
-                  <p className="text-sm">No unread notifications</p>
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {unreadNotifications.map((notification) => (
-                    <NotificationItem
-                      key={notification.id}
-                      notification={notification}
-                      onAction={handleNotificationAction}
-                      onMarkAsRead={() => markAsRead.mutate(notification.id)}
-                      onDismiss={() => dismiss.mutate(notification.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-          <TabsContent value="all" className="m-0">
-            <ScrollArea className="h-[400px]">
-              {allNotifications.length === 0 ? (
-                <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
-                  <Icon icon={faBell} className="size-12 mb-2 opacity-20" />
-                  <p className="text-sm">No notifications yet</p>
-                </div>
-              ) : (
-                <div className="divide-y">
-                  {allNotifications.map((notification) => (
-                    <NotificationItem
-                      key={notification.id}
-                      notification={notification}
-                      onAction={handleNotificationAction}
-                      onMarkAsRead={() => markAsRead.mutate(notification.id)}
-                      onDismiss={() => dismiss.mutate(notification.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </TabsContent>
-        </Tabs>
-      </PopoverContent>
-    </Popover>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Link to="/settings/notifications">
+                    <Button variant="secondary" size="icon" className="size-8">
+                      <Icon icon={faGear} />
+                    </Button>
+                  </Link>
+                </TooltipTrigger>
+                <TooltipContent>Settings</TooltipContent>
+              </Tooltip>
+            </div>
+          </div>
+          <Tabs defaultValue="unread" className="w-full">
+            <TabsList className="h-auto rounded-none border-b gap-6 bg-transparent p-0 w-full justify-start">
+              <TabsTrigger
+                value="unread"
+                className="group data-[state=active]:after:bg-primary data-[state=active]:text-primary relative rounded-none px-4 py-2 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              >
+                Unread
+                {unreadNotifications.length > 0 && (
+                  <div className="text-xs text-muted-foreground bg-muted border border-border rounded-md px-1.5 items-center justify-center py-0.5 size-full group-data-[state=active]:bg-primary group-data-[state=active]:text-background">
+                    {unreadNotifications.length}
+                  </div>
+                )}
+              </TabsTrigger>
+              <TabsTrigger
+                value="all"
+                className="group data-[state=active]:after:bg-primary data-[state=active]:text-primary relative rounded-none px-4 py-2 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+              >
+                All
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="unread" className="m-0">
+              <ScrollArea className="h-[400px]">
+                {unreadNotifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
+                    <Icon icon={faBell} className="size-12 mb-2 opacity-20" />
+                    <p className="text-sm">No unread notifications</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {unreadNotifications.map((notification) => (
+                      <NotificationItem
+                        key={notification.id}
+                        notification={notification}
+                        onAction={handleNotificationAction}
+                        onMarkAsRead={() => markAsRead.mutate(notification.id)}
+                        onDismiss={() => dismiss.mutate(notification.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </TabsContent>
+            <TabsContent value="all" className="m-0">
+              <ScrollArea className="h-[400px]">
+                {allNotifications.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
+                    <Icon icon={faBell} className="size-12 mb-2 opacity-20" />
+                    <p className="text-sm">No notifications yet</p>
+                  </div>
+                ) : (
+                  <div className="divide-y">
+                    {allNotifications.map((notification) => (
+                      <NotificationItem
+                        key={notification.id}
+                        notification={notification}
+                        onAction={handleNotificationAction}
+                        onMarkAsRead={() => markAsRead.mutate(notification.id)}
+                        onDismiss={() => dismiss.mutate(notification.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </TabsContent>
+          </Tabs>
+        </PopoverContent>
+      </Popover>
+    </TooltipProvider>
   );
 }

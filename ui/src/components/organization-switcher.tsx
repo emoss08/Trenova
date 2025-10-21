@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import {
   SidebarMenu,
   SidebarMenuButton,
@@ -42,19 +37,22 @@ function OrganizationSwitcherButtonSkeleton() {
   );
 }
 
-type OrganizationSwitcherButtonProps = {
+interface OrganizationSwitcherButtonProps
+  extends React.ComponentProps<typeof SidebarMenuButton> {
   org: OrganizationSchema | undefined;
   isLoading: boolean;
-};
+}
 
 function OrganizationSwitcherButton({
   org,
   isLoading,
+  ...props
 }: OrganizationSwitcherButtonProps) {
   return isLoading ? (
     <OrganizationSwitcherButtonSkeleton />
   ) : (
     <SidebarMenuButton
+      {...props}
       size="lg"
       className="bg-sidebar data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground [&>svg]:size-5"
     >
@@ -106,15 +104,11 @@ export function OrganizationSwitcher() {
       return await api.user.switchOrganization(user.id, organizationId);
     },
     onSuccess: (updatedUser) => {
-      // * Update the user in the store with the new organization
       setUser(updatedUser);
-
-      // * Invalidate all queries to refresh data for the new organization
       queryClient.invalidateQueries();
 
-      // * Broadcast query invalidation to other tabs/windows
       broadcastQueryInvalidation({
-        queryKey: ["*"], // Invalidate all queries
+        queryKey: ["*"],
         options: {
           correlationId: `switch-organization-${Date.now()}`,
         },
@@ -124,11 +118,11 @@ export function OrganizationSwitcher() {
         },
       });
 
-      toast.success("Organization switched successfully");
-      setOpen(false);
+      window.location.reload();
     },
     onError: (error: APIError) => {
       toast.error(error.message || "Failed to switch organization");
+      window.location.reload();
     },
   });
 
@@ -142,9 +136,7 @@ export function OrganizationSwitcher() {
       <SidebarMenuItem>
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <div>
-              <OrganizationSwitcherButton org={org} isLoading={isLoading} />
-            </div>
+            <OrganizationSwitcherButton org={org} isLoading={isLoading} />
           </PopoverTrigger>
           <PopoverContent align="start" className="w-[300px] p-1">
             <span className="ml-1.5 select-none text-xs text-foreground">

@@ -1,35 +1,30 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
 type GetServiceTypeByIDOptions struct {
-	ID     pulid.ID
-	OrgID  pulid.ID
-	BuID   pulid.ID
-	UserID pulid.ID
+	ID     pulid.ID `json:"id"     form:"id"`
+	OrgID  pulid.ID `json:"orgId"  form:"orgId"`
+	BuID   pulid.ID `json:"buId"   form:"buId"`
+	UserID pulid.ID `json:"userId" form:"userId"`
 }
 
 type ListServiceTypeRequest struct {
-	Filter *ports.LimitOffsetQueryOptions `query:"filter"`
-	Status string                         `query:"status"`
+	Filter *pagination.QueryOptions `form:"filter" json:"filter"`
+	Status string                   `form:"status" json:"status"`
 }
 
 type ServiceTypeRepository interface {
 	List(
 		ctx context.Context,
 		req *ListServiceTypeRequest,
-	) (*ports.ListResult[*servicetype.ServiceType], error)
+	) (*pagination.ListResult[*servicetype.ServiceType], error)
 	GetByID(ctx context.Context, opts GetServiceTypeByIDOptions) (*servicetype.ServiceType, error)
 	Create(ctx context.Context, st *servicetype.ServiceType) (*servicetype.ServiceType, error)
 	Update(ctx context.Context, st *servicetype.ServiceType) (*servicetype.ServiceType, error)

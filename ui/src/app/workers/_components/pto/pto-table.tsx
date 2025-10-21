@@ -30,6 +30,7 @@ export function PtoDataTable() {
       useEnhancedBackend={true}
       TableModal={PTOCreateModal}
       TableEditModal={EditPTOModal}
+      defaultSort={[{ field: "createdAt", direction: "desc" }]}
     />
   );
 }

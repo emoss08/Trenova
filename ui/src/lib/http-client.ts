@@ -1,10 +1,6 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { API_URL, APP_ENV } from "@/constants/env";
 import { APIError } from "@/types/errors";
+import { generateRequestID } from "./pulid";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "DELETE" | "PATCH";
 
@@ -116,10 +112,16 @@ class HttpClient {
     attempt: number,
     maxRetries: number,
   ): boolean {
+    const shouldNotRetyStatuCodes = [500, 404, 429];
+
     if (attempt >= maxRetries) return false;
     if (error instanceof APIError) {
-      return error.status >= 500 || error.message.includes("network");
+      return (
+        error.message.includes("network") &&
+        !shouldNotRetyStatuCodes.includes(error.status)
+      );
     }
+
     return true;
   }
 
@@ -181,7 +183,7 @@ class HttpClient {
 
   private getHeaders(options: RequestConfig, isFormData: boolean): HeadersInit {
     let baseHeaders: HeadersInit = {
-      "X-Request-ID": crypto.randomUUID(),
+      "X-Request-ID": generateRequestID(),
       ...options.headers,
     };
 

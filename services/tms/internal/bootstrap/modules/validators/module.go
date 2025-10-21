@@ -1,73 +1,60 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package validators
 
 import (
-	"github.com/emoss08/trenova/internal/pkg/validator/accessorialchargevalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/assignmentvalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/billingcontrolvalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/commodityvalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/compliancevalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/consolidationsettingvalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/consolidationvalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/customervalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/documenttypevalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/equipmentmanufacturervalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/equipmenttypevalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/fleetcodevalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/framework"
-	"github.com/emoss08/trenova/internal/pkg/validator/hazardousmaterialvalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/hazmatsegreationrulevalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/holdreasonvalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/locationvalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/notificationpreferencevalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/organizationvalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/servicetypevalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/shipmentcontrolvalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/shipmenttypevalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/tractorvalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/trailervalidator"
-	"github.com/emoss08/trenova/internal/pkg/validator/workervalidator"
+	"github.com/emoss08/trenova/pkg/validator/accessorialchargevalidator"
+	"github.com/emoss08/trenova/pkg/validator/billingcontrolvalidator"
+	"github.com/emoss08/trenova/pkg/validator/commodityvalidator"
+	"github.com/emoss08/trenova/pkg/validator/customervalidator"
+	"github.com/emoss08/trenova/pkg/validator/dispatchcontrolvalidator"
+	"github.com/emoss08/trenova/pkg/validator/distanceoverridevalidator"
+	"github.com/emoss08/trenova/pkg/validator/documenttypevalidator"
+	"github.com/emoss08/trenova/pkg/validator/emailvalidator"
+	"github.com/emoss08/trenova/pkg/validator/equipmentmanufacturervalidator"
+	"github.com/emoss08/trenova/pkg/validator/equipmenttypevalidator"
+	"github.com/emoss08/trenova/pkg/validator/fleetcodevalidator"
+	"github.com/emoss08/trenova/pkg/validator/framework"
+	"github.com/emoss08/trenova/pkg/validator/hazardousmaterialvalidator"
+	"github.com/emoss08/trenova/pkg/validator/hazmatsegregationrulevalidator"
+	"github.com/emoss08/trenova/pkg/validator/holdreasonvalidator"
+	"github.com/emoss08/trenova/pkg/validator/locationcategoryvalidator"
+	"github.com/emoss08/trenova/pkg/validator/locationvalidator"
+	"github.com/emoss08/trenova/pkg/validator/organizationvalidator"
+	"github.com/emoss08/trenova/pkg/validator/servicetypevalidator"
+	"github.com/emoss08/trenova/pkg/validator/shipmentcontrolvalidator"
+	"github.com/emoss08/trenova/pkg/validator/shipmenttypevalidator"
+	"github.com/emoss08/trenova/pkg/validator/tractorvalidator"
+	"github.com/emoss08/trenova/pkg/validator/trailervalidator"
+	"github.com/emoss08/trenova/pkg/validator/workervalidator"
 	"go.uber.org/fx"
 )
 
 var Module = fx.Module("validators",
 	fx.Provide(
-		compliancevalidator.NewValidator,
+		holdreasonvalidator.NewValidator,
+		hazardousmaterialvalidator.NewValidator,
+		hazmatsegregationrulevalidator.NewValidator,
+		billingcontrolvalidator.NewValidator,
+		shipmentcontrolvalidator.NewValidator,
+		locationcategoryvalidator.NewValidator,
+		locationvalidator.NewValidator,
 		fleetcodevalidator.NewValidator,
-		locationvalidator.NewLocationCategoryValidator,
+		emailvalidator.NewEmailProfileValidator,
+		documenttypevalidator.NewValidator,
 		equipmenttypevalidator.NewValidator,
 		equipmentmanufacturervalidator.NewValidator,
+		workervalidator.NewWorkerProfileValidator,
+		workervalidator.NewWorkerPTOValidator,
+		workervalidator.NewValidator,
 		shipmenttypevalidator.NewValidator,
 		servicetypevalidator.NewValidator,
-		hazardousmaterialvalidator.NewValidator,
-		commodityvalidator.NewValidator,
-		locationvalidator.NewValidator,
 		tractorvalidator.NewValidator,
 		trailervalidator.NewValidator,
+		commodityvalidator.NewValidator,
 		customervalidator.NewValidator,
-		hazmatsegreationrulevalidator.NewValidator,
-		shipmentvalidator.NewStopValidator,
-		shipmentvalidator.NewMoveValidator,
-		shipmentvalidator.NewShipmentHoldValidator,
-		shipmentvalidator.NewValidator,
-		assignmentvalidator.NewValidator,
-		shipmentcontrolvalidator.NewValidator,
-		billingcontrolvalidator.NewValidator,
 		accessorialchargevalidator.NewValidator,
-		documenttypevalidator.NewValidator,
+		dispatchcontrolvalidator.NewValidator,
 		organizationvalidator.NewValidator,
-		workervalidator.NewWorkerPTOValidator,
-		workervalidator.NewWorkerProfileValidator,
-		workervalidator.NewValidator,
-		notificationpreferencevalidator.NewValidator,
-		consolidationsettingvalidator.NewValidator,
-		consolidationvalidator.NewValidator,
-		holdreasonvalidator.NewValidator,
+		distanceoverridevalidator.NewValidator,
 	),
 	fx.Options(
 		framework.Module,

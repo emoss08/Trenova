@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -19,6 +14,8 @@ import {
 } from "@fortawesome/pro-regular-svg-icons";
 import { AnimatePresence, motion } from "motion/react";
 import React, { useEffect, useRef, useState } from "react";
+import { isMacOs } from "react-device-detect";
+import { Kbd } from "../ui/kbd";
 import { getFilterOptions } from "./site-search-filter-options";
 
 export function SiteSearchInput({
@@ -44,9 +41,7 @@ export function SiteSearchInput({
         <span className="text-muted-foreground">Search...</span>
       </div>
       <div className="pointer-events-none inline-flex select-none">
-        <kbd className="-me-1 ms-12 inline-flex h-5 max-h-full items-center rounded border border-border bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-muted-foreground/70">
-          ⌘K
-        </kbd>
+        <Kbd>{isMacOs ? "⌘" : "Ctrl"} + K</Kbd>
       </div>
     </span>
   );
@@ -74,25 +69,20 @@ export function SearchInputWithBadges({
   const inputContainerRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
 
-  // Update filter visibility when tab changes
   useEffect(() => {
     setShowFilters(activeTab !== "all");
 
-    // If the active tab has changed (not just on initial render), clear the filters
     if (previousActiveTab !== activeTab && previousActiveTab !== undefined) {
       setActiveFilters({});
     }
 
-    // Update previous active tab
     setPreviousActiveTab(activeTab);
   }, [activeTab, previousActiveTab, setActiveFilters]);
 
-  // Close dropdown when filters change
   useEffect(() => {
     setShowFilterDropdown(false);
   }, [activeFilters]);
 
-  // Handle clicks outside the dropdown to close it
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -110,7 +100,6 @@ export function SearchInputWithBadges({
     };
   }, [showFilterDropdown]);
 
-  // Handle tag suggestions visibility and filtering
   useEffect(() => {
     if (!searchQuery) {
       setShowTagSuggestions(false);
@@ -120,27 +109,23 @@ export function SearchInputWithBadges({
     const atIndex = searchQuery.lastIndexOf("@");
 
     if (atIndex === -1 || atSymbolIndex !== atIndex) {
-      // Reset tag suggestions if no @ symbol or if it's a new @ symbol
       setShowTagSuggestions(false);
       setTagFilter("");
       setAtSymbolIndex(-1);
       return;
     }
 
-    // Check if there's a space after the @ symbol
     const hasSpaceAfterAt = searchQuery.substring(atIndex).includes(" ");
     if (hasSpaceAfterAt) {
       setShowTagSuggestions(false);
       return;
     }
 
-    // Get the partial tag after the @ symbol
     const partialTag = searchQuery.substring(atIndex + 1);
     setTagFilter(partialTag.toLowerCase());
     setShowTagSuggestions(true);
   }, [searchQuery, atSymbolIndex]);
 
-  // Filter tabs based on tag input
   const filteredTabs = Object.entries(tabConfig)
     .filter(
       ([key, config]) =>
@@ -151,7 +136,6 @@ export function SearchInputWithBadges({
       configA.label.toLowerCase().localeCompare(configB.label.toLowerCase()),
     );
 
-  // Reset selected index when filtered tabs change
   useEffect(() => {
     setSelectedTagIndex(0);
   }, [filteredTabs.length]);
@@ -160,19 +144,15 @@ export function SearchInputWithBadges({
     const newValue = e.target.value;
     setSearchQuery(newValue);
 
-    // Track cursor position
     setCursorPosition(e.target.selectionStart ?? 0);
 
-    // Check for @ symbol
     const atIndex = newValue.lastIndexOf("@");
     if (atIndex !== -1 && atIndex < cursorPosition) {
-      // Only set if the @ is before the current cursor position
       setAtSymbolIndex(atIndex);
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    // Handle Ctrl+Backspace to remove tag
     if (
       e.key === "Backspace" &&
       (e.ctrlKey || e.metaKey) &&
@@ -181,12 +161,10 @@ export function SearchInputWithBadges({
       e.preventDefault();
       setActiveTab("all");
       setShowFilters(false);
-      // Clear filters when removing tag
       setActiveFilters({});
       return;
     }
 
-    // Close dropdown on escape key
     if (e.key === "Escape" && showFilterDropdown) {
       e.preventDefault();
       setShowFilterDropdown(false);
@@ -226,23 +204,19 @@ export function SearchInputWithBadges({
   };
 
   const applyTag = (tabKey: string) => {
-    // If changing to a different tag, clear filters first
     if (activeTab !== tabKey) {
       setActiveFilters({});
     }
 
-    // Apply tag by setting active tab
     setActiveTab(tabKey as SiteSearchTab);
     setShowTagSuggestions(false);
 
-    // Remove the @tag part from search query
     if (atSymbolIndex !== -1) {
       const beforeAt = searchQuery.substring(0, atSymbolIndex);
       const afterTag = searchQuery.substring(cursorPosition);
       setSearchQuery(beforeAt + afterTag);
     }
 
-    // Reset state
     setAtSymbolIndex(-1);
     setTagFilter("");
   };
@@ -251,7 +225,6 @@ export function SearchInputWithBadges({
     e.stopPropagation();
     setActiveTab("all");
     setShowFilters(false);
-    // Clear filters when changing tabs
     setActiveFilters({});
   };
 
@@ -273,14 +246,11 @@ export function SearchInputWithBadges({
     setShowFilterDropdown(!showFilterDropdown);
   };
 
-  // Get config for current tab, use the enhanced config
   const currentTabConfig = tabConfig[activeTab] || tabConfig.all;
 
-  // Create array of filter entries for easier manipulation
   const filterEntries = Object.entries(activeFilters);
   const totalFilterCount = filterEntries.length;
 
-  // Show only 1 visible filter when there are more than 1 filters
   const visibleFilters = filterEntries.slice(0, Math.min(1, totalFilterCount));
   const hiddenFilters = filterEntries.slice(1);
   const hiddenFilterCount = hiddenFilters.length;
@@ -297,7 +267,6 @@ export function SearchInputWithBadges({
           className="flex items-center min-h-[48px] w-full px-8 py-2 relative"
         >
           <div className="flex items-center w-full">
-            {/* Tab badge when not "all" */}
             <AnimatePresence>
               {activeTab !== "all" && (
                 <motion.div
@@ -324,8 +293,6 @@ export function SearchInputWithBadges({
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* Filter badges container - using flex layout with items-center to ensure vertical alignment */}
             <div
               ref={filtersContainerRef}
               className="flex items-center gap-1.5"
@@ -358,8 +325,6 @@ export function SearchInputWithBadges({
                     </button>
                   </motion.div>
                 ))}
-
-                {/* "X more..." button */}
                 {hiddenFilterCount > 0 && (
                   <motion.button
                     ref={moreButtonRef}
@@ -379,8 +344,6 @@ export function SearchInputWithBadges({
                       icon={showFilterDropdown ? faChevronUp : faChevronDown}
                       className="size-3 ml-0.5"
                     />
-
-                    {/* Filter dropdown */}
                     <AnimatePresence>
                       {showFilterDropdown && (
                         <motion.div
@@ -427,8 +390,6 @@ export function SearchInputWithBadges({
                 )}
               </AnimatePresence>
             </div>
-
-            {/* Input field - with added self-center for better vertical alignment */}
             <input
               ref={inputRef}
               placeholder={
@@ -453,8 +414,6 @@ export function SearchInputWithBadges({
           </div>
         </div>
       </div>
-
-      {/* Tab suggestions dropdown */}
       <AnimatePresence>
         {showTagSuggestions && filteredTabs.length > 0 && (
           <motion.div
@@ -487,8 +446,6 @@ export function SearchInputWithBadges({
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Tab selectors - show when no active filter tab */}
       <AnimatePresence mode="wait">
         {!showFilters ? (
           <motion.div
@@ -532,7 +489,6 @@ export function SearchInputWithBadges({
             </div>
           </motion.div>
         ) : (
-          /* Filters for the selected category */
           <motion.div
             key="filters"
             initial={{ opacity: 0, y: 10 }}

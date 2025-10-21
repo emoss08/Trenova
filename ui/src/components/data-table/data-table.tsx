@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 /**
  * ACKNOWLEDGMENTS
  *
@@ -21,21 +16,13 @@
 import { useDataTableQuery } from "@/hooks/use-data-table-query";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
 import { useLiveDataTable } from "@/hooks/use-live-data-table";
-import { usePermissions } from "@/hooks/use-permissions";
-import {
-  convertFilterStateToAPIParams,
-  getDataTableEndpoint,
-} from "@/lib/enhanced-data-table-api";
-import { filterUtils } from "@/lib/enhanced-data-table-utils";
+import { usePermissions } from "@/hooks/use-permission";
+import { convertFilterStateToAPIParams } from "@/lib/data-table-api";
+import { filterUtils } from "@/lib/data-table-utils";
 import { queries } from "@/lib/queries";
 import type { FilterStateSchema } from "@/lib/schemas/table-configuration-schema";
-import { DataTableProps } from "@/types/data-table";
-import type {
-  EnhancedColumnDef,
-  EnhancedDataTableConfig,
-} from "@/types/enhanced-data-table";
+import { Config, DataTableProps, EnhancedColumnDef } from "@/types/data-table";
 import { Action } from "@/types/roles-permissions";
-import type { API_ENDPOINTS } from "@/types/server";
 import { useQuery } from "@tanstack/react-query";
 import {
   getCoreRowModel,
@@ -45,36 +32,28 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 import { useQueryStates } from "nuqs";
-import React, { lazy, useCallback, useEffect, useMemo } from "react";
-import { toast } from "sonner";
-import { LazyLoader } from "../error-boundary";
+import React from "react";
 import LetterGlitch from "../ui/letter-glitch";
 import { DataTablePermissionDeniedSkeleton } from "../ui/permission-skeletons";
 import { Table } from "../ui/table";
-import { DataTableActionsSkeleton } from "./_components/data-table-actions";
+import { DataTableOptions } from "./_components/_actions/data-table-options";
 import { DataTableBody } from "./_components/data-table-body";
 import { DataTableHeader } from "./_components/data-table-header";
-import { DataTableOptions } from "./_components/data-table-options";
 import { PaginationInner } from "./_components/data-table-pagination";
-import { EnhancedDataTableFilters } from "./_components/enhanced-data-table-filters";
-import { EnhancedDataTableSearch } from "./_components/enhanced-data-table-search";
-import { EnhancedDataTableSort } from "./_components/enhanced-data-table-sort";
 import { LiveModeBanner } from "./_components/live-mode-banner";
 import { DataTableProvider } from "./data-table-provider";
-
-const DataTableActions = lazy(() => import("./_components/data-table-actions"));
 
 export interface EnhancedDataTableProps<TData extends Record<string, any>>
   extends Omit<DataTableProps<TData>, "columns"> {
   columns: EnhancedColumnDef<TData>[];
-  config?: EnhancedDataTableConfig;
+  config?: Config;
   defaultFilters?: FilterStateSchema["filters"];
   defaultSort?: FilterStateSchema["sort"];
   onFilterChange?: (state: FilterStateSchema) => void;
   useEnhancedBackend?: boolean;
 }
 
-const defaultConfig: EnhancedDataTableConfig = {
+const defaultConfig: Config = {
   enableFiltering: true,
   enableSorting: true,
   enableMultiSort: true,
@@ -83,7 +62,6 @@ const defaultConfig: EnhancedDataTableConfig = {
   searchDebounce: 300,
   showFilterUI: true,
   showSortUI: true,
-  enableFilterPresets: false,
 };
 
 export function DataTable<TData extends Record<string, any>>({
@@ -106,20 +84,17 @@ export function DataTable<TData extends Record<string, any>>({
   defaultFilters = [],
   defaultSort = [],
   onFilterChange,
-  useEnhancedBackend = false,
+  // useEnhancedBackend = false,
   contextMenuActions,
 }: EnhancedDataTableProps<TData>) {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const { page, pageSize, entityId, modalType } = searchParams;
 
-  // Derive rowSelection from entityId - URL is the single source of truth
   const rowSelection = React.useMemo(
     () => (entityId ? { [entityId]: true } : {}),
     [entityId],
   );
 
-  // Initialize column order and visibility with React state
-  // These will be populated from server-side table configuration
   const [columnOrder, setColumnOrder] = React.useState<string[]>([]);
   const [columnVisibility, setColumnVisibility] =
     React.useState<VisibilityState>({});
@@ -143,20 +118,17 @@ export function DataTable<TData extends Record<string, any>>({
     return () => observer.unobserve(topBar);
   }, [topBarRef]);
 
-  // Derive filter state from URL parameters
-  const filterState = useMemo<FilterStateSchema>(() => {
+  const filterState = React.useMemo<FilterStateSchema>(() => {
     const deserialized = filterUtils.deserializeFromURL({
       query: searchParams.query || "",
       filters: searchParams.filters || "",
       sort: searchParams.sort || "",
     });
 
-    // Check if this is the very first load (no URL params at all)
-    // vs. user has interacted and explicitly set empty state
     const isFirstLoad =
       !searchParams.query && !searchParams.filters && !searchParams.sort;
 
-    const result = {
+    return {
       globalSearch: deserialized.globalSearch || "",
       filters:
         deserialized.filters.length > 0
@@ -171,8 +143,6 @@ export function DataTable<TData extends Record<string, any>>({
             ? defaultSort
             : [],
     };
-
-    return result;
   }, [
     searchParams.query,
     searchParams.filters,
@@ -181,27 +151,14 @@ export function DataTable<TData extends Record<string, any>>({
     defaultSort,
   ]);
 
-  // Convert filter state to API parameters
-  const enhancedSearchParams = useMemo(() => {
-    const apiParams = convertFilterStateToAPIParams(filterState, {
-      useLegacyMode: !useEnhancedBackend,
-      additionalParams: extraSearchParams || {},
-    });
+  const parsedSearchParams = React.useMemo(
+    () =>
+      convertFilterStateToAPIParams(filterState, {
+        additionalParams: extraSearchParams || {},
+      }),
+    [filterState, extraSearchParams],
+  );
 
-    // Don't add timestamp - it causes infinite loops!
-    return apiParams;
-  }, [filterState, extraSearchParams, useEnhancedBackend]);
-
-  // Get the appropriate endpoint
-  const apiEndpoint = useMemo((): API_ENDPOINTS => {
-    if (useEnhancedBackend) {
-      return getDataTableEndpoint(resource, true);
-    }
-    return link;
-  }, [resource, link, useEnhancedBackend]);
-
-  // Live mode state management - using React state instead of localStorage
-  // Live mode preferences should be session-based, not persisted
   const [liveModeEnabled, setLiveModeEnabled] = React.useState(
     liveMode?.enabled || false,
   );
@@ -209,7 +166,6 @@ export function DataTable<TData extends Record<string, any>>({
     liveMode?.autoRefresh || false,
   );
 
-  // Fetch persisted table configuration from the server
   const {
     data: tableConfig,
     isLoading: isTableConfigLoading,
@@ -218,46 +174,34 @@ export function DataTable<TData extends Record<string, any>>({
     ...queries.tableConfiguration.getDefaultOrLatestConfiguration(resource),
   });
 
-  // On first successful fetch, hydrate the local column visibility
-  useEffect(() => {
-    if (isError) {
-      toast.error("Unable to fetch table configuration", {
-        description: "Please try again later or contact support",
-      });
+  React.useEffect(() => {
+    if (isError || isTableConfigLoading || !tableConfig) {
       return;
     }
 
-    // Don't do anything while still loading
-    if (isTableConfigLoading) return;
-
-    // * Check if there is no table configuration only after the query is done loading
-    if (!tableConfig) {
-      return;
-    }
-
-    // * Set column visibility from table configuration
     if (tableConfig.tableConfig?.columnVisibility) {
       setColumnVisibility(
         tableConfig.tableConfig.columnVisibility as VisibilityState,
       );
     }
 
-    // * Set column order from table configuration
     if (tableConfig.tableConfig?.columnOrder) {
       setColumnOrder(tableConfig.tableConfig.columnOrder);
     }
 
-    handleFilterChange({
-      globalSearch: "",
-      filters: tableConfig.tableConfig.filters || [],
-      sort: tableConfig.tableConfig.sort || [],
-    });
-
+    const hasUrlFilters =
+      searchParams.filters || searchParams.sort || searchParams.query;
+    if (!hasUrlFilters && tableConfig.tableConfig) {
+      handleFilterChange({
+        globalSearch: "",
+        filters: tableConfig.tableConfig.filters || [],
+        sort: tableConfig.tableConfig.sort || [],
+      });
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tableConfig, isTableConfigLoading, isError, setColumnOrder]);
+  }, [tableConfig, isTableConfigLoading, isError]);
 
-  // Derive pagination state from URL
-  const pagination = useMemo(
+  const pagination = React.useMemo(
     () => ({
       pageIndex: (page ?? 1) - 1,
       pageSize: pageSize ?? initialPageSize,
@@ -265,15 +209,13 @@ export function DataTable<TData extends Record<string, any>>({
     [page, pageSize, initialPageSize],
   );
 
-  // Use the data table query with enhanced parameters
   const dataQuery = useDataTableQuery<TData>(
     queryKey,
-    apiEndpoint as API_ENDPOINTS,
+    link,
     pagination,
-    enhancedSearchParams,
+    parsedSearchParams,
   );
 
-  // Live mode integration with performance optimization
   const liveData = useLiveDataTable({
     queryKey,
     endpoint: liveMode?.endpoint || "",
@@ -306,7 +248,6 @@ export function DataTable<TData extends Record<string, any>>({
     enableRowSelection: true,
     getRowId: (row) => row.id,
     onRowSelectionChange: (updater) => {
-      // When row selection changes, update the URL
       const newSelection =
         typeof updater === "function" ? updater(rowSelection) : updater;
       const selectedId = Object.keys(newSelection)[0];
@@ -323,7 +264,6 @@ export function DataTable<TData extends Record<string, any>>({
       getRowClassName: (row: Row<TData>) => {
         let className = getRowClassName?.(row) || "";
 
-        // Add new item highlighting
         if (liveModeEnabled && liveData.isNewItem?.(row.id)) {
           className += " animate-new-item";
         }
@@ -333,58 +273,54 @@ export function DataTable<TData extends Record<string, any>>({
     },
   });
 
-  /**
-   * Calculate column sizes as CSS variables for performance optimization
-   * This approach from infinite table prevents expensive column.getSize() calls on every render
-   */
   const tableState = table.getState();
-  const columnSizeVars = useMemo(() => {
+  const columnSizeVars = React.useMemo(() => {
     const headers = table.getFlatHeaders();
     const colSizes: { [key: string]: string } = {};
-    for (let i = 0; i < headers.length; i++) {
-      const header = headers[i]!;
-      // Replace "." with "-" to avoid invalid CSS variable names
-      colSizes[`--header-${header.id.replace(".", "-")}-size`] =
-        `${header.getSize()}px`;
+
+    for (const header of headers) {
+      const sanitizedId = header.id.replace(".", "-");
+      colSizes[`--header-${sanitizedId}-size`] = `${header.getSize()}px`;
       colSizes[`--col-${header.column.id.replace(".", "-")}-size`] =
         `${header.column.getSize()}px`;
     }
+
     return colSizes;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    table,
     tableState.columnSizingInfo,
     tableState.columnSizing,
     tableState.columnVisibility,
   ]);
 
-  const selectedRow = useMemo(() => {
+  const selectedRow = React.useMemo(() => {
     if (
       (dataQuery.isLoading || dataQuery.isFetching) &&
       !dataQuery.data?.results.length
-    )
-      return;
-    const selectedRowKey = Object.keys(rowSelection)?.[0];
+    ) {
+      return undefined;
+    }
+
+    const selectedRowKey = Object.keys(rowSelection)[0];
+    if (!selectedRowKey) return undefined;
 
     return table
       .getCoreRowModel()
       .flatRows.find((row) => row.id === selectedRowKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     rowSelection,
     dataQuery.isLoading,
     dataQuery.isFetching,
-    dataQuery.data?.results,
+    dataQuery.data,
+    table,
   ]);
 
-  // No longer need effects to sync rowSelection with entityId
-  // The rowSelection is now derived directly from entityId
-
-  const handleFilterChange = useCallback(
+  const handleFilterChange = React.useCallback(
     (newFilterState: FilterStateSchema) => {
       const urlParams = filterUtils.serializeToURL(newFilterState);
 
       setSearchParams({
-        ...searchParams,
         query: typeof urlParams.query === "string" ? urlParams.query : null,
         filters:
           typeof urlParams.filters === "string" ? urlParams.filters : null,
@@ -394,21 +330,12 @@ export function DataTable<TData extends Record<string, any>>({
 
       onFilterChange?.(newFilterState);
     },
-    [searchParams, setSearchParams, onFilterChange],
+    [setSearchParams, onFilterChange],
   );
-
-  const handleCreateClick = useCallback(() => {
-    setSearchParams({ modalType: "create", entityId: null });
-  }, [setSearchParams]);
-
-  const handleCreateModalClose = useCallback(() => {
-    setSearchParams({ modalType: null, entityId: null });
-  }, [setSearchParams]);
 
   const isCreateModalOpen = Boolean(modalType === "create");
 
-  // Keyboard shortcut to reset column visibility and order (like infinite table)
-  useEffect(() => {
+  React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "u" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
@@ -419,7 +346,11 @@ export function DataTable<TData extends Record<string, any>>({
 
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [setColumnOrder, setColumnVisibility]);
+  }, []);
+
+  const handleCreateModalClose = React.useCallback(() => {
+    setSearchParams({ modalType: null, entityId: null });
+  }, [setSearchParams]);
 
   return (
     <DataTableProvider
@@ -443,59 +374,20 @@ export function DataTable<TData extends Record<string, any>>({
         {can(resource, Action.Read) ? (
           <>
             {includeOptions && (
-              <DataTableOptions>
-                <div className="flex flex-col size-full">
-                  <div className="flex justify-between items-center">
-                    {(config.showFilterUI || config.showSortUI) && (
-                      <div className="flex flex-col lg:flex-row gap-2">
-                        <EnhancedDataTableSearch
-                          filterState={filterState}
-                          onFilterChange={handleFilterChange}
-                          placeholder={`Search ${name.toLowerCase()}...`}
-                        />
-                        {config.showFilterUI && (
-                          <div className="flex-1">
-                            <EnhancedDataTableFilters
-                              columns={columns}
-                              filterState={filterState}
-                              onFilterChange={handleFilterChange}
-                              config={config}
-                            />
-                          </div>
-                        )}
-                        {config.showSortUI && (
-                          <div className="w-full lg:w-auto">
-                            <EnhancedDataTableSort
-                              columns={columns}
-                              sortState={filterState.sort}
-                              onSortChange={(newSort) => {
-                                const newFilterState = {
-                                  ...filterState,
-                                  sort: newSort,
-                                };
-                                handleFilterChange(newFilterState);
-                              }}
-                              config={config}
-                            />
-                          </div>
-                        )}
-                      </div>
-                    )}
-                    <LazyLoader fallback={<DataTableActionsSkeleton />}>
-                      <DataTableActions
-                        name={name}
-                        resource={resource}
-                        exportModelName={exportModelName}
-                        extraActions={extraActions}
-                        handleCreateClick={handleCreateClick}
-                        liveModeConfig={liveMode}
-                        liveModeEnabled={liveModeEnabled}
-                        onLiveModeToggle={setLiveModeEnabled}
-                      />
-                    </LazyLoader>
-                  </div>
-                </div>
-              </DataTableOptions>
+              <DataTableOptions
+                config={config}
+                handleFilterChange={handleFilterChange}
+                setSearchParams={setSearchParams}
+                filterState={filterState}
+                columns={columns}
+                name={name}
+                resource={resource}
+                exportModelName={exportModelName}
+                extraActions={extraActions}
+                liveMode={liveMode}
+                liveModeEnabled={liveModeEnabled}
+                setLiveModeEnabled={setLiveModeEnabled}
+              />
             )}
             {liveMode && !autoRefreshEnabled && (
               <LiveModeBanner
@@ -512,8 +404,8 @@ export function DataTable<TData extends Record<string, any>>({
                   <LetterGlitch
                     glitchColors={["#9c9c9c", "#696969", "#424242"]}
                     glitchSpeed={50}
-                    centerVignette={false}
-                    outerVignette={true}
+                    centerVignette={true}
+                    outerVignette={false}
                     smooth={true}
                   />
                   <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center pointer-events-none">
@@ -533,6 +425,7 @@ export function DataTable<TData extends Record<string, any>>({
               >
                 {includeHeader && <DataTableHeader table={table} />}
                 <DataTableBody
+                  isLoading={true}
                   table={table}
                   columns={columns}
                   liveMode={
@@ -562,7 +455,7 @@ export function DataTable<TData extends Record<string, any>>({
                 isLoading={dataQuery.isFetching || dataQuery.isLoading}
                 currentRecord={selectedRow?.original}
                 error={dataQuery.error}
-                apiEndpoint={apiEndpoint as API_ENDPOINTS}
+                apiEndpoint={link}
                 queryKey={queryKey}
               />
             )}

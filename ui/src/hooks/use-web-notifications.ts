@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { useCallback, useEffect, useRef, useState } from "react";
 
 // Types
@@ -63,23 +58,19 @@ export function useWebNotifications() {
   const [isEnabled, setIsEnabled] = useState(() => {
     if (typeof window === "undefined") return false;
     const stored = localStorage.getItem(PERMISSION_STORAGE_KEY);
-    // Check if explicitly disabled or not granted
     if (stored === "disabled") return false;
     return stored === "granted" && Notification.permission === "granted";
   });
 
-  // Refs for managing notifications and rate limiting
   const notificationQueue = useRef<NotificationQueueItem[]>([]);
   const activeNotifications = useRef<Map<string, Notification>>(new Map());
   const notificationTimestamps = useRef<number[]>([]);
   const processingQueue = useRef(false);
 
-  // Check if document is visible
   const isDocumentVisible = useCallback(() => {
     return document.visibilityState === "visible";
   }, []);
 
-  // Clean up old timestamps for rate limiting
   const cleanupTimestamps = useCallback(() => {
     const now = Date.now();
     notificationTimestamps.current = notificationTimestamps.current.filter(
@@ -87,7 +78,6 @@ export function useWebNotifications() {
     );
   }, []);
 
-  // Check if we're within rate limit
   const isWithinRateLimit = useCallback(() => {
     cleanupTimestamps();
     return notificationTimestamps.current.length < NOTIFICATION_RATE_LIMIT;
@@ -119,7 +109,6 @@ export function useWebNotifications() {
     }
   }, [isSupported]);
 
-  // Enable notifications
   const enableNotifications = useCallback(async (): Promise<boolean> => {
     if (!isSupported) {
       console.warn("[WebNotifications] Browser does not support notifications");
@@ -141,7 +130,6 @@ export function useWebNotifications() {
     }
   }, [isSupported, requestPermission]);
 
-  // Disable notifications
   const disableNotifications = useCallback(() => {
     setIsEnabled(false);
     localStorage.setItem(PERMISSION_STORAGE_KEY, "disabled");
@@ -153,7 +141,6 @@ export function useWebNotifications() {
     activeNotifications.current.clear();
   }, []);
 
-  // Process notification queue
   const processQueue = useCallback(() => {
     if (processingQueue.current || notificationQueue.current.length === 0) {
       return;
@@ -172,11 +159,9 @@ export function useWebNotifications() {
           tag: item.options?.tag || item.id,
         });
 
-        // Track active notification
         activeNotifications.current.set(item.id, notification);
         notificationTimestamps.current.push(Date.now());
 
-        // Set up event handlers
         notification.onclick = (event) => {
           event.preventDefault();
           window.focus();
@@ -208,7 +193,6 @@ export function useWebNotifications() {
     processingQueue.current = false;
   }, [isWithinRateLimit]);
 
-  // Show notification
   const showNotification = useCallback(
     (config: WebNotificationConfig): string | null => {
       if (!isSupported) {
@@ -223,7 +207,6 @@ export function useWebNotifications() {
         return null;
       }
 
-      // Don't show if document is visible (user is actively using the app)
       if (isDocumentVisible()) {
         return null;
       }
@@ -235,16 +218,13 @@ export function useWebNotifications() {
         timestamp: Date.now(),
       };
 
-      // Add to queue
       notificationQueue.current.push(queueItem);
 
-      // Trim queue if it's too large
       if (notificationQueue.current.length > MAX_QUEUE_SIZE) {
         notificationQueue.current =
           notificationQueue.current.slice(-MAX_QUEUE_SIZE);
       }
 
-      // Process queue
       processQueue();
 
       return id;
@@ -252,7 +232,6 @@ export function useWebNotifications() {
     [isSupported, permission, isEnabled, isDocumentVisible, processQueue],
   );
 
-  // Clear all notifications
   const clearAll = useCallback(() => {
     notificationQueue.current = [];
     activeNotifications.current.forEach((notification) => {
@@ -261,14 +240,11 @@ export function useWebNotifications() {
     activeNotifications.current.clear();
   }, []);
 
-  // Clear specific notification
   const clearNotification = useCallback((notificationId: string) => {
-    // Remove from queue
     notificationQueue.current = notificationQueue.current.filter(
       (item) => item.id !== notificationId,
     );
 
-    // Close if active
     const notification = activeNotifications.current.get(notificationId);
     if (notification) {
       notification.close();
@@ -276,22 +252,6 @@ export function useWebNotifications() {
     }
   }, []);
 
-  // Test notification
-  const testNotification = useCallback(() => {
-    return showNotification({
-      title: "Test Notification",
-      options: {
-        body: "This is a test notification from Trenova",
-        icon: DEFAULT_ICON,
-        tag: "test-notification",
-      },
-      onClick: () => {
-        console.log("[WebNotifications] Test notification clicked");
-      },
-    });
-  }, [showNotification]);
-
-  // Handle permission changes
   useEffect(() => {
     if (!isSupported) return;
 
@@ -302,7 +262,6 @@ export function useWebNotifications() {
       }
     };
 
-    // Some browsers support permission change events
     if ("permissions" in navigator) {
       navigator.permissions
         .query({ name: "notifications" as PermissionName })
@@ -319,7 +278,6 @@ export function useWebNotifications() {
     }
   }, [isSupported]);
 
-  // Process queue when visibility changes
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (!isDocumentVisible()) {
@@ -333,7 +291,6 @@ export function useWebNotifications() {
     };
   }, [isDocumentVisible, processQueue]);
 
-  // Cleanup on unmount
   useEffect(() => {
     return () => {
       clearAll();
@@ -341,24 +298,14 @@ export function useWebNotifications() {
   }, [clearAll]);
 
   return {
-    // State
     permission,
-    isSupported,
     isEnabled,
     isGranted: permission === "granted",
-
-    // Actions
     requestPermission,
     enableNotifications,
     disableNotifications,
     showNotification,
     clearAll,
     clearNotification,
-    testNotification,
-
-    // Utilities
-    isDocumentVisible,
-    queueSize: notificationQueue.current.length,
-    activeCount: activeNotifications.current.size,
   };
 }

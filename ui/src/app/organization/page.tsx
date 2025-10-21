@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { QueryLazyComponent } from "@/components/error-boundary";
 import { FormSaveProvider } from "@/components/form";
 import { MetaTags } from "@/components/meta-tags";
@@ -13,15 +8,17 @@ const OrganizationForm = lazy(() => import("./_components/organization-form"));
 
 export function OrganizationSettings() {
   return (
-    <div className="flex flex-col space-y-6">
+    <>
       <MetaTags title="Organization" description="Organization" />
-      <Header />
-      <QueryLazyComponent queryKey={queries.organization.getOrgById._def}>
-        <FormSaveProvider>
-          <OrganizationForm />
-        </FormSaveProvider>
-      </QueryLazyComponent>
-    </div>
+      <div className="flex flex-col gap-y-3">
+        <Header />
+        <QueryLazyComponent queryKey={queries.organization.getOrgById._def}>
+          <FormSaveProvider>
+            <OrganizationForm />
+          </FormSaveProvider>
+        </QueryLazyComponent>
+      </div>
+    </>
   );
 }
 

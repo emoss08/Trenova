@@ -1,9 +1,10 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { Button } from "@/components/ui/button";
+import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
 import { cn } from "@/lib/utils";
 import type { TableSheetProps } from "@/types/data-table";
 import type {
@@ -13,15 +14,15 @@ import type {
 import {
   faChevronDown,
   faChevronRight,
+  faCompress,
+  faCopy,
   faEllipsis,
+  faExpand,
   faMinus,
   faPlus,
-  faCopy,
   faTable,
-  faExpand,
-  faCompress,
 } from "@fortawesome/pro-regular-svg-icons";
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { BetaTag } from "./beta-tag";
 import {
   Dialog,
@@ -42,6 +43,7 @@ import {
 } from "./dropdown-menu";
 import { Icon } from "./icons";
 import { ScrollArea } from "./scroll-area";
+import { SensitiveValue } from "./sensitive-value";
 import {
   Table,
   TableBody,
@@ -50,8 +52,6 @@ import {
   TableHeader,
   TableRow,
 } from "./shadcn-table";
-import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
-import { SensitiveValue } from "./sensitive-value";
 
 interface CollapsibleNodeInternalProps extends CollapsibleNodeProps {
   forceExpanded?: boolean;
@@ -98,8 +98,8 @@ function CollapsibleNode({
 
   if (!isObject) {
     const valueDisplay = (
-      <SensitiveValue 
-        value={value} 
+      <SensitiveValue
+        value={value}
         className="max-w-[350px] truncate overflow-hidden text-ellipsis"
         prefix=" "
       />
@@ -285,12 +285,7 @@ export function ReadableJsonValue({
 
   // Handle primitive values
   if (typeof value !== "object") {
-    return (
-      <SensitiveValue 
-        value={value} 
-        className="max-w-[450px] truncate"
-      />
-    );
+    return <SensitiveValue value={value} className="max-w-[450px] truncate" />;
   }
 
   // Handle arrays and objects

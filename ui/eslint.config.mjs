@@ -1,14 +1,9 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 // @ts-check
 import eslint from "@eslint/js";
 import pluginQuery from "@tanstack/eslint-plugin-query";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import react from "eslint-plugin-react";
-import * as reactHooks from "eslint-plugin-react-hooks";
+import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
 import globals from "globals";
 import tseslint from "typescript-eslint";
@@ -20,7 +15,7 @@ export default tseslint.config(
   tseslint.configs.strict,
   reactRefresh.configs.vite,
   eslintPluginPrettierRecommended,
-  reactHooks.configs.recommended,
+  reactHooks.configs["recommended-latest"],
   {
     ...react.configs.flat.recommended,
     settings: { react: { version: "detect" } },
@@ -39,12 +34,13 @@ export default tseslint.config(
       "@typescript-eslint/no-explicit-any": "off",
       "@typescript-eslint/no-non-null-assertion": "off",
       "react/react-in-jsx-scope": "off",
+      "react/display-name": "off",
     },
   },
   {
     rules: {
       "react-hooks/rules-of-hooks": "error",
-      "react-hooks/exhaustive-deps": "warn",
+      "react-hooks/exhaustive-deps": "error",
     },
   },
 );

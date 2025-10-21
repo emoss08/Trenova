@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package locationcategory
 
 import (
@@ -10,206 +5,88 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/internal/pkg/validator"
-	"github.com/emoss08/trenova/internal/pkg/validator/locationvalidator"
-	"github.com/emoss08/trenova/pkg/types"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/rotisserie/eris"
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/pkg/validator"
+	"github.com/emoss08/trenova/pkg/validator/locationcategoryvalidator"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	Logger       *logger.Logger
+	Logger       *zap.Logger
 	Repo         repositories.LocationCategoryRepository
-	PermService  services.PermissionService
 	AuditService services.AuditService
-	Validator    *locationvalidator.LocationCategoryValidator
+	Validator    *locationcategoryvalidator.Validator
 }
 
 type Service struct {
-	l    *zerolog.Logger
+	l    *zap.Logger
 	repo repositories.LocationCategoryRepository
-	ps   services.PermissionService
 	as   services.AuditService
-	v    *locationvalidator.LocationCategoryValidator
+	v    *locationcategoryvalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().
-		Str("service", "locationcategory").
-		Logger()
-
 	return &Service{
-		l:    &log,
+		l:    p.Logger.Named("service.location_category"),
 		repo: p.Repo,
-		ps:   p.PermService,
 		as:   p.AuditService,
 		v:    p.Validator,
 	}
 }
 
-func (s *Service) SelectOptions(
-	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
-) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, opts)
-	if err != nil {
-		return nil, eris.Wrap(err, "select location categories")
-	}
-
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, lc := range result.Items {
-		options[i] = &types.SelectOption{
-			Value: lc.GetID(),
-			Label: lc.Name,
-			Color: lc.Color,
-		}
-	}
-
-	return options, nil
-}
-
 func (s *Service) List(
 	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
-) (*ports.ListResult[*location.LocationCategory], error) {
-	log := s.l.With().Str("operation", "List").Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         opts.TenantOpts.UserID,
-				Resource:       permission.ResourceLocationCategory,
-				Action:         permission.ActionRead,
-				BusinessUnitID: opts.TenantOpts.BuID,
-				OrganizationID: opts.TenantOpts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		s.l.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check permissions")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to read location categories",
-		)
-	}
-
-	entities, err := s.repo.List(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to list location categories")
-		return nil, eris.Wrap(err, "list location categories")
-	}
-
-	return &ports.ListResult[*location.LocationCategory]{
-		Items: entities.Items,
-		Total: entities.Total,
-	}, nil
+	req *repositories.ListLocationCategoryRequest,
+) (*pagination.ListResult[*location.LocationCategory], error) {
+	return s.repo.List(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	opts repositories.GetLocationCategoryByIDOptions,
+	req repositories.GetLocationCategoryByIDRequest,
 ) (*location.LocationCategory, error) {
-	log := s.l.With().
-		Str("operation", "GetByID").
-		Str("locationCategoryID", opts.ID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         opts.UserID,
-				Resource:       permission.ResourceLocationCategory,
-				Action:         permission.ActionRead,
-				BusinessUnitID: opts.BuID,
-				OrganizationID: opts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check read location category permissions")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to read this location category",
-		)
-	}
-
-	entity, err := s.repo.GetByID(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get location category")
-		return nil, eris.Wrap(err, "get location category")
-	}
-
-	return entity, nil
+	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) Create(
 	ctx context.Context,
-	lc *location.LocationCategory,
+	entity *location.LocationCategory,
 	userID pulid.ID,
 ) (*location.LocationCategory, error) {
-	log := s.l.With().
-		Str("operation", "Create").
-		Str("name", lc.Name).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceLocationCategory,
-				Action:         permission.ActionCreate,
-				BusinessUnitID: lc.BusinessUnitID,
-				OrganizationID: lc.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Create"),
+		zap.String("buID", entity.BusinessUnitID.String()),
+		zap.String("orgID", entity.OrganizationID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check create location category permissions")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to create a location category",
-		)
-	}
 
 	valCtx := &validator.ValidationContext{
 		IsCreate: true,
 		IsUpdate: false,
 	}
 
-	if err := s.v.Validate(ctx, valCtx, lc); err != nil {
+	if err := s.v.Validate(ctx, valCtx, entity); err != nil {
 		return nil, err
 	}
 
-	createdEntity, err := s.repo.Create(ctx, lc)
+	createdEntity, err := s.repo.Create(ctx, entity)
 	if err != nil {
-		return nil, eris.Wrap(err, "create location category")
+		return nil, err
 	}
 
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceLocationCategory,
 			ResourceID:     createdEntity.GetID(),
-			Action:         permission.ActionCreate,
+			Operation:      permission.OpCreate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(createdEntity),
 			OrganizationID: createdEntity.OrganizationID,
@@ -218,7 +95,7 @@ func (s *Service) Create(
 		audit.WithComment("Location category created"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log location category creation")
+		log.Error("failed to log location category creation", zap.Error(err))
 	}
 
 	return createdEntity, nil
@@ -226,67 +103,45 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	lc *location.LocationCategory,
+	entity *location.LocationCategory,
 	userID pulid.ID,
 ) (*location.LocationCategory, error) {
-	log := s.l.With().
-		Str("operation", "Update").
-		Str("name", lc.Name).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceLocationCategory,
-				Action:         permission.ActionUpdate,
-				BusinessUnitID: lc.BusinessUnitID,
-				OrganizationID: lc.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Update"),
+		zap.String("buID", entity.BusinessUnitID.String()),
+		zap.String("orgID", entity.OrganizationID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check update location category permissions")
-	}
 
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to update this location category",
-		)
-	}
-
-	// Validate the location category
 	valCtx := &validator.ValidationContext{
-		IsUpdate: true,
 		IsCreate: false,
+		IsUpdate: true,
 	}
 
-	if err := s.v.Validate(ctx, valCtx, lc); err != nil {
+	if err := s.v.Validate(ctx, valCtx, entity); err != nil {
 		return nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetLocationCategoryByIDOptions{
-		ID:    lc.ID,
-		OrgID: lc.OrganizationID,
-		BuID:  lc.BusinessUnitID,
+	original, err := s.repo.GetByID(ctx, repositories.GetLocationCategoryByIDRequest{
+		ID:    entity.ID,
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
 	})
 	if err != nil {
-		return nil, eris.Wrap(err, "get location category")
+		return nil, err
 	}
 
-	updatedEntity, err := s.repo.Update(ctx, lc)
+	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update location category")
-		return nil, eris.Wrap(err, "update location category")
+		log.Error("failed to update location category", zap.Error(err))
+		return nil, err
 	}
 
-	// Log the update if the insert was successful
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceLocationCategory,
 			ResourceID:     updatedEntity.GetID(),
-			Action:         permission.ActionUpdate,
+			Operation:      permission.OpUpdate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(updatedEntity),
 			PreviousState:  jsonutils.MustToJSON(original),
@@ -297,7 +152,7 @@ func (s *Service) Update(
 		audit.WithDiff(original, updatedEntity),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log location category update")
+		log.Error("failed to log location category update", zap.Error(err))
 	}
 
 	return updatedEntity, nil

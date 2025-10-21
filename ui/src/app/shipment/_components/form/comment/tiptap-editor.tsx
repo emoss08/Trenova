@@ -1,34 +1,23 @@
-/* eslint-disable react/display-name */
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { MeasuredContainer } from "@/components/measured-container";
 import { Icon } from "@/components/ui/icons";
-import { UserSchema } from "@/lib/schemas/user-schema";
 import { cn } from "@/lib/utils";
 import { useCommentEditStore } from "@/stores/comment-edit-store";
-import "@/styles/tiptap.css";
-import { faXmark } from "@fortawesome/pro-solid-svg-icons";
+import "@/styles/tiptap.scss";
+import { faXmark } from "@fortawesome/pro-regular-svg-icons";
+import Mention from "@tiptap/extension-mention";
 import Placeholder from "@tiptap/extension-placeholder";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { CharacterCount } from "@tiptap/extensions";
+import { EditorContent, useEditor, useEditorState } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { forwardRef, useEffect, useImperativeHandle } from "react";
-import { CustomMention } from "./extensions/mention-extension";
-import { MentionFloatingMenu } from "./extensions/mention-list";
-import { SlashCommandExtension } from "./extensions/slash-command-extension";
-import { SlashCommandMenu } from "./extensions/slash-command-menu";
-import { CommentTypeNode } from "./nodes/comment-type-node";
+import { forwardRef, useCallback, useEffect, useImperativeHandle } from "react";
+import suggestion from "./extensions/mention/mention-suggestion";
 import { type CommentType } from "./utils";
-
 interface TiptapEditorProps {
   value?: string | Record<string, any>;
   onChange?: (value: string) => void;
   onJsonChange?: (json: Record<string, any>) => void;
   onMentionedUsersChange?: (userIds: string[]) => void;
   onCommentTypeChange?: (type: CommentType | null) => void;
-  searchUsers: (query: string) => Promise<UserSchema[]>;
   isInvalid?: boolean;
   placeholder?: string;
   hasIncompleteSlashCommand?: boolean;
@@ -42,6 +31,8 @@ export interface TiptapEditorRef {
   getJSON: () => Record<string, any>;
 }
 
+const MAX_CHARACTERS = 1000;
+
 export const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
   (
     {
@@ -49,9 +40,8 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       onChange,
       onJsonChange,
       onMentionedUsersChange,
-      onCommentTypeChange,
+      // onCommentTypeChange,
       hasIncompleteSlashCommand,
-      searchUsers,
       placeholder,
       disabled = false,
       isInvalid,
@@ -70,25 +60,29 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         StarterKit.configure({
           paragraph: {
             HTMLAttributes: {
-              class: "m-0",
+              class: cn(
+                "prose prose-sm max-w-none focus:outline-none",
+                "min-h-[inherit] max-h-[inherit]",
+                "overflow-y-auto",
+                disabled && "cursor-not-allowed opacity-50",
+              ),
             },
           },
-          heading: false,
-          codeBlock: false,
-          blockquote: false,
-          bulletList: false,
-          orderedList: false,
-          listItem: false,
-          horizontalRule: false,
         }),
         Placeholder.configure({
           emptyNodeClass: "is-editor-empty",
           placeholder: effectivePlaceholder,
           includeChildren: false,
         }),
-        CustomMention,
-        SlashCommandExtension,
-        CommentTypeNode,
+        CharacterCount.configure({
+          limit: MAX_CHARACTERS,
+        }),
+        Mention.configure({
+          HTMLAttributes: {
+            class: "mention",
+          },
+          suggestion: suggestion(),
+        }),
       ],
       content: value,
       editorProps: {
@@ -106,9 +100,9 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
         onChange?.(editor.getText());
         onJsonChange?.(editor.getJSON());
 
-        // Extract mentioned user IDs
         if (onMentionedUsersChange) {
           const mentions: string[] = [];
+
           editor.state.doc.descendants((node) => {
             if (node.type.name === "mention" && node.attrs.id) {
               mentions.push(node.attrs.id);
@@ -116,19 +110,15 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
           });
           onMentionedUsersChange([...new Set(mentions)]);
         }
-
-        // Check for comment type changes
-        if (onCommentTypeChange) {
-          let currentCommentType: string | null = null;
-          editor.state.doc.descendants((node) => {
-            if (node.type.name === "commentType" && node.attrs.type) {
-              currentCommentType = node.attrs.type;
-              return false; // Stop at first comment type
-            }
-          });
-          onCommentTypeChange(currentCommentType);
-        }
       },
+    });
+
+    const { characterCount, wordsCount } = useEditorState({
+      editor,
+      selector: (context) => ({
+        characterCount: context.editor.storage.characterCount.characters(),
+        wordsCount: context.editor.storage.characterCount.words(),
+      }),
     });
 
     useImperativeHandle(ref, () => ({
@@ -143,26 +133,24 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
       }
     }, [value, editor]);
 
-    // Load JSON content when editing
     useEffect(() => {
       if (editor && isEditMode && editingComment?.metadata?.editorContent) {
         editor.commands.setContent(editingComment.metadata.editorContent);
       }
     }, [editor, isEditMode, editingComment]);
-
-    const handleContainerClick = () => {
-      if (editor && !editor.isFocused) {
+    const handleContainerClick = useCallback(() => {
+      if (!editor.isFocused) {
         editor.commands.focus("end");
       }
-    };
+    }, [editor]);
 
-    const handleClearEditMode = () => {
+    const handleClearEditMode = useCallback(() => {
       clearEditMode();
       setEditingComment(null);
-      if (editor) {
-        editor.commands.setContent("");
-      }
-    };
+      editor.commands.setContent("");
+    }, [clearEditMode, setEditingComment, editor]);
+
+    if (!editor) return null;
 
     return (
       <div className="relative">
@@ -176,19 +164,15 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
               <Icon icon={faXmark} />
             </button>
           </div>
-        )}
+        )}{" "}
         <MeasuredContainer
           as="div"
           name="editor"
           className={cn(
-            "block w-full rounded-md border text-sm",
-            "overflow-y-auto",
-            "min-h-[100px]",
-            "transition-[border-color,box-shadow] duration-200 ease-in-out",
-            "border-muted-foreground/20 bg-muted px-3 py-2",
-            "cursor-text",
+            "block w-full rounded-md bg-muted px-3 py-2 rounded-tr-none border border-muted-foreground/20 text-sm overflow-y-auto min-h-[100px]",
+            "transition-[border-color,box-shadow] duration-200 ease-in-out cursor-text",
             isEditMode && "rounded-bl-none",
-            "focus-within:border-blue-600 focus-within:ring-4 focus-within:ring-blue-600/20",
+            "focus-within:border-foreground focus-within:ring-4 focus-within:ring-foreground/20",
             isInvalid &&
               "border-red-500 bg-red-500/20 ring-0 ring-red-500 focus-within:border-red-600 focus-within:ring-4 focus-within:ring-red-400/20",
             hasIncompleteSlashCommand &&
@@ -202,19 +186,9 @@ export const TiptapEditor = forwardRef<TiptapEditorRef, TiptapEditorProps>(
             className={cn("minimal-tiptap-editor")}
           />
         </MeasuredContainer>
-        {editor && searchUsers && (
-          <MentionFloatingMenu
-            editor={editor}
-            searchUsers={searchUsers}
-            onMentionedUsersChange={onMentionedUsersChange}
-          />
-        )}
-        {editor && (
-          <SlashCommandMenu
-            editor={editor}
-            onCommentTypeChange={onCommentTypeChange}
-          />
-        )}
+        <div className="absolute bottom-1 right-2 text-2xs text-muted-foreground">
+          {characterCount} / {MAX_CHARACTERS} characters - {wordsCount} words
+        </div>
       </div>
     );
   },

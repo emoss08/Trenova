@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
@@ -10,8 +5,8 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
 type GetAuditEntryByIDOptions struct {
@@ -31,14 +26,14 @@ type ListByResourceIDRequest struct {
 type GetAuditByResourceRequest struct {
 	Resource       permission.Resource
 	ResourceID     string
-	Action         permission.Action
+	Operation      uint32
 	OrganizationID pulid.ID
 	Limit          int
 }
 
 type GetRecentEntriesRequest struct {
 	SinceTimestamp int64
-	Action         permission.Action
+	Operation      uint32
 	Limit          int
 }
 
@@ -46,14 +41,14 @@ type AuditRepository interface {
 	InsertAuditEntries(ctx context.Context, entries []*audit.Entry) error
 	List(
 		ctx context.Context,
-		opts *ports.LimitOffsetQueryOptions,
-	) (*ports.ListResult[*audit.Entry], error)
+		opts *pagination.QueryOptions,
+	) (*pagination.ListResult[*audit.Entry], error)
 	ListByResourceID(
 		ctx context.Context,
 		opts ListByResourceIDRequest,
-	) (*ports.ListResult[*audit.Entry], error)
+	) (*pagination.ListResult[*audit.Entry], error)
 	GetByID(ctx context.Context, opts GetAuditEntryByIDOptions) (*audit.Entry, error)
-	GetByResourceAndAction(
+	GetByResourceAndOperation(
 		ctx context.Context,
 		req *GetAuditByResourceRequest,
 	) ([]*audit.Entry, error)

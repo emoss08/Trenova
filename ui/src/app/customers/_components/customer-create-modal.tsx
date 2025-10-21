@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button, FormSaveButton } from "@/components/ui/button";
 import {
   Dialog,
@@ -48,6 +43,13 @@ export function CreateCustomerModal({ open, onOpenChange }: TableSheetProps) {
         city: "",
         postalCode: "",
         stateId: "",
+        isGeocoded: false,
+        placeId: "",
+        longitude: 0,
+        latitude: 0,
+        consolidationPriority: 1,
+        allowConsolidation: true,
+        exclusiveConsolidation: false,
         billingProfile: {
           billingCycleType: BillingCycleType.Immediate,
           hasOverrides: false,
@@ -71,7 +73,7 @@ export function CreateCustomerModal({ open, onOpenChange }: TableSheetProps) {
       },
     },
     mutationFn: async (values: CustomerSchema) => {
-      const response = await http.post("/customers", values);
+      const response = await http.post("/customers/", values);
       return response.data;
     },
     onSuccess: () => {

@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Gender, Status } from "@/types/common";
 import {
   ComplianceStatus,
@@ -22,7 +17,6 @@ import {
   versionSchema,
 } from "./helpers";
 
-/* Worker Profile Schema */
 const workerProfileSchema = z.object({
   id: optionalStringSchema,
   version: versionSchema,
@@ -31,8 +25,6 @@ const workerProfileSchema = z.object({
   organizationId: optionalStringSchema,
   businessUnitId: optionalStringSchema,
   workerId: optionalStringSchema,
-
-  // * Core Fields
   dob: nullableIntegerSchema,
   licenseNumber: z.string(),
   endorsement: z.enum(Endorsement),
@@ -49,7 +41,6 @@ const workerProfileSchema = z.object({
   lastDrugTest: z.number(),
 });
 
-/* Worker PTO Schema */
 export const workerPTOSchema = z
   .object({
     id: optionalStringSchema,
@@ -59,8 +50,6 @@ export const workerPTOSchema = z
     organizationId: optionalStringSchema,
     businessUnitId: optionalStringSchema,
     workerId: optionalStringSchema,
-
-    // * Core Fields
     status: z.enum(PTOStatus),
     type: z.enum(PTOType),
     startDate: z
@@ -88,7 +77,6 @@ export const workerPTOSchema = z
     },
   );
 
-/* Worker Schema */
 export const workerSchema = z
   .object({
     id: optionalStringSchema,
@@ -97,8 +85,6 @@ export const workerSchema = z
     updatedAt: timestampSchema,
     organizationId: optionalStringSchema,
     businessUnitId: optionalStringSchema,
-
-    // * Core Fields
     profilePictureUrl: optionalStringSchema,
     status: z.enum(Status),
     type: z.enum(WorkerType),
@@ -111,6 +97,7 @@ export const workerSchema = z
     fleetCodeId: nullableStringSchema,
     gender: z.enum(Gender),
     postalCode: z.string(),
+    externalId: optionalStringSchema,
     profile: workerProfileSchema.nullish(),
     pto: z.array(workerPTOSchema).nullish(),
   })
@@ -137,7 +124,7 @@ export const workerSchema = z
 
 export const ptoRejectionRequestSchema = z.object({
   ptoId: z.string().min(1, { message: "PTO ID is required" }),
-  reason: z.string(),
+  reason: z.string().min(1, { message: "Reason is required" }),
 });
 
 export const ptoFilterSchema = z
@@ -155,7 +142,7 @@ export const ptoFilterSchema = z
   .refine(
     (data) => {
       const diffInMs = (data.endDate - data.startDate) * 1000;
-      const ninetyDaysInMs = 90 * 24 * 60 * 60 * 1000;
+      const ninetyDaysInMs = 120 * 24 * 60 * 60 * 1000;
       return diffInMs <= ninetyDaysInMs;
     },
     {

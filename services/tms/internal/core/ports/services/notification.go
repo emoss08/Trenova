@@ -1,17 +1,12 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package services
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/notification"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
 type SendNotificationRequest struct {
@@ -57,6 +52,7 @@ type ShipmentCommentNotificationRequest struct {
 	OrganizationID  pulid.ID `json:"organizationId"`
 	BusinessUnitID  pulid.ID `json:"businessUnitId"`
 	CommentID       pulid.ID `json:"commentId"`
+	OwnerID         pulid.ID `json:"ownerId"`
 	OwnerName       string   `json:"ownerName"`
 	MentionedUserID pulid.ID `json:"mentionedUserId"`
 }
@@ -78,50 +74,31 @@ type ShipmentHoldReleaseNotificationRequest struct {
 }
 
 type NotificationService interface {
-	// SendNotification sends a notification to the specified targets
 	SendNotification(ctx context.Context, req *SendNotificationRequest) error
-
-	// SendJobCompletionNotification sends a notification when a job completes
 	SendJobCompletionNotification(ctx context.Context, req *JobCompletionNotificationRequest) error
-
 	SendConfigurationCopiedNotification(
 		ctx context.Context,
 		req *ConfigurationCopiedNotificationRequest,
 	) error
-
 	SendCommentNotification(ctx context.Context, req *ShipmentCommentNotificationRequest) error
-
 	SendOwnershipTransferNotification(
 		ctx context.Context,
 		req *OwnershipTransferNotificationRequest,
 	) error
-
 	SendShipmentHoldReleaseNotification(
 		ctx context.Context,
 		req *ShipmentHoldReleaseNotificationRequest,
 	) error
-
-	// SendBulkCommentNotifications sends multiple comment notifications
 	SendBulkCommentNotifications(
 		ctx context.Context,
 		reqs []*ShipmentCommentNotificationRequest,
 	) error
-
-	// MarkAsRead marks a notification as read
 	MarkAsRead(ctx context.Context, req repositories.MarkAsReadRequest) error
-
-	// MarkAsDismissed marks a notification as dismissed
 	MarkAsDismissed(ctx context.Context, req repositories.MarkAsDismissedRequest) error
-
-	// ReadAllNotifications reads all notifications for a user
 	ReadAllNotifications(ctx context.Context, req repositories.ReadAllNotificationsRequest) error
-
-	// GetUserNotifications retrieves notifications for a user
 	GetUserNotifications(
 		ctx context.Context,
 		req *repositories.GetUserNotificationsRequest,
-	) (*ports.ListResult[*notification.Notification], error)
-
-	// GetUnreadCount gets the count of unread notifications for a user
+	) (*pagination.ListResult[*notification.Notification], error)
 	GetUnreadCount(ctx context.Context, userID pulid.ID, organizationID pulid.ID) (int, error)
 }

@@ -1,10 +1,6 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 /** Type for Hazardous Class Choices */
 export enum HazardousClassChoiceProps {
+  HazardClass1 = "HazardClass1",
   HazardClass1And1 = "HazardClass1And1",
   HazardClass1And2 = "HazardClass1And2",
   HazardClass1And3 = "HazardClass1And3",
@@ -38,6 +34,7 @@ export const mapToHazardousClassChoice = (
   hazardousClassChoice: HazardousClassChoiceProps,
 ) => {
   const hazardousClassChoiceLabels = {
+    HazardClass1: "Division 1: Explosive Hazard",
     HazardClass1And1: "Division 1.1: Mass Explosive Hazard",
     HazardClass1And2: "Division 1.2: Projection Hazard",
     HazardClass1And3:

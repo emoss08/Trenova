@@ -1,12 +1,7 @@
-"use client";
-
-import * as React from "react";
-
-import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
-
-import { cn } from "@/lib/utils";
-
 import { useTouchPrimary } from "@/hooks/use-has-primary-touch";
+import { cn } from "@/lib/utils";
+import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
+import * as React from "react";
 
 const ScrollAreaContext = React.createContext<boolean>(false);
 type Mask = {
@@ -255,4 +250,3 @@ const ScrollMask = ({
 };
 
 export { ScrollArea, ScrollBar };
-

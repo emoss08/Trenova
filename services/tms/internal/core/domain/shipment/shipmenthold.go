@@ -2,18 +2,25 @@ package shipment
 
 import (
 	"context"
+	"errors"
 
-	"github.com/emoss08/trenova/internal/core/domain/user"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*ShipmentHold)(nil)
+var (
+	_ bun.BeforeAppendModelHook = (*ShipmentHold)(nil)
+	_ domain.Validatable        = (*ShipmentHold)(nil)
+	_ framework.TenantedEntity  = (*ShipmentHold)(nil)
+)
 
+//nolint:revive // valid struct name
 type ShipmentHold struct {
 	bun.BaseModel `bun:"table:shipment_holds,alias:sh" json:"-"`
 
@@ -39,12 +46,15 @@ type ShipmentHold struct {
 	CreatedByID       *pulid.ID      `json:"createdById"       bun:"created_by_id,type:VARCHAR(100),nullzero"`
 	ReleasedByID      *pulid.ID      `json:"releasedById"      bun:"released_by_id,type:VARCHAR(100),nullzero"`
 
-	CreatedBy  *user.User `json:"createdBy,omitempty"  bun:"rel:belongs-to,join:created_by_id=id"`
-	ReleasedBy *user.User `json:"releasedBy,omitempty" bun:"rel:belongs-to,join:released_by_id=id"`
+	// Relationships
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	CreatedBy    *tenant.User         `json:"createdBy,omitempty"    bun:"rel:belongs-to,join:created_by_id=id"`
+	ReleasedBy   *tenant.User         `json:"releasedBy,omitempty"   bun:"rel:belongs-to,join:released_by_id=id"`
 }
 
-func (sh *ShipmentHold) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(ctx, sh,
+func (sh *ShipmentHold) Validate(multiErr *errortypes.MultiError) {
+	err := validation.ValidateStruct(sh,
 		validation.Field(&sh.Type,
 			validation.Required.Error("Hold Type is required"),
 			validation.In(
@@ -80,7 +90,7 @@ func (sh *ShipmentHold) Validate(ctx context.Context, multiErr *errors.MultiErro
 			validation.Min(int64(1)).Error("Started At must be a Unix timestamp > 0"),
 		),
 		validation.Field(&sh.ReleasedAt,
-			validation.By(func(value any) error {
+			validation.By(func(_ any) error {
 				if sh.ReleasedAt != nil && *sh.ReleasedAt < sh.StartedAt {
 					return validation.NewError(
 						"released_at_lt_started_at",
@@ -99,8 +109,8 @@ func (sh *ShipmentHold) Validate(ctx context.Context, multiErr *errors.MultiErro
 	)
 	if err != nil {
 		var validationErrs validation.Errors
-		if eris.As(err, &validationErrs) {
-			errors.FromOzzoErrors(validationErrs, multiErr)
+		if errors.As(err, &validationErrs) {
+			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
@@ -127,12 +137,20 @@ func (sh *ShipmentHold) GetID() string {
 	return sh.ID.String()
 }
 
+func (sh *ShipmentHold) GetOrganizationID() pulid.ID {
+	return sh.OrganizationID
+}
+
+func (sh *ShipmentHold) GetBusinessUnitID() pulid.ID {
+	return sh.BusinessUnitID
+}
+
 func (sh *ShipmentHold) GetTableName() string {
 	return "shipment_holds"
 }
 
 func (sh *ShipmentHold) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:

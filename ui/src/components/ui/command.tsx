@@ -1,13 +1,8 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
+import { cn } from "@/lib/utils";
+import { faSearch, IconDefinition } from "@fortawesome/pro-regular-svg-icons";
+import { CheckIcon } from "@radix-ui/react-icons";
 import { Command as CommandPrimitive } from "cmdk";
 import * as React from "react";
-
-import { cn } from "@/lib/utils";
-import { faSearch } from "@fortawesome/pro-regular-svg-icons";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +10,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./dialog";
+import Highlight from "./highlight";
 import { Icon } from "./icons";
 
 function Command({
@@ -144,11 +140,79 @@ function CommandItem({
     <CommandPrimitive.Item
       data-slot="command-item"
       className={cn(
-        "data-[selected=true]:bg-muted-foreground/10 data-[selected=true]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "data-[selected=true]:bg-accent data-[selected=true]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
     />
+  );
+}
+
+function SelectCommandItem({
+  className,
+  icon,
+  color,
+  label,
+  description,
+  checked,
+  searchValue,
+  ...props
+}: Omit<React.ComponentProps<typeof CommandPrimitive.Item>, "children"> & {
+  checked?: boolean;
+  icon?: React.ReactNode | IconDefinition;
+  label?: string;
+  description?: string;
+  color?: string;
+  searchValue?: string;
+}) {
+  const renderIcon = () => {
+    if (typeof icon === "object" && icon !== null && "icon" in icon) {
+      return (
+        <Icon
+          icon={icon}
+          className="size-3 data-[state=checked]:text-foreground data-[state=checked]:bg-muted-foreground/10"
+        />
+      );
+    }
+    return icon;
+  };
+
+  return (
+    <CommandPrimitive.Item
+      data-slot="command-item"
+      className={cn(
+        "data-[selected=true]:bg-muted-foreground/10 flex-row gap-x-4 justify-between hover:cursor-pointer data-[selected=true]:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex cursor-default items-center gap-2 rounded-sm px-2 py-1.5 text-sm outline-hidden select-none data-[disabled=true]:pointer-events-none data-[disabled=true]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        className,
+      )}
+      {...props}
+    >
+      {icon ? (
+        renderIcon()
+      ) : color ? (
+        <span
+          className="block size-2 rounded-full shrink-0"
+          style={{ backgroundColor: color }}
+        />
+      ) : null}
+      <div className="flex flex-col leading-tight w-full text-left truncate">
+        <span className="">
+          {searchValue ? (
+            <Highlight text={label || ""} highlight={searchValue} />
+          ) : (
+            label
+          )}
+        </span>
+        {description && (
+          <span
+            data-desc
+            className="text-muted-foreground mt-1 block text-2xs font-normal text-wrap"
+          >
+            {description}
+          </span>
+        )}
+      </div>
+      {checked && <CheckIcon className="ml-auto shrink-0" />}
+    </CommandPrimitive.Item>
   );
 }
 
@@ -177,6 +241,6 @@ export {
   CommandItem,
   CommandList,
   CommandSeparator,
-  CommandShortcut
+  CommandShortcut,
+  SelectCommandItem,
 };
-

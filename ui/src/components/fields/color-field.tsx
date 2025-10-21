@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button } from "@/components/ui/button";
 import {
   Popover,
@@ -24,7 +19,6 @@ import { Icon } from "../ui/icons";
 import { Input } from "../ui/input";
 import { FieldWrapper } from "./field-components";
 
-// Define the solid colors array as objects
 const solids = [
   { color: "#E2E2E2", name: "Light gray" },
   { color: "#ff75c3", name: "Bright pink" },
@@ -87,7 +81,6 @@ const ColorGrid = memo(function ColorGrid({
   );
 });
 
-// Controlled input component
 const ColorFieldInput = memo(function ColorFieldInput<T extends FieldValues>({
   field,
   fieldState,
@@ -102,7 +95,6 @@ const ColorFieldInput = memo(function ColorFieldInput<T extends FieldValues>({
   const [isOpen, setIsOpen] = useState(false);
   const { onChange, value, ...restField } = field;
 
-  // Memoize the handleChange function
   const handleChange = useCallback(
     (color: string) => {
       setIsOpen(false);
@@ -119,7 +111,7 @@ const ColorFieldInput = memo(function ColorFieldInput<T extends FieldValues>({
           variant="outline"
           type="button"
           className={cn(
-            "w-full font-normal gap-2 justify-start text-left items-center rounded border-muted-foreground/20 bg-muted px-1.5 data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
+            "w-full font-normal gap-2 justify-start text-left items-center rounded border-muted-foreground/20 bg-primary/5 px-1.5 data-[state=open]:border-foreground data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-foreground/20",
             "[&_svg]:size-3 justify-between",
             "transition-[border-color,box-shadow] duration-200 ease-in-out",
             disabled && "opacity-50 cursor-not-allowed",

@@ -1,10 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import React, { memo, useEffect, useMemo, useRef, useState } from "react";
-
 import {
   Collapsible,
   CollapsibleContent,
@@ -28,15 +21,16 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { useDebounce } from "@/hooks/use-debounce";
-import { usePermissions } from "@/hooks/use-permissions";
+import { usePermissions } from "@/hooks/use-permission";
 import { routes } from "@/lib/nav-links";
 import { cn } from "@/lib/utils";
 import { useIsAuthenticated, useUser } from "@/stores/user-store";
 import { Resource } from "@/types/audit-entry";
 import { RouteInfo } from "@/types/nav-links";
 import { Action } from "@/types/roles-permissions";
-import { faSearch, faXmark } from "@fortawesome/pro-regular-svg-icons";
+import { faSearch } from "@fortawesome/pro-regular-svg-icons";
 import { ChevronRightIcon } from "@radix-ui/react-icons";
+import React, { memo, useEffect, useMemo, useRef, useState } from "react";
 import { isMacOs } from "react-device-detect";
 import { Link, useLocation } from "react-router";
 import { FavoritesSidebar } from "./favorites-sidebar";
@@ -44,22 +38,17 @@ import { NavUser } from "./nav-user";
 import { OrganizationSwitcher } from "./organization-switcher";
 import Highlight from "./ui/highlight";
 import { Icon } from "./ui/icons";
-import { Kbd, KbdKey } from "./ui/kibo-ui/kbd";
+import { Kbd } from "./ui/kbd";
 import { Skeleton } from "./ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { WorkflowPlaceholder } from "./workflow";
 
-// Helper function to check if a route is active
 const isRouteActive = (currentPath: string, itemPath?: string): boolean => {
   if (!itemPath) return false;
 
-  // Special handling for root path
   if (itemPath === "/") {
     return currentPath === "/";
   }
 
-  // For other paths, ensure we match complete segments
-  // This prevents "/teams" from matching "/team"
   const normalizedCurrentPath = currentPath.endsWith("/")
     ? currentPath.slice(0, -1)
     : currentPath;
@@ -70,7 +59,6 @@ const isRouteActive = (currentPath: string, itemPath?: string): boolean => {
   return normalizedCurrentPath.startsWith(normalizedItemPath);
 };
 
-// Helper function to check if any child route is active
 const hasActiveChild = (currentPath: string, item: RouteInfo): boolean => {
   if (isRouteActive(currentPath, item.link)) return true;
   if (!item.tree) return false;
@@ -82,29 +70,24 @@ const hasActiveChild = (currentPath: string, item: RouteInfo): boolean => {
   );
 };
 
-// Filter routes based on permissions
 const filterRoutesByPermission = (
   routes: RouteInfo[],
   can: (resource: Resource, action: Action) => boolean,
 ): RouteInfo[] => {
   return routes
     .map((route) => {
-      // If route has children, filter them first
       if (route.tree) {
         const filteredChildren = filterRoutesByPermission(route.tree, can);
 
-        // If this is a grouping node (like ConfigurationFiles) and has accessible children, include it
         if (filteredChildren.length > 0) {
           return {
             ...route,
             tree: filteredChildren,
           };
         }
-        // If no children are accessible, exclude this route
         return null;
       }
 
-      // For leaf nodes, check if user has permission
       if (can(route.key as Resource, "read" as Action)) {
         return route;
       }
@@ -114,7 +97,6 @@ const filterRoutesByPermission = (
     .filter((route): route is RouteInfo => route !== null);
 };
 
-// Filter routes based on search query
 const filterRoutesBySearch = (
   routes: RouteInfo[],
   searchQuery: string,
@@ -126,17 +108,14 @@ const filterRoutesBySearch = (
 
   return routes
     .map((route) => {
-      // Check if current route matches all query words
       const routeLabel = route.label.toLowerCase();
       const routeMatches = queryWords.every((word) =>
         routeLabel.includes(word),
       );
 
-      // If route has children, filter them
       if (route.tree) {
         const filteredChildren = filterRoutesBySearch(route.tree, searchQuery);
 
-        // Include parent if it matches or has matching children
         if (routeMatches || filteredChildren.length > 0) {
           return {
             ...route,
@@ -146,7 +125,6 @@ const filterRoutesBySearch = (
         return null;
       }
 
-      // For leaf nodes, include if matches
       return routeMatches ? route : null;
     })
     .filter((route): route is RouteInfo => route !== null);
@@ -164,19 +142,16 @@ function Tree({
   const isActive = isRouteActive(currentPath, item.link);
   const hasActive = hasActiveChild(currentPath, item);
 
-  // Check if this item has children and we're searching
   const hasChildrenDuringSearch = !!(
     searchQuery &&
     item.tree &&
     item.tree.length > 0
   );
 
-  // Initialize open state - open if has active child OR has children during search
   const [isOpen, setIsOpen] = React.useState(
     hasActive || hasChildrenDuringSearch,
   );
 
-  // Helper to handle navigation - prevent navigation if already on the same route
   const handleNavigation = React.useCallback(
     (
       e: React.MouseEvent<HTMLAnchorElement>,
@@ -184,30 +159,24 @@ function Tree({
     ) => {
       if (!targetPath || targetPath === "#") return;
 
-      // If we're already on this route, prevent navigation to preserve query params
       if (isRouteActive(currentPath, targetPath)) {
         e.preventDefault();
         return;
       }
-
-      // Otherwise, allow normal navigation (clears query params for different tables)
     },
     [currentPath],
   );
 
-  // Update open state when active state changes
   React.useEffect(() => {
     if (hasActive) {
       setIsOpen(true);
     }
   }, [hasActive, currentPath]);
 
-  // Auto-expand when searching and has children
   React.useEffect(() => {
     if (searchQuery && item.tree && item.tree.length > 0) {
       setIsOpen(true);
     } else if (!searchQuery && !hasActive) {
-      // Collapse when search is cleared (unless has active child)
       setIsOpen(false);
     }
   }, [searchQuery, item.tree, hasActive]);
@@ -324,7 +293,7 @@ export const AppSidebar = memo(function AppSidebar({
   const isAuthenticated = useIsAuthenticated();
   const user = useUser();
   const [searchQuery, setSearchQuery] = useState("");
-  const searchInputRef = useRef<HTMLInputElement>(null);
+
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
   const filteredRoutes = useMemo(() => {
@@ -333,77 +302,16 @@ export const AppSidebar = memo(function AppSidebar({
     return filterRoutesBySearch(permissionFilteredRoutes, debouncedSearchQuery);
   }, [can, user, debouncedSearchQuery]);
 
-  // Show loading state while user data is being fetched
   const isLoading = isAuthenticated && !user;
 
-  // Add keyboard shortcut for search
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Cmd/Ctrl + K to focus search
-      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
-        e.preventDefault();
-        searchInputRef.current?.focus();
-      }
-      // Escape to clear search
-      if (e.key === "Escape" && searchQuery) {
-        setSearchQuery("");
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [searchQuery]);
-
-  // TODO(wolfred): Allow for the sidebar to be configurable by the user.
   return (
     <Sidebar variant="floating" {...props}>
       <SidebarHeader className="gap-4">
         <OrganizationSwitcher />
-        <WorkflowPlaceholder />
-        <div className="relative">
-          <Icon
-            icon={faSearch}
-            className="absolute left-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
-          />
-          <SidebarInput
-            ref={searchInputRef}
-            placeholder="Search navigation..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full"
-            icon={
-              <Icon icon={faSearch} className="size-3 text-muted-foreground" />
-            }
-            rightElement={
-              <Tooltip>
-                <TooltipTrigger>
-                  <Kbd>
-                    <KbdKey aria-label="Meta">{isMacOs ? "⌘" : "Ctrl"}</KbdKey>
-                    <KbdKey>K</KbdKey>
-                  </Kbd>
-                </TooltipTrigger>
-                <TooltipContent className="flex items-center gap-2 text-xs">
-                  <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-                    {isMacOs ? "⌘" : "Ctrl"}
-                  </kbd>
-                  <kbd className="-me-1 inline-flex h-5 max-h-full items-center rounded bg-background px-1 font-[inherit] text-[0.625rem] font-medium text-foreground">
-                    K
-                  </kbd>
-                  <p>to trigger advanced search</p>
-                </TooltipContent>
-              </Tooltip>
-            }
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery("")}
-              className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-              aria-label="Clear search"
-            >
-              <Icon icon={faXmark} className="size-3" />
-            </button>
-          )}
-        </div>
+        <SiteInputWrapper
+          searchQuery={searchQuery}
+          setSearchQuery={setSearchQuery}
+        />
       </SidebarHeader>
       <SidebarContent>
         <FavoritesSidebar />
@@ -413,20 +321,17 @@ export const AppSidebar = memo(function AppSidebar({
           </SidebarGroupLabel>
           <SidebarGroupContent>
             {isLoading ? (
-              // Show loading skeletons while permissions are loading
               <div className="space-y-2">
-                {[...Array(5)].map((_, i) => (
+                {[...Array(10)].map((_, i) => (
                   <Skeleton key={i} className="h-8 w-full" />
                 ))}
               </div>
             ) : filteredRoutes.length === 0 && debouncedSearchQuery ? (
-              // Show no results message
               <div className="px-2 py-8 text-center text-sm text-muted-foreground">
                 No navigation items found for &ldquo;{debouncedSearchQuery}
                 &rdquo;
               </div>
             ) : (
-              // Show navigation items once loaded
               filteredRoutes.map((item) => (
                 <Tree
                   key={item.key}
@@ -445,3 +350,56 @@ export const AppSidebar = memo(function AppSidebar({
     </Sidebar>
   );
 });
+
+function SiteInputWrapper({
+  searchQuery,
+  setSearchQuery,
+}: {
+  searchQuery: string;
+  setSearchQuery: (query: string) => void;
+}) {
+  const searchInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      }
+      if (e.key === "Escape" && searchQuery) {
+        setSearchQuery("");
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [searchQuery, setSearchQuery]);
+
+  return (
+    <div className="relative">
+      <Icon
+        icon={faSearch}
+        className="absolute left-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
+      />
+      <SidebarInput
+        ref={searchInputRef}
+        placeholder="Search navigation..."
+        value={searchQuery}
+        onChange={(e) => setSearchQuery(e.target.value)}
+        className="w-full"
+        icon={<Icon icon={faSearch} className="size-3 text-muted-foreground" />}
+        rightElement={
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Kbd aria-label="Meta">{isMacOs ? "⌘" : "Ctrl"} + K</Kbd>
+            </TooltipTrigger>
+            <TooltipContent className="flex items-center gap-2 text-xs">
+              <Kbd>{isMacOs ? "⌘" : "Ctrl"} + K</Kbd>
+              <p>to trigger advanced search</p>
+            </TooltipContent>
+          </Tooltip>
+        }
+      />
+    </div>
+  );
+}

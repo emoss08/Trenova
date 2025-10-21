@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import * as SelectPrimitive from "@radix-ui/react-select";
 import * as React from "react";
 
@@ -63,10 +58,10 @@ function SelectTrigger({
     <SelectPrimitive.Trigger
       data-slot="select-trigger"
       className={cn(
-        "group bg-muted flex h-7 w-full items-center justify-between whitespace-nowrap rounded-md border border-muted-foreground/20",
+        "group bg-primary/5 flex h-7 w-full items-center justify-between whitespace-nowrap rounded-md border border-muted-foreground/20",
         "px-1.5 py-2 text-xs ring-offset-background placeholder:text-muted-foreground outline-hidden",
-        "data-[state=open]:border-blue-600 data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-blue-600/20",
-        "focus-visible:border-blue-600 focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-blue-600/20",
+        "data-[state=open]:border-foreground data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-foreground/20",
+        "focus-visible:border-foreground focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-foreground/20",
         "transition-[border-color,box-shadow] duration-200 ease-in-out",
         "disabled:opacity-50 [&>span]:line-clamp-1 cursor-pointer disabled:cursor-not-allowed",
         className,
@@ -156,7 +151,7 @@ function SelectItem({
     <SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "focus:bg-muted text-left focus:text-accent-foreground cursor-pointer hover:bg-muted dark:hover:bg-primary/10 data-[state=checked]:bg-muted",
+        "focus:bg-muted dark:focus:bg-primary/10 text-left focus:text-accent-foreground cursor-pointer hover:bg-muted dark:hover:bg-primary/10 data-[state=checked]:bg-muted",
         "data-[state=checked]:dark:bg-primary/10 [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full items-center gap-2 rounded-sm",
         "py-1.5 pr-8 pl-2 text-2xs outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         "[&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",

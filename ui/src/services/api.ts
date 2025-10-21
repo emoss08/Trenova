@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { http } from "@/lib/http-client";
 import type { TractorSchema } from "@/lib/schemas/tractor-schema";
 import type { TractorAssignment } from "@/types/assignment";
@@ -19,12 +14,16 @@ import { CustomerAPI } from "./customer";
 import { DataRetentionAPI } from "./data-retention";
 import { DatabaseBackupAPI } from "./database-backups";
 import { DedicatedLaneAPI, DedicatedLaneSuggestionAPI } from "./dedicated-lane";
+import { DispatchControlAPI } from "./dispatch-control";
+import { DistanceOverrideAPI } from "./distance-override";
 import { DockerAPI } from "./docker";
 import { DocumentAPI } from "./document";
+import { EmailProfileAPI } from "./email-profile";
 import { FavoriteAPI } from "./favorite";
 import { GoogleMapsAPI } from "./google-maps";
 import { HoldReasonAPI } from "./hold-reason";
 import { IntegrationAPI } from "./integration";
+import { LocationAPI } from "./location";
 import { NotificationAPI } from "./notification";
 import { OrganizationAPI } from "./organization";
 import { PatternConfigAPI } from "./pattern-config";
@@ -35,6 +34,7 @@ import { ShipmentControlAPI } from "./shipment-control";
 import { TableConfigurationAPI } from "./table-configuration";
 import { UsStateAPI } from "./us-state";
 import { UserAPI } from "./user";
+import { VariableAPI } from "./variable";
 import { WorkerAPI } from "./worker";
 
 class AssignmentsAPI {
@@ -62,6 +62,7 @@ class API {
   analytics: AnalyticsAPI;
   organization: OrganizationAPI;
   shipmentControl: ShipmentControlAPI;
+  dispatchControl: DispatchControlAPI;
   billingControl: BillingControlAPI;
   databaseBackups: DatabaseBackupAPI;
   auditEntries: AuditEntryAPI;
@@ -80,7 +81,10 @@ class API {
   docker: DockerAPI;
   dataRetention: DataRetentionAPI;
   worker: WorkerAPI;
-
+  variables: VariableAPI;
+  emailProfile: EmailProfileAPI;
+  locations: LocationAPI;
+  distanceOverride: DistanceOverrideAPI;
   constructor() {
     this.assignments = new AssignmentsAPI();
     this.auth = new AuthAPI();
@@ -96,6 +100,7 @@ class API {
     this.organization = new OrganizationAPI();
     this.shipmentControl = new ShipmentControlAPI();
     this.billingControl = new BillingControlAPI();
+    this.dispatchControl = new DispatchControlAPI();
     this.databaseBackups = new DatabaseBackupAPI();
     this.auditEntries = new AuditEntryAPI();
     this.tableConfigurations = new TableConfigurationAPI();
@@ -114,6 +119,10 @@ class API {
     this.docker = new DockerAPI();
     this.dataRetention = new DataRetentionAPI();
     this.worker = new WorkerAPI();
+    this.variables = new VariableAPI();
+    this.emailProfile = new EmailProfileAPI();
+    this.locations = new LocationAPI();
+    this.distanceOverride = new DistanceOverrideAPI();
   }
 }
 

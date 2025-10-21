@@ -1,12 +1,8 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { BillingCycleType, PaymentTerm } from "@/types/billing";
 import { Status } from "@/types/common";
 import * as z from "zod/v4";
 import { documentTypeSchema } from "./document-type-schema";
+import { geocodeBadeSchema } from "./geocode-schema";
 import {
   nullableStringSchema,
   optionalStringSchema,
@@ -22,8 +18,6 @@ export const emailProfileSchema = z.object({
   updatedAt: timestampSchema,
   organizationId: optionalStringSchema,
   businessUnitId: optionalStringSchema,
-
-  // * Core Fields
   customerId: nullableStringSchema,
   subject: optionalStringSchema,
   comment: optionalStringSchema,
@@ -40,12 +34,8 @@ export const billingProfileSchema = z.object({
   updatedAt: timestampSchema,
   organizationId: optionalStringSchema,
   businessUnitId: optionalStringSchema,
-
-  // * Core Fields
   customerId: nullableStringSchema,
   billingCycleType: z.enum(BillingCycleType),
-
-  // * Billing Profile Fields
   hasOverrides: z.boolean(),
   enforceCustomerBillingReq: z.boolean().default(false),
   validateCustomerRates: z.boolean().default(false),
@@ -54,17 +44,17 @@ export const billingProfileSchema = z.object({
   autoMarkReadyToBill: z.boolean().default(false),
   autoBill: z.boolean().default(false),
   specialInstructions: optionalStringSchema,
-  documentTypes: z.array(documentTypeSchema).optional(),
+  documentTypes: z.array(documentTypeSchema),
 });
 
 export const customerSchema = z.object({
+  ...geocodeBadeSchema.shape,
   id: optionalStringSchema,
   version: versionSchema,
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
   organizationId: optionalStringSchema,
   businessUnitId: optionalStringSchema,
-
   status: z.enum(Status),
   name: z.string().min(1, { error: "Name is required" }),
   code: z.string().min(1, { error: "Code is required" }),
@@ -74,11 +64,13 @@ export const customerSchema = z.object({
   city: z.string().min(1, { error: "City is required" }),
   postalCode: z.string().min(1, { error: "Postal code is required" }),
   stateId: z.string().min(1, { error: "State is required" }),
-
-  // * Relationships
+  consolidationPriority: z.number().default(1),
+  allowConsolidation: z.boolean().default(true),
+  exclusiveConsolidation: z.boolean().default(false),
+  externalId: optionalStringSchema,
   state: usStateSchema.optional(),
-  billingProfile: billingProfileSchema.optional(),
-  emailProfile: emailProfileSchema.optional(),
+  billingProfile: billingProfileSchema.nullish(),
+  emailProfile: emailProfileSchema.nullish(),
 });
 
 export type CustomerSchema = z.infer<typeof customerSchema>;

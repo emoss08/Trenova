@@ -1,32 +1,19 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { cn } from "@/lib/utils";
 import { faCircleExclamation } from "@fortawesome/pro-regular-svg-icons";
 import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useFormContext, useFormState } from "react-hook-form";
+import { Kbd } from "../ui/kbd";
 import { PulsatingDots } from "../ui/pulsating-dots";
 
 type DockPosition = "center" | "left" | "right";
 
 interface FormSaveDockProps {
-  /** Custom save button content */
   saveButtonContent?: ReactNode;
-
-  /** Custom text to display in the dock */
   unsavedText?: string;
-
-  /** Position of the dock (center, left, or right) */
   position?: DockPosition;
-
-  /** Custom width for the dock */
   width?: string;
-
-  /** Additional className for the dock container */
   className?: string;
 }
 
@@ -82,11 +69,23 @@ function SaveDockContent({
           >
             Reset
           </Button>
-          <Button type="submit" disabled={isSubmitting}>
+          <Button
+            type="submit"
+            variant="background"
+            className="pr-2"
+            disabled={isSubmitting}
+          >
             {isSubmitting ? (
               <PulsatingDots size={1} color="white" />
             ) : (
-              saveButtonContent
+              <>
+                {saveButtonContent && (
+                  <>
+                    {saveButtonContent}
+                    <Kbd className="shrink-0">⏎</Kbd>
+                  </>
+                )}
+              </>
             )}
           </Button>
         </div>

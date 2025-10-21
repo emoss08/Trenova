@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
@@ -9,11 +9,11 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
 import {
-    getArrowByType,
-    getDateByType,
-    setDateByType,
-    type Period,
-    type TimePickerType,
+  getArrowByType,
+  getDateByType,
+  setDateByType,
+  type Period,
+  type TimePickerType,
 } from "./time-picker-utils";
 
 export interface TimePickerInputProps
@@ -135,4 +135,3 @@ const TimePickerInput = React.forwardRef<
 TimePickerInput.displayName = "TimePickerInput";
 
 export { TimePickerInput };
-

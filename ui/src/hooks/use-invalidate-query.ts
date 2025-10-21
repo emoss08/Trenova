@@ -1,56 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-/**
- * Query Invalidation System
- *
- * This module provides a robust system for invalidating React Query cache entries across browser tabs
- * using the BroadcastChannel API. It supports two invalidation strategies:
- *
- * 1. Predicate-based Invalidation:
- *    - Uses pattern matching to invalidate queries based on partial key matches
- *    - Useful when you need to invalidate multiple related queries at once
- *    - Example: Invalidating all queries that contain "user" in their key:
- *      - "users.list" would match
- *      - "user.details.123" would match
- *      - "settings" would not match
- *
- * 2. Direct Key Invalidation:
- *    - Invalidates queries using exact query key matching
- *    - More precise control over which queries are invalidated
- *    - Example: Invalidating ["users", "list"] would only match that exact query key
- *
- * Usage Examples:
- *
- * ```typescript
- * Predicate-based invalidation (pattern matching)
- *
- * broadcastQueryInvalidation(['user'], {
- *   config: {
- *     predicate: true, // Enable pattern matching
- *     refetchType: 'all'
- *   }
- * });
- *
- * This would invalidate queries with keys like:
- * - ['user']
- * - ['users', 'list']
- * - ['user', '123', 'details']
- *
- * Direct key invalidation
- * broadcastQueryInvalidation([['users', 'list']], {
- *   config: {
- *     predicate: false, // Disable pattern matching
- *     exact: true
- *   }
- * });
- *
- * This would only invalidate the query with exactly ['users', 'list'] as its key
- * ```
- */
-
 import { APP_ENV } from "@/constants/env";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback, useEffect, useRef } from "react";
@@ -76,11 +23,9 @@ const MAX_RETRY_ATTEMPTS = 5;
 const INITIAL_RETRY_DELAY = 1000;
 const MAX_RETRY_DELAY = 10000; // 10 seconds
 
-// Helper for exponential backoff
 const calculateDelay = (attempt: number) =>
   Math.min(INITIAL_RETRY_DELAY * Math.pow(2, attempt), MAX_RETRY_DELAY);
 
-// Debug logger with environment check
 const logDebug = (message: string, color: string = "#a742f5") => {
   if (APP_ENV === "development") {
     console.debug(
@@ -90,7 +35,6 @@ const logDebug = (message: string, color: string = "#a742f5") => {
   }
 };
 
-// Type guard for invalidation messages
 const isInvalidationMessage = (data: unknown): data is InvalidationMessage =>
   typeof data === "object" &&
   data !== null &&
@@ -105,6 +49,7 @@ export const useQueryInvalidationListener = () => {
   const retryTimeoutRef = useRef<number>(0);
   const abortControllerRef = useRef<AbortController | null>(null);
   const retryAttemptRef = useRef(0);
+  const initializeChannelRef = useRef<() => Promise<void>>(async () => {});
   const handleInvalidation: MessageHandler = useCallback(
     async (message) => {
       try {
@@ -119,7 +64,6 @@ export const useQueryInvalidationListener = () => {
 
         const config = message.config || {};
         if (config.predicate) {
-          // Use predicate-based invalidation
           queryKeys.forEach((keyPattern) => {
             queryClient.invalidateQueries({
               predicate: (query) =>
@@ -133,7 +77,6 @@ export const useQueryInvalidationListener = () => {
             });
           });
         } else {
-          // Use direct key invalidation
           await Promise.all(
             queryKeys.map(async (queryKey) => {
               if (!queryKey) return;
@@ -150,7 +93,6 @@ export const useQueryInvalidationListener = () => {
         logDebug(`Successfully invalidated queries`, "#4caf50");
       } catch (error) {
         console.error("[Trenova] Query invalidation failed:", error);
-        // Consider adding retry logic for failed invalidations here
       }
     },
     [queryClient],
@@ -194,10 +136,17 @@ export const useQueryInvalidationListener = () => {
         logDebug(
           `Retrying channel initialization (attempt ${retryAttemptRef.current})`,
         );
-        retryTimeoutRef.current = window.setTimeout(initializeChannel, delay);
+        retryTimeoutRef.current = window.setTimeout(
+          () => initializeChannelRef.current?.(),
+          delay,
+        );
       }
     }
   }, [messageHandler]);
+
+  useEffect(() => {
+    initializeChannelRef.current = initializeChannel;
+  }, [initializeChannel]);
 
   useEffect(() => {
     initializeChannel();
@@ -214,18 +163,15 @@ export const useQueryInvalidationListener = () => {
     };
   }, [initializeChannel, messageHandler]);
 
-  // Add heartbeat/ping-pong mechanism if needed
   useEffect(() => {
     const interval = setInterval(() => {
       if (!channelRef.current) return;
-      // Optional: Implement health check here
     }, 30000);
 
     return () => clearInterval(interval);
   }, []);
 };
 
-// Enhanced broadcast function with transaction tracking
 export const broadcastQueryInvalidation = async ({
   queryKey,
   config,
@@ -245,7 +191,7 @@ export const broadcastQueryInvalidation = async ({
     };
 
     const cleanup = () => {
-      setTimeout(() => channel.close(), 1000); // Allow time for message transmission
+      setTimeout(() => channel.close(), 1000);
     };
 
     channel.postMessage(message);

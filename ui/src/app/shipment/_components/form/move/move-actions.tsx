@@ -1,17 +1,17 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-import { StopDialog } from "@/app/shipment/_components/sidebar/stop-details/stop-dialog";
+import { StopDialog } from "@/app/shipment/_components/form/stop-details/stop-dialog";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icons";
 import { http } from "@/lib/http-client";

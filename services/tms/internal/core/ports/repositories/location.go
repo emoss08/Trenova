@@ -1,26 +1,21 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
-type ListLocationOptions struct {
-	Filter          *ports.LimitOffsetQueryOptions `query:"filter"`
-	IncludeCategory bool                           `query:"includeCategory"`
-	IncludeState    bool                           `query:"includeState"`
-	Status          string                         `query:"status"`
+type ListLocationRequest struct {
+	Filter          *pagination.QueryOptions `query:"filter"`
+	IncludeCategory bool                     `query:"includeCategory"`
+	IncludeState    bool                     `query:"includeState"`
+	Status          string                   `query:"status"`
 }
 
-type GetLocationByIDOptions struct {
+type GetLocationByIDRequest struct {
 	ID              pulid.ID
 	OrgID           pulid.ID
 	BuID            pulid.ID
@@ -32,9 +27,9 @@ type GetLocationByIDOptions struct {
 type LocationRepository interface {
 	List(
 		ctx context.Context,
-		opts *ListLocationOptions,
-	) (*ports.ListResult[*location.Location], error)
-	GetByID(ctx context.Context, opts GetLocationByIDOptions) (*location.Location, error)
+		req *ListLocationRequest,
+	) (*pagination.ListResult[*location.Location], error)
+	GetByID(ctx context.Context, req GetLocationByIDRequest) (*location.Location, error)
 	Create(ctx context.Context, l *location.Location) (*location.Location, error)
 	Update(ctx context.Context, l *location.Location) (*location.Location, error)
 }

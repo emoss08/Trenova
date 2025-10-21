@@ -1,24 +1,19 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
-type ListFleetCodeOptions struct {
-	Filter                *ports.LimitOffsetQueryOptions
-	IncludeManagerDetails bool `query:"includeManagerDetails"`
+type ListFleetCodeRequest struct {
+	Filter                *pagination.QueryOptions `query:"filter"`
+	IncludeManagerDetails bool                     `query:"includeManagerDetails"`
 }
 
-type GetFleetCodeByIDOptions struct {
+type GetFleetCodeByIDRequest struct {
 	ID                    pulid.ID
 	OrgID                 pulid.ID
 	BuID                  pulid.ID
@@ -29,9 +24,9 @@ type GetFleetCodeByIDOptions struct {
 type FleetCodeRepository interface {
 	List(
 		ctx context.Context,
-		opts *ListFleetCodeOptions,
-	) (*ports.ListResult[*fleetcode.FleetCode], error)
-	GetByID(ctx context.Context, opts GetFleetCodeByIDOptions) (*fleetcode.FleetCode, error)
-	Create(ctx context.Context, fc *fleetcode.FleetCode) (*fleetcode.FleetCode, error)
-	Update(ctx context.Context, fc *fleetcode.FleetCode) (*fleetcode.FleetCode, error)
+		req *ListFleetCodeRequest,
+	) (*pagination.ListResult[*fleetcode.FleetCode], error)
+	GetByID(ctx context.Context, req GetFleetCodeByIDRequest) (*fleetcode.FleetCode, error)
+	Create(ctx context.Context, l *fleetcode.FleetCode) (*fleetcode.FleetCode, error)
+	Update(ctx context.Context, l *fleetcode.FleetCode) (*fleetcode.FleetCode, error)
 }

@@ -1,121 +1,75 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/formulatemplate"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
-var FormulaTemplateFieldConfig = &ports.FieldConfiguration{
-	FilterableFields: map[string]bool{
-		"name":       true,
-		"category":   true,
-		"isActive":   true,
-		"isDefault":  true,
-		"outputUnit": true,
-	},
-	SortableFields: map[string]bool{
-		"name":      true,
-		"category":  true,
-		"createdAt": true,
-		"updatedAt": true,
-	},
-	FieldMap: map[string]string{
-		"name":       "name",
-		"category":   "category",
-		"isActive":   "is_active",
-		"isDefault":  "is_default",
-		"outputUnit": "output_unit",
-		"createdAt":  "created_at",
-		"updatedAt":  "updated_at",
-	},
-	EnumMap: map[string]bool{
-		"category": true,
-	},
-}
-
 type FormulaTemplateOptions struct {
-	IncludeInactive bool `query:"includeInactive"`
+	IncludeInactive bool `form:"includeInactive"`
 }
 
-type ListFormulaTemplateOptions struct {
-	Filter                 *ports.LimitOffsetQueryOptions `json:"filter"                 query:"filter"`
-	FormulaTemplateOptions `json:"formulaTemplateOptions" query:"formulaTemplateOptions"`
+type ListFormulaTemplateRequest struct {
+	Filter                 *pagination.QueryOptions `json:"filter"                 form:"filter"`
+	FormulaTemplateOptions `json:"formulaTemplateOptions" form:"formulaTemplateOptions"`
 }
 
-type GetFormulaTemplateByIDOptions struct {
-	ID                     pulid.ID `json:"id"                     query:"id"`
-	OrgID                  pulid.ID `json:"orgId"                  query:"orgId"`
-	BuID                   pulid.ID `json:"buId"                   query:"buId"`
-	UserID                 pulid.ID `json:"userId"                 query:"userId"`
-	FormulaTemplateOptions `json:"formulaTemplateOptions" query:"formulaTemplateOptions"`
+type GetFormulaTemplateByIDRequest struct {
+	ID                     pulid.ID `json:"id"                     form:"id"`
+	OrgID                  pulid.ID `json:"orgId"                  form:"orgId"`
+	BuID                   pulid.ID `json:"buId"                   form:"buId"`
+	UserID                 pulid.ID `json:"userId"                 form:"userId"`
+	FormulaTemplateOptions `json:"formulaTemplateOptions" form:"formulaTemplateOptions"`
 }
 
-type GetDefaultFormulaTemplateOptions struct {
-	Category               formulatemplate.Category `json:"category"               query:"category"`
-	OrgID                  pulid.ID                 `json:"orgId"                  query:"orgId"`
-	BuID                   pulid.ID                 `json:"buId"                   query:"buId"`
-	UserID                 pulid.ID                 `json:"userId"                 query:"userId"`
-	FormulaTemplateOptions `json:"formulaTemplateOptions" query:"formulaTemplateOptions"`
+type GetDefaultFormulaTemplateRequest struct {
+	Category               formulatemplate.Category `json:"category"               form:"category"`
+	OrgID                  pulid.ID                 `json:"orgId"                  form:"orgId"`
+	BuID                   pulid.ID                 `json:"buId"                   form:"buId"`
+	UserID                 pulid.ID                 `json:"userId"                 form:"userId"`
+	FormulaTemplateOptions `json:"formulaTemplateOptions" form:"formulaTemplateOptions"`
 }
 
 type SetDefaultFormulaTemplateRequest struct {
-	TemplateID pulid.ID                 `json:"templateId" query:"templateId"`
-	Category   formulatemplate.Category `json:"category"   query:"category"`
-	OrgID      pulid.ID                 `json:"orgId"      query:"orgId"`
-	BuID       pulid.ID                 `json:"buId"       query:"buId"`
-	UserID     pulid.ID                 `json:"userId"     query:"userId"`
+	TemplateID pulid.ID                 `json:"templateId" form:"templateId"`
+	Category   formulatemplate.Category `json:"category"   form:"category"`
+	OrgID      pulid.ID                 `json:"orgId"      form:"orgId"`
+	BuID       pulid.ID                 `json:"buId"       form:"buId"`
+	UserID     pulid.ID                 `json:"userId"     form:"userId"`
 }
 
 type FormulaTemplateRepository interface {
 	List(
 		ctx context.Context,
-		opts *ListFormulaTemplateOptions,
-	) (*ports.ListResult[*formulatemplate.FormulaTemplate], error)
-
+		opts *ListFormulaTemplateRequest,
+	) (*pagination.ListResult[*formulatemplate.FormulaTemplate], error)
 	GetByID(
 		ctx context.Context,
-		opts *GetFormulaTemplateByIDOptions,
+		opts *GetFormulaTemplateByIDRequest,
 	) (*formulatemplate.FormulaTemplate, error)
-
 	GetByCategory(
 		ctx context.Context,
 		category formulatemplate.Category,
 		orgID pulid.ID,
 		buID pulid.ID,
 	) ([]*formulatemplate.FormulaTemplate, error)
-
 	GetDefault(
 		ctx context.Context,
-		opts *GetDefaultFormulaTemplateOptions,
+		opts *GetDefaultFormulaTemplateRequest,
 	) (*formulatemplate.FormulaTemplate, error)
-
 	Create(
 		ctx context.Context,
 		template *formulatemplate.FormulaTemplate,
 	) (*formulatemplate.FormulaTemplate, error)
-
 	Update(
 		ctx context.Context,
 		template *formulatemplate.FormulaTemplate,
 	) (*formulatemplate.FormulaTemplate, error)
-
 	SetDefault(
 		ctx context.Context,
 		req *SetDefaultFormulaTemplateRequest,
-	) error
-
-	Delete(
-		ctx context.Context,
-		id pulid.ID,
-		orgID pulid.ID,
-		buID pulid.ID,
 	) error
 }

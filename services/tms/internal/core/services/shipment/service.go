@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package shipment
 
 import (
@@ -17,282 +12,111 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	dedicatedlaneservice "github.com/emoss08/trenova/internal/core/services/dedicatedlane"
-	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/shipmentjobs"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/internal/pkg/validator"
-	"github.com/emoss08/trenova/internal/pkg/validator/shipmentvalidator"
-	"github.com/emoss08/trenova/pkg/types"
-	"github.com/emoss08/trenova/pkg/types/temporaltype"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/gofiber/fiber/v2"
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/pkg/utils/jsonutils"
+	"github.com/gin-gonic/gin"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	Logger                     *logger.Logger
-	Repo                       repositories.ShipmentRepository
-	ProNumberRepo              repositories.ProNumberRepository
-	PermService                services.PermissionService
-	AuditService               services.AuditService
-	UserRepo                   repositories.UserRepository
-	StreamingService           services.StreamingService
-	TemporalClient             client.Client
-	NotificationService        services.NotificationService
-	EmailService               services.EmailService
-	Validator                  *shipmentvalidator.Validator
-	DedicatedLaneAssignService *dedicatedlaneservice.AssignmentService
+	Logger              *zap.Logger
+	Repo                repositories.ShipmentRepository
+	TemporalClient      client.Client
+	AuditService        services.AuditService
+	UserRepo            repositories.UserRepository
+	PermissionEngine    ports.PermissionEngine
+	NotificationService services.NotificationService
+	StreamingService    services.StreamingService
+	ShipmentControlRepo repositories.ShipmentControlRepository
 }
 
 type Service struct {
-	l             *zerolog.Logger
-	repo          repositories.ShipmentRepository
-	proNumberRepo repositories.ProNumberRepository
-	ps            services.PermissionService
-	as            services.AuditService
-	ur            repositories.UserRepository
-	ss            services.StreamingService
-	ns            services.NotificationService
-	es            services.EmailService
-	tc            client.Client
-	v             *shipmentvalidator.Validator
-	dlas          *dedicatedlaneservice.AssignmentService
+	l              *zap.Logger
+	repo           repositories.ShipmentRepository
+	temporalClient client.Client
+	as             services.AuditService
+	ns             services.NotificationService
+	ur             repositories.UserRepository
+	ss             services.StreamingService
+	pe             ports.PermissionEngine
+	scRepo         repositories.ShipmentControlRepository
 }
 
-//nolint:gocritic // The p parameter is passed using fx.In
+//nolint:gocritic // service constructor
 func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().
-		Str("service", "shipment").
-		Logger()
-
 	return &Service{
-		l:             &log,
-		repo:          p.Repo,
-		proNumberRepo: p.ProNumberRepo,
-		ps:            p.PermService,
-		as:            p.AuditService,
-		ur:            p.UserRepo,
-		ss:            p.StreamingService,
-		ns:            p.NotificationService,
-		es:            p.EmailService,
-		tc:            p.TemporalClient,
-		v:             p.Validator,
-		dlas:          p.DedicatedLaneAssignService,
+		l:              p.Logger.Named("service.shipment"),
+		repo:           p.Repo,
+		temporalClient: p.TemporalClient,
+		ns:             p.NotificationService,
+		as:             p.AuditService,
+		ur:             p.UserRepo,
+		pe:             p.PermissionEngine,
+		ss:             p.StreamingService,
+		scRepo:         p.ShipmentControlRepo,
 	}
-}
-
-func (s *Service) SelectOptions(
-	ctx context.Context,
-	opts *repositories.ListShipmentOptions,
-) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, t := range result.Items {
-		options[i] = &types.SelectOption{
-			Value: t.GetID(),
-			Label: t.ProNumber,
-		}
-	}
-
-	return options, nil
 }
 
 func (s *Service) List(
 	ctx context.Context,
-	opts *repositories.ListShipmentOptions,
-) (*ports.ListResult[*shipment.Shipment], error) {
-	log := s.l.With().
-		Str("operation", "List").
-		Interface("opts", opts).
-		Logger()
+	req *repositories.ListShipmentRequest,
+) (*pagination.ListResult[*shipment.Shipment], error) {
+	return s.repo.List(ctx, req)
+}
 
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         opts.Filter.TenantOpts.UserID,
-				Resource:       permission.ResourceShipment,
-				Action:         permission.ActionRead,
-				BusinessUnitID: opts.Filter.TenantOpts.BuID,
-				OrganizationID: opts.Filter.TenantOpts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read shipments")
-	}
-
-	entities, err := s.repo.List(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to list shipments")
-		return nil, err
-	}
-
-	return entities, nil
+func (s *Service) Get(
+	ctx context.Context,
+	req *repositories.GetShipmentByIDRequest,
+) (*shipment.Shipment, error) {
+	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) GetPreviousRates(
 	ctx context.Context,
 	req *repositories.GetPreviousRatesRequest,
-) (*ports.ListResult[*shipment.Shipment], error) {
-	log := s.l.With().
-		Str("operation", "GetPreviousRates").
-		Interface("req", req).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
-			UserID:         req.UserID,
-			Resource:       permission.ResourceShipment,
-			Action:         permission.ActionRead,
-			BusinessUnitID: req.BuID,
-			OrganizationID: req.OrgID,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to read previous rates",
-		)
-	}
-
-	entities, err := s.repo.GetPreviousRates(ctx, req)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get previous rates")
-		return nil, err
-	}
-
-	return entities, nil
-}
-
-func (s *Service) Get(
-	ctx context.Context,
-	opts *repositories.GetShipmentByIDOptions,
-) (*shipment.Shipment, error) {
-	log := s.l.With().
-		Str("operation", "GetByID").
-		Str("shipmentID", opts.ID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         opts.UserID,
-				Resource:       permission.ResourceShipment,
-				Action:         permission.ActionRead,
-				BusinessUnitID: opts.BuID,
-				OrganizationID: opts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this shipment")
-	}
-
-	entity, err := s.repo.GetByID(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get shipment")
-		return nil, err
-	}
-
-	return entity, nil
+) (*pagination.ListResult[*shipment.Shipment], error) {
+	return s.repo.GetPreviousRates(ctx, req)
 }
 
 func (s *Service) Create(
 	ctx context.Context,
-	shp *shipment.Shipment,
+	entity *shipment.Shipment,
 	userID pulid.ID,
 ) (*shipment.Shipment, error) {
-	log := s.l.With().
-		Str("operation", "Create").
-		Str("code", shp.ProNumber).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceShipment,
-				Action:         permission.ActionCreate,
-				BusinessUnitID: shp.BusinessUnitID,
-				OrganizationID: shp.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Create"),
+		zap.String("orgID", entity.OrganizationID.String()),
+		zap.String("buID", entity.BusinessUnitID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
 
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a shipment")
-	}
-
-	valCtx := &validator.ValidationContext{
-		IsCreate: true,
-		IsUpdate: false,
-	}
-
-	if err := s.v.Validate(ctx, valCtx, shp); err != nil {
-		return nil, err
-	}
-
-	createdEntity, err := s.repo.Create(ctx, shp, userID)
+	createdEntity, err := s.repo.Create(ctx, entity, userID)
 	if err != nil {
 		return nil, err
-	}
-
-	// Check for dedicated lane auto-assignment
-	if err = s.dlas.HandleDedicatedLaneOperations(ctx, createdEntity); err != nil {
-		log.Error().Err(err).Msg("failed to handle dedicated lane operations")
-		// Don't fail the shipment creation if dedicated lane assignment fails
 	}
 
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceShipment,
 			ResourceID:     createdEntity.GetID(),
-			Action:         permission.ActionCreate,
+			Operation:      permission.OpCreate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(createdEntity),
 			OrganizationID: createdEntity.OrganizationID,
 			BusinessUnitID: createdEntity.BusinessUnitID,
 		},
 		audit.WithComment("Shipment created"),
-		audit.WithCritical(),
-		audit.WithCategory("operations"),
-		audit.WithMetadata(map[string]any{
-			"proNumber":  createdEntity.ProNumber,
-			"customerID": createdEntity.CustomerID.String(),
-			"bol":        createdEntity.BOL,
-		}),
-		audit.WithTags("shipment-creation", "customer-"+createdEntity.CustomerID.String()),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log shipment creation")
+		log.Error("failed to log shipment creation", zap.Error(err))
 	}
 
 	return createdEntity, nil
@@ -300,49 +124,20 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	shp *shipment.Shipment,
+	entity *shipment.Shipment,
 	userID pulid.ID,
 ) (*shipment.Shipment, error) {
-	log := s.l.With().
-		Str("operation", "Update").
-		Str("code", shp.ProNumber).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceShipment,
-				Action:         permission.ActionUpdate,
-				BusinessUnitID: shp.BusinessUnitID,
-				OrganizationID: shp.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Update"),
+		zap.String("orgID", entity.OrganizationID.String()),
+		zap.String("buID", entity.BusinessUnitID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
 
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to update this shipment",
-		)
-	}
-
-	valCtx := &validator.ValidationContext{
-		IsUpdate: true,
-		IsCreate: false,
-	}
-
-	if err := s.v.Validate(ctx, valCtx, shp); err != nil {
-		return nil, err
-	}
-
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDOptions{
-		ID:    shp.ID,
-		OrgID: shp.OrganizationID,
-		BuID:  shp.BusinessUnitID,
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:    entity.ID,
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
 		ShipmentOptions: repositories.ShipmentOptions{
 			ExpandShipmentDetails: true,
 		},
@@ -351,18 +146,16 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	updatedEntity, err := s.repo.Update(ctx, shp, userID)
+	updatedEntity, err := s.repo.Update(ctx, entity, userID)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update shipment")
 		return nil, err
 	}
 
-	// Log the update if the insert was successful
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceShipment,
 			ResourceID:     updatedEntity.GetID(),
-			Action:         permission.ActionUpdate,
+			Operation:      permission.OpUpdate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(updatedEntity),
 			PreviousState:  jsonutils.MustToJSON(original),
@@ -371,201 +164,94 @@ func (s *Service) Update(
 		},
 		audit.WithComment("Shipment updated"),
 		audit.WithDiff(original, updatedEntity),
-		audit.WithCategory("operations"),
-		audit.WithMetadata(map[string]any{
-			"proNumber":  updatedEntity.ProNumber,
-			"customerID": updatedEntity.CustomerID.String(),
-			"bol":        updatedEntity.BOL,
-		}),
-		audit.WithTags("shipment-update", "customer-"+updatedEntity.CustomerID.String()),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log shipment update")
+		log.Error("failed to log shipment update", zap.Error(err))
 	}
 
 	return updatedEntity, nil
 }
 
-func (s *Service) Cancel(
-	ctx context.Context,
-	req *repositories.CancelShipmentRequest,
-) (*shipment.Shipment, error) {
-	log := s.l.With().
-		Str("operation", "Cancel").
-		Str("shipmentID", req.ShipmentID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         req.CanceledByID,
-				Resource:       permission.ResourceShipment,
-				Action:         permission.ActionCancel,
-				BusinessUnitID: req.BuID,
-				OrganizationID: req.OrgID,
-			},
-		},
+func (s *Service) Duplicate(req *repositories.DuplicateShipmentRequest) error {
+	log := s.l.With(
+		zap.String("operation", "Duplicate"),
+		zap.Any("request", req),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
+	if err := req.Validate(); err != nil {
+		return err
 	}
 
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to cancel this shipment",
-		)
-	}
-
-	// get the original shipment
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDOptions{
-		ID:    req.ShipmentID,
-		OrgID: req.OrgID,
-		BuID:  req.BuID,
-		ShipmentOptions: repositories.ShipmentOptions{
-			ExpandShipmentDetails: true,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get shipment")
-		return nil, err
-	}
-
-	if err := s.v.ValidateCancellation(original); err != nil {
-		return nil, err
-	}
-
-	newEntity, err := s.repo.Cancel(ctx, req)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to cancel shipment")
-		return nil, err
-	}
-
-	// Log the update if the insert was successful
-	err = s.as.LogAction(
-		&services.LogActionParams{
-			Resource:       permission.ResourceShipment,
-			ResourceID:     req.ShipmentID.String(),
-			Action:         permission.ActionCancel,
-			UserID:         req.CanceledByID,
+	payload := &shipmentjobs.DuplicateShipmentPayload{
+		BasePayload: temporaltype.BasePayload{
 			OrganizationID: req.OrgID,
 			BusinessUnitID: req.BuID,
-		},
-		audit.WithComment("Shipment canceled"),
-		audit.WithDiff(original, newEntity),
-		audit.WithCategory("operations"),
-		audit.WithMetadata(map[string]any{
-			"proNumber":  newEntity.ProNumber,
-			"customerID": newEntity.CustomerID.String(),
-			"bol":        newEntity.BOL,
-		}),
-		audit.WithTags("shipment-cancellation", "customer-"+newEntity.CustomerID.String()),
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to log shipment cancellation")
-	}
-
-	return newEntity, nil
-}
-
-func (s *Service) UnCancel(
-	ctx context.Context,
-	req *repositories.UnCancelShipmentRequest,
-) (*shipment.Shipment, error) {
-	log := s.l.With().
-		Str("operation", "UnCancel").
-		Str("shipmentID", req.ShipmentID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
 			UserID:         req.UserID,
-			Resource:       permission.ResourceShipment,
-			Action:         permission.ActionUpdate,
-			BusinessUnitID: req.BuID,
-			OrganizationID: req.OrgID,
 		},
-	})
+		ShipmentID:               req.ShipmentID,
+		Count:                    req.Count,
+		OverrideDates:            req.OverrideDates,
+		IncludeCommodities:       req.IncludeCommodities,
+		IncludeAdditionalCharges: req.IncludeAdditionalCharges,
+	}
+
+	workflowID := fmt.Sprintf(
+		"shipment-duplicate-%s-%d",
+		req.ShipmentID.String(),
+		time.Now().UnixNano(),
+	)
+
+	_, err := s.temporalClient.ExecuteWorkflow(
+		context.Background(),
+		client.StartWorkflowOptions{
+			ID:        workflowID,
+			TaskQueue: shipmentjobs.ShipmentTaskQueue,
+		},
+		shipmentjobs.SendBulkDuplicateShipmentWorkflow,
+		payload,
+	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
+		log.Error("failed to execute workflow", zap.Error(err))
 	}
 
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to un-cancel this shipment",
-		)
-	}
-
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDOptions{
-		ID:    req.ShipmentID,
-		OrgID: req.OrgID,
-		BuID:  req.BuID,
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get shipment")
-		return nil, err
-	}
-
-	log.Info().Interface("original", original).Msg("original shipment before un-cancel")
-	if original.Status != shipment.StatusCanceled {
-		return nil, errors.NewBusinessError("Shipment is not canceled")
-	}
-
-	updatedEntity, err := s.repo.UnCancel(ctx, req)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to un-cancel shipment")
-		return nil, err
-	}
-
-	return updatedEntity, nil
+	return nil
 }
 
 func (s *Service) TransferOwnership(
 	ctx context.Context,
 	req *repositories.TransferOwnershipRequest,
 ) (*shipment.Shipment, error) {
-	log := s.l.With().
-		Str("operation", "TransferOwnership").
-		Str("shipmentID", req.ShipmentID.String()).
-		Logger()
+	log := s.l.With(
+		zap.String("operation", "TransferOwnership"),
+		zap.String("shipmentID", req.ShipmentID.String()),
+		zap.String("ownerID", req.OwnerID.String()),
+	)
 
-	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDOptions{
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 		ID:    req.ShipmentID,
 		OrgID: req.OrgID,
 		BuID:  req.BuID,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get shipment")
 		return nil, err
 	}
-
-	result, err := s.ps.HasPermission(ctx, &services.PermissionCheck{
-		UserID:         req.UserID,
-		Resource:       permission.ResourceShipment,
-		Action:         permission.ActionManage,
-		BusinessUnitID: req.BuID,
-		OrganizationID: req.OrgID,
-	},
-	)
+	isAdmin, err := s.pe.HasAdminRole(ctx, req.UserID, req.OrgID)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
 		return nil, err
 	}
 
-	isNotOwner := original.OwnerID != nil && *original.OwnerID != req.UserID
-	hasNoManagePermission := !result.Allowed
+	isOwner := original.OwnerID != nil && *original.OwnerID == req.UserID
 
-	// * User must be either the current owner OR have manage permission
-	if isNotOwner && hasNoManagePermission {
-		return nil, errors.NewAuthorizationError(
+	if !isOwner && !isAdmin {
+		return nil, errortypes.NewValidationError(
+			"ownerId",
+			errortypes.ErrInvalid,
 			"You do not have permission to transfer ownership of this shipment",
 		)
 	}
 
 	updatedEntity, err := s.repo.TransferOwnership(ctx, req)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to transfer ownership of shipment")
+		log.Error("failed to transfer ownership of shipment", zap.Error(err))
 		return nil, err
 	}
 
@@ -573,7 +259,7 @@ func (s *Service) TransferOwnership(
 		&services.LogActionParams{
 			Resource:       permission.ResourceShipment,
 			ResourceID:     updatedEntity.GetID(),
-			Action:         permission.ActionUpdate,
+			Operation:      permission.OpUpdate,
 			UserID:         req.UserID,
 			CurrentState:   jsonutils.MustToJSON(updatedEntity),
 			PreviousState:  jsonutils.MustToJSON(original),
@@ -582,180 +268,88 @@ func (s *Service) TransferOwnership(
 		},
 		audit.WithComment("Shipment ownership transferred"),
 		audit.WithDiff(original, updatedEntity),
-		audit.WithCategory("operations"),
-		audit.WithTags("ownership-transfer"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log shipment ownership transfer")
+		log.Error("failed to log shipment ownership transfer", zap.Error(err))
 	}
 
 	ownerName, err := s.ur.GetNameByID(ctx, req.UserID)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get original owner")
+		log.Error("failed to get original owner", zap.Error(err))
 		return nil, err
 	}
 
-	newOwner, err := s.ur.GetByID(ctx, repositories.GetUserByIDOptions{
-		OrgID:  req.OrgID,
-		BuID:   req.BuID,
-		UserID: pulid.ConvertFromPtr(updatedEntity.OwnerID),
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get new owner")
-	}
-	if err = s.ns.SendOwnershipTransferNotification(ctx, &services.OwnershipTransferNotificationRequest{
-		OrgID:        req.OrgID,
-		BuID:         req.BuID,
-		OwnerName:    ownerName,
-		ProNumber:    original.ProNumber,
-		TargetUserID: pulid.ConvertFromPtr(updatedEntity.OwnerID),
-	}); err != nil {
-		log.Error().Err(err).Msg("failed to send ownership transfer notification")
-	}
-
-	// Send ownership transfer email using the system template
-	customerName := ""
-
-	_, err = s.es.SendSystemEmail(
+	err = s.ns.SendOwnershipTransferNotification(
 		ctx,
-		services.TemplateShipmentOwnershipTransfer,
-		[]string{newOwner.EmailAddress},
-		map[string]any{
-			"NewOwnerName":      newOwner.Name,
-			"PreviousOwnerName": ownerName,
-			"ProNumber":         original.ProNumber,
-			"TransferDate":      time.Now(),
-			"BOL":               original.BOL,
-			"CustomerName":      customerName,
-			"Status":            string(original.Status),
-			"ViewShipmentURL": fmt.Sprintf(
-				"http://localhost:5173/shipments/management?entityId=%s&modalType=edit",
-				updatedEntity.GetID(),
-			),
+		&services.OwnershipTransferNotificationRequest{
+			OrgID:        req.OrgID,
+			BuID:         req.BuID,
+			OwnerName:    ownerName,
+			ProNumber:    original.ProNumber,
+			TargetUserID: pulid.ConvertFromPtr(updatedEntity.OwnerID),
 		},
-		req.OrgID,
-		req.BuID,
-		req.UserID,
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to send ownership transfer email")
+		log.Error("failed to send ownership transfer notification", zap.Error(err))
 	}
 
 	return updatedEntity, nil
 }
 
-func (s *Service) Duplicate(
-	ctx context.Context,
-	req *repositories.DuplicateShipmentRequest,
-) error {
-	log := s.l.With().
-		Str("operation", "Duplicate").
-		Str("shipmentID", req.ShipmentID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         req.UserID,
-				Resource:       permission.ResourceShipment,
-				Action:         permission.ActionDuplicate,
-				BusinessUnitID: req.BuID,
-				OrganizationID: req.OrgID,
-			},
-		},
+func (s *Service) CheckForDuplicateBOLs(ctx context.Context, entity *shipment.Shipment) error {
+	log := s.l.With(
+		zap.String("operation", "CheckForDuplicateBOLs"),
+		zap.String("bol", entity.BOL),
 	)
+
+	sc, err := s.scRepo.GetByOrgID(ctx, entity.OrganizationID)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
+		log.Error("failed to get shipment control", zap.Error(err))
 		return err
 	}
 
-	if !result.Allowed {
-		return errors.NewAuthorizationError(
-			"You do not have permission to duplicate this shipment",
+	if !sc.CheckForDuplicateBOLs {
+		return nil
+	}
+
+	var excludeID *pulid.ID
+	if !entity.ID.IsNil() {
+		excludeID = &entity.ID
+		log.Debug(
+			"excluding current shipment from duplicate check",
+			zap.String("excludeID", entity.ID.String()),
 		)
 	}
 
-	// * Validate the request
-	if err := req.Validate(ctx); err != nil {
-		return err
-	}
+	me := errortypes.NewMultiError()
 
-	workflowOptions := client.StartWorkflowOptions{
-		ID:        fmt.Sprintf("duplicate-shipment-%s", req.ShipmentID.String()),
-		TaskQueue: temporaltype.ShipmentTaskQueue,
-	}
-
-	we, err := s.tc.ExecuteWorkflow(
-		context.Background(), // ! It is important to execute this in the background
-		workflowOptions,
-		shipmentjobs.DuplicateShipmentWorkflow,
-		&shipmentjobs.DuplicateShipmentPayload{
-			BasePayload: temporaltype.BasePayload{
-				OrganizationID: req.OrgID,
-				BusinessUnitID: req.BuID,
-				UserID:         req.UserID,
-			},
-			ShipmentID:               req.ShipmentID,
-			Count:                    req.Count,
-			OverrideDates:            req.OverrideDates,
-			IncludeCommodities:       req.IncludeCommodities,
-			IncludeAdditionalCharges: req.IncludeAdditionalCharges,
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to execute duplicate shipment workflow")
-		return err
-	}
-
-	log.Info().Str("workflowID", we.GetID()).Msg("duplicate shipment workflow executed")
-
-	return nil
-}
-
-func (s *Service) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shipment) error {
-	log := s.l.With().
-		Str("operation", "CheckForDuplicateBOLs").
-		Str("bol", shp.BOL).
-		Logger()
-
-	var excludeID *pulid.ID
-	if !shp.ID.IsNil() {
-		excludeID = &shp.ID
-		log.Debug().
-			Str("excludeID", shp.ID.String()).
-			Msg("excluding current shipment from duplicate check")
-	}
-
-	req := &repositories.DuplicateBolsRequest{
-		CurrentBOL: shp.BOL,
-		OrgID:      shp.OrganizationID,
-		BuID:       shp.BusinessUnitID,
+	duplicates, err := s.repo.CheckForDuplicateBOLs(ctx, &repositories.DuplicateBolsRequest{
+		CurrentBOL: entity.BOL,
+		OrgID:      entity.OrganizationID,
+		BuID:       entity.BusinessUnitID,
 		ExcludeID:  excludeID,
-	}
-
-	me := req.Validate()
-
-	duplicates, err := s.repo.CheckForDuplicateBOLs(ctx, req)
+	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to check for duplicate BOLs")
+		log.Error("failed to check for duplicate BOLs", zap.Error(err))
 		return err
 	}
 
-	// Add any duplicates found to the multi-error
 	if len(duplicates) > 0 {
-		log.Info().
-			Int("duplicateCount", len(duplicates)).
-			Msg("duplicate BOLs found")
+		log.Debug("duplicate BOLs found", zap.Int("duplicateCount", len(duplicates)))
 
 		proNumbers := make([]string, 0, len(duplicates))
 		for _, dup := range duplicates {
 			proNumbers = append(proNumbers, dup.ProNumber)
 		}
 
-		me.Add("bol", errors.ErrInvalid, fmt.Sprintf(
-			"BOL is already in use by shipment(s) with Pro Number(s): %s",
-			strings.Join(proNumbers, ", "),
-		))
+		me.Add(
+			"bol",
+			errortypes.ErrInvalid,
+			fmt.Sprintf(
+				"BOL is already in use by shipment(s) with Pro Number(s): %s",
+				strings.Join(proNumbers, ", "),
+			),
+		)
 	}
 
 	if me.HasErrors() {
@@ -765,77 +359,102 @@ func (s *Service) CheckForDuplicateBOLs(ctx context.Context, shp *shipment.Shipm
 	return nil
 }
 
-func (s *Service) MarkReadyToBill(
+func (s *Service) Cancel(
 	ctx context.Context,
-	req *repositories.UpdateShipmentStatusRequest,
+	req *repositories.CancelShipmentRequest,
 ) (*shipment.Shipment, error) {
-	log := s.l.With().
-		Str("operation", "MarkReadyToBill").
-		Str("shipmentID", req.GetOpts.ID.String()).
-		Logger()
+	log := s.l.With(
+		zap.String("operation", "Cancel"),
+		zap.String("shipmentID", req.ShipmentID.String()),
+	)
 
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
-			UserID:         req.GetOpts.UserID,
-			Resource:       permission.ResourceShipment,
-			Action:         permission.ActionUpdate,
-			BusinessUnitID: req.GetOpts.BuID,
-			OrganizationID: req.GetOpts.OrgID,
-		},
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:    req.ShipmentID,
+		OrgID: req.OrgID,
+		BuID:  req.BuID,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
 		return nil, err
 	}
 
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to mark this shipment as ready to bill",
-		)
+	updatedEntity, err := s.repo.Cancel(ctx, req)
+	if err != nil {
+		log.Error("failed to cancel shipment", zap.Error(err))
+		return nil, err
 	}
 
-	// TODO(wolfred): Validate the requirements set by that particular customer on the server before allowing the shipment to be marked ready-to-bill
-
-	updatedEntity, err := s.repo.UpdateStatus(ctx, &repositories.UpdateShipmentStatusRequest{
-		GetOpts: req.GetOpts,
-		Status:  shipment.StatusReadyToBill,
-	})
+	err = s.as.LogAction(&services.LogActionParams{
+		Resource:       permission.ResourceShipment,
+		ResourceID:     updatedEntity.GetID(),
+		Operation:      permission.OpUpdate,
+		UserID:         req.CanceledByID,
+		CurrentState:   jsonutils.MustToJSON(updatedEntity),
+		PreviousState:  jsonutils.MustToJSON(original),
+		OrganizationID: updatedEntity.OrganizationID,
+		BusinessUnitID: updatedEntity.BusinessUnitID,
+	},
+		audit.WithComment("Shipment canceled"),
+		audit.WithDiff(original, updatedEntity),
+	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update shipment status")
-		return nil, err
+		log.Error("failed to log shipment cancellation", zap.Error(err))
 	}
 
 	return updatedEntity, nil
 }
 
-func (s *Service) CalculateShipmentTotals(
+func (s *Service) UnCancel(
+	ctx context.Context,
+	req *repositories.UnCancelShipmentRequest,
+) (*shipment.Shipment, error) {
+	log := s.l.With(
+		zap.String("operation", "UnCancel"),
+		zap.String("shipmentID", req.ShipmentID.String()),
+	)
+
+	original, err := s.repo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:    req.ShipmentID,
+		OrgID: req.OrgID,
+		BuID:  req.BuID,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	updatedEntity, err := s.repo.UnCancel(ctx, req)
+	if err != nil {
+		log.Error("failed to un-cancel shipment", zap.Error(err))
+		return nil, err
+	}
+
+	err = s.as.LogAction(&services.LogActionParams{
+		Resource:       permission.ResourceShipment,
+		ResourceID:     updatedEntity.GetID(),
+		Operation:      permission.OpUpdate,
+		UserID:         req.UserID,
+		CurrentState:   jsonutils.MustToJSON(updatedEntity),
+		PreviousState:  jsonutils.MustToJSON(original),
+		OrganizationID: updatedEntity.OrganizationID,
+		BusinessUnitID: updatedEntity.BusinessUnitID,
+	},
+		audit.WithComment("Shipment uncanceled"),
+		audit.WithDiff(original, updatedEntity),
+	)
+	if err != nil {
+		log.Error("failed to log shipment un-cancellation", zap.Error(err))
+	}
+
+	return updatedEntity, nil
+}
+
+func (s *Service) CalculateTotals(
 	ctx context.Context,
 	shp *shipment.Shipment,
 	userID pulid.ID,
 ) (*repositories.ShipmentTotalsResponse, error) {
-	log := s.l.With().Str("operation", "CalculateShipmentTotals").Logger()
-
-	// We do not persist any data here; the calculator only needs an in-memory
-	// copy of the shipment with the user-supplied fields filled in. The heavy
-	// lifting is delegated to the repository which has access to the shared
-	// ShipmentCalculator instance.
-
-	// NOTE: No explicit permission check is required because we are not
-	// accessing or mutating any stored resources. If that ever changes, a
-	// read permission check similar to the one in List/Get can be added.
-
-	resp, err := s.repo.CalculateShipmentTotals(ctx, shp, userID)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to calculate shipment totals")
-		return nil, err
-	}
-
-	return resp, nil
+	return s.repo.CalculateTotals(ctx, shp, userID)
 }
 
-// LiveStream provides real-time streaming of shipment changes via CDC
-func (s *Service) LiveStream(c *fiber.Ctx) error {
-	s.l.Info().Msg("Starting CDC-based live stream for shipments")
-
-	return s.ss.StreamData(c, "shipments")
+func (s *Service) Stream(c *gin.Context) {
+	s.ss.StreamData(c, "shipments")
 }

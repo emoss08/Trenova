@@ -1,10 +1,5 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import type { UserSchema } from "@/lib/schemas/user-schema";
-import type { Action } from "./roles-permissions";
+import { PermissionOperation } from "./_gen/permissions";
 
 export type AuditEntryResponse = {
   items: AuditEntry[];
@@ -25,7 +20,7 @@ export interface AuditEntry {
   currentState: Record<string, any>;
   metadata: Record<string, any>;
   resource: Resource;
-  action: Action;
+  operation: PermissionOperation;
   userAgent: string;
   comment: string;
   sensitiveData: boolean;
@@ -44,10 +39,12 @@ export enum Resource {
   Organization = "organization", // Represents resources related to organizations.
   DocumentQualityConfig = "document_quality_config", // Represents resources related to document quality config.
   ShipmentControl = "shipment_control", // Represents resources related to shipment control.
+  DispatchControl = "dispatch_control", // Represents resources related to dispatch control.
   ConsolidationSettings = "consolidation_settings", // Represents resources related to consolidation settings.
   PatternConfig = "pattern_config", // Represents resources related to pattern config.
   GoogleMapsConfig = "google_maps_config", // Represents resources related to google maps config.
   BillingControl = "billing_control", // Represents resources related to billing control.
+  DistanceOverride = "distance_override", // Represents resources related to distance overrides.
   Document = "document", // Represents resources related to documents.
   DedicatedLane = "dedicated_lane", // Represents resources related to dedicated lanes.
   DedicatedLaneSuggestion = "dedicated_lane_suggestion", // Represents resources related to dedicated lane suggestions.
@@ -119,5 +116,8 @@ export enum Resource {
   RevenueCode = "revenue_code",
   AIClassification = "ai_classification",
   EmailProfile = "email_profile",
+  AILog = "ai_log",
+  Variable = "variable",
+  VariableFormat = "format",
   Docker = "docker",
 }

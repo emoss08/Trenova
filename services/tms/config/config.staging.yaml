@@ -1,0 +1,33 @@
+app:
+  env: staging
+  debug: true
+
+server:
+  mode: release
+  cors:
+    allowed_origins:
+      - https://staging.trenova.io
+      - http://localhost:5173
+
+database:
+  sslmode: prefer
+  max_idle_conns: 15
+  max_open_conns: 150
+
+redis:
+  pool_size: 25
+  min_idle_conns: 5
+
+security:
+  rate_limit:
+    requests_per_minute: 120
+
+logging:
+  level: debug
+  output: file
+
+monitoring:
+  prometheus:
+    enabled: true
+  opentelemetry:
+    enabled: true

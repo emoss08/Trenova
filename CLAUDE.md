@@ -12,18 +12,16 @@ Trenova is an AI-driven transportation management system for trucking companies 
 
 ```bash
 # Development
-task run                    # Run main API server
-task test                   # Run all Go tests
-task test-pretty           # Run tests with formatted output
-task format                # Format Go code
-task lint                  # Run linting
-task check                 # Run security checks
+make run                    # Run main API server
+make test                   # Run all Go tests
+make test-pretty           # Run tests with formatted output
+make check                 # Run security checks
 
 # Database
-task db-reset              # Reset database
-task db-migrate            # Run migrations
-task db-seed               # Seed test data
-task redis-flushall        # Clear Redis cache
+make db-reset              # Reset database
+make db-migrate            # Run migrations
+make db-seed               # Seed test data
+make redis-flushall        # Clear Redis cache
 ```
 
 ### Frontend Development (React/TypeScript)
@@ -34,17 +32,6 @@ npm run dev                # Start Vite dev server (port 5173)
 npm run build              # Build for production
 npm run lint               # Run ESLint
 npm run preview            # Preview production build
-```
-
-### Full Development Environment
-
-```bash
-# Start infrastructure (PostgreSQL, Redis, etc.)
-docker-compose -f docker-compose-local.yml up -d
-
-# Then run frontend and backend separately
-cd ui && npm run dev       # Terminal 1
-task run                   # Terminal 2
 ```
 
 ## Architecture
@@ -88,7 +75,7 @@ The system manages transportation logistics including:
 
 ### Backend
 
-- **Framework**: Go Fiber (HTTP), Bun (ORM)
+- **Framework**: Gin (HTTP), Bun (ORM)
 - **Database**: PostgreSQL
 - **Cache**: Redis
 - **Messaging**: Kafka

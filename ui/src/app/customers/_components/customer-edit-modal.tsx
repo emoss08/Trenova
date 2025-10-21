@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { Button, FormSaveButton } from "@/components/ui/button";
@@ -61,7 +56,7 @@ export function CustomerEditForm({
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: CustomerSchema) => {
       const response = await http.put<CustomerSchema>(
-        `/customers/${currentRecord?.id}`,
+        `/customers/${currentRecord?.id}/`,
         values,
       );
       return response.data;
@@ -165,7 +160,7 @@ export function CustomerEditForm({
       <FormProvider {...form}>
         <Form className="space-y-0 p-0" onSubmit={handleSubmit(onSubmit)}>
           <DialogBody className="p-0">
-            <CustomerForm />
+            <CustomerForm isEdit={true} />
           </DialogBody>
           <DialogFooter>
             <Button type="button" variant="outline" onClick={onClose}>

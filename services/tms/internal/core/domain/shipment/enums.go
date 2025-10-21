@@ -1,50 +1,21 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package shipment
 
-import "github.com/rotisserie/eris"
+import "errors"
 
 type Status string
 
 const (
-	// StatusNew indicates that the shipment has been created but not yet processed
-	StatusNew = Status("New")
-
-	// StatusPartiallyAssigned indicates that the shipment has multiple moves
-	// but only some of them have been assigned to a worker
-	StatusPartiallyAssigned = Status("PartiallyAssigned")
-
-	// StatusAssigned indicates that all moves on the shipment have been assigned
-	// to workers(s)
-	StatusAssigned = Status("Assigned")
-
-	// StatusInTransit indicates that the shipment is currently being processed
-	StatusInTransit = Status("InTransit")
-
-	// StatusDelayed indicates that the shipment is delayed
-	StatusDelayed = Status("Delayed")
-
-	// StatusPartiallyCompleted indicates that not all moves on the shipment
-	// have been completed
+	StatusNew                = Status("New")
+	StatusPartiallyAssigned  = Status("PartiallyAssigned")
+	StatusAssigned           = Status("Assigned")
+	StatusInTransit          = Status("InTransit")
+	StatusDelayed            = Status("Delayed")
 	StatusPartiallyCompleted = Status("PartiallyCompleted")
-
-	// StatusCompleted indicates that the shipment has been completed
-	StatusCompleted = Status("Completed")
-
-	// StatusReadyToBill indicates that the shipment is ready to be billed
-	StatusReadyToBill = Status("ReadyToBill")
-
-	// StatusReviewRequired indicates that the shipment requires review before it can be billed
-	StatusReviewRequired = Status("ReviewRequired")
-
-	// StatusBilled indicates that the shipment has been billed
-	StatusBilled = Status("Billed")
-
-	// StatusCanceled indicates that the shipment has been canceled
-	StatusCanceled = Status("Canceled")
+	StatusCompleted          = Status("Completed")
+	StatusReadyToBill        = Status("ReadyToBill")
+	StatusReviewRequired     = Status("ReviewRequired")
+	StatusBilled             = Status("Billed")
+	StatusCanceled           = Status("Canceled")
 )
 
 func StatusFromString(status string) (Status, error) {
@@ -72,117 +43,65 @@ func StatusFromString(status string) (Status, error) {
 	case "ReviewRequired":
 		return StatusReviewRequired, nil
 	default:
-		return "", eris.New("invalid shipment status")
+		return "", errors.New("invalid shipment status")
 	}
 }
 
 type RatingMethod string
 
 const (
-	// FlatRate is the cost per shipment
-	RatingMethodFlatRate = RatingMethod("FlatRate")
-
-	// PerMile is the cost per mile of the shipment
-	RatingMethodPerMile = RatingMethod("PerMile")
-
-	// PerStop is the cost per stop of the shipment
-	RatingMethodPerStop = RatingMethod("PerStop")
-
-	// PerPound is the cost per pound of the shipment
-	RatingMethodPerPound = RatingMethod("PerPound")
-
-	// PerPallet is the cost per pallet position used
-	RatingMethodPerPallet = RatingMethod("PerPallet")
-
-	// PerLinearFoot is the cost based on the linear feet of trailer space used.
-	// This is commonly used for LTL shipments, Flatbed haulers, and specific
-	// commodities that are measured in linear feet.
-	RatingMethodPerLinearFoot = RatingMethod("PerLinearFoot")
-
-	// Other takes the rating units and the rate and does multiplication
-	// of the two to get the total cost
-	RatingMethodOther = RatingMethod("Other")
-
-	// FormulaTemplate uses a formula template to calculate the shipment rate
-	// based on complex business rules and multiple variables
+	RatingMethodFlatRate        = RatingMethod("FlatRate")
+	RatingMethodPerMile         = RatingMethod("PerMile")
+	RatingMethodPerStop         = RatingMethod("PerStop")
+	RatingMethodPerPound        = RatingMethod("PerPound")
+	RatingMethodPerPallet       = RatingMethod("PerPallet")
+	RatingMethodPerLinearFoot   = RatingMethod("PerLinearFoot")
+	RatingMethodOther           = RatingMethod("Other")
 	RatingMethodFormulaTemplate = RatingMethod("FormulaTemplate")
 )
 
 type EntryMethod string
 
 const (
-	// EntryMethodManual is when a user manually enters the shipment
-	EntryMethodManual = EntryMethod("Manual")
-
-	// EntryMethodElectronic is when a the system automatically enters the shipment
+	EntryMethodManual     = EntryMethod("Manual")
 	EntryMethodElectronic = EntryMethod("Electronic")
 )
 
 type StopType string
 
 const (
-	// StopTypePickup is when a user manually enters the shipment
-	StopTypePickup = StopType("Pickup")
-
-	// StopTypeDelivery is when a the system automatically enters the shipment
-	StopTypeDelivery = StopType("Delivery")
-
-	// StopTypeSplitPickup is when a user manually enters the shipment
-	StopTypeSplitPickup = StopType("SplitPickup")
-
-	// StopTypeSplitDelivery is when a the system automatically enters the shipment
+	StopTypePickup        = StopType("Pickup")
+	StopTypeDelivery      = StopType("Delivery")
+	StopTypeSplitPickup   = StopType("SplitPickup")
 	StopTypeSplitDelivery = StopType("SplitDelivery")
 )
 
 type StopStatus string
 
 const (
-	// StopStatusNew indicates that the stop has been created but not yet processed
-	StopStatusNew = StopStatus("New")
-
-	// StopStatusInTransit indicates that the stop is currently being processed
+	StopStatusNew       = StopStatus("New")
 	StopStatusInTransit = StopStatus("InTransit")
-
-	// StopStatusCompleted indicates that the stop has been completed
 	StopStatusCompleted = StopStatus("Completed")
-
-	// StopStatusCanceled indicates that the stop has been canceled
-	StopStatusCanceled = StopStatus("Canceled")
+	StopStatusCanceled  = StopStatus("Canceled")
 )
 
 type MoveStatus string
 
 const (
-	// MoveStatusNew indicates that the move has been created but not yet processed
-	MoveStatusNew = MoveStatus("New")
-
-	// MoveStatusAssigned indicates that the move has been assigned to a worker
-	MoveStatusAssigned = MoveStatus("Assigned")
-
-	// MoveStatusInTransit indicates that the move is currently being processed
+	MoveStatusNew       = MoveStatus("New")
+	MoveStatusAssigned  = MoveStatus("Assigned")
 	MoveStatusInTransit = MoveStatus("InTransit")
-
-	// MoveStatusCompleted indicates that the move has been completed
 	MoveStatusCompleted = MoveStatus("Completed")
-
-	// MoveStatusCanceled indicates that the move has been canceled
-	MoveStatusCanceled = MoveStatus("Canceled")
+	MoveStatusCanceled  = MoveStatus("Canceled")
 )
 
 type AssignmentStatus string
 
 const (
-	// AssignmentStatusNew indicates that the assignment has been created but not yet processed
-	AssignmentStatusNew = AssignmentStatus("New")
-
-	// AssignmentStatusInProgress indicates that the assignment is currently being processed
+	AssignmentStatusNew        = AssignmentStatus("New")
 	AssignmentStatusInProgress = AssignmentStatus("InProgress")
-
-	// AssignmentStatusCompleted indicates that the assignment has been completed
-	AssignmentStatusCompleted = AssignmentStatus("Completed")
-
-	// AssignmentStatusCanceled indicates that the assignment has been canceled
-	AssignmentStatusCanceled = AssignmentStatus("Canceled")
+	AssignmentStatusCompleted  = AssignmentStatus("Completed")
+	AssignmentStatusCanceled   = AssignmentStatus("Canceled")
 )
 
 type AutoAssignmentStrategy string
@@ -204,26 +123,17 @@ const (
 type HoldType string
 
 const (
-	// missing appt/window, facility closed, dock issue
 	HoldOperational = HoldType("OperationalHold")
-	// OOS, HOS, CDL, permits, safety blocks
-	HoldCompliance = HoldType("ComplianceHold")
-	// shipper/consignee requested pause/change
-	HoldCustomer = HoldType("CustomerHold")
-	// credit limit, AR blocks (doesn't have to block ops)
-	HoldFinance = HoldType("FinanceHold")
+	HoldCompliance  = HoldType("ComplianceHold")
+	HoldCustomer    = HoldType("CustomerHold")
+	HoldFinance     = HoldType("FinanceHold")
 )
 
 type HoldSeverity string
 
 const (
-	// FYI, never blocks ops
-	SeverityInfo = HoldSeverity("Informational")
-
-	// Warns, may block billing, not movement
+	SeverityInfo     = HoldSeverity("Informational")
 	SeverityAdvisory = HoldSeverity("Advisory")
-
-	// can block dispatch/delivery until released
 	SeverityBlocking = HoldSeverity("Blocking")
 )
 

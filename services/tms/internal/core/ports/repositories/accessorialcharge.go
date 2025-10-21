@@ -1,33 +1,32 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
 type GetAccessorialChargeByIDRequest struct {
-	ID     pulid.ID
-	OrgID  pulid.ID
-	BuID   pulid.ID
-	UserID pulid.ID
+	ID     pulid.ID `json:"id"     form:"id"`
+	OrgID  pulid.ID `json:"orgId"  form:"orgId"`
+	BuID   pulid.ID `json:"buId"   form:"buId"`
+	UserID pulid.ID `json:"userId" form:"userId"`
+}
+
+type ListAccessorialChargeRequest struct {
+	Filter *pagination.QueryOptions `json:"filter" form:"filter"`
 }
 
 type AccessorialChargeRepository interface {
 	List(
 		ctx context.Context,
-		opts *ports.LimitOffsetQueryOptions,
-	) (*ports.ListResult[*accessorialcharge.AccessorialCharge], error)
+		req *ListAccessorialChargeRequest,
+	) (*pagination.ListResult[*accessorialcharge.AccessorialCharge], error)
 	GetByID(
 		ctx context.Context,
-		opts GetAccessorialChargeByIDRequest,
+		req GetAccessorialChargeByIDRequest,
 	) (*accessorialcharge.AccessorialCharge, error)
 	Create(
 		ctx context.Context,

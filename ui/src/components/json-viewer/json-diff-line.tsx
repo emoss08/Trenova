@@ -1,13 +1,16 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
+import {
+  containsSensitivePattern,
+  detectSensitiveDataType,
+} from "@/lib/json-sensitive-utils";
 import { cn } from "@/lib/utils";
 import type { DiffLineProps } from "@/types/json-viewer";
 import { useMemo } from "react";
 import { SensitiveBadge } from "../ui/sensitive-badge";
-import { detectSensitiveDataType, containsSensitivePattern } from "@/lib/json-sensitive-utils";
 
 export function DiffLine({ line, lineNumber, type }: DiffLineProps) {
   const bgColor = useMemo(() => {
@@ -63,10 +66,10 @@ export function DiffLine({ line, lineNumber, type }: DiffLineProps) {
       if (valueMatch) {
         const value = valueMatch[1];
         const sensitiveInfo = detectSensitiveDataType(value);
-        
+
         if (sensitiveInfo.isSensitive) {
           const parts = line.split(/(".*?"\s*:\s*"[^"]*")/).filter(Boolean);
-          
+
           return (
             <>
               {parts.map((part, index) => {
@@ -77,13 +80,20 @@ export function DiffLine({ line, lineNumber, type }: DiffLineProps) {
                         dangerouslySetInnerHTML={{
                           __html: part.replace(
                             valueMatch[0],
-                            valueMatch[0].replace(/"([^"]+)"$/, '<span class="text-vitess-string">"$1"</span>'),
+                            valueMatch[0].replace(
+                              /"([^"]+)"$/,
+                              '<span class="text-vitess-string">"$1"</span>',
+                            ),
                           ),
                         }}
                       />
-                      <SensitiveBadge 
-                        size="xs" 
-                        variant={sensitiveInfo.type === "redacted" ? "destructive" : "warning"}
+                      <SensitiveBadge
+                        size="xs"
+                        variant={
+                          sensitiveInfo.type === "redacted"
+                            ? "destructive"
+                            : "warning"
+                        }
                       />
                     </span>
                   );
@@ -174,9 +184,13 @@ export function DiffLine({ line, lineNumber, type }: DiffLineProps) {
               parts.push(
                 <span key="value" className="inline-flex items-center gap-1.5">
                   <span className="text-vitess-string">{valueText}</span>
-                  <SensitiveBadge 
-                    size="xs" 
-                    variant={sensitiveInfo.type === "redacted" ? "destructive" : "warning"}
+                  <SensitiveBadge
+                    size="xs"
+                    variant={
+                      sensitiveInfo.type === "redacted"
+                        ? "destructive"
+                        : "warning"
+                    }
                   />
                 </span>,
               );
@@ -185,34 +199,34 @@ export function DiffLine({ line, lineNumber, type }: DiffLineProps) {
                 /: "(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|0x[0-9a-fA-F]+)"/,
               )
             ) {
-            // Handle numeric values in strings with comprehensive pattern matching:
-            // - Regular numbers with optional decimal: 123, -123, 123.456, -123.456
-            // - Scientific notation: 1.23e+4, -1.23e-4
-            // - Hexadecimal: 0xFF, 0xA1B2C3
-            const numMatch = valueText.match(
-              /: "(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|0x[0-9a-fA-F]+)"/,
-            );
-            const numValue = numMatch ? numMatch[1] : "";
+              // Handle numeric values in strings with comprehensive pattern matching:
+              // - Regular numbers with optional decimal: 123, -123, 123.456, -123.456
+              // - Scientific notation: 1.23e+4, -1.23e-4
+              // - Hexadecimal: 0xFF, 0xA1B2C3
+              const numMatch = valueText.match(
+                /: "(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?|0x[0-9a-fA-F]+)"/,
+              );
+              const numValue = numMatch ? numMatch[1] : "";
 
-            parts.push(
-              <span key="value">
-                : <span className="text-vitess-string">&quot;</span>
-                <span className="text-vitess-number">{numValue}</span>
-                <span className="text-vitess-string">&quot;</span>
-              </span>,
-            );
-          } else if (valueText.match(/: "(-?\d+\.?\d*)"/)) {
-            // Handle numeric values in strings - detect by pattern not by field name
-            const numMatch = valueText.match(/: "(-?\d+\.?\d*)"/);
-            const numValue = numMatch ? numMatch[1] : "";
+              parts.push(
+                <span key="value">
+                  : <span className="text-vitess-string">&quot;</span>
+                  <span className="text-vitess-number">{numValue}</span>
+                  <span className="text-vitess-string">&quot;</span>
+                </span>,
+              );
+            } else if (valueText.match(/: "(-?\d+\.?\d*)"/)) {
+              // Handle numeric values in strings - detect by pattern not by field name
+              const numMatch = valueText.match(/: "(-?\d+\.?\d*)"/);
+              const numValue = numMatch ? numMatch[1] : "";
 
-            parts.push(
-              <span key="value">
-                : <span className="text-vitess-string">&quot;</span>
-                <span className="text-vitess-number">{numValue}</span>
-                <span className="text-vitess-string">&quot;</span>
-              </span>,
-            );
+              parts.push(
+                <span key="value">
+                  : <span className="text-vitess-string">&quot;</span>
+                  <span className="text-vitess-number">{numValue}</span>
+                  <span className="text-vitess-string">&quot;</span>
+                </span>,
+              );
             } else {
               parts.push(
                 <span key="value" className="text-vitess-string">

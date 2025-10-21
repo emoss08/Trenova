@@ -1,12 +1,7 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package dedicatedlane
 
 import (
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/shopspring/decimal"
 )
 
@@ -66,25 +61,4 @@ type PatternAnalysisResult struct {
 	ConfigsUsed            []*PatternDetectionConfig `json:"configsUsed"`
 	Patterns               []*PatternMatch           `json:"patterns"`
 	ProcessingTimeMs       int64                     `json:"processingTimeMs"`
-}
-
-// SuggestionAcceptRequest represents a request to accept a suggestion
-type SuggestionAcceptRequest struct {
-	SuggestionID      pulid.ID  `json:"suggestionId"`
-	OrganizationID    pulid.ID  `json:"organizationId"`
-	BusinessUnitID    pulid.ID  `json:"businessUnitId"`
-	ProcessedByID     pulid.ID  `json:"processedById"`
-	DedicatedLaneName *string   `json:"dedicatedLaneName,omitempty"` // Override suggested name
-	PrimaryWorkerID   *pulid.ID `json:"primaryWorkerId"`
-	SecondaryWorkerID *pulid.ID `json:"secondaryWorkerId,omitempty"`
-	AutoAssign        bool      `json:"autoAssign"`
-}
-
-// SuggestionRejectRequest represents a request to reject a suggestion
-type SuggestionRejectRequest struct {
-	SuggestionID   pulid.ID `json:"suggestionId"`
-	OrganizationID pulid.ID `json:"organizationId"`
-	BusinessUnitID pulid.ID `json:"businessUnitId"`
-	ProcessedByID  pulid.ID `json:"processedById"`
-	RejectReason   string   `json:"rejectReason,omitempty"`
 }

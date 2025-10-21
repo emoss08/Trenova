@@ -1,9 +1,4 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import { LazyComponent } from "@/components/error-boundary";
+import { DataTableLazyComponent } from "@/components/error-boundary";
 import { MetaTags } from "@/components/meta-tags";
 import { lazy } from "react";
 
@@ -15,9 +10,23 @@ export function LocationCategories() {
   return (
     <>
       <MetaTags title="Location Categories" description="Location Categories" />
-      <LazyComponent>
-        <LocationCategoryTable />
-      </LazyComponent>
+      <div className="flex flex-col gap-y-3">
+        <Header />
+        <DataTableLazyComponent>
+          <LocationCategoryTable />
+        </DataTableLazyComponent>
+      </div>
     </>
+  );
+}
+
+function Header() {
+  return (
+    <div className="flex justify-between items-center">
+      <h1 className="text-3xl font-bold tracking-tight">Location Categories</h1>
+      <p className="text-muted-foreground">
+        Manage and configure location categories for your organization
+      </p>
+    </div>
   );
 }

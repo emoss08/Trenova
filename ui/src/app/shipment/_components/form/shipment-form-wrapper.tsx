@@ -1,11 +1,5 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Form } from "@/components/ui/form";
 import { type ShipmentSchema } from "@/lib/schemas/shipment-schema";
-import { memo } from "react";
 import { useFormContext } from "react-hook-form";
 
 interface ShipmentFormWrapperProps {
@@ -14,7 +8,7 @@ interface ShipmentFormWrapperProps {
   className?: string;
 }
 
-function ShipmentFormWrapperComponent({
+export function ShipmentFormWrapper({
   onSubmit,
   children,
   className = "space-y-0 p-0",
@@ -27,5 +21,3 @@ function ShipmentFormWrapperComponent({
     </Form>
   );
 }
-
-export const ShipmentFormWrapper = memo(ShipmentFormWrapperComponent);

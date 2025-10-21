@@ -1,12 +1,6 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import * as z from "zod/v4";
 import { assignmentSchema } from "./assignment-schema";
 import {
-  nullableIntegerSchema,
   optionalStringSchema,
   timestampSchema,
   versionSchema,
@@ -34,7 +28,7 @@ export const moveSchema = z.object({
   status: MoveStatus,
   loaded: z.boolean(),
   sequence: z.number().min(0, { error: "Sequence cannot be negative" }),
-  distance: nullableIntegerSchema,
+  distance: z.number().nullish(),
   stops: z.array(stopSchema),
   assignment: assignmentSchema.nullish(),
   formId: optionalStringSchema, // * Simply becuase react-hook-form will override the id if there is nothing for it to append to.

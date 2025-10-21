@@ -1,12 +1,12 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { queries } from "@/lib/queries";
 import { useIsAuthenticated, useUser } from "@/stores/user-store";
-import { useQuery } from "@tanstack/react-query";
 import { Helmet } from "@dr.pogodin/react-helmet";
+import { useQuery } from "@tanstack/react-query";
 
 export function MetaTags({
   title,

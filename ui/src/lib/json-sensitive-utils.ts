@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
@@ -23,7 +23,12 @@ export const SENSITIVE_PATTERNS = {
   maskedApiKey: /^[A-Za-z0-9]{1,5}[*]{20,}[A-Za-z0-9]{0,5}$/, // Pattern like "AIza***KQU"
 };
 
-export type SensitiveDataType = "redacted" | "omitted" | "masked" | "partial" | null;
+export type SensitiveDataType =
+  | "redacted"
+  | "omitted"
+  | "masked"
+  | "partial"
+  | null;
 
 export interface SensitiveDataInfo {
   isSensitive: boolean;
@@ -76,7 +81,7 @@ export function formatJsonWithSpaces(data: any): string {
     // First stringify with proper indentation
     const jsonString = JSON.stringify(data, null, 2);
     // Add space after colons for better readability
-    return jsonString.replace(/("(?:[^"\\]|\\.)*"):/g, '$1: ');
+    return jsonString.replace(/("(?:[^"\\]|\\.)*"):/g, "$1: ");
   } catch (error) {
     console.error("Error formatting data:", error);
     return "";
@@ -88,7 +93,7 @@ export function containsSensitivePattern(line: string): boolean {
   // Quick checks for common patterns
   if (line.includes(': "****"')) return true;
   if (line.includes(': "[REDACTED]"')) return true;
-  
+
   // Check for masked values in JSON format
   const valueMatch = line.match(/:\s*"([^"]+)"/);
   if (valueMatch) {
@@ -96,6 +101,6 @@ export function containsSensitivePattern(line: string): boolean {
     const info = detectSensitiveDataType(value);
     return info.isSensitive;
   }
-  
+
   return false;
 }

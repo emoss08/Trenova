@@ -1,13 +1,8 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 /* eslint-disable react-hooks/exhaustive-deps */
 import { useDataTable } from "@/components/data-table/data-table-provider";
-import { Kbd } from "@/components/kbd";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
+import { Kbd } from "@/components/ui/kbd";
 import { Separator } from "@/components/ui/separator";
 import { SheetClose } from "@/components/ui/sheet";
 import {
@@ -109,7 +104,7 @@ export function ShipmentFormHeader({
             </TooltipTrigger>
             <TooltipContent>
               <p>
-                Navigate <Kbd variant="outline">↑</Kbd>
+                Navigate <Kbd>↑</Kbd>
               </p>
             </TooltipContent>
           </Tooltip>
@@ -128,7 +123,7 @@ export function ShipmentFormHeader({
             </TooltipTrigger>
             <TooltipContent>
               <p>
-                Navigate <Kbd variant="outline">↓</Kbd>
+                Navigate <Kbd>↓</Kbd>
               </p>
             </TooltipContent>
           </Tooltip>

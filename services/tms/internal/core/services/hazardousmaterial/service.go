@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package hazardousmaterial
 
 import (
@@ -10,152 +5,55 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/internal/pkg/validator"
-	"github.com/emoss08/trenova/internal/pkg/validator/hazardousmaterialvalidator"
-	"github.com/emoss08/trenova/pkg/types"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/rotisserie/eris"
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/pkg/validator"
+	"github.com/emoss08/trenova/pkg/validator/hazardousmaterialvalidator"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	Logger       *logger.Logger
+	Logger       *zap.Logger
 	Repo         repositories.HazardousMaterialRepository
-	PermService  services.PermissionService
 	AuditService services.AuditService
 	Validator    *hazardousmaterialvalidator.Validator
 }
 
 type Service struct {
-	l    *zerolog.Logger
+	l    *zap.Logger
 	repo repositories.HazardousMaterialRepository
-	ps   services.PermissionService
 	as   services.AuditService
 	v    *hazardousmaterialvalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().
-		Str("service", "hazardousmaterial").
-		Logger()
-
 	return &Service{
-		l:    &log,
+		l:    p.Logger.Named("service.hazardousmaterial"),
 		repo: p.Repo,
-		ps:   p.PermService,
 		as:   p.AuditService,
 		v:    p.Validator,
 	}
 }
 
-func (s *Service) SelectOptions(
-	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
-) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, opts)
-	if err != nil {
-		return nil, eris.Wrap(err, "select hazardous materials")
-	}
-
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, hm := range result.Items {
-		options[i] = &types.SelectOption{
-			Value: hm.GetID(),
-			Label: hm.Code,
-		}
-	}
-
-	return options, nil
-}
-
 func (s *Service) List(
 	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
-) (*ports.ListResult[*hazardousmaterial.HazardousMaterial], error) {
-	log := s.l.With().Str("operation", "List").Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         opts.TenantOpts.UserID,
-				Resource:       permission.ResourceHazardousMaterial,
-				Action:         permission.ActionRead,
-				BusinessUnitID: opts.TenantOpts.BuID,
-				OrganizationID: opts.TenantOpts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		s.l.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check permissions")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to read hazardous materials",
-		)
-	}
-
-	entities, err := s.repo.List(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to list hazardous materials")
-		return nil, eris.Wrap(err, "list hazardous materials")
-	}
-
-	return &ports.ListResult[*hazardousmaterial.HazardousMaterial]{
-		Items: entities.Items,
-		Total: entities.Total,
-	}, nil
+	req *repositories.ListHazardousMaterialRequest,
+) (*pagination.ListResult[*hazardousmaterial.HazardousMaterial], error) {
+	return s.repo.List(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	opts repositories.GetHazardousMaterialByIDOptions,
+	opts repositories.GetHazardousMaterialByIDRequest,
 ) (*hazardousmaterial.HazardousMaterial, error) {
-	log := s.l.With().
-		Str("operation", "GetByID").
-		Str("hmID", opts.ID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         opts.UserID,
-				Resource:       permission.ResourceHazardousMaterial,
-				Action:         permission.ActionRead,
-				BusinessUnitID: opts.BuID,
-				OrganizationID: opts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check read hazardous material permissions")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to read this hazardous material",
-		)
-	}
-
-	entity, err := s.repo.GetByID(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get hazardous material")
-		return nil, eris.Wrap(err, "get hazardous material")
-	}
-
-	return entity, nil
+	return s.repo.GetByID(ctx, opts)
 }
 
 func (s *Service) Create(
@@ -163,32 +61,13 @@ func (s *Service) Create(
 	hm *hazardousmaterial.HazardousMaterial,
 	userID pulid.ID,
 ) (*hazardousmaterial.HazardousMaterial, error) {
-	log := s.l.With().
-		Str("operation", "Create").
-		Str("code", hm.Code).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceHazardousMaterial,
-				Action:         permission.ActionCreate,
-				BusinessUnitID: hm.BusinessUnitID,
-				OrganizationID: hm.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Create"),
+		zap.String("code", hm.Code),
+		zap.String("buID", hm.BusinessUnitID.String()),
+		zap.String("orgID", hm.OrganizationID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check create hazardous material permissions")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to create a hazardous material",
-		)
-	}
 
 	valCtx := &validator.ValidationContext{
 		IsCreate: true,
@@ -201,23 +80,23 @@ func (s *Service) Create(
 
 	createdEntity, err := s.repo.Create(ctx, hm)
 	if err != nil {
-		return nil, eris.Wrap(err, "create hazardous material")
+		return nil, err
 	}
 
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceHazardousMaterial,
 			ResourceID:     createdEntity.GetID(),
-			Action:         permission.ActionCreate,
-			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(createdEntity),
 			OrganizationID: createdEntity.OrganizationID,
 			BusinessUnitID: createdEntity.BusinessUnitID,
+			UserID:         userID,
+			Operation:      permission.OpCreate,
+			CurrentState:   jsonutils.MustToJSON(createdEntity),
 		},
 		audit.WithComment("Hazardous Material created"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log hazardous material creation")
+		log.Error("failed to log hazardous material creation", zap.Error(err))
 	}
 
 	return createdEntity, nil
@@ -228,34 +107,14 @@ func (s *Service) Update(
 	hm *hazardousmaterial.HazardousMaterial,
 	userID pulid.ID,
 ) (*hazardousmaterial.HazardousMaterial, error) {
-	log := s.l.With().
-		Str("operation", "Update").
-		Str("code", hm.Code).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceHazardousMaterial,
-				Action:         permission.ActionUpdate,
-				BusinessUnitID: hm.BusinessUnitID,
-				OrganizationID: hm.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Update"),
+		zap.String("code", hm.Code),
+		zap.String("buID", hm.BusinessUnitID.String()),
+		zap.String("orgID", hm.OrganizationID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check update hazardous material permissions")
-	}
 
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to update this hazardous material",
-		)
-	}
-
-	// Validate the hazardous material
 	valCtx := &validator.ValidationContext{
 		IsUpdate: true,
 		IsCreate: false,
@@ -265,27 +124,26 @@ func (s *Service) Update(
 		return nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetHazardousMaterialByIDOptions{
+	original, err := s.repo.GetByID(ctx, repositories.GetHazardousMaterialByIDRequest{
 		ID:    hm.ID,
 		OrgID: hm.OrganizationID,
 		BuID:  hm.BusinessUnitID,
 	})
 	if err != nil {
-		return nil, eris.Wrap(err, "get hazardous material")
+		return nil, err
 	}
 
 	updatedEntity, err := s.repo.Update(ctx, hm)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update hazardous material")
-		return nil, eris.Wrap(err, "update hazardous material")
+		log.Error("failed to update hazardous material", zap.Error(err))
+		return nil, err
 	}
 
-	// Log the update if the insert was successful
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceHazardousMaterial,
 			ResourceID:     updatedEntity.GetID(),
-			Action:         permission.ActionUpdate,
+			Operation:      permission.OpUpdate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(updatedEntity),
 			PreviousState:  jsonutils.MustToJSON(original),
@@ -296,7 +154,7 @@ func (s *Service) Update(
 		audit.WithDiff(original, updatedEntity),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log hazardous material update")
+		log.Error("failed to log hazardous material update", zap.Error(err))
 	}
 
 	return updatedEntity, nil

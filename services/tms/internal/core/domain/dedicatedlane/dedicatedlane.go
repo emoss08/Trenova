@@ -1,33 +1,31 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package dedicatedlane
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain"
-	"github.com/emoss08/trenova/internal/core/domain/businessunit"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/equipmenttype"
 	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/organization"
 	"github.com/emoss08/trenova/internal/core/domain/servicetype"
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*DedicatedLane)(nil)
-	_ domain.Validatable        = (*DedicatedLane)(nil)
+	_ bun.BeforeAppendModelHook      = (*DedicatedLane)(nil)
+	_ domain.Validatable             = (*DedicatedLane)(nil)
+	_ framework.TenantedEntity       = (*DedicatedLane)(nil)
+	_ domaintypes.PostgresSearchable = (*DedicatedLane)(nil)
 )
 
 type DedicatedLane struct {
@@ -52,9 +50,8 @@ type DedicatedLane struct {
 	CreatedAt             int64         `json:"createdAt"                  bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt             int64         `json:"updatedAt"                  bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
-	// Relationships
-	BusinessUnit        *businessunit.BusinessUnit   `json:"businessUnit,omitzero"        bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization        *organization.Organization   `json:"organization,omitzero"        bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit        *tenant.BusinessUnit         `json:"businessUnit,omitzero"        bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization        *tenant.Organization         `json:"organization,omitzero"        bun:"rel:belongs-to,join:organization_id=id"`
 	ShipmentType        *shipmenttype.ShipmentType   `json:"shipmentType,omitzero"        bun:"rel:belongs-to,join:shipment_type_id=id"`
 	ServiceType         *servicetype.ServiceType     `json:"serviceType,omitzero"         bun:"rel:belongs-to,join:service_type_id=id"`
 	Customer            *customer.Customer           `json:"customer,omitzero"            bun:"rel:belongs-to,join:customer_id=id"`
@@ -66,23 +63,14 @@ type DedicatedLane struct {
 	SecondaryWorker     *worker.Worker               `json:"secondaryWorker,omitzero"     bun:"rel:belongs-to,join:secondary_worker_id=id"`
 }
 
-func (d *DedicatedLane) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(
-		ctx,
+func (d *DedicatedLane) Validate(multiErr *errortypes.MultiError) {
+	err := validation.ValidateStruct(
 		d,
-		validation.Field(
-			&d.Name,
+		validation.Field(&d.Name,
 			validation.Required.Error("Name is required"),
-			validation.Length(2, 100).Error("Name must be between 2 & 100 characters"),
+			validation.Length(2, 100).Error("Name must be between 2 and 100 characters"),
 		),
-		validation.Field(
-			&d.CustomerID,
-			validation.Required.Error("Customer is required"),
-		),
-		validation.Field(
-			&d.OriginLocationID,
-			validation.Required.Error("Origin Location is required"),
-		),
+		validation.Field(&d.CustomerID, validation.Required.Error("Customer is required")),
 		validation.Field(
 			&d.DestinationLocationID,
 			validation.Required.Error("Destination Location is required"),
@@ -92,9 +80,10 @@ func (d *DedicatedLane) Validate(ctx context.Context, multiErr *errors.MultiErro
 			),
 		),
 		validation.Field(
+			&d.AutoAssign,
 			validation.When(
-				d.AutoAssign,
-				validation.Required.Error("Primary Worker is required when auto assign is true."),
+				d.AutoAssign && d.PrimaryWorkerID.IsNil(),
+				validation.Required.Error("Primary worker is required when auto assign is true"),
 			),
 		),
 		validation.Field(&d.SecondaryWorkerID,
@@ -107,8 +96,8 @@ func (d *DedicatedLane) Validate(ctx context.Context, multiErr *errors.MultiErro
 	)
 	if err != nil {
 		var validationErrs validation.Errors
-		if eris.As(err, &validationErrs) {
-			errors.FromOzzoErrors(validationErrs, multiErr)
+		if errors.As(err, &validationErrs) {
+			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
@@ -121,8 +110,27 @@ func (d *DedicatedLane) GetTableName() string {
 	return "dedicated_lanes"
 }
 
+func (d *DedicatedLane) GetOrganizationID() pulid.ID {
+	return d.OrganizationID
+}
+
+func (d *DedicatedLane) GetBusinessUnitID() pulid.ID {
+	return d.BusinessUnitID
+}
+
+func (d *DedicatedLane) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "dl",
+		UseSearchVector: false,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "name", Type: domaintypes.FieldTypeText, Weight: domaintypes.SearchWeightA},
+			{Name: "status", Type: domaintypes.FieldTypeEnum, Weight: domaintypes.SearchWeightB},
+		},
+	}
+}
+
 func (d *DedicatedLane) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:
@@ -131,6 +139,7 @@ func (d *DedicatedLane) BeforeAppendModel(_ context.Context, query bun.Query) er
 		}
 
 		d.CreatedAt = now
+
 	case *bun.UpdateQuery:
 		d.UpdatedAt = now
 	}

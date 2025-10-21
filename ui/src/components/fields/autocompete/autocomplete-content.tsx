@@ -1,5 +1,5 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
@@ -19,7 +19,6 @@ import { useDebounce } from "@/hooks/use-debounce";
 import { http } from "@/lib/http-client";
 import { cn, toTitleCase } from "@/lib/utils";
 import type { LimitOffsetResponse } from "@/types/server";
-import { faGhost } from "@fortawesome/pro-duotone-svg-icons";
 import { faCheck } from "@fortawesome/pro-regular-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import type React from "react";
@@ -373,10 +372,6 @@ export function AutocompleteCommandContent<TOption>({
         )}
         {!isLoading && data && options.length === 0 && (
           <div className="flex flex-col items-center p-4 justify-center size-full gap-2">
-            <div className="flex items-center justify-center p-4 rounded-full bg-blue-600/20 border border-blue-600/50">
-              <Icon icon={faGhost} className="size-10 text-blue-600" />
-            </div>
-
             <CommandEmpty>
               {noResultsMessage ?? `No ${toTitleCase(label ?? "")} found.`}
             </CommandEmpty>

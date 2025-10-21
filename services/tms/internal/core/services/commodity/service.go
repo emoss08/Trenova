@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package commodity
 
 import (
@@ -10,201 +5,89 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/internal/pkg/validator"
-	"github.com/emoss08/trenova/internal/pkg/validator/commodityvalidator"
-	"github.com/emoss08/trenova/pkg/types"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/rotisserie/eris"
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/pkg/validator"
+	"github.com/emoss08/trenova/pkg/validator/commodityvalidator"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	Logger       *logger.Logger
+	Logger       *zap.Logger
 	Repo         repositories.CommodityRepository
-	PermService  services.PermissionService
 	AuditService services.AuditService
 	Validator    *commodityvalidator.Validator
 }
 
 type Service struct {
-	l    *zerolog.Logger
+	l    *zap.Logger
 	repo repositories.CommodityRepository
-	ps   services.PermissionService
 	as   services.AuditService
 	v    *commodityvalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().
-		Str("service", "commodity").
-		Logger()
-
 	return &Service{
-		l:    &log,
+		l:    p.Logger.Named("service.commodity"),
 		repo: p.Repo,
-		ps:   p.PermService,
 		as:   p.AuditService,
 		v:    p.Validator,
 	}
 }
 
-func (s *Service) SelectOptions(
-	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
-) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, opts)
-	if err != nil {
-		return nil, eris.Wrap(err, "select commodities")
-	}
-
-	options := make([]*types.SelectOption, len(result.Items))
-	for i, com := range result.Items {
-		options[i] = &types.SelectOption{
-			Value: com.GetID(),
-			Label: com.Name,
-		}
-	}
-
-	return options, nil
-}
-
 func (s *Service) List(
 	ctx context.Context,
-	opts *ports.LimitOffsetQueryOptions,
-) (*ports.ListResult[*commodity.Commodity], error) {
-	log := s.l.With().Str("operation", "List").Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         opts.TenantOpts.UserID,
-				Resource:       permission.ResourceCommodity,
-				Action:         permission.ActionRead,
-				BusinessUnitID: opts.TenantOpts.BuID,
-				OrganizationID: opts.TenantOpts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		s.l.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check permissions")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read commodities")
-	}
-
-	entities, err := s.repo.List(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to list commodities")
-		return nil, eris.Wrap(err, "list commodities")
-	}
-
-	return &ports.ListResult[*commodity.Commodity]{
-		Items: entities.Items,
-		Total: entities.Total,
-	}, nil
+	req *repositories.ListCommodityRequest,
+) (*pagination.ListResult[*commodity.Commodity], error) {
+	return s.repo.List(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	opts repositories.GetCommodityByIDOptions,
+	req repositories.GetCommodityByIDRequest,
 ) (*commodity.Commodity, error) {
-	log := s.l.With().
-		Str("operation", "GetByID").
-		Str("hmID", opts.ID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         opts.UserID,
-				Resource:       permission.ResourceCommodity,
-				Action:         permission.ActionRead,
-				BusinessUnitID: opts.BuID,
-				OrganizationID: opts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check read commodity permissions")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to read this commodity",
-		)
-	}
-
-	entity, err := s.repo.GetByID(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get commodity")
-		return nil, eris.Wrap(err, "get commodity")
-	}
-
-	return entity, nil
+	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) Create(
 	ctx context.Context,
-	com *commodity.Commodity,
+	entity *commodity.Commodity,
 	userID pulid.ID,
 ) (*commodity.Commodity, error) {
-	log := s.l.With().
-		Str("operation", "Create").
-		Str("name", com.Name).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceCommodity,
-				Action:         permission.ActionCreate,
-				BusinessUnitID: com.BusinessUnitID,
-				OrganizationID: com.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Create"),
+		zap.String("name", entity.Name),
+		zap.String("buID", entity.BusinessUnitID.String()),
+		zap.String("orgID", entity.OrganizationID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check create commodity permissions")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a commodity")
-	}
 
 	valCtx := &validator.ValidationContext{
 		IsCreate: true,
 		IsUpdate: false,
 	}
 
-	if err := s.v.Validate(ctx, valCtx, com); err != nil {
+	if err := s.v.Validate(ctx, valCtx, entity); err != nil {
 		return nil, err
 	}
 
-	createdEntity, err := s.repo.Create(ctx, com)
+	createdEntity, err := s.repo.Create(ctx, entity)
 	if err != nil {
-		return nil, eris.Wrap(err, "create commodity")
+		return nil, err
 	}
 
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceCommodity,
 			ResourceID:     createdEntity.GetID(),
-			Action:         permission.ActionCreate,
+			Operation:      permission.OpCreate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(createdEntity),
 			OrganizationID: createdEntity.OrganizationID,
@@ -213,7 +96,7 @@ func (s *Service) Create(
 		audit.WithComment("Commodity created"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log commodity creation")
+		log.Error("failed to log commodity creation", zap.Error(err))
 	}
 
 	return createdEntity, nil
@@ -221,67 +104,46 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	com *commodity.Commodity,
+	entity *commodity.Commodity,
 	userID pulid.ID,
 ) (*commodity.Commodity, error) {
-	log := s.l.With().
-		Str("operation", "Update").
-		Str("name", com.Name).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceCommodity,
-				Action:         permission.ActionUpdate,
-				BusinessUnitID: com.BusinessUnitID,
-				OrganizationID: com.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Update"),
+		zap.String("name", entity.Name),
+		zap.String("buID", entity.BusinessUnitID.String()),
+		zap.String("orgID", entity.OrganizationID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check update commodity permissions")
-	}
 
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to update this commodity",
-		)
-	}
-
-	// Validate the commodity
 	valCtx := &validator.ValidationContext{
-		IsUpdate: true,
 		IsCreate: false,
+		IsUpdate: true,
 	}
 
-	if err := s.v.Validate(ctx, valCtx, com); err != nil {
+	if err := s.v.Validate(ctx, valCtx, entity); err != nil {
 		return nil, err
 	}
 
-	original, err := s.repo.GetByID(ctx, repositories.GetCommodityByIDOptions{
-		ID:    com.ID,
-		OrgID: com.OrganizationID,
-		BuID:  com.BusinessUnitID,
+	original, err := s.repo.GetByID(ctx, repositories.GetCommodityByIDRequest{
+		ID:    entity.ID,
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	updatedEntity, err := s.repo.Update(ctx, com)
+	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update commodity")
+		log.Error("failed to update commodity", zap.Error(err))
 		return nil, err
 	}
 
-	// Log the update if the insert was successful
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceCommodity,
 			ResourceID:     updatedEntity.GetID(),
-			Action:         permission.ActionUpdate,
+			Operation:      permission.OpUpdate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(updatedEntity),
 			PreviousState:  jsonutils.MustToJSON(original),
@@ -292,7 +154,7 @@ func (s *Service) Update(
 		audit.WithDiff(original, updatedEntity),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log commodity update")
+		log.Error("failed to log commodity update", zap.Error(err))
 	}
 
 	return updatedEntity, nil

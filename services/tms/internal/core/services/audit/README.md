@@ -1,7 +1,3 @@
-<!--
-Copyright 2023-2025 Eric Moss
-Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
-Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md-->
 # Audit Service
 
 The audit service provides comprehensive audit logging capabilities for Trenova, including automatic sensitive data detection and masking.
@@ -44,6 +40,7 @@ The audit service provides comprehensive audit logging capabilities for Trenova,
 ### Auto-Detection Patterns
 
 The service automatically detects and masks:
+
 - API Keys (generic and provider-specific like Google)
 - Social Security Numbers
 - Credit Card Numbers
@@ -63,6 +60,7 @@ The service automatically detects and masks:
 The service now properly sanitizes sensitive data in two critical areas:
 
 #### 1. Changes Field Sanitization
+
 The `Changes` field created by `WithDiff` is now properly sanitized. Previously, sensitive data like API keys were exposed in the diff output. Now:
 
 - Both `from` and `to` values in change records are properly masked
@@ -70,6 +68,7 @@ The `Changes` field created by `WithDiff` is now properly sanitized. Previously,
 - Auto-detection works on change paths (e.g., `configuration.apiKey`)
 
 #### 2. User Object Sanitization
+
 The `User` relationship object attached to audit entries is now sanitized to protect privacy:
 
 - Email addresses are masked based on strategy (e.g., `admin@trenova.app` → `a****@trenova.app`)
@@ -77,6 +76,7 @@ The `User` relationship object attached to audit entries is now sanitized to pro
 - Profile picture URLs are cleared in strict mode
 
 Example of properly masked audit entry:
+
 ```json
 {
   "changes": {
@@ -115,6 +115,7 @@ auditService.RegisterSensitiveFields(permission.ResourceIntegration, []services.
 ### Array Notation Support
 
 The service supports several notations for fields within arrays:
+
 - `shipmentMoves.tractorId` - Applies to all array elements
 - `shipmentMoves[0].tractorId` - Specific array index
 - `shipmentMoves[].tractorId` - Explicit array notation
@@ -122,6 +123,7 @@ The service supports several notations for fields within arrays:
 ### Enhanced Path Handling
 
 The sensitive data manager now:
+
 1. Builds proper paths for array elements (e.g., `shipmentMoves[0].tractorId`)
 2. Checks multiple path variations when matching registered fields
 3. Supports deeply nested structures with multiple array levels
@@ -196,6 +198,7 @@ auditService.RegisterSensitiveFields(permission.ResourceShipment, []services.Sen
 ### API Keys Not Being Masked in Changes
 
 This has been fixed. The service now:
+
 1. Sanitizes the `Changes` field separately with special handling
 2. Checks change paths against sensitive patterns
 3. Masks both `from` and `to` values in change records
@@ -203,6 +206,7 @@ This has been fixed. The service now:
 ### Nested Fields in Arrays Not Masked
 
 The service now properly handles:
+
 1. Array-aware path building (e.g., `shipmentMoves[0].tractorId`)
 2. Multiple path variation checking
 3. Array notation in field registration (e.g., `shipmentMoves[].tractorId`)
@@ -210,6 +214,7 @@ The service now properly handles:
 ### Performance Considerations
 
 For optimal performance:
+
 1. Register known sensitive fields explicitly rather than relying solely on auto-detection
 2. Use appropriate batch sizes based on your audit volume
 3. Consider adjusting the masking strategy based on your security requirements

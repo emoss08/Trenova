@@ -1,15 +1,8 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-// Package cdc implements Change Data Capture (CDC) functionality for real-time database event processing.
-// It provides a Kafka-based consumer service that listens to Debezium change events and routes them
-// to appropriate table-specific handlers for processing.
 package cdc
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"regexp"
 	"strings"
@@ -18,141 +11,124 @@ import (
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/internal/pkg/config"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/cdcutils"
-	"github.com/emoss08/trenova/internal/pkg/utils/maputils"
-	"github.com/emoss08/trenova/shared/cdctypes"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability"
+	"github.com/emoss08/trenova/pkg/cdctypes"
+	"github.com/emoss08/trenova/pkg/utils/cdcutils"
+	"github.com/emoss08/trenova/pkg/utils/maputils"
+	lru "github.com/hashicorp/golang-lru/v2"
 	"github.com/linkedin/goavro/v2"
 	"github.com/riferrei/srclient"
-	"github.com/rotisserie/eris"
-	"github.com/rs/zerolog"
-	"github.com/samber/oops"
 	"github.com/segmentio/kafka-go"
 	"github.com/sourcegraph/conc"
+	"github.com/sourcegraph/conc/pool"
 	"go.uber.org/fx"
-	"golang.org/x/sync/singleflight"
+	"go.uber.org/zap"
 )
 
 type KafkaConsumerParams struct {
 	fx.In
 
-	Logger *logger.Logger
-	Config *config.Manager
+	Logger          *zap.Logger
+	Config          *config.Config
+	MetricsRegistry *observability.MetricsRegistry `optional:"true"`
 }
 
-type KafkaConsumerService struct {
-	l            *zerolog.Logger
-	config       *config.KafkaConfig
+type KafkaConsumer struct {
+	l            *zap.Logger
+	config       *config.CDCConfig
 	reader       *kafka.Reader
 	ctx          context.Context
 	cancel       context.CancelFunc
 	wg           *conc.WaitGroup
 	running      atomic.Bool
-	handlers     sync.Map // * table -> handler mapping
+	handlers     sync.Map
 	schemaClient *srclient.SchemaRegistryClient
-	avroSchemas  sync.Map // * schema ID -> codec mapping
-	singleFlight singleflight.Group
+	schemaCache  *lru.Cache[int, *goavro.Codec]
+	metrics      *observability.MetricsRegistry
+	messageQueue chan *kafka.Message
+	workerPool   *pool.Pool
 }
 
-// NewKafkaConsumerService initializes a new Kafka CDC consumer service with its dependencies.
-// This service manages the consumption of Debezium change events from Kafka topics and routes
-// them to registered table-specific handlers for processing.
-//
-// Parameters:
-//   - p: KafkaConsumerParams containing dependencies (logger, config).
-//
-// Returns:
-//   - services.CDCService: A ready-to-use CDC consumer service instance.
-func NewKafkaConsumerService(p KafkaConsumerParams) services.CDCService {
-	cfg := p.Config.Kafka()
-
-	log := p.Logger.With().
-		Str("service", "kafka-consumer").
-		Logger()
-
-	// Initialize schema registry client
+func NewKafkaConsumer(p KafkaConsumerParams) services.CDCService {
+	cfg := p.Config.CDC
 	schemaClient := srclient.CreateSchemaRegistryClient(cfg.SchemaRegistryURL)
 
-	return &KafkaConsumerService{
-		l:            &log,
-		config:       p.Config.Kafka(),
+	schemaCache, err := lru.New[int, *goavro.Codec](cfg.SchemaCache.MaxSize)
+	if err != nil {
+		p.Logger.Fatal("Failed to create schema cache", zap.Error(err))
+	}
+
+	consumer := &KafkaConsumer{
+		l:            p.Logger.With(zap.String("service", "kafka-consumer")),
+		config:       cfg,
 		wg:           conc.NewWaitGroup(),
 		schemaClient: schemaClient,
+		schemaCache:  schemaCache,
+		metrics:      p.MetricsRegistry,
 	}
+
+	if cfg.Processing.EnableParallelProcessing {
+		consumer.messageQueue = make(chan *kafka.Message, cfg.Processing.MessageChannelSize)
+	}
+
+	return consumer
 }
 
-// RegisterHandler registers a table-specific handler for processing CDC events.
-// Each table can have one handler that will process all change events (CREATE, UPDATE, DELETE)
-// for that specific table.
-//
-// Parameters:
-//   - table: The database table name to handle events for.
-//   - handler: The handler implementation that will process events for this table.
-func (s *KafkaConsumerService) RegisterHandler(table string, handler services.CDCEventHandler) {
+func (s *KafkaConsumer) RegisterHandler(table string, handler services.CDCEventHandler) {
 	s.handlers.Store(table, handler)
-	s.l.Info().
-		Str("table", table).
-		Str("handler_type", fmt.Sprintf("%T", handler)).
-		Msg("Registered CDC handler for table")
+	s.l.Info(
+		"Registered CDC handler for table",
+		zap.String("table", table),
+		zap.String("handler_type", fmt.Sprintf("%T", handler)),
+	)
 }
 
-// Start initializes and starts the Kafka CDC consumer service.
-// It discovers available topics, creates readers for each topic matching the configured pattern,
-// and launches goroutines to consume messages from each topic.
-//
-// Parameters:
-//   - ctx: Context for request scope and cancellation.
-//
-// Returns:
-//   - error: If the service fails to start or is already running.
-func (s *KafkaConsumerService) Start() error {
+func (s *KafkaConsumer) Start() error {
 	if s.running.Load() {
 		return cdctypes.ErrConsumerAlreadyRunning
 	}
 
 	if !s.config.Enabled {
-		s.l.Info().Msg("Kafka consumer disabled via configuration")
+		s.l.Info("Kafka consumer disabled via configuration")
 		return nil
 	}
 
-	s.l.Info().
-		Strs("brokers", s.config.Brokers).
-		Str("topic_pattern", s.config.TopicPattern).
-		Str("group_id", s.config.ConsumerGroupID).
-		Msg("🚀 Starting Kafka consumer service")
+	s.l.Info(
+		"Starting Kafka consumer",
+		zap.Strings("brokers", s.config.Brokers),
+		zap.String("topic_pattern", s.config.TopicPattern),
+		zap.String("group_id", s.config.ConsumerGroup),
+	)
 
-	// * Create a background context for long-running operations instead of using the startup context
-	// * The startup context has a timeout and will cancel after application starts
+	// ! Create a background context for long-running operations instead of using the startup context
+	// ! The startup context has a timeout and will cancel after application starts
 	s.ctx, s.cancel = context.WithCancel(context.Background())
 
-	// * Parse start offset
 	startOffset := kafka.LastOffset
 	if strings.EqualFold(s.config.StartOffset, "earliest") {
 		startOffset = kafka.FirstOffset
 	}
 
-	// * Get topics that match our pattern
 	topics, err := s.getMatchingTopics()
 	if err != nil {
-		s.l.Warn().Err(err).Msg("Failed to get matching topics, will retry later")
-		// * Start with common topics based on pattern
+		s.l.Warn("Failed to get matching topics, will retry later", zap.Error(err))
 		topics = s.getDefaultTopics()
 	}
 
 	if len(topics) == 0 {
-		s.l.Warn().Msg("No topics found, starting consumer anyway to listen for new topics")
+		s.l.Warn("No matching topics found, will retry later")
 		topics = s.getDefaultTopics()
 	}
 
-	s.l.Debug().Strs("topics", topics).Msg("Subscribing to topics")
+	s.l.Debug("Subscribing to topics", zap.Strings("topics", topics))
 
 	if len(topics) > 0 {
-		s.l.Info().Strs("topics", topics).Msg("Starting consumer for topics")
+		s.l.Info("Starting consumer for topics", zap.Strings("topics", topics))
 
 		s.reader = kafka.NewReader(kafka.ReaderConfig{
 			Brokers:                s.config.Brokers,
-			GroupID:                s.config.ConsumerGroupID,
+			GroupID:                s.config.ConsumerGroup,
 			GroupTopics:            topics, // Subscribe to all matching topics
 			StartOffset:            startOffset,
 			MinBytes:               1,
@@ -177,98 +153,192 @@ func (s *KafkaConsumerService) Start() error {
 
 	s.running.Store(true)
 
-	// Start single consumer goroutine for all topics
+	if s.config.Processing.EnableParallelProcessing {
+		s.startWorkerPool()
+		s.l.Info(
+			"Started worker pool for parallel processing",
+			zap.Int("worker_count", s.config.Processing.WorkerCount),
+			zap.Int("queue_size", s.config.Processing.MessageChannelSize),
+		)
+	}
+
 	s.wg.Go(func() {
 		s.consumeMessages()
 	})
 
-	// Start schema cache cleaner
-	s.wg.Go(func() {
-		s.cleanSchemaCache()
-	})
-
-	s.l.Info().Msg("Kafka consumer service started successfully")
+	s.l.Info(
+		"Kafka consumer started",
+		zap.Bool("parallel_processing", s.config.Processing.EnableParallelProcessing),
+		zap.Int("workers", s.config.Processing.WorkerCount),
+	)
 	return nil
 }
 
-// Stop gracefully shuts down the Kafka CDC consumer service.
-// It cancels the context to signal all consumers to stop, closes the Kafka reader,
-// and waits for all goroutines to complete.
-//
-// Returns:
-//   - error: If there are issues during shutdown (logged but not returned).
-func (s *KafkaConsumerService) Stop() error {
+func (s *KafkaConsumer) Stop() error {
 	if !s.running.Load() {
 		return nil
 	}
 
-	s.l.Info().Msg("Stopping Kafka consumer service")
+	s.l.Info("Stopping Kafka consumer")
 
 	if s.cancel != nil {
 		s.cancel()
 	}
 
+	if s.config.Processing.EnableParallelProcessing && s.messageQueue != nil {
+		close(s.messageQueue)
+		s.l.Debug("Closed message queue")
+	}
+
+	if s.workerPool != nil {
+		shutdownCtx, cancel := context.WithTimeout(
+			context.Background(),
+			s.config.Processing.ShutdownTimeout,
+		)
+		defer cancel()
+
+		done := make(chan struct{})
+		go func() {
+			s.workerPool.Wait()
+			close(done)
+		}()
+
+		select {
+		case <-done:
+			s.l.Info("Worker pool shut down gracefully")
+		case <-shutdownCtx.Done():
+			s.l.Warn(
+				"Worker pool shutdown timed out",
+				zap.Duration("timeout", s.config.Processing.ShutdownTimeout),
+			)
+		}
+	}
+
 	if s.reader != nil {
 		if err := s.reader.Close(); err != nil {
-			s.l.Error().Err(err).Msg("Error closing Kafka reader")
+			s.l.Error("Error closing Kafka reader", zap.Error(err))
 		}
 	}
 
 	s.wg.Wait()
 	s.running.Store(false)
 
-	s.l.Info().Msg("Kafka consumer service stopped")
+	s.l.Info("Kafka consumer stopped")
 	return nil
 }
 
-// IsRunning returns the current running state of the CDC consumer service.
-// Thread-safe method that can be called concurrently.
-//
-// Returns:
-//   - bool: True if the service is currently running, false otherwise.
-func (s *KafkaConsumerService) IsRunning() bool {
+func (s *KafkaConsumer) IsRunning() bool {
 	return s.running.Load()
 }
 
-// logKafkaError handles Kafka error logging in a structured way
-func (s *KafkaConsumerService) logKafkaError(msg string, args ...any) {
-	// * Downgrade rebalancing messages to debug level as they're normal operation
-	if strings.Contains(msg, "Rebalance In Progress") || strings.Contains(msg, "[27]") {
-		s.l.Debug().Msgf("Kafka rebalancing: "+msg, args...)
-		return
+func (s *KafkaConsumer) startWorkerPool() {
+	s.workerPool = pool.New().WithMaxGoroutines(s.config.Processing.WorkerCount)
+
+	if s.metrics != nil {
+		s.metrics.UpdateCDCProcessingWorkers(s.config.Processing.WorkerCount)
 	}
-	// * Downgrade timeout errors to debug level as they're normal when no messages
-	if strings.Contains(msg, "i/o timeout") || strings.Contains(msg, "timeout") {
-		s.l.Debug().Msgf("Kafka timeout (normal when idle): "+msg, args...)
-		return
-	}
-	s.l.Error().Msgf("Kafka error: "+msg, args...)
+
+	s.wg.Go(func() {
+		s.processMessageQueue()
+	})
 }
 
-// getMatchingTopics discovers Kafka topics that match the configured pattern.
-// It connects to Kafka, reads available partitions, and filters topics using regex matching.
-//
-// Returns:
-//   - []string: List of topic names that match the configured pattern.
-//   - error: If Kafka connection or topic discovery fails.
-func (s *KafkaConsumerService) getMatchingTopics() ([]string, error) {
+func (s *KafkaConsumer) processMessageQueue() {
+	for {
+		select {
+		case <-s.ctx.Done():
+			s.l.Debug("Message queue processor stopping")
+			return
+		case message, ok := <-s.messageQueue:
+			if !ok {
+				s.l.Debug("Message queue closed")
+				return
+			}
+
+			msg := message
+			s.workerPool.Go(func() {
+				s.processAndLogMessage(msg)
+			})
+		}
+	}
+}
+
+func (s *KafkaConsumer) retryWithBackoff(
+	ctx context.Context,
+	operation func() error,
+	operationName string,
+) error {
+	backoff := s.config.Retry.InitialBackoff
+	maxAttempts := s.config.Retry.MaxAttempts
+
+	for attempt := 1; attempt <= maxAttempts; attempt++ {
+		err := operation()
+		if err == nil {
+			return nil
+		}
+
+		if ctx.Err() != nil {
+			return fmt.Errorf("%s cancelled: %w", operationName, ctx.Err())
+		}
+
+		if attempt == maxAttempts {
+			return fmt.Errorf("%s failed after %d attempts: %w", operationName, maxAttempts, err)
+		}
+
+		s.l.Warn(
+			"Operation failed, retrying",
+			zap.String("operation", operationName),
+			zap.Int("attempt", attempt),
+			zap.Int("max_attempts", maxAttempts),
+			zap.Duration("backoff", backoff),
+			zap.Error(err),
+		)
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(backoff):
+			backoff = time.Duration(float64(backoff) * s.config.Retry.BackoffFactor)
+			if backoff > s.config.Retry.MaxBackoff {
+				backoff = s.config.Retry.MaxBackoff
+			}
+		}
+	}
+
+	return nil
+}
+
+func (s *KafkaConsumer) logKafkaError(msg string, args ...any) {
+	if strings.Contains(msg, "Rebalance In Progress") || strings.Contains(msg, "[27]") {
+		s.l.Debug("Kafka rebalancing", zap.String("message", msg), zap.Any("args", args))
+		if s.metrics != nil {
+			s.metrics.RecordCDCRebalance()
+		}
+		return
+	}
+	if strings.Contains(msg, "i/o timeout") || strings.Contains(msg, "timeout") {
+		s.l.Debug(
+			"Kafka timeout (normal when idle)",
+			zap.String("message", msg),
+			zap.Any("args", args),
+		)
+		return
+	}
+	s.l.Error("Kafka error", zap.String("message", msg), zap.Any("args", args))
+}
+
+func (s *KafkaConsumer) getMatchingTopics() ([]string, error) {
 	conn, err := kafka.Dial("tcp", s.config.Brokers[0])
 	if err != nil {
-		return nil, oops.
-			In("kafka_consumer").
-			With("broker", s.config.Brokers[0]).
-			Time(time.Now()).
-			Wrapf(err, "failed to connect to Kafka")
+		s.l.Error("Failed to connect to Kafka", zap.Error(err))
+		return nil, fmt.Errorf("failed to connect to Kafka: %w", err)
 	}
 	defer conn.Close()
 
 	partitions, err := conn.ReadPartitions()
 	if err != nil {
-		return nil, oops.
-			In("kafka_consumer").
-			With("broker", s.config.Brokers[0]).
-			Time(time.Now()).
-			Wrapf(err, "failed to read partitions")
+		s.l.Error("Failed to read partitions", zap.Error(err))
+		return nil, fmt.Errorf("failed to read partitions: %w", err)
 	}
 
 	topicSet := make(map[string]bool)
@@ -288,37 +358,20 @@ func (s *KafkaConsumerService) getMatchingTopics() ([]string, error) {
 	return topics, nil
 }
 
-// convertPatternToRegex converts a glob-style pattern to a compiled regular expression.
-// Supports wildcard (*) patterns commonly used in topic naming conventions.
-//
-// Parameters:
-//   - pattern: Glob pattern string (e.g., "trenova.public.*")
-//
-// Returns:
-//   - *regexp.Regexp: Compiled regex pattern, or match-all pattern if compilation fails.
-func (s *KafkaConsumerService) convertPatternToRegex(pattern string) *regexp.Regexp {
-	// * Convert glob pattern to regex
-	// * Replace * with .*
+func (s *KafkaConsumer) convertPatternToRegex(pattern string) *regexp.Regexp {
 	regexPattern := strings.ReplaceAll(pattern, "*", ".*")
 	regexPattern = "^" + regexPattern + "$"
 
 	regex, err := regexp.Compile(regexPattern)
 	if err != nil {
-		s.l.Warn().Err(err).Str("pattern", pattern).Msg("Invalid pattern, using match-all")
+		s.l.Warn("Invalid pattern, using match-all", zap.Error(err), zap.String("pattern", pattern))
 		return regexp.MustCompile(".*")
 	}
 
 	return regex
 }
 
-// getDefaultTopics provides a fallback list of common topics when topic discovery fails.
-// Returns a predefined set of table topics based on the configured pattern to ensure
-// the consumer can start even if Kafka metadata is temporarily unavailable.
-//
-// Returns:
-//   - []string: List of default topic names for common database tables.
-func (s *KafkaConsumerService) getDefaultTopics() []string {
-	// * Extract base from pattern and create common table topics
+func (s *KafkaConsumer) getDefaultTopics() []string {
 	if strings.Contains(s.config.TopicPattern, "trenova.public") {
 		return []string{
 			"trenova.public.shipments",
@@ -336,26 +389,22 @@ func (s *KafkaConsumerService) getDefaultTopics() []string {
 	return []string{}
 }
 
-// handleReadError centralizes error handling for Kafka message reads.
-// It implements an exponential backoff strategy for retriable errors.
-// Returns false if consumption should stop.
-func (s *KafkaConsumerService) handleReadError(
+func (s *KafkaConsumer) handleReadError(
 	err error,
 	topic string,
 	backoff *time.Duration,
 ) bool {
-	if eris.Is(err, context.Canceled) {
-		s.l.Info().Str("topic", topic).Msg("Consumer context cancelled during read")
+	if errors.Is(err, context.Canceled) {
+		s.l.Info("Consumer context cancelled during read", zap.String("topic", topic))
 		return false
 	}
 
 	if netErr, ok := err.(interface{ Timeout() bool }); ok && netErr.Timeout() {
-		s.l.Debug().Str("topic", topic).Msg("Read timeout - no new messages (normal)")
+		s.l.Debug("Read timeout - no new messages (normal)", zap.String("topic", topic))
 		*backoff = 0 // Reset backoff on normal timeout
 		return true
 	}
 
-	// Implement exponential backoff for other errors
 	const maxBackoff = 30 * time.Second
 	if *backoff == 0 {
 		*backoff = 1 * time.Second
@@ -365,47 +414,39 @@ func (s *KafkaConsumerService) handleReadError(
 			*backoff = maxBackoff
 		}
 	}
-	s.l.Warn().
-		Err(err).
-		Str("topic", topic).
-		Dur("backoff", *backoff).
-		Msg("Kafka read error, backing off")
+	s.l.Warn(
+		"Kafka read error, backing off",
+		zap.Error(err),
+		zap.String("topic", topic),
+		zap.Duration("backoff", *backoff),
+	)
 	time.Sleep(*backoff)
 
 	return true
 }
 
-// processAndLogMessage wraps the message processing and error logging.
-func (s *KafkaConsumerService) processAndLogMessage(message *kafka.Message) {
+func (s *KafkaConsumer) processAndLogMessage(message *kafka.Message) {
 	processCtx, cancel := context.WithTimeout(s.ctx, 30*time.Second)
 	defer cancel()
-	_ = processCtx // Will be used in future for passing context to handlers
 
-	if err := s.processMessage(message); err != nil {
-		s.l.Error().
-			Err(err).
-			Str("topic", message.Topic).
-			Int("partition", message.Partition).
-			Int64("offset", message.Offset).
-			Bytes("key", message.Key).
-			Int("value_size", len(message.Value)).
-			Msg("Error processing Kafka message")
+	start := time.Now()
+	err := s.processMessage(processCtx, message)
+	duration := time.Since(start).Seconds()
+
+	if err != nil {
+		if s.metrics != nil {
+			s.metrics.RecordCDCMessage("unknown", "unknown", "error", duration)
+		}
 	}
 }
 
-// decodeAvroMessage decodes an Avro-encoded Kafka message.
-func (s *KafkaConsumerService) decodeAvroMessage(message *kafka.Message) (map[string]any, error) {
+func (s *KafkaConsumer) decodeAvroMessage(message *kafka.Message) (map[string]any, error) {
 	// ! Kafka Connect Avro messages have the format: [magic_byte][schema_id][avro_data]
 	// ! The first byte is 0x0 (magic byte), followed by 4 bytes for schema ID
 	if len(message.Value) < 5 {
-		return nil, oops.
-			In("kafka_consumer").
-			With("topic", message.Topic).
-			Time(time.Now()).
-			New("message too short for Avro format")
+		return nil, ErrMessageTooShort
 	}
 
-	// * Extract schema ID (bytes 1-4, big endian)
 	schemaID := int(
 		message.Value[1],
 	)<<24 | int(
@@ -416,192 +457,177 @@ func (s *KafkaConsumerService) decodeAvroMessage(message *kafka.Message) (map[st
 		message.Value[4],
 	)
 
-	// * Try to get codec from cache
-	codecKey := fmt.Sprintf("schema-%d", schemaID)
-	codecInterface, ok := s.avroSchemas.Load(codecKey)
+	codec, ok := s.schemaCache.Get(schemaID)
+	if !ok { //nolint:nestif // this is fine
+		if s.metrics != nil {
+			s.metrics.RecordCDCSchemaCache("miss")
+		}
 
-	var codec *goavro.Codec
-	if !ok {
-		// Get schema from registry
 		schema, err := s.schemaClient.GetSchema(schemaID)
 		if err != nil {
-			return nil, oops.
-				In("kafka_consumer").
-				With("schema_id", schemaID).
-				With("topic", message.Topic).
-				Time(time.Now()).
-				Wrapf(err, "failed to get schema by ID")
+			return nil, fmt.Errorf("failed to get schema by ID %d: %w", schemaID, err)
 		}
 
-		// Create and cache codec
 		codec, err = goavro.NewCodec(schema.Schema())
 		if err != nil {
-			return nil, oops.
-				In("kafka_consumer").
-				With("schema_id", schemaID).
-				Time(time.Now()).
-				Wrapf(err, "failed to create Avro codec")
+			return nil, fmt.Errorf("failed to create Avro codec for schema %d: %w", schemaID, err)
 		}
 
-		s.avroSchemas.Store(codecKey, codec)
-	} else {
-		codec = codecInterface.(*goavro.Codec)
+		evicted := s.schemaCache.Add(schemaID, codec)
+		if evicted && s.metrics != nil {
+			s.metrics.RecordCDCSchemaCache("eviction")
+		}
+	} else if s.metrics != nil {
+		s.metrics.RecordCDCSchemaCache("hit")
 	}
 
-	// * Decode the Avro data (skip first 5 bytes which are magic byte + schema ID)
 	native, _, err := codec.NativeFromBinary(message.Value[5:])
 	if err != nil {
-		return nil, oops.
-			In("kafka_consumer").
-			With("schema_id", schemaID).
-			With("topic", message.Topic).
-			Time(time.Now()).
-			Wrapf(err, "failed to decode Avro message")
+		return nil, fmt.Errorf("failed to decode Avro message: %w", err)
 	}
 
-	// * Convert to map[string]any
-	if result, ok := native.(map[string]any); ok {
+	if result, rOk := native.(map[string]any); rOk {
 		return result, nil
 	}
 
-	return nil, oops.
-		In("kafka_consumer").
-		With("schema_id", schemaID).
-		With("topic", message.Topic).
-		Time(time.Now()).
-		New("decoded Avro message is not a map")
+	return nil, ErrDecodeAvroMessage
 }
 
-// processMessage handles individual Kafka messages containing Debezium change events.
-// It unmarshals the JSON payload, extracts table information, finds the appropriate handler,
-// and routes the event for processing.
-//
-// Parameters:
-//   - message: The Kafka message containing the Debezium change event.
-//
-// Returns:
-//   - error: If message processing fails at any stage.
-func (s *KafkaConsumerService) processMessage(message *kafka.Message) error {
-	log := s.l.With().
-		Str("operation", "processMessage").
-		Logger()
+func (s *KafkaConsumer) processMessage( //nolint:funlen // this is fine
+	ctx context.Context,
+	message *kafka.Message,
+) error {
+	log := s.l.With(zap.String("operation", "processMessage"))
+	start := time.Now()
 
-	// * Decode Avro message
 	avroData, err := s.decodeAvroMessage(message)
 	if err != nil {
-		log.Error().
-			Err(err).
-			Str("topic", message.Topic).
-			Int("partition", message.Partition).
-			Int64("offset", message.Offset).
-			Msg("Failed to decode Avro message")
+		if errors.Is(err, ErrMessageTooShort) {
+			log.Warn(
+				"Message too short to be an Avro message",
+				zap.String("topic", message.Topic),
+				zap.Int("partition", message.Partition),
+				zap.Int64("offset", message.Offset),
+				zap.Int("message_size", len(message.Value)),
+			)
+			return nil
+		}
 
-		return oops.
-			In("kafka_consumer").
-			With("topic", message.Topic).
-			With("partition", message.Partition).
-			With("offset", message.Offset).
-			Time(time.Now()).
-			Wrapf(err, "failed to decode Avro message")
+		log.Error(
+			"Failed to decode Avro message",
+			zap.Error(err),
+			zap.String("topic", message.Topic),
+			zap.Int("partition", message.Partition),
+			zap.Int64("offset", message.Offset),
+			zap.Int("message_size", len(message.Value)),
+		)
+		if s.metrics != nil {
+			s.metrics.RecordCDCHandlerError("unknown", "decode_error")
+		}
+		return fmt.Errorf("failed to decode Avro message: %w", err)
 	}
 
-	// * Extract source information for table name
 	source, ok := avroData["source"].(map[string]any)
 	if !ok {
-		log.Error().
-			Err(err).
-			Str("topic", message.Topic).
-			Int("partition", message.Partition).
-			Int64("offset", message.Offset).
-			Msg("Failed to decode Avro message")
-
-		return oops.
-			In("kafka_consumer").
-			With("topic", message.Topic).
-			Time(time.Now()).
-			New("source field not found or not a map")
+		sourceErr := errors.New("source field not found or not a map")
+		log.Error(
+			"Invalid CDC message structure",
+			zap.Error(sourceErr),
+			zap.String("topic", message.Topic),
+			zap.Int("partition", message.Partition),
+			zap.Int64("offset", message.Offset),
+		)
+		if s.metrics != nil {
+			s.metrics.RecordCDCHandlerError("unknown", "invalid_structure")
+		}
+		return sourceErr
 	}
 
 	tableName, ok := source["table"].(string)
 	if !ok {
-		log.Error().
-			Err(err).
-			Str("topic", message.Topic).
-			Int("partition", message.Partition).
-			Int64("offset", message.Offset).
-			Msg("Failed to decode Avro message")
-
-		return oops.
-			In("kafka_consumer").
-			With("topic", message.Topic).
-			Time(time.Now()).
-			New("table name not found in source")
+		tableErr := errors.New("table name not found in source")
+		log.Error(
+			"Table name missing from CDC message",
+			zap.Error(tableErr),
+			zap.String("topic", message.Topic),
+			zap.Int("partition", message.Partition),
+			zap.Int64("offset", message.Offset),
+		)
+		if s.metrics != nil {
+			s.metrics.RecordCDCHandlerError("unknown", "missing_table")
+		}
+		return tableErr
 	}
 
-	// * Check if we have a handler for this table
 	handler, exists := s.handlers.Load(tableName)
-
 	if !exists {
-		s.l.Debug().
-			Str("table", tableName).
-			Str("topic", message.Topic).
-			Msg("No handler registered for table, skipping")
-		return nil
+		return fmt.Errorf("handler does not exist for table %s", tableName)
 	}
 
-	// * Convert Avro data to CDC event
 	cdcEvent, err := s.convertAvroToCDCEvent(avroData)
 	if err != nil {
-		operation, _ := avroData["op"].(string)
-		return oops.
-			In("kafka_consumer").
-			With("topic", message.Topic).
-			With("table", tableName).
-			With("operation", operation).
-			Time(time.Now()).
-			Wrapf(err, "failed to convert to CDC event")
+		log.Error(
+			"Failed to convert to CDC event",
+			zap.Error(err),
+			zap.String("table", tableName),
+		)
+		if s.metrics != nil {
+			s.metrics.RecordCDCHandlerError(tableName, "conversion_error")
+		}
+		return fmt.Errorf("failed to convert to CDC event: %w", err)
 	}
 
-	// * Route to appropriate handler
-	if err = handler.(services.CDCEventHandler).HandleEvent(cdcEvent); err != nil {
-		return oops.
-			In("kafka_consumer").
-			With("topic", message.Topic).
-			With("table", tableName).
-			With("operation", cdcEvent.Operation).
-			With("handler_type", fmt.Sprintf("%T", handler)).
-			Time(time.Now()).
-			Wrapf(err, "handler failed for table %s", tableName)
+	handlerErr := s.retryWithBackoff(ctx, func() error {
+		if err = handler.(services.CDCEventHandler).HandleEvent(ctx, cdcEvent); err != nil { //nolint:errcheck // we're returning the error
+			return err
+		}
+
+		return nil
+	}, fmt.Sprintf("handler for table %s", tableName))
+
+	if handlerErr != nil {
+		log.Error(
+			"Handler failed after retries",
+			zap.Error(handlerErr),
+			zap.String("table", tableName),
+			zap.String("operation", cdcEvent.Operation),
+			zap.Int("max_attempts", s.config.Retry.MaxAttempts),
+		)
+		if s.metrics != nil {
+			duration := time.Since(start).Seconds()
+			s.metrics.RecordCDCMessage(tableName, cdcEvent.Operation, "error", duration)
+			s.metrics.RecordCDCHandlerError(tableName, "handler_failed")
+		}
+
+		return fmt.Errorf("handler failed for table %s after retries: %w", tableName, handlerErr)
 	}
 
-	s.l.Debug().
-		Str("table", tableName).
-		Str("operation", cdcEvent.Operation).
-		Msg("Successfully processed CDC event")
+	duration := time.Since(start).Seconds()
+	if s.metrics != nil {
+		s.metrics.RecordCDCMessage(tableName, cdcEvent.Operation, "success", duration)
+	}
+
+	log.Debug(
+		"Successfully processed CDC event",
+		zap.String("table", tableName),
+		zap.String("operation", cdcEvent.Operation),
+		zap.Float64("duration_seconds", duration),
+	)
 
 	return nil
 }
 
-// convertAvroToCDCEvent transforms an Avro-decoded Debezium change event into our generic CDC event format.
-// This handles the new Avro format where data is already decoded into maps.
-//
-// Parameters:
-//   - avroData: The decoded Avro data containing the Debezium envelope.
-//
-// Returns:
-//   - *services.CDCEvent: Normalized CDC event for handler processing.
-//   - error: If event conversion fails.
-func (s *KafkaConsumerService) convertAvroToCDCEvent(
+func (s *KafkaConsumer) convertAvroToCDCEvent(
 	avroData map[string]any,
 ) (*cdctypes.CDCEvent, error) {
 	op, ok := avroData["op"].(string)
 	if !ok {
-		return nil, eris.New("operation field not found or not a string")
+		return nil, ErrOperationFieldNotFound
 	}
 
 	sourceMap, ok := avroData["source"].(map[string]any)
 	if !ok {
-		return nil, eris.New("source field not found or not a map")
+		return nil, ErrSourceFieldNotFound
 	}
 
 	before := cdcutils.ExtractDataState(avroData, "before")
@@ -628,20 +654,21 @@ func (s *KafkaConsumerService) convertAvroToCDCEvent(
 	}, nil
 }
 
-// consumeMessages reads messages from Kafka using the single reader for all topics
-func (s *KafkaConsumerService) consumeMessages() {
-	s.l.Info().Msg("Started message consumer")
+func (s *KafkaConsumer) consumeMessages() {
+	s.l.Info(
+		"Started message consumer",
+		zap.Bool("parallel_processing", s.config.Processing.EnableParallelProcessing),
+	)
 
 	var backoff time.Duration
 
 	for {
 		select {
 		case <-s.ctx.Done():
-			s.l.Info().Msg("Message consumer stopped")
+			s.l.Info("Message consumer stopped")
 			return
 
 		default:
-			// Read message with proper timeout handling
 			message, err := s.reader.ReadMessage(s.ctx)
 			if err != nil {
 				if !s.handleReadError(err, "multi-topic", &backoff) {
@@ -652,47 +679,20 @@ func (s *KafkaConsumerService) consumeMessages() {
 
 			backoff = 0
 
-			// Process message
-			s.processAndLogMessage(&message)
-
-			// Note: ReadMessage automatically commits messages when using consumer groups
-		}
-	}
-}
-
-// cleanSchemaCache periodically cleans old schemas from the cache to prevent memory leaks
-func (s *KafkaConsumerService) cleanSchemaCache() {
-	ticker := time.NewTicker(5 * time.Minute)
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-s.ctx.Done():
-			return
-
-		case <-ticker.C:
-			// Count schemas
-			count := 0
-			s.avroSchemas.Range(func(key, value any) bool {
-				count++
-				return true
-			})
-
-			// If we have too many schemas cached, remove some
-			if count > 100 {
-				removed := 0
-				s.avroSchemas.Range(func(key, value any) bool {
-					if removed < count-100 {
-						s.avroSchemas.Delete(key)
-						removed++
-					}
-					return removed < count-100
-				})
-
-				s.l.Debug().
-					Int("removed", removed).
-					Int("remaining", 100).
-					Msg("Cleaned schema cache")
+			if s.config.Processing.EnableParallelProcessing {
+				select {
+				case s.messageQueue <- &message:
+				case <-s.ctx.Done():
+					return
+				default:
+					s.l.Warn(
+						"Message queue full, processing synchronously",
+						zap.Int("queue_size", s.config.Processing.MessageChannelSize),
+					)
+					s.processAndLogMessage(&message)
+				}
+			} else {
+				s.processAndLogMessage(&message)
 			}
 		}
 	}

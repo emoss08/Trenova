@@ -12,7 +12,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
-import { usePermissions } from "@/hooks/use-permissions";
+import { usePermissions } from "@/hooks/use-permission";
 import { holdTypeChoices } from "@/lib/choices";
 import {
   ReleaseShipmentHoldRequestSchema,

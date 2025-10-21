@@ -1,82 +1,30 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/customer"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
-var CustomerFieldConfig = &ports.FieldConfiguration{
-	FilterableFields: map[string]bool{
-		"name":         true,
-		"code":         true,
-		"status":       true,
-		"customerType": true,
-		"email":        true,
-		"city":         true,
-		"postalCode":   true,
-		"createdAt":    true,
-		"updatedAt":    true,
-	},
-	SortableFields: map[string]bool{
-		"name":         true,
-		"code":         true,
-		"status":       true,
-		"customerType": true,
-		"createdAt":    true,
-		"updatedAt":    true,
-	},
-	FieldMap: map[string]string{
-		"name":         "name",
-		"code":         "code",
-		"status":       "status",
-		"customerType": "customer_type",
-		"email":        "email",
-		"createdAt":    "created_at",
-		"updatedAt":    "updated_at",
-		"city":         "city",
-		"postalCode":   "postal_code",
-	},
-	EnumMap: map[string]bool{
-		"status": true,
-	},
+type CustomerFilterOptions struct {
+	IncludeState          bool `form:"includeState"`
+	IncludeBillingProfile bool `form:"includeBillingProfile"`
+	IncludeEmailProfile   bool `form:"includeEmailProfile"`
 }
 
-type ListCustomerOptions struct {
-	IncludeState          bool `query:"includeState"`
-	IncludeBillingProfile bool `query:"includeBillingProfile"`
-	IncludeEmailProfile   bool `query:"includeEmailProfile"`
-	Filter                *ports.QueryOptions
+type ListCustomerRequest struct {
+	CustomerFilterOptions `form:"customerFilterOptions"`
+	Filter                *pagination.QueryOptions
 }
 
-// BuildCustomerListOptions is a specific helper for customer list options
-func BuildCustomerListOptions(
-	filter *ports.QueryOptions,
-	additionalOpts *ListCustomerOptions,
-) *ListCustomerOptions {
-	return &ListCustomerOptions{
-		Filter:                filter,
-		IncludeState:          additionalOpts.IncludeState,
-		IncludeBillingProfile: additionalOpts.IncludeBillingProfile,
-		IncludeEmailProfile:   additionalOpts.IncludeEmailProfile,
-	}
-}
-
-type GetCustomerByIDOptions struct {
+type GetCustomerByIDRequest struct {
 	ID                    pulid.ID
 	OrgID                 pulid.ID
 	BuID                  pulid.ID
 	UserID                pulid.ID
-	IncludeState          bool `query:"includeState"`
-	IncludeBillingProfile bool `query:"includeBillingProfile"`
-	IncludeEmailProfile   bool `query:"includeEmailProfile"`
+	CustomerFilterOptions `form:"customerFilterOptions"`
 }
 
 type CustomerDocRequirementResponse struct {
@@ -89,9 +37,9 @@ type CustomerDocRequirementResponse struct {
 type CustomerRepository interface {
 	List(
 		ctx context.Context,
-		opts *ListCustomerOptions,
-	) (*ports.ListResult[*customer.Customer], error)
-	GetByID(ctx context.Context, opts GetCustomerByIDOptions) (*customer.Customer, error)
+		opts *ListCustomerRequest,
+	) (*pagination.ListResult[*customer.Customer], error)
+	GetByID(ctx context.Context, opts GetCustomerByIDRequest) (*customer.Customer, error)
 	GetDocumentRequirements(
 		ctx context.Context,
 		cusID pulid.ID,

@@ -1,31 +1,25 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { DataTableConfig } from "@/config/data-table";
+import type {
+  FilterFieldSchema,
+  FilterStateSchema,
+  SortFieldSchema,
+} from "@/lib/schemas/table-configuration-schema";
 import { API_ENDPOINTS } from "@/types/server";
 import { IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 import type {
   ColumnDef,
-  ColumnFilter,
   ColumnFiltersState,
   ColumnSort,
   OnChangeFn,
   PaginationState,
   Row,
   RowSelectionState,
-  SortingState,
   Table,
   VisibilityState,
 } from "@tanstack/react-table";
 import React from "react";
 import type { Resource } from "./audit-entry";
 import type { LiveModeTableConfig } from "./live-mode";
-
-export type Prettify<T> = {
-  [K in keyof T]: T[K];
-} & {};
 
 export type StringKeyOf<TData> = Extract<keyof TData, string>;
 
@@ -50,20 +44,6 @@ export type ColumnType = DataTableConfig["columnTypes"][number];
 
 export type FilterOperator = DataTableConfig["globalOperators"][number];
 
-export type JoinOperator = DataTableConfig["joinOperators"][number]["value"];
-
-export interface DataTableFilterField<TData> {
-  id: StringKeyOf<TData>;
-  label: string;
-  placeholder?: string;
-  options?: Option[];
-}
-
-export interface DataTableAdvancedFilterField<TData>
-  extends DataTableFilterField<TData> {
-  type: ColumnType;
-}
-
 export interface DataTableRowAction<TData> {
   row: Row<TData>;
   type: "update" | "delete";
@@ -76,14 +56,11 @@ export interface QueryBuilderOpts {
   nullish?: boolean;
 }
 
-type ExtraAction = {
+export type ExtraAction = {
   key: string;
-  // * Label to be displayed
   label: string;
   icon?: IconDefinition;
-  // * Content to be displayed after the label
   endContent?: React.ReactNode;
-  // * Description to be displayed below the label
   description?: string;
   onClick: () => void;
 };
@@ -95,12 +72,12 @@ export interface ContextMenuAction<TData> {
   variant?: "default" | "destructive";
   disabled?: boolean | ((row: Row<TData>) => boolean);
   hidden?: boolean | ((row: Row<TData>) => boolean);
-  onClick?: (row: Row<TData>) => void; // Optional when subActions exist
+  onClick?: (row: Row<TData>) => void;
   separator?: "before" | "after";
   subActions?: ContextMenuAction<TData>[];
 }
 
-type DataTableCreateButtonProps = {
+export type DataTableCreateButtonProps = {
   name: string;
   exportModelName: string;
   onCreateClick: () => void;
@@ -136,40 +113,12 @@ export type EditTableSheetProps<TData extends Record<string, any>> = {
   currentRecord?: TData;
   isLoading?: boolean;
   error?: Error | null;
-  // New properties for independent modal data fetching
   useIndependentFetch?: boolean;
   apiEndpoint?: API_ENDPOINTS;
   queryKey?: string;
 };
 
-type CurrentRecord<TData extends Record<string, unknown>> = TData | undefined;
-type SetCurrentRecord<TData extends Record<string, unknown>> = (
-  record: TData | undefined,
-) => void;
-
-interface DataTableState<TData extends Record<string, unknown>> {
-  pagination: PaginationState;
-  setPagination: OnChangeFn<PaginationState>;
-  rowSelection: RowSelectionState;
-  setRowSelection: OnChangeFn<RowSelectionState>;
-  currentRecord: CurrentRecord<TData>;
-  setCurrentRecord: SetCurrentRecord<TData>;
-  columnVisibility: VisibilityState;
-  setColumnVisibility: OnChangeFn<VisibilityState>;
-  columnFilters: ColumnFilter[];
-  setColumnFilters: OnChangeFn<ColumnFilter[]>;
-  sorting: ExtendedSortingState<TData>;
-  setSorting: OnChangeFn<ExtendedSortingState<TData>>;
-  showFilterDialog: boolean;
-  setShowFilterDialog: OnChangeFn<boolean>;
-  initialPageSize: number;
-  setInitialPageSize: OnChangeFn<number>;
-  defaultSort: SortingState;
-  setDefaultSort: OnChangeFn<SortingState>;
-  onDataChange?: (data: TData[]) => void;
-}
-
-type DataTableProps<TData extends Record<string, any>> = {
+export type DataTableProps<TData extends Record<string, any>> = {
   columns: ColumnDef<TData>[];
   name: string;
   link: API_ENDPOINTS;
@@ -189,7 +138,7 @@ type DataTableProps<TData extends Record<string, any>> = {
   contextMenuActions?: ContextMenuAction<TData>[];
 };
 
-type DataTableBodyProps<TData extends Record<string, any>> = {
+export type DataTableBodyProps<TData extends Record<string, any>> = {
   table: Table<TData>;
   columns: ColumnDef<TData>[];
   liveMode?: {
@@ -202,11 +151,52 @@ type DataTableBodyProps<TData extends Record<string, any>> = {
   };
 };
 
-export type {
-  DataTableBodyProps,
-  DataTableCreateButtonProps,
-  DataTableProps,
-  DataTableState,
-  ExtraAction
-};
+export interface EnhancedQueryParams {
+  limit?: number;
+  offset?: number;
+  query?: string;
 
+  filters?: FilterFieldSchema[];
+  sort?: SortFieldSchema[];
+}
+
+export type EnhancedColumnDef<TData, TValue = unknown> = ColumnDef<
+  TData,
+  TValue
+>;
+
+export interface Config {
+  enableFiltering?: boolean;
+  enableSorting?: boolean;
+  enableMultiSort?: boolean;
+  maxFilters?: number;
+  maxSorts?: number;
+  searchDebounce?: number;
+  showFilterUI?: boolean;
+  showSortUI?: boolean;
+}
+
+export interface FilterPreset {
+  id: string;
+  name: string;
+  description?: string;
+  filters: FilterStateSchema["filters"];
+  sort: FilterStateSchema["sort"];
+  globalSearch?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface URLFilterParams {
+  [key: string]: string | string[] | undefined;
+}
+
+export interface FilterUtils {
+  serializeToURL(state: FilterStateSchema): URLFilterParams;
+  deserializeFromURL(params: URLFilterParams): FilterStateSchema;
+  serializeForAPI(state: FilterStateSchema): EnhancedQueryParams;
+  validateFilterState(
+    state: FilterStateSchema,
+    columns: EnhancedColumnDef<any>[],
+  ): boolean;
+}

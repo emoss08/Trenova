@@ -1,32 +1,29 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package notification
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 
-	"github.com/emoss08/trenova/internal/pkg/errors"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/rotisserie/eris"
 
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/uptrace/bun"
 )
 
 var _ bun.BeforeAppendModelHook = (*Notification)(nil)
+
+var _ domain.Validatable = (*Notification)(nil)
 
 type Targeting struct {
 	Channel        Channel   `json:"channel"`
 	OrganizationID pulid.ID  `json:"organizationId"`
 	BusinessUnitID *pulid.ID `json:"businessUnitId,omitempty"`
 	TargetUserID   *pulid.ID `json:"targetUserId,omitempty"`
-	TargetRoleID   *pulid.ID `json:"targetRoleId,omitempty"`
 }
 
 type Action struct {
@@ -50,6 +47,8 @@ type Notification struct {
 
 	ID              pulid.ID        `json:"id"                        bun:"id,pk,type:VARCHAR(100)"`
 	OrganizationID  pulid.ID        `json:"organizationId"            bun:"organization_id,type:VARCHAR(100),notnull"`
+	BusinessUnitID  *pulid.ID       `json:"businessUnitId,omitempty"  bun:"business_unit_id,type:VARCHAR(100)"`
+	TargetUserID    *pulid.ID       `json:"targetUserId,omitempty"    bun:"target_user_id,type:VARCHAR(100)"`
 	EventType       EventType       `json:"eventType"                 bun:"event_type,type:VARCHAR(100),notnull"`
 	Priority        Priority        `json:"priority"                  bun:"priority,type:VARCHAR(20),notnull"`
 	Channel         Channel         `json:"channel"                   bun:"channel,type:VARCHAR(20),notnull"`
@@ -72,14 +71,14 @@ type Notification struct {
 	DismissedAt     *int64          `json:"dismissedAt,omitempty"     bun:"dismissed_at"`
 	JobID           *string         `json:"jobId,omitempty"           bun:"job_id,type:VARCHAR(255)"`
 	CorrelationID   *string         `json:"correlationId,omitempty"   bun:"correlation_id,type:VARCHAR(255)"`
-	BusinessUnitID  *pulid.ID       `json:"businessUnitId,omitempty"  bun:"business_unit_id,type:VARCHAR(100)"`
-	TargetUserID    *pulid.ID       `json:"targetUserId,omitempty"    bun:"target_user_id,type:VARCHAR(100)"`
-	TargetRoleID    *pulid.ID       `json:"targetRoleId,omitempty"    bun:"target_role_id,type:VARCHAR(100)"`
+
+	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	TargetUser   *tenant.User         `json:"targetUser,omitempty"   bun:"rel:belongs-to,join:target_user_id=id"`
 }
 
-func (n *Notification) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(
-		ctx,
+func (n *Notification) Validate(multiErr *errortypes.MultiError) {
+	err := validation.ValidateStruct(
 		n,
 		validation.Field(&n.ID, validation.Required.Error("ID is required")),
 		validation.Field(
@@ -96,15 +95,14 @@ func (n *Notification) Validate(ctx context.Context, multiErr *errors.MultiError
 	)
 	if err != nil {
 		var validationErrs validation.Errors
-		if eris.As(err, &validationErrs) {
-			errors.FromOzzoErrors(validationErrs, multiErr)
+		if errors.As(err, &validationErrs) {
+			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
 
-// BeforeAppendModel implements the bun.BeforeAppendModelHook interface.
 func (n *Notification) BeforeAppendModel(_ context.Context, q bun.Query) error {
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 
 	switch q.(type) {
 	case *bun.InsertQuery:
@@ -120,46 +118,38 @@ func (n *Notification) BeforeAppendModel(_ context.Context, q bun.Query) error {
 	return nil
 }
 
-// GetTargeting returns the targeting information for the notification
 func (n *Notification) GetTargeting() Targeting {
 	return Targeting{
 		Channel:        n.Channel,
 		OrganizationID: n.OrganizationID,
 		BusinessUnitID: n.BusinessUnitID,
 		TargetUserID:   n.TargetUserID,
-		TargetRoleID:   n.TargetRoleID,
 	}
 }
 
-// IsExpired checks if the notification has expired
 func (n *Notification) IsExpired() bool {
 	if n.ExpiresAt == nil {
 		return false
 	}
-	return timeutils.NowUnix() > *n.ExpiresAt
+	return utils.NowUnix() > *n.ExpiresAt
 }
 
-// IsDelivered checks if the notification has been delivered
 func (n *Notification) IsDelivered() bool {
 	return n.DeliveryStatus == DeliveryStatusDelivered
 }
 
-// IsRead checks if the notification has been read
 func (n *Notification) IsRead() bool {
 	return n.ReadAt != nil
 }
 
-// IsDismissed checks if the notification has been dismissed
 func (n *Notification) IsDismissed() bool {
 	return n.DismissedAt != nil
 }
 
-// CanRetry checks if the notification can be retried
 func (n *Notification) CanRetry() bool {
 	return n.RetryCount < n.MaxRetries && n.DeliveryStatus == DeliveryStatusFailed
 }
 
-// GenerateRoomName generates the WebSocket room name based on targeting
 func (n *Notification) GenerateRoomName() string {
 	targeting := n.GetTargeting()
 	return GenerateRoomName(targeting)
@@ -167,6 +157,10 @@ func (n *Notification) GenerateRoomName() string {
 
 func (n *Notification) GetID() pulid.ID {
 	return n.ID
+}
+
+func (n *Notification) GetTableName() string {
+	return "notifications"
 }
 
 func (n *Notification) GetEventType() EventType {

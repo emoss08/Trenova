@@ -1,84 +1,94 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package repositories
 
 import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
-	"github.com/emoss08/trenova/internal/core/ports"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
 )
 
 type ListDedicatedLaneSuggestionRequest struct {
-	Filter           *ports.LimitOffsetQueryOptions
-	Status           *dedicatedlane.SuggestionStatus `query:"status"`
-	CustomerID       *pulid.ID                       `query:"customerId"`
-	IncludeExpired   bool                            `query:"includeExpired"`
-	IncludeProcessed bool                            `query:"includeProcessed"`
+	Filter           *pagination.QueryOptions        `json:"filter"           form:"filter"`
+	Status           *dedicatedlane.SuggestionStatus `json:"status"           form:"status"`
+	CustomerID       *pulid.ID                       `json:"customerId"       form:"customerId"`
+	IncludeExpired   bool                            `json:"includeExpired"   form:"includeExpired"`
+	IncludeProcessed bool                            `json:"includeProcessed" form:"includeProcessed"`
 }
 
 type GetDedicatedLaneSuggestionByIDRequest struct {
-	ID     pulid.ID
-	OrgID  pulid.ID
-	BuID   pulid.ID
-	UserID pulid.ID
+	ID     pulid.ID `json:"id"     form:"id"`
+	OrgID  pulid.ID `json:"orgId"  form:"orgId"`
+	BuID   pulid.ID `json:"buId"   form:"buId"`
+	UserID pulid.ID `json:"userId" form:"userId"`
 }
 
 type UpdateSuggestionStatusRequest struct {
-	SuggestionID  pulid.ID
-	Status        dedicatedlane.SuggestionStatus
-	ProcessedByID *pulid.ID
-	ProcessedAt   *int64
-	RejectReason  *string
+	SuggestionID  pulid.ID                       `json:"suggestionId"  form:"suggestionId"`
+	Status        dedicatedlane.SuggestionStatus `json:"status"        form:"status"`
+	ProcessedByID *pulid.ID                      `json:"processedById" form:"processedById"`
+	ProcessedAt   *int64                         `json:"processedAt"   form:"processedAt"`
+	RejectReason  *string                        `json:"rejectReason"  form:"rejectReason"`
+}
+
+type DeleteDedicatedLaneSuggestionRequest struct {
+	ID     pulid.ID `json:"id"     form:"id"`
+	OrgID  pulid.ID `json:"orgId"  form:"orgId"`
+	BuID   pulid.ID `json:"buId"   form:"buId"`
+	UserID pulid.ID `json:"userId" form:"userId"`
+}
+
+type SuggestionAcceptRequest struct {
+	SuggestionID      pulid.ID  `json:"suggestionId"`
+	OrgID             pulid.ID  `json:"orgId"`
+	BuID              pulid.ID  `json:"buId"`
+	ProcessedByID     pulid.ID  `json:"processedById"`
+	DedicatedLaneName *string   `json:"dedicatedLaneName,omitempty"` // Override suggested name
+	PrimaryWorkerID   *pulid.ID `json:"primaryWorkerId"`
+	SecondaryWorkerID *pulid.ID `json:"secondaryWorkerId,omitempty"`
+	AutoAssign        bool      `json:"autoAssign"`
+}
+
+type SuggestionRejectRequest struct {
+	SuggestionID  pulid.ID `json:"suggestionId"`
+	OrgID         pulid.ID `json:"orgId"`
+	BuID          pulid.ID `json:"buId"`
+	ProcessedByID pulid.ID `json:"processedById"`
+	RejectReason  string   `json:"rejectReason,omitempty"`
 }
 
 type DedicatedLaneSuggestionRepository interface {
 	List(
 		ctx context.Context,
 		req *ListDedicatedLaneSuggestionRequest,
-	) (*ports.ListResult[*dedicatedlane.DedicatedLaneSuggestion], error)
-
+	) (*pagination.ListResult[*dedicatedlane.Suggestion], error)
 	GetByID(
 		ctx context.Context,
 		req *GetDedicatedLaneSuggestionByIDRequest,
-	) (*dedicatedlane.DedicatedLaneSuggestion, error)
-
+	) (*dedicatedlane.Suggestion, error)
 	Create(
 		ctx context.Context,
-		suggestion *dedicatedlane.DedicatedLaneSuggestion,
-	) (*dedicatedlane.DedicatedLaneSuggestion, error)
-
+		suggestion *dedicatedlane.Suggestion,
+	) (*dedicatedlane.Suggestion, error)
 	Update(
 		ctx context.Context,
-		suggestion *dedicatedlane.DedicatedLaneSuggestion,
-	) (*dedicatedlane.DedicatedLaneSuggestion, error)
-
+		suggestion *dedicatedlane.Suggestion,
+	) (*dedicatedlane.Suggestion, error)
 	UpdateStatus(
 		ctx context.Context,
 		req *UpdateSuggestionStatusRequest,
-	) (*dedicatedlane.DedicatedLaneSuggestion, error)
-
+	) (*dedicatedlane.Suggestion, error)
 	Delete(
 		ctx context.Context,
-		id pulid.ID,
-		orgID pulid.ID,
-		buID pulid.ID,
+		req *DeleteDedicatedLaneSuggestionRequest,
 	) error
-
-	// ExpireOldSuggestions marks suggestions as expired based on their ExpiresAt timestamp
 	ExpireOldSuggestions(
 		ctx context.Context,
 		orgID pulid.ID,
 		buID pulid.ID,
 	) (int64, error)
-
-	// CheckForDuplicatePattern checks if a similar suggestion already exists
 	CheckForDuplicatePattern(
 		ctx context.Context,
 		req *FindDedicatedLaneByShipmentRequest,
-	) (*dedicatedlane.DedicatedLaneSuggestion, error)
+	) (*dedicatedlane.Suggestion, error)
 }

@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { createContext, ReactNode, useContext, useState } from "react";
 
 interface TourStep {
@@ -44,7 +39,9 @@ export function TourProvider({ children }: TourProviderProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [steps, setSteps] = useState<TourStep[]>([]);
-  const [cleanupFn, setCleanupFn] = useState<(() => void) | undefined>(undefined);
+  const [cleanupFn, setCleanupFn] = useState<(() => void) | undefined>(
+    undefined,
+  );
 
   const openTour = (newSteps: TourStep[], cleanup?: () => void) => {
     setSteps(newSteps);
@@ -53,7 +50,7 @@ export function TourProvider({ children }: TourProviderProps) {
     if (cleanup) {
       setCleanupFn(() => cleanup);
     }
-    
+
     // Execute the action for the first step if it exists
     if (newSteps.length > 0 && newSteps[0].action) {
       setTimeout(() => {
@@ -79,10 +76,10 @@ export function TourProvider({ children }: TourProviderProps) {
       if (steps[currentStep].actionOnNext) {
         steps[currentStep].actionOnNext?.();
       }
-      
+
       const nextStepIndex = currentStep + 1;
       setCurrentStep(nextStepIndex);
-      
+
       // Execute the action for the next step if it exists
       if (steps[nextStepIndex].action) {
         setTimeout(() => {
@@ -100,10 +97,10 @@ export function TourProvider({ children }: TourProviderProps) {
       if (steps[currentStep].actionOnPrev) {
         steps[currentStep].actionOnPrev?.();
       }
-      
+
       const prevStepIndex = currentStep - 1;
       setCurrentStep(prevStepIndex);
-      
+
       // Execute the action for the previous step if it exists
       if (steps[prevStepIndex].action) {
         setTimeout(() => {
@@ -116,7 +113,7 @@ export function TourProvider({ children }: TourProviderProps) {
   const goToStep = (step: number) => {
     if (step >= 0 && step < steps.length) {
       setCurrentStep(step);
-      
+
       // Execute the action for the destination step if it exists
       if (steps[step].action) {
         setTimeout(() => {

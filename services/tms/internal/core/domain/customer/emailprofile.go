@@ -1,22 +1,16 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package customer
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain"
-	"github.com/emoss08/trenova/internal/core/domain/businessunit"
-	"github.com/emoss08/trenova/internal/core/domain/organization"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 )
 
@@ -44,25 +38,21 @@ type CustomerEmailProfile struct {
 	UpdatedAt      int64    `json:"updatedAt"      bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit *businessunit.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *organization.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	Customer     *Customer            `json:"-" bun:"rel:belongs-to,join:customer_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"-" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"-" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
-func (c *CustomerEmailProfile) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(ctx, c,
-		// * Ensure Customer ID is set
+func (c *CustomerEmailProfile) Validate(multiErr *errortypes.MultiError) {
+	err := validation.ValidateStruct(c,
 		validation.Field(&c.CustomerID, validation.Required.Error("Customer ID is required")),
-
-		// * Ensure from email is a valid email
 		validation.Field(&c.FromEmail, is.Email.Error("From Email must be a valid email address")),
-
-		// * Ensure blind copy is a comma separated list of valid emails
 		validation.Field(&c.BlindCopy, validation.By(domain.ValidateCommaSeparatedEmails)),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
-		if eris.As(err, &validationErrs) {
-			errors.FromOzzoErrors(validationErrs, multiErr)
+		if errors.As(err, &validationErrs) {
+			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
@@ -76,7 +66,7 @@ func (c *CustomerEmailProfile) GetTableName() string {
 }
 
 func (c *CustomerEmailProfile) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+	now := utils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:

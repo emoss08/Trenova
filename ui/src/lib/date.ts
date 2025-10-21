@@ -1,13 +1,7 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { TimeFormat } from "@/types/user";
 import * as chrono from "chrono-node";
 import {
   endOfDay,
-  endOfMonth,
   format,
   fromUnixTime,
   startOfDay,
@@ -392,7 +386,6 @@ export function formatDurationFromSeconds(durationInSeconds: number): string {
   }
 
   if (parts.length === 0) {
-    // Duration is > 0 but < 60 seconds, display as "1m"
     return "1m";
   }
 
@@ -459,15 +452,11 @@ export function getStartOfDay(
   timezone?: string,
 ): number {
   if (!timezone) {
-    // Fallback to browser local timezone
     return dateToUnixTimestamp(startOfDay(date));
   }
 
-  // Convert the date to the target timezone
   const zonedDate = toZonedTime(date, timezone);
-  // Get start of day in that timezone
   const startOfDayInZone = startOfDay(zonedDate);
-  // Convert back to UTC for Unix timestamp
   const utcDate = fromZonedTime(startOfDayInZone, timezone);
   return dateToUnixTimestamp(utcDate);
 }
@@ -483,15 +472,11 @@ export function getEndOfDay(
   timezone?: string,
 ): number {
   if (!timezone) {
-    // Fallback to browser local timezone
     return dateToUnixTimestamp(endOfDay(date));
   }
 
-  // Convert the date to the target timezone
   const zonedDate = toZonedTime(date, timezone);
-  // Get end of day in that timezone
   const endOfDayInZone = endOfDay(zonedDate);
-  // Convert back to UTC for Unix timestamp
   const utcDate = fromZonedTime(endOfDayInZone, timezone);
   return dateToUnixTimestamp(utcDate);
 }
@@ -507,15 +492,30 @@ export function getStartOfMonth(
   timezone?: string,
 ): number {
   if (!timezone) {
-    return dateToUnixTimestamp(startOfMonth(date));
+    const start = startOfMonth(date);
+    return dateToUnixTimestamp(start);
   }
 
-  // Convert the date to the target timezone
-  const zonedDate = toZonedTime(date, timezone);
-  // Get start of month in that timezone
-  const startOfMonthInZone = startOfMonth(zonedDate);
-  // Convert back to UTC for Unix timestamp
-  const utcDate = fromZonedTime(startOfMonthInZone, timezone);
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
+  const noonUTC = Date.UTC(year, month, 1, 12, 0, 0, 0);
+  const noonDate = new Date(noonUTC);
+
+  const dateInTimezone = toZonedTime(noonDate, timezone);
+
+  const midnightLocal = new Date(
+    dateInTimezone.getFullYear(),
+    dateInTimezone.getMonth(),
+    1,
+    0,
+    0,
+    0,
+    0,
+  );
+
+  const utcDate = fromZonedTime(midnightLocal, timezone);
+
   return dateToUnixTimestamp(utcDate);
 }
 
@@ -529,16 +529,44 @@ export function getEndOfMonth(
   date: Date = new Date(),
   timezone?: string,
 ): number {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+
   if (!timezone) {
-    return dateToUnixTimestamp(endOfMonth(date));
+    const lastDay = new Date(year, month + 1, 0);
+    const endOfMonthDate = new Date(
+      lastDay.getFullYear(),
+      lastDay.getMonth(),
+      lastDay.getDate(),
+      23,
+      59,
+      59,
+      999,
+    );
+    return dateToUnixTimestamp(endOfMonthDate);
   }
 
-  // Convert the date to the target timezone
-  const zonedDate = toZonedTime(date, timezone);
-  // Get end of month in that timezone
-  const endOfMonthInZone = endOfMonth(zonedDate);
-  // Convert back to UTC for Unix timestamp
-  const utcDate = fromZonedTime(endOfMonthInZone, timezone);
+  const lastDayOfMonth = new Date(Date.UTC(year, month + 1, 0)).getUTCDate();
+
+  const noonOnLastDay = new Date(
+    Date.UTC(year, month, lastDayOfMonth, 12, 0, 0, 0),
+  );
+
+  const lastDayInTimezone = toZonedTime(noonOnLastDay, timezone);
+
+  const endOfDayUTC = Date.UTC(
+    lastDayInTimezone.getFullYear(),
+    lastDayInTimezone.getMonth(),
+    lastDayInTimezone.getDate(),
+    23,
+    59,
+    59,
+    999,
+  );
+  const endOfDayDate = new Date(endOfDayUTC);
+
+  const utcDate = fromZonedTime(endOfDayDate, timezone);
+
   return dateToUnixTimestamp(utcDate);
 }
 
@@ -633,14 +661,16 @@ export function getCommonDatePresets(timezone?: string): DateRangePreset[] {
       label: "Next month",
       getValue: () => {
         const today = new Date();
-        const nextMonth = new Date(
+
+        const firstDayNextMonth = new Date(
           today.getFullYear(),
           today.getMonth() + 1,
           1,
         );
+
         return {
-          startDate: getStartOfMonth(nextMonth, timezone),
-          endDate: getEndOfMonth(nextMonth, timezone),
+          startDate: getStartOfMonth(firstDayNextMonth, timezone),
+          endDate: getEndOfMonth(firstDayNextMonth, timezone),
         };
       },
     },

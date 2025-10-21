@@ -1,3 +1,4 @@
+"use no memo";
 import { useContainerSize } from "@/hooks/use-container-size";
 import * as React from "react";
 

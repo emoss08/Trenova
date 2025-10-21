@@ -1,0 +1,206 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://example.com/schemas/formula/template.schema.json",
+    "title": "Template Schema - Complete Reference",
+    "description": "This is a template showing all available features for formula schemas. Use this as a reference when creating new schemas.",
+    "type": "object",
+    "version": "1.0.0",
+    "// x-formula-context": "Defines metadata about the formula context",
+    "x-formula-context": {
+        "category": "example",
+        "entities": [
+            "Entity1",
+            "Entity2"
+        ],
+        "permissions": [
+            "formula:read:example"
+        ],
+        "tags": [
+            "pricing",
+            "calculation",
+            "optional-tags"
+        ]
+    },
+    "// x-data-source": "Defines how to fetch data from the database",
+    "x-data-source": {
+        "// Required fields": "",
+        "table": "table_name",
+        "entity": "github.com/example/package.EntityType",
+        "// Optional fields": "",
+        "preload": [
+            "DirectRelation",
+            "NestedRelation.SubRelation"
+        ],
+        "// Optional: Define joins for complex queries": "",
+        "joins": {
+            "joinName": {
+                "table": "joined_table",
+                "on": "table_name.foreign_id = joined_table.id",
+                "type": "LEFT",
+                "condition": "additional WHERE conditions"
+            }
+        },
+        "// Optional: Default filters": "",
+        "filters": [
+            {
+                "field": "status",
+                "operator": "eq",
+                "value": "active"
+            },
+            {
+                "field": "created_at",
+                "operator": "gte",
+                "value": "now() - interval '30 days'"
+            }
+        ],
+        "// Optional: Default ordering": "",
+        "orderBy": "created_at DESC"
+    },
+    "properties": {
+        "// Simple field example": "",
+        "simpleField": {
+            "description": "A simple string field",
+            "type": "string",
+            "x-source": {
+                "field": "database_column_name",
+                "path": "GoStructFieldName"
+            }
+        },
+        "// Nullable field example": "",
+        "nullableField": {
+            "description": "A field that can be null",
+            "type": [
+                "number",
+                "null"
+            ],
+            "x-source": {
+                "field": "nullable_column",
+                "path": "NullableField",
+                "nullable": true,
+                "transform": "int64ToFloat64"
+            }
+        },
+        "// Enum field example": "",
+        "enumField": {
+            "description": "Field with predefined values",
+            "type": "string",
+            "enum": [
+                "value1",
+                "value2",
+                "value3"
+            ],
+            "x-source": {
+                "field": "enum_column",
+                "path": "EnumField"
+            }
+        },
+        "// Number field with validation": "",
+        "numberField": {
+            "description": "Number with min/max constraints",
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100,
+            "x-source": {
+                "field": "number_column",
+                "path": "NumberField",
+                "transform": "decimalToFloat64"
+            }
+        },
+        "// Computed field example": "",
+        "computedField": {
+            "description": "A field calculated from other fields",
+            "type": "number",
+            "x-source": {
+                "computed": true,
+                "function": "computeFunctionName",
+                "requires": [
+                    "field1",
+                    "field2"
+                ],
+                "preload": [
+                    "RelationNeededForComputation"
+                ]
+            }
+        },
+        "// Nested object example": "",
+        "nestedObject": {
+            "description": "Related entity as nested object",
+            "type": "object",
+            "x-source": {
+                "relation": "RelationName",
+                "preload": true
+            },
+            "properties": {
+                "nestedField": {
+                    "type": "string",
+                    "x-source": {
+                        "path": "RelationName.FieldName"
+                    }
+                }
+            }
+        },
+        "// Array field example": "",
+        "arrayField": {
+            "description": "Array of items",
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 100,
+            "x-source": {
+                "relation": "CollectionRelation",
+                "preload": true
+            },
+            "items": {
+                "type": "object",
+                "properties": {
+                    "itemField": {
+                        "type": "string",
+                        "x-source": {
+                            "path": "ItemFieldName"
+                        }
+                    },
+                    "nestedItem": {
+                        "type": "object",
+                        "x-source": {
+                            "relation": "NestedRelation",
+                            "preload": true
+                        },
+                        "properties": {
+                            "deepField": {
+                                "type": "string",
+                                "x-source": {
+                                    "path": "NestedRelation.DeepField"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "// required": "List of required fields at the root level",
+    "required": [
+        "simpleField",
+        "enumField"
+    ],
+    "// Available transform functions": [
+        "decimalToFloat64 - Convert decimal.Decimal to float64",
+        "int64ToFloat64 - Convert *int64 to float64",
+        "int16ToFloat64 - Convert *int16 to float64",
+        "stringToUpper - Convert string to uppercase",
+        "stringToLower - Convert string to lowercase",
+        "unixToISO8601 - Convert unix timestamp to ISO8601 string"
+    ],
+    "// Available operators for filters": [
+        "eq - Equal",
+        "ne - Not equal",
+        "gt - Greater than",
+        "lt - Less than",
+        "gte - Greater than or equal",
+        "lte - Less than or equal",
+        "like - SQL LIKE pattern matching",
+        "in - Value in list",
+        "not_in - Value not in list",
+        "is_null - Value is null",
+        "is_not_null - Value is not null"
+    ]
+}

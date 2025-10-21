@@ -1,25 +1,25 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package shipment
 
 import (
 	"context"
-	"time"
+	"errors"
 
-	"github.com/emoss08/trenova/internal/core/domain/businessunit"
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/location"
-	"github.com/emoss08/trenova/internal/core/domain/organization"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 )
 
-var _ bun.BeforeAppendModelHook = (*Stop)(nil)
+var (
+	_ bun.BeforeAppendModelHook = (*Stop)(nil)
+	_ domain.Validatable        = (*Stop)(nil)
+	_ framework.TenantedEntity  = (*Stop)(nil)
+)
 
 type Stop struct {
 	bun.BaseModel `bun:"table:stops,alias:stp" json:"-"`
@@ -44,15 +44,14 @@ type Stop struct {
 	UpdatedAt        int64      `json:"updatedAt"        bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
-	ShipmentMove *ShipmentMove              `json:"shipmentMove,omitempty" bun:"rel:belongs-to,join:shipment_move_id=id"`
-	Location     *location.Location         `json:"location,omitempty"     bun:"rel:belongs-to,join:location_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	ShipmentMove *ShipmentMove        `json:"shipmentMove,omitempty" bun:"rel:belongs-to,join:shipment_move_id=id"`
+	Location     *location.Location   `json:"location,omitempty"     bun:"rel:belongs-to,join:location_id=id"`
 }
 
-func (s *Stop) Validate(ctx context.Context, multiErr *errors.MultiError) {
-	err := validation.ValidateStructWithContext(ctx, s,
-		// Type is required and must be a valid stop type
+func (s *Stop) Validate(multiErr *errortypes.MultiError) {
+	err := validation.ValidateStruct(s,
 		validation.Field(&s.Type,
 			validation.Required.Error("Type is required"),
 			validation.In(
@@ -62,8 +61,6 @@ func (s *Stop) Validate(ctx context.Context, multiErr *errors.MultiError) {
 				StopTypeSplitDelivery,
 			).Error("Type must be a valid stop type"),
 		),
-
-		// Status is required and must be a valid stop status
 		validation.Field(&s.Status,
 			validation.Required.Error("Status is required"),
 			validation.In(
@@ -73,21 +70,17 @@ func (s *Stop) Validate(ctx context.Context, multiErr *errors.MultiError) {
 				StopStatusCanceled,
 			).Error("Status must be a valid stop status"),
 		),
-
-		// Planned arrival is required
 		validation.Field(&s.PlannedArrival,
 			validation.Required.Error("Planned arrival is required"),
 		),
-
-		// Planned departure is required
 		validation.Field(&s.PlannedDeparture,
 			validation.Required.Error("Planned departure is required"),
 		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
-		if eris.As(err, &validationErrs) {
-			errors.FromOzzoErrors(validationErrs, multiErr)
+		if errors.As(err, &validationErrs) {
+			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
@@ -100,8 +93,16 @@ func (s *Stop) GetTableName() string {
 	return "stops"
 }
 
+func (s *Stop) GetOrganizationID() pulid.ID {
+	return s.OrganizationID
+}
+
+func (s *Stop) GetBusinessUnitID() pulid.ID {
+	return s.BusinessUnitID
+}
+
 func (s *Stop) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := time.Now().Unix()
+	now := utils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:
@@ -127,4 +128,20 @@ func (s *Stop) StatusEquals(status StopStatus) bool {
 
 func (s *Stop) IsDestinationStop() bool {
 	return s.Type == StopTypeDelivery || s.Type == StopTypeSplitDelivery
+}
+
+func (s *Stop) IsCompleted() bool {
+	return s.Status == StopStatusCompleted
+}
+
+func (s *Stop) IsCanceled() bool {
+	return s.Status == StopStatusCanceled
+}
+
+func (s *Stop) IsInTransit() bool {
+	return s.Status == StopStatusInTransit
+}
+
+func (s *Stop) IsNew() bool {
+	return s.Status == StopStatusNew
 }

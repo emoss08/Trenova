@@ -1,55 +1,38 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package dedicatedlane
 
 import (
 	"context"
-	"fmt"
-	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/rotisserie/eris"
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils/jsonutils"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
-type ServiceParams struct {
+type Params struct {
 	fx.In
 
-	Logger       *logger.Logger
+	Logger       *zap.Logger
 	Repo         repositories.DedicatedLaneRepository
-	PermService  services.PermissionService
 	AuditService services.AuditService
 }
 
 type Service struct {
-	l    *zerolog.Logger
+	l    *zap.Logger
 	repo repositories.DedicatedLaneRepository
-	ps   services.PermissionService
 	as   services.AuditService
 }
 
-func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().
-		Str("service", "dedicated_lane").
-		Logger()
-
+func NewService(p Params) *Service {
 	return &Service{
-		l:    &log,
+		l:    p.Logger.Named("service.dedicatedlane"),
 		repo: p.Repo,
-		ps:   p.PermService,
 		as:   p.AuditService,
 	}
 }
@@ -57,130 +40,92 @@ func NewService(p ServiceParams) *Service {
 func (s *Service) List(
 	ctx context.Context,
 	req *repositories.ListDedicatedLaneRequest,
-) (*ports.ListResult[*dedicatedlane.DedicatedLane], error) {
-	if err := s.checkPermission(
-		ctx,
-		permission.ActionRead,
-		req.Filter.TenantOpts.UserID,
-		req.Filter.TenantOpts.BuID,
-		req.Filter.TenantOpts.OrgID,
-	); err != nil {
-		return nil, err
-	}
-
+) (*pagination.ListResult[*dedicatedlane.DedicatedLane], error) {
 	return s.repo.List(ctx, req)
 }
 
 func (s *Service) Get(
 	ctx context.Context,
-	opts *repositories.GetDedicatedLaneByIDRequest,
+	req *repositories.GetDedicatedLaneByIDRequest,
 ) (*dedicatedlane.DedicatedLane, error) {
-	if err := s.checkPermission(
-		ctx,
-		permission.ActionRead,
-		opts.UserID,
-		opts.BuID,
-		opts.OrgID,
-	); err != nil {
-		return nil, err
-	}
-
-	return s.repo.GetByID(ctx, opts)
+	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) FindByShipment(
 	ctx context.Context,
 	req *repositories.FindDedicatedLaneByShipmentRequest,
 ) (*dedicatedlane.DedicatedLane, error) {
-	// * we don't care about permissions here, we just want to find the dedicated lane
 	return s.repo.FindByShipment(ctx, req)
 }
 
 func (s *Service) Create(
 	ctx context.Context,
-	req *dedicatedlane.DedicatedLane,
+	entity *dedicatedlane.DedicatedLane,
 	userID pulid.ID,
 ) (*dedicatedlane.DedicatedLane, error) {
-	log := s.l.With().
-		Str("operation", "create").
-		Str("id", req.ID.String()).
-		Logger()
+	log := s.l.With(
+		zap.String("operation", "Create"),
+		zap.String("buID", entity.BusinessUnitID.String()),
+		zap.String("orgID", entity.OrganizationID.String()),
+		zap.String("userID", userID.String()),
+	)
 
-	if err := s.checkPermission(
-		ctx,
-		permission.ActionCreate,
-		userID,
-		req.BusinessUnitID,
-		req.OrganizationID,
-	); err != nil {
-		return nil, err
-	}
-
-	entity, err := s.repo.Create(ctx, req)
+	createdEntity, err := s.repo.Create(ctx, entity)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to create dedicated lane")
-		return nil, eris.Wrap(err, "create dedicated lane")
+		return nil, err
 	}
 
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceDedicatedLane,
-			ResourceID:     entity.GetID(),
-			Action:         permission.ActionCreate,
+			ResourceID:     createdEntity.GetID(),
+			Operation:      permission.OpCreate,
 			UserID:         userID,
-			CurrentState:   jsonutils.MustToJSON(entity),
-			OrganizationID: entity.OrganizationID,
-			BusinessUnitID: entity.BusinessUnitID,
+			CurrentState:   jsonutils.MustToJSON(createdEntity),
+			OrganizationID: createdEntity.OrganizationID,
+			BusinessUnitID: createdEntity.BusinessUnitID,
 		},
 		audit.WithComment("Dedicated lane created"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log dedicated lane creation")
+		log.Error("failed to log dedicated lane creation", zap.Error(err))
 	}
 
-	return entity, nil
+	return createdEntity, nil
 }
 
 func (s *Service) Update(
 	ctx context.Context,
-	req *dedicatedlane.DedicatedLane,
+	entity *dedicatedlane.DedicatedLane,
 	userID pulid.ID,
 ) (*dedicatedlane.DedicatedLane, error) {
-	log := s.l.With().
-		Str("operation", "update").
-		Str("id", req.ID.String()).
-		Logger()
-
-	if err := s.checkPermission(
-		ctx,
-		permission.ActionUpdate,
-		userID,
-		req.BusinessUnitID,
-		req.OrganizationID,
-	); err != nil {
-		return nil, err
-	}
+	log := s.l.With(
+		zap.String("operation", "Update"),
+		zap.String("buID", entity.BusinessUnitID.String()),
+		zap.String("orgID", entity.OrganizationID.String()),
+		zap.String("userID", userID.String()),
+	)
 
 	original, err := s.repo.GetByID(ctx, &repositories.GetDedicatedLaneByIDRequest{
-		ID:     req.ID,
-		OrgID:  req.OrganizationID,
-		BuID:   req.BusinessUnitID,
-		UserID: userID,
+		ID:    entity.ID,
+		OrgID: entity.OrganizationID,
+		BuID:  entity.BusinessUnitID,
 	})
 	if err != nil {
 		return nil, err
 	}
 
-	updatedEntity, err := s.repo.Update(ctx, req)
+	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update dedicated lane")
+		log.Error("failed to update dedicated lane", zap.Error(err))
+		return nil, err
 	}
 
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceDedicatedLane,
 			ResourceID:     updatedEntity.GetID(),
-			Action:         permission.ActionUpdate,
+			Operation:      permission.OpUpdate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(updatedEntity),
 			PreviousState:  jsonutils.MustToJSON(original),
@@ -191,50 +136,8 @@ func (s *Service) Update(
 		audit.WithDiff(original, updatedEntity),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log dedicated lane update")
+		log.Error("failed to log dedicated lane update", zap.Error(err))
 	}
 
 	return updatedEntity, nil
-}
-
-func (s *Service) checkPermission(
-	ctx context.Context,
-	action permission.Action,
-	userID, buID, orgID pulid.ID,
-) error {
-	log := s.l.With().
-		Str("operation", "checkPermission").
-		Str("action", string(action)).
-		Str("userID", userID.String()).
-		Str("buID", buID.String()).
-		Str("orgID", orgID.String()).
-		Logger()
-
-	// Check if user has permission to delete roles
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceDedicatedLane,
-				Action:         action,
-				BusinessUnitID: buID,
-				OrganizationID: orgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return eris.Wrap(err, "check permissions")
-	}
-
-	if !result.Allowed {
-		return errors.NewAuthorizationError(
-			fmt.Sprintf(
-				"You do not have permission to %s this dedicated lane",
-				strings.ToLower(string(action)),
-			),
-		)
-	}
-
-	return nil
 }

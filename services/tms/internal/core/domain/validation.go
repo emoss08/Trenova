@@ -1,17 +1,33 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package domain
 
 import (
+	"errors"
 	"regexp"
 	"strings"
 	"time"
 
 	"github.com/asaskevich/govalidator"
-	"github.com/rotisserie/eris"
+	"github.com/emoss08/trenova/pkg/errortypes"
+)
+
+var (
+	ErrInvalidTimezone   = errors.New("invalid timezone. Please provide a valid timezone")
+	ErrInvalidPostalCode = errors.New(
+		"invalid postal code. Please provide a valid US or Canadian postal code",
+	)
+	ErrInvalidEmail = errors.New(
+		"invalid email address. Please provide a valid email address",
+	)
+	ErrInvalidStringSlice = errors.New(
+		"value must be a slice of strings",
+	)
+	ErrInvalidVin         = errors.New("invalid VIN. Please provide a valid VIN")
+	ErrInvalidTemperature = errors.New(
+		"invalid temperature. Please provide a valid temperature",
+	)
+	ErrInvalidStringOrCommaSeparated = errors.New(
+		"invalid string format. Please provide a valid string or comma-separated values",
+	)
 )
 
 var (
@@ -22,15 +38,31 @@ var (
 	usPostalCodeRegex       = regexp.MustCompile(`^\d{5}(-\d{4})?$`)
 )
 
+type Validatable interface {
+	Validate(multiErr *errortypes.MultiError)
+	GetTableName() string
+}
+
 func ValidateTimezone(value any) error {
 	tz, _ := value.(string)
 	if tz == "" || tz == "auto" {
-		return nil // Skip empty timezone validation here as Required rule will catch it
+		return nil
 	}
+
 	_, err := time.LoadLocation(tz)
 	if err != nil {
-		return eris.New("Invalid timezone. Please provide a valid timezone")
+		return err
 	}
+
+	return nil
+}
+
+func ValidateStringSlice(v any) error {
+	_, ok := v.([]string)
+	if !ok {
+		return ErrInvalidStringSlice
+	}
+
 	return nil
 }
 
@@ -41,7 +73,7 @@ func ValidatePostalCode(value any) error {
 	}
 
 	if !usPostalCodeRegex.MatchString(pc) && !caPostalCodeRegex.MatchString(pc) {
-		return eris.New("Invalid postal code. Please provide a valid US or Canadian postal code")
+		return ErrInvalidPostalCode
 	}
 
 	return nil
@@ -54,7 +86,27 @@ func ValidateVin(value any) error {
 	}
 
 	if !vinRegex.MatchString(vin) {
-		return eris.New("Invalid VIN. Please provide a valid VIN")
+		return ErrInvalidVin
+	}
+
+	return nil
+}
+
+func ValidateCommaSeparatedEmails(value any) error {
+	emails, _ := value.(string)
+	if emails == "" {
+		return nil
+	}
+
+	for email := range strings.SplitSeq(emails, ",") {
+		trimmedEmail := strings.TrimSpace(email)
+		if trimmedEmail == "" {
+			continue
+		}
+
+		if !govalidator.IsEmail(trimmedEmail) {
+			return ErrInvalidEmail
+		}
 	}
 
 	return nil
@@ -67,8 +119,28 @@ func ValidateTemperature(value any) error {
 	}
 
 	if temperature > temperatureMax || temperature < temperatureMin {
-		return eris.New("Invalid temperature. Please provide a valid temperature")
+		return ErrInvalidTemperature
 	}
+	return nil
+}
+
+func ValidateStringOrCommaSeparated(value any) error {
+	str, ok := value.(string)
+	if !ok {
+		return ErrInvalidStringOrCommaSeparated
+	}
+
+	if str == "" {
+		return nil // Allow empty strings (Required rule will catch if needed)
+	}
+
+	for part := range strings.SplitSeq(str, ",") {
+		trimmed := strings.TrimSpace(part)
+		if trimmed == "" {
+			return ErrInvalidStringOrCommaSeparated
+		}
+	}
+
 	return nil
 }
 
@@ -83,34 +155,4 @@ func ValidateTemperaturePointer(value any) error {
 	}
 
 	return ValidateTemperature(*temperature)
-}
-
-func ValidateCommaSeparatedEmails(value any) error {
-	emails, _ := value.(string)
-	if emails == "" {
-		return nil
-	}
-
-	// Use range with SplitSeq
-	for email := range strings.SplitSeq(emails, ",") {
-		trimmedEmail := strings.TrimSpace(email)
-		if trimmedEmail == "" {
-			continue
-		}
-
-		if !govalidator.IsEmail(trimmedEmail) {
-			return eris.New("Invalid email address. Please provide a valid email address")
-		}
-	}
-
-	return nil
-}
-
-func ValidateStringSlice(v any) error {
-	_, ok := v.([]string)
-	if !ok {
-		return eris.New("value must be a slice of strings")
-	}
-
-	return nil
 }

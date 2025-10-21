@@ -1,10 +1,5 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
+import { HoverCardTimestamp } from "@/components/data-table/_components/data-table-components";
 import { InternalLink } from "@/components/ui/link";
-import { generateDateTimeStringFromUnixTimestamp } from "@/lib/date";
 import { getRoutePageInfo } from "@/lib/utils";
 import { AuditEntry } from "@/types/audit-entry";
 import { useMemo } from "react";
@@ -62,8 +57,8 @@ export function AuditLogDetails({ entry }: { entry: AuditEntry }) {
       ),
     },
     {
-      title: "Action",
-      value: <ActionBadge action={entry.action} withDot={false} />,
+      title: "Operation",
+      value: <ActionBadge operation={entry.operation} withDot={false} />,
     },
     {
       title: "Resource",
@@ -93,7 +88,7 @@ export function AuditLogDetails({ entry }: { entry: AuditEntry }) {
     },
     {
       title: "Timestamp",
-      value: generateDateTimeStringFromUnixTimestamp(entry.timestamp),
+      value: <HoverCardTimestamp timestamp={entry.timestamp} />,
     },
   ];
 

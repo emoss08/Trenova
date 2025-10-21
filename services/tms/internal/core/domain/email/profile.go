@@ -1,34 +1,30 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package email
 
 import (
 	"context"
+	"errors"
 
 	"github.com/emoss08/trenova/internal/core/domain"
-	"github.com/emoss08/trenova/internal/core/domain/businessunit"
-	"github.com/emoss08/trenova/internal/core/domain/organization"
-	"github.com/emoss08/trenova/internal/core/ports/infra"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/utils/timeutils"
-	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/go-ozzo/ozzo-validation/v4/is"
-	"github.com/rotisserie/eris"
 	"github.com/uptrace/bun"
 )
 
 var (
-	_ bun.BeforeAppendModelHook = (*Profile)(nil)
-	_ domain.Validatable        = (*Profile)(nil)
-	_ infra.PostgresSearchable  = (*Profile)(nil)
+	_ bun.BeforeAppendModelHook      = (*EmailProfile)(nil)
+	_ domain.Validatable             = (*EmailProfile)(nil)
+	_ framework.TenantedEntity       = (*EmailProfile)(nil)
+	_ domaintypes.PostgresSearchable = (*EmailProfile)(nil)
 )
 
-// Profile represents an email configuration profile
-type Profile struct {
+//nolint:revive // it's a valid struct name
+type EmailProfile struct {
 	bun.BaseModel `bun:"table:email_profiles,alias:ep" json:"-"`
 
 	ID                 pulid.ID       `json:"id"                       bun:"id,type:varchar(100),pk,notnull"`
@@ -50,6 +46,10 @@ type Profile struct {
 	FromAddress        string         `json:"fromAddress"              bun:"from_address,type:varchar(255),notnull"`
 	FromName           string         `json:"fromName"                 bun:"from_name,type:varchar(255)"`
 	ReplyTo            string         `json:"replyTo"                  bun:"reply_to,type:varchar(255)"`
+	SearchVector       string         `json:"-"                        bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank               string         `json:"-"                        bun:"rank,type:VARCHAR(100),scanonly"`
+	Password           string         `json:"password,omitempty"       bun:"-"`
+	APIKey             string         `json:"apiKey,omitempty"         bun:"-"`
 	Port               int            `json:"port"                     bun:"port,type:integer"`
 	MaxConnections     int            `json:"maxConnections"           bun:"max_connections,type:integer,default:5"`
 	TimeoutSeconds     int            `json:"timeoutSeconds"           bun:"timeout_seconds,type:integer,default:30"`
@@ -63,22 +63,16 @@ type Profile struct {
 	UpdatedAt          int64          `json:"updatedAt"                bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	Metadata           map[string]any `json:"metadata"                 bun:"metadata,type:jsonb"`
 	IsDefault          bool           `json:"isDefault"                bun:"is_default,type:boolean,default:false"`
-	// Transient fields for handling plain text values (not persisted)
-	Password string `json:"password,omitempty"       bun:"-"`
-	APIKey   string `json:"apiKey,omitempty"         bun:"-"`
 
 	// Relationships
-	BusinessUnit *businessunit.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization *organization.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 }
 
-// Validate implements the Validatable interface
-func (p *Profile) Validate( //nolint:funlen // This is a validation function, this is fine.
-	ctx context.Context,
-	multiErr *errors.MultiError,
+func (p *EmailProfile) Validate( //nolint:funlen // this is a validation function
+	multiErr *errortypes.MultiError,
 ) {
-	err := validation.ValidateStructWithContext(ctx, p,
-		// Basic fields validation
+	err := validation.ValidateStruct(p,
 		validation.Field(&p.BusinessUnitID,
 			validation.Required.Error("Business Unit is required"),
 		),
@@ -96,12 +90,7 @@ func (p *Profile) Validate( //nolint:funlen // This is a validation function, th
 			validation.Required.Error("Provider Type is required"),
 			validation.In(
 				ProviderTypeSMTP,
-				ProviderTypeSendGrid,
-				ProviderTypeAWSSES,
-				ProviderTypeMailgun,
-				ProviderTypePostmark,
-				ProviderTypeExchange,
-				ProviderTypeOffice365,
+				ProviderTypeResend,
 			).Error("Provider Type must be a valid provider"),
 		),
 		validation.Field(&p.AuthType,
@@ -134,8 +123,6 @@ func (p *Profile) Validate( //nolint:funlen // This is a validation function, th
 		validation.Field(&p.ReplyTo,
 			validation.When(p.ReplyTo != "", is.Email.Error("Reply To must be a valid email")),
 		),
-
-		// Performance settings validation
 		validation.Field(&p.MaxConnections,
 			validation.Min(1).Error("Max Connections must be at least 1"),
 			validation.Max(100).Error("Max Connections must not exceed 100"),
@@ -152,8 +139,6 @@ func (p *Profile) Validate( //nolint:funlen // This is a validation function, th
 			validation.Min(1).Error("Retry Delay must be at least 1 second"),
 			validation.Max(60).Error("Retry Delay must not exceed 60 seconds"),
 		),
-
-		// Rate limiting validation
 		validation.Field(&p.RateLimitPerMinute,
 			validation.Min(1).Error("Rate Limit Per Minute must be at least 1"),
 			validation.Max(1000).Error("Rate Limit Per Minute must not exceed 1000"),
@@ -166,8 +151,6 @@ func (p *Profile) Validate( //nolint:funlen // This is a validation function, th
 			validation.Min(1).Error("Rate Limit Per Day must be at least 1"),
 			validation.Max(1000000).Error("Rate Limit Per Day must not exceed 1000000"),
 		),
-
-		// * Provider-specific validation for SMTP
 		validation.Field(&p.Host,
 			validation.When(
 				p.ProviderType == ProviderTypeSMTP,
@@ -191,94 +174,76 @@ func (p *Profile) Validate( //nolint:funlen // This is a validation function, th
 				),
 			),
 		),
-		// API Key validation for API-based providers
-		validation.Field(&p.EncryptedAPIKey,
-			validation.When(
-				p.ProviderType == ProviderTypeSendGrid || p.ProviderType == ProviderTypeMailgun ||
-					p.ProviderType == ProviderTypePostmark,
-				validation.Required.Error("API Key is required for this provider"),
-			),
-		),
-
-		// AWS SES validation
-		validation.Field(&p.Metadata,
-			validation.When(
-				p.ProviderType == ProviderTypeAWSSES,
-				validation.Required.Error("Metadata configuration is required for AWS SES"),
-			),
-		),
-
-		// Exchange/Office365 validation
-		validation.Field(&p.Username,
-			validation.When(
-				p.ProviderType == ProviderTypeExchange || p.ProviderType == ProviderTypeOffice365,
-				validation.Required.Error("Username is required for Exchange/Office365"),
-				is.Email.Error("Username must be a valid email for Exchange/Office365"),
-			),
-		),
-		validation.Field(&p.OAuth2ClientID,
-			validation.When(
-				(p.ProviderType == ProviderTypeExchange || p.ProviderType == ProviderTypeOffice365) &&
-					p.AuthType == AuthTypeOAuth2,
-				validation.Required.Error("OAuth2 Client ID is required for OAuth2 authentication"),
-			),
-		),
-		validation.Field(&p.OAuth2ClientSecret,
-			validation.When(
-				(p.ProviderType == ProviderTypeExchange || p.ProviderType == ProviderTypeOffice365) &&
-					p.AuthType == AuthTypeOAuth2,
-				validation.Required.Error(
-					"OAuth2 Client Secret is required for OAuth2 authentication",
-				),
-			),
-		),
-		validation.Field(&p.OAuth2TenantID,
-			validation.When(
-				(p.ProviderType == ProviderTypeExchange || p.ProviderType == ProviderTypeOffice365) &&
-					p.AuthType == AuthTypeOAuth2,
-				validation.Required.Error("OAuth2 Tenant ID is required for OAuth2 authentication"),
-			),
-		),
 	)
 	if err != nil {
 		var validationErrs validation.Errors
-		if eris.As(err, &validationErrs) {
-			errors.FromOzzoErrors(validationErrs, multiErr)
+		if errors.As(err, &validationErrs) {
+			errortypes.FromOzzoErrors(validationErrs, multiErr)
 		}
 	}
 }
 
-// GetConnectionInfo returns connection information based on provider type
-func (p *Profile) GetConnectionInfo() map[string]any {
+func (p *EmailProfile) GetConnectionInfo() map[string]any {
 	info := map[string]any{
 		"provider": p.ProviderType,
 		"from":     p.FromAddress,
 	}
 
-	switch p.ProviderType {
+	switch p.ProviderType { //nolint:exhaustive // mailhog is only for development
 	case ProviderTypeSMTP:
 		info["host"] = p.Host
 		info["port"] = p.Port
 		info["encryption"] = p.EncryptionType
-	case ProviderTypeSendGrid, ProviderTypeMailgun, ProviderTypePostmark:
+	case ProviderTypeResend:
 		info["hasAPIKey"] = p.EncryptedAPIKey != ""
-	case ProviderTypeExchange, ProviderTypeOffice365:
-		info["authType"] = p.AuthType
-		if p.AuthType == AuthTypeOAuth2 {
-			info["tenantID"] = p.OAuth2TenantID
-		}
 	}
 
 	return info
 }
 
-// BeforeAppendModel implements the bun.BeforeAppendModelHook interface
-func (p *Profile) BeforeAppendModel(_ context.Context, query bun.Query) error {
-	now := timeutils.NowUnix()
+func (p *EmailProfile) GetTableName() string {
+	return "email_profiles"
+}
+
+func (p *EmailProfile) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
+	return domaintypes.PostgresSearchConfig{
+		TableAlias:      "ep",
+		UseSearchVector: true,
+		SearchableFields: []domaintypes.SearchableField{
+			{Name: "name", Weight: domaintypes.SearchWeightA, Type: domaintypes.FieldTypeText},
+			{
+				Name:   "from_address",
+				Weight: domaintypes.SearchWeightB,
+				Type:   domaintypes.FieldTypeText,
+			},
+			{Name: "host", Weight: domaintypes.SearchWeightC, Type: domaintypes.FieldTypeText},
+			{
+				Name:   "description",
+				Weight: domaintypes.SearchWeightD,
+				Type:   domaintypes.FieldTypeText,
+			},
+		},
+	}
+}
+
+func (p *EmailProfile) GetID() string {
+	return p.ID.String()
+}
+
+func (p *EmailProfile) GetBusinessUnitID() pulid.ID {
+	return p.BusinessUnitID
+}
+
+func (p *EmailProfile) GetOrganizationID() pulid.ID {
+	return p.OrganizationID
+}
+
+func (p *EmailProfile) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := utils.NowUnix()
 
 	switch query.(type) {
 	case *bun.InsertQuery:
-		if p.ID == "" {
+		if p.ID.IsNil() {
 			p.ID = pulid.MustNew("emp_")
 		}
 		p.CreatedAt = now
@@ -287,24 +252,4 @@ func (p *Profile) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	}
 
 	return nil
-}
-
-func (p *Profile) GetTableName() string {
-	return "email_profiles"
-}
-
-// GetPostgresSearchConfig implements the PostgresSearchable interface
-func (p *Profile) GetPostgresSearchConfig() infra.PostgresSearchConfig {
-	return infra.PostgresSearchConfig{
-		TableAlias: "ep",
-		Fields: []infra.PostgresSearchableField{
-			{Name: "name", Weight: "A", Type: infra.PostgresSearchTypeText},
-			{Name: "from_address", Weight: "B", Type: infra.PostgresSearchTypeText},
-			{Name: "host", Weight: "C", Type: infra.PostgresSearchTypeText},
-			{Name: "description", Weight: "D", Type: infra.PostgresSearchTypeText},
-		},
-		MinLength:       2,
-		MaxTerms:        5,
-		UsePartialMatch: true,
-	}
 }

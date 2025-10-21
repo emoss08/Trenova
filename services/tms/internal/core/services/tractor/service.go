@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package tractor
 
 import (
@@ -10,99 +5,47 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/internal/pkg/validator"
-	"github.com/emoss08/trenova/internal/pkg/validator/tractorvalidator"
-	"github.com/emoss08/trenova/pkg/types"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/rs/zerolog"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/pkg/validator"
+	"github.com/emoss08/trenova/pkg/validator/tractorvalidator"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
 type ServiceParams struct {
 	fx.In
 
-	Logger       *logger.Logger
-	Validator    *tractorvalidator.Validator
+	Logger       *zap.Logger
 	Repo         repositories.TractorRepository
-	PermService  services.PermissionService
 	AuditService services.AuditService
+	Validator    *tractorvalidator.Validator
 }
 
 type Service struct {
-	l    *zerolog.Logger
-	v    *tractorvalidator.Validator
+	l    *zap.Logger
 	repo repositories.TractorRepository
-	ps   services.PermissionService
 	as   services.AuditService
+	v    *tractorvalidator.Validator
 }
 
 func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().
-		Str("service", "tractor").
-		Logger()
-
 	return &Service{
-		l:    &log,
+		l:    p.Logger.Named("service.tractor"),
 		repo: p.Repo,
-		ps:   p.PermService,
 		as:   p.AuditService,
 		v:    p.Validator,
 	}
 }
 
-func (s *Service) SelectOptions(
-	ctx context.Context,
-	req *repositories.ListTractorRequest,
-) ([]*types.SelectOption, error) {
-	result, err := s.repo.List(ctx, req)
-	if err != nil {
-		return nil, err
-	}
-
-	options := make([]*types.SelectOption, 0, len(result.Items))
-	for _, t := range result.Items {
-		options = append(options, &types.SelectOption{
-			Value: t.GetID(),
-			Label: t.Code,
-		})
-	}
-
-	return options, nil
-}
-
 func (s *Service) List(
 	ctx context.Context,
 	req *repositories.ListTractorRequest,
-) (*ports.ListResult[*tractor.Tractor], error) {
-	log := s.l.With().Str("operation", "List").Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         req.Filter.TenantOpts.UserID,
-				Resource:       permission.ResourceTractor,
-				Action:         permission.ActionRead,
-				BusinessUnitID: req.Filter.TenantOpts.BuID,
-				OrganizationID: req.Filter.TenantOpts.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read tractors")
-	}
-
+) (*pagination.ListResult[*tractor.Tractor], error) {
 	return s.repo.List(ctx, req)
 }
 
@@ -110,80 +53,32 @@ func (s *Service) Get(
 	ctx context.Context,
 	req *repositories.GetTractorByIDRequest,
 ) (*tractor.Tractor, error) {
-	log := s.l.With().
-		Str("operation", "GetByID").
-		Str("tractorID", req.TractorID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         req.UserID,
-				Resource:       permission.ResourceTractor,
-				Action:         permission.ActionRead,
-				BusinessUnitID: req.BuID,
-				OrganizationID: req.OrgID,
-			},
-		},
-	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to read this tractor")
-	}
-
-	entity, err := s.repo.GetByID(ctx, req)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get tractor")
-		return nil, err
-	}
-
-	return entity, nil
+	return s.repo.GetByID(ctx, req)
 }
 
 func (s *Service) Create(
 	ctx context.Context,
-	lc *tractor.Tractor,
+	entity *tractor.Tractor,
 	userID pulid.ID,
 ) (*tractor.Tractor, error) {
-	log := s.l.With().
-		Str("operation", "Create").
-		Str("code", lc.Code).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceTractor,
-				Action:         permission.ActionCreate,
-				BusinessUnitID: lc.BusinessUnitID,
-				OrganizationID: lc.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Create"),
+		zap.String("code", entity.Code),
+		zap.String("buID", entity.BusinessUnitID.String()),
+		zap.String("orgID", entity.OrganizationID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError("You do not have permission to create a tractor")
-	}
 
 	valCtx := &validator.ValidationContext{
 		IsCreate: true,
 		IsUpdate: false,
 	}
 
-	if err := s.v.Validate(ctx, valCtx, lc); err != nil {
+	if err := s.v.Validate(ctx, valCtx, entity); err != nil {
 		return nil, err
 	}
 
-	createdEntity, err := s.repo.Create(ctx, lc)
+	createdEntity, err := s.repo.Create(ctx, entity)
 	if err != nil {
 		return nil, err
 	}
@@ -192,7 +87,7 @@ func (s *Service) Create(
 		&services.LogActionParams{
 			Resource:       permission.ResourceTractor,
 			ResourceID:     createdEntity.GetID(),
-			Action:         permission.ActionCreate,
+			Operation:      permission.OpCreate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(createdEntity),
 			OrganizationID: createdEntity.OrganizationID,
@@ -201,7 +96,7 @@ func (s *Service) Create(
 		audit.WithComment("Tractor created"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log tractor creation")
+		log.Error("failed to log tractor creation", zap.Error(err))
 	}
 
 	return createdEntity, nil
@@ -209,49 +104,30 @@ func (s *Service) Create(
 
 func (s *Service) Update(
 	ctx context.Context,
-	t *tractor.Tractor,
+	entity *tractor.Tractor,
 	userID pulid.ID,
 ) (*tractor.Tractor, error) {
-	log := s.l.With().
-		Str("operation", "Update").
-		Str("code", t.Code).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceTractor,
-				Action:         permission.ActionUpdate,
-				BusinessUnitID: t.BusinessUnitID,
-				OrganizationID: t.OrganizationID,
-			},
-		},
+	log := s.l.With(
+		zap.String("operation", "Update"),
+		zap.String("code", entity.Code),
+		zap.String("buID", entity.BusinessUnitID.String()),
+		zap.String("orgID", entity.OrganizationID.String()),
+		zap.String("userID", userID.String()),
 	)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to update this tractor",
-		)
-	}
 
 	valCtx := &validator.ValidationContext{
-		IsUpdate: true,
 		IsCreate: false,
+		IsUpdate: true,
 	}
 
-	if err := s.v.Validate(ctx, valCtx, t); err != nil {
+	if err := s.v.Validate(ctx, valCtx, entity); err != nil {
 		return nil, err
 	}
 
 	original, err := s.repo.GetByID(ctx, &repositories.GetTractorByIDRequest{
-		TractorID: t.ID,
-		OrgID:     t.OrganizationID,
-		BuID:      t.BusinessUnitID,
+		TractorID: entity.ID,
+		OrgID:     entity.OrganizationID,
+		BuID:      entity.BusinessUnitID,
 		FilterOptions: repositories.TractorFilterOptions{
 			IncludeWorkerDetails:    true,
 			IncludeEquipmentDetails: true,
@@ -259,22 +135,20 @@ func (s *Service) Update(
 		},
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get tractor")
 		return nil, err
 	}
 
-	updatedEntity, err := s.repo.Update(ctx, t)
+	updatedEntity, err := s.repo.Update(ctx, entity)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to update tractor")
+		log.Error("failed to update tractor", zap.Error(err))
 		return nil, err
 	}
 
-	// Log the update if the insert was successful
 	err = s.as.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceTractor,
 			ResourceID:     updatedEntity.GetID(),
-			Action:         permission.ActionUpdate,
+			Operation:      permission.OpUpdate,
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(updatedEntity),
 			PreviousState:  jsonutils.MustToJSON(original),
@@ -285,7 +159,7 @@ func (s *Service) Update(
 		audit.WithDiff(original, updatedEntity),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log tractor update")
+		log.Error("failed to log tractor update", zap.Error(err))
 	}
 
 	return updatedEntity, nil
@@ -295,15 +169,14 @@ func (s *Service) Assignment(
 	ctx context.Context,
 	req repositories.TractorAssignmentRequest,
 ) (*repositories.AssignmentResponse, error) {
-	log := s.l.With().
-		Str("operation", "Assignment").
-		Str("tractorID", req.TractorID.String()).
-		Logger()
+	log := s.l.With(
+		zap.String("operation", "Assignment"),
+		zap.String("tractorID", req.TractorID.String()),
+	)
 
-	// ! We do not need to check permissions for this operation
 	assignment, err := s.repo.Assignment(ctx, req)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get tractor assignment")
+		log.Error("failed to get tractor assignment", zap.Error(err))
 		return nil, err
 	}
 

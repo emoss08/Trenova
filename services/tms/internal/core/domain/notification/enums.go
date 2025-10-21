@@ -1,11 +1,3 @@
-/*
-
- * Copyright 2023-2025 Eric Moss
-
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
-
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package notification
 
 import "fmt"
@@ -13,73 +5,30 @@ import "fmt"
 type EventType string
 
 const (
-	EventJobUnknown = EventType("job.unknown")
-
-	// EventJobShipmentDuplicate is fired when a shipment duplication job completes
-	EventJobShipmentDuplicate = EventType("job.shipment.duplicate_complete")
-
-	// EventJobPatternAnalysis is fired when a pattern analysis job completes
-	EventJobPatternAnalysis = EventType("job.analysis.pattern_complete")
-
-	// EventJobShipmentDelay is fired when a shipment delay job completes
-	EventJobShipmentDelay = EventType("job.shipment.delay_complete")
-
-	// EventJobComplianceCheck is fired when a compliance check job completes
-	EventJobComplianceCheck = EventType("job.compliance.check_complete")
-
-	// EventJobBillingProcess is fired when a billing process job completes
-	EventJobBillingProcess = EventType("job.billing.process_complete")
-
-	// EventSystemMaintenance is fired when system maintenance is scheduled
-	EventSystemMaintenance = EventType("system.maintenance.scheduled")
-
-	// EventConfigurationCopied is fired when a configuration is copied
-	EventConfigurationCopied = EventType("configuration.copied")
-
-	// EventShipmentHoldRelease is fired when a shipment hold is released
-	EventShipmentHoldRelease = EventType("shipment.hold.released")
-
-	// EventShipmentOwnershipTransferred is fired when a shipment ownership is transferred
+	EventJobUnknown                   = EventType("job.unknown")
+	EventJobShipmentDuplicate         = EventType("job.shipment.duplicate_complete")
+	EventJobPatternAnalysis           = EventType("job.analysis.pattern_complete")
+	EventJobShipmentDelay             = EventType("job.shipment.delay_complete")
+	EventJobComplianceCheck           = EventType("job.compliance.check_complete")
+	EventJobBillingProcess            = EventType("job.billing.process_complete")
+	EventSystemMaintenance            = EventType("system.maintenance.scheduled")
+	EventConfigurationCopied          = EventType("configuration.copied")
+	EventShipmentHoldRelease          = EventType("shipment.hold.released")
 	EventShipmentOwnershipTransferred = EventType("shipment.ownership.transferred")
-
-	// EventShipmentComment is fired when a shipment comment is created
-	EventShipmentComment = EventType("shipment.comment.created")
-
-	// EventSystemAlert is fired when a critical system alert occurs
-	EventSystemAlert = EventType("system.alert.critical")
-	// EventShipmentStatusChange is fired when a shipment status changes
-
-	EventShipmentStatusChange = EventType("business.shipment.status_change")
-	// EventWorkerComplianceExpired is fired when a worker's compliance expires
-	EventWorkerComplianceExpired = EventType("business.worker.compliance_expired")
-
-	// EventCustomerDocumentReview is fired when a customer document needs review
-	EventCustomerDocumentReview = EventType("business.customer.document_review")
-	// Entity Update Events
-	// EventEntityUpdated is fired when an entity owned by a user is updated by someone else
-	EventEntityUpdated = EventType("entity.updated")
-	// EventShipmentUpdated is fired when a shipment is updated
-
-	EventShipmentUpdated = EventType("entity.shipment.updated")
-	// EventWorkerUpdated is fired when a worker is updated
-	EventWorkerUpdated = EventType("entity.worker.updated")
-	// EventCustomerUpdated is fired when a customer is updated
-	EventCustomerUpdated = EventType("entity.customer.updated")
-	// EventTractorUpdated is fired when a tractor is updated
-
-	EventTractorUpdated = EventType("entity.tractor.updated")
-	// EventTrailerUpdated is fired when a trailer is updated
-
-	EventTrailerUpdated = EventType("entity.trailer.updated")
-
-	// EventLocationUpdated is fired when a location is updated
-	EventLocationUpdated = EventType("entity.location.updated")
-	// EventBatchSummary is fired for batched notifications
-
-	EventBatchSummary = EventType("batch.summary")
+	EventShipmentComment              = EventType("shipment.comment.created")
+	EventSystemAlert                  = EventType("system.alert.critical")
+	EventShipmentStatusChange         = EventType("business.shipment.status_change")
+	EventWorkerComplianceExpired      = EventType("business.worker.compliance_expired")
+	EventCustomerDocumentReview       = EventType("business.customer.document_review")
+	EventEntityUpdated                = EventType("entity.updated")
+	EventShipmentUpdated              = EventType("entity.shipment.updated")
+	EventWorkerUpdated                = EventType("entity.worker.updated")
+	EventCustomerUpdated              = EventType("entity.customer.updated")
+	EventTractorUpdated               = EventType("entity.tractor.updated")
+	EventTrailerUpdated               = EventType("entity.trailer.updated")
+	EventLocationUpdated              = EventType("entity.location.updated")
+	EventBatchSummary                 = EventType("batch.summary")
 )
-
-// RateLimitPeriod represents the time period for rate limiting
 
 type RateLimitPeriod string
 
@@ -88,8 +37,6 @@ const (
 	RateLimitPeriodHour   = RateLimitPeriod("hour")
 	RateLimitPeriodDay    = RateLimitPeriod("day")
 )
-
-// UpdateType represents the type of update that can trigger notifications
 
 type UpdateType string
 
@@ -108,82 +55,30 @@ const (
 type Priority string
 
 const (
-	// PriorityCritical is for system alerts and compliance violations
 	PriorityCritical = Priority("critical")
-
-	// PriorityHigh is for job failures and urgent approvals
-	PriorityHigh = Priority("high")
-
-	// PriorityMedium is for job completions and status updates
-	PriorityMedium = Priority("medium")
-
-	// PriorityLow is for info updates and suggestions
-	PriorityLow = Priority("low")
+	PriorityHigh     = Priority("high")
+	PriorityMedium   = Priority("medium")
+	PriorityLow      = Priority("low")
 )
-
-// ShouldBypassQuietHours returns true if the priority level should bypass quiet hours
-func (p Priority) ShouldBypassQuietHours() bool {
-	return p == PriorityCritical || p == PriorityHigh
-}
-
-// ShouldBypassBatching returns true if the priority level should bypass batching
-func (p Priority) ShouldBypassBatching() bool {
-	return p == PriorityCritical || p == PriorityHigh
-}
-
-// CanBeBatched returns true if the priority level allows batching
-func (p Priority) CanBeBatched() bool {
-	return p == PriorityMedium || p == PriorityLow
-}
-
-// GetLevel returns the numeric level of the priority (higher is more important)
-func (p Priority) GetLevel() int {
-	switch p {
-	case PriorityCritical:
-		return 4
-	case PriorityHigh:
-		return 3
-	case PriorityMedium:
-		return 2
-	case PriorityLow:
-		return 1
-	default:
-		return 0
-	}
-}
 
 type Channel string
 
 const (
-	// ChannelGlobal sends to all users in organization
 	ChannelGlobal = Channel("global")
-	// ChannelUser sends to a specific user
-	ChannelUser = Channel("user")
-	// ChannelRole sends to users with specific role in business unit/org
-	ChannelRole = Channel("role")
+	ChannelUser   = Channel("user")
 )
 
 type DeliveryStatus string
 
 const (
-	// DeliveryStatusPending indicates the notification is pending delivery
-	DeliveryStatusPending = DeliveryStatus("pending")
-
-	// DeliveryStatusDelivered indicates the notification has been delivered
+	DeliveryStatusPending   = DeliveryStatus("pending")
 	DeliveryStatusDelivered = DeliveryStatus("delivered")
-
-	// DeliveryStatusFailed indicates the notification delivery failed
-	DeliveryStatusFailed = DeliveryStatus("failed")
-
-	// DeliveryStatusExpired indicates the notification has expired
-	DeliveryStatusExpired = DeliveryStatus("expired")
+	DeliveryStatusFailed    = DeliveryStatus("failed")
+	DeliveryStatusExpired   = DeliveryStatus("expired")
 )
-
-// GenerateRoomName generates the WebSocket room name based on targeting
 
 func GenerateRoomName(targeting Targeting) string {
 	switch targeting.Channel {
-
 	case ChannelGlobal:
 		return fmt.Sprint("org_", targeting.OrganizationID.String())
 
@@ -195,15 +90,6 @@ func GenerateRoomName(targeting Targeting) string {
 			targeting.TargetUserID.String(),
 		)
 
-	case ChannelRole:
-		return fmt.Sprint(
-			"role_",
-			targeting.OrganizationID.String(),
-			"_",
-			targeting.BusinessUnitID.String(),
-			"_",
-			targeting.TargetRoleID.String(),
-		)
 	default:
 		return ""
 	}

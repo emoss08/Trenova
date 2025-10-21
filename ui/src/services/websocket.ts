@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { WEBSOCKET_URL } from "@/constants/env";
 import type {
   NotificationMessage,
@@ -63,7 +58,6 @@ export class WebSocketService {
 
         this.subscription = subscription;
 
-        // Create ReconnectingWebSocket with custom options
         this.socket = new ReconnectingWebSocket(this.config.url, [], {
           minReconnectionDelay: this.config.reconnectInterval,
           maxReconnectionDelay: this.config.reconnectInterval * 4,
@@ -142,16 +136,13 @@ export class WebSocketService {
   }
 
   private handleNotification(notification: NotificationMessage): void {
-    // Validate notification is for current subscription
     if (!this.subscription) return;
 
     const isForUser =
       notification.channel === "global" ||
       (notification.channel === "user" &&
-        notification.targetUserId === this.subscription.userId) ||
-      (notification.channel === "role" &&
-        notification.targetRoleId &&
-        this.subscription.roles.includes(notification.targetRoleId));
+        notification.targetUserId === this.subscription.userId &&
+        notification.organizationId === this.subscription.organizationId);
 
     if (isForUser) {
       this.onMessage?.({

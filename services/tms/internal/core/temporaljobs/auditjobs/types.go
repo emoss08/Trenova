@@ -1,0 +1,33 @@
+package auditjobs
+
+import (
+	"github.com/emoss08/trenova/internal/core/domain/audit"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/temporaltype"
+)
+
+type ProcessAuditBatchPayload struct {
+	temporaltype.BasePayload
+	Entries []*audit.Entry `json:"entries"`
+	BatchID pulid.ID       `json:"batchId"`
+}
+
+type ProcessAuditBatchResult struct {
+	ProcessedCount int            `json:"processedCount"`
+	FailedCount    int            `json:"failedCount"`
+	BatchID        pulid.ID       `json:"batchId"`
+	ProcessedAt    int64          `json:"processedAt"`
+	Errors         []string       `json:"errors,omitempty"`
+	Metadata       map[string]any `json:"metadata,omitempty"`
+}
+
+type AuditBufferStatus struct {
+	BufferedEntries int   `json:"bufferedEntries"`
+	LastFlush       int64 `json:"lastFlush"`
+	OverflowCount   int   `json:"overflowCount"`
+}
+
+type DeleteAuditEntriesResult struct {
+	TotalDeleted int    `json:"totalDeleted,omitempty"`
+	Result       string `json:"result,omitempty"`
+}

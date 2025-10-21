@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button } from "@/components/ui/button";
 import { FormCreateModal } from "@/components/ui/form-create-modal";
 import { Icon } from "@/components/ui/icons";
@@ -16,8 +11,9 @@ import {
   HazardousClassChoiceProps,
   PackingGroupChoiceProps,
 } from "@/types/hazardous-material";
-import { faInfoCircle, faXmark } from "@fortawesome/pro-regular-svg-icons";
+import { faInfoCircle } from "@fortawesome/pro-regular-svg-icons";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Cross2Icon } from "@radix-ui/react-icons";
 import { useForm } from "react-hook-form";
 import { HazardousMaterialForm } from "./hazardous-material-form";
 
@@ -31,8 +27,8 @@ export function CreateHazardousMaterialModal({
       code: "",
       status: Status.Active,
       description: "",
-      class: HazardousClassChoiceProps.HazardClass1And1,
-      packingGroup: PackingGroupChoiceProps.PackingGroupIII,
+      class: HazardousClassChoiceProps.HazardClass1,
+      packingGroup: PackingGroupChoiceProps.PackingGroupI,
       properShippingName: "",
       handlingInstructions: "",
       emergencyContact: "",
@@ -89,15 +85,12 @@ function HazardousMaterialNotice() {
         </div>
         <Button
           variant="secondary"
-          className="group -my-1.5 -me-2 size-8 shrink-0 p-0 hover:bg-transparent"
+          className="group -my-1.5 -me-2 size-8 shrink-0 p-0"
           onClick={handleClose}
           aria-label="Close banner"
+          tabIndex={-1}
         >
-          <Icon
-            icon={faXmark}
-            className="opacity-60 transition-opacity group-hover:opacity-100"
-            aria-hidden="true"
-          />
+          <Cross2Icon className="opacity-60 transition-opacity group-hover:opacity-100" />
         </Button>
       </div>
     </div>

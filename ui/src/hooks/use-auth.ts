@@ -1,18 +1,11 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
-import { useAuthActions, useUser } from "@/stores/user-store";
-import { useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
-
 import { api } from "@/services/api";
-import { useQuery } from "@tanstack/react-query";
+import { useAuthActions, useUser } from "@/stores/user-store";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useEffect } from "react";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
 
-const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutes
+const SESSION_CHECK_INTERVAL = 5 * 60 * 1000;
 
 export function useAuth() {
   const user = useUser();
@@ -34,10 +27,9 @@ export function useAuth() {
     },
     retry: false,
     refetchInterval: SESSION_CHECK_INTERVAL,
-    enabled: !!user, // Only run if we have a user
+    enabled: !!user,
   });
 
-  // Handle authentication state changes
   useEffect(() => {
     if (sessionQuery.isSuccess && sessionQuery.data) {
       setUser(sessionQuery.data);

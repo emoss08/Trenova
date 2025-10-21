@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 "use no memo";
 import { Table } from "@tanstack/react-table";
 import React from "react";
@@ -27,19 +22,13 @@ export function PaginationInner<TData>({
     totalPages > 1 && (
       <DataTablePaginationOuter>
         <PaginationSelectedRows table={table} />
-
-        <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
-          {/* Row Selector */}
+        <DataTablePNavigationOuter>
           <PaginationRowSelector />
-
           <DataTableNavigationInner>
-            {/* Page Count */}
             <PaginationPageCount table={table} />
-
-            {/* Navigation */}
             <PaginationNavigation table={table} />
           </DataTableNavigationInner>
-        </div>
+        </DataTablePNavigationOuter>
       </DataTablePaginationOuter>
     )
   );
@@ -52,6 +41,18 @@ export function DataTablePaginationOuter({
 }) {
   return (
     <div className="flex w-full flex-col-reverse items-center justify-between gap-4 overflow-visible sm:flex-row sm:gap-8">
+      {children}
+    </div>
+  );
+}
+
+export function DataTablePNavigationOuter({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="flex flex-col-reverse items-center gap-4 sm:flex-row sm:gap-6 lg:gap-8">
       {children}
     </div>
   );

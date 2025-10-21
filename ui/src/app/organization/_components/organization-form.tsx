@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { AddressField } from "@/components/fields/address-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -17,7 +12,6 @@ import {
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { DataTablePermissionDeniedSkeleton } from "@/components/ui/permission-skeletons";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
-import { usePermissions } from "@/hooks/use-permissions";
 import { queries } from "@/lib/queries";
 import {
   organizationSchema,
@@ -26,6 +20,7 @@ import {
 import { TIMEZONES } from "@/lib/timezone/timezone";
 import { api } from "@/services/api";
 import { useUser } from "@/stores/user-store";
+import { useOrganizationPermissions } from "@/types/_gen/permissions";
 import { Resource } from "@/types/audit-entry";
 import type { APIError } from "@/types/errors";
 import { OrganizationType } from "@/types/organization";
@@ -51,8 +46,7 @@ export default function OrganizationForm() {
   const userOrg = useSuspenseQuery({
     ...queries.organization.getOrgById(user?.currentOrganizationId ?? ""),
   });
-  const { can } = usePermissions();
-
+  const { canRead } = useOrganizationPermissions();
   const form = useForm({
     resolver: zodResolver(organizationSchema),
     defaultValues: userOrg.data,
@@ -68,17 +62,14 @@ export default function OrganizationForm() {
       );
     },
     onMutate: async (newValues) => {
-      // * Cancel any outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({
         queryKey: queries.organization.getOrgById._def,
       });
 
-      // * Snapshot the previous value
       const previousOrganization = queryClient.getQueryData([
         queries.organization.getOrgById._def,
       ]);
 
-      // * Optimistically update to the new value
       queryClient.setQueryData(
         [queries.organization.getOrgById._def],
         newValues,
@@ -100,11 +91,9 @@ export default function OrganizationForm() {
         },
       });
 
-      // * Reset the form to the new values
       reset(newValues);
     },
     onError: (error: APIError, _, context) => {
-      // * Rollback the optimistic update
       queryClient.setQueryData(
         [queries.organization.getOrgById._def],
         context?.previousOrganization,
@@ -125,11 +114,9 @@ export default function OrganizationForm() {
         });
       }
 
-      // * Regardless of the error, reset the form to the previous state
       reset();
     },
     onSettled: () => {
-      // * Invalidate the query to refresh the data
       queryClient.invalidateQueries({
         queryKey: queries.organization.getOrgById._def,
       });
@@ -143,7 +130,7 @@ export default function OrganizationForm() {
     [mutateAsync],
   );
 
-  if (!can(Resource.Organization, Action.Read)) {
+  if (!canRead) {
     return (
       <DataTablePermissionDeniedSkeleton
         resource={Resource.Organization}
@@ -296,11 +283,10 @@ function ComplianceForm() {
 function AddressForm() {
   const { control } = useFormContext();
 
-  // Get state options for the form
   const usStates = useSuspenseQuery({
     ...queries.usState.options(),
   });
-  const usStateOptions = usStates.data?.results ?? [];
+  const usStateOptions = usStates.data ?? [];
 
   return (
     <Card>

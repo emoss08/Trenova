@@ -1,8 +1,4 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
+import { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
 import { ConsolidationStatus } from "@/lib/schemas/consolidation-schema";
 import { MoveStatus, type MoveSchema } from "@/lib/schemas/move-schema";
 import {
@@ -17,11 +13,17 @@ import {
 import { StopStatus, type StopSchema } from "@/lib/schemas/stop-schema";
 import { EquipmentStatus } from "@/lib/schemas/tractor-schema";
 import {
+  VariableContext,
+  VariableSchema,
+  VariableValueType,
+} from "@/lib/schemas/variable-schema";
+import {
   WorkerPTOSchema,
   type WorkerSchema,
 } from "@/lib/schemas/worker-schema";
 import { cn } from "@/lib/utils";
 import { badgeVariants } from "@/lib/variants/badge";
+import { AccessorialChargeMethod } from "@/types/billing";
 import { type Status } from "@/types/common";
 import { DocumentStatus, DocumentType } from "@/types/document";
 import { type PackingGroupChoiceProps } from "@/types/hazardous-material";
@@ -725,6 +727,106 @@ export function BooleanBadge({ value }: { value: boolean }) {
   return (
     <Badge variant={value ? "active" : "inactive"} className="max-h-6">
       {value ? "Yes" : "No"}
+    </Badge>
+  );
+}
+
+export function VariableContextBadge({
+  value,
+}: {
+  value: VariableSchema["appliesTo"];
+}) {
+  const valueAttributes: Record<VariableSchema["appliesTo"], BadgeAttrProps> = {
+    [VariableContext.enum.Invoice]: {
+      variant: "purple",
+      text: "Invoice",
+    },
+    [VariableContext.enum.Customer]: {
+      variant: "indigo",
+      text: "Customer",
+    },
+    [VariableContext.enum.Shipment]: {
+      variant: "warning",
+      text: "Shipment",
+    },
+    [VariableContext.enum.Organization]: {
+      variant: "active",
+      text: "Organization",
+    },
+    [VariableContext.enum.System]: {
+      variant: "inactive",
+      text: "System",
+    },
+  };
+  return (
+    <Badge variant={valueAttributes[value].variant} className="max-h-6">
+      {valueAttributes[value].text}
+    </Badge>
+  );
+}
+
+export function VariableValueTypeBadge({
+  valueType,
+}: {
+  valueType: VariableSchema["valueType"];
+}) {
+  const valueTypeAttributes: Record<
+    VariableSchema["valueType"],
+    BadgeAttrProps
+  > = {
+    [VariableValueType.enum.String]: {
+      variant: "purple",
+      text: "String",
+    },
+    [VariableValueType.enum.Number]: {
+      variant: "indigo",
+      text: "Number",
+    },
+    [VariableValueType.enum.Date]: {
+      variant: "warning",
+      text: "Date",
+    },
+    [VariableValueType.enum.Boolean]: {
+      variant: "active",
+      text: "Boolean",
+    },
+    [VariableValueType.enum.Currency]: {
+      variant: "inactive",
+      text: "Currency",
+    },
+  };
+  return (
+    <Badge variant={valueTypeAttributes[valueType].variant} className="max-h-6">
+      {valueTypeAttributes[valueType].text}
+    </Badge>
+  );
+}
+
+export function AccessorialChargeMethodBadge({
+  method,
+}: {
+  method: AccessorialChargeSchema["method"];
+}) {
+  const methodAttributes: Record<
+    AccessorialChargeSchema["method"],
+    BadgeAttrProps
+  > = {
+    [AccessorialChargeMethod.Flat]: {
+      variant: "active",
+      text: "Flat",
+    },
+    [AccessorialChargeMethod.Distance]: {
+      variant: "indigo",
+      text: "Distance",
+    },
+    [AccessorialChargeMethod.Percentage]: {
+      variant: "warning",
+      text: "Percentage",
+    },
+  };
+  return (
+    <Badge variant={methodAttributes[method].variant} className="max-h-6">
+      {methodAttributes[method].text}
     </Badge>
   );
 }

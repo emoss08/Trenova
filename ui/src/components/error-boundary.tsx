@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { cn } from "@/lib/utils";
 import {
   faChevronRight,
@@ -33,6 +28,7 @@ import React, {
 import { ErrorBoundary } from "react-error-boundary";
 import { useRouteError } from "react-router";
 import { NotFoundPage } from "./boundaries/not-found";
+import { DataTableSkeleton } from "./data-table/_components/data-table-skeleton";
 import { Alert, AlertDescription, AlertTitle } from "./ui/alert";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -428,6 +424,24 @@ export function LazyComponent({
       <SuspenseLoader componentLoaderProps={componentLoaderProps}>
         {children}
       </SuspenseLoader>
+    </ErrorBoundary>
+  );
+}
+
+type DataTableLazyComponentProps = {
+  children: React.ReactNode;
+  onError?: (error: Error, info: ErrorInfo) => void;
+};
+
+export function DataTableLazyComponent({
+  children,
+  onError,
+}: DataTableLazyComponentProps) {
+  return (
+    <ErrorBoundary FallbackComponent={LazyLoadErrorFallback} onError={onError}>
+      <Suspense fallback={<DataTableSkeleton columnCount={10} rowCount={10} />}>
+        {children}
+      </Suspense>
     </ErrorBoundary>
   );
 }

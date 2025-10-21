@@ -1,8 +1,3 @@
-/*
- * Copyright 2023-2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 package tableconfiguration
 
 import (
@@ -11,197 +6,84 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
-	tcdomain "github.com/emoss08/trenova/internal/core/domain/tableconfiguration"
-	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
-	"github.com/emoss08/trenova/internal/infrastructure/jobs/temporaljobs/notificationjobs"
-	"github.com/emoss08/trenova/internal/pkg/appctx"
-	"github.com/emoss08/trenova/internal/pkg/errors"
-	"github.com/emoss08/trenova/internal/pkg/logger"
-	"github.com/emoss08/trenova/internal/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/pkg/types/temporaltype"
-	"github.com/emoss08/trenova/shared/pulid"
-	"github.com/rotisserie/eris"
-	"github.com/rs/zerolog"
-	"go.temporal.io/sdk/client"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/notificationjobs"
 
+	authCtx "github.com/emoss08/trenova/internal/api/context"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/pkg/utils/jsonutils"
+	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
+	"go.uber.org/zap"
 )
 
-type ServiceParams struct {
+type Params struct {
 	fx.In
 
-	Logger         *logger.Logger
+	Logger         *zap.Logger
 	Repo           repositories.TableConfigurationRepository
 	UserRepo       repositories.UserRepository
-	PermService    services.PermissionService
 	AuditService   services.AuditService
 	TemporalClient client.Client
 }
 
 type Service struct {
-	l    *zerolog.Logger
-	repo repositories.TableConfigurationRepository
-	ur   repositories.UserRepository
-	ps   services.PermissionService
-	as   services.AuditService
-	tc   client.Client
+	l              *zap.Logger
+	repo           repositories.TableConfigurationRepository
+	userRepo       repositories.UserRepository
+	auditService   services.AuditService
+	temporalClient client.Client
 }
 
-// NewService creates a new table configuration service
-//
-//nolint:gocritic // Dependency injection
-func NewService(p ServiceParams) *Service {
-	log := p.Logger.With().
-		Str("service", "tableconfiguration").
-		Logger()
-
+func NewService(p Params) *Service {
 	return &Service{
-		repo: p.Repo,
-		ps:   p.PermService,
-		as:   p.AuditService,
-		l:    &log,
-		ur:   p.UserRepo,
-		tc:   p.TemporalClient,
+		l:              p.Logger.Named("service.tableconfiguration"),
+		repo:           p.Repo,
+		userRepo:       p.UserRepo,
+		auditService:   p.AuditService,
+		temporalClient: p.TemporalClient,
 	}
 }
 
 func (s *Service) List(
 	ctx context.Context,
 	opts *repositories.TableConfigurationFilters,
-) (*ports.ListResult[*tableconfiguration.Configuration], error) {
-	log := s.l.With().Str("operation", "List").Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
-			UserID:         opts.Base.UserID,
-			Resource:       permission.ResourceTableConfiguration,
-			Action:         permission.ActionRead,
-			BusinessUnitID: opts.Base.BuID,
-			OrganizationID: opts.Base.OrgID,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check permissions")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to read table configurations",
-		)
-	}
-
-	entities, err := s.repo.List(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to list table configurations")
-		return nil, eris.Wrap(err, "list table configurations")
-	}
-
-	return entities, nil
+) (*pagination.ListResult[*tableconfiguration.Configuration], error) {
+	return s.repo.List(ctx, opts)
 }
 
 func (s *Service) ListPublicConfigurations(
 	ctx context.Context,
 	opts *repositories.TableConfigurationFilters,
-) (*ports.ListResult[*tcdomain.Configuration], error) {
-	log := s.l.With().Str("operation", "ListPublicConfigurations").Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx, []*services.PermissionCheck{
-		{
-			UserID:         opts.Base.UserID,
-			Resource:       permission.ResourceTableConfiguration,
-			Action:         permission.ActionRead,
-			BusinessUnitID: opts.Base.BuID,
-			OrganizationID: opts.Base.OrgID,
-		},
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, err
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to read table configurations",
-		)
-	}
-
-	entities, err := s.repo.ListPublicConfigurations(ctx, opts)
-	if err != nil {
-		log.Error().Err(err).Msg("failed to list table configurations")
-		return nil, err
-	}
-
-	return entities, nil
+) (*pagination.ListResult[*tableconfiguration.Configuration], error) {
+	return s.repo.ListPublicConfigurations(ctx, opts)
 }
 
 func (s *Service) Create(
 	ctx context.Context,
-	config *tcdomain.Configuration,
-) (*tcdomain.Configuration, error) {
-	log := s.l.With().Str("method", "Create").
-		Str("orgID", config.OrganizationID.String()).
-		Str("businessUnitID", config.BusinessUnitID.String()).
-		Str("userID", config.UserID.String()).
-		Logger()
-
-	result, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         config.UserID,
-				Resource:       permission.ResourceTableConfiguration,
-				Action:         permission.ActionCreate,
-				BusinessUnitID: config.BusinessUnitID,
-				OrganizationID: config.OrganizationID,
-			},
-		})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permissions")
-		return nil, eris.Wrap(err, "check permissions")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to create table configurations",
-		)
-	}
-
-	// if setting as default, ensure user has permission
-	if config.IsDefault {
-		defaultPermResult, dprErr := s.ps.HasPermission(ctx,
-			&services.PermissionCheck{
-				UserID:         config.UserID,
-				Resource:       permission.ResourceTableConfiguration,
-				Action:         permission.ActionManageDefaults,
-				BusinessUnitID: config.BusinessUnitID,
-				OrganizationID: config.OrganizationID,
-			})
-		if dprErr != nil {
-			log.Error().Err(dprErr).Msg("failed to check default permission")
-			return nil, eris.Wrap(dprErr, "failed to check default permission")
-		}
-
-		if !defaultPermResult.Allowed {
-			return nil, errors.NewAuthorizationError(
-				"You do not have permission to manage default table configurations",
-			)
-		}
-	}
+	config *tableconfiguration.Configuration,
+) (*tableconfiguration.Configuration, error) {
+	log := s.l.With(
+		zap.String("operation", "Create"),
+		zap.String("buID", config.BusinessUnitID.String()),
+		zap.String("userID", config.UserID.String()),
+	)
 
 	createdEntity, err := s.repo.Create(ctx, config)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to create table configuration")
-		return nil, eris.Wrap(err, "create configuration")
+		log.Error("failed to create table configuration", zap.Error(err))
+		return nil, err
 	}
 
-	err = s.as.LogAction(
+	err = s.auditService.LogAction(
 		&services.LogActionParams{
 			Resource:       permission.ResourceTableConfiguration,
 			ResourceID:     createdEntity.GetID(),
-			Action:         permission.ActionCreate,
+			Operation:      permission.OpCreate,
 			UserID:         config.UserID,
 			CurrentState:   jsonutils.MustToJSON(createdEntity),
 			BusinessUnitID: config.BusinessUnitID,
@@ -210,7 +92,7 @@ func (s *Service) Create(
 		audit.WithComment("Table configuration created"),
 	)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to log table configuration creation")
+		log.Error("failed to log table configuration creation", zap.Error(err))
 	}
 
 	return createdEntity, nil
@@ -220,57 +102,41 @@ func (s *Service) Copy(
 	ctx context.Context,
 	req *repositories.CopyTableConfigurationRequest,
 ) error {
-	log := s.l.With().
-		Str("operation", "Copy").
-		Str("configID", req.ConfigID.String()).
-		Logger()
+	log := s.l.With(
+		zap.String("operation", "Copy"),
+		zap.String("configID", req.ConfigID.String()),
+	)
 
-	result, err := s.ps.HasPermission(ctx, &services.PermissionCheck{
-		UserID:         req.UserID,
-		Resource:       permission.ResourceTableConfiguration,
-		Action:         permission.ActionRead,
-		BusinessUnitID: req.BuID,
-		OrganizationID: req.OrgID,
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check copy permission")
-		return err
-	}
-
-	if !result.Allowed {
-		return errors.NewAuthorizationError(
-			"You do not have permission to copy this configuration",
-		)
-	}
-
-	if err = s.repo.Copy(ctx, req); err != nil {
-		log.Error().Err(err).Msg("failed to copy configuration")
+	if err := s.repo.Copy(ctx, req); err != nil {
+		log.Error("failed to copy configuration", zap.Error(err))
 		return err
 	}
 
 	existing, err := s.repo.GetByID(ctx, req.ConfigID, &repositories.TableConfigurationFilters{
-		Base: &ports.FilterQueryOptions{
-			OrgID: req.OrgID,
-			BuID:  req.BuID,
+		Filter: &pagination.QueryOptions{
+			TenantOpts: pagination.TenantOptions{
+				OrgID: req.OrgID,
+				BuID:  req.BuID,
+			},
 		},
 		IncludeCreator: true,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get existing configuration")
+		log.Error("failed to get existing configuration", zap.Error(err))
 		return err
 	}
 
-	copiedBy, err := s.ur.GetByID(ctx, repositories.GetUserByIDOptions{
+	copiedBy, err := s.userRepo.GetByID(ctx, repositories.GetUserByIDRequest{
 		OrgID:  req.OrgID,
 		BuID:   req.BuID,
 		UserID: req.UserID,
 	})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get copied by user")
+		log.Error("failed to get copied by user", zap.Error(err))
 		return err
 	}
 
-	if _, err = s.tc.ExecuteWorkflow(
+	if _, err = s.temporalClient.ExecuteWorkflow(
 		context.Background(),
 		client.StartWorkflowOptions{
 			ID:        fmt.Sprintf("configuration-copied-%s", req.ConfigID.String()),
@@ -294,186 +160,170 @@ func (s *Service) Copy(
 			ConfigCopiedBy: copiedBy.Name,
 		},
 	); err != nil {
-		log.Error().Err(err).Msg("failed to send configuration copied notification")
+		log.Error("failed to send configuration copied notification", zap.Error(err))
 		// ! we will not return an error here because we want to continue the operation
 		// ! even if the notification fails
 	}
 
+	err = s.auditService.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceTableConfiguration,
+			ResourceID:     existing.GetID(),
+			Operation:      permission.OpCopy,
+			UserID:         req.UserID,
+			CurrentState:   jsonutils.MustToJSON(existing),
+			BusinessUnitID: req.BuID,
+			OrganizationID: req.OrgID,
+		},
+		audit.WithComment("Table configuration copied"),
+	)
+	if err != nil {
+		log.Error("failed to log table configuration copy", zap.Error(err))
+	}
 	return nil
 }
 
 func (s *Service) Update(
 	ctx context.Context,
-	config *tcdomain.Configuration,
-) (*tcdomain.Configuration, error) {
-	log := s.l.With().
-		Str("operation", "Update").
-		Str("configID", config.ID.String()).
-		Logger()
+	config *tableconfiguration.Configuration,
+) (*tableconfiguration.Configuration, error) {
+	log := s.l.With(
+		zap.String("operation", "Update"),
+		zap.String("configID", config.ID.String()),
+	)
 
 	existing, err := s.repo.GetByID(ctx, config.ID,
 		&repositories.TableConfigurationFilters{
-			Base: &ports.FilterQueryOptions{
-				OrgID: config.OrganizationID,
-				BuID:  config.BusinessUnitID,
+			Filter: &pagination.QueryOptions{
+				TenantOpts: pagination.TenantOptions{
+					OrgID: config.OrganizationID,
+					BuID:  config.BusinessUnitID,
+				},
 			},
 		})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get existing configuration")
-		return nil, eris.Wrap(err, "get existing configuration")
-	}
-
-	result, err := s.ps.HasPermission(ctx,
-		&services.PermissionCheck{
-			UserID:         config.UserID,
-			Resource:       permission.ResourceTableConfiguration,
-			Action:         permission.ActionUpdate,
-			BusinessUnitID: config.BusinessUnitID,
-			OrganizationID: config.OrganizationID,
-			ResourceID:     config.ID,
-			CustomData: map[string]any{
-				"userId": existing.UserID,
-			},
-		})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check update permission")
-		return nil, eris.Wrap(err, "check update permission")
-	}
-
-	if !result.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You do not have permission to update this table configuration",
-		)
+		log.Error("failed to get existing configuration", zap.Error(err))
+		return nil, err
 	}
 
 	if err = s.repo.Update(ctx, config); err != nil {
-		log.Error().Err(err).Msg("failed to update table configuration")
-		return nil, eris.Wrap(err, "update configuration")
+		log.Error("failed to update table configuration", zap.Error(err))
+		return nil, err
+	}
+
+	err = s.auditService.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceTableConfiguration,
+			ResourceID:     existing.GetID(),
+			Operation:      permission.OpUpdate,
+			UserID:         config.UserID,
+			PreviousState:  jsonutils.MustToJSON(config),
+			CurrentState:   jsonutils.MustToJSON(existing),
+			BusinessUnitID: config.BusinessUnitID,
+			OrganizationID: config.OrganizationID,
+		},
+		audit.WithComment("Table configuration updated"),
+		audit.WithDiff(existing, config),
+	)
+	if err != nil {
+		log.Error("failed to log table configuration update", zap.Error(err))
 	}
 
 	return config, nil
 }
 
-// Delete deletes a table configuration with permission checks
 func (s *Service) Delete(
 	ctx context.Context,
 	req repositories.DeleteUserConfigurationRequest,
 ) error {
-	log := s.l.With().
-		Str("operation", "Delete").
-		Str("configID", req.ConfigID.String()).
-		Logger()
-
-	// * The deletion can only be done by the user who created the configuration
-	result, err := s.ps.HasPermission(ctx, &services.PermissionCheck{
-		UserID:         req.UserID,
-		Resource:       permission.ResourceTableConfiguration,
-		Action:         permission.ActionDelete,
-		BusinessUnitID: req.BuID,
-		OrganizationID: req.OrgID,
-		ResourceID:     req.ConfigID,
-	})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check delete permission")
-		return eris.Wrap(err, "check delete permission")
-	}
-
-	if !result.Allowed {
-		return errors.NewAuthorizationError(
-			"You don't have permission to delete this configuration",
-		)
-	}
+	log := s.l.With(
+		zap.String("operation", "Delete"),
+		zap.String("configID", req.ConfigID.String()),
+	)
 
 	existing, err := s.repo.GetByID(ctx, req.ConfigID, &repositories.TableConfigurationFilters{
-		Base: &ports.FilterQueryOptions{
-			OrgID:  req.OrgID,
-			BuID:   req.BuID,
-			UserID: req.UserID,
+		Filter: &pagination.QueryOptions{
+			TenantOpts: pagination.TenantOptions{
+				OrgID:  req.OrgID,
+				BuID:   req.BuID,
+				UserID: req.UserID,
+			},
 		},
 	})
 	if err != nil {
-		return eris.Wrap(err, "get existing configuration")
-	}
-
-	// Check delete permission
-	permResult, err := s.ps.HasPermission(ctx,
-		&services.PermissionCheck{
-			UserID:         req.UserID,
-			Resource:       permission.ResourceTableConfiguration,
-			Action:         permission.ActionDelete,
-			BusinessUnitID: req.BuID,
-			OrganizationID: req.OrgID,
-			ResourceID:     req.ConfigID,
-			CustomData: map[string]any{
-				"userId": existing.UserID,
-			},
-		})
-	if err != nil {
-		return eris.Wrap(err, "check permission")
-	}
-	if !permResult.Allowed {
-		return errors.NewAuthorizationError(
-			"You don't have permission to delete this configuration",
-		)
+		log.Error("failed to get existing configuration", zap.Error(err))
+		return err
 	}
 
 	if err = s.repo.Delete(ctx, req); err != nil {
-		log.Error().Err(err).Msg("failed to delete configuration")
-		return eris.Wrap(err, "delete configuration")
+		log.Error("failed to delete configuration", zap.Error(err))
+		return err
+	}
+
+	err = s.auditService.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceTableConfiguration,
+			ResourceID:     existing.GetID(),
+			Operation:      permission.OpDelete,
+			PreviousState:  jsonutils.MustToJSON(existing),
+			OrganizationID: req.OrgID,
+			BusinessUnitID: req.BuID,
+			UserID:         req.UserID,
+		},
+		audit.WithComment("Table configuration deleted"),
+		audit.WithDiff(existing, nil),
+	)
+	if err != nil {
+		log.Error("failed to log table configuration deletion", zap.Error(err))
 	}
 
 	return nil
 }
 
-// ShareConfiguration shares a configuration with specified users/roles/teams
 func (s *Service) ShareConfiguration(
 	ctx context.Context,
-	share *tcdomain.ConfigurationShare,
+	share *tableconfiguration.ConfigurationShare,
 	userID pulid.ID,
 ) error {
-	log := s.l.With().
-		Str("operation", "ShareConfiguration").
-		Str("configID", share.ConfigurationID.String()).
-		Logger()
+	log := s.l.With(
+		zap.String("operation", "ShareConfiguration"),
+		zap.String("configID", share.ConfigurationID.String()),
+		zap.String("userID", userID.String()),
+	)
 
-	// Get existing configuration
 	existing, err := s.repo.GetByID(ctx,
 		share.ConfigurationID,
 		&repositories.TableConfigurationFilters{
-			Base: &ports.FilterQueryOptions{
-				OrgID: share.OrganizationID,
-				BuID:  share.BusinessUnitID,
-			},
-		})
-	if err != nil {
-		return err
-	}
-
-	// Check share permission
-	permResult, err := s.ps.HasAnyPermissions(ctx,
-		[]*services.PermissionCheck{
-			{
-				UserID:         userID,
-				Resource:       permission.ResourceTableConfiguration,
-				Action:         permission.ActionShare,
-				BusinessUnitID: existing.BusinessUnitID,
-				OrganizationID: existing.OrganizationID,
-				// ResourceID:     existing.ID,
-				CustomData: map[string]any{
-					"userId": existing.UserID,
+			Filter: &pagination.QueryOptions{
+				TenantOpts: pagination.TenantOptions{
+					OrgID: share.OrganizationID,
+					BuID:  share.BusinessUnitID,
 				},
 			},
 		})
 	if err != nil {
-		return eris.Wrap(err, "check permission")
-	}
-	if !permResult.Allowed {
-		return errors.NewAuthorizationError("You don't have permission to share this configuration")
+		return err
 	}
 
-	if err = s.repo.ShareConfiguration(ctx, share); err != nil {
-		log.Error().Err(err).Msg("failed to share configuration")
+	if err = s.repo.Share(ctx, share); err != nil {
+		log.Error("failed to share configuration", zap.Error(err))
 		return err
+	}
+
+	err = s.auditService.LogAction(
+		&services.LogActionParams{
+			Resource:       permission.ResourceTableConfiguration,
+			ResourceID:     existing.GetID(),
+			Operation:      permission.OpShare,
+			UserID:         userID,
+			CurrentState:   jsonutils.MustToJSON(existing),
+			OrganizationID: existing.OrganizationID,
+			BusinessUnitID: existing.BusinessUnitID,
+		},
+		audit.WithComment("Table configuration shared"),
+	)
+	if err != nil {
+		log.Error("failed to log table configuration share", zap.Error(err))
 	}
 
 	return nil
@@ -482,101 +332,63 @@ func (s *Service) ShareConfiguration(
 func (s *Service) ListUserConfigurations(
 	ctx context.Context,
 	opts *repositories.ListUserConfigurationRequest,
-) (*ports.ListResult[*tcdomain.Configuration], error) {
-	log := s.l.With().
-		Str("operation", "ListUserConfigurations").
-		Str("userID", opts.Filter.TenantOpts.UserID.String()).
-		Logger()
-
-	permResult, err := s.ps.HasPermission(ctx,
-		&services.PermissionCheck{
-			UserID:         opts.Filter.TenantOpts.UserID,
-			Resource:       permission.ResourceTableConfiguration,
-			Action:         permission.ActionRead,
-			BusinessUnitID: opts.Filter.TenantOpts.BuID,
-			OrganizationID: opts.Filter.TenantOpts.OrgID,
-		})
-	if err != nil {
-		log.Error().Err(err).Msg("failed to check permission")
-		return nil, eris.Wrap(err, "check permission")
-	}
-
-	if !permResult.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You don't have permission to view table configurations",
-		)
-	}
+) (*pagination.ListResult[*tableconfiguration.Configuration], error) {
+	log := s.l.With(
+		zap.String("operation", "ListUserConfigurations"),
+		zap.Any("opts", opts),
+	)
 
 	result, err := s.repo.ListUserConfigurations(ctx, opts)
 	if err != nil {
-		log.Error().Err(err).Msg("failed to list user configurations")
-		return nil, eris.Wrap(err, "list user configurations")
+		log.Error("failed to list user configurations", zap.Error(err))
+		return nil, err
 	}
 
 	return result, nil
 }
 
-// GetUserConfigurations retrieves configurations accessible to a user
 func (s *Service) GetUserConfigurations(
 	ctx context.Context,
-	tableID string,
-	opts *repositories.GetUserByIDOptions,
-) ([]*tcdomain.Configuration, error) {
-	log := s.l.With().
-		Str("operation", "GetUserConfigurations").
-		Str("userID", opts.UserID.String()).
-		Logger()
+	resource string,
+	opts *repositories.TableConfigurationFilters,
+) ([]*tableconfiguration.Configuration, error) {
+	log := s.l.With(
+		zap.String("operation", "GetUserConfigurations"),
+		zap.String("userID", opts.Filter.TenantOpts.UserID.String()),
+	)
 
-	// Check read permission
-	permResult, err := s.ps.HasPermission(ctx,
-		&services.PermissionCheck{
-			UserID:         opts.UserID,
-			Resource:       permission.ResourceTableConfiguration,
-			Action:         permission.ActionRead,
-			BusinessUnitID: opts.BuID,
-			OrganizationID: opts.OrgID,
-		})
-	if err != nil {
-		return nil, eris.Wrap(err, "check permission")
-	}
-	if !permResult.Allowed {
-		return nil, errors.NewAuthorizationError(
-			"You don't have permission to view table configurations",
-		)
-	}
-
-	configs, err := s.repo.GetUserConfigurations(ctx, tableID,
+	configs, err := s.repo.GetUserConfigurations(ctx, resource,
 		&repositories.TableConfigurationFilters{
-			Base: &ports.FilterQueryOptions{
-				OrgID: opts.OrgID,
-				BuID:  opts.BuID,
+			Filter: &pagination.QueryOptions{
+				TenantOpts: pagination.TenantOptions{
+					OrgID: opts.Filter.TenantOpts.OrgID,
+					BuID:  opts.Filter.TenantOpts.BuID,
+				},
 			},
 		})
 	if err != nil {
-		log.Error().Err(err).Msg("failed to get user configurations")
-		return nil, eris.Wrap(err, "get user configurations")
+		log.Error("failed to get user configurations", zap.Error(err))
+		return nil, err
 	}
 
 	return configs, nil
 }
 
-// GetDefaultOrLatestConfiguration retrieves a configuration for the given table identifier and current user.
-// If none exists it will create a new one with a minimal default payload so the
-// client always receives a valid configuration object.
 func (s *Service) GetDefaultOrLatestConfiguration(
 	ctx context.Context,
 	resource string,
-	rCtx *appctx.RequestContext,
-) (*tcdomain.Configuration, error) {
-	// First attempt to find an existing configuration for this user/org/bu + table
-	config, err := s.repo.GetDefaultOrLatestConfiguration(
+	rCtx *authCtx.AuthContext,
+) (*tableconfiguration.Configuration, error) {
+	config, err := s.repo.GetDefaultOrLatest(
 		ctx,
 		resource,
 		&repositories.TableConfigurationFilters{
-			Base: &ports.FilterQueryOptions{
-				OrgID:  rCtx.OrgID,
-				BuID:   rCtx.BuID,
-				UserID: rCtx.UserID,
+			Filter: &pagination.QueryOptions{
+				TenantOpts: pagination.TenantOptions{
+					OrgID:  rCtx.OrganizationID,
+					BuID:   rCtx.BusinessUnitID,
+					UserID: rCtx.UserID,
+				},
 			},
 		},
 	)

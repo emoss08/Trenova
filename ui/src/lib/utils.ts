@@ -1,9 +1,8 @@
 /*
- * Copyright 2023-2025 Eric Moss
+ * Copyright 2025 Eric Moss
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-import { Resource } from "@/types/audit-entry";
 import { ResourcePageInfo, ResourceType, RouteInfo } from "@/types/nav-links";
 import {
   faFileAlt,
@@ -14,7 +13,6 @@ import {
   faFileWord,
 } from "@fortawesome/pro-solid-svg-icons";
 import { clsx, type ClassValue } from "clsx";
-import { RefObject, useEffect } from "react";
 import { twMerge } from "tailwind-merge";
 import { LocationSchema } from "./schemas/location-schema";
 
@@ -45,24 +43,6 @@ export function USDollarFormat(num: number): string {
 }
 
 /**
- * Converts a decimal string to a USD string
- * @param value - The decimal string to convert
- * @returns {string}
- */
-export function ConvertDecimalToUSD(value: string): string {
-  if (value === "") {
-    return "";
-  }
-
-  const num = parseFloat(value);
-
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-  }).format(num);
-}
-
-/**
  * Truncates a string to a given length
  * @param str - The string to truncate
  * @param length - The length to truncate the string to
@@ -71,61 +51,6 @@ export function ConvertDecimalToUSD(value: string): string {
 export function truncateText(str: string, length: number): string {
   return str?.length > length ? `${str.slice(0, length)}...` : str;
 }
-
-/**
- * Returns a random integer between min (inclusive) and max (inclusive).
- * @returns {number}
- * @param ref
- * @param handler
- */
-export const useClickOutside = <T extends HTMLElement>(
-  ref: RefObject<T>,
-  handler: (event: MouseEvent | TouchEvent) => void,
-): void => {
-  useEffect(() => {
-    let startedInside: boolean | null = false;
-    let startedWhenMounted = false;
-
-    const listener = (event: MouseEvent | TouchEvent) => {
-      // Do nothing if `mousedown` or `touchstart` started inside ref element
-      if (startedInside || !startedWhenMounted) return;
-      // Do nothing if clicking ref's element or descendent elements
-      if (!ref.current || ref.current.contains(event.target as Node)) return;
-
-      handler(event);
-    };
-
-    const validateEventStart = (event: MouseEvent | TouchEvent) => {
-      startedWhenMounted = !!ref.current;
-      startedInside = ref.current && ref.current.contains(event.target as Node);
-    };
-
-    document.addEventListener("mousedown", validateEventStart);
-    document.addEventListener("touchstart", validateEventStart);
-    document.addEventListener("click", listener);
-
-    return () => {
-      document.removeEventListener("mousedown", validateEventStart);
-      document.removeEventListener("touchstart", validateEventStart);
-      document.removeEventListener("click", listener);
-    };
-  }, [ref, handler]);
-};
-
-/**
- * Removes all undefined, null, and empty string values from an object
- * @param obj
- * @returns {Record<string, any>}
- */
-export const cleanObject = (obj: Record<string, any>): Record<string, any> => {
-  const cleanedObj: Record<string, any> = {};
-  Object.keys(obj).forEach((key) => {
-    if (obj[key] !== undefined && obj[key] !== "" && obj[key] !== null) {
-      cleanedObj[key] = obj[key];
-    }
-  });
-  return cleanedObj;
-};
 
 /**
  * List of words that should remain lowercase in titles
@@ -221,26 +146,6 @@ export function toSentenceCase(str: string) {
     .trim();
 }
 
-/**
- * @see https://github.com/radix-ui/primitives/blob/main/packages/core/primitive/src/primitive.tsx
- */
-export function composeEventHandlers<E>(
-  originalEventHandler?: (event: E) => void,
-  ourEventHandler?: (event: E) => void,
-  { checkForDefaultPrevented = true } = {},
-) {
-  return function handleEvent(event: E) {
-    originalEventHandler?.(event);
-
-    if (
-      checkForDefaultPrevented === false ||
-      !(event as unknown as Event).defaultPrevented
-    ) {
-      return ourEventHandler?.(event);
-    }
-  };
-}
-
 export function formatLocation(location?: LocationSchema) {
   if (!location) {
     return "";
@@ -259,63 +164,6 @@ export function formatLocation(location?: LocationSchema) {
 export function toNumber(value: any): number {
   const num = Number(value);
   return isNaN(num) ? 0 : num; // Ensure it returns 0 if NaN
-}
-
-export function resourceToPage(resource: Resource) {
-  switch (resource) {
-    case Resource.LocationCategory:
-      return "/dispatch/configurations/location-categories";
-    case Resource.Location:
-      return "/dispatch/configurations/locations";
-    case Resource.FleetCode:
-      return "/dispatch/configurations/fleet-codes";
-    case Resource.Worker:
-      return "/dispatch/configurations/workers";
-    case Resource.Tractor:
-      return "/dispatch/configurations/tractors";
-    case Resource.Trailer:
-      return "/dispatch/configurations/trailers";
-    case Resource.Shipment:
-      return "/shipments/management";
-    case Resource.ShipmentType:
-      return "/shipments/configurations/shipment-types";
-    case Resource.ServiceType:
-      return "/shipments/configurations/service-types";
-    case Resource.HazardousMaterial:
-      return "/shipments/configurations/hazardous-materials";
-    case Resource.Commodity:
-      return "/shipments/configurations/commodities";
-    case Resource.Assignment:
-      return "/shipments/assignments";
-    case Resource.DocumentType:
-      return "/billing/configurations/document-types";
-    case Resource.ShipmentMove:
-      return "/shipments/moves";
-    case Resource.Stop:
-      return "/shipments/stops"; // Doesn't map to a page, need to change to something else.
-    case Resource.Customer:
-      return "/billing/configurations/customers";
-    case Resource.Invoice:
-      return "/invoices";
-    case Resource.Dispatch:
-      return "/dispatch/management";
-    case Resource.Report:
-      return "/reports";
-    case Resource.AuditEntry:
-      return "/audit-entries";
-    case Resource.TableConfiguration:
-      return "/dispatch/configurations/table-configurations";
-    case Resource.Integration:
-      return "/dispatch/integrations";
-    case Resource.Setting:
-      return "/dispatch/settings";
-    case Resource.Template:
-      return "/dispatch/templates";
-    case Resource.Backup:
-      return "/dispatch/backups";
-    default:
-      return "/";
-  }
 }
 
 export const resourcePathMap = new Map<string, ResourcePageInfo>();
@@ -349,18 +197,6 @@ export function getRoutePageInfo(resourceType: ResourceType): ResourcePageInfo {
   }
 
   return pageInfo;
-}
-
-export function convertValueToDisplay(value: any) {
-  if (typeof value === "boolean") {
-    return value ? "true" : "false";
-  }
-
-  if (typeof value === "object" && value !== null) {
-    return JSON.stringify(value);
-  }
-
-  return value;
 }
 
 export function formatFileSize(bytes: number) {
