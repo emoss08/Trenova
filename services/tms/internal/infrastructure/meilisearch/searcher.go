@@ -8,20 +8,29 @@ import (
 	"github.com/emoss08/trenova/pkg/meilisearchtype"
 	"github.com/meilisearch/meilisearch-go"
 	"github.com/sourcegraph/conc"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
+type SearcherParams struct {
+	fx.In
+
+	Connection *Connection
+	Client     *Client
+	Indexer    *Indexer
+}
+
 type Searcher struct {
-	client  *Client
 	conn    *Connection
+	client  *Client
 	indexer *Indexer
 }
 
-func NewSearcher(conn *Connection, indexer *Indexer) *Searcher {
+func NewSearcher(p SearcherParams) *Searcher {
 	return &Searcher{
-		client:  NewClient(conn),
-		conn:    conn,
-		indexer: indexer,
+		conn:    p.Connection,
+		client:  p.Client,
+		indexer: p.Indexer,
 	}
 }
 

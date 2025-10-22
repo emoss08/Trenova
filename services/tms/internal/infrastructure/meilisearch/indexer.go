@@ -7,20 +7,32 @@ import (
 
 	"github.com/emoss08/trenova/pkg/meilisearchtype"
 	"github.com/meilisearch/meilisearch-go"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
+
+type IndexerParams struct {
+	fx.In
+
+	Client     *Client
+	Connection *Connection
+	Logger     *zap.Logger
+}
 
 type Indexer struct {
 	client     *Client
 	conn       *Connection
+	logger     *zap.Logger
 	indexCache map[string]*meilisearch.IndexResult
 	indexMu    sync.RWMutex
 }
 
-func NewIndexer(conn *Connection) *Indexer {
+func NewIndexer(p IndexerParams) *Indexer {
+	log := p.Logger.With(zap.String("component", "meilisearch-indexer"))
 	return &Indexer{
-		client:     NewClient(conn),
-		conn:       conn,
+		client:     p.Client,
+		conn:       p.Connection,
+		logger:     log,
 		indexCache: make(map[string]*meilisearch.IndexResult),
 	}
 }

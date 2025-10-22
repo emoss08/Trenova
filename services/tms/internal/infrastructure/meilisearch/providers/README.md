@@ -57,11 +57,13 @@ if s.searchHelper != nil {
 ```
 
 **Advantages:**
+
 - No custom provider needed
 - Clear contract via interface
 - Works out of the box
 
 **Disadvantages:**
+
 - Adds methods to domain entities
 - May not be ideal for complex conversion logic
 
@@ -107,11 +109,13 @@ if err := s.searchHelper.IndexShipment(ctx, shipment); err != nil {
 ```
 
 **Advantages:**
+
 - Separates complex conversion logic from domain
 - Can inject dependencies if needed
 - More flexible for special cases
 
 **Disadvantages:**
+
 - Requires additional code
 - Must be registered in Fx module
 

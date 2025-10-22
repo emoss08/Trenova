@@ -5,20 +5,25 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/pkg/meilisearchtype"
+	"go.uber.org/fx"
 )
+
+type EngineParams struct {
+	fx.In
+
+	Indexer  *Indexer
+	Searcher *Searcher
+}
 
 type Engine struct {
 	indexer  *Indexer
 	searcher *Searcher
 }
 
-func NewEngine(conn *Connection) ports.SearchEngine {
-	indexer := NewIndexer(conn)
-	searcher := NewSearcher(conn, indexer)
-
+func NewEngine(p EngineParams) ports.SearchEngine {
 	return &Engine{
-		indexer:  indexer,
-		searcher: searcher,
+		indexer:  p.Indexer,
+		searcher: p.Searcher,
 	}
 }
 
