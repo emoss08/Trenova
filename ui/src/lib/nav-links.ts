@@ -316,9 +316,9 @@ export const routes: RouteInfo[] = [
         icon: faFiles,
         tree: [
           {
-            key: Resource.ShipmentType,
-            label: "Shipment Types",
-            link: "/shipments/configurations/shipment-types",
+            key: Resource.Commodity,
+            label: "Commodities",
+            link: "/shipments/configurations/commodities",
             supportsModal: true,
           },
           {
@@ -340,9 +340,9 @@ export const routes: RouteInfo[] = [
             supportsModal: true,
           },
           {
-            key: Resource.Commodity,
-            label: "Commodities",
-            link: "/shipments/configurations/commodities",
+            key: Resource.ShipmentType,
+            label: "Shipment Types",
+            link: "/shipments/configurations/shipment-types",
             supportsModal: true,
           },
           {
