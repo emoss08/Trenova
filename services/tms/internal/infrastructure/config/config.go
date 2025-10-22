@@ -22,6 +22,7 @@ type Config struct {
 	Temporal        *TemporalConfig        `mapstructure:"temporal,omitempty"`
 	Email           *EmailConfig           `mapstructure:"email,omitempty"           validate:"required"`
 	PermissionCache *PermissionCacheConfig `mapstructure:"permissionCache,omitempty"`
+	Search          *SearchConfig          `mapstructure:"search,omitempty"`
 	Security        SecurityConfig         `mapstructure:"security"                  validate:"required"`
 	Logging         LoggingConfig          `mapstructure:"logging"                   validate:"required"`
 	Monitoring      MonitoringConfig       `mapstructure:"monitoring"                validate:"required"`
@@ -327,6 +328,15 @@ type StreamingConfig struct {
 	MaxConnections        int           `mapstructure:"maxConnections"        validate:"min=1,max=100"`
 	StreamTimeout         time.Duration `mapstructure:"streamTimeout"         validate:"min=0"`
 	MaxConnectionsPerUser int           `mapstructure:"maxConnectionsPerUser" validate:"min=1,max=100"`
+}
+
+// SearchConfig contains Meilisearch settings
+type SearchConfig struct {
+	Enabled     bool          `mapstructure:"enabled"`
+	Host        string        `mapstructure:"host"         validate:"required_if=Enabled true"`
+	APIKey      string        `mapstructure:"api_key"      validate:"required_if=Enabled true"`
+	IndexPrefix string        `mapstructure:"index_prefix"`
+	Timeout     time.Duration `mapstructure:"timeout"`
 }
 
 // Environment check methods

@@ -211,6 +211,25 @@ services:
       timeout: 10s
       retries: 5
 
+  meilisearch:
+    image: getmeili/meilisearch:v1.16
+    ports:
+      - "7700:7700"
+    environment:
+      MEILI_MASTER_KEY: ${MEILI_MASTER_KEY:-masterKey}
+    volumes:
+      - meilisearch_data:/data
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    healthcheck:
+      test: curl -f http://localhost:7700/health
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
 volumes:
   pg_data: {}
   redis_data: {}
@@ -219,4 +238,5 @@ volumes:
   zookeeper_logs: {}
   kafka_data: {}
   kafka_connect_data: {}
+  meilisearch_data: {}
   kafka_ui_data: {}
