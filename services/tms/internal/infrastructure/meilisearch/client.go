@@ -7,16 +7,27 @@ import (
 
 	"github.com/emoss08/trenova/pkg/meilisearchtype"
 	"github.com/meilisearch/meilisearch-go"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-type Client struct {
-	conn *Connection
+type ClientParams struct {
+	fx.In
+
+	Connection *Connection
+	Logger     *zap.Logger
 }
 
-func NewClient(conn *Connection) *Client {
+type Client struct {
+	conn   *Connection
+	logger *zap.Logger
+}
+
+func NewClient(p ClientParams) *Client {
+	log := p.Logger.With(zap.String("component", "meilisearch-client"))
 	return &Client{
-		conn: conn,
+		conn:   p.Connection,
+		logger: log,
 	}
 }
 
