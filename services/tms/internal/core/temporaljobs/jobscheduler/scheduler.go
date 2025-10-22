@@ -77,8 +77,8 @@ func (s *Scheduler) Start(ctx context.Context) error {
 			ID:          "flush-audit-buffer-schedule",
 			Description: "Flush audit buffer entries for batch processing",
 			Schedule: ScheduleSpec{
-				Interval: 5 * time.Minute,
-			}, // Every 5 minutes
+				Interval: 30 * time.Minute, // Every 30 minutes
+			},
 			WorkflowType:     "ScheduledAuditFlushWorkflow",
 			TaskQueue:        temporaltype.AuditTaskQueue,
 			WorkflowIDPrefix: "flush-audit-buffer-scheduled",
