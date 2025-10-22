@@ -7,13 +7,10 @@ import (
 	"time"
 
 	"github.com/bytedance/sonic"
-	"github.com/emoss08/trenova/internal/core/domain/ailog"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/ailogjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/redis"
 	"github.com/emoss08/trenova/pkg/pagination"
-	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/openai/openai-go/v2"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
@@ -79,8 +76,6 @@ func (s *Service) ClassifyLocation(
 	}
 
 	s.cacheResponse(ctx, req, response, log)
-
-	s.logAIOperation(req, result, prompt, log)
 
 	return response, nil
 }
@@ -177,51 +172,6 @@ func (s *Service) cacheResponse(
 	cacheKey := s.buildCacheKey(req)
 	if err := s.cache.SetJSON(ctx, cacheKey, response, 24*time.Hour); err != nil {
 		log.Error("failed to cache classification response", zap.Error(err))
-	}
-}
-
-func (s *Service) logAIOperation(
-	req *LocationClassificationRequest,
-	result *openai.ChatCompletion,
-	prompt string,
-	log *zap.Logger,
-) {
-	payload := &ailogjobs.InsertAILogPayload{
-		BasePayload: temporaltype.BasePayload{
-			OrganizationID: req.TenantOpts.OrgID,
-			BusinessUnitID: req.TenantOpts.BuID,
-			UserID:         req.TenantOpts.UserID,
-			Timestamp:      time.Now().Unix(),
-			Metadata:       make(map[string]any),
-		},
-		Log: &ailog.AILog{
-			OrganizationID:   req.TenantOpts.OrgID,
-			BusinessUnitID:   req.TenantOpts.BuID,
-			UserID:           req.TenantOpts.UserID,
-			Prompt:           prompt,
-			Response:         result.Choices[0].Message.Content,
-			Operation:        ailog.OperationClassifyLocation,
-			Model:            ailog.Model(locationClassificationModel),
-			Object:           string(result.Object),
-			ServiceTier:      locationClassificationServiceTier,
-			PromptTokens:     result.Usage.PromptTokens,
-			CompletionTokens: result.Usage.CompletionTokens,
-			TotalTokens:      result.Usage.TotalTokens,
-			ReasoningTokens:  result.Usage.CompletionTokensDetails.ReasoningTokens,
-		},
-	}
-
-	workflowID := fmt.Sprintf("ailog-classification-%s-%d",
-		req.TenantOpts.UserID.String(),
-		time.Now().UnixNano())
-
-	if _, err := s.temporalClient.ExecuteWorkflow(context.Background(), client.StartWorkflowOptions{
-		ID:        workflowID,
-		TaskQueue: ailogjobs.AILogTaskQueue,
-	}, ailogjobs.InsertAILogWorkflow, payload); err != nil {
-		log.Error("failed to start ai log workflow",
-			zap.Error(err),
-			zap.String("workflowID", workflowID))
 	}
 }
 

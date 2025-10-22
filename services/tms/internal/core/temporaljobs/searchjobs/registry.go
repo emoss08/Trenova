@@ -1,4 +1,4 @@
-package ailogjobs
+package searchjobs
 
 import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
@@ -23,23 +23,23 @@ type Registry struct {
 func NewRegistry(p RegistryParams) *Registry {
 	return &Registry{
 		activities: p.Activities,
-		logger:     p.Logger.Named("ailog-worker-registry"),
+		logger:     p.Logger.Named("search-worker-registry"),
 		config:     registry.DefaultWorkerConfig(),
 	}
 }
 
 func (r *Registry) GetName() string {
-	return "ailog-worker"
+	return "search-worker"
 }
 
 func (r *Registry) GetTaskQueue() string {
-	return AILogTaskQueue
+	return SearchTaskQueue
 }
 
 func (r *Registry) RegisterActivities(w worker.Worker) error {
-	w.RegisterActivity(r.activities.InsertAILogActivity)
+	w.RegisterActivity(r.activities.IndexEntityActivity)
 
-	r.logger.Info("registered ailog activities",
+	r.logger.Info("registered search activities",
 		zap.Int("count", 1),
 	)
 
@@ -57,7 +57,7 @@ func (r *Registry) RegisterWorkflows(w worker.Worker) error {
 		)
 	}
 
-	r.logger.Info("registered ailog workflows",
+	r.logger.Info("registered search workflows",
 		zap.Int("count", len(workflows)),
 	)
 

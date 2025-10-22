@@ -1,9 +1,29 @@
 package meilisearchtype
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/pkg/pulid"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 )
+
+type Searchable interface {
+	GetID() string
+	GetOrganizationID() pulid.ID
+	GetBusinessUnitID() pulid.ID
+	GetSearchTitle() string
+	GetSearchSubtitle() string
+	GetSearchContent() string
+	GetSearchMetadata() map[string]any
+	GetSearchEntityType() EntityType
+	GetSearchTimestamps() (createdAt, updatedAt int64)
+}
+
+type SearchIndexer interface {
+	Index(ctx context.Context, document *SearchDocument) error
+	BatchIndex(ctx context.Context, documents []*SearchDocument) error
+	Delete(ctx context.Context, req DeleteOperationRequest) error
+}
 
 type EntityType string
 

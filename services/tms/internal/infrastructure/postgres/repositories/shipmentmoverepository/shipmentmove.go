@@ -1161,14 +1161,14 @@ func (r *repository) calculateAndUpdateMoveDistance(
 			return nil
 		}
 		log.Error("failed to calculate distance", zap.Error(err))
-		return fmt.Errorf("calculate distance: %w", err)
+		return err
 	}
 
 	move.Distance = &result.Distance
 
 	if err = r.updateMoveDistance(ctx, tx, move); err != nil {
 		log.Error("failed to persist move distance", zap.Error(err))
-		return fmt.Errorf("update move distance: %w", err)
+		return err
 	}
 
 	log.Debug("move distance updated successfully",

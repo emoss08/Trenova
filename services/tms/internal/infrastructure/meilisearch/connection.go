@@ -29,11 +29,6 @@ type Connection struct {
 }
 
 func NewConnection(p ConnectionParams) (*Connection, error) {
-	if p.Config.Search == nil || !p.Config.Search.Enabled {
-		p.Logger.Info("Meilisearch search is not configured or disabled")
-		return nil, ErrDisabled
-	}
-
 	logger := p.Logger.With(zap.String("component", "meilisearch"))
 	cfg := p.Config.Search
 
