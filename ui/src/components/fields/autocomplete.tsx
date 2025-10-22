@@ -56,16 +56,16 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
       return data;
     },
     enabled: !!value && !selectedOption,
-    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
-    gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: false,
     retry: 1,
   });
 
-  // Update selectedOption when we fetch an option or when value changes
   useEffect(() => {
     if (!value) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setSelectedOption(null);
     } else if (fetchedOption && !selectedOption) {
       setSelectedOption(fetchedOption);
@@ -75,7 +75,6 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
   const handleClear = useCallback(() => {
     setSelectedOption(null);
     onChange("");
-    // Trigger onOptionChange with null to notify parent components
     if (onOptionChange) {
       onOptionChange(null);
     }
@@ -122,7 +121,6 @@ export function Autocomplete<TOption, TForm extends FieldValues>({
             noResultsMessage={noResultsMessage}
             extraSearchParams={extraSearchParams}
             popoutLink={popoutLink}
-            // Pass the setSelectedOption function to ensure state sync
             onClear={() => {
               setSelectedOption(null);
               if (onOptionChange) {

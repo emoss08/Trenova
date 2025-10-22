@@ -66,3 +66,20 @@ const (
 func (s ServiceIncidentType) NotEqual(value ServiceIncidentType) bool {
 	return s != value
 }
+
+type SSOProtocol string
+
+const (
+	SSOProtocolOIDC = SSOProtocol("OIDC") // OpenID Connect (currently supported)
+	// SSOProtocolSAML = SSOProtocol("SAML") // Security Assertion Markup Language 2.0 (future)
+)
+
+type SSOProvider string
+
+const (
+	SSOProviderOkta        = SSOProvider("Okta")
+	SSOProviderAzureAD     = SSOProvider("AzureAD")
+	SSOProviderAuth0       = SSOProvider("Auth0")
+	SSOProviderGoogle      = SSOProvider("Google")
+	SSOProviderGenericOIDC = SSOProvider("GenericOIDC")
+)

@@ -41,7 +41,7 @@ type Organization struct {
 	PostalCode     string    `json:"postalCode"     bun:"postal_code,type:us_postal_code,notnull"`
 	Timezone       string    `json:"timezone"       bun:"timezone,type:VARCHAR(100),notnull,default:'America/New_York'"`
 	TaxID          string    `json:"taxId"          bun:"tax_id,type:VARCHAR(50)"`
-	Metadata       *Metadata `json:"-"              bun:"metadata,type:JSONB"` // Do not expose this to the API
+	Metadata       *Metadata `json:"-"              bun:"metadata,type:JSONB"`
 	Version        int64     `json:"version"        bun:"version,type:BIGINT"`
 	CreatedAt      int64     `json:"createdAt"      bun:"created_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`
 	UpdatedAt      int64     `json:"updatedAt"      bun:"updated_at,nullzero,notnull,default:extract(epoch from current_timestamp)::bigint"`

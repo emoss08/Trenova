@@ -73,12 +73,12 @@ export function SelectField<T extends FieldValues>({
               <Button
                 variant="outline"
                 className={cn(
-                  "group bg-primary/5 hover:bg-primary/10 flex h-7 w-full items-center justify-between whitespace-nowrap rounded-md border border-muted-foreground/20",
+                  "group bg-primary/5 hover:bg-muted-foreground/10 flex h-7 w-full items-center justify-between whitespace-nowrap rounded-md border border-muted-foreground/20",
                   "px-1.5 py-2 text-xs ring-offset-background placeholder:text-muted-foreground outline-hidden",
                   "data-[state=open]:border-foreground data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-foreground/20",
                   "focus-visible:border-foreground focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-foreground/20",
                   "transition-[border-color,box-shadow] duration-200 ease-in-out",
-                  "disabled:opacity-50 [&>span]:line-clamp-1 cursor-pointer disabled:cursor-not-allowed",
+                  "disabled:opacity-50 [&>span]:line-clamp-1 cursor-default disabled:cursor-not-allowed",
                   fieldState.invalid &&
                     "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
                   isReadOnly &&
