@@ -63,7 +63,7 @@ function SelectTrigger({
         "data-[state=open]:border-foreground data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-foreground/20",
         "focus-visible:border-foreground focus-visible:outline-hidden focus-visible:ring-4 focus-visible:ring-foreground/20",
         "transition-[border-color,box-shadow] duration-200 ease-in-out",
-        "disabled:opacity-50 [&>span]:line-clamp-1 cursor-pointer disabled:cursor-not-allowed",
+        "disabled:opacity-50 [&>span]:line-clamp-1 disabled:cursor-not-allowed",
         className,
       )}
       {...props}

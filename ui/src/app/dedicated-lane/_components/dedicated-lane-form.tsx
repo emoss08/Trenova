@@ -15,12 +15,15 @@ import type { DedicatedLaneSchema } from "@/lib/schemas/dedicated-lane-schema";
 import { EquipmentClass } from "@/types/equipment-type";
 import { useFormContext } from "react-hook-form";
 
+function DedicatedLaneFormOuter({ children }: { children: React.ReactNode }) {
+  return <div className="flex flex-col">{children}</div>;
+}
 export function DedicatedLaneForm() {
   const { control } = useFormContext<DedicatedLaneSchema>();
 
   return (
-    <>
-      <FormGroup cols={2}>
+    <DedicatedLaneFormOuter>
+      <FormGroup cols={2} className="pb-2 border-b">
         <FormControl cols="full">
           <SelectField
             control={control}
@@ -56,7 +59,7 @@ export function DedicatedLaneForm() {
       </FormGroup>
       <ShipmentInformationSection />
       <WorkerAssignmentSection />
-    </>
+    </DedicatedLaneFormOuter>
   );
 }
 
@@ -67,15 +70,15 @@ function ShipmentInformationSection() {
     <FormSection
       title="Route Details"
       description="Configure origin, destination, and equipment specifications"
-      className="border-t pt-4"
+      className="py-2 border-b"
     >
       <FormGroup cols={2}>
         <FormControl>
           <LocationAutocompleteField<DedicatedLaneSchema>
             name="originLocationId"
             control={control}
-            label="Origin"
-            placeholder="Select Origin"
+            label="Origin Location"
+            placeholder="Select Origin Location"
             description="Starting location for the dedicated lane"
             rules={{ required: true }}
           />
@@ -84,8 +87,8 @@ function ShipmentInformationSection() {
           <LocationAutocompleteField<DedicatedLaneSchema>
             name="destinationLocationId"
             control={control}
-            label="Destination"
-            placeholder="Select Destination"
+            label="Destination Location"
+            placeholder="Select Destination Location"
             description="Final delivery location for the dedicated lane"
             rules={{ required: true }}
           />
@@ -96,7 +99,7 @@ function ShipmentInformationSection() {
             control={control}
             label="Shipment Type"
             rules={{ required: true }}
-            placeholder="Select Type"
+            placeholder="Select Shipment Type"
             description="Classification of shipment for this lane"
           />
         </FormControl>
@@ -106,7 +109,7 @@ function ShipmentInformationSection() {
             control={control}
             label="Service Type"
             rules={{ required: true }}
-            placeholder="Select Service"
+            placeholder="Select Service Type"
             description="Required service level for this lane"
           />
         </FormControl>
@@ -115,7 +118,7 @@ function ShipmentInformationSection() {
             name="tractorTypeId"
             control={control}
             label="Tractor Type"
-            placeholder="Select Tractor"
+            placeholder="Select Tractor Type"
             description="Required tractor specification"
             extraSearchParams={{
               classes: [EquipmentClass.Tractor],
@@ -127,7 +130,7 @@ function ShipmentInformationSection() {
             name="trailerTypeId"
             control={control}
             label="Trailer Type"
-            placeholder="Select Trailer"
+            placeholder="Select Trailer Type"
             description="Required trailer or container specification"
             extraSearchParams={{
               classes: [EquipmentClass.Trailer, EquipmentClass.Container],
@@ -146,7 +149,7 @@ function WorkerAssignmentSection() {
     <FormSection
       title="Worker Assignment"
       description="Designate primary and secondary workers for this lane"
-      className="border-t pt-4"
+      className="py-2"
     >
       <FormGroup cols={2}>
         <FormControl>

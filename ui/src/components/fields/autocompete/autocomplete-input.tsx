@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { ChevronDownIcon, Cross2Icon } from "@radix-ui/react-icons";
@@ -42,7 +37,7 @@ export function AutocompleteTrigger<TOption>({
       aria-expanded={open}
       className={cn(
         "w-full font-normal gap-2 rounded border-muted-foreground/20 text-xs bg-primary/5 px-1.5 data-[state=open]:border-foreground data-[state=open]:outline-hidden data-[state=open]:ring-4 data-[state=open]:ring-foreground/20",
-        "[&_svg]:size-3 justify-between hover:bg-muted",
+        "[&_svg]:size-3 justify-between hover:bg-muted-foreground/10 cursor-default",
         "transition-[border-color,box-shadow] duration-200 ease-in-out",
         disabled && "opacity-50 cursor-not-allowed",
         isInvalid &&

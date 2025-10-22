@@ -11,12 +11,14 @@ The permission registry system includes automatic code generation to keep Go enu
 **Location:** `services/ui/src/types/_gen/permissions.ts`
 
 **What's Generated:**
+
 - ✅ Permission operation constants (`PermissionOperations`)
 - ✅ Resource metadata (operations, composite operations, sensitive fields)
 - ✅ React permission hooks (`useHazardousMaterialPermissions()`)
 - ✅ Type guards (`isValidResource`, `isValidOperation`)
 
 **What's NOT Generated:**
+
 - ❌ Entity TypeScript types (use Zod schemas instead, e.g., `hazardous-material-schema.ts`)
 
 ### Go (Backend)
@@ -24,6 +26,7 @@ The permission registry system includes automatic code generation to keep Go enu
 **Location:** `internal/core/domain/permission/resource_gen.go`
 
 **What's Generated:**
+
 - ✅ Resource enum (`Resource` type with constants)
 - ✅ Helper methods (`IsValid()`, `AllResources()`, `ResourceDescriptions()`)
 
@@ -142,6 +145,7 @@ func createRegistry() *permregistry.Registry {
 ### 5. Use Generated Code
 
 **Frontend:**
+
 ```typescript
 import {
   useCustomerPermissions,
@@ -167,6 +171,7 @@ console.log(CustomerMetadata.sensitiveFields);
 ```
 
 **Backend:**
+
 ```go
 import "github.com/emoss08/trenova/internal/core/domain/permission"
 
@@ -282,22 +287,23 @@ Add to `Makefile`:
 # Code generation
 .PHONY: codegen
 codegen: build-cli
-	@echo "🔧 Generating code from permission registry..."
-	./build/trenova codegen generate
+ @echo "🔧 Generating code from permission registry..."
+ ./build/trenova codegen generate
 
 .PHONY: codegen-check
 codegen-check: codegen
-	@echo "🔍 Checking for uncommitted generated code..."
-	@git diff --exit-code services/ui/src/types/_gen/ || \
-		(echo "❌ Generated code is out of sync! Run 'make codegen' and commit." && exit 1)
+ @echo "🔍 Checking for uncommitted generated code..."
+ @git diff --exit-code services/ui/src/types/_gen/ || \
+  (echo "❌ Generated code is out of sync! Run 'make codegen' and commit." && exit 1)
 
 .PHONY: build-cli
 build-cli:
-	@mkdir -p build
-	go build -o build/trenova ./cmd/cli/main.go
+ @mkdir -p build
+ go build -o build/trenova ./cmd/cli/main.go
 ```
 
 Usage:
+
 ```bash
 make codegen         # Generate code
 make codegen-check   # Verify generated code is up to date (CI)
@@ -371,6 +377,7 @@ jobs:
 **Problem:** `resource_gen.go` conflicts with `enums.go`
 
 **Solution:** Choose one approach:
+
 1. **Option A:** Use generated enum - Delete/rename old `enums.go` Resource type
 2. **Option B:** Keep manual enum - Don't generate enum (only generate TypeScript)
 
@@ -385,6 +392,7 @@ jobs:
 **Problem:** `useCustomerPermissions` returns all false
 
 **Solution:** Make sure:
+
 1. Resource is registered in bootstrap module
 2. Code generation includes the resource
 3. Permission policies are assigned to user
