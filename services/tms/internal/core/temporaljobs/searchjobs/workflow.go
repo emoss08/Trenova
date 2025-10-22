@@ -1,4 +1,4 @@
-package ailogjobs
+package searchjobs
 
 import (
 	"time"
@@ -9,23 +9,23 @@ import (
 )
 
 const (
-	AILogTaskQueue = "ailog-queue"
+	SearchTaskQueue = "search-queue"
 )
 
 func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 	return []temporaltype.WorkflowDefinition{
 		{
-			Name:        "InsertAILogWorkflow",
-			Fn:          InsertAILogWorkflow,
-			TaskQueue:   AILogTaskQueue,
-			Description: "Insert AI operation log to database",
+			Name:        "IndexEntityWorkflow",
+			Fn:          IndexEntityWorkflow,
+			TaskQueue:   SearchTaskQueue,
+			Description: "Index an entity in search",
 		},
 	}
 }
 
-func InsertAILogWorkflow(
+func IndexEntityWorkflow(
 	ctx workflow.Context,
-	payload *InsertAILogPayload,
+	payload *IndexEntityPayload,
 ) error {
 	ao := workflow.ActivityOptions{
 		StartToCloseTimeout: 10 * time.Second,
@@ -52,7 +52,7 @@ func InsertAILogWorkflow(
 
 	var a *Activities
 	err = workflow.
-		ExecuteActivity(sessionCtx, a.InsertAILogActivity, &payload).
+		ExecuteActivity(sessionCtx, a.IndexEntityActivity, &payload).
 		Get(sessionCtx, nil)
 	if err != nil {
 		return err

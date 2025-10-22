@@ -12,8 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/searchjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
+	"github.com/emoss08/trenova/internal/infrastructure/meilisearch/providers"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/meilisearchtype"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -36,6 +39,7 @@ type ServiceParams struct {
 	NotificationService services.NotificationService
 	StreamingService    services.StreamingService
 	ShipmentControlRepo repositories.ShipmentControlRepository
+	SearchHelper        *providers.SearchHelper
 }
 
 type Service struct {
@@ -48,6 +52,7 @@ type Service struct {
 	ss             services.StreamingService
 	pe             ports.PermissionEngine
 	scRepo         repositories.ShipmentControlRepository
+	searchHelper   *providers.SearchHelper
 }
 
 //nolint:gocritic // service constructor
@@ -62,6 +67,7 @@ func NewService(p ServiceParams) *Service {
 		pe:             p.PermissionEngine,
 		ss:             p.StreamingService,
 		scRepo:         p.ShipmentControlRepo,
+		searchHelper:   p.SearchHelper,
 	}
 }
 
@@ -119,6 +125,10 @@ func (s *Service) Create(
 		log.Error("failed to log shipment creation", zap.Error(err))
 	}
 
+	if err = s.IndexInSearch(ctx, createdEntity.ID, createdEntity.OrganizationID, createdEntity.BusinessUnitID); err != nil {
+		log.Warn("failed to index created shipment in search", zap.Error(err))
+	}
+
 	return createdEntity, nil
 }
 
@@ -167,6 +177,10 @@ func (s *Service) Update(
 	)
 	if err != nil {
 		log.Error("failed to log shipment update", zap.Error(err))
+	}
+
+	if err = s.IndexInSearch(ctx, updatedEntity.ID, updatedEntity.OrganizationID, updatedEntity.BusinessUnitID); err != nil {
+		log.Warn("failed to index ownership transferred shipment in search", zap.Error(err))
 	}
 
 	return updatedEntity, nil
@@ -293,6 +307,10 @@ func (s *Service) TransferOwnership(
 		log.Error("failed to send ownership transfer notification", zap.Error(err))
 	}
 
+	if err = s.IndexInSearch(ctx, updatedEntity.ID, updatedEntity.OrganizationID, updatedEntity.BusinessUnitID); err != nil {
+		log.Warn("failed to index ownership transferred shipment in search", zap.Error(err))
+	}
+
 	return updatedEntity, nil
 }
 
@@ -400,6 +418,10 @@ func (s *Service) Cancel(
 		log.Error("failed to log shipment cancellation", zap.Error(err))
 	}
 
+	if err = s.IndexInSearch(ctx, updatedEntity.ID, updatedEntity.OrganizationID, updatedEntity.BusinessUnitID); err != nil {
+		log.Warn("failed to index canceled shipment in search", zap.Error(err))
+	}
+
 	return updatedEntity, nil
 }
 
@@ -444,6 +466,10 @@ func (s *Service) UnCancel(
 		log.Error("failed to log shipment un-cancellation", zap.Error(err))
 	}
 
+	if err = s.IndexInSearch(ctx, updatedEntity.ID, updatedEntity.OrganizationID, updatedEntity.BusinessUnitID); err != nil {
+		log.Warn("failed to index uncanceled shipment in search", zap.Error(err))
+	}
+
 	return updatedEntity, nil
 }
 
@@ -457,4 +483,38 @@ func (s *Service) CalculateTotals(
 
 func (s *Service) Stream(c *gin.Context) {
 	s.ss.StreamData(c, "shipments")
+}
+
+func (s *Service) IndexInSearch(ctx context.Context, shpID, orgID, buID pulid.ID) error {
+	log := s.l.With(
+		zap.String("operation", "IndexInSearch"),
+		zap.String("shipmentID", shpID.String()),
+		zap.String("orgID", orgID.String()),
+		zap.String("buID", buID.String()),
+	)
+	payload := &searchjobs.IndexEntityPayload{
+		BasePayload: temporaltype.BasePayload{
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+		},
+		EntityType: meilisearchtype.EntityTypeShipment,
+		EntityID:   shpID,
+	}
+
+	workflowID := fmt.Sprintf("index-shipment-in-search-%s-%d", shpID.String(), time.Now().Unix())
+
+	_, err := s.temporalClient.ExecuteWorkflow(
+		ctx,
+		client.StartWorkflowOptions{
+			ID:        workflowID,
+			TaskQueue: searchjobs.SearchTaskQueue,
+		},
+		searchjobs.IndexEntityWorkflow,
+		payload,
+	)
+	if err != nil {
+		log.Error("failed to execute workflow", zap.Error(err))
+	}
+
+	return nil
 }

@@ -1,12 +1,12 @@
 package temporaljobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/temporaljobs/ailogjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/jobscheduler"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/notificationjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/searchjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
 	"go.uber.org/fx"
 )
@@ -17,7 +17,7 @@ var Module = fx.Module("temporaljobs",
 	auditjobs.Module,
 	notificationjobs.Module,
 	emailjobs.Module,
-	ailogjobs.Module,
+	searchjobs.Module,
 	shipmentjobs.Module,
 	SchedulerModule,
 )

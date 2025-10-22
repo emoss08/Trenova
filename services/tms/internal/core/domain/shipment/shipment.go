@@ -3,6 +3,7 @@ package shipment
 import (
 	"context"
 	"errors"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/meilisearchtype"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/emoss08/trenova/pkg/validator/framework"
@@ -27,6 +29,7 @@ var (
 	_ domain.Validatable             = (*Shipment)(nil)
 	_ framework.TenantedEntity       = (*Shipment)(nil)
 	_ domaintypes.PostgresSearchable = (*Shipment)(nil)
+	_ meilisearchtype.Searchable     = (*Shipment)(nil)
 )
 
 type Shipment struct {
@@ -359,4 +362,118 @@ func (st *Shipment) IsDelayed() bool {
 
 func (st *Shipment) IsNew() bool {
 	return st.Status == StatusNew
+}
+
+func (st *Shipment) GetSearchTitle() string {
+	var b strings.Builder
+	b.Grow(100) // Pre-allocate reasonable capacity
+
+	if st.ProNumber != "" {
+		b.WriteString(st.ProNumber)
+	}
+
+	if st.BOL != "" {
+		if b.Len() > 0 {
+			b.WriteString(" | ")
+		}
+		b.WriteString(st.BOL)
+	}
+
+	if b.Len() == 0 {
+		return st.ID.String()
+	}
+
+	return b.String()
+}
+
+func (st *Shipment) GetSearchSubtitle() string {
+	var b strings.Builder
+	b.Grow(150) // Pre-allocate reasonable capacity
+
+	b.WriteString(string(st.Status))
+
+	if st.Customer != nil && st.Customer.Name != "" {
+		b.WriteString(" • ")
+		b.WriteString(st.Customer.Name)
+	}
+
+	if st.ServiceType != nil && st.ServiceType.Code != "" {
+		b.WriteString(" • ")
+		b.WriteString(st.ServiceType.Code)
+	}
+
+	return b.String()
+}
+
+func (st *Shipment) GetSearchContent() string {
+	var b strings.Builder
+	b.Grow(200) // Pre-allocate reasonable capacity
+
+	appendWithSpace := func(s string) {
+		if s == "" {
+			return
+		}
+		if b.Len() > 0 {
+			b.WriteString(" ")
+		}
+		b.WriteString(s)
+	}
+
+	appendWithSpace(st.ProNumber)
+	appendWithSpace(st.BOL)
+
+	if st.Customer != nil {
+		appendWithSpace(st.Customer.Name)
+		appendWithSpace(st.Customer.Code)
+	}
+
+	if st.ServiceType != nil {
+		appendWithSpace(st.ServiceType.Code)
+	}
+
+	return b.String()
+}
+
+func (st *Shipment) GetSearchMetadata() map[string]any {
+	metadata := make(map[string]any, 10) // Pre-allocate with expected capacity
+
+	metadata["proNumber"] = st.ProNumber
+	metadata["bol"] = st.BOL
+	metadata["status"] = string(st.Status)
+
+	if st.Customer != nil {
+		metadata["customerId"] = st.Customer.ID.String()
+		metadata["customerName"] = st.Customer.Name
+		if st.Customer.Code != "" {
+			metadata["customerCode"] = st.Customer.Code
+		}
+	}
+
+	if st.ServiceType != nil && st.ServiceType.Code != "" {
+		metadata["serviceTypeCode"] = st.ServiceType.Code
+		if st.ServiceType.Description != "" {
+			metadata["serviceTypeDescription"] = st.ServiceType.Description
+		}
+	}
+
+	if st.TotalChargeAmount.Valid {
+		metadata["totalChargeAmount"] = st.TotalChargeAmount.Decimal.String()
+	}
+
+	if st.ActualShipDate != nil && *st.ActualShipDate > 0 {
+		metadata["actualShipDate"] = *st.ActualShipDate
+	}
+	if st.ActualDeliveryDate != nil && *st.ActualDeliveryDate > 0 {
+		metadata["actualDeliveryDate"] = *st.ActualDeliveryDate
+	}
+
+	return metadata
+}
+
+func (st *Shipment) GetSearchEntityType() meilisearchtype.EntityType {
+	return meilisearchtype.EntityTypeShipment
+}
+
+func (st *Shipment) GetSearchTimestamps() (createdAt, updatedAt int64) {
+	return st.CreatedAt, st.UpdatedAt
 }

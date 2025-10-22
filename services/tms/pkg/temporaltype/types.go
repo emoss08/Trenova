@@ -26,6 +26,14 @@ type BasePayload struct {
 	Metadata       map[string]any `json:"metadata,omitempty"`
 }
 
+func (b *BasePayload) GetOrganizationID() pulid.ID {
+	return b.OrganizationID
+}
+
+func (b *BasePayload) GetBusinessUnitID() pulid.ID {
+	return b.BusinessUnitID
+}
+
 type WorkflowDefinition struct {
 	Name        string
 	Fn          any

@@ -332,7 +332,6 @@ type StreamingConfig struct {
 
 // SearchConfig contains Meilisearch settings
 type SearchConfig struct {
-	Enabled     bool          `mapstructure:"enabled"`
 	Host        string        `mapstructure:"host"         validate:"required_if=Enabled true"`
 	APIKey      string        `mapstructure:"api_key"      validate:"required_if=Enabled true"`
 	IndexPrefix string        `mapstructure:"index_prefix"`

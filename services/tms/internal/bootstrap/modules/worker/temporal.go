@@ -3,11 +3,11 @@ package worker
 import (
 	"context"
 
-	"github.com/emoss08/trenova/internal/core/temporaljobs/ailogjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/notificationjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/searchjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"go.temporal.io/sdk/client"
@@ -23,7 +23,7 @@ type TemporalWorkerParams struct {
 	AuditRegistry        *auditjobs.Registry
 	NotificationRegistry *notificationjobs.Registry
 	EmailRegistry        *emailjobs.Registry
-	AILogRegistry        *ailogjobs.Registry
+	SearchRegistry       *searchjobs.Registry
 	ShipmentRegistry     *shipmentjobs.Registry
 	Config               *config.Config
 	Logger               *zap.Logger
@@ -50,8 +50,8 @@ func NewTemporalWorkers(p TemporalWorkerParams) error {
 		return err
 	}
 
-	if err := p.WorkerManager.Register(p.AILogRegistry); err != nil {
-		log.Error("failed to register ailog worker", zap.Error(err))
+	if err := p.WorkerManager.Register(p.SearchRegistry); err != nil {
+		log.Error("failed to register search worker", zap.Error(err))
 		return err
 	}
 
