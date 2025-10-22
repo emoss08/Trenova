@@ -68,7 +68,7 @@ func (s *service) CalculateDistance(
 	distance, source, err := s.determineDistance(ctx, tx, req, stopSeqs, log)
 	if err != nil {
 		log.Error("failed to determine distance", zap.Error(err))
-		return nil, fmt.Errorf("determine distance: %w", err)
+		return nil, err
 	}
 
 	log.Debug("distance calculation completed",
@@ -126,7 +126,8 @@ func (s *service) determineDistance(
 		log,
 	)
 	if err != nil && !errors.Is(err, ErrNoDistanceOverrideFound) {
-		return 0, "", fmt.Errorf("check distance override: %w", err)
+		// * We don't want to return an error here, we want to continue with the calculation
+		log.Warn("failed to get distance override", zap.Error(err))
 	}
 
 	if distanceOverride != nil {
@@ -140,7 +141,7 @@ func (s *service) determineDistance(
 
 	calculatedDistance, err := s.calculateHaversineDistance(ctx, tx, stopSeqs, log)
 	if err != nil {
-		return 0, "", fmt.Errorf("calculate haversine distance: %w", err)
+		return 0, "", err
 	}
 
 	return calculatedDistance, services.DistanceSourceCalculated, nil
