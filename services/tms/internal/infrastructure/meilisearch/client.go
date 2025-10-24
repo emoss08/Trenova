@@ -57,6 +57,12 @@ func (c *Client) GetOrCreateIndex(
 
 	c.conn.logger.Info("Created new Meilisearch index", zap.String("index", indexName))
 
+	// ! It is important to fetch the index info after creation to get the correct primary key
+	indexResult, err = index.FetchInfo()
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch index info: %w", err)
+	}
+
 	return indexResult, nil
 }
 
