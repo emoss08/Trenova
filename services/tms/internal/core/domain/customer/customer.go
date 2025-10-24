@@ -3,12 +3,14 @@ package customer
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/meilisearchtype"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/emoss08/trenova/pkg/validator/framework"
@@ -21,6 +23,7 @@ var (
 	_ domain.Validatable             = (*Customer)(nil)
 	_ framework.TenantedEntity       = (*Customer)(nil)
 	_ domaintypes.PostgresSearchable = (*Customer)(nil)
+	_ meilisearchtype.Searchable     = (*Customer)(nil)
 )
 
 type Customer struct {
@@ -134,6 +137,41 @@ func (c *Customer) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 			},
 		},
 	}
+}
+
+func (c *Customer) GetSearchTitle() string {
+	return c.Name
+}
+
+func (c *Customer) GetSearchSubtitle() string {
+	return c.Code
+}
+
+func (c *Customer) GetSearchContent() string {
+	return fmt.Sprintf("%s | %s", c.Name, c.Code)
+}
+
+func (c *Customer) GetSearchMetadata() map[string]any {
+	metadata := make(map[string]any, 10) // Pre-allocate with expected capacity
+
+	metadata["name"] = c.Name
+	metadata["code"] = c.Code
+	metadata["status"] = string(c.Status)
+
+	if c.State != nil {
+		metadata["stateId"] = c.State.ID.String()
+		metadata["stateName"] = c.State.Name
+	}
+
+	return metadata
+}
+
+func (c *Customer) GetSearchEntityType() meilisearchtype.EntityType {
+	return meilisearchtype.EntityTypeCustomer
+}
+
+func (c *Customer) GetSearchTimestamps() (createdAt, updatedAt int64) {
+	return c.CreatedAt, c.UpdatedAt
 }
 
 func (c *Customer) BeforeAppendModel(_ context.Context, query bun.Query) error {
