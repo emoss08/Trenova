@@ -30,6 +30,13 @@ type GetShipmentByIDRequest struct {
 	ShipmentOptions ShipmentOptions `json:"shipmentOptions" form:"shipmentOptions"`
 }
 
+type GetShipmentsByIDsRequest struct {
+	IDs             []pulid.ID      `json:"ids"             form:"ids"`
+	OrgID           pulid.ID        `json:"orgId"           form:"orgId"`
+	BuID            pulid.ID        `json:"buId"            form:"buId"`
+	ShipmentOptions ShipmentOptions `json:"shipmentOptions" form:"shipmentOptions"`
+}
+
 type UpdateShipmentStatusRequest struct {
 	GetOpts *GetShipmentByIDRequest `json:"getOpts" form:"getOpts"`
 	Status  shipment.Status         `json:"status"  form:"status"`
@@ -174,6 +181,7 @@ type ShipmentRepository interface {
 		opts *ListShipmentRequest,
 	) (*pagination.ListResult[*shipment.Shipment], error)
 	GetByID(ctx context.Context, req *GetShipmentByIDRequest) (*shipment.Shipment, error)
+	GetByIDs(ctx context.Context, req *GetShipmentsByIDsRequest) ([]*shipment.Shipment, error)
 	GetPreviousRates(
 		ctx context.Context,
 		req *GetPreviousRatesRequest,

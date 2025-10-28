@@ -45,12 +45,7 @@ func (s *Searcher) Search(
 	if len(entityTypes) == 0 {
 		entityTypes = []meilisearchtype.EntityType{
 			meilisearchtype.EntityTypeShipment,
-			meilisearchtype.EntityTypeInvoice,
-			meilisearchtype.EntityTypeWorker,
 			meilisearchtype.EntityTypeCustomer,
-			meilisearchtype.EntityTypeCommodity,
-			meilisearchtype.EntityTypeLocation,
-			meilisearchtype.EntityTypeHazardousMaterial,
 		}
 	}
 

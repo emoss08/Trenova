@@ -509,8 +509,8 @@ func (s *Service) IndexInSearch(ctx context.Context, shpID, orgID, buID pulid.ID
 			ID:        workflowID,
 			TaskQueue: searchjobs.SearchTaskQueue,
 		},
-		searchjobs.IndexEntityWorkflow,
 		payload,
+		searchjobs.IndexEntityWorkflow,
 	)
 	if err != nil {
 		log.Error("failed to execute workflow", zap.Error(err))

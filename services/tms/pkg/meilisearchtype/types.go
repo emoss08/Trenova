@@ -28,13 +28,8 @@ type SearchIndexer interface {
 type EntityType string
 
 const (
-	EntityTypeShipment          = EntityType("shipment")
-	EntityTypeInvoice           = EntityType("invoice")
-	EntityTypeWorker            = EntityType("worker")
-	EntityTypeCustomer          = EntityType("customer")
-	EntityTypeCommodity         = EntityType("commodity")
-	EntityTypeLocation          = EntityType("location")
-	EntityTypeHazardousMaterial = EntityType("hazardous_material")
+	EntityTypeShipment = EntityType("shipment")
+	EntityTypeCustomer = EntityType("customer")
 )
 
 func (e EntityType) String() string {
@@ -43,9 +38,7 @@ func (e EntityType) String() string {
 
 func (e EntityType) IsValid() bool {
 	switch e {
-	case EntityTypeShipment, EntityTypeInvoice, EntityTypeWorker,
-		EntityTypeCustomer, EntityTypeCommodity, EntityTypeLocation,
-		EntityTypeHazardousMaterial:
+	case EntityTypeShipment, EntityTypeCustomer:
 		return true
 	default:
 		return false
@@ -107,13 +100,13 @@ func (s *SearchDocument) ToMap() map[string]any {
 }
 
 type SearchRequest struct {
-	Query          string
-	EntityTypes    []EntityType
-	OrganizationID pulid.ID
-	BusinessUnitID pulid.ID
-	Limit          int
-	Offset         int
-	Filters        map[string]any
+	Query          string         `form:"query"          json:"query"`
+	EntityTypes    []EntityType   `form:"entityTypes"    json:"entityTypes"`
+	OrganizationID pulid.ID       `form:"organizationId" json:"organizationId"`
+	BusinessUnitID pulid.ID       `form:"businessUnitId" json:"businessUnitId"`
+	Limit          int            `form:"limit"          json:"limit"          default:"20"`
+	Offset         int            `form:"offset"         json:"offset"         default:"0"`
+	Filters        map[string]any `form:"filters"        json:"filters"`
 }
 
 func (s *SearchRequest) Validate() error {

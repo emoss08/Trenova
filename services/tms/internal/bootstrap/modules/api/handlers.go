@@ -48,4 +48,5 @@ var HandlerModule = fx.Module("api-handlers", fx.Provide(
 	handlers.NewPatternConfigHandler,
 	handlers.NewDispatchControlHandler,
 	handlers.NewDistanceOverrideHandler,
+	handlers.NewSearchHandler,
 ))

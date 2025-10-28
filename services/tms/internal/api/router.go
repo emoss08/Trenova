@@ -63,6 +63,7 @@ type RouterParams struct {
 	UsStateHandler                 *handlers.UsStateHandler
 	WebSocketHandler               *handlers.WebSocketHandler
 	NotificationHandler            *handlers.NotificationHandler
+	SearchHandler                  *handlers.SearchHandler
 	PageFavoriteHandler            *handlers.PageFavoriteHandler
 	DispatchControlHandler         *handlers.DispatchControlHandler
 	DataRetentionHandler           *handlers.DataRetentionHandler
@@ -113,6 +114,7 @@ type Router struct {
 	usStateHandler                 *handlers.UsStateHandler
 	websocketHandler               *handlers.WebSocketHandler
 	notificationHandler            *handlers.NotificationHandler
+	searchHandler                  *handlers.SearchHandler
 	pageFavoriteHandler            *handlers.PageFavoriteHandler
 	dataRetentionHandler           *handlers.DataRetentionHandler
 	classificationHandler          *handlers.ClassificationHandler
@@ -152,6 +154,7 @@ func NewRouter(p RouterParams) *Router {
 		equipmentManufacturerHandler:   p.EquipmentManufacturerHandler,
 		fleetCodeHandler:               p.FleetCodeHandler,
 		serviceTypeHandler:             p.ServiceTypeHandler,
+		searchHandler:                  p.SearchHandler,
 		tractorHandler:                 p.TractorHandler,
 		tableConfigurationHandler:      p.TableConfigurationHandler,
 		hazardousMaterialHandler:       p.HazardousMaterialHandler,
@@ -208,7 +211,7 @@ func (r *Router) setupCORS() {
 		MaxAge:           time.Duration(r.cfg.Server.CORS.MaxAge) * time.Second,
 	}
 
-	// * If AllowOrigins is empty or contains "*", allow all origins with credentials disabled
+	// If AllowOrigins is empty or contains "*", allow all origins with credentials disabled
 	if len(corsConfig.AllowOrigins) == 0 ||
 		(len(corsConfig.AllowOrigins) == 1 && corsConfig.AllowOrigins[0] == "*") {
 		corsConfig.AllowAllOrigins = true
@@ -308,4 +311,5 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.dedicatedLaneSuggestionHandler.RegisterRoutes(protected)
 	r.patternConfigHandler.RegisterRoutes(protected)
 	r.dispatchControlHandler.RegisterRoutes(protected)
+	r.searchHandler.RegisterRoutes(protected)
 }
