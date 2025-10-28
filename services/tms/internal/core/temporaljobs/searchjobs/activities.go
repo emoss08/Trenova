@@ -54,6 +54,24 @@ func (a *Activities) IndexEntityActivity(
 	}
 }
 
+func (a *Activities) BulkIndexEntityActivity(
+	ctx context.Context,
+	payload *BulkIndexEntityPayload,
+) error {
+	logger := activity.GetLogger(ctx)
+	logger.Info("Starting bulk index entity activity",
+		"entityType", payload.EntityType,
+		"entityIDs", payload.EntityIDs,
+	)
+
+	switch payload.EntityType {
+	case meilisearchtype.EntityTypeShipment:
+		return a.bulkIndexShipments(ctx, payload)
+	default:
+		return fmt.Errorf("unsupported entity type: %s", payload.EntityType)
+	}
+}
+
 func (a *Activities) indexShipment(ctx context.Context, payload *IndexEntityPayload) error {
 	shp, err := a.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 		ID:    payload.EntityID,
@@ -71,6 +89,35 @@ func (a *Activities) indexShipment(ctx context.Context, payload *IndexEntityPayl
 	// We should retry this operation if it fails
 	if err = a.searchHelper.Index(ctx, shp); err != nil {
 		return temporaltype.NewRetryableError("failed to index shipment", err).ToTemporalError()
+	}
+
+	return nil
+}
+
+func (a *Activities) bulkIndexShipments(
+	ctx context.Context,
+	payload *BulkIndexEntityPayload,
+) error {
+	shipments, err := a.shipmentRepo.GetByIDs(ctx, &repositories.GetShipmentsByIDsRequest{
+		IDs:   payload.EntityIDs,
+		OrgID: payload.GetOrganizationID(),
+		BuID:  payload.GetBusinessUnitID(),
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		appErr := temporaltype.ClassifyError(err)
+		return appErr.ToTemporalError()
+	}
+
+	searchableShipments := make([]meilisearchtype.Searchable, 0, len(shipments))
+	for _, shp := range shipments {
+		searchableShipments = append(searchableShipments, shp)
+	}
+
+	if err = a.searchHelper.BatchIndex(ctx, searchableShipments); err != nil {
+		return temporaltype.NewRetryableError("failed to index shipments", err).ToTemporalError()
 	}
 
 	return nil

@@ -11,3 +11,9 @@ type IndexEntityPayload struct {
 	EntityType meilisearchtype.EntityType
 	EntityID   pulid.ID
 }
+
+type BulkIndexEntityPayload struct {
+	temporaltype.BasePayload
+	EntityType meilisearchtype.EntityType
+	EntityIDs  []pulid.ID
+}

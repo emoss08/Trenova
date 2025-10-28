@@ -38,6 +38,7 @@ func (r *Registry) GetTaskQueue() string {
 
 func (r *Registry) RegisterActivities(w worker.Worker) error {
 	w.RegisterActivity(r.activities.IndexEntityActivity)
+	w.RegisterActivity(r.activities.BulkIndexEntityActivity)
 
 	r.logger.Info("registered search activities",
 		zap.Int("count", 1),

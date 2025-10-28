@@ -257,6 +257,41 @@ func (r *repository) GetByID(
 	return entity, nil
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req *repositories.GetShipmentsByIDsRequest,
+) ([]*shipment.Shipment, error) {
+	log := r.l.With(
+		zap.String("operation", "GetByIDs"),
+		zap.Any("req", req),
+	)
+
+	db, err := r.db.DB(ctx)
+	if err != nil {
+		log.Error("failed to get database connection", zap.Error(err))
+		return nil, err
+	}
+
+	entities := make([]*shipment.Shipment, 0, len(req.IDs))
+	q := db.NewSelect().Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("sp.id IN (?)", bun.In(req.IDs)).
+				Where("sp.organization_id = ?", req.OrgID).
+				Where("sp.business_unit_id = ?", req.BuID)
+		})
+
+	q = q.Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
+		return r.addOptions(sq, req.ShipmentOptions)
+	})
+
+	if err = q.Scan(ctx); err != nil {
+		log.Error("failed to scan shipments", zap.Error(err))
+		return nil, dberror.HandleNotFoundError(err, "Shipment")
+	}
+
+	return entities, nil
+}
+
 func (r *repository) BulkDuplicate(
 	ctx context.Context,
 	req *repositories.DuplicateShipmentRequest,

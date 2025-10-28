@@ -20,6 +20,12 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 			TaskQueue:   SearchTaskQueue,
 			Description: "Index an entity in search",
 		},
+		{
+			Name:        "BulkIndexEntityWorkflow",
+			Fn:          BulkIndexEntityWorkflow,
+			TaskQueue:   SearchTaskQueue,
+			Description: "Bulk index entities in search",
+		},
 	}
 }
 
@@ -53,6 +59,44 @@ func IndexEntityWorkflow(
 	var a *Activities
 	err = workflow.
 		ExecuteActivity(sessionCtx, a.IndexEntityActivity, &payload).
+		Get(sessionCtx, nil)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func BulkIndexEntityWorkflow(
+	ctx workflow.Context,
+	payload *BulkIndexEntityPayload,
+) error {
+	ao := workflow.ActivityOptions{
+		StartToCloseTimeout: 10 * time.Second,
+		HeartbeatTimeout:    2 * time.Second,
+		RetryPolicy: &temporal.RetryPolicy{
+			InitialInterval:    time.Second,
+			BackoffCoefficient: 2.0,
+			MaximumAttempts:    3,
+			MaximumInterval:    time.Minute,
+		},
+	}
+
+	ctx = workflow.WithActivityOptions(ctx, ao)
+	so := &workflow.SessionOptions{
+		CreationTimeout:  10 * time.Second,
+		ExecutionTimeout: 10 * time.Second,
+	}
+
+	sessionCtx, err := workflow.CreateSession(ctx, so)
+	if err != nil {
+		return err
+	}
+	defer workflow.CompleteSession(sessionCtx)
+
+	var a *Activities
+	err = workflow.
+		ExecuteActivity(sessionCtx, a.BulkIndexEntityActivity, &payload).
 		Get(sessionCtx, nil)
 	if err != nil {
 		return err

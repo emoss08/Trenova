@@ -3,13 +3,18 @@ package shipmentjobs
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/searchjobs"
+	"github.com/emoss08/trenova/pkg/meilisearchtype"
+	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/activity"
+	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -19,17 +24,20 @@ type ActivitiesParams struct {
 
 	ShipmentRepository repositories.ShipmentRepository
 	AuditService       services.AuditService
+	TemporalClient     client.Client
 }
 
 type Activities struct {
-	sr repositories.ShipmentRepository
-	as services.AuditService
+	sr             repositories.ShipmentRepository
+	as             services.AuditService
+	temporalClient client.Client
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		sr: p.ShipmentRepository,
-		as: p.AuditService,
+		sr:             p.ShipmentRepository,
+		as:             p.AuditService,
+		temporalClient: p.TemporalClient,
 	}
 }
 
@@ -100,6 +108,11 @@ func (a *Activities) BulkDuplicateShipmentActivity(
 		proNumbers = append(proNumbers, shp.ProNumber)
 	}
 
+	shipmentIDs := make([]pulid.ID, 0, len(shipments))
+	for _, shp := range shipments {
+		shipmentIDs = append(shipmentIDs, shp.ID)
+	}
+
 	activity.RecordHeartbeat(ctx, "logging shipment duplication")
 	err = a.as.LogAction(&services.LogActionParams{
 		Resource:       permission.ResourceShipment,
@@ -120,10 +133,41 @@ func (a *Activities) BulkDuplicateShipmentActivity(
 		logger.Error("failed to log shipment duplication", zap.Error(err))
 	}
 
+	bp := &searchjobs.BulkIndexEntityPayload{
+		BasePayload: temporaltype.BasePayload{
+			OrganizationID: payload.OrganizationID,
+			BusinessUnitID: payload.BusinessUnitID,
+		},
+		EntityType: meilisearchtype.EntityTypeShipment,
+		EntityIDs:  shipmentIDs,
+	}
+
+	workflowID := fmt.Sprintf(
+		"bulk-index-shipments-%s-%d",
+		payload.ShipmentID.String(),
+		time.Now().Unix(),
+	)
+
+	_, err = a.temporalClient.ExecuteWorkflow(
+		ctx,
+		client.StartWorkflowOptions{
+			ID:        workflowID,
+			TaskQueue: searchjobs.SearchTaskQueue,
+		},
+		searchjobs.BulkIndexEntityWorkflow,
+		bp,
+	)
+	if err != nil {
+		logger.Error("failed to execute workflow", zap.Error(err))
+		return nil, temporaltype.NewRetryableError("failed to bulk index shipments", err).
+			ToTemporalError()
+	}
+
 	return &DuplicateShipmentResult{
-		Count:      len(shipments),
-		ProNumbers: proNumbers,
-		Result:     fmt.Sprintf("Successfully duplicated %d shipments", len(shipments)),
+		Count:       len(shipments),
+		ShipmentIDs: shipmentIDs,
+		ProNumbers:  proNumbers,
+		Result:      fmt.Sprintf("Successfully duplicated %d shipments", len(shipments)),
 		Data: map[string]any{
 			"shipmentCount":    len(shipments),
 			"originalShipment": payload.ShipmentID.String(),
