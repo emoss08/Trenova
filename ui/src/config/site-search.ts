@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { CommandGroupInfo } from "@/types/nav-links";
 import { type SiteSearchQuickOptionProps } from "@/types/search";
 import {
@@ -30,31 +25,15 @@ export const tabConfig: Record<
     filters: [],
     color: "bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-200",
   },
-  shipments: {
+  shipment: {
     icon: faBoxes,
     label: "Shipments",
     filters: ["status", "priority", "date", "customer"],
     color: "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300",
   },
-  workers: {
-    icon: faUserHelmetSafety,
-    label: "Workers",
-    filters: ["status", "availability", "type", "license"],
-    color:
-      "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300",
-  },
-  equipment: {
-    icon: faTruck,
-    label: "Tractors",
-    filters: ["status", "type", "maintenance", "ownership"],
-    color:
-      "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300",
-  },
 };
 
-// Quick actions are shown when the search query is empty
 export const quickActions: Record<string, SiteSearchQuickOptionProps> = {
-  // TODO(Wolfred): Add some point we need to change these based on user permissions.
   createShipment: {
     icon: faBoxes,
     label: "Create Shipment",

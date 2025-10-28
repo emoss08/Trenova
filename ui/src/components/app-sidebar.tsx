@@ -36,6 +36,7 @@ import { Link, useLocation } from "react-router";
 import { FavoritesSidebar } from "./favorites-sidebar";
 import { NavUser } from "./nav-user";
 import { OrganizationSwitcher } from "./organization-switcher";
+import { SearchDialog } from "./site-search/site-search-dialog";
 import Highlight from "./ui/highlight";
 import { Icon } from "./ui/icons";
 import { Kbd } from "./ui/kbd";
@@ -308,6 +309,7 @@ export const AppSidebar = memo(function AppSidebar({
     <Sidebar variant="floating" {...props}>
       <SidebarHeader className="gap-4">
         <OrganizationSwitcher />
+        <SearchDialog />
         <SiteInputWrapper
           searchQuery={searchQuery}
           setSearchQuery={setSearchQuery}

@@ -29,6 +29,7 @@ import { OrganizationAPI } from "./organization";
 import { PatternConfigAPI } from "./pattern-config";
 import { PermissionAPI } from "./permission";
 import { RoleAPI } from "./role";
+import { SearchAPI } from "./search";
 import { ShipmentAPI } from "./shipment";
 import { ShipmentControlAPI } from "./shipment-control";
 import { TableConfigurationAPI } from "./table-configuration";
@@ -85,6 +86,7 @@ class API {
   emailProfile: EmailProfileAPI;
   locations: LocationAPI;
   distanceOverride: DistanceOverrideAPI;
+  search: SearchAPI;
   constructor() {
     this.assignments = new AssignmentsAPI();
     this.auth = new AuthAPI();
@@ -123,6 +125,7 @@ class API {
     this.emailProfile = new EmailProfileAPI();
     this.locations = new LocationAPI();
     this.distanceOverride = new DistanceOverrideAPI();
+    this.search = new SearchAPI();
   }
 }
 

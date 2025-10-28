@@ -7,7 +7,7 @@ export type ShipmentQueryParams = {
 } & QueryOptions;
 
 export type ShipmentDetailsQueryParams = {
-  shipmentId: string;
+  shipmentId: ShipmentSchema["id"];
   enabled?: boolean;
 };
 

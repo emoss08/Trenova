@@ -1,30 +1,19 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { IconDefinition } from "@fortawesome/pro-regular-svg-icons";
 
-export type SiteSearchTab =
-  | "all"
-  | "shipments"
-  | "workers"
-  | "tractors"
-  | "customers";
-
-/**
- * Entity types for search
- */
 export enum SearchEntityType {
-  Shipments = "shipments",
-  Workers = "workers",
-  Tractors = "tractors",
-  Customers = "customers",
+  Shipment = "shipment",
+  Customer = "customer",
+  All = "all",
 }
 
-/**
- * Options for search operations
- */
+export type SearchRequest = {
+  query: string;
+  entityTypes: SearchEntityType[];
+  limit?: number;
+  offset?: number;
+  filters?: Record<string, any>;
+};
+
 export type SearchOptions = {
   query: string;
   types?: string[];
@@ -35,51 +24,30 @@ export type SearchOptions = {
   filter?: string;
 };
 
-/**
- * Individual search result document
- */
-export type SearchResult = {
+export type SearchHit = {
   id: string;
-  type: SearchEntityType;
+  entityType: SearchEntityType;
   title: string;
-  description?: string;
-  searchableText?: string;
+  subtitle?: string;
   metadata?: Record<string, any>;
-  highlights?: Record<string, string[]>;
-  createdAt?: number;
-  updatedAt?: number;
-  businessUnitId?: string;
-  organizationId?: string;
+  score?: number;
+  highlightedContent?: Record<string, string>;
 };
 
-/**
- * Search response from the API
- */
 export type SearchResponse = {
-  results: SearchResult[];
+  hits: SearchHit[];
   total: number;
-  processedIn: string;
+  offset: number;
+  limit: number;
+  processingTimeMs: number;
   query: string;
-  facets?: Record<string, any>;
 };
-
-/**
- * Built-in sort options
- */
-export const SortOption = {
-  CreatedAtDesc: "createdAt:desc",
-  CreatedAtAsc: "createdAt:asc",
-  UpdatedAtDesc: "updatedAt:desc",
-  UpdatedAtAsc: "updatedAt:asc",
-  TitleAsc: "title:asc",
-  TitleDesc: "title:desc",
-} as const;
 
 export type SearchInputProps = {
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  activeTab: SiteSearchTab;
-  setActiveTab: (tab: SiteSearchTab) => void;
+  activeTab: SearchEntityType;
+  setActiveTab: (tab: SearchEntityType) => void;
   inputRef: React.RefObject<HTMLInputElement | null>;
   activeFilters?: Record<string, string>;
   setActiveFilters?: (filters: Record<string, string>) => void;
@@ -91,4 +59,9 @@ export type SiteSearchQuickOptionProps = {
   description: string;
   link?: string;
   onClick?: () => void;
+};
+
+export type SearchResultItemProps = {
+  result: SearchHit;
+  searchQuery: string;
 };

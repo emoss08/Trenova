@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "type": "module",
   "scripts": {
-    "dev": "bunx --bun vite",
+    "dev": "vite",
     "build": "tsc -b && vite build",
     "build:analyze": "ANALYZE=true tsc -b && vite build",
     "lint": "eslint .",

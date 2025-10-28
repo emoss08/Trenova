@@ -16,7 +16,7 @@ import { ShipmentEditForm } from "./shipment-edit-form";
 export function ShipmentEditSheet({
   currentRecord,
 }: EditTableSheetProps<ShipmentSchema>) {
-  const [searchParams, setSearchParams] = useQueryStates(searchParamsParser, {
+  const [_searchParams, setSearchParams] = useQueryStates(searchParamsParser, {
     history: "replace",
     throttleMs: 50,
   });
