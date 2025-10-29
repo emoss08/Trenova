@@ -32,7 +32,7 @@ import { usePermissions } from "@/hooks/use-permission";
 
 export const PermissionOperations = {
 {{- range .Operations}}
-  {{ .ConstName }}: {{ .Code }},  // {{ .DisplayName }}
+  {{ .ConstName }}: {{ .CodeValue }},  // {{ .DisplayName }}
 {{- end}}
 } as const;
 
@@ -52,7 +52,7 @@ export const {{ .TypeName }}Metadata = {
   operations: [
 {{- range .Operations}}
     {
-      code: {{ .Code }},
+      code: {{ .CodeValue }},
       name: '{{ .Name }}',
       displayName: '{{ .DisplayName }}',
       description: '{{ .Description }}',
@@ -61,7 +61,7 @@ export const {{ .TypeName }}Metadata = {
   ],
   compositeOperations: {
 {{- range $key, $value := .CompositeOperations}}
-    {{ $key }}: {{ $value }},
+    {{ $key }}: {{ formatUint32 $value }},
 {{- end}}
   },
 } as const;
@@ -120,6 +120,7 @@ type typeScriptData struct {
 
 type operationInfo struct {
 	Code        permission.Operation
+	CodeValue   uint32
 	Name        string
 	ConstName   string
 	MethodName  string
@@ -161,6 +162,7 @@ func GenerateTypeScriptTypes(outputDir string) error {
 		for _, op := range res.GetSupportedOperations() {
 			opInfo := operationInfo{
 				Code:        op.Code,
+				CodeValue:   op.Code.ToUint32(),
 				Name:        op.Name,
 				ConstName:   strings.ToUpper(op.Name),
 				MethodName:  utils.ToConstName(op.Name),
@@ -190,6 +192,9 @@ func GenerateTypeScriptTypes(outputDir string) error {
 	funcMap := template.FuncMap{
 		"toMethodName": func(s string) string {
 			return utils.ToConstName(s)
+		},
+		"formatUint32": func(op permission.Operation) uint32 {
+			return op.ToUint32()
 		},
 	}
 
