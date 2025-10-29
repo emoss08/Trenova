@@ -1,17 +1,11 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
-import { billingClientSearchParams } from "@/hooks/use-billing-client-state";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { AnalyticsPage } from "@/types/analytics";
 import { faChevronRight } from "@fortawesome/pro-solid-svg-icons";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useQueryStates } from "nuqs";
+import { parseAsBoolean, useQueryState } from "nuqs";
 import { TransferDialog } from "./transfer-to-billing/transfer-dialog";
 
 export default function BillingQueueAnalytics() {
@@ -29,8 +23,11 @@ export default function BillingQueueAnalytics() {
 }
 
 function ShipmentReadyToBillCard({ count }: { count: number }) {
-  const [searchParams, setSearchParams] = useQueryStates(
-    billingClientSearchParams,
+  const [transferModalOpen, setTransferModalOpen] = useQueryState(
+    "transferModalOpen",
+    parseAsBoolean.withDefault(false).withOptions({
+      shallow: true,
+    }),
   );
 
   return (
@@ -56,7 +53,7 @@ function ShipmentReadyToBillCard({ count }: { count: number }) {
               <Button
                 className="[&_svg]:size-2"
                 size="sm"
-                onClick={() => setSearchParams({ transferModalOpen: true })}
+                onClick={() => setTransferModalOpen(true)}
               >
                 Transfer to billing
                 <Icon icon={faChevronRight} className="size-3" />
@@ -66,12 +63,8 @@ function ShipmentReadyToBillCard({ count }: { count: number }) {
         </div>
       </div>
       <TransferDialog
-        open={searchParams.transferModalOpen}
-        onOpenChange={() =>
-          setSearchParams({
-            transferModalOpen: !searchParams.transferModalOpen,
-          })
-        }
+        open={transferModalOpen}
+        onOpenChange={() => setTransferModalOpen(!transferModalOpen)}
       />
     </>
   );
