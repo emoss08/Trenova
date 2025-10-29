@@ -12,7 +12,11 @@ function Highlight({ text, highlight = "", className }: HighlightProps) {
     return <span className={className}>{text}</span>;
   }
 
-  const parts = text.split(new RegExp(`(${highlight})`, "gi"));
+  const escapeRegExp = (value: string) =>
+    value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+  const safe = escapeRegExp(highlight);
+  const parts = text.split(new RegExp(`(${safe})`, "gi"));
 
   return (
     <span className={className}>

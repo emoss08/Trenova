@@ -1,12 +1,16 @@
 import { api } from "@/services/api";
 import { SearchEntityType, type SearchRequest } from "@/types/search";
 import { useQuery } from "@tanstack/react-query";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useDebounce } from "./use-debounce";
 
 export function useSearch(activeTab: SearchEntityType = SearchEntityType.All) {
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
+  const cleanedDebouncedQuery = useMemo(() => {
+    // Remove trailing @mention token (e.g., "@shipments") from the query used for API
+    return (debouncedSearchQuery || "").replace(/@\S*$/, "").trim();
+  }, [debouncedSearchQuery]);
 
   const performSearch = useCallback(async (req: SearchRequest) => {
     const response = await api.search.search(req);
@@ -19,9 +23,9 @@ export function useSearch(activeTab: SearchEntityType = SearchEntityType.All) {
       : [activeTab as SearchEntityType];
 
   const { data, isLoading, isError, error, refetch } = useQuery({
-    queryKey: ["search", debouncedSearchQuery, activeTab, selectedEntityTypes],
+    queryKey: ["search", cleanedDebouncedQuery, activeTab, selectedEntityTypes],
     queryFn: async () => {
-      if (!debouncedSearchQuery) {
+      if (!cleanedDebouncedQuery) {
         return {
           hits: [],
           total: 0,
@@ -33,7 +37,7 @@ export function useSearch(activeTab: SearchEntityType = SearchEntityType.All) {
       }
 
       const request: SearchRequest = {
-        query: debouncedSearchQuery,
+        query: cleanedDebouncedQuery,
         entityTypes: selectedEntityTypes,
         limit: 10,
         offset: 0,
@@ -56,7 +60,7 @@ export function useSearch(activeTab: SearchEntityType = SearchEntityType.All) {
 
       return response;
     },
-    enabled: !!debouncedSearchQuery,
+    enabled: !!cleanedDebouncedQuery,
   });
 
   return {

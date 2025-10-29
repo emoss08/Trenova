@@ -47,8 +47,13 @@ export function ShipmentPreviewContent({
           <h3 className="text-xl">{data.proNumber || data.id}</h3>
           <ShipmentStatusBadge status={data.status} />
         </div>
-        <div className="text-2xs text-muted-foreground">
-          {data.customer?.name}
+        <div className="flex flex-row items-center gap-2">
+          <div className="text-2xs text-muted-foreground truncate max-w-[200px]">
+            Customer: {data.customer?.name} ({data.customer?.code})
+          </div>
+          <div className="text-2xs text-muted-foreground truncate max-w-[200px]">
+            BOL: {data.bol}
+          </div>
         </div>
       </div>
       <ShipmentRouteMap moves={data.moves} />
