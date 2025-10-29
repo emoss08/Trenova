@@ -78,6 +78,13 @@ func (c *Client) UpdateIndexSettings(
 		DisplayedAttributes:  config.DisplayedAttributes,
 		RankingRules:         config.RankingRules,
 		StopWords:            config.StopWords,
+		TypoTolerance: &meilisearch.TypoTolerance{
+			Enabled: true,
+			MinWordSizeForTypos: meilisearch.MinWordSizeForTypos{
+				OneTypo:  5,
+				TwoTypos: 9,
+			},
+		},
 	}
 
 	task, err := indexResult.UpdateSettings(settings)
