@@ -57,7 +57,7 @@ func (s *Service) ModerateText(
 	matchedWords, hasProhibitedWord := s.detectProhibitedWords(text)
 
 	result, err := s.openAIClient.Moderations.New(ctx, openai.ModerationNewParams{
-		Model: openai.ModerationModelTextModerationLatest,
+		Model: openai.ModerationModelOmniModerationLatest,
 		Input: openai.ModerationNewParamsInputUnion{
 			OfString: openai.String(text),
 		},
