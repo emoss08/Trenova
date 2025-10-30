@@ -13,7 +13,7 @@ export function ShipmentMovePreview({
           <div className="flex items-center gap-2">
             Move {move.sequence + 1}
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-2">
             {[...move.stops]
               .sort((a, b) => a.sequence - b.sequence)
               .map((stop) => (
@@ -28,14 +28,21 @@ export function ShipmentMovePreview({
 
 function ShipmentStopPreview({ stop }: { stop: StopSchema }) {
   return (
-    <div className="flex flex-row gap-1">
-      <div className="border border-border rounded-md p-2 w-6 text-center items-center shrink-0">
-        {stop.sequence + 1}
+    <div className="flex flex-row items-center gap-1 h-6">
+      <div className="border border-border rounded-md p-2 size-6 items-center shrink-0 flex justify-center">
+        <span className="text-xs font-medium text-foreground">
+          {stop.sequence + 1}
+        </span>
       </div>
-      <div className="flex flex-col gap-0.5 items-start">
-        <p className="text-sm text-foreground truncate max-w-[300px]">
-          {stop.location?.name}
-        </p>
+      <div className="flex flex-col leading-tight items-start">
+        <div className="flex flex-row items-center gap-1">
+          <p className="text-sm text-foreground truncate max-w-[300px]">
+            {stop.location?.name}
+          </p>
+          <p className="text-2xs text-muted-foreground truncate max-w-[100px]">
+            ({stop.type})
+          </p>
+        </div>
         <p className="text-2xs text-muted-foreground truncate max-w-[300px]">
           {stop.location ? formatLocation(stop.location) : "—"}
         </p>
