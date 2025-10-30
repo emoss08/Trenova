@@ -19,10 +19,14 @@ const (
 	OpCopy
 	OpAssign
 	OpDuplicate
+	OpClose
+	OpLock
+	OpUnlock
+	OpActivate
 )
 
 func (o Operation) String() string {
-	return [...]string{"create", "read", "update", "delete", "export", "import", "approve", "reject", "share", "archive", "restore", "manage", "submit", "copy", "assign", "duplicate"}[o]
+	return [...]string{"create", "read", "update", "delete", "export", "import", "approve", "reject", "share", "archive", "restore", "manage", "submit", "copy", "assign", "duplicate", "close", "lock", "unlock", "activate"}[o]
 }
 
 func (o Operation) ToUint32() uint32 {

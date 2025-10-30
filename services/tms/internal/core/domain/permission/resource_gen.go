@@ -21,6 +21,7 @@ const (
 	ResourceEmailProfile            Resource = "email_profile"
 	ResourceEquipmentManufacturer   Resource = "equipment_manufacturer"
 	ResourceEquipmentType           Resource = "equipment_type"
+	ResourceFiscalYear              Resource = "fiscal_year"
 	ResourceFleetCode               Resource = "fleet_code"
 	ResourceHazardousMaterial       Resource = "hazardous_material"
 	ResourceHazmatSegregationRule   Resource = "hazmat_segregation_rule"
@@ -51,7 +52,7 @@ func (r Resource) String() string {
 // IsValid checks if the Resource value is valid
 func (r Resource) IsValid() bool {
 	switch r {
-	case ResourceAccessorialCharge, ResourceAccountType, ResourceAuditEntry, ResourceBillingControl, ResourceCommodity, ResourceCustomer, ResourceDataRetention, ResourceDedicatedLane, ResourceDedicatedLaneSuggestion, ResourceDispatchControl, ResourceDistanceOverride, ResourceDocumentType, ResourceEmailProfile, ResourceEquipmentManufacturer, ResourceEquipmentType, ResourceFleetCode, ResourceHazardousMaterial, ResourceHazmatSegregationRule, ResourceHoldReason, ResourceLocation, ResourceLocationCategory, ResourceOrganization, ResourcePatternConfig, ResourceServiceType, ResourceShipment, ResourceShipmentComment, ResourceShipmentControl, ResourceShipmentType, ResourceTractor, ResourceTrailer, ResourceUser, ResourceVariable, ResourceVariableFormat, ResourceWorker, ResourceWorkerPto:
+	case ResourceAccessorialCharge, ResourceAccountType, ResourceAuditEntry, ResourceBillingControl, ResourceCommodity, ResourceCustomer, ResourceDataRetention, ResourceDedicatedLane, ResourceDedicatedLaneSuggestion, ResourceDispatchControl, ResourceDistanceOverride, ResourceDocumentType, ResourceEmailProfile, ResourceEquipmentManufacturer, ResourceEquipmentType, ResourceFiscalYear, ResourceFleetCode, ResourceHazardousMaterial, ResourceHazmatSegregationRule, ResourceHoldReason, ResourceLocation, ResourceLocationCategory, ResourceOrganization, ResourcePatternConfig, ResourceServiceType, ResourceShipment, ResourceShipmentComment, ResourceShipmentControl, ResourceShipmentType, ResourceTractor, ResourceTrailer, ResourceUser, ResourceVariable, ResourceVariableFormat, ResourceWorker, ResourceWorkerPto:
 		return true
 	default:
 		return false
@@ -76,6 +77,7 @@ func AllResources() []Resource {
 		ResourceEmailProfile,
 		ResourceEquipmentManufacturer,
 		ResourceEquipmentType,
+		ResourceFiscalYear,
 		ResourceFleetCode,
 		ResourceHazardousMaterial,
 		ResourceHazmatSegregationRule,

@@ -185,5 +185,9 @@ var RegistryModule = fx.Module("permission-registry",
 			accounting.NewAccountTypePermission,
 			fx.ResultTags(`group:"permission_entities"`),
 		),
+		fx.Annotate(
+			accounting.NewFiscalYearPermission,
+			fx.ResultTags(`group:"permission_entities"`),
+		),
 	),
 )

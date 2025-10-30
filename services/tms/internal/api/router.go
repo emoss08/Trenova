@@ -42,6 +42,7 @@ type RouterParams struct {
 	AILogHandler                   *handlers.AILogHandler
 	GoogleMapsHandler              *handlers.GoogleMapsHandler
 	OrganizationHandler            *handlers.OrganizationHandler
+	FiscalYearHandler              *handlers.FiscalYearHandler
 	TrailerHandler                 *handlers.TrailerHandler
 	WorkerHandler                  *handlers.WorkerHandler
 	ShipmentControlHandler         *handlers.ShipmentControlHandler
@@ -97,6 +98,7 @@ type Router struct {
 	hazmatSegregationRuleHandler   *handlers.HazmatSegregationRuleHandler
 	permissionHandler              *handlers.PermissionHandler
 	organizationHandler            *handlers.OrganizationHandler
+	fiscalYearHandler              *handlers.FiscalYearHandler
 	serviceTypeHandler             *handlers.ServiceTypeHandler
 	commodityHandler               *handlers.CommodityHandler
 	googleMapsHandler              *handlers.GoogleMapsHandler
@@ -143,6 +145,7 @@ func NewRouter(p RouterParams) *Router {
 		accessorialChargeHandler:       p.AccessorialChargeHandler,
 		workerHandler:                  p.WorkerHandler,
 		commodityHandler:               p.CommodityHandler,
+		fiscalYearHandler:              p.FiscalYearHandler,
 		googleMapsHandler:              p.GoogleMapsHandler,
 		hazmatSegregationRuleHandler:   p.HazmatSegregationRuleHandler,
 		customerHandler:                p.CustomerHandler,
@@ -316,4 +319,5 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.dispatchControlHandler.RegisterRoutes(protected)
 	r.searchHandler.RegisterRoutes(protected)
 	r.accountTypeHandler.RegisterRoutes(protected)
+	r.fiscalYearHandler.RegisterRoutes(protected)
 }

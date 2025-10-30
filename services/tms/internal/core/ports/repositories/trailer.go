@@ -9,22 +9,22 @@ import (
 )
 
 type TrailerFilterOptions struct {
-	IncludeEquipmentDetails bool   `query:"includeEquipmentDetails"`
-	IncludeFleetDetails     bool   `query:"includeFleetDetails"`
-	Status                  string `query:"status"`
+	IncludeEquipmentDetails bool   `form:"includeEquipmentDetails" json:"includeEquipmentDetails"`
+	IncludeFleetDetails     bool   `form:"includeFleetDetails"     json:"includeFleetDetails"`
+	Status                  string `form:"status"                  json:"status"`
 }
 
 type ListTrailerRequest struct {
 	Filter        *pagination.QueryOptions
-	FilterOptions TrailerFilterOptions `query:"filterOptions"`
+	FilterOptions TrailerFilterOptions `form:"filterOptions" json:"filterOptions"`
 }
 
 type GetTrailerByIDRequest struct {
-	ID            pulid.ID
-	OrgID         pulid.ID
-	BuID          pulid.ID
-	UserID        pulid.ID
-	FilterOptions TrailerFilterOptions `query:"filterOptions"`
+	ID            pulid.ID             `form:"id"            json:"id"`
+	OrgID         pulid.ID             `form:"orgId"         json:"orgId"`
+	BuID          pulid.ID             `form:"buId"          json:"buId"`
+	UserID        pulid.ID             `form:"userId"        json:"userId"`
+	FilterOptions TrailerFilterOptions `form:"filterOptions" json:"filterOptions"`
 }
 
 type TrailerRepository interface {

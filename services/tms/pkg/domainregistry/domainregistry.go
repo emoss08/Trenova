@@ -131,5 +131,6 @@ func RegisterPermissionAwareEntities() []PermissionAware {
 		tenant.NewDispatchControlPermission(),
 		distanceoverride.NewDistanceOverridePermission(),
 		accounting.NewAccountTypePermission(),
+		accounting.NewFiscalYearPermission(),
 	}
 }

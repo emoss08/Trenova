@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/emailprofilerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmentmanufacturerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmenttyperepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fleetcoderepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/formulatemplaterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazardousmaterialrepository"
@@ -98,5 +99,6 @@ var Module = fx.Module("postgres-repositories",
 		dispatchcontrolrepository.NewRepository,
 		distanceoverriderepository.NewRepository,
 		accounttyperepository.NewRepository,
+		fiscalyearrepository.NewRepository,
 	),
 )
