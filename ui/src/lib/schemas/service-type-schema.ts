@@ -4,11 +4,11 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { Status } from "@/types/common";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 
 export const serviceTypeSchema = z.object({

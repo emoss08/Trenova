@@ -1,4 +1,4 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 import { decimalStringSchema, optionalStringSchema } from "./helpers";
 import { usStateSchema } from "./us-state-schema";
 

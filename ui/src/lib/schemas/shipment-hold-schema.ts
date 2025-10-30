@@ -1,4 +1,4 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 import { optionalStringSchema, pulidSchema, timestampSchema } from "./helpers";
 import { userSchema } from "./user-schema";
 

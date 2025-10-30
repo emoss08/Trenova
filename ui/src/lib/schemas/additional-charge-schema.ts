@@ -4,7 +4,7 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { AccessorialChargeMethod } from "@/types/billing";
-import * as z from "zod/v4";
+import * as z from "zod";
 import { accessorialChargeSchema } from "./accessorial-charge-schema";
 
 export const additionalChargeSchema = z.object({

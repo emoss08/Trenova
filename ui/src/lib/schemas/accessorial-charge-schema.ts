@@ -1,6 +1,6 @@
 import { AccessorialChargeMethod } from "@/types/billing";
 import { Status } from "@/types/common";
-import * as z from "zod/v4";
+import * as z from "zod";
 
 export const accessorialChargeSchema = z.object({
   id: z.string().optional(),

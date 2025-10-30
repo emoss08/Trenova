@@ -1,13 +1,13 @@
 import { BillingCycleType, PaymentTerm } from "@/types/billing";
 import { Status } from "@/types/common";
-import * as z from "zod/v4";
+import * as z from "zod";
 import { documentTypeSchema } from "./document-type-schema";
 import { geocodeBadeSchema } from "./geocode-schema";
 import {
-  nullableStringSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    nullableStringSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 import { usStateSchema } from "./us-state-schema";
 

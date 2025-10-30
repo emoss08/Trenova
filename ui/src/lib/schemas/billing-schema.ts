@@ -4,17 +4,17 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import {
-  BillingExceptionHandling,
-  PaymentTerm,
-  TransferSchedule,
+    BillingExceptionHandling,
+    PaymentTerm,
+    TransferSchedule,
 } from "@/types/billing";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  decimalStringSchema,
-  nullableIntegerSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    decimalStringSchema,
+    nullableIntegerSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 
 export const billingControlSchema = z

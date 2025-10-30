@@ -1,9 +1,9 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  optionalIntegerSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    optionalIntegerSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 import { locationSchema } from "./location-schema";
 

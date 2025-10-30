@@ -1,8 +1,8 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 import { HoldSeverity, HoldType } from "./shipment-hold-schema";
 

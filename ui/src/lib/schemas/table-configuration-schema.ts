@@ -1,11 +1,11 @@
 import { Resource } from "@/types/audit-entry";
 import { Visibility } from "@/types/table-configuration";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  nullableIntegerSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    nullableIntegerSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 import { userSchema } from "./user-schema";
 

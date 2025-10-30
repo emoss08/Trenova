@@ -1,10 +1,10 @@
 import { LocationCategoryType } from "@/types/location-category";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  nullableStringSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    nullableStringSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 
 export const locationCategorySchema = z.object({

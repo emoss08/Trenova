@@ -1,9 +1,9 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  optionalStringSchema,
-  pulidSchema,
-  timestampSchema,
-  versionSchema,
+    optionalStringSchema,
+    pulidSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 import { userSchema } from "./user-schema";
 

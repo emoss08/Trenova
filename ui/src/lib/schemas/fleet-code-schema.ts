@@ -1,10 +1,10 @@
 import { Status } from "@/types/common";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  decimalStringSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    decimalStringSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 import { userSchema } from "./user-schema";
 

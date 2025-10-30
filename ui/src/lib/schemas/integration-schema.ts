@@ -4,12 +4,12 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { IntegrationCategory, IntegrationType } from "@/types/integration";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  nullableStringSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    nullableStringSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 import { organizationSchema } from "./organization-schema";
 import { userSchema } from "./user-schema";

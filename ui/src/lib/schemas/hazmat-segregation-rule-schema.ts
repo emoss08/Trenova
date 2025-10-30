@@ -6,13 +6,13 @@
 import { Status } from "@/types/common";
 import { HazardousClassChoiceProps } from "@/types/hazardous-material";
 import { SegregationType } from "@/types/hazmat-segregation-rule";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  decimalStringSchema,
-  nullableStringSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    decimalStringSchema,
+    nullableStringSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 
 export const hazmatSegregationRuleSchema = z

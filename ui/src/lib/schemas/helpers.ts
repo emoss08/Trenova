@@ -1,4 +1,4 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 
 // Helper to handle decimal strings that come from the backend
 

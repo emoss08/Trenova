@@ -4,13 +4,13 @@
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
 import { AssignmentStatus } from "@/types/assignment";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  nullablePulidSchema,
-  nullableStringSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    nullablePulidSchema,
+    nullableStringSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 import { tractorSchema } from "./tractor-schema";
 import { trailerSchema } from "./trailer-schema";

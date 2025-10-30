@@ -1,13 +1,13 @@
 import { Status } from "@/types/common";
 import {
-  HazardousClassChoiceProps,
-  PackingGroupChoiceProps,
+    HazardousClassChoiceProps,
+    PackingGroupChoiceProps,
 } from "@/types/hazardous-material";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 
 export const hazardousMaterialSchema = z.object({

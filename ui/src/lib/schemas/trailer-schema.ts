@@ -3,16 +3,16 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-import * as z from "zod/v4";
+import * as z from "zod";
 import { equipmentManufacturerSchema } from "./equipment-manufacturer-schema";
 import { equipmentTypeSchema } from "./equipment-type-schema";
 import { fleetCodeSchema } from "./fleet-code-schema";
 import {
-  nullableIntegerSchema,
-  nullableStringSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    nullableIntegerSchema,
+    nullableStringSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 import { EquipmentStatus } from "./tractor-schema";
 import { usStateSchema } from "./us-state-schema";

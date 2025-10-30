@@ -1,20 +1,20 @@
 import { Gender, Status } from "@/types/common";
 import {
-  ComplianceStatus,
-  Endorsement,
-  PTOStatus,
-  PTOType,
-  WorkerType,
+    ComplianceStatus,
+    Endorsement,
+    PTOStatus,
+    PTOType,
+    WorkerType,
 } from "@/types/worker";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  nullableIntegerSchema,
-  nullablePulidSchema,
-  nullableStringSchema,
-  nullableTimestampSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    nullableIntegerSchema,
+    nullablePulidSchema,
+    nullableStringSchema,
+    nullableTimestampSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 
 const workerProfileSchema = z.object({

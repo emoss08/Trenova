@@ -3,13 +3,13 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-import { string, z } from "zod/v4";
+import { string, z } from "zod";
 import {
-  decimalStringSchema,
-  nullableStringSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    decimalStringSchema,
+    nullableStringSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 
 export const ContextType = z.enum(["BUILT_IN", "CUSTOM"]);

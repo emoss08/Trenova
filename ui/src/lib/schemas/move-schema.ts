@@ -1,9 +1,9 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 import { assignmentSchema } from "./assignment-schema";
 import {
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 import { stopSchema } from "./stop-schema";
 

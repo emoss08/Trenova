@@ -5,11 +5,11 @@
 
 import { Status } from "@/types/common";
 import { EquipmentClass } from "@/types/equipment-type";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 
 export const equipmentTypeSchema = z.object({

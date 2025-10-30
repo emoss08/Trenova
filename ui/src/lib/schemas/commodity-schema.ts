@@ -1,12 +1,12 @@
 import { Status } from "@/types/common";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  decimalStringSchema,
-  nullableIntegerSchema,
-  nullableStringSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    decimalStringSchema,
+    nullableIntegerSchema,
+    nullableStringSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 
 export const commoditySchema = z.object({

@@ -3,12 +3,12 @@
  * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
  * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
 
-import * as z from "zod/v4";
+import * as z from "zod";
 import { commoditySchema } from "./commodity-schema";
 import {
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 
 export const shipmentCommoditySchema = z.object({

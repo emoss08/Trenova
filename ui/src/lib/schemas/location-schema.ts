@@ -1,10 +1,10 @@
 import { Status } from "@/types/common";
-import * as z from "zod/v4";
+import * as z from "zod";
 import { geocodeBadeSchema } from "./geocode-schema";
 import {
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 import { locationCategorySchema } from "./location-category-schema";
 import { usStateSchema } from "./us-state-schema";

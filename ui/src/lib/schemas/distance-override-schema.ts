@@ -1,10 +1,10 @@
-import * as z from "zod/v4";
+import * as z from "zod";
 import { customerSchema } from "./customer-schema";
 import {
-  decimalStringSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    decimalStringSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 import { locationSchema } from "./location-schema";
 

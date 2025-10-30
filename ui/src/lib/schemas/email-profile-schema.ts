@@ -1,12 +1,12 @@
 import { Status } from "@/types/common";
-import { z } from "zod/v4";
+import { z } from "zod";
 import {
-  nullableBigIntegerSchema,
-  nullableIntegerSchema,
-  nullableStringSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    nullableBigIntegerSchema,
+    nullableIntegerSchema,
+    nullableStringSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 
 export const ProviderType = z.enum(["SMTP", "Resend"]);

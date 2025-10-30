@@ -5,18 +5,18 @@
 
 import { Resource } from "@/types/audit-entry";
 import {
-  Channel,
-  DeliveryStatus,
-  EventType,
-  Priority,
-  UpdateType,
+    Channel,
+    DeliveryStatus,
+    EventType,
+    Priority,
+    UpdateType,
 } from "@/types/notification";
-import * as z from "zod/v4";
+import * as z from "zod";
 import {
-  nullableTimestampSchema,
-  optionalStringSchema,
-  timestampSchema,
-  versionSchema,
+    nullableTimestampSchema,
+    optionalStringSchema,
+    timestampSchema,
+    versionSchema,
 } from "./helpers";
 
 export const targetingSchema = z.object({
@@ -122,9 +122,10 @@ type NotificationPreferenceSchema = z.infer<
 >;
 
 export type {
-  ActionSchema,
-  NotificationPreferenceSchema,
-  NotificationSchema,
-  RelatedEntitySchema,
-  TargetingSchema,
+    ActionSchema,
+    NotificationPreferenceSchema,
+    NotificationSchema,
+    RelatedEntitySchema,
+    TargetingSchema
 };
+
