@@ -11,6 +11,18 @@ export enum StandardOp {
   Import = 1 << 5, // 32
   Approve = 1 << 6, // 64
   Reject = 1 << 7, // 128
+  Share = 1 << 8, // 256
+  Archive = 1 << 9, // 512
+  Restore = 1 << 10, // 1024
+  Manage = 1 << 11, // 2048
+  Submit = 1 << 12, // 4096
+  Copy = 1 << 13, // 8192
+  Assign = 1 << 14, // 16384
+  Duplicate = 1 << 15, // 32768
+  Close = 1 << 16, // 65536
+  Lock = 1 << 17, // 131072
+  Unlock = 1 << 18, // 262144
+  Activate = 1 << 19, // 524288
 }
 
 export const ACTION_BITS: Record<string, number> = {
@@ -22,6 +34,10 @@ export const ACTION_BITS: Record<string, number> = {
   import: StandardOp.Import,
   approve: StandardOp.Approve,
   reject: StandardOp.Reject,
+  close: StandardOp.Close,
+  lock: StandardOp.Lock,
+  unlock: StandardOp.Unlock,
+  activate: StandardOp.Activate,
 };
 
 export enum DataScope {

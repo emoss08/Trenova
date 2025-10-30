@@ -47,6 +47,34 @@ export function ActionBadge({
       variant: "pink",
       text: "Duplicated",
     },
+    [PermissionOperations.CLOSE]: {
+      variant: "inactive",
+      text: "Closed",
+    },
+    [PermissionOperations.LOCK]: {
+      variant: "warning",
+      text: "Locked",
+    },
+    [PermissionOperations.UNLOCK]: {
+      variant: "active",
+      text: "Unlocked",
+    },
+    [PermissionOperations.ACTIVATE]: {
+      variant: "active",
+      text: "Activated",
+    },
+    [PermissionOperations.APPROVE]: {
+      variant: "active",
+      text: "Approved",
+    },
+    [PermissionOperations.REJECT]: {
+      variant: "inactive",
+      text: "Rejected",
+    },
+    [PermissionOperations.ASSIGN]: {
+      variant: "info",
+      text: "Assigned",
+    },
   };
 
   return (
@@ -121,6 +149,22 @@ export function AuditEntryResourceBadge({
     [Resource.ResourceEditor]: {
       variant: "orange",
       text: "Resource Editor",
+    },
+    [Resource.FiscalYear]: {
+      variant: "orange",
+      text: "Fiscal Year",
+    },
+    [Resource.DispatchControl]: {
+      variant: "orange",
+      text: "Dispatch Control",
+    },
+    [Resource.DistanceOverride]: {
+      variant: "indigo",
+      text: "Distance Override",
+    },
+    [Resource.AccountType]: {
+      variant: "indigo",
+      text: "Account Type",
     },
     // Operations Resources
     [Resource.Worker]: {

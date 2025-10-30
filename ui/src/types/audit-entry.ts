@@ -50,6 +50,7 @@ export enum Resource {
   DedicatedLaneSuggestion = "dedicated_lane_suggestion", // Represents resources related to dedicated lane suggestions.
   Role = "role", // Represents resources related to roles.
   PageFavorite = "page_favorite", // Represents resources related to page favorites.
+  FiscalYear = "fiscal_year", // Represents resources related to fiscal years.
 
   // Operations resources
   Worker = "worker", // Represents resources related to workers.
