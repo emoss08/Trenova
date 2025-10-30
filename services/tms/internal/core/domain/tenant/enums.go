@@ -83,3 +83,11 @@ const (
 	SSOProviderGoogle      = SSOProvider("Google")
 	SSOProviderGenericOIDC = SSOProvider("GenericOIDC")
 )
+
+type SubscriptionNotificationType string
+
+const (
+	SubscriptionNotificationTypeEmail = SubscriptionNotificationType("Email")
+	SubscriptionNotificationTypeInApp = SubscriptionNotificationType("InApp")
+	SubscriptionNotificationTypeBoth  = SubscriptionNotificationType("Both")
+)

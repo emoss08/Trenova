@@ -2,6 +2,7 @@ package permission
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/domain/accounting"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
@@ -178,6 +179,10 @@ var RegistryModule = fx.Module("permission-registry",
 		),
 		fx.Annotate(
 			distanceoverride.NewDistanceOverridePermission,
+			fx.ResultTags(`group:"permission_entities"`),
+		),
+		fx.Annotate(
+			accounting.NewAccountTypePermission,
 			fx.ResultTags(`group:"permission_entities"`),
 		),
 	),

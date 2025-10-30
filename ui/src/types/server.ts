@@ -120,6 +120,7 @@ export type BaseEndpoint =
   | "/variables/"
   | "/distance-overrides/"
   | "/variable-formats/"
+  | "/account-types/"
   | "/workers/pto/create/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;

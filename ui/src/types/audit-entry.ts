@@ -69,6 +69,7 @@ export enum Resource {
   EquipmentType = "equipment_type", // Represents resources for managing equipment types.
   EquipmentManufacturer = "equipment_manufacturer", // Represents resources for managing equipment manufacturers.
   ShipmentType = "shipment_type", // Represents resources for managing shipment type.
+  AccountType = "account_type", // Represents resources for managing account types.
   ServiceType = "service_type", // Represents resources for managing service types.
   HazardousMaterial = "hazardous_material", // Represents resources for managing hazardous materials.
   Commodity = "commodity", // Represents resources for managing commodities.

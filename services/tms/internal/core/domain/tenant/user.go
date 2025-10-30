@@ -94,9 +94,49 @@ func (om *OrganizationMembership) BeforeAppendModel(_ context.Context, q bun.Que
 	return nil
 }
 
+type UserSubscription struct {
+	bun.BaseModel `bun:"table:user_subscriptions,alias:us" json:"-"`
+
+	ID               pulid.ID                     `json:"id"               bun:"id,pk,type:VARCHAR(100)"`
+	UserID           pulid.ID                     `json:"userId"           bun:"user_id,type:VARCHAR(100),notnull"`
+	OrganizationID   pulid.ID                     `json:"organizationId"   bun:"organization_id,type:VARCHAR(100),notnull"`
+	BusinessUnitID   pulid.ID                     `json:"businessUnitId"   bun:"business_unit_id,type:VARCHAR(100),notnull"`
+	NotificationType SubscriptionNotificationType `json:"notificationType" bun:"notification_type,type:subscription_notification_type_enum,notnull"`
+	EntityType       permission.Resource          `json:"entityType"       bun:"entity_type,type:VARCHAR(100),notnull"`
+	EntityID         pulid.ID                     `json:"entityId"         bun:"entity_id,type:VARCHAR(100),notnull"`
+	CreatedAt        int64                        `json:"createdAt"        bun:"created_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt        int64                        `json:"updatedAt"        bun:"updated_at,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ExpiresAt        *int64                       `json:"expiresAt"        bun:"expires_at"`
+
+	User         *User         `json:"user,omitempty"         bun:"rel:belongs-to,join:user_id=id"`
+	Organization *Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
+	BusinessUnit *BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
+}
+
+func (us *UserSubscription) BeforeAppendModel(_ context.Context, q bun.Query) error {
+	now := utils.NowUnix()
+
+	switch q.(type) {
+	case *bun.InsertQuery:
+		if us.ID.IsNil() {
+			us.ID = pulid.MustNew("us_")
+		}
+		us.CreatedAt = now
+
+		if us.ExpiresAt == nil {
+			us.ExpiresAt = utils.Int64ToPointer(now + utils.DaysToSeconds(30))
+		}
+	case *bun.UpdateQuery:
+		us.UpdatedAt = now
+	}
+
+	return nil
+}
+
 var (
 	_ bun.BeforeAppendModelHook      = (*User)(nil)
 	_ bun.BeforeAppendModelHook      = (*OrganizationMembership)(nil)
+	_ bun.BeforeAppendModelHook      = (*UserSubscription)(nil)
 	_ domaintypes.PostgresSearchable = (*User)(nil)
 	_ domain.Validatable             = (*User)(nil)
 	_ framework.TenantedEntity       = (*User)(nil)

@@ -2,6 +2,7 @@ package domainregistry
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/domain/accounting"
 	"github.com/emoss08/trenova/internal/core/domain/ailog"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/commodity"
@@ -89,6 +90,7 @@ func RegisterEntities() []any {
 		&dedicatedlane.Suggestion{},
 		&dedicatedlane.PatternConfig{},
 		&distanceoverride.Override{},
+		&accounting.AccountType{},
 	}
 }
 
@@ -128,5 +130,6 @@ func RegisterPermissionAwareEntities() []PermissionAware {
 		dedicatedlane.NewPatternConfigPermission(),
 		tenant.NewDispatchControlPermission(),
 		distanceoverride.NewDistanceOverridePermission(),
+		accounting.NewAccountTypePermission(),
 	}
 }

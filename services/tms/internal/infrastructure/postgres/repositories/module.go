@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accounttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/additionalchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ailogrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/auditrepository"
@@ -96,5 +97,6 @@ var Module = fx.Module("postgres-repositories",
 		patternconfigrepository.NewRepository,
 		dispatchcontrolrepository.NewRepository,
 		distanceoverriderepository.NewRepository,
+		accounttyperepository.NewRepository,
 	),
 )

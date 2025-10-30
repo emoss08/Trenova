@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/emoss08/trenova/internal/core/services/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/services/accounttype"
 	"github.com/emoss08/trenova/internal/core/services/ailog"
 	"github.com/emoss08/trenova/internal/core/services/audit"
 	"github.com/emoss08/trenova/internal/core/services/auth"
@@ -98,5 +99,6 @@ var Module = fx.Module(
 		dispatchcontrol.NewService,
 		distanceoverride.NewService,
 		distancecalculator.NewService,
+		accounttype.NewService,
 	),
 )

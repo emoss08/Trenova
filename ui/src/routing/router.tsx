@@ -81,6 +81,16 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "configurations/account-types",
+                loader: createPermissionLoader(Resource.AccountType),
+                async lazy() {
+                  let { AccountTypes } = await import(
+                    "@/app/account-types/page"
+                  );
+                  return { Component: AccountTypes };
+                },
+              },
+              {
                 path: "configurations/accessorial-charges",
                 loader: createPermissionLoader(Resource.AccessorialCharge),
                 async lazy() {

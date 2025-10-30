@@ -7,6 +7,7 @@ type Resource string
 
 const (
 	ResourceAccessorialCharge       Resource = "accessorial_charge"
+	ResourceAccountType             Resource = "account_type"
 	ResourceAuditEntry              Resource = "audit_entry"
 	ResourceBillingControl          Resource = "billing_control"
 	ResourceCommodity               Resource = "commodity"
@@ -50,7 +51,7 @@ func (r Resource) String() string {
 // IsValid checks if the Resource value is valid
 func (r Resource) IsValid() bool {
 	switch r {
-	case ResourceAccessorialCharge, ResourceAuditEntry, ResourceBillingControl, ResourceCommodity, ResourceCustomer, ResourceDataRetention, ResourceDedicatedLane, ResourceDedicatedLaneSuggestion, ResourceDispatchControl, ResourceDistanceOverride, ResourceDocumentType, ResourceEmailProfile, ResourceEquipmentManufacturer, ResourceEquipmentType, ResourceFleetCode, ResourceHazardousMaterial, ResourceHazmatSegregationRule, ResourceHoldReason, ResourceLocation, ResourceLocationCategory, ResourceOrganization, ResourcePatternConfig, ResourceServiceType, ResourceShipment, ResourceShipmentComment, ResourceShipmentControl, ResourceShipmentType, ResourceTractor, ResourceTrailer, ResourceUser, ResourceVariable, ResourceVariableFormat, ResourceWorker, ResourceWorkerPto:
+	case ResourceAccessorialCharge, ResourceAccountType, ResourceAuditEntry, ResourceBillingControl, ResourceCommodity, ResourceCustomer, ResourceDataRetention, ResourceDedicatedLane, ResourceDedicatedLaneSuggestion, ResourceDispatchControl, ResourceDistanceOverride, ResourceDocumentType, ResourceEmailProfile, ResourceEquipmentManufacturer, ResourceEquipmentType, ResourceFleetCode, ResourceHazardousMaterial, ResourceHazmatSegregationRule, ResourceHoldReason, ResourceLocation, ResourceLocationCategory, ResourceOrganization, ResourcePatternConfig, ResourceServiceType, ResourceShipment, ResourceShipmentComment, ResourceShipmentControl, ResourceShipmentType, ResourceTractor, ResourceTrailer, ResourceUser, ResourceVariable, ResourceVariableFormat, ResourceWorker, ResourceWorkerPto:
 		return true
 	default:
 		return false
@@ -61,6 +62,7 @@ func (r Resource) IsValid() bool {
 func AllResources() []Resource {
 	return []Resource{
 		ResourceAccessorialCharge,
+		ResourceAccountType,
 		ResourceAuditEntry,
 		ResourceBillingControl,
 		ResourceCommodity,

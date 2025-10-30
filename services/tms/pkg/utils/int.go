@@ -74,3 +74,7 @@ func ConvertToUint32(value int) uint32 {
 
 	return 0
 }
+
+func Int64ToPointer(value int64) *int64 {
+	return &value
+}
