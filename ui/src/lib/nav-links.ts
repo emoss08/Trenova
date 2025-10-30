@@ -214,6 +214,12 @@ export const routes: RouteInfo[] = [
             supportsModal: true,
           },
           {
+            key: Resource.AccountType,
+            label: "Account Types",
+            link: "/billing/configurations/account-types",
+            supportsModal: true,
+          },
+          {
             key: Resource.RevenueCode,
             label: "Revenue Codes",
             link: "/billing/configurations/revenue-codes",
