@@ -450,7 +450,7 @@ export function DataTable<TData extends Record<string, any>>({
                 onOpenChange={handleCreateModalClose}
               />
             )}
-            {TableEditModal && (
+            {TableEditModal && selectedRow?.original && (
               <TableEditModal
                 isLoading={dataQuery.isFetching || dataQuery.isLoading}
                 currentRecord={selectedRow?.original}
