@@ -22,11 +22,15 @@ export function LocationCategories() {
 
 function Header() {
   return (
-    <div className="flex justify-between items-center">
-      <h1 className="text-3xl font-bold tracking-tight">Location Categories</h1>
-      <p className="text-muted-foreground">
-        Manage and configure location categories for your organization
-      </p>
+    <div className="flex justify-between items-start">
+      <div>
+        <h1 className="text-3xl font-bold tracking-tight">
+          Location Categories
+        </h1>
+        <p className="text-muted-foreground">
+          Manage and configure location categories for your organization
+        </p>
+      </div>
     </div>
   );
 }

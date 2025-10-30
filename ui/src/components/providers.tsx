@@ -2,7 +2,7 @@ import { PermissionProvider } from "@/contexts/permission-context";
 import { APIError } from "@/types/errors";
 import { HelmetProvider } from "@dr.pogodin/react-helmet";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
+// import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import { ThemeProvider } from "./theme-provider";
 import { Toaster } from "./ui/sonner";
@@ -35,7 +35,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           >
             <WebSocketProvider>
               <ThemeProvider defaultTheme="dark" storageKey="trenova-ui-theme">
-                <ReactQueryDevtools />
+                {/* <ReactQueryDevtools /> */}
                 {children}
                 <Toaster position="top-center" />
               </ThemeProvider>
