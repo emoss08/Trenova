@@ -91,6 +91,7 @@ func RegisterEntities() []any {
 		&dedicatedlane.PatternConfig{},
 		&distanceoverride.Override{},
 		&accounting.AccountType{},
+		&accounting.FiscalYear{},
 	}
 }
 

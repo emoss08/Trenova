@@ -61,7 +61,6 @@ type FiscalYear struct {
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
 	ClosedBy     *tenant.User         `json:"closedBy,omitempty"     bun:"rel:belongs-to,join:closed_by_id=id"`
 	LockedBy     *tenant.User         `json:"lockedBy,omitempty"     bun:"rel:belongs-to,join:locked_by_id=id"`
-	PriorYear    *FiscalYear          `json:"priorYear,omitempty"    bun:"rel:belongs-to,join:prior_year_id=id"`
 }
 
 func (fy *FiscalYear) Validate(multiErr *errortypes.MultiError) {
