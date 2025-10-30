@@ -1,7 +1,7 @@
-"use no memo";
 import { useShipmentDetails } from "@/app/shipment/queries/shipment";
 import { useDataTable } from "@/components/data-table/data-table-provider";
 import { FormSaveDock } from "@/components/form";
+import { Form } from "@/components/ui/form";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { searchParamsParser } from "@/hooks/use-data-table-state";
@@ -15,7 +15,6 @@ import { useCallback, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ShipmentDetailsSkeleton } from "../shipment-details-skeleton";
-import { ShipmentFormWrapper } from "../shipment-form-wrapper";
 import { ShipmentGeneralInfoForm } from "../shipment-general-info-form";
 
 export function ShipmentEditFormWrapper({
@@ -46,10 +45,8 @@ export function ShipmentEditFormWrapper({
     setError,
     reset,
     handleSubmit,
-    formState: { isSubmitting, errors },
+    formState: { isSubmitting },
   } = form;
-
-  console.info("Shipment Form Errors:", errors);
 
   const { mutateAsync } = useApiMutation({
     mutationFn: async (values: ShipmentSchema) => {
@@ -124,7 +121,7 @@ export function ShipmentEditFormWrapper({
 
   return (
     <FormProvider {...form}>
-      <ShipmentFormWrapper onSubmit={onSubmit}>
+      <Form className="space-y-0 p-0" onSubmit={form.handleSubmit(onSubmit)}>
         {isDetailsLoading ? (
           <ShipmentDetailsSkeleton />
         ) : (
@@ -133,7 +130,7 @@ export function ShipmentEditFormWrapper({
             <FormSaveDock position="right" />
           </>
         )}
-      </ShipmentFormWrapper>
+      </Form>
     </FormProvider>
   );
 }

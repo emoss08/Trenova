@@ -21,26 +21,9 @@ import { UnCancelShipmentDialog } from "../cancellation/shipment-uncanel-dialog"
 import { ShipmentDuplicateDialog } from "../duplicate/shipment-duplicate-dialog";
 import { TransferOwnershipDialog } from "../transfer-ownership/transfer-ownership-dialog";
 
-// Map of status that are allowed to be canceled.
-// const cancellatedStatuses = [
-//   ShipmentStatus.New,
-//   ShipmentStatus.InTransit,
-//   ShipmentStatus.Delayed,
-//   ShipmentStatus.PartiallyCompleted,
-//   ShipmentStatus.Completed,
-// ];
-
-export function ShipmentActions({
-  shipment,
-}: {
-  shipment?: ShipmentSchema | null;
-}) {
+export function ShipmentActions({ shipment }: { shipment: ShipmentSchema }) {
   const { canDuplicate, canAssign } = useShipmentPermissions();
   const [searchParams, setSearchParams] = useQueryStates(shipmentActionsParser);
-
-  if (!shipment) {
-    return null;
-  }
 
   return (
     <>

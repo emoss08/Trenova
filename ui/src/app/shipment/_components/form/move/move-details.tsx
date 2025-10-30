@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { LazyComponent } from "@/components/error-boundary";
 import { MOVE_DELETE_DIALOG_KEY } from "@/constants/env";
 import { ShipmentSchema } from "@/lib/schemas/shipment-schema";
@@ -23,13 +18,10 @@ const resequenceMoves = (
     return [];
   }
 
-  // * Create a copy of the moves array to avoid mutating the original
   const updatedMoves = [...moves];
 
-  // * Get the sequence number of the deleted move
   const deletedSequence = moves[deletedIndex].sequence;
 
-  // * Adjust sequence numbers for all moves after the deleted one
   for (let i = 0; i < updatedMoves.length; i++) {
     if (i !== deletedIndex && updatedMoves[i].sequence > deletedSequence) {
       updatedMoves[i] = {

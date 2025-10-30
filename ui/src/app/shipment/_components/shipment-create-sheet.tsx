@@ -1,4 +1,5 @@
 import { FormSaveDock } from "@/components/form/form-save-dock";
+import { Form } from "@/components/ui/form";
 import {
   Sheet,
   SheetBody,
@@ -26,7 +27,6 @@ import { useCallback, useEffect } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { ShipmentCreateForm } from "./form/shipment-form";
-import { ShipmentFormWrapper } from "./form/shipment-form-wrapper";
 
 export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
   const queryClient = useQueryClient();
@@ -189,12 +189,15 @@ export function ShipmentCreateSheet({ open, onOpenChange }: TableSheetProps) {
           </SheetDescription>
         </VisuallyHidden>
         <FormProvider {...form}>
-          <ShipmentFormWrapper onSubmit={onSubmit}>
+          <Form
+            className="space-y-0 p-0"
+            onSubmit={form.handleSubmit(onSubmit)}
+          >
             <SheetBody className="p-0">
               <ShipmentCreateForm />
             </SheetBody>
             <FormSaveDock position="right" />
-          </ShipmentFormWrapper>
+          </Form>
         </FormProvider>
       </SheetContent>
     </Sheet>

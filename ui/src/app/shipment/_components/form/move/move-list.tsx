@@ -1,3 +1,4 @@
+"use no memo";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import type { MoveSchema } from "@/lib/schemas/move-schema";
 import type { ShipmentSchema } from "@/lib/schemas/shipment-schema";
@@ -9,7 +10,7 @@ import { StopTimeline } from "../stop-details/stop-timeline-content";
 
 function MoveListScrollArea({ children }: { children: React.ReactNode }) {
   return (
-    <ScrollArea className="flex max-h-[250px] flex-col overflow-y-auto px-4 py-2 rounded-b-lg">
+    <ScrollArea className="flex max-h-[250px] flex-col px-4 py-2 rounded-b-lg">
       {children}
     </ScrollArea>
   );

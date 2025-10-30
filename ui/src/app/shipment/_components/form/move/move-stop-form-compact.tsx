@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { AutoCompleteDateTimeField } from "@/components/fields/datetime-field";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
@@ -45,11 +40,9 @@ const CompactStopFormComponent = ({
   const stopsLength = watch(`moves.${moveIdx}.stops`)?.length || 0;
   const locationId = watch(`moves.${moveIdx}.stops.${stopIdx}.locationId`);
 
-  // Determine if this is first or last stop
   const isFirstStop = stopIdx === 0;
   const isLastStop = stopIdx === stopsLength - 1;
 
-  // Memoize the stop title to prevent recalculation on each render
   const stopTitle = useMemo(() => {
     if (isFirstStop) return "Origin Stop (Pickup)";
     if (isLastStop) return "Destination Stop (Delivery)";
@@ -60,7 +53,6 @@ const CompactStopFormComponent = ({
     ...queries.location.getById(locationId),
   });
 
-  // Set address when location changes
   useEffect(() => {
     if (!isLoadingLocation && locationId && locationData) {
       const formattedLocation = formatLocation(locationData);
@@ -69,22 +61,18 @@ const CompactStopFormComponent = ({
         formattedLocation,
       );
 
-      // Get current move values
       const currentValues = getValues();
       const currentMove = currentValues.moves?.[moveIdx];
 
       if (currentMove && currentMove.stops && currentMove.stops[stopIdx]) {
-        // Update the stop with location data
         const updatedStop = {
           ...currentMove.stops[stopIdx],
           location: locationData,
         };
 
-        // Update all the stops
         const updatedStops = [...currentMove.stops];
         updatedStops[stopIdx] = updatedStop;
 
-        // Update the entire move
         setValue(`moves.${moveIdx}`, {
           ...currentMove,
           stops: updatedStops,

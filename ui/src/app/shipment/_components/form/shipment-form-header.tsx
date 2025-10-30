@@ -128,8 +128,12 @@ export function ShipmentFormHeader({
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
-        <Separator orientation="vertical" className="mx-1" />
-        <ShipmentActions shipment={selectedShipment} />
+        {!selectedShipment && (
+          <>
+            <Separator orientation="vertical" className="mx-1" />
+            <ShipmentActions shipment={selectedShipment!} />
+          </>
+        )}
       </div>
     </ShipmentFormHeaderInner>
   );
