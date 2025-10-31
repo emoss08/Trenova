@@ -33,6 +33,10 @@ import {
   ProviderType,
   type EmailProfileSchema,
 } from "./schemas/email-profile-schema";
+import {
+  FiscalYearSchema,
+  FiscalYearStatusSchema,
+} from "./schemas/fiscal-year-schema";
 import { MoveStatus, type MoveSchema } from "./schemas/move-schema";
 import { HoldSeverity, HoldType } from "./schemas/shipment-hold-schema";
 import {
@@ -881,3 +885,26 @@ export const serviceIncidentTypeChoices = [
 ] satisfies ReadonlyArray<
   ChoiceProps<DispatchControlSchema["recordServiceFailures"]>
 >;
+
+export const fiscalYearStatusChoices = [
+  {
+    value: FiscalYearStatusSchema.enum.Draft,
+    label: "Draft",
+    color: "#9333ea",
+  },
+  {
+    value: FiscalYearStatusSchema.enum.Open,
+    label: "Open",
+    color: "#16a34a",
+  },
+  {
+    value: FiscalYearStatusSchema.enum.Closed,
+    label: "Closed",
+    color: "#dc2626",
+  },
+  {
+    value: FiscalYearStatusSchema.enum.Locked,
+    label: "Locked",
+    color: "#f59e0b",
+  },
+] satisfies ReadonlyArray<ChoiceProps<FiscalYearSchema["status"]>>;

@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS "fiscal_years"(
     "start_date" bigint NOT NULL,
     "end_date" bigint NOT NULL,
     "tax_year" int,
-    "budget_amount" bigint NOT NULL DEFAULT 0,
+    "budget_amount" bigint,
     "adjustment_deadline" bigint,
     "is_current" boolean NOT NULL DEFAULT FALSE,
     "is_calendar_year" boolean NOT NULL DEFAULT FALSE,

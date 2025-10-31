@@ -52,6 +52,14 @@ func GetCurrentYear() int {
 	return time.Now().Year()
 }
 
+func GetStartOfYear() int64 {
+	return time.Date(time.Now().Year(), time.January, 1, 0, 0, 0, 0, time.UTC).Unix()
+}
+
+func GetEndOfYear() int64 {
+	return time.Date(time.Now().Year(), time.December, 31, 23, 59, 59, 0, time.UTC).Unix()
+}
+
 func IsAtLeastAge(dob int64, age int) bool {
 	return dob <= YearsAgoUnix(age)
 }

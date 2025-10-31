@@ -69,6 +69,10 @@ const routes: RouteObject[] = [
                   let { Customers } = await import("@/app/customers/page");
                   return { Component: Customers };
                 },
+                handle: {
+                  crumb: "Customers",
+                  title: "Customers",
+                },
               },
               {
                 path: "configurations/document-types",
@@ -78,6 +82,22 @@ const routes: RouteObject[] = [
                     "@/app/document-types/page"
                   );
                   return { Component: DocumentTypes };
+                },
+                handle: {
+                  crumb: "Document Types",
+                  title: "Document Types",
+                },
+              },
+              {
+                path: "configurations/fiscal-years",
+                loader: createPermissionLoader(Resource.FiscalYear),
+                async lazy() {
+                  let { FiscalYears } = await import("@/app/fiscal-years/page");
+                  return { Component: FiscalYears };
+                },
+                handle: {
+                  crumb: "Fiscal Years",
+                  title: "Fiscal Years",
                 },
               },
               {
@@ -89,6 +109,10 @@ const routes: RouteObject[] = [
                   );
                   return { Component: AccountTypes };
                 },
+                handle: {
+                  crumb: "Account Types",
+                  title: "Account Types",
+                },
               },
               {
                 path: "configurations/accessorial-charges",
@@ -98,6 +122,10 @@ const routes: RouteObject[] = [
                     "@/app/accessorial-charges/page"
                   );
                   return { Component: AccessorialCharges };
+                },
+                handle: {
+                  crumb: "Accessorial Charges",
+                  title: "Accessorial Charges",
                 },
               },
             ],

@@ -1,5 +1,9 @@
 import { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
 import { ConsolidationStatus } from "@/lib/schemas/consolidation-schema";
+import {
+  FiscalYearSchema,
+  FiscalYearStatusSchema,
+} from "@/lib/schemas/fiscal-year-schema";
 import { MoveStatus, type MoveSchema } from "@/lib/schemas/move-schema";
 import {
   HoldSeverity,
@@ -827,6 +831,36 @@ export function AccessorialChargeMethodBadge({
   return (
     <Badge variant={methodAttributes[method].variant} className="max-h-6">
       {methodAttributes[method].text}
+    </Badge>
+  );
+}
+
+export function FiscalYearStatusBadge({
+  status,
+}: {
+  status: FiscalYearSchema["status"];
+}) {
+  const statusAttributes: Record<FiscalYearSchema["status"], BadgeAttrProps> = {
+    [FiscalYearStatusSchema.enum.Draft]: {
+      variant: "purple",
+      text: "Draft",
+    },
+    [FiscalYearStatusSchema.enum.Open]: {
+      variant: "active",
+      text: "Open",
+    },
+    [FiscalYearStatusSchema.enum.Closed]: {
+      variant: "inactive",
+      text: "Closed",
+    },
+    [FiscalYearStatusSchema.enum.Locked]: {
+      variant: "warning",
+      text: "Locked",
+    },
+  };
+  return (
+    <Badge variant={statusAttributes[status].variant} className="max-h-6">
+      {statusAttributes[status].text}
     </Badge>
   );
 }

@@ -3,11 +3,14 @@ package seedhelpers
 import (
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/accounting"
+	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/utils"
+	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 )
 
@@ -194,6 +197,46 @@ func (sc *SeedContext) CreateOrganizationSettings(tx bun.Tx, org *tenant.Organiz
 
 	if _, err := tx.NewInsert().Model(dataRetention).Exec(sc.ctx); err != nil {
 		return fmt.Errorf("create data retention: %w", err)
+	}
+
+	patternConfig := &dedicatedlane.PatternConfig{
+		ID:                    pulid.MustNew("pco_"),
+		BusinessUnitID:        org.BusinessUnitID,
+		OrganizationID:        org.ID,
+		Enabled:               true,
+		RequireExactMatch:     false,
+		WeightRecentShipments: true,
+		MinConfidenceScore:    decimal.NewFromFloat(0.7),
+		MinFrequency:          3,
+		AnalysisWindowDays:    90,
+		SuggestionTTLDays:     30,
+	}
+
+	if _, err := tx.NewInsert().Model(patternConfig).Exec(sc.ctx); err != nil {
+		return fmt.Errorf("create pattern config: %w", err)
+	}
+
+	currentYear := utils.GetCurrentYear()
+	fiscalYear := &accounting.FiscalYear{
+		ID:                    pulid.MustNew("fy_"),
+		OrganizationID:        org.ID,
+		BusinessUnitID:        org.BusinessUnitID,
+		Year:                  currentYear,
+		Name:                  fmt.Sprintf("FY %d", currentYear),
+		Status:                accounting.FiscalYearStatusDraft,
+		IsCurrent:             true,
+		IsCalendarYear:        true,
+		AllowAdjustingEntries: false,
+		StartDate:             utils.GetStartOfYear(),
+		EndDate:               utils.GetEndOfYear(),
+		TaxYear:               currentYear,
+		BudgetAmount:          0,
+		CreatedAt:             utils.NowUnix(),
+		UpdatedAt:             utils.NowUnix(),
+	}
+
+	if _, err := tx.NewInsert().Model(fiscalYear).Exec(sc.ctx); err != nil {
+		return fmt.Errorf("create fiscal year: %w", err)
 	}
 
 	return nil

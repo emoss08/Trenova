@@ -1,7 +1,7 @@
 import { FormEditModal } from "@/components/ui/form-edit-modal";
 import {
-    accountTypeSchema,
-    AccountTypeSchema,
+  accountTypeSchema,
+  AccountTypeSchema,
 } from "@/lib/schemas/account-type-schema";
 import { type EditTableSheetProps } from "@/types/data-table";
 import { zodResolver } from "@hookform/resolvers/zod";

@@ -37,16 +37,16 @@ type FiscalYear struct {
 	TaxYear        int              `json:"taxYear"        bun:"tax_year,type:INTEGER,nullzero"` // Optional: Only if differs from Year (requires IRS approval)
 
 	// Financial Planning
-	BudgetAmount       int64 `json:"budgetAmount"       bun:"budget_amount,type:BIGINT,nullzero,default:0"` // Stored in cents
-	AdjustmentDeadline int64 `json:"adjustmentDeadline" bun:"adjustment_deadline,type:BIGINT,nullzero"`     // Date when adjusting entires are no longer accepted
+	BudgetAmount       int64 `json:"budgetAmount"       bun:"budget_amount,type:BIGINT,nullzero"`       // Stored in cents
+	AdjustmentDeadline int64 `json:"adjustmentDeadline" bun:"adjustment_deadline,type:BIGINT,nullzero"` // Date when adjusting entires are no longer accepted
 
 	// Control Flags
 	IsCurrent             bool `json:"isCurrent"             bun:"is_current,type:BOOLEAN,notnull,default:false"`
 	IsCalendarYear        bool `json:"isCalendarYear"        bun:"is_calendar_year,type:BOOLEAN,notnull,default:false"`
 	AllowAdjustingEntries bool `json:"allowAdjustingEntries" bun:"allow_adjusting_entries,type:BOOLEAN,notnull,default:false"`
 
-	ClosedAt   int64     `json:"closedAt"   bun:"closed_at,type:BIGINT,nullzero"`
-	LockedAt   int64     `json:"lockedAt"   bun:"locked_at,type:BIGINT,nullzero"`
+	ClosedAt   *int64    `json:"closedAt"   bun:"closed_at,type:BIGINT,nullzero"`
+	LockedAt   *int64    `json:"lockedAt"   bun:"locked_at,type:BIGINT,nullzero"`
 	ClosedByID *pulid.ID `json:"closedById" bun:"closed_by_id,type:VARCHAR(100),nullzero"`
 	LockedByID *pulid.ID `json:"lockedById" bun:"locked_by_id,type:VARCHAR(100),nullzero"`
 

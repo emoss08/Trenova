@@ -86,7 +86,6 @@ func (h *AuthHandler) login(c *gin.Context) {
 	h.l.Debug("User logged in successfully",
 		zap.String("userId", resp.User.ID.String()),
 		zap.String("email", resp.User.EmailAddress),
-		zap.String("ip", c.ClientIP()),
 	)
 
 	c.JSON(http.StatusOK, resp)
@@ -130,7 +129,6 @@ func (h *AuthHandler) logout(c *gin.Context) {
 
 	h.l.Info("User logged out successfully",
 		zap.String("sessionId", sessionID.String()),
-		zap.String("ip", c.ClientIP()),
 	)
 
 	c.Status(http.StatusNoContent)

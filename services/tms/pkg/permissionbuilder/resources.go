@@ -54,6 +54,7 @@ func (rr *ResourceRegistry) RegisterFromDomainRegistry() {
 	rr.RegisterManual("audit_entry", permission.ResourceAuditEntry)
 	rr.RegisterManual("distance_override", permission.ResourceDistanceOverride)
 	rr.RegisterManual("dedicated_lane_suggestion", permission.ResourceDedicatedLaneSuggestion)
+	rr.RegisterManual("fiscal_year", permission.ResourceFiscalYear)
 }
 
 // RegisterManual manually registers a resource (for non-table resources)

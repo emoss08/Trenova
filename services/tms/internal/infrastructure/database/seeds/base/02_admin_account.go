@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain/accounting"
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
@@ -284,6 +285,29 @@ func (s *AdminAccountSeed) createDefaultSettings(
 
 	if _, err := tx.NewInsert().Model(patternConfig).Exec(ctx); err != nil {
 		return fmt.Errorf("create pattern config: %w", err)
+	}
+
+	currentYear := utils.GetCurrentYear()
+	fiscalYear := &accounting.FiscalYear{
+		ID:                    pulid.MustNew("fy_"),
+		OrganizationID:        orgID,
+		BusinessUnitID:        buID,
+		Year:                  currentYear,
+		Name:                  fmt.Sprintf("FY %d", currentYear),
+		Status:                accounting.FiscalYearStatusOpen,
+		IsCurrent:             true,
+		IsCalendarYear:        true,
+		AllowAdjustingEntries: false,
+		StartDate:             utils.GetStartOfYear(),
+		EndDate:               utils.GetEndOfYear(),
+		TaxYear:               currentYear,
+		BudgetAmount:          0,
+		CreatedAt:             utils.NowUnix(),
+		UpdatedAt:             utils.NowUnix(),
+	}
+
+	if _, err := tx.NewInsert().Model(fiscalYear).Exec(ctx); err != nil {
+		return fmt.Errorf("create fiscal year: %w", err)
 	}
 
 	return nil

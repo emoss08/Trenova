@@ -30,6 +30,7 @@ type FormCreateModalProps<T extends FieldValues> = TableSheetProps & {
   title: string;
   queryKey: string;
   formComponent: React.ReactNode;
+  description?: string;
   form: UseFormReturn<T>;
   className?: string;
   notice?: React.ReactNode;
@@ -38,6 +39,7 @@ type FormCreateModalProps<T extends FieldValues> = TableSheetProps & {
 export function FormCreateModal<T extends FieldValues>({
   open,
   onOpenChange,
+  description,
   title,
   formComponent,
   form,
@@ -131,7 +133,9 @@ export function FormCreateModal<T extends FieldValues>({
         <DialogHeader>
           <DialogTitle>Add New {title}</DialogTitle>
           <DialogDescription>
-            Please fill out the form below to create a new {title}.
+            {description
+              ? description
+              : `Please fill out the form below to create a new ${title}.`}
           </DialogDescription>
         </DialogHeader>
         {notice ? notice : null}

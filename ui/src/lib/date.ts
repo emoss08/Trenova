@@ -570,6 +570,29 @@ export function getEndOfMonth(
   return dateToUnixTimestamp(utcDate);
 }
 
+export function getCurrentYear(): number {
+  return new Date().getFullYear();
+}
+
+/**
+ * Gets the start of year as Unix timestamp
+ * @returns Unix timestamp for start of year (00:00:00.000)
+ */
+export function getStartOfYear(): number {
+  const currentYear = getCurrentYear();
+
+  return Math.floor(new Date(currentYear, 0, 1).getTime() / 1000);
+}
+
+/**
+ * Gets the end of year as Unix timestamp
+ * @returns Unix timestamp for end of year (23:59:59.999)
+ */
+export function getEndOfYear(): number {
+  const currentYear = getCurrentYear();
+  return Math.floor(new Date(currentYear, 11, 31, 23, 59, 59).getTime() / 1000);
+}
+
 /**
  * Gets the start of quarter in a specific timezone as Unix timestamp
  * @param date Date object to get quarter from (defaults to today)

@@ -2,7 +2,6 @@ package fiscalyearvalidator
 
 import (
 	"context"
-	"strconv"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accounting"
@@ -35,15 +34,6 @@ func NewValidator(p ValidatorParams) *Validator {
 		getDB,
 	).
 		WithModelName("FiscalYear").
-		WithUniqueFields(func(entity *accounting.FiscalYear) []framework.UniqueField {
-			return []framework.UniqueField{
-				{
-					Name:     "year",
-					GetValue: func() string { return strconv.Itoa(entity.Year) },
-					Message:  "Fiscal year ':value' already exists in this organization.",
-				},
-			}
-		}).
 		WithCustomRules(func(entity *accounting.FiscalYear, vc *validator.ValidationContext) []framework.ValidationRule {
 			var rules []framework.ValidationRule
 
@@ -140,7 +130,7 @@ func validateDateRules(entity *accounting.FiscalYear, me *errortypes.MultiError)
 func validateStatusRules(entity *accounting.FiscalYear, me *errortypes.MultiError) {
 	switch entity.Status { //nolint:exhaustive // We only support these statuses
 	case accounting.FiscalYearStatusClosed:
-		if entity.ClosedAt == 0 {
+		if entity.ClosedAt == nil {
 			me.Add(
 				"closedAt",
 				errortypes.ErrInvalid,
@@ -173,7 +163,7 @@ func validateStatusRules(entity *accounting.FiscalYear, me *errortypes.MultiErro
 		}
 
 	case accounting.FiscalYearStatusLocked:
-		if entity.LockedAt == 0 {
+		if entity.LockedAt == nil {
 			me.Add(
 				"lockedAt",
 				errortypes.ErrInvalid,
@@ -187,7 +177,7 @@ func validateStatusRules(entity *accounting.FiscalYear, me *errortypes.MultiErro
 				"Locked by user is required when status is Locked",
 			)
 		}
-		if entity.ClosedAt == 0 {
+		if entity.ClosedAt == nil {
 			me.Add(
 				"status",
 				errortypes.ErrInvalid,
