@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { cn } from "@/lib/utils";
 import { type SwitchFieldProps } from "@/types/fields";
 import { Controller, FieldValues } from "react-hook-form";
@@ -18,6 +13,7 @@ export function SwitchField<T extends FieldValues>({
   rules,
   outlined,
   recommended,
+  readOnly,
   position = "right",
   "aria-describedby": ariaDescribedBy,
   ...props
@@ -44,6 +40,7 @@ export function SwitchField<T extends FieldValues>({
         >
           {position === "left" && (
             <Switch
+              readOnly={readOnly}
               id={inputId}
               aria-describedby={cn(
                 description && descriptionId,
@@ -81,6 +78,7 @@ export function SwitchField<T extends FieldValues>({
 
           {position === "right" && (
             <Switch
+              readOnly={readOnly}
               id={inputId}
               aria-describedby={cn(
                 description && descriptionId,

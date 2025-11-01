@@ -70,6 +70,7 @@ type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   switchInputClassName?: string;
   size?: "xs" | "sm" | "default" | "lg";
   recommended?: boolean;
+  readOnly?: boolean;
 };
 
 export type SwitchFieldProps<T extends FieldValues> = BaseSwitchFieldProps &

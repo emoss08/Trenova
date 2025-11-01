@@ -6,12 +6,14 @@ import { cn } from "@/lib/utils";
 type SwitchProps = React.ComponentProps<typeof SwitchPrimitive.Root> & {
   thumbClassName?: string;
   size?: "xs" | "sm" | "default" | "lg";
+  readOnly?: boolean;
 };
 
 function Switch({
   className,
   thumbClassName,
   size = "default",
+  readOnly,
   ...props
 }: SwitchProps) {
   return (
@@ -21,6 +23,7 @@ function Switch({
         "peer data-[state=checked]:bg-primary data-[state=unchecked]:bg-input focus-visible:border-ring focus-visible:ring-ring/50",
         "dark:data-[state=unchecked]:bg-input/80 inline-flex h-[1.15rem] w-8 shrink-0 items-center rounded-full border border-transparent",
         "shadow-xs transition-all outline-none focus-visible:ring-[3px] disabled:cursor-not-allowed disabled:opacity-50",
+        readOnly && "cursor-default opacity-60 pointer-events-none",
         // Size variations
         size === "xs" && "h-3.5 w-6",
         size === "sm" && "h-4 w-7",
