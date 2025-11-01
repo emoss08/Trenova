@@ -23,6 +23,7 @@ tsconfig.app.tsbuildinfo
 .DS_Store
 *.suo
 *.ntvs*
+.npmrc
 *.njsproj
 *.sln
 *.sw?
