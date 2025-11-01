@@ -15,6 +15,7 @@ package-lock.json
 
 tsconfig.node.tsbuildinfo
 tsconfig.app.tsbuildinfo
+.env
 
 # Editor directories and files
 .vscode/*
