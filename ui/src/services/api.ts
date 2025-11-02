@@ -20,6 +20,7 @@ import { DockerAPI } from "./docker";
 import { DocumentAPI } from "./document";
 import { EmailProfileAPI } from "./email-profile";
 import { FavoriteAPI } from "./favorite";
+import { FiscalYearAPI } from "./fiscal-year";
 import { GoogleMapsAPI } from "./google-maps";
 import { HoldReasonAPI } from "./hold-reason";
 import { IntegrationAPI } from "./integration";
@@ -85,6 +86,7 @@ class API {
   variables: VariableAPI;
   emailProfile: EmailProfileAPI;
   locations: LocationAPI;
+  fiscalYear: FiscalYearAPI;
   distanceOverride: DistanceOverrideAPI;
   search: SearchAPI;
   constructor() {
@@ -126,6 +128,7 @@ class API {
     this.locations = new LocationAPI();
     this.distanceOverride = new DistanceOverrideAPI();
     this.search = new SearchAPI();
+    this.fiscalYear = new FiscalYearAPI();
   }
 }
 
