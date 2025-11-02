@@ -55,201 +55,209 @@ function generateSuggestions(
 export const AutoCompleteDatePicker = forwardRef<
   HTMLInputElement,
   DatePickerProps
->(({ date, setDate, isInvalid, placeholder, clearable, ...props }, ref) => {
-  const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
-  const [inputValue, setInputValue] = useState("");
-  const [isOpen, setIsOpen] = useState(false);
-  const [isClosing, setClosing] = useState(false);
-  const [selectedIndex, setSelectedIndex] = useState(0);
+>(
+  (
+    { date, setDate, isInvalid, placeholder, clearable, readOnly, ...props },
+    ref,
+  ) => {
+    const [suggestion, setSuggestion] = useState<Suggestion | null>(null);
+    const [inputValue, setInputValue] = useState("");
+    const [isOpen, setIsOpen] = useState(false);
+    const [isClosing, setClosing] = useState(false);
+    const [selectedIndex, setSelectedIndex] = useState(0);
 
-  const inputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  useImperativeHandle(ref, () => inputRef.current!);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+    useImperativeHandle(ref, () => inputRef.current!);
 
-  const suggestions = generateSuggestions(inputValue, suggestion);
+    const suggestions = generateSuggestions(inputValue, suggestion);
 
-  function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const value = e.target.value;
-    setInputValue(value);
+    function handleInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+      const value = e.target.value;
+      setInputValue(value);
 
-    if (value.length > 0) {
-      setIsOpen(true);
-    } else {
-      setIsOpen(false);
+      if (value.length > 0) {
+        setIsOpen(true);
+      } else {
+        setIsOpen(false);
+      }
+
+      setSelectedIndex(0);
+
+      const result = chrono.parseDate(value);
+      if (result) {
+        setSuggestion({ date: result, inputString: value });
+      } else {
+        setSuggestion(null);
+      }
     }
 
-    setSelectedIndex(0);
+    // 🔑 Only react to external changes in `date`:
+    useEffect(() => {
+      if (date) {
+        // If an outside update provides a date, sync the input to it.
+        const formatted = generateDateOnlyString(date);
+        setInputValue(formatted);
+      } else {
+        // If outside set `date` to undefined, clear the input
+        setInputValue("");
+      }
+    }, [date]);
 
-    const result = chrono.parseDate(value);
-    if (result) {
-      setSuggestion({ date: result, inputString: value });
-    } else {
-      setSuggestion(null);
-    }
-  }
-
-  // 🔑 Only react to external changes in `date`:
-  useEffect(() => {
-    if (date) {
-      // If an outside update provides a date, sync the input to it.
-      const formatted = generateDateOnlyString(date);
-      setInputValue(formatted);
-    } else {
-      // If outside set `date` to undefined, clear the input
-      setInputValue("");
-    }
-  }, [date]);
-
-  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setSelectedIndex((prevIndex) =>
-        prevIndex < suggestions.length - 1 ? prevIndex + 1 : prevIndex,
-      );
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setSelectedIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : 0));
-    } else if (e.key === "Enter" && isOpen && suggestions.length > 0) {
-      e.preventDefault();
-      const dateStr = generateDateOnlyString(suggestions[selectedIndex].date);
-      setInputValue(dateStr);
-      setDate(suggestions[selectedIndex].date);
-      closeDropdown();
-    } else if (e.key === "Escape" || e.key === "Tab") {
-      closeDropdown();
-    }
-  }
-
-  function closeDropdown() {
-    setClosing(true);
-    setSelectedIndex(0);
-    setTimeout(() => {
-      setIsOpen(false);
-      setClosing(false);
-    }, 200);
-  }
-
-  function handleClear() {
-    setInputValue("");
-    setDate(undefined);
-    closeDropdown();
-    // inputRef.current?.focus();
-  }
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node) &&
-        inputRef.current &&
-        !inputRef.current.contains(e.target as Node)
-      ) {
+    function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex((prevIndex) =>
+          prevIndex < suggestions.length - 1 ? prevIndex + 1 : prevIndex,
+        );
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex((prevIndex) => (prevIndex > 0 ? prevIndex - 1 : 0));
+      } else if (e.key === "Enter" && isOpen && suggestions.length > 0) {
+        e.preventDefault();
+        const dateStr = generateDateOnlyString(suggestions[selectedIndex].date);
+        setInputValue(dateStr);
+        setDate(suggestions[selectedIndex].date);
+        closeDropdown();
+      } else if (e.key === "Escape" || e.key === "Tab") {
         closeDropdown();
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    function closeDropdown() {
+      setClosing(true);
+      setSelectedIndex(0);
+      setTimeout(() => {
+        setIsOpen(false);
+        setClosing(false);
+      }, 200);
+    }
 
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
+    function handleClear() {
+      setInputValue("");
+      setDate(undefined);
+      closeDropdown();
+      // inputRef.current?.focus();
+    }
 
-  return (
-    <div className="relative">
+    useEffect(() => {
+      function handleClickOutside(e: MouseEvent) {
+        if (
+          dropdownRef.current &&
+          !dropdownRef.current.contains(e.target as Node) &&
+          inputRef.current &&
+          !inputRef.current.contains(e.target as Node)
+        ) {
+          closeDropdown();
+        }
+      }
+
+      document.addEventListener("mousedown", handleClickOutside);
+
+      return () => {
+        document.removeEventListener("mousedown", handleClickOutside);
+      };
+    }, []);
+
+    return (
       <div className="relative">
-        <Input
-          placeholder={placeholder || "Tomorrow"}
-          {...props}
-          ref={inputRef}
-          isInvalid={isInvalid}
-          type="text"
-          value={inputValue}
-          onChange={handleInputChange}
-          onKeyDown={handleKeyDown}
-          onFocus={() => setIsOpen(true)}
-          onClick={() => setIsOpen(true)}
-        />
-        {clearable && inputValue && (
-          <Button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClear();
-            }}
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="absolute right-7 top-1/2 size-5 -translate-y-1/2 [&>svg]:size-3"
-          >
-            <span className="sr-only">Clear date</span>
-            <Cross2Icon className="size-4" />
-          </Button>
-        )}
-        <DatePickerPopover
-          onOpen={() => setSuggestion(null)}
-          date={date}
-          setDate={setDate}
-          setInputValue={setInputValue}
-        >
-          <Button
-            type="button"
-            size="icon"
-            variant="ghost"
-            className="absolute right-2 top-1/2 size-5 -translate-y-1/2 [&>svg]:size-3"
-          >
-            <span className="sr-only">Open normal date time picker</span>
-            <CalendarIcon className="size-4" />
-          </Button>
-        </DatePickerPopover>
-      </div>
-
-      {isOpen && suggestions.length > 0 && (
-        <div
-          ref={dropdownRef}
-          role="dialog"
-          className={cn(
-            "absolute z-10 mt-2 w-full rounded-md border bg-popover p-0 shadow-md transition-all animate-in fade-in-0 zoom-in-95 slide-in-from-top-2",
-            isClosing && "duration-300 animate-out fade-out-0 zoom-out-95",
+        <div className="relative">
+          <Input
+            placeholder={placeholder || "Tomorrow"}
+            {...props}
+            readOnly={readOnly}
+            ref={inputRef}
+            isInvalid={isInvalid}
+            type="text"
+            value={inputValue}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            onFocus={() => setIsOpen(true)}
+            onClick={() => setIsOpen(true)}
+          />
+          {clearable && inputValue && (
+            <Button
+              onClick={(e) => {
+                e.stopPropagation();
+                handleClear();
+              }}
+              type="button"
+              size="icon"
+              variant="ghost"
+              className="absolute right-7 top-1/2 size-5 -translate-y-1/2 [&>svg]:size-3"
+            >
+              <span className="sr-only">Clear date</span>
+              <Cross2Icon className="size-4" />
+            </Button>
           )}
-          tabIndex={-1}
-          aria-label="Suggestions"
-        >
-          <ul
-            role="listbox"
-            aria-label="Suggestions"
-            className="max-h-56 overflow-auto p-1"
+          <DatePickerPopover
+            onOpen={() => setSuggestion(null)}
+            date={date}
+            setDate={setDate}
+            setInputValue={setInputValue}
           >
-            {suggestions.map((suggestion, index) => (
-              <li
-                key={suggestion.inputString}
-                role="option"
-                aria-selected={selectedIndex === index}
-                className={cn(
-                  "flex cursor-pointer items-center justify-between gap-1 rounded-sm px-3 py-1.5 text-xs",
-                  index === selectedIndex && "bg-muted text-accent-foreground",
-                )}
-                onClick={() => {
-                  const dateStr = generateDateOnlyString(suggestion.date);
-                  setInputValue(dateStr);
-                  setDate(suggestion.date);
-                  closeDropdown();
-                  inputRef.current?.focus();
-                }}
-                onMouseEnter={() => setSelectedIndex(index)}
-              >
-                <span className="xs:w-auto w-[110px] truncate">
-                  {suggestion.inputString}
-                </span>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {generateDateOnlyString(suggestion.date)}
-                </span>
-              </li>
-            ))}
-          </ul>
+            <Button
+              type="button"
+              size="icon"
+              variant="ghost"
+              disabled={readOnly}
+              className="absolute right-2 top-1/2 size-5 -translate-y-1/2 [&>svg]:size-3"
+            >
+              <span className="sr-only">Open normal date time picker</span>
+              <CalendarIcon className="size-4" />
+            </Button>
+          </DatePickerPopover>
         </div>
-      )}
-    </div>
-  );
-});
+
+        {isOpen && suggestions.length > 0 && (
+          <div
+            ref={dropdownRef}
+            role="dialog"
+            className={cn(
+              "absolute z-10 mt-2 w-full rounded-md border bg-popover p-0 shadow-md transition-all animate-in fade-in-0 zoom-in-95 slide-in-from-top-2",
+              isClosing && "duration-300 animate-out fade-out-0 zoom-out-95",
+            )}
+            tabIndex={-1}
+            aria-label="Suggestions"
+          >
+            <ul
+              role="listbox"
+              aria-label="Suggestions"
+              className="max-h-56 overflow-auto p-1"
+            >
+              {suggestions.map((suggestion, index) => (
+                <li
+                  key={suggestion.inputString}
+                  role="option"
+                  aria-selected={selectedIndex === index}
+                  className={cn(
+                    "flex cursor-pointer items-center justify-between gap-1 rounded-sm px-3 py-1.5 text-xs",
+                    index === selectedIndex &&
+                      "bg-muted text-accent-foreground",
+                  )}
+                  onClick={() => {
+                    const dateStr = generateDateOnlyString(suggestion.date);
+                    setInputValue(dateStr);
+                    setDate(suggestion.date);
+                    closeDropdown();
+                    inputRef.current?.focus();
+                  }}
+                  onMouseEnter={() => setSelectedIndex(index)}
+                >
+                  <span className="xs:w-auto w-[110px] truncate">
+                    {suggestion.inputString}
+                  </span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {generateDateOnlyString(suggestion.date)}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+    );
+  },
+);
 
 AutoCompleteDatePicker.displayName = "AutoCompleteDatePicker";
