@@ -68,6 +68,7 @@ export type ExtraAction = {
 export interface ContextMenuAction<TData> {
   id: string;
   label: string | ((row: Row<TData>) => string);
+  description?: string | ((row: Row<TData>) => string);
   shortcut?: string;
   variant?: "default" | "destructive";
   disabled?: boolean | ((row: Row<TData>) => boolean);
