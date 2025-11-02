@@ -7,7 +7,10 @@ import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
 import { NumberField } from "@/components/ui/number-input";
 import { fiscalYearStatusChoices } from "@/lib/choices";
 import { getEndOfYear, getStartOfYear } from "@/lib/date";
-import { FiscalYearSchema } from "@/lib/schemas/fiscal-year-schema";
+import {
+  FiscalYearSchema,
+  FiscalYearStatusSchema,
+} from "@/lib/schemas/fiscal-year-schema";
 import { useEffect } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
@@ -15,6 +18,11 @@ export function FiscalYearForm({ isCreate = false }: { isCreate?: boolean }) {
   const { control, setValue } = useFormContext<FiscalYearSchema>();
   const year = useWatch({ control, name: "year" });
   const isCalendarYear = useWatch({ control, name: "isCalendarYear" });
+  const status = useWatch({ control, name: "status" });
+
+  const isDraft = status === FiscalYearStatusSchema.enum.Draft;
+  const isClosed = status === FiscalYearStatusSchema.enum.Closed;
+  const isLocked = status === FiscalYearStatusSchema.enum.Locked;
 
   useEffect(() => {
     if (isCreate && year) {
@@ -71,6 +79,7 @@ export function FiscalYearForm({ isCreate = false }: { isCreate?: boolean }) {
             placeholder="FY 2025"
             description="Display name for reports and references"
             maxLength={100}
+            readOnly={!isCreate && (isClosed || isLocked)} // Read-only if closed/locked
           />
         </FormControl>
 
@@ -99,6 +108,7 @@ export function FiscalYearForm({ isCreate = false }: { isCreate?: boolean }) {
               label="Calendar Year"
               description="Standard Jan 1 - Dec 31 period (automatically sets dates)"
               position="left"
+              disabled={!isCreate && !isDraft}
               outlined
             />
           </FormControl>
@@ -113,6 +123,7 @@ export function FiscalYearForm({ isCreate = false }: { isCreate?: boolean }) {
               label="Start Date"
               placeholder="Select start date"
               description="First day of fiscal period"
+              readOnly={!isCreate && !isDraft}
             />
           </FormControl>
 
@@ -124,6 +135,7 @@ export function FiscalYearForm({ isCreate = false }: { isCreate?: boolean }) {
               label="End Date"
               placeholder="Select end date"
               description="Last day of fiscal period"
+              readOnly={!isCreate && !isDraft}
             />
           </FormControl>
         </FormGroup>
@@ -144,6 +156,7 @@ export function FiscalYearForm({ isCreate = false }: { isCreate?: boolean }) {
               placeholder="0"
               description="Annual budget in dollars (optional)"
               min={0}
+              readOnly={!isCreate && (isClosed || isLocked)}
             />
           </FormControl>
 
@@ -175,6 +188,7 @@ export function FiscalYearForm({ isCreate = false }: { isCreate?: boolean }) {
               description="Permit accounting adjustments after year-end close"
               position="left"
               outlined
+              readOnly={!isCreate && isLocked}
             />
           </FormControl>
 
@@ -186,6 +200,7 @@ export function FiscalYearForm({ isCreate = false }: { isCreate?: boolean }) {
                 label="Adjustment Deadline"
                 placeholder="Select deadline"
                 description="Final date for post-close adjusting entries"
+                readOnly={isLocked}
               />
             </FormControl>
           )}
@@ -208,6 +223,7 @@ export function FiscalYearForm({ isCreate = false }: { isCreate?: boolean }) {
                 description="Active year for transaction posting (only one allowed per organization)"
                 position="left"
                 outlined
+                disabled
               />
             </FormControl>
           </FormGroup>
