@@ -39,13 +39,13 @@ type AppConfig struct {
 
 // ServerConfig contains HTTP server settings
 type ServerConfig struct {
-	Host            string        `mapstructure:"host"             validate:"required,hostname|ip"`
-	Port            int           `mapstructure:"port"             validate:"required,min=1,max=65535"`
-	Mode            string        `mapstructure:"mode"             validate:"required,oneof=debug release test"`
-	ReadTimeout     time.Duration `mapstructure:"read_timeout"`
-	WriteTimeout    time.Duration `mapstructure:"write_timeout"`
-	IdleTimeout     time.Duration `mapstructure:"idle_timeout"`
-	ShutdownTimeout time.Duration `mapstructure:"shutdown_timeout"`
+	Host            string        `mapstructure:"host"            validate:"required,hostname|ip"`
+	Port            int           `mapstructure:"port"            validate:"required,min=1,max=65535"`
+	Mode            string        `mapstructure:"mode"            validate:"required,oneof=debug release test"`
+	ReadTimeout     time.Duration `mapstructure:"readTimeout"`
+	WriteTimeout    time.Duration `mapstructure:"writeTimeout"`
+	IdleTimeout     time.Duration `mapstructure:"idleTimeout"`
+	ShutdownTimeout time.Duration `mapstructure:"shutdownTimeout"`
 	CORS            CORSConfig    `mapstructure:"cors,omitempty"`
 }
 
@@ -59,66 +59,66 @@ type GoogleConfig struct {
 }
 
 type AIConfig struct {
-	OpenAIAPIKey string `mapstructure:"openai_api_key"`
+	OpenAIAPIKey string `mapstructure:"openaiAPIKey"`
 }
 
 // CORSConfig contains CORS settings
 type CORSConfig struct {
 	Enabled        bool     `mapstructure:"enabled"`
-	AllowedOrigins []string `mapstructure:"allowed_origins" validate:"required_if=Enabled true,dive,url,no_trailing_slash|eq=*"`
-	AllowedMethods []string `mapstructure:"allowed_methods" validate:"required_if=Enabled true"`
-	AllowedHeaders []string `mapstructure:"allowed_headers" validate:"required_if=Enabled true"`
-	ExposeHeaders  []string `mapstructure:"expose_headers"`
+	AllowedOrigins []string `mapstructure:"allowedOrigins" validate:"required_if=Enabled true,dive,url,no_trailing_slash|eq=*"`
+	AllowedMethods []string `mapstructure:"allowedMethods" validate:"required_if=Enabled true"`
+	AllowedHeaders []string `mapstructure:"allowedHeaders" validate:"required_if=Enabled true"`
+	ExposeHeaders  []string `mapstructure:"exposeHeaders"`
 	Credentials    bool     `mapstructure:"credentials"`
-	MaxAge         int      `mapstructure:"max_age"         validate:"min=0,max=86400"`
+	MaxAge         int      `mapstructure:"maxAge"         validate:"min=0,max=86400"`
 }
 
 // DatabaseConfig contains database connection settings
 type DatabaseConfig struct {
-	Host            string        `mapstructure:"host"               validate:"required"`
-	Port            int           `mapstructure:"port"               validate:"required,min=1,max=65535"`
-	Name            string        `mapstructure:"name"               validate:"required,min=1,max=63"`
-	User            string        `mapstructure:"user"               validate:"required,min=1,max=63"`
-	PasswordSource  string        `mapstructure:"password_source"    validate:"required,oneof=env file secret"`
-	Password        string        `mapstructure:"password"           validate:"required_if=PasswordSource env"`
-	PasswordFile    string        `mapstructure:"password_file"      validate:"required_if=PasswordSource file"`
-	PasswordSecret  string        `mapstructure:"password_secret"    validate:"required_if=PasswordSource secret"`
-	SSLMode         string        `mapstructure:"sslmode"            validate:"required,oneof=disable require verify-ca verify-full"`
-	MaxIdleConns    int           `mapstructure:"max_idle_conns"     validate:"min=1,max=1000"`
-	MaxOpenConns    int           `mapstructure:"max_open_conns"     validate:"min=1,max=1000"`
-	ConnMaxLifetime time.Duration `mapstructure:"conn_max_lifetime"`
-	ConnMaxIdleTime time.Duration `mapstructure:"conn_max_idle_time"`
+	Host            string        `mapstructure:"host"            validate:"required"`
+	Port            int           `mapstructure:"port"            validate:"required,min=1,max=65535"`
+	Name            string        `mapstructure:"name"            validate:"required,min=1,max=63"`
+	User            string        `mapstructure:"user"            validate:"required,min=1,max=63"`
+	PasswordSource  string        `mapstructure:"passwordSource"  validate:"required,oneof=env file secret"`
+	Password        string        `mapstructure:"password"        validate:"required_if=PasswordSource env"`
+	PasswordFile    string        `mapstructure:"passwordFile"    validate:"required_if=PasswordSource file"`
+	PasswordSecret  string        `mapstructure:"passwordSecret"  validate:"required_if=PasswordSource secret"`
+	SSLMode         string        `mapstructure:"SSLMode"         validate:"required,oneof=disable require verify-ca verify-full"`
+	MaxIdleConns    int           `mapstructure:"maxIdleConns"    validate:"min=1,max=1000"`
+	MaxOpenConns    int           `mapstructure:"maxOpenConns"    validate:"min=1,max=1000"`
+	ConnMaxLifetime time.Duration `mapstructure:"connMaxLifetime"`
+	ConnMaxIdleTime time.Duration `mapstructure:"connMaxIdleTime"`
 	Verbose         bool          `mapstructure:"verbose"`
 }
 
 // CacheConfig contains Redis cache settings (optional)
 type CacheConfig struct {
-	Provider         string        `mapstructure:"provider"           validate:"required,oneof=redis memory"`
-	Host             string        `mapstructure:"host"               validate:"required_if=Provider redis"`
-	Port             int           `mapstructure:"port"               validate:"required_if=Provider redis,min=1,max=65535"`
+	Provider         string        `mapstructure:"provider"         validate:"required,oneof=redis memory"`
+	Host             string        `mapstructure:"host"             validate:"required_if=Provider redis"`
+	Port             int           `mapstructure:"port"             validate:"required_if=Provider redis,min=1,max=65535"`
 	Password         string        `mapstructure:"password"`
 	Username         string        `mapstructure:"username"`
-	DB               int           `mapstructure:"db"                 validate:"min=0,max=15"`
-	PoolSize         int           `mapstructure:"pool_size"          validate:"min=1,max=1000"`
-	MinIdleConns     int           `mapstructure:"min_idle_conns"     validate:"min=0,max=1000"`
-	MaxRetries       int           `mapstructure:"max_retries"        validate:"min=0,max=10"`
-	DefaultTTL       time.Duration `mapstructure:"default_ttl"`
-	MaxRetryBackoff  time.Duration `mapstructure:"max_retry_backoff"`
-	MinRetryBackoff  time.Duration `mapstructure:"min_retry_backoff"`
-	DialTimeout      time.Duration `mapstructure:"dial_timeout"`
-	ReadTimeout      time.Duration `mapstructure:"read_timeout"`
-	WriteTimeout     time.Duration `mapstructure:"write_timeout"`
-	PoolTimeout      time.Duration `mapstructure:"pool_timeout"`
-	ConnMaxIdleTime  time.Duration `mapstructure:"conn_max_idle_time"`
-	ConnMaxLifetime  time.Duration `mapstructure:"conn_max_lifetime"`
-	ClusterMode      bool          `mapstructure:"cluster_mode"`
-	ClusterNodes     []string      `mapstructure:"cluster_nodes"      validate:"required_if=ClusterMode true"`
-	SentinelMode     bool          `mapstructure:"sentinel_mode"`
-	MasterName       string        `mapstructure:"master_name"        validate:"required_if=SentinelMode true"`
-	SentinelAddrs    []string      `mapstructure:"sentinel_addrs"     validate:"required_if=SentinelMode true"`
-	SentinelPassword string        `mapstructure:"sentinel_password"`
-	EnablePipelining bool          `mapstructure:"enable_pipelining"`
-	SlowLogThreshold time.Duration `mapstructure:"slow_log_threshold"`
+	DB               int           `mapstructure:"db"               validate:"min=0,max=15"`
+	PoolSize         int           `mapstructure:"poolSize"         validate:"min=1,max=1000"`
+	MinIdleConns     int           `mapstructure:"minIdleConns"     validate:"min=0,max=1000"`
+	MaxRetries       int           `mapstructure:"maxRetries"       validate:"min=0,max=10"`
+	DefaultTTL       time.Duration `mapstructure:"defaultTTL"`
+	MaxRetryBackoff  time.Duration `mapstructure:"maxRetryBackoff"`
+	MinRetryBackoff  time.Duration `mapstructure:"minRetryBackoff"`
+	DialTimeout      time.Duration `mapstructure:"dialTimeout"`
+	ReadTimeout      time.Duration `mapstructure:"readTimeout"`
+	WriteTimeout     time.Duration `mapstructure:"writeTimeout"`
+	PoolTimeout      time.Duration `mapstructure:"poolTimeout"`
+	ConnMaxIdleTime  time.Duration `mapstructure:"connMaxIdleTime"`
+	ConnMaxLifetime  time.Duration `mapstructure:"connMaxLifetime"`
+	ClusterMode      bool          `mapstructure:"clusterMode"`
+	ClusterNodes     []string      `mapstructure:"clusterNodes"     validate:"required_if=ClusterMode true"`
+	SentinelMode     bool          `mapstructure:"sentinelMode"`
+	MasterName       string        `mapstructure:"masterName"       validate:"required_if=SentinelMode true"`
+	SentinelAddrs    []string      `mapstructure:"sentinelAddrs"    validate:"required_if=SentinelMode true"`
+	SentinelPassword string        `mapstructure:"sentinelPassword"`
+	EnablePipelining bool          `mapstructure:"enablePipelining"`
+	SlowLogThreshold time.Duration `mapstructure:"slowLogThreshold"`
 }
 
 func (c *CacheConfig) GetRedisAddr() string {
@@ -130,9 +130,9 @@ func (c *CacheConfig) GetRedisAddr() string {
 }
 
 type QueueConfig struct {
-	Provider      string            `mapstructure:"provider"       validate:"required,oneof=kafka rabbitmq redis"`
-	Brokers       []string          `mapstructure:"brokers"        validate:"required_if=Provider kafka,min=1"`
-	ConsumerGroup string            `mapstructure:"consumer_group" validate:"required_if=Provider kafka,min=1,max=255"`
+	Provider      string            `mapstructure:"provider"      validate:"required,oneof=kafka rabbitmq redis"`
+	Brokers       []string          `mapstructure:"brokers"       validate:"required_if=Provider kafka,min=1"`
+	ConsumerGroup string            `mapstructure:"consumerGroup" validate:"required_if=Provider kafka,min=1,max=255"`
 	Topics        map[string]string `mapstructure:"topics"`
 }
 
@@ -177,15 +177,15 @@ type CDCRetryConfig struct {
 
 // StorageConfig contains object storage settings (optional)
 type StorageConfig struct {
-	Provider     string `mapstructure:"provider"      validate:"required,oneof=minio s3 local"`
-	Endpoint     string `mapstructure:"endpoint"      validate:"required_if=Provider minio"`
-	AccessKey    string `mapstructure:"access_key"    validate:"required_if=Provider minio s3"`
-	SecretKey    string `mapstructure:"secret_key"    validate:"required_if=Provider minio s3"`
-	SessionToken string `mapstructure:"session_token" validate:"required_if=Provider minio s3"`
-	Region       string `mapstructure:"region"        validate:"required_if=Provider s3"`
-	Bucket       string `mapstructure:"bucket"        validate:"required_if=Provider minio s3,min=3,max=63"`
-	UseSSL       bool   `mapstructure:"use_ssl"`
-	LocalPath    string `mapstructure:"local_path"    validate:"required_if=Provider local"`
+	Provider     string `mapstructure:"provider"     validate:"required,oneof=minio s3 local"`
+	Endpoint     string `mapstructure:"endpoint"     validate:"required_if=Provider minio"`
+	AccessKey    string `mapstructure:"accessKey"    validate:"required_if=Provider minio s3"`
+	SecretKey    string `mapstructure:"secretKey"    validate:"required_if=Provider minio s3"`
+	SessionToken string `mapstructure:"sessionToken" validate:"required_if=Provider minio s3"`
+	Region       string `mapstructure:"region"       validate:"required_if=Provider s3"`
+	Bucket       string `mapstructure:"bucket"       validate:"required_if=Provider minio s3,min=3,max=63"`
+	UseSSL       bool   `mapstructure:"useSSL"`
+	LocalPath    string `mapstructure:"localPath"    validate:"required_if=Provider local"`
 }
 
 // TemporalConfig contains Temporal workflow engine settings
@@ -207,7 +207,7 @@ type EmailConfig struct {
 	Provider string     `mapstructure:"provider" validate:"required,oneof=smtp resend"`
 	From     string     `mapstructure:"from"     validate:"required,email"`
 	SMTP     SMTPConfig `mapstructure:"smtp"`
-	APIKey   string     `mapstructure:"api_key"`
+	APIKey   string     `mapstructure:"apiKey"`
 }
 
 // SMTPConfig contains SMTP settings
@@ -216,14 +216,14 @@ type SMTPConfig struct {
 	Port     int    `mapstructure:"port"     validate:"required_if=Provider smtp"`
 	Username string `mapstructure:"username"`
 	Password string `mapstructure:"password"`
-	UseTLS   bool   `mapstructure:"use_tls"`
+	UseTLS   bool   `mapstructure:"useTLS"`
 }
 
 // SecurityConfig contains security settings
 type SecurityConfig struct {
 	Session    SessionConfig    `mapstructure:"session"    validate:"required"`
-	APIToken   APITokenConfig   `mapstructure:"api_token"`
-	RateLimit  RateLimitConfig  `mapstructure:"rate_limit"`
+	APIToken   APITokenConfig   `mapstructure:"apiToken"`
+	RateLimit  RateLimitConfig  `mapstructure:"rateLimit"`
 	CSRF       CSRFConfig       `mapstructure:"csrf"`
 	Encryption EncryptionConfig `mapstructure:"encryption"`
 }
@@ -235,37 +235,37 @@ type EncryptionConfig struct {
 
 // SessionConfig contains session settings
 type SessionConfig struct {
-	Secret        string        `mapstructure:"secret"         validate:"required,min=32"`
-	Name          string        `mapstructure:"name"           validate:"required"`
-	MaxAge        time.Duration `mapstructure:"max_age"        validate:"required,min=1m"`
-	HTTPOnly      bool          `mapstructure:"http_only"`
+	Secret        string        `mapstructure:"secret"        validate:"required,min=32"`
+	Name          string        `mapstructure:"name"          validate:"required"`
+	MaxAge        time.Duration `mapstructure:"maxAge"        validate:"required,min=1m"`
+	HTTPOnly      bool          `mapstructure:"httpOnly"`
 	Secure        bool          `mapstructure:"secure"`
-	SameSite      string        `mapstructure:"same_site"      validate:"required,oneof=strict lax none"`
+	SameSite      string        `mapstructure:"sameSite"      validate:"required,oneof=strict lax none"`
 	Domain        string        `mapstructure:"domain"`
-	Path          string        `mapstructure:"path"           validate:"required"`
-	RefreshWindow time.Duration `mapstructure:"refresh_window"`
+	Path          string        `mapstructure:"path"          validate:"required"`
+	RefreshWindow time.Duration `mapstructure:"refreshWindow"`
 }
 
 // APITokenConfig contains API token settings
 type APITokenConfig struct {
 	Enabled          bool          `mapstructure:"enabled"`
-	DefaultExpiry    time.Duration `mapstructure:"default_expiry"`
-	MaxExpiry        time.Duration `mapstructure:"max_expiry"`
-	MaxTokensPerUser int           `mapstructure:"max_tokens_per_user"`
+	DefaultExpiry    time.Duration `mapstructure:"defaultExpiry"`
+	MaxExpiry        time.Duration `mapstructure:"maxExpiry"`
+	MaxTokensPerUser int           `mapstructure:"maxTokensPerUser"`
 }
 
 // RateLimitConfig contains rate limiting settings
 type RateLimitConfig struct {
 	Enabled           bool          `mapstructure:"enabled"`
-	RequestsPerMinute int           `mapstructure:"requests_per_minute" validate:"min=1,max=10000"`
-	BurstSize         int           `mapstructure:"burst_size"          validate:"min=1,max=1000"`
-	CleanupInterval   time.Duration `mapstructure:"cleanup_interval"`
+	RequestsPerMinute int           `mapstructure:"requestsPerMinute" validate:"min=1,max=10000"`
+	BurstSize         int           `mapstructure:"burstSize"         validate:"min=1,max=1000"`
+	CleanupInterval   time.Duration `mapstructure:"cleanupInterval"`
 }
 
 // CSRFConfig contains CSRF protection settings
 type CSRFConfig struct {
-	TokenName  string `mapstructure:"token_name"  validate:"required"`
-	HeaderName string `mapstructure:"header_name" validate:"required"`
+	TokenName  string `mapstructure:"tokenName"  validate:"required"`
+	HeaderName string `mapstructure:"headerName" validate:"required"`
 }
 
 // LoggingConfig contains logging settings
@@ -280,10 +280,10 @@ type LoggingConfig struct {
 
 // LogFileConfig contains log file settings
 type LogFileConfig struct {
-	Path       string `mapstructure:"path"        validate:"required"`
-	MaxSize    int    `mapstructure:"max_size"    validate:"min=1,max=1000"`
-	MaxAge     int    `mapstructure:"max_age"     validate:"min=1,max=365"`
-	MaxBackups int    `mapstructure:"max_backups" validate:"min=0,max=100"`
+	Path       string `mapstructure:"path"       validate:"required"`
+	MaxSize    int    `mapstructure:"maxSize"    validate:"min=1,max=1000"`
+	MaxAge     int    `mapstructure:"maxAge"     validate:"min=1,max=365"`
+	MaxBackups int    `mapstructure:"maxBackups" validate:"min=0,max=100"`
 	Compress   bool   `mapstructure:"compress"`
 }
 
@@ -302,24 +302,24 @@ type MetricsConfig struct {
 	Path      string `mapstructure:"path"      validate:"required_if=Provider prometheus"`
 	Namespace string `mapstructure:"namespace" validate:"required_if=Enabled true"`
 	Subsystem string `mapstructure:"subsystem" validate:"required_if=Enabled true"`
-	APIKey    string `mapstructure:"api_key"   validate:"required_if=Provider datadog"`
+	APIKey    string `mapstructure:"apiKey"    validate:"required_if=Provider datadog"`
 }
 
 // TracingConfig contains tracing settings
 type TracingConfig struct {
 	Enabled      bool    `mapstructure:"enabled"`
-	Provider     string  `mapstructure:"provider"      validate:"required_if=Enabled true,oneof=jaeger zipkin otlp otlp-grpc stdout"`
-	Endpoint     string  `mapstructure:"endpoint"      validate:"required_if=Enabled true"`
-	ServiceName  string  `mapstructure:"service_name"  validate:"required_if=Enabled true"`
-	SamplingRate float64 `mapstructure:"sampling_rate" validate:"min=0,max=1"`
+	Provider     string  `mapstructure:"provider"     validate:"required_if=Enabled true,oneof=jaeger zipkin otlp otlp-grpc stdout"`
+	Endpoint     string  `mapstructure:"endpoint"     validate:"required_if=Enabled true"`
+	ServiceName  string  `mapstructure:"serviceName"  validate:"required_if=Enabled true"`
+	SamplingRate float64 `mapstructure:"samplingRate" validate:"min=0,max=1"`
 }
 
 // HealthConfig contains health check settings
 type HealthConfig struct {
-	Path          string        `mapstructure:"path"           validate:"required"`
-	ReadinessPath string        `mapstructure:"readiness_path"`
-	LivenessPath  string        `mapstructure:"liveness_path"`
-	CheckInterval time.Duration `mapstructure:"check_interval"`
+	Path          string        `mapstructure:"path"          validate:"required"`
+	ReadinessPath string        `mapstructure:"readinessPath"`
+	LivenessPath  string        `mapstructure:"livenessPath"`
+	CheckInterval time.Duration `mapstructure:"checkInterval"`
 	Timeout       time.Duration `mapstructure:"timeout"`
 }
 
@@ -332,9 +332,9 @@ type StreamingConfig struct {
 
 // SearchConfig contains Meilisearch settings
 type SearchConfig struct {
-	Host        string        `mapstructure:"host"         validate:"required_if=Enabled true"`
-	APIKey      string        `mapstructure:"api_key"      validate:"required_if=Enabled true"`
-	IndexPrefix string        `mapstructure:"index_prefix"`
+	Host        string        `mapstructure:"host"        validate:"required_if=Enabled true"`
+	APIKey      string        `mapstructure:"apiKey"      validate:"required_if=Enabled true"`
+	IndexPrefix string        `mapstructure:"indexPrefix"`
 	Timeout     time.Duration `mapstructure:"timeout"`
 }
 
