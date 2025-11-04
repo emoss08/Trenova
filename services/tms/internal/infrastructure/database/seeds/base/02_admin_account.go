@@ -3,6 +3,7 @@ package base
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/accounting"
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
@@ -309,6 +310,72 @@ func (s *AdminAccountSeed) createDefaultSettings(
 	if _, err := tx.NewInsert().Model(fiscalYear).Exec(ctx); err != nil {
 		return fmt.Errorf("create fiscal year: %w", err)
 	}
+
+	if err := s.generateFiscalPeriods(ctx, tx, fiscalYear); err != nil {
+		return fmt.Errorf("generate fiscal periods: %w", err)
+	}
+
+	return nil
+}
+
+func (s *AdminAccountSeed) generateFiscalPeriods(
+	ctx context.Context,
+	tx bun.Tx,
+	fiscalYear *accounting.FiscalYear,
+) error {
+	periods := make([]*accounting.FiscalPeriod, 0, 12)
+
+	startTime := time.Unix(fiscalYear.StartDate, 0)
+	endTime := time.Unix(fiscalYear.EndDate, 0)
+
+	totalDays := endTime.Sub(startTime).Hours() / 24
+
+	currentStart := startTime
+	for i := 1; i <= 12; i++ {
+		var periodEnd time.Time
+
+		if i == 12 {
+			periodEnd = endTime
+		} else {
+			daysInPeriod := totalDays / 12
+			periodEnd = currentStart.Add(time.Duration(daysInPeriod*24) * time.Hour)
+
+			periodEnd = time.Date(
+				periodEnd.Year(),
+				periodEnd.Month(),
+				periodEnd.Day(),
+				23, 59, 59, 0,
+				periodEnd.Location(),
+			)
+		}
+
+		periodName := fmt.Sprintf("Period %d - %s", i, currentStart.Format("January 2006"))
+
+		period := &accounting.FiscalPeriod{
+			ID:             pulid.MustNew("fp_"),
+			FiscalYearID:   fiscalYear.ID,
+			OrganizationID: fiscalYear.OrganizationID,
+			BusinessUnitID: fiscalYear.BusinessUnitID,
+			PeriodNumber:   i,
+			PeriodType:     accounting.PeriodTypeMonth,
+			Name:           periodName,
+			StartDate:      currentStart.Unix(),
+			EndDate:        periodEnd.Unix(),
+			Status:         accounting.PeriodStatusOpen,
+			CreatedAt:      utils.NowUnix(),
+			UpdatedAt:      utils.NowUnix(),
+		}
+
+		periods = append(periods, period)
+
+		currentStart = periodEnd.Add(time.Second)
+	}
+
+	if _, err := tx.NewInsert().Model(&periods).Exec(ctx); err != nil {
+		return fmt.Errorf("insert fiscal periods: %w", err)
+	}
+
+	color.Green("✓ Generated %d fiscal periods for FY %d", len(periods), fiscalYear.Year)
 
 	return nil
 }

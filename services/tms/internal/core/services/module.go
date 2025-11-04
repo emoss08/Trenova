@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/encryption"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturer"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttype"
+	"github.com/emoss08/trenova/internal/core/services/fiscalperiod"
 	"github.com/emoss08/trenova/internal/core/services/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/services/fleetcode"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplate"
@@ -101,6 +102,7 @@ var Module = fx.Module(
 		distanceoverride.NewService,
 		distancecalculator.NewService,
 		accounttype.NewService,
+		fiscalperiod.NewService,
 		fiscalyear.NewService,
 	),
 )

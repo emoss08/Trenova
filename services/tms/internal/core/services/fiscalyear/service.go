@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/audit"
+	"github.com/emoss08/trenova/internal/core/services/fiscalperiod"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
@@ -24,16 +25,18 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Logger           *zap.Logger
-	Repo             repositories.FiscalYearRepository
-	AuditService     services.AuditService
-	PermissionEngine ports.PermissionEngine
-	Validator        *fiscalyearvalidator.Validator
+	Logger              *zap.Logger
+	Repo                repositories.FiscalYearRepository
+	AuditService        services.AuditService
+	FiscalPeriodService *fiscalperiod.Service
+	PermissionEngine    ports.PermissionEngine
+	Validator           *fiscalyearvalidator.Validator
 }
 
 type Service struct {
 	l    *zap.Logger
 	repo repositories.FiscalYearRepository
+	fps  *fiscalperiod.Service
 	pe   ports.PermissionEngine
 	as   services.AuditService
 	v    *fiscalyearvalidator.Validator
@@ -43,6 +46,7 @@ func NewService(p ServiceParams) *Service {
 	return &Service{
 		l:    p.Logger.Named("service.fiscalyear"),
 		repo: p.Repo,
+		fps:  p.FiscalPeriodService,
 		pe:   p.PermissionEngine,
 		as:   p.AuditService,
 		v:    p.Validator,
@@ -101,6 +105,11 @@ func (s *Service) Create(
 	createdEntity, err := s.repo.Create(ctx, entity)
 	if err != nil {
 		return nil, err
+	}
+
+	_, err = s.fps.GeneratePeriodsForFiscalYear(ctx, createdEntity)
+	if err != nil {
+		log.Error("failed to auto-generate fiscal periods", zap.Error(err))
 	}
 
 	err = s.as.LogAction(

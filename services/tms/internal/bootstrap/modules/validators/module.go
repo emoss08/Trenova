@@ -12,6 +12,7 @@ import (
 	"github.com/emoss08/trenova/pkg/validator/emailvalidator"
 	"github.com/emoss08/trenova/pkg/validator/equipmentmanufacturervalidator"
 	"github.com/emoss08/trenova/pkg/validator/equipmenttypevalidator"
+	"github.com/emoss08/trenova/pkg/validator/fiscalperiodvalidator"
 	"github.com/emoss08/trenova/pkg/validator/fiscalyearvalidator"
 	"github.com/emoss08/trenova/pkg/validator/fleetcodevalidator"
 	"github.com/emoss08/trenova/pkg/validator/framework"
@@ -59,6 +60,7 @@ var Module = fx.Module("validators",
 		distanceoverridevalidator.NewValidator,
 		accounttypevalidator.NewValidator,
 		fiscalyearvalidator.NewValidator,
+		fiscalperiodvalidator.NewValidator,
 	),
 	fx.Options(
 		framework.Module,

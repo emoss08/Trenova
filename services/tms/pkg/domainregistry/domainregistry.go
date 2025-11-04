@@ -92,6 +92,7 @@ func RegisterEntities() []any {
 		&distanceoverride.Override{},
 		&accounting.AccountType{},
 		&accounting.FiscalYear{},
+		&accounting.FiscalPeriod{},
 	}
 }
 
@@ -133,5 +134,6 @@ func RegisterPermissionAwareEntities() []PermissionAware {
 		distanceoverride.NewDistanceOverridePermission(),
 		accounting.NewAccountTypePermission(),
 		accounting.NewFiscalYearPermission(),
+		accounting.NewFiscalPeriodPermission(),
 	}
 }

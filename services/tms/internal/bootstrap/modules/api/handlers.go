@@ -51,4 +51,5 @@ var HandlerModule = fx.Module("api-handlers", fx.Provide(
 	handlers.NewSearchHandler,
 	handlers.NewAccountTypeHandler,
 	handlers.NewFiscalYearHandler,
+	handlers.NewFiscalPeriodHandler,
 ))

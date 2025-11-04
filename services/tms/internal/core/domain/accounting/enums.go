@@ -2,6 +2,12 @@ package accounting
 
 import "errors"
 
+var (
+	ErrInvalidFiscalYearStatus = errors.New("invalid fiscal year status")
+	ErrInvalidPeriodType       = errors.New("invalid period type")
+	ErrInvalidPeriodStatus     = errors.New("invalid period status")
+)
+
 type Category string
 
 const (
@@ -93,6 +99,97 @@ func FiscalYearStatusFromString(status string) (FiscalYearStatus, error) {
 	case "Locked":
 		return FiscalYearStatusLocked, nil
 	default:
-		return "", errors.New("invalid fiscal year status")
+		return "", ErrInvalidFiscalYearStatus
+	}
+}
+
+type PeriodType string
+
+const (
+	PeriodTypeMonth   = PeriodType("Month")
+	PeriodTypeQuarter = PeriodType("Quarter")
+	PeriodTypeYear    = PeriodType("Year")
+)
+
+func (p PeriodType) String() string {
+	return string(p)
+}
+
+func (p PeriodType) IsValid() bool {
+	switch p {
+	case PeriodTypeMonth, PeriodTypeQuarter, PeriodTypeYear:
+		return true
+	}
+	return false
+}
+
+func (p PeriodType) GetDescription() string {
+	switch p {
+	case PeriodTypeMonth:
+		return "Month"
+	case PeriodTypeQuarter:
+		return "Quarter"
+	case PeriodTypeYear:
+		return "Year"
+	}
+	return "Unknown period type"
+}
+
+func PeriodTypeFromString(periodType string) (PeriodType, error) {
+	switch periodType {
+	case "Month":
+		return PeriodTypeMonth, nil
+	case "Quarter":
+		return PeriodTypeQuarter, nil
+	case "Year":
+		return PeriodTypeYear, nil
+	default:
+		return "", ErrInvalidPeriodType
+	}
+}
+
+type PeriodStatus string
+
+const (
+	PeriodStatusOpen   = PeriodStatus("Open")
+	PeriodStatusClosed = PeriodStatus("Closed")
+	PeriodStatusLocked = PeriodStatus("Locked")
+)
+
+func (p PeriodStatus) String() string {
+	return string(p)
+}
+
+func (p PeriodStatus) IsValid() bool {
+	switch p {
+	case PeriodStatusOpen, PeriodStatusClosed, PeriodStatusLocked:
+		return true
+	}
+	return false
+}
+
+func (p PeriodStatus) GetDescription() string {
+	switch p {
+	case PeriodStatusOpen:
+		return "Open"
+	case PeriodStatusClosed:
+		return "Closed"
+	case PeriodStatusLocked:
+		return "Locked"
+	default:
+		return "Unknown period status"
+	}
+}
+
+func PeriodStatusFromString(periodStatus string) (PeriodStatus, error) {
+	switch periodStatus {
+	case "Open":
+		return PeriodStatusOpen, nil
+	case "Closed":
+		return PeriodStatusClosed, nil
+	case "Locked":
+		return PeriodStatusLocked, nil
+	default:
+		return "", ErrInvalidPeriodStatus
 	}
 }
