@@ -4,8 +4,8 @@ import {
 } from "@/components/data-table/_components/data-table-components";
 import { FiscalYearStatusBadge } from "@/components/status-badge";
 import { fiscalYearStatusChoices } from "@/lib/choices";
-import { toDate } from "@/lib/date";
 import { FiscalYearSchema } from "@/lib/schemas/fiscal-year-schema";
+import { DashIcon } from "@radix-ui/react-icons";
 import { type ColumnDef } from "@tanstack/react-table";
 
 export function getColumns(): ColumnDef<FiscalYearSchema>[] {
@@ -31,14 +31,23 @@ export function getColumns(): ColumnDef<FiscalYearSchema>[] {
     },
     {
       accessorKey: "startDate",
-      header: "Name",
+      header: "Date Range",
       cell: ({ row }) => {
         const { startDate, endDate } = row.original;
         return (
-          <p>
-            {toDate(startDate)?.toLocaleDateString()} -{" "}
-            {toDate(endDate)?.toLocaleDateString()}
-          </p>
+          <div className="flex flex-row gap-0.5 cursor-default items-center justify-start">
+            <HoverCardTimestamp
+              timestamp={startDate}
+              showTime={false}
+              className="underline hover:no-underline decoration-dotted"
+            />
+            <DashIcon />
+            <HoverCardTimestamp
+              timestamp={endDate}
+              showTime={false}
+              className="underline hover:no-underline decoration-dotted"
+            />
+          </div>
         );
       },
       meta: {

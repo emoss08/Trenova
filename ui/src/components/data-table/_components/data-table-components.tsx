@@ -1,4 +1,4 @@
-import { Badge, type BadgeProps } from "@/components/ui/badge";
+import { Badge } from "@/components/ui/badge";
 import {
   HoverCard,
   HoverCardContent,
@@ -17,7 +17,7 @@ import { UTCDate } from "@date-fns/utc";
 import { faCheck, faCopy } from "@fortawesome/pro-solid-svg-icons";
 import { HoverCardPortal } from "@radix-ui/react-hover-card";
 import { format, formatDistanceToNowStrict } from "date-fns";
-import type { ComponentPropsWithoutRef } from "react";
+import { type ComponentPropsWithoutRef } from "react";
 
 type DataTableDescriptionProps = {
   description?: string;
@@ -101,6 +101,7 @@ interface HoverCardTimestampProps {
   align?: HoverCardContentProps["align"];
   alignOffset?: HoverCardContentProps["alignOffset"];
   className?: string;
+  showTime?: boolean;
 }
 
 // * Credit: https://github.com/openstatusHQ/data-table-filters/blob/main/src/app/infinite/_components/hover-card-timestamp.tsx#L28
@@ -111,6 +112,7 @@ export function HoverCardTimestamp({
   alignOffset = -4,
   sideOffset,
   className,
+  showTime = true,
 }: HoverCardTimestampProps) {
   const user = useUser();
   const userTimezone = user?.timezone || "auto";
@@ -143,6 +145,7 @@ export function HoverCardTimestamp({
               timeFormat: userTimeFormat,
               showSeconds: false,
               showTimeZone: false,
+              showTime: showTime,
               showDate: true,
             },
             userTimezone,
@@ -165,7 +168,7 @@ export function HoverCardTimestamp({
                 timestamp,
                 {
                   timeFormat: userTimeFormat,
-                  showSeconds: true,
+                  showSeconds: showTime,
                   showTimeZone: false,
                   showDate: true,
                 },
@@ -207,32 +210,5 @@ function Row({ value, label }: { value: string; label: string }) {
         {value}
       </dd>
     </div>
-  );
-}
-
-export function RandomColoredBadge({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const variants: BadgeProps["variant"][] = [
-    "active",
-    "inactive",
-    "info",
-    "purple",
-    "orange",
-    "indigo",
-    "pink",
-    "teal",
-    "warning",
-  ];
-
-  return (
-    <Badge
-      withDot={false}
-      variant={variants[Math.floor(Math.random() * variants.length)]}
-    >
-      {children}
-    </Badge>
   );
 }
