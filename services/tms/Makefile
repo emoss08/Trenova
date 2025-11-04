@@ -67,6 +67,11 @@ run: build-cli
 	@echo "$(GREEN)Starting API server...$(NC)"
 	@$(BUILD_DIR)/$(CLI_BINARY) api run
 
+## run-watch: Run the API server with hot reload
+run-watch:
+	@echo "$(GREEN)Starting API server with hot reload...$(NC)"
+	@air api run
+
 ## run-worker: Run the worker service
 run-worker:
 	@echo "$(GREEN)Starting worker service...$(NC)"

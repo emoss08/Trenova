@@ -124,6 +124,13 @@ func (a *Activities) bulkIndexShipments(
 }
 
 func (a *Activities) indexCustomer(ctx context.Context, payload *IndexEntityPayload) error {
+	logger := activity.GetLogger(ctx)
+	logger.Info("Starting index customer activity",
+		"customerId", payload.EntityID,
+		"organizationId", payload.GetOrganizationID(),
+		"businessUnitId", payload.GetBusinessUnitID(),
+	)
+
 	cus, err := a.customerRepo.GetByID(ctx, repositories.GetCustomerByIDRequest{
 		ID:    payload.EntityID,
 		OrgID: payload.GetOrganizationID(),
@@ -139,6 +146,10 @@ func (a *Activities) indexCustomer(ctx context.Context, payload *IndexEntityPayl
 
 	// We should retry this operation if it fails
 	if err = a.searchHelper.Index(ctx, cus); err != nil {
+		logger.Error(
+			"failed to index customer",
+			"error", err,
+		)
 		return temporaltype.NewRetryableError("failed to index customer", err).ToTemporalError()
 	}
 

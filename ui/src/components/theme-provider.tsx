@@ -48,6 +48,18 @@ export function ThemeProvider({
     root.classList.add(theme);
   }, [theme]);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "o" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        setTheme((theme) => theme === "dark" ? "light" : "dark");
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [setTheme]);
+
   const value = {
     theme,
     setTheme: (theme: Theme) => {

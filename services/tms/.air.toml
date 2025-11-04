@@ -2,8 +2,8 @@ root = "."
 tmp_dir = "tmp"
 
 [build]
-cmd = "GOTOOLCHAIN=go1.25.0 GOEXPERIMENT=greenteagc go1.25.0 build -o ./tmp/trenova-cli ./cmd/cli"
-bin = "./tmp/trenova-cli api run"
+cmd = "GOEXPERIMENT=greenteagc go build -o ./tmp/trenova-cli ./cmd/cli"
+bin = "./tmp/trenova-cli"
 delay = 100
 exclude_dir = ["assets", "tmp", "vendor", "ui", "platform", "microservices"]
 include_ext = ["go", "tpl", "tmpl", "html", "yaml"]

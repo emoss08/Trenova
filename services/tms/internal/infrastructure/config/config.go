@@ -10,23 +10,23 @@ import (
 
 // Config represents the main application configuration
 type Config struct {
-	App             AppConfig              `mapstructure:"app"                       validate:"required"`
-	Server          ServerConfig           `mapstructure:"server"                    validate:"required"`
-	Database        DatabaseConfig         `mapstructure:"database"                  validate:"required"`
+	App             AppConfig              `mapstructure:"app"                validate:"required"`
+	Server          ServerConfig           `mapstructure:"server"             validate:"required"`
+	Database        DatabaseConfig         `mapstructure:"database"           validate:"required"`
 	Cache           *CacheConfig           `mapstructure:"cache,omitempty"`
 	Queue           *QueueConfig           `mapstructure:"queue,omitempty"`
-	AI              *AIConfig              `mapstructure:"ai"                        validate:"required"`
-	Google          *GoogleConfig          `mapstructure:"google"                    validate:"required"`
+	AI              *AIConfig              `mapstructure:"ai"                 validate:"required"`
+	Google          *GoogleConfig          `mapstructure:"google"             validate:"required"`
 	CDC             *CDCConfig             `mapstructure:"cdc,omitempty"`
 	Storage         *StorageConfig         `mapstructure:"storage,omitempty"`
 	Temporal        *TemporalConfig        `mapstructure:"temporal,omitempty"`
-	Email           *EmailConfig           `mapstructure:"email,omitempty"           validate:"required"`
-	PermissionCache *PermissionCacheConfig `mapstructure:"permissionCache,omitempty"`
+	Email           *EmailConfig           `mapstructure:"email,omitempty"    validate:"required"`
+	PermissionCache *PermissionCacheConfig `mapstructure:"permissionCache"    validate:"required"`
 	Search          *SearchConfig          `mapstructure:"search,omitempty"`
-	Security        SecurityConfig         `mapstructure:"security"                  validate:"required"`
-	Logging         LoggingConfig          `mapstructure:"logging"                   validate:"required"`
-	Monitoring      MonitoringConfig       `mapstructure:"monitoring"                validate:"required"`
-	Streaming       StreamingConfig        `mapstructure:"streaming"                 validate:"required"`
+	Security        SecurityConfig         `mapstructure:"security"           validate:"required"`
+	Logging         LoggingConfig          `mapstructure:"logging"            validate:"required"`
+	Monitoring      MonitoringConfig       `mapstructure:"monitoring"         validate:"required"`
+	Streaming       StreamingConfig        `mapstructure:"streaming"          validate:"required"`
 }
 
 // AppConfig contains application-level settings
@@ -55,7 +55,7 @@ type PermissionCacheConfig struct {
 }
 
 type GoogleConfig struct {
-	APIKey string `mapstructure:"api_key"`
+	APIKey string `mapstructure:"apiKey"`
 }
 
 type AIConfig struct {
@@ -75,15 +75,15 @@ type CORSConfig struct {
 
 // DatabaseConfig contains database connection settings
 type DatabaseConfig struct {
+	PasswordSource  string        `mapstructure:"passwordSource"  validate:"required,oneof=env file secret"`
 	Host            string        `mapstructure:"host"            validate:"required"`
 	Port            int           `mapstructure:"port"            validate:"required,min=1,max=65535"`
 	Name            string        `mapstructure:"name"            validate:"required,min=1,max=63"`
 	User            string        `mapstructure:"user"            validate:"required,min=1,max=63"`
-	PasswordSource  string        `mapstructure:"passwordSource"  validate:"required,oneof=env file secret"`
 	Password        string        `mapstructure:"password"        validate:"required_if=PasswordSource env"`
 	PasswordFile    string        `mapstructure:"passwordFile"    validate:"required_if=PasswordSource file"`
 	PasswordSecret  string        `mapstructure:"passwordSecret"  validate:"required_if=PasswordSource secret"`
-	SSLMode         string        `mapstructure:"SSLMode"         validate:"required,oneof=disable require verify-ca verify-full"`
+	SSLMode         string        `mapstructure:"sslMode"         validate:"required,oneof=disable require verify-ca verify-full"`
 	MaxIdleConns    int           `mapstructure:"maxIdleConns"    validate:"min=1,max=1000"`
 	MaxOpenConns    int           `mapstructure:"maxOpenConns"    validate:"min=1,max=1000"`
 	ConnMaxLifetime time.Duration `mapstructure:"connMaxLifetime"`
@@ -178,14 +178,13 @@ type CDCRetryConfig struct {
 // StorageConfig contains object storage settings (optional)
 type StorageConfig struct {
 	Provider     string `mapstructure:"provider"     validate:"required,oneof=minio s3 local"`
-	Endpoint     string `mapstructure:"endpoint"     validate:"required_if=Provider minio"`
-	AccessKey    string `mapstructure:"accessKey"    validate:"required_if=Provider minio s3"`
-	SecretKey    string `mapstructure:"secretKey"    validate:"required_if=Provider minio s3"`
-	SessionToken string `mapstructure:"sessionToken" validate:"required_if=Provider minio s3"`
-	Region       string `mapstructure:"region"       validate:"required_if=Provider s3"`
-	Bucket       string `mapstructure:"bucket"       validate:"required_if=Provider minio s3,min=3,max=63"`
+	Endpoint     string `mapstructure:"endpoint"`
+	AccessKey    string `mapstructure:"accessKey"`
+	SecretKey    string `mapstructure:"secretKey"`
+	SessionToken string `mapstructure:"sessionToken"`
+	Region       string `mapstructure:"region"`
+	Bucket       string `mapstructure:"bucket"`
 	UseSSL       bool   `mapstructure:"useSSL"`
-	LocalPath    string `mapstructure:"localPath"    validate:"required_if=Provider local"`
 }
 
 // TemporalConfig contains Temporal workflow engine settings

@@ -160,37 +160,37 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("server.host", "0.0.0.0")
 	l.viper.SetDefault("server.port", 8080)
 	l.viper.SetDefault("server.mode", "release")
-	l.viper.SetDefault("server.read_timeout", "30s")
-	l.viper.SetDefault("server.write_timeout", "30s")
-	l.viper.SetDefault("server.idle_timeout", "120s")
-	l.viper.SetDefault("server.shutdown_timeout", "30s")
+	l.viper.SetDefault("server.readTimeout", "30s")
+	l.viper.SetDefault("server.writeTimeout", "30s")
+	l.viper.SetDefault("server.idleTimeout", "120s")
+	l.viper.SetDefault("server.shutdownTimeout", "10s")
 
 	// Database defaults
-	l.viper.SetDefault("database.password_source", "env")
-	l.viper.SetDefault("database.sslmode", "prefer")
-	l.viper.SetDefault("database.max_idle_conns", 10)
-	l.viper.SetDefault("database.max_open_conns", 100)
-	l.viper.SetDefault("database.conn_max_lifetime", "1h")
-	l.viper.SetDefault("database.conn_max_idle_time", "10m")
+	l.viper.SetDefault("database.passwordSource", "env")
+	l.viper.SetDefault("database.sslMode", "prefer")
+	l.viper.SetDefault("database.maxIdleConns", 10)
+	l.viper.SetDefault("database.maxOpenConns", 100)
+	l.viper.SetDefault("database.connMaxLifetime", "1h")
+	l.viper.SetDefault("database.connMaxIdleTime", "10m")
 
 	// Session defaults
 	l.viper.SetDefault("security.session.name", "trv-session-id")
-	l.viper.SetDefault("security.session.max_age", "24h")
-	l.viper.SetDefault("security.session.http_only", true)
+	l.viper.SetDefault("security.session.maxAge", "24h")
+	l.viper.SetDefault("security.session.httpOnly", true)
 	l.viper.SetDefault("security.session.secure", false)
-	l.viper.SetDefault("security.session.same_site", "lax")
+	l.viper.SetDefault("security.session.sameSite", "lax")
 	l.viper.SetDefault("security.session.path", "/")
-	l.viper.SetDefault("security.session.refresh_window", "1h")
+	l.viper.SetDefault("security.session.refreshWindow", "1h")
 
 	// CSRF defaults
-	l.viper.SetDefault("security.csrf.token_name", "csrf_token")
-	l.viper.SetDefault("security.csrf.header_name", "X-CSRF-Token")
+	l.viper.SetDefault("security.csrf.tokenName", "csrf_token")
+	l.viper.SetDefault("security.csrf.headerName", "X-CSRF-Token")
 
 	// Rate limit defaults
-	l.viper.SetDefault("security.rate_limit.enabled", true)
-	l.viper.SetDefault("security.rate_limit.requests_per_minute", 60)
-	l.viper.SetDefault("security.rate_limit.burst_size", 10)
-	l.viper.SetDefault("security.rate_limit.cleanup_interval", "1m")
+	l.viper.SetDefault("security.rateLimit.enabled", true)
+	l.viper.SetDefault("security.rateLimit.requestsPerMinute", 60)
+	l.viper.SetDefault("security.rateLimit.burstSize", 10)
+	l.viper.SetDefault("security.rateLimit.cleanupInterval", "1m")
 
 	// Logging defaults
 	l.viper.SetDefault("logging.level", "info")
@@ -201,9 +201,9 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 
 	// Health check defaults
 	l.viper.SetDefault("monitoring.health.path", "/health")
-	l.viper.SetDefault("monitoring.health.readiness_path", "/ready")
-	l.viper.SetDefault("monitoring.health.liveness_path", "/live")
-	l.viper.SetDefault("monitoring.health.check_interval", "30s")
+	l.viper.SetDefault("monitoring.health.readinessPath", "/ready")
+	l.viper.SetDefault("monitoring.health.livenessPath", "/live")
+	l.viper.SetDefault("monitoring.health.checkInterval", "30s")
 	l.viper.SetDefault("monitoring.health.timeout", "5s")
 
 	// Cache defaults
@@ -211,18 +211,18 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("cache.host", "localhost")
 	l.viper.SetDefault("cache.port", 6379)
 	l.viper.SetDefault("cache.db", 0)
-	l.viper.SetDefault("cache.pool_size", 10)
-	l.viper.SetDefault("cache.min_idle_conns", 5)
-	l.viper.SetDefault("cache.max_retries", 3)
-	l.viper.SetDefault("cache.default_ttl", "1h")
-	l.viper.SetDefault("cache.max_retry_backoff", "1s")
-	l.viper.SetDefault("cache.min_retry_backoff", "100ms")
-	l.viper.SetDefault("cache.dial_timeout", "5s")
-	l.viper.SetDefault("cache.read_timeout", "3s")
-	l.viper.SetDefault("cache.write_timeout", "3s")
-	l.viper.SetDefault("cache.pool_timeout", "10s")
-	l.viper.SetDefault("cache.conn_max_idle_time", "10m")
-	l.viper.SetDefault("cache.conn_max_lifetime", "1h")
+	l.viper.SetDefault("cache.poolSize", 10)
+	l.viper.SetDefault("cache.minIdleConns", 5)
+	l.viper.SetDefault("cache.maxRetries", 3)
+	l.viper.SetDefault("cache.defaultTTL", "1h")
+	l.viper.SetDefault("cache.maxRetryBackoff", "1s")
+	l.viper.SetDefault("cache.minRetryBackoff", "100ms")
+	l.viper.SetDefault("cache.dialTimeout", "5s")
+	l.viper.SetDefault("cache.readTimeout", "3s")
+	l.viper.SetDefault("cache.writeTimeout", "3s")
+	l.viper.SetDefault("cache.poolTimeout", "10s")
+	l.viper.SetDefault("cache.connMaxIdleTime", "10m")
+	l.viper.SetDefault("cache.connMaxLifetime", "1h")
 }
 
 // loadConfigFiles loads base and environment-specific config files
