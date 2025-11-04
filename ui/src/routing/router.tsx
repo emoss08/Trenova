@@ -101,6 +101,20 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "configurations/fiscal-periods",
+                loader: createPermissionLoader(Resource.FiscalPeriod),
+                async lazy() {
+                  let { FiscalPeriods } = await import(
+                    "@/app/fiscal-period/page"
+                  );
+                  return { Component: FiscalPeriods };
+                },
+                handle: {
+                  crumb: "Fiscal Periods",
+                  title: "Fiscal Periods",
+                },
+              },
+              {
                 path: "configurations/account-types",
                 loader: createPermissionLoader(Resource.AccountType),
                 async lazy() {

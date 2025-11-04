@@ -51,6 +51,7 @@ export enum Resource {
   Role = "role", // Represents resources related to roles.
   PageFavorite = "page_favorite", // Represents resources related to page favorites.
   FiscalYear = "fiscal_year", // Represents resources related to fiscal years.
+  FiscalPeriod = "fiscal_period", // Represents resources related to fiscal periods.
 
   // Operations resources
   Worker = "worker", // Represents resources related to workers.

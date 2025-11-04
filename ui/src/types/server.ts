@@ -120,6 +120,7 @@ export type BaseEndpoint =
   | "/variables/"
   | "/distance-overrides/"
   | "/fiscal-years/"
+  | "/fiscal-periods/"
   | "/variable-formats/"
   | "/account-types/"
   | "/workers/pto/create/";

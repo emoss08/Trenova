@@ -220,6 +220,12 @@ export const routes: RouteInfo[] = [
             supportsModal: true,
           },
           {
+            key: Resource.FiscalPeriod,
+            label: "Fiscal Periods",
+            link: "/billing/configurations/fiscal-periods",
+            supportsModal: true,
+          },
+          {
             key: Resource.AccountType,
             label: "Account Types",
             link: "/billing/configurations/account-types",

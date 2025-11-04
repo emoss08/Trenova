@@ -1,6 +1,10 @@
 import { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
 import { ConsolidationStatus } from "@/lib/schemas/consolidation-schema";
 import {
+  FiscalPeriodSchema,
+  FiscalPeriodTypeSchema,
+} from "@/lib/schemas/fiscal-period-schema";
+import {
   FiscalYearSchema,
   FiscalYearStatusSchema,
 } from "@/lib/schemas/fiscal-year-schema";
@@ -861,6 +865,62 @@ export function FiscalYearStatusBadge({
   return (
     <Badge variant={statusAttributes[status].variant} className="max-h-6">
       {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function FiscalPeriodStatusBadge({
+  status,
+}: {
+  status: FiscalPeriodSchema["status"];
+}) {
+  const statusAttributes: Record<FiscalPeriodSchema["status"], BadgeAttrProps> =
+    {
+      [FiscalYearStatusSchema.enum.Open]: {
+        variant: "active",
+        text: "Open",
+      },
+      [FiscalYearStatusSchema.enum.Closed]: {
+        variant: "inactive",
+        text: "Closed",
+      },
+      [FiscalYearStatusSchema.enum.Locked]: {
+        variant: "warning",
+        text: "Locked",
+      },
+    };
+  return (
+    <Badge variant={statusAttributes[status].variant} className="max-h-6">
+      {statusAttributes[status].text}
+    </Badge>
+  );
+}
+
+export function FiscalPeriodTypeBadge({
+  type,
+}: {
+  type: FiscalPeriodSchema["periodType"];
+}) {
+  const typeAttributes: Record<
+    FiscalPeriodSchema["periodType"],
+    BadgeAttrProps
+  > = {
+    [FiscalPeriodTypeSchema.enum.Month]: {
+      variant: "info",
+      text: "Month",
+    },
+    [FiscalPeriodTypeSchema.enum.Quarter]: {
+      variant: "indigo",
+      text: "Quarter",
+    },
+    [FiscalPeriodTypeSchema.enum.Year]: {
+      variant: "active",
+      text: "Year",
+    },
+  };
+  return (
+    <Badge variant={typeAttributes[type].variant} className="max-h-6">
+      {typeAttributes[type].text}
     </Badge>
   );
 }

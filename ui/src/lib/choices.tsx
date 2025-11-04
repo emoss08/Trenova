@@ -34,6 +34,11 @@ import {
   type EmailProfileSchema,
 } from "./schemas/email-profile-schema";
 import {
+  FiscalPeriodSchema,
+  FiscalPeriodStatusSchema,
+  FiscalPeriodTypeSchema,
+} from "./schemas/fiscal-period-schema";
+import {
   FiscalYearSchema,
   FiscalYearStatusSchema,
 } from "./schemas/fiscal-year-schema";
@@ -908,3 +913,39 @@ export const fiscalYearStatusChoices = [
     color: "#f59e0b",
   },
 ] satisfies ReadonlyArray<ChoiceProps<FiscalYearSchema["status"]>>;
+
+export const fiscalPeriodStatusChoices = [
+  {
+    value: FiscalPeriodStatusSchema.enum.Open,
+    label: "Open",
+    color: "#16a34a",
+  },
+  {
+    value: FiscalPeriodStatusSchema.enum.Closed,
+    label: "Closed",
+    color: "#dc2626",
+  },
+  {
+    value: FiscalPeriodStatusSchema.enum.Locked,
+    label: "Locked",
+    color: "#f59e0b",
+  },
+] satisfies ReadonlyArray<ChoiceProps<FiscalPeriodSchema["status"]>>;
+
+export const fiscalPeriodTypeChoices = [
+  {
+    value: FiscalPeriodTypeSchema.enum.Month,
+    label: "Month",
+    color: "#2563eb",
+  },
+  {
+    value: FiscalPeriodTypeSchema.enum.Quarter,
+    label: "Quarter",
+    color: "#4b0082",
+  },
+  {
+    value: FiscalPeriodTypeSchema.enum.Year,
+    label: "Year",
+    color: "#16a34a",
+  },
+] satisfies ReadonlyArray<ChoiceProps<FiscalPeriodSchema["periodType"]>>;
