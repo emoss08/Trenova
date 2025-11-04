@@ -26,7 +26,50 @@ const (
 )
 
 func (o Operation) String() string {
-	return [...]string{"create", "read", "update", "delete", "export", "import", "approve", "reject", "share", "archive", "restore", "manage", "submit", "copy", "assign", "duplicate", "close", "lock", "unlock", "activate"}[o]
+	switch o {
+	case OpCreate:
+		return "create"
+	case OpRead:
+		return "read"
+	case OpUpdate:
+		return "update"
+	case OpDelete:
+		return "delete"
+	case OpExport:
+		return "export"
+	case OpImport:
+		return "import"
+	case OpApprove:
+		return "approve"
+	case OpReject:
+		return "reject"
+	case OpShare:
+		return "share"
+	case OpArchive:
+		return "archive"
+	case OpRestore:
+		return "restore"
+	case OpManage:
+		return "manage"
+	case OpSubmit:
+		return "submit"
+	case OpCopy:
+		return "copy"
+	case OpAssign:
+		return "assign"
+	case OpDuplicate:
+		return "duplicate"
+	case OpClose:
+		return "close"
+	case OpLock:
+		return "lock"
+	case OpUnlock:
+		return "unlock"
+	case OpActivate:
+		return "activate"
+	default:
+		return "unknown"
+	}
 }
 
 func (o Operation) ToUint32() uint32 {
