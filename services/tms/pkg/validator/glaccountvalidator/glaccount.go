@@ -320,8 +320,35 @@ func validateCanDeactivate(
 		)
 	}
 
-	// TODO(emoss08): Check if account has transactions in open periods
-	// This would require checking journal entries, which we'll implement later
+	// Check if account has posted journal entries in open periods
+	jeCount, err := db.NewSelect().
+		Model((*accounting.JournalEntryLine)(nil)).
+		Join("INNER JOIN journal_entries AS je ON je.id = jel.journal_entry_id").
+		Join("INNER JOIN fiscal_periods AS fp ON fp.id = je.fiscal_period_id").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("jel.gl_account_id = ?", entity.ID).
+				Where("jel.organization_id = ?", entity.OrganizationID).
+				Where("jel.business_unit_id = ?", entity.BusinessUnitID).
+				Where("je.is_posted = ?", true).
+				Where("fp.status = ?", accounting.PeriodStatusOpen)
+		}).
+		Count(ctx)
+	if err != nil {
+		me.Add("__all__", errortypes.ErrSystemError, "Failed to check for journal entries")
+		return
+	}
+
+	if jeCount > 0 {
+		me.Add(
+			"isActive",
+			errortypes.ErrInvalid,
+			fmt.Sprintf(
+				"Cannot deactivate account with %d posted transactions in open periods. Close the periods first.",
+				jeCount,
+			),
+		)
+	}
 }
 
 func (v *Validator) Validate(

@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS "gl_accounts"(
     CONSTRAINT "pk_gl_accounts" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
     CONSTRAINT "fk_gl_accounts_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE,
     CONSTRAINT "fk_gl_accounts_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON DELETE CASCADE,
-    CONSTRAINT "fk_gl_accounts_account_type" FOREIGN KEY ("account_type_id") REFERENCES "account_types"("id") ON DELETE RESTRICT,
+    CONSTRAINT "fk_gl_accounts_account_type" FOREIGN KEY ("account_type_id", "organization_id", "business_unit_id") REFERENCES "account_types"("id", "organization_id", "business_unit_id") ON DELETE RESTRICT,
     CONSTRAINT "fk_gl_accounts_parent" FOREIGN KEY ("parent_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON DELETE RESTRICT,
     CONSTRAINT "uq_gl_accounts_code" UNIQUE ("organization_id", "business_unit_id", "account_code"),
     CONSTRAINT "chk_gl_accounts_no_self_parent" CHECK ("id" != "parent_id")
