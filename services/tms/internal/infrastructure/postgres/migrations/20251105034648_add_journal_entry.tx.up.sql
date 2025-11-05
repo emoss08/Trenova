@@ -1,0 +1,311 @@
+SET statement_timeout = 0;
+
+-- Create journal entry type enum
+CREATE TYPE journal_entry_type_enum AS ENUM(
+    'Standard',
+    'Adjusting',
+    'Closing',
+    'Reversal',
+    'Reclassification'
+);
+
+--bun:split
+-- Create journal entry status enum
+CREATE TYPE journal_entry_status_enum AS ENUM(
+    'Draft',
+    'Pending',
+    'Approved',
+    'Posted',
+    'Reversed',
+    'Rejected'
+);
+
+--bun:split
+-- Create journal entries table (header)
+CREATE TABLE IF NOT EXISTS "journal_entries"(
+    "id" varchar(100) NOT NULL,
+    "business_unit_id" varchar(100) NOT NULL,
+    "organization_id" varchar(100) NOT NULL,
+    "fiscal_year_id" varchar(100) NOT NULL,
+    "fiscal_period_id" varchar(100) NOT NULL,
+    "entry_number" varchar(50) NOT NULL,
+    "entry_date" bigint NOT NULL,
+    "entry_type" journal_entry_type_enum NOT NULL DEFAULT 'Standard',
+    "status" journal_entry_status_enum NOT NULL DEFAULT 'Draft',
+    "reference_number" varchar(100),
+    "reference_type" varchar(50),
+    "reference_id" varchar(100),
+    "description" text NOT NULL,
+    "total_debit" bigint NOT NULL DEFAULT 0,
+    "total_credit" bigint NOT NULL DEFAULT 0,
+    "is_posted" boolean NOT NULL DEFAULT FALSE,
+    "posted_at" bigint,
+    "posted_by_id" varchar(100),
+    "is_auto_generated" boolean NOT NULL DEFAULT FALSE,
+    "is_reversal" boolean NOT NULL DEFAULT FALSE,
+    "reversal_of_id" varchar(100),
+    "reversed_by_id" varchar(100),
+    "reversal_date" bigint,
+    "reversal_reason" text,
+    "requires_approval" boolean NOT NULL DEFAULT TRUE,
+    "is_approved" boolean NOT NULL DEFAULT FALSE,
+    "approved_at" bigint,
+    "approved_by_id" varchar(100),
+    "approval_notes" text,
+    "version" bigint NOT NULL DEFAULT 0,
+    "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
+    "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
+    CONSTRAINT "pk_journal_entries" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
+    CONSTRAINT "fk_journal_entries_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE,
+    CONSTRAINT "fk_journal_entries_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON DELETE CASCADE,
+    CONSTRAINT "fk_journal_entries_fiscal_year" FOREIGN KEY ("fiscal_year_id", "organization_id", "business_unit_id") REFERENCES "fiscal_years"("id", "organization_id", "business_unit_id") ON DELETE RESTRICT,
+    CONSTRAINT "fk_journal_entries_fiscal_period" FOREIGN KEY ("fiscal_period_id", "organization_id", "business_unit_id") REFERENCES "fiscal_periods"("id", "organization_id", "business_unit_id") ON DELETE RESTRICT,
+    CONSTRAINT "fk_journal_entries_posted_by" FOREIGN KEY ("posted_by_id") REFERENCES "users"("id") ON DELETE SET NULL,
+    CONSTRAINT "fk_journal_entries_approved_by" FOREIGN KEY ("approved_by_id") REFERENCES "users"("id") ON DELETE SET NULL,
+    CONSTRAINT "fk_journal_entries_reversal_of" FOREIGN KEY ("reversal_of_id", "organization_id", "business_unit_id") REFERENCES "journal_entries"("id", "organization_id", "business_unit_id") ON DELETE RESTRICT,
+    CONSTRAINT "fk_journal_entries_reversed_by" FOREIGN KEY ("reversed_by_id", "organization_id", "business_unit_id") REFERENCES "journal_entries"("id", "organization_id", "business_unit_id") ON DELETE RESTRICT,
+    CONSTRAINT "uq_journal_entries_entry_number" UNIQUE ("organization_id", "business_unit_id", "entry_number"),
+    CONSTRAINT "chk_journal_entries_balanced" CHECK ("total_debit" = "total_credit" OR "status" = 'Draft'),
+    CONSTRAINT "chk_journal_entries_posted_at" CHECK (("is_posted" = TRUE AND "posted_at" IS NOT NULL AND "posted_by_id" IS NOT NULL) OR ("is_posted" = FALSE)),
+    CONSTRAINT "chk_journal_entries_approved_at" CHECK (("is_approved" = TRUE AND "approved_at" IS NOT NULL AND "approved_by_id" IS NOT NULL) OR ("is_approved" = FALSE)),
+    CONSTRAINT "chk_journal_entries_reversal" CHECK (("is_reversal" = TRUE AND "reversal_of_id" IS NOT NULL) OR ("is_reversal" = FALSE)),
+    CONSTRAINT "chk_journal_entries_no_self_reversal" CHECK ("id" != "reversal_of_id" AND "id" != "reversed_by_id")
+);
+
+--bun:split
+-- Create journal entry lines table (detail)
+CREATE TABLE IF NOT EXISTS "journal_entry_lines"(
+    "id" varchar(100) NOT NULL,
+    "business_unit_id" varchar(100) NOT NULL,
+    "organization_id" varchar(100) NOT NULL,
+    "journal_entry_id" varchar(100) NOT NULL,
+    "gl_account_id" varchar(100) NOT NULL,
+    "line_number" smallint NOT NULL,
+    "description" text NOT NULL,
+    "debit_amount" bigint NOT NULL DEFAULT 0,
+    "credit_amount" bigint NOT NULL DEFAULT 0,
+    "department_id" varchar(100),
+    "project_id" varchar(100),
+    "location_id" varchar(100),
+    "customer_id" varchar(100),
+    "tax_code" varchar(20),
+    "tax_amount" bigint NOT NULL DEFAULT 0,
+    "is_reconciled" boolean NOT NULL DEFAULT FALSE,
+    "reconciled_at" bigint,
+    "reconciled_by_id" varchar(100),
+    "version" bigint NOT NULL DEFAULT 0,
+    "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
+    "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
+    CONSTRAINT "pk_journal_entry_lines" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
+    CONSTRAINT "fk_journal_entry_lines_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE,
+    CONSTRAINT "fk_journal_entry_lines_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON DELETE CASCADE,
+    CONSTRAINT "fk_journal_entry_lines_journal_entry" FOREIGN KEY ("journal_entry_id", "organization_id", "business_unit_id") REFERENCES "journal_entries"("id", "organization_id", "business_unit_id") ON DELETE CASCADE,
+    CONSTRAINT "fk_journal_entry_lines_gl_account" FOREIGN KEY ("gl_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON DELETE RESTRICT,
+    CONSTRAINT "fk_journal_entry_lines_location" FOREIGN KEY ("location_id", "organization_id", "business_unit_id") REFERENCES "locations"("id", "organization_id", "business_unit_id") ON DELETE SET NULL,
+    CONSTRAINT "fk_journal_entry_lines_customer" FOREIGN KEY ("customer_id", "organization_id", "business_unit_id") REFERENCES "customers"("id", "organization_id", "business_unit_id") ON DELETE SET NULL,
+    CONSTRAINT "fk_journal_entry_lines_reconciled_by" FOREIGN KEY ("reconciled_by_id") REFERENCES "users"("id") ON DELETE SET NULL,
+    CONSTRAINT "uq_journal_entry_lines_line_number" UNIQUE ("journal_entry_id", "organization_id", "business_unit_id", "line_number"),
+    CONSTRAINT "chk_journal_entry_lines_debit_or_credit" CHECK (("debit_amount" > 0 AND "credit_amount" = 0) OR ("credit_amount" > 0 AND "debit_amount" = 0)),
+    CONSTRAINT "chk_journal_entry_lines_reconciled_at" CHECK (("is_reconciled" = TRUE AND "reconciled_at" IS NOT NULL AND "reconciled_by_id" IS NOT NULL) OR ("is_reconciled" = FALSE))
+);
+
+--bun:split
+-- Indexes for journal_entries
+CREATE INDEX IF NOT EXISTS idx_journal_entries_bu_org ON "journal_entries"("business_unit_id", "organization_id");
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entries_created_updated ON "journal_entries"("created_at", "updated_at");
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entries_status ON "journal_entries"("status");
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entries_type ON "journal_entries"("entry_type");
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entries_entry_date ON "journal_entries"("entry_date");
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entries_fiscal_year ON "journal_entries"("fiscal_year_id");
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entries_fiscal_period ON "journal_entries"("fiscal_period_id");
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entries_posted ON "journal_entries"("is_posted")
+WHERE
+    "is_posted" = TRUE;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entries_approved ON "journal_entries"("is_approved")
+WHERE
+    "is_approved" = TRUE;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entries_reversal ON "journal_entries"("is_reversal")
+WHERE
+    "is_reversal" = TRUE;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entries_reference ON "journal_entries"("reference_type", "reference_id")
+WHERE
+    "reference_type" IS NOT NULL
+    AND "reference_id" IS NOT NULL;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entries_entry_number ON "journal_entries"("entry_number");
+
+--bun:split
+-- Indexes for journal_entry_lines
+CREATE INDEX IF NOT EXISTS idx_journal_entry_lines_bu_org ON "journal_entry_lines"("business_unit_id", "organization_id");
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entry_lines_created_updated ON "journal_entry_lines"("created_at", "updated_at");
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entry_lines_journal_entry ON "journal_entry_lines"("journal_entry_id");
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entry_lines_gl_account ON "journal_entry_lines"("gl_account_id");
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entry_lines_location ON "journal_entry_lines"("location_id")
+WHERE
+    "location_id" IS NOT NULL;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entry_lines_customer ON "journal_entry_lines"("customer_id")
+WHERE
+    "customer_id" IS NOT NULL;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entry_lines_reconciled ON "journal_entry_lines"("is_reconciled")
+WHERE
+    "is_reconciled" = TRUE;
+
+--bun:split
+-- Comments for journal_entries
+COMMENT ON TABLE "journal_entries" IS 'Stores journal entry headers for double-entry accounting';
+
+--bun:split
+COMMENT ON COLUMN "journal_entries"."entry_number" IS 'Unique sequential entry number (e.g., JE-2025-001)';
+
+--bun:split
+COMMENT ON COLUMN "journal_entries"."reference_number" IS 'External reference number (e.g., invoice #, shipment #)';
+
+--bun:split
+COMMENT ON COLUMN "journal_entries"."reference_type" IS 'Type of reference (Shipment, Invoice, Payment, etc.)';
+
+--bun:split
+COMMENT ON COLUMN "journal_entries"."reference_id" IS 'ID of the referenced entity';
+
+--bun:split
+COMMENT ON COLUMN "journal_entries"."total_debit" IS 'Sum of all debit lines in cents (denormalized for performance)';
+
+--bun:split
+COMMENT ON COLUMN "journal_entries"."total_credit" IS 'Sum of all credit lines in cents (denormalized for performance)';
+
+--bun:split
+COMMENT ON COLUMN "journal_entries"."is_auto_generated" IS 'Whether this entry was auto-created by the system';
+
+--bun:split
+COMMENT ON COLUMN "journal_entries"."reversal_of_id" IS 'Original entry that this entry reverses';
+
+--bun:split
+COMMENT ON COLUMN "journal_entries"."reversed_by_id" IS 'Entry that reversed this entry';
+
+--bun:split
+-- Comments for journal_entry_lines
+COMMENT ON TABLE "journal_entry_lines" IS 'Stores journal entry line items (detail records)';
+
+--bun:split
+COMMENT ON COLUMN "journal_entry_lines"."line_number" IS 'Sequential line number within the journal entry';
+
+--bun:split
+COMMENT ON COLUMN "journal_entry_lines"."debit_amount" IS 'Debit amount in cents (0 if credit line)';
+
+--bun:split
+COMMENT ON COLUMN "journal_entry_lines"."credit_amount" IS 'Credit amount in cents (0 if debit line)';
+
+--bun:split
+COMMENT ON COLUMN "journal_entry_lines"."department_id" IS 'Department/cost center for dimensional analysis';
+
+--bun:split
+COMMENT ON COLUMN "journal_entry_lines"."project_id" IS 'Project/job for dimensional analysis';
+
+--bun:split
+COMMENT ON COLUMN "journal_entry_lines"."location_id" IS 'Location for dimensional analysis';
+
+--bun:split
+COMMENT ON COLUMN "journal_entry_lines"."customer_id" IS 'Customer for dimensional analysis';
+
+--bun:split
+-- Search Vector for journal_entries
+ALTER TABLE "journal_entries"
+    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+
+--bun:split
+CREATE INDEX IF NOT EXISTS idx_journal_entries_search_vector ON "journal_entries" USING GIN(search_vector);
+
+--bun:split
+CREATE OR REPLACE FUNCTION journal_entries_search_trigger()
+    RETURNS TRIGGER
+    AS $$
+BEGIN
+    NEW.search_vector := setweight(to_tsvector('english', COALESCE(NEW.entry_number, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.reference_number, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B');
+    RETURN NEW;
+END;
+$$
+LANGUAGE plpgsql;
+
+--bun:split
+DROP TRIGGER IF EXISTS journal_entries_search_update ON "journal_entries";
+
+--bun:split
+CREATE TRIGGER journal_entries_search_update
+    BEFORE INSERT OR UPDATE ON "journal_entries"
+    FOR EACH ROW
+    EXECUTE FUNCTION journal_entries_search_trigger();
+
+--bun:split
+UPDATE
+    "journal_entries"
+SET
+    search_vector = setweight(to_tsvector('english', COALESCE(entry_number, '')), 'A') || setweight(to_tsvector('english', COALESCE(reference_number, '')), 'A') || setweight(to_tsvector('english', COALESCE(description, '')), 'B');
+
+--bun:split
+-- Statistics for query optimization
+ALTER TABLE "journal_entries"
+    ALTER COLUMN "status" SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE "journal_entries"
+    ALTER COLUMN "organization_id" SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE "journal_entries"
+    ALTER COLUMN "business_unit_id" SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE "journal_entries"
+    ALTER COLUMN "fiscal_year_id" SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE "journal_entries"
+    ALTER COLUMN "fiscal_period_id" SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE "journal_entry_lines"
+    ALTER COLUMN "organization_id" SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE "journal_entry_lines"
+    ALTER COLUMN "business_unit_id" SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE "journal_entry_lines"
+    ALTER COLUMN "journal_entry_id" SET STATISTICS 1000;
+
+--bun:split
+ALTER TABLE "journal_entry_lines"
+    ALTER COLUMN "gl_account_id" SET STATISTICS 1000;

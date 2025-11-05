@@ -44,6 +44,8 @@ type RouterParams struct {
 	OrganizationHandler            *handlers.OrganizationHandler
 	FiscalYearHandler              *handlers.FiscalYearHandler
 	FiscalPeriodHandler            *handlers.FiscalPeriodHandler
+	GLAccountHandler               *handlers.GLAccountHandler
+	JournalEntryHandler            *handlers.JournalEntryHandler
 	TrailerHandler                 *handlers.TrailerHandler
 	WorkerHandler                  *handlers.WorkerHandler
 	ShipmentControlHandler         *handlers.ShipmentControlHandler
@@ -72,6 +74,7 @@ type RouterParams struct {
 	DataRetentionHandler           *handlers.DataRetentionHandler
 	ClassificationHandler          *handlers.ClassificationHandler
 	PatternConfigHandler           *handlers.PatternConfigHandler
+	AccountingControlHandler       *handlers.AccountingControlHandler
 	ErrorHandler                   *helpers.ErrorHandler
 }
 
@@ -101,6 +104,8 @@ type Router struct {
 	organizationHandler            *handlers.OrganizationHandler
 	fiscalYearHandler              *handlers.FiscalYearHandler
 	fiscalPeriodHandler            *handlers.FiscalPeriodHandler
+	glAccountHandler               *handlers.GLAccountHandler
+	journalEntryHandler            *handlers.JournalEntryHandler
 	serviceTypeHandler             *handlers.ServiceTypeHandler
 	commodityHandler               *handlers.CommodityHandler
 	googleMapsHandler              *handlers.GoogleMapsHandler
@@ -125,6 +130,7 @@ type Router struct {
 	dataRetentionHandler           *handlers.DataRetentionHandler
 	classificationHandler          *handlers.ClassificationHandler
 	patternConfigHandler           *handlers.PatternConfigHandler
+	accountingControlHandler       *handlers.AccountingControlHandler
 	errorHandler                   *helpers.ErrorHandler
 	userHandler                    *handlers.UserHandler
 	metrics                        *observability.MetricsRegistry
@@ -149,6 +155,8 @@ func NewRouter(p RouterParams) *Router {
 		commodityHandler:               p.CommodityHandler,
 		fiscalYearHandler:              p.FiscalYearHandler,
 		fiscalPeriodHandler:            p.FiscalPeriodHandler,
+		glAccountHandler:               p.GLAccountHandler,
+		journalEntryHandler:            p.JournalEntryHandler,
 		googleMapsHandler:              p.GoogleMapsHandler,
 		hazmatSegregationRuleHandler:   p.HazmatSegregationRuleHandler,
 		customerHandler:                p.CustomerHandler,
@@ -183,6 +191,7 @@ func NewRouter(p RouterParams) *Router {
 		locationCategoryHandler:        p.LocationCategoryHandler,
 		classificationHandler:          p.ClassificationHandler,
 		patternConfigHandler:           p.PatternConfigHandler,
+		accountingControlHandler:       p.AccountingControlHandler,
 		errorHandler:                   p.ErrorHandler,
 		metrics:                        p.Metrics,
 	}
@@ -324,4 +333,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.accountTypeHandler.RegisterRoutes(protected)
 	r.fiscalYearHandler.RegisterRoutes(protected)
 	r.fiscalPeriodHandler.RegisterRoutes(protected)
+	r.glAccountHandler.RegisterRoutes(protected)
+	r.journalEntryHandler.RegisterRoutes(protected)
+	r.accountingControlHandler.RegisterRoutes(protected)
 }
