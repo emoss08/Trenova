@@ -22,9 +22,16 @@ export const fiscalPeriodSchema = z
     status: FiscalPeriodStatusSchema,
     periodType: FiscalPeriodTypeSchema,
     fiscalYearId: optionalStringSchema,
-    periodNumber: z.number().int().positive().min(1, {
-      error: "Period number is required",
-    }),
+    periodNumber: z
+      .number()
+      .int()
+      .positive()
+      .min(1, {
+        error: "Period number is required",
+      })
+      .max(12, {
+        error: "Period number must be less than 12",
+      }),
     name: z
       .string()
       .min(1, {

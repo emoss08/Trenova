@@ -28,7 +28,7 @@ export function EditFiscalPeriodModal({
       title="Fiscal Period"
       queryKey="fiscal-period-list"
       formComponent={<FiscalPeriodForm />}
-      fieldKey="periodNumber"
+      fieldKey="name"
       form={form}
     />
   );
