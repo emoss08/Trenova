@@ -8,6 +8,7 @@ type Resource string
 const (
 	ResourceAccessorialCharge       Resource = "accessorial_charge"
 	ResourceAccountType             Resource = "account_type"
+	ResourceAccountingControl       Resource = "accounting_control"
 	ResourceAuditEntry              Resource = "audit_entry"
 	ResourceBillingControl          Resource = "billing_control"
 	ResourceCommodity               Resource = "commodity"
@@ -24,9 +25,11 @@ const (
 	ResourceFiscalPeriod            Resource = "fiscal_period"
 	ResourceFiscalYear              Resource = "fiscal_year"
 	ResourceFleetCode               Resource = "fleet_code"
+	ResourceGlAccount               Resource = "gl_account"
 	ResourceHazardousMaterial       Resource = "hazardous_material"
 	ResourceHazmatSegregationRule   Resource = "hazmat_segregation_rule"
 	ResourceHoldReason              Resource = "hold_reason"
+	ResourceJournalEntry            Resource = "journal_entry"
 	ResourceLocation                Resource = "location"
 	ResourceLocationCategory        Resource = "location_category"
 	ResourceOrganization            Resource = "organization"
@@ -53,7 +56,7 @@ func (r Resource) String() string {
 // IsValid checks if the Resource value is valid
 func (r Resource) IsValid() bool {
 	switch r {
-	case ResourceAccessorialCharge, ResourceAccountType, ResourceAuditEntry, ResourceBillingControl, ResourceCommodity, ResourceCustomer, ResourceDataRetention, ResourceDedicatedLane, ResourceDedicatedLaneSuggestion, ResourceDispatchControl, ResourceDistanceOverride, ResourceDocumentType, ResourceEmailProfile, ResourceEquipmentManufacturer, ResourceEquipmentType, ResourceFiscalPeriod, ResourceFiscalYear, ResourceFleetCode, ResourceHazardousMaterial, ResourceHazmatSegregationRule, ResourceHoldReason, ResourceLocation, ResourceLocationCategory, ResourceOrganization, ResourcePatternConfig, ResourceServiceType, ResourceShipment, ResourceShipmentComment, ResourceShipmentControl, ResourceShipmentType, ResourceTractor, ResourceTrailer, ResourceUser, ResourceVariable, ResourceVariableFormat, ResourceWorker, ResourceWorkerPto:
+	case ResourceAccessorialCharge, ResourceAccountType, ResourceAccountingControl, ResourceAuditEntry, ResourceBillingControl, ResourceCommodity, ResourceCustomer, ResourceDataRetention, ResourceDedicatedLane, ResourceDedicatedLaneSuggestion, ResourceDispatchControl, ResourceDistanceOverride, ResourceDocumentType, ResourceEmailProfile, ResourceEquipmentManufacturer, ResourceEquipmentType, ResourceFiscalPeriod, ResourceFiscalYear, ResourceFleetCode, ResourceGlAccount, ResourceHazardousMaterial, ResourceHazmatSegregationRule, ResourceHoldReason, ResourceJournalEntry, ResourceLocation, ResourceLocationCategory, ResourceOrganization, ResourcePatternConfig, ResourceServiceType, ResourceShipment, ResourceShipmentComment, ResourceShipmentControl, ResourceShipmentType, ResourceTractor, ResourceTrailer, ResourceUser, ResourceVariable, ResourceVariableFormat, ResourceWorker, ResourceWorkerPto:
 		return true
 	default:
 		return false
@@ -65,6 +68,7 @@ func AllResources() []Resource {
 	return []Resource{
 		ResourceAccessorialCharge,
 		ResourceAccountType,
+		ResourceAccountingControl,
 		ResourceAuditEntry,
 		ResourceBillingControl,
 		ResourceCommodity,
@@ -81,9 +85,11 @@ func AllResources() []Resource {
 		ResourceFiscalPeriod,
 		ResourceFiscalYear,
 		ResourceFleetCode,
+		ResourceGlAccount,
 		ResourceHazardousMaterial,
 		ResourceHazmatSegregationRule,
 		ResourceHoldReason,
+		ResourceJournalEntry,
 		ResourceLocation,
 		ResourceLocationCategory,
 		ResourceOrganization,

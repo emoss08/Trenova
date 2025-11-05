@@ -17,5 +17,6 @@ var Module = fx.Module("redis-repositories",
 		NewDataRetentionRepository,
 		NewHazmatExpirationRepository,
 		NewDispatchControlRepository,
+		NewAccountingControlRepository,
 	),
 )

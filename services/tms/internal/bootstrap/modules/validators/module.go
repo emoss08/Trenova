@@ -2,6 +2,7 @@ package validators
 
 import (
 	"github.com/emoss08/trenova/pkg/validator/accessorialchargevalidator"
+	"github.com/emoss08/trenova/pkg/validator/accountingcontrolvalidator"
 	"github.com/emoss08/trenova/pkg/validator/accounttypevalidator"
 	"github.com/emoss08/trenova/pkg/validator/billingcontrolvalidator"
 	"github.com/emoss08/trenova/pkg/validator/commodityvalidator"
@@ -16,9 +17,11 @@ import (
 	"github.com/emoss08/trenova/pkg/validator/fiscalyearvalidator"
 	"github.com/emoss08/trenova/pkg/validator/fleetcodevalidator"
 	"github.com/emoss08/trenova/pkg/validator/framework"
+	"github.com/emoss08/trenova/pkg/validator/glaccountvalidator"
 	"github.com/emoss08/trenova/pkg/validator/hazardousmaterialvalidator"
 	"github.com/emoss08/trenova/pkg/validator/hazmatsegregationrulevalidator"
 	"github.com/emoss08/trenova/pkg/validator/holdreasonvalidator"
+	"github.com/emoss08/trenova/pkg/validator/journalentryvalidator"
 	"github.com/emoss08/trenova/pkg/validator/locationcategoryvalidator"
 	"github.com/emoss08/trenova/pkg/validator/locationvalidator"
 	"github.com/emoss08/trenova/pkg/validator/organizationvalidator"
@@ -61,6 +64,9 @@ var Module = fx.Module("validators",
 		accounttypevalidator.NewValidator,
 		fiscalyearvalidator.NewValidator,
 		fiscalperiodvalidator.NewValidator,
+		glaccountvalidator.NewValidator,
+		accountingcontrolvalidator.NewValidator,
+		journalentryvalidator.NewValidator,
 	),
 	fx.Options(
 		framework.Module,

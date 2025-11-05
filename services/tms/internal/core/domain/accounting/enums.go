@@ -3,9 +3,15 @@ package accounting
 import "errors"
 
 var (
-	ErrInvalidFiscalYearStatus = errors.New("invalid fiscal year status")
-	ErrInvalidPeriodType       = errors.New("invalid period type")
-	ErrInvalidPeriodStatus     = errors.New("invalid period status")
+	ErrInvalidFiscalYearStatus     = errors.New("invalid fiscal year status")
+	ErrInvalidPeriodType           = errors.New("invalid period type")
+	ErrInvalidPeriodStatus         = errors.New("invalid period status")
+	ErrInvalidJournalEntryCriteria = errors.New("invalid journal entry criteria")
+	ErrInvalidThresholdAction      = errors.New("invalid threshold action")
+	ErrInvalidRevenueRecognition   = errors.New("invalid revenue recognition method")
+	ErrInvalidExpenseRecognition   = errors.New("invalid expense recognition method")
+	ErrInvalidJournalEntryStatus   = errors.New("invalid journal entry status")
+	ErrInvalidJournalEntryType     = errors.New("invalid journal entry type")
 )
 
 type Category string
@@ -191,5 +197,228 @@ func PeriodStatusFromString(periodStatus string) (PeriodStatus, error) {
 		return PeriodStatusLocked, nil
 	default:
 		return "", ErrInvalidPeriodStatus
+	}
+}
+
+type JournalEntryCriteriaType string
+
+const (
+	JournalEntryCriteriaShipmentBilled    = JournalEntryCriteriaType("Shipment_Billed")
+	JournalEntryCriteriaPaymentReceived   = JournalEntryCriteriaType("Payment_Received")
+	JournalEntryCriteriaExpenseRecognized = JournalEntryCriteriaType("Expense_Recognized")
+	JournalEntryCriteriaDeliveryComplete  = JournalEntryCriteriaType("Delivery_Complete")
+)
+
+func (j JournalEntryCriteriaType) String() string {
+	return string(j)
+}
+
+func (j JournalEntryCriteriaType) IsValid() bool {
+	switch j {
+	case JournalEntryCriteriaShipmentBilled, JournalEntryCriteriaPaymentReceived,
+		JournalEntryCriteriaExpenseRecognized, JournalEntryCriteriaDeliveryComplete:
+		return true
+	}
+	return false
+}
+
+func (j JournalEntryCriteriaType) GetDescription() string {
+	switch j {
+	case JournalEntryCriteriaShipmentBilled:
+		return "Create journal entry when shipment is billed"
+	case JournalEntryCriteriaPaymentReceived:
+		return "Create journal entry when payment is received"
+	case JournalEntryCriteriaExpenseRecognized:
+		return "Create journal entry when expense is recognized"
+	case JournalEntryCriteriaDeliveryComplete:
+		return "Create journal entry when delivery is complete"
+	default:
+		return "Unknown criteria"
+	}
+}
+
+type ThresholdActionType string
+
+const (
+	ThresholdActionWarn   = ThresholdActionType("Warn")
+	ThresholdActionBlock  = ThresholdActionType("Block")
+	ThresholdActionNotify = ThresholdActionType("Notify")
+)
+
+func (t ThresholdActionType) String() string {
+	return string(t)
+}
+
+func (t ThresholdActionType) IsValid() bool {
+	switch t {
+	case ThresholdActionWarn, ThresholdActionBlock, ThresholdActionNotify:
+		return true
+	}
+	return false
+}
+
+func (t ThresholdActionType) GetDescription() string {
+	switch t {
+	case ThresholdActionWarn:
+		return "Display warning when threshold is exceeded"
+	case ThresholdActionBlock:
+		return "Block operations when threshold is exceeded"
+	case ThresholdActionNotify:
+		return "Send notifications when threshold is exceeded"
+	default:
+		return "Unknown action"
+	}
+}
+
+type RevenueRecognitionType string
+
+const (
+	RevenueRecognitionOnDelivery = RevenueRecognitionType("On_Delivery")
+	RevenueRecognitionOnBilling  = RevenueRecognitionType("On_Billing")
+	RevenueRecognitionOnPayment  = RevenueRecognitionType("On_Payment")
+	RevenueRecognitionOnPickup   = RevenueRecognitionType("On_Pickup")
+)
+
+func (r RevenueRecognitionType) String() string {
+	return string(r)
+}
+
+func (r RevenueRecognitionType) IsValid() bool {
+	switch r {
+	case RevenueRecognitionOnDelivery, RevenueRecognitionOnBilling,
+		RevenueRecognitionOnPayment, RevenueRecognitionOnPickup:
+		return true
+	}
+	return false
+}
+
+func (r RevenueRecognitionType) GetDescription() string {
+	switch r {
+	case RevenueRecognitionOnDelivery:
+		return "Recognize revenue when goods are delivered"
+	case RevenueRecognitionOnBilling:
+		return "Recognize revenue when invoice is created"
+	case RevenueRecognitionOnPayment:
+		return "Recognize revenue when payment is received"
+	case RevenueRecognitionOnPickup:
+		return "Recognize revenue when goods are picked up"
+	default:
+		return "Unknown method"
+	}
+}
+
+type ExpenseRecognitionType string
+
+const (
+	ExpenseRecognitionOnIncurrence = ExpenseRecognitionType("On_Incurrence")
+	ExpenseRecognitionOnPayment    = ExpenseRecognitionType("On_Payment")
+	ExpenseRecognitionOnAccrual    = ExpenseRecognitionType("On_Accrual")
+)
+
+func (e ExpenseRecognitionType) String() string {
+	return string(e)
+}
+
+func (e ExpenseRecognitionType) IsValid() bool {
+	switch e {
+	case ExpenseRecognitionOnIncurrence, ExpenseRecognitionOnPayment, ExpenseRecognitionOnAccrual:
+		return true
+	}
+	return false
+}
+
+func (e ExpenseRecognitionType) GetDescription() string {
+	switch e {
+	case ExpenseRecognitionOnIncurrence:
+		return "Recognize expense when incurred"
+	case ExpenseRecognitionOnPayment:
+		return "Recognize expense when payment is made"
+	case ExpenseRecognitionOnAccrual:
+		return "Recognize expense on accrual basis"
+	default:
+		return "Unknown method"
+	}
+}
+
+type JournalEntryStatus string
+
+const (
+	JournalEntryStatusDraft    = JournalEntryStatus("Draft")
+	JournalEntryStatusPending  = JournalEntryStatus("Pending")
+	JournalEntryStatusApproved = JournalEntryStatus("Approved")
+	JournalEntryStatusPosted   = JournalEntryStatus("Posted")
+	JournalEntryStatusReversed = JournalEntryStatus("Reversed")
+	JournalEntryStatusRejected = JournalEntryStatus("Rejected")
+)
+
+func (j JournalEntryStatus) String() string {
+	return string(j)
+}
+
+func (j JournalEntryStatus) IsValid() bool {
+	switch j {
+	case JournalEntryStatusDraft, JournalEntryStatusPending, JournalEntryStatusApproved,
+		JournalEntryStatusPosted, JournalEntryStatusReversed, JournalEntryStatusRejected:
+		return true
+	}
+	return false
+}
+
+func (j JournalEntryStatus) GetDescription() string {
+	switch j {
+	case JournalEntryStatusDraft:
+		return "Entry is being created and can be edited"
+	case JournalEntryStatusPending:
+		return "Entry is pending approval"
+	case JournalEntryStatusApproved:
+		return "Entry has been approved and ready to post"
+	case JournalEntryStatusPosted:
+		return "Entry has been posted to the general ledger"
+	case JournalEntryStatusReversed:
+		return "Entry has been reversed"
+	case JournalEntryStatusRejected:
+		return "Entry has been rejected"
+	default:
+		return "Unknown status"
+	}
+}
+
+type JournalEntryType string
+
+const (
+	JournalEntryTypeStandard         = JournalEntryType("Standard")
+	JournalEntryTypeAdjusting        = JournalEntryType("Adjusting")
+	JournalEntryTypeClosing          = JournalEntryType("Closing")
+	JournalEntryTypeReversal         = JournalEntryType("Reversal")
+	JournalEntryTypeReclassification = JournalEntryType("Reclassification")
+)
+
+func (j JournalEntryType) String() string {
+	return string(j)
+}
+
+func (j JournalEntryType) IsValid() bool {
+	switch j {
+	case JournalEntryTypeStandard, JournalEntryTypeAdjusting, JournalEntryTypeClosing,
+		JournalEntryTypeReversal, JournalEntryTypeReclassification:
+		return true
+	}
+	return false
+}
+
+func (j JournalEntryType) GetDescription() string {
+	switch j {
+	case JournalEntryTypeStandard:
+		return "Standard journal entry for normal transactions"
+	case JournalEntryTypeAdjusting:
+		return "Adjusting entry for period-end adjustments"
+	case JournalEntryTypeClosing:
+		return "Closing entry for year-end closing"
+	case JournalEntryTypeReversal:
+		return "Reversal entry to reverse a previous entry"
+	case JournalEntryTypeReclassification:
+		return "Reclassification entry to move amounts between accounts"
+	default:
+		return "Unknown type"
 	}
 }

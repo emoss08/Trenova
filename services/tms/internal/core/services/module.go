@@ -2,6 +2,7 @@ package services
 
 import (
 	"github.com/emoss08/trenova/internal/core/services/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/services/accountingcontrol"
 	"github.com/emoss08/trenova/internal/core/services/accounttype"
 	"github.com/emoss08/trenova/internal/core/services/ailog"
 	"github.com/emoss08/trenova/internal/core/services/audit"
@@ -25,9 +26,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/fiscalyear"
 	"github.com/emoss08/trenova/internal/core/services/fleetcode"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplate"
+	"github.com/emoss08/trenova/internal/core/services/glaccount"
 	"github.com/emoss08/trenova/internal/core/services/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/services/hazmatsegregationrule"
 	"github.com/emoss08/trenova/internal/core/services/holdreason"
+	"github.com/emoss08/trenova/internal/core/services/journalentry"
 	"github.com/emoss08/trenova/internal/core/services/location"
 	"github.com/emoss08/trenova/internal/core/services/locationcategory"
 	"github.com/emoss08/trenova/internal/core/services/moderation"
@@ -104,5 +107,8 @@ var Module = fx.Module(
 		accounttype.NewService,
 		fiscalperiod.NewService,
 		fiscalyear.NewService,
+		glaccount.NewService,
+		journalentry.NewService,
+		accountingcontrol.NewService,
 	),
 )

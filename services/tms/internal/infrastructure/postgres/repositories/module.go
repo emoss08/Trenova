@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accountingcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accounttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/additionalchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ailogrepository"
@@ -22,10 +23,12 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalyearrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fleetcoderepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/formulatemplaterepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/glaccountrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazardousmaterialrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazmatexpirationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/hazmatsegregationrulerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/holdreasonrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/journalentryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationcategoryrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/locationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/m2msync"
@@ -102,5 +105,8 @@ var Module = fx.Module("postgres-repositories",
 		accounttyperepository.NewRepository,
 		fiscalyearrepository.NewRepository,
 		fiscalperiodrepository.NewRepository,
+		glaccountrepository.NewRepository,
+		journalentryrepository.NewRepository,
+		accountingcontrolrepository.NewRepository,
 	),
 )

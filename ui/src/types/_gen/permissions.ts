@@ -24,6 +24,7 @@ export const PermissionOperations = {
   IMPORT: 32,  // Import
   APPROVE: 64,  // Approve
   REJECT: 128,  // Reject
+  SUBMIT: 4096,  // Submit
   ASSIGN: 16384,  // Assign
   DUPLICATE: 32768,  // Duplicate
   CLOSE: 65536,  // Close
@@ -126,6 +127,55 @@ export const AccountTypeMetadata = {
   ],
   compositeOperations: {
     manage: 55,
+    read_only: 2,
+  },
+} as const;
+
+/**
+ * Permission metadata for AccountingControl
+ */
+export const AccountingControlMetadata = {
+  resourceName: 'accounting_control',
+  operations: [
+    {
+      code: 1,
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new accounting control to the database',
+    },
+    {
+      code: 2,
+      name: 'read',
+      displayName: 'Read',
+      description: 'View accounting control information',
+    },
+    {
+      code: 4,
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify accounting control details',
+    },
+    {
+      code: 8,
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove accounting control',
+    },
+    {
+      code: 16,
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export accounting control data for operational reporting',
+    },
+    {
+      code: 32,
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import accounting control from other sources',
+    },
+  ],
+  compositeOperations: {
+    manage: 63,
     read_only: 2,
   },
 } as const;
@@ -927,6 +977,55 @@ export const FleetCodeMetadata = {
 } as const;
 
 /**
+ * Permission metadata for GlAccount
+ */
+export const GlAccountMetadata = {
+  resourceName: 'gl_account',
+  operations: [
+    {
+      code: 1,
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new GL accounts to the chart of accounts',
+    },
+    {
+      code: 2,
+      name: 'read',
+      displayName: 'Read',
+      description: 'View GL account information',
+    },
+    {
+      code: 4,
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify GL account details',
+    },
+    {
+      code: 8,
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove GL accounts from the system',
+    },
+    {
+      code: 16,
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export chart of accounts data',
+    },
+    {
+      code: 32,
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import chart of accounts from templates or other sources',
+    },
+  ],
+  compositeOperations: {
+    manage: 63,
+    read_only: 2,
+  },
+} as const;
+
+/**
  * Permission metadata for HazardousMaterial
  */
 export const HazardousMaterialMetadata = {
@@ -1073,6 +1172,75 @@ export const HoldReasonMetadata = {
   ],
   compositeOperations: {
     manage: 63,
+    read_only: 2,
+  },
+} as const;
+
+/**
+ * Permission metadata for JournalEntry
+ */
+export const JournalEntryMetadata = {
+  resourceName: 'journal_entry',
+  operations: [
+    {
+      code: 1,
+      name: 'create',
+      displayName: 'Create',
+      description: 'Create new journal entries',
+    },
+    {
+      code: 2,
+      name: 'read',
+      displayName: 'Read',
+      description: 'View journal entry information',
+    },
+    {
+      code: 4,
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify journal entry details',
+    },
+    {
+      code: 8,
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Delete draft journal entries',
+    },
+    {
+      code: 16,
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export journal entries data',
+    },
+    {
+      code: 32,
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import journal entries from external sources',
+    },
+    {
+      code: 64,
+      name: 'approve',
+      displayName: 'Approve',
+      description: 'Approve journal entries for posting',
+    },
+    {
+      code: 128,
+      name: 'reject',
+      displayName: 'Reject',
+      description: 'Reject journal entries',
+    },
+    {
+      code: 4096,
+      name: 'submit',
+      displayName: 'Submit',
+      description: 'Submit journal entries for approval',
+    },
+  ],
+  compositeOperations: {
+    approver: 194,
+    creator: 4111,
+    manage: 4351,
     read_only: 2,
   },
 } as const;
@@ -1909,6 +2077,27 @@ export const useAccountTypePermissions = () => {
 };
 
 /**
+ * React hook for AccountingControl permissions
+ * @example
+ * const perms = useAccountingControlPermissions();
+ * if (perms.canCreate) { ... }
+ */
+export const useAccountingControlPermissions = () => {
+  const { can } = usePermissions();
+
+  return {
+    canCreate: can('accounting_control', 'create'),
+    canRead: can('accounting_control', 'read'),
+    canUpdate: can('accounting_control', 'update'),
+    canDelete: can('accounting_control', 'delete'),
+    canExport: can('accounting_control', 'export'),
+    canImport: can('accounting_control', 'import'),
+    hasManage: can('accounting_control', 'manage'),
+    hasReadOnly: can('accounting_control', 'read_only'),
+  };
+};
+
+/**
  * React hook for AuditEntry permissions
  * @example
  * const perms = useAuditEntryPermissions();
@@ -2252,6 +2441,27 @@ export const useFleetCodePermissions = () => {
 };
 
 /**
+ * React hook for GlAccount permissions
+ * @example
+ * const perms = useGlAccountPermissions();
+ * if (perms.canCreate) { ... }
+ */
+export const useGlAccountPermissions = () => {
+  const { can } = usePermissions();
+
+  return {
+    canCreate: can('gl_account', 'create'),
+    canRead: can('gl_account', 'read'),
+    canUpdate: can('gl_account', 'update'),
+    canDelete: can('gl_account', 'delete'),
+    canExport: can('gl_account', 'export'),
+    canImport: can('gl_account', 'import'),
+    hasManage: can('gl_account', 'manage'),
+    hasReadOnly: can('gl_account', 'read_only'),
+  };
+};
+
+/**
  * React hook for HazardousMaterial permissions
  * @example
  * const perms = useHazardousMaterialPermissions();
@@ -2315,6 +2525,32 @@ export const useHoldReasonPermissions = () => {
     canImport: can('hold_reason', 'import'),
     hasManage: can('hold_reason', 'manage'),
     hasReadOnly: can('hold_reason', 'read_only'),
+  };
+};
+
+/**
+ * React hook for JournalEntry permissions
+ * @example
+ * const perms = useJournalEntryPermissions();
+ * if (perms.canCreate) { ... }
+ */
+export const useJournalEntryPermissions = () => {
+  const { can } = usePermissions();
+
+  return {
+    canCreate: can('journal_entry', 'create'),
+    canRead: can('journal_entry', 'read'),
+    canUpdate: can('journal_entry', 'update'),
+    canDelete: can('journal_entry', 'delete'),
+    canExport: can('journal_entry', 'export'),
+    canImport: can('journal_entry', 'import'),
+    canApprove: can('journal_entry', 'approve'),
+    canReject: can('journal_entry', 'reject'),
+    canSubmit: can('journal_entry', 'submit'),
+    hasApprover: can('journal_entry', 'approver'),
+    hasCreator: can('journal_entry', 'creator'),
+    hasManage: can('journal_entry', 'manage'),
+    hasReadOnly: can('journal_entry', 'read_only'),
   };
 };
 
@@ -2664,6 +2900,7 @@ export const isValidResource = (resource: string): boolean => {
   return [
     'accessorial_charge',
     'account_type',
+    'accounting_control',
     'audit_entry',
     'billing_control',
     'commodity',
@@ -2680,9 +2917,11 @@ export const isValidResource = (resource: string): boolean => {
     'fiscal_period',
     'fiscal_year',
     'fleet_code',
+    'gl_account',
     'hazardous_material',
     'hazmat_segregation_rule',
     'hold_reason',
+    'journal_entry',
     'location',
     'location_category',
     'organization',

@@ -197,5 +197,13 @@ var RegistryModule = fx.Module("permission-registry",
 			accounting.NewGLAccountPermission,
 			fx.ResultTags(`group:"permission_entities"`),
 		),
+		fx.Annotate(
+			accounting.NewAccountingControlPermission,
+			fx.ResultTags(`group:"permission_entities"`),
+		),
+		fx.Annotate(
+			accounting.NewAccountTypePermission,
+			fx.ResultTags(`group:"permission_entities"`),
+		),
 	),
 )
