@@ -93,6 +93,7 @@ func RegisterEntities() []any {
 		&accounting.AccountType{},
 		&accounting.FiscalYear{},
 		&accounting.FiscalPeriod{},
+		&accounting.GLAccount{},
 	}
 }
 
@@ -135,5 +136,6 @@ func RegisterPermissionAwareEntities() []PermissionAware {
 		accounting.NewAccountTypePermission(),
 		accounting.NewFiscalYearPermission(),
 		accounting.NewFiscalPeriodPermission(),
+		accounting.NewGLAccountPermission(),
 	}
 }
