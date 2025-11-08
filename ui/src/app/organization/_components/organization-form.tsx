@@ -193,16 +193,6 @@ function GeneralForm() {
               description="Primary timezone for operations, scheduling, and reporting activities"
             />
           </FormControl>
-          <FormControl>
-            <InputField
-              control={control}
-              name="id"
-              label="Organization ID"
-              readOnly
-              placeholder="Enter organization ID"
-              description="System-generated unique identifier for this organization"
-            />
-          </FormControl>
           <CopyText label="Organization ID" value={getValues("id") ?? ""} />
           <CopyText
             label="Parent Business Unit ID"
