@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { CopyText } from "@/components/ui/copy-text";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { DataTablePermissionDeniedSkeleton } from "@/components/ui/permission-skeletons";
 import { broadcastQueryInvalidation } from "@/hooks/use-invalidate-query";
@@ -154,7 +155,7 @@ export default function OrganizationForm() {
 }
 
 function GeneralForm() {
-  const { control } = useFormContext();
+  const { control, getValues } = useFormContext();
 
   return (
     <Card>
@@ -202,16 +203,11 @@ function GeneralForm() {
               description="System-generated unique identifier for this organization"
             />
           </FormControl>
-          <FormControl>
-            <InputField
-              control={control}
-              name="businessUnitId"
-              label="Parent Business Unit ID"
-              readOnly
-              placeholder="Enter parent business unit ID"
-              description="Identifier for associated parent business unit in the corporate hierarchy"
-            />
-          </FormControl>
+          <CopyText label="Organization ID" value={getValues("id") ?? ""} />
+          <CopyText
+            label="Parent Business Unit ID"
+            value={getValues("businessUnitId") ?? ""}
+          />
         </FormGroup>
       </CardContent>
     </Card>
