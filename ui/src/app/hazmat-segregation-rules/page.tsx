@@ -25,7 +25,7 @@ export function HazmatSegregationRules() {
 
 function Header() {
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex items-center justify-between">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">
           Hazmat Segregation Rules

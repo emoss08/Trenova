@@ -43,7 +43,7 @@ export function FiscalYearForm({ isCreate = false }: { isCreate?: boolean }) {
   return (
     <div className="flex flex-col">
       {/* Basic Information */}
-      <FormGroup cols={2} className="pb-2 border-b">
+      <FormGroup cols={2} className="border-b pb-2">
         <FormControl>
           <SelectField
             control={control}
@@ -98,7 +98,7 @@ export function FiscalYearForm({ isCreate = false }: { isCreate?: boolean }) {
       <FormSection
         title="Date Configuration"
         description="Define the fiscal period and calendar year settings"
-        className="py-2 border-b"
+        className="border-b py-2"
       >
         <FormGroup cols={1}>
           <FormControl>
@@ -145,7 +145,7 @@ export function FiscalYearForm({ isCreate = false }: { isCreate?: boolean }) {
       <FormSection
         title="Financial Planning"
         description="Budget and tax reporting configuration"
-        className="py-2 border-b"
+        className="border-b py-2"
       >
         <FormGroup cols={2}>
           <FormControl>
@@ -177,7 +177,7 @@ export function FiscalYearForm({ isCreate = false }: { isCreate?: boolean }) {
       <FormSection
         title="Year-End Settings"
         description="Post-close adjustment configuration"
-        className={!isCreate ? "py-2 border-b" : "py-2"}
+        className={!isCreate ? "border-b py-2" : "py-2"}
       >
         <FormGroup cols={2}>
           <FormControl cols="full">

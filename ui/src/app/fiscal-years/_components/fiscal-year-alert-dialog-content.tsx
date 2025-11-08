@@ -62,8 +62,8 @@ export function FiscalYearCloseAlertDialogContent({
           <AlertDialogDescription />
         </VisuallyHidden>
         {record && record.endDate > today && (
-          <div className="flex bg-yellow-500/10 border border-yellow-600/50 p-4 rounded-md justify-between items-center mb-4 w-full">
-            <div className="flex items-center gap-3 w-full text-yellow-600">
+          <div className="mb-4 flex w-full items-center justify-between rounded-md border border-yellow-600/50 bg-yellow-500/10 p-4">
+            <div className="flex w-full items-center gap-3 text-yellow-600">
               <div className="flex flex-col">
                 <p className="text-sm font-medium">Early Close Warning</p>
                 <div className="flex flex-col gap-1 text-xs dark:text-yellow-100">
@@ -91,7 +91,7 @@ export function FiscalYearCloseAlertDialogContent({
             This prevent new transactions. Only adjusting entries will be
             allowed.
           </p>
-          <ul className="list-disc list-inside">
+          <ul className="list-inside list-disc">
             <li>All shipments are billed</li>
             <li>Depreciation is posted</li>
             <li>Bank reconciliation complete</li>
@@ -159,7 +159,7 @@ export function FiscalYearLockAlertDialogContent({
             transactions or adjustments will be allowed.
           </p>
           <p>This is typically done after:</p>
-          <ul className="list-disc list-inside">
+          <ul className="list-inside list-disc">
             <li>Audit completion</li>
             <li>Final management review</li>
             <li>All adjustments finalized</li>
@@ -224,8 +224,8 @@ export function FiscalYearUnlockAlertDialogContent({
           <AlertDialogDescription />
         </VisuallyHidden>
 
-        <div className="flex bg-red-500/10 border border-red-600/50 p-4 rounded-md justify-between items-center w-full">
-          <div className="flex items-center gap-3 w-full text-red-600">
+        <div className="flex w-full items-center justify-between rounded-md border border-red-600/50 bg-red-500/10 p-4">
+          <div className="flex w-full items-center gap-3 text-red-600">
             <div className="flex flex-col">
               <p className="text-sm font-semibold">
                 Administrative Action Required!
@@ -249,7 +249,7 @@ export function FiscalYearUnlockAlertDialogContent({
             <p className="font-semibold text-foreground">
               Typical reasons for unlocking:
             </p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-2">
+            <ul className="ml-2 list-inside list-disc space-y-1 text-muted-foreground">
               <li>Audit adjustments required after lock</li>
               <li>Correction of material accounting errors</li>
               <li>Regulatory compliance requirements</li>
@@ -257,9 +257,9 @@ export function FiscalYearUnlockAlertDialogContent({
             </ul>
           </div>
 
-          <div className="space-y-2 mt-4">
+          <div className="mt-4 space-y-2">
             <p className="font-semibold text-foreground">After unlocking:</p>
-            <ul className="list-disc list-inside text-muted-foreground space-y-1 ml-2">
+            <ul className="ml-2 list-inside list-disc space-y-1 text-muted-foreground">
               <li>Adjusting entries can be posted (if enabled)</li>
               <li>Financial reports may need regeneration</li>
               <li>The year should be re-locked after corrections</li>
@@ -267,7 +267,7 @@ export function FiscalYearUnlockAlertDialogContent({
             </ul>
           </div>
 
-          <div className="mt-4 p-3 bg-muted rounded-md">
+          <div className="mt-4 rounded-md bg-muted p-3">
             <p className="text-xs text-muted-foreground">
               <strong>Note:</strong> This action requires administrator
               privileges and will be recorded in the audit log with your user ID

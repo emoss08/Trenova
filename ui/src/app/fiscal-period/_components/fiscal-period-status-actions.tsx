@@ -109,7 +109,7 @@ function CloseDialog({
           <p className="text-sm text-muted-foreground">
             Closing this period will:
           </p>
-          <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+          <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
             <li>Prevent new transactions from being posted</li>
             <li>Require reopening to make any changes</li>
             <li>Enable locking once all reconciliations are complete</li>
@@ -185,12 +185,12 @@ function ReopenDialog({
           <p className="text-sm text-muted-foreground">
             Reopening this period will:
           </p>
-          <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+          <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
             <li>Allow new transactions to be posted</li>
             <li>Enable edits to existing entries</li>
             <li>Require reclosing before locking</li>
           </ul>
-          <p className="font-semibold text-warning">
+          <p className="font-semibold text-yellow-500">
             This action should only be taken when adjustments are necessary.
           </p>
         </AlertDialogDescription>
@@ -260,7 +260,7 @@ function LockDialog({
           <p className="text-sm text-muted-foreground">
             Locking this period will:
           </p>
-          <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+          <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
             <li>Permanently prevent all changes</li>
             <li>Finalize all financial data</li>
             <li>Require special permission to unlock</li>
@@ -337,7 +337,7 @@ function UnlockDialog({
           <p className="text-sm text-muted-foreground">
             Unlocking this period will:
           </p>
-          <ul className="list-disc list-inside text-sm text-muted-foreground space-y-1">
+          <ul className="list-inside list-disc space-y-1 text-sm text-muted-foreground">
             <li>Return the period to Closed status</li>
             <li>Allow reopening if needed</li>
             <li>Require manager approval</li>

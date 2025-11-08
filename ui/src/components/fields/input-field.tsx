@@ -93,7 +93,7 @@ export function InputField<T extends FieldValues>({
                 showCharacterLimit ? (
                   <div
                     id={`${inputId}-description`}
-                    className="text-muted-foreground pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-xs tabular-nums peer-disabled:opacity-50"
+                    className="pointer-events-none absolute inset-y-0 end-0 flex items-center justify-center pe-3 text-xs text-muted-foreground tabular-nums peer-disabled:opacity-50"
                     aria-live="polite"
                     role="status"
                   >
@@ -182,7 +182,7 @@ export function DoubleClickInput<T extends Record<string, any>>({
           onKeyDown={handleKeyDown}
         />
       ) : (
-        <div className="flex items-center w-full gap-x-1.5">
+        <div className="flex w-full items-center gap-x-1.5">
           <span
             className={cn(
               "text-sm flex-grow text-blue-500 underline",

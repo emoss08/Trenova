@@ -78,7 +78,7 @@ function HazmatSegregationRuleNotice() {
         </div>
         <Button
           variant="ghost"
-          className="group -my-1.5 -me-2 size-8 shrink-0 p-0 bg-amber-600/20 hover:bg-amber-600/30"
+          className="group -my-1.5 -me-2 size-8 shrink-0 bg-amber-600/20 p-0 hover:bg-amber-600/30"
           onClick={dismiss}
           aria-label="Close banner"
         >

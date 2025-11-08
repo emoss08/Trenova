@@ -75,17 +75,17 @@ export function getColumns(): ColumnDef<FiscalPeriodSchema>[] {
       cell: ({ row }) => {
         const { startDate, endDate } = row.original;
         return (
-          <div className="flex flex-row gap-0.5 cursor-default items-center justify-start">
+          <div className="flex cursor-default flex-row items-center justify-start gap-0.5">
             <HoverCardTimestamp
               timestamp={startDate}
               showTime={false}
-              className="underline hover:no-underline decoration-dotted"
+              className="underline decoration-dotted hover:no-underline"
             />
             <DashIcon />
             <HoverCardTimestamp
               timestamp={endDate}
               showTime={false}
-              className="underline hover:no-underline decoration-dotted"
+              className="underline decoration-dotted hover:no-underline"
             />
           </div>
         );

@@ -9,10 +9,7 @@ import {
 } from "@/lib/choices";
 import { FiscalPeriodSchema } from "@/lib/schemas/fiscal-period-schema";
 import { FiscalYearStatusSchema } from "@/lib/schemas/fiscal-year-schema";
-import { useQuery } from "@tanstack/react-query";
 import { useFormContext, useWatch } from "react-hook-form";
-import { useAuthStore } from "@/stores/auth-store";
-import { fetchData } from "@/services/api-service";
 
 export function FiscalPeriodForm({ isCreate = false }: { isCreate?: boolean }) {
   const { control } = useFormContext<FiscalPeriodSchema>();
@@ -23,7 +20,7 @@ export function FiscalPeriodForm({ isCreate = false }: { isCreate?: boolean }) {
 
   return (
     <div className="flex flex-col">
-      <FormGroup cols={2} className="pb-2 border-b">
+      <FormGroup cols={2} className="border-b pb-2">
         <FormControl>
           <SelectField
             control={control}
@@ -79,7 +76,7 @@ export function FiscalPeriodForm({ isCreate = false }: { isCreate?: boolean }) {
       <FormSection
         title="Date Configuration"
         description="Define the fiscal period and calendar year settings"
-        className="py-2 border-b"
+        className="border-b py-2"
       >
         <FormGroup cols={2}>
           <FormControl>
