@@ -53,6 +53,12 @@ export const queries = createQueryKeyStore({
         return await api.accountingControl.get();
       },
     }),
+    getUserPreference: () => ({
+      queryKey: ["userPreference"],
+      queryFn: async () => {
+        return await api.userPreference.get();
+      },
+    }),
     getDispatchControl: () => ({
       queryKey: ["dispatchControl"],
       queryFn: async () => {

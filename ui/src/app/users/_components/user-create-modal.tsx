@@ -6,10 +6,9 @@
 import { Button } from "@/components/ui/button";
 import { FormCreateModal } from "@/components/ui/form-create-modal";
 import { Icon } from "@/components/ui/icons";
-import { USER_CREATE_NOTICE_KEY } from "@/constants/env";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 import { userSchema } from "@/lib/schemas/user-schema";
 import { TIMEZONES } from "@/lib/timezone/timezone";
+import { useNotice } from "@/stores/user-preference-store";
 import { useUser } from "@/stores/user-store";
 import { Status } from "@/types/common";
 import type { TableSheetProps } from "@/types/data-table";
@@ -62,16 +61,9 @@ export function CreateUserModal({ open, onOpenChange }: TableSheetProps) {
 }
 
 function UserCreateNotice() {
-  const [noticeVisible, setNoticeVisible] = useLocalStorage(
-    USER_CREATE_NOTICE_KEY,
-    true,
-  );
+  const { isDismissed, dismiss } = useNotice("user-create-notice");
 
-  const handleClose = () => {
-    setNoticeVisible(false);
-  };
-
-  return noticeVisible ? (
+  return !isDismissed ? (
     <div className="bg-purple-500/20 px-4 py-3 text-purple-500">
       <div className="flex gap-2">
         <div className="flex grow gap-3">
@@ -91,7 +83,7 @@ function UserCreateNotice() {
         <Button
           variant="ghost"
           className="group -my-1.5 -me-2 size-8 shrink-0 p-0 hover:bg-transparent"
-          onClick={handleClose}
+          onClick={dismiss}
           aria-label="Close banner"
         >
           <Icon

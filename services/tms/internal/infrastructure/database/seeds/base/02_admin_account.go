@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/domain/userpreference"
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/infrastructure/database/common"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -132,6 +133,22 @@ func (s *AdminAccountSeed) Run(
 
 			if _, err = db.NewInsert().Model(adminUser).Exec(ctx); err != nil {
 				return fmt.Errorf("create admin user: %w", err)
+			}
+
+			userPreference := &userpreference.UserPreference{
+				UserID:         adminUser.ID,
+				OrganizationID: organization.ID,
+				BusinessUnitID: businessUnit.ID,
+				Preferences: userpreference.PreferenceData{
+					DismissedNotices: []string{},
+					DismissedDialogs: []string{},
+					UISettings:       make(map[string]any),
+				},
+				CreatedAt: utils.NowUnix(),
+				UpdatedAt: utils.NowUnix(),
+			}
+			if _, err = db.NewInsert().Model(userPreference).Exec(ctx); err != nil {
+				return fmt.Errorf("create user preference: %w", err)
 			}
 
 			adminPolicy, adminRole, err := s.createAdminPermissions(

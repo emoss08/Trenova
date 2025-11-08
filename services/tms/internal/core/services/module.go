@@ -47,6 +47,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/tractor"
 	"github.com/emoss08/trenova/internal/core/services/trailer"
 	"github.com/emoss08/trenova/internal/core/services/user"
+	"github.com/emoss08/trenova/internal/core/services/userpreference"
 	"github.com/emoss08/trenova/internal/core/services/usstate"
 	"github.com/emoss08/trenova/internal/core/services/variable"
 	"github.com/emoss08/trenova/internal/core/services/websocket"
@@ -110,5 +111,6 @@ var Module = fx.Module(
 		glaccount.NewService,
 		journalentry.NewService,
 		accountingcontrol.NewService,
+		userpreference.NewService,
 	),
 )

@@ -48,6 +48,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tableconfigurationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tractorrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/trailerrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/userpreferencerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/userrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/usstaterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/variablerepository"
@@ -108,5 +109,6 @@ var Module = fx.Module("postgres-repositories",
 		glaccountrepository.NewRepository,
 		journalentryrepository.NewRepository,
 		accountingcontrolrepository.NewRepository,
+		userpreferencerepository.NewRepository,
 	),
 )

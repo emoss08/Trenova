@@ -2,6 +2,7 @@ import { ChangePasswordDialog } from "@/app/auth/_components/change-password-dia
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useAuth } from "@/hooks/use-auth";
 import { useQueryInvalidationListener } from "@/hooks/use-invalidate-query";
+import { useInitializeUserPreferences } from "@/stores/user-preference-store";
 import { useUser } from "@/stores/user-store";
 import React, { useState } from "react";
 import { Outlet } from "react-router";
@@ -19,6 +20,7 @@ export function MainLayout() {
 
   useAuth();
   useQueryInvalidationListener();
+  useInitializeUserPreferences();
 
   return (
     <>

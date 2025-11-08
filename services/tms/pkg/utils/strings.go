@@ -234,6 +234,25 @@ func MergeStringSlices(a, b []string) []string {
 	return result
 }
 
+func MergeUniqueStringSlices(a, b []string) []string {
+	seen := make(map[string]bool)
+
+	for _, s := range a {
+		seen[s] = true
+	}
+
+	for _, s := range b {
+		seen[s] = true
+	}
+
+	result := make([]string, 0, len(seen))
+	for s := range seen {
+		result = append(result, s)
+	}
+
+	return result
+}
+
 func RemoveString(slice []string, item string) []string {
 	result := make([]string, 0, len(slice))
 

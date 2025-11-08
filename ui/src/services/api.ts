@@ -38,6 +38,7 @@ import { ShipmentControlAPI } from "./shipment-control";
 import { TableConfigurationAPI } from "./table-configuration";
 import { UsStateAPI } from "./us-state";
 import { UserAPI } from "./user";
+import { UserPreferenceAPI } from "./user-preference";
 import { VariableAPI } from "./variable";
 import { WorkerAPI } from "./worker";
 
@@ -93,6 +94,7 @@ class API {
   fiscalPeriod: FiscalPeriodAPI;
   distanceOverride: DistanceOverrideAPI;
   search: SearchAPI;
+  userPreference: UserPreferenceAPI;
   constructor() {
     this.assignments = new AssignmentsAPI();
     this.auth = new AuthAPI();
@@ -135,6 +137,7 @@ class API {
     this.fiscalYear = new FiscalYearAPI();
     this.fiscalPeriod = new FiscalPeriodAPI();
     this.accountingControl = new AccountingControlAPI();
+    this.userPreference = new UserPreferenceAPI();
   }
 }
 

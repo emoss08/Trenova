@@ -75,6 +75,7 @@ type RouterParams struct {
 	ClassificationHandler          *handlers.ClassificationHandler
 	PatternConfigHandler           *handlers.PatternConfigHandler
 	AccountingControlHandler       *handlers.AccountingControlHandler
+	UserPreferenceHandler          *handlers.UserPreferenceHandler
 	ErrorHandler                   *helpers.ErrorHandler
 }
 
@@ -131,6 +132,7 @@ type Router struct {
 	classificationHandler          *handlers.ClassificationHandler
 	patternConfigHandler           *handlers.PatternConfigHandler
 	accountingControlHandler       *handlers.AccountingControlHandler
+	userPreferenceHandler          *handlers.UserPreferenceHandler
 	errorHandler                   *helpers.ErrorHandler
 	userHandler                    *handlers.UserHandler
 	metrics                        *observability.MetricsRegistry
@@ -192,6 +194,7 @@ func NewRouter(p RouterParams) *Router {
 		classificationHandler:          p.ClassificationHandler,
 		patternConfigHandler:           p.PatternConfigHandler,
 		accountingControlHandler:       p.AccountingControlHandler,
+		userPreferenceHandler:          p.UserPreferenceHandler,
 		errorHandler:                   p.ErrorHandler,
 		metrics:                        p.Metrics,
 	}
@@ -336,4 +339,5 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.glAccountHandler.RegisterRoutes(protected)
 	r.journalEntryHandler.RegisterRoutes(protected)
 	r.accountingControlHandler.RegisterRoutes(protected)
+	r.userPreferenceHandler.RegisterRoutes(protected)
 }

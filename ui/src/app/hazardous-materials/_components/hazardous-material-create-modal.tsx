@@ -2,9 +2,8 @@ import { Button } from "@/components/ui/button";
 import { FormCreateModal } from "@/components/ui/form-create-modal";
 import { Icon } from "@/components/ui/icons";
 import { ExternalLink } from "@/components/ui/link";
-import { HAZARDOUS_MATERIAL_NOTICE_KEY } from "@/constants/env";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 import { hazardousMaterialSchema } from "@/lib/schemas/hazardous-material-schema";
+import { useNotice } from "@/stores/user-preference-store";
 import { Status } from "@/types/common";
 import { type TableSheetProps } from "@/types/data-table";
 import {
@@ -53,16 +52,9 @@ export function CreateHazardousMaterialModal({
 }
 
 function HazardousMaterialNotice() {
-  const [noticeVisible, setNoticeVisible] = useLocalStorage(
-    HAZARDOUS_MATERIAL_NOTICE_KEY,
-    true,
-  );
+  const { isDismissed, dismiss } = useNotice("hazardous-material-notice");
 
-  const handleClose = () => {
-    setNoticeVisible(false);
-  };
-
-  return noticeVisible ? (
+  return !isDismissed ? (
     <div className="bg-muted px-4 py-3 text-foreground">
       <div className="flex gap-2">
         <div className="flex grow gap-3">
@@ -86,7 +78,7 @@ function HazardousMaterialNotice() {
         <Button
           variant="secondary"
           className="group -my-1.5 -me-2 size-8 shrink-0 p-0"
-          onClick={handleClose}
+          onClick={dismiss}
           aria-label="Close banner"
           tabIndex={-1}
         >

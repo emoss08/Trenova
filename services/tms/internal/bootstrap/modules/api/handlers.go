@@ -55,4 +55,5 @@ var HandlerModule = fx.Module("api-handlers", fx.Provide(
 	handlers.NewGLAccountHandler,
 	handlers.NewJournalEntryHandler,
 	handlers.NewAccountingControlHandler,
+	handlers.NewUserPreferenceHandler,
 ))

@@ -9,22 +9,17 @@ export const MOVE_DELETE_DIALOG_KEY = import.meta.env
   .VITE_MOVE_DELETE_DIALOG_KEY as string;
 export const COMMODITY_DELETE_DIALOG_KEY = import.meta.env
   .VITE_COMMODITY_DELETE_DIALOG_KEY as string;
-export const HAZARDOUS_MATERIAL_NOTICE_KEY = import.meta.env
-  .VITE_HAZARDOUS_MATERIAL_NOTICE_KEY as string;
+
 export const GOOGLE_MAPS_NOTICE_KEY = import.meta.env
   .VITE_GOOGLE_MAPS_NOTICE_KEY as string;
 export const RESEND_ALERT_KEY = import.meta.env
   .VITE_RESEND_NOTICE_KEY as string;
-export const HAZMAT_SEGREGATION_RULE_NOTICE_KEY = import.meta.env
-  .VITE_HAZMAT_SEGREGATION_RULE_NOTICE_KEY as string;
 export const USER_CREATE_NOTICE_KEY = import.meta.env
   .VITE_USER_CREATE_NOTICE_KEY as string;
 export const STOP_DIALOG_NOTICE_KEY = import.meta.env
   .VITE_STOP_DIALOG_NOTICE_KEY as string;
 export const ADDITIONAL_CHARGE_DELETE_DIALOG_KEY = import.meta.env
   .VITE_ADDITIONAL_CHARGE_DELETE_DIALOG_KEY as string;
-export const SITE_SEARCH_RECENT_SEARCHES_KEY = import.meta.env
-  .VITE_SITE_SEARCH_RECENT_SEARCHES_KEY as string;
 export const SHOW_FAVORITES_KEY = import.meta.env
   .VITE_SHOW_FAVORITES_KEY as string;
 export const PTO_COLOR_SCHEME_KEY = import.meta.env
