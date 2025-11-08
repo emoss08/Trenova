@@ -4,3 +4,9 @@ export type UserSelectOptionResponse = {
   emailAddress: string;
   profilePicUrl: string;
 };
+
+export type GLAccountSelectOptionResponse = {
+  id: string;
+  accountCode: string;
+  name: string;
+};

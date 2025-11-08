@@ -8,6 +8,16 @@ import (
 	"github.com/emoss08/trenova/pkg/pulid"
 )
 
+type GLAccountSelectOptionsRequest struct {
+	*pagination.SelectQueryOptions
+}
+
+type GLAccountSelectOptionResponse struct {
+	ID          pulid.ID `json:"id"          form:"id"          bun:"id"`
+	AccountCode string   `json:"accountCode" form:"accountCode" bun:"account_code"`
+	Name        string   `json:"name"        form:"name"        bun:"name"`
+}
+
 type GLAccountFilterOptions struct {
 	IncludeAccountType bool   `form:"includeAccountType"`
 	IncludeParent      bool   `form:"includeParent"`
@@ -87,6 +97,14 @@ type GLAccountRepository interface {
 		ctx context.Context,
 		opts *ListGLAccountRequest,
 	) (*pagination.ListResult[*accounting.GLAccount], error)
+	GetOption(
+		ctx context.Context,
+		req GetGLAccountByIDRequest,
+	) (*accounting.GLAccount, error)
+	SelectOptions(
+		ctx context.Context,
+		req GLAccountSelectOptionsRequest,
+	) ([]*GLAccountSelectOptionResponse, error)
 	GetByID(
 		ctx context.Context,
 		opts *GetGLAccountByIDRequest,

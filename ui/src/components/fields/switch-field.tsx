@@ -15,6 +15,7 @@ export function SwitchField<T extends FieldValues>({
   recommended,
   readOnly,
   position = "right",
+  className,
   "aria-describedby": ariaDescribedBy,
   ...props
 }: SwitchFieldProps<T>) {
@@ -36,6 +37,7 @@ export function SwitchField<T extends FieldValues>({
             "relative flex w-full items-start gap-2 rounded-md p-3",
             outlined &&
               "border border-muted-foreground/20 has-data-[state=checked]:border-foreground has-data-[state=checked]:ring-4 has-data-[state=checked]:ring-foreground/20 bg-primary/5 transition-[border-color,box-shadow] duration-200 ease-in-out",
+            className,
           )}
         >
           {position === "left" && (

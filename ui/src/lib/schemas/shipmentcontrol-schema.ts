@@ -1,8 +1,8 @@
 import * as z from "zod";
 import {
-    optionalStringSchema,
-    timestampSchema,
-    versionSchema,
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
 } from "./helpers";
 
 export const shipmentControlSchema = z

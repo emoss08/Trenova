@@ -33,6 +33,69 @@ func NewRepository(p Params) repositories.GLAccountRepository {
 	}
 }
 
+func (r *repository) GetOption(
+	ctx context.Context,
+	req repositories.GetGLAccountByIDRequest,
+) (*accounting.GLAccount, error) {
+	db, err := r.db.DB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	entity := new(accounting.GLAccount)
+	if err = db.NewSelect().Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("gla.id = ?", req.GLAccountID).
+				Where("gla.organization_id = ?", req.OrgID).
+				Where("gla.business_unit_id = ?", req.BuID)
+		}).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req repositories.GLAccountSelectOptionsRequest,
+) ([]*repositories.GLAccountSelectOptionResponse, error) {
+	log := r.l.With(
+		zap.String("operation", "SelectOptions"),
+		zap.Any("req", req),
+	)
+
+	db, err := r.db.DB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	entities := make([]*repositories.GLAccountSelectOptionResponse, 0)
+	q := db.NewSelect().Model((*accounting.GLAccount)(nil)).
+		Column("id", "account_code", "name").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("gla.organization_id = ?", req.OrgID).
+				Where("gla.business_unit_id = ?", req.BuID)
+		})
+
+	if req.Query != "" {
+		q = q.Where(
+			"gla.account_code ILIKE ? OR gla.name ILIKE ?",
+			"%"+req.Query+"%",
+			"%"+req.Query+"%",
+		)
+	}
+
+	if err = q.Scan(ctx, &entities); err != nil {
+		log.Error("failed to scan gl accounts", zap.Error(err))
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (r *repository) addOptions(
 	q *bun.SelectQuery,
 	opts *repositories.GLAccountFilterOptions,

@@ -121,6 +121,7 @@ export type BaseEndpoint =
   | "/distance-overrides/"
   | "/fiscal-years/"
   | "/fiscal-periods/"
+  | "/gl-accounts/"
   | "/variable-formats/"
   | "/account-types/"
   | "/workers/pto/create/";

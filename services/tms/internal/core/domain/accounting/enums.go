@@ -203,10 +203,10 @@ func PeriodStatusFromString(periodStatus string) (PeriodStatus, error) {
 type JournalEntryCriteriaType string
 
 const (
-	JournalEntryCriteriaShipmentBilled    = JournalEntryCriteriaType("Shipment_Billed")
-	JournalEntryCriteriaPaymentReceived   = JournalEntryCriteriaType("Payment_Received")
-	JournalEntryCriteriaExpenseRecognized = JournalEntryCriteriaType("Expense_Recognized")
-	JournalEntryCriteriaDeliveryComplete  = JournalEntryCriteriaType("Delivery_Complete")
+	JournalEntryCriteriaShipmentBilled    = JournalEntryCriteriaType("ShipmentBilled")
+	JournalEntryCriteriaPaymentReceived   = JournalEntryCriteriaType("PaymentReceived")
+	JournalEntryCriteriaExpenseRecognized = JournalEntryCriteriaType("ExpenseRecognized")
+	JournalEntryCriteriaDeliveryComplete  = JournalEntryCriteriaType("DeliveryComplete")
 )
 
 func (j JournalEntryCriteriaType) String() string {
@@ -273,10 +273,10 @@ func (t ThresholdActionType) GetDescription() string {
 type RevenueRecognitionType string
 
 const (
-	RevenueRecognitionOnDelivery = RevenueRecognitionType("On_Delivery")
-	RevenueRecognitionOnBilling  = RevenueRecognitionType("On_Billing")
-	RevenueRecognitionOnPayment  = RevenueRecognitionType("On_Payment")
-	RevenueRecognitionOnPickup   = RevenueRecognitionType("On_Pickup")
+	RevenueRecognitionOnDelivery = RevenueRecognitionType("OnDelivery")
+	RevenueRecognitionOnBilling  = RevenueRecognitionType("OnBilling")
+	RevenueRecognitionOnPayment  = RevenueRecognitionType("OnPayment")
+	RevenueRecognitionOnPickup   = RevenueRecognitionType("OnPickup")
 )
 
 func (r RevenueRecognitionType) String() string {
@@ -310,9 +310,9 @@ func (r RevenueRecognitionType) GetDescription() string {
 type ExpenseRecognitionType string
 
 const (
-	ExpenseRecognitionOnIncurrence = ExpenseRecognitionType("On_Incurrence")
-	ExpenseRecognitionOnPayment    = ExpenseRecognitionType("On_Payment")
-	ExpenseRecognitionOnAccrual    = ExpenseRecognitionType("On_Accrual")
+	ExpenseRecognitionOnIncurrence = ExpenseRecognitionType("OnIncurrence")
+	ExpenseRecognitionOnPayment    = ExpenseRecognitionType("OnPayment")
+	ExpenseRecognitionOnAccrual    = ExpenseRecognitionType("OnAccrual")
 )
 
 func (e ExpenseRecognitionType) String() string {

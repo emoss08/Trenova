@@ -24,6 +24,13 @@ import { RoleType } from "@/types/roles-permissions";
 import { ShipmentDocumentType } from "@/types/shipment";
 import { Visibility } from "@/types/table-configuration";
 import { Endorsement, PTOStatus, PTOType, WorkerType } from "@/types/worker";
+import {
+  AccountingControlSchema,
+  ExpenseRecognitionSchema,
+  JournalEntryCriteriaSchema,
+  RevenueRecognitionSchema,
+  ThresholdActionSchema,
+} from "./schemas/accounting-control-schema";
 import { ConsolidationStatus } from "./schemas/consolidation-schema";
 import {
   DispatchControlSchema,
@@ -949,3 +956,96 @@ export const fiscalPeriodTypeChoices = [
     color: "#16a34a",
   },
 ] satisfies ReadonlyArray<ChoiceProps<FiscalPeriodSchema["periodType"]>>;
+
+export const journalEntryCriteriaChoices = [
+  {
+    value: JournalEntryCriteriaSchema.enum.ShipmentBilled,
+    label: "Shipment Billed",
+    description: "Create journal entry when shipment is billed",
+  },
+  {
+    value: JournalEntryCriteriaSchema.enum.PaymentReceived,
+    label: "Payment Received",
+    description: "Create journal entry when payment is received",
+  },
+  {
+    value: JournalEntryCriteriaSchema.enum.ExpenseRecognized,
+    label: "Expense Recognized",
+    description: "Create journal entry when expense is recognized",
+  },
+  {
+    value: JournalEntryCriteriaSchema.enum.DeliveryComplete,
+    label: "Delivery Complete",
+    description: "Create journal entry when delivery is complete",
+  },
+] satisfies ReadonlyArray<
+  ChoiceProps<AccountingControlSchema["journalEntryCriteria"]>
+>;
+
+export const reconciliationThresholdActionChoices = [
+  {
+    value: ThresholdActionSchema.enum.Warn,
+    label: "Warn",
+    description: "Warn when reconciliation threshold is exceeded",
+    color: "#f59e0b",
+  },
+  {
+    value: ThresholdActionSchema.enum.Block,
+    label: "Block",
+    description: "Block when reconciliation threshold is exceeded",
+    color: "#b91c1c",
+  },
+  {
+    value: ThresholdActionSchema.enum.Notify,
+    label: "Notify",
+    description: "Notify when reconciliation threshold is exceeded",
+    color: "#0369a1",
+  },
+] satisfies ReadonlyArray<
+  ChoiceProps<AccountingControlSchema["reconciliationThresholdAction"]>
+>;
+
+export const revenueRecognitionMethodChoices = [
+  {
+    value: RevenueRecognitionSchema.enum.OnDelivery,
+    label: "On Delivery",
+    description: "Recognize revenue when goods are delivered",
+  },
+  {
+    value: RevenueRecognitionSchema.enum.OnBilling,
+    label: "On Billing",
+    description: "Recognize revenue when invoice is created",
+  },
+  {
+    value: RevenueRecognitionSchema.enum.OnPayment,
+    label: "On Payment",
+    description: "Recognize revenue when payment is received",
+  },
+  {
+    value: RevenueRecognitionSchema.enum.OnPickup,
+    label: "On Pickup",
+    description: "Recognize revenue when goods are picked up",
+  },
+] satisfies ReadonlyArray<
+  ChoiceProps<AccountingControlSchema["revenueRecognitionMethod"]>
+>;
+
+export const expenseRecognitionMethodChoices = [
+  {
+    value: ExpenseRecognitionSchema.enum.OnIncurrence,
+    label: "On Incurrence",
+    description: "Recognize expense when incurred",
+  },
+  {
+    value: ExpenseRecognitionSchema.enum.OnAccrual,
+    label: "On Accrual",
+    description: "Recognize expense on accrual basis",
+  },
+  {
+    value: ExpenseRecognitionSchema.enum.OnPayment,
+    label: "On Payment",
+    description: "Recognize expense when payment is made",
+  },
+] satisfies ReadonlyArray<
+  ChoiceProps<AccountingControlSchema["expenseRecognitionMethod"]>
+>;

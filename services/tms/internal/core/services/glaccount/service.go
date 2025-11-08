@@ -44,6 +44,7 @@ type Service struct {
 	v      *glaccountvalidator.Validator
 }
 
+//nolint:gocritic // This is a constructor
 func NewService(p ServiceParams) *Service {
 	return &Service{
 		l:      p.Logger.Named("service.glaccount"),
@@ -54,6 +55,20 @@ func NewService(p ServiceParams) *Service {
 		as:     p.AuditService,
 		v:      p.Validator,
 	}
+}
+
+func (s *Service) GetOption(
+	ctx context.Context,
+	req repositories.GetGLAccountByIDRequest,
+) (*accounting.GLAccount, error) {
+	return s.repo.GetOption(ctx, req)
+}
+
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	req repositories.GLAccountSelectOptionsRequest,
+) ([]*repositories.GLAccountSelectOptionResponse, error) {
+	return s.repo.SelectOptions(ctx, req)
 }
 
 func (s *Service) List(

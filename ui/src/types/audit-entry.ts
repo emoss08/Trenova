@@ -39,6 +39,7 @@ export enum Resource {
   Organization = "organization", // Represents resources related to organizations.
   DocumentQualityConfig = "document_quality_config", // Represents resources related to document quality config.
   ShipmentControl = "shipment_control", // Represents resources related to shipment control.
+  AccountingControl = "accounting_control", // Represents resources related to accounting control.
   DispatchControl = "dispatch_control", // Represents resources related to dispatch control.
   ConsolidationSettings = "consolidation_settings", // Represents resources related to consolidation settings.
   PatternConfig = "pattern_config", // Represents resources related to pattern config.

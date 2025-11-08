@@ -2,6 +2,7 @@ import { http } from "@/lib/http-client";
 import type { TractorSchema } from "@/lib/schemas/tractor-schema";
 import type { TractorAssignment } from "@/types/assignment";
 import { AccessorialChargeAPI } from "./accessorial-charge";
+import { AccountingControlAPI } from "./accounting-control";
 import { AIAPI } from "./ai";
 import { AnalyticsAPI } from "./analytics";
 import { AuditEntryAPI } from "./audit-entry";
@@ -65,6 +66,7 @@ class API {
   analytics: AnalyticsAPI;
   organization: OrganizationAPI;
   shipmentControl: ShipmentControlAPI;
+  accountingControl: AccountingControlAPI;
   dispatchControl: DispatchControlAPI;
   billingControl: BillingControlAPI;
   databaseBackups: DatabaseBackupAPI;
@@ -132,6 +134,7 @@ class API {
     this.search = new SearchAPI();
     this.fiscalYear = new FiscalYearAPI();
     this.fiscalPeriod = new FiscalPeriodAPI();
+    this.accountingControl = new AccountingControlAPI();
   }
 }
 

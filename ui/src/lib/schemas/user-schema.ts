@@ -3,13 +3,13 @@ import { ConditionType } from "@/types/roles-permissions";
 import { TimeFormat } from "@/types/user";
 import * as z from "zod";
 import {
-    optionalStringSchema,
-    timestampSchema,
-    versionSchema,
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
 } from "./helpers";
 import {
-    organizationMembershipSchema,
-    organizationSchema,
+  organizationMembershipSchema,
+  organizationSchema,
 } from "./organization-schema";
 
 const fieldPermissionSchema = z.object({

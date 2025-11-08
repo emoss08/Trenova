@@ -1,8 +1,8 @@
 CREATE TYPE "journal_entry_criteria_enum" AS ENUM(
-    'Shipment_Billed',
-    'Payment_Received',
-    'Expense_Recognized',
-    'Delivery_Complete'
+    'ShipmentBilled',
+    'PaymentReceived',
+    'ExpenseRecognized',
+    'DeliveryComplete'
 );
 
 CREATE TYPE "reconciliation_threshold_action_enum" AS ENUM(
@@ -12,16 +12,16 @@ CREATE TYPE "reconciliation_threshold_action_enum" AS ENUM(
 );
 
 CREATE TYPE "revenue_recognition_enum" AS ENUM(
-    'On_Delivery',
-    'On_Billing',
-    'On_Payment',
-    'On_Pickup'
+    'OnDelivery',
+    'OnBilling',
+    'OnPayment',
+    'OnPickup'
 );
 
 CREATE TYPE "expense_recognition_enum" AS ENUM(
-    'On_Incurrence',
-    'On_Accrual',
-    'On_Payment'
+    'OnIncurrence',
+    'OnAccrual',
+    'OnPayment'
 );
 
 --bun:split
@@ -30,9 +30,9 @@ CREATE TABLE IF NOT EXISTS "accounting_controls"(
     "business_unit_id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
     "auto_create_journal_entries" boolean NOT NULL DEFAULT FALSE,
-    "journal_entry_criteria" journal_entry_criteria_enum NOT NULL DEFAULT 'Shipment_Billed',
-    "default_revenue_account_id" varchar(100) NOT NULL,
-    "default_expense_account_id" varchar(100) NOT NULL,
+    "journal_entry_criteria" journal_entry_criteria_enum NOT NULL DEFAULT 'ShipmentBilled',
+    "default_revenue_account_id" varchar(100),
+    "default_expense_account_id" varchar(100),
     "restrict_manual_journal_entries" boolean NOT NULL DEFAULT FALSE,
     "require_journal_entry_approval" boolean NOT NULL DEFAULT TRUE,
     "enable_journal_entry_reversal" boolean NOT NULL DEFAULT TRUE,
@@ -44,9 +44,9 @@ CREATE TABLE IF NOT EXISTS "accounting_controls"(
     "reconciliation_threshold_action" reconciliation_threshold_action_enum NOT NULL DEFAULT 'Warn',
     "halt_on_pending_reconciliation" boolean NOT NULL DEFAULT FALSE,
     "enable_reconciliation_notifications" boolean NOT NULL DEFAULT TRUE,
-    "revenue_recognition_method" revenue_recognition_enum NOT NULL DEFAULT 'On_Delivery',
+    "revenue_recognition_method" revenue_recognition_enum NOT NULL DEFAULT 'OnDelivery',
     "defer_revenue_until_paid" boolean NOT NULL DEFAULT FALSE,
-    "expense_recognition_method" expense_recognition_enum NOT NULL DEFAULT 'On_Incurrence',
+    "expense_recognition_method" expense_recognition_enum NOT NULL DEFAULT 'OnIncurrence',
     "accrue_expenses" boolean NOT NULL DEFAULT TRUE,
     "enable_automatic_tax_calculation" boolean NOT NULL DEFAULT TRUE,
     "default_tax_account_id" varchar(100),

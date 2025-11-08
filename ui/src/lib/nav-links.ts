@@ -22,7 +22,6 @@ export const adminLinks: SidebarLink[] = [
     href: "/organization/accounting-controls/",
     title: "Accounting Controls",
     group: "Organization",
-    disabled: true,
   },
   {
     href: "/organization/billing-controls/",
@@ -452,6 +451,12 @@ export const routes: RouteInfo[] = [
         key: Resource.ConsolidationSettings,
         label: "Consolidation Settings",
         link: "/organization/consolidation-settings/",
+        supportsModal: false,
+      },
+      {
+        key: Resource.AccountingControl,
+        label: "Accounting Controls",
+        link: "/organization/accounting-controls/",
         supportsModal: false,
       },
       {

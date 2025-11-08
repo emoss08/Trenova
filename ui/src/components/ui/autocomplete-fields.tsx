@@ -21,7 +21,10 @@ import type { TrailerSchema } from "@/lib/schemas/trailer-schema";
 import type { RoleSchema } from "@/lib/schemas/user-schema";
 import type { WorkerSchema } from "@/lib/schemas/worker-schema";
 import { formatLocation, truncateText, USDollarFormat } from "@/lib/utils";
-import { UserSelectOptionResponse } from "@/types/auto-complete-fields";
+import {
+  GLAccountSelectOptionResponse,
+  UserSelectOptionResponse,
+} from "@/types/auto-complete-fields";
 import { AccessorialChargeMethod } from "@/types/billing";
 import { Status } from "@/types/common";
 import type {
@@ -169,6 +172,29 @@ export function LocationCategoryAutocompleteField<T extends FieldValues>({
           {option.description && (
             <span className="text-2xs text-muted-foreground truncate w-full">
               {option.description}
+            </span>
+          )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function GLAccountAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<GLAccountSelectOptionResponse, T>) {
+  return (
+    <AutocompleteField<GLAccountSelectOptionResponse, T>
+      link="/gl-accounts/select-options/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => `${option.accountCode}`}
+      renderOption={(option) => (
+        <div className="flex flex-col items-start size-full">
+          <span className="text-xs font-medium">{option.accountCode}</span>
+          {option.name && (
+            <span className="text-2xs text-muted-foreground truncate w-full">
+              {option.name}
             </span>
           )}
         </div>

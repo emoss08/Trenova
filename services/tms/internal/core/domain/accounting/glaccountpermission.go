@@ -77,4 +77,3 @@ func (c glAccountPermission) GetOperationsRequiringApproval() []permission.Opera
 		permission.OpDelete,
 	}
 }
-

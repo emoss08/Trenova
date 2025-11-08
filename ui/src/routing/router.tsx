@@ -440,6 +440,20 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "accounting-controls",
+                loader: createPermissionLoader(Resource.AccountingControl),
+                async lazy() {
+                  let { AccountingControl } = await import(
+                    "@/app/accounting-control/page"
+                  );
+                  return { Component: AccountingControl };
+                },
+                handle: {
+                  crumb: "Accounting Controls",
+                  title: "Accounting Controls",
+                },
+              },
+              {
                 path: "dispatch-controls",
                 loader: createPermissionLoader(Resource.DispatchControl),
                 async lazy() {

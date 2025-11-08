@@ -29,7 +29,7 @@ type AccountingControl struct { //nolint:revive // this is fine
 
 	// Journal Entry Automation
 	AutoCreateJournalEntries bool                     `json:"autoCreateJournalEntries" bun:"auto_create_journal_entries,type:BOOLEAN,notnull,default:false"`
-	JournalEntryCriteria     JournalEntryCriteriaType `json:"journalEntryCriteria"     bun:"journal_entry_criteria,type:journal_entry_criteria_enum,notnull,default:'Shipment_Billed'"`
+	JournalEntryCriteria     JournalEntryCriteriaType `json:"journalEntryCriteria"     bun:"journal_entry_criteria,type:journal_entry_criteria_enum,notnull,default:'ShipmentBilled'"`
 	DefaultRevenueAccountID  *pulid.ID                `json:"defaultRevenueAccountId"  bun:"default_revenue_account_id,type:VARCHAR(100),nullzero"`
 	DefaultExpenseAccountID  *pulid.ID                `json:"defaultExpenseAccountId"  bun:"default_expense_account_id,type:VARCHAR(100),nullzero"`
 
@@ -51,11 +51,11 @@ type AccountingControl struct { //nolint:revive // this is fine
 	EnableReconciliationNotifications bool                `json:"enableReconciliationNotifications" bun:"enable_reconciliation_notifications,type:BOOLEAN,notnull,default:true"`
 
 	// Revenue Recognition
-	RevenueRecognitionMethod RevenueRecognitionType `json:"revenueRecognitionMethod" bun:"revenue_recognition_method,type:revenue_recognition_enum,notnull,default:'On_Delivery'"`
+	RevenueRecognitionMethod RevenueRecognitionType `json:"revenueRecognitionMethod" bun:"revenue_recognition_method,type:revenue_recognition_enum,notnull,default:'OnDelivery'"`
 	DeferRevenueUntilPaid    bool                   `json:"deferRevenueUntilPaid"    bun:"defer_revenue_until_paid,type:BOOLEAN,notnull,default:false"`
 
 	// Expense Recognition
-	ExpenseRecognitionMethod ExpenseRecognitionType `json:"expenseRecognitionMethod" bun:"expense_recognition_method,type:expense_recognition_enum,notnull,default:'On_Incurrence'"`
+	ExpenseRecognitionMethod ExpenseRecognitionType `json:"expenseRecognitionMethod" bun:"expense_recognition_method,type:expense_recognition_enum,notnull,default:'OnIncurrence'"`
 	AccrueExpenses           bool                   `json:"accrueExpenses"           bun:"accrue_expenses,type:BOOLEAN,notnull,default:true"`
 
 	// Tax Settings

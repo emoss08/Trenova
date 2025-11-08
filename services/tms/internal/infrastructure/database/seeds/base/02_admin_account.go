@@ -259,6 +259,18 @@ func (s *AdminAccountSeed) createDefaultSettings(
 		return fmt.Errorf("create billing control: %w", err)
 	}
 
+	accountingControl := &accounting.AccountingControl{
+		ID:             pulid.MustNew("ac_"),
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		CreatedAt:      utils.NowUnix(),
+		UpdatedAt:      utils.NowUnix(),
+	}
+
+	if _, err := tx.NewInsert().Model(accountingControl).Exec(ctx); err != nil {
+		return fmt.Errorf("create accounting control: %w", err)
+	}
+
 	dataRetention := &tenant.DataRetention{
 		ID:             pulid.MustNew("dr_"),
 		OrganizationID: orgID,
