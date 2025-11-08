@@ -1,15 +1,30 @@
 import { useCopyToClipboard } from "@/hooks/use-copy-to-clipboard";
+import { cn } from "@/lib/utils";
 import { faCheck, faClipboard } from "@fortawesome/pro-regular-svg-icons";
 import React from "react";
 import { Button } from "./button";
 import { Icon } from "./icons";
 import { Label } from "./label";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./tooltip";
 
-export function CopyText({ label, value }: { label: string; value: string }) {
+export function CopyText({
+  label,
+  value,
+  className,
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
   const { copy, isCopied } = useCopyToClipboard();
 
   return (
-    <div className="group flex flex-col gap-1">
+    <div className={cn("group flex flex-col gap-1", className)}>
       <Label>{label}</Label>
       <div className="flex items-center justify-between border-muted-foreground/20 bg-primary/5 h-7 w-full gap-1 text-sm text-muted-foreground font-mono truncate rounded-md border px-2 py-1">
         <span className="flex-grow">{value}</span>
@@ -33,12 +48,24 @@ function CopyButton({
   };
 
   return (
-    <Button size="xs" variant="ghost" onClick={handleClick} className="size-5">
-      {active ? (
-        <Icon icon={faCheck} className="size-4" />
-      ) : (
-        <Icon icon={faClipboard} className="size-4" />
-      )}
-    </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            size="xs"
+            variant="outline"
+            onClick={handleClick}
+            className="size-5"
+          >
+            {active ? (
+              <Icon icon={faCheck} className="size-4" />
+            ) : (
+              <Icon icon={faClipboard} className="size-4" />
+            )}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>{active ? "Copied" : "Copy"}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
