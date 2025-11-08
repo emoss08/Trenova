@@ -2,6 +2,7 @@ package userpreference
 
 import (
 	"context"
+	"maps"
 
 	"github.com/emoss08/trenova/internal/core/domain/userpreference"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -99,8 +100,6 @@ func (s *Service) Upsert(
 	return upserted, nil
 }
 
-// MergePreferences merges new preferences with existing ones
-// This is useful for partial updates from the frontend
 func (s *Service) MergePreferences(
 	ctx context.Context,
 	userID pulid.ID,
@@ -135,9 +134,8 @@ func (s *Service) MergePreferences(
 		if existing.Preferences.UISettings == nil {
 			existing.Preferences.UISettings = make(map[string]any)
 		}
-		for k, v := range updates.UISettings {
-			existing.Preferences.UISettings[k] = v
-		}
+
+		maps.Copy(existing.Preferences.UISettings, updates.UISettings)
 	}
 
 	return s.Update(ctx, existing)
