@@ -103,11 +103,11 @@ export function SelectField<T extends FieldValues>({
                     {selectedOption?.label || placeholder}
                   </span>
                 </div>
-                <ChevronDownIcon className="group-data-[state=open]:rotate-180 transition-transform duration-200 ease-in-out size-3 opacity-50 flex-shrink-0 ml-1" />
+                <ChevronDownIcon className="ml-1 size-3 flex-shrink-0 opacity-50 transition-transform duration-200 ease-in-out group-data-[state=open]:rotate-180" />
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="border-input min-w-[var(--radix-popover-trigger-width)] p-0"
+              className="min-w-[var(--radix-popover-trigger-width)] border-input p-0"
               align="start"
             >
               <Command
@@ -192,12 +192,12 @@ export function DoubleClickSelectField<T extends FieldValues>({
                 {isOpen ? (
                   <span
                     onClick={() => setIsOpen(false)}
-                    className="cursor-pointer select-none text-xs text-muted-foreground"
+                    className="cursor-pointer text-xs text-muted-foreground select-none"
                   >
                     Cancel
                   </span>
                 ) : (
-                  <span className="cursor-pointer select-none text-xs text-muted-foreground">
+                  <span className="cursor-pointer text-xs text-muted-foreground select-none">
                     Click to edit
                   </span>
                 )}

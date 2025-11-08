@@ -1,14 +1,24 @@
-// @ts-check
 import eslint from "@eslint/js";
 import pluginQuery from "@tanstack/eslint-plugin-query";
 import eslintPluginPrettierRecommended from "eslint-plugin-prettier/recommended";
 import react from "eslint-plugin-react";
 import reactHooks from "eslint-plugin-react-hooks";
 import reactRefresh from "eslint-plugin-react-refresh";
+import tailwind from "eslint-plugin-tailwindcss";
+import { defineConfig } from "eslint/config";
 import globals from "globals";
+import { dirname } from "path";
 import tseslint from "typescript-eslint";
+import { fileURLToPath } from "url";
 
-export default tseslint.config(
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
+
+
+export default defineConfig(
+  {
+    ignores: ["eslint.config.mjs"],
+  },
   tseslint.configs.recommended,
   ...pluginQuery.configs["flat/recommended"],
   eslint.configs.recommended,
@@ -16,6 +26,7 @@ export default tseslint.config(
   reactRefresh.configs.vite,
   eslintPluginPrettierRecommended,
   reactHooks.configs["recommended-latest"],
+  ...tailwind.configs["flat/recommended"],
   {
     ...react.configs.flat.recommended,
     settings: { react: { version: "detect" } },
@@ -43,4 +54,11 @@ export default tseslint.config(
       "react-hooks/exhaustive-deps": "error",
     },
   },
+  {
+  settings: {
+    tailwindcss: {
+      config: `${__dirname}/src/styles/app.css`
+    }
+  }
+  }
 );
