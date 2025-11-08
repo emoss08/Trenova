@@ -107,7 +107,7 @@ export function SelectField<T extends FieldValues>({
               </Button>
             </PopoverTrigger>
             <PopoverContent
-              className="border-input max-w-[var(--radix-popover-trigger-width)] p-0"
+              className="border-input min-w-[var(--radix-popover-trigger-width)] p-0"
               align="start"
             >
               <Command
