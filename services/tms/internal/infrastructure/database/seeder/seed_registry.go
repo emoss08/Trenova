@@ -15,6 +15,7 @@ func RegisterAll(s *Seeder, env common.Environment) {
 	s.RegisterRunner(base.NewPermissionsAndPoliciesSeed())
 	s.RegisterRunner(base.NewAdminAccountSeed())
 	s.RegisterRunner(base.NewHazmatExpirationSeed())
+	s.RegisterRunner(base.NewGlAccountSeed())
 
 	// Development seeds
 	if env == common.EnvDevelopment || env == common.EnvTest {
