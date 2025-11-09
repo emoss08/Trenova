@@ -72,7 +72,7 @@ func (s *Service) SendNotification(
 		return fmt.Errorf("failed to create notification: %w", err)
 	}
 
-	s.webSocketService.BroadcastToUser(notif.TargetUserID.String(), notif)
+	s.webSocketService.BroadcastToUser(ctx, notif.TargetUserID.String(), notif)
 
 	now := utils.NowUnix()
 	notif.DeliveryStatus = notification.DeliveryStatusDelivered

@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
 	"sync"
 	"time"
 
 	authCtx "github.com/emoss08/trenova/internal/api/context"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type StreamMetrics struct {
@@ -24,20 +27,18 @@ type StreamManager struct {
 	ctx            context.Context
 	cancel         context.CancelFunc
 	config         *config.StreamingConfig
+	tracer         *observability.TracerProvider
 	metrics        StreamMetrics
 	lastDataChange time.Time
 	idleTimeout    time.Duration
+	userConnCount  map[string]int // Track connections per user for limit enforcement
 }
 
-func (sm *StreamManager) handleNewClient(
-	c *gin.Context,
+func (sm *StreamManager) createStreamClient(
+	requestCtx context.Context,
 	authContext *authCtx.AuthContext,
 	clientID string,
-) {
-	fmt.Printf("[StreamManager] handleNewClient called for clientID: %s\n", clientID)
-
-	requestCtx := c.Request.Context()
-
+) (*Client, context.CancelFunc) {
 	var clientCtx context.Context
 	var clientCancel context.CancelFunc
 
@@ -51,7 +52,6 @@ func (sm *StreamManager) handleNewClient(
 		clientCtx, clientCancel = context.WithCancel(requestCtx)
 		fmt.Printf("[StreamManager] Client context created without timeout\n")
 	}
-	defer clientCancel()
 
 	client := &Client{
 		ID:           clientID,
@@ -69,40 +69,22 @@ func (sm *StreamManager) handleNewClient(
 	}
 
 	fmt.Printf("[StreamManager] Client struct created: %+v\n", client)
+	return client, clientCancel
+}
 
-	sm.addClient(client)
-	fmt.Printf("[StreamManager] Client added to manager, total clients: %d\n", sm.getClientCount())
-
-	defer func() {
-		fmt.Printf("[StreamManager] Removing client: %s\n", clientID)
-		sm.removeClient(clientID)
-	}()
-
-	sm.ensureStreamRunning()
-	fmt.Printf("[StreamManager] Stream running status: %v\n", sm.isRunning)
-
-	// Send initial connection event
-	connectEvent := map[string]any{
-		"status":    "connected",
-		"timestamp": time.Now().Unix(),
-	}
-	fmt.Printf("[StreamManager] Sending initial connection event\n")
-	sm.sendEventToClientAsync(client, "connected", connectEvent)
-	fmt.Printf("[StreamManager] Connection event sent\n")
-
-	ticker := time.NewTicker(30 * time.Second)
-	defer ticker.Stop()
-
-	fmt.Printf("[StreamManager] Starting Gin SSE stream for: %s\n", clientID)
-
-	// Use Gin's Stream method to handle SSE properly
+func (sm *StreamManager) runStreamLoop(
+	c *gin.Context,
+	client *Client,
+	clientID string,
+	ticker *time.Ticker,
+) {
 	c.Stream(func(_ io.Writer) bool {
 		select {
-		case <-clientCtx.Done():
+		case <-client.ctx.Done():
 			fmt.Printf(
 				"[StreamManager] Client context cancelled: %s, error: %v\n",
 				clientID,
-				clientCtx.Err(),
+				client.ctx.Err(),
 			)
 			return false
 		case <-ticker.C:
@@ -128,7 +110,48 @@ func (sm *StreamManager) handleNewClient(
 			return true
 		}
 	})
+}
 
+func (sm *StreamManager) handleNewClient(
+	c *gin.Context,
+	authContext *authCtx.AuthContext,
+	clientID string,
+) {
+	fmt.Printf("[StreamManager] handleNewClient called for clientID: %s\n", clientID)
+
+	client, clientCancel := sm.createStreamClient(c.Request.Context(), authContext, clientID)
+	defer clientCancel()
+
+	if err := sm.addClient(client); err != nil {
+		fmt.Printf("[StreamManager] Failed to add client: %v\n", err)
+		c.JSON(http.StatusTooManyRequests, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+	fmt.Printf("[StreamManager] Client added to manager, total clients: %d\n", sm.getClientCount())
+
+	defer func() {
+		fmt.Printf("[StreamManager] Removing client: %s\n", clientID)
+		sm.removeClient(clientID)
+	}()
+
+	sm.ensureStreamRunning()
+	fmt.Printf("[StreamManager] Stream running status: %v\n", sm.isRunning)
+
+	connectEvent := map[string]any{
+		"status":    "connected",
+		"timestamp": time.Now().Unix(),
+	}
+	fmt.Printf("[StreamManager] Sending initial connection event\n")
+	sm.sendEventToClientAsync(client, "connected", connectEvent)
+	fmt.Printf("[StreamManager] Connection event sent\n")
+
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	fmt.Printf("[StreamManager] Starting Gin SSE stream for: %s\n", clientID)
+	sm.runStreamLoop(c, client, clientID, ticker)
 	fmt.Printf("[StreamManager] Stream ended for client: %s\n", clientID)
 }
 
@@ -174,16 +197,55 @@ func (sm *StreamManager) sendEventToClientAsync(client *Client, eventType string
 	}
 }
 
-func (sm *StreamManager) addClient(client *Client) {
+func (sm *StreamManager) addClient(client *Client) error {
+	ctx := context.Background()
+	ctx, span := sm.tracer.StartSpan(ctx, "streaming.addClient")
+	defer span.End()
+
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
+	// Check total connection limit
+	if len(sm.clients) >= sm.config.MaxConnections {
+		observability.AddSpanEvent(ctx, "connection_rejected_total_limit",
+			attribute.Int("current_connections", len(sm.clients)),
+			attribute.Int("max_connections", sm.config.MaxConnections),
+		)
+		return fmt.Errorf("max total connections reached: %d", sm.config.MaxConnections)
+	}
+
+	// Check per-user connection limit
+	userConnCount := sm.userConnCount[client.UserID]
+	if userConnCount >= sm.config.MaxConnectionsPerUser {
+		observability.AddSpanEvent(ctx, "connection_rejected_user_limit",
+			attribute.String("user_id", client.UserID),
+			attribute.Int("current_user_connections", userConnCount),
+			attribute.Int("max_user_connections", sm.config.MaxConnectionsPerUser),
+		)
+		return fmt.Errorf("max connections per user reached: %d", sm.config.MaxConnectionsPerUser)
+	}
+
 	sm.clients[client.ID] = client
+	sm.userConnCount[client.UserID]++
 	sm.metrics.ActiveConnections++
 	sm.metrics.TotalConnections++
+
+	// Add OTel attributes for connection counts
+	observability.AddSpanAttributes(ctx,
+		attribute.Int("streaming.total_connections", len(sm.clients)),
+		attribute.Int("streaming.user_connections", sm.userConnCount[client.UserID]),
+		attribute.String("user_id", client.UserID),
+		attribute.String("org_id", client.OrgID),
+	)
+
+	return nil
 }
 
 func (sm *StreamManager) removeClient(clientID string) {
+	ctx := context.Background()
+	ctx, span := sm.tracer.StartSpan(ctx, "streaming.removeClient")
+	defer span.End()
+
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
@@ -195,7 +257,19 @@ func (sm *StreamManager) removeClient(clientID string) {
 		client.cancel()
 
 		delete(sm.clients, clientID)
+		sm.userConnCount[client.UserID]--
+		if sm.userConnCount[client.UserID] <= 0 {
+			delete(sm.userConnCount, client.UserID)
+		}
 		sm.metrics.ActiveConnections--
+
+		// Add OTel attributes for connection counts after cleanup
+		observability.AddSpanAttributes(ctx,
+			attribute.Int("streaming.total_connections", len(sm.clients)),
+			attribute.Int("streaming.user_remaining_connections", sm.userConnCount[client.UserID]),
+			attribute.String("user_id", client.UserID),
+			attribute.String("org_id", client.OrgID),
+		)
 	}
 }
 

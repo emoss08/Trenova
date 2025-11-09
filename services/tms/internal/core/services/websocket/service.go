@@ -9,12 +9,14 @@ import (
 
 	"github.com/bytedance/sonic"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/emoss08/trenova/internal/infrastructure/redis"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
+	"go.opentelemetry.io/otel/attribute"
 
 	authcontext "github.com/emoss08/trenova/internal/api/context"
 
@@ -29,12 +31,16 @@ type ServiceParams struct {
 	Logger  *zap.Logger
 	Redis   *redis.Connection
 	Metrics *observability.MetricsRegistry
+	Tracer  *observability.TracerProvider
+	Config  *config.Config
 }
 
 type Service struct {
 	l          *zap.Logger
 	redis      *redis.Connection
 	metrics    *observability.MetricsRegistry
+	tracer     *observability.TracerProvider
+	cfg        *config.Config
 	serverID   string
 	clients    map[*Client]bool
 	userIndex  map[string]map[*Client]bool // userID -> multiple clients for multi-tab support
@@ -55,6 +61,7 @@ type Client struct {
 	orgID       pulid.ID
 	roomID      string
 	connectedAt time.Time
+	ctx         context.Context
 }
 
 type Message struct {
@@ -74,10 +81,14 @@ type BroadcastRequest struct {
 }
 
 func NewService(p ServiceParams) services.WebSocketService {
+	cfg := p.Config.WebSocket
+
 	s := &Service{
 		l:          p.Logger.Named("service.websocket"),
 		redis:      p.Redis,
 		metrics:    p.Metrics,
+		tracer:     p.Tracer,
+		cfg:        p.Config,
 		serverID:   pulid.MustNew("srv_").String(), // Unique server ID
 		clients:    make(map[*Client]bool),
 		userIndex:  make(map[string]map[*Client]bool),
@@ -91,16 +102,20 @@ func NewService(p ServiceParams) services.WebSocketService {
 				// TODO: Implement proper origin checking in production
 				return true
 			},
-			ReadBufferSize:  1024,
-			WriteBufferSize: 1024,
+			ReadBufferSize:  cfg.ReadBufferSize,
+			WriteBufferSize: cfg.WriteBufferSize,
 		},
 	}
 
 	p.LC.Append(fx.Hook{
-		OnStart: func(context.Context) error {
+		OnStart: func(ctx context.Context) error {
 			go s.run()
-			go s.ListenToRedis()
-			s.l.Info("🚀 websocket service started")
+			go s.ListenToRedis(ctx)
+			go s.startConnectionMonitor(ctx)
+			s.l.Info("🚀 websocket service started",
+				zap.Int("max_total_connections", p.Config.WebSocket.MaxTotalConnections),
+				zap.Int("max_connections_per_user", p.Config.WebSocket.MaxConnectionsPerUser),
+			)
 			return nil
 		},
 		OnStop: func(context.Context) error {
@@ -128,14 +143,38 @@ func (s *Service) run() {
 	}
 }
 
-func (s *Service) registerClient(c *Client) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
+func (s *Service) checkConnectionLimits(ctx context.Context, c *Client) bool {
+	if len(s.clients) >= s.cfg.WebSocket.MaxTotalConnections {
+		observability.AddSpanEvent(ctx, "connection_rejected_total_limit",
+			attribute.Int("current_connections", len(s.clients)),
+			attribute.Int("max_connections", s.cfg.WebSocket.MaxTotalConnections),
+		)
+		s.l.Warn("connection rejected: total limit reached",
+			zap.Int("current", len(s.clients)),
+			zap.Int("max", s.cfg.WebSocket.MaxTotalConnections),
+		)
+		return false
+	}
 
-	s.clients[c] = true
+	userConnections := len(s.userIndex[c.userID.String()])
+	if userConnections >= s.cfg.WebSocket.MaxConnectionsPerUser {
+		observability.AddSpanEvent(ctx, "connection_rejected_user_limit",
+			attribute.String("user_id", c.userID.String()),
+			attribute.Int("current_user_connections", userConnections),
+			attribute.Int("max_user_connections", s.cfg.WebSocket.MaxConnectionsPerUser),
+		)
+		s.l.Warn("connection rejected: user limit reached",
+			zap.String("user_id", c.userID.String()),
+			zap.Int("current", userConnections),
+			zap.Int("max", s.cfg.WebSocket.MaxConnectionsPerUser),
+		)
+		return false
+	}
 
-	s.metrics.RecordWSConnection(c.orgID.String(), c.userID.String())
+	return true
+}
 
+func (s *Service) updateClientIndexes(ctx context.Context, c *Client) {
 	if s.userIndex[c.userID.String()] == nil {
 		s.userIndex[c.userID.String()] = make(map[*Client]bool)
 	}
@@ -151,16 +190,17 @@ func (s *Service) registerClient(c *Client) {
 			s.roomIndex[c.roomID] = make(map[*Client]bool)
 		}
 		s.roomIndex[c.roomID][c] = true
-
 		s.metrics.RecordWSRoomSize(c.roomID, len(s.roomIndex[c.roomID]))
 
-		if err := s.redis.SAdd(context.Background(), "room:"+c.roomID+":users", c.userID.String()); err != nil {
+		if err := s.redis.SAdd(ctx, "room:"+c.roomID+":users", c.userID.String()); err != nil {
 			s.l.Error("failed to add user to room in Redis", zap.Error(err))
 		}
 	}
 
 	s.metrics.UpdateWSRooms(len(s.roomIndex))
+}
 
+func (s *Service) syncClientToRedis(ctx context.Context, c *Client) {
 	var remoteAddr string
 	if c.conn != nil && c.conn.RemoteAddr() != nil {
 		remoteAddr = c.conn.RemoteAddr().String()
@@ -169,7 +209,7 @@ func (s *Service) registerClient(c *Client) {
 	}
 
 	if err := s.redis.SAdd(
-		context.Background(),
+		ctx,
 		fmt.Sprintf("user:%s:connections", c.userID.String()),
 		remoteAddr,
 	); err != nil {
@@ -177,22 +217,53 @@ func (s *Service) registerClient(c *Client) {
 	}
 
 	if err := s.redis.SAdd(
-		context.Background(),
+		ctx,
 		fmt.Sprintf("org:%s:clients", c.orgID.String()),
 		c.userID.String(),
 	); err != nil {
 		s.l.Error("failed to add user to org in Redis", zap.Error(err))
 	}
+}
+
+func (s *Service) registerClient(c *Client) {
+	ctx, span := s.tracer.StartSpan(c.ctx, "websocket.registerClient")
+	defer span.End()
+
+	s.mu.Lock()
+	defer s.mu.Unlock()
+
+	if !s.checkConnectionLimits(ctx, c) {
+		return
+	}
+
+	s.clients[c] = true
+	s.metrics.RecordWSConnection(c.orgID.String(), c.userID.String())
+
+	s.updateClientIndexes(ctx, c)
+	s.syncClientToRedis(ctx, c)
+
+	observability.AddSpanAttributes(ctx,
+		attribute.Int("ws.total_connections", len(s.clients)),
+		attribute.Int("ws.user_connections", len(s.userIndex[c.userID.String()])),
+		attribute.Int("ws.org_connections", len(s.orgIndex[c.orgID.String()])),
+		attribute.Int("ws.total_rooms", len(s.roomIndex)),
+		attribute.String("user_id", c.userID.String()),
+		attribute.String("org_id", c.orgID.String()),
+	)
 
 	s.l.Info("client registered",
 		zap.String("user_id", c.userID.String()),
 		zap.String("org_id", c.orgID.String()),
 		zap.String("room_id", c.roomID),
 		zap.Int("user_connections", len(s.userIndex[c.userID.String()])),
+		zap.Int("total_connections", len(s.clients)),
 	)
 }
 
 func (s *Service) unregisterClient(c *Client) {
+	ctx, span := s.tracer.StartSpan(c.ctx, "websocket.unregisterClient")
+	defer span.End()
+
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
@@ -219,7 +290,7 @@ func (s *Service) unregisterClient(c *Client) {
 		if remainingConnections == 0 {
 			delete(s.userIndex, c.userID.String())
 			if err := s.redis.SRem(
-				context.Background(),
+				ctx,
 				fmt.Sprintf("org:%s:clients", c.orgID.String()),
 				c.userID.String(),
 			); err != nil {
@@ -242,7 +313,7 @@ func (s *Service) unregisterClient(c *Client) {
 			delete(roomClients, c)
 			if len(roomClients) == 0 {
 				delete(s.roomIndex, c.roomID)
-				if err := s.redis.SRem(context.Background(), "room:"+c.roomID+":users", c.userID.String()); err != nil {
+				if err := s.redis.SRem(ctx, "room:"+c.roomID+":users", c.userID.String()); err != nil {
 					s.l.Error("failed to remove user from room in Redis", zap.Error(err))
 				}
 			} else {
@@ -255,7 +326,7 @@ func (s *Service) unregisterClient(c *Client) {
 
 	if c.conn != nil && c.conn.RemoteAddr() != nil {
 		if err := s.redis.SRem(
-			context.Background(),
+			ctx,
 			fmt.Sprintf("user:%s:connections", c.userID.String()),
 			c.conn.RemoteAddr().String(),
 		); err != nil {
@@ -263,11 +334,21 @@ func (s *Service) unregisterClient(c *Client) {
 		}
 	}
 
+	observability.AddSpanAttributes(ctx,
+		attribute.Int("ws.total_connections", len(s.clients)),
+		attribute.Int("ws.user_remaining_connections", remainingConnections),
+		attribute.Int("ws.org_connections", len(s.orgIndex[c.orgID.String()])),
+		attribute.Int("ws.total_rooms", len(s.roomIndex)),
+		attribute.String("user_id", c.userID.String()),
+		attribute.String("org_id", c.orgID.String()),
+	)
+
 	s.l.Info("client unregistered",
 		zap.String("user_id", c.userID.String()),
 		zap.String("org_id", c.orgID.String()),
 		zap.String("room_id", c.roomID),
 		zap.Int("remaining_connections", remainingConnections),
+		zap.Int("total_connections", len(s.clients)),
 	)
 }
 
@@ -369,7 +450,7 @@ func (s *Service) sendToRoom(roomID string, message []byte) {
 	}
 }
 
-func (s *Service) BroadcastToUser(userID string, content any) {
+func (s *Service) BroadcastToUser(ctx context.Context, userID string, content any) {
 	msg := Message{
 		Type:     "notification",
 		Target:   "user",
@@ -405,12 +486,12 @@ func (s *Service) BroadcastToUser(userID string, content any) {
 		return
 	}
 
-	if pubErr := s.redis.Publish(context.Background(), "broadcast:user:"+userID, data); pubErr != nil {
+	if pubErr := s.redis.Publish(ctx, "broadcast:user:"+userID, data); pubErr != nil {
 		s.l.Error("failed to publish to Redis", zap.Error(pubErr))
 	}
 }
 
-func (s *Service) BroadcastToRoom(roomID string, content any) {
+func (s *Service) BroadcastToRoom(ctx context.Context, roomID string, content any) {
 	msg := Message{
 		Type:     "notification",
 		Target:   "room",
@@ -440,12 +521,12 @@ func (s *Service) BroadcastToRoom(roomID string, content any) {
 		return
 	}
 
-	if pubErr := s.redis.Publish(context.Background(), "broadcast:room:"+roomID, data); pubErr != nil {
+	if pubErr := s.redis.Publish(ctx, "broadcast:room:"+roomID, data); pubErr != nil {
 		s.l.Error("failed to publish to Redis", zap.Error(pubErr))
 	}
 }
 
-func (s *Service) BroadcastToOrg(orgID string, content any) {
+func (s *Service) BroadcastToOrg(ctx context.Context, orgID string, content any) {
 	msg := Message{
 		Type:     "notification",
 		Target:   "org",
@@ -475,13 +556,13 @@ func (s *Service) BroadcastToOrg(orgID string, content any) {
 		return
 	}
 
-	if pubErr := s.redis.Publish(context.Background(), "broadcast:org:"+orgID, data); pubErr != nil {
+	if pubErr := s.redis.Publish(ctx, "broadcast:org:"+orgID, data); pubErr != nil {
 		s.l.Error("failed to publish to Redis", zap.Error(pubErr))
 	}
 }
 
-func (s *Service) ListenToRedis() {
-	pubsub := s.redis.PSubscribe(context.Background(), "broadcast:*")
+func (s *Service) ListenToRedis(ctx context.Context) {
+	pubsub := s.redis.PSubscribe(ctx, "broadcast:*")
 	defer pubsub.Close()
 
 	ch := pubsub.Channel()
@@ -508,6 +589,10 @@ func (s *Service) HandleWebSocket(c *gin.Context) {
 		return
 	}
 
+	ctx := c.Request.Context()
+	ctx = observability.WithUserID(ctx, reqCtx.UserID.String())
+	ctx = observability.WithOrganizationID(ctx, reqCtx.OrganizationID.String())
+
 	client := &Client{
 		service:     s,
 		conn:        conn,
@@ -516,14 +601,15 @@ func (s *Service) HandleWebSocket(c *gin.Context) {
 		orgID:       reqCtx.OrganizationID,
 		roomID:      roomID,
 		connectedAt: time.Now(),
+		ctx:         ctx,
 	}
 
 	s.register <- client
 	go s.writePump(client)
-	s.readPump(client) // This blocks until connection closes
+	s.readPump(ctx, client) // This blocks until connection closes
 }
 
-func (s *Service) readPump(c *Client) {
+func (s *Service) readPump(ctx context.Context, c *Client) {
 	defer func() {
 		s.unregister <- c
 		_ = c.conn.Close()
@@ -579,14 +665,14 @@ func (s *Service) readPump(c *Client) {
 		case "room":
 			if c.roomID != "" {
 				msg.TargetID = c.roomID
-				s.BroadcastToRoom(c.roomID, msg.Content)
+				s.BroadcastToRoom(ctx, c.roomID, msg.Content)
 			}
 		case "org":
 			msg.TargetID = c.orgID.String()
-			s.BroadcastToOrg(c.orgID.String(), msg.Content)
+			s.BroadcastToOrg(ctx, c.orgID.String(), msg.Content)
 		case "user":
 			if msg.TargetID != "" {
-				s.BroadcastToUser(msg.TargetID, msg.Content)
+				s.BroadcastToUser(ctx, msg.TargetID, msg.Content)
 			}
 		}
 	}
@@ -623,7 +709,7 @@ func (s *Service) disconnectAllClients() {
 	s.l.Info("all clients disconnected")
 }
 
-func (s *Service) HandleBroadcast(c *gin.Context) {
+func (s *Service) HandleBroadcast(ctx context.Context, c *gin.Context) {
 	var req BroadcastRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -634,21 +720,21 @@ func (s *Service) HandleBroadcast(c *gin.Context) {
 
 	switch req.Type {
 	case "user_broadcast":
-		s.BroadcastToUser(req.TargetID, req.Message)
+		s.BroadcastToUser(ctx, req.TargetID, req.Message)
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "success",
 			"message": fmt.Sprintf("Message sent to user %s", req.TargetID),
 		})
 
 	case "org_broadcast":
-		s.BroadcastToOrg(req.TargetID, req.Message)
+		s.BroadcastToOrg(ctx, req.TargetID, req.Message)
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "success",
 			"message": fmt.Sprintf("Message sent to organization %s", req.TargetID),
 		})
 
 	case "room_broadcast":
-		s.BroadcastToRoom(req.TargetID, req.Message)
+		s.BroadcastToRoom(ctx, req.TargetID, req.Message)
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "success",
 			"message": fmt.Sprintf("Message sent to room %s", req.TargetID),
@@ -670,7 +756,7 @@ func (s *Service) GetOrgMembers(c *gin.Context) {
 		return
 	}
 
-	members, err := s.redis.SMembers(context.Background(), fmt.Sprintf("org:%s:clients", orgID))
+	members, err := s.redis.SMembers(c.Request.Context(), fmt.Sprintf("org:%s:clients", orgID))
 	if err != nil {
 		s.l.Error("failed to get organization members", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -694,7 +780,7 @@ func (s *Service) GetRoomMembers(c *gin.Context) {
 		return
 	}
 
-	members, err := s.redis.SMembers(context.Background(), "room:"+roomID+":users")
+	members, err := s.redis.SMembers(c.Request.Context(), "room:"+roomID+":users")
 	if err != nil {
 		s.l.Error("failed to get room members", zap.Error(err))
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -707,4 +793,49 @@ func (s *Service) GetRoomMembers(c *gin.Context) {
 		"room_id": roomID,
 		"members": members,
 	})
+}
+
+func (s *Service) startConnectionMonitor(ctx context.Context) {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			s.monitorConnections(ctx)
+		}
+	}
+}
+
+func (s *Service) monitorConnections(ctx context.Context) {
+	ctx, span := s.tracer.StartSpan(ctx, "websocket.monitorConnections")
+	defer span.End()
+
+	s.mu.RLock()
+	totalConnections := len(s.clients)
+	totalUsers := len(s.userIndex)
+	totalOrgs := len(s.orgIndex)
+	totalRooms := len(s.roomIndex)
+	s.mu.RUnlock()
+
+	observability.AddSpanAttributes(ctx,
+		attribute.Int("ws.monitor.total_connections", totalConnections),
+		attribute.Int("ws.monitor.total_users", totalUsers),
+		attribute.Int("ws.monitor.total_orgs", totalOrgs),
+		attribute.Int("ws.monitor.total_rooms", totalRooms),
+	)
+
+	observability.AddSpanEvent(ctx, "connection_monitor_check",
+		attribute.Int("total_connections", totalConnections),
+		attribute.Int("total_users", totalUsers),
+	)
+
+	s.l.Debug("connection monitor check",
+		zap.Int("total_connections", totalConnections),
+		zap.Int("total_users", totalUsers),
+		zap.Int("total_orgs", totalOrgs),
+		zap.Int("total_rooms", totalRooms),
+	)
 }

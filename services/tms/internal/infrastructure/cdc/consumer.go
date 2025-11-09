@@ -22,6 +22,7 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/sourcegraph/conc"
 	"github.com/sourcegraph/conc/pool"
+	"go.opentelemetry.io/otel/attribute"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -31,11 +32,13 @@ type KafkaConsumerParams struct {
 
 	Logger          *zap.Logger
 	Config          *config.Config
-	MetricsRegistry *observability.MetricsRegistry `optional:"true"`
+	MetricsRegistry *observability.MetricsRegistry
+	Tracer          *observability.TracerProvider
 }
 
 type KafkaConsumer struct {
 	l            *zap.Logger
+	tracer       *observability.TracerProvider
 	config       *config.CDCConfig
 	reader       *kafka.Reader
 	ctx          context.Context
@@ -61,6 +64,7 @@ func NewKafkaConsumer(p KafkaConsumerParams) services.CDCService {
 
 	consumer := &KafkaConsumer{
 		l:            p.Logger.With(zap.String("service", "kafka-consumer")),
+		tracer:       p.Tracer,
 		config:       cfg,
 		wg:           conc.NewWaitGroup(),
 		schemaClient: schemaClient,
@@ -76,12 +80,52 @@ func NewKafkaConsumer(p KafkaConsumerParams) services.CDCService {
 }
 
 func (s *KafkaConsumer) RegisterHandler(table string, handler services.CDCEventHandler) {
+	ctx := context.Background()
+	ctx, span := s.tracer.StartSpan(ctx, "cdc.registerHandler")
+	defer span.End()
+
+	observability.AddSpanAttributes(ctx,
+		attribute.String("cdc.table", table),
+		attribute.String("cdc.handler_type", fmt.Sprintf("%T", handler)),
+		attribute.Int("cdc.handler_count", s.getHandlerCount()+1),
+	)
+
 	s.handlers.Store(table, handler)
 	s.l.Info(
 		"Registered CDC handler for table",
 		zap.String("table", table),
 		zap.String("handler_type", fmt.Sprintf("%T", handler)),
+		zap.Int("total_handlers", s.getHandlerCount()),
 	)
+}
+
+// UnregisterHandler removes a CDC handler for the specified table
+func (s *KafkaConsumer) UnregisterHandler(table string) {
+	ctx := context.Background()
+	ctx, span := s.tracer.StartSpan(ctx, "cdc.unregisterHandler")
+	defer span.End()
+
+	observability.AddSpanAttributes(ctx,
+		attribute.String("cdc.table", table),
+		attribute.Int("cdc.handler_count", s.getHandlerCount()-1),
+	)
+
+	s.handlers.Delete(table)
+	s.l.Info(
+		"Unregistered CDC handler for table",
+		zap.String("table", table),
+		zap.Int("remaining_handlers", s.getHandlerCount()),
+	)
+}
+
+// getHandlerCount returns the number of registered handlers
+func (s *KafkaConsumer) getHandlerCount() int {
+	count := 0
+	s.handlers.Range(func(_, _ any) bool {
+		count++
+		return true
+	})
+	return count
 }
 
 func (s *KafkaConsumer) Start() error {

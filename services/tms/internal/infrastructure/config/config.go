@@ -27,6 +27,7 @@ type Config struct {
 	Logging         LoggingConfig          `mapstructure:"logging"            validate:"required"`
 	Monitoring      MonitoringConfig       `mapstructure:"monitoring"         validate:"required"`
 	Streaming       StreamingConfig        `mapstructure:"streaming"          validate:"required"`
+	WebSocket       WebSocketConfig        `mapstructure:"websocket"          validate:"required"`
 }
 
 // AppConfig contains application-level settings
@@ -327,6 +328,16 @@ type StreamingConfig struct {
 	MaxConnections        int           `mapstructure:"maxConnections"        validate:"min=1,max=100"`
 	StreamTimeout         time.Duration `mapstructure:"streamTimeout"         validate:"min=0"`
 	MaxConnectionsPerUser int           `mapstructure:"maxConnectionsPerUser" validate:"min=1,max=100"`
+}
+
+// WebSocketConfig contains WebSocket connection settings
+type WebSocketConfig struct {
+	MaxTotalConnections   int           `mapstructure:"maxTotalConnections"   validate:"min=1,max=50000"`
+	MaxConnectionsPerUser int           `mapstructure:"maxConnectionsPerUser" validate:"min=1,max=20"`
+	ConnectionTimeout     time.Duration `mapstructure:"connectionTimeout"     validate:"min=0"`
+	PingInterval          time.Duration `mapstructure:"pingInterval"          validate:"min=0"`
+	ReadBufferSize        int           `mapstructure:"readBufferSize"        validate:"min=1024"`
+	WriteBufferSize       int           `mapstructure:"writeBufferSize"       validate:"min=1024"`
 }
 
 // SearchConfig contains Meilisearch settings

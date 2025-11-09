@@ -1,6 +1,8 @@
 package services
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/gorilla/websocket"
 
@@ -9,9 +11,9 @@ import (
 
 type WebSocketService interface {
 	HandleWebSocket(c *gin.Context)
-	BroadcastToUser(userID string, content any)
-	BroadcastToOrg(orgID string, content any)
-	BroadcastToRoom(roomID string, content any)
+	BroadcastToUser(ctx context.Context, userID string, content any)
+	BroadcastToOrg(ctx context.Context, orgID string, content any)
+	BroadcastToRoom(ctx context.Context, roomID string, content any)
 }
 
 type WebSocketMessage struct {

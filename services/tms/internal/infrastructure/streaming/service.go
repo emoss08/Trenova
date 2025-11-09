@@ -10,6 +10,7 @@ import (
 	authCtx "github.com/emoss08/trenova/internal/api/context"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/internal/infrastructure/observability"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -20,10 +21,12 @@ type ServiceParams struct {
 
 	Config *config.Config
 	Logger *zap.Logger
+	Tracer *observability.TracerProvider
 }
 
 type Service struct {
 	l               *zap.Logger
+	tracer          *observability.TracerProvider
 	mu              sync.RWMutex
 	streams         map[string]*StreamManager
 	config          *config.StreamingConfig
@@ -55,6 +58,7 @@ type SSEMessage struct {
 func NewService(p ServiceParams) services.StreamingService {
 	return &Service{
 		l:               p.Logger.With(zap.String("service", "streaming")),
+		tracer:          p.Tracer,
 		streams:         make(map[string]*StreamManager),
 		config:          &p.Config.Streaming,
 		userConnections: make(map[string]int),
@@ -232,8 +236,10 @@ func (s *Service) getOrCreateStreamManager(streamKey string) *StreamManager {
 	streamMgr := &StreamManager{
 		clients:        make(map[string]*Client),
 		config:         s.config,
+		tracer:         s.tracer,
 		idleTimeout:    30 * time.Minute,
 		lastDataChange: time.Now(),
+		userConnCount:  make(map[string]int),
 		metrics: StreamMetrics{
 			ActiveConnections: 0,
 			TotalConnections:  0,
