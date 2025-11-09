@@ -27,6 +27,10 @@ export function ActionBadge({
       variant: "purple",
       text: "Updated",
     },
+    [PermissionOperations.SUBMIT]: {
+      variant: "purple",
+      text: "Submitted",
+    },
     [PermissionOperations.DELETE]: {
       variant: "inactive",
       text: "Deleted",
@@ -311,6 +315,14 @@ export function AuditEntryResourceBadge({
     [Resource.Setting]: {
       variant: "warning",
       text: "Setting",
+    },
+    [Resource.AccountingControl]: {
+      variant: "warning",
+      text: "Accounting Control",
+    },
+    [Resource.FiscalPeriod]: {
+      variant: "warning",
+      text: "Fiscal Period",
     },
     [Resource.Template]: {
       variant: "warning",

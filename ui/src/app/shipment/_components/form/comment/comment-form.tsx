@@ -69,7 +69,7 @@ export function CommentForm({ shipmentId }: CommentFormProps) {
     handleSubmit,
     reset,
     setError,
-    formState: { isSubmitting, errors, isSubmitSuccessful },
+    formState: { isSubmitting, isSubmitSuccessful },
   } = form;
 
   const { mutateAsync } = useApiMutation({
@@ -268,7 +268,7 @@ export function CommentForm({ shipmentId }: CommentFormProps) {
   return (
     <FormProvider {...form}>
       <Form
-        className="flex flex-col px-2 gap-2"
+        className="flex flex-col gap-2 px-2"
         onSubmit={handleSubmit(onSubmit)}
       >
         <FormGroup cols={1}>

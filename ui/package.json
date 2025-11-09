@@ -112,6 +112,8 @@
     "@rollup/plugin-node-resolve": "^16.0.3",
     "@tanstack/eslint-plugin-query": "^5.91.2",
     "@tanstack/react-query-devtools": "^5.90.2",
+    "@types/google-map-react": "^2.1.10",
+    "@types/google.maps": "^3.58.1",
     "@types/node": "^24.9.2",
     "@types/react": "^19.2.2",
     "@types/react-dom": "^19.2.2",

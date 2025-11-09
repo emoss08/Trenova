@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { AnimatePresence, motion } from "motion/react";
 import { parseAsString, useQueryState } from "nuqs";
 import { useState } from "react";
 import { Link } from "react-router";
@@ -71,26 +72,47 @@ export function AuthForm() {
 
   return (
     <>
-      <div className="flex flex-col gap-6">
-        <Card className="bg-transparent mx-auto w-[400px] border-input">
+      <div className="flex max-w-[400px] flex-col gap-6">
+        <Card className="rounded-2xl border-border bg-background backdrop-blur-md">
           <CardHeader className="text-left">
-            <CardTitle className="text-xl font-bold">
-              {formType === AuthFormType.FORGOT_PASSWORD
-                ? "Reset Password"
-                : "Welcome back!"}
-            </CardTitle>
-            <CardDescription className="flex space-x-1 text-sm">
-              <span className="text-muted-foreground">
-                Don&apos;t have an account yet?
-              </span>
-              <Link className="text-primary underline" to="#">
-                Create an Account
-              </Link>
-            </CardDescription>
+            <motion.div
+              key={
+                formType === AuthFormType.FORGOT_PASSWORD ? "reset" : "login"
+              }
+              initial={{ opacity: 0, y: 6 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.2, ease: "easeOut" }}
+            >
+              <CardTitle>
+                {formType === AuthFormType.FORGOT_PASSWORD
+                  ? "Reset Password"
+                  : "Welcome back!"}
+              </CardTitle>
+              <CardDescription className="mt-1 flex space-x-1 text-sm">
+                <span className="text-muted-foreground">
+                  Don&apos;t have an account yet?
+                </span>
+                <Link className="text-primary underline" to="#">
+                  Create an Account
+                </Link>
+              </CardDescription>
+            </motion.div>
           </CardHeader>
-          <CardContent className="px-6 py-4">{renderForm()}</CardContent>
+          <CardContent className="px-6 py-4">
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={formType}
+                initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: -8, scale: 0.98 }}
+                transition={{ duration: 0.22, ease: "easeOut" }}
+              >
+                {renderForm()}
+              </motion.div>
+            </AnimatePresence>
+          </CardContent>
         </Card>
-        <div className="text-balance text-center text-xs text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
+        <div className="text-center text-xs text-balance text-muted-foreground [&_a]:underline [&_a]:underline-offset-4 [&_a]:hover:text-primary">
           By clicking continue, you agree to our{" "}
           <a href="#">Terms of Service</a> and{" "}
           <span

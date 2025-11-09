@@ -1,10 +1,5 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormGroup } from "@/components/ui/form";
+import { Form, FormControl } from "@/components/ui/form";
 import { Label } from "@/components/ui/label";
 import {
   resetPasswordSchema,
@@ -53,14 +48,12 @@ export function ResetPasswordForm({ onBack, email }: ResetPasswordFormProps) {
 
   return (
     <Form className="flex flex-col gap-y-2" onSubmit={handleSubmit(onSubmit)}>
-      <FormGroup cols={1}>
-        <FormControl className="min-h-[3em] rounded-md bg-muted p-2">
-          <div className="flex flex-col gap-1">
-            <Label>Email address</Label>
-            <p className="text-sm text-muted-foreground">{email}</p>
-          </div>
-        </FormControl>
-      </FormGroup>
+      <FormControl className="min-h-[3em] rounded-md border border-orange-400 bg-orange-500/20 p-2">
+        <div className="flex flex-col gap-1">
+          <Label>Email address</Label>
+          <p className="text-sm text-muted-foreground">{email}</p>
+        </div>
+      </FormControl>
       <div className="flex justify-between gap-2">
         <Button variant="ghost" onClick={onBack}>
           Back to login

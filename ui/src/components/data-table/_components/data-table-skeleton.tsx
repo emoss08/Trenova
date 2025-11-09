@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -146,6 +141,17 @@ export function DataTableSkeleton(props: DataTableSkeletonProps) {
           </div>
         </div>
       ) : null}
+    </div>
+  );
+}
+
+export function DataTableActionsSkeleton() {
+  return (
+    <div className="flex items-center gap-2">
+      <Skeleton className="h-7 w-44 rounded-md" />
+      <Skeleton className="h-7 w-26 rounded-md" />
+      <div className="h-6 w-px bg-border" />
+      <Skeleton className="h-7 w-18 rounded-md" />
     </div>
   );
 }

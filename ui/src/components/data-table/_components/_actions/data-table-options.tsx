@@ -6,7 +6,7 @@ import { LiveModeTableConfig } from "@/types/live-mode";
 import React, { lazy } from "react";
 import { DataTableFilters } from "../_filter/data-table-filters";
 import { DataTableSort } from "../_sort/data-table-sort";
-import { DataTableActionsSkeleton } from "../data-table-actions";
+import { DataTableActionsSkeleton } from "../data-table-skeleton";
 import { DataTableSearch } from "./data-table-search";
 
 const DataTableActions = lazy(() => import("../data-table-actions"));
@@ -106,13 +106,13 @@ export function DataTableOptions({
 }
 
 function DataTableOptionsOuter({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-col h-auto w-full">{children}</div>;
+  return <div className="flex h-auto w-full flex-col">{children}</div>;
 }
 
 function DataTableOptionsInner({ children }: { children: React.ReactNode }) {
-  return <div className="flex justify-between items-center">{children}</div>;
+  return <div className="flex items-center justify-between">{children}</div>;
 }
 
 function DataTableOptionsFilters({ children }: { children: React.ReactNode }) {
-  return <div className="flex flex-col lg:flex-row gap-2">{children}</div>;
+  return <div className="flex flex-col gap-2 lg:flex-row">{children}</div>;
 }

@@ -4,14 +4,11 @@ import { Icon } from "@/components/ui/icons";
 import { Switch } from "@/components/ui/switch";
 import { TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import { DataTableBodyProps } from "@/types/data-table";
+import { ContextMenuAction, DataTableBodyProps } from "@/types/data-table";
 import { faSpinnerThird } from "@fortawesome/pro-regular-svg-icons";
 import { faPlay } from "@fortawesome/pro-solid-svg-icons";
 import { flexRender, type Row, type Table } from "@tanstack/react-table";
-import {
-  DataTableContextMenu,
-  type ContextMenuAction,
-} from "./data-table-context-menu";
+import { DataTableContextMenu } from "./data-table-context-menu";
 
 function LiveModeTableRow({
   columns,
@@ -29,12 +26,12 @@ function LiveModeTableRow({
 }) {
   return (
     <TableRow
-      className="bg-blue-500/10 hover:!bg-blue-500/20 [&:hover_td]:md:!bg-blue-500/10 [&_td]:md:border-blue-500/10"
+      className="bg-blue-500/10 hover:!bg-blue-500/20 [&_td]:md:border-blue-500/10 [&:hover_td]:md:!bg-blue-500/10"
       // Respect header presence using CSS var set on the scroll container
       style={{ top: "var(--header-h, 0px)" }}
     >
       <TableCell colSpan={columns.length} className="p-3 select-none">
-        <div className="flex justify-between items-center">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3 text-blue-600">
             <div className="flex items-center gap-1">
               <Icon icon={faPlay} className="size-3 text-blue-600" />
@@ -165,12 +162,12 @@ export function DataTableBody<TData extends Record<string, any>>({
         <TableRow>
           <TableCell
             colSpan={columns.length}
-            className="h-24 text-center border-b rounded-b-md"
+            className="h-24 rounded-b-md border-b text-center"
           >
-            <div className="flex flex-row items-center justify-center text-sm font-medium text-foreground bg-muted-foreground/10 rounded-md p-2 w-fit mx-auto border border-border">
+            <div className="mx-auto flex w-fit flex-row items-center justify-center rounded-md border border-border bg-muted-foreground/10 p-2 text-sm font-medium text-foreground">
               <Icon
                 icon={faSpinnerThird}
-                className="size-3 text-primary motion-safe:animate-spin mr-2"
+                className="mr-2 size-3 text-primary motion-safe:animate-spin"
               />
               <p className="text-xs text-foreground">Loading data...</p>
             </div>
@@ -180,7 +177,7 @@ export function DataTableBody<TData extends Record<string, any>>({
         <TableRow>
           <TableCell
             colSpan={columns.length}
-            className="h-24 text-center border-b rounded-b-md"
+            className="h-24 rounded-b-md border-b text-center"
           >
             No results.
           </TableCell>
