@@ -459,7 +459,7 @@ function ConsolidationSettings() {
           </FormControl>
           {showConsolidationOptions && (
             <>
-              <FormControl className="pl-10 min-h-[3em]">
+              <FormControl className="min-h-[3em] pl-10">
                 <SwitchField
                   control={control}
                   position="left"
@@ -469,7 +469,7 @@ function ConsolidationSettings() {
                   size="sm"
                 />
               </FormControl>
-              <FormControl className="pl-10 min-h-[3em]">
+              <FormControl className="min-h-[3em] pl-10">
                 <NumberField
                   control={control}
                   name="consolidationPeriodDays"

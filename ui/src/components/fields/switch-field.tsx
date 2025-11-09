@@ -34,9 +34,9 @@ export function SwitchField<T extends FieldValues>({
       }) => (
         <div
           className={cn(
-            "relative flex w-full items-start gap-2 rounded-md p-3",
+            "relative flex w-full items-start gap-2 rounded-md p-3 group",
             outlined &&
-              "border border-muted-foreground/20 has-data-[state=checked]:border-foreground has-data-[state=checked]:ring-4 has-data-[state=checked]:ring-foreground/20 bg-primary/5 transition-[border-color,box-shadow] duration-200 ease-in-out",
+              "border border-muted-foreground/20 bg-primary/5 has-data-[state=checked]:border-blue-600 has-data-[state=checked]:ring-4 has-data-[state=checked]:bg-blue-600/10 has-data-[state=checked]:text-blue-500 dark:has-data-[state=checked]:text-blue-400 has-data-[state=checked]:ring-blue-600/20 transition-[border-color,box-shadow,background-color] duration-200 ease-in-out",
             className,
           )}
         >
@@ -63,7 +63,7 @@ export function SwitchField<T extends FieldValues>({
 
           <div
             className={cn(
-              "grid grow gap-2",
+              "grid grow gap-1",
               position === "left" ? "order-1" : "order-0",
             )}
           >
@@ -72,7 +72,10 @@ export function SwitchField<T extends FieldValues>({
               {recommended && <RecommendedBadge size="sm" variant="warning" />}
             </div>
             {description && (
-              <p id={descriptionId} className="text-2xs text-muted-foreground">
+              <p
+                id={descriptionId}
+                className="text-2xs text-muted-foreground group-has-data-[state=checked]:text-blue-500 dark:group-has-data-[state=checked]:text-blue-400"
+              >
                 {description}
               </p>
             )}
@@ -102,7 +105,7 @@ export function SwitchField<T extends FieldValues>({
           {fieldState.error && (
             <p
               id={errorId}
-              className="text-2xs text-destructive absolute -bottom-5 left-0"
+              className="absolute -bottom-5 left-0 text-2xs text-destructive"
             >
               {fieldState.error.message}
             </p>

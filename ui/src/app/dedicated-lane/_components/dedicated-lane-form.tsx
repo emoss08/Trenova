@@ -23,7 +23,7 @@ export function DedicatedLaneForm() {
 
   return (
     <DedicatedLaneFormOuter>
-      <FormGroup cols={2} className="pb-2 border-b">
+      <FormGroup cols={2} className="border-b pb-2">
         <FormControl cols="full">
           <SelectField
             control={control}
@@ -70,7 +70,7 @@ function ShipmentInformationSection() {
     <FormSection
       title="Route Details"
       description="Configure origin, destination, and equipment specifications"
-      className="py-2 border-b"
+      className="border-b py-2"
     >
       <FormGroup cols={2}>
         <FormControl>
