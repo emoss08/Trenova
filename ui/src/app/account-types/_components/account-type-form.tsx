@@ -3,7 +3,7 @@ import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
 import { FormControl, FormGroup } from "@/components/ui/form";
-import { statusChoices } from "@/lib/choices";
+import { accountTypeCategoryChoices, statusChoices } from "@/lib/choices";
 import { AccountTypeSchema } from "@/lib/schemas/account-type-schema";
 import { useFormContext } from "react-hook-form";
 
@@ -43,6 +43,17 @@ export function AccountTypeForm() {
           placeholder="Name"
           description="The name of the account type"
           maxLength={100}
+        />
+      </FormControl>
+      <FormControl cols="full">
+        <SelectField
+          control={control}
+          options={accountTypeCategoryChoices}
+          rules={{ required: true }}
+          name="category"
+          label="Category"
+          placeholder="Category"
+          description="The category of the account type"
         />
       </FormControl>
       <FormControl cols="full">

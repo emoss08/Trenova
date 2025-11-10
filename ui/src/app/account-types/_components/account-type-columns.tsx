@@ -4,7 +4,7 @@ import {
   HoverCardTimestamp,
 } from "@/components/data-table/_components/data-table-components";
 import { StatusBadge } from "@/components/status-badge";
-import { statusChoices } from "@/lib/choices";
+import { accountTypeCategoryChoices, statusChoices } from "@/lib/choices";
 import { AccountTypeSchema } from "@/lib/schemas/account-type-schema";
 import { type ColumnDef } from "@tanstack/react-table";
 
@@ -61,6 +61,25 @@ export function getColumns(): ColumnDef<AccountTypeSchema>[] {
       size: 200,
       minSize: 200,
       maxSize: 250,
+    },
+    {
+      accessorKey: "category",
+      header: "Category",
+      cell: ({ row }) => {
+        const { category } = row.original;
+        return <p>{category}</p>;
+      },
+      size: 200,
+      minSize: 200,
+      maxSize: 250,
+      meta: {
+        apiField: "category",
+        filterable: true,
+        sortable: true,
+        filterType: "select",
+        filterOptions: accountTypeCategoryChoices,
+        defaultFilterOperator: "eq",
+      },
     },
     {
       accessorKey: "description",
