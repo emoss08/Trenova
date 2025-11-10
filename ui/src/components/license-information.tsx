@@ -56,14 +56,14 @@ export function LicenseInformation({
         </DialogHeader>
         <DialogBody>
           {isLoading ? (
-            <div className="flex items-center justify-center h-40">
-              <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+            <div className="flex h-40 items-center justify-center">
+              <div className="h-8 w-8 animate-spin rounded-full border-t-2 border-b-2 border-primary"></div>
             </div>
           ) : (
-            <div className="space-y-4 text-sm license-markdown">
+            <div className="license-markdown space-y-4 text-sm">
               <ReactMarkdown>{licenseMarkdown}</ReactMarkdown>
 
-              <h3 className="text-lg font-semibold mt-6">
+              <h3 className="mt-6 text-lg font-semibold">
                 Third-Party Components
               </h3>
               <p className="text-muted-foreground">
@@ -78,7 +78,7 @@ export function LicenseInformation({
                       target="_blank"
                       rel="noreferrer"
                       href={license.url}
-                      className="text-xs text-muted-foreground hover:underline cursor-pointer"
+                      className="cursor-pointer text-xs text-muted-foreground hover:underline"
                     >
                       {license.license} - {license.copyright}
                     </a>
@@ -86,7 +86,7 @@ export function LicenseInformation({
                 ))}
               </div>
 
-              <p className="text-muted-foreground mt-6">
+              <p className="mt-6 text-muted-foreground">
                 For the complete text of these licenses, please visit the
                 respective project websites or view the license files included
                 with the software.

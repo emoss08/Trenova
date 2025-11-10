@@ -91,8 +91,8 @@ export function NavUser() {
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
-              side="top"
-              align="start"
+              side="bottom"
+              align="end"
               className="w-[270px] max-w-[300px]"
             >
               <DropdownMenuLabel className="p-0 font-normal">
@@ -132,7 +132,7 @@ export function NavUser() {
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>Learn More</DropdownMenuSubTrigger>
                 <DropdownMenuPortal>
-                  <DropdownMenuSubContent sideOffset={5}>
+                  <DropdownMenuSubContent alignOffset={-30} sideOffset={5}>
                     <DropdownMenuItem
                       endContent={<Icon icon={faUpRightFromSquare} />}
                       title="About Trenova"
