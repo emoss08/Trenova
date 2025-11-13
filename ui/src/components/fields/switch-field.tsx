@@ -74,7 +74,11 @@ export function SwitchField<T extends FieldValues>({
             {description && (
               <p
                 id={descriptionId}
-                className="text-2xs text-muted-foreground group-has-data-[state=checked]:text-blue-500 dark:group-has-data-[state=checked]:text-blue-400"
+                className={cn(
+                  "text-2xs text-muted-foreground",
+                  outlined &&
+                    "group-has-data-[state=checked]:text-blue-500 dark:group-has-data-[state=checked]:text-blue-400",
+                )}
               >
                 {description}
               </p>
