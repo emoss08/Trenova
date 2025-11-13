@@ -85,23 +85,18 @@ func (a *Activities) ExecuteQueryActivity(
 
 	activity.RecordHeartbeat(ctx, "building query")
 
-	tableName, tableAlias, err := a.getTableInfo(payload.ResourceType)
+	resourceInfo, err := GetResourceInfo(payload.ResourceType)
 	if err != nil {
 		return nil, fmt.Errorf("unsupported resource type: %w", err)
 	}
 
 	query := a.db.NewSelect().
-		Table(tableName).
-		TableExpr(fmt.Sprintf("%s AS %s", tableName, tableAlias)).
-		Where(fmt.Sprintf("%s.organization_id = ?", tableAlias), payload.OrganizationID).
-		Where(fmt.Sprintf("%s.business_unit_id = ?", tableAlias), payload.BusinessUnitID)
+		Table(resourceInfo.TableName).
+		TableExpr(fmt.Sprintf("%s AS %s", resourceInfo.TableName, resourceInfo.Alias)).
+		Where(fmt.Sprintf("%s.organization_id = ?", resourceInfo.Alias), payload.OrganizationID).
+		Where(fmt.Sprintf("%s.business_unit_id = ?", resourceInfo.Alias), payload.BusinessUnitID)
 
-	entity, err := a.getEntityForResourceType(payload.ResourceType)
-	if err != nil {
-		return nil, err
-	}
-
-	qb := querybuilder.NewQueryBuilder(query, tableAlias, nil)
+	qb := querybuilder.NewQueryBuilder(query, resourceInfo.Alias, nil)
 	qb = qb.WithTraversalSupport(true)
 
 	if len(payload.FilterState.FieldFilters) > 0 {
@@ -113,8 +108,10 @@ func (a *Activities) ExecuteQueryActivity(
 	}
 
 	if payload.FilterState.Query != "" {
-		searchFields := a.getSearchFields(payload.ResourceType)
-		qb = qb.ApplyTextSearch(payload.FilterState.Query, searchFields)
+		searchConfig := resourceInfo.Entity.PostgresSearchConfig()
+		if searchConfig != nil && len(searchConfig.SearchFields) > 0 {
+			qb = qb.ApplyTextSearch(payload.FilterState.Query, searchConfig.SearchFields)
+		}
 	}
 
 	query = qb.GetQuery()
@@ -307,15 +304,18 @@ func (a *Activities) UploadToStorageActivity(
 		return nil, fmt.Errorf("failed to get report: %w", err)
 	}
 
+	resourceInfo, err := GetResourceInfo(rpt.ResourceType)
+	if err != nil {
+		return nil, fmt.Errorf("unsupported resource type: %w", err)
+	}
+
 	query := a.db.NewSelect().
-		Table(a.getTableNameForResourceType(rpt.ResourceType)).
+		Table(resourceInfo.TableName).
+		TableExpr(fmt.Sprintf("%s AS %s", resourceInfo.TableName, resourceInfo.Alias)).
 		Where("organization_id = ?", rpt.OrganizationID).
 		Where("business_unit_id = ?", rpt.BusinessUnitID)
 
-	tableName, tableAlias, _ := a.getTableInfo(rpt.ResourceType)
-	query = query.TableExpr(fmt.Sprintf("%s AS %s", tableName, tableAlias))
-
-	qb := querybuilder.NewQueryBuilder(query, tableAlias, nil)
+	qb := querybuilder.NewQueryBuilder(query, resourceInfo.Alias, nil)
 	if len(rpt.FilterState.FieldFilters) > 0 {
 		qb = qb.ApplyFilters(rpt.FilterState.FieldFilters)
 	}
@@ -323,8 +323,10 @@ func (a *Activities) UploadToStorageActivity(
 		qb = qb.ApplySort(rpt.FilterState.Sort)
 	}
 	if rpt.FilterState.Query != "" {
-		searchFields := a.getSearchFields(rpt.ResourceType)
-		qb = qb.ApplyTextSearch(rpt.FilterState.Query, searchFields)
+		searchConfig := resourceInfo.Entity.PostgresSearchConfig()
+		if searchConfig != nil && len(searchConfig.SearchFields) > 0 {
+			qb = qb.ApplyTextSearch(rpt.FilterState.Query, searchConfig.SearchFields)
+		}
 	}
 
 	var rows []map[string]any
@@ -503,57 +505,4 @@ func (a *Activities) SendReportEmailActivity(
 	activity.RecordHeartbeat(ctx, "email sent")
 
 	return nil
-}
-
-func (a *Activities) getTableInfo(resourceType string) (string, string, error) {
-	tableMap := map[string]struct {
-		table string
-		alias string
-	}{
-		"user":             {"users", "u"},
-		"customer":         {"customers", "cus"},
-		"shipment":         {"shipments", "sp"},
-		"tractor":          {"tractors", "tr"},
-		"trailer":          {"trailers", "trl"},
-		"location":         {"locations", "loc"},
-		"worker":           {"workers", "wrk"},
-		"equipment_type":   {"equipment_types", "et"},
-		"commodity":        {"commodities", "cmd"},
-		"revenue_code":     {"revenue_codes", "rc"},
-		"general_ledger":   {"general_ledger_accounts", "gl"},
-		"division_code":    {"division_codes", "dc"},
-		"accessorial":      {"accessorial_charges", "ac"},
-		"hazardous_material": {"hazardous_materials", "hm"},
-	}
-
-	if info, ok := tableMap[resourceType]; ok {
-		return info.table, info.alias, nil
-	}
-	return "", "", fmt.Errorf("unsupported resource type: %s", resourceType)
-}
-
-func (a *Activities) getTableNameForResourceType(resourceType string) string {
-	table, _, _ := a.getTableInfo(resourceType)
-	return table
-}
-
-func (a *Activities) getEntityForResourceType(resourceType string) (any, error) {
-	return nil, nil
-}
-
-func (a *Activities) getSearchFields(resourceType string) []string {
-	searchFieldsMap := map[string][]string{
-		"user":       {"u.name", "u.email_address", "u.username"},
-		"customer":   {"cus.name", "cus.code"},
-		"shipment":   {"sp.pro_number", "sp.bol_number"},
-		"tractor":    {"tr.code"},
-		"trailer":    {"trl.code"},
-		"location":   {"loc.name", "loc.code"},
-		"worker":     {"wrk.code"},
-	}
-
-	if fields, ok := searchFieldsMap[resourceType]; ok {
-		return fields
-	}
-	return []string{}
 }

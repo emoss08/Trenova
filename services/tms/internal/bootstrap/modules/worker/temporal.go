@@ -7,6 +7,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/emailjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/notificationjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/searchjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -23,6 +24,7 @@ type TemporalWorkerParams struct {
 	AuditRegistry        *auditjobs.Registry
 	NotificationRegistry *notificationjobs.Registry
 	EmailRegistry        *emailjobs.Registry
+	ReportRegistry       *reportjobs.Registry
 	SearchRegistry       *searchjobs.Registry
 	ShipmentRegistry     *shipmentjobs.Registry
 	Config               *config.Config
@@ -47,6 +49,11 @@ func NewTemporalWorkers(p TemporalWorkerParams) error {
 
 	if err := p.WorkerManager.Register(p.EmailRegistry); err != nil {
 		log.Error("failed to register email worker", zap.Error(err))
+		return err
+	}
+
+	if err := p.WorkerManager.Register(p.ReportRegistry); err != nil {
+		log.Error("failed to register report worker", zap.Error(err))
 		return err
 	}
 
