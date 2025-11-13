@@ -154,16 +154,15 @@ func (h *UserHandler) me(c *gin.Context) {
 func (h *UserHandler) updateMe(c *gin.Context) {
 	authCtx := context.GetAuthContext(c)
 
-	entity := new(tenant.User)
-	if err := c.ShouldBindJSON(entity); err != nil {
+	req := new(repositories.UpdateMeRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	entity.ID = authCtx.UserID
-	context.AddContextToRequest(authCtx, entity)
-
-	entity, err := h.service.Update(c.Request.Context(), entity, authCtx.UserID)
+	context.AddContextToRequest(authCtx, req)
+	req.UserID = authCtx.UserID
+	entity, err := h.service.UpdateMe(c.Request.Context(), req)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
