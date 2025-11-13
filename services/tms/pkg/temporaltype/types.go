@@ -11,6 +11,7 @@ const (
 	SystemTaskQueue       = "system-queue"
 	EmailTaskQueue        = "email-queue"
 	AuditTaskQueue        = "audit-queue"
+	ReportTaskQueue       = "report-queue"
 )
 
 const (

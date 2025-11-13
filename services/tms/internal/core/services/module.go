@@ -38,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/organization"
 	"github.com/emoss08/trenova/internal/core/services/pagefavorite"
 	"github.com/emoss08/trenova/internal/core/services/patternconfig"
+	"github.com/emoss08/trenova/internal/core/services/reportservice"
 	"github.com/emoss08/trenova/internal/core/services/servicetype"
 	"github.com/emoss08/trenova/internal/core/services/shipment"
 	"github.com/emoss08/trenova/internal/core/services/shipmentcomment"
@@ -112,5 +113,6 @@ var Module = fx.Module(
 		journalentry.NewService,
 		accountingcontrol.NewService,
 		userpreference.NewService,
+		reportservice.NewService,
 	),
 )

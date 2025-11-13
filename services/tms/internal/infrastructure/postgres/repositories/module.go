@@ -37,6 +37,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/pagefavoriterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/patternconfigrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/policyrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/reportrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/rolerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/servicetyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentcommentrepository"
@@ -110,5 +111,6 @@ var Module = fx.Module("postgres-repositories",
 		journalentryrepository.NewRepository,
 		accountingcontrolrepository.NewRepository,
 		userpreferencerepository.NewRepository,
+		reportrepository.NewRepository,
 	),
 )
