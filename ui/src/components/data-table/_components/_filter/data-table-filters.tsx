@@ -32,7 +32,7 @@ export function DataTableFilters({
     <DataTableFiltersInner>
       <Popover>
         <PopoverTrigger asChild>
-          <Button variant="outline" className="flex items-center gap-2">
+          <Button variant="outline" className="flex w-full items-center gap-2">
             <Icon icon={faBarsFilter} className="size-4" />
             <span className="text-sm">Filter</span>
             {filterState.filters.length > 0 && (
@@ -46,7 +46,7 @@ export function DataTableFilters({
             )}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto sm:min-w-[380px] p-0" align="start">
+        <PopoverContent className="w-auto p-0 sm:min-w-[380px]" align="start">
           <DataTableFilterContent
             filterState={filterState}
             columns={columns}
@@ -60,7 +60,7 @@ export function DataTableFilters({
 
 function DataTableFiltersInner({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-col items-center gap-2 w-full lg:w-auto">
+    <div className="flex w-full flex-col items-center gap-2 lg:w-auto">
       {children}
     </div>
   );

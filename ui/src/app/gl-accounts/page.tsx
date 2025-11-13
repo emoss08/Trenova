@@ -2,18 +2,16 @@ import { DataTableLazyComponent } from "@/components/error-boundary";
 import { MetaTags } from "@/components/meta-tags";
 import { lazy } from "react";
 
-const LocationCategoryTable = lazy(
-  () => import("./_components/location-category-table"),
-);
+const GLAccountTable = lazy(() => import("./_components/gl-account-table"));
 
-export function LocationCategories() {
+export function GLAccounts() {
   return (
     <>
-      <MetaTags title="Location Categories" description="Location Categories" />
+      <MetaTags title="GL Accounts" description="GL Accounts" />
       <div className="flex flex-col gap-y-3">
         <Header />
         <DataTableLazyComponent>
-          <LocationCategoryTable />
+          <GLAccountTable />
         </DataTableLazyComponent>
       </div>
     </>
@@ -24,11 +22,9 @@ function Header() {
   return (
     <div className="flex items-start justify-between">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">
-          Location Categories
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight">GL Accounts</h1>
         <p className="text-muted-foreground">
-          Manage and configure location categories for your organization
+          Manage and configure GL accounts for your organization
         </p>
       </div>
     </div>

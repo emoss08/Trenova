@@ -25,6 +25,10 @@ import { ShipmentDocumentType } from "@/types/shipment";
 import { Visibility } from "@/types/table-configuration";
 import { Endorsement, PTOStatus, PTOType, WorkerType } from "@/types/worker";
 import {
+  AccountTypeCategorySchema,
+  AccountTypeSchema,
+} from "./schemas/account-type-schema";
+import {
   AccountingControlSchema,
   ExpenseRecognitionSchema,
   JournalEntryCriteriaSchema,
@@ -1049,3 +1053,30 @@ export const expenseRecognitionMethodChoices = [
 ] satisfies ReadonlyArray<
   ChoiceProps<AccountingControlSchema["expenseRecognitionMethod"]>
 >;
+
+export const accountTypeCategoryChoices = [
+  {
+    value: AccountTypeCategorySchema.enum.Asset,
+    label: "Asset",
+  },
+  {
+    value: AccountTypeCategorySchema.enum.Liability,
+    label: "Liability",
+  },
+  {
+    value: AccountTypeCategorySchema.enum.Equity,
+    label: "Equity",
+  },
+  {
+    value: AccountTypeCategorySchema.enum.Revenue,
+    label: "Revenue",
+  },
+  {
+    value: AccountTypeCategorySchema.enum.CostOfRevenue,
+    label: "Cost of Revenue",
+  },
+  {
+    value: AccountTypeCategorySchema.enum.Expense,
+    label: "Expense",
+  },
+] satisfies ReadonlyArray<ChoiceProps<AccountTypeSchema["category"]>>;

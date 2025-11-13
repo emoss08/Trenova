@@ -207,7 +207,7 @@ export const routes: RouteInfo[] = [
             supportsModal: true,
           },
           {
-            key: Resource.GlAccount,
+            key: Resource.GLAccount,
             label: "GL Accounts",
             link: "/billing/configurations/gl-accounts",
             supportsModal: true,

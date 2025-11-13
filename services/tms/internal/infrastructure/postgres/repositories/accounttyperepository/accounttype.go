@@ -79,6 +79,69 @@ func (r *repository) List(
 	}, nil
 }
 
+func (r *repository) SelectOptions(
+	ctx context.Context,
+	req repositories.AccountTypeSelectOptionsRequest,
+) ([]*repositories.AccountTypeSelectOptionResponse, error) {
+	log := r.l.With(
+		zap.String("operation", "SelectOptions"),
+		zap.Any("req", req),
+	)
+
+	db, err := r.db.DB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	entities := make([]*repositories.AccountTypeSelectOptionResponse, 0)
+	q := db.NewSelect().Model((*accounting.AccountType)(nil)).
+		Column("id", "code", "name", "category").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("at.organization_id = ?", req.OrgID).
+				Where("at.business_unit_id = ?", req.BuID)
+		})
+
+	if req.Query != "" {
+		q = q.Where(
+			"at.code ILIKE ? OR at.name ILIKE ?",
+			"%"+req.Query+"%",
+			"%"+req.Query+"%",
+		)
+	}
+
+	if err = q.Scan(ctx, &entities); err != nil {
+		log.Error("failed to scan account types", zap.Error(err))
+		return nil, err
+	}
+
+	return entities, nil
+}
+
+func (r *repository) GetOption(
+	ctx context.Context,
+	req repositories.GetAccountTypeByIDRequest,
+) (*accounting.AccountType, error) {
+	db, err := r.db.DB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	entity := new(accounting.AccountType)
+	if err = db.NewSelect().Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where("at.id = ?", req.ID).
+				Where("at.organization_id = ?", req.OrgID).
+				Where("at.business_unit_id = ?", req.BuID)
+		}).
+		Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return entity, nil
+}
+
 func (r *repository) GetByID(
 	ctx context.Context,
 	req *repositories.GetAccountTypeByIDRequest,

@@ -51,6 +51,18 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "configurations/gl-accounts",
+                loader: createPermissionLoader(Resource.GLAccount),
+                async lazy() {
+                  let { GLAccounts } = await import("@/app/gl-accounts/page");
+                  return { Component: GLAccounts };
+                },
+                handle: {
+                  crumb: "GL Accounts",
+                  title: "GL Accounts",
+                },
+              },
+              {
                 path: "configurations/charge-types",
                 loader: createPermissionLoader(Resource.ChargeType),
                 async lazy() {

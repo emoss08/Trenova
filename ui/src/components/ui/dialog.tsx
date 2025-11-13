@@ -83,12 +83,12 @@ function DialogContent({
                 <TooltipTrigger asChild>
                   <DialogPrimitive.Close
                     asChild
-                    className="absolute right-2 top-2"
+                    className="absolute top-2 right-2"
                   >
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-sm px-1.5 transition-[border-color,box-shadow] duration-100 ease-in-out focus:border focus:border-foreground focus:outline-hidden focus:ring-4 focus:ring-foreground/20 disabled:pointer-events-none [&_svg]:size-4 z-10"
+                      className="z-10 rounded-sm px-1.5 transition-[border-color,box-shadow] duration-100 ease-in-out focus:border focus:border-foreground focus:ring-4 focus:ring-foreground/20 focus:outline-hidden disabled:pointer-events-none [&_svg]:size-4"
                     >
                       <XIcon />
                       <span className="sr-only">Close</span>
@@ -129,7 +129,7 @@ function DialogFooter({ className, ...props }: React.ComponentProps<"div">) {
     <div
       data-slot="dialog-footer"
       className={cn(
-        "flex flex-col-reverse justify-between p-2 border-t border-input bg-sidebar rounded-b-lg sm:flex-row sm:space-x-2",
+        "flex flex-col-reverse justify-between p-2 gap-2 border-t border-input bg-sidebar rounded-b-lg sm:flex-row sm:space-x-2",
         className,
       )}
       {...props}

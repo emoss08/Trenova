@@ -19,11 +19,30 @@ type GetAccountTypeByIDRequest struct {
 	UserID pulid.ID
 }
 
+type AccountTypeSelectOptionsRequest struct {
+	*pagination.SelectQueryOptions
+}
+
+type AccountTypeSelectOptionResponse struct {
+	ID       pulid.ID `json:"id"       form:"id"       bun:"id"`
+	Code     string   `json:"code"     form:"code"     bun:"code"`
+	Name     string   `json:"name"     form:"name"     bun:"name"`
+	Category string   `json:"category" form:"category" bun:"category"`
+}
+
 type AccountTypeRepository interface {
 	List(
 		ctx context.Context,
 		req *ListAccountTypeRequest,
 	) (*pagination.ListResult[*accounting.AccountType], error)
+	GetOption(
+		ctx context.Context,
+		req GetAccountTypeByIDRequest,
+	) (*accounting.AccountType, error)
+	SelectOptions(
+		ctx context.Context,
+		req AccountTypeSelectOptionsRequest,
+	) ([]*AccountTypeSelectOptionResponse, error)
 	GetByID(
 		ctx context.Context,
 		req *GetAccountTypeByIDRequest,

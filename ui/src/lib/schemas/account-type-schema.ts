@@ -46,3 +46,24 @@ export const accountTypeSchema = z.object({
 });
 
 export type AccountTypeSchema = z.infer<typeof accountTypeSchema>;
+
+export function categoryToHumanReadable(
+  category: AccountTypeSchema["category"],
+): string {
+  switch (category) {
+    case AccountTypeCategorySchema.enum.Asset:
+      return "Asset";
+    case AccountTypeCategorySchema.enum.Liability:
+      return "Liability";
+    case AccountTypeCategorySchema.enum.Equity:
+      return "Equity";
+    case AccountTypeCategorySchema.enum.Revenue:
+      return "Revenue";
+    case AccountTypeCategorySchema.enum.CostOfRevenue:
+      return "Cost of Revenue";
+    case AccountTypeCategorySchema.enum.Expense:
+      return "Expense";
+    default:
+      return "Unknown";
+  }
+}

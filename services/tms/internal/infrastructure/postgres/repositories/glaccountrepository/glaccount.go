@@ -124,10 +124,6 @@ func (r *repository) addOptions(
 		q = q.Where("gla.parent_id = ?", opts.ParentID)
 	}
 
-	if opts.IsActive != nil {
-		q = q.Where("gla.is_active = ?", *opts.IsActive)
-	}
-
 	if opts.IsSystem != nil {
 		q = q.Where("gla.is_system = ?", *opts.IsSystem)
 	}

@@ -38,7 +38,6 @@ type GLAccount struct {
 	Description string `json:"description" bun:"description,type:TEXT,nullzero"`
 
 	// Account Properties
-	IsActive       bool `json:"isActive"       bun:"is_active,type:BOOLEAN,notnull,default:true"`
 	IsSystem       bool `json:"isSystem"       bun:"is_system,type:BOOLEAN,notnull,default:false"`
 	AllowManualJE  bool `json:"allowManualJE"  bun:"allow_manual_je,type:BOOLEAN,notnull,default:true"`
 	RequireProject bool `json:"requireProject" bun:"require_project,type:BOOLEAN,notnull,default:false"`

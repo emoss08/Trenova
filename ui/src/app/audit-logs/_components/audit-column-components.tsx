@@ -392,7 +392,7 @@ export function AuditEntryResourceBadge({
       variant: undefined,
       text: "Division Code",
     },
-    [Resource.GlAccount]: {
+    [Resource.GLAccount]: {
       variant: undefined,
       text: "GL Account",
     },

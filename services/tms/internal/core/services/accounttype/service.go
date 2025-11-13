@@ -56,6 +56,20 @@ func (s *Service) Get(
 	return s.repo.GetByID(ctx, req)
 }
 
+func (s *Service) GetOption(
+	ctx context.Context,
+	req repositories.GetAccountTypeByIDRequest,
+) (*accounting.AccountType, error) {
+	return s.repo.GetOption(ctx, req)
+}
+
+func (s *Service) SelectOptions(
+	ctx context.Context,
+	req repositories.AccountTypeSelectOptionsRequest,
+) ([]*repositories.AccountTypeSelectOptionResponse, error) {
+	return s.repo.SelectOptions(ctx, req)
+}
+
 func (s *Service) Create(
 	ctx context.Context,
 	entity *accounting.AccountType,

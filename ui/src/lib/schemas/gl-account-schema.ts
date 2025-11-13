@@ -25,7 +25,6 @@ export const glAccountSchema = z.object({
   accountCode: z.string().min(1, { error: "Account code is required" }),
   name: z.string().min(1, { error: "Name is required" }),
   description: optionalStringSchema,
-  isActive: z.boolean().default(true),
   isSystem: z.boolean(),
   allowManualJE: z.boolean().default(true),
   requireProject: z.boolean().default(false),

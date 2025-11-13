@@ -1272,7 +1272,6 @@ func (s *GlAccountSeed) createDefaultCOA(
 			AccountCode:    seed.Code,
 			Name:           seed.Name,
 			Description:    seed.Description,
-			IsActive:       true,
 			IsSystem:       seed.IsSystem,
 			AllowManualJE:  true,
 			RequireProject: false,

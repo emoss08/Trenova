@@ -8,7 +8,6 @@ CREATE TABLE IF NOT EXISTS "gl_accounts"(
     "account_code" varchar(20) NOT NULL,
     "name" varchar(200) NOT NULL,
     "description" text,
-    "is_active" boolean NOT NULL DEFAULT TRUE,
     "is_system" boolean NOT NULL DEFAULT FALSE,
     "allow_manual_je" boolean NOT NULL DEFAULT TRUE,
     "require_project" boolean NOT NULL DEFAULT FALSE,
@@ -38,10 +37,6 @@ CREATE INDEX IF NOT EXISTS idx_gl_accounts_account_type ON "gl_accounts"("accoun
 CREATE INDEX IF NOT EXISTS idx_gl_accounts_parent ON "gl_accounts"("parent_id");
 
 CREATE INDEX IF NOT EXISTS idx_gl_accounts_code ON "gl_accounts"("account_code");
-
-CREATE INDEX IF NOT EXISTS idx_gl_accounts_active ON "gl_accounts"("is_active")
-WHERE
-    "is_active" = TRUE;
 
 COMMENT ON TABLE "gl_accounts" IS 'Stores General Ledger accounts for the chart of accounts';
 

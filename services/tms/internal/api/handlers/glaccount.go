@@ -130,12 +130,8 @@ func (h *GLAccountHandler) selectOptions(c *gin.Context) {
 }
 
 func (h *GLAccountHandler) list(c *gin.Context) {
-	var isActive, isSystem, allowManualJE *bool
+	var isSystem, allowManualJE *bool
 
-	if c.Query("isActive") != "" {
-		val := helpers.QueryBool(c, "isActive")
-		isActive = &val
-	}
 	if c.Query("isSystem") != "" {
 		val := helpers.QueryBool(c, "isSystem")
 		isSystem = &val
@@ -157,7 +153,6 @@ func (h *GLAccountHandler) list(c *gin.Context) {
 					Status:             helpers.QueryString(c, "status", ""),
 					AccountTypeID:      helpers.QueryString(c, "accountTypeId", ""),
 					ParentID:           helpers.QueryString(c, "parentId", ""),
-					IsActive:           isActive,
 					IsSystem:           isSystem,
 					AllowManualJE:      allowManualJE,
 				},

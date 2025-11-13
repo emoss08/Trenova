@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/accounting"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -604,7 +605,7 @@ func validateGLAccounts(
 		}
 
 		// Check if account is active
-		if !account.IsActive {
+		if account.Status != domain.StatusActive {
 			me.Add(
 				fmt.Sprintf("lines[%d].glAccountId", i),
 				errortypes.ErrInvalid,

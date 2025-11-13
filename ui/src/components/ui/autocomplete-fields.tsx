@@ -1,5 +1,6 @@
 import { holdTypeChoices } from "@/lib/choices";
 import type { AccessorialChargeSchema } from "@/lib/schemas/accessorial-charge-schema";
+import { categoryToHumanReadable } from "@/lib/schemas/account-type-schema";
 import type { CommoditySchema } from "@/lib/schemas/commodity-schema";
 import type { CustomerSchema } from "@/lib/schemas/customer-schema";
 import type { DocumentTypeSchema } from "@/lib/schemas/document-type-schema";
@@ -22,6 +23,7 @@ import type { RoleSchema } from "@/lib/schemas/user-schema";
 import type { WorkerSchema } from "@/lib/schemas/worker-schema";
 import { formatLocation, truncateText, USDollarFormat } from "@/lib/utils";
 import {
+  AccountTypeSelectOptionResponse,
   GLAccountSelectOptionResponse,
   UserSelectOptionResponse,
 } from "@/types/auto-complete-fields";
@@ -83,18 +85,18 @@ export function HazardousMaterialAutocompleteField<T extends FieldValues>({
       getDisplayValue={(option) => `${option.name}`}
       placeholder="Select a hazardous material"
       renderOption={(option) => (
-        <div className="flex flex-col gap-0.5 items-start size-full">
+        <div className="flex size-full flex-col items-start gap-0.5">
           <div className="flex flex-row items-center">
             <span className="text-xs font-medium">
               {truncateText(option.name, 10)}
             </span>
             <PackingGroupBadge
               group={option.packingGroup}
-              className="h-4 text-2xs bg-transparent border-none"
+              className="h-4 border-none bg-transparent text-2xs"
             />
           </div>
           {option?.description && (
-            <span className="text-2xs text-muted-foreground truncate w-full">
+            <span className="w-full truncate text-2xs text-muted-foreground">
               {truncateText(option?.description, 35)}
             </span>
           )}
@@ -113,7 +115,7 @@ export function UserAutocompleteField<T extends FieldValues>({
       link="/users/select-options/"
       getOptionValue={(option) => option.id ?? ""}
       getDisplayValue={(option) => (
-        <div className="flex flex-row items-center gap-1.5 shrink-0">
+        <div className="flex shrink-0 flex-row items-center gap-1.5">
           <LazyImage
             src={
               option.profilePicUrl ||
@@ -128,8 +130,8 @@ export function UserAutocompleteField<T extends FieldValues>({
         </div>
       )}
       renderOption={(option) => (
-        <div className="flex flex-col items-start size-full">
-          <div className="flex flex-row items-center gap-1.5 w-full">
+        <div className="flex size-full flex-col items-start">
+          <div className="flex w-full flex-row items-center gap-1.5">
             <LazyImage
               src={
                 option.profilePicUrl ||
@@ -142,7 +144,7 @@ export function UserAutocompleteField<T extends FieldValues>({
               {option.name}
             </span>
           </div>
-          <span className="text-2xs text-muted-foreground truncate w-full">
+          <span className="w-full truncate text-2xs text-muted-foreground">
             {truncateText(option.emailAddress, 20)}
           </span>
         </div>
@@ -170,7 +172,7 @@ export function LocationCategoryAutocompleteField<T extends FieldValues>({
         <div className="flex flex-col items-start">
           <ColorOptionValue color={option.color} value={option.name} />
           {option.description && (
-            <span className="text-2xs text-muted-foreground truncate w-full">
+            <span className="w-full truncate text-2xs text-muted-foreground">
               {option.description}
             </span>
           )}
@@ -190,13 +192,35 @@ export function GLAccountAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => `${option.accountCode}`}
       renderOption={(option) => (
-        <div className="flex flex-col items-start size-full">
+        <div className="flex size-full flex-col items-start">
           <span className="text-xs font-medium">{option.accountCode}</span>
           {option.name && (
-            <span className="text-2xs text-muted-foreground truncate w-full">
+            <span className="w-full truncate text-2xs text-muted-foreground">
               {option.name}
             </span>
           )}
+        </div>
+      )}
+      {...props}
+    />
+  );
+}
+
+export function AccountTypeAutocompleteField<T extends FieldValues>({
+  ...props
+}: BaseAutocompleteFieldProps<AccountTypeSelectOptionResponse, T>) {
+  return (
+    <AutocompleteField<AccountTypeSelectOptionResponse, T>
+      link="/account-types/select-options/"
+      getOptionValue={(option) => option.id || ""}
+      getDisplayValue={(option) => `${option.code}`}
+      renderOption={(option) => (
+        <div className="flex size-full flex-col items-start">
+          <span className="text-xs font-medium">{option.code}</span>
+          <span className="w-full truncate text-2xs text-muted-foreground">
+            {truncateText(option.name, 20)} (
+            {categoryToHumanReadable(option.category)})
+          </span>
         </div>
       )}
       {...props}
@@ -216,10 +240,10 @@ export function EquipmentTypeAutocompleteField<T extends FieldValues>({
         <ColorOptionValue color={option.color} value={option.code} />
       )}
       renderOption={(option) => (
-        <div className="flex flex-col items-start size-full">
+        <div className="flex size-full flex-col items-start">
           <ColorOptionValue color={option.color} value={option.code} />
           {option?.description && (
-            <span className="text-2xs text-muted-foreground truncate w-full">
+            <span className="w-full truncate text-2xs text-muted-foreground">
               {option?.description}
             </span>
           )}
@@ -255,10 +279,10 @@ export function FleetCodeAutocompleteField<T extends FieldValues>({
         <ColorOptionValue color={option.color} value={option.code} />
       )}
       renderOption={(option) => (
-        <div className="flex flex-col items-start size-full">
+        <div className="flex size-full flex-col items-start">
           <ColorOptionValue color={option.color} value={option.code} />
           {option?.description && (
-            <span className="text-2xs text-muted-foreground truncate w-full">
+            <span className="w-full truncate text-2xs text-muted-foreground">
               {option?.description}
             </span>
           )}
@@ -331,10 +355,10 @@ export function ShipmentTypeAutocompleteField<T extends FieldValues>({
         <ColorOptionValue color={option.color} value={option.code} />
       )}
       renderOption={(option) => (
-        <div className="flex flex-col gap-0.5 items-start size-full">
+        <div className="flex size-full flex-col items-start gap-0.5">
           <ColorOptionValue color={option.color} value={option.code} />
           {option?.description && (
-            <span className="text-2xs text-muted-foreground truncate w-full">
+            <span className="w-full truncate text-2xs text-muted-foreground">
               {option?.description}
             </span>
           )}
@@ -359,10 +383,10 @@ export function ServiceTypeAutocompleteField<T extends FieldValues>({
         <ColorOptionValue color={option.color} value={option.code} />
       )}
       renderOption={(option) => (
-        <div className="flex flex-col gap-0.5 items-start size-full">
+        <div className="flex size-full flex-col items-start gap-0.5">
           <ColorOptionValue color={option.color} value={option.code} />
           {option?.description && (
-            <span className="text-2xs text-muted-foreground truncate w-full">
+            <span className="w-full truncate text-2xs text-muted-foreground">
               {option?.description}
             </span>
           )}
@@ -384,19 +408,19 @@ export function LocationAutocompleteField<T extends FieldValues>({
       link="/locations/"
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => (
-        <span className="text-left truncate w-full">{option.name}</span>
+        <span className="w-full truncate text-left">{option.name}</span>
       )}
       renderOption={(option) => (
-        <div className="flex flex-col gap-0.5 items-start size-full">
-          <div className="flex items-center gap-1 w-full">
-            <span className="text-sm font-normal truncate w-prose">
+        <div className="flex size-full flex-col items-start gap-0.5">
+          <div className="flex w-full items-center gap-1">
+            <span className="w-prose truncate text-sm font-normal">
               {option.name}
             </span>
-            <span className="text-2xs text-muted-foreground truncate w-prose">
+            <span className="w-prose truncate text-2xs text-muted-foreground">
               {option.locationCategory?.name}
             </span>
           </div>
-          <span className="text-2xs text-muted-foreground truncate w-full">
+          <span className="w-full truncate text-2xs text-muted-foreground">
             {formatLocation(option)}
           </span>
         </div>
@@ -431,15 +455,15 @@ export function AccessorialChargeAutocompleteField<T extends FieldValues>({
       placeholder="Select Accessorial Charge"
       getDisplayValue={(option) => option.code}
       renderOption={(option) => (
-        <div className="flex flex-col gap-0.5 items-start size-full">
-          <div className="flex flex-row items-left gap-1 w-full">
+        <div className="flex size-full flex-col items-start gap-0.5">
+          <div className="flex w-full flex-row items-start gap-1">
             <p className="text-sm font-medium">{option.code}</p>
             <p className="text-sm font-medium text-muted-foreground">
               {mapAmount(option.method, option.amount)}
             </p>
           </div>
           {option.description && (
-            <p className="text-xs text-muted-foreground truncate w-full">
+            <p className="w-full truncate text-xs text-muted-foreground">
               {option.description}
             </p>
           )}
@@ -473,12 +497,12 @@ export function HoldReasonAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id || ""}
       getDisplayValue={(option) => option.label}
       renderOption={(option) => (
-        <div className="flex flex-col gap-0.5 items-start size-full">
+        <div className="flex size-full flex-col items-start gap-0.5">
           <p className="flex flex-row items-center gap-1">
-            <span className="text-sm font-medium max-w-prose truncate">
+            <span className="max-w-prose truncate text-sm font-medium">
               {option.label}
             </span>
-            <span className="text-2xs text-muted-foreground truncate">
+            <span className="truncate text-2xs text-muted-foreground">
               {
                 holdTypeChoices.find((choice) => choice.value === option.type)
                   ?.label
@@ -486,7 +510,7 @@ export function HoldReasonAutocompleteField<T extends FieldValues>({
             </span>
           </p>
           {option.description && (
-            <p className="text-xs text-muted-foreground truncate max-w-prose">
+            <p className="max-w-prose truncate text-xs text-muted-foreground">
               {option.description}
             </p>
           )}
@@ -506,10 +530,10 @@ export function CustomerAutocompleteField<T extends FieldValues>({
       getOptionValue={(option) => option.id ?? ""}
       getDisplayValue={(option) => option.code}
       renderOption={(option) => (
-        <div className="flex flex-col gap-0.5 items-start size-full">
+        <div className="flex size-full flex-col items-start gap-0.5">
           <p className="text-sm font-medium">{option.code}</p>
           {option.name && (
-            <p className="text-xs text-muted-foreground truncate w-full">
+            <p className="w-full truncate text-xs text-muted-foreground">
               {option.name}
             </p>
           )}
@@ -553,10 +577,10 @@ export function DocumentTypeAutocompleteField<T extends FieldValues>({
       getOptionLabel={(option) => option.name}
       nestedValues={true}
       renderOption={(option) => (
-        <div className="flex flex-col gap-0.5 items-start size-full">
+        <div className="flex size-full flex-col items-start gap-0.5">
           <ColorOptionValue color={option.color} value={option.code} />
           {option?.description && (
-            <span className="text-2xs text-muted-foreground truncate w-full">
+            <span className="w-full truncate text-2xs text-muted-foreground">
               {option?.description}
             </span>
           )}
@@ -580,20 +604,20 @@ export function FormulaTemplateAutocompleteField<T extends FieldValues>({
         renderOption={(option) => (
           <Tooltip>
             <TooltipTrigger asChild>
-              <div className="flex flex-col gap-0.5 items-start size-full">
-                <p className="text-sm font-medium truncate w-full">
+              <div className="flex size-full flex-col items-start gap-0.5">
+                <p className="w-full truncate text-sm font-medium">
                   {option.name}
                 </p>
                 {option.description && (
-                  <p className="text-xs text-muted-foreground truncate w-full">
+                  <p className="w-full truncate text-xs text-muted-foreground">
                     {option.description}
                   </p>
                 )}
               </div>
             </TooltipTrigger>
             <TooltipContent className="max-w-md" side="left" sideOffset={10}>
-              <div className="flex flex-col gap-0.5 items-start size-full">
-                <p className="text-sm font-medium truncate w-full">
+              <div className="flex size-full flex-col items-start gap-0.5">
+                <p className="w-full truncate text-sm font-medium">
                   {option.name}
                 </p>
                 {option.description && (
@@ -601,11 +625,11 @@ export function FormulaTemplateAutocompleteField<T extends FieldValues>({
                     {option.description}
                   </p>
                 )}
-                <div className="flex flex-col bg-muted/5 gap-0.5 items-start border border-muted/5 rounded-md size-full">
-                  <h4 className="text-sm font-medium truncate w-full border-b border-muted/5 p-1">
+                <div className="flex size-full flex-col items-start gap-0.5 rounded-md border border-muted/5 bg-muted/5">
+                  <h4 className="w-full truncate border-b border-muted/5 p-1 text-sm font-medium">
                     Expression
                   </h4>
-                  <p className="text-wrap text-xs text-background p-1">
+                  <p className="p-1 text-xs text-wrap text-background">
                     <ExpressionHighlight expression={option.expression} />
                   </p>
                 </div>

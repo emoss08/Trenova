@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/emoss08/trenova/internal/core/domain"
 	"github.com/emoss08/trenova/internal/core/domain/accounting"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -101,7 +102,7 @@ func NewValidator(p Params) *Validator {
 						WithStage(framework.ValidationStageCompliance).
 						WithPriority(framework.ValidationPriorityHigh).
 						WithValidation(func(ctx context.Context, me *errortypes.MultiError) error {
-							if vc.IsUpdate && !entity.IsActive {
+							if vc.IsUpdate && entity.Status != domain.StatusActive {
 								validateCanDeactivate(ctx, entity, me, getDB)
 							}
 							return nil
@@ -159,7 +160,7 @@ func validateParentAccount(
 		return
 	}
 
-	if !parent.IsActive {
+	if parent.Status != domain.StatusActive {
 		me.Add("parentId", errortypes.ErrInvalid, "Parent account must be active")
 	}
 }

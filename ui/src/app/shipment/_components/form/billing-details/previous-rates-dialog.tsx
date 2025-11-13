@@ -67,7 +67,7 @@ export function PreviousRatesDialog() {
           <span>View Previous Rates</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="w-[1200px] max-w-[1800px] max-h-[80vh] overflow-y-auto">
+      <DialogContent className="max-h-[80vh] w-[1200px] max-w-[1800px] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             Previous Rates <BetaTag />
@@ -81,7 +81,7 @@ export function PreviousRatesDialog() {
           {isLoading ? (
             <p>Loading...</p>
           ) : previousRates?.total === 0 ? (
-            <div className="flex flex-col items-center justify-center max-h-[300px] rounded-md overflow-hidden p-2">
+            <div className="flex max-h-[300px] flex-col items-center justify-center overflow-hidden rounded-md p-2">
               <div className="relative size-full max-h-[300px]">
                 <LetterGlitch
                   glitchColors={["#9c9c9c", "#696969", "#424242"]}
@@ -92,11 +92,11 @@ export function PreviousRatesDialog() {
                   className="max-h-[300px]"
                   canvasClassName="max-h-[300px]"
                 />
-                <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center pointer-events-none">
-                  <p className="text-sm/none px-1 py-0.5 text-center font-medium uppercase select-none font-table dark:text-neutral-900 bg-amber-300 text-amber-950 dark:bg-amber-400">
+                <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1">
+                  <p className="bg-amber-300 px-1 py-0.5 text-center font-table text-sm/none font-medium text-amber-950 uppercase select-none dark:bg-amber-400 dark:text-neutral-900">
                     No data available
                   </p>
-                  <p className="text-sm/none px-1 py-0.5 text-center font-medium uppercase select-none font-table dark:text-neutral-900 bg-neutral-900 text-white dark:bg-neutral-500">
+                  <p className="bg-neutral-900 px-1 py-0.5 text-center font-table text-sm/none font-medium text-white uppercase select-none dark:bg-neutral-500 dark:text-neutral-900">
                     No previous rates associated with this lane
                   </p>
                 </div>
@@ -186,7 +186,7 @@ function ShipmentCell({
       <a
         href={href}
         target="_blank"
-        className="underline w-fit"
+        className="w-fit underline"
         rel="noreferrer"
       >
         {value}
@@ -206,7 +206,7 @@ function LocationCell({ location }: { location: LocationSchema }) {
       <a
         href={`/dispatch/configurations/locations?entityId=${location.id}&modalType=edit`}
         target="_blank"
-        className="underline w-fit"
+        className="w-fit underline"
         rel="noreferrer"
       >
         {location.name}

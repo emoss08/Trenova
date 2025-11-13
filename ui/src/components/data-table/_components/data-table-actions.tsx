@@ -67,5 +67,5 @@ export function DataTableActionsInner({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="flex items-center gap-2">{children}</div>;
+  return <div className="flex flex-col gap-2 lg:flex-row">{children}</div>;
 }

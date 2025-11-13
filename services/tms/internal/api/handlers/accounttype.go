@@ -44,6 +44,55 @@ func (h *AccountTypeHandler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.GET(":id/", h.pm.RequirePermission(permission.ResourceAccountType, "read"), h.get)
 	api.POST("", h.pm.RequirePermission(permission.ResourceAccountType, "create"), h.create)
 	api.PUT(":id/", h.pm.RequirePermission(permission.ResourceAccountType, "update"), h.update)
+
+	selectOptions := api.Group("/select-options/")
+	selectOptions.GET("", h.selectOptions)
+	selectOptions.GET(":id/", h.getOption)
+}
+
+func (h *AccountTypeHandler) getOption(c *gin.Context) {
+	authCtx := context.GetAuthContext(c)
+
+	entityID, err := pulid.MustParse(c.Param("id"))
+	if err != nil {
+		h.errorHandler.HandleError(c, err)
+		return
+	}
+
+	entity, err := h.service.GetOption(c.Request.Context(), repositories.GetAccountTypeByIDRequest{
+		ID:    entityID,
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	})
+	if err != nil {
+		h.errorHandler.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, entity)
+}
+
+func (h *AccountTypeHandler) selectOptions(c *gin.Context) {
+	authCtx := context.GetAuthContext(c)
+
+	options, err := h.service.SelectOptions(
+		c.Request.Context(),
+		repositories.AccountTypeSelectOptionsRequest{
+			SelectQueryOptions: &pagination.SelectQueryOptions{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				Limit:  helpers.QueryInt(c, "limit", 20),
+				Offset: helpers.QueryInt(c, "offset", 0),
+				Query:  helpers.QueryString(c, "query"),
+			},
+		},
+	)
+	if err != nil {
+		h.errorHandler.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"results": options})
 }
 
 func (h *AccountTypeHandler) list(c *gin.Context) {

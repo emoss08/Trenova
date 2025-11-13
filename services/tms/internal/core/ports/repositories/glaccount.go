@@ -25,7 +25,6 @@ type GLAccountFilterOptions struct {
 	Status             string `form:"status"`
 	AccountTypeID      string `form:"accountTypeId"`
 	ParentID           string `form:"parentId"`
-	IsActive           *bool  `form:"isActive"`
 	IsSystem           *bool  `form:"isSystem"`
 	AllowManualJE      *bool  `form:"allowManualJE"`
 }

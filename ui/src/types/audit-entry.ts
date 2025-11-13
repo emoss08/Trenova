@@ -51,6 +51,7 @@ export enum Resource {
   DedicatedLaneSuggestion = "dedicated_lane_suggestion", // Represents resources related to dedicated lane suggestions.
   Role = "role", // Represents resources related to roles.
   PageFavorite = "page_favorite", // Represents resources related to page favorites.
+  GLAccount = "gl_account", // Represents resources related to general ledger accounts.
   FiscalYear = "fiscal_year", // Represents resources related to fiscal years.
   FiscalPeriod = "fiscal_period", // Represents resources related to fiscal periods.
 
@@ -116,7 +117,6 @@ export enum Resource {
   DelayCode = "delay_code",
   ChargeType = "charge_type",
   DivisionCode = "division_code",
-  GlAccount = "gl_account",
   RevenueCode = "revenue_code",
   AIClassification = "ai_classification",
   EmailProfile = "email_profile",
