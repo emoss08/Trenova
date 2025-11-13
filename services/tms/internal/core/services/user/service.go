@@ -140,6 +140,13 @@ func (s *Service) Create(
 	return createdEntity, nil
 }
 
+func (s *Service) UpdateMe(
+	ctx context.Context,
+	req *repositories.UpdateMeRequest,
+) (*tenant.User, error) {
+	return s.repo.UpdateMe(ctx, req)
+}
+
 func (s *Service) Update(
 	ctx context.Context,
 	u *tenant.User,

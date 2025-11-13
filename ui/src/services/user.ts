@@ -23,6 +23,11 @@ export class UserAPI {
     return http.post<UserSchema>("/users/change-password/", request);
   }
 
+  async updateMe(data: Partial<UserSchema>) {
+    const response = await http.put<UserSchema>("/users/me/", data);
+    return response.data;
+  }
+
   async searchUsers(query: string) {
     const response = await http.get<LimitOffsetResponse<UserSchema>>(
       "/users/select-options/",

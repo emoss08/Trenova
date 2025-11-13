@@ -9,7 +9,7 @@ import type { UserSchema } from "@/lib/schemas/user-schema";
 import { useUser } from "@/stores/user-store";
 import { faUpRightFromSquare } from "@fortawesome/pro-regular-svg-icons";
 import { CaretSortIcon } from "@radix-ui/react-icons";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { LicenseInformation } from "./license-information";
 import { Theme, useTheme } from "./theme-provider";
@@ -27,6 +27,7 @@ import {
   DropdownMenuTrigger,
 } from "./ui/dropdown-menu";
 import { Icon } from "./ui/icons";
+import { UserSettingsDialog } from "./user-settings-dialog";
 
 export function UserAvatar({ user }: { user: UserSchema | null }) {
   if (!user) {
@@ -54,6 +55,24 @@ export function NavUser() {
   const user = useUser();
 
   const [licenseDialogOpen, setLicenseDialogOpen] = useState(false);
+  const [settingsDialogOpen, setSettingsDialogOpen] = useState(false);
+
+  // Keybind support for opening settings (Ctrl+Shift+S or Cmd+Shift+S)
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        event.key === "S" &&
+        event.shiftKey &&
+        (event.ctrlKey || event.metaKey)
+      ) {
+        event.preventDefault();
+        setSettingsDialogOpen(true);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   const handleLogout = async () => {
     toast.promise(logout, {
@@ -99,7 +118,11 @@ export function NavUser() {
                 <UserAvatar user={user} />
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem title="Account Settings" />
+              <DropdownMenuItem
+                title="Account Settings"
+                onClick={() => setSettingsDialogOpen(true)}
+                className="cursor-pointer"
+              />
               <DropdownMenuItem title="Notifications" />
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>Switch Theme</DropdownMenuSubTrigger>
@@ -167,6 +190,13 @@ export function NavUser() {
         <LicenseInformation
           open={licenseDialogOpen}
           onOpenChange={setLicenseDialogOpen}
+        />
+      )}
+      {user && settingsDialogOpen && (
+        <UserSettingsDialog
+          open={settingsDialogOpen}
+          onOpenChange={setSettingsDialogOpen}
+          user={user}
         />
       )}
     </>
