@@ -223,6 +223,16 @@ func (l *Loader) setDefaults() { //nolint:funlen // sets default configs
 	l.viper.SetDefault("cache.poolTimeout", "10s")
 	l.viper.SetDefault("cache.connMaxIdleTime", "10m")
 	l.viper.SetDefault("cache.connMaxLifetime", "1h")
+
+	// Storage defaults
+	l.viper.SetDefault("storage.provider", "minio")
+	l.viper.SetDefault("storage.endpoint", "localhost:9000")
+	l.viper.SetDefault("storage.accessKey", "minioadmin")
+	l.viper.SetDefault("storage.secretKey", "minioadmin")
+	l.viper.SetDefault("storage.sessionToken", "")
+	l.viper.SetDefault("storage.region", "us-east-1")
+	l.viper.SetDefault("storage.bucket", "trenova-documents")
+	l.viper.SetDefault("storage.useSSL", false)
 }
 
 // loadConfigFiles loads base and environment-specific config files

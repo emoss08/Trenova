@@ -25,9 +25,13 @@ kafka:
   brokers:
     - localhost:9093
 
-minio:
+storage:
+  provider: minio
   endpoint: localhost:9001
+  accessKey: minioadmin
+  secretKey: minioadmin
   bucket: trenova-test
+  useSSL: false
 
 temporal:
   namespace: test

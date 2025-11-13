@@ -68,13 +68,16 @@ kafka:
     notifications: trenova-notifications
     audit: trenova-audit
 
-# MinIO object storage configuration
-minio:
-  endpoint: localhost:9000         # MinIO endpoint
-  access_key: minioadmin           # MinIO access key
-  secret_key: minioadmin           # MinIO secret key
-  use_ssl: false                   # Use SSL for MinIO connection
+# Object storage configuration (MinIO/S3)
+storage:
+  provider: minio                  # Storage provider: minio, s3, local
+  endpoint: localhost:9000         # Storage endpoint (MinIO/S3)
+  accessKey: minioadmin            # Storage access key
+  secretKey: minioadmin            # Storage secret key
+  sessionToken: ""                 # Session token (optional, for S3)
+  region: us-east-1                # Region (for S3)
   bucket: trenova-documents        # Default bucket name
+  useSSL: false                    # Use SSL for storage connection (false for local MinIO)
 
 # Temporal workflow configuration
 temporal:
