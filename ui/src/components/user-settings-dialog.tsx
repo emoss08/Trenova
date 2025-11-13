@@ -1,17 +1,31 @@
 import ChangePasswordForm from "@/app/auth/_components/change-password-form";
 import {
   Dialog,
-  DialogBody,
   DialogContent,
   DialogDescription,
-  DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { UserSchema } from "@/lib/schemas/user-schema";
-import { faLock, faUser } from "@fortawesome/pro-regular-svg-icons";
+import {
+  faLock,
+  faUser,
+  IconDefinition,
+} from "@fortawesome/pro-regular-svg-icons";
+import { useState } from "react";
 import { Icon } from "./ui/icons";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarProvider,
+} from "./ui/sidebar";
 import { UserProfileForm } from "./user-profile-form";
+
+type UserSettingsTab = "profile" | "change-password";
 
 interface UserSettingsDialogProps {
   open: boolean;
@@ -19,68 +33,114 @@ interface UserSettingsDialogProps {
   user: UserSchema;
 }
 
+type UserSettingsTabItem = {
+  name: UserSettingsTab;
+  displayName: string;
+  description: string;
+  icon: IconDefinition;
+  component: React.ReactNode;
+};
+
+const renderComponent = (
+  user: UserSchema,
+  onOpenChange: (open: boolean) => void,
+) => {
+  const nav: UserSettingsTabItem[] = [
+    {
+      name: "profile",
+      displayName: "Profile",
+      description:
+        "Update your profile information to keep your account secure and personalized.",
+      icon: faUser,
+      component: <UserProfileForm user={user} />,
+    },
+    {
+      name: "change-password",
+      displayName: "Change Password",
+      description: "Change your password to keep your account secure.",
+      icon: faLock,
+      component: <ChangePasswordForm onOpenChange={onOpenChange} />,
+    },
+  ];
+  return nav;
+};
+
 export function UserSettingsDialog({
   open,
   onOpenChange,
   user,
 }: UserSettingsDialogProps) {
+  const [activeTab, setActiveTab] = useState<UserSettingsTab>("profile");
+  const data = renderComponent(user, onOpenChange);
+  const activeTabItem = data.find((nav) => nav.name === activeTab);
+
+  const activeComponent = activeTabItem?.component as React.ReactNode;
+  const activeTabName = activeTabItem?.displayName;
+  const activeTabDescription = activeTabItem?.description;
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl">
-        <DialogHeader>
-          <DialogTitle>User Settings</DialogTitle>
-          <DialogDescription>
-            Manage your profile information and security settings
-          </DialogDescription>
-        </DialogHeader>
-        <DialogBody>
-          <Tabs defaultValue="profile" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="profile">
-                <Icon icon={faUser} />
-                Profile
-              </TabsTrigger>
-              <TabsTrigger value="password">
-                <Icon icon={faLock} />
-                Password
-              </TabsTrigger>
-            </TabsList>
-            <TabsContent value="profile" className="mt-4">
-              <UserProfileForm
-                user={user}
-                onSuccess={() => onOpenChange(false)}
-              />
-            </TabsContent>
-            <TabsContent value="password" className="mt-4">
-              <PasswordTabContent onOpenChange={onOpenChange} />
-            </TabsContent>
-          </Tabs>
-        </DialogBody>
+      <DialogContent className="overflow-hidden p-0 md:max-h-[500px] md:max-w-[700px] lg:max-w-[800px]">
+        <DialogTitle className="sr-only">Settings</DialogTitle>
+        <DialogDescription className="sr-only">
+          Customize your settings here.
+        </DialogDescription>
+        <SidebarProvider className="min-h-full items-start">
+          <Sidebar collapsible="none" className="hidden md:flex">
+            <SidebarContent>
+              <SidebarGroup>
+                <SidebarGroupContent>
+                  <SidebarMenu>
+                    {data.map((item) => (
+                      <SidebarMenuItem key={item.name}>
+                        <SidebarMenuButton
+                          asChild
+                          isActive={activeTab === item.name}
+                          onClick={() =>
+                            setActiveTab(item.name as UserSettingsTab)
+                          }
+                        >
+                          <span>
+                            <Icon icon={item.icon} />
+                            <span>{item.displayName}</span>
+                          </span>
+                        </SidebarMenuButton>
+                      </SidebarMenuItem>
+                    ))}
+                  </SidebarMenu>
+                </SidebarGroupContent>
+              </SidebarGroup>
+            </SidebarContent>
+          </Sidebar>
+          <MainContentOuter>
+            <header className="flex h-16 shrink-0 items-center gap-2 border-b border-border transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
+              <div className="flex flex-col items-start gap-0.5 px-4">
+                <h1 className="text-lg font-medium">{activeTabName}</h1>
+                <p className="text-sm text-muted-foreground">
+                  {activeTabDescription}
+                </p>
+              </div>
+            </header>
+            <MainContent>{activeComponent}</MainContent>
+          </MainContentOuter>
+        </SidebarProvider>
       </DialogContent>
     </Dialog>
   );
 }
 
-function PasswordTabContent({
-  onOpenChange,
-}: {
-  onOpenChange: (open: boolean) => void;
-}) {
+function MainContent({ children }: { children: React.ReactNode }) {
   return (
-    <div className="space-y-4">
-      <div className="text-sm text-muted-foreground">
-        <p>Change your password to keep your account secure.</p>
-        <p className="mt-2">
-          Your password must be at least 8 characters long and contain:
-        </p>
-        <ul className="mt-2 list-inside list-disc space-y-1 text-xs">
-          <li>At least one uppercase letter</li>
-          <li>At least one lowercase letter</li>
-          <li>At least one number</li>
-          <li>At least one special character</li>
-        </ul>
-      </div>
-      <ChangePasswordForm onOpenChange={onOpenChange} />
+    <div className="flex flex-1 flex-col gap-4 pt-0">
+      <div className="aspect-video max-w-3xl rounded-xl">{children}</div>
     </div>
+  );
+}
+
+function MainContentOuter({ children }: { children: React.ReactNode }) {
+  return (
+    <main className="flex h-[480px] flex-1 flex-col overflow-hidden">
+      {children}
+    </main>
   );
 }

@@ -19,19 +19,20 @@ import * as z from "zod";
 const profileUpdateSchema = z.object({
   name: z
     .string()
-    .min(1, "Name is required")
-    .regex(
-      /^[a-zA-Z]+(\s[a-zA-Z]+)*$/,
-      "Name can only contain letters and spaces",
-    ),
+    .min(1, { error: "Name is required" })
+    .regex(/^[a-zA-Z]+(\s[a-zA-Z]+)*$/, {
+      error: "Name can only contain letters and spaces",
+    }),
   username: z
     .string()
-    .min(1, "Username is required")
-    .max(20, "Username must be less than 20 characters")
-    .regex(/^[a-zA-Z0-9]+$/, "Username must be alphanumeric"),
-  emailAddress: z.string().email("Invalid email address"),
-  timezone: z.string().min(1, "Timezone is required"),
-  timeFormat: z.enum(TimeFormat),
+    .min(1, { error: "Username is required" })
+    .max(20, { error: "Username must be less than 20 characters" })
+    .regex(/^[a-zA-Z0-9]+$/, { error: "Username must be alphanumeric" }),
+  emailAddress: z.email({ error: "Invalid email address" }),
+  timezone: z.string().min(1, { error: "Timezone is required" }).max(50, {
+    error: "Timezone must be less than 50 characters",
+  }),
+  timeFormat: z.enum(TimeFormat, { error: "Time format is required" }),
 });
 
 type ProfileUpdateSchema = z.infer<typeof profileUpdateSchema>;
@@ -88,56 +89,65 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
-      <FormGroup className="gap-4" cols={1}>
-        <FormControl>
-          <InputField
-            control={control}
-            name="name"
-            label="Full Name"
-            placeholder="Enter your full name"
-            rules={{ required: true }}
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            name="username"
-            label="Username"
-            placeholder="Enter your username"
-            rules={{ required: true }}
-            maxLength={20}
-          />
-        </FormControl>
-        <FormControl>
-          <InputField
-            control={control}
-            name="emailAddress"
-            label="Email Address"
-            type="email"
-            placeholder="Enter your email address"
-            rules={{ required: true }}
-          />
-        </FormControl>
-        <FormControl>
-          <SelectField
-            control={control}
-            name="timezone"
-            label="Timezone"
-            options={TIMEZONES}
-            placeholder="Select timezone"
-            rules={{ required: true }}
-          />
-        </FormControl>
-        <FormControl>
-          <SelectField
-            control={control}
-            name="timeFormat"
-            label="Time Format"
-            options={timeFormatChoices}
-            placeholder="Select time format"
-            rules={{ required: true }}
-          />
-        </FormControl>
+      <div className="flex flex-col px-4 py-2">
+        <FormGroup cols={1}>
+          <FormControl>
+            <InputField
+              control={control}
+              name="name"
+              label="Full Name"
+              placeholder="Enter your full name"
+              rules={{ required: true }}
+              description="The name you want to be displayed in the system"
+            />
+          </FormControl>
+          <FormControl>
+            <InputField
+              control={control}
+              name="username"
+              label="Username"
+              placeholder="Enter your username"
+              rules={{ required: true }}
+              maxLength={20}
+              description="The username you want to use to login to the system"
+            />
+          </FormControl>
+          <FormControl>
+            <InputField
+              control={control}
+              name="emailAddress"
+              label="Email Address"
+              type="email"
+              placeholder="Enter your email address"
+              rules={{ required: true }}
+              description="The email address you want to use to receive notifications and other communications from the system"
+            />
+          </FormControl>
+          <FormControl>
+            <SelectField
+              control={control}
+              name="timezone"
+              label="Timezone"
+              options={TIMEZONES}
+              placeholder="Select timezone"
+              rules={{ required: true }}
+              description="The timezone you want to use to display the time in the system"
+            />
+          </FormControl>
+          <FormControl>
+            <SelectField
+              control={control}
+              name="timeFormat"
+              label="Time Format"
+              options={timeFormatChoices}
+              placeholder="Select time format"
+              rules={{ required: true }}
+              description="The time format you want to use to display the time in the system"
+            />
+          </FormControl>
+        </FormGroup>
+      </div>
+      <div className="flex justify-end border-t px-4 py-2">
         <FormSaveButton
           size="lg"
           type="submit"
@@ -146,7 +156,7 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
           isSubmitting={isSubmitting}
           disabled={isSubmitting || !isDirty}
         />
-      </FormGroup>
+      </div>
     </Form>
   );
 }

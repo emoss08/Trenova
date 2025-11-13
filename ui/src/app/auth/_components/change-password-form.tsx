@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { PasswordField } from "@/components/fields/sensitive-input-field";
 import { FormSaveButton } from "@/components/ui/button";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
@@ -63,34 +58,41 @@ export function ChangePasswordForm({
 
   return (
     <Form onSubmit={handleSubmit(onSubmit)}>
-      <FormGroup className="gap-1" cols={1}>
-        <FormControl>
-          <PasswordField
-            control={control}
-            name="currentPassword"
-            label="Current password"
-            placeholder="Enter your current password"
-            rules={{ required: true }}
-          />
-        </FormControl>
-        <FormControl>
-          <PasswordField
-            control={control}
-            name="newPassword"
-            label="New password"
-            placeholder="Enter your new password"
-            rules={{ required: true }}
-          />
-        </FormControl>
-        <FormControl>
-          <PasswordField
-            control={control}
-            name="confirmPassword"
-            label="Confirm password"
-            placeholder="Confirm your new password"
-            rules={{ required: true }}
-          />
-        </FormControl>
+      <div className="flex min-h-[368px] flex-col px-4 py-2">
+        <FormGroup cols={1}>
+          <FormControl>
+            <PasswordField
+              control={control}
+              name="currentPassword"
+              label="Current password"
+              placeholder="Enter your current password"
+              description="The current password you want to change"
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl>
+            <PasswordField
+              control={control}
+              name="newPassword"
+              label="New password"
+              placeholder="Enter your new password"
+              description="The new password you want to set"
+              rules={{ required: true }}
+            />
+          </FormControl>
+          <FormControl>
+            <PasswordField
+              control={control}
+              name="confirmPassword"
+              label="Confirm password"
+              placeholder="Confirm your new password"
+              rules={{ required: true }}
+              description="The confirm password you want to set"
+            />
+          </FormControl>
+        </FormGroup>
+      </div>
+      <div className="flex justify-end border-t px-4 py-2">
         <FormSaveButton
           size="lg"
           type="submit"
@@ -99,7 +101,7 @@ export function ChangePasswordForm({
           isSubmitting={isSubmitting}
           disabled={isSubmitting}
         />
-      </FormGroup>
+      </div>
     </Form>
   );
 }
