@@ -1,13 +1,10 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { FormSaveButton } from "@/components/ui/button";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
+import { timeFormatChoices } from "@/lib/choices";
 import type { UserSchema } from "@/lib/schemas/user-schema";
+import { TIMEZONES } from "@/lib/timezone/timezone";
 import { api } from "@/services/api";
 import { useAuthActions } from "@/stores/user-store";
 import type { APIError } from "@/types/errors";
@@ -23,7 +20,10 @@ const profileUpdateSchema = z.object({
   name: z
     .string()
     .min(1, "Name is required")
-    .regex(/^[a-zA-Z]+(\s[a-zA-Z]+)*$/, "Name can only contain letters and spaces"),
+    .regex(
+      /^[a-zA-Z]+(\s[a-zA-Z]+)*$/,
+      "Name can only contain letters and spaces",
+    ),
   username: z
     .string()
     .min(1, "Username is required")
@@ -35,22 +35,6 @@ const profileUpdateSchema = z.object({
 });
 
 type ProfileUpdateSchema = z.infer<typeof profileUpdateSchema>;
-
-// Common timezone options
-const TIMEZONE_OPTIONS = [
-  { value: "America/New_York", label: "Eastern Time (ET)" },
-  { value: "America/Chicago", label: "Central Time (CT)" },
-  { value: "America/Denver", label: "Mountain Time (MT)" },
-  { value: "America/Los_Angeles", label: "Pacific Time (PT)" },
-  { value: "America/Anchorage", label: "Alaska Time (AKT)" },
-  { value: "Pacific/Honolulu", label: "Hawaii Time (HT)" },
-  { value: "UTC", label: "UTC" },
-];
-
-const TIME_FORMAT_OPTIONS = [
-  { value: TimeFormat.TwelveHour, label: "12-hour (AM/PM)" },
-  { value: TimeFormat.TwentyFourHour, label: "24-hour" },
-];
 
 interface UserProfileFormProps {
   user: UserSchema;
@@ -139,7 +123,7 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
             control={control}
             name="timezone"
             label="Timezone"
-            options={TIMEZONE_OPTIONS}
+            options={TIMEZONES}
             placeholder="Select timezone"
             rules={{ required: true }}
           />
@@ -149,7 +133,7 @@ export function UserProfileForm({ user, onSuccess }: UserProfileFormProps) {
             control={control}
             name="timeFormat"
             label="Time Format"
-            options={TIME_FORMAT_OPTIONS}
+            options={timeFormatChoices}
             placeholder="Select time format"
             rules={{ required: true }}
           />

@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import ChangePasswordForm from "@/app/auth/_components/change-password-form";
 import {
   Dialog,
@@ -13,7 +8,6 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { VisuallyHidden } from "@/components/ui/visually-hidden";
 import type { UserSchema } from "@/lib/schemas/user-schema";
 import { faLock, faUser } from "@fortawesome/pro-regular-svg-icons";
 import { Icon } from "./ui/icons";
