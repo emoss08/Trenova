@@ -148,6 +148,32 @@ export const userSchema = z.object({
 
 export type UserSchema = z.infer<typeof userSchema>;
 
+export const updateMeSchema = z.object({
+  id: optionalStringSchema,
+  version: versionSchema,
+  createdAt: timestampSchema,
+  updatedAt: timestampSchema,
+
+  name: z
+    .string()
+    .min(1, { error: "Name is required" })
+    .regex(/^[a-zA-Z]+(\s[a-zA-Z]+)*$/, {
+      error: "Name can only contain letters and spaces",
+    }),
+  username: z
+    .string()
+    .min(1, { error: "Username is required" })
+    .max(20, { error: "Username must be less than 20 characters" })
+    .regex(/^[a-zA-Z0-9]+$/, { error: "Username must be alphanumeric" }),
+  emailAddress: z.email({ error: "Invalid email address" }),
+  timezone: z.string().min(1, { error: "Timezone is required" }).max(50, {
+    error: "Timezone must be less than 50 characters",
+  }),
+  timeFormat: z.enum(TimeFormat, { error: "Time format is required" }),
+});
+
+export type UpdateMeSchema = z.infer<typeof updateMeSchema>;
+
 export const bulkCreateUserSchema = z.object({
   users: z.array(userSchema).min(1, "At least one user is required"),
 });

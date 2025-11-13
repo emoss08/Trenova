@@ -23,6 +23,7 @@ import { NotificationResources } from "@/types/notification";
 import { RoleType } from "@/types/roles-permissions";
 import { ShipmentDocumentType } from "@/types/shipment";
 import { Visibility } from "@/types/table-configuration";
+import { TimeFormat } from "@/types/user";
 import { Endorsement, PTOStatus, PTOType, WorkerType } from "@/types/worker";
 import {
   AccountTypeCategorySchema,
@@ -1080,3 +1081,14 @@ export const accountTypeCategoryChoices = [
     label: "Expense",
   },
 ] satisfies ReadonlyArray<ChoiceProps<AccountTypeSchema["category"]>>;
+
+export const timeFormatChoices = [
+  {
+    value: TimeFormat.TimeFormat12Hour,
+    label: "12-hour",
+  },
+  {
+    value: TimeFormat.TimeFormat24Hour,
+    label: "24-hour",
+  },
+] satisfies ReadonlyArray<ChoiceProps<TimeFormat>>;

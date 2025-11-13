@@ -321,6 +321,52 @@ func (ur *repository) Create(ctx context.Context, u *tenant.User) (*tenant.User,
 	return u, nil
 }
 
+func (ur *repository) UpdateMe(
+	ctx context.Context,
+	req *repositories.UpdateMeRequest,
+) (*tenant.User, error) {
+	log := ur.l.With(zap.String("operation", "UpdateMe"), zap.Any("request", req))
+
+	db, err := ur.db.DB(ctx)
+	if err != nil {
+		log.Error("failed to get database connection", zap.Error(err))
+		return nil, err
+	}
+
+	_, err = db.NewUpdate().
+		Model((*tenant.User)(nil)).
+		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+			return uq.Where("usr.id = ?", req.UserID).
+				Where("usr.current_organization_id = ?", req.OrgID).
+				Where("usr.business_unit_id = ?", req.BuID)
+		}).
+		Set("name = ?", req.Name).
+		Set("username = ?", req.Username).
+		Set("email_address = ?", req.EmailAddress).
+		Set("timezone = ?", req.Timezone).
+		Set("time_format = ?", req.TimeFormat).
+		Set("updated_at = ?", utils.NowUnix()).
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to update user", zap.Error(err))
+		return nil, err
+	}
+
+	u, err := ur.GetByID(ctx, repositories.GetUserByIDRequest{
+		UserID:       req.UserID,
+		OrgID:        req.OrgID,
+		BuID:         req.BuID,
+		IncludeRoles: true,
+		IncludeOrgs:  true,
+	})
+	if err != nil {
+		log.Error("failed to get user", zap.Error(err))
+		return nil, err
+	}
+
+	return u, nil
+}
+
 func (ur *repository) Update(ctx context.Context, u *tenant.User) (*tenant.User, error) {
 	log := ur.l.With(zap.String("operation", "Update"))
 
@@ -341,6 +387,7 @@ func (ur *repository) Update(ctx context.Context, u *tenant.User) (*tenant.User,
 					Where("usr.current_organization_id = ?", u.CurrentOrganizationID).
 					Where("usr.business_unit_id = ?", u.BusinessUnitID)
 			}).
+			OmitZero().
 			Returning("*").
 			Exec(c)
 

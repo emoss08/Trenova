@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
 )
@@ -49,6 +50,17 @@ type ListUserRequest struct {
 	IncludeRoles bool
 }
 
+type UpdateMeRequest struct {
+	UserID       pulid.ID               `json:"userId"`
+	OrgID        pulid.ID               `json:"orgId"`
+	BuID         pulid.ID               `json:"buId"`
+	Name         string                 `json:"name"         form:"name"`
+	Username     string                 `json:"username"     form:"username"`
+	EmailAddress string                 `json:"emailAddress" form:"emailAddress"`
+	Timezone     string                 `json:"timezone"     form:"timezone"`
+	TimeFormat   domaintypes.TimeFormat `json:"timeFormat"   form:"timeFormat"`
+}
+
 type UserRepository interface {
 	GetOption(ctx context.Context, req GetUserByIDRequest) (*tenant.User, error)
 	SelectOptions(
@@ -62,8 +74,9 @@ type UserRepository interface {
 	GetByIDs(ctx context.Context, opts GetUsersByIDsRequest) ([]*tenant.User, error)
 	GetSystemUser(ctx context.Context) (*tenant.User, error)
 	UpdateLastLogin(ctx context.Context, userID pulid.ID) error
-	Create(ctx context.Context, u *tenant.User) (*tenant.User, error)
 	Update(ctx context.Context, u *tenant.User) (*tenant.User, error)
+	UpdateMe(ctx context.Context, req *UpdateMeRequest) (*tenant.User, error)
+	Create(ctx context.Context, u *tenant.User) (*tenant.User, error)
 	SwitchOrganization(ctx context.Context, userID, newOrgID pulid.ID) (*tenant.User, error)
 	ChangePassword(ctx context.Context, req *ChangePasswordRequest) (*tenant.User, error)
 }
