@@ -16,13 +16,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { useToast } from "@/hooks/use-toast";
-import { API_URL } from "@/lib/constants";
+import { http } from "@/lib/http-client";
 import type { FilterStateSchema } from "@/lib/schemas/table-configuration-schema";
 import type { Resource } from "@/types/audit-entry";
 import { faDownload, faFileExcel } from "@fortawesome/pro-solid-svg-icons";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import React from "react";
+import { toast } from "sonner";
 
 type ReportFormat = "CSV" | "EXCEL";
 type DeliveryMethod = "DOWNLOAD" | "EMAIL";
@@ -45,41 +45,21 @@ interface Report {
 async function generateReport(
   request: GenerateReportRequest,
 ): Promise<{ reportId: string }> {
-  const response = await fetch(`${API_URL}/reports/generate/`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    credentials: "include",
-    body: JSON.stringify(request),
-  });
-
-  if (!response.ok) {
-    const error = await response.json();
-    throw new Error(error.message || "Failed to generate report");
-  }
-
-  return response.json();
+  const response = await http.post("/reports/generate/", request);
+  return response.data as { reportId: string };
 }
 
 async function getReportStatus(reportId: string): Promise<Report> {
-  const response = await fetch(`${API_URL}/reports/${reportId}/`, {
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to get report status");
-  }
-
-  return response.json();
+  const response = await http.get(`/reports/${reportId}/`);
+  return response.data as Report;
 }
 
 function downloadReport(reportId: string, fileName: string) {
-  const downloadUrl = `${API_URL}/reports/${reportId}/download/`;
+  const downloadUrl = `/reports/${reportId}/download/`;
   const link = document.createElement("a");
   link.href = downloadUrl;
   link.download = fileName;
-  document.body.appendChild(link);
+  document.body.append(link);
   link.click();
   document.body.removeChild(link);
 }
@@ -100,22 +80,18 @@ export function DataTableExport({
   const [deliveryMethod, setDeliveryMethod] =
     React.useState<DeliveryMethod>("DOWNLOAD");
   const [reportId, setReportId] = React.useState<string | null>(null);
-  const { toast } = useToast();
 
   const generateMutation = useMutation({
     mutationFn: generateReport,
     onSuccess: (data) => {
       setReportId(data.reportId);
-      toast({
-        title: "Export Started",
+      toast.success("Export Started", {
         description: "Your report is being generated...",
       });
     },
     onError: (error: Error) => {
-      toast({
-        title: "Export Failed",
+      toast.error("Export Failed", {
         description: error.message,
-        variant: "destructive",
       });
     },
   });
@@ -135,8 +111,7 @@ export function DataTableExport({
 
   React.useEffect(() => {
     if (reportStatus?.status === "COMPLETED") {
-      toast({
-        title: "Export Complete",
+      toast.success("Export Complete", {
         description:
           deliveryMethod === "EMAIL"
             ? "The report has been sent to your email"
@@ -151,15 +126,13 @@ export function DataTableExport({
       setReportId(null);
       setOpen(false);
     } else if (reportStatus?.status === "FAILED") {
-      toast({
-        title: "Export Failed",
+      toast.error("Export Failed", {
         description:
           reportStatus.errorMessage || "An error occurred during export",
-        variant: "destructive",
       });
       setReportId(null);
     }
-  }, [reportStatus, deliveryMethod, format, reportId, resourceName, toast]);
+  }, [reportStatus, deliveryMethod, format, reportId, resourceName]);
 
   const handleExport = () => {
     const exportName = `${resourceName} Export - ${new Date().toLocaleDateString()}`;
@@ -227,9 +200,7 @@ export function DataTableExport({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="DOWNLOAD">
-                    Download immediately
-                  </SelectItem>
+                  <SelectItem value="DOWNLOAD">Download immediately</SelectItem>
                   <SelectItem value="EMAIL">Send via email</SelectItem>
                 </SelectContent>
               </Select>
@@ -237,8 +208,8 @@ export function DataTableExport({
 
             {filterState.filters.length > 0 && (
               <div className="rounded-md bg-muted p-3 text-sm">
-                <p className="font-medium mb-1">Active Filters:</p>
-                <ul className="list-disc list-inside space-y-0.5">
+                <p className="mb-1 font-medium">Active Filters:</p>
+                <ul className="list-inside list-disc space-y-0.5">
                   {filterState.filters.map((filter, index) => (
                     <li key={index} className="text-muted-foreground">
                       {filter.field}: {filter.operator} {String(filter.value)}
@@ -250,8 +221,8 @@ export function DataTableExport({
 
             {filterState.sort.length > 0 && (
               <div className="rounded-md bg-muted p-3 text-sm">
-                <p className="font-medium mb-1">Active Sorting:</p>
-                <ul className="list-disc list-inside space-y-0.5">
+                <p className="mb-1 font-medium">Active Sorting:</p>
+                <ul className="list-inside list-disc space-y-0.5">
                   {filterState.sort.map((sort, index) => (
                     <li key={index} className="text-muted-foreground">
                       {sort.field}: {sort.direction}
@@ -262,7 +233,7 @@ export function DataTableExport({
             )}
 
             {isProcessing && (
-              <div className="rounded-md bg-blue-50 dark:bg-blue-950 p-3 text-sm">
+              <div className="rounded-md bg-blue-50 p-3 text-sm dark:bg-blue-950">
                 <p className="text-blue-900 dark:text-blue-100">
                   {reportStatus?.status === "PROCESSING"
                     ? "Generating your export..."

@@ -3,7 +3,6 @@ package handlers
 import (
 	"fmt"
 	"net/http"
-	"time"
 
 	"github.com/emoss08/trenova/internal/api/context"
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -93,10 +92,10 @@ func (h *ReportHandler) get(c *gin.Context) {
 }
 
 type GenerateReportRequest struct {
-	ResourceType   string                  `json:"resourceType" binding:"required"`
-	Name           string                  `json:"name" binding:"required"`
-	Format         string                  `json:"format" binding:"required,oneof=CSV EXCEL"`
-	DeliveryMethod string                  `json:"deliveryMethod" binding:"required,oneof=DOWNLOAD EMAIL"`
+	ResourceType   string                  `json:"resourceType"             binding:"required"`
+	Name           string                  `json:"name"                     binding:"required"`
+	Format         string                  `json:"format"                   binding:"required,oneof=CSV EXCEL"`
+	DeliveryMethod string                  `json:"deliveryMethod"           binding:"required,oneof=DOWNLOAD EMAIL"`
 	FilterState    pagination.QueryOptions `json:"filterState"`
 	EmailProfileID *pulid.ID               `json:"emailProfileId,omitempty"`
 }
@@ -176,7 +175,7 @@ func (h *ReportHandler) download(c *gin.Context) {
 
 	if rpt.Status != report.StatusCompleted {
 		c.JSON(http.StatusBadRequest, gin.H{
-			"error": "Report is not ready for download",
+			"error":  "Report is not ready for download",
 			"status": rpt.Status,
 		})
 		return
@@ -190,7 +189,12 @@ func (h *ReportHandler) download(c *gin.Context) {
 	}
 
 	bucketName := "trenova-reports"
-	object, err := h.minioClient.GetObject(c.Request.Context(), bucketName, rpt.FilePath, minio.GetObjectOptions{})
+	object, err := h.minioClient.GetObject(
+		c.Request.Context(),
+		bucketName,
+		rpt.FilePath,
+		minio.GetObjectOptions{},
+	)
 	if err != nil {
 		h.logger.Error("failed to get object from MinIO",
 			zap.Error(err),

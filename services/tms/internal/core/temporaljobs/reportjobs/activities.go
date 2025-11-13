@@ -5,13 +5,10 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
-	"io"
-	"path/filepath"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/report"
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/pkg/utils"
@@ -29,14 +26,14 @@ type ActivitiesParams struct {
 	fx.In
 
 	Logger         *zap.Logger
-	DB             *bun.DB
+	DB             *postgres.Connection
 	MinIOClient    *minio.Client
 	TemporalClient client.Client
 }
 
 type Activities struct {
 	logger         *zap.Logger
-	db             *bun.DB
+	db             *postgres.Connection
 	minioClient    *minio.Client
 	temporalClient client.Client
 }
@@ -58,12 +55,17 @@ func (a *Activities) UpdateReportStatusActivity(
 	logger := activity.GetLogger(ctx)
 	logger.Info("Updating report status", "reportID", reportID, "status", status)
 
+	db, err := a.db.DB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get database connection: %w", err)
+	}
+
 	reportStatus, err := report.StatusFromString(status)
 	if err != nil {
 		return fmt.Errorf("invalid status: %w", err)
 	}
 
-	_, err = a.db.NewUpdate().
+	_, err = db.NewUpdate().
 		Model((*report.Report)(nil)).
 		Set("status = ?", reportStatus).
 		Set("updated_at = ?", utils.NowUnix()).
@@ -81,7 +83,13 @@ func (a *Activities) ExecuteQueryActivity(
 	payload *temporaltype.GenerateReportPayload,
 ) (*temporaltype.QueryExecutionResult, error) {
 	logger := activity.GetLogger(ctx)
-	logger.Info("Executing query for report", "reportID", payload.ReportID, "resourceType", payload.ResourceType)
+	logger.Info(
+		"Executing query for report",
+		"reportID",
+		payload.ReportID,
+		"resourceType",
+		payload.ResourceType,
+	)
 
 	activity.RecordHeartbeat(ctx, "building query")
 
@@ -90,13 +98,21 @@ func (a *Activities) ExecuteQueryActivity(
 		return nil, fmt.Errorf("unsupported resource type: %w", err)
 	}
 
-	query := a.db.NewSelect().
+	db, err := a.db.DB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get database connection: %w", err)
+	}
+
+	query := db.NewSelect().
 		Table(resourceInfo.TableName).
 		TableExpr(fmt.Sprintf("%s AS %s", resourceInfo.TableName, resourceInfo.Alias)).
-		Where(fmt.Sprintf("%s.organization_id = ?", resourceInfo.Alias), payload.OrganizationID).
-		Where(fmt.Sprintf("%s.business_unit_id = ?", resourceInfo.Alias), payload.BusinessUnitID)
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where(fmt.Sprintf("%s.organization_id = ?", resourceInfo.Alias), payload.OrganizationID).
+				Where(fmt.Sprintf("%s.business_unit_id = ?", resourceInfo.Alias), payload.BusinessUnitID)
+		})
 
-	qb := querybuilder.NewQueryBuilder(query, resourceInfo.Alias, nil)
+	qb := querybuilder.New(query, resourceInfo.Alias)
 	qb = qb.WithTraversalSupport(true)
 
 	if len(payload.FilterState.FieldFilters) > 0 {
@@ -108,9 +124,13 @@ func (a *Activities) ExecuteQueryActivity(
 	}
 
 	if payload.FilterState.Query != "" {
-		searchConfig := resourceInfo.Entity.PostgresSearchConfig()
-		if searchConfig != nil && len(searchConfig.SearchFields) > 0 {
-			qb = qb.ApplyTextSearch(payload.FilterState.Query, searchConfig.SearchFields)
+		searchConfig := resourceInfo.Entity.GetPostgresSearchConfig()
+		if len(searchConfig.SearchableFields) > 0 {
+			searchFields := make([]string, len(searchConfig.SearchableFields))
+			for i, field := range searchConfig.SearchableFields {
+				searchFields[i] = field.Name
+			}
+			qb = qb.ApplyTextSearch(payload.FilterState.Query, searchFields)
 		}
 	}
 
@@ -180,7 +200,12 @@ func (a *Activities) GenerateFileActivity(
 
 	activity.RecordHeartbeat(ctx, "file generated")
 
-	filePath := fmt.Sprintf("reports/%s/%s/%s", payload.OrganizationID, payload.BusinessUnitID, fileName)
+	filePath := fmt.Sprintf(
+		"reports/%s/%s/%s",
+		payload.OrganizationID,
+		payload.BusinessUnitID,
+		fileName,
+	)
 
 	return &temporaltype.ReportResult{
 		ReportID:  payload.ReportID,
@@ -220,7 +245,10 @@ func (a *Activities) generateCSV(result *temporaltype.QueryExecutionResult) ([]b
 	return buf.Bytes(), nil
 }
 
-func (a *Activities) generateExcel(result *temporaltype.QueryExecutionResult, resourceType string) ([]byte, error) {
+func (a *Activities) generateExcel(
+	result *temporaltype.QueryExecutionResult,
+	resourceType string,
+) ([]byte, error) {
 	f := excelize.NewFile()
 	defer f.Close()
 
@@ -248,10 +276,10 @@ func (a *Activities) generateExcel(result *temporaltype.QueryExecutionResult, re
 
 	for i, col := range result.Columns {
 		cell, _ := excelize.CoordinatesToCellName(i+1, 1)
-		if err := f.SetCellValue(sheetName, cell, col); err != nil {
+		if err = f.SetCellValue(sheetName, cell, col); err != nil {
 			return nil, fmt.Errorf("failed to set header cell: %w", err)
 		}
-		if err := f.SetCellStyle(sheetName, cell, cell, headerStyle); err != nil {
+		if err = f.SetCellStyle(sheetName, cell, cell, headerStyle); err != nil {
 			return nil, fmt.Errorf("failed to set header style: %w", err)
 		}
 	}
@@ -260,7 +288,7 @@ func (a *Activities) generateExcel(result *temporaltype.QueryExecutionResult, re
 		for colIdx, col := range result.Columns {
 			cell, _ := excelize.CoordinatesToCellName(colIdx+1, rowIdx+2)
 			if val, ok := row[col]; ok && val != nil {
-				if err := f.SetCellValue(sheetName, cell, val); err != nil {
+				if err = f.SetCellValue(sheetName, cell, val); err != nil {
 					return nil, fmt.Errorf("failed to set cell value: %w", err)
 				}
 			}
@@ -269,17 +297,17 @@ func (a *Activities) generateExcel(result *temporaltype.QueryExecutionResult, re
 
 	for i := range result.Columns {
 		col, _ := excelize.ColumnNumberToName(i + 1)
-		if err := f.SetColWidth(sheetName, col, col, 15); err != nil {
+		if err = f.SetColWidth(sheetName, col, col, 15); err != nil {
 			return nil, fmt.Errorf("failed to set column width: %w", err)
 		}
 	}
 
-	if err := f.DeleteSheet("Sheet1"); err != nil {
+	if err = f.DeleteSheet("Sheet1"); err != nil {
 		return nil, fmt.Errorf("failed to delete default sheet: %w", err)
 	}
 
 	var buf bytes.Buffer
-	if err := f.Write(&buf); err != nil {
+	if err = f.Write(&buf); err != nil {
 		return nil, fmt.Errorf("failed to write Excel file: %w", err)
 	}
 
@@ -291,12 +319,23 @@ func (a *Activities) UploadToStorageActivity(
 	result *temporaltype.ReportResult,
 ) (*temporaltype.ReportResult, error) {
 	logger := activity.GetLogger(ctx)
-	logger.Info("Uploading file to storage", "reportID", result.ReportID, "filePath", result.FilePath)
+	logger.Info(
+		"Uploading file to storage",
+		"reportID",
+		result.ReportID,
+		"filePath",
+		result.FilePath,
+	)
+
+	db, err := a.db.DB(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get database connection: %w", err)
+	}
 
 	activity.RecordHeartbeat(ctx, "uploading to storage")
 
 	var rpt report.Report
-	err := a.db.NewSelect().
+	err = db.NewSelect().
 		Model(&rpt).
 		Where("id = ?", result.ReportID).
 		Scan(ctx)
@@ -309,13 +348,22 @@ func (a *Activities) UploadToStorageActivity(
 		return nil, fmt.Errorf("unsupported resource type: %w", err)
 	}
 
-	query := a.db.NewSelect().
+	query := db.NewSelect().
 		Table(resourceInfo.TableName).
 		TableExpr(fmt.Sprintf("%s AS %s", resourceInfo.TableName, resourceInfo.Alias)).
-		Where("organization_id = ?", rpt.OrganizationID).
-		Where("business_unit_id = ?", rpt.BusinessUnitID)
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.
+				Where(
+					fmt.Sprintf("%s.organization_id = ?", resourceInfo.Alias),
+					rpt.OrganizationID,
+				).
+				Where(
+					fmt.Sprintf("%s.business_unit_id = ?", resourceInfo.Alias),
+					rpt.BusinessUnitID,
+				)
+		})
 
-	qb := querybuilder.NewQueryBuilder(query, resourceInfo.Alias, nil)
+	qb := querybuilder.New(query, resourceInfo.Alias)
 	if len(rpt.FilterState.FieldFilters) > 0 {
 		qb = qb.ApplyFilters(rpt.FilterState.FieldFilters)
 	}
@@ -323,9 +371,13 @@ func (a *Activities) UploadToStorageActivity(
 		qb = qb.ApplySort(rpt.FilterState.Sort)
 	}
 	if rpt.FilterState.Query != "" {
-		searchConfig := resourceInfo.Entity.PostgresSearchConfig()
-		if searchConfig != nil && len(searchConfig.SearchFields) > 0 {
-			qb = qb.ApplyTextSearch(rpt.FilterState.Query, searchConfig.SearchFields)
+		searchConfig := resourceInfo.Entity.GetPostgresSearchConfig()
+		if len(searchConfig.SearchableFields) > 0 {
+			searchFields := make([]string, len(searchConfig.SearchableFields))
+			for i, field := range searchConfig.SearchableFields {
+				searchFields[i] = field.Name
+			}
+			qb = qb.ApplyTextSearch(rpt.FilterState.Query, searchFields)
 		}
 	}
 
@@ -401,10 +453,15 @@ func (a *Activities) UpdateReportCompletedActivity(
 	logger := activity.GetLogger(ctx)
 	logger.Info("Updating report as completed", "reportID", result.ReportID)
 
+	db, err := a.db.DB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get database connection: %w", err)
+	}
+
 	now := utils.NowUnix()
 	expiresAt := now + (7 * 24 * 60 * 60)
 
-	_, err := a.db.NewUpdate().
+	_, err = db.NewUpdate().
 		Model((*report.Report)(nil)).
 		Set("status = ?", report.StatusCompleted).
 		Set("file_path = ?", result.FilePath).
@@ -430,7 +487,12 @@ func (a *Activities) MarkReportFailedActivity(
 	logger := activity.GetLogger(ctx)
 	logger.Info("Marking report as failed", "reportID", reportID, "error", errorMsg)
 
-	_, err := a.db.NewUpdate().
+	db, err := a.db.DB(ctx)
+	if err != nil {
+		return fmt.Errorf("failed to get database connection: %w", err)
+	}
+
+	_, err = db.NewUpdate().
 		Model((*report.Report)(nil)).
 		Set("status = ?", report.StatusFailed).
 		Set("error_message = ?", errorMsg).
@@ -497,7 +559,12 @@ func (a *Activities) SendReportEmailActivity(
 		TaskQueue: temporaltype.EmailTaskQueue,
 	}
 
-	_, err := a.temporalClient.ExecuteWorkflow(ctx, workflowOptions, "SendEmailWorkflow", emailPayload)
+	_, err := a.temporalClient.ExecuteWorkflow(
+		ctx,
+		workflowOptions,
+		"SendEmailWorkflow",
+		emailPayload,
+	)
 	if err != nil {
 		return fmt.Errorf("failed to start email workflow: %w", err)
 	}

@@ -1,6 +1,7 @@
 package reportjobs
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -12,15 +13,15 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/hazardousmaterial"
 	"github.com/emoss08/trenova/internal/core/domain/location"
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/tractor"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
-	"github.com/emoss08/trenova/internal/core/domain/user"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/uptrace/bun"
 )
 
-var ErrUnsupportedResourceType = fmt.Errorf("unsupported resource type")
+var ErrUnsupportedResourceType = errors.New("unsupported resource type")
 
 type ResourceInfo struct {
 	TableName string
@@ -32,17 +33,17 @@ var resourceRegistry map[string]ResourceInfo
 
 func init() {
 	entities := map[string]domaintypes.PostgresSearchable{
-		"user":                (*user.User)(nil),
-		"customer":            (*customer.Customer)(nil),
-		"shipment":            (*shipment.Shipment)(nil),
-		"tractor":             (*tractor.Tractor)(nil),
-		"trailer":             (*trailer.Trailer)(nil),
-		"location":            (*location.Location)(nil),
-		"worker":              (*worker.Worker)(nil),
-		"equipment_type":      (*equipmenttype.EquipmentType)(nil),
-		"commodity":           (*commodity.Commodity)(nil),
-		"accessorial_charge":  (*accessorialcharge.AccessorialCharge)(nil),
-		"hazardous_material":  (*hazardousmaterial.HazardousMaterial)(nil),
+		"user":               (*tenant.User)(nil),
+		"customer":           (*customer.Customer)(nil),
+		"shipment":           (*shipment.Shipment)(nil),
+		"tractor":            (*tractor.Tractor)(nil),
+		"trailer":            (*trailer.Trailer)(nil),
+		"location":           (*location.Location)(nil),
+		"worker":             (*worker.Worker)(nil),
+		"equipment_type":     (*equipmenttype.EquipmentType)(nil),
+		"commodity":          (*commodity.Commodity)(nil),
+		"accessorial_charge": (*accessorialcharge.AccessorialCharge)(nil),
+		"hazardous_material": (*hazardousmaterial.HazardousMaterial)(nil),
 	}
 
 	resourceRegistry = make(map[string]ResourceInfo, len(entities))

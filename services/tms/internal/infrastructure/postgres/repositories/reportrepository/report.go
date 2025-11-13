@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
-	"github.com/emoss08/trenova/pkg/utils/querybuilder"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -177,7 +176,6 @@ func (r *repository) List(
 			return r.filterQuery(sq, req)
 		}).
 		ScanAndCount(ctx)
-
 	if err != nil {
 		log.Error("failed to list reports", zap.Error(err))
 		return nil, err
@@ -193,12 +191,5 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	opts *repositories.ListReportRequest,
 ) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		"rpt",
-		opts.Filter,
-		(*report.Report)(nil),
-	)
-
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
 }

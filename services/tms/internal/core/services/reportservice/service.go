@@ -120,13 +120,18 @@ func (s *Service) GenerateReport(
 		TaskQueue: temporaltype.ReportTaskQueue,
 	}
 
-	_, err := s.temporalClient.ExecuteWorkflow(ctx, workflowOptions, "GenerateReportWorkflow", payload)
+	_, err := s.temporalClient.ExecuteWorkflow(
+		ctx,
+		workflowOptions,
+		"GenerateReportWorkflow",
+		payload,
+	)
 	if err != nil {
 		log.Error("failed to start workflow", zap.Error(err))
 
 		rpt.Status = report.StatusFailed
 		rpt.ErrorMessage = fmt.Sprintf("failed to start workflow: %v", err)
-		rpt.CompletedAt = utils.ToUnixTimePtr(time.Now())
+		rpt.CompletedAt = utils.Int64ToPointer(time.Now().Unix())
 		_ = s.repo.Update(ctx, rpt)
 
 		return nil, fmt.Errorf("failed to start report generation workflow: %w", err)
