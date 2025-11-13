@@ -409,6 +409,10 @@ func (a *Activities) UploadToStorageActivity(
 		return nil, fmt.Errorf("failed to generate file for upload: %w", err)
 	}
 
+	// Update file size and row count to match the actual generated file
+	result.FileSize = int64(len(fileData))
+	result.RowCount = queryResult.Total
+
 	reader := bytes.NewReader(fileData)
 	contentType := "text/csv"
 	if rpt.Format == report.FormatExcel {
