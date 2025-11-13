@@ -697,7 +697,7 @@ func (f *coalesceFunction) Call(_ *EvaluationContext, args ...any) (any, error) 
 			}
 		}
 	}
-	return nil, ErrCoalesceAllArgumentsMustBeNonNil
+	return nil, nil
 }
 
 func equal(a, b any) bool {
