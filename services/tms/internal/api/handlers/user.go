@@ -42,6 +42,7 @@ func (h *UserHandler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/users/")
 	api.GET("", h.pm.RequirePermission(permission.ResourceUser, "read"), h.list)
 	api.GET("me/", h.me)
+	api.PUT("me/", h.updateMe)
 	api.GET(":id/", h.pm.RequirePermission(permission.ResourceUser, "read"), h.get)
 	api.POST("", h.pm.RequirePermission(permission.ResourceUser, "create"), h.create)
 	api.POST("change-password/", h.changePassword)
@@ -148,6 +149,27 @@ func (h *UserHandler) me(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, usr)
+}
+
+func (h *UserHandler) updateMe(c *gin.Context) {
+	authCtx := context.GetAuthContext(c)
+
+	entity := new(tenant.User)
+	if err := c.ShouldBindJSON(entity); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	entity.ID = authCtx.UserID
+	context.AddContextToRequest(authCtx, entity)
+
+	entity, err := h.service.Update(c.Request.Context(), entity, authCtx.UserID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, entity)
 }
 
 func (h *UserHandler) create(c *gin.Context) {
