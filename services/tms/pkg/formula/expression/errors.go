@@ -54,10 +54,7 @@ var (
 	ErrIndexOfFirstArgumentMustBeStringOrArray = errors.New(
 		"indexOf: first argument must be string or array",
 	)
-	ErrCoalesceAllArgumentsMustBeNonNil = errors.New(
-		"coalesce: all arguments must be non-nil",
-	)
-	ErrNumericOverflow                          = errors.New("numeric overflow")
+	ErrNumericOverflow = errors.New("numeric overflow")
 	ErrDivisionByZero                           = errors.New("division by zero")
 	ErrModuloByZero                             = errors.New("modulo by zero")
 	ErrPowerResultOutOfRange                    = errors.New("power: result out of range")
