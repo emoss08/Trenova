@@ -2,12 +2,14 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { usePermissions } from "@/hooks/use-permission";
+import type { FilterStateSchema } from "@/lib/schemas/table-configuration-schema";
 import type { Resource } from "@/types/audit-entry";
 import type { ExtraAction } from "@/types/data-table";
 import type { LiveModeTableConfig } from "@/types/live-mode";
 import { Action } from "@/types/roles-permissions";
 import { faCirclePlay, faCircleStop } from "@fortawesome/pro-solid-svg-icons";
 import React from "react";
+import { DataTableExport } from "./_actions/data-table-export";
 import {
   DataTableCreateButton,
   DataTableViewOptions,
@@ -22,6 +24,7 @@ export default function DataTableActions({
   liveModeConfig,
   liveModeEnabled,
   onLiveModeToggle,
+  filterState,
 }: {
   name: string;
   resource: Resource;
@@ -29,6 +32,7 @@ export default function DataTableActions({
   handleCreateClick: () => void;
   liveModeEnabled: boolean;
   onLiveModeToggle: (enabled: boolean) => void;
+  filterState: FilterStateSchema;
   extraActions?: ExtraAction[];
   liveModeConfig?: LiveModeTableConfig;
 }) {
@@ -37,6 +41,11 @@ export default function DataTableActions({
   return (
     <DataTableActionsInner>
       <DataTableViewOptions resource={resource} />
+      <DataTableExport
+        resource={resource}
+        filterState={filterState}
+        resourceName={name}
+      />
       {liveModeConfig && (
         <Button
           variant={liveModeEnabled ? "red" : "outline"}

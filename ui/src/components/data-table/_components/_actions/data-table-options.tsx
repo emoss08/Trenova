@@ -98,6 +98,7 @@ export function DataTableOptions({
             liveModeConfig={liveMode}
             liveModeEnabled={liveModeEnabled}
             onLiveModeToggle={setLiveModeEnabled}
+            filterState={filterState}
           />
         </LazyLoader>
       </DataTableOptionsInner>
