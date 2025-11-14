@@ -125,7 +125,12 @@ func (a *Activities) ExecuteQueryActivity(
 		WithRelationshipFields().
 		Build()
 
-	qb := querybuilder.NewWithPostgresSearch(query, resourceInfo.Alias, fieldConfig, resourceInfo.Entity)
+	qb := querybuilder.NewWithPostgresSearch(
+		query,
+		resourceInfo.Alias,
+		fieldConfig,
+		resourceInfo.Entity,
+	)
 	qb.WithTraversalSupport(true)
 
 	if len(payload.FilterState.FieldFilters) > 0 {
@@ -384,7 +389,12 @@ func (a *Activities) UploadToStorageActivity(
 		WithRelationshipFields().
 		Build()
 
-	qb := querybuilder.NewWithPostgresSearch(query, resourceInfo.Alias, fieldConfig, resourceInfo.Entity)
+	qb := querybuilder.NewWithPostgresSearch(
+		query,
+		resourceInfo.Alias,
+		fieldConfig,
+		resourceInfo.Entity,
+	)
 	qb.WithTraversalSupport(true)
 
 	if len(rpt.FilterState.FieldFilters) > 0 {
@@ -646,15 +656,19 @@ func (a *Activities) SendReportReadyNotificationActivity(
 		},
 		RelatedEntities: []notification.RelatedEntity{
 			{
-				EntityType: "report",
-				EntityID:   result.ReportID.String(),
+				Type: "report",
+				ID:   result.ReportID,
+				Name: fmt.Sprintf("Report %s", result.ReportID.String()),
+				URL:  downloadURL,
 			},
 		},
 		Actions: []notification.Action{
 			{
-				Label: "Download Report",
-				Type:  "link",
-				URL:   downloadURL,
+				ID:       "download_report",
+				Label:    "Download Report",
+				Type:     "link",
+				Style:    "primary",
+				Endpoint: downloadURL,
 			},
 		},
 	}
