@@ -646,6 +646,7 @@ func (a *Activities) SendReportReadyNotificationActivity(
 			ReportType:     payload.ResourceType,
 			ReportFormat:   formatDisplay,
 			ReportSize:     result.FileSize,
+			ReportRowCount: result.RowCount,
 			ReportURL:      downloadURL,
 		},
 	)

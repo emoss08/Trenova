@@ -57,6 +57,7 @@ type ReportExportNotificationRequest struct {
 	ReportType     string   `json:"reportType"`
 	ReportFormat   string   `json:"reportFormat"`
 	ReportSize     int64    `json:"reportSize"`
+	ReportRowCount int      `json:"reportRowCount"`
 	ReportURL      string   `json:"reportURL"`
 }
 
