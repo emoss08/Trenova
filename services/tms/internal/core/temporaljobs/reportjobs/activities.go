@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/report"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -25,25 +27,28 @@ import (
 type ActivitiesParams struct {
 	fx.In
 
-	Logger         *zap.Logger
-	DB             *postgres.Connection
-	MinIOClient    *minio.Client
-	TemporalClient client.Client
+	Logger              *zap.Logger
+	DB                  *postgres.Connection
+	MinIOClient         *minio.Client
+	TemporalClient      client.Client
+	NotificationService services.NotificationService
 }
 
 type Activities struct {
-	logger         *zap.Logger
-	db             *postgres.Connection
-	minioClient    *minio.Client
-	temporalClient client.Client
+	logger              *zap.Logger
+	db                  *postgres.Connection
+	minioClient         *minio.Client
+	temporalClient      client.Client
+	notificationService services.NotificationService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
-		logger:         p.Logger.With(zap.String("worker", "report")),
-		db:             p.DB,
-		minioClient:    p.MinIOClient,
-		temporalClient: p.TemporalClient,
+		logger:              p.Logger.With(zap.String("worker", "report")),
+		db:                  p.DB,
+		minioClient:         p.MinIOClient,
+		temporalClient:      p.TemporalClient,
+		notificationService: p.NotificationService,
 	}
 }
 
@@ -574,6 +579,86 @@ func (a *Activities) SendReportEmailActivity(
 	}
 
 	activity.RecordHeartbeat(ctx, "email sent")
+
+	return nil
+}
+
+func (a *Activities) SendReportReadyNotificationActivity(
+	ctx context.Context,
+	payload *temporaltype.GenerateReportPayload,
+	result *temporaltype.ReportResult,
+) error {
+	logger := activity.GetLogger(ctx)
+	logger.Info(
+		"Sending report ready notification",
+		"reportID",
+		result.ReportID,
+		"userID",
+		payload.UserID,
+	)
+
+	activity.RecordHeartbeat(ctx, "preparing notification")
+
+	downloadURL := fmt.Sprintf("/api/v1/reports/%s/download/", result.ReportID)
+
+	formatDisplay := "CSV"
+	if payload.Format == report.FormatExcel {
+		formatDisplay = "Excel"
+	}
+
+	notificationReq := &services.JobCompletionNotificationRequest{
+		JobID:          result.ReportID.String(),
+		JobType:        "report_export",
+		UserID:         payload.UserID,
+		OrganizationID: payload.OrganizationID,
+		BusinessUnitID: payload.BusinessUnitID,
+		Success:        true,
+		Result: fmt.Sprintf(
+			"Your %s export (%s) is ready for download with %d rows.",
+			payload.ResourceType,
+			formatDisplay,
+			result.RowCount,
+		),
+		Data: map[string]any{
+			"reportId":     result.ReportID.String(),
+			"resourceType": payload.ResourceType,
+			"format":       formatDisplay,
+			"rowCount":     result.RowCount,
+			"fileSize":     result.FileSize,
+		},
+		RelatedEntities: []notification.RelatedEntity{
+			{
+				EntityType: "report",
+				EntityID:   result.ReportID.String(),
+			},
+		},
+		Actions: []notification.Action{
+			{
+				Label: "Download Report",
+				Type:  "link",
+				URL:   downloadURL,
+			},
+		},
+	}
+
+	activity.RecordHeartbeat(ctx, "sending notification")
+
+	err := a.notificationService.SendJobCompletionNotification(ctx, notificationReq)
+	if err != nil {
+		logger.Error(
+			"Failed to send report ready notification",
+			"error",
+			err,
+			"reportID",
+			result.ReportID,
+			"userID",
+			payload.UserID,
+		)
+		return fmt.Errorf("failed to send notification: %w", err)
+	}
+
+	activity.RecordHeartbeat(ctx, "notification sent")
+	logger.Info("Report ready notification sent successfully", "reportID", result.ReportID)
 
 	return nil
 }

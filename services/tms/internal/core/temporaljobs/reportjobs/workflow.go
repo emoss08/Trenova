@@ -99,6 +99,12 @@ func GenerateReportWorkflow(
 		return nil, err
 	}
 
+	err = workflow.ExecuteActivity(sessionCtx, a.SendReportReadyNotificationActivity, payload, &result).
+		Get(sessionCtx, nil)
+	if err != nil {
+		return nil, err
+	}
+
 	if payload.DeliveryMethod == "EMAIL" {
 		err = workflow.ExecuteActivity(sessionCtx, a.SendReportEmailActivity, payload, &result).
 			Get(sessionCtx, nil)

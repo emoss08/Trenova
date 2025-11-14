@@ -20,7 +20,7 @@ import { http } from "@/lib/http-client";
 import type { FilterStateSchema } from "@/lib/schemas/table-configuration-schema";
 import type { Resource } from "@/types/audit-entry";
 import { faDownload, faFileExcel } from "@fortawesome/pro-solid-svg-icons";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { toast } from "sonner";
 
@@ -35,33 +35,11 @@ interface GenerateReportRequest {
   filterState: FilterStateSchema;
 }
 
-interface Report {
-  id: string;
-  status: "PENDING" | "PROCESSING" | "COMPLETED" | "FAILED";
-  filePath: string;
-  errorMessage?: string;
-}
-
 async function generateReport(
   request: GenerateReportRequest,
 ): Promise<{ reportId: string }> {
   const response = await http.post("/reports/generate/", request);
   return response.data as { reportId: string };
-}
-
-async function getReportStatus(reportId: string): Promise<Report> {
-  const response = await http.get(`/reports/${reportId}/`);
-  return response.data as Report;
-}
-
-function downloadReport(reportId: string, fileName: string) {
-  const downloadUrl = `/reports/${reportId}/download/`;
-  const link = document.createElement("a");
-  link.href = downloadUrl;
-  link.download = fileName;
-  document.body.append(link);
-  link.click();
-  document.body.removeChild(link);
 }
 
 interface DataTableExportProps {
@@ -79,15 +57,17 @@ export function DataTableExport({
   const [format, setFormat] = React.useState<ReportFormat>("CSV");
   const [deliveryMethod, setDeliveryMethod] =
     React.useState<DeliveryMethod>("DOWNLOAD");
-  const [reportId, setReportId] = React.useState<string | null>(null);
 
   const generateMutation = useMutation({
     mutationFn: generateReport,
-    onSuccess: (data) => {
-      setReportId(data.reportId);
+    onSuccess: () => {
       toast.success("Export Started", {
-        description: "Your report is being generated...",
+        description:
+          deliveryMethod === "EMAIL"
+            ? "You'll receive an email when your report is ready"
+            : "You'll receive a notification when your report is ready",
       });
+      setOpen(false);
     },
     onError: (error: Error) => {
       toast.error("Export Failed", {
@@ -95,44 +75,6 @@ export function DataTableExport({
       });
     },
   });
-
-  const { data: reportStatus, isLoading: isPolling } = useQuery({
-    queryKey: ["report-status", reportId],
-    queryFn: () => getReportStatus(reportId!),
-    enabled: !!reportId,
-    refetchInterval: (query) => {
-      const status = query.state.data?.status;
-      if (status === "COMPLETED" || status === "FAILED") {
-        return false;
-      }
-      return 2000;
-    },
-  });
-
-  React.useEffect(() => {
-    if (reportStatus?.status === "COMPLETED") {
-      toast.success("Export Complete", {
-        description:
-          deliveryMethod === "EMAIL"
-            ? "The report has been sent to your email"
-            : "Your report is ready for download",
-      });
-
-      if (deliveryMethod === "DOWNLOAD") {
-        const fileName = `${resourceName}_export_${new Date().toISOString().split("T")[0]}.${format.toLowerCase()}`;
-        downloadReport(reportId!, fileName);
-      }
-
-      setReportId(null);
-      setOpen(false);
-    } else if (reportStatus?.status === "FAILED") {
-      toast.error("Export Failed", {
-        description:
-          reportStatus.errorMessage || "An error occurred during export",
-      });
-      setReportId(null);
-    }
-  }, [reportStatus, deliveryMethod, format, reportId, resourceName]);
 
   const handleExport = () => {
     const exportName = `${resourceName} Export - ${new Date().toLocaleDateString()}`;
@@ -145,8 +87,6 @@ export function DataTableExport({
       filterState,
     });
   };
-
-  const isProcessing = generateMutation.isPending || isPolling || !!reportId;
 
   return (
     <>
@@ -170,7 +110,7 @@ export function DataTableExport({
               <Select
                 value={format}
                 onValueChange={(value) => setFormat(value as ReportFormat)}
-                disabled={isProcessing}
+                disabled={generateMutation.isPending}
               >
                 <SelectTrigger id="format">
                   <SelectValue />
@@ -194,13 +134,15 @@ export function DataTableExport({
                 onValueChange={(value) =>
                   setDeliveryMethod(value as DeliveryMethod)
                 }
-                disabled={isProcessing}
+                disabled={generateMutation.isPending}
               >
                 <SelectTrigger id="delivery">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="DOWNLOAD">Download immediately</SelectItem>
+                  <SelectItem value="DOWNLOAD">
+                    Notification with download link
+                  </SelectItem>
                   <SelectItem value="EMAIL">Send via email</SelectItem>
                 </SelectContent>
               </Select>
@@ -231,29 +173,22 @@ export function DataTableExport({
                 </ul>
               </div>
             )}
-
-            {isProcessing && (
-              <div className="rounded-md bg-blue-50 p-3 text-sm dark:bg-blue-950">
-                <p className="text-blue-900 dark:text-blue-100">
-                  {reportStatus?.status === "PROCESSING"
-                    ? "Generating your export..."
-                    : "Starting export..."}
-                </p>
-              </div>
-            )}
           </div>
 
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setOpen(false)}
-              disabled={isProcessing}
+              disabled={generateMutation.isPending}
             >
               Cancel
             </Button>
-            <Button onClick={handleExport} disabled={isProcessing}>
-              {isProcessing ? (
-                <>Processing...</>
+            <Button
+              onClick={handleExport}
+              disabled={generateMutation.isPending}
+            >
+              {generateMutation.isPending ? (
+                <>Starting export...</>
               ) : (
                 <>
                   <Icon icon={faDownload} />
