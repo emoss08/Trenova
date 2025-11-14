@@ -70,6 +70,7 @@ type UserRepository interface {
 	List(ctx context.Context, req *ListUserRequest) (*pagination.ListResult[*tenant.User], error)
 	FindByEmail(ctx context.Context, email string) (*tenant.User, error)
 	GetNameByID(ctx context.Context, userID pulid.ID) (string, error)
+	GetEmailByID(ctx context.Context, userID pulid.ID) (string, error)
 	GetByID(ctx context.Context, opts GetUserByIDRequest) (*tenant.User, error)
 	GetByIDs(ctx context.Context, opts GetUsersByIDsRequest) ([]*tenant.User, error)
 	GetSystemUser(ctx context.Context) (*tenant.User, error)

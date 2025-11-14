@@ -113,22 +113,15 @@ func (h *ReportHandler) generate(c *gin.Context) {
 		return
 	}
 
-	userEmail := c.GetString("userEmail")
-	if userEmail == "" {
-		h.logger.Warn("user email not found in context, email delivery may fail")
-	}
-
 	rpt, err := h.service.GenerateReport(c.Request.Context(), &reportservice.GenerateReportRequest{
 		OrganizationID: authCtx.OrganizationID,
 		BusinessUnitID: authCtx.BusinessUnitID,
 		UserID:         authCtx.UserID,
-		UserEmail:      userEmail,
 		ResourceType:   req.ResourceType,
 		Name:           req.Name,
 		Format:         format,
 		DeliveryMethod: deliveryMethod,
 		FilterState:    req.FilterState,
-		EmailProfileID: req.EmailProfileID,
 	})
 	if err != nil {
 		h.errorHandler.HandleError(c, err)

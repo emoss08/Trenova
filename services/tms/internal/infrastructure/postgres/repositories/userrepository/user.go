@@ -249,6 +249,22 @@ func (ur *repository) GetNameByID(ctx context.Context, userID pulid.ID) (string,
 	return u.Name, nil
 }
 
+func (ur *repository) GetEmailByID(ctx context.Context, userID pulid.ID) (string, error) {
+	db, err := ur.db.DB(ctx)
+	if err != nil {
+		return "", err
+	}
+
+	u := new(tenant.User)
+	q := db.NewSelect().Model(u).Where("usr.id = ?", userID)
+
+	if err = q.Scan(ctx); err != nil {
+		return "", err
+	}
+
+	return u.EmailAddress, nil
+}
+
 func (ur *repository) GetByIDs(
 	ctx context.Context,
 	req repositories.GetUsersByIDsRequest,

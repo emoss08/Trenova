@@ -19,22 +19,28 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Logger         *zap.Logger
-	Repo           repositories.ReportRepository
-	TemporalClient client.Client
+	Logger           *zap.Logger
+	Repo             repositories.ReportRepository
+	UserRepo         repositories.UserRepository
+	EmailProfileRepo repositories.EmailProfileRepository
+	TemporalClient   client.Client
 }
 
 type Service struct {
-	l              *zap.Logger
-	repo           repositories.ReportRepository
-	temporalClient client.Client
+	l                *zap.Logger
+	repo             repositories.ReportRepository
+	userRepo         repositories.UserRepository
+	emailProfileRepo repositories.EmailProfileRepository
+	temporalClient   client.Client
 }
 
 func NewService(p ServiceParams) *Service {
 	return &Service{
-		l:              p.Logger.Named("service.report"),
-		repo:           p.Repo,
-		temporalClient: p.TemporalClient,
+		l:                p.Logger.Named("service.report"),
+		repo:             p.Repo,
+		userRepo:         p.UserRepo,
+		emailProfileRepo: p.EmailProfileRepo,
+		temporalClient:   p.TemporalClient,
 	}
 }
 
@@ -67,6 +73,34 @@ func (s *Service) GenerateReport(
 		return nil, err
 	}
 
+	// If delivery method is email, query for user email and default email profile
+	var userEmail string
+	var emailProfileID *pulid.ID
+
+	if req.DeliveryMethod == report.DeliveryMethodEmail {
+		// Get user email
+		email, err := s.userRepo.GetEmailByID(ctx, req.UserID)
+		if err != nil {
+			log.Error("failed to get user email", zap.Error(err))
+			return nil, fmt.Errorf("failed to get user email: %w", err)
+		}
+		userEmail = email
+
+		// Get default email profile
+		emailProfile, err := s.emailProfileRepo.GetDefault(ctx, req.OrganizationID, req.BusinessUnitID)
+		if err != nil {
+			log.Error("failed to get default email profile", zap.Error(err))
+			return nil, fmt.Errorf("no default email profile found for organization: %w", err)
+		}
+
+		emailProfileID = &emailProfile.ID
+
+		log.Info("using email delivery",
+			zap.String("userEmail", userEmail),
+			zap.String("emailProfileID", emailProfile.ID.String()),
+		)
+	}
+
 	rpt := &report.Report{
 		ID:             pulid.MustNew("report_"),
 		OrganizationID: req.OrganizationID,
@@ -90,12 +124,12 @@ func (s *Service) GenerateReport(
 		OrganizationID: req.OrganizationID,
 		BusinessUnitID: req.BusinessUnitID,
 		UserID:         req.UserID,
-		UserEmail:      req.UserEmail,
+		UserEmail:      userEmail,
 		ResourceType:   req.ResourceType,
 		Format:         req.Format,
 		DeliveryMethod: req.DeliveryMethod,
 		FilterState:    req.FilterState,
-		EmailProfileID: req.EmailProfileID,
+		EmailProfileID: emailProfileID,
 	}
 
 	workflowOptions := client.StartWorkflowOptions{
