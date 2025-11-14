@@ -45,9 +45,10 @@ func (r *Registry) RegisterActivities(w worker.Worker) error {
 	w.RegisterActivity(r.activities.UpdateReportCompletedActivity)
 	w.RegisterActivity(r.activities.MarkReportFailedActivity)
 	w.RegisterActivity(r.activities.SendReportEmailActivity)
+	w.RegisterActivity(r.activities.SendReportReadyNotificationActivity)
 
 	r.logger.Info("registered report activities",
-		zap.Int("count", 7),
+		zap.Int("count", 8),
 	)
 
 	return nil
