@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -192,4 +193,103 @@ func (r *repository) filterQuery(
 	opts *repositories.ListReportRequest,
 ) *bun.SelectQuery {
 	return q.Limit(opts.Filter.Limit).Offset(opts.Filter.Offset)
+}
+
+func (r *repository) UpdateStatus(
+	ctx context.Context,
+	req repositories.UpdateStatusRequest,
+) error {
+	log := r.l.With(
+		zap.String("operation", "UpdateStatus"),
+		zap.String("report_id", req.ReportID.String()),
+		zap.String("status", req.Status.String()),
+	)
+
+	db, err := r.db.DB(ctx)
+	if err != nil {
+		log.Error("failed to get database connection", zap.Error(err))
+		return err
+	}
+
+	_, err = db.NewUpdate().
+		Model((*report.Report)(nil)).
+		Set("status = ?", req.Status).
+		Set("updated_at = ?", utils.NowUnix()).
+		Where("id = ?", req.ReportID).
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to update report status", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (r *repository) UpdateCompleted(
+	ctx context.Context,
+	req repositories.UpdateCompletedRequest,
+) error {
+	log := r.l.With(
+		zap.String("operation", "UpdateCompleted"),
+		zap.String("report_id", req.ReportID.String()),
+	)
+
+	db, err := r.db.DB(ctx)
+	if err != nil {
+		log.Error("failed to get database connection", zap.Error(err))
+		return err
+	}
+
+	now := utils.NowUnix()
+
+	_, err = db.NewUpdate().
+		Model((*report.Report)(nil)).
+		Set("status = ?", report.StatusCompleted).
+		Set("file_path = ?", req.FilePath).
+		Set("file_size = ?", req.FileSize).
+		Set("row_count = ?", req.RowCount).
+		Set("completed_at = ?", now).
+		Set("expires_at = ?", req.ExpiresAt).
+		Set("updated_at = ?", now).
+		Where("id = ?", req.ReportID).
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to update report as completed", zap.Error(err))
+		return err
+	}
+
+	return nil
+}
+
+func (r *repository) MarkFailed(
+	ctx context.Context,
+	req repositories.MarkFailedRequest,
+) error {
+	log := r.l.With(
+		zap.String("operation", "MarkFailed"),
+		zap.String("report_id", req.ReportID.String()),
+	)
+
+	db, err := r.db.DB(ctx)
+	if err != nil {
+		log.Error("failed to get database connection", zap.Error(err))
+		return err
+	}
+
+	now := utils.NowUnix()
+
+	_, err = db.NewUpdate().
+		Model((*report.Report)(nil)).
+		Set("status = ?", report.StatusFailed).
+		Set("error_message = ?", req.ErrorMessage).
+		Set("completed_at = ?", now).
+		Set("updated_at = ?", now).
+		Where("id = ?", req.ReportID).
+		Exec(ctx)
+	if err != nil {
+		log.Error("failed to mark report as failed", zap.Error(err))
+		return err
+	}
+
+	return nil
 }
