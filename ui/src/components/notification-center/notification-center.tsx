@@ -77,13 +77,13 @@ export function NotificationCenter() {
               <Button
                 variant="ghost"
                 size="icon"
-                className="size-7 items-center relative"
+                className="relative size-7 items-center"
               >
                 <Icon icon={faBell} className="text-muted-foreground" />
                 {unreadNotifications.length > 0 && (
-                  <span className="absolute -right-1 -top-0.5 flex size-2">
+                  <span className="absolute -top-0.5 -right-1 flex size-2">
                     <span className="absolute inline-flex size-full animate-ping rounded-full bg-green-400 opacity-100"></span>
-                    <span className="ring-background relative inline-flex size-2 rounded-full bg-green-600 ring-1"></span>
+                    <span className="relative inline-flex size-2 rounded-full bg-green-600 ring-1 ring-background"></span>
                   </span>
                 )}
               </Button>
@@ -139,21 +139,21 @@ export function NotificationCenter() {
             </div>
           </div>
           <Tabs defaultValue="unread" className="w-full">
-            <TabsList className="h-auto rounded-none border-b gap-6 bg-transparent p-0 w-full justify-start">
+            <TabsList className="h-auto w-full justify-start gap-6 rounded-none border-b bg-transparent p-0">
               <TabsTrigger
                 value="unread"
-                className="group data-[state=active]:after:bg-primary data-[state=active]:text-primary relative rounded-none px-4 py-2 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                className="group relative rounded-none px-4 py-2 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
               >
                 Unread
                 {unreadNotifications.length > 0 && (
-                  <div className="text-xs text-muted-foreground bg-muted border border-border rounded-md px-1.5 items-center justify-center py-0.5 size-full group-data-[state=active]:bg-primary group-data-[state=active]:text-background">
+                  <div className="size-full items-center justify-center rounded-md border border-border bg-muted px-1.5 py-0.5 text-xs text-muted-foreground group-data-[state=active]:bg-primary group-data-[state=active]:text-background">
                     {unreadNotifications.length}
                   </div>
                 )}
               </TabsTrigger>
               <TabsTrigger
                 value="all"
-                className="group data-[state=active]:after:bg-primary data-[state=active]:text-primary relative rounded-none px-4 py-2 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:shadow-none"
+                className="group relative rounded-none px-4 py-2 after:absolute after:inset-x-0 after:bottom-0 after:h-0.5 data-[state=active]:bg-transparent data-[state=active]:text-primary data-[state=active]:shadow-none data-[state=active]:after:bg-primary"
               >
                 All
               </TabsTrigger>
@@ -161,8 +161,8 @@ export function NotificationCenter() {
             <TabsContent value="unread" className="m-0">
               <ScrollArea className="h-[400px]">
                 {unreadNotifications.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
-                    <Icon icon={faBell} className="size-12 mb-2 opacity-20" />
+                  <div className="flex h-[200px] flex-col items-center justify-center text-muted-foreground">
+                    <Icon icon={faBell} className="mb-2 size-12 opacity-20" />
                     <p className="text-sm">No unread notifications</p>
                   </div>
                 ) : (
@@ -183,8 +183,8 @@ export function NotificationCenter() {
             <TabsContent value="all" className="m-0">
               <ScrollArea className="h-[400px]">
                 {allNotifications.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-[200px] text-muted-foreground">
-                    <Icon icon={faBell} className="size-12 mb-2 opacity-20" />
+                  <div className="flex h-[200px] flex-col items-center justify-center text-muted-foreground">
+                    <Icon icon={faBell} className="mb-2 size-12 opacity-20" />
                     <p className="text-sm">No notifications yet</p>
                   </div>
                 ) : (

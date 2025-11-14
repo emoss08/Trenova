@@ -48,6 +48,18 @@ type ConfigurationCopiedNotificationRequest struct {
 	ConfigCopiedBy string   `json:"configCopiedBy"`
 }
 
+type ReportExportNotificationRequest struct {
+	UserID         pulid.ID `json:"userId"`
+	OrganizationID pulid.ID `json:"organizationId"`
+	BusinessUnitID pulid.ID `json:"businessUnitId"`
+	ReportID       pulid.ID `json:"reportId"`
+	ReportName     string   `json:"reportName"`
+	ReportType     string   `json:"reportType"`
+	ReportFormat   string   `json:"reportFormat"`
+	ReportSize     int64    `json:"reportSize"`
+	ReportURL      string   `json:"reportURL"`
+}
+
 type ShipmentCommentNotificationRequest struct {
 	OrganizationID  pulid.ID `json:"organizationId"`
 	BusinessUnitID  pulid.ID `json:"businessUnitId"`
@@ -80,6 +92,7 @@ type NotificationService interface {
 		ctx context.Context,
 		req *ConfigurationCopiedNotificationRequest,
 	) error
+	SendReportExportNotification(ctx context.Context, req *ReportExportNotificationRequest) error
 	SendCommentNotification(ctx context.Context, req *ShipmentCommentNotificationRequest) error
 	SendOwnershipTransferNotification(
 		ctx context.Context,

@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/notification"
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
@@ -634,48 +633,22 @@ func (a *Activities) SendReportReadyNotificationActivity(
 		formatDisplay = "Excel"
 	}
 
-	notificationReq := &services.JobCompletionNotificationRequest{
-		JobID:          result.ReportID.String(),
-		JobType:        "report_export",
-		UserID:         payload.UserID,
-		OrganizationID: payload.OrganizationID,
-		BusinessUnitID: payload.BusinessUnitID,
-		Success:        true,
-		Result: fmt.Sprintf(
-			"Your %s export (%s) is ready for download with %d rows.",
-			payload.ResourceType,
-			formatDisplay,
-			result.RowCount,
-		),
-		Data: map[string]any{
-			"reportId":     result.ReportID.String(),
-			"resourceType": payload.ResourceType,
-			"format":       formatDisplay,
-			"rowCount":     result.RowCount,
-			"fileSize":     result.FileSize,
-		},
-		RelatedEntities: []notification.RelatedEntity{
-			{
-				Type: "report",
-				ID:   result.ReportID,
-				Name: fmt.Sprintf("Report %s", result.ReportID.String()),
-				URL:  downloadURL,
-			},
-		},
-		Actions: []notification.Action{
-			{
-				ID:       "download_report",
-				Label:    "Download Report",
-				Type:     "link",
-				Style:    "primary",
-				Endpoint: downloadURL,
-			},
-		},
-	}
-
 	activity.RecordHeartbeat(ctx, "sending notification")
 
-	err := a.notificationService.SendJobCompletionNotification(ctx, notificationReq)
+	err := a.notificationService.SendReportExportNotification(
+		ctx,
+		&services.ReportExportNotificationRequest{
+			UserID:         payload.UserID,
+			OrganizationID: payload.OrganizationID,
+			BusinessUnitID: payload.BusinessUnitID,
+			ReportID:       result.ReportID,
+			ReportName:     fmt.Sprintf("Report %s", result.ReportID.String()),
+			ReportType:     payload.ResourceType,
+			ReportFormat:   formatDisplay,
+			ReportSize:     result.FileSize,
+			ReportURL:      downloadURL,
+		},
+	)
 	if err != nil {
 		logger.Error(
 			"Failed to send report ready notification",

@@ -50,7 +50,7 @@ export function NotificationItem({
       onMouseLeave={() => setItemHover(false)}
       // onClick={() => onAction(notification.id, notification.data)}
     >
-      <div className="flex-1 min-w-0 flex flex-col">
+      <div className="flex min-w-0 flex-1 flex-col">
         <div className="flex items-center justify-between gap-2">
           <h4
             className={cn(
@@ -68,7 +68,7 @@ export function NotificationItem({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="size-6 hover:bg-muted-foreground/20 transition-colors"
+                      className="size-6 transition-colors hover:bg-muted-foreground/20"
                       onClick={(e) => {
                         e.stopPropagation();
                         onMarkAsRead();
@@ -85,7 +85,7 @@ export function NotificationItem({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="size-6 hover:bg-muted-foreground/20 transition-colors"
+                    className="size-6 transition-colors hover:bg-muted-foreground/20"
                     onClick={(e) => {
                       e.stopPropagation();
                       onDismiss();
@@ -105,7 +105,7 @@ export function NotificationItem({
             </span>
           )}
         </div>
-        <p className="text-sm mt-1 text-muted-foreground">
+        <p className="mt-1 text-sm text-muted-foreground">
           {notification.message}
         </p>
       </div>

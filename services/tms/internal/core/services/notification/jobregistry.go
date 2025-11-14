@@ -61,6 +61,14 @@ var JobNotificationRegistry = map[string]*JobNotificationConfig{
 		MessageTemplate: "Billing process job %s has %s: %s",
 		Tags:            []string{"job", "billing", "finance"},
 	},
+	"report_export": {
+		EventType:       notification.EventJobReportExport,
+		Priority:        notification.PriorityMedium,
+		FailurePriority: notification.PriorityHigh,
+		TitleTemplate:   "Report Export %s",
+		MessageTemplate: "Report export job %s has %s: %s",
+		Tags:            []string{"job", "report", "export"},
+	},
 }
 
 func GetJobNotificationConfig(jobType string) (*JobNotificationConfig, bool) {

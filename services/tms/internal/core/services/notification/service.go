@@ -162,6 +162,55 @@ func (s *Service) SendConfigurationCopiedNotification(
 	return s.SendNotification(ctx, notifReq)
 }
 
+func (s *Service) SendReportExportNotification(
+	ctx context.Context,
+	req *services.ReportExportNotificationRequest,
+) error {
+	s.l.Info("sending report export notification",
+		zap.Any("req", req),
+	)
+
+	notifReq := &services.SendNotificationRequest{
+		EventType: notification.EventJobReportExport,
+		Priority:  notification.PriorityMedium,
+		Targeting: notification.Targeting{
+			Channel:        notification.ChannelUser,
+			OrganizationID: req.OrganizationID,
+			BusinessUnitID: &req.BusinessUnitID,
+			TargetUserID:   &req.UserID,
+		},
+		Title: "Report Export Completed",
+		Message: fmt.Sprintf(
+			"Your %s export (%s) is ready for download with %d rows.",
+			req.ReportType,
+			req.ReportFormat,
+			req.ReportSize,
+		),
+		Data: map[string]any{
+			"reportId": req.ReportID.String(),
+		},
+		RelatedEntities: []notification.RelatedEntity{
+			{
+				Type: "report",
+				ID:   req.ReportID,
+				Name: req.ReportName,
+				URL:  req.ReportURL,
+			},
+		},
+		Actions: []notification.Action{
+			{
+				ID:       "download_report",
+				Label:    "Download Report",
+				Type:     "link",
+				Style:    "primary",
+				Endpoint: req.ReportURL,
+			},
+		},
+	}
+
+	return s.SendNotification(ctx, notifReq)
+}
+
 func (s *Service) SendOwnershipTransferNotification(
 	ctx context.Context,
 	req *services.OwnershipTransferNotificationRequest,
