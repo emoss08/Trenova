@@ -184,10 +184,15 @@ func (s *Service) SendReportExportNotification(
 			"Your %s export (%s) is ready for download with %d rows.",
 			req.ReportType,
 			req.ReportFormat,
-			req.ReportSize,
+			req.ReportRowCount,
 		),
 		Data: map[string]any{
-			"reportId": req.ReportID.String(),
+			"reportId":       req.ReportID.String(),
+			"reportType":     req.ReportType,
+			"reportFormat":   req.ReportFormat,
+			"reportRowCount": req.ReportRowCount,
+			"reportSize":     req.ReportSize,
+			"reportURL":      req.ReportURL,
 		},
 		RelatedEntities: []notification.RelatedEntity{
 			{
