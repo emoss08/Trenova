@@ -108,7 +108,6 @@ func (a *Activities) ExecuteQueryActivity(
 	}
 
 	query := db.NewSelect().
-		Table(resourceInfo.TableName).
 		TableExpr(fmt.Sprintf("%s AS %s", resourceInfo.TableName, resourceInfo.Alias)).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.
