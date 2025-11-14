@@ -51,6 +51,45 @@ func NewActivities(p ActivitiesParams) *Activities {
 	}
 }
 
+// excludedColumns defines columns that should never be exported to users
+var excludedColumns = map[string]bool{
+	"search_vector":      true,
+	"business_unit_id":   true,
+	"organization_id":    true,
+	"version":            true,
+}
+
+// filterColumns removes excluded columns from the list
+func filterColumns(columns []string) []string {
+	filtered := make([]string, 0, len(columns))
+	for _, col := range columns {
+		if !excludedColumns[col] {
+			filtered = append(filtered, col)
+		}
+	}
+	return filtered
+}
+
+// filterRowData removes excluded columns from row data
+func filterRowData(rows []map[string]any, allowedColumns []string) []map[string]any {
+	allowedSet := make(map[string]bool)
+	for _, col := range allowedColumns {
+		allowedSet[col] = true
+	}
+
+	filtered := make([]map[string]any, len(rows))
+	for i, row := range rows {
+		filteredRow := make(map[string]any)
+		for col, val := range row {
+			if allowedSet[col] {
+				filteredRow[col] = val
+			}
+		}
+		filtered[i] = filteredRow
+	}
+	return filtered
+}
+
 func (a *Activities) UpdateReportStatusActivity(
 	ctx context.Context,
 	reportID pulid.ID,
@@ -169,14 +208,19 @@ func (a *Activities) ExecuteQueryActivity(
 		}, nil
 	}
 
-	columns := make([]string, 0, len(rows[0]))
+	// Collect all columns from first row
+	allColumns := make([]string, 0, len(rows[0]))
 	for col := range rows[0] {
-		columns = append(columns, col)
+		allColumns = append(allColumns, col)
 	}
+
+	// Filter out excluded columns
+	columns := filterColumns(allColumns)
+	filteredRows := filterRowData(rows, columns)
 
 	return &temporaltype.QueryExecutionResult{
 		Columns: columns,
-		Rows:    rows,
+		Rows:    filteredRows,
 		Total:   len(rows),
 	}, nil
 }
@@ -420,11 +464,18 @@ func (a *Activities) UploadToStorageActivity(
 		Total: len(rows),
 	}
 	if len(rows) > 0 {
-		columns := make([]string, 0, len(rows[0]))
+		// Collect all columns from first row
+		allColumns := make([]string, 0, len(rows[0]))
 		for col := range rows[0] {
-			columns = append(columns, col)
+			allColumns = append(allColumns, col)
 		}
+
+		// Filter out excluded columns
+		columns := filterColumns(allColumns)
+		filteredRows := filterRowData(rows, columns)
+
 		queryResult.Columns = columns
+		queryResult.Rows = filteredRows
 	}
 
 	var fileData []byte
