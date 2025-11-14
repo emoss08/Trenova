@@ -121,7 +121,6 @@ func (a *Activities) ExecuteQueryActivity(
 		WithAllFieldsFilterable().
 		WithAllFieldsSortable().
 		WithAutoEnumDetection().
-		WithRelationshipFields().
 		Build()
 
 	qb := querybuilder.NewWithPostgresSearch(
@@ -385,7 +384,6 @@ func (a *Activities) UploadToStorageActivity(
 		WithAllFieldsFilterable().
 		WithAllFieldsSortable().
 		WithAutoEnumDetection().
-		WithRelationshipFields().
 		Build()
 
 	qb := querybuilder.NewWithPostgresSearch(
