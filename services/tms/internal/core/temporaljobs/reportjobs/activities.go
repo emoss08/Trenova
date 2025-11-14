@@ -14,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/emoss08/trenova/pkg/utils/querybuilder"
+	"github.com/emoss08/trenova/pkg/utils/reportuils"
 	"github.com/minio/minio-go/v7"
 	"github.com/uptrace/bun"
 	"github.com/xuri/excelize/v2"
@@ -49,45 +50,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 		temporalClient:      p.TemporalClient,
 		notificationService: p.NotificationService,
 	}
-}
-
-// excludedColumns defines columns that should never be exported to users
-var excludedColumns = map[string]bool{
-	"search_vector":      true,
-	"business_unit_id":   true,
-	"organization_id":    true,
-	"version":            true,
-}
-
-// filterColumns removes excluded columns from the list
-func filterColumns(columns []string) []string {
-	filtered := make([]string, 0, len(columns))
-	for _, col := range columns {
-		if !excludedColumns[col] {
-			filtered = append(filtered, col)
-		}
-	}
-	return filtered
-}
-
-// filterRowData removes excluded columns from row data
-func filterRowData(rows []map[string]any, allowedColumns []string) []map[string]any {
-	allowedSet := make(map[string]bool)
-	for _, col := range allowedColumns {
-		allowedSet[col] = true
-	}
-
-	filtered := make([]map[string]any, len(rows))
-	for i, row := range rows {
-		filteredRow := make(map[string]any)
-		for col, val := range row {
-			if allowedSet[col] {
-				filteredRow[col] = val
-			}
-		}
-		filtered[i] = filteredRow
-	}
-	return filtered
 }
 
 func (a *Activities) UpdateReportStatusActivity(
@@ -208,15 +170,13 @@ func (a *Activities) ExecuteQueryActivity(
 		}, nil
 	}
 
-	// Collect all columns from first row
 	allColumns := make([]string, 0, len(rows[0]))
 	for col := range rows[0] {
 		allColumns = append(allColumns, col)
 	}
 
-	// Filter out excluded columns
-	columns := filterColumns(allColumns)
-	filteredRows := filterRowData(rows, columns)
+	columns := reportuils.FilterColumns(allColumns)
+	filteredRows := reportuils.FilterRowData(rows, columns)
 
 	return &temporaltype.QueryExecutionResult{
 		Columns: columns,
@@ -464,15 +424,13 @@ func (a *Activities) UploadToStorageActivity(
 		Total: len(rows),
 	}
 	if len(rows) > 0 {
-		// Collect all columns from first row
 		allColumns := make([]string, 0, len(rows[0]))
 		for col := range rows[0] {
 			allColumns = append(allColumns, col)
 		}
 
-		// Filter out excluded columns
-		columns := filterColumns(allColumns)
-		filteredRows := filterRowData(rows, columns)
+		columns := reportuils.FilterColumns(allColumns)
+		filteredRows := reportuils.FilterRowData(rows, columns)
 
 		queryResult.Columns = columns
 		queryResult.Rows = filteredRows
@@ -488,7 +446,6 @@ func (a *Activities) UploadToStorageActivity(
 		return nil, fmt.Errorf("failed to generate file for upload: %w", err)
 	}
 
-	// Update file size and row count to match the actual generated file
 	result.FileSize = int64(len(fileData))
 	result.RowCount = queryResult.Total
 
@@ -553,7 +510,7 @@ func (a *Activities) UpdateReportCompletedActivity(
 		Set("completed_at = ?", now).
 		Set("expires_at = ?", expiresAt).
 		Set("updated_at = ?", now).
-		Where("id = ?", result.ReportID).
+		Where("rpt.id = ?", result.ReportID).
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to update report: %w", err)
@@ -626,14 +583,14 @@ func (a *Activities) SendReportEmailActivity(
 			payload.ResourceType,
 			payload.Format,
 			result.RowCount,
-			float64(result.FileSize)/(1024*1024),
+			reportuils.FileSizeMB(result.FileSize),
 			downloadURL,
 		),
 		TextBody: fmt.Sprintf(
 			"Your %s export is ready. Rows: %d, Size: %.2f MB. Download: %s",
 			payload.ResourceType,
 			result.RowCount,
-			float64(result.FileSize)/(1024*1024),
+			reportuils.FileSizeMB(result.FileSize),
 			downloadURL,
 		),
 	}
