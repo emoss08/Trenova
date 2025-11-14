@@ -117,15 +117,23 @@ func (a *Activities) ExecuteQueryActivity(
 				Where(fmt.Sprintf("%s.business_unit_id = ?", resourceInfo.Alias), payload.BusinessUnitID)
 		})
 
-	qb := querybuilder.New(query, resourceInfo.Alias)
-	qb = qb.WithTraversalSupport(true)
+	fieldConfig := querybuilder.NewFieldConfigBuilder(resourceInfo.Entity).
+		WithAutoMapping().
+		WithAllFieldsFilterable().
+		WithAllFieldsSortable().
+		WithAutoEnumDetection().
+		WithRelationshipFields().
+		Build()
+
+	qb := querybuilder.NewWithPostgresSearch(query, resourceInfo.Alias, fieldConfig, resourceInfo.Entity)
+	qb.WithTraversalSupport(true)
 
 	if len(payload.FilterState.FieldFilters) > 0 {
-		qb = qb.ApplyFilters(payload.FilterState.FieldFilters)
+		qb.ApplyFilters(payload.FilterState.FieldFilters)
 	}
 
 	if len(payload.FilterState.Sort) > 0 {
-		qb = qb.ApplySort(payload.FilterState.Sort)
+		qb.ApplySort(payload.FilterState.Sort)
 	}
 
 	if payload.FilterState.Query != "" {
@@ -135,7 +143,7 @@ func (a *Activities) ExecuteQueryActivity(
 			for i, field := range searchConfig.SearchableFields {
 				searchFields[i] = field.Name
 			}
-			qb = qb.ApplyTextSearch(payload.FilterState.Query, searchFields)
+			qb.ApplyTextSearch(payload.FilterState.Query, searchFields)
 		}
 	}
 
@@ -368,12 +376,22 @@ func (a *Activities) UploadToStorageActivity(
 				)
 		})
 
-	qb := querybuilder.New(query, resourceInfo.Alias)
+	fieldConfig := querybuilder.NewFieldConfigBuilder(resourceInfo.Entity).
+		WithAutoMapping().
+		WithAllFieldsFilterable().
+		WithAllFieldsSortable().
+		WithAutoEnumDetection().
+		WithRelationshipFields().
+		Build()
+
+	qb := querybuilder.NewWithPostgresSearch(query, resourceInfo.Alias, fieldConfig, resourceInfo.Entity)
+	qb.WithTraversalSupport(true)
+
 	if len(rpt.FilterState.FieldFilters) > 0 {
-		qb = qb.ApplyFilters(rpt.FilterState.FieldFilters)
+		qb.ApplyFilters(rpt.FilterState.FieldFilters)
 	}
 	if len(rpt.FilterState.Sort) > 0 {
-		qb = qb.ApplySort(rpt.FilterState.Sort)
+		qb.ApplySort(rpt.FilterState.Sort)
 	}
 	if rpt.FilterState.Query != "" {
 		searchConfig := resourceInfo.Entity.GetPostgresSearchConfig()
@@ -382,7 +400,7 @@ func (a *Activities) UploadToStorageActivity(
 			for i, field := range searchConfig.SearchableFields {
 				searchFields[i] = field.Name
 			}
-			qb = qb.ApplyTextSearch(rpt.FilterState.Query, searchFields)
+			qb.ApplyTextSearch(rpt.FilterState.Query, searchFields)
 		}
 	}
 
