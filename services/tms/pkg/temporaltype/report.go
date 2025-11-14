@@ -21,13 +21,16 @@ type GenerateReportPayload struct {
 }
 
 type ReportResult struct {
-	ReportID  pulid.ID `json:"reportId"`
-	FilePath  string   `json:"filePath"`
-	FileSize  int64    `json:"fileSize"`
-	RowCount  int      `json:"rowCount"`
-	Status    string   `json:"status"`
-	ErrorMsg  string   `json:"errorMsg,omitempty"`
-	Timestamp int64    `json:"timestamp"`
+	ReportID       pulid.ID      `json:"reportId"`
+	OrganizationID pulid.ID      `json:"organizationId"`
+	BusinessUnitID pulid.ID      `json:"businessUnitId"`
+	UserID         pulid.ID      `json:"userId"`
+	FilePath       string        `json:"filePath"`
+	FileSize       int64         `json:"fileSize"`
+	RowCount       int           `json:"rowCount"`
+	Status         report.Status `json:"status"`
+	ErrorMsg       string        `json:"errorMsg,omitempty"`
+	Timestamp      int64         `json:"timestamp"`
 }
 
 type QueryExecutionResult struct {

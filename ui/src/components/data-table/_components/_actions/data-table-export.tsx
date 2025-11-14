@@ -17,6 +17,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { http } from "@/lib/http-client";
+import {
+  DeliveryMethodSchema,
+  GenerateReportRequestSchema,
+  GenerateReportResponseSchema,
+  ReportFormatSchema,
+} from "@/lib/schemas/report-schema";
 import type { FilterStateSchema } from "@/lib/schemas/table-configuration-schema";
 import type { Resource } from "@/types/audit-entry";
 import { faDownload, faFileExcel } from "@fortawesome/pro-solid-svg-icons";
@@ -24,20 +30,9 @@ import { useMutation } from "@tanstack/react-query";
 import React from "react";
 import { toast } from "sonner";
 
-type ReportFormat = "CSV" | "EXCEL";
-type DeliveryMethod = "DOWNLOAD" | "EMAIL";
-
-interface GenerateReportRequest {
-  resourceType: string;
-  name: string;
-  format: ReportFormat;
-  deliveryMethod: DeliveryMethod;
-  filterState: FilterStateSchema;
-}
-
 async function generateReport(
-  request: GenerateReportRequest,
-): Promise<{ reportId: string }> {
+  request: GenerateReportRequestSchema,
+): Promise<GenerateReportResponseSchema> {
   const response = await http.post("/reports/generate/", request);
   return response.data as { reportId: string };
 }
@@ -54,16 +49,18 @@ export function DataTableExport({
   resourceName,
 }: DataTableExportProps) {
   const [open, setOpen] = React.useState(false);
-  const [format, setFormat] = React.useState<ReportFormat>("CSV");
+  const [format, setFormat] = React.useState<ReportFormatSchema>(
+    ReportFormatSchema.enum.Csv,
+  );
   const [deliveryMethod, setDeliveryMethod] =
-    React.useState<DeliveryMethod>("DOWNLOAD");
+    React.useState<DeliveryMethodSchema>(DeliveryMethodSchema.enum.Download);
 
   const generateMutation = useMutation({
     mutationFn: generateReport,
     onSuccess: () => {
       toast.success("Export Started", {
         description:
-          deliveryMethod === "EMAIL"
+          deliveryMethod === DeliveryMethodSchema.enum.Email
             ? "You'll receive an email when your report is ready"
             : "You'll receive a notification when your report is ready",
       });
@@ -109,15 +106,19 @@ export function DataTableExport({
               <Label htmlFor="format">Format</Label>
               <Select
                 value={format}
-                onValueChange={(value) => setFormat(value as ReportFormat)}
+                onValueChange={(value) =>
+                  setFormat(value as ReportFormatSchema)
+                }
                 disabled={generateMutation.isPending}
               >
                 <SelectTrigger id="format">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="CSV">CSV (Comma-separated)</SelectItem>
-                  <SelectItem value="EXCEL">
+                  <SelectItem value={ReportFormatSchema.enum.Csv}>
+                    CSV (Comma-separated)
+                  </SelectItem>
+                  <SelectItem value={ReportFormatSchema.enum.Excel}>
                     <div className="flex items-center gap-2">
                       <Icon icon={faFileExcel} className="text-green-600" />
                       Excel (XLSX)
@@ -132,7 +133,7 @@ export function DataTableExport({
               <Select
                 value={deliveryMethod}
                 onValueChange={(value) =>
-                  setDeliveryMethod(value as DeliveryMethod)
+                  setDeliveryMethod(value as DeliveryMethodSchema)
                 }
                 disabled={generateMutation.isPending}
               >
@@ -140,10 +141,12 @@ export function DataTableExport({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="DOWNLOAD">
+                  <SelectItem value={DeliveryMethodSchema.enum.Download}>
                     Notification with download link
                   </SelectItem>
-                  <SelectItem value="EMAIL">Send via email</SelectItem>
+                  <SelectItem value={DeliveryMethodSchema.enum.Email}>
+                    Send via email
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>

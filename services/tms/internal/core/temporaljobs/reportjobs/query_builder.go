@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/emoss08/trenova/internal/core/domain/report"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/pkg/utils/querybuilder"
@@ -12,12 +12,10 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// QueryBuilder encapsulates query building logic for report exports
 type QueryBuilder struct {
 	resourceInfo *ResourceInfo
 }
 
-// NewQueryBuilder creates a new QueryBuilder for the given resource type
 func NewQueryBuilder(resourceType string) (*QueryBuilder, error) {
 	resourceInfo, err := GetResourceInfo(resourceType)
 	if err != nil {
@@ -25,11 +23,10 @@ func NewQueryBuilder(resourceType string) (*QueryBuilder, error) {
 	}
 
 	return &QueryBuilder{
-		resourceInfo: resourceInfo,
+		resourceInfo: &resourceInfo,
 	}, nil
 }
 
-// BuildBaseQuery creates the base query with organization and business unit filters
 func (qb *QueryBuilder) BuildBaseQuery(
 	db *bun.DB,
 	organizationID,
@@ -44,10 +41,9 @@ func (qb *QueryBuilder) BuildBaseQuery(
 		})
 }
 
-// ApplyFilters applies filter state to the query
 func (qb *QueryBuilder) ApplyFilters(
 	query *bun.SelectQuery,
-	filterState report.FilterState,
+	queryOptions pagination.QueryOptions,
 ) *bun.SelectQuery {
 	fieldConfig := querybuilder.NewFieldConfigBuilder(qb.resourceInfo.Entity).
 		WithAutoMapping().
@@ -64,29 +60,28 @@ func (qb *QueryBuilder) ApplyFilters(
 	)
 	qbuilder.WithTraversalSupport(true)
 
-	if len(filterState.FieldFilters) > 0 {
-		qbuilder.ApplyFilters(filterState.FieldFilters)
+	if len(queryOptions.FieldFilters) > 0 {
+		qbuilder.ApplyFilters(queryOptions.FieldFilters)
 	}
 
-	if len(filterState.Sort) > 0 {
-		qbuilder.ApplySort(filterState.Sort)
+	if len(queryOptions.Sort) > 0 {
+		qbuilder.ApplySort(queryOptions.Sort)
 	}
 
-	if filterState.Query != "" {
+	if queryOptions.Query != "" {
 		searchConfig := qb.resourceInfo.Entity.GetPostgresSearchConfig()
 		if len(searchConfig.SearchableFields) > 0 {
 			searchFields := make([]string, len(searchConfig.SearchableFields))
 			for i, field := range searchConfig.SearchableFields {
 				searchFields[i] = field.Name
 			}
-			qbuilder.ApplyTextSearch(filterState.Query, searchFields)
+			qbuilder.ApplyTextSearch(queryOptions.Query, searchFields)
 		}
 	}
 
 	return qbuilder.GetQuery()
 }
 
-// ExecuteAndFilter executes the query and filters the results
 func (qb *QueryBuilder) ExecuteAndFilter(
 	ctx context.Context,
 	query *bun.SelectQuery,

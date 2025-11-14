@@ -149,18 +149,21 @@ func (a *Activities) GenerateFileActivity(
 
 	filePath := fmt.Sprintf(
 		"reports/%s/%s/%s",
-		payload.OrganizationID,
-		payload.BusinessUnitID,
+		payload.BusinessUnitID.String(),
+		payload.OrganizationID.String(),
 		fileName,
 	)
 
 	return &temporaltype.ReportResult{
-		ReportID:  payload.ReportID,
-		FilePath:  filePath,
-		FileSize:  int64(len(fileData)),
-		RowCount:  queryResult.Total,
-		Status:    "COMPLETED",
-		Timestamp: utils.NowUnix(),
+		ReportID:       payload.ReportID,
+		OrganizationID: payload.OrganizationID,
+		BusinessUnitID: payload.BusinessUnitID,
+		UserID:         payload.UserID,
+		FilePath:       filePath,
+		FileSize:       int64(len(fileData)),
+		RowCount:       queryResult.Total,
+		Status:         report.StatusCompleted,
+		Timestamp:      utils.NowUnix(),
 	}, nil
 }
 
@@ -181,6 +184,9 @@ func (a *Activities) UploadToStorageActivity(
 
 	rpt, err := a.reportRepo.Get(ctx, repositories.GetReportByIDRequest{
 		ReportID: result.ReportID,
+		OrgID:    result.OrganizationID,
+		BuID:     result.BusinessUnitID,
+		UserID:   result.UserID,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to get report: %w", err)

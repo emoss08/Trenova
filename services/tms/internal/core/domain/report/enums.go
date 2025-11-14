@@ -8,8 +8,8 @@ import (
 type Format string
 
 const (
-	FormatCSV   Format = "CSV"
-	FormatExcel Format = "EXCEL"
+	FormatCSV   Format = "Csv"
+	FormatExcel Format = "Excel"
 )
 
 func (f Format) String() string {
@@ -40,9 +40,9 @@ func (f Format) Value() (driver.Value, error) {
 
 func FormatFromString(s string) (Format, error) {
 	switch s {
-	case "CSV", "csv":
+	case "Csv":
 		return FormatCSV, nil
-	case "EXCEL", "excel", "xlsx":
+	case "Excel":
 		return FormatExcel, nil
 	default:
 		return "", fmt.Errorf("invalid format: %s", s)
@@ -61,8 +61,8 @@ func (f Format) IsValid() bool {
 type DeliveryMethod string
 
 const (
-	DeliveryMethodDownload DeliveryMethod = "DOWNLOAD"
-	DeliveryMethodEmail    DeliveryMethod = "EMAIL"
+	DeliveryMethodDownload DeliveryMethod = "Download"
+	DeliveryMethodEmail    DeliveryMethod = "Email"
 )
 
 func (d DeliveryMethod) String() string {
@@ -93,9 +93,9 @@ func (d DeliveryMethod) Value() (driver.Value, error) {
 
 func DeliveryMethodFromString(s string) (DeliveryMethod, error) {
 	switch s {
-	case "DOWNLOAD", "download":
+	case "Download":
 		return DeliveryMethodDownload, nil
-	case "EMAIL", "email":
+	case "Email":
 		return DeliveryMethodEmail, nil
 	default:
 		return "", fmt.Errorf("invalid delivery method: %s", s)
@@ -114,10 +114,10 @@ func (d DeliveryMethod) IsValid() bool {
 type Status string
 
 const (
-	StatusPending    Status = "PENDING"
-	StatusProcessing Status = "PROCESSING"
-	StatusCompleted  Status = "COMPLETED"
-	StatusFailed     Status = "FAILED"
+	StatusPending    Status = "Pending"
+	StatusProcessing Status = "Processing"
+	StatusCompleted  Status = "Completed"
+	StatusFailed     Status = "Failed"
 )
 
 func (s Status) String() string {
@@ -148,13 +148,13 @@ func (s Status) Value() (driver.Value, error) {
 
 func StatusFromString(str string) (Status, error) {
 	switch str {
-	case "PENDING", "pending":
+	case "Pending":
 		return StatusPending, nil
-	case "PROCESSING", "processing":
+	case "Processing":
 		return StatusProcessing, nil
-	case "COMPLETED", "completed":
+	case "Completed":
 		return StatusCompleted, nil
-	case "FAILED", "failed":
+	case "Failed":
 		return StatusFailed, nil
 	default:
 		return "", fmt.Errorf("invalid status: %s", str)

@@ -91,31 +91,22 @@ func (h *ReportHandler) get(c *gin.Context) {
 	c.JSON(http.StatusOK, entity)
 }
 
-type GenerateReportRequest struct {
-	ResourceType   string                  `json:"resourceType"             binding:"required"`
-	Name           string                  `json:"name"                     binding:"required"`
-	Format         string                  `json:"format"                   binding:"required,oneof=CSV EXCEL"`
-	DeliveryMethod string                  `json:"deliveryMethod"           binding:"required,oneof=DOWNLOAD EMAIL"`
-	FilterState    pagination.QueryOptions `json:"filterState"`
-	EmailProfileID *pulid.ID               `json:"emailProfileId,omitempty"`
-}
-
 func (h *ReportHandler) generate(c *gin.Context) {
 	authCtx := context.GetAuthContext(c)
 
-	var req GenerateReportRequest
+	var req reportservice.GenerateReportRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		h.errorHandler.HandleError(c, err)
 		return
 	}
 
-	format, err := report.FormatFromString(req.Format)
+	format, err := report.FormatFromString(req.Format.String())
 	if err != nil {
 		h.errorHandler.HandleError(c, fmt.Errorf("invalid format: %w", err))
 		return
 	}
 
-	deliveryMethod, err := report.DeliveryMethodFromString(req.DeliveryMethod)
+	deliveryMethod, err := report.DeliveryMethodFromString(req.DeliveryMethod.String())
 	if err != nil {
 		h.errorHandler.HandleError(c, fmt.Errorf("invalid delivery method: %w", err))
 		return

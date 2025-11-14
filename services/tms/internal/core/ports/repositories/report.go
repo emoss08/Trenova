@@ -33,7 +33,7 @@ type UpdateCompletedRequest struct {
 	ExpiresAt int64
 }
 
-type MarkFailedRequest struct{
+type MarkFailedRequest struct {
 	ReportID     pulid.ID
 	ErrorMessage string
 }
@@ -43,7 +43,10 @@ type ReportRepository interface {
 	Get(ctx context.Context, req GetReportByIDRequest) (*report.Report, error)
 	Update(ctx context.Context, rpt *report.Report) error
 	Delete(ctx context.Context, id pulid.ID) error
-	List(ctx context.Context, req *ListReportRequest) (*pagination.ListResult[*report.Report], error)
+	List(
+		ctx context.Context,
+		req *ListReportRequest,
+	) (*pagination.ListResult[*report.Report], error)
 
 	// Activity-specific methods
 	UpdateStatus(ctx context.Context, req UpdateStatusRequest) error

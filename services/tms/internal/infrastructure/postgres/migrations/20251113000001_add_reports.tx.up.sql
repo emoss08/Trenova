@@ -1,18 +1,18 @@
 CREATE TYPE report_format_enum AS ENUM(
-    'CSV',
-    'EXCEL'
+    'Csv',
+    'Excel'
 );
 
 CREATE TYPE report_delivery_method_enum AS ENUM(
-    'DOWNLOAD',
-    'EMAIL'
+    'Download',
+    'Email'
 );
 
 CREATE TYPE report_status_enum AS ENUM(
-    'PENDING',
-    'PROCESSING',
-    'COMPLETED',
-    'FAILED'
+    'Pending',
+    'Processing',
+    'Completed',
+    'Failed'
 );
 
 CREATE TABLE IF NOT EXISTS "reports"(
@@ -24,8 +24,8 @@ CREATE TABLE IF NOT EXISTS "reports"(
     "name" varchar(255) NOT NULL,
     "format" report_format_enum NOT NULL,
     "delivery_method" report_delivery_method_enum NOT NULL,
-    "status" report_status_enum NOT NULL DEFAULT 'PENDING',
-    "filter_state" jsonb NOT NULL DEFAULT '{}'::jsonb,
+    "status" report_status_enum NOT NULL DEFAULT 'Pending',
+    "filter_state" jsonb NOT NULL DEFAULT '{}' ::jsonb,
     "file_path" text,
     "file_size" bigint DEFAULT 0,
     "row_count" int DEFAULT 0,
@@ -51,7 +51,9 @@ CREATE INDEX IF NOT EXISTS idx_reports_resource_type ON "reports"("resource_type
 
 CREATE INDEX IF NOT EXISTS idx_reports_created_at ON "reports"("created_at");
 
-CREATE INDEX IF NOT EXISTS idx_reports_expires_at ON "reports"("expires_at") WHERE "expires_at" IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_reports_expires_at ON "reports"("expires_at")
+WHERE
+    "expires_at" IS NOT NULL;
 
 COMMENT ON TABLE "reports" IS 'Stores generated data export reports for users';
 
@@ -105,3 +107,4 @@ ALTER TABLE "reports"
 --bun:split
 ALTER TABLE "reports"
     ALTER COLUMN "resource_type" SET STATISTICS 1000;
+

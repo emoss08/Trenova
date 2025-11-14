@@ -49,7 +49,7 @@ func GenerateReportWorkflow(
 
 	var a *Activities
 
-	err = workflow.ExecuteActivity(sessionCtx, a.UpdateReportStatusActivity, payload.ReportID, "PROCESSING").
+	err = workflow.ExecuteActivity(sessionCtx, a.UpdateReportStatusActivity, payload.ReportID, "Processing").
 		Get(sessionCtx, nil)
 	if err != nil {
 		return nil, err
@@ -59,11 +59,7 @@ func GenerateReportWorkflow(
 	err = workflow.ExecuteActivity(sessionCtx, a.ExecuteQueryActivity, payload).
 		Get(sessionCtx, &queryResult)
 	if err != nil {
-		var failureMsg string
-		if err != nil {
-			failureMsg = err.Error()
-		}
-		_ = workflow.ExecuteActivity(sessionCtx, a.MarkReportFailedActivity, payload.ReportID, failureMsg).
+		_ = workflow.ExecuteActivity(sessionCtx, a.MarkReportFailedActivity, payload.ReportID, err.Error()).
 			Get(sessionCtx, nil)
 		return nil, err
 	}
@@ -72,11 +68,7 @@ func GenerateReportWorkflow(
 	err = workflow.ExecuteActivity(sessionCtx, a.GenerateFileActivity, payload, &queryResult).
 		Get(sessionCtx, &result)
 	if err != nil {
-		var failureMsg string
-		if err != nil {
-			failureMsg = err.Error()
-		}
-		_ = workflow.ExecuteActivity(sessionCtx, a.MarkReportFailedActivity, payload.ReportID, failureMsg).
+		_ = workflow.ExecuteActivity(sessionCtx, a.MarkReportFailedActivity, payload.ReportID, err.Error()).
 			Get(sessionCtx, nil)
 		return nil, err
 	}
@@ -84,11 +76,7 @@ func GenerateReportWorkflow(
 	err = workflow.ExecuteActivity(sessionCtx, a.UploadToStorageActivity, &result).
 		Get(sessionCtx, &result)
 	if err != nil {
-		var failureMsg string
-		if err != nil {
-			failureMsg = err.Error()
-		}
-		_ = workflow.ExecuteActivity(sessionCtx, a.MarkReportFailedActivity, payload.ReportID, failureMsg).
+		_ = workflow.ExecuteActivity(sessionCtx, a.MarkReportFailedActivity, payload.ReportID, err.Error()).
 			Get(sessionCtx, nil)
 		return nil, err
 	}

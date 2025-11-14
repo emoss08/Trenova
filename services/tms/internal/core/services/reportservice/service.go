@@ -52,19 +52,6 @@ func (s *Service) Get(
 	return s.repo.Get(ctx, req)
 }
 
-type GenerateReportRequest struct {
-	OrganizationID pulid.ID
-	BusinessUnitID pulid.ID
-	UserID         pulid.ID
-	UserEmail      string
-	ResourceType   string
-	Name           string
-	Format         report.Format
-	DeliveryMethod report.DeliveryMethod
-	FilterState    pagination.QueryOptions
-	EmailProfileID *pulid.ID
-}
-
 func (s *Service) GenerateReport(
 	ctx context.Context,
 	req *GenerateReportRequest,
@@ -76,12 +63,8 @@ func (s *Service) GenerateReport(
 		zap.String("userID", req.UserID.String()),
 	)
 
-	if !req.Format.IsValid() {
-		return nil, fmt.Errorf("invalid format: %s", req.Format)
-	}
-
-	if !req.DeliveryMethod.IsValid() {
-		return nil, fmt.Errorf("invalid delivery method: %s", req.DeliveryMethod)
+	if err := req.Validate(); err != nil {
+		return nil, err
 	}
 
 	rpt := &report.Report{
