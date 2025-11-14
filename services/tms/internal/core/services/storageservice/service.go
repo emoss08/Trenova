@@ -151,9 +151,9 @@ func (s *Service) GetFileInfo(
 	}
 
 	return &FileInfo{
-		Size:        stat.Size,
-		ContentType: stat.ContentType,
-		ETag:        stat.ETag,
+		Size:         stat.Size,
+		ContentType:  stat.ContentType,
+		ETag:         stat.ETag,
 		LastModified: stat.LastModified,
 	}, nil
 }
