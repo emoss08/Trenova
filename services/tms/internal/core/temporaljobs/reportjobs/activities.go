@@ -1,7 +1,6 @@
 package reportjobs
 
 import (
-	"bytes"
 	"context"
 	"fmt"
 	"time"
@@ -9,12 +8,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/services/storageservice"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/emoss08/trenova/pkg/utils/reportuils"
-	"github.com/minio/minio-go/v7"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
@@ -26,7 +25,7 @@ type ActivitiesParams struct {
 
 	Logger              *zap.Logger
 	DB                  *postgres.Connection
-	MinIOClient         *minio.Client
+	StorageService      *storageservice.Service
 	TemporalClient      client.Client
 	NotificationService services.NotificationService
 	ReportRepository    repositories.ReportRepository
@@ -35,7 +34,7 @@ type ActivitiesParams struct {
 type Activities struct {
 	logger              *zap.Logger
 	db                  *postgres.Connection
-	minioClient         *minio.Client
+	storageService      *storageservice.Service
 	temporalClient      client.Client
 	notificationService services.NotificationService
 	reportRepo          repositories.ReportRepository
@@ -46,7 +45,7 @@ func NewActivities(p ActivitiesParams) *Activities {
 	return &Activities{
 		logger:              p.Logger.With(zap.String("worker", "report")),
 		db:                  p.DB,
-		minioClient:         p.MinIOClient,
+		storageService:      p.StorageService,
 		temporalClient:      p.TemporalClient,
 		notificationService: p.NotificationService,
 		reportRepo:          p.ReportRepository,
@@ -230,30 +229,15 @@ func (a *Activities) UploadToStorageActivity(
 	}
 
 	bucketName := "trenova-reports"
-	exists, err := a.minioClient.BucketExists(ctx, bucketName)
-	if err != nil {
-		return nil, fmt.Errorf("failed to check bucket existence: %w", err)
-	}
-	if !exists {
-		err = a.minioClient.MakeBucket(ctx, bucketName, minio.MakeBucketOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("failed to create bucket: %w", err)
-		}
+
+	// Ensure bucket exists
+	if err := a.storageService.EnsureBucket(ctx, bucketName); err != nil {
+		return nil, fmt.Errorf("failed to ensure bucket: %w", err)
 	}
 
-	reader := bytes.NewReader(fileData)
-	_, err = a.minioClient.PutObject(
-		ctx,
-		bucketName,
-		result.FilePath,
-		reader,
-		result.FileSize,
-		minio.PutObjectOptions{
-			ContentType: contentType,
-		},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("failed to upload file to MinIO: %w", err)
+	// Upload file to storage
+	if err := a.storageService.UploadFile(ctx, bucketName, result.FilePath, fileData, contentType); err != nil {
+		return nil, fmt.Errorf("failed to upload file: %w", err)
 	}
 
 	activity.RecordHeartbeat(ctx, "upload complete")

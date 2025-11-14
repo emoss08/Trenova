@@ -3,6 +3,7 @@ package handlers
 import (
 	"fmt"
 	"net/http"
+	"path/filepath"
 
 	"github.com/emoss08/trenova/internal/api/context"
 	"github.com/emoss08/trenova/internal/api/helpers"
@@ -10,10 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/report"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/reportservice"
+	"github.com/emoss08/trenova/internal/core/services/storageservice"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/gin-gonic/gin"
-	"github.com/minio/minio-go/v7"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -21,28 +22,28 @@ import (
 type ReportHandlerParams struct {
 	fx.In
 
-	Logger       *zap.Logger
-	Service      *reportservice.Service
-	MinIOClient  *minio.Client
-	PM           *middleware.PermissionMiddleware
-	ErrorHandler *helpers.ErrorHandler
+	Logger         *zap.Logger
+	Service        *reportservice.Service
+	StorageService *storageservice.Service
+	PM             *middleware.PermissionMiddleware
+	ErrorHandler   *helpers.ErrorHandler
 }
 
 type ReportHandler struct {
-	logger       *zap.Logger
-	service      *reportservice.Service
-	minioClient  *minio.Client
-	pm           *middleware.PermissionMiddleware
-	errorHandler *helpers.ErrorHandler
+	logger         *zap.Logger
+	service        *reportservice.Service
+	storageService *storageservice.Service
+	pm             *middleware.PermissionMiddleware
+	errorHandler   *helpers.ErrorHandler
 }
 
 func NewReportHandler(p ReportHandlerParams) *ReportHandler {
 	return &ReportHandler{
-		logger:       p.Logger.Named("handler.report"),
-		service:      p.Service,
-		minioClient:  p.MinIOClient,
-		pm:           p.PM,
-		errorHandler: p.ErrorHandler,
+		logger:         p.Logger.Named("handler.report"),
+		service:        p.Service,
+		storageService: p.StorageService,
+		pm:             p.PM,
+		errorHandler:   p.ErrorHandler,
 	}
 }
 
@@ -180,14 +181,11 @@ func (h *ReportHandler) download(c *gin.Context) {
 	}
 
 	bucketName := "trenova-reports"
-	object, err := h.minioClient.GetObject(
-		c.Request.Context(),
-		bucketName,
-		rpt.FilePath,
-		minio.GetObjectOptions{},
-	)
+
+	// Stream file from storage
+	object, err := h.storageService.StreamFile(c.Request.Context(), bucketName, rpt.FilePath)
 	if err != nil {
-		h.logger.Error("failed to get object from MinIO",
+		h.logger.Error("failed to get object from storage",
 			zap.Error(err),
 			zap.String("reportID", id.String()),
 			zap.String("filePath", rpt.FilePath),
@@ -207,14 +205,31 @@ func (h *ReportHandler) download(c *gin.Context) {
 		return
 	}
 
+	// Determine content type and file extension
 	contentType := "text/csv"
+	extension := ".csv"
 	if rpt.Format == report.FormatExcel {
 		contentType = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+		extension = ".xlsx"
+	}
+
+	// Get base filename from the stored file path or use report name
+	baseFilename := rpt.Name
+	if baseFilename == "" {
+		baseFilename = filepath.Base(rpt.FilePath)
+		// Remove extension if present
+		baseFilename = baseFilename[:len(baseFilename)-len(filepath.Ext(baseFilename))]
+	}
+
+	// Ensure filename has the correct extension
+	filename := baseFilename
+	if filepath.Ext(filename) != extension {
+		filename = baseFilename + extension
 	}
 
 	c.Header("Content-Description", "File Transfer")
 	c.Header("Content-Transfer-Encoding", "binary")
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", rpt.Name))
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filename))
 	c.Header("Content-Type", contentType)
 	c.Header("Content-Length", fmt.Sprintf("%d", stat.Size))
 
