@@ -103,7 +103,9 @@ export default function WorkflowContent({
   const [selectedNode, setSelectedNode] = useState<WorkflowNodeType | null>(
     null,
   );
-  const [activeVersionId, setActiveVersionId] = useState<string | undefined>(versionId);
+  const [activeVersionId, setActiveVersionId] = useState<string | undefined>(
+    versionId,
+  );
 
   // Create initial version mutation
   const createInitialVersionMutation = useMutation({

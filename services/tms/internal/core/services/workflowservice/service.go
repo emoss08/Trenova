@@ -15,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/utils/jsonutils"
+	"github.com/emoss08/trenova/pkg/utils/workflowutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -525,6 +526,17 @@ type SaveWorkflowDefinitionRequest struct {
 	Edges      []*workflow.WorkflowEdge `json:"edges"      form:"edges"`
 }
 
+// translateEdgeReferences converts edge references from nodeKeys to database IDs.
+// This is necessary because the frontend uses stable node keys (from React Flow),
+// but the database foreign keys must reference the actual node IDs.
+func (s *Service) translateEdgeReferences(
+	nodes []*workflow.WorkflowNode,
+	edges []*workflow.WorkflowEdge,
+) error {
+	mapper := workflowutils.NewNodeKeyMapper(nodes)
+	return mapper.TranslateEdgesToDatabaseIDs(edges)
+}
+
 func (s *Service) SaveWorkflowDefinition(
 	ctx context.Context,
 	req *SaveWorkflowDefinitionRequest,
@@ -572,17 +584,31 @@ func (s *Service) SaveWorkflowDefinition(
 		return err
 	}
 
-	// Create new nodes
-	if err := s.repo.CreateNodes(ctx, req.Nodes); err != nil {
-		log.Error("failed to create nodes", zap.Error(err))
-		return err
+	// Create nodes first (this populates their database IDs)
+	if len(req.Nodes) > 0 {
+		if err := s.repo.CreateNodes(ctx, req.Nodes); err != nil {
+			log.Error("failed to create nodes", zap.Error(err))
+			return err
+		}
 	}
 
-	// Create new edges
-	if err := s.repo.CreateEdges(ctx, req.Edges); err != nil {
-		log.Error("failed to create edges", zap.Error(err))
-		return err
+	// Translate edge references from nodeKeys to database IDs
+	if len(req.Edges) > 0 {
+		if err := s.translateEdgeReferences(req.Nodes, req.Edges); err != nil {
+			log.Error("failed to translate edge references", zap.Error(err))
+			return err
+		}
+
+		if err := s.repo.CreateEdges(ctx, req.Edges); err != nil {
+			log.Error("failed to create edges", zap.Error(err))
+			return err
+		}
 	}
+
+	log.Info("workflow definition saved successfully",
+		zap.Int("nodeCount", len(req.Nodes)),
+		zap.Int("edgeCount", len(req.Edges)),
+	)
 
 	return nil
 }
