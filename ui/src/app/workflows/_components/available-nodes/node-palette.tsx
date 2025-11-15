@@ -26,7 +26,6 @@ const nodeTypes = [
 
 export default function AvailableNodes() {
   const { addNodes } = useReactFlow();
-  const nodeId = nanoid();
 
   return (
     <div className="flex h-[80vh] w-80 flex-col">
@@ -52,7 +51,7 @@ export default function AvailableNodes() {
               onClick={() =>
                 addNodes([
                   {
-                    id: `${nodeId}-${type}`,
+                    id: `${nanoid()}-${type}`,
                     type,
                     position: {
                       x: Math.random() * 400 + 100,
