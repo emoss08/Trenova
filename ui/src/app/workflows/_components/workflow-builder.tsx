@@ -1,5 +1,5 @@
 import { ReactFlowProvider } from "@xyflow/react";
-import { lazy, Suspense } from "react";
+import React, { lazy, Suspense } from "react";
 import {
   ReactFlowSkeleton,
   WorkflowOptionsSkeleton,

@@ -48,7 +48,7 @@ export default function AvailableNodes() {
           {nodeTypes.map(({ type, label, icon: Icon, description }) => (
             <button
               key={type}
-              className="flex w-full cursor-pointer flex-row items-center gap-1 rounded-md border border-border p-1 hover:bg-accent"
+              className="flex w-full cursor-pointer flex-row items-center gap-2 rounded-md border border-border px-2 py-1 hover:bg-accent"
               onClick={() =>
                 addNodes([
                   {
@@ -68,7 +68,7 @@ export default function AvailableNodes() {
               }
             >
               <Icon className="size-4 shrink-0" />
-              <div className="flex flex-col items-start">
+              <div className="flex flex-col items-start leading-tight">
                 <span className="text-sm">{label}</span>
                 <span className="text-xs text-muted-foreground">
                   {description}

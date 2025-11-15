@@ -1,28 +1,40 @@
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
-import { faGear, faShareNodes } from "@fortawesome/pro-regular-svg-icons";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  faNetworkWired,
+  faShareNodes,
+} from "@fortawesome/pro-regular-svg-icons";
 import { Activity, lazy, Suspense, useState } from "react";
 import { AvailableNodesSkeleton } from "./workflow-skeletons";
 
 const AvailableNodes = lazy(() => import("./available-nodes/node-palette"));
 
-type Option = "available-nodes" | "workflow-settings";
+type Option = "available-nodes" | "nodes-in-use";
 type Options = {
   label: string;
   value: Option;
   icon: React.ReactNode;
+  tooltip: string;
 };
 
 const options: Options[] = [
   {
     label: "Available Nodes",
     value: "available-nodes",
-    icon: <Icon icon={faShareNodes} className="size-4 shrink-0" />,
+    icon: <Icon icon={faShareNodes} />,
+    tooltip: "Available nodes",
   },
   {
-    label: "Workflow Settings",
-    value: "workflow-settings",
-    icon: <Icon icon={faGear} className="size-4 shrink-0" />,
+    label: "Nodes in use",
+    value: "nodes-in-use",
+    icon: <Icon icon={faNetworkWired} />,
+    tooltip: "Nodes in use",
   },
 ];
 
@@ -35,8 +47,8 @@ export default function WorkflowOptions() {
   };
 
   return (
-    <div className="relative flex w-fit max-w-sm shrink-0 divide-x divide-card-foreground/10 rounded-lg border border-border">
-      <div className="min-w-xs grow">
+    <WorkflowOptionsOuter>
+      <WorkflowOptionsInner>
         <Activity
           mode={selectedOption === "available-nodes" ? "visible" : "hidden"}
         >
@@ -44,7 +56,14 @@ export default function WorkflowOptions() {
             <AvailableNodes />
           </Suspense>
         </Activity>
-      </div>
+        <Activity
+          mode={selectedOption === "nodes-in-use" ? "visible" : "hidden"}
+        >
+          <div className="flex h-full flex-col text-sm text-wrap">
+            This is where users will be able to see and modify the nodes in use
+          </div>
+        </Activity>
+      </WorkflowOptionsInner>
       <div className="shrink-0 p-1.5">
         <div className="flex h-full flex-col gap-2">
           {options.map((option) => (
@@ -57,7 +76,7 @@ export default function WorkflowOptions() {
           ))}
         </div>
       </div>
-    </div>
+    </WorkflowOptionsOuter>
   );
 }
 
@@ -73,12 +92,32 @@ function WorkflowOptionsButton({
   const isSelected = selectedOption === option.value;
 
   return (
-    <Button
-      variant={isSelected ? "default" : "ghost"}
-      size="icon"
-      onClick={() => handleSelectOption(option.value)}
-    >
-      {option.icon}
-    </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant={isSelected ? "default" : "ghost"}
+            size="icon"
+            className="[&_svg]:size-4"
+            onClick={() => handleSelectOption(option.value)}
+          >
+            {option.icon}
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="left">{option.tooltip}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
+}
+
+function WorkflowOptionsOuter({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="relative flex w-fit max-w-sm shrink-0 divide-x divide-card-foreground/10 rounded-lg border border-border">
+      {children}
+    </div>
+  );
+}
+
+function WorkflowOptionsInner({ children }: { children: React.ReactNode }) {
+  return <div className="min-w-xs grow">{children}</div>;
 }

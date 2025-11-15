@@ -47,7 +47,7 @@ export function ApprovedPTOHeader() {
 
   return (
     <HeaderOuter>
-      <h3 className="text-lg font-medium font-table">Approved PTO Overview</h3>
+      <h3 className="font-table text-lg font-medium">Approved PTO Overview</h3>
       <HeaderInner>
         <ViewTypeButtons>
           <Button
@@ -86,7 +86,7 @@ function HeaderInner({ children }: { children: React.ReactNode }) {
 
 function ViewTypeButtons({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex flex-row gap-0.5 items-center p-0.5 bg-sidebar border border-border rounded-md">
+    <div className="flex flex-row items-center gap-0.5 rounded-md border border-border bg-sidebar p-0.5">
       {children}
     </div>
   );
