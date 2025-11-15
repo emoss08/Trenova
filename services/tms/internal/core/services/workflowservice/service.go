@@ -71,12 +71,12 @@ func (s *Service) Create(
 		zap.String("userID", userID.String()),
 	)
 
-	// Validate
-	multiErr := errortypes.NewMultiError()
-	entity.Validate(multiErr)
-	if multiErr.HasErrors() {
-		return nil, multiErr
-	}
+	// // Validate
+	// multiErr := errortypes.NewMultiError()
+	// entity.Validate(multiErr)
+	// if multiErr.HasErrors() {
+	// 	return nil, multiErr
+	// }
 
 	// Set created by
 	entity.CreatedBy = userID

@@ -1,41 +1,26 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button } from "@/components/ui/button";
-import { api } from "@/services/api";
 import { queries } from "@/lib/queries";
+import { api } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
-  ReactFlow,
   Background,
   Controls,
   MiniMap,
+  Panel,
+  ReactFlow,
   addEdge,
-  useNodesState,
   useEdgesState,
+  useNodesState,
   type Connection,
   type Node,
-  type Edge,
-  Panel,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import {
-  Save,
-  Play,
-  Plus,
-  GitBranch,
-  Repeat,
-  Clock,
-  Square,
-  Zap,
-} from "lucide-react";
+import { Play, Save } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
-import { WorkflowNode } from "./workflow-nodes";
-import { NodePalette } from "./node-palette";
 import { NodeConfigPanel } from "./node-config-panel";
+import { NodePalette } from "./node-palette";
+import { WorkflowNode } from "./workflow-nodes";
 
 const nodeTypes = {
   trigger: WorkflowNode,
@@ -60,7 +45,7 @@ export function WorkflowBuilder({
 
   // Load workflow version if exists
   const { data: version, isLoading } = useQuery({
-    ...queries.workflow.getVersion(workflowId!, versionId!, !!workflowId && !!versionId),
+    ...queries.workflow.getVersion(workflowId!, versionId!),
     enabled: !!workflowId && !!versionId,
   });
 
@@ -79,7 +64,7 @@ export function WorkflowBuilder({
               nodeType: node.type,
               config: node.data?.config || {},
             },
-          }))
+          })),
         );
       }
       if (def.edges && Array.isArray(def.edges)) {
@@ -90,7 +75,7 @@ export function WorkflowBuilder({
             target: edge.target,
             sourceHandle: edge.sourceHandle,
             targetHandle: edge.targetHandle,
-          }))
+          })),
         );
       }
     }
@@ -98,7 +83,7 @@ export function WorkflowBuilder({
 
   const onConnect = useCallback(
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges]
+    [setEdges],
   );
 
   const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
@@ -126,18 +111,20 @@ export function WorkflowBuilder({
       };
       setNodes((nds) => [...nds, newNode]);
     },
-    [setNodes]
+    [setNodes],
   );
 
   const updateNodeData = useCallback(
     (nodeId: string, data: any) => {
       setNodes((nds) =>
         nds.map((node) =>
-          node.id === nodeId ? { ...node, data: { ...node.data, ...data } } : node
-        )
+          node.id === nodeId
+            ? { ...node, data: { ...node.data, ...data } }
+            : node,
+        ),
       );
     },
-    [setNodes]
+    [setNodes],
   );
 
   const deleteNode = useCallback(() => {
@@ -146,8 +133,8 @@ export function WorkflowBuilder({
       setEdges((eds) =>
         eds.filter(
           (edge) =>
-            edge.source !== selectedNode.id && edge.target !== selectedNode.id
-        )
+            edge.source !== selectedNode.id && edge.target !== selectedNode.id,
+        ),
       );
       setSelectedNode(null);
     }
@@ -175,7 +162,9 @@ export function WorkflowBuilder({
         })),
       };
 
-      return api.workflows.saveDefinition(workflowId, versionId, { definition });
+      return api.workflows.saveDefinition(workflowId, versionId, {
+        definition,
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workflow", workflowId] });

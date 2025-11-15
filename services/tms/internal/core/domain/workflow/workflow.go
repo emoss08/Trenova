@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
@@ -138,13 +139,16 @@ func (w *Workflow) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 }
 
 func (w *Workflow) BeforeAppendModel(_ context.Context, query bun.Query) error {
+	now := utils.NowUnix()
 	switch query.(type) {
 	case *bun.InsertQuery:
 		if w.ID.IsNil() {
 			w.ID = pulid.MustNew("wf_")
 		}
+		w.CreatedAt = now
+		w.UpdatedAt = now
 	case *bun.UpdateQuery:
-		w.Version++
+		w.UpdatedAt = now
 	}
 	return nil
 }

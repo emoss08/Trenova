@@ -34,7 +34,7 @@ export default function WorkflowDetail() {
   if (!workflow) {
     return (
       <div className="flex h-screen flex-col items-center justify-center gap-4">
-        <h2 className="font-semibold text-2xl">Workflow Not Found</h2>
+        <h2 className="text-2xl font-semibold">Workflow Not Found</h2>
         <Button onClick={() => navigate("/organization/workflows")}>
           <ArrowLeft className="mr-2 size-4" />
           Back to Workflows
@@ -61,9 +61,9 @@ export default function WorkflowDetail() {
               Back
             </Button>
             <div>
-              <h1 className="font-bold text-2xl">{workflow.name}</h1>
+              <h1 className="text-2xl font-bold">{workflow.name}</h1>
               {workflow.description && (
-                <p className="text-muted-foreground text-sm">
+                <p className="text-sm text-muted-foreground">
                   {workflow.description}
                 </p>
               )}
@@ -93,7 +93,7 @@ export default function WorkflowDetail() {
             </TabsContent>
 
             <TabsContent value="executions" className="p-6">
-              <ExecutionsList workflowId={workflow.id} />
+              <ExecutionsList workflowId={workflow.id!} />
             </TabsContent>
           </Tabs>
         </div>
@@ -122,8 +122,8 @@ function ExecutionsList({ workflowId }: { workflowId: string }) {
           <CardTitle>No Executions</CardTitle>
         </CardHeader>
         <CardContent>
-          <p className="text-muted-foreground text-sm">
-            This workflow hasn't been executed yet.
+          <p className="text-sm text-muted-foreground">
+            This workflow hasn&apos;t been executed yet.
           </p>
         </CardContent>
       </Card>
