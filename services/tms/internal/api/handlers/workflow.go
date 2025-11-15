@@ -347,16 +347,6 @@ func (h *WorkflowHandler) saveDefinition(c *gin.Context) {
 		return
 	}
 
-	// Debug: Log what we received
-	for i, node := range req.Definition.Nodes {
-		h.logger.Info("received node",
-			zap.Int("index", i),
-			zap.String("nodeKey", node.NodeKey),
-			zap.String("nodeType", string(node.NodeType)),
-			zap.String("label", node.Label),
-		)
-	}
-
 	err = h.service.SaveWorkflowDefinition(
 		c.Request.Context(),
 		&workflowservice.SaveWorkflowDefinitionRequest{

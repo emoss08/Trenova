@@ -516,13 +516,13 @@ func (s *Service) Archive(
 // Node and Edge Management
 
 type SaveWorkflowDefinitionRequest struct {
-	WorkflowID pulid.ID
-	VersionID  pulid.ID
-	OrgID      pulid.ID
-	BuID       pulid.ID
-	UserID     pulid.ID
-	Nodes      []*workflow.WorkflowNode
-	Edges      []*workflow.WorkflowEdge
+	WorkflowID pulid.ID                 `json:"workflowID" form:"workflowID"`
+	VersionID  pulid.ID                 `json:"versionID"  form:"versionID"`
+	OrgID      pulid.ID                 `json:"orgID"      form:"orgID"`
+	BuID       pulid.ID                 `json:"buID"       form:"buID"`
+	UserID     pulid.ID                 `json:"userID"     form:"userID"`
+	Nodes      []*workflow.WorkflowNode `json:"nodes"      form:"nodes"`
+	Edges      []*workflow.WorkflowEdge `json:"edges"      form:"edges"`
 }
 
 func (s *Service) SaveWorkflowDefinition(
@@ -533,6 +533,7 @@ func (s *Service) SaveWorkflowDefinition(
 		zap.String("operation", "SaveWorkflowDefinition"),
 		zap.String("workflowID", req.WorkflowID.String()),
 		zap.String("versionID", req.VersionID.String()),
+		zap.Any("req", req),
 	)
 
 	// Validate all nodes
