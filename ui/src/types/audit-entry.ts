@@ -90,6 +90,7 @@ export enum Resource {
   // Management resources
   Dispatch = "dispatch", // Represents resources for dispatch management.
   Report = "report", // Represents resources for managing reports.
+  Workflow = "workflow", // Represents resources for managing workflow automation.
   AuditEntry = "audit_entry", // Represents resources for tracking and auditing logs.
   AuditLog = "audit_log", // Represents resources for tracking and auditing logs.
 
