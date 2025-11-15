@@ -1,5 +1,15 @@
+/*
+ * Copyright 2025 Eric Moss
+ * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
+ * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
+
 import { Button } from "@/components/ui/button";
 import { queries } from "@/lib/queries";
+import {
+  type WorkflowDefinitionSchema,
+  type WorkflowEdgeSchema,
+  type WorkflowNodeSchema,
+} from "@/lib/schemas/workflow-schema";
 import { api } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
@@ -12,7 +22,10 @@ import {
   useEdgesState,
   useNodesState,
   type Connection,
+  type Edge,
   type Node,
+  type OnEdgesChange,
+  type OnNodesChange,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Play, Save } from "lucide-react";
@@ -31,6 +44,66 @@ const nodeTypes = {
   end: WorkflowNode,
 };
 
+interface NodeData {
+  label: string;
+  nodeType: string;
+  config: Record<string, any>;
+  actionType?: string;
+}
+
+// Convert backend workflow node to React Flow node
+function toReactFlowNode(node: WorkflowNodeSchema): Node<NodeData> {
+  return {
+    id: node.id,
+    type: node.type,
+    position: node.position,
+    data: {
+      label: node.label,
+      nodeType: node.type,
+      config: node.config || {},
+      actionType: node.actionType,
+    },
+  };
+}
+
+// Convert React Flow node to backend workflow node
+function toWorkflowNode(node: Node<NodeData>): WorkflowNodeSchema {
+  return {
+    id: node.id,
+    type: node.type as any,
+    label: node.data.label,
+    config: node.data.config || {},
+    position: node.position,
+    actionType: node.data.actionType as any,
+    data: node.data.config,
+  };
+}
+
+// Convert backend workflow edge to React Flow edge
+function toReactFlowEdge(edge: WorkflowEdgeSchema): Edge {
+  return {
+    id: edge.id,
+    source: edge.source,
+    target: edge.target,
+    sourceHandle: edge.sourceHandle || undefined,
+    targetHandle: edge.targetHandle || undefined,
+    label: edge.label || undefined,
+  };
+}
+
+// Convert React Flow edge to backend workflow edge
+function toWorkflowEdge(edge: Edge): WorkflowEdgeSchema {
+  return {
+    id: edge.id,
+    source: edge.source,
+    target: edge.target,
+    sourceHandle: edge.sourceHandle || null,
+    targetHandle: edge.targetHandle || null,
+    label: (edge.label as string) || null,
+    condition: {},
+  };
+}
+
 export function WorkflowBuilder({
   workflowId,
   versionId,
@@ -39,9 +112,9 @@ export function WorkflowBuilder({
   versionId?: string;
 }) {
   const queryClient = useQueryClient();
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [selectedNode, setSelectedNode] = useState<Node | null>(null);
+  const [selectedNode, setSelectedNode] = useState<Node<NodeData> | null>(null);
 
   // Load workflow version if exists
   const { data: version, isLoading } = useQuery({
@@ -52,31 +125,14 @@ export function WorkflowBuilder({
   // Load nodes and edges from version
   useEffect(() => {
     if (version?.definition) {
-      const def = version.definition;
+      const def = version.definition as WorkflowDefinitionSchema;
+
       if (def.nodes && Array.isArray(def.nodes)) {
-        setNodes(
-          def.nodes.map((node: any) => ({
-            id: node.id,
-            type: node.type,
-            position: node.position || { x: 0, y: 0 },
-            data: {
-              label: node.data?.label || node.type,
-              nodeType: node.type,
-              config: node.data?.config || {},
-            },
-          })),
-        );
+        setNodes(def.nodes.map(toReactFlowNode));
       }
+
       if (def.edges && Array.isArray(def.edges)) {
-        setEdges(
-          def.edges.map((edge: any) => ({
-            id: edge.id,
-            source: edge.source,
-            target: edge.target,
-            sourceHandle: edge.sourceHandle,
-            targetHandle: edge.targetHandle,
-          })),
-        );
+        setEdges(def.edges.map(toReactFlowEdge));
       }
     }
   }, [version, setNodes, setEdges]);
@@ -86,9 +142,12 @@ export function WorkflowBuilder({
     [setEdges],
   );
 
-  const onNodeClick = useCallback((_event: React.MouseEvent, node: Node) => {
-    setSelectedNode(node);
-  }, []);
+  const onNodeClick = useCallback(
+    (_event: React.MouseEvent, node: Node<NodeData>) => {
+      setSelectedNode(node);
+    },
+    [],
+  );
 
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
@@ -96,8 +155,9 @@ export function WorkflowBuilder({
 
   const addNode = useCallback(
     (type: string) => {
-      const newNode: Node = {
-        id: `${type}-${Date.now()}`,
+      const timestamp = Date.now();
+      const newNode: Node<NodeData> = {
+        id: `node-${type}-${timestamp}`,
         type,
         position: {
           x: Math.random() * 400 + 100,
@@ -110,16 +170,17 @@ export function WorkflowBuilder({
         },
       };
       setNodes((nds) => [...nds, newNode]);
+      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} node added`);
     },
     [setNodes],
   );
 
   const updateNodeData = useCallback(
-    (nodeId: string, data: any) => {
+    (nodeId: string, updates: Partial<NodeData>) => {
       setNodes((nds) =>
         nds.map((node) =>
           node.id === nodeId
-            ? { ...node, data: { ...node.data, ...data } }
+            ? { ...node, data: { ...node.data, ...updates } }
             : node,
         ),
       );
@@ -137,6 +198,7 @@ export function WorkflowBuilder({
         ),
       );
       setSelectedNode(null);
+      toast.success("Node deleted");
     }
   }, [selectedNode, setNodes, setEdges]);
 
@@ -146,20 +208,9 @@ export function WorkflowBuilder({
         throw new Error("Workflow ID and Version ID are required");
       }
 
-      const definition = {
-        nodes: nodes.map((node) => ({
-          id: node.id,
-          type: node.type,
-          position: node.position,
-          data: node.data,
-        })),
-        edges: edges.map((edge) => ({
-          id: edge.id,
-          source: edge.source,
-          target: edge.target,
-          sourceHandle: edge.sourceHandle,
-          targetHandle: edge.targetHandle,
-        })),
+      const definition: WorkflowDefinitionSchema = {
+        nodes: nodes.map(toWorkflowNode),
+        edges: edges.map(toWorkflowEdge),
       };
 
       return api.workflows.saveDefinition(workflowId, versionId, {
@@ -217,11 +268,11 @@ export function WorkflowBuilder({
 
   return (
     <div className="relative h-full w-full">
-      <ReactFlow
+      <ReactFlow<NodeData>
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
+        onNodesChange={onNodesChange as OnNodesChange<Node<NodeData>>}
+        onEdgesChange={onEdgesChange as OnEdgesChange<Edge>}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}

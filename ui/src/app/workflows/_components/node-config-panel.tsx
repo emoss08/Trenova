@@ -19,14 +19,21 @@ import type { Node } from "@xyflow/react";
 import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
 
+interface NodeData {
+  label: string;
+  nodeType: string;
+  config: Record<string, any>;
+  actionType?: string;
+}
+
 export function NodeConfigPanel({
   node,
   onUpdate,
   onDelete,
   onClose,
 }: {
-  node: Node | null;
-  onUpdate: (nodeId: string, data: any) => void;
+  node: Node<NodeData> | null;
+  onUpdate: (nodeId: string, data: Partial<NodeData>) => void;
   onDelete: () => void;
   onClose: () => void;
 }) {
