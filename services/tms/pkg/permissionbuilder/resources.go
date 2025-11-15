@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domainregistry"
 )
 
-// ResourceRegistry manages the mapping between domain entities and permission resources
 type ResourceRegistry struct {
 	resources map[string]permission.Resource
 	entities  map[permission.Resource]reflect.Type
@@ -21,7 +20,6 @@ func init() {
 	defaultRegistry.RegisterFromDomainRegistry()
 }
 
-// NewResourceRegistry creates a new resource registry
 func NewResourceRegistry() *ResourceRegistry {
 	return &ResourceRegistry{
 		resources: make(map[string]permission.Resource),
@@ -29,7 +27,6 @@ func NewResourceRegistry() *ResourceRegistry {
 	}
 }
 
-// RegisterFromDomainRegistry automatically registers resources from domain entities
 func (rr *ResourceRegistry) RegisterFromDomainRegistry() {
 	entities := domainregistry.RegisterEntities()
 
@@ -55,14 +52,15 @@ func (rr *ResourceRegistry) RegisterFromDomainRegistry() {
 	rr.RegisterManual("distance_override", permission.ResourceDistanceOverride)
 	rr.RegisterManual("dedicated_lane_suggestion", permission.ResourceDedicatedLaneSuggestion)
 	rr.RegisterManual("fiscal_year", permission.ResourceFiscalYear)
+	rr.RegisterManual("variable_format", permission.ResourceVariableFormat)
+	rr.RegisterManual("variable", permission.ResourceVariable)
+	rr.RegisterManual("docker", permission.ResourceDocker)
 }
 
-// RegisterManual manually registers a resource (for non-table resources)
 func (rr *ResourceRegistry) RegisterManual(name string, resource permission.Resource) {
 	rr.resources[name] = resource
 }
 
-// GetAllResources returns all registered resources
 func (rr *ResourceRegistry) GetAllResources() []permission.Resource {
 	resources := make([]permission.Resource, 0, len(rr.resources))
 	for _, res := range rr.resources {
@@ -71,24 +69,20 @@ func (rr *ResourceRegistry) GetAllResources() []permission.Resource {
 	return resources
 }
 
-// GetResource returns the resource for a given name
 func (rr *ResourceRegistry) GetResource(name string) (permission.Resource, bool) {
 	res, ok := rr.resources[name]
 	return res, ok
 }
 
-// GetEntityType returns the domain entity type for a resource
 func (rr *ResourceRegistry) GetEntityType(resource permission.Resource) (reflect.Type, bool) {
 	t, ok := rr.entities[resource]
 	return t, ok
 }
 
-// GetAllResources returns all registered resources from the default registry
 func GetAllResources() []permission.Resource {
 	return defaultRegistry.GetAllResources()
 }
 
-// GetResource returns the resource for a given name from the default registry
 func GetResource(name string) (permission.Resource, bool) {
 	return defaultRegistry.GetResource(name)
 }

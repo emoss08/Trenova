@@ -18,10 +18,10 @@ export default function VariableContent() {
 
   return (
     <Tabs value={tab} onValueChange={setTab}>
-      <TabsList className="before:bg-border relative h-auto w-full gap-0.5 bg-transparent p-0 before:absolute before:inset-x-0 before:bottom-0 before:h-px justify-start">
+      <TabsList className="relative h-auto w-full justify-start gap-0.5 bg-transparent p-0 before:absolute before:inset-x-0 before:bottom-0 before:h-px before:bg-border">
         <TabsTrigger
           value="variables"
-          className="bg-muted overflow-hidden rounded-b-none border-x border-t py-2 data-[state=active]:z-10 data-[state=active]:shadow-none"
+          className="overflow-hidden rounded-b-none border-x border-t bg-muted py-2 data-[state=active]:z-10 data-[state=active]:shadow-none"
         >
           <VariableIcon
             className="-ms-0.5 mb-0.5 opacity-60"
@@ -32,7 +32,7 @@ export default function VariableContent() {
         </TabsTrigger>
         <TabsTrigger
           value="formats"
-          className="bg-muted overflow-hidden rounded-b-none border-x border-t py-2 data-[state=active]:z-10 data-[state=active]:shadow-none"
+          className="overflow-hidden rounded-b-none border-x border-t bg-muted py-2 data-[state=active]:z-10 data-[state=active]:shadow-none"
         >
           <PiIcon
             className="-ms-0.5 mb-0.5 opacity-60"

@@ -132,6 +132,7 @@ const (
 	ScopeTypeOrganization ScopeType = "organization"
 )
 
+// TODO(Wolfred): All of the domains in this file should be moved to generated code at some point.
 const (
 	ResourceBusinessUnit = Resource(
 		"business_unit",
@@ -154,9 +155,6 @@ const (
 	ResourceWorkerPTO = Resource(
 		"worker_pto",
 	) // Represents resources related to worker PTOs.
-	ResourceDocker = Resource(
-		"docker",
-	) // Represents resources for managing docker.
 	ResourceShipmentHold = Resource(
 		"shipment_hold",
 	) // Represents resources for managing shipment holds.

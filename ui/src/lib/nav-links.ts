@@ -116,35 +116,33 @@ export const adminLinks: SidebarLink[] = [
     group: "Data & Integrations",
   },
   {
-    href: "/organization/ai-logs/",
-    title: "AI Logs",
-    group: "Data & Integrations",
-  },
-  {
     href: "/organization/integrations/",
     title: "Apps & Integrations",
     group: "Data & Integrations",
+    disabled: true,
   },
   {
     href: "/organization/pattern-config/",
     title: "Pattern Detection",
+    group: "Data & Integrations",
+    disabled: true,
+  },
+  {
+    href: "/organization/variables/",
+    title: "Variables & Formats",
     group: "Data & Integrations",
   },
   {
     href: "/organization/data-retention/",
     title: "Data Retention",
     group: "Data & Integrations",
+    disabled: true,
   },
   {
     href: "/organization/docker/",
     title: "Docker Management",
     group: "Data & Integrations",
-  },
-  {
-    href: "/organization/resource-editor/",
-    title: "Resource Editor",
-    group: "Data & Integrations",
-    disabled: false,
+    disabled: true,
   },
   {
     href: "/organization/table-change-alerts/",

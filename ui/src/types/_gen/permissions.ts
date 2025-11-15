@@ -16,25 +16,24 @@ import { usePermissions } from "@/hooks/use-permission";
 // ============================================================================
 
 export const PermissionOperations = {
-  CREATE: 1, // Create
-  READ: 2, // Read
-  UPDATE: 4, // Update
-  DELETE: 8, // Delete
-  EXPORT: 16, // Export
-  IMPORT: 32, // Import
-  APPROVE: 64, // Approve
-  REJECT: 128, // Reject
-  SUBMIT: 4096, // Submit
-  ASSIGN: 16384, // Assign
-  DUPLICATE: 32768, // Duplicate
-  CLOSE: 65536, // Close
-  LOCK: 131072, // Lock
-  UNLOCK: 262144, // Unlock
-  ACTIVATE: 524288, // Activate
+  CREATE: 1,  // Create
+  READ: 2,  // Read
+  UPDATE: 4,  // Update
+  DELETE: 8,  // Delete
+  EXPORT: 16,  // Export
+  IMPORT: 32,  // Import
+  APPROVE: 64,  // Approve
+  REJECT: 128,  // Reject
+  SUBMIT: 4096,  // Submit
+  ASSIGN: 16384,  // Assign
+  DUPLICATE: 32768,  // Duplicate
+  CLOSE: 65536,  // Close
+  LOCK: 131072,  // Lock
+  UNLOCK: 262144,  // Unlock
+  ACTIVATE: 524288,  // Activate
 } as const;
 
-export type PermissionOperation =
-  (typeof PermissionOperations)[keyof typeof PermissionOperations];
+export type PermissionOperation = typeof PermissionOperations[keyof typeof PermissionOperations];
 
 // ============================================================================
 // Resource Metadata
@@ -44,43 +43,43 @@ export type PermissionOperation =
  * Permission metadata for AccessorialCharge
  */
 export const AccessorialChargeMetadata = {
-  resourceName: "accessorial_charge",
+  resourceName: 'accessorial_charge',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new accessorial charges to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new accessorial charges to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View accessorial charge information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View accessorial charge information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify accessorial charge details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify accessorial charge details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove accessorial charges",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove accessorial charges',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export accessorial charges data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export accessorial charges data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import accessorial charges from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import accessorial charges from other sources',
     },
   ],
   compositeOperations: {
@@ -93,37 +92,37 @@ export const AccessorialChargeMetadata = {
  * Permission metadata for AccountType
  */
 export const AccountTypeMetadata = {
-  resourceName: "account_type",
+  resourceName: 'account_type',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new account types to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new account types to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View account type information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View account type information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify account type details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify account type details',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export account types data for compliance reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export account types data for compliance reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import account types from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import account types from other sources',
     },
   ],
   compositeOperations: {
@@ -136,43 +135,43 @@ export const AccountTypeMetadata = {
  * Permission metadata for AccountingControl
  */
 export const AccountingControlMetadata = {
-  resourceName: "accounting_control",
+  resourceName: 'accounting_control',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new accounting control to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new accounting control to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View accounting control information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View accounting control information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify accounting control details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify accounting control details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove accounting control",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove accounting control',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export accounting control data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export accounting control data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import accounting control from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import accounting control from other sources',
     },
   ],
   compositeOperations: {
@@ -185,31 +184,31 @@ export const AccountingControlMetadata = {
  * Permission metadata for AuditEntry
  */
 export const AuditEntryMetadata = {
-  resourceName: "audit_entry",
+  resourceName: 'audit_entry',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new audit entries to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new audit entries to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View audit entry information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View audit entry information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify audit entry details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify audit entry details',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export audit entries data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export audit entries data for operational reporting',
     },
   ],
   compositeOperations: {
@@ -222,43 +221,43 @@ export const AuditEntryMetadata = {
  * Permission metadata for BillingControl
  */
 export const BillingControlMetadata = {
-  resourceName: "billing_control",
+  resourceName: 'billing_control',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new billing control to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new billing control to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View billing control information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View billing control information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify billing control details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify billing control details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove billing control",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove billing control',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export billing control data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export billing control data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import billing control from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import billing control from other sources',
     },
   ],
   compositeOperations: {
@@ -271,44 +270,43 @@ export const BillingControlMetadata = {
  * Permission metadata for Commodity
  */
 export const CommodityMetadata = {
-  resourceName: "commodity",
+  resourceName: 'commodity',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new commodities to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new commodities to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View commodity information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View commodity information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify commodity details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify commodity details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description:
-        "Remove commodities (requires approval due to safety regulations)",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove commodities (requires approval due to safety regulations)',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export commodities data for compliance reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export commodities data for compliance reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import commodities from UN database or other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import commodities from UN database or other sources',
     },
   ],
   compositeOperations: {
@@ -323,43 +321,43 @@ export const CommodityMetadata = {
  * Permission metadata for Customer
  */
 export const CustomerMetadata = {
-  resourceName: "customer",
+  resourceName: 'customer',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new customers to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new customers to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View customer information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View customer information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify customer details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify customer details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove customers",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove customers',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export customers data for sales reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export customers data for sales reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import customers from other systems",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import customers from other systems',
     },
   ],
   compositeOperations: {
@@ -373,43 +371,43 @@ export const CustomerMetadata = {
  * Permission metadata for DataRetention
  */
 export const DataRetentionMetadata = {
-  resourceName: "data_retention",
+  resourceName: 'data_retention',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new data retention to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new data retention to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View data retention information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View data retention information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify data retention details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify data retention details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove data retention",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove data retention',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export data retention data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export data retention data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import data retention from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import data retention from other sources',
     },
   ],
   compositeOperations: {
@@ -422,43 +420,43 @@ export const DataRetentionMetadata = {
  * Permission metadata for DedicatedLane
  */
 export const DedicatedLaneMetadata = {
-  resourceName: "dedicated_lane",
+  resourceName: 'dedicated_lane',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new dedicated lanes to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new dedicated lanes to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View dedicated lane information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View dedicated lane information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify dedicated lane details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify dedicated lane details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove dedicated lanes",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove dedicated lanes',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export dedicated lanes data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export dedicated lanes data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import dedicated lanes from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import dedicated lanes from other sources',
     },
   ],
   compositeOperations: {
@@ -471,25 +469,25 @@ export const DedicatedLaneMetadata = {
  * Permission metadata for DedicatedLaneSuggestion
  */
 export const DedicatedLaneSuggestionMetadata = {
-  resourceName: "dedicated_lane_suggestion",
+  resourceName: 'dedicated_lane_suggestion',
   operations: [
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View dedicated lane suggestions information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View dedicated lane suggestions information',
     },
     {
       code: 64,
-      name: "approve",
-      displayName: "Approve",
-      description: "Approve dedicated lane suggestion",
+      name: 'approve',
+      displayName: 'Approve',
+      description: 'Approve dedicated lane suggestion',
     },
     {
       code: 128,
-      name: "reject",
-      displayName: "Reject",
-      description: "Reject dedicated lane suggestion",
+      name: 'reject',
+      displayName: 'Reject',
+      description: 'Reject dedicated lane suggestion',
     },
   ],
   compositeOperations: {
@@ -502,43 +500,43 @@ export const DedicatedLaneSuggestionMetadata = {
  * Permission metadata for DispatchControl
  */
 export const DispatchControlMetadata = {
-  resourceName: "dispatch_control",
+  resourceName: 'dispatch_control',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new dispatch control to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new dispatch control to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View dispatch control information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View dispatch control information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify dispatch control details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify dispatch control details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove dispatch control",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove dispatch control',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export dispatch control data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export dispatch control data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import dispatch control from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import dispatch control from other sources',
     },
   ],
   compositeOperations: {
@@ -551,43 +549,43 @@ export const DispatchControlMetadata = {
  * Permission metadata for DistanceOverride
  */
 export const DistanceOverrideMetadata = {
-  resourceName: "distance_override",
+  resourceName: 'distance_override',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new distance overrides to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new distance overrides to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View distance override information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View distance override information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify distance override details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify distance override details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove distance overrides",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove distance overrides',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export distance overrides data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export distance overrides data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import distance overrides from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import distance overrides from other sources',
     },
   ],
   compositeOperations: {
@@ -597,46 +595,64 @@ export const DistanceOverrideMetadata = {
 } as const;
 
 /**
+ * Permission metadata for Docker
+ */
+export const DockerMetadata = {
+  resourceName: 'docker',
+  operations: [
+    {
+      code: 2,
+      name: 'read',
+      displayName: 'Read',
+      description: 'View docker information',
+    },
+  ],
+  compositeOperations: {
+    manage: 2,
+  },
+} as const;
+
+/**
  * Permission metadata for DocumentType
  */
 export const DocumentTypeMetadata = {
-  resourceName: "document_type",
+  resourceName: 'document_type',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new document types to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new document types to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View document type information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View document type information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify document type details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify document type details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove document types",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove document types',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export document types data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export document types data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import document types from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import document types from other sources',
     },
   ],
   compositeOperations: {
@@ -649,43 +665,43 @@ export const DocumentTypeMetadata = {
  * Permission metadata for EmailProfile
  */
 export const EmailProfileMetadata = {
-  resourceName: "email_profile",
+  resourceName: 'email_profile',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new email profiles to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new email profiles to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View email profile information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View email profile information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify email profile details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify email profile details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove email profiles",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove email profiles',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export email profiles data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export email profiles data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import email profiles from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import email profiles from other sources',
     },
   ],
   compositeOperations: {
@@ -698,44 +714,43 @@ export const EmailProfileMetadata = {
  * Permission metadata for EquipmentManufacturer
  */
 export const EquipmentManufacturerMetadata = {
-  resourceName: "equipment_manufacturer",
+  resourceName: 'equipment_manufacturer',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new equipment manufacturers to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new equipment manufacturers to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View equipment manufacturer information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View equipment manufacturer information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify equipment manufacturer details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify equipment manufacturer details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove equipment manufacturers",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove equipment manufacturers',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description:
-        "Export equipment manufacturers data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export equipment manufacturers data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import equipment manufacturers from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import equipment manufacturers from other sources',
     },
   ],
   compositeOperations: {
@@ -749,43 +764,43 @@ export const EquipmentManufacturerMetadata = {
  * Permission metadata for EquipmentType
  */
 export const EquipmentTypeMetadata = {
-  resourceName: "equipment_type",
+  resourceName: 'equipment_type',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new equipment types to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new equipment types to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View equipment type information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View equipment type information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify equipment type details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify equipment type details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove equipment types",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove equipment types',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export equipment types data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export equipment types data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import equipment types from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import equipment types from other sources',
     },
   ],
   compositeOperations: {
@@ -799,61 +814,61 @@ export const EquipmentTypeMetadata = {
  * Permission metadata for FiscalPeriod
  */
 export const FiscalPeriodMetadata = {
-  resourceName: "fiscal_period",
+  resourceName: 'fiscal_period',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new fiscal periods to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new fiscal periods to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View fiscal period information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View fiscal period information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify fiscal period details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify fiscal period details',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export fiscal periods data for compliance reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export fiscal periods data for compliance reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import fiscal periods from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import fiscal periods from other sources',
     },
     {
       code: 65536,
-      name: "close",
-      displayName: "Close",
-      description: "Close fiscal period",
+      name: 'close',
+      displayName: 'Close',
+      description: 'Close fiscal period',
     },
     {
       code: 131072,
-      name: "lock",
-      displayName: "Lock",
-      description: "Lock fiscal period",
+      name: 'lock',
+      displayName: 'Lock',
+      description: 'Lock fiscal period',
     },
     {
       code: 262144,
-      name: "unlock",
-      displayName: "Unlock",
-      description: "Unlock fiscal period",
+      name: 'unlock',
+      displayName: 'Unlock',
+      description: 'Unlock fiscal period',
     },
     {
       code: 524288,
-      name: "activate",
-      displayName: "Activate",
-      description: "Activate fiscal period",
+      name: 'activate',
+      displayName: 'Activate',
+      description: 'Activate fiscal period',
     },
   ],
   compositeOperations: {
@@ -866,61 +881,61 @@ export const FiscalPeriodMetadata = {
  * Permission metadata for FiscalYear
  */
 export const FiscalYearMetadata = {
-  resourceName: "fiscal_year",
+  resourceName: 'fiscal_year',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new fiscal years to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new fiscal years to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View fiscal year information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View fiscal year information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify fiscal year details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify fiscal year details',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export fiscal years data for compliance reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export fiscal years data for compliance reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import fiscal years from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import fiscal years from other sources',
     },
     {
       code: 65536,
-      name: "close",
-      displayName: "Close",
-      description: "Close fiscal year",
+      name: 'close',
+      displayName: 'Close',
+      description: 'Close fiscal year',
     },
     {
       code: 131072,
-      name: "lock",
-      displayName: "Lock",
-      description: "Lock fiscal year",
+      name: 'lock',
+      displayName: 'Lock',
+      description: 'Lock fiscal year',
     },
     {
       code: 262144,
-      name: "unlock",
-      displayName: "Unlock",
-      description: "Unlock fiscal year",
+      name: 'unlock',
+      displayName: 'Unlock',
+      description: 'Unlock fiscal year',
     },
     {
       code: 524288,
-      name: "activate",
-      displayName: "Activate",
-      description: "Activate fiscal year",
+      name: 'activate',
+      displayName: 'Activate',
+      description: 'Activate fiscal year',
     },
   ],
   compositeOperations: {
@@ -933,43 +948,43 @@ export const FiscalYearMetadata = {
  * Permission metadata for FleetCode
  */
 export const FleetCodeMetadata = {
-  resourceName: "fleet_code",
+  resourceName: 'fleet_code',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new fleet codes to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new fleet codes to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View fleet code information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View fleet code information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify fleet code details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify fleet code details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove fleet codes (requires approval)",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove fleet codes (requires approval)',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export fleet codes data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export fleet codes data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import fleet codes from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import fleet codes from other sources',
     },
   ],
   compositeOperations: {
@@ -983,43 +998,43 @@ export const FleetCodeMetadata = {
  * Permission metadata for GlAccount
  */
 export const GlAccountMetadata = {
-  resourceName: "gl_account",
+  resourceName: 'gl_account',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new GL accounts to the chart of accounts",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new GL accounts to the chart of accounts',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View GL account information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View GL account information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify GL account details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify GL account details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove GL accounts from the system",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove GL accounts from the system',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export chart of accounts data",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export chart of accounts data',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import chart of accounts from templates or other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import chart of accounts from templates or other sources',
     },
   ],
   compositeOperations: {
@@ -1032,45 +1047,43 @@ export const GlAccountMetadata = {
  * Permission metadata for HazardousMaterial
  */
 export const HazardousMaterialMetadata = {
-  resourceName: "hazardous_material",
+  resourceName: 'hazardous_material',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new hazardous materials to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new hazardous materials to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View hazardous material information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View hazardous material information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify hazardous material details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify hazardous material details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description:
-        "Remove hazardous materials (requires approval due to safety regulations)",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove hazardous materials (requires approval due to safety regulations)',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export hazardous materials data for compliance reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export hazardous materials data for compliance reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description:
-        "Import hazardous materials from UN database or other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import hazardous materials from UN database or other sources',
     },
   ],
   compositeOperations: {
@@ -1085,45 +1098,43 @@ export const HazardousMaterialMetadata = {
  * Permission metadata for HazmatSegregationRule
  */
 export const HazmatSegregationRuleMetadata = {
-  resourceName: "hazmat_segregation_rule",
+  resourceName: 'hazmat_segregation_rule',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new hazmat segregation rules to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new hazmat segregation rules to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View hazmat segregation rule information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View hazmat segregation rule information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify hazmat segregation rule details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify hazmat segregation rule details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description:
-        "Remove hazmat segregation rules (requires approval due to safety regulations)",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove hazmat segregation rules (requires approval due to safety regulations)',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description:
-        "Export hazmat segregation rules data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export hazmat segregation rules data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import hazmat segregation rules from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import hazmat segregation rules from other sources',
     },
   ],
   compositeOperations: {
@@ -1138,43 +1149,43 @@ export const HazmatSegregationRuleMetadata = {
  * Permission metadata for HoldReason
  */
 export const HoldReasonMetadata = {
-  resourceName: "hold_reason",
+  resourceName: 'hold_reason',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new hold reasons to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new hold reasons to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View hold reason information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View hold reason information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify hold reason details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify hold reason details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove hold reasons",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove hold reasons',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export hold reasons data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export hold reasons data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import hold reasons from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import hold reasons from other sources',
     },
   ],
   compositeOperations: {
@@ -1187,61 +1198,61 @@ export const HoldReasonMetadata = {
  * Permission metadata for JournalEntry
  */
 export const JournalEntryMetadata = {
-  resourceName: "journal_entry",
+  resourceName: 'journal_entry',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Create new journal entries",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Create new journal entries',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View journal entry information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View journal entry information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify journal entry details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify journal entry details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Delete draft journal entries",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Delete draft journal entries',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export journal entries data",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export journal entries data',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import journal entries from external sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import journal entries from external sources',
     },
     {
       code: 64,
-      name: "approve",
-      displayName: "Approve",
-      description: "Approve journal entries for posting",
+      name: 'approve',
+      displayName: 'Approve',
+      description: 'Approve journal entries for posting',
     },
     {
       code: 128,
-      name: "reject",
-      displayName: "Reject",
-      description: "Reject journal entries",
+      name: 'reject',
+      displayName: 'Reject',
+      description: 'Reject journal entries',
     },
     {
       code: 4096,
-      name: "submit",
-      displayName: "Submit",
-      description: "Submit journal entries for approval",
+      name: 'submit',
+      displayName: 'Submit',
+      description: 'Submit journal entries for approval',
     },
   ],
   compositeOperations: {
@@ -1256,43 +1267,43 @@ export const JournalEntryMetadata = {
  * Permission metadata for Location
  */
 export const LocationMetadata = {
-  resourceName: "location",
+  resourceName: 'location',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new locations to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new locations to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View location information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View location information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify location details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify location details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove locations",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove locations',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export locations data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export locations data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import locations from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import locations from other sources',
     },
   ],
   compositeOperations: {
@@ -1305,43 +1316,43 @@ export const LocationMetadata = {
  * Permission metadata for LocationCategory
  */
 export const LocationCategoryMetadata = {
-  resourceName: "location_category",
+  resourceName: 'location_category',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new location categories to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new location categories to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View location category information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View location category information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify location category details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify location category details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove location categories",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove location categories',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export location categories data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export location categories data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import location categories from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import location categories from other sources',
     },
   ],
   compositeOperations: {
@@ -1354,43 +1365,43 @@ export const LocationCategoryMetadata = {
  * Permission metadata for Organization
  */
 export const OrganizationMetadata = {
-  resourceName: "organization",
+  resourceName: 'organization',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new organization to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new organization to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View organization information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View organization information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify organization details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify organization details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove organization",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove organization',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export organization data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export organization data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import organization from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import organization from other sources',
     },
   ],
   compositeOperations: {
@@ -1403,19 +1414,19 @@ export const OrganizationMetadata = {
  * Permission metadata for PatternConfig
  */
 export const PatternConfigMetadata = {
-  resourceName: "pattern_config",
+  resourceName: 'pattern_config',
   operations: [
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View pattern config information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View pattern config information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify pattern config details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify pattern config details',
     },
   ],
   compositeOperations: {
@@ -1428,43 +1439,43 @@ export const PatternConfigMetadata = {
  * Permission metadata for ServiceType
  */
 export const ServiceTypeMetadata = {
-  resourceName: "service_type",
+  resourceName: 'service_type',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new service types to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new service types to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View service type information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View service type information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify service type details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify service type details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove service types",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove service types',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export service types data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export service types data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import service types from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import service types from other sources',
     },
   ],
   compositeOperations: {
@@ -1477,55 +1488,55 @@ export const ServiceTypeMetadata = {
  * Permission metadata for Shipment
  */
 export const ShipmentMetadata = {
-  resourceName: "shipment",
+  resourceName: 'shipment',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new shipments to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new shipments to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View shipment information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View shipment information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify shipment details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify shipment details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove shipments",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove shipments',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export shipments data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export shipments data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import shipments from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import shipments from other sources',
     },
     {
       code: 16384,
-      name: "assign",
-      displayName: "Assign",
-      description: "Assign shipments to users",
+      name: 'assign',
+      displayName: 'Assign',
+      description: 'Assign shipments to users',
     },
     {
       code: 32768,
-      name: "duplicate",
-      displayName: "Duplicate",
-      description: "Duplicate shipments",
+      name: 'duplicate',
+      displayName: 'Duplicate',
+      description: 'Duplicate shipments',
     },
   ],
   compositeOperations: {
@@ -1538,43 +1549,43 @@ export const ShipmentMetadata = {
  * Permission metadata for ShipmentComment
  */
 export const ShipmentCommentMetadata = {
-  resourceName: "shipment_comment",
+  resourceName: 'shipment_comment',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new shipment comments to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new shipment comments to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View shipment comment information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View shipment comment information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify shipment comment details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify shipment comment details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove shipment comments",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove shipment comments',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export shipment comments data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export shipment comments data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import shipment comments from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import shipment comments from other sources',
     },
   ],
   compositeOperations: {
@@ -1587,43 +1598,43 @@ export const ShipmentCommentMetadata = {
  * Permission metadata for ShipmentControl
  */
 export const ShipmentControlMetadata = {
-  resourceName: "shipment_control",
+  resourceName: 'shipment_control',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new shipment control to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new shipment control to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View shipment control information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View shipment control information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify shipment control details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify shipment control details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove shipment control",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove shipment control',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export shipment control data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export shipment control data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import shipment control from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import shipment control from other sources',
     },
   ],
   compositeOperations: {
@@ -1636,43 +1647,43 @@ export const ShipmentControlMetadata = {
  * Permission metadata for ShipmentType
  */
 export const ShipmentTypeMetadata = {
-  resourceName: "shipment_type",
+  resourceName: 'shipment_type',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new shipment types to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new shipment types to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View shipment type information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View shipment type information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify shipment type details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify shipment type details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove shipment types",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove shipment types',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export shipment types data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export shipment types data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import shipment types from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import shipment types from other sources',
     },
   ],
   compositeOperations: {
@@ -1685,43 +1696,43 @@ export const ShipmentTypeMetadata = {
  * Permission metadata for Tractor
  */
 export const TractorMetadata = {
-  resourceName: "tractor",
+  resourceName: 'tractor',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new tractors to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new tractors to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View tractor information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View tractor information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify tractor details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify tractor details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove tractors",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove tractors',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export tractors data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export tractors data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import tractors from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import tractors from other sources',
     },
   ],
   compositeOperations: {
@@ -1735,43 +1746,43 @@ export const TractorMetadata = {
  * Permission metadata for Trailer
  */
 export const TrailerMetadata = {
-  resourceName: "trailer",
+  resourceName: 'trailer',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new trailers to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new trailers to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View trailer information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View trailer information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify trailer details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify trailer details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove trailers",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove trailers',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export trailers data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export trailers data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import trailers from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import trailers from other sources',
     },
   ],
   compositeOperations: {
@@ -1785,43 +1796,43 @@ export const TrailerMetadata = {
  * Permission metadata for User
  */
 export const UserMetadata = {
-  resourceName: "user",
+  resourceName: 'user',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new user to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new user to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View user information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View user information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify user details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify user details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove user",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove user',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export user data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export user data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import user from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import user from other sources',
     },
   ],
   compositeOperations: {
@@ -1834,43 +1845,43 @@ export const UserMetadata = {
  * Permission metadata for Variable
  */
 export const VariableMetadata = {
-  resourceName: "variable",
+  resourceName: 'variable',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new variables to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new variables to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View variable information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View variable information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify variable details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify variable details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove variables",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove variables',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export variables data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export variables data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import variables from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import variables from other sources',
     },
   ],
   compositeOperations: {
@@ -1883,43 +1894,43 @@ export const VariableMetadata = {
  * Permission metadata for VariableFormat
  */
 export const VariableFormatMetadata = {
-  resourceName: "variable_format",
+  resourceName: 'variable_format',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new variable formats to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new variable formats to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View variable format information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View variable format information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify variable format details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify variable format details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove variable formats",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove variable formats',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export variable formats data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export variable formats data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import variable formats from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import variable formats from other sources',
     },
   ],
   compositeOperations: {
@@ -1932,43 +1943,43 @@ export const VariableFormatMetadata = {
  * Permission metadata for Worker
  */
 export const WorkerMetadata = {
-  resourceName: "worker",
+  resourceName: 'worker',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new workers to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new workers to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View worker information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View worker information',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify worker details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify worker details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove workers",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove workers',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export workers data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export workers data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import workers from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import workers from other sources',
     },
   ],
   compositeOperations: {
@@ -1981,55 +1992,55 @@ export const WorkerMetadata = {
  * Permission metadata for WorkerPto
  */
 export const WorkerPtoMetadata = {
-  resourceName: "worker_pto",
+  resourceName: 'worker_pto',
   operations: [
     {
       code: 1,
-      name: "create",
-      displayName: "Create",
-      description: "Add new worker PTOs to the database",
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new worker PTOs to the database',
     },
     {
       code: 2,
-      name: "read",
-      displayName: "Read",
-      description: "View worker PTO information",
+      name: 'read',
+      displayName: 'Read',
+      description: 'View worker PTO information',
     },
     {
       code: 64,
-      name: "approve",
-      displayName: "Approve",
-      description: "Approve worker PTOs",
+      name: 'approve',
+      displayName: 'Approve',
+      description: 'Approve worker PTOs',
     },
     {
       code: 128,
-      name: "reject",
-      displayName: "Reject",
-      description: "Reject worker PTOs",
+      name: 'reject',
+      displayName: 'Reject',
+      description: 'Reject worker PTOs',
     },
     {
       code: 4,
-      name: "update",
-      displayName: "Update",
-      description: "Modify worker PTO details",
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify worker PTO details',
     },
     {
       code: 8,
-      name: "delete",
-      displayName: "Delete",
-      description: "Remove worker PTOs",
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove worker PTOs',
     },
     {
       code: 16,
-      name: "export",
-      displayName: "Export",
-      description: "Export worker PTOs data for operational reporting",
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export worker PTOs data for operational reporting',
     },
     {
       code: 32,
-      name: "import",
-      displayName: "Import",
-      description: "Import worker PTOs from other sources",
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import worker PTOs from other sources',
     },
   ],
   compositeOperations: {
@@ -2052,14 +2063,14 @@ export const useAccessorialChargePermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("accessorial_charge", "create"),
-    canRead: can("accessorial_charge", "read"),
-    canUpdate: can("accessorial_charge", "update"),
-    canDelete: can("accessorial_charge", "delete"),
-    canExport: can("accessorial_charge", "export"),
-    canImport: can("accessorial_charge", "import"),
-    hasManage: can("accessorial_charge", "manage"),
-    hasReadOnly: can("accessorial_charge", "read_only"),
+    canCreate: can('accessorial_charge', 'create'),
+    canRead: can('accessorial_charge', 'read'),
+    canUpdate: can('accessorial_charge', 'update'),
+    canDelete: can('accessorial_charge', 'delete'),
+    canExport: can('accessorial_charge', 'export'),
+    canImport: can('accessorial_charge', 'import'),
+    hasManage: can('accessorial_charge', 'manage'),
+    hasReadOnly: can('accessorial_charge', 'read_only'),
   };
 };
 
@@ -2073,13 +2084,13 @@ export const useAccountTypePermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("account_type", "create"),
-    canRead: can("account_type", "read"),
-    canUpdate: can("account_type", "update"),
-    canExport: can("account_type", "export"),
-    canImport: can("account_type", "import"),
-    hasManage: can("account_type", "manage"),
-    hasReadOnly: can("account_type", "read_only"),
+    canCreate: can('account_type', 'create'),
+    canRead: can('account_type', 'read'),
+    canUpdate: can('account_type', 'update'),
+    canExport: can('account_type', 'export'),
+    canImport: can('account_type', 'import'),
+    hasManage: can('account_type', 'manage'),
+    hasReadOnly: can('account_type', 'read_only'),
   };
 };
 
@@ -2093,14 +2104,14 @@ export const useAccountingControlPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("accounting_control", "create"),
-    canRead: can("accounting_control", "read"),
-    canUpdate: can("accounting_control", "update"),
-    canDelete: can("accounting_control", "delete"),
-    canExport: can("accounting_control", "export"),
-    canImport: can("accounting_control", "import"),
-    hasManage: can("accounting_control", "manage"),
-    hasReadOnly: can("accounting_control", "read_only"),
+    canCreate: can('accounting_control', 'create'),
+    canRead: can('accounting_control', 'read'),
+    canUpdate: can('accounting_control', 'update'),
+    canDelete: can('accounting_control', 'delete'),
+    canExport: can('accounting_control', 'export'),
+    canImport: can('accounting_control', 'import'),
+    hasManage: can('accounting_control', 'manage'),
+    hasReadOnly: can('accounting_control', 'read_only'),
   };
 };
 
@@ -2114,12 +2125,12 @@ export const useAuditEntryPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("audit_entry", "create"),
-    canRead: can("audit_entry", "read"),
-    canUpdate: can("audit_entry", "update"),
-    canExport: can("audit_entry", "export"),
-    hasManage: can("audit_entry", "manage"),
-    hasReadOnly: can("audit_entry", "read_only"),
+    canCreate: can('audit_entry', 'create'),
+    canRead: can('audit_entry', 'read'),
+    canUpdate: can('audit_entry', 'update'),
+    canExport: can('audit_entry', 'export'),
+    hasManage: can('audit_entry', 'manage'),
+    hasReadOnly: can('audit_entry', 'read_only'),
   };
 };
 
@@ -2133,14 +2144,14 @@ export const useBillingControlPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("billing_control", "create"),
-    canRead: can("billing_control", "read"),
-    canUpdate: can("billing_control", "update"),
-    canDelete: can("billing_control", "delete"),
-    canExport: can("billing_control", "export"),
-    canImport: can("billing_control", "import"),
-    hasManage: can("billing_control", "manage"),
-    hasReadOnly: can("billing_control", "read_only"),
+    canCreate: can('billing_control', 'create'),
+    canRead: can('billing_control', 'read'),
+    canUpdate: can('billing_control', 'update'),
+    canDelete: can('billing_control', 'delete'),
+    canExport: can('billing_control', 'export'),
+    canImport: can('billing_control', 'import'),
+    hasManage: can('billing_control', 'manage'),
+    hasReadOnly: can('billing_control', 'read_only'),
   };
 };
 
@@ -2154,16 +2165,16 @@ export const useCommodityPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("commodity", "create"),
-    canRead: can("commodity", "read"),
-    canUpdate: can("commodity", "update"),
-    canDelete: can("commodity", "delete"),
-    canExport: can("commodity", "export"),
-    canImport: can("commodity", "import"),
-    hasCompliance: can("commodity", "compliance"),
-    hasManage: can("commodity", "manage"),
-    hasReadOnly: can("commodity", "read_only"),
-    hasSafetyOfficer: can("commodity", "safety_officer"),
+    canCreate: can('commodity', 'create'),
+    canRead: can('commodity', 'read'),
+    canUpdate: can('commodity', 'update'),
+    canDelete: can('commodity', 'delete'),
+    canExport: can('commodity', 'export'),
+    canImport: can('commodity', 'import'),
+    hasCompliance: can('commodity', 'compliance'),
+    hasManage: can('commodity', 'manage'),
+    hasReadOnly: can('commodity', 'read_only'),
+    hasSafetyOfficer: can('commodity', 'safety_officer'),
   };
 };
 
@@ -2177,15 +2188,15 @@ export const useCustomerPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("customer", "create"),
-    canRead: can("customer", "read"),
-    canUpdate: can("customer", "update"),
-    canDelete: can("customer", "delete"),
-    canExport: can("customer", "export"),
-    canImport: can("customer", "import"),
-    hasManage: can("customer", "manage"),
-    hasReadOnly: can("customer", "read_only"),
-    hasSales: can("customer", "sales"),
+    canCreate: can('customer', 'create'),
+    canRead: can('customer', 'read'),
+    canUpdate: can('customer', 'update'),
+    canDelete: can('customer', 'delete'),
+    canExport: can('customer', 'export'),
+    canImport: can('customer', 'import'),
+    hasManage: can('customer', 'manage'),
+    hasReadOnly: can('customer', 'read_only'),
+    hasSales: can('customer', 'sales'),
   };
 };
 
@@ -2199,14 +2210,14 @@ export const useDataRetentionPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("data_retention", "create"),
-    canRead: can("data_retention", "read"),
-    canUpdate: can("data_retention", "update"),
-    canDelete: can("data_retention", "delete"),
-    canExport: can("data_retention", "export"),
-    canImport: can("data_retention", "import"),
-    hasManage: can("data_retention", "manage"),
-    hasReadOnly: can("data_retention", "read_only"),
+    canCreate: can('data_retention', 'create'),
+    canRead: can('data_retention', 'read'),
+    canUpdate: can('data_retention', 'update'),
+    canDelete: can('data_retention', 'delete'),
+    canExport: can('data_retention', 'export'),
+    canImport: can('data_retention', 'import'),
+    hasManage: can('data_retention', 'manage'),
+    hasReadOnly: can('data_retention', 'read_only'),
   };
 };
 
@@ -2220,14 +2231,14 @@ export const useDedicatedLanePermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("dedicated_lane", "create"),
-    canRead: can("dedicated_lane", "read"),
-    canUpdate: can("dedicated_lane", "update"),
-    canDelete: can("dedicated_lane", "delete"),
-    canExport: can("dedicated_lane", "export"),
-    canImport: can("dedicated_lane", "import"),
-    hasManage: can("dedicated_lane", "manage"),
-    hasReadOnly: can("dedicated_lane", "read_only"),
+    canCreate: can('dedicated_lane', 'create'),
+    canRead: can('dedicated_lane', 'read'),
+    canUpdate: can('dedicated_lane', 'update'),
+    canDelete: can('dedicated_lane', 'delete'),
+    canExport: can('dedicated_lane', 'export'),
+    canImport: can('dedicated_lane', 'import'),
+    hasManage: can('dedicated_lane', 'manage'),
+    hasReadOnly: can('dedicated_lane', 'read_only'),
   };
 };
 
@@ -2241,11 +2252,11 @@ export const useDedicatedLaneSuggestionPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canRead: can("dedicated_lane_suggestion", "read"),
-    canApprove: can("dedicated_lane_suggestion", "approve"),
-    canReject: can("dedicated_lane_suggestion", "reject"),
-    hasManage: can("dedicated_lane_suggestion", "manage"),
-    hasReadOnly: can("dedicated_lane_suggestion", "read_only"),
+    canRead: can('dedicated_lane_suggestion', 'read'),
+    canApprove: can('dedicated_lane_suggestion', 'approve'),
+    canReject: can('dedicated_lane_suggestion', 'reject'),
+    hasManage: can('dedicated_lane_suggestion', 'manage'),
+    hasReadOnly: can('dedicated_lane_suggestion', 'read_only'),
   };
 };
 
@@ -2259,14 +2270,14 @@ export const useDispatchControlPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("dispatch_control", "create"),
-    canRead: can("dispatch_control", "read"),
-    canUpdate: can("dispatch_control", "update"),
-    canDelete: can("dispatch_control", "delete"),
-    canExport: can("dispatch_control", "export"),
-    canImport: can("dispatch_control", "import"),
-    hasManage: can("dispatch_control", "manage"),
-    hasReadOnly: can("dispatch_control", "read_only"),
+    canCreate: can('dispatch_control', 'create'),
+    canRead: can('dispatch_control', 'read'),
+    canUpdate: can('dispatch_control', 'update'),
+    canDelete: can('dispatch_control', 'delete'),
+    canExport: can('dispatch_control', 'export'),
+    canImport: can('dispatch_control', 'import'),
+    hasManage: can('dispatch_control', 'manage'),
+    hasReadOnly: can('dispatch_control', 'read_only'),
   };
 };
 
@@ -2280,14 +2291,29 @@ export const useDistanceOverridePermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("distance_override", "create"),
-    canRead: can("distance_override", "read"),
-    canUpdate: can("distance_override", "update"),
-    canDelete: can("distance_override", "delete"),
-    canExport: can("distance_override", "export"),
-    canImport: can("distance_override", "import"),
-    hasManage: can("distance_override", "manage"),
-    hasReadOnly: can("distance_override", "read_only"),
+    canCreate: can('distance_override', 'create'),
+    canRead: can('distance_override', 'read'),
+    canUpdate: can('distance_override', 'update'),
+    canDelete: can('distance_override', 'delete'),
+    canExport: can('distance_override', 'export'),
+    canImport: can('distance_override', 'import'),
+    hasManage: can('distance_override', 'manage'),
+    hasReadOnly: can('distance_override', 'read_only'),
+  };
+};
+
+/**
+ * React hook for Docker permissions
+ * @example
+ * const perms = useDockerPermissions();
+ * if (perms.canCreate) { ... }
+ */
+export const useDockerPermissions = () => {
+  const { can } = usePermissions();
+
+  return {
+    canRead: can('docker', 'read'),
+    hasManage: can('docker', 'manage'),
   };
 };
 
@@ -2301,14 +2327,14 @@ export const useDocumentTypePermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("document_type", "create"),
-    canRead: can("document_type", "read"),
-    canUpdate: can("document_type", "update"),
-    canDelete: can("document_type", "delete"),
-    canExport: can("document_type", "export"),
-    canImport: can("document_type", "import"),
-    hasManage: can("document_type", "manage"),
-    hasReadOnly: can("document_type", "read_only"),
+    canCreate: can('document_type', 'create'),
+    canRead: can('document_type', 'read'),
+    canUpdate: can('document_type', 'update'),
+    canDelete: can('document_type', 'delete'),
+    canExport: can('document_type', 'export'),
+    canImport: can('document_type', 'import'),
+    hasManage: can('document_type', 'manage'),
+    hasReadOnly: can('document_type', 'read_only'),
   };
 };
 
@@ -2322,14 +2348,14 @@ export const useEmailProfilePermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("email_profile", "create"),
-    canRead: can("email_profile", "read"),
-    canUpdate: can("email_profile", "update"),
-    canDelete: can("email_profile", "delete"),
-    canExport: can("email_profile", "export"),
-    canImport: can("email_profile", "import"),
-    hasManage: can("email_profile", "manage"),
-    hasReadOnly: can("email_profile", "read_only"),
+    canCreate: can('email_profile', 'create'),
+    canRead: can('email_profile', 'read'),
+    canUpdate: can('email_profile', 'update'),
+    canDelete: can('email_profile', 'delete'),
+    canExport: can('email_profile', 'export'),
+    canImport: can('email_profile', 'import'),
+    hasManage: can('email_profile', 'manage'),
+    hasReadOnly: can('email_profile', 'read_only'),
   };
 };
 
@@ -2343,15 +2369,15 @@ export const useEquipmentManufacturerPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("equipment_manufacturer", "create"),
-    canRead: can("equipment_manufacturer", "read"),
-    canUpdate: can("equipment_manufacturer", "update"),
-    canDelete: can("equipment_manufacturer", "delete"),
-    canExport: can("equipment_manufacturer", "export"),
-    canImport: can("equipment_manufacturer", "import"),
-    hasEquipmentManager: can("equipment_manufacturer", "equipment_manager"),
-    hasManage: can("equipment_manufacturer", "manage"),
-    hasReadOnly: can("equipment_manufacturer", "read_only"),
+    canCreate: can('equipment_manufacturer', 'create'),
+    canRead: can('equipment_manufacturer', 'read'),
+    canUpdate: can('equipment_manufacturer', 'update'),
+    canDelete: can('equipment_manufacturer', 'delete'),
+    canExport: can('equipment_manufacturer', 'export'),
+    canImport: can('equipment_manufacturer', 'import'),
+    hasEquipmentManager: can('equipment_manufacturer', 'equipment_manager'),
+    hasManage: can('equipment_manufacturer', 'manage'),
+    hasReadOnly: can('equipment_manufacturer', 'read_only'),
   };
 };
 
@@ -2365,15 +2391,15 @@ export const useEquipmentTypePermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("equipment_type", "create"),
-    canRead: can("equipment_type", "read"),
-    canUpdate: can("equipment_type", "update"),
-    canDelete: can("equipment_type", "delete"),
-    canExport: can("equipment_type", "export"),
-    canImport: can("equipment_type", "import"),
-    hasEquipmentManager: can("equipment_type", "equipment_manager"),
-    hasManage: can("equipment_type", "manage"),
-    hasReadOnly: can("equipment_type", "read_only"),
+    canCreate: can('equipment_type', 'create'),
+    canRead: can('equipment_type', 'read'),
+    canUpdate: can('equipment_type', 'update'),
+    canDelete: can('equipment_type', 'delete'),
+    canExport: can('equipment_type', 'export'),
+    canImport: can('equipment_type', 'import'),
+    hasEquipmentManager: can('equipment_type', 'equipment_manager'),
+    hasManage: can('equipment_type', 'manage'),
+    hasReadOnly: can('equipment_type', 'read_only'),
   };
 };
 
@@ -2387,17 +2413,17 @@ export const useFiscalPeriodPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("fiscal_period", "create"),
-    canRead: can("fiscal_period", "read"),
-    canUpdate: can("fiscal_period", "update"),
-    canExport: can("fiscal_period", "export"),
-    canImport: can("fiscal_period", "import"),
-    canClose: can("fiscal_period", "close"),
-    canLock: can("fiscal_period", "lock"),
-    canUnlock: can("fiscal_period", "unlock"),
-    canActivate: can("fiscal_period", "activate"),
-    hasManage: can("fiscal_period", "manage"),
-    hasReadOnly: can("fiscal_period", "read_only"),
+    canCreate: can('fiscal_period', 'create'),
+    canRead: can('fiscal_period', 'read'),
+    canUpdate: can('fiscal_period', 'update'),
+    canExport: can('fiscal_period', 'export'),
+    canImport: can('fiscal_period', 'import'),
+    canClose: can('fiscal_period', 'close'),
+    canLock: can('fiscal_period', 'lock'),
+    canUnlock: can('fiscal_period', 'unlock'),
+    canActivate: can('fiscal_period', 'activate'),
+    hasManage: can('fiscal_period', 'manage'),
+    hasReadOnly: can('fiscal_period', 'read_only'),
   };
 };
 
@@ -2411,17 +2437,17 @@ export const useFiscalYearPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("fiscal_year", "create"),
-    canRead: can("fiscal_year", "read"),
-    canUpdate: can("fiscal_year", "update"),
-    canExport: can("fiscal_year", "export"),
-    canImport: can("fiscal_year", "import"),
-    canClose: can("fiscal_year", "close"),
-    canLock: can("fiscal_year", "lock"),
-    canUnlock: can("fiscal_year", "unlock"),
-    canActivate: can("fiscal_year", "activate"),
-    hasManage: can("fiscal_year", "manage"),
-    hasReadOnly: can("fiscal_year", "read_only"),
+    canCreate: can('fiscal_year', 'create'),
+    canRead: can('fiscal_year', 'read'),
+    canUpdate: can('fiscal_year', 'update'),
+    canExport: can('fiscal_year', 'export'),
+    canImport: can('fiscal_year', 'import'),
+    canClose: can('fiscal_year', 'close'),
+    canLock: can('fiscal_year', 'lock'),
+    canUnlock: can('fiscal_year', 'unlock'),
+    canActivate: can('fiscal_year', 'activate'),
+    hasManage: can('fiscal_year', 'manage'),
+    hasReadOnly: can('fiscal_year', 'read_only'),
   };
 };
 
@@ -2435,15 +2461,15 @@ export const useFleetCodePermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("fleet_code", "create"),
-    canRead: can("fleet_code", "read"),
-    canUpdate: can("fleet_code", "update"),
-    canDelete: can("fleet_code", "delete"),
-    canExport: can("fleet_code", "export"),
-    canImport: can("fleet_code", "import"),
-    hasFleetManager: can("fleet_code", "fleet_manager"),
-    hasManage: can("fleet_code", "manage"),
-    hasReadOnly: can("fleet_code", "read_only"),
+    canCreate: can('fleet_code', 'create'),
+    canRead: can('fleet_code', 'read'),
+    canUpdate: can('fleet_code', 'update'),
+    canDelete: can('fleet_code', 'delete'),
+    canExport: can('fleet_code', 'export'),
+    canImport: can('fleet_code', 'import'),
+    hasFleetManager: can('fleet_code', 'fleet_manager'),
+    hasManage: can('fleet_code', 'manage'),
+    hasReadOnly: can('fleet_code', 'read_only'),
   };
 };
 
@@ -2457,14 +2483,14 @@ export const useGlAccountPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("gl_account", "create"),
-    canRead: can("gl_account", "read"),
-    canUpdate: can("gl_account", "update"),
-    canDelete: can("gl_account", "delete"),
-    canExport: can("gl_account", "export"),
-    canImport: can("gl_account", "import"),
-    hasManage: can("gl_account", "manage"),
-    hasReadOnly: can("gl_account", "read_only"),
+    canCreate: can('gl_account', 'create'),
+    canRead: can('gl_account', 'read'),
+    canUpdate: can('gl_account', 'update'),
+    canDelete: can('gl_account', 'delete'),
+    canExport: can('gl_account', 'export'),
+    canImport: can('gl_account', 'import'),
+    hasManage: can('gl_account', 'manage'),
+    hasReadOnly: can('gl_account', 'read_only'),
   };
 };
 
@@ -2478,16 +2504,16 @@ export const useHazardousMaterialPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("hazardous_material", "create"),
-    canRead: can("hazardous_material", "read"),
-    canUpdate: can("hazardous_material", "update"),
-    canDelete: can("hazardous_material", "delete"),
-    canExport: can("hazardous_material", "export"),
-    canImport: can("hazardous_material", "import"),
-    hasCompliance: can("hazardous_material", "compliance"),
-    hasManage: can("hazardous_material", "manage"),
-    hasReadOnly: can("hazardous_material", "read_only"),
-    hasSafetyOfficer: can("hazardous_material", "safety_officer"),
+    canCreate: can('hazardous_material', 'create'),
+    canRead: can('hazardous_material', 'read'),
+    canUpdate: can('hazardous_material', 'update'),
+    canDelete: can('hazardous_material', 'delete'),
+    canExport: can('hazardous_material', 'export'),
+    canImport: can('hazardous_material', 'import'),
+    hasCompliance: can('hazardous_material', 'compliance'),
+    hasManage: can('hazardous_material', 'manage'),
+    hasReadOnly: can('hazardous_material', 'read_only'),
+    hasSafetyOfficer: can('hazardous_material', 'safety_officer'),
   };
 };
 
@@ -2501,16 +2527,16 @@ export const useHazmatSegregationRulePermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("hazmat_segregation_rule", "create"),
-    canRead: can("hazmat_segregation_rule", "read"),
-    canUpdate: can("hazmat_segregation_rule", "update"),
-    canDelete: can("hazmat_segregation_rule", "delete"),
-    canExport: can("hazmat_segregation_rule", "export"),
-    canImport: can("hazmat_segregation_rule", "import"),
-    hasCompliance: can("hazmat_segregation_rule", "compliance"),
-    hasManage: can("hazmat_segregation_rule", "manage"),
-    hasReadOnly: can("hazmat_segregation_rule", "read_only"),
-    hasSafetyOfficer: can("hazmat_segregation_rule", "safety_officer"),
+    canCreate: can('hazmat_segregation_rule', 'create'),
+    canRead: can('hazmat_segregation_rule', 'read'),
+    canUpdate: can('hazmat_segregation_rule', 'update'),
+    canDelete: can('hazmat_segregation_rule', 'delete'),
+    canExport: can('hazmat_segregation_rule', 'export'),
+    canImport: can('hazmat_segregation_rule', 'import'),
+    hasCompliance: can('hazmat_segregation_rule', 'compliance'),
+    hasManage: can('hazmat_segregation_rule', 'manage'),
+    hasReadOnly: can('hazmat_segregation_rule', 'read_only'),
+    hasSafetyOfficer: can('hazmat_segregation_rule', 'safety_officer'),
   };
 };
 
@@ -2524,14 +2550,14 @@ export const useHoldReasonPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("hold_reason", "create"),
-    canRead: can("hold_reason", "read"),
-    canUpdate: can("hold_reason", "update"),
-    canDelete: can("hold_reason", "delete"),
-    canExport: can("hold_reason", "export"),
-    canImport: can("hold_reason", "import"),
-    hasManage: can("hold_reason", "manage"),
-    hasReadOnly: can("hold_reason", "read_only"),
+    canCreate: can('hold_reason', 'create'),
+    canRead: can('hold_reason', 'read'),
+    canUpdate: can('hold_reason', 'update'),
+    canDelete: can('hold_reason', 'delete'),
+    canExport: can('hold_reason', 'export'),
+    canImport: can('hold_reason', 'import'),
+    hasManage: can('hold_reason', 'manage'),
+    hasReadOnly: can('hold_reason', 'read_only'),
   };
 };
 
@@ -2545,19 +2571,19 @@ export const useJournalEntryPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("journal_entry", "create"),
-    canRead: can("journal_entry", "read"),
-    canUpdate: can("journal_entry", "update"),
-    canDelete: can("journal_entry", "delete"),
-    canExport: can("journal_entry", "export"),
-    canImport: can("journal_entry", "import"),
-    canApprove: can("journal_entry", "approve"),
-    canReject: can("journal_entry", "reject"),
-    canSubmit: can("journal_entry", "submit"),
-    hasApprover: can("journal_entry", "approver"),
-    hasCreator: can("journal_entry", "creator"),
-    hasManage: can("journal_entry", "manage"),
-    hasReadOnly: can("journal_entry", "read_only"),
+    canCreate: can('journal_entry', 'create'),
+    canRead: can('journal_entry', 'read'),
+    canUpdate: can('journal_entry', 'update'),
+    canDelete: can('journal_entry', 'delete'),
+    canExport: can('journal_entry', 'export'),
+    canImport: can('journal_entry', 'import'),
+    canApprove: can('journal_entry', 'approve'),
+    canReject: can('journal_entry', 'reject'),
+    canSubmit: can('journal_entry', 'submit'),
+    hasApprover: can('journal_entry', 'approver'),
+    hasCreator: can('journal_entry', 'creator'),
+    hasManage: can('journal_entry', 'manage'),
+    hasReadOnly: can('journal_entry', 'read_only'),
   };
 };
 
@@ -2571,14 +2597,14 @@ export const useLocationPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("location", "create"),
-    canRead: can("location", "read"),
-    canUpdate: can("location", "update"),
-    canDelete: can("location", "delete"),
-    canExport: can("location", "export"),
-    canImport: can("location", "import"),
-    hasManage: can("location", "manage"),
-    hasReadOnly: can("location", "read_only"),
+    canCreate: can('location', 'create'),
+    canRead: can('location', 'read'),
+    canUpdate: can('location', 'update'),
+    canDelete: can('location', 'delete'),
+    canExport: can('location', 'export'),
+    canImport: can('location', 'import'),
+    hasManage: can('location', 'manage'),
+    hasReadOnly: can('location', 'read_only'),
   };
 };
 
@@ -2592,14 +2618,14 @@ export const useLocationCategoryPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("location_category", "create"),
-    canRead: can("location_category", "read"),
-    canUpdate: can("location_category", "update"),
-    canDelete: can("location_category", "delete"),
-    canExport: can("location_category", "export"),
-    canImport: can("location_category", "import"),
-    hasManage: can("location_category", "manage"),
-    hasReadOnly: can("location_category", "read_only"),
+    canCreate: can('location_category', 'create'),
+    canRead: can('location_category', 'read'),
+    canUpdate: can('location_category', 'update'),
+    canDelete: can('location_category', 'delete'),
+    canExport: can('location_category', 'export'),
+    canImport: can('location_category', 'import'),
+    hasManage: can('location_category', 'manage'),
+    hasReadOnly: can('location_category', 'read_only'),
   };
 };
 
@@ -2613,14 +2639,14 @@ export const useOrganizationPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("organization", "create"),
-    canRead: can("organization", "read"),
-    canUpdate: can("organization", "update"),
-    canDelete: can("organization", "delete"),
-    canExport: can("organization", "export"),
-    canImport: can("organization", "import"),
-    hasManage: can("organization", "manage"),
-    hasReadOnly: can("organization", "read_only"),
+    canCreate: can('organization', 'create'),
+    canRead: can('organization', 'read'),
+    canUpdate: can('organization', 'update'),
+    canDelete: can('organization', 'delete'),
+    canExport: can('organization', 'export'),
+    canImport: can('organization', 'import'),
+    hasManage: can('organization', 'manage'),
+    hasReadOnly: can('organization', 'read_only'),
   };
 };
 
@@ -2634,10 +2660,10 @@ export const usePatternConfigPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canRead: can("pattern_config", "read"),
-    canUpdate: can("pattern_config", "update"),
-    hasManage: can("pattern_config", "manage"),
-    hasReadOnly: can("pattern_config", "read_only"),
+    canRead: can('pattern_config', 'read'),
+    canUpdate: can('pattern_config', 'update'),
+    hasManage: can('pattern_config', 'manage'),
+    hasReadOnly: can('pattern_config', 'read_only'),
   };
 };
 
@@ -2651,14 +2677,14 @@ export const useServiceTypePermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("service_type", "create"),
-    canRead: can("service_type", "read"),
-    canUpdate: can("service_type", "update"),
-    canDelete: can("service_type", "delete"),
-    canExport: can("service_type", "export"),
-    canImport: can("service_type", "import"),
-    hasManage: can("service_type", "manage"),
-    hasReadOnly: can("service_type", "read_only"),
+    canCreate: can('service_type', 'create'),
+    canRead: can('service_type', 'read'),
+    canUpdate: can('service_type', 'update'),
+    canDelete: can('service_type', 'delete'),
+    canExport: can('service_type', 'export'),
+    canImport: can('service_type', 'import'),
+    hasManage: can('service_type', 'manage'),
+    hasReadOnly: can('service_type', 'read_only'),
   };
 };
 
@@ -2672,16 +2698,16 @@ export const useShipmentPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("shipment", "create"),
-    canRead: can("shipment", "read"),
-    canUpdate: can("shipment", "update"),
-    canDelete: can("shipment", "delete"),
-    canExport: can("shipment", "export"),
-    canImport: can("shipment", "import"),
-    canAssign: can("shipment", "assign"),
-    canDuplicate: can("shipment", "duplicate"),
-    hasManage: can("shipment", "manage"),
-    hasReadOnly: can("shipment", "read_only"),
+    canCreate: can('shipment', 'create'),
+    canRead: can('shipment', 'read'),
+    canUpdate: can('shipment', 'update'),
+    canDelete: can('shipment', 'delete'),
+    canExport: can('shipment', 'export'),
+    canImport: can('shipment', 'import'),
+    canAssign: can('shipment', 'assign'),
+    canDuplicate: can('shipment', 'duplicate'),
+    hasManage: can('shipment', 'manage'),
+    hasReadOnly: can('shipment', 'read_only'),
   };
 };
 
@@ -2695,14 +2721,14 @@ export const useShipmentCommentPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("shipment_comment", "create"),
-    canRead: can("shipment_comment", "read"),
-    canUpdate: can("shipment_comment", "update"),
-    canDelete: can("shipment_comment", "delete"),
-    canExport: can("shipment_comment", "export"),
-    canImport: can("shipment_comment", "import"),
-    hasManage: can("shipment_comment", "manage"),
-    hasReadOnly: can("shipment_comment", "read_only"),
+    canCreate: can('shipment_comment', 'create'),
+    canRead: can('shipment_comment', 'read'),
+    canUpdate: can('shipment_comment', 'update'),
+    canDelete: can('shipment_comment', 'delete'),
+    canExport: can('shipment_comment', 'export'),
+    canImport: can('shipment_comment', 'import'),
+    hasManage: can('shipment_comment', 'manage'),
+    hasReadOnly: can('shipment_comment', 'read_only'),
   };
 };
 
@@ -2716,14 +2742,14 @@ export const useShipmentControlPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("shipment_control", "create"),
-    canRead: can("shipment_control", "read"),
-    canUpdate: can("shipment_control", "update"),
-    canDelete: can("shipment_control", "delete"),
-    canExport: can("shipment_control", "export"),
-    canImport: can("shipment_control", "import"),
-    hasManage: can("shipment_control", "manage"),
-    hasReadOnly: can("shipment_control", "read_only"),
+    canCreate: can('shipment_control', 'create'),
+    canRead: can('shipment_control', 'read'),
+    canUpdate: can('shipment_control', 'update'),
+    canDelete: can('shipment_control', 'delete'),
+    canExport: can('shipment_control', 'export'),
+    canImport: can('shipment_control', 'import'),
+    hasManage: can('shipment_control', 'manage'),
+    hasReadOnly: can('shipment_control', 'read_only'),
   };
 };
 
@@ -2737,14 +2763,14 @@ export const useShipmentTypePermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("shipment_type", "create"),
-    canRead: can("shipment_type", "read"),
-    canUpdate: can("shipment_type", "update"),
-    canDelete: can("shipment_type", "delete"),
-    canExport: can("shipment_type", "export"),
-    canImport: can("shipment_type", "import"),
-    hasManage: can("shipment_type", "manage"),
-    hasReadOnly: can("shipment_type", "read_only"),
+    canCreate: can('shipment_type', 'create'),
+    canRead: can('shipment_type', 'read'),
+    canUpdate: can('shipment_type', 'update'),
+    canDelete: can('shipment_type', 'delete'),
+    canExport: can('shipment_type', 'export'),
+    canImport: can('shipment_type', 'import'),
+    hasManage: can('shipment_type', 'manage'),
+    hasReadOnly: can('shipment_type', 'read_only'),
   };
 };
 
@@ -2758,15 +2784,15 @@ export const useTractorPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("tractor", "create"),
-    canRead: can("tractor", "read"),
-    canUpdate: can("tractor", "update"),
-    canDelete: can("tractor", "delete"),
-    canExport: can("tractor", "export"),
-    canImport: can("tractor", "import"),
-    hasEquipmentManager: can("tractor", "equipment_manager"),
-    hasManage: can("tractor", "manage"),
-    hasReadOnly: can("tractor", "read_only"),
+    canCreate: can('tractor', 'create'),
+    canRead: can('tractor', 'read'),
+    canUpdate: can('tractor', 'update'),
+    canDelete: can('tractor', 'delete'),
+    canExport: can('tractor', 'export'),
+    canImport: can('tractor', 'import'),
+    hasEquipmentManager: can('tractor', 'equipment_manager'),
+    hasManage: can('tractor', 'manage'),
+    hasReadOnly: can('tractor', 'read_only'),
   };
 };
 
@@ -2780,15 +2806,15 @@ export const useTrailerPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("trailer", "create"),
-    canRead: can("trailer", "read"),
-    canUpdate: can("trailer", "update"),
-    canDelete: can("trailer", "delete"),
-    canExport: can("trailer", "export"),
-    canImport: can("trailer", "import"),
-    hasEquipmentManager: can("trailer", "equipment_manager"),
-    hasManage: can("trailer", "manage"),
-    hasReadOnly: can("trailer", "read_only"),
+    canCreate: can('trailer', 'create'),
+    canRead: can('trailer', 'read'),
+    canUpdate: can('trailer', 'update'),
+    canDelete: can('trailer', 'delete'),
+    canExport: can('trailer', 'export'),
+    canImport: can('trailer', 'import'),
+    hasEquipmentManager: can('trailer', 'equipment_manager'),
+    hasManage: can('trailer', 'manage'),
+    hasReadOnly: can('trailer', 'read_only'),
   };
 };
 
@@ -2802,14 +2828,14 @@ export const useUserPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("user", "create"),
-    canRead: can("user", "read"),
-    canUpdate: can("user", "update"),
-    canDelete: can("user", "delete"),
-    canExport: can("user", "export"),
-    canImport: can("user", "import"),
-    hasManage: can("user", "manage"),
-    hasReadOnly: can("user", "read_only"),
+    canCreate: can('user', 'create'),
+    canRead: can('user', 'read'),
+    canUpdate: can('user', 'update'),
+    canDelete: can('user', 'delete'),
+    canExport: can('user', 'export'),
+    canImport: can('user', 'import'),
+    hasManage: can('user', 'manage'),
+    hasReadOnly: can('user', 'read_only'),
   };
 };
 
@@ -2823,14 +2849,14 @@ export const useVariablePermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("variable", "create"),
-    canRead: can("variable", "read"),
-    canUpdate: can("variable", "update"),
-    canDelete: can("variable", "delete"),
-    canExport: can("variable", "export"),
-    canImport: can("variable", "import"),
-    hasManage: can("variable", "manage"),
-    hasReadOnly: can("variable", "read_only"),
+    canCreate: can('variable', 'create'),
+    canRead: can('variable', 'read'),
+    canUpdate: can('variable', 'update'),
+    canDelete: can('variable', 'delete'),
+    canExport: can('variable', 'export'),
+    canImport: can('variable', 'import'),
+    hasManage: can('variable', 'manage'),
+    hasReadOnly: can('variable', 'read_only'),
   };
 };
 
@@ -2844,14 +2870,14 @@ export const useVariableFormatPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("variable_format", "create"),
-    canRead: can("variable_format", "read"),
-    canUpdate: can("variable_format", "update"),
-    canDelete: can("variable_format", "delete"),
-    canExport: can("variable_format", "export"),
-    canImport: can("variable_format", "import"),
-    hasManage: can("variable_format", "manage"),
-    hasReadOnly: can("variable_format", "read_only"),
+    canCreate: can('variable_format', 'create'),
+    canRead: can('variable_format', 'read'),
+    canUpdate: can('variable_format', 'update'),
+    canDelete: can('variable_format', 'delete'),
+    canExport: can('variable_format', 'export'),
+    canImport: can('variable_format', 'import'),
+    hasManage: can('variable_format', 'manage'),
+    hasReadOnly: can('variable_format', 'read_only'),
   };
 };
 
@@ -2865,14 +2891,14 @@ export const useWorkerPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("worker", "create"),
-    canRead: can("worker", "read"),
-    canUpdate: can("worker", "update"),
-    canDelete: can("worker", "delete"),
-    canExport: can("worker", "export"),
-    canImport: can("worker", "import"),
-    hasManage: can("worker", "manage"),
-    hasReadOnly: can("worker", "read_only"),
+    canCreate: can('worker', 'create'),
+    canRead: can('worker', 'read'),
+    canUpdate: can('worker', 'update'),
+    canDelete: can('worker', 'delete'),
+    canExport: can('worker', 'export'),
+    canImport: can('worker', 'import'),
+    hasManage: can('worker', 'manage'),
+    hasReadOnly: can('worker', 'read_only'),
   };
 };
 
@@ -2886,16 +2912,16 @@ export const useWorkerPtoPermissions = () => {
   const { can } = usePermissions();
 
   return {
-    canCreate: can("worker_pto", "create"),
-    canRead: can("worker_pto", "read"),
-    canApprove: can("worker_pto", "approve"),
-    canReject: can("worker_pto", "reject"),
-    canUpdate: can("worker_pto", "update"),
-    canDelete: can("worker_pto", "delete"),
-    canExport: can("worker_pto", "export"),
-    canImport: can("worker_pto", "import"),
-    hasManage: can("worker_pto", "manage"),
-    hasReadOnly: can("worker_pto", "read_only"),
+    canCreate: can('worker_pto', 'create'),
+    canRead: can('worker_pto', 'read'),
+    canApprove: can('worker_pto', 'approve'),
+    canReject: can('worker_pto', 'reject'),
+    canUpdate: can('worker_pto', 'update'),
+    canDelete: can('worker_pto', 'delete'),
+    canExport: can('worker_pto', 'export'),
+    canImport: can('worker_pto', 'import'),
+    hasManage: can('worker_pto', 'manage'),
+    hasReadOnly: can('worker_pto', 'read_only'),
   };
 };
 
@@ -2905,46 +2931,47 @@ export const useWorkerPtoPermissions = () => {
 
 export const isValidResource = (resource: string): boolean => {
   return [
-    "accessorial_charge",
-    "account_type",
-    "accounting_control",
-    "audit_entry",
-    "billing_control",
-    "commodity",
-    "customer",
-    "data_retention",
-    "dedicated_lane",
-    "dedicated_lane_suggestion",
-    "dispatch_control",
-    "distance_override",
-    "document_type",
-    "email_profile",
-    "equipment_manufacturer",
-    "equipment_type",
-    "fiscal_period",
-    "fiscal_year",
-    "fleet_code",
-    "gl_account",
-    "hazardous_material",
-    "hazmat_segregation_rule",
-    "hold_reason",
-    "journal_entry",
-    "location",
-    "location_category",
-    "organization",
-    "pattern_config",
-    "service_type",
-    "shipment",
-    "shipment_comment",
-    "shipment_control",
-    "shipment_type",
-    "tractor",
-    "trailer",
-    "user",
-    "variable",
-    "variable_format",
-    "worker",
-    "worker_pto",
+    'accessorial_charge',
+    'account_type',
+    'accounting_control',
+    'audit_entry',
+    'billing_control',
+    'commodity',
+    'customer',
+    'data_retention',
+    'dedicated_lane',
+    'dedicated_lane_suggestion',
+    'dispatch_control',
+    'distance_override',
+    'docker',
+    'document_type',
+    'email_profile',
+    'equipment_manufacturer',
+    'equipment_type',
+    'fiscal_period',
+    'fiscal_year',
+    'fleet_code',
+    'gl_account',
+    'hazardous_material',
+    'hazmat_segregation_rule',
+    'hold_reason',
+    'journal_entry',
+    'location',
+    'location_category',
+    'organization',
+    'pattern_config',
+    'service_type',
+    'shipment',
+    'shipment_comment',
+    'shipment_control',
+    'shipment_type',
+    'tractor',
+    'trailer',
+    'user',
+    'variable',
+    'variable_format',
+    'worker',
+    'worker_pto',
   ].includes(resource);
 };
 

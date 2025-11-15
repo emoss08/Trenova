@@ -673,8 +673,8 @@ const routes: RouteObject[] = [
                   return { Component: Variables };
                 },
                 handle: {
-                  crumb: "AI Logs",
-                  title: "AI Logs",
+                  crumb: "Variables & Formats",
+                  title: "Variables & Formats",
                 },
               },
             ],

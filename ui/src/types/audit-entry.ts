@@ -122,6 +122,6 @@ export enum Resource {
   EmailProfile = "email_profile",
   AILog = "ai_log",
   Variable = "variable",
-  VariableFormat = "format",
+  VariableFormat = "variable_format",
   Docker = "docker",
 }

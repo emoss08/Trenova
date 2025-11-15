@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/core/domain/docker"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
@@ -97,6 +98,7 @@ func RegisterEntities() []any {
 		&accounting.AccountingControl{},
 		&accounting.JournalEntry{},
 		&accounting.JournalEntryLine{},
+		&docker.DockerDomain{},
 	}
 }
 
@@ -142,5 +144,6 @@ func RegisterPermissionAwareEntities() []PermissionAware {
 		accounting.NewGLAccountPermission(),
 		accounting.NewAccountingControlPermission(),
 		accounting.NewJournalEntryPermission(),
+		docker.NewDockerPermission(),
 	}
 }
