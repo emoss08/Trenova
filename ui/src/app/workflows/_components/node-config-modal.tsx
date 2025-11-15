@@ -1,5 +1,6 @@
 import {
   Dialog,
+  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -7,9 +8,9 @@ import {
 } from "@/components/ui/dialog";
 import type { WorkflowNodeType } from "@/types/workflow";
 import { useState } from "react";
-import ActionConfigForm from "./config-forms/action-config-form";
-import ActionTypeSelector from "./config-forms/action-type-selector";
-import ConditionConfigForm from "./config-forms/condition-config-form";
+import { ActionConfigForm } from "./config-forms/action-config-form";
+import { ActionTypeSelector } from "./config-forms/action-type-selector";
+import { ConditionConfigForm } from "./config-forms/condition-config-form";
 
 interface NodeConfigModalProps {
   open: boolean;
@@ -151,7 +152,7 @@ export default function NodeConfigModal({
           <DialogDescription>{getModalDescription()}</DialogDescription>
         </DialogHeader>
 
-        <div className="mt-4">{renderForm()}</div>
+        <DialogBody>{renderForm()}</DialogBody>
       </DialogContent>
     </Dialog>
   );

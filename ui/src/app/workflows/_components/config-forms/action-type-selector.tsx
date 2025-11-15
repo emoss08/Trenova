@@ -82,7 +82,7 @@ interface ActionTypeSelectorProps {
   onChange: (value: string) => void;
 }
 
-export default function ActionTypeSelector({
+export function ActionTypeSelector({
   value,
   onChange,
 }: ActionTypeSelectorProps) {

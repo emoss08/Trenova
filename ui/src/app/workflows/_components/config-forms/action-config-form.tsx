@@ -20,7 +20,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { type z } from "zod";
 import VariableInput from "./variable-input";
 
@@ -31,24 +31,22 @@ interface ActionConfigFormProps {
   onCancel: () => void;
 }
 
-// Shipment Update Status Form
 function ShipmentUpdateStatusForm({
   initialConfig,
   onSave,
   onCancel,
 }: Omit<ActionConfigFormProps, "actionType">) {
   const {
-    register,
+    control,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<z.infer<typeof shipmentUpdateStatusConfigSchema>>({
     resolver: zodResolver(shipmentUpdateStatusConfigSchema),
     defaultValues: initialConfig,
   });
 
-  const shipmentId = watch("shipmentId");
+  const shipmentId = useWatch({ control, name: "shipmentId" });
 
   return (
     <form onSubmit={handleSubmit(onSave)} className="space-y-4">
@@ -105,18 +103,18 @@ function NotificationSendEmailForm({
   onCancel,
 }: Omit<ActionConfigFormProps, "actionType">) {
   const {
+    control,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<z.infer<typeof notificationSendEmailConfigSchema>>({
     resolver: zodResolver(notificationSendEmailConfigSchema),
     defaultValues: initialConfig,
   });
 
-  const to = watch("to");
-  const subject = watch("subject");
-  const body = watch("body");
+  const to = useWatch({ control, name: "to" });
+  const subject = useWatch({ control, name: "subject" });
+  const body = useWatch({ control, name: "body" });
 
   return (
     <form onSubmit={handleSubmit(onSave)} className="space-y-4">
@@ -168,23 +166,22 @@ function NotificationSendEmailForm({
   );
 }
 
-// Billing Validate Requirements Form
-function BillingValidateRequirementsForm({
+export function BillingValidateRequirementsForm({
   initialConfig,
   onSave,
   onCancel,
 }: Omit<ActionConfigFormProps, "actionType">) {
   const {
+    control,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<z.infer<typeof billingValidateRequirementsConfigSchema>>({
     resolver: zodResolver(billingValidateRequirementsConfigSchema),
     defaultValues: initialConfig,
   });
 
-  const shipmentId = watch("shipmentId");
+  const shipmentId = useWatch({ control, name: "shipmentId" });
 
   return (
     <form onSubmit={handleSubmit(onSave)} className="space-y-4">
@@ -212,25 +209,24 @@ function BillingValidateRequirementsForm({
   );
 }
 
-// Data API Call Form
 function DataAPICallForm({
   initialConfig,
   onSave,
   onCancel,
 }: Omit<ActionConfigFormProps, "actionType">) {
   const {
+    control,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<z.infer<typeof dataAPICallConfigSchema>>({
     resolver: zodResolver(dataAPICallConfigSchema),
     defaultValues: initialConfig,
   });
 
-  const url = watch("url");
-  const method = watch("method");
-  const body = watch("body");
+  const url = useWatch({ control, name: "url" });
+  const method = useWatch({ control, name: "method" });
+  const body = useWatch({ control, name: "body" });
   const [headers, setHeaders] = useState<Record<string, string>>(
     initialConfig.headers || {},
   );
@@ -249,6 +245,7 @@ function DataAPICallForm({
 
   const removeHeader = (key: string) => {
     const updated = { ...headers };
+    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
     delete updated[key];
     setHeaders(updated);
     setValue("headers", updated);
@@ -366,16 +363,16 @@ function DocumentValidateCompletenessForm({
   onCancel,
 }: Omit<ActionConfigFormProps, "actionType">) {
   const {
+    control,
     handleSubmit,
     setValue,
-    watch,
     formState: { errors },
   } = useForm<z.infer<typeof documentValidateCompletenessConfigSchema>>({
     resolver: zodResolver(documentValidateCompletenessConfigSchema),
     defaultValues: initialConfig,
   });
 
-  const shipmentId = watch("shipmentId");
+  const shipmentId = useWatch({ control, name: "shipmentId" });
   const [requiredDocuments, setRequiredDocuments] = useState<string[]>(
     initialConfig.requiredDocuments || [],
   );
@@ -474,7 +471,7 @@ function DocumentValidateCompletenessForm({
 }
 
 // Main Action Config Form component that routes to the right form
-export default function ActionConfigForm({
+export function ActionConfigForm({
   actionType,
   initialConfig,
   onSave,
@@ -525,8 +522,8 @@ export default function ActionConfigForm({
       return (
         <div className="space-y-4">
           <p className="text-sm text-muted-foreground">
-            Configuration form for action type "{actionType}" is not yet
-            implemented.
+            Configuration form for action type &quot;{actionType}&quot; is not
+            yet implemented.
           </p>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={onCancel}>

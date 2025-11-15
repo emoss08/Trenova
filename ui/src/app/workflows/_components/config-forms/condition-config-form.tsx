@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/select";
 import { conditionConfigSchema } from "@/lib/schemas/node-config-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { type z } from "zod";
 
 interface ConditionConfigFormProps {
@@ -19,7 +19,7 @@ interface ConditionConfigFormProps {
   onCancel: () => void;
 }
 
-export default function ConditionConfigForm({
+export function ConditionConfigForm({
   initialConfig,
   onSave,
   onCancel,
@@ -28,14 +28,16 @@ export default function ConditionConfigForm({
     register,
     handleSubmit,
     setValue,
-    watch,
+    control,
     formState: { errors },
   } = useForm<z.infer<typeof conditionConfigSchema>>({
     resolver: zodResolver(conditionConfigSchema),
     defaultValues: initialConfig,
   });
 
-  const operator = watch("operator");
+  const operator = useWatch({ control, name: "operator" });
+  const value = useWatch({ control, name: "value" });
+  const field = useWatch({ control, name: "field" });
 
   return (
     <form onSubmit={handleSubmit(onSave)} className="space-y-4">
@@ -95,11 +97,11 @@ export default function ConditionConfigForm({
       <div className="rounded-md border border-border bg-muted/50 p-3">
         <p className="text-sm font-medium">Preview</p>
         <p className="font-mono text-sm text-muted-foreground">
-          {watch("field") || "field"} {operator === "equals" && "=="}
+          {field ?? "field"} {operator === "equals" && "=="}
           {operator === "notEquals" && "!="}
           {operator === "contains" && "contains"}
           {operator === "greaterThan" && ">"}
-          {operator === "lessThan" && "<"} {watch("value") || "value"}
+          {operator === "lessThan" && "<"} {value ?? "value"}
         </p>
       </div>
 

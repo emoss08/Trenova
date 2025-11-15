@@ -1,8 +1,12 @@
 package workflowjobs
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
@@ -10,6 +14,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils/workflowutils"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -31,6 +36,7 @@ type ActionHandlersParams struct {
 	Logger              *zap.Logger
 	ShipmentRepo        repositories.ShipmentRepository
 	NotificationService services.NotificationService
+	EmailService        services.EmailService
 	// Add more services as needed for different actions
 }
 
@@ -39,6 +45,7 @@ type ActionHandlers struct {
 	logger              *zap.Logger
 	shipmentRepo        repositories.ShipmentRepository
 	notificationService services.NotificationService
+	emailService        services.EmailService
 }
 
 // NewActionHandlers creates a new action handlers instance
@@ -47,6 +54,7 @@ func NewActionHandlers(p ActionHandlersParams) *ActionHandlers {
 		logger:              p.Logger.Named("action-handlers"),
 		shipmentRepo:        p.ShipmentRepo,
 		notificationService: p.NotificationService,
+		emailService:        p.EmailService,
 	}
 }
 
@@ -59,6 +67,20 @@ func (h *ActionHandlers) Execute(
 		zap.String("actionType", string(execCtx.ActionType)),
 		zap.String("orgId", execCtx.OrgID.String()),
 	)
+
+	// Resolve variables in config using workflow state
+	resolver := workflowutils.NewVariableResolver(execCtx.InputData)
+	resolvedConfig, err := resolver.ResolveConfig(execCtx.Config)
+	if err != nil {
+		h.logger.Error("failed to resolve variables in config",
+			zap.Error(err),
+			zap.Any("config", execCtx.Config),
+		)
+		return nil, fmt.Errorf("variable resolution failed: %w", err)
+	}
+
+	// Update config with resolved values
+	execCtx.Config = resolvedConfig
 
 	switch execCtx.ActionType {
 	// Shipment actions
@@ -296,20 +318,77 @@ func (h *ActionHandlers) billingValidateRequirements(
 	ctx context.Context,
 	execCtx *ActionExecutionContext,
 ) (map[string]any, error) {
-	shipmentID := execCtx.Config["shipmentId"]
+	// Extract and validate config
+	shipmentIDStr, ok := execCtx.Config["shipmentId"].(string)
+	if !ok || shipmentIDStr == "" {
+		return nil, fmt.Errorf("shipmentId is required")
+	}
 
-	h.logger.Info("Validating billing requirements", zap.Any("shipmentId", shipmentID))
+	shipmentID, err := pulid.MustParse(shipmentIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid shipmentId: %w", err)
+	}
 
-	// TODO: Implement billing validation logic
-	// Check if all required documents are present, rates are set, etc.
+	h.logger.Info("Validating billing requirements",
+		zap.String("shipmentId", shipmentID.String()),
+	)
 
-	return map[string]any{
-		"success":         true,
-		"shipmentId":      shipmentID,
-		"isValid":         true,
-		"missingItems":    []string{},
-		"validationNotes": "All billing requirements met",
-	}, nil
+	// Get the shipment to validate
+	shp, err := h.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:     shipmentID,
+		OrgID:  execCtx.OrgID,
+		BuID:   execCtx.BuID,
+		UserID: execCtx.UserID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get shipment: %w", err)
+	}
+
+	// Validate billing requirements
+	missingItems := []string{}
+	validationNotes := []string{}
+
+	// Check if shipment has a customer
+	if shp.CustomerID.IsNil() {
+		missingItems = append(missingItems, "Customer not assigned")
+	}
+
+	// Check if shipment has moves with locations
+	if len(shp.Moves) == 0 {
+		missingItems = append(missingItems, "No moves configured")
+	}
+
+	// Check if shipment has delivery date
+	if shp.ActualDeliveryDate == nil {
+		validationNotes = append(validationNotes, "Actual delivery date not set - may not be ready for billing")
+	}
+
+	// Check if freight charges are set
+	if shp.FreightChargeAmount.Decimal.IsZero() {
+		validationNotes = append(validationNotes, "Freight charge amount is zero")
+	}
+
+	isValid := len(missingItems) == 0
+
+	result := map[string]any{
+		"success":    true,
+		"shipmentId": shipmentID.String(),
+		"isValid":    isValid,
+	}
+
+	if len(missingItems) > 0 {
+		result["missingItems"] = missingItems
+	} else {
+		result["missingItems"] = []string{}
+	}
+
+	if len(validationNotes) > 0 {
+		result["validationNotes"] = validationNotes
+	} else {
+		result["validationNotes"] = []string{"All billing requirements met"}
+	}
+
+	return result, nil
 }
 
 func (h *ActionHandlers) billingTransferToQueue(
@@ -382,23 +461,92 @@ func (h *ActionHandlers) documentValidateCompleteness(
 	ctx context.Context,
 	execCtx *ActionExecutionContext,
 ) (map[string]any, error) {
-	shipmentID := execCtx.Config["shipmentId"]
-	requiredDocs := execCtx.Config["requiredDocuments"]
+	// Extract and validate config
+	shipmentIDStr, ok := execCtx.Config["shipmentId"].(string)
+	if !ok || shipmentIDStr == "" {
+		return nil, fmt.Errorf("shipmentId is required")
+	}
+
+	shipmentID, err := pulid.MustParse(shipmentIDStr)
+	if err != nil {
+		return nil, fmt.Errorf("invalid shipmentId: %w", err)
+	}
+
+	// Get required documents list
+	requiredDocs, ok := execCtx.Config["requiredDocuments"].([]any)
+	if !ok || len(requiredDocs) == 0 {
+		return nil, fmt.Errorf("requiredDocuments is required and must be a non-empty array")
+	}
+
+	// Convert to string slice
+	requiredDocStrings := make([]string, 0, len(requiredDocs))
+	for _, doc := range requiredDocs {
+		if docStr, ok := doc.(string); ok {
+			requiredDocStrings = append(requiredDocStrings, docStr)
+		}
+	}
 
 	h.logger.Info("Validating document completeness",
-		zap.Any("shipmentId", shipmentID),
-		zap.Any("requiredDocs", requiredDocs),
+		zap.String("shipmentId", shipmentID.String()),
+		zap.Strings("requiredDocs", requiredDocStrings),
 	)
 
-	// TODO: Implement document validation logic
+	// Get the shipment to validate
+	shp, err := h.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:     shipmentID,
+		OrgID:  execCtx.OrgID,
+		BuID:   execCtx.BuID,
+		UserID: execCtx.UserID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to get shipment: %w", err)
+	}
+
+	// TODO: In a real implementation, you would:
+	// 1. Query document repository for documents attached to this shipment
+	// 2. Check if each required document type is present
+	// 3. Return detailed completeness information
+	//
+	// For now, we'll simulate this with a simple check
+	// This is a placeholder that should be replaced with actual document repository integration
+
+	presentDocs := []string{}
+	missingDocs := []string{}
+
+	// Simulate document checking
+	// In reality, you'd query the document repository here
+	for _, requiredDoc := range requiredDocStrings {
+		// For demo purposes, assume documents are missing
+		// Replace this with actual repository check
+		missingDocs = append(missingDocs, requiredDoc)
+	}
+
+	completionRate := 0.0
+	if len(requiredDocStrings) > 0 {
+		completionRate = (float64(len(presentDocs)) / float64(len(requiredDocStrings))) * 100
+	}
+
+	isComplete := len(missingDocs) == 0
+
+	h.logger.Info("Document validation complete",
+		zap.String("shipmentId", shp.ID.String()),
+		zap.Bool("isComplete", isComplete),
+		zap.Int("presentCount", len(presentDocs)),
+		zap.Int("missingCount", len(missingDocs)),
+	)
 
 	return map[string]any{
 		"success":        true,
-		"shipmentId":     shipmentID,
-		"isComplete":     true,
-		"missingDocs":    []string{},
-		"presentDocs":    []string{"BOL", "POD", "Rate Confirmation"},
-		"completionRate": 100,
+		"shipmentId":     shipmentID.String(),
+		"isComplete":     isComplete,
+		"presentDocs":    presentDocs,
+		"missingDocs":    missingDocs,
+		"completionRate": int(completionRate),
+		"message": fmt.Sprintf(
+			"Document check: %d/%d documents present",
+			len(presentDocs),
+			len(requiredDocStrings),
+		),
 	}, nil
 }
 
@@ -454,16 +602,44 @@ func (h *ActionHandlers) notificationSendEmail(
 	ctx context.Context,
 	execCtx *ActionExecutionContext,
 ) (map[string]any, error) {
-	to := execCtx.Config["to"]
-	subject := execCtx.Config["subject"]
+	// Extract and validate config
+	to, ok := execCtx.Config["to"].(string)
+	if !ok || to == "" {
+		return nil, fmt.Errorf("to (email address) is required")
+	}
+
+	subject, ok := execCtx.Config["subject"].(string)
+	if !ok || subject == "" {
+		return nil, fmt.Errorf("subject is required")
+	}
+
+	body, ok := execCtx.Config["body"].(string)
+	if !ok || body == "" {
+		return nil, fmt.Errorf("body is required")
+	}
 
 	h.logger.Info("Sending email notification",
-		zap.Any("to", to),
-		zap.Any("subject", subject),
+		zap.String("to", to),
+		zap.String("subject", subject),
 	)
 
-	// TODO: Integrate with email service
-	// Use the existing email service to send emails
+	// Send email using the email service
+	err := h.emailService.SendEmail(ctx, &services.SendEmailRequest{
+		OrganizationID: execCtx.OrgID,
+		BusinessUnitID: execCtx.BuID,
+		UserID:         execCtx.UserID,
+		To:             []string{to},
+		Subject:        subject,
+		HTMLBody:       body,
+		TextBody:       body, // Use same content for text fallback
+	})
+	if err != nil {
+		h.logger.Error("failed to send email",
+			zap.Error(err),
+			zap.String("to", to),
+		)
+		return nil, fmt.Errorf("failed to send email: %w", err)
+	}
 
 	return map[string]any{
 		"success": true,
@@ -566,24 +742,100 @@ func (h *ActionHandlers) dataAPICall(
 	ctx context.Context,
 	execCtx *ActionExecutionContext,
 ) (map[string]any, error) {
-	url := execCtx.Config["url"]
-	method := execCtx.Config["method"]
+	// Extract and validate config
+	url, ok := execCtx.Config["url"].(string)
+	if !ok || url == "" {
+		return nil, fmt.Errorf("url is required")
+	}
+
+	method, ok := execCtx.Config["method"].(string)
+	if !ok || method == "" {
+		method = "GET" // Default to GET
+	}
 
 	h.logger.Info("Making API call",
-		zap.Any("url", url),
-		zap.Any("method", method),
+		zap.String("url", url),
+		zap.String("method", method),
 	)
 
-	// TODO: Implement HTTP API call
+	// Prepare request
+	var req *http.Request
+	var err error
 
-	return map[string]any{
-		"success":      true,
+	// Handle request body if present
+	if body, exists := execCtx.Config["body"].(string); exists && body != "" {
+		req, err = http.NewRequestWithContext(ctx, method, url, bytes.NewBufferString(body))
+	} else {
+		req, err = http.NewRequestWithContext(ctx, method, url, nil)
+	}
+
+	if err != nil {
+		return nil, fmt.Errorf("failed to create HTTP request: %w", err)
+	}
+
+	// Add headers if provided
+	if headers, ok := execCtx.Config["headers"].(map[string]any); ok {
+		for key, value := range headers {
+			if strValue, ok := value.(string); ok {
+				req.Header.Set(key, strValue)
+			}
+		}
+	}
+
+	// Set default Content-Type if not specified
+	if req.Header.Get("Content-Type") == "" && method != "GET" {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	// Execute request with timeout
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		h.logger.Error("API call failed",
+			zap.Error(err),
+			zap.String("url", url),
+		)
+		return nil, fmt.Errorf("API call failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Read response body
+	responseBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response body: %w", err)
+	}
+
+	// Try to parse as JSON
+	var responseData any
+	if err := json.Unmarshal(responseBody, &responseData); err != nil {
+		// If not JSON, store as string
+		responseData = string(responseBody)
+	}
+
+	result := map[string]any{
+		"success":      resp.StatusCode >= 200 && resp.StatusCode < 300,
 		"url":          url,
 		"method":       method,
-		"statusCode":   200,
-		"responseData": map[string]any{},
-		"message":      "API call completed successfully",
-	}, nil
+		"statusCode":   resp.StatusCode,
+		"responseData": responseData,
+		"headers":      resp.Header,
+	}
+
+	// Log error if not successful
+	if resp.StatusCode >= 400 {
+		h.logger.Warn("API call returned error status",
+			zap.Int("statusCode", resp.StatusCode),
+			zap.String("url", url),
+		)
+		result["message"] = fmt.Sprintf("API call returned status %d", resp.StatusCode)
+	} else {
+		result["message"] = "API call completed successfully"
+	}
+
+	return result, nil
 }
 
 func (h *ActionHandlers) dataDatabaseQuery(
