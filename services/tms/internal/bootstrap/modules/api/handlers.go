@@ -56,4 +56,5 @@ var HandlerModule = fx.Module("api-handlers", fx.Provide(
 	handlers.NewJournalEntryHandler,
 	handlers.NewAccountingControlHandler,
 	handlers.NewUserPreferenceHandler,
+	handlers.NewFormulaTemplateHandler,
 ))
