@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { type WorkflowSchema } from "@/lib/schemas/workflow-schema";
@@ -38,16 +33,16 @@ export function WorkflowInfo({ workflow }: { workflow: WorkflowSchema }) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-muted-foreground text-sm">Name</p>
+              <p className="text-sm text-muted-foreground">Name</p>
               <p className="font-medium">{workflow.name}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Status</p>
+              <p className="text-sm text-muted-foreground">Status</p>
               <Badge variant={statusConfig.variant}>{statusConfig.label}</Badge>
             </div>
             {workflow.description && (
               <div className="col-span-2">
-                <p className="text-muted-foreground text-sm">Description</p>
+                <p className="text-sm text-muted-foreground">Description</p>
                 <p className="font-medium">{workflow.description}</p>
               </div>
             )}
@@ -63,20 +58,20 @@ export function WorkflowInfo({ workflow }: { workflow: WorkflowSchema }) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-muted-foreground text-sm">Trigger Type</p>
+              <p className="text-sm text-muted-foreground">Trigger Type</p>
               <p className="font-medium">
                 {triggerTypeLabels[workflow.triggerType]}
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Trigger Config</p>
+              <p className="text-sm text-muted-foreground">Trigger Config</p>
               {workflow.triggerConfig &&
               Object.keys(workflow.triggerConfig).length > 0 ? (
                 <pre className="mt-1 overflow-auto rounded-md bg-muted p-2 font-mono text-xs">
                   {JSON.stringify(workflow.triggerConfig, null, 2)}
                 </pre>
               ) : (
-                <p className="text-muted-foreground text-sm">
+                <p className="text-sm text-muted-foreground">
                   No configuration
                 </p>
               )}
@@ -93,19 +88,19 @@ export function WorkflowInfo({ workflow }: { workflow: WorkflowSchema }) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-muted-foreground text-sm">Timeout</p>
+              <p className="text-sm text-muted-foreground">Timeout</p>
               <p className="font-medium">{workflow.timeoutSeconds}s</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Max Retries</p>
+              <p className="text-sm text-muted-foreground">Max Retries</p>
               <p className="font-medium">{workflow.maxRetries}</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Retry Delay</p>
+              <p className="text-sm text-muted-foreground">Retry Delay</p>
               <p className="font-medium">{workflow.retryDelaySeconds}s</p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Enable Logging</p>
+              <p className="text-sm text-muted-foreground">Enable Logging</p>
               <Badge variant={workflow.enableLogging ? "success" : "default"}>
                 {workflow.enableLogging ? "Enabled" : "Disabled"}
               </Badge>
@@ -122,18 +117,18 @@ export function WorkflowInfo({ workflow }: { workflow: WorkflowSchema }) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-sm text-muted-foreground">
                 Current Version ID
               </p>
-              <p className="font-medium font-mono text-sm">
+              <p className="font-mono text-sm font-medium">
                 {workflow.currentVersionId || "No version"}
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">
+              <p className="text-sm text-muted-foreground">
                 Published Version ID
               </p>
-              <p className="font-medium font-mono text-sm">
+              <p className="font-mono text-sm font-medium">
                 {workflow.publishedVersionId || "Not published"}
               </p>
             </div>
@@ -149,14 +144,14 @@ export function WorkflowInfo({ workflow }: { workflow: WorkflowSchema }) {
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-muted-foreground text-sm">Created At</p>
-              <p className="font-medium text-sm">
+              <p className="text-sm text-muted-foreground">Created At</p>
+              <p className="text-sm font-medium">
                 {format(new Date(workflow.createdAt), "PPpp")}
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Updated At</p>
-              <p className="font-medium text-sm">
+              <p className="text-sm text-muted-foreground">Updated At</p>
+              <p className="text-sm font-medium">
                 {format(new Date(workflow.updatedAt), "PPpp")}
               </p>
             </div>

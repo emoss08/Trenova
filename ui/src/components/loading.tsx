@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { faSpinnerThird } from "@fortawesome/pro-regular-svg-icons";
 import { Icon } from "./ui/icons";
 
@@ -16,7 +11,7 @@ export default function LoadingSkeleton() {
             size="2x"
             className="motion-safe:animate-spin"
           />
-          <p className="font-xl mb-2 font-semibold">
+          <p className="mb-2 text-xl font-semibold">
             Hang tight!{" "}
             <u className="font-bold underline decoration-blue-600">Trenova</u>{" "}
             is gearing up for you.

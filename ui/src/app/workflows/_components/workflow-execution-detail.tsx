@@ -1,15 +1,9 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { queries } from "@/lib/queries";
 import {
-  type WorkflowExecutionSchema,
   type ExecutionStatusType,
+  type WorkflowExecutionSchema,
 } from "@/lib/schemas/workflow-schema";
 import { useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
@@ -58,26 +52,26 @@ export function WorkflowExecutionDetail({
         <CardContent className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <p className="text-muted-foreground text-sm">Status</p>
+              <p className="text-sm text-muted-foreground">Status</p>
               <Badge>{executionStatusConfig[execution.status].label}</Badge>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Triggered By</p>
-              <p className="font-medium text-sm">
+              <p className="text-sm text-muted-foreground">Triggered By</p>
+              <p className="text-sm font-medium">
                 {execution.triggeredBy || "System"}
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Started At</p>
-              <p className="font-medium text-sm">
+              <p className="text-sm text-muted-foreground">Started At</p>
+              <p className="text-sm font-medium">
                 {execution.startedAt
                   ? format(new Date(execution.startedAt), "PPpp")
                   : "-"}
               </p>
             </div>
             <div>
-              <p className="text-muted-foreground text-sm">Completed At</p>
-              <p className="font-medium text-sm">
+              <p className="text-sm text-muted-foreground">Completed At</p>
+              <p className="text-sm font-medium">
                 {execution.completedAt
                   ? format(new Date(execution.completedAt), "PPpp")
                   : "-"}
@@ -87,8 +81,8 @@ export function WorkflowExecutionDetail({
 
           {execution.error && (
             <div className="rounded-lg border-destructive bg-destructive/10 p-4">
-              <p className="font-medium text-destructive text-sm">Error</p>
-              <p className="mt-1 text-destructive text-sm">{execution.error}</p>
+              <p className="text-sm font-medium text-destructive">Error</p>
+              <p className="mt-1 text-sm text-destructive">{execution.error}</p>
             </div>
           )}
         </CardContent>
@@ -135,11 +129,11 @@ export function WorkflowExecutionDetail({
                         <div className="flex items-start justify-between">
                           <div>
                             <p className="font-medium">{step.nodeId}</p>
-                            <p className="text-muted-foreground text-sm">
+                            <p className="text-sm text-muted-foreground">
                               Step {step.stepNumber}
                             </p>
                           </div>
-                          <div className="flex items-center gap-2 text-muted-foreground text-xs">
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <Clock className="size-3" />
                             {step.startedAt
                               ? format(new Date(step.startedAt), "HH:mm:ss")
@@ -149,10 +143,10 @@ export function WorkflowExecutionDetail({
 
                         {step.error && (
                           <div className="mt-2 rounded-md bg-destructive/10 p-3">
-                            <p className="font-medium text-destructive text-xs">
+                            <p className="text-xs font-medium text-destructive">
                               Error
                             </p>
-                            <p className="mt-1 text-destructive text-xs">
+                            <p className="mt-1 text-xs text-destructive">
                               {step.error}
                             </p>
                           </div>
@@ -160,7 +154,7 @@ export function WorkflowExecutionDetail({
 
                         {step.output && (
                           <div className="mt-2 rounded-md bg-muted p-3">
-                            <p className="font-medium text-xs">Output</p>
+                            <p className="text-xs font-medium">Output</p>
                             <pre className="mt-1 overflow-auto font-mono text-xs">
                               {JSON.stringify(step.output, null, 2)}
                             </pre>

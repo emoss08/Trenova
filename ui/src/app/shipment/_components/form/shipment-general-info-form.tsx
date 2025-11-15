@@ -51,5 +51,5 @@ function ShipmentGeneralInfoFormInner({
 }: {
   children: React.ReactNode;
 }) {
-  return <div className="space-y-4 pb-16 pt-2">{children}</div>;
+  return <div className="space-y-4 pt-2 pb-16">{children}</div>;
 }

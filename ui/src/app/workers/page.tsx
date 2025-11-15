@@ -31,7 +31,7 @@ function WorkersContent({ children }: { children: React.ReactNode }) {
 
 const Header = memo(() => {
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex items-center justify-between">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Workers</h1>
         <p className="text-muted-foreground">

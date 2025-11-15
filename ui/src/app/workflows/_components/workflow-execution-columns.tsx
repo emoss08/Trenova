@@ -1,13 +1,8 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
 import { Badge } from "@/components/ui/badge";
 import {
-  type WorkflowExecutionSchema,
   type ExecutionStatusType,
+  type WorkflowExecutionSchema,
 } from "@/lib/schemas/workflow-schema";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import { formatDistanceToNow } from "date-fns";
@@ -73,7 +68,11 @@ export function getExecutionColumns(): ColumnDef<WorkflowExecutionSchema>[] {
         const minutes = Math.floor(seconds / 60);
 
         if (minutes > 0) {
-          return <span className="text-sm">{minutes}m {seconds % 60}s</span>;
+          return (
+            <span className="text-sm">
+              {minutes}m {seconds % 60}s
+            </span>
+          );
         }
         return <span className="text-sm">{seconds}s</span>;
       },
@@ -84,7 +83,7 @@ export function getExecutionColumns(): ColumnDef<WorkflowExecutionSchema>[] {
       cell: ({ row }) => {
         if (row.original.error) {
           return (
-            <p className="max-w-xs truncate text-destructive text-sm">
+            <p className="max-w-xs truncate text-sm text-destructive">
               {row.original.error}
             </p>
           );

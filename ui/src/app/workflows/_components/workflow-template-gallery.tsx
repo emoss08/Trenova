@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -34,8 +29,8 @@ export function WorkflowTemplateGallery({
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-semibold text-xl">Workflow Templates</h2>
-          <p className="text-muted-foreground text-sm">
+          <h2 className="text-xl font-semibold">Workflow Templates</h2>
+          <p className="text-sm text-muted-foreground">
             Start with a pre-built workflow template
           </p>
         </div>
@@ -58,7 +53,10 @@ export function WorkflowTemplateGallery({
       ) : filteredTemplates && filteredTemplates.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {filteredTemplates.map((template) => (
-            <Card key={template.id} className="transition-shadow hover:shadow-lg">
+            <Card
+              key={template.id}
+              className="transition-shadow hover:shadow-lg"
+            >
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="size-5 text-primary" />
@@ -66,14 +64,14 @@ export function WorkflowTemplateGallery({
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="line-clamp-3 text-muted-foreground text-sm">
+                <p className="line-clamp-3 text-sm text-muted-foreground">
                   {template.description || "No description available"}
                 </p>
 
                 <div className="flex items-center justify-between">
                   <div>
                     {template.isSystemTemplate && (
-                      <span className="rounded-full bg-primary/10 px-2 py-1 font-medium text-primary text-xs">
+                      <span className="rounded-full bg-primary/10 px-2 py-1 text-xs font-medium text-primary">
                         System
                       </span>
                     )}
@@ -93,8 +91,8 @@ export function WorkflowTemplateGallery({
       ) : (
         <div className="py-12 text-center">
           <Sparkles className="mx-auto size-12 text-muted-foreground" />
-          <h3 className="mt-4 font-medium text-lg">No templates found</h3>
-          <p className="mt-2 text-muted-foreground text-sm">
+          <h3 className="mt-4 text-lg font-medium">No templates found</h3>
+          <p className="mt-2 text-sm text-muted-foreground">
             {search
               ? "Try adjusting your search"
               : "No workflow templates are available"}
