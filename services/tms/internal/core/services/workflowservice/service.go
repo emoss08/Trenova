@@ -2,6 +2,7 @@ package workflowservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -14,7 +15,6 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/utils/jsonutils"
-	"github.com/emoss08/trenova/pkg/validator"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
@@ -196,7 +196,9 @@ func (s *Service) Delete(
 
 	// Don't allow deletion of active workflows
 	if wf.Status == workflow.WorkflowStatusActive {
-		return errortypes.NewBusinessError("Cannot delete active workflow. Please deactivate it first.")
+		return errortypes.NewBusinessError(
+			"Cannot delete active workflow. Please deactivate it first.",
+		)
 	}
 
 	err = s.repo.Delete(ctx, id, orgID, buID)
@@ -273,7 +275,7 @@ func (s *Service) CreateVersion(
 		VersionNumber:      versionNumber,
 		VersionName:        versionName,
 		Changelog:          changelog,
-		WorkflowDefinition: jsonutils.MustToJSONB(workflowDefinition),
+		WorkflowDefinition: jsonutils.MustToJSON(workflowDefinition),
 		CreatedBy:          userID,
 		CreatedAt:          time.Now().Unix(),
 	}
@@ -444,7 +446,7 @@ func (s *Service) UpdateStatus(
 		if status == workflow.WorkflowStatusActive {
 			// Setup scheduled trigger
 			var triggerConfig workflow.ScheduledTriggerConfig
-			if err := wf.TriggerConfig.Unmarshal(&triggerConfig); err == nil {
+			if err := jsonutils.MustToJSON(wf.TriggerConfig); err == nil {
 				if err := s.triggerService.SetupScheduledTrigger(ctx, wf, &triggerConfig); err != nil {
 					log.Error("failed to setup scheduled trigger", zap.Error(err))
 					// Don't fail the status update, just log the error
@@ -452,7 +454,7 @@ func (s *Service) UpdateStatus(
 					log.Info("scheduled trigger setup successfully")
 				}
 			} else {
-				log.Error("failed to parse trigger config", zap.Error(err))
+				log.Error("failed to parse trigger config", zap.Error(errors.New("failed to parse trigger config")))
 			}
 		} else if status == workflow.WorkflowStatusInactive {
 			// Pause scheduled trigger
@@ -535,27 +537,23 @@ func (s *Service) SaveWorkflowDefinition(
 
 	// Validate all nodes
 	multiErr := errortypes.NewMultiError()
-	for i, node := range req.Nodes {
+	for _, node := range req.Nodes {
 		node.WorkflowVersionID = req.VersionID
 		node.OrganizationID = req.OrgID
 		node.BusinessUnitID = req.BuID
 		node.CreatedAt = time.Now().Unix()
 
-		if err := (&validator.ValidationContext{IsCreate: true}).Validate(node); err != nil {
-			multiErr.Add(fmt.Sprintf("nodes[%d]", i), err.Error())
-		}
+		node.Validate(multiErr)
 	}
 
 	// Validate all edges
-	for i, edge := range req.Edges {
+	for _, edge := range req.Edges {
 		edge.WorkflowVersionID = req.VersionID
 		edge.OrganizationID = req.OrgID
 		edge.BusinessUnitID = req.BuID
 		edge.CreatedAt = time.Now().Unix()
 
-		if err := (&validator.ValidationContext{IsCreate: true}).Validate(edge); err != nil {
-			multiErr.Add(fmt.Sprintf("edges[%d]", i), err.Error())
-		}
+		edge.Validate(multiErr)
 	}
 
 	if multiErr.HasErrors() {

@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pulid"
-	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
@@ -36,7 +35,7 @@ type WorkflowEdge struct {
 	TargetHandle *string  `json:"targetHandle" bun:"target_handle,type:VARCHAR(100),nullzero"`
 
 	// Condition (for conditional edges)
-	Condition *utils.JSONB `json:"condition" bun:"condition,type:jsonb,nullzero"`
+	Condition map[string]any `json:"condition" bun:"condition,type:jsonb,nullzero"`
 
 	// Display
 	Label string `json:"label" bun:"label,type:VARCHAR(255)"`
@@ -45,11 +44,11 @@ type WorkflowEdge struct {
 	CreatedAt int64 `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit    *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization    *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
+	BusinessUnit    *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id"    json:"-"`
+	Organization    *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"     json:"-"`
 	WorkflowVersion *WorkflowVersion     `bun:"rel:belongs-to,join:workflow_version_id=id" json:"-"`
-	SourceNode      *WorkflowNode        `bun:"rel:belongs-to,join:source_node_id=id" json:"sourceNode,omitempty"`
-	TargetNode      *WorkflowNode        `bun:"rel:belongs-to,join:target_node_id=id" json:"targetNode,omitempty"`
+	SourceNode      *WorkflowNode        `bun:"rel:belongs-to,join:source_node_id=id"      json:"sourceNode,omitempty"`
+	TargetNode      *WorkflowNode        `bun:"rel:belongs-to,join:target_node_id=id"      json:"targetNode,omitempty"`
 }
 
 func (we *WorkflowEdge) Validate(multiErr *errortypes.MultiError) {

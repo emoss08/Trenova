@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pulid"
-	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
@@ -37,18 +36,18 @@ type WorkflowExecution struct {
 	TriggerType TriggerType     `json:"triggerType" bun:"trigger_type,type:workflow_trigger_type_enum,notnull"`
 
 	// Trigger Context
-	TriggerData utils.JSONB `json:"triggerData" bun:"trigger_data,type:jsonb,default:'{}'"`
-	TriggeredBy *pulid.ID   `json:"triggeredBy" bun:"triggered_by,type:VARCHAR(100),nullzero"` // User ID if manual
+	TriggerData map[string]any `json:"triggerData" bun:"trigger_data,type:jsonb,default:'{}'"`
+	TriggeredBy *pulid.ID      `json:"triggeredBy" bun:"triggered_by,type:VARCHAR(100),nullzero"` // User ID if manual
 
 	// Temporal Workflow Info
 	TemporalWorkflowID *string `json:"temporalWorkflowId" bun:"temporal_workflow_id,type:VARCHAR(255),nullzero"`
 	TemporalRunID      *string `json:"temporalRunId"      bun:"temporal_run_id,type:VARCHAR(255),nullzero"`
 
 	// Execution Results
-	InputData    *utils.JSONB `json:"inputData"    bun:"input_data,type:jsonb,nullzero"`
-	OutputData   *utils.JSONB `json:"outputData"   bun:"output_data,type:jsonb,nullzero"`
-	ErrorMessage *string      `json:"errorMessage" bun:"error_message,type:TEXT,nullzero"`
-	ErrorStack   *string      `json:"errorStack"   bun:"error_stack,type:TEXT,nullzero"`
+	InputData    map[string]any `json:"inputData"    bun:"input_data,type:jsonb,nullzero"`
+	OutputData   map[string]any `json:"outputData"   bun:"output_data,type:jsonb,nullzero"`
+	ErrorMessage *string        `json:"errorMessage" bun:"error_message,type:TEXT,nullzero"`
+	ErrorStack   *string        `json:"errorStack"   bun:"error_stack,type:TEXT,nullzero"`
 
 	// Timing
 	StartedAt   *int64 `json:"startedAt"   bun:"started_at,type:BIGINT,nullzero"`
@@ -65,11 +64,11 @@ type WorkflowExecution struct {
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit    *tenant.BusinessUnit       `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization    *tenant.Organization       `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
-	Workflow        *Workflow                  `bun:"rel:belongs-to,join:workflow_id=id" json:"workflow,omitempty"`
-	WorkflowVersion *WorkflowVersion           `bun:"rel:belongs-to,join:workflow_version_id=id" json:"workflowVersion,omitempty"`
-	Steps           []*WorkflowExecutionStep   `bun:"rel:has-many,join:id=execution_id" json:"steps,omitempty"`
+	BusinessUnit    *tenant.BusinessUnit     `bun:"rel:belongs-to,join:business_unit_id=id"    json:"-"`
+	Organization    *tenant.Organization     `bun:"rel:belongs-to,join:organization_id=id"     json:"-"`
+	Workflow        *Workflow                `bun:"rel:belongs-to,join:workflow_id=id"         json:"workflow,omitempty"`
+	WorkflowVersion *WorkflowVersion         `bun:"rel:belongs-to,join:workflow_version_id=id" json:"workflowVersion,omitempty"`
+	Steps           []*WorkflowExecutionStep `bun:"rel:has-many,join:id=execution_id"          json:"steps,omitempty"`
 }
 
 func (wx *WorkflowExecution) Validate(multiErr *errortypes.MultiError) {

@@ -21,17 +21,17 @@ import (
 type ExecutionServiceParams struct {
 	fx.In
 
-	Logger         *zap.Logger
-	Repo           repositories.WorkflowExecutionRepository
-	WorkflowRepo   repositories.WorkflowRepository
-	AuditService   services.AuditService
+	Logger       *zap.Logger
+	Repo         repositories.WorkflowExecutionRepository
+	WorkflowRepo repositories.WorkflowRepository
+	AuditService services.AuditService
 }
 
 type ExecutionService struct {
-	l    *zap.Logger
-	repo repositories.WorkflowExecutionRepository
+	l      *zap.Logger
+	repo   repositories.WorkflowExecutionRepository
 	wfRepo repositories.WorkflowRepository
-	as   services.AuditService
+	as     services.AuditService
 }
 
 func NewExecutionService(p ExecutionServiceParams) *ExecutionService {
@@ -96,7 +96,12 @@ func (s *ExecutionService) TriggerWorkflow(
 	}
 
 	// Get published version
-	publishedVersion, err := s.wfRepo.GetVersionByID(ctx, *wf.PublishedVersionID, req.OrgID, req.BuID)
+	publishedVersion, err := s.wfRepo.GetVersionByID(
+		ctx,
+		*wf.PublishedVersionID,
+		req.OrgID,
+		req.BuID,
+	)
 	if err != nil {
 		log.Error("failed to get published version", zap.Error(err))
 		return nil, err
@@ -110,7 +115,7 @@ func (s *ExecutionService) TriggerWorkflow(
 		WorkflowVersionID: publishedVersion.ID,
 		Status:            workflow.ExecutionStatusPending,
 		TriggerType:       workflow.TriggerTypeManual,
-		TriggerData:       jsonutils.MustToJSONB(req.TriggerData),
+		TriggerData:       jsonutils.MustToJSON(req.TriggerData),
 		TriggeredBy:       &req.UserID,
 		MaxRetries:        wf.MaxRetries,
 		CreatedAt:         time.Now().Unix(),
@@ -283,7 +288,9 @@ func (s *ExecutionService) RetryExecution(
 			OrganizationID: orgID,
 			BusinessUnitID: buID,
 		},
-		audit.WithComment(fmt.Sprintf("Retry of execution %s (attempt %d)", original.ID, newExecution.RetryCount)),
+		audit.WithComment(
+			fmt.Sprintf("Retry of execution %s (attempt %d)", original.ID, newExecution.RetryCount),
+		),
 	)
 	if err != nil {
 		log.Error("failed to log retry execution", zap.Error(err))

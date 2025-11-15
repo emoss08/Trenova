@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pulid"
-	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
@@ -35,7 +34,7 @@ type WorkflowTemplate struct {
 	Tags        []string `json:"tags"        bun:"tags,type:TEXT[],array,default:'{}'"`
 
 	// Template Definition
-	TemplateDefinition utils.JSONB `json:"templateDefinition" bun:"template_definition,type:jsonb,notnull"`
+	TemplateDefinition map[string]any `json:"templateDefinition" bun:"template_definition,type:jsonb,notnull"`
 
 	// Visibility
 	IsSystemTemplate bool `json:"isSystemTemplate" bun:"is_system_template,type:BOOLEAN,default:false"` // System-wide templates

@@ -5,7 +5,6 @@ import (
 
 	"github.com/emoss08/trenova/internal/api/context"
 	"github.com/emoss08/trenova/internal/api/helpers"
-	"github.com/emoss08/trenova/internal/core/domain/workflow"
 	workflowservice "github.com/emoss08/trenova/internal/core/services/workflowservice"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/gin-gonic/gin"

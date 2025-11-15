@@ -196,8 +196,8 @@ type ShipmentRepository interface {
 	// 	req *GetShipmentsByDateRangeRequest,
 	// ) (*pagination.ListResult[*shipment.Shipment], error)
 	GetDelayedShipments(ctx context.Context) ([]*shipment.Shipment, error)
-	Create(ctx context.Context, t *shipment.Shipment, userID pulid.ID) (*shipment.Shipment, error)
-	Update(ctx context.Context, t *shipment.Shipment, userID pulid.ID) (*shipment.Shipment, error)
+	Create(ctx context.Context, shp *shipment.Shipment, userID pulid.ID) (*shipment.Shipment, error)
+	Update(ctx context.Context, shp *shipment.Shipment, userID pulid.ID) (*shipment.Shipment, error)
 	// UpdateStatus(ctx context.Context, opts *UpdateShipmentStatusRequest) (*shipment.Shipment, error)
 	Cancel(ctx context.Context, req *CancelShipmentRequest) (*shipment.Shipment, error)
 	UnCancel(ctx context.Context, req *UnCancelShipmentRequest) (*shipment.Shipment, error)

@@ -1,7 +1,10 @@
 package jsonutils
 
 import (
+	"fmt"
 	"strings"
+
+	"github.com/bytedance/sonic"
 )
 
 // ExtractJSON extracts the first JSON object or array from a string
@@ -49,4 +52,17 @@ func ExtractJSON(s string) string {
 	}
 
 	return ""
+}
+
+func MustFromJSON(s map[string]any, v any) error {
+	jsonBytes, err := sonic.Marshal(s)
+	if err != nil {
+		return fmt.Errorf("failed to marshal JSON: %w", err)
+	}
+
+	err = sonic.Unmarshal(jsonBytes, v)
+	if err != nil {
+		panic(fmt.Errorf("failed to unmarshal JSON: %w", err))
+	}
+	return nil
 }

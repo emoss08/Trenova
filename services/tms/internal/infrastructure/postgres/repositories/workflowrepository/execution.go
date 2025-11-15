@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
-	"github.com/emoss08/trenova/pkg/utils/querybuilder"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -34,28 +33,6 @@ func NewExecutionRepository(p ExecutionParams) repositories.WorkflowExecutionRep
 	}
 }
 
-func (r *executionRepository) filterQuery(
-	q *bun.SelectQuery,
-	req *repositories.ListWorkflowExecutionRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		"wfx",
-		req.Filter,
-		(*workflow.WorkflowExecution)(nil),
-	)
-
-	if req.WorkflowID != nil {
-		q = q.Where("wfx.workflow_id = ?", req.WorkflowID)
-	}
-
-	if req.Status != nil {
-		q = q.Where("wfx.status = ?", req.Status)
-	}
-
-	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
-}
-
 func (r *executionRepository) List(
 	ctx context.Context,
 	req *repositories.ListWorkflowExecutionRequest,
@@ -77,9 +54,7 @@ func (r *executionRepository) List(
 		Model(&entities).
 		Relation("Workflow").
 		Relation("WorkflowVersion").
-		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return r.filterQuery(sq, req)
-		}).ScanAndCount(ctx)
+		ScanAndCount(ctx)
 	if err != nil {
 		log.Error("failed to scan workflow executions", zap.Error(err))
 		return nil, err
@@ -167,7 +142,7 @@ func (r *executionRepository) Update(
 	ov := entity.Version
 	entity.Version++
 
-	res, err := db.NewUpdate().
+	_, err = db.NewUpdate().
 		Model(entity).
 		WherePK().
 		Where("version = ?", ov).
@@ -178,7 +153,7 @@ func (r *executionRepository) Update(
 		return nil, err
 	}
 
-	return entity, dberror.HandleUpdateError(res, "WorkflowExecution")
+	return entity, nil
 }
 
 // Step management
@@ -221,7 +196,7 @@ func (r *executionRepository) UpdateStep(
 		return nil, err
 	}
 
-	res, err := db.NewUpdate().
+	_, err = db.NewUpdate().
 		Model(entity).
 		WherePK().
 		Returning("*").
@@ -231,7 +206,7 @@ func (r *executionRepository) UpdateStep(
 		return nil, err
 	}
 
-	return entity, dberror.HandleUpdateError(res, "WorkflowExecutionStep")
+	return entity, nil
 }
 
 func (r *executionRepository) GetStepsByExecutionID(

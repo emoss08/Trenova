@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/pkg/domaintypes"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pulid"
-	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
@@ -36,8 +35,8 @@ type Workflow struct {
 	Status      WorkflowStatus `json:"status"      bun:"status,type:workflow_status_enum,default:'draft'"`
 
 	// Trigger Configuration
-	TriggerType   TriggerType `json:"triggerType"   bun:"trigger_type,type:workflow_trigger_type_enum,notnull"`
-	TriggerConfig utils.JSONB `json:"triggerConfig" bun:"trigger_config,type:jsonb,default:'{}'"`
+	TriggerType   TriggerType    `json:"triggerType"   bun:"trigger_type,type:workflow_trigger_type_enum,notnull"`
+	TriggerConfig map[string]any `json:"triggerConfig" bun:"trigger_config,type:jsonb,default:'{}'"`
 
 	// Versioning
 	CurrentVersionID   *pulid.ID `json:"currentVersionId"   bun:"current_version_id,type:VARCHAR(100),nullzero"`
@@ -64,11 +63,11 @@ type Workflow struct {
 	UpdatedAt int64 `json:"updatedAt" bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit      *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization      *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
-	CurrentVersion    *WorkflowVersion     `bun:"rel:belongs-to,join:current_version_id=id" json:"currentVersion,omitempty"`
-	PublishedVersion  *WorkflowVersion     `bun:"rel:belongs-to,join:published_version_id=id" json:"publishedVersion,omitempty"`
-	Versions          []*WorkflowVersion   `bun:"rel:has-many,join:id=workflow_id" json:"versions,omitempty"`
+	BusinessUnit     *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id"     json:"-"`
+	Organization     *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"      json:"-"`
+	CurrentVersion   *WorkflowVersion     `bun:"rel:belongs-to,join:current_version_id=id"   json:"currentVersion,omitempty"`
+	PublishedVersion *WorkflowVersion     `bun:"rel:belongs-to,join:published_version_id=id" json:"publishedVersion,omitempty"`
+	Versions         []*WorkflowVersion   `bun:"rel:has-many,join:id=workflow_id"            json:"versions,omitempty"`
 }
 
 func (w *Workflow) Validate(multiErr *errortypes.MultiError) {
@@ -128,7 +127,11 @@ func (w *Workflow) GetPostgresSearchConfig() domaintypes.PostgresSearchConfig {
 		UseSearchVector: false,
 		SearchableFields: []domaintypes.SearchableField{
 			{Name: "name", Weight: domaintypes.SearchWeightA, Type: domaintypes.FieldTypeText},
-			{Name: "description", Weight: domaintypes.SearchWeightB, Type: domaintypes.FieldTypeText},
+			{
+				Name:   "description",
+				Weight: domaintypes.SearchWeightB,
+				Type:   domaintypes.FieldTypeText,
+			},
 			{Name: "category", Weight: domaintypes.SearchWeightC, Type: domaintypes.FieldTypeText},
 		},
 	}

@@ -5,7 +5,7 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/emoss08/trenova/internal/core/domain/shipmentenum"
+	"github.com/emoss08/trenova/internal/core/domain/shipment"
 	"github.com/emoss08/trenova/internal/core/domain/workflow"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -28,9 +28,9 @@ type ActionExecutionContext struct {
 type ActionHandlersParams struct {
 	fx.In
 
-	Logger                *zap.Logger
-	ShipmentRepo          repositories.ShipmentRepository
-	NotificationService   services.NotificationService
+	Logger              *zap.Logger
+	ShipmentRepo        repositories.ShipmentRepository
+	NotificationService services.NotificationService
 	// Add more services as needed for different actions
 }
 
@@ -51,7 +51,10 @@ func NewActionHandlers(p ActionHandlersParams) *ActionHandlers {
 }
 
 // Execute executes an action based on its type
-func (h *ActionHandlers) Execute(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) Execute(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	h.logger.Info("Executing action",
 		zap.String("actionType", string(execCtx.ActionType)),
 		zap.String("orgId", execCtx.OrgID.String()),
@@ -119,7 +122,10 @@ func (h *ActionHandlers) Execute(ctx context.Context, execCtx *ActionExecutionCo
 
 // ==================== Shipment Actions ====================
 
-func (h *ActionHandlers) shipmentUpdateStatus(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) shipmentUpdateStatus(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	shipmentIDStr, ok := execCtx.Config["shipmentId"].(string)
 	if !ok {
 		return nil, fmt.Errorf("shipmentId is required")
@@ -141,7 +147,7 @@ func (h *ActionHandlers) shipmentUpdateStatus(ctx context.Context, execCtx *Acti
 	)
 
 	// Get the shipment to verify it exists
-	shipment, err := h.shipmentRepo.GetByID(ctx, repositories.GetShipmentByIDRequest{
+	shp, err := h.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 		ID:     shipmentID,
 		OrgID:  execCtx.OrgID,
 		BuID:   execCtx.BuID,
@@ -151,27 +157,40 @@ func (h *ActionHandlers) shipmentUpdateStatus(ctx context.Context, execCtx *Acti
 		return nil, fmt.Errorf("failed to get shipment: %w", err)
 	}
 
-	oldStatus := string(shipment.Status)
+	oldStatus := string(shp.Status)
 
 	// Update the shipment status
 	// Note: This is a simplified implementation
 	// In a real scenario, you'd call a service method that handles all the business logic
-	shipment.Status = shipmentenum.ShipmentStatus(newStatus)
+	newStatusEnum, err := shipment.StatusFromString(newStatus)
+	if err != nil {
+		return nil, fmt.Errorf("invalid status: %w", err)
+	}
 
-	if _, err := h.shipmentRepo.Update(ctx, shipment); err != nil {
+	shp.Status = newStatusEnum
+
+	if _, err := h.shipmentRepo.Update(ctx, shp, execCtx.UserID); err != nil {
 		return nil, fmt.Errorf("failed to update shipment status: %w", err)
 	}
 
 	return map[string]any{
-		"success":   true,
+		"success":    true,
 		"shipmentId": shipmentID.String(),
 		"oldStatus":  oldStatus,
 		"newStatus":  newStatus,
-		"message":    fmt.Sprintf("Shipment %s status updated from %s to %s", shipmentID, oldStatus, newStatus),
+		"message": fmt.Sprintf(
+			"Shipment %s status updated from %s to %s",
+			shipmentID,
+			oldStatus,
+			newStatus,
+		),
 	}, nil
 }
 
-func (h *ActionHandlers) shipmentAssignCarrier(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) shipmentAssignCarrier(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	shipmentIDStr, ok := execCtx.Config["shipmentId"].(string)
 	if !ok {
 		return nil, fmt.Errorf("shipmentId is required")
@@ -198,7 +217,7 @@ func (h *ActionHandlers) shipmentAssignCarrier(ctx context.Context, execCtx *Act
 	)
 
 	// Get the shipment
-	shipment, err := h.shipmentRepo.GetByID(ctx, repositories.GetShipmentByIDRequest{
+	shipment, err := h.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
 		ID:     shipmentID,
 		OrgID:  execCtx.OrgID,
 		BuID:   execCtx.BuID,
@@ -210,9 +229,9 @@ func (h *ActionHandlers) shipmentAssignCarrier(ctx context.Context, execCtx *Act
 
 	// Assign the carrier
 	// Note: You may need to verify the carrier exists first
-	shipment.CustomerID = &carrierID // Assuming carrier is stored in CustomerID field
+	shipment.CustomerID = carrierID // Assuming carrier is stored in CustomerID field
 
-	if _, err := h.shipmentRepo.Update(ctx, shipment); err != nil {
+	if _, err := h.shipmentRepo.Update(ctx, shipment, execCtx.UserID); err != nil {
 		return nil, fmt.Errorf("failed to assign carrier: %w", err)
 	}
 
@@ -224,7 +243,10 @@ func (h *ActionHandlers) shipmentAssignCarrier(ctx context.Context, execCtx *Act
 	}, nil
 }
 
-func (h *ActionHandlers) shipmentAssignDriver(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) shipmentAssignDriver(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	shipmentID := execCtx.Config["shipmentId"]
 	driverID := execCtx.Config["driverId"]
 
@@ -243,7 +265,10 @@ func (h *ActionHandlers) shipmentAssignDriver(ctx context.Context, execCtx *Acti
 	}, nil
 }
 
-func (h *ActionHandlers) shipmentUpdateField(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) shipmentUpdateField(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	shipmentID := execCtx.Config["shipmentId"]
 	field := execCtx.Config["field"]
 	value := execCtx.Config["value"]
@@ -267,7 +292,10 @@ func (h *ActionHandlers) shipmentUpdateField(ctx context.Context, execCtx *Actio
 
 // ==================== Billing Actions ====================
 
-func (h *ActionHandlers) billingValidateRequirements(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) billingValidateRequirements(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	shipmentID := execCtx.Config["shipmentId"]
 
 	h.logger.Info("Validating billing requirements", zap.Any("shipmentId", shipmentID))
@@ -284,7 +312,10 @@ func (h *ActionHandlers) billingValidateRequirements(ctx context.Context, execCt
 	}, nil
 }
 
-func (h *ActionHandlers) billingTransferToQueue(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) billingTransferToQueue(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	shipmentID := execCtx.Config["shipmentId"]
 	queueName := execCtx.Config["queue"]
 
@@ -303,7 +334,10 @@ func (h *ActionHandlers) billingTransferToQueue(ctx context.Context, execCtx *Ac
 	}, nil
 }
 
-func (h *ActionHandlers) billingGenerateInvoice(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) billingGenerateInvoice(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	shipmentID := execCtx.Config["shipmentId"]
 
 	h.logger.Info("Generating invoice", zap.Any("shipmentId", shipmentID))
@@ -319,7 +353,10 @@ func (h *ActionHandlers) billingGenerateInvoice(ctx context.Context, execCtx *Ac
 	}, nil
 }
 
-func (h *ActionHandlers) billingSendInvoice(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) billingSendInvoice(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	invoiceID := execCtx.Config["invoiceId"]
 	recipientEmail := execCtx.Config["recipientEmail"]
 
@@ -341,7 +378,10 @@ func (h *ActionHandlers) billingSendInvoice(ctx context.Context, execCtx *Action
 
 // ==================== Document Actions ====================
 
-func (h *ActionHandlers) documentValidateCompleteness(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) documentValidateCompleteness(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	shipmentID := execCtx.Config["shipmentId"]
 	requiredDocs := execCtx.Config["requiredDocuments"]
 
@@ -362,7 +402,10 @@ func (h *ActionHandlers) documentValidateCompleteness(ctx context.Context, execC
 	}, nil
 }
 
-func (h *ActionHandlers) documentRequestMissing(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) documentRequestMissing(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	shipmentID := execCtx.Config["shipmentId"]
 	missingDocs := execCtx.Config["missingDocuments"]
 
@@ -382,7 +425,10 @@ func (h *ActionHandlers) documentRequestMissing(ctx context.Context, execCtx *Ac
 	}, nil
 }
 
-func (h *ActionHandlers) documentGenerate(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) documentGenerate(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	documentType := execCtx.Config["documentType"]
 	shipmentID := execCtx.Config["shipmentId"]
 
@@ -404,10 +450,12 @@ func (h *ActionHandlers) documentGenerate(ctx context.Context, execCtx *ActionEx
 
 // ==================== Notification Actions ====================
 
-func (h *ActionHandlers) notificationSendEmail(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) notificationSendEmail(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	to := execCtx.Config["to"]
 	subject := execCtx.Config["subject"]
-	body := execCtx.Config["body"]
 
 	h.logger.Info("Sending email notification",
 		zap.Any("to", to),
@@ -426,7 +474,10 @@ func (h *ActionHandlers) notificationSendEmail(ctx context.Context, execCtx *Act
 	}, nil
 }
 
-func (h *ActionHandlers) notificationSendSMS(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) notificationSendSMS(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	to := execCtx.Config["to"]
 	message := execCtx.Config["message"]
 
@@ -444,9 +495,11 @@ func (h *ActionHandlers) notificationSendSMS(ctx context.Context, execCtx *Actio
 	}, nil
 }
 
-func (h *ActionHandlers) notificationSendWebhook(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) notificationSendWebhook(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	url := execCtx.Config["url"]
-	payload := execCtx.Config["payload"]
 
 	h.logger.Info("Sending webhook notification",
 		zap.Any("url", url),
@@ -462,10 +515,12 @@ func (h *ActionHandlers) notificationSendWebhook(ctx context.Context, execCtx *A
 	}, nil
 }
 
-func (h *ActionHandlers) notificationSendPush(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) notificationSendPush(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	userID := execCtx.Config["userId"]
 	title := execCtx.Config["title"]
-	body := execCtx.Config["body"]
 
 	h.logger.Info("Sending push notification",
 		zap.Any("userId", userID),
@@ -484,7 +539,10 @@ func (h *ActionHandlers) notificationSendPush(ctx context.Context, execCtx *Acti
 
 // ==================== Data Actions ====================
 
-func (h *ActionHandlers) dataTransform(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) dataTransform(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	transformType := execCtx.Config["transformType"]
 	inputField := execCtx.Config["inputField"]
 
@@ -504,7 +562,10 @@ func (h *ActionHandlers) dataTransform(ctx context.Context, execCtx *ActionExecu
 	}, nil
 }
 
-func (h *ActionHandlers) dataAPICall(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) dataAPICall(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	url := execCtx.Config["url"]
 	method := execCtx.Config["method"]
 
@@ -525,7 +586,10 @@ func (h *ActionHandlers) dataAPICall(ctx context.Context, execCtx *ActionExecuti
 	}, nil
 }
 
-func (h *ActionHandlers) dataDatabaseQuery(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) dataDatabaseQuery(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	query := execCtx.Config["query"]
 
 	h.logger.Info("Executing database query",
@@ -545,9 +609,11 @@ func (h *ActionHandlers) dataDatabaseQuery(ctx context.Context, execCtx *ActionE
 
 // ==================== Flow Control Actions ====================
 
-func (h *ActionHandlers) flowApprovalRequest(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) flowApprovalRequest(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	approver := execCtx.Config["approver"]
-	message := execCtx.Config["message"]
 
 	h.logger.Info("Requesting approval",
 		zap.Any("approver", approver),
@@ -566,7 +632,10 @@ func (h *ActionHandlers) flowApprovalRequest(ctx context.Context, execCtx *Actio
 	}, nil
 }
 
-func (h *ActionHandlers) flowWaitForEvent(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) flowWaitForEvent(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	eventType := execCtx.Config["eventType"]
 
 	h.logger.Info("Waiting for event",
@@ -583,7 +652,10 @@ func (h *ActionHandlers) flowWaitForEvent(ctx context.Context, execCtx *ActionEx
 	}, nil
 }
 
-func (h *ActionHandlers) flowParallelExecution(ctx context.Context, execCtx *ActionExecutionContext) (map[string]any, error) {
+func (h *ActionHandlers) flowParallelExecution(
+	ctx context.Context,
+	execCtx *ActionExecutionContext,
+) (map[string]any, error) {
 	tasks := execCtx.Config["tasks"]
 
 	h.logger.Info("Starting parallel execution",

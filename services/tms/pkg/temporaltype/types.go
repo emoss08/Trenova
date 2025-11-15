@@ -12,6 +12,7 @@ const (
 	EmailTaskQueue        = "email-queue"
 	AuditTaskQueue        = "audit-queue"
 	ReportTaskQueue       = "report-queue"
+	WorkflowTaskQueue     = "workflow-queue"
 )
 
 const (

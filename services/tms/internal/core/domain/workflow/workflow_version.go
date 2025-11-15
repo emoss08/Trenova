@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pulid"
-	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
@@ -30,12 +29,12 @@ type WorkflowVersion struct {
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,notnull,pk,type:VARCHAR(100)"`
 
 	// Version Info
-	VersionNumber int         `json:"versionNumber" bun:"version_number,notnull"`
-	VersionName   string      `json:"versionName"   bun:"version_name,type:VARCHAR(255)"`
-	Changelog     string      `json:"changelog"     bun:"changelog,type:TEXT"`
+	VersionNumber int    `json:"versionNumber" bun:"version_number,notnull"`
+	VersionName   string `json:"versionName"   bun:"version_name,type:VARCHAR(255)"`
+	Changelog     string `json:"changelog"     bun:"changelog,type:TEXT"`
 
 	// Workflow Definition (stored as JSON)
-	WorkflowDefinition utils.JSONB `json:"workflowDefinition" bun:"workflow_definition,type:jsonb,notnull"`
+	WorkflowDefinition map[string]any `json:"workflowDefinition" bun:"workflow_definition,type:jsonb,notnull"`
 
 	// Status
 	IsPublished *bool     `json:"isPublished" bun:"is_published,default:false"`
@@ -47,9 +46,9 @@ type WorkflowVersion struct {
 	CreatedAt int64    `json:"createdAt" bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
-	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
-	Workflow     *Workflow            `bun:"rel:belongs-to,join:workflow_id=id" json:"-"`
+	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id"  json:"-"`
+	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"   json:"-"`
+	Workflow     *Workflow            `bun:"rel:belongs-to,join:workflow_id=id"       json:"-"`
 	Nodes        []*WorkflowNode      `bun:"rel:has-many,join:id=workflow_version_id" json:"nodes,omitempty"`
 	Edges        []*WorkflowEdge      `bun:"rel:has-many,join:id=workflow_version_id" json:"edges,omitempty"`
 }

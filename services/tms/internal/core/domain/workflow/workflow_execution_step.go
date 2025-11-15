@@ -8,7 +8,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pulid"
-	"github.com/emoss08/trenova/pkg/utils"
 	"github.com/emoss08/trenova/pkg/validator/framework"
 	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/uptrace/bun"
@@ -40,10 +39,10 @@ type WorkflowExecutionStep struct {
 	Status     StepStatus `json:"status"     bun:"status,type:workflow_execution_step_status_enum,default:'pending'"`
 
 	// Execution Data
-	InputData    *utils.JSONB `json:"inputData"    bun:"input_data,type:jsonb,nullzero"`
-	OutputData   *utils.JSONB `json:"outputData"   bun:"output_data,type:jsonb,nullzero"`
-	ErrorMessage *string      `json:"errorMessage" bun:"error_message,type:TEXT,nullzero"`
-	ErrorStack   *string      `json:"errorStack"   bun:"error_stack,type:TEXT,nullzero"`
+	InputData    map[string]any `json:"inputData"    bun:"input_data,type:jsonb,nullzero"`
+	OutputData   map[string]any `json:"outputData"   bun:"output_data,type:jsonb,nullzero"`
+	ErrorMessage *string        `json:"errorMessage" bun:"error_message,type:TEXT,nullzero"`
+	ErrorStack   *string        `json:"errorStack"   bun:"error_stack,type:TEXT,nullzero"`
 
 	// Timing
 	StartedAt   *int64 `json:"startedAt"   bun:"started_at,type:BIGINT,nullzero"`
@@ -60,7 +59,7 @@ type WorkflowExecutionStep struct {
 	// Relationships
 	BusinessUnit *tenant.BusinessUnit `bun:"rel:belongs-to,join:business_unit_id=id" json:"-"`
 	Organization *tenant.Organization `bun:"rel:belongs-to,join:organization_id=id"  json:"-"`
-	Execution    *WorkflowExecution   `bun:"rel:belongs-to,join:execution_id=id" json:"-"`
+	Execution    *WorkflowExecution   `bun:"rel:belongs-to,join:execution_id=id"     json:"-"`
 }
 
 func (wes *WorkflowExecutionStep) Validate(multiErr *errortypes.MultiError) {

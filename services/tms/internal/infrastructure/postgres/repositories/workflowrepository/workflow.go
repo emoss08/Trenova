@@ -153,7 +153,7 @@ func (r *repository) Update(
 	ov := entity.Version
 	entity.Version++
 
-	res, err := db.NewUpdate().
+	_, err = db.NewUpdate().
 		Model(entity).
 		WherePK().
 		Where("version = ?", ov).
@@ -164,7 +164,7 @@ func (r *repository) Update(
 		return nil, err
 	}
 
-	return entity, dberror.HandleUpdateError(res, "Workflow")
+	return entity, nil
 }
 
 func (r *repository) Delete(

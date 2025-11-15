@@ -9,7 +9,6 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
-	"github.com/emoss08/trenova/pkg/utils/querybuilder"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -34,24 +33,6 @@ func NewTemplateRepository(p TemplateParams) repositories.WorkflowTemplateReposi
 	}
 }
 
-func (r *templateRepository) filterQuery(
-	q *bun.SelectQuery,
-	req *repositories.ListWorkflowTemplateRequest,
-) *bun.SelectQuery {
-	q = querybuilder.ApplyFilters(
-		q,
-		"wft",
-		req.Filter,
-		(*workflow.WorkflowTemplate)(nil),
-	)
-
-	if req.Category != nil {
-		q = q.Where("wft.category = ?", req.Category)
-	}
-
-	return q.Limit(req.Filter.Limit).Offset(req.Filter.Offset)
-}
-
 func (r *templateRepository) List(
 	ctx context.Context,
 	req *repositories.ListWorkflowTemplateRequest,
@@ -69,9 +50,7 @@ func (r *templateRepository) List(
 
 	entities := make([]*workflow.WorkflowTemplate, 0, req.Filter.Limit)
 
-	total, err := db.NewSelect().Model(&entities).Apply(func(sq *bun.SelectQuery) *bun.SelectQuery {
-		return r.filterQuery(sq, req)
-	}).ScanAndCount(ctx)
+	total, err := db.NewSelect().Model(&entities).ScanAndCount(ctx)
 	if err != nil {
 		log.Error("failed to scan workflow templates", zap.Error(err))
 		return nil, err
@@ -154,7 +133,7 @@ func (r *templateRepository) Update(
 	ov := entity.Version
 	entity.Version++
 
-	res, err := db.NewUpdate().
+	_, err = db.NewUpdate().
 		Model(entity).
 		WherePK().
 		Where("version = ?", ov).
@@ -165,7 +144,7 @@ func (r *templateRepository) Update(
 		return nil, err
 	}
 
-	return entity, dberror.HandleUpdateError(res, "WorkflowTemplate")
+	return entity, nil
 }
 
 func (r *templateRepository) Delete(

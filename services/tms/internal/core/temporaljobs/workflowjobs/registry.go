@@ -3,7 +3,6 @@ package workflowjobs
 import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
-	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/worker"
 	"go.uber.org/zap"
 )
@@ -54,55 +53,30 @@ func (r *Registry) Register(w worker.Worker) error {
 
 	// Create activities instance
 	activities := NewActivities(ActivitiesParams{
-		Logger:              r.logger,
-		WorkflowRepo:        r.workflowRepo,
-		ExecutionRepo:       r.executionRepo,
-		ShipmentRepo:        r.shipmentRepo,
-		NotificationService: r.notificationService,
-		AuditService:        r.auditService,
+		Logger:       r.logger,
+		WorkflowRepo: r.workflowRepo,
+		// ExecutionRepo:       r.executionRepo,
+		// ShipmentRepo:        r.shipmentRepo,
+		// NotificationService: r.notificationService,
+		// AuditService:        r.auditService,
 	})
 
-	// Register activities
-	activityList := RegisterActivities()
-	for _, activity := range activityList {
-		w.RegisterActivity(activity.Fn)
-		r.logger.Info("Registered activity",
-			zap.String("name", activity.Name),
-		)
-	}
+	// // Register activities
+	// activityList := RegisterActivities()
+	// for _, activity := range activityList {
+	// 	w.RegisterActivity(activity.Fn)
+	// 	r.logger.Info("Registered activity",
+	// 		zap.String("name", activity.Name),
+	// 	)
+	// }
 
 	// Register the activities struct (for method-based activity registration)
 	w.RegisterActivity(activities)
 
-	r.logger.Info("Workflow jobs registry completed",
-		zap.Int("workflows", len(workflows)),
-		zap.Int("activities", len(activityList)),
-	)
+	// r.logger.Info("Workflow jobs registry completed",
+	// 	zap.Int("workflows", len(workflows)),
+	// 	zap.Int("activities", len(activityList)),
+	// )
 
 	return nil
-}
-
-// GetTaskQueues returns the task queues this registry handles
-func (r *Registry) GetTaskQueues() []temporaltype.TaskQueue {
-	return []temporaltype.TaskQueue{
-		WorkflowTaskQueue,
-	}
-}
-
-// RegisterActivities returns the list of activities to register
-func RegisterActivities() []temporaltype.ActivityDefinition {
-	return []temporaltype.ActivityDefinition{
-		{
-			Name:        "LoadWorkflowDefinition",
-			Description: "Load workflow definition and nodes from database",
-		},
-		{
-			Name:        "UpdateExecutionStatus",
-			Description: "Update workflow execution status",
-		},
-		{
-			Name:        "ExecuteNode",
-			Description: "Execute a single workflow node",
-		},
-	}
 }

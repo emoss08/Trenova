@@ -20,7 +20,7 @@ func RegisterWorkflows() []temporaltype.WorkflowDefinition {
 		{
 			Name:        "ExecuteWorkflow",
 			Fn:          ExecuteWorkflow,
-			TaskQueue:   temporaltype.WorkflowTaskQueue,
+			TaskQueue:   WorkflowTaskQueue,
 			Description: "Execute a workflow automation",
 		},
 	}
@@ -207,7 +207,6 @@ func executeNodeGraph(
 			BuID:        execCtx.BuID,
 			UserID:      execCtx.UserID,
 		}).Get(ctx, &nodeResult)
-
 		if err != nil {
 			logger.Error("Node execution failed", "nodeKey", currentNode.NodeKey, "error", err)
 			return fmt.Errorf("node %s execution failed: %w", currentNode.NodeKey, err)
@@ -257,10 +256,19 @@ func executeNodeGraph(
 				sourceHandle = *edge.SourceHandle
 			}
 
-			if (takeTruePath && sourceHandle == "true") || (!takeTruePath && sourceHandle == "false") {
+			if (takeTruePath && sourceHandle == "true") ||
+				(!takeTruePath && sourceHandle == "false") {
 				nextNode := findNodeByID(allNodes, edge.TargetNodeID)
 				if nextNode != nil {
-					return executeNodeGraph(ctx, a, nextNode, allNodes, allEdges, execCtx, stepsExecuted)
+					return executeNodeGraph(
+						ctx,
+						a,
+						nextNode,
+						allNodes,
+						allEdges,
+						execCtx,
+						stepsExecuted,
+					)
 				}
 			}
 		}
@@ -270,7 +278,15 @@ func executeNodeGraph(
 		for _, edge := range outgoingEdges {
 			nextNode := findNodeByID(allNodes, edge.TargetNodeID)
 			if nextNode != nil {
-				err := executeNodeGraph(ctx, a, nextNode, allNodes, allEdges, execCtx, stepsExecuted)
+				err := executeNodeGraph(
+					ctx,
+					a,
+					nextNode,
+					allNodes,
+					allEdges,
+					execCtx,
+					stepsExecuted,
+				)
 				if err != nil {
 					return err
 				}

@@ -9,25 +9,28 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/jobscheduler"
-	"github.com/emoss08/trenova/internal/core/temporaljobs/workflowjobs"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/temporaltype"
+	"github.com/emoss08/trenova/pkg/utils/jsonutils"
 	"go.temporal.io/sdk/client"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
 // TriggerService handles workflow trigger management
 type TriggerService struct {
-	logger            *zap.Logger
-	workflowRepo      repositories.WorkflowRepository
-	executionService  *ExecutionService
-	schedulerManager  *jobscheduler.Manager
-	temporalClient    client.Client
-	auditService      services.AuditService
+	logger           *zap.Logger
+	workflowRepo     repositories.WorkflowRepository
+	executionService *ExecutionService
+	schedulerManager *jobscheduler.Manager
+	temporalClient   client.Client
+	auditService     services.AuditService
 }
 
 // TriggerServiceParams holds dependencies for trigger service
 type TriggerServiceParams struct {
+	fx.In
+
 	Logger           *zap.Logger
 	WorkflowRepo     repositories.WorkflowRepository
 	ExecutionService *ExecutionService
@@ -76,26 +79,14 @@ func (s *TriggerService) SetupScheduledTrigger(
 	scheduleConfig := &jobscheduler.ScheduleConfig{
 		ID:           scheduleID,
 		WorkflowType: "ExecuteWorkflow",
-		TaskQueue:    string(temporaltype.WorkflowTaskQueue),
-		Schedule: client.ScheduleSpec{
-			CronExpressions: []string{triggerConfig.CronExpression},
+		TaskQueue:    temporaltype.WorkflowTaskQueue,
+		Schedule: jobscheduler.ScheduleSpec{
+			Cron: triggerConfig.CronExpression,
 		},
-		Args: []any{
-			&workflowjobs.ExecuteWorkflowPayload{
-				BasePayload: temporaltype.BasePayload{
-					OrganizationID: wf.OrganizationID,
-					BusinessUnitID: wf.BusinessUnitID,
-				},
-				WorkflowID:        wf.ID,
-				WorkflowVersionID: *wf.PublishedVersionID,
-				TriggerType:       workflow.TriggerTypeScheduled,
-				TriggerData: map[string]any{
-					"scheduledTime": time.Now().Format(time.RFC3339),
-					"cronExpression": triggerConfig.CronExpression,
-				},
-			},
+		Description: "Scheduled trigger for workflow " + wf.Name,
+		Metadata: map[string]string{
+			"workflowId": wf.ID.String(),
 		},
-		Paused: false,
 	}
 
 	if err := s.schedulerManager.CreateOrUpdateSchedule(ctx, scheduleConfig); err != nil {
@@ -253,7 +244,7 @@ func (s *TriggerService) TriggerShipmentStatusChange(
 
 		// Parse trigger config to check if this status change matches
 		var triggerConfig workflow.ShipmentStatusTriggerConfig
-		if err := wf.TriggerConfig.Unmarshal(&triggerConfig); err != nil {
+		if err := jsonutils.MustFromJSON(wf.TriggerConfig, &triggerConfig); err != nil {
 			s.logger.Warn("Failed to parse trigger config",
 				zap.String("workflowId", wf.ID.String()),
 				zap.Error(err),
@@ -281,9 +272,9 @@ func (s *TriggerService) TriggerShipmentStatusChange(
 			BuID:       buID,
 			UserID:     userID,
 			TriggerData: map[string]any{
-				"shipmentId": shipmentID.String(),
-				"oldStatus":  oldStatus,
-				"newStatus":  newStatus,
+				"shipmentId":  shipmentID.String(),
+				"oldStatus":   oldStatus,
+				"newStatus":   newStatus,
 				"triggeredAt": time.Now().Format(time.RFC3339),
 			},
 		})
@@ -342,7 +333,7 @@ func (s *TriggerService) TriggerDocumentUpload(
 
 		// Parse trigger config
 		var triggerConfig workflow.DocumentUploadTriggerConfig
-		if err := wf.TriggerConfig.Unmarshal(&triggerConfig); err != nil {
+		if err := jsonutils.MustFromJSON(wf.TriggerConfig, &triggerConfig); err != nil {
 			s.logger.Warn("Failed to parse trigger config",
 				zap.String("workflowId", wf.ID.String()),
 				zap.Error(err),
@@ -431,7 +422,7 @@ func (s *TriggerService) TriggerEntityEvent(
 
 		// Parse trigger config
 		var triggerConfig workflow.EntityEventTriggerConfig
-		if err := wf.TriggerConfig.Unmarshal(&triggerConfig); err != nil {
+		if err := jsonutils.MustFromJSON(wf.TriggerConfig, &triggerConfig); err != nil {
 			s.logger.Warn("Failed to parse trigger config",
 				zap.String("workflowId", wf.ID.String()),
 				zap.Error(err),

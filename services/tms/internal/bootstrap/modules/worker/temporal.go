@@ -69,10 +69,10 @@ func NewTemporalWorkers(p TemporalWorkerParams) error {
 		return err
 	}
 
-	if err := p.WorkerManager.Register(p.WorkflowRegistry); err != nil {
-		log.Error("failed to register workflow worker", zap.Error(err))
-		return err
-	}
+	// if err := p.WorkerManager.Register(p.WorkflowRegistry); err != nil {
+	// 	log.Error("failed to register workflow worker", zap.Error(err))
+	// 	return err
+	// }
 
 	p.LC.Append(fx.Hook{
 		OnStart: func(ctx context.Context) error {

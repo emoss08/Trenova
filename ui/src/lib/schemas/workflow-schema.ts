@@ -131,7 +131,7 @@ export const webhookTriggerConfigSchema = z.object({
   webhookUrl: optionalStringSchema,
   requireAuth: z.boolean(),
   authToken: optionalStringSchema,
-  customHeaders: z.record(z.string()).optional(),
+  customHeaders: z.record(z.string(), z.string()).optional(),
 });
 
 export type WebhookTriggerConfigSchema = z.infer<
@@ -154,12 +154,12 @@ export const workflowNodeSchema = z.object({
   type: NodeType,
   actionType: ActionType.optional(),
   label: z.string().min(1, "Node label is required"),
-  config: z.record(z.any()),
+  config: z.record(z.any(), z.any()),
   position: z.object({
     x: z.number(),
     y: z.number(),
   }),
-  data: z.record(z.any()).optional(),
+  data: z.record(z.any(), z.any()).optional(),
 });
 
 export type WorkflowNodeSchema = z.infer<typeof workflowNodeSchema>;
@@ -171,7 +171,7 @@ export const workflowEdgeSchema = z.object({
   sourceHandle: optionalStringSchema,
   targetHandle: optionalStringSchema,
   label: optionalStringSchema,
-  condition: z.record(z.any()).optional(),
+  condition: z.record(z.any(), z.any()).optional(),
 });
 
 export type WorkflowEdgeSchema = z.infer<typeof workflowEdgeSchema>;
@@ -190,9 +190,7 @@ export const workflowDefinitionSchema = z.object({
     .optional(),
 });
 
-export type WorkflowDefinitionSchema = z.infer<
-  typeof workflowDefinitionSchema
->;
+export type WorkflowDefinitionSchema = z.infer<typeof workflowDefinitionSchema>;
 
 // ==================== Workflow ====================
 
@@ -211,7 +209,7 @@ export const workflowSchema = z.object({
   description: optionalStringSchema,
   status: WorkflowStatus,
   triggerType: TriggerType,
-  triggerConfig: z.record(z.any()),
+  triggerConfig: z.record(z.any(), z.any()),
   currentVersionId: nullablePulidSchema,
   publishedVersionId: nullablePulidSchema,
   tags: z.array(z.string()).optional(),
@@ -260,11 +258,11 @@ export const workflowExecutionSchema = z.object({
   completedAt: timestampSchema,
   duration: z.number().int().min(0).optional(),
   triggerType: TriggerType,
-  triggerData: z.record(z.any()).optional(),
-  inputData: z.record(z.any()).optional(),
-  outputData: z.record(z.any()).optional(),
+  triggerData: z.record(z.any(), z.any()).optional(),
+  inputData: z.record(z.any(), z.any()).optional(),
+  outputData: z.record(z.any(), z.any()).optional(),
   errorMessage: optionalStringSchema,
-  errorDetails: z.record(z.any()).optional(),
+  errorDetails: z.record(z.any(), z.any()).optional(),
   retryCount: z.number().int().min(0),
   maxRetries: z.number().int().min(0),
   temporalWorkflowId: optionalStringSchema,
@@ -290,8 +288,8 @@ export const workflowExecutionStepSchema = z.object({
   startedAt: timestampSchema,
   completedAt: timestampSchema,
   duration: z.number().int().min(0).optional(),
-  inputData: z.record(z.any()).optional(),
-  outputData: z.record(z.any()).optional(),
+  inputData: z.record(z.any(), z.any()).optional(),
+  outputData: z.record(z.any(), z.any()).optional(),
   errorMessage: optionalStringSchema,
   retryCount: z.number().int().min(0),
 });
@@ -318,7 +316,7 @@ export const workflowTemplateSchema = z.object({
   category: optionalStringSchema,
   definition: workflowDefinitionSchema,
   triggerType: TriggerType,
-  triggerConfig: z.record(z.any()),
+  triggerConfig: z.record(z.any(), z.any()),
   isSystem: z.boolean(),
   isPublic: z.boolean(),
   usageCount: z.number().int().min(0),
@@ -339,7 +337,7 @@ export const createWorkflowRequestSchema = z.object({
     .max(100, "Workflow name must be less than 100 characters"),
   description: optionalStringSchema,
   triggerType: TriggerType,
-  triggerConfig: z.record(z.any()),
+  triggerConfig: z.record(z.any(), z.any()),
   tags: z.array(z.string()).optional(),
 });
 
@@ -354,7 +352,7 @@ export const updateWorkflowRequestSchema = z.object({
     .max(100, "Workflow name must be less than 100 characters")
     .optional(),
   description: optionalStringSchema,
-  triggerConfig: z.record(z.any()).optional(),
+  triggerConfig: z.record(z.any(), z.any()).optional(),
   tags: z.array(z.string()).optional(),
 });
 
@@ -379,7 +377,7 @@ export type SaveDefinitionRequestSchema = z.infer<
 >;
 
 export const triggerWorkflowRequestSchema = z.object({
-  triggerData: z.record(z.any()).optional(),
+  triggerData: z.record(z.any(), z.any()).optional(),
 });
 
 export type TriggerWorkflowRequestSchema = z.infer<
@@ -395,7 +393,7 @@ export const createTemplateRequestSchema = z.object({
   category: optionalStringSchema,
   definition: workflowDefinitionSchema,
   triggerType: TriggerType,
-  triggerConfig: z.record(z.any()),
+  triggerConfig: z.record(z.any(), z.any()),
   isPublic: z.boolean(),
   tags: z.array(z.string()).optional(),
 });
@@ -412,6 +410,4 @@ export const useTemplateRequestSchema = z.object({
   description: optionalStringSchema,
 });
 
-export type UseTemplateRequestSchema = z.infer<
-  typeof useTemplateRequestSchema
->;
+export type UseTemplateRequestSchema = z.infer<typeof useTemplateRequestSchema>;

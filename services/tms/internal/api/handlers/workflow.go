@@ -46,17 +46,45 @@ func (h *WorkflowHandler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.DELETE(":id/", h.pm.RequirePermission(workflow.ResourceWorkflow, "delete"), h.delete)
 
 	// Version management
-	api.GET(":id/versions/", h.pm.RequirePermission(workflow.ResourceWorkflow, "read"), h.listVersions)
-	api.GET(":id/versions/:versionId/", h.pm.RequirePermission(workflow.ResourceWorkflow, "read"), h.getVersion)
-	api.POST(":id/versions/", h.pm.RequirePermission(workflow.ResourceWorkflow, "update"), h.createVersion)
-	api.POST(":id/versions/:versionId/publish/", h.pm.RequirePermission(workflow.ResourceWorkflow, "update"), h.publishVersion)
+	api.GET(
+		":id/versions/",
+		h.pm.RequirePermission(workflow.ResourceWorkflow, "read"),
+		h.listVersions,
+	)
+	api.GET(
+		":id/versions/:versionId/",
+		h.pm.RequirePermission(workflow.ResourceWorkflow, "read"),
+		h.getVersion,
+	)
+	api.POST(
+		":id/versions/",
+		h.pm.RequirePermission(workflow.ResourceWorkflow, "update"),
+		h.createVersion,
+	)
+	api.POST(
+		":id/versions/:versionId/publish/",
+		h.pm.RequirePermission(workflow.ResourceWorkflow, "update"),
+		h.publishVersion,
+	)
 
 	// Node and edge management
-	api.PUT(":id/versions/:versionId/definition/", h.pm.RequirePermission(workflow.ResourceWorkflow, "update"), h.saveDefinition)
+	api.PUT(
+		":id/versions/:versionId/definition/",
+		h.pm.RequirePermission(workflow.ResourceWorkflow, "update"),
+		h.saveDefinition,
+	)
 
 	// Status management
-	api.POST(":id/activate/", h.pm.RequirePermission(workflow.ResourceWorkflow, "update"), h.activate)
-	api.POST(":id/deactivate/", h.pm.RequirePermission(workflow.ResourceWorkflow, "update"), h.deactivate)
+	api.POST(
+		":id/activate/",
+		h.pm.RequirePermission(workflow.ResourceWorkflow, "update"),
+		h.activate,
+	)
+	api.POST(
+		":id/deactivate/",
+		h.pm.RequirePermission(workflow.ResourceWorkflow, "update"),
+		h.deactivate,
+	)
 	api.POST(":id/archive/", h.pm.RequirePermission(workflow.ResourceWorkflow, "update"), h.archive)
 }
 
@@ -151,7 +179,13 @@ func (h *WorkflowHandler) delete(c *gin.Context) {
 		return
 	}
 
-	err = h.service.Delete(c.Request.Context(), id, authCtx.OrganizationID, authCtx.BusinessUnitID, authCtx.UserID)
+	err = h.service.Delete(
+		c.Request.Context(),
+		id,
+		authCtx.OrganizationID,
+		authCtx.BusinessUnitID,
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.errorHandler.HandleError(c, err)
 		return
@@ -171,7 +205,12 @@ func (h *WorkflowHandler) listVersions(c *gin.Context) {
 		return
 	}
 
-	versions, err := h.service.GetVersions(c.Request.Context(), id, authCtx.OrganizationID, authCtx.BusinessUnitID)
+	versions, err := h.service.GetVersions(
+		c.Request.Context(),
+		id,
+		authCtx.OrganizationID,
+		authCtx.BusinessUnitID,
+	)
 	if err != nil {
 		h.errorHandler.HandleError(c, err)
 		return
@@ -189,7 +228,12 @@ func (h *WorkflowHandler) getVersion(c *gin.Context) {
 		return
 	}
 
-	version, err := h.service.GetVersion(c.Request.Context(), versionID, authCtx.OrganizationID, authCtx.BusinessUnitID)
+	version, err := h.service.GetVersion(
+		c.Request.Context(),
+		versionID,
+		authCtx.OrganizationID,
+		authCtx.BusinessUnitID,
+	)
 	if err != nil {
 		h.errorHandler.HandleError(c, err)
 		return
@@ -296,15 +340,18 @@ func (h *WorkflowHandler) saveDefinition(c *gin.Context) {
 		return
 	}
 
-	err = h.service.SaveWorkflowDefinition(c.Request.Context(), &workflowservice.SaveWorkflowDefinitionRequest{
-		WorkflowID: workflowID,
-		VersionID:  versionID,
-		OrgID:      authCtx.OrganizationID,
-		BuID:       authCtx.BusinessUnitID,
-		UserID:     authCtx.UserID,
-		Nodes:      req.Nodes,
-		Edges:      req.Edges,
-	})
+	err = h.service.SaveWorkflowDefinition(
+		c.Request.Context(),
+		&workflowservice.SaveWorkflowDefinitionRequest{
+			WorkflowID: workflowID,
+			VersionID:  versionID,
+			OrgID:      authCtx.OrganizationID,
+			BuID:       authCtx.BusinessUnitID,
+			UserID:     authCtx.UserID,
+			Nodes:      req.Nodes,
+			Edges:      req.Edges,
+		},
+	)
 	if err != nil {
 		h.errorHandler.HandleError(c, err)
 		return
@@ -324,7 +371,13 @@ func (h *WorkflowHandler) activate(c *gin.Context) {
 		return
 	}
 
-	err = h.service.Activate(c.Request.Context(), id, authCtx.OrganizationID, authCtx.BusinessUnitID, authCtx.UserID)
+	err = h.service.Activate(
+		c.Request.Context(),
+		id,
+		authCtx.OrganizationID,
+		authCtx.BusinessUnitID,
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.errorHandler.HandleError(c, err)
 		return
@@ -342,7 +395,13 @@ func (h *WorkflowHandler) deactivate(c *gin.Context) {
 		return
 	}
 
-	err = h.service.Deactivate(c.Request.Context(), id, authCtx.OrganizationID, authCtx.BusinessUnitID, authCtx.UserID)
+	err = h.service.Deactivate(
+		c.Request.Context(),
+		id,
+		authCtx.OrganizationID,
+		authCtx.BusinessUnitID,
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.errorHandler.HandleError(c, err)
 		return
@@ -360,7 +419,13 @@ func (h *WorkflowHandler) archive(c *gin.Context) {
 		return
 	}
 
-	err = h.service.Archive(c.Request.Context(), id, authCtx.OrganizationID, authCtx.BusinessUnitID, authCtx.UserID)
+	err = h.service.Archive(
+		c.Request.Context(),
+		id,
+		authCtx.OrganizationID,
+		authCtx.BusinessUnitID,
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.errorHandler.HandleError(c, err)
 		return

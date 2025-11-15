@@ -2,13 +2,11 @@ package workflowjobs
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/workflow"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/utils/jsonutils"
 	"go.temporal.io/sdk/activity"
 	"go.uber.org/fx"
@@ -25,10 +23,10 @@ type ActivitiesParams struct {
 }
 
 type Activities struct {
-	workflowRepo     repositories.WorkflowRepository
-	executionRepo    repositories.WorkflowExecutionRepository
-	logger           *zap.Logger
-	actionHandlers   *ActionHandlers
+	workflowRepo   repositories.WorkflowRepository
+	executionRepo  repositories.WorkflowExecutionRepository
+	logger         *zap.Logger
+	actionHandlers *ActionHandlers
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
@@ -51,7 +49,12 @@ func (a *Activities) LoadWorkflowDefinition(
 	activity.RecordHeartbeat(ctx, "loading workflow version")
 
 	// Get the workflow version with nodes and edges
-	version, err := a.workflowRepo.GetVersionByID(ctx, payload.WorkflowVersionID, payload.OrgID, payload.BuID)
+	_, err := a.workflowRepo.GetVersionByID(
+		ctx,
+		payload.WorkflowVersionID,
+		payload.OrgID,
+		payload.BuID,
+	)
 	if err != nil {
 		a.logger.Error("failed to load workflow version", zap.Error(err))
 		return nil, fmt.Errorf("failed to load workflow version: %w", err)
@@ -60,14 +63,24 @@ func (a *Activities) LoadWorkflowDefinition(
 	activity.RecordHeartbeat(ctx, "loading nodes and edges")
 
 	// Get nodes
-	nodes, err := a.workflowRepo.GetNodesByVersionID(ctx, payload.WorkflowVersionID, payload.OrgID, payload.BuID)
+	nodes, err := a.workflowRepo.GetNodesByVersionID(
+		ctx,
+		payload.WorkflowVersionID,
+		payload.OrgID,
+		payload.BuID,
+	)
 	if err != nil {
 		a.logger.Error("failed to load workflow nodes", zap.Error(err))
 		return nil, fmt.Errorf("failed to load workflow nodes: %w", err)
 	}
 
 	// Get edges
-	edges, err := a.workflowRepo.GetEdgesByVersionID(ctx, payload.WorkflowVersionID, payload.OrgID, payload.BuID)
+	edges, err := a.workflowRepo.GetEdgesByVersionID(
+		ctx,
+		payload.WorkflowVersionID,
+		payload.OrgID,
+		payload.BuID,
+	)
 	if err != nil {
 		a.logger.Error("failed to load workflow edges", zap.Error(err))
 		return nil, fmt.Errorf("failed to load workflow edges: %w", err)
@@ -113,15 +126,17 @@ func (a *Activities) UpdateExecutionStatus(
 	switch payload.Status {
 	case workflow.ExecutionStatusRunning:
 		execution.StartedAt = &now
-	case workflow.ExecutionStatusCompleted, workflow.ExecutionStatusFailed, workflow.ExecutionStatusCanceled:
+	case workflow.ExecutionStatusCompleted,
+		workflow.ExecutionStatusFailed,
+		workflow.ExecutionStatusCanceled:
 		execution.CompletedAt = &now
 		if execution.StartedAt != nil {
 			duration := (now - *execution.StartedAt) * 1000 // Convert to milliseconds
 			execution.DurationMs = &duration
 		}
 		if payload.OutputData != nil {
-			outputData := jsonutils.MustToJSONB(payload.OutputData)
-			execution.OutputData = &outputData
+			outputData := jsonutils.MustToJSON(payload.OutputData)
+			execution.OutputData = outputData
 		}
 		if payload.ErrorMsg != "" {
 			execution.ErrorMessage = &payload.ErrorMsg
@@ -165,7 +180,7 @@ func (a *Activities) ExecuteNode(
 		ActionType:     payload.ActionType,
 		StepNumber:     payload.StepNumber,
 		Status:         workflow.StepStatusRunning,
-		InputData:      jsonToJSONBPtr(payload.InputData),
+		InputData:      payload.InputData,
 		StartedAt:      timePtr(time.Now().Unix()),
 		CreatedAt:      time.Now().Unix(),
 		UpdatedAt:      time.Now().Unix(),
@@ -220,7 +235,7 @@ func (a *Activities) ExecuteNode(
 	}
 
 	createdStep.Status = workflow.StepStatusCompleted
-	createdStep.OutputData = jsonToJSONBPtr(outputData)
+	createdStep.OutputData = outputData
 	createdStep.UpdatedAt = time.Now().Unix()
 
 	_, err = a.executionRepo.UpdateStep(ctx, createdStep)
@@ -239,14 +254,17 @@ func (a *Activities) ExecuteNode(
 }
 
 // executeAction executes an action node
-func (a *Activities) executeAction(ctx context.Context, payload *ExecuteNodePayload) (map[string]any, error) {
+func (a *Activities) executeAction(
+	ctx context.Context,
+	payload *ExecuteNodePayload,
+) (map[string]any, error) {
 	if payload.ActionType == nil {
 		return nil, fmt.Errorf("action type is required for action nodes")
 	}
 
 	// Parse config from JSONB
 	var config map[string]any
-	if err := json.Unmarshal(payload.Config, &config); err != nil {
+	if err := jsonutils.MustToJSON(payload.Config); err != nil {
 		return nil, fmt.Errorf("failed to parse node config: %w", err)
 	}
 
@@ -262,10 +280,13 @@ func (a *Activities) executeAction(ctx context.Context, payload *ExecuteNodePayl
 }
 
 // evaluateCondition evaluates a condition node
-func (a *Activities) evaluateCondition(ctx context.Context, payload *ExecuteNodePayload) (map[string]any, error) {
+func (a *Activities) evaluateCondition(
+	ctx context.Context,
+	payload *ExecuteNodePayload,
+) (map[string]any, error) {
 	// Parse config from JSONB
 	var config map[string]any
-	if err := json.Unmarshal(payload.Config, &config); err != nil {
+	if err := jsonutils.MustToJSON(payload.Config); err != nil {
 		return nil, fmt.Errorf("failed to parse condition config: %w", err)
 	}
 
@@ -279,10 +300,13 @@ func (a *Activities) evaluateCondition(ctx context.Context, payload *ExecuteNode
 }
 
 // executeDelay executes a delay node
-func (a *Activities) executeDelay(ctx context.Context, payload *ExecuteNodePayload) (map[string]any, error) {
+func (a *Activities) executeDelay(
+	ctx context.Context,
+	payload *ExecuteNodePayload,
+) (map[string]any, error) {
 	// Parse config from JSONB
 	var config map[string]any
-	if err := json.Unmarshal(payload.Config, &config); err != nil {
+	if err := jsonutils.MustToJSON(payload.Config); err != nil {
 		return nil, fmt.Errorf("failed to parse delay config: %w", err)
 	}
 
@@ -302,7 +326,10 @@ func (a *Activities) executeDelay(ctx context.Context, payload *ExecuteNodePaylo
 }
 
 // executeLoop executes a loop node
-func (a *Activities) executeLoop(ctx context.Context, payload *ExecuteNodePayload) (map[string]any, error) {
+func (a *Activities) executeLoop(
+	ctx context.Context,
+	payload *ExecuteNodePayload,
+) (map[string]any, error) {
 	// This is a placeholder - loop logic would be implemented in the workflow itself
 	// For now, we'll just pass through
 	return map[string]any{
@@ -379,14 +406,6 @@ func compareNumbers(a, b any, compare func(float64, float64) bool) bool {
 	}
 
 	return compare(aNum, bNum)
-}
-
-func jsonToJSONBPtr(data map[string]any) *utils.JSONB {
-	if data == nil {
-		return nil
-	}
-	jsonb := jsonutils.MustToJSONB(data)
-	return &jsonb
 }
 
 func timePtr(t int64) *int64 {
