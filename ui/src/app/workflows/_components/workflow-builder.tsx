@@ -170,7 +170,9 @@ export function WorkflowBuilder({
         },
       };
       setNodes((nds) => [...nds, newNode]);
-      toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} node added`);
+      toast.success(
+        `${type.charAt(0).toUpperCase() + type.slice(1)} node added`,
+      );
     },
     [setNodes],
   );
@@ -267,7 +269,7 @@ export function WorkflowBuilder({
   }
 
   return (
-    <div className="relative h-full w-full">
+    <div style={{ height: "100vh", width: "100vw" }}>
       <ReactFlow<NodeData>
         nodes={nodes}
         edges={edges}
