@@ -5,14 +5,15 @@
 
 import { Handle, Position, type NodeProps } from "@xyflow/react";
 import {
-  Zap,
-  Play,
-  GitBranch,
-  Repeat,
   Clock,
+  GitBranch,
+  Play,
+  Repeat,
   Square,
+  Zap,
 } from "lucide-react";
 import { memo } from "react";
+import { type WorkflowNodeType } from "./workflow-builder";
 
 const nodeIcons = {
   trigger: Zap,
@@ -56,7 +57,7 @@ const nodeColors = {
   },
 };
 
-export const WorkflowNode = memo(({ data, selected }: NodeProps) => {
+export const WorkflowNode = memo(({ data, selected }: NodeProps<WorkflowNodeType>) => {
   const nodeType = data.nodeType || "action";
   const Icon = nodeIcons[nodeType as keyof typeof nodeIcons] || Play;
   const colors = nodeColors[nodeType as keyof typeof nodeColors] || nodeColors.action;
@@ -76,13 +77,13 @@ export const WorkflowNode = memo(({ data, selected }: NodeProps) => {
 
       <div className="flex items-center gap-2">
         <Icon className={`size-4 ${colors.text}`} />
-        <div className={`font-medium text-sm ${colors.text}`}>
+        <div className={`text-sm font-medium ${colors.text}`}>
           {data.label || nodeType}
         </div>
       </div>
 
       {data.config?.description && (
-        <div className="mt-1 text-muted-foreground text-xs">
+        <div className="mt-1 text-xs text-muted-foreground">
           {data.config.description}
         </div>
       )}

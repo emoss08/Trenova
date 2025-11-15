@@ -13,17 +13,17 @@ import {
 import { api } from "@/services/api";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  addEdge,
+  applyEdgeChanges,
+  applyNodeChanges,
   Background,
   Controls,
   MiniMap,
   Panel,
   ReactFlow,
-  addEdge,
-  useEdgesState,
-  useNodesState,
-  type Connection,
   type Edge,
   type Node,
+  type OnConnect,
   type OnEdgesChange,
   type OnNodesChange,
 } from "@xyflow/react";
@@ -44,15 +44,19 @@ const nodeTypes = {
   end: WorkflowNode,
 };
 
-interface NodeData {
+// Define node data type
+export type NodeData = {
   label: string;
   nodeType: string;
   config: Record<string, any>;
   actionType?: string;
-}
+};
+
+// Define custom node type
+export type WorkflowNodeType = Node<NodeData, string>;
 
 // Convert backend workflow node to React Flow node
-function toReactFlowNode(node: WorkflowNodeSchema): Node<NodeData> {
+function toReactFlowNode(node: WorkflowNodeSchema): WorkflowNodeType {
   return {
     id: node.id,
     type: node.type,
@@ -67,7 +71,7 @@ function toReactFlowNode(node: WorkflowNodeSchema): Node<NodeData> {
 }
 
 // Convert React Flow node to backend workflow node
-function toWorkflowNode(node: Node<NodeData>): WorkflowNodeSchema {
+function toWorkflowNode(node: WorkflowNodeType): WorkflowNodeSchema {
   return {
     id: node.id,
     type: node.type as any,
@@ -112,9 +116,11 @@ export function WorkflowBuilder({
   versionId?: string;
 }) {
   const queryClient = useQueryClient();
-  const [nodes, setNodes, onNodesChange] = useNodesState<NodeData>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const [selectedNode, setSelectedNode] = useState<Node<NodeData> | null>(null);
+  const [nodes, setNodes] = useState<WorkflowNodeType[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
+  const [selectedNode, setSelectedNode] = useState<WorkflowNodeType | null>(
+    null,
+  );
 
   // Load workflow version if exists
   const { data: version, isLoading } = useQuery({
@@ -135,15 +141,25 @@ export function WorkflowBuilder({
         setEdges(def.edges.map(toReactFlowEdge));
       }
     }
-  }, [version, setNodes, setEdges]);
+  }, [version]);
 
-  const onConnect = useCallback(
-    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
-    [setEdges],
+  const onNodesChange: OnNodesChange<WorkflowNodeType> = useCallback(
+    (changes) => setNodes((nds) => applyNodeChanges(changes, nds)),
+    [],
+  );
+
+  const onEdgesChange: OnEdgesChange = useCallback(
+    (changes) => setEdges((eds) => applyEdgeChanges(changes, eds)),
+    [],
+  );
+
+  const onConnect: OnConnect = useCallback(
+    (connection) => setEdges((eds) => addEdge(connection, eds)),
+    [],
   );
 
   const onNodeClick = useCallback(
-    (_event: React.MouseEvent, node: Node<NodeData>) => {
+    (_event: React.MouseEvent, node: WorkflowNodeType) => {
       setSelectedNode(node);
     },
     [],
@@ -156,7 +172,7 @@ export function WorkflowBuilder({
   const addNode = useCallback(
     (type: string) => {
       const timestamp = Date.now();
-      const newNode: Node<NodeData> = {
+      const newNode: WorkflowNodeType = {
         id: `node-${type}-${timestamp}`,
         type,
         position: {
@@ -174,7 +190,7 @@ export function WorkflowBuilder({
         `${type.charAt(0).toUpperCase() + type.slice(1)} node added`,
       );
     },
-    [setNodes],
+    [],
   );
 
   const updateNodeData = useCallback(
@@ -187,7 +203,7 @@ export function WorkflowBuilder({
         ),
       );
     },
-    [setNodes],
+    [],
   );
 
   const deleteNode = useCallback(() => {
@@ -202,7 +218,7 @@ export function WorkflowBuilder({
       setSelectedNode(null);
       toast.success("Node deleted");
     }
-  }, [selectedNode, setNodes, setEdges]);
+  }, [selectedNode]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -269,12 +285,12 @@ export function WorkflowBuilder({
   }
 
   return (
-    <div style={{ height: "100vh", width: "100vw" }}>
-      <ReactFlow<NodeData>
+    <div className="relative h-full w-full">
+      <ReactFlow
         nodes={nodes}
         edges={edges}
-        onNodesChange={onNodesChange as OnNodesChange<Node<NodeData>>}
-        onEdgesChange={onEdgesChange as OnEdgesChange<Edge>}
+        onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
         onPaneClick={onPaneClick}

@@ -15,16 +15,9 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { Textarea } from "@/components/ui/textarea";
-import type { Node } from "@xyflow/react";
 import { Trash2 } from "lucide-react";
 import { useEffect, useState } from "react";
-
-interface NodeData {
-  label: string;
-  nodeType: string;
-  config: Record<string, any>;
-  actionType?: string;
-}
+import { type NodeData, type WorkflowNodeType } from "./workflow-builder";
 
 export function NodeConfigPanel({
   node,
@@ -32,7 +25,7 @@ export function NodeConfigPanel({
   onDelete,
   onClose,
 }: {
-  node: Node<NodeData> | null;
+  node: WorkflowNodeType | null;
   onUpdate: (nodeId: string, data: Partial<NodeData>) => void;
   onDelete: () => void;
   onClose: () => void;
@@ -120,14 +113,14 @@ export function NodeConfigPanel({
 
             <div className="space-y-2">
               <Label>Node Type</Label>
-              <div className="rounded-md bg-muted px-3 py-2 font-medium text-sm">
+              <div className="rounded-md bg-muted px-3 py-2 text-sm font-medium">
                 {node.data.nodeType || node.type}
               </div>
             </div>
 
             <div className="space-y-2">
               <Label>Node ID</Label>
-              <div className="font-mono text-muted-foreground text-xs">
+              <div className="text-xs font-mono text-muted-foreground">
                 {node.id}
               </div>
             </div>
