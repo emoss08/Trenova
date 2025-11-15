@@ -31,10 +31,10 @@ function SelectValue({ color, icon, ...props }: SelectValue) {
   };
 
   return (
-    <div className="flex h-5 items-center text-xs font-normal text-foreground gap-x-1.5 flex-1 min-w-0 overflow-hidden [&_svg]:size-3 [&_svg]:shrink-0">
+    <div className="flex h-5 min-w-0 flex-1 items-center gap-x-1.5 overflow-hidden text-xs font-normal text-foreground [&_svg]:size-3 [&_svg]:shrink-0">
       {color ? (
         <div
-          className="size-2 rounded-full flex-shrink-0"
+          className="size-2 flex-shrink-0 rounded-full"
           style={{
             backgroundColor: color,
           }}
@@ -42,7 +42,7 @@ function SelectValue({ color, icon, ...props }: SelectValue) {
       ) : icon ? (
         renderIcon()
       ) : null}
-      <div className="truncate min-w-0 flex-1 text-left">
+      <div className="min-w-0 flex-1 truncate text-left">
         <SelectPrimitive.Value data-slot="select-value" {...props} />
       </div>
     </div>
@@ -70,7 +70,7 @@ function SelectTrigger({
     >
       {children}
       <SelectPrimitive.Icon asChild>
-        <ChevronDownIcon className="group-data-[state=open]:rotate-180 transition-transform duration-200 ease-in-out size-3 opacity-50 flex-shrink-0 ml-1" />
+        <ChevronDownIcon className="ml-1 size-3 flex-shrink-0 opacity-50 transition-transform duration-200 ease-in-out group-data-[state=open]:rotate-180" />
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
   );
@@ -140,7 +140,7 @@ function SelectItem({
       return (
         <Icon
           icon={icon}
-          className="size-3 data-[state=checked]:text-foreground data-[state=checked]:bg-muted-foreground/10"
+          className="size-3 data-[state=checked]:bg-muted-foreground/10 data-[state=checked]:text-foreground"
         />
       );
     }
@@ -172,7 +172,7 @@ function SelectItem({
           <CheckIcon className="size-4" />
         </SelectPrimitive.ItemIndicator>
       </span>
-      <div className="flex flex-col w-full">
+      <div className="flex w-full flex-col">
         <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
         {description && (
           <SelectItemDescription>{description}</SelectItemDescription>

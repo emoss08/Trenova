@@ -7,7 +7,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import type { WorkflowNodeType } from "@/types/workflow";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ActionConfigForm } from "./config-forms/action-config-form";
 import { ActionTypeSelector } from "./config-forms/action-type-selector";
 import { ConditionConfigForm } from "./config-forms/condition-config-form";
@@ -32,6 +32,13 @@ export default function NodeConfigModal({
   const [selectedActionType, setSelectedActionType] = useState<
     string | undefined
   >(node?.data.actionType);
+
+  // Update selectedActionType when node changes
+  useEffect(() => {
+    if (node?.data.actionType) {
+      setSelectedActionType(node.data.actionType);
+    }
+  }, [node?.id, node?.data.actionType]);
 
   if (!node) return null;
 
@@ -90,6 +97,7 @@ export default function NodeConfigModal({
             {selectedActionType && (
               <div className="border-t border-border pt-4">
                 <ActionConfigForm
+                  key={`${node.id}-${selectedActionType}`}
                   actionType={selectedActionType}
                   initialConfig={node.data.config || {}}
                   onSave={handleSave}
@@ -109,6 +117,7 @@ export default function NodeConfigModal({
       case "condition":
         return (
           <ConditionConfigForm
+            key={node.id}
             initialConfig={node.data.config || {}}
             onSave={handleSave}
             onCancel={handleCancel}

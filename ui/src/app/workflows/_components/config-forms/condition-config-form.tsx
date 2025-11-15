@@ -61,13 +61,13 @@ export function ConditionConfigForm({
         <Label htmlFor="operator">Operator</Label>
         <Select
           onValueChange={(value) => setValue("operator", value as any)}
-          defaultValue={operator}
+          value={operator}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select operator..." />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="equals">Equals (&==)</SelectItem>
+            <SelectItem value="equals">Equals (==)</SelectItem>
             <SelectItem value="notEquals">Not Equals (!=)</SelectItem>
             <SelectItem value="contains">Contains</SelectItem>
             <SelectItem value="greaterThan">Greater Than (&gt;)</SelectItem>

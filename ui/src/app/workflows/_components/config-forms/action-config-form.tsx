@@ -47,6 +47,7 @@ function ShipmentUpdateStatusForm({
   });
 
   const shipmentId = useWatch({ control, name: "shipmentId" });
+  const status = useWatch({ control, name: "status" });
 
   return (
     <form onSubmit={handleSubmit(onSave)} className="space-y-4">
@@ -68,7 +69,7 @@ function ShipmentUpdateStatusForm({
         <Label htmlFor="status">New Status</Label>
         <Select
           onValueChange={(value) => setValue("status", value as any)}
-          defaultValue={initialConfig.status}
+          value={status}
         >
           <SelectTrigger>
             <SelectValue placeholder="Select status..." />
@@ -270,7 +271,7 @@ function DataAPICallForm({
         <Label htmlFor="method">Method</Label>
         <Select
           onValueChange={(value) => setValue("method", value as any)}
-          defaultValue={method || "GET"}
+          value={method || "GET"}
         >
           <SelectTrigger>
             <SelectValue />

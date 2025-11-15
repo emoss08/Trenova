@@ -7,11 +7,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Bell, Building2, Database, FileText, TruckIcon } from "lucide-react";
 
 export type ActionCategory = {
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
   actions: {
     value: string;
     label: string;
@@ -22,7 +20,6 @@ export type ActionCategory = {
 const actionCategories: ActionCategory[] = [
   {
     label: "Shipment",
-    icon: TruckIcon,
     actions: [
       {
         value: "shipment_update_status",
@@ -33,7 +30,6 @@ const actionCategories: ActionCategory[] = [
   },
   {
     label: "Billing",
-    icon: Building2,
     actions: [
       {
         value: "billing_validate_requirements",
@@ -44,7 +40,6 @@ const actionCategories: ActionCategory[] = [
   },
   {
     label: "Document",
-    icon: FileText,
     actions: [
       {
         value: "document_validate_completeness",
@@ -55,7 +50,6 @@ const actionCategories: ActionCategory[] = [
   },
   {
     label: "Notification",
-    icon: Bell,
     actions: [
       {
         value: "notification_send_email",
@@ -66,7 +60,6 @@ const actionCategories: ActionCategory[] = [
   },
   {
     label: "Data",
-    icon: Database,
     actions: [
       {
         value: "data_api_call",
@@ -94,18 +87,16 @@ export function ActionTypeSelector({
       <SelectContent>
         {actionCategories.map((category) => (
           <SelectGroup key={category.label}>
-            <SelectLabel className="flex items-center gap-2">
-              <category.icon className="size-4" />
+            <SelectLabel className="px-2 py-1.5 text-xs text-muted-foreground">
               {category.label}
             </SelectLabel>
             {category.actions.map((action) => (
-              <SelectItem key={action.value} value={action.value}>
-                <div className="flex flex-col">
-                  <span className="font-medium">{action.label}</span>
-                  <span className="text-xs text-muted-foreground">
-                    {action.description}
-                  </span>
-                </div>
+              <SelectItem
+                key={action.value}
+                value={action.value}
+                className="text-sm font-normal"
+              >
+                {action.label}
               </SelectItem>
             ))}
           </SelectGroup>
