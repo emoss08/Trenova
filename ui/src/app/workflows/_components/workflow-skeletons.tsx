@@ -11,6 +11,16 @@ export function AvailableNodesSkeleton() {
   );
 }
 
+export function NodesInUseSkeleton() {
+  return (
+    <div className="flex flex-col gap-2 p-4">
+      {Array.from({ length: 6 }, (_, index) => (
+        <Skeleton key={index} className="h-12 w-full" />
+      ))}
+    </div>
+  );
+}
+
 export function ReactFlowSkeleton() {
   return (
     <div className="flex h-[80vh] w-full flex-col items-center justify-center rounded-md border border-border">

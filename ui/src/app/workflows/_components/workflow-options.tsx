@@ -11,9 +11,10 @@ import {
   faShareNodes,
 } from "@fortawesome/pro-regular-svg-icons";
 import { Activity, lazy, Suspense, useState } from "react";
-import { AvailableNodesSkeleton } from "./workflow-skeletons";
+import { AvailableNodesSkeleton, NodesInUseSkeleton } from "./workflow-skeletons";
 
 const AvailableNodes = lazy(() => import("./available-nodes/node-palette"));
+const NodesInUse = lazy(() => import("./nodes-in-use/nodes-in-use"));
 
 type Option = "available-nodes" | "nodes-in-use";
 type Options = {
@@ -59,9 +60,9 @@ export default function WorkflowOptions() {
         <Activity
           mode={selectedOption === "nodes-in-use" ? "visible" : "hidden"}
         >
-          <div className="flex h-full flex-col text-sm text-wrap">
-            This is where users will be able to see and modify the nodes in use
-          </div>
+          <Suspense fallback={<NodesInUseSkeleton />}>
+            <NodesInUse />
+          </Suspense>
         </Activity>
       </WorkflowOptionsInner>
       <div className="shrink-0 p-1.5">

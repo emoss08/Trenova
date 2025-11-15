@@ -1,5 +1,6 @@
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
+import { queries } from "@/lib/queries";
 import {
   type WorkflowDefinitionSchema,
   type WorkflowEdgeSchema,
@@ -7,7 +8,7 @@ import {
 } from "@/lib/schemas/workflow-schema";
 import { api } from "@/services/api";
 import { WorkflowNodeType } from "@/types/workflow";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addEdge,
   Background,
@@ -24,7 +25,7 @@ import {
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { Play, Save } from "lucide-react";
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { WorkflowNode } from "./workflow-nodes/workflow-nodes";
 
@@ -100,6 +101,28 @@ export default function WorkflowContent({
     null,
   );
 
+  // Load workflow version with definition
+  const { data: version, isLoading } = useQuery({
+    ...queries.workflow.getVersion(workflowId, versionId, !!versionId),
+  });
+
+  // Load nodes and edges from version definition
+  useEffect(() => {
+    if (version?.definition) {
+      const def = version.definition as WorkflowDefinitionSchema;
+
+      if (def.nodes && Array.isArray(def.nodes)) {
+        const reactFlowNodes = def.nodes.map(toReactFlowNode);
+        setNodes(reactFlowNodes);
+      }
+
+      if (def.edges && Array.isArray(def.edges)) {
+        const reactFlowEdges = def.edges.map(toReactFlowEdge);
+        setEdges(reactFlowEdges);
+      }
+    }
+  }, [version, setNodes, setEdges]);
+
   const onConnect: OnConnect = useCallback(
     (params) => setEdges((eds) => addEdge({ ...params, animated: true }, eds)),
     [setEdges],
@@ -161,6 +184,28 @@ export default function WorkflowContent({
     },
   });
 
+  if (isLoading) {
+    return (
+      <FlowContainer>
+        <div className="flex h-full items-center justify-center">
+          <div className="text-muted-foreground">Loading workflow...</div>
+        </div>
+      </FlowContainer>
+    );
+  }
+
+  if (!workflowId || !versionId) {
+    return (
+      <FlowContainer>
+        <div className="flex h-full items-center justify-center">
+          <div className="text-muted-foreground">
+            Select or create a workflow to start building
+          </div>
+        </div>
+      </FlowContainer>
+    );
+  }
+
   return (
     <FlowContainer>
       <ReactFlow
@@ -184,7 +229,7 @@ export default function WorkflowContent({
             size="sm"
             variant="outline"
             onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending}
+            disabled={saveMutation.isPending || !versionId}
           >
             <Save className="mr-2 size-4" />
             Save Draft
@@ -192,7 +237,7 @@ export default function WorkflowContent({
           <Button
             size="sm"
             onClick={() => publishMutation.mutate()}
-            disabled={publishMutation.isPending}
+            disabled={publishMutation.isPending || !versionId}
           >
             <Play className="mr-2 size-4" />
             Publish

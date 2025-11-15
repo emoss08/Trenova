@@ -1,82 +1,78 @@
 package workflowjobs
 
 import (
-	"github.com/emoss08/trenova/internal/core/ports/repositories"
-	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/registry"
+	"github.com/emoss08/trenova/pkg/temporaltype"
 	"go.temporal.io/sdk/worker"
+	"go.uber.org/fx"
 	"go.uber.org/zap"
 )
 
-// Registry provides workflow and activity registration for workflow automation
-type Registry struct {
-	logger              *zap.Logger
-	workflowRepo        repositories.WorkflowRepository
-	executionRepo       repositories.WorkflowExecutionRepository
-	shipmentRepo        repositories.ShipmentRepository
-	notificationService services.NotificationService
-	auditService        services.AuditService
-}
-
-// RegistryParams holds the dependencies for creating a workflow jobs registry
 type RegistryParams struct {
-	Logger              *zap.Logger
-	WorkflowRepo        repositories.WorkflowRepository
-	ExecutionRepo       repositories.WorkflowExecutionRepository
-	ShipmentRepo        repositories.ShipmentRepository
-	NotificationService services.NotificationService
-	AuditService        services.AuditService
+	fx.In
+
+	Activities *Activities
+	Logger     *zap.Logger
 }
 
-// NewRegistry creates a new workflow jobs registry
+type Registry struct {
+	activities *Activities
+	logger     *zap.Logger
+	config     registry.WorkerConfig
+}
+
 func NewRegistry(p RegistryParams) *Registry {
 	return &Registry{
-		logger:              p.Logger,
-		workflowRepo:        p.WorkflowRepo,
-		executionRepo:       p.ExecutionRepo,
-		shipmentRepo:        p.ShipmentRepo,
-		notificationService: p.NotificationService,
-		auditService:        p.AuditService,
+		activities: p.Activities,
+		logger:     p.Logger.Named("workflow-worker-registry"),
+		config:     registry.DefaultWorkerConfig(),
 	}
 }
 
-// Register implements the WorkflowRegistry interface
-func (r *Registry) Register(w worker.Worker) error {
-	// Register workflows
+func (r *Registry) GetName() string {
+	return "workflow-worker"
+}
+
+func (r *Registry) GetTaskQueue() string {
+	return temporaltype.WorkflowTaskQueue
+}
+
+func (r *Registry) RegisterActivities(w worker.Worker) error {
+	w.RegisterActivity(r.activities.LoadWorkflowDefinition)
+	w.RegisterActivity(r.activities.UpdateExecutionStatus)
+	w.RegisterActivity(r.activities.ExecuteNode)
+
+	r.logger.Info("registered workflow activities",
+		zap.Int("count", 3),
+	)
+
+	return nil
+}
+
+func (r *Registry) RegisterWorkflows(w worker.Worker) error {
 	workflows := RegisterWorkflows()
-	for _, workflow := range workflows {
-		w.RegisterWorkflow(workflow.Fn)
-		r.logger.Info("Registered workflow",
-			zap.String("name", workflow.Name),
-			zap.String("taskQueue", string(workflow.TaskQueue)),
+
+	for _, wf := range workflows {
+		w.RegisterWorkflow(wf.Fn)
+		r.logger.Info("registered workflow",
+			zap.String("name", wf.Name),
+			zap.String("description", wf.Description),
 		)
 	}
 
-	// Create activities instance
-	activities := NewActivities(ActivitiesParams{
-		Logger:       r.logger,
-		WorkflowRepo: r.workflowRepo,
-		// ExecutionRepo:       r.executionRepo,
-		// ShipmentRepo:        r.shipmentRepo,
-		// NotificationService: r.notificationService,
-		// AuditService:        r.auditService,
-	})
-
-	// // Register activities
-	// activityList := RegisterActivities()
-	// for _, activity := range activityList {
-	// 	w.RegisterActivity(activity.Fn)
-	// 	r.logger.Info("Registered activity",
-	// 		zap.String("name", activity.Name),
-	// 	)
-	// }
-
-	// Register the activities struct (for method-based activity registration)
-	w.RegisterActivity(activities)
-
-	// r.logger.Info("Workflow jobs registry completed",
-	// 	zap.Int("workflows", len(workflows)),
-	// 	zap.Int("activities", len(activityList)),
-	// )
+	r.logger.Info("registered workflow workflows",
+		zap.Int("count", len(workflows)),
+	)
 
 	return nil
+}
+
+func (r *Registry) GetWorkerOptions() worker.Options {
+	return r.config.ToWorkerOptions()
+}
+
+// WithConfig allows customizing worker configuration
+func (r *Registry) WithConfig(config registry.WorkerConfig) *Registry {
+	r.config = config
+	return r
 }
