@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -106,7 +101,7 @@ export function NodeConfigPanel({
                 className="font-mono text-sm"
                 rows={8}
               />
-              <p className="text-muted-foreground text-xs">
+              <p className="text-xs text-muted-foreground">
                 Advanced configuration in JSON format
               </p>
             </div>
@@ -120,7 +115,7 @@ export function NodeConfigPanel({
 
             <div className="space-y-2">
               <Label>Node ID</Label>
-              <div className="text-xs font-mono text-muted-foreground">
+              <div className="font-mono text-xs text-muted-foreground">
                 {node.id}
               </div>
             </div>
