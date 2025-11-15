@@ -242,8 +242,8 @@ function NotificationSendEmailForm({
       <div className="rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950">
         <FieldHelp type="info">
           <span className="font-medium">Preview:</span> The email will be sent
-          from your organization's configured email profile. Variables will be
-          replaced with actual values when the workflow executes.
+          from your organization&apos;s configured email profile. Variables will
+          be replaced with actual values when the workflow executes.
         </FieldHelp>
       </div>
 

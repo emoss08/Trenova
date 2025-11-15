@@ -56,7 +56,8 @@ const actionCategories: ActionCategory[] = [
       {
         value: "billing_validate_requirements",
         label: "Validate Billing Readiness",
-        description: "Check if shipment has all required information for billing",
+        description:
+          "Check if shipment has all required information for billing",
         example: "Verify customer, charges, and delivery date are set",
       },
     ],
@@ -133,10 +134,10 @@ export function ActionTypeSelector({
     <div className="space-y-2">
       <div className="flex items-center gap-2">
         <Select value={value} onValueChange={onChange}>
-          <SelectTrigger className="flex-1">
+          <SelectTrigger className="flex-1 **:data-desc:hidden">
             <SelectValue placeholder="Select an action type..." />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="[&_*[role=option]]:ps-2 [&_*[role=option]]:pe-8 [&_*[role=option]>span]:start-auto [&_*[role=option]>span]:end-2">
             {actionCategories.map((category) => {
               const Icon = category.icon;
               return (
@@ -151,12 +152,13 @@ export function ActionTypeSelector({
                       value={action.value}
                       className="pl-8 text-sm font-normal"
                     >
-                      <div className="flex flex-col">
-                        <span>{action.label}</span>
-                        <span className="text-xs text-muted-foreground">
-                          {action.description}
-                        </span>
-                      </div>
+                      {action.label}
+                      <span
+                        className="mt-1 block text-xs text-muted-foreground"
+                        data-desc
+                      >
+                        {action.description}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectGroup>
