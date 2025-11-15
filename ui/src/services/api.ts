@@ -41,6 +41,9 @@ import { UserAPI } from "./user";
 import { UserPreferenceAPI } from "./user-preference";
 import { VariableAPI } from "./variable";
 import { WorkerAPI } from "./worker";
+import { workflowAPI } from "./workflow";
+import { workflowExecutionAPI } from "./workflow-execution";
+import { workflowTemplateAPI } from "./workflow-template";
 
 class AssignmentsAPI {
   async getTractorAssignments(tractorId?: TractorSchema["id"]) {
@@ -95,6 +98,9 @@ class API {
   distanceOverride: DistanceOverrideAPI;
   search: SearchAPI;
   userPreference: UserPreferenceAPI;
+  workflows: typeof workflowAPI;
+  workflowExecutions: typeof workflowExecutionAPI;
+  workflowTemplates: typeof workflowTemplateAPI;
   constructor() {
     this.assignments = new AssignmentsAPI();
     this.auth = new AuthAPI();
@@ -138,6 +144,9 @@ class API {
     this.fiscalPeriod = new FiscalPeriodAPI();
     this.accountingControl = new AccountingControlAPI();
     this.userPreference = new UserPreferenceAPI();
+    this.workflows = workflowAPI;
+    this.workflowExecutions = workflowExecutionAPI;
+    this.workflowTemplates = workflowTemplateAPI;
   }
 }
 

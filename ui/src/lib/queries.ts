@@ -351,4 +351,50 @@ export const queries = createQueryKeyStore({
       queryFn: async () => api.worker.getPTOCalendarData(req),
     }),
   },
+  workflow: {
+    list: (params?: import("@/services/workflow").ListWorkflowsParams) => ({
+      queryKey: ["workflows", params],
+      queryFn: async () => api.workflows.list(params),
+    }),
+    getById: (id: string, enabled: boolean = true) => ({
+      queryKey: ["workflow", id],
+      queryFn: async () => api.workflows.getById(id),
+      enabled,
+    }),
+    listVersions: (workflowId: string) => ({
+      queryKey: ["workflow/versions", workflowId],
+      queryFn: async () => api.workflows.listVersions(workflowId),
+    }),
+    getVersion: (workflowId: string, versionId: string) => ({
+      queryKey: ["workflow/version", workflowId, versionId],
+      queryFn: async () => api.workflows.getVersion(workflowId, versionId),
+    }),
+  },
+  workflowExecution: {
+    list: (params?: import("@/services/workflow-execution").ListExecutionsParams) => ({
+      queryKey: ["workflow-executions", params],
+      queryFn: async () => api.workflowExecutions.list(params),
+    }),
+    getById: (id: string, enabled: boolean = true) => ({
+      queryKey: ["workflow-execution", id],
+      queryFn: async () => api.workflowExecutions.getById(id),
+      enabled,
+    }),
+    getSteps: (executionId: string, enabled: boolean = true) => ({
+      queryKey: ["workflow-execution/steps", executionId],
+      queryFn: async () => api.workflowExecutions.getSteps(executionId),
+      enabled,
+    }),
+  },
+  workflowTemplate: {
+    list: (params?: import("@/services/workflow-template").ListTemplatesParams) => ({
+      queryKey: ["workflow-templates", params],
+      queryFn: async () => api.workflowTemplates.list(params),
+    }),
+    getById: (id: string, enabled: boolean = true) => ({
+      queryKey: ["workflow-template", id],
+      queryFn: async () => api.workflowTemplates.getById(id),
+      enabled,
+    }),
+  },
 });
