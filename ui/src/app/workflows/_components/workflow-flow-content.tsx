@@ -115,7 +115,7 @@ export default function WorkflowContent({
       return api.workflows.createVersion(workflowId, {
         versionName: "v1",
         changelog: "Initial version",
-        definition: { nodes: [], edges: [] },
+        workflowDefinition: { nodes: [], edges: [] },
       });
     },
     onSuccess: (newVersion) => {
@@ -136,18 +136,17 @@ export default function WorkflowContent({
     enabled: !!activeVersionId && !!workflowId,
   });
 
-  // Load nodes and edges from version definition
+  // Load nodes and edges from version (nodes/edges come from backend relationships)
   useEffect(() => {
-    if (version?.definition) {
-      const def = version.definition as WorkflowDefinitionSchema;
-
-      if (def.nodes && Array.isArray(def.nodes)) {
-        const reactFlowNodes = def.nodes.map(toReactFlowNode);
+    if (version) {
+      // Backend returns nodes and edges as top-level arrays via relationships
+      if (version.nodes && Array.isArray(version.nodes)) {
+        const reactFlowNodes = version.nodes.map(toReactFlowNode);
         setNodes(reactFlowNodes);
       }
 
-      if (def.edges && Array.isArray(def.edges)) {
-        const reactFlowEdges = def.edges.map(toReactFlowEdge);
+      if (version.edges && Array.isArray(version.edges)) {
+        const reactFlowEdges = version.edges.map(toReactFlowEdge);
         setEdges(reactFlowEdges);
       }
     }

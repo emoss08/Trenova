@@ -231,13 +231,17 @@ export const workflowVersionSchema = z.object({
 
   workflowId: pulidSchema,
   versionNumber: z.number().int().min(1),
-  definition: workflowDefinitionSchema,
+  definition: workflowDefinitionSchema.optional().nullable(),
   isPublished: z.boolean(),
   publishedAt: timestampSchema,
   publishedBy: nullablePulidSchema,
   changelog: optionalStringSchema,
 
   createdBy: pulidSchema,
+
+  // Backend returns nodes/edges via relationships
+  nodes: z.array(workflowNodeSchema).optional(),
+  edges: z.array(workflowEdgeSchema).optional(),
 });
 
 export type WorkflowVersionSchema = z.infer<typeof workflowVersionSchema>;
@@ -361,7 +365,9 @@ export type UpdateWorkflowRequestSchema = z.infer<
 >;
 
 export const createVersionRequestSchema = z.object({
+  versionName: z.string().optional(),
   changelog: optionalStringSchema,
+  workflowDefinition: z.any().optional(),
 });
 
 export type CreateVersionRequestSchema = z.infer<
