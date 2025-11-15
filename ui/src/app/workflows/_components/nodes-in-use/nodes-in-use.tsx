@@ -1,3 +1,4 @@
+"use no memo";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";

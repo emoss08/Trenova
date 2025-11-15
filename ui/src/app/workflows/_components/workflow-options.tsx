@@ -1,3 +1,4 @@
+"use no memo";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icons";
 import {
@@ -11,7 +12,10 @@ import {
   faShareNodes,
 } from "@fortawesome/pro-regular-svg-icons";
 import { Activity, lazy, Suspense, useState } from "react";
-import { AvailableNodesSkeleton, NodesInUseSkeleton } from "./workflow-skeletons";
+import {
+  AvailableNodesSkeleton,
+  NodesInUseSkeleton,
+} from "./workflow-skeletons";
 
 const AvailableNodes = lazy(() => import("./available-nodes/node-palette"));
 const NodesInUse = lazy(() => import("./nodes-in-use/nodes-in-use"));
