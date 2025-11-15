@@ -91,7 +91,7 @@ export default function WorkflowContent({
   versionId,
 }: {
   workflowId: string;
-  versionId: string;
+  versionId: string | undefined;
 }) {
   const { theme } = useTheme();
   const queryClient = useQueryClient();
@@ -100,10 +100,37 @@ export default function WorkflowContent({
   const [selectedNode, setSelectedNode] = useState<WorkflowNodeType | null>(
     null,
   );
+  const [activeVersionId, setActiveVersionId] = useState<string | undefined>(versionId);
 
-  // Load workflow version with definition
+  // Create initial version mutation
+  const createInitialVersionMutation = useMutation({
+    mutationFn: async () => {
+      if (!workflowId) {
+        throw new Error("Workflow ID is required");
+      }
+
+      return api.workflows.createVersion(workflowId, {
+        versionName: "v1",
+        changelog: "Initial version",
+        definition: { nodes: [], edges: [] },
+      });
+    },
+    onSuccess: (newVersion) => {
+      setActiveVersionId(newVersion.id);
+      queryClient.invalidateQueries({ queryKey: ["workflow", workflowId] });
+      toast.success("Initial version created");
+    },
+    onError: (error: Error) => {
+      toast.error("Failed to create initial version", {
+        description: error.message,
+      });
+    },
+  });
+
+  // Load workflow version with definition (only if versionId exists)
   const { data: version, isLoading } = useQuery({
-    ...queries.workflow.getVersion(workflowId, versionId, !!versionId),
+    ...queries.workflow.getVersion(workflowId, activeVersionId!),
+    enabled: !!activeVersionId && !!workflowId,
   });
 
   // Load nodes and edges from version definition
@@ -141,7 +168,7 @@ export default function WorkflowContent({
 
   const saveMutation = useMutation({
     mutationFn: async () => {
-      if (!workflowId || !versionId) {
+      if (!workflowId || !activeVersionId) {
         throw new Error("Workflow ID and Version ID are required");
       }
 
@@ -150,7 +177,7 @@ export default function WorkflowContent({
         edges: edges.map((edge) => toWorkflowEdge(edge as Edge)),
       };
 
-      return api.workflows.saveDefinition(workflowId, versionId, {
+      return api.workflows.saveDefinition(workflowId, activeVersionId, {
         definition,
       });
     },
@@ -167,11 +194,11 @@ export default function WorkflowContent({
 
   const publishMutation = useMutation({
     mutationFn: async () => {
-      if (!workflowId || !versionId) {
+      if (!workflowId || !activeVersionId) {
         throw new Error("Workflow ID and Version ID are required");
       }
       await saveMutation.mutateAsync();
-      return api.workflows.publishVersion(workflowId, versionId);
+      return api.workflows.publishVersion(workflowId, activeVersionId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workflow", workflowId] });
@@ -184,23 +211,50 @@ export default function WorkflowContent({
     },
   });
 
-  if (isLoading) {
+  if (isLoading || createInitialVersionMutation.isPending) {
     return (
       <FlowContainer>
         <div className="flex h-full items-center justify-center">
-          <div className="text-muted-foreground">Loading workflow...</div>
+          <div className="text-muted-foreground">
+            {createInitialVersionMutation.isPending
+              ? "Creating initial version..."
+              : "Loading workflow..."}
+          </div>
         </div>
       </FlowContainer>
     );
   }
 
-  if (!workflowId || !versionId) {
+  if (!workflowId) {
     return (
       <FlowContainer>
         <div className="flex h-full items-center justify-center">
           <div className="text-muted-foreground">
             Select or create a workflow to start building
           </div>
+        </div>
+      </FlowContainer>
+    );
+  }
+
+  // Show create version button if no version exists
+  if (!activeVersionId) {
+    return (
+      <FlowContainer>
+        <div className="flex h-full flex-col items-center justify-center gap-4">
+          <div className="text-center">
+            <h3 className="text-lg font-semibold">No Workflow Version</h3>
+            <p className="text-sm text-muted-foreground">
+              Create an initial version to start building your workflow
+            </p>
+          </div>
+          <Button
+            onClick={() => createInitialVersionMutation.mutate()}
+            disabled={createInitialVersionMutation.isPending}
+          >
+            <Play className="mr-2 size-4" />
+            Create Initial Version
+          </Button>
         </div>
       </FlowContainer>
     );
@@ -229,7 +283,7 @@ export default function WorkflowContent({
             size="sm"
             variant="outline"
             onClick={() => saveMutation.mutate()}
-            disabled={saveMutation.isPending || !versionId}
+            disabled={saveMutation.isPending || !activeVersionId}
           >
             <Save className="mr-2 size-4" />
             Save Draft
@@ -237,7 +291,7 @@ export default function WorkflowContent({
           <Button
             size="sm"
             onClick={() => publishMutation.mutate()}
-            disabled={publishMutation.isPending || !versionId}
+            disabled={publishMutation.isPending || !activeVersionId}
           >
             <Play className="mr-2 size-4" />
             Publish
