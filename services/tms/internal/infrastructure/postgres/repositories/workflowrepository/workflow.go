@@ -197,8 +197,6 @@ func (r *repository) Delete(
 	return nil
 }
 
-// Version management
-
 func (r *repository) CreateVersion(
 	ctx context.Context,
 	entity *workflow.WorkflowVersion,
@@ -222,9 +220,6 @@ func (r *repository) CreateVersion(
 	return entity, nil
 }
 
-// translateEdgeReferencesToNodeKeys converts edge references from database IDs to nodeKeys.
-// This allows the frontend to work with stable node identifiers (nodeKeys) rather than
-// database-generated IDs.
 func (r *repository) translateEdgeReferencesToNodeKeys(version *workflow.WorkflowVersion) error {
 	if len(version.Edges) == 0 || len(version.Nodes) == 0 {
 		return nil
@@ -262,8 +257,7 @@ func (r *repository) GetVersionByID(
 		return nil, dberror.HandleNotFoundError(err, "WorkflowVersion")
 	}
 
-	// Translate edge references from database IDs back to nodeKeys for frontend
-	if err := r.translateEdgeReferencesToNodeKeys(entity); err != nil {
+	if err = r.translateEdgeReferencesToNodeKeys(entity); err != nil {
 		log.Error("failed to translate edge references", zap.Error(err))
 		return nil, err
 	}
@@ -353,7 +347,6 @@ func (r *repository) PublishVersion(
 
 	now := time.Now().Unix()
 
-	// Begin transaction
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		log.Error("failed to begin transaction", zap.Error(err))
@@ -367,7 +360,6 @@ func (r *repository) PublishVersion(
 		}
 	}()
 
-	// Unpublish all previous versions
 	_, err = tx.NewUpdate().
 		Model((*workflow.WorkflowVersion)(nil)).
 		Set("is_published = ?", false).
@@ -380,7 +372,6 @@ func (r *repository) PublishVersion(
 		return err
 	}
 
-	// Publish the new version
 	_, err = tx.NewUpdate().
 		Model((*workflow.WorkflowVersion)(nil)).
 		Set("is_published = ?", true).
@@ -395,7 +386,6 @@ func (r *repository) PublishVersion(
 		return err
 	}
 
-	// Update workflow published_version_id
 	_, err = tx.NewUpdate().
 		Model((*workflow.Workflow)(nil)).
 		Set("published_version_id = ?", versionID).
@@ -415,8 +405,6 @@ func (r *repository) PublishVersion(
 
 	return nil
 }
-
-// Node management
 
 func (r *repository) CreateNodes(
 	ctx context.Context,
@@ -505,8 +493,6 @@ func (r *repository) DeleteNodesByVersionID(
 	return nil
 }
 
-// Edge management
-
 func (r *repository) CreateEdges(
 	ctx context.Context,
 	edges []*workflow.WorkflowEdge,
@@ -593,8 +579,6 @@ func (r *repository) DeleteEdgesByVersionID(
 
 	return nil
 }
-
-// Status management
 
 func (r *repository) UpdateStatus(
 	ctx context.Context,

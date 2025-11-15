@@ -27,6 +27,7 @@ import "@xyflow/react/dist/style.css";
 import { Play, Save } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+import NodeConfigModal from "./node-config-modal";
 import { WorkflowNode } from "./workflow-nodes/workflow-nodes";
 
 const nodeTypes = {
@@ -106,6 +107,8 @@ export default function WorkflowContent({
   const [activeVersionId, setActiveVersionId] = useState<string | undefined>(
     versionId,
   );
+  const [configModalOpen, setConfigModalOpen] = useState(false);
+  const [configNode, setConfigNode] = useState<WorkflowNodeType | null>(null);
 
   // Create initial version mutation
   const createInitialVersionMutation = useMutation({
@@ -166,9 +169,39 @@ export default function WorkflowContent({
     [setSelectedNode],
   );
 
+  const onNodeDoubleClick = useCallback<NodeMouseHandler>(
+    (_, node) => {
+      setConfigNode(node as WorkflowNodeType);
+      setConfigModalOpen(true);
+    },
+    [setConfigNode, setConfigModalOpen],
+  );
+
   const onPaneClick = useCallback(() => {
     setSelectedNode(null);
   }, []);
+
+  const handleSaveNodeConfig = useCallback(
+    (nodeId: string, config: Record<string, any>, actionType?: string) => {
+      setNodes((nodes) =>
+        nodes.map((node) => {
+          if (node.id === nodeId) {
+            return {
+              ...node,
+              data: {
+                ...node.data,
+                config,
+                actionType,
+              },
+            };
+          }
+          return node;
+        }),
+      );
+      toast.success("Node configuration saved");
+    },
+    [setNodes],
+  );
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -273,6 +306,7 @@ export default function WorkflowContent({
         onEdgesChange={onEdgesChange}
         onConnect={onConnect}
         onNodeClick={onNodeClick}
+        onNodeDoubleClick={onNodeDoubleClick}
         onPaneClick={onPaneClick}
         nodeTypes={nodeTypes}
         fitView
@@ -302,6 +336,13 @@ export default function WorkflowContent({
           </Button>
         </Panel>
       </ReactFlow>
+
+      <NodeConfigModal
+        open={configModalOpen}
+        onOpenChange={setConfigModalOpen}
+        node={configNode}
+        onSave={handleSaveNodeConfig}
+      />
     </FlowContainer>
   );
 }
