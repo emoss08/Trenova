@@ -77,6 +77,9 @@ type RouterParams struct {
 	AccountingControlHandler       *handlers.AccountingControlHandler
 	UserPreferenceHandler          *handlers.UserPreferenceHandler
 	ReportHandler                  *handlers.ReportHandler
+	WorkflowHandler                *handlers.WorkflowHandler
+	WorkflowExecutionHandler       *handlers.WorkflowExecutionHandler
+	WorkflowTemplateHandler        *handlers.WorkflowTemplateHandler
 	ErrorHandler                   *helpers.ErrorHandler
 }
 
@@ -135,6 +138,9 @@ type Router struct {
 	accountingControlHandler       *handlers.AccountingControlHandler
 	userPreferenceHandler          *handlers.UserPreferenceHandler
 	reportHandler                  *handlers.ReportHandler
+	workflowHandler                *handlers.WorkflowHandler
+	workflowExecutionHandler       *handlers.WorkflowExecutionHandler
+	workflowTemplateHandler        *handlers.WorkflowTemplateHandler
 	errorHandler                   *helpers.ErrorHandler
 	userHandler                    *handlers.UserHandler
 	metrics                        *observability.MetricsRegistry
@@ -198,6 +204,9 @@ func NewRouter(p RouterParams) *Router {
 		accountingControlHandler:       p.AccountingControlHandler,
 		userPreferenceHandler:          p.UserPreferenceHandler,
 		reportHandler:                  p.ReportHandler,
+		workflowHandler:                p.WorkflowHandler,
+		workflowExecutionHandler:       p.WorkflowExecutionHandler,
+		workflowTemplateHandler:        p.WorkflowTemplateHandler,
 		errorHandler:                   p.ErrorHandler,
 		metrics:                        p.Metrics,
 	}
@@ -344,4 +353,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.accountingControlHandler.RegisterRoutes(protected)
 	r.userPreferenceHandler.RegisterRoutes(protected)
 	r.reportHandler.RegisterRoutes(protected)
+	r.workflowHandler.RegisterRoutes(protected)
+	r.workflowExecutionHandler.RegisterRoutes(protected)
+	r.workflowTemplateHandler.RegisterRoutes(protected)
 }

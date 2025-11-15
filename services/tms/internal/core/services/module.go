@@ -54,6 +54,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/variable"
 	"github.com/emoss08/trenova/internal/core/services/websocket"
 	"github.com/emoss08/trenova/internal/core/services/worker"
+	"github.com/emoss08/trenova/internal/core/services/workflowservice"
 	"go.uber.org/fx"
 )
 
@@ -116,5 +117,8 @@ var Module = fx.Module(
 		userpreference.NewService,
 		reportservice.NewService,
 		storageservice.NewService,
+		workflowservice.NewService,
+		workflowservice.NewExecutionService,
+		workflowservice.NewTemplateService,
 	),
 )
