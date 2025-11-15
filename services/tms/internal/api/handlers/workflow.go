@@ -320,8 +320,10 @@ func (h *WorkflowHandler) publishVersion(c *gin.Context) {
 // Node and Edge Management
 
 type SaveDefinitionRequest struct {
-	Nodes []*workflow.WorkflowNode `json:"nodes"`
-	Edges []*workflow.WorkflowEdge `json:"edges"`
+	Definition struct {
+		Nodes []*workflow.WorkflowNode `json:"nodes"`
+		Edges []*workflow.WorkflowEdge `json:"edges"`
+	} `json:"definition"`
 }
 
 func (h *WorkflowHandler) saveDefinition(c *gin.Context) {
@@ -353,8 +355,8 @@ func (h *WorkflowHandler) saveDefinition(c *gin.Context) {
 			OrgID:      authCtx.OrganizationID,
 			BuID:       authCtx.BusinessUnitID,
 			UserID:     authCtx.UserID,
-			Nodes:      req.Nodes,
-			Edges:      req.Edges,
+			Nodes:      req.Definition.Nodes,
+			Edges:      req.Definition.Edges,
 		},
 	)
 	if err != nil {
