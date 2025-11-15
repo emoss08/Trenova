@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 export type NotificationQueryParams = {
   limit?: number;
   offset?: number;
@@ -15,8 +10,7 @@ export type NotificationPriority = "critical" | "high" | "medium" | "low";
 
 export enum EventType {
   JobUnknown = "job.unknown",
-
-  // Job Events
+  EventJobReportExport = "job.report.export_complete",
   JobShipmentDuplicate = "job.shipment.duplicate_complete",
   JobPatternAnalysis = "job.analysis.pattern_complete",
   JobComplianceCheck = "job.compliance.check_complete",

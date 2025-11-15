@@ -26,6 +26,7 @@ type ReportResult struct {
 	BusinessUnitID pulid.ID      `json:"businessUnitId"`
 	UserID         pulid.ID      `json:"userId"`
 	FilePath       string        `json:"filePath"`
+	FileName       string        `json:"fileName"`
 	FileSize       int64         `json:"fileSize"`
 	RowCount       int           `json:"rowCount"`
 	Status         report.Status `json:"status"`

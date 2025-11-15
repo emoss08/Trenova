@@ -160,6 +160,7 @@ func (a *Activities) GenerateFileActivity(
 		UserID:         payload.UserID,
 		FilePath:       filePath,
 		FileSize:       int64(len(fileData)),
+		FileName:       fileName,
 		RowCount:       queryResult.Total,
 		Status:         report.StatusCompleted,
 		Timestamp:      utils.NowUnix(),
@@ -219,7 +220,6 @@ func (a *Activities) UploadToStorageActivity(
 		return nil, fmt.Errorf("failed to generate file for upload: %w", err)
 	}
 
-	// Update file size and row count to match the actual generated file
 	result.FileSize = int64(len(fileData))
 	result.RowCount = queryResult.Total
 
@@ -230,13 +230,11 @@ func (a *Activities) UploadToStorageActivity(
 
 	bucketName := "trenova-reports"
 
-	// Ensure bucket exists
-	if err := a.storageService.EnsureBucket(ctx, bucketName); err != nil {
+	if err = a.storageService.EnsureBucket(ctx, bucketName); err != nil {
 		return nil, fmt.Errorf("failed to ensure bucket: %w", err)
 	}
 
-	// Upload file to storage
-	if err := a.storageService.UploadFile(ctx, bucketName, result.FilePath, fileData, contentType); err != nil {
+	if err = a.storageService.UploadFile(ctx, bucketName, result.FilePath, fileData, contentType); err != nil {
 		return nil, fmt.Errorf("failed to upload file: %w", err)
 	}
 
@@ -363,10 +361,7 @@ func (a *Activities) SendReportReadyNotificationActivity(
 
 	downloadURL := fmt.Sprintf("/api/v1/reports/%s/download/", result.ReportID)
 
-	formatDisplay := "CSV"
-	if payload.Format == report.FormatExcel {
-		formatDisplay = "Excel"
-	}
+	formatDisplay := payload.Format.String()
 
 	activity.RecordHeartbeat(ctx, "sending notification")
 
@@ -380,6 +375,7 @@ func (a *Activities) SendReportReadyNotificationActivity(
 			ReportName:     fmt.Sprintf("Report %s", result.ReportID.String()),
 			ReportType:     payload.ResourceType,
 			ReportFormat:   formatDisplay,
+			ReportFileName: result.FileName,
 			ReportSize:     result.FileSize,
 			ReportRowCount: result.RowCount,
 			ReportURL:      downloadURL,

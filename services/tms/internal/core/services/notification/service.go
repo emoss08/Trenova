@@ -192,7 +192,9 @@ func (s *Service) SendReportExportNotification(
 			"reportFormat":   req.ReportFormat,
 			"reportRowCount": req.ReportRowCount,
 			"reportSize":     req.ReportSize,
+			"reportFileName": req.ReportFileName,
 			"reportURL":      req.ReportURL,
+			"reportName":     req.ReportName,
 		},
 		RelatedEntities: []notification.RelatedEntity{
 			{
@@ -200,15 +202,6 @@ func (s *Service) SendReportExportNotification(
 				ID:   req.ReportID,
 				Name: req.ReportName,
 				URL:  req.ReportURL,
-			},
-		},
-		Actions: []notification.Action{
-			{
-				ID:       "download_report",
-				Label:    "Download Report",
-				Type:     "link",
-				Style:    "primary",
-				Endpoint: req.ReportURL,
 			},
 		},
 	}

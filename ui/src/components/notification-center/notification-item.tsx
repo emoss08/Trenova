@@ -1,20 +1,23 @@
 import { Button } from "@/components/ui/button";
+import { NotificationSchema } from "@/lib/schemas/notification-schema";
 import { cn } from "@/lib/utils";
+import { EventType } from "@/types/notification";
 import { faCheck, faXmark } from "@fortawesome/pro-regular-svg-icons";
 import { formatDistanceToNow } from "date-fns/formatDistanceToNow";
 import React, { useState } from "react";
 import { Icon } from "../ui/icons";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { DownloadReportNotificationItem } from "./_components/download-report";
 
 interface NotificationItemProps {
-  notification: any;
+  notification: NotificationSchema;
   onAction: (id: string, data?: any) => void;
   onMarkAsRead: () => void;
   onDismiss: () => void;
 }
 
 type NotificationItemOuterProps = React.ComponentProps<"div"> & {
-  readAt?: boolean;
+  readAt?: number | null;
 };
 
 function NotificationItemOuter({
@@ -34,6 +37,21 @@ function NotificationItemOuter({
     </div>
   );
 }
+
+const getNotificationContent = (notification: NotificationSchema) => {
+  switch (notification.eventType) {
+    case EventType.EventJobReportExport:
+      return <DownloadReportNotificationItem notification={notification} />;
+    default:
+      return (
+        <div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            {notification.message}
+          </p>
+        </div>
+      );
+  }
+};
 
 export function NotificationItem({
   notification,
@@ -105,9 +123,7 @@ export function NotificationItem({
             </span>
           )}
         </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {notification.message}
-        </p>
+        {getNotificationContent(notification)}
       </div>
     </NotificationItemOuter>
   );

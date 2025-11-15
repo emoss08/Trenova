@@ -1,22 +1,17 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Resource } from "@/types/audit-entry";
 import {
-    Channel,
-    DeliveryStatus,
-    EventType,
-    Priority,
-    UpdateType,
+  Channel,
+  DeliveryStatus,
+  EventType,
+  Priority,
+  UpdateType,
 } from "@/types/notification";
 import * as z from "zod";
 import {
-    nullableTimestampSchema,
-    optionalStringSchema,
-    timestampSchema,
-    versionSchema,
+  nullableTimestampSchema,
+  optionalStringSchema,
+  timestampSchema,
+  versionSchema,
 } from "./helpers";
 
 export const targetingSchema = z.object({
@@ -57,8 +52,8 @@ export const notificationSchema = z.object({
   title: z.string(),
   message: z.string(),
   data: z.record(z.string(), z.any()),
-  relatedEntities: z.array(relatedEntitySchema),
-  actions: z.array(actionSchema),
+  relatedEntities: z.array(relatedEntitySchema).nullish(),
+  actions: z.array(actionSchema).nullish(),
 
   expiresAt: nullableTimestampSchema,
   deliveredAt: nullableTimestampSchema,
@@ -75,7 +70,7 @@ export const notificationSchema = z.object({
   source: z.string(),
   jobId: z.string().nullish(),
   correlationId: z.string().nullish(),
-  tags: z.array(z.string()),
+  tags: z.array(z.string()).nullish(),
 
   version: z.number(),
 });
@@ -122,10 +117,10 @@ type NotificationPreferenceSchema = z.infer<
 >;
 
 export type {
-    ActionSchema,
-    NotificationPreferenceSchema,
-    NotificationSchema,
-    RelatedEntitySchema,
-    TargetingSchema
+  ActionSchema,
+  NotificationPreferenceSchema,
+  NotificationSchema,
+  RelatedEntitySchema,
+  TargetingSchema
 };
 

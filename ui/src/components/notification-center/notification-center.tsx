@@ -12,6 +12,7 @@ import {
   useNotificationHistory,
 } from "@/hooks/use-notifications";
 import { useWebNotifications } from "@/hooks/use-web-notifications";
+import { NotificationSchema } from "@/lib/schemas/notification-schema";
 import { useWebSocketStore } from "@/stores/websocket-store";
 import { faBellOn, faBellRing } from "@fortawesome/pro-duotone-svg-icons";
 import {
@@ -28,7 +29,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../ui/tooltip";
-import { NotificationItem } from "./navigation-item";
+import { NotificationItem } from "./notification-item";
 
 export function NotificationCenter() {
   const [isOpen, setIsOpen] = useState(false);
@@ -170,7 +171,9 @@ export function NotificationCenter() {
                     {unreadNotifications.map((notification) => (
                       <NotificationItem
                         key={notification.id}
-                        notification={notification}
+                        notification={
+                          notification as unknown as NotificationSchema
+                        }
                         onAction={handleNotificationAction}
                         onMarkAsRead={() => markAsRead.mutate(notification.id)}
                         onDismiss={() => dismiss.mutate(notification.id)}
@@ -192,7 +195,9 @@ export function NotificationCenter() {
                     {allNotifications.map((notification) => (
                       <NotificationItem
                         key={notification.id}
-                        notification={notification}
+                        notification={
+                          notification as unknown as NotificationSchema
+                        }
                         onAction={handleNotificationAction}
                         onMarkAsRead={() => markAsRead.mutate(notification.id)}
                         onDismiss={() => dismiss.mutate(notification.id)}

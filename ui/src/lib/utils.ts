@@ -215,7 +215,14 @@ const imageTypes = [
   "image/webp",
 ];
 const documentTypes = [".pdf", "application/pdf"];
-const excelTypes = [".xls", "application/excel", ".xlsx", "application/xlsx"];
+const excelTypes = [
+  ".xls",
+  "application/excel",
+  ".xlsx",
+  "application/xlsx",
+  "csv",
+  "application/csv",
+];
 const wordTypes = [".doc", "application/word", ".docx", "application/docx"];
 
 export function getFileIcon(fileType: string) {

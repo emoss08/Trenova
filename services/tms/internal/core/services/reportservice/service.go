@@ -73,12 +73,10 @@ func (s *Service) GenerateReport(
 		return nil, err
 	}
 
-	// If delivery method is email, query for user email and default email profile
 	var userEmail string
 	var emailProfileID *pulid.ID
 
 	if req.DeliveryMethod == report.DeliveryMethodEmail {
-		// Get user email
 		email, err := s.userRepo.GetEmailByID(ctx, req.UserID)
 		if err != nil {
 			log.Error("failed to get user email", zap.Error(err))
@@ -86,8 +84,11 @@ func (s *Service) GenerateReport(
 		}
 		userEmail = email
 
-		// Get default email profile
-		emailProfile, err := s.emailProfileRepo.GetDefault(ctx, req.OrganizationID, req.BusinessUnitID)
+		emailProfile, err := s.emailProfileRepo.GetDefault(
+			ctx,
+			req.OrganizationID,
+			req.BusinessUnitID,
+		)
 		if err != nil {
 			log.Error("failed to get default email profile", zap.Error(err))
 			return nil, fmt.Errorf("no default email profile found for organization: %w", err)
