@@ -40,12 +40,15 @@ const nodeTypes = {
 
 function toReactFlowNode(node: WorkflowNodeSchema): WorkflowNodeType {
   return {
-    id: node.id,
-    type: node.type,
-    position: node.position,
+    id: node.nodeKey, // Use nodeKey as React Flow ID
+    type: node.nodeType, // Use nodeType as React Flow type
+    position: {
+      x: node.positionX,
+      y: node.positionY,
+    },
     data: {
       label: node.label,
-      nodeType: node.type,
+      nodeType: node.nodeType,
       config: node.config || {},
       actionType: node.actionType,
     },
@@ -54,35 +57,35 @@ function toReactFlowNode(node: WorkflowNodeSchema): WorkflowNodeType {
 
 function toWorkflowNode(node: WorkflowNodeType): WorkflowNodeSchema {
   return {
-    id: node.id,
-    type: node.type as any,
+    nodeKey: node.id, // Use React Flow ID as nodeKey
+    nodeType: node.type as any, // Use React Flow type as nodeType
     label: node.data.label,
+    description: node.data.config?.description || undefined,
     config: node.data.config || {},
-    position: node.position,
+    positionX: node.position.x,
+    positionY: node.position.y,
     actionType: node.data.actionType as any,
-    data: node.data.config,
   };
 }
 
 function toReactFlowEdge(edge: WorkflowEdgeSchema): Edge {
   return {
-    id: edge.id,
-    source: edge.source,
-    target: edge.target,
-    sourceHandle: edge.sourceHandle,
-    targetHandle: edge.targetHandle,
+    id: edge.id || `${edge.sourceNodeId}-${edge.targetNodeId}`,
+    source: edge.sourceNodeId, // Backend node ID becomes React Flow source
+    target: edge.targetNodeId, // Backend node ID becomes React Flow target
+    sourceHandle: edge.sourceHandle || undefined,
+    targetHandle: edge.targetHandle || undefined,
     label: edge.label,
   };
 }
 
 function toWorkflowEdge(edge: Edge): WorkflowEdgeSchema {
   return {
-    id: edge.id,
-    source: edge.source,
-    target: edge.target,
-    sourceHandle: edge.sourceHandle,
-    targetHandle: edge.targetHandle,
-    label: (edge.label as string) || null,
+    sourceNodeId: edge.source, // React Flow source becomes backend sourceNodeId
+    targetNodeId: edge.target, // React Flow target becomes backend targetNodeId
+    sourceHandle: edge.sourceHandle || undefined,
+    targetHandle: edge.targetHandle || undefined,
+    label: (edge.label as string) || undefined,
     condition: {},
   };
 }
