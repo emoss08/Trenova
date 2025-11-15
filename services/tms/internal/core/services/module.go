@@ -120,5 +120,6 @@ var Module = fx.Module(
 		workflowservice.NewService,
 		workflowservice.NewExecutionService,
 		workflowservice.NewTemplateService,
+		workflowservice.NewTriggerService,
 	),
 )

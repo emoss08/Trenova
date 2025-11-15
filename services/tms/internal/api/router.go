@@ -80,6 +80,7 @@ type RouterParams struct {
 	WorkflowHandler                *handlers.WorkflowHandler
 	WorkflowExecutionHandler       *handlers.WorkflowExecutionHandler
 	WorkflowTemplateHandler        *handlers.WorkflowTemplateHandler
+	WorkflowWebhookHandler         *handlers.WorkflowWebhookHandler
 	ErrorHandler                   *helpers.ErrorHandler
 }
 
@@ -141,6 +142,7 @@ type Router struct {
 	workflowHandler                *handlers.WorkflowHandler
 	workflowExecutionHandler       *handlers.WorkflowExecutionHandler
 	workflowTemplateHandler        *handlers.WorkflowTemplateHandler
+	workflowWebhookHandler         *handlers.WorkflowWebhookHandler
 	errorHandler                   *helpers.ErrorHandler
 	userHandler                    *handlers.UserHandler
 	metrics                        *observability.MetricsRegistry
@@ -207,6 +209,7 @@ func NewRouter(p RouterParams) *Router {
 		workflowHandler:                p.WorkflowHandler,
 		workflowExecutionHandler:       p.WorkflowExecutionHandler,
 		workflowTemplateHandler:        p.WorkflowTemplateHandler,
+		workflowWebhookHandler:         p.WorkflowWebhookHandler,
 		errorHandler:                   p.ErrorHandler,
 		metrics:                        p.Metrics,
 	}
@@ -279,6 +282,7 @@ func (r *Router) setupPublicRoutes(rg *gin.RouterGroup) {
 	})
 
 	r.authHandler.RegisterPublicRoutes(rg)
+	r.workflowWebhookHandler.RegisterRoutes(rg)
 }
 
 func (r *Router) healthCheck(c *gin.Context) {

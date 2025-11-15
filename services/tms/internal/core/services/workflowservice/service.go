@@ -22,22 +22,25 @@ import (
 type ServiceParams struct {
 	fx.In
 
-	Logger       *zap.Logger
-	Repo         repositories.WorkflowRepository
-	AuditService services.AuditService
+	Logger         *zap.Logger
+	Repo           repositories.WorkflowRepository
+	AuditService   services.AuditService
+	TriggerService *TriggerService `optional:"true"`
 }
 
 type Service struct {
-	l    *zap.Logger
-	repo repositories.WorkflowRepository
-	as   services.AuditService
+	l              *zap.Logger
+	repo           repositories.WorkflowRepository
+	as             services.AuditService
+	triggerService *TriggerService
 }
 
 func NewService(p ServiceParams) *Service {
 	return &Service{
-		l:    p.Logger.Named("service.workflow"),
-		repo: p.Repo,
-		as:   p.AuditService,
+		l:              p.Logger.Named("service.workflow"),
+		repo:           p.Repo,
+		as:             p.AuditService,
+		triggerService: p.TriggerService,
 	}
 }
 
@@ -431,6 +434,41 @@ func (s *Service) UpdateStatus(
 	if err != nil {
 		log.Error("failed to update workflow status", zap.Error(err))
 		return err
+	}
+
+	// Handle trigger setup/teardown for scheduled workflows
+	if s.triggerService != nil && wf.TriggerType == workflow.TriggerTypeScheduled {
+		// Refresh workflow to get updated status
+		wf.Status = status
+
+		if status == workflow.WorkflowStatusActive {
+			// Setup scheduled trigger
+			var triggerConfig workflow.ScheduledTriggerConfig
+			if err := wf.TriggerConfig.Unmarshal(&triggerConfig); err == nil {
+				if err := s.triggerService.SetupScheduledTrigger(ctx, wf, &triggerConfig); err != nil {
+					log.Error("failed to setup scheduled trigger", zap.Error(err))
+					// Don't fail the status update, just log the error
+				} else {
+					log.Info("scheduled trigger setup successfully")
+				}
+			} else {
+				log.Error("failed to parse trigger config", zap.Error(err))
+			}
+		} else if status == workflow.WorkflowStatusInactive {
+			// Pause scheduled trigger
+			if err := s.triggerService.PauseScheduledTrigger(ctx, id); err != nil {
+				log.Error("failed to pause scheduled trigger", zap.Error(err))
+			} else {
+				log.Info("scheduled trigger paused successfully")
+			}
+		} else if status == workflow.WorkflowStatusArchived {
+			// Remove scheduled trigger completely
+			if err := s.triggerService.RemoveScheduledTrigger(ctx, id); err != nil {
+				log.Error("failed to remove scheduled trigger", zap.Error(err))
+			} else {
+				log.Info("scheduled trigger removed successfully")
+			}
+		}
 	}
 
 	// Audit log

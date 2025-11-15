@@ -60,4 +60,5 @@ var HandlerModule = fx.Module("api-handlers", fx.Provide(
 	handlers.NewWorkflowHandler,
 	handlers.NewWorkflowExecutionHandler,
 	handlers.NewWorkflowTemplateHandler,
+	handlers.NewWorkflowWebhookHandler,
 ))
