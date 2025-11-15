@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/utils/querybuilder"
+	"github.com/emoss08/trenova/pkg/utils/workflowutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -221,6 +222,18 @@ func (r *repository) CreateVersion(
 	return entity, nil
 }
 
+// translateEdgeReferencesToNodeKeys converts edge references from database IDs to nodeKeys.
+// This allows the frontend to work with stable node identifiers (nodeKeys) rather than
+// database-generated IDs.
+func (r *repository) translateEdgeReferencesToNodeKeys(version *workflow.WorkflowVersion) error {
+	if len(version.Edges) == 0 || len(version.Nodes) == 0 {
+		return nil
+	}
+
+	mapper := workflowutils.NewNodeKeyMapper(version.Nodes)
+	return mapper.TranslateEdgesToNodeKeys(version.Edges)
+}
+
 func (r *repository) GetVersionByID(
 	ctx context.Context,
 	id, orgID, buID pulid.ID,
@@ -247,6 +260,12 @@ func (r *repository) GetVersionByID(
 		Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "WorkflowVersion")
+	}
+
+	// Translate edge references from database IDs back to nodeKeys for frontend
+	if err := r.translateEdgeReferencesToNodeKeys(entity); err != nil {
+		log.Error("failed to translate edge references", zap.Error(err))
+		return nil, err
 	}
 
 	return entity, nil
