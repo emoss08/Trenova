@@ -26,6 +26,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
 	"github.com/emoss08/trenova/internal/core/domain/variable"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/core/domain/workflow"
 	"github.com/emoss08/trenova/internal/core/services/permissionservice"
 	"github.com/emoss08/trenova/pkg/permissionregistry"
 	"go.uber.org/fx"
@@ -208,6 +209,10 @@ var RegistryModule = fx.Module("permission-registry",
 		),
 		fx.Annotate(
 			docker.NewDockerPermission,
+			fx.ResultTags(`group:"permission_entities"`),
+		),
+		fx.Annotate(
+			workflow.NewWorkflowPermission,
 			fx.ResultTags(`group:"permission_entities"`),
 		),
 	),

@@ -138,7 +138,7 @@ func (s *ExecutionService) TriggerWorkflow(
 	// Audit log
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       workflow.ResourceWorkflowExecution,
+			Resource:       permission.ResourceWorkflowExecution,
 			ResourceID:     createdExecution.GetID(),
 			Operation:      permission.OpCreate,
 			UserID:         req.UserID,
@@ -210,7 +210,7 @@ func (s *ExecutionService) CancelExecution(
 	// Audit log
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       workflow.ResourceWorkflowExecution,
+			Resource:       permission.ResourceWorkflowExecution,
 			ResourceID:     id.String(),
 			Operation:      permission.OpUpdate,
 			UserID:         userID,
@@ -280,7 +280,7 @@ func (s *ExecutionService) RetryExecution(
 	// Audit log
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       workflow.ResourceWorkflowExecution,
+			Resource:       permission.ResourceWorkflowExecution,
 			ResourceID:     createdExecution.GetID(),
 			Operation:      permission.OpCreate,
 			UserID:         userID,

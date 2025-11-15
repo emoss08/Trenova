@@ -2049,6 +2049,55 @@ export const WorkerPtoMetadata = {
   },
 } as const;
 
+/**
+ * Permission metadata for Workflow
+ */
+export const WorkflowMetadata = {
+  resourceName: 'workflow',
+  operations: [
+    {
+      code: 1,
+      name: 'create',
+      displayName: 'Create',
+      description: 'Add new workflows to the database',
+    },
+    {
+      code: 2,
+      name: 'read',
+      displayName: 'Read',
+      description: 'View workflow information',
+    },
+    {
+      code: 4,
+      name: 'update',
+      displayName: 'Update',
+      description: 'Modify workflow details',
+    },
+    {
+      code: 8,
+      name: 'delete',
+      displayName: 'Delete',
+      description: 'Remove workflows',
+    },
+    {
+      code: 16,
+      name: 'export',
+      displayName: 'Export',
+      description: 'Export workflows data for operational reporting',
+    },
+    {
+      code: 32,
+      name: 'import',
+      displayName: 'Import',
+      description: 'Import workflows from other sources',
+    },
+  ],
+  compositeOperations: {
+    manage: 63,
+    read_only: 2,
+  },
+} as const;
+
 // ============================================================================
 // Permission Hooks (React)
 // ============================================================================
@@ -2925,6 +2974,27 @@ export const useWorkerPtoPermissions = () => {
   };
 };
 
+/**
+ * React hook for Workflow permissions
+ * @example
+ * const perms = useWorkflowPermissions();
+ * if (perms.canCreate) { ... }
+ */
+export const useWorkflowPermissions = () => {
+  const { can } = usePermissions();
+
+  return {
+    canCreate: can('workflow', 'create'),
+    canRead: can('workflow', 'read'),
+    canUpdate: can('workflow', 'update'),
+    canDelete: can('workflow', 'delete'),
+    canExport: can('workflow', 'export'),
+    canImport: can('workflow', 'import'),
+    hasManage: can('workflow', 'manage'),
+    hasReadOnly: can('workflow', 'read_only'),
+  };
+};
+
 // ============================================================================
 // Type Guards
 // ============================================================================
@@ -2972,6 +3042,7 @@ export const isValidResource = (resource: string): boolean => {
     'variable_format',
     'worker',
     'worker_pto',
+    'workflow',
   ].includes(resource);
 };
 

@@ -593,9 +593,7 @@ const routes: RouteObject[] = [
                 path: "workflows",
                 loader: createPermissionLoader(Resource.Workflow),
                 async lazy() {
-                  let { default: Workflows } = await import(
-                    "@/app/workflows/page"
-                  );
+                  let { Workflows } = await import("@/app/workflows/page");
                   return { Component: Workflows };
                 },
                 handle: {

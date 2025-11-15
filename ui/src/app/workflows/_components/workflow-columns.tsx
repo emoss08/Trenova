@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,27 +9,26 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { api } from "@/services/api";
 import {
+  type TriggerTypeType,
   type WorkflowSchema,
   type WorkflowStatusType,
-  type TriggerTypeType,
 } from "@/lib/schemas/workflow-schema";
+import { api } from "@/services/api";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
 import {
   Archive,
-  CheckCircle2,
   MoreHorizontal,
   Pause,
   Play,
-  Workflow as WorkflowIcon,
   PlayCircle,
+  Workflow as WorkflowIcon,
 } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
-import { TriggerWorkflowDialog } from "./trigger-workflow-dialog";
 import { toast } from "sonner";
+import { TriggerWorkflowDialog } from "./trigger-workflow-dialog";
 
 const workflowStatusConfig: Record<
   WorkflowStatusType,
@@ -62,7 +56,7 @@ function WorkflowActions({ workflow }: { workflow: WorkflowSchema }) {
   const [triggerDialogOpen, setTriggerDialogOpen] = useState(false);
 
   const activateMutation = useMutation({
-    mutationFn: () => api.workflows.activate(workflow.id),
+    mutationFn: () => api.workflows.activate(workflow.id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workflows"] });
       toast.success("Workflow activated successfully");
@@ -73,7 +67,7 @@ function WorkflowActions({ workflow }: { workflow: WorkflowSchema }) {
   });
 
   const deactivateMutation = useMutation({
-    mutationFn: () => api.workflows.deactivate(workflow.id),
+    mutationFn: () => api.workflows.deactivate(workflow.id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workflows"] });
       toast.success("Workflow deactivated successfully");
@@ -84,7 +78,7 @@ function WorkflowActions({ workflow }: { workflow: WorkflowSchema }) {
   });
 
   const archiveMutation = useMutation({
-    mutationFn: () => api.workflows.archive(workflow.id),
+    mutationFn: () => api.workflows.archive(workflow.id!),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workflows"] });
       toast.success("Workflow archived successfully");
@@ -107,34 +101,37 @@ function WorkflowActions({ workflow }: { workflow: WorkflowSchema }) {
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuItem
             onClick={() => navigate(`/organization/workflows/${workflow.id}`)}
-          >
-            <WorkflowIcon className="mr-2 size-4" />
-            View Builder
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setTriggerDialogOpen(true)}>
-            <PlayCircle className="mr-2 size-4" />
-            Trigger Workflow
-          </DropdownMenuItem>
+            startContent={<WorkflowIcon className="mr-2 size-4" />}
+            title="View Builder"
+          />
+          <DropdownMenuItem
+            startContent={<PlayCircle className="mr-2 size-4" />}
+            title="Trigger Workflow"
+            onClick={() => setTriggerDialogOpen(true)}
+          />
           <DropdownMenuSeparator />
           {workflow.status !== "active" && workflow.status !== "archived" && (
-            <DropdownMenuItem onClick={() => activateMutation.mutate()}>
-              <Play className="mr-2 size-4" />
-              Activate
-            </DropdownMenuItem>
+            <DropdownMenuItem
+              title="Activate Workflow"
+              onClick={() => activateMutation.mutate()}
+              startContent={<Play className="mr-2 size-4" />}
+            />
           )}
           {workflow.status === "active" && (
-            <DropdownMenuItem onClick={() => deactivateMutation.mutate()}>
-              <Pause className="mr-2 size-4" />
-              Deactivate
-            </DropdownMenuItem>
+            <DropdownMenuItem
+              title="Deactivate Workflow"
+              onClick={() => deactivateMutation.mutate()}
+              startContent={<Pause className="mr-2 size-4" />}
+            />
           )}
           {workflow.status !== "archived" && (
             <>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={() => archiveMutation.mutate()}>
-                <Archive className="mr-2 size-4" />
-                Archive
-              </DropdownMenuItem>
+              <DropdownMenuItem
+                title="Archive Workflow"
+                onClick={() => archiveMutation.mutate()}
+                startContent={<Archive className="mr-2 size-4" />}
+              />
             </>
           )}
         </DropdownMenuContent>
@@ -159,7 +156,7 @@ export function getColumns(): ColumnDef<WorkflowSchema>[] {
       cell: ({ row }) => {
         const status = row.original.status;
         const config = workflowStatusConfig[status];
-        return <Badge variant={config.variant}>{config.label}</Badge>;
+        return <Badge>{config.label}</Badge>;
       },
     }),
     columnHelper.display({
@@ -192,7 +189,6 @@ export function getColumns(): ColumnDef<WorkflowSchema>[] {
       },
     }),
     commonColumns.createdAt,
-    commonColumns.updatedAt,
     columnHelper.display({
       id: "actions",
       header: "Actions",

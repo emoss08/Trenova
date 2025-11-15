@@ -47,6 +47,7 @@ const (
 	ResourceVariableFormat          Resource = "variable_format"
 	ResourceWorker                  Resource = "worker"
 	ResourceWorkerPto               Resource = "worker_pto"
+	ResourceWorkflow                Resource = "workflow"
 )
 
 // String returns the string representation of the Resource
@@ -57,7 +58,7 @@ func (r Resource) String() string {
 // IsValid checks if the Resource value is valid
 func (r Resource) IsValid() bool {
 	switch r {
-	case ResourceAccessorialCharge, ResourceAccountType, ResourceAccountingControl, ResourceAuditEntry, ResourceBillingControl, ResourceCommodity, ResourceCustomer, ResourceDataRetention, ResourceDedicatedLane, ResourceDedicatedLaneSuggestion, ResourceDispatchControl, ResourceDistanceOverride, ResourceDocker, ResourceDocumentType, ResourceEmailProfile, ResourceEquipmentManufacturer, ResourceEquipmentType, ResourceFiscalPeriod, ResourceFiscalYear, ResourceFleetCode, ResourceGlAccount, ResourceHazardousMaterial, ResourceHazmatSegregationRule, ResourceHoldReason, ResourceJournalEntry, ResourceLocation, ResourceLocationCategory, ResourceOrganization, ResourcePatternConfig, ResourceServiceType, ResourceShipment, ResourceShipmentComment, ResourceShipmentControl, ResourceShipmentType, ResourceTractor, ResourceTrailer, ResourceUser, ResourceVariable, ResourceVariableFormat, ResourceWorker, ResourceWorkerPto:
+	case ResourceAccessorialCharge, ResourceAccountType, ResourceAccountingControl, ResourceAuditEntry, ResourceBillingControl, ResourceCommodity, ResourceCustomer, ResourceDataRetention, ResourceDedicatedLane, ResourceDedicatedLaneSuggestion, ResourceDispatchControl, ResourceDistanceOverride, ResourceDocker, ResourceDocumentType, ResourceEmailProfile, ResourceEquipmentManufacturer, ResourceEquipmentType, ResourceFiscalPeriod, ResourceFiscalYear, ResourceFleetCode, ResourceGlAccount, ResourceHazardousMaterial, ResourceHazmatSegregationRule, ResourceHoldReason, ResourceJournalEntry, ResourceLocation, ResourceLocationCategory, ResourceOrganization, ResourcePatternConfig, ResourceServiceType, ResourceShipment, ResourceShipmentComment, ResourceShipmentControl, ResourceShipmentType, ResourceTractor, ResourceTrailer, ResourceUser, ResourceVariable, ResourceVariableFormat, ResourceWorker, ResourceWorkerPto, ResourceWorkflow:
 		return true
 	default:
 		return false
@@ -108,5 +109,6 @@ func AllResources() []Resource {
 		ResourceVariableFormat,
 		ResourceWorker,
 		ResourceWorkerPto,
+		ResourceWorkflow,
 	}
 }

@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AlertCircle } from "lucide-react";
@@ -36,8 +31,8 @@ export function WorkflowBuilder({
       <div className="border-b p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="font-semibold text-lg">Workflow Builder</h2>
-            <p className="text-muted-foreground text-sm">
+            <h2 className="text-lg font-semibold">Workflow Builder</h2>
+            <p className="text-sm text-muted-foreground">
               Visual workflow automation designer
             </p>
           </div>
@@ -61,19 +56,19 @@ export function WorkflowBuilder({
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
               The visual workflow builder requires the @xyflow/react package to
               be installed.
             </p>
             <div className="rounded-lg bg-muted p-4">
-              <p className="font-medium text-sm">Installation Required:</p>
+              <p className="text-sm font-medium">Installation Required:</p>
               <code className="mt-2 block rounded bg-background p-2 font-mono text-xs">
                 npm install @xyflow/react
               </code>
             </div>
             <div className="space-y-2">
-              <p className="font-medium text-sm">Planned Features:</p>
-              <ul className="ml-4 list-disc space-y-1 text-muted-foreground text-sm">
+              <p className="text-sm font-medium">Planned Features:</p>
+              <ul className="ml-4 list-disc space-y-1 text-sm text-muted-foreground">
                 <li>Drag-and-drop visual workflow designer</li>
                 <li>Pre-built node types (trigger, action, condition, etc.)</li>
                 <li>Node configuration panels</li>

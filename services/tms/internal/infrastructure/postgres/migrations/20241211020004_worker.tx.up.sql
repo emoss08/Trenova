@@ -1,7 +1,3 @@
---
--- Copyright 2023-2025 Eric Moss
--- Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
--- Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md--
 -- Worker type enum with descriptions
 CREATE TYPE worker_type_enum AS ENUM(
     'Employee', -- Full-time company employee
@@ -133,17 +129,6 @@ UPDATE
 SET
     search_vector = setweight(to_tsvector('english', COALESCE(first_name, '')), 'A') || setweight(to_tsvector('english', COALESCE(last_name, '')), 'A');
 
--- Performance Optimization Notes:
--- - Only add indexes that match your actual query patterns
--- - Run EXPLAIN ANALYZE on slow queries to identify missing indexes
--- - After adding indexes, run: ANALYZE "workers";
--- Useful Analysis Queries:
--- Check index usage:
--- SELECT schemaname, tablename, indexname, idx_scan, idx_tup_read, idx_tup_fetch
--- FROM pg_stat_user_indexes WHERE tablename = 'workers' ORDER BY idx_scan;
--- Find missing indexes (run after typical workload):
--- SELECT * FROM pg_stat_user_tables WHERE tablename = 'workers';
--- (Look for high seq_scan with high n_tup_fetched)
 --bun:split
 -- Endorsement type enum with descriptions
 CREATE TYPE endorsement_type_enum AS ENUM(

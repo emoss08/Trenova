@@ -33,6 +33,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/internal/core/domain/variable"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/core/domain/workflow"
 )
 
 func RegisterEntities() []any {
@@ -99,6 +100,13 @@ func RegisterEntities() []any {
 		&accounting.JournalEntry{},
 		&accounting.JournalEntryLine{},
 		&docker.DockerDomain{},
+		&workflow.Workflow{},
+		&workflow.WorkflowVersion{},
+		&workflow.WorkflowExecution{},
+		&workflow.WorkflowExecutionStep{},
+		&workflow.WorkflowTemplate{},
+		&workflow.WorkflowNode{},
+		&workflow.WorkflowEdge{},
 	}
 }
 
@@ -145,5 +153,6 @@ func RegisterPermissionAwareEntities() []PermissionAware {
 		accounting.NewAccountingControlPermission(),
 		accounting.NewJournalEntryPermission(),
 		docker.NewDockerPermission(),
+		workflow.NewWorkflowPermission(),
 	}
 }

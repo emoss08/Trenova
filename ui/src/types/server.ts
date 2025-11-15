@@ -118,6 +118,7 @@ export type BaseEndpoint =
   | "/ai-logs/"
   | "/workers/pto/"
   | "/variables/"
+  | "/workflows/"
   | "/distance-overrides/"
   | "/fiscal-years/"
   | "/fiscal-periods/"

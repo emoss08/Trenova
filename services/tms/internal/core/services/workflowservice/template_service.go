@@ -84,7 +84,7 @@ func (s *TemplateService) Create(
 	// Audit log
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       workflow.ResourceWorkflowTemplate,
+			Resource:       permission.ResourceWorkflowTemplate,
 			ResourceID:     createdEntity.GetID(),
 			Operation:      permission.OpCreate,
 			UserID:         userID,
@@ -145,7 +145,7 @@ func (s *TemplateService) Update(
 	// Audit log
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       workflow.ResourceWorkflowTemplate,
+			Resource:       permission.ResourceWorkflowTemplate,
 			ResourceID:     updatedEntity.GetID(),
 			Operation:      permission.OpUpdate,
 			UserID:         userID,
@@ -199,7 +199,7 @@ func (s *TemplateService) Delete(
 	// Audit log
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       workflow.ResourceWorkflowTemplate,
+			Resource:       permission.ResourceWorkflowTemplate,
 			ResourceID:     id.String(),
 			Operation:      permission.OpDelete,
 			UserID:         userID,

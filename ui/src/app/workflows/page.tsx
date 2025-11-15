@@ -5,7 +5,7 @@ import { lazy } from "react";
 // Lazy Loaded Components
 const WorkflowTable = lazy(() => import("./_components/workflow-table"));
 
-export default function Workflows() {
+export function Workflows() {
   return (
     <>
       <MetaTags

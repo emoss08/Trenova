@@ -90,7 +90,7 @@ func (s *Service) Create(
 	// Audit log
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       workflow.ResourceWorkflow,
+			Resource:       permission.ResourceWorkflow,
 			ResourceID:     createdEntity.GetID(),
 			Operation:      permission.OpCreate,
 			UserID:         userID,
@@ -154,7 +154,7 @@ func (s *Service) Update(
 	// Audit log
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       workflow.ResourceWorkflow,
+			Resource:       permission.ResourceWorkflow,
 			ResourceID:     updatedEntity.GetID(),
 			Operation:      permission.OpUpdate,
 			UserID:         userID,
@@ -210,7 +210,7 @@ func (s *Service) Delete(
 	// Audit log
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       workflow.ResourceWorkflow,
+			Resource:       permission.ResourceWorkflow,
 			ResourceID:     id.String(),
 			Operation:      permission.OpDelete,
 			UserID:         userID,
@@ -305,7 +305,7 @@ func (s *Service) CreateVersion(
 	// Audit log
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       workflow.ResourceWorkflow,
+			Resource:       permission.ResourceWorkflow,
 			ResourceID:     workflowID.String(),
 			Operation:      permission.OpUpdate,
 			UserID:         userID,
@@ -370,7 +370,7 @@ func (s *Service) PublishVersion(
 	// Audit log
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       workflow.ResourceWorkflow,
+			Resource:       permission.ResourceWorkflow,
 			ResourceID:     workflowID.String(),
 			Operation:      permission.OpUpdate,
 			UserID:         userID,
@@ -476,7 +476,7 @@ func (s *Service) UpdateStatus(
 	// Audit log
 	err = s.as.LogAction(
 		&services.LogActionParams{
-			Resource:       workflow.ResourceWorkflow,
+			Resource:       permission.ResourceWorkflow,
 			ResourceID:     id.String(),
 			Operation:      permission.OpUpdate,
 			UserID:         userID,

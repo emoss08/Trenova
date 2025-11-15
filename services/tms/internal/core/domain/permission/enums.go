@@ -215,4 +215,6 @@ const (
 	ResourceAILog = Resource(
 		"ai_log",
 	) // Represents resources for managing ai logs.
+	ResourceWorkflowExecution = Resource("workflow_execution")
+	ResourceWorkflowTemplate  = Resource("workflow_template")
 )

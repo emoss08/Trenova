@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/context"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/workflow"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	workflowservice "github.com/emoss08/trenova/internal/core/services/workflowservice"
@@ -39,14 +40,30 @@ func NewWorkflowTemplateHandler(p WorkflowTemplateHandlerParams) *WorkflowTempla
 
 func (h *WorkflowTemplateHandler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/workflow-templates/")
-	api.GET("", h.pm.RequirePermission(workflow.ResourceWorkflowTemplate, "read"), h.list)
-	api.GET("system/", h.pm.RequirePermission(workflow.ResourceWorkflowTemplate, "read"), h.listSystem)
-	api.GET("public/", h.pm.RequirePermission(workflow.ResourceWorkflowTemplate, "read"), h.listPublic)
-	api.GET(":id/", h.pm.RequirePermission(workflow.ResourceWorkflowTemplate, "read"), h.get)
-	api.POST("", h.pm.RequirePermission(workflow.ResourceWorkflowTemplate, "create"), h.create)
-	api.PUT(":id/", h.pm.RequirePermission(workflow.ResourceWorkflowTemplate, "update"), h.update)
-	api.DELETE(":id/", h.pm.RequirePermission(workflow.ResourceWorkflowTemplate, "delete"), h.delete)
-	api.POST(":id/use/", h.pm.RequirePermission(workflow.ResourceWorkflowTemplate, "read"), h.useTemplate)
+	api.GET("", h.pm.RequirePermission(permission.ResourceWorkflowTemplate, "read"), h.list)
+	api.GET(
+		"system/",
+		h.pm.RequirePermission(permission.ResourceWorkflowTemplate, "read"),
+		h.listSystem,
+	)
+	api.GET(
+		"public/",
+		h.pm.RequirePermission(permission.ResourceWorkflowTemplate, "read"),
+		h.listPublic,
+	)
+	api.GET(":id/", h.pm.RequirePermission(permission.ResourceWorkflowTemplate, "read"), h.get)
+	api.POST("", h.pm.RequirePermission(permission.ResourceWorkflowTemplate, "create"), h.create)
+	api.PUT(":id/", h.pm.RequirePermission(permission.ResourceWorkflowTemplate, "update"), h.update)
+	api.DELETE(
+		":id/",
+		h.pm.RequirePermission(permission.ResourceWorkflowTemplate, "delete"),
+		h.delete,
+	)
+	api.POST(
+		":id/use/",
+		h.pm.RequirePermission(permission.ResourceWorkflowTemplate, "read"),
+		h.useTemplate,
+	)
 }
 
 func (h *WorkflowTemplateHandler) list(c *gin.Context) {
@@ -79,7 +96,11 @@ func (h *WorkflowTemplateHandler) listSystem(c *gin.Context) {
 func (h *WorkflowTemplateHandler) listPublic(c *gin.Context) {
 	authCtx := context.GetAuthContext(c)
 
-	templates, err := h.service.GetPublicTemplates(c.Request.Context(), authCtx.OrganizationID, authCtx.BusinessUnitID)
+	templates, err := h.service.GetPublicTemplates(
+		c.Request.Context(),
+		authCtx.OrganizationID,
+		authCtx.BusinessUnitID,
+	)
 	if err != nil {
 		h.errorHandler.HandleError(c, err)
 		return
@@ -169,7 +190,13 @@ func (h *WorkflowTemplateHandler) delete(c *gin.Context) {
 		return
 	}
 
-	err = h.service.Delete(c.Request.Context(), id, authCtx.OrganizationID, authCtx.BusinessUnitID, authCtx.UserID)
+	err = h.service.Delete(
+		c.Request.Context(),
+		id,
+		authCtx.OrganizationID,
+		authCtx.BusinessUnitID,
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.errorHandler.HandleError(c, err)
 		return
@@ -187,7 +214,13 @@ func (h *WorkflowTemplateHandler) useTemplate(c *gin.Context) {
 		return
 	}
 
-	template, err := h.service.UseTemplate(c.Request.Context(), id, authCtx.OrganizationID, authCtx.BusinessUnitID, authCtx.UserID)
+	template, err := h.service.UseTemplate(
+		c.Request.Context(),
+		id,
+		authCtx.OrganizationID,
+		authCtx.BusinessUnitID,
+		authCtx.UserID,
+	)
 	if err != nil {
 		h.errorHandler.HandleError(c, err)
 		return

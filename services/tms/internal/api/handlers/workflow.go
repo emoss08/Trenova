@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/context"
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
+	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/domain/workflow"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	workflowservice "github.com/emoss08/trenova/internal/core/services/workflowservice"
@@ -39,53 +40,57 @@ func NewWorkflowHandler(p WorkflowHandlerParams) *WorkflowHandler {
 
 func (h *WorkflowHandler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/workflows/")
-	api.GET("", h.pm.RequirePermission(workflow.ResourceWorkflow, "read"), h.list)
-	api.GET(":id/", h.pm.RequirePermission(workflow.ResourceWorkflow, "read"), h.get)
-	api.POST("", h.pm.RequirePermission(workflow.ResourceWorkflow, "create"), h.create)
-	api.PUT(":id/", h.pm.RequirePermission(workflow.ResourceWorkflow, "update"), h.update)
-	api.DELETE(":id/", h.pm.RequirePermission(workflow.ResourceWorkflow, "delete"), h.delete)
+	api.GET("", h.pm.RequirePermission(permission.ResourceWorkflow, "read"), h.list)
+	api.GET(":id/", h.pm.RequirePermission(permission.ResourceWorkflow, "read"), h.get)
+	api.POST("", h.pm.RequirePermission(permission.ResourceWorkflow, "create"), h.create)
+	api.PUT(":id/", h.pm.RequirePermission(permission.ResourceWorkflow, "update"), h.update)
+	api.DELETE(":id/", h.pm.RequirePermission(permission.ResourceWorkflow, "delete"), h.delete)
 
 	// Version management
 	api.GET(
 		":id/versions/",
-		h.pm.RequirePermission(workflow.ResourceWorkflow, "read"),
+		h.pm.RequirePermission(permission.ResourceWorkflow, "read"),
 		h.listVersions,
 	)
 	api.GET(
 		":id/versions/:versionId/",
-		h.pm.RequirePermission(workflow.ResourceWorkflow, "read"),
+		h.pm.RequirePermission(permission.ResourceWorkflow, "read"),
 		h.getVersion,
 	)
 	api.POST(
 		":id/versions/",
-		h.pm.RequirePermission(workflow.ResourceWorkflow, "update"),
+		h.pm.RequirePermission(permission.ResourceWorkflow, "update"),
 		h.createVersion,
 	)
 	api.POST(
 		":id/versions/:versionId/publish/",
-		h.pm.RequirePermission(workflow.ResourceWorkflow, "update"),
+		h.pm.RequirePermission(permission.ResourceWorkflow, "update"),
 		h.publishVersion,
 	)
 
 	// Node and edge management
 	api.PUT(
 		":id/versions/:versionId/definition/",
-		h.pm.RequirePermission(workflow.ResourceWorkflow, "update"),
+		h.pm.RequirePermission(permission.ResourceWorkflow, "update"),
 		h.saveDefinition,
 	)
 
 	// Status management
 	api.POST(
 		":id/activate/",
-		h.pm.RequirePermission(workflow.ResourceWorkflow, "update"),
+		h.pm.RequirePermission(permission.ResourceWorkflow, "update"),
 		h.activate,
 	)
 	api.POST(
 		":id/deactivate/",
-		h.pm.RequirePermission(workflow.ResourceWorkflow, "update"),
+		h.pm.RequirePermission(permission.ResourceWorkflow, "update"),
 		h.deactivate,
 	)
-	api.POST(":id/archive/", h.pm.RequirePermission(workflow.ResourceWorkflow, "update"), h.archive)
+	api.POST(
+		":id/archive/",
+		h.pm.RequirePermission(permission.ResourceWorkflow, "update"),
+		h.archive,
+	)
 }
 
 func (h *WorkflowHandler) list(c *gin.Context) {
