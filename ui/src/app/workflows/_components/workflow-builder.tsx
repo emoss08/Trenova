@@ -89,9 +89,9 @@ function toReactFlowEdge(edge: WorkflowEdgeSchema): Edge {
     id: edge.id,
     source: edge.source,
     target: edge.target,
-    sourceHandle: edge.sourceHandle || undefined,
-    targetHandle: edge.targetHandle || undefined,
-    label: edge.label || undefined,
+    sourceHandle: edge.sourceHandle,
+    targetHandle: edge.targetHandle,
+    label: edge.label,
   };
 }
 
@@ -101,8 +101,8 @@ function toWorkflowEdge(edge: Edge): WorkflowEdgeSchema {
     id: edge.id,
     source: edge.source,
     target: edge.target,
-    sourceHandle: edge.sourceHandle || null,
-    targetHandle: edge.targetHandle || null,
+    sourceHandle: edge.sourceHandle,
+    targetHandle: edge.targetHandle,
     label: (edge.label as string) || null,
     condition: {},
   };
@@ -169,29 +169,24 @@ export function WorkflowBuilder({
     setSelectedNode(null);
   }, []);
 
-  const addNode = useCallback(
-    (type: string) => {
-      const timestamp = Date.now();
-      const newNode: WorkflowNodeType = {
-        id: `node-${type}-${timestamp}`,
-        type,
-        position: {
-          x: Math.random() * 400 + 100,
-          y: Math.random() * 400 + 100,
-        },
-        data: {
-          label: type.charAt(0).toUpperCase() + type.slice(1),
-          nodeType: type,
-          config: {},
-        },
-      };
-      setNodes((nds) => [...nds, newNode]);
-      toast.success(
-        `${type.charAt(0).toUpperCase() + type.slice(1)} node added`,
-      );
-    },
-    [],
-  );
+  const addNode = useCallback((type: string) => {
+    const timestamp = Date.now();
+    const newNode: WorkflowNodeType = {
+      id: `node-${type}-${timestamp}`,
+      type,
+      position: {
+        x: Math.random() * 400 + 100,
+        y: Math.random() * 400 + 100,
+      },
+      data: {
+        label: type.charAt(0).toUpperCase() + type.slice(1),
+        nodeType: type,
+        config: {},
+      },
+    };
+    setNodes((nds) => [...nds, newNode]);
+    toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} node added`);
+  }, []);
 
   const updateNodeData = useCallback(
     (nodeId: string, updates: Partial<NodeData>) => {
@@ -285,7 +280,7 @@ export function WorkflowBuilder({
   }
 
   return (
-    <div className="relative h-full w-full">
+    <div style={{ height: "100vh", width: "100vw" }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}

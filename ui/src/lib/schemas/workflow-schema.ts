@@ -6,6 +6,7 @@
 import * as z from "zod";
 import {
   nullablePulidSchema,
+  nullableStringSchema,
   optionalStringSchema,
   pulidSchema,
   timestampSchema,
@@ -168,9 +169,9 @@ export const workflowEdgeSchema = z.object({
   id: z.string().min(1),
   source: z.string().min(1),
   target: z.string().min(1),
-  sourceHandle: optionalStringSchema,
-  targetHandle: optionalStringSchema,
-  label: optionalStringSchema,
+  sourceHandle: nullableStringSchema,
+  targetHandle: nullableStringSchema,
+  label: nullableStringSchema,
   condition: z.record(z.any(), z.any()).optional(),
 });
 
