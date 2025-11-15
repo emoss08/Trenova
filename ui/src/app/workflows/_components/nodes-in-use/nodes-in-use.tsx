@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Icon } from "@/components/ui/icon";
+import { Icon } from "@/components/ui/icons";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -8,7 +8,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { WorkflowNodeType } from "@/types/workflow";
 import { faNetworkWired } from "@fortawesome/pro-regular-svg-icons";
 import { useReactFlow } from "@xyflow/react";
-import { Clock, GitBranch, Play, Repeat, Square, Trash2, Zap } from "lucide-react";
+import {
+  Clock,
+  GitBranch,
+  Play,
+  Repeat,
+  Square,
+  Trash2,
+  Zap,
+} from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -37,13 +45,16 @@ export default function NodesInUse() {
   const nodes = getNodes() as WorkflowNodeType[];
   const selectedNode = nodes.find((n) => n.id === selectedNodeId);
 
-  const handleUpdateNode = (nodeId: string, updates: Partial<WorkflowNodeType["data"]>) => {
+  const handleUpdateNode = (
+    nodeId: string,
+    updates: Partial<WorkflowNodeType["data"]>,
+  ) => {
     setNodes((nds) =>
       nds.map((node) =>
         node.id === nodeId
           ? { ...node, data: { ...node.data, ...updates } }
-          : node
-      )
+          : node,
+      ),
     );
     toast.success("Node updated");
   };
@@ -59,7 +70,10 @@ export default function NodesInUse() {
       <div className="flex h-[80vh] w-80 flex-col">
         <div className="flex flex-col items-center justify-center gap-1 p-4">
           <div className="flex size-12 items-center justify-center rounded-full bg-primary">
-            <Icon icon={faNetworkWired} className="size-6 shrink-0 text-background" />
+            <Icon
+              icon={faNetworkWired}
+              className="size-6 shrink-0 text-background"
+            />
           </div>
           <span className="text-xl font-medium">Nodes in Use</span>
           <span className="text-sm text-muted-foreground">
@@ -74,19 +88,26 @@ export default function NodesInUse() {
     <div className="flex h-[80vh] w-80 flex-col">
       <div className="flex flex-col items-center justify-center gap-1 p-4">
         <div className="flex size-12 items-center justify-center rounded-full bg-primary">
-          <Icon icon={faNetworkWired} className="size-6 shrink-0 text-background" />
+          <Icon
+            icon={faNetworkWired}
+            className="size-6 shrink-0 text-background"
+          />
         </div>
         <span className="text-xl font-medium">Nodes in Use</span>
         <span className="text-sm text-muted-foreground">
-          {nodes.length} {nodes.length === 1 ? "node" : "nodes"} in this workflow
+          {nodes.length} {nodes.length === 1 ? "node" : "nodes"} in this
+          workflow
         </span>
       </div>
 
       <ScrollArea className="flex-1 px-4">
         <div className="flex flex-col gap-2">
           {nodes.map((node) => {
-            const IconComponent = nodeIcons[node.data.nodeType as keyof typeof nodeIcons] || Play;
-            const colorClass = nodeColors[node.data.nodeType as keyof typeof nodeColors] || "text-blue-600";
+            const IconComponent =
+              nodeIcons[node.data.nodeType as keyof typeof nodeIcons] || Play;
+            const colorClass =
+              nodeColors[node.data.nodeType as keyof typeof nodeColors] ||
+              "text-blue-600";
             const isSelected = selectedNodeId === node.id;
 
             return (
@@ -101,7 +122,9 @@ export default function NodesInUse() {
                 >
                   <IconComponent className={`size-4 shrink-0 ${colorClass}`} />
                   <div className="flex flex-1 flex-col leading-tight">
-                    <span className="text-sm font-medium">{node.data.label}</span>
+                    <span className="text-sm font-medium">
+                      {node.data.label}
+                    </span>
                     <span className="text-xs text-muted-foreground">
                       {node.data.nodeType}
                     </span>
@@ -134,8 +157,12 @@ function NodeProperties({
   onDelete: () => void;
 }) {
   const [label, setLabel] = useState(node.data.label);
-  const [description, setDescription] = useState(node.data.config?.description || "");
-  const [delaySeconds, setDelaySeconds] = useState(node.data.config?.delaySeconds || 1);
+  const [description, setDescription] = useState(
+    node.data.config?.description || "",
+  );
+  const [delaySeconds, setDelaySeconds] = useState(
+    node.data.config?.delaySeconds || 1,
+  );
 
   const handleSave = () => {
     const baseConfig = {
@@ -235,7 +262,8 @@ function NodeProperties({
           <div className="rounded-md bg-background px-2 py-1.5 text-xs text-muted-foreground">
             {node.data.config?.field ? (
               <div>
-                {node.data.config.field} {node.data.config.operator} {node.data.config.value}
+                {node.data.config.field} {node.data.config.operator}{" "}
+                {node.data.config.value}
               </div>
             ) : (
               "Not configured"
