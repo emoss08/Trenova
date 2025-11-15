@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/searchjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/workflowjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
@@ -27,6 +28,7 @@ type TemporalWorkerParams struct {
 	ReportRegistry       *reportjobs.Registry
 	SearchRegistry       *searchjobs.Registry
 	ShipmentRegistry     *shipmentjobs.Registry
+	WorkflowRegistry     *workflowjobs.Registry
 	Config               *config.Config
 	Logger               *zap.Logger
 	LC                   fx.Lifecycle
@@ -64,6 +66,11 @@ func NewTemporalWorkers(p TemporalWorkerParams) error {
 
 	if err := p.WorkerManager.Register(p.ShipmentRegistry); err != nil {
 		log.Error("failed to register shipment worker", zap.Error(err))
+		return err
+	}
+
+	if err := p.WorkerManager.Register(p.WorkflowRegistry); err != nil {
+		log.Error("failed to register workflow worker", zap.Error(err))
 		return err
 	}
 

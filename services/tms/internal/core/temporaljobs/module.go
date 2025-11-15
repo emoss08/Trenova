@@ -9,6 +9,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/temporaljobs/reportjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/searchjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/workflowjobs"
 	"go.uber.org/fx"
 )
 
@@ -21,6 +22,7 @@ var Module = fx.Module("temporaljobs",
 	reportjobs.Module,
 	searchjobs.Module,
 	shipmentjobs.Module,
+	workflowjobs.Module,
 	SchedulerModule,
 )
 
