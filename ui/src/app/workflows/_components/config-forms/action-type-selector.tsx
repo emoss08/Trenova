@@ -1,4 +1,9 @@
 import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "@/components/ui/hover-card";
+import {
   Select,
   SelectContent,
   SelectGroup,
@@ -7,64 +12,104 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertCircle,
+  Bell,
+  Database,
+  DollarSign,
+  FileText,
+  HelpCircle,
+  TruckIcon,
+} from "lucide-react";
 
 export type ActionCategory = {
   label: string;
+  icon: React.ComponentType<{ className?: string }>;
+  description: string;
   actions: {
     value: string;
     label: string;
     description: string;
+    example?: string;
   }[];
 };
 
 const actionCategories: ActionCategory[] = [
   {
-    label: "Shipment",
+    label: "Shipment Operations",
+    icon: TruckIcon,
+    description: "Manage shipment lifecycle and assignments",
     actions: [
       {
         value: "shipment_update_status",
-        label: "Update Status",
-        description: "Update shipment status",
+        label: "Update Shipment Status",
+        description: "Change the current status of a shipment",
+        example: "Mark shipment as 'In Transit' or 'Delivered'",
       },
     ],
   },
   {
-    label: "Billing",
+    label: "Billing & Finance",
+    icon: DollarSign,
+    description: "Handle billing, invoicing, and financial operations",
     actions: [
       {
         value: "billing_validate_requirements",
-        label: "Validate Requirements",
-        description: "Validate billing requirements",
+        label: "Validate Billing Readiness",
+        description: "Check if shipment has all required information for billing",
+        example: "Verify customer, charges, and delivery date are set",
       },
     ],
   },
   {
-    label: "Document",
+    label: "Document Management",
+    icon: FileText,
+    description: "Manage shipment documents and compliance",
     actions: [
       {
         value: "document_validate_completeness",
-        label: "Validate Completeness",
-        description: "Check if all required documents are present",
+        label: "Check Required Documents",
+        description: "Verify all required documents are uploaded",
+        example: "Check for BOL, POD, and Invoice before billing",
       },
     ],
   },
   {
-    label: "Notification",
+    label: "Notifications & Alerts",
+    icon: Bell,
+    description: "Send notifications to users, customers, or external systems",
     actions: [
       {
         value: "notification_send_email",
-        label: "Send Email",
-        description: "Send an email notification",
+        label: "Send Email Notification",
+        description: "Send a customizable email message",
+        example: "Notify customer when shipment is out for delivery",
       },
     ],
   },
   {
-    label: "Data",
+    label: "Data & Integration",
+    icon: Database,
+    description: "Integrate with external systems and transform data",
     actions: [
       {
         value: "data_api_call",
-        label: "API Call",
-        description: "Make an HTTP API request",
+        label: "Call External API",
+        description: "Make HTTP request to external service",
+        example: "Update tracking in customer's TMS system",
+      },
+    ],
+  },
+  {
+    label: "Compliance & Safety",
+    icon: AlertCircle,
+    description: "Ensure regulatory compliance and safety requirements",
+    actions: [
+      {
+        value: "compliance_check_hazmat",
+        label: "Check Hazmat Compliance",
+        description: "Verify hazardous materials documentation",
+        example: "Ensure hazmat placards and paperwork are complete",
       },
     ],
   },
@@ -79,29 +124,98 @@ export function ActionTypeSelector({
   value,
   onChange,
 }: ActionTypeSelectorProps) {
+  // Find the selected action for display
+  const selectedAction = actionCategories
+    .flatMap((cat) => cat.actions)
+    .find((action) => action.value === value);
+
   return (
-    <Select value={value} onValueChange={onChange}>
-      <SelectTrigger>
-        <SelectValue placeholder="Select an action type..." />
-      </SelectTrigger>
-      <SelectContent>
-        {actionCategories.map((category) => (
-          <SelectGroup key={category.label}>
-            <SelectLabel className="px-2 py-1.5 text-xs text-muted-foreground">
-              {category.label}
-            </SelectLabel>
-            {category.actions.map((action) => (
-              <SelectItem
-                key={action.value}
-                value={action.value}
-                className="text-sm font-normal"
-              >
-                {action.label}
-              </SelectItem>
-            ))}
-          </SelectGroup>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Select value={value} onValueChange={onChange}>
+          <SelectTrigger className="flex-1">
+            <SelectValue placeholder="Select an action type..." />
+          </SelectTrigger>
+          <SelectContent>
+            {actionCategories.map((category) => {
+              const Icon = category.icon;
+              return (
+                <SelectGroup key={category.label}>
+                  <SelectLabel className="flex items-center gap-2 px-2 py-1.5 text-xs font-semibold">
+                    <Icon className="size-3.5" />
+                    {category.label}
+                  </SelectLabel>
+                  {category.actions.map((action) => (
+                    <SelectItem
+                      key={action.value}
+                      value={action.value}
+                      className="pl-8 text-sm font-normal"
+                    >
+                      <div className="flex flex-col">
+                        <span>{action.label}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {action.description}
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              );
+            })}
+          </SelectContent>
+        </Select>
+
+        <HoverCard>
+          <HoverCardTrigger asChild>
+            <button
+              type="button"
+              className="flex size-9 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+            >
+              <HelpCircle className="size-4 text-muted-foreground" />
+            </button>
+          </HoverCardTrigger>
+          <HoverCardContent className="w-80" side="left">
+            <div className="space-y-2">
+              <h4 className="text-sm font-semibold">Action Types</h4>
+              <p className="text-xs text-muted-foreground">
+                Actions are the operations performed by workflow nodes. Each
+                action can access workflow data using variables like{" "}
+                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+                  {"{"}
+                  {"{"}trigger.shipmentId{"}}"}
+                </code>
+                .
+              </p>
+              <div className="space-y-1 pt-2">
+                <p className="text-xs font-medium">Available Categories:</p>
+                {actionCategories.map((cat) => {
+                  const Icon = cat.icon;
+                  return (
+                    <div key={cat.label} className="flex items-start gap-2">
+                      <Icon className="mt-0.5 size-3.5 text-muted-foreground" />
+                      <div>
+                        <p className="text-xs font-medium">{cat.label}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {cat.description}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </HoverCardContent>
+        </HoverCard>
+      </div>
+
+      {selectedAction && selectedAction.example && (
+        <div className="rounded-md border border-border bg-muted/50 p-3">
+          <p className="text-xs font-medium text-muted-foreground">
+            Example Use Case:
+          </p>
+          <p className="mt-1 text-sm">{selectedAction.example}</p>
+        </div>
+      )}
+    </div>
   );
 }

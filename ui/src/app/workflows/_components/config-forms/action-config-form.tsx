@@ -9,6 +9,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import {
   billingValidateRequirementsConfigSchema,
@@ -18,11 +19,40 @@ import {
   shipmentUpdateStatusConfigSchema,
 } from "@/lib/schemas/node-config-schema";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Plus, X } from "lucide-react";
+import { AlertCircle, CheckCircle2, Info, Plus, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { type z } from "zod";
 import VariableInput from "./variable-input";
+
+// Reusable help text component
+function FieldHelp({
+  children,
+  type = "info",
+}: {
+  children: React.ReactNode;
+  type?: "info" | "warning" | "success";
+}) {
+  const Icon =
+    type === "warning"
+      ? AlertCircle
+      : type === "success"
+        ? CheckCircle2
+        : Info;
+  const colorClass =
+    type === "warning"
+      ? "text-yellow-600 dark:text-yellow-500"
+      : type === "success"
+        ? "text-green-600 dark:text-green-500"
+        : "text-muted-foreground";
+
+  return (
+    <div className="flex items-start gap-2 text-xs text-muted-foreground">
+      <Icon className={`mt-0.5 size-3.5 shrink-0 ${colorClass}`} />
+      <p>{children}</p>
+    </div>
+  );
+}
 
 interface ActionConfigFormProps {
   actionType: string;
@@ -50,42 +80,62 @@ function ShipmentUpdateStatusForm({
   const status = useWatch({ control, name: "status" });
 
   return (
-    <form onSubmit={handleSubmit(onSave)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="shipmentId">Shipment ID</Label>
-        <VariableInput
-          value={shipmentId || ""}
-          onChange={(value) => setValue("shipmentId", value)}
-          placeholder="{{trigger.shipmentId}}"
-        />
-        {errors.shipmentId && (
-          <p className="text-sm text-destructive">
-            {errors.shipmentId.message}
-          </p>
-        )}
+    <form onSubmit={handleSubmit(onSave)} className="space-y-5">
+      <div className="space-y-3">
+        <div className="space-y-2">
+          <Label htmlFor="shipmentId" className="text-sm font-medium">
+            Shipment ID
+          </Label>
+          <VariableInput
+            value={shipmentId || ""}
+            onChange={(value) => setValue("shipmentId", value)}
+            placeholder="{{trigger.shipmentId}}"
+          />
+          <FieldHelp>
+            The ID of the shipment to update. Use{" "}
+            <code className="rounded bg-muted px-1 font-mono">
+              {"{"}
+              {"{"}trigger.shipmentId{"}}"}
+            </code>{" "}
+            to reference the shipment from the workflow trigger.
+          </FieldHelp>
+          {errors.shipmentId && (
+            <p className="text-sm text-destructive">
+              {errors.shipmentId.message}
+            </p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="status" className="text-sm font-medium">
+            New Status
+          </Label>
+          <Select
+            onValueChange={(value) => setValue("status", value as any)}
+            value={status}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select status..." />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="new">New</SelectItem>
+              <SelectItem value="in_transit">In Transit</SelectItem>
+              <SelectItem value="delivered">Delivered</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+              <SelectItem value="on_hold">On Hold</SelectItem>
+            </SelectContent>
+          </Select>
+          <FieldHelp>
+            The status to set on the shipment. This will update the shipment's
+            status field in the database.
+          </FieldHelp>
+          {errors.status && (
+            <p className="text-sm text-destructive">{errors.status.message}</p>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="status">New Status</Label>
-        <Select
-          onValueChange={(value) => setValue("status", value as any)}
-          value={status}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select status..." />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="new">New</SelectItem>
-            <SelectItem value="in_transit">In Transit</SelectItem>
-            <SelectItem value="delivered">Delivered</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-            <SelectItem value="on_hold">On Hold</SelectItem>
-          </SelectContent>
-        </Select>
-        {errors.status && (
-          <p className="text-sm text-destructive">{errors.status.message}</p>
-        )}
-      </div>
+      <Separator />
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
@@ -118,44 +168,86 @@ function NotificationSendEmailForm({
   const body = useWatch({ control, name: "body" });
 
   return (
-    <form onSubmit={handleSubmit(onSave)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="to">To (Email)</Label>
-        <VariableInput
-          value={to || ""}
-          onChange={(value) => setValue("to", value)}
-          placeholder="{{trigger.customerEmail}}"
-          type="email"
-        />
-        {errors.to && (
-          <p className="text-sm text-destructive">{errors.to.message}</p>
-        )}
+    <form onSubmit={handleSubmit(onSave)} className="space-y-5">
+      <div className="space-y-3">
+        <div className="space-y-2">
+          <Label htmlFor="to" className="text-sm font-medium">
+            Recipient Email Address
+          </Label>
+          <VariableInput
+            value={to || ""}
+            onChange={(value) => setValue("to", value)}
+            placeholder="customer@example.com or {{trigger.customer.email}}"
+            type="email"
+          />
+          <FieldHelp>
+            The email address to send to. Can be a static email address or a
+            variable like{" "}
+            <code className="rounded bg-muted px-1 font-mono">
+              {"{"}
+              {"{"}trigger.customer.email{"}}"}
+            </code>
+            .
+          </FieldHelp>
+          {errors.to && (
+            <p className="text-sm text-destructive">{errors.to.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="subject" className="text-sm font-medium">
+            Email Subject
+          </Label>
+          <Input
+            value={subject || ""}
+            onChange={(e) => setValue("subject", e.target.value)}
+            placeholder="Shipment {{trigger.proNumber}} Status Update"
+            className="font-mono text-sm"
+          />
+          <FieldHelp>
+            The subject line of the email. You can use variables to personalize
+            it, such as{" "}
+            <code className="rounded bg-muted px-1 font-mono">
+              Shipment {"{"}
+              {"{"}trigger.proNumber{"}}"}
+            </code>
+            .
+          </FieldHelp>
+          {errors.subject && (
+            <p className="text-sm text-destructive">{errors.subject.message}</p>
+          )}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="body" className="text-sm font-medium">
+            Email Body
+          </Label>
+          <Textarea
+            value={body || ""}
+            onChange={(e) => setValue("body", e.target.value)}
+            placeholder={`Hello,\n\nYour shipment {{trigger.proNumber}} has been updated to status: {{trigger.status}}.\n\nThank you!`}
+            rows={6}
+            className="font-mono text-sm"
+          />
+          <FieldHelp>
+            The main content of the email. Use variables to include dynamic
+            information from the workflow. HTML is supported.
+          </FieldHelp>
+          {errors.body && (
+            <p className="text-sm text-destructive">{errors.body.message}</p>
+          )}
+        </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="subject">Subject</Label>
-        <Input
-          value={subject || ""}
-          onChange={(e) => setValue("subject", e.target.value)}
-          placeholder="Shipment Update Notification"
-        />
-        {errors.subject && (
-          <p className="text-sm text-destructive">{errors.subject.message}</p>
-        )}
+      <div className="rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950">
+        <FieldHelp type="info">
+          <span className="font-medium">Preview:</span> The email will be sent
+          from your organization's configured email profile. Variables will be
+          replaced with actual values when the workflow executes.
+        </FieldHelp>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="body">Body</Label>
-        <Textarea
-          value={body || ""}
-          onChange={(e) => setValue("body", e.target.value)}
-          placeholder="Your shipment has been updated..."
-          rows={5}
-        />
-        {errors.body && (
-          <p className="text-sm text-destructive">{errors.body.message}</p>
-        )}
-      </div>
+      <Separator />
 
       <div className="flex justify-end gap-2">
         <Button type="button" variant="outline" onClick={onCancel}>
