@@ -5,12 +5,36 @@
 
 import { createCommonColumns } from "@/components/data-table/_components/data-table-column-helpers";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { api } from "@/services/api";
 import {
   type WorkflowSchema,
   type WorkflowStatusType,
   type TriggerTypeType,
 } from "@/lib/schemas/workflow-schema";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createColumnHelper, type ColumnDef } from "@tanstack/react-table";
+import {
+  Archive,
+  CheckCircle2,
+  MoreHorizontal,
+  Pause,
+  Play,
+  Workflow as WorkflowIcon,
+  PlayCircle,
+} from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router";
+import { TriggerWorkflowDialog } from "./trigger-workflow-dialog";
+import { toast } from "sonner";
 
 const workflowStatusConfig: Record<
   WorkflowStatusType,
@@ -31,6 +55,98 @@ const triggerTypeLabels: Record<TriggerTypeType, string> = {
   entity_updated: "Entity Updated",
   webhook: "Webhook",
 };
+
+function WorkflowActions({ workflow }: { workflow: WorkflowSchema }) {
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [triggerDialogOpen, setTriggerDialogOpen] = useState(false);
+
+  const activateMutation = useMutation({
+    mutationFn: () => api.workflows.activate(workflow.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workflows"] });
+      toast.success("Workflow activated successfully");
+    },
+    onError: () => {
+      toast.error("Failed to activate workflow");
+    },
+  });
+
+  const deactivateMutation = useMutation({
+    mutationFn: () => api.workflows.deactivate(workflow.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workflows"] });
+      toast.success("Workflow deactivated successfully");
+    },
+    onError: () => {
+      toast.error("Failed to deactivate workflow");
+    },
+  });
+
+  const archiveMutation = useMutation({
+    mutationFn: () => api.workflows.archive(workflow.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["workflows"] });
+      toast.success("Workflow archived successfully");
+    },
+    onError: () => {
+      toast.error("Failed to archive workflow");
+    },
+  });
+
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" className="size-8 p-0">
+            <span className="sr-only">Open menu</span>
+            <MoreHorizontal className="size-4" />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+          <DropdownMenuItem
+            onClick={() => navigate(`/organization/workflows/${workflow.id}`)}
+          >
+            <WorkflowIcon className="mr-2 size-4" />
+            View Builder
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setTriggerDialogOpen(true)}>
+            <PlayCircle className="mr-2 size-4" />
+            Trigger Workflow
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          {workflow.status !== "active" && workflow.status !== "archived" && (
+            <DropdownMenuItem onClick={() => activateMutation.mutate()}>
+              <Play className="mr-2 size-4" />
+              Activate
+            </DropdownMenuItem>
+          )}
+          {workflow.status === "active" && (
+            <DropdownMenuItem onClick={() => deactivateMutation.mutate()}>
+              <Pause className="mr-2 size-4" />
+              Deactivate
+            </DropdownMenuItem>
+          )}
+          {workflow.status !== "archived" && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => archiveMutation.mutate()}>
+                <Archive className="mr-2 size-4" />
+                Archive
+              </DropdownMenuItem>
+            </>
+          )}
+        </DropdownMenuContent>
+      </DropdownMenu>
+      <TriggerWorkflowDialog
+        workflow={workflow}
+        open={triggerDialogOpen}
+        onOpenChange={setTriggerDialogOpen}
+      />
+    </>
+  );
+}
 
 export function getColumns(): ColumnDef<WorkflowSchema>[] {
   const columnHelper = createColumnHelper<WorkflowSchema>();
@@ -77,5 +193,10 @@ export function getColumns(): ColumnDef<WorkflowSchema>[] {
     }),
     commonColumns.createdAt,
     commonColumns.updatedAt,
+    columnHelper.display({
+      id: "actions",
+      header: "Actions",
+      cell: ({ row }) => <WorkflowActions workflow={row.original} />,
+    }),
   ];
 }
