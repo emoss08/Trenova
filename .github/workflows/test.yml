@@ -5,7 +5,7 @@ on:
     branches:
       - main
       - develop
-      - 'claude/**'
+      - "claude/**"
   pull_request:
     branches:
       - main
@@ -48,7 +48,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.3'
+          go-version: "1.25.3"
           cache: true
           cache-dependency-path: |
             go.work.sum
@@ -80,19 +80,19 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Set up Go
-        uses: actions/setup-go@v5
+        uses: actions/setup-go@v6
         with:
-          go-version: '1.25.3'
+          go-version: "1.25.3"
           cache: true
           cache-dependency-path: |
             go.work.sum
             services/tms/go.sum
 
       - name: Run golangci-lint
-        uses: golangci/golangci-lint-action@v6
+        uses: golangci/golangci-lint-action@v8
         with:
           version: latest
           working-directory: ./services/tms
@@ -109,7 +109,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.25.3'
+          go-version: "1.25.3"
           cache: true
           cache-dependency-path: |
             go.work.sum
