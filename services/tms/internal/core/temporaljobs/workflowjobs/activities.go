@@ -259,13 +259,13 @@ func (a *Activities) executeAction(
 	payload *ExecuteNodePayload,
 ) (map[string]any, error) {
 	if payload.ActionType == nil {
-		return nil, fmt.Errorf("action type is required for action nodes")
+		return nil, ErrActionTypeRequired
 	}
 
 	// Parse config from JSONB
 	var config map[string]any
 	if err := jsonutils.MustToJSON(payload.Config); err != nil {
-		return nil, fmt.Errorf("failed to parse node config: %w", err)
+		return nil, fmt.Errorf("failed to parse node config: %+v", err)
 	}
 
 	// Execute the appropriate action handler
@@ -287,7 +287,7 @@ func (a *Activities) evaluateCondition(
 	// Parse config from JSONB
 	var config map[string]any
 	if err := jsonutils.MustToJSON(payload.Config); err != nil {
-		return nil, fmt.Errorf("failed to parse condition config: %w", err)
+		return nil, fmt.Errorf("failed to parse condition config: %+v", err)
 	}
 
 	// Evaluate condition (simplified - you can make this more sophisticated)
@@ -307,7 +307,7 @@ func (a *Activities) executeDelay(
 	// Parse config from JSONB
 	var config map[string]any
 	if err := jsonutils.MustToJSON(payload.Config); err != nil {
-		return nil, fmt.Errorf("failed to parse delay config: %w", err)
+		return nil, fmt.Errorf("failed to parse delay config: %+v", err)
 	}
 
 	// Get delay duration from config
