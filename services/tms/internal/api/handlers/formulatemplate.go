@@ -269,8 +269,20 @@ func (h *FormulaTemplateHandler) validateExpression(c *gin.Context) {
 		return
 	}
 
-	// Try to parse the expression
-	_, err := expression.Parse(req.Expression)
+	// Tokenize the expression
+	tokens, err := expression.NewTokenizer(req.Expression).Tokenize()
+	if err != nil {
+		c.JSON(http.StatusOK, ValidateExpressionResponse{
+			Valid:   false,
+			Error:   err.Error(),
+			Message: "Tokenization failed",
+		})
+		return
+	}
+
+	// Parse the tokens
+	parser := expression.NewParser(tokens)
+	_, err = parser.Parse()
 	if err != nil {
 		c.JSON(http.StatusOK, ValidateExpressionResponse{
 			Valid:   false,
@@ -302,6 +314,30 @@ type TestFormulaResponse struct {
 	ResultType    string         `json:"resultType,omitempty"`
 }
 
+// simpleTestContext wraps a map to provide a simple VariableContext for testing
+type simpleTestContext struct {
+	variables map[string]any
+}
+
+func (s *simpleTestContext) GetEntity() any {
+	return s.variables
+}
+
+func (s *simpleTestContext) GetField(path string) (any, error) {
+	if val, ok := s.variables[path]; ok {
+		return val, nil
+	}
+	return nil, nil
+}
+
+func (s *simpleTestContext) GetComputed(function string) (any, error) {
+	return nil, nil
+}
+
+func (s *simpleTestContext) GetMetadata() map[string]any {
+	return make(map[string]any)
+}
+
 // testFormula allows testing a formula with sample data
 func (h *FormulaTemplateHandler) testFormula(c *gin.Context) {
 	var req TestFormulaRequest
@@ -310,21 +346,12 @@ func (h *FormulaTemplateHandler) testFormula(c *gin.Context) {
 		return
 	}
 
-	// Parse the expression
-	parsedExpr, err := expression.Parse(req.Expression)
-	if err != nil {
-		c.JSON(http.StatusOK, TestFormulaResponse{
-			Success: false,
-			Error:   err.Error(),
-		})
-		return
-	}
+	// Create a simple variable context with the test variables
+	varCtx := &simpleTestContext{variables: req.Variables}
 
-	// Create a simple context with the provided variables
-	ctx := expression.NewEvaluationContext(req.Variables, expression.DefaultFunctionRegistry())
-
-	// Evaluate the parsed expression
-	result, err := parsedExpr.Evaluate(ctx)
+	// Use the evaluator to evaluate the expression
+	evaluator := expression.NewEvaluator(h.variableRegistry)
+	result, err := evaluator.Evaluate(c.Request.Context(), req.Expression, varCtx)
 	if err != nil {
 		c.JSON(http.StatusOK, TestFormulaResponse{
 			Success: false,
@@ -334,21 +361,8 @@ func (h *FormulaTemplateHandler) testFormula(c *gin.Context) {
 	}
 
 	// Determine result type
-	resultType := "unknown"
-	if result != nil {
-		switch result.(type) {
-		case float64, int, int64, int32:
-			resultType = "number"
-		case string:
-			resultType = "string"
-		case bool:
-			resultType = "boolean"
-		case []any:
-			resultType = "array"
-		case map[string]any:
-			resultType = "object"
-		}
-	}
+	resultType := "number" // The evaluator returns float64
+	resultValue := any(result)
 
 	// Collect used variables
 	usedVars := make([]string, 0)
@@ -358,7 +372,7 @@ func (h *FormulaTemplateHandler) testFormula(c *gin.Context) {
 
 	c.JSON(http.StatusOK, TestFormulaResponse{
 		Success:       true,
-		Result:        result,
+		Result:        resultValue,
 		UsedVariables: usedVars,
 		ResultType:    resultType,
 	})
