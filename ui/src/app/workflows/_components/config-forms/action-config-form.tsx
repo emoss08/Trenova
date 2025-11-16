@@ -25,7 +25,6 @@ import { useForm, useWatch } from "react-hook-form";
 import { type z } from "zod";
 import VariableInput from "./variable-input";
 
-// Reusable help text component
 function FieldHelp({
   children,
   type = "info",
@@ -34,11 +33,7 @@ function FieldHelp({
   type?: "info" | "warning" | "success";
 }) {
   const Icon =
-    type === "warning"
-      ? AlertCircle
-      : type === "success"
-        ? CheckCircle2
-        : Info;
+    type === "warning" ? AlertCircle : type === "success" ? CheckCircle2 : Info;
   const colorClass =
     type === "warning"
       ? "text-yellow-600 dark:text-yellow-500"
@@ -126,8 +121,8 @@ function ShipmentUpdateStatusForm({
             </SelectContent>
           </Select>
           <FieldHelp>
-            The status to set on the shipment. This will update the shipment's
-            status field in the database.
+            The status to set on the shipment. This will update the
+            shipment&apos;s status field in the database.
           </FieldHelp>
           {errors.status && (
             <p className="text-sm text-destructive">{errors.status.message}</p>
@@ -147,7 +142,6 @@ function ShipmentUpdateStatusForm({
   );
 }
 
-// Notification Send Email Form
 function NotificationSendEmailForm({
   initialConfig,
   onSave,

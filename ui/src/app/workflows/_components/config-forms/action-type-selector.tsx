@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   HoverCard,
   HoverCardContent,
@@ -12,19 +13,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertCircle,
-  Bell,
-  Database,
-  DollarSign,
-  FileText,
-  HelpCircle,
-  TruckIcon,
-} from "lucide-react";
+import { HelpCircle } from "lucide-react";
 
 export type ActionCategory = {
   label: string;
-  icon: React.ComponentType<{ className?: string }>;
   description: string;
   actions: {
     value: string;
@@ -37,7 +29,6 @@ export type ActionCategory = {
 const actionCategories: ActionCategory[] = [
   {
     label: "Shipment Operations",
-    icon: TruckIcon,
     description: "Manage shipment lifecycle and assignments",
     actions: [
       {
@@ -50,7 +41,6 @@ const actionCategories: ActionCategory[] = [
   },
   {
     label: "Billing & Finance",
-    icon: DollarSign,
     description: "Handle billing, invoicing, and financial operations",
     actions: [
       {
@@ -64,7 +54,6 @@ const actionCategories: ActionCategory[] = [
   },
   {
     label: "Document Management",
-    icon: FileText,
     description: "Manage shipment documents and compliance",
     actions: [
       {
@@ -77,7 +66,6 @@ const actionCategories: ActionCategory[] = [
   },
   {
     label: "Notifications & Alerts",
-    icon: Bell,
     description: "Send notifications to users, customers, or external systems",
     actions: [
       {
@@ -90,7 +78,6 @@ const actionCategories: ActionCategory[] = [
   },
   {
     label: "Data & Integration",
-    icon: Database,
     description: "Integrate with external systems and transform data",
     actions: [
       {
@@ -103,7 +90,6 @@ const actionCategories: ActionCategory[] = [
   },
   {
     label: "Compliance & Safety",
-    icon: AlertCircle,
     description: "Ensure regulatory compliance and safety requirements",
     actions: [
       {
@@ -125,7 +111,6 @@ export function ActionTypeSelector({
   value,
   onChange,
 }: ActionTypeSelectorProps) {
-  // Find the selected action for display
   const selectedAction = actionCategories
     .flatMap((cat) => cat.actions)
     .find((action) => action.value === value);
@@ -139,11 +124,9 @@ export function ActionTypeSelector({
           </SelectTrigger>
           <SelectContent className="[&_*[role=option]]:ps-2 [&_*[role=option]]:pe-8 [&_*[role=option]>span]:start-auto [&_*[role=option]>span]:end-2">
             {actionCategories.map((category) => {
-              const Icon = category.icon;
               return (
                 <SelectGroup key={category.label}>
-                  <SelectLabel className="flex items-center gap-2 px-2 py-1.5 text-xs font-semibold">
-                    <Icon className="size-3.5" />
+                  <SelectLabel className="flex items-center gap-2 px-2 py-1.5 text-2xs font-semibold text-muted-foreground uppercase">
                     {category.label}
                   </SelectLabel>
                   {category.actions.map((action) => (
@@ -169,41 +152,47 @@ export function ActionTypeSelector({
 
         <HoverCard>
           <HoverCardTrigger asChild>
-            <button
+            <Button
               type="button"
-              className="flex size-9 items-center justify-center rounded-md border border-input bg-background hover:bg-accent hover:text-accent-foreground"
+              variant="outline"
+              size="icon"
+              className="flex size-7 cursor-help items-center justify-center [&_svg]:size-3.5"
             >
-              <HelpCircle className="size-4 text-muted-foreground" />
-            </button>
+              <HelpCircle className="size-3.5" />
+            </Button>
           </HoverCardTrigger>
-          <HoverCardContent className="w-80" side="left">
+          <HoverCardContent className="w-80 p-0" side="left">
             <div className="space-y-2">
-              <h4 className="text-sm font-semibold">Action Types</h4>
-              <p className="text-xs text-muted-foreground">
-                Actions are the operations performed by workflow nodes. Each
-                action can access workflow data using variables like{" "}
-                <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
-                  {"{"}
-                  {"{"}trigger.shipmentId{"}}"}
-                </code>
-                .
-              </p>
-              <div className="space-y-1 pt-2">
-                <p className="text-xs font-medium">Available Categories:</p>
-                {actionCategories.map((cat) => {
-                  const Icon = cat.icon;
-                  return (
-                    <div key={cat.label} className="flex items-start gap-2">
-                      <Icon className="mt-0.5 size-3.5 text-muted-foreground" />
-                      <div>
-                        <p className="text-xs font-medium">{cat.label}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {cat.description}
-                        </p>
+              <div className="px-4 py-2">
+                <h4 className="text-sm font-semibold">Action Types</h4>
+                <p className="text-xs text-muted-foreground">
+                  Actions are the operations performed by workflow nodes. Each
+                  action can access workflow data using variables like{" "}
+                  <code className="rounded bg-muted px-1 py-0.5 font-mono text-xs">
+                    {"{"}
+                    {"{"}trigger.shipmentId{"}}"}
+                  </code>
+                  .
+                </p>
+              </div>
+              <div className="space-y-1">
+                <p className="border-b border-border pb-1 text-center text-xs font-medium">
+                  Available Categories
+                </p>
+                <div className="flex flex-col gap-1 px-4 py-1">
+                  {actionCategories.map((cat) => {
+                    return (
+                      <div key={cat.label} className="flex items-start gap-2">
+                        <div>
+                          <p className="text-xs font-medium">{cat.label}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {cat.description}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
+                </div>
               </div>
             </div>
           </HoverCardContent>

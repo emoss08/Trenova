@@ -93,7 +93,6 @@ export default function NodeConfigModal({
                 onChange={setSelectedActionType}
               />
             </div>
-
             {selectedActionType && (
               <div className="border-t border-border pt-4">
                 <ActionConfigForm
@@ -113,7 +112,6 @@ export default function NodeConfigModal({
             )}
           </div>
         );
-
       case "condition":
         return (
           <ConditionConfigForm

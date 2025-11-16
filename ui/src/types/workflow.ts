@@ -1,5 +1,5 @@
 import { type Node } from "@xyflow/react";
-// Define node data type
+
 export type NodeData = {
   label: string;
   nodeType: string;
@@ -7,5 +7,16 @@ export type NodeData = {
   actionType?: string;
 };
 
-// Define custom node type
 export type WorkflowNodeType = Node<NodeData, string>;
+
+export type VariableCategory = {
+  label: string;
+  description: string;
+  variables: Variable[];
+};
+
+export type Variable = {
+  value: string;
+  label: string;
+  description: string;
+};
