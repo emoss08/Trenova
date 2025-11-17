@@ -1,5 +1,6 @@
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
+import { Icon } from "@/components/ui/icons";
 import { queries } from "@/lib/queries";
 import {
   type WorkflowDefinitionSchema,
@@ -8,6 +9,7 @@ import {
 } from "@/lib/schemas/workflow-schema";
 import { api } from "@/services/api";
 import { WorkflowNodeType } from "@/types/workflow";
+import { faExclamationTriangle } from "@fortawesome/pro-regular-svg-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   addEdge,
@@ -29,6 +31,7 @@ import React, { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 import NodeConfigModal from "./node-config-modal";
 import { WorkflowNode } from "./workflow-nodes/workflow-nodes";
+import { WorkflowLoadingSkeleton } from "./workflow-skeletons";
 
 const nodeTypes = {
   trigger: WorkflowNode,
@@ -41,8 +44,8 @@ const nodeTypes = {
 
 function toReactFlowNode(node: WorkflowNodeSchema): WorkflowNodeType {
   return {
-    id: node.nodeKey, // Use nodeKey as React Flow ID
-    type: node.nodeType, // Use nodeType as React Flow type
+    id: node.nodeKey,
+    type: node.nodeType,
     position: {
       x: node.positionX,
       y: node.positionY,
@@ -58,8 +61,8 @@ function toReactFlowNode(node: WorkflowNodeSchema): WorkflowNodeType {
 
 function toWorkflowNode(node: WorkflowNodeType): WorkflowNodeSchema {
   return {
-    nodeKey: node.id, // Use React Flow ID as nodeKey
-    nodeType: node.type as any, // Use React Flow type as nodeType
+    nodeKey: node.id,
+    nodeType: node.type as any,
     label: node.data.label,
     description: node.data.config?.description || undefined,
     config: node.data.config || {},
@@ -72,8 +75,8 @@ function toWorkflowNode(node: WorkflowNodeType): WorkflowNodeSchema {
 function toReactFlowEdge(edge: WorkflowEdgeSchema): Edge {
   return {
     id: edge.id || `${edge.sourceNodeId}-${edge.targetNodeId}`,
-    source: edge.sourceNodeId, // Backend node ID becomes React Flow source
-    target: edge.targetNodeId, // Backend node ID becomes React Flow target
+    source: edge.sourceNodeId,
+    target: edge.targetNodeId,
     sourceHandle: edge.sourceHandle || undefined,
     targetHandle: edge.targetHandle || undefined,
     label: edge.label,
@@ -82,8 +85,8 @@ function toReactFlowEdge(edge: WorkflowEdgeSchema): Edge {
 
 function toWorkflowEdge(edge: Edge): WorkflowEdgeSchema {
   return {
-    sourceNodeId: edge.source, // React Flow source becomes backend sourceNodeId
-    targetNodeId: edge.target, // React Flow target becomes backend targetNodeId
+    sourceNodeId: edge.source,
+    targetNodeId: edge.target,
     sourceHandle: edge.sourceHandle || undefined,
     targetHandle: edge.targetHandle || undefined,
     label: (edge.label as string) || undefined,
@@ -110,7 +113,6 @@ export default function WorkflowContent({
   const [configModalOpen, setConfigModalOpen] = useState(false);
   const [configNode, setConfigNode] = useState<WorkflowNodeType | null>(null);
 
-  // Create initial version mutation
   const createInitialVersionMutation = useMutation({
     mutationFn: async () => {
       if (!workflowId) {
@@ -135,8 +137,11 @@ export default function WorkflowContent({
     },
   });
 
-  // Load workflow version with definition (only if versionId exists)
-  const { data: version, isLoading } = useQuery({
+  const {
+    data: version,
+    isLoading,
+    isError,
+  } = useQuery({
     ...queries.workflow.getVersion(workflowId, activeVersionId!),
     enabled: !!activeVersionId && !!workflowId,
   });
@@ -248,16 +253,41 @@ export default function WorkflowContent({
     },
   });
 
-  if (isLoading || createInitialVersionMutation.isPending) {
+  if (isError) {
     return (
       <FlowContainer>
-        <div className="flex h-full items-center justify-center">
-          <div className="text-muted-foreground">
-            {createInitialVersionMutation.isPending
-              ? "Creating initial version..."
-              : "Loading workflow..."}
+        <div className="flex h-full flex-col items-center justify-center gap-2 bg-primary/10">
+          <div className="flex items-center gap-2 text-destructive">
+            <Icon icon={faExclamationTriangle} className="size-4" />
+            <h3 className="text-lg font-semibold">Error Loading Workflow</h3>
           </div>
+          <p className="mx-auto max-w-md text-center text-sm/none text-muted-foreground">
+            Something went wrong while loading the workflow. Please try again
+            later. If the problem persists, please contact support.
+          </p>
         </div>
+      </FlowContainer>
+    );
+  }
+
+  if (isLoading) {
+    return (
+      <FlowContainer>
+        <WorkflowLoadingSkeleton
+          message="Loading workflow..."
+          description="If this takes too long, please refresh the page."
+        />
+      </FlowContainer>
+    );
+  }
+
+  if (createInitialVersionMutation.isPending) {
+    return (
+      <FlowContainer>
+        <WorkflowLoadingSkeleton
+          message="Creating initial version..."
+          description="If this takes too long, please refresh the page."
+        />
       </FlowContainer>
     );
   }
@@ -274,7 +304,6 @@ export default function WorkflowContent({
     );
   }
 
-  // Show create version button if no version exists
   if (!activeVersionId) {
     return (
       <FlowContainer>
