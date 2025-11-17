@@ -57,7 +57,7 @@ export function DataTableColorColumn({
       )}
     >
       <div
-        className="size-2 rounded-full shrink-0"
+        className="size-2 shrink-0 rounded-full"
         style={{
           backgroundColor: color,
         }}
@@ -154,7 +154,7 @@ export function HoverCardTimestamp({
       </HoverCardTrigger>
       <HoverCardPortal>
         <HoverCardContent
-          className="p-2 w-auto"
+          className="w-auto p-2"
           {...{ side, align, alignOffset, sideOffset }}
         >
           <dl className="flex flex-col gap-1">
@@ -192,14 +192,14 @@ function Row({ value, label }: { value: string; label: string }) {
 
   return (
     <div
-      className="group flex gap-4 text-sm justify-between items-center"
+      className="group flex items-center justify-between gap-4 text-sm"
       onClick={(e) => {
         e.stopPropagation();
         copy(value);
       }}
     >
       <dt className="text-muted-foreground">{label}</dt>
-      <dd className="font-mono truncate flex items-center gap-1">
+      <dd className="flex items-center gap-1 truncate font-mono">
         <span className="invisible group-hover:visible">
           {!isCopied ? (
             <Icon icon={faCopy} className="size-3" />

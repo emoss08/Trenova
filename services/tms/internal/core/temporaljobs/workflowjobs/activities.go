@@ -38,7 +38,6 @@ func NewActivities(p ActivitiesParams) *Activities {
 	}
 }
 
-// LoadWorkflowDefinition loads the workflow definition from the database
 func (a *Activities) LoadWorkflowDefinition(
 	ctx context.Context,
 	payload *LoadWorkflowDefinitionPayload,
@@ -48,7 +47,6 @@ func (a *Activities) LoadWorkflowDefinition(
 
 	activity.RecordHeartbeat(ctx, "loading workflow version")
 
-	// Get the workflow version with nodes and edges
 	_, err := a.workflowRepo.GetVersionByID(
 		ctx,
 		payload.WorkflowVersionID,
@@ -62,7 +60,6 @@ func (a *Activities) LoadWorkflowDefinition(
 
 	activity.RecordHeartbeat(ctx, "loading nodes and edges")
 
-	// Get nodes
 	nodes, err := a.workflowRepo.GetNodesByVersionID(
 		ctx,
 		payload.WorkflowVersionID,
@@ -74,7 +71,6 @@ func (a *Activities) LoadWorkflowDefinition(
 		return nil, fmt.Errorf("failed to load workflow nodes: %w", err)
 	}
 
-	// Get edges
 	edges, err := a.workflowRepo.GetEdgesByVersionID(
 		ctx,
 		payload.WorkflowVersionID,
@@ -96,7 +92,6 @@ func (a *Activities) LoadWorkflowDefinition(
 	}, nil
 }
 
-// UpdateExecutionStatus updates the execution status in the database
 func (a *Activities) UpdateExecutionStatus(
 	ctx context.Context,
 	payload *UpdateExecutionStatusPayload,
@@ -108,7 +103,6 @@ func (a *Activities) UpdateExecutionStatus(
 
 	activity.RecordHeartbeat(ctx, "updating execution status")
 
-	// Get the execution
 	execution, err := a.executionRepo.GetByID(ctx, repositories.GetWorkflowExecutionByIDRequest{
 		ID:    payload.ExecutionID,
 		OrgID: payload.OrgID,
@@ -119,7 +113,6 @@ func (a *Activities) UpdateExecutionStatus(
 		return fmt.Errorf("failed to get execution: %w", err)
 	}
 
-	// Update status
 	execution.Status = payload.Status
 	now := time.Now().Unix()
 
@@ -131,7 +124,7 @@ func (a *Activities) UpdateExecutionStatus(
 		workflow.ExecutionStatusCanceled:
 		execution.CompletedAt = &now
 		if execution.StartedAt != nil {
-			duration := (now - *execution.StartedAt) * 1000 // Convert to milliseconds
+			duration := (now - *execution.StartedAt) * 1000
 			execution.DurationMs = &duration
 		}
 		if payload.OutputData != nil {
@@ -143,7 +136,6 @@ func (a *Activities) UpdateExecutionStatus(
 		}
 	}
 
-	// Save updated execution
 	_, err = a.executionRepo.Update(ctx, execution)
 	if err != nil {
 		a.logger.Error("failed to update execution", zap.Error(err))
@@ -154,7 +146,6 @@ func (a *Activities) UpdateExecutionStatus(
 	return nil
 }
 
-// ExecuteNode executes a single workflow node
 func (a *Activities) ExecuteNode(
 	ctx context.Context,
 	payload *ExecuteNodePayload,
@@ -169,7 +160,6 @@ func (a *Activities) ExecuteNode(
 
 	activity.RecordHeartbeat(ctx, "creating execution step")
 
-	// Create execution step record
 	step := &workflow.WorkflowExecutionStep{
 		ExecutionID:    payload.ExecutionID,
 		OrganizationID: payload.OrgID,
@@ -194,7 +184,6 @@ func (a *Activities) ExecuteNode(
 
 	activity.RecordHeartbeat(ctx, "executing node logic")
 
-	// Execute node based on type
 	var outputData map[string]any
 	var execErr error
 
@@ -213,7 +202,6 @@ func (a *Activities) ExecuteNode(
 
 	duration := time.Since(startTime).Milliseconds()
 
-	// Update step status
 	createdStep.CompletedAt = timePtr(time.Now().Unix())
 	createdStep.DurationMs = &duration
 
@@ -253,7 +241,6 @@ func (a *Activities) ExecuteNode(
 	}, nil
 }
 
-// executeAction executes an action node
 func (a *Activities) executeAction(
 	ctx context.Context,
 	payload *ExecuteNodePayload,
@@ -262,13 +249,11 @@ func (a *Activities) executeAction(
 		return nil, ErrActionTypeRequired
 	}
 
-	// Parse config from JSONB
 	var config map[string]any
 	if err := jsonutils.MustToJSON(payload.Config); err != nil {
 		return nil, fmt.Errorf("failed to parse node config: %+v", err)
 	}
 
-	// Execute the appropriate action handler
 	return a.actionHandlers.Execute(ctx, &ActionExecutionContext{
 		ActionType: *payload.ActionType,
 		Config:     config,
@@ -279,12 +264,10 @@ func (a *Activities) executeAction(
 	})
 }
 
-// evaluateCondition evaluates a condition node
 func (a *Activities) evaluateCondition(
 	ctx context.Context,
 	payload *ExecuteNodePayload,
 ) (map[string]any, error) {
-	// Parse config from JSONB
 	var config map[string]any
 	if err := jsonutils.MustToJSON(payload.Config); err != nil {
 		return nil, fmt.Errorf("failed to parse condition config: %+v", err)
@@ -310,13 +293,11 @@ func (a *Activities) executeDelay(
 		return nil, fmt.Errorf("failed to parse delay config: %+v", err)
 	}
 
-	// Get delay duration from config
 	delaySeconds, ok := config["delaySeconds"].(float64)
 	if !ok {
 		delaySeconds = 1 // Default 1 second
 	}
 
-	// Sleep for the specified duration
 	activity.GetLogger(ctx).Info("Delaying execution", "seconds", delaySeconds)
 	time.Sleep(time.Duration(delaySeconds) * time.Second)
 
@@ -325,7 +306,6 @@ func (a *Activities) executeDelay(
 	}, nil
 }
 
-// executeLoop executes a loop node
 func (a *Activities) executeLoop(
 	ctx context.Context,
 	payload *ExecuteNodePayload,
@@ -342,7 +322,6 @@ func (a *Activities) executeLoop(
 func evaluateConditionLogic(config map[string]any, inputData map[string]any) bool {
 	// Simplified condition evaluation
 	// You can extend this to support complex expressions
-
 	field, ok := config["field"].(string)
 	if !ok {
 		return false

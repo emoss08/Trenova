@@ -1,6 +1,6 @@
+import { FieldLabel } from "@/components/fields/field-components";
 import {
   Dialog,
-  DialogBody,
   DialogContent,
   DialogDescription,
   DialogHeader,
@@ -86,15 +86,15 @@ export default function NodeConfigModal({
       case "action":
         return (
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium">Action Type</label>
+            <div className=" px-4 pt-2">
+              <FieldLabel label="Action Type" required />
               <ActionTypeSelector
                 value={selectedActionType}
                 onChange={setSelectedActionType}
               />
             </div>
             {selectedActionType && (
-              <div className="border-t border-border pt-4">
+              <div className="border-t border-border pt-2">
                 <ActionConfigForm
                   key={`${node.id}-${selectedActionType}`}
                   actionType={selectedActionType}
@@ -153,13 +153,13 @@ export default function NodeConfigModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>{getModalTitle()}</DialogTitle>
           <DialogDescription>{getModalDescription()}</DialogDescription>
         </DialogHeader>
 
-        <DialogBody>{renderForm()}</DialogBody>
+        {renderForm()}
       </DialogContent>
     </Dialog>
   );

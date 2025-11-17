@@ -1,22 +1,36 @@
 import { z } from "zod";
+import { HttpMethod } from "./common-schema";
+import { optionalStringSchema } from "./helpers";
+import { ShipmentStatus } from "./shipment-schema";
 import { ActionType, NodeType } from "./workflow-schema";
 
 const variableStringSchema = z
   .string()
+  .min(1, { error: "Shipment ID is required" })
   .describe("Supports variable interpolation like {{trigger.shipmentId}}");
+
+const variableEmailSchema = z
+  .email()
+  .describe("Supports variable interpolation like {{trigger.customer.email}}");
+
+const Operator = z.enum([
+  "equals",
+  "notEquals",
+  "contains",
+  "greaterThan",
+  "lessThan",
+]);
 
 export const shipmentUpdateStatusConfigSchema = z.object({
   shipmentId: variableStringSchema,
-  status: z.enum(["new", "in_transit", "delivered", "cancelled", "on_hold"]),
+  status: ShipmentStatus,
 });
 
 export const notificationSendEmailConfigSchema = z.object({
-  to: variableStringSchema
-    .email("Invalid email format")
-    .or(variableStringSchema),
-  subject: z.string().min(1, "Subject is required"),
-  body: z.string().min(1, "Body is required"),
-  template: z.string().optional(),
+  to: variableEmailSchema.or(variableStringSchema),
+  subject: z.string().min(1, { error: "Subject is required" }),
+  body: z.string().min(1, { error: "Body is required" }),
+  template: optionalStringSchema,
 });
 
 export const billingValidateRequirementsConfigSchema = z.object({
@@ -24,17 +38,22 @@ export const billingValidateRequirementsConfigSchema = z.object({
 });
 
 export const dataAPICallConfigSchema = z.object({
-  url: z.string().url("Invalid URL").or(variableStringSchema),
-  method: z.enum(["GET", "POST", "PUT", "DELETE", "PATCH"]),
-  headers: z.record(z.string(), z.string()).optional(),
-  body: z.string().optional(),
+  url: z.url({ error: "Invalid URL" }).or(variableStringSchema),
+  method: HttpMethod,
+  headers: z.array(
+    z.object({
+      key: z.string(),
+      value: z.string(),
+    }),
+  ),
+  body: optionalStringSchema,
 });
 
 export const documentValidateCompletenessConfigSchema = z.object({
   shipmentId: variableStringSchema,
   requiredDocuments: z
     .array(z.string())
-    .min(1, "At least one required document must be specified"),
+    .min(1, { error: "At least one required document must be specified" }),
 });
 
 export const actionConfigSchemas = {
@@ -60,21 +79,15 @@ export type DocumentValidateCompletenessConfig = z.infer<
 >;
 
 export const conditionConfigSchema = z.object({
-  field: z.string().min(1, "Field is required"),
-  operator: z.enum([
-    "equals",
-    "notEquals",
-    "contains",
-    "greaterThan",
-    "lessThan",
-  ]),
+  field: z.string().min(1, { error: "Field is required" }),
+  operator: Operator,
   value: z.union([z.string(), z.number(), z.boolean()]),
 });
 
 export type ConditionConfig = z.infer<typeof conditionConfigSchema>;
 
 export const delayConfigSchema = z.object({
-  delaySeconds: z.number().min(1, "Delay must be at least 1 second"),
+  delaySeconds: z.number().min(1, { error: "Delay must be at least 1 second" }),
 });
 
 export type DelayConfig = z.infer<typeof delayConfigSchema>;
@@ -86,3 +99,9 @@ export const nodeConfigSchema = z.object({
 });
 
 export type NodeConfigSchema = z.infer<typeof nodeConfigSchema>;
+
+export type OperatorSchema = z.infer<typeof Operator>;
+
+export type ShipmentUpdateStatusConfigSchema = z.infer<
+  typeof shipmentUpdateStatusConfigSchema
+>;

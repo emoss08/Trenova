@@ -1,26 +1,20 @@
 import { Variable, VariableCategory } from "@/types/workflow";
 
 export function VariableCategoryItem({
-  value,
   category,
-  inputRef,
   onChange,
 }: {
-  value: string;
-  inputRef: HTMLInputElement | null;
   category: VariableCategory;
   onChange: (value: string) => void;
 }) {
   return (
-    <div className="space-y-1">
+    <div className="flex flex-col gap-1 px-2 py-2">
       <VariableCategoryHeader category={category} />
       <div className="space-y-1">
         {category.variables.map((variable) => (
           <VariableItem
             key={variable.value}
-            value={value}
             variable={variable}
-            inputRef={inputRef}
             onChange={onChange}
           />
         ))}
@@ -41,37 +35,16 @@ function VariableCategoryHeader({ category }: { category: VariableCategory }) {
 }
 
 function VariableItem({
-  value,
   variable,
-  inputRef,
   onChange,
 }: {
-  value: string;
   variable: Variable;
-  inputRef: HTMLInputElement | null;
   onChange: (value: string) => void;
 }) {
-  const insertVariable = (variable: string) => {
-    if (!inputRef) return;
-
-    const start = inputRef.selectionStart || 0;
-    const end = inputRef.selectionEnd || 0;
-    const newValue =
-      value.substring(0, start) + variable + value.substring(end);
-
-    onChange(newValue);
-
-    setTimeout(() => {
-      inputRef.focus();
-      const newCursorPos = start + variable.length;
-      inputRef.setSelectionRange(newCursorPos, newCursorPos);
-    }, 0);
-  };
-
   return (
     <button
       type="button"
-      onClick={() => insertVariable(variable.value)}
+      onClick={() => onChange(variable.value)}
       className="block w-full rounded-md p-2 text-left hover:bg-accent"
     >
       <div className="flex items-start justify-between">

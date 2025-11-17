@@ -1,144 +1,93 @@
+import { InputField } from "@/components/fields/input-field";
+import { SelectField } from "@/components/fields/select-field";
+import { TextareaField } from "@/components/fields/textarea-field";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DialogFooter } from "@/components/ui/dialog";
+import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { shipmentStatusChoices } from "@/lib/choices";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import {
+  BillingValidateRequirementsConfig,
   billingValidateRequirementsConfigSchema,
-  dataAPICallConfigSchema,
+  DocumentValidateCompletenessConfig,
   documentValidateCompletenessConfigSchema,
   notificationSendEmailConfigSchema,
+  ShipmentUpdateStatusConfigSchema,
   shipmentUpdateStatusConfigSchema,
 } from "@/lib/schemas/node-config-schema";
+import { ActionConfigFormProps } from "@/types/workflow";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { AlertCircle, CheckCircle2, Info, Plus, X } from "lucide-react";
-import { useEffect, useState } from "react";
+import { InfoIcon, Plus, X } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 import { useForm, useWatch } from "react-hook-form";
 import { type z } from "zod";
-import VariableInput from "./variable-input";
-
-function FieldHelp({
-  children,
-  type = "info",
-}: {
-  children: React.ReactNode;
-  type?: "info" | "warning" | "success";
-}) {
-  const Icon =
-    type === "warning" ? AlertCircle : type === "success" ? CheckCircle2 : Info;
-  const colorClass =
-    type === "warning"
-      ? "text-yellow-600 dark:text-yellow-500"
-      : type === "success"
-        ? "text-green-600 dark:text-green-500"
-        : "text-muted-foreground";
-
-  return (
-    <div className="flex items-start gap-2 text-xs text-muted-foreground">
-      <Icon className={`mt-0.5 size-3.5 shrink-0 ${colorClass}`} />
-      <p>{children}</p>
-    </div>
-  );
-}
-
-interface ActionConfigFormProps {
-  actionType: string;
-  initialConfig: Record<string, any>;
-  onSave: (config: Record<string, any>) => void;
-  onCancel: () => void;
-}
+import { DataAPICallForm } from "./data-api-call-form";
+import { VariableInput } from "./inputs/variable-input";
 
 function ShipmentUpdateStatusForm({
   initialConfig,
   onSave,
   onCancel,
 }: Omit<ActionConfigFormProps, "actionType">) {
-  const {
-    control,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<z.infer<typeof shipmentUpdateStatusConfigSchema>>({
-    resolver: zodResolver(shipmentUpdateStatusConfigSchema),
-    defaultValues: initialConfig,
-  });
+  const { control, handleSubmit, setError } =
+    useForm<ShipmentUpdateStatusConfigSchema>({
+      resolver: zodResolver(shipmentUpdateStatusConfigSchema),
+      defaultValues: initialConfig,
+    });
 
-  const shipmentId = useWatch({ control, name: "shipmentId" });
-  const status = useWatch({ control, name: "status" });
+  const handleSave = useCallback(
+    (values: ShipmentUpdateStatusConfigSchema) => {
+      const validated = shipmentUpdateStatusConfigSchema.safeParse(values);
+      if (!validated.success) {
+        validated.error.issues.forEach((issue) => {
+          setError(issue.path[0] as keyof ShipmentUpdateStatusConfigSchema, {
+            message: issue.message,
+          });
+        });
+        return;
+      }
+
+      onSave(validated.data);
+    },
+    [onSave, setError],
+  );
 
   return (
-    <form onSubmit={handleSubmit(onSave)} className="space-y-5">
-      <div className="space-y-3">
-        <div className="space-y-2">
-          <Label htmlFor="shipmentId" className="text-sm font-medium">
-            Shipment ID
-          </Label>
+    <Form onSubmit={handleSubmit(handleSave)}>
+      <FormGroup cols={1} className="px-4 pb-2">
+        <FormControl>
           <VariableInput
-            value={shipmentId || ""}
-            onChange={(value) => setValue("shipmentId", value)}
+            name="shipmentId"
+            control={control}
+            rules={{ required: true }}
+            label="Shipment ID"
+            description="The ID of the shipment to update. Use {{trigger.shipmentId}} to reference the shipment from the workflow trigger."
             placeholder="{{trigger.shipmentId}}"
+            type="text"
           />
-          <FieldHelp>
-            The ID of the shipment to update. Use{" "}
-            <code className="rounded bg-muted px-1 font-mono">
-              {"{"}
-              {"{"}trigger.shipmentId{"}}"}
-            </code>{" "}
-            to reference the shipment from the workflow trigger.
-          </FieldHelp>
-          {errors.shipmentId && (
-            <p className="text-sm text-destructive">
-              {errors.shipmentId.message}
-            </p>
-          )}
-        </div>
+        </FormControl>
 
-        <div className="space-y-2">
-          <Label htmlFor="status" className="text-sm font-medium">
-            New Status
-          </Label>
-          <Select
-            onValueChange={(value) => setValue("status", value as any)}
-            value={status}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Select status..." />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="new">New</SelectItem>
-              <SelectItem value="in_transit">In Transit</SelectItem>
-              <SelectItem value="delivered">Delivered</SelectItem>
-              <SelectItem value="cancelled">Cancelled</SelectItem>
-              <SelectItem value="on_hold">On Hold</SelectItem>
-            </SelectContent>
-          </Select>
-          <FieldHelp>
-            The status to set on the shipment. This will update the
-            shipment&apos;s status field in the database.
-          </FieldHelp>
-          {errors.status && (
-            <p className="text-sm text-destructive">{errors.status.message}</p>
-          )}
-        </div>
-      </div>
-
-      <Separator />
-
-      <div className="flex justify-end gap-2">
+        <FormControl>
+          <SelectField
+            control={control}
+            rules={{ required: true }}
+            name="status"
+            label="New Status"
+            placeholder="New Status"
+            description="The status to set on the shipment. This will update the shipment's status field in the database."
+            options={shipmentStatusChoices}
+          />
+        </FormControl>
+      </FormGroup>
+      <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit">Save Configuration</Button>
-      </div>
-    </form>
+      </DialogFooter>
+    </Form>
   );
 }
 
@@ -147,109 +96,71 @@ function NotificationSendEmailForm({
   onSave,
   onCancel,
 }: Omit<ActionConfigFormProps, "actionType">) {
-  const {
-    control,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<z.infer<typeof notificationSendEmailConfigSchema>>({
+  const { control, handleSubmit } = useForm<
+    z.infer<typeof notificationSendEmailConfigSchema>
+  >({
     resolver: zodResolver(notificationSendEmailConfigSchema),
     defaultValues: initialConfig,
   });
 
-  const to = useWatch({ control, name: "to" });
-  const subject = useWatch({ control, name: "subject" });
-  const body = useWatch({ control, name: "body" });
-
   return (
-    <form onSubmit={handleSubmit(onSave)} className="space-y-5">
-      <div className="space-y-3">
-        <div className="space-y-2">
-          <Label htmlFor="to" className="text-sm font-medium">
-            Recipient Email Address
-          </Label>
-          <VariableInput
-            value={to || ""}
-            onChange={(value) => setValue("to", value)}
-            placeholder="customer@example.com or {{trigger.customer.email}}"
-            type="email"
-          />
-          <FieldHelp>
-            The email address to send to. Can be a static email address or a
-            variable like{" "}
-            <code className="rounded bg-muted px-1 font-mono">
-              {"{"}
-              {"{"}trigger.customer.email{"}}"}
-            </code>
-            .
-          </FieldHelp>
-          {errors.to && (
-            <p className="text-sm text-destructive">{errors.to.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="subject" className="text-sm font-medium">
-            Email Subject
-          </Label>
-          <Input
-            value={subject || ""}
-            onChange={(e) => setValue("subject", e.target.value)}
-            placeholder="Shipment {{trigger.proNumber}} Status Update"
-            className="font-mono text-sm"
-          />
-          <FieldHelp>
-            The subject line of the email. You can use variables to personalize
-            it, such as{" "}
-            <code className="rounded bg-muted px-1 font-mono">
-              Shipment {"{"}
-              {"{"}trigger.proNumber{"}}"}
-            </code>
-            .
-          </FieldHelp>
-          {errors.subject && (
-            <p className="text-sm text-destructive">{errors.subject.message}</p>
-          )}
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor="body" className="text-sm font-medium">
-            Email Body
-          </Label>
-          <Textarea
-            value={body || ""}
-            onChange={(e) => setValue("body", e.target.value)}
-            placeholder={`Hello,\n\nYour shipment {{trigger.proNumber}} has been updated to status: {{trigger.status}}.\n\nThank you!`}
-            rows={6}
-            className="font-mono text-sm"
-          />
-          <FieldHelp>
-            The main content of the email. Use variables to include dynamic
-            information from the workflow. HTML is supported.
-          </FieldHelp>
-          {errors.body && (
-            <p className="text-sm text-destructive">{errors.body.message}</p>
-          )}
+    <>
+      <div className="px-4 pb-2">
+        <div className="rounded-md border border-blue-500 bg-blue-500/10 p-2">
+          <div className="flex items-center gap-1">
+            <InfoIcon className="size-4 text-blue-500" />
+            <span className="text-sm font-medium text-blue-500">Notice</span>
+          </div>
+          <p className="text-sm text-blue-500">
+            The email will be sent from your organization&apos;s configured
+            email profile. Variables will be replaced with actual values when
+            the workflow executes.
+          </p>
         </div>
       </div>
-
-      <div className="rounded-md border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950">
-        <FieldHelp type="info">
-          <span className="font-medium">Preview:</span> The email will be sent
-          from your organization&apos;s configured email profile. Variables will
-          be replaced with actual values when the workflow executes.
-        </FieldHelp>
-      </div>
-
-      <Separator />
-
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit">Save Configuration</Button>
-      </div>
-    </form>
+      <Form onSubmit={handleSubmit(onSave)}>
+        <FormGroup cols={1} className="px-4 pb-2">
+          <FormControl>
+            <VariableInput
+              name="to"
+              control={control}
+              rules={{ required: true }}
+              label="Recipient Email Address"
+              description="The email address to send to. Can be a static email address or a variable like {{trigger.customer.email}}."
+              placeholder="customer@example.com or {{trigger.customer.email}}"
+              type="email"
+            />
+          </FormControl>
+          <FormControl>
+            <InputField
+              name="subject"
+              control={control}
+              rules={{ required: true }}
+              label="Email Subject"
+              description="The subject line of the email. You can use variables to personalize it, such as {{trigger.proNumber}}."
+              placeholder="Shipment {{trigger.proNumber}} Status Update"
+              type="text"
+            />
+          </FormControl>
+          <FormControl>
+            <TextareaField
+              name="body"
+              control={control}
+              rules={{ required: true }}
+              label="Email Body"
+              description="The main content of the email. You can use variables to include dynamic information from the workflow."
+              placeholder={`Hello,\n\nYour shipment {{trigger.proNumber}} has been updated to status: {{trigger.status}}.\n\nThank you!`}
+            />
+          </FormControl>
+        </FormGroup>
+        <DialogFooter>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            Cancel
+          </Button>
+          <Button type="submit">Save Configuration</Button>
+        </DialogFooter>
+      </Form>
+    </>
   );
 }
 
@@ -258,192 +169,36 @@ export function BillingValidateRequirementsForm({
   onSave,
   onCancel,
 }: Omit<ActionConfigFormProps, "actionType">) {
-  const {
-    control,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<z.infer<typeof billingValidateRequirementsConfigSchema>>({
+  const { control, handleSubmit } = useForm<BillingValidateRequirementsConfig>({
     resolver: zodResolver(billingValidateRequirementsConfigSchema),
     defaultValues: initialConfig,
   });
 
-  const shipmentId = useWatch({ control, name: "shipmentId" });
-
   return (
-    <form onSubmit={handleSubmit(onSave)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="shipmentId">Shipment ID</Label>
-        <VariableInput
-          value={shipmentId || ""}
-          onChange={(value) => setValue("shipmentId", value)}
-          placeholder="{{trigger.shipmentId}}"
-        />
-        {errors.shipmentId && (
-          <p className="text-sm text-destructive">
-            {errors.shipmentId.message}
-          </p>
-        )}
-      </div>
-
-      <div className="flex justify-end gap-2">
+    <Form onSubmit={handleSubmit(onSave)}>
+      <FormGroup cols={1} className="px-4 py-2">
+        <FormControl>
+          <VariableInput
+            name="shipmentId"
+            control={control}
+            rules={{ required: true }}
+            label="Shipment ID"
+            description="The ID of the shipment to validate requirements for. Use {{trigger.shipmentId}} to reference the shipment from the workflow trigger."
+            placeholder="{{trigger.shipmentId}}"
+            type="text"
+          />
+        </FormControl>
+      </FormGroup>
+      <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>
           Cancel
         </Button>
         <Button type="submit">Save Configuration</Button>
-      </div>
-    </form>
+      </DialogFooter>
+    </Form>
   );
 }
 
-function DataAPICallForm({
-  initialConfig,
-  onSave,
-  onCancel,
-}: Omit<ActionConfigFormProps, "actionType">) {
-  const {
-    control,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<z.infer<typeof dataAPICallConfigSchema>>({
-    resolver: zodResolver(dataAPICallConfigSchema),
-    defaultValues: initialConfig,
-  });
-
-  const url = useWatch({ control, name: "url" });
-  const method = useWatch({ control, name: "method" });
-  const body = useWatch({ control, name: "body" });
-  const [headers, setHeaders] = useState<Record<string, string>>(
-    initialConfig.headers || {},
-  );
-  const [newHeaderKey, setNewHeaderKey] = useState("");
-  const [newHeaderValue, setNewHeaderValue] = useState("");
-
-  const addHeader = () => {
-    if (newHeaderKey && newHeaderValue) {
-      const updated = { ...headers, [newHeaderKey]: newHeaderValue };
-      setHeaders(updated);
-      setValue("headers", updated);
-      setNewHeaderKey("");
-      setNewHeaderValue("");
-    }
-  };
-
-  const removeHeader = (key: string) => {
-    const updated = { ...headers };
-    // eslint-disable-next-line @typescript-eslint/no-dynamic-delete
-    delete updated[key];
-    setHeaders(updated);
-    setValue("headers", updated);
-  };
-
-  return (
-    <form onSubmit={handleSubmit(onSave)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="url">URL</Label>
-        <VariableInput
-          value={url || ""}
-          onChange={(value) => setValue("url", value)}
-          placeholder="https://api.example.com/endpoint"
-          type="url"
-        />
-        {errors.url && (
-          <p className="text-sm text-destructive">{errors.url.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="method">Method</Label>
-        <Select
-          onValueChange={(value) => setValue("method", value as any)}
-          value={method || "GET"}
-        >
-          <SelectTrigger>
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="GET">GET</SelectItem>
-            <SelectItem value="POST">POST</SelectItem>
-            <SelectItem value="PUT">PUT</SelectItem>
-            <SelectItem value="DELETE">DELETE</SelectItem>
-            <SelectItem value="PATCH">PATCH</SelectItem>
-          </SelectContent>
-        </Select>
-        {errors.method && (
-          <p className="text-sm text-destructive">{errors.method.message}</p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label>Headers</Label>
-        <div className="space-y-2">
-          {Object.entries(headers).map(([key, value]) => (
-            <div key={key} className="flex items-center gap-2">
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <span className="font-mono text-xs">
-                  {key}: {value}
-                </span>
-                <button
-                  type="button"
-                  onClick={() => removeHeader(key)}
-                  className="ml-1"
-                >
-                  <X className="size-3" />
-                </button>
-              </Badge>
-            </div>
-          ))}
-          <div className="flex gap-2">
-            <Input
-              placeholder="Header name"
-              value={newHeaderKey}
-              onChange={(e) => setNewHeaderKey(e.target.value)}
-              className="flex-1"
-            />
-            <Input
-              placeholder="Header value"
-              value={newHeaderValue}
-              onChange={(e) => setNewHeaderValue(e.target.value)}
-              className="flex-1"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={addHeader}
-            >
-              <Plus className="size-4" />
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor="body">Request Body (JSON)</Label>
-        <Textarea
-          value={body || ""}
-          onChange={(e) => setValue("body", e.target.value)}
-          placeholder='{"key": "value"}'
-          rows={4}
-          className="font-mono text-sm"
-        />
-        {errors.body && (
-          <p className="text-sm text-destructive">{errors.body.message}</p>
-        )}
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit">Save Configuration</Button>
-      </div>
-    </form>
-  );
-}
-
-// Document Validate Completeness Form
 function DocumentValidateCompletenessForm({
   initialConfig,
   onSave,
@@ -454,7 +209,7 @@ function DocumentValidateCompletenessForm({
     handleSubmit,
     setValue,
     formState: { errors },
-  } = useForm<z.infer<typeof documentValidateCompletenessConfigSchema>>({
+  } = useForm<DocumentValidateCompletenessConfig>({
     resolver: zodResolver(documentValidateCompletenessConfigSchema),
     defaultValues: initialConfig,
   });
@@ -557,7 +312,6 @@ function DocumentValidateCompletenessForm({
   );
 }
 
-// Main Action Config Form component that routes to the right form
 export function ActionConfigForm({
   actionType,
   initialConfig,

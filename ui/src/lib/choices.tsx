@@ -36,6 +36,7 @@ import {
   RevenueRecognitionSchema,
   ThresholdActionSchema,
 } from "./schemas/accounting-control-schema";
+import { HttpMethod, HttpMethodSchema } from "./schemas/common-schema";
 import { ConsolidationStatus } from "./schemas/consolidation-schema";
 import {
   DispatchControlSchema,
@@ -1092,3 +1093,36 @@ export const timeFormatChoices = [
     label: "24-hour",
   },
 ] satisfies ReadonlyArray<ChoiceProps<TimeFormat>>;
+
+export const httpMethodChoices = [
+  {
+    value: HttpMethod.enum.GET,
+    label: "GET",
+    description: "Retrieve data from the server",
+    color: "#16a34a",
+  },
+  {
+    value: HttpMethod.enum.POST,
+    label: "POST",
+    description: "Create a new resource on the server",
+    color: "#7e22ce",
+  },
+  {
+    value: HttpMethod.enum.PUT,
+    label: "PUT",
+    description: "Update an existing resource on the server",
+    color: "#f59e0b",
+  },
+  {
+    value: HttpMethod.enum.DELETE,
+    label: "DELETE",
+    description: "Delete a resource on the server",
+    color: "#b91c1c",
+  },
+  {
+    value: HttpMethod.enum.PATCH,
+    label: "PATCH",
+    description: "Update a resource on the server",
+    color: "#0369a1",
+  },
+] satisfies ReadonlyArray<ChoiceProps<HttpMethodSchema>>;

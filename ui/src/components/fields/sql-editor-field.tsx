@@ -1,6 +1,7 @@
 import { useLocalStorage } from "@/hooks/use-local-storage";
 import { cn } from "@/lib/utils";
 import type { TextareaFieldProps } from "@/types/fields";
+import { json } from "@codemirror/lang-json";
 import { PostgreSQL, sql } from "@codemirror/lang-sql";
 import { EditorView, keymap } from "@codemirror/view";
 import { tags as t } from "@lezer/highlight";
@@ -123,12 +124,7 @@ export function SQLEditorField<T extends FieldValues>({
   ]);
 
   const extensions = vimEnabled
-    ? [
-        vim({ status: true }),
-        sql({ dialect: PostgreSQL }),
-        EditorView.lineWrapping,
-        toggleVimKeymap,
-      ]
+    ? [vim({ status: true }), json(), EditorView.lineWrapping, toggleVimKeymap]
     : [sql({ dialect: PostgreSQL }), EditorView.lineWrapping, toggleVimKeymap];
 
   return (
@@ -160,8 +156,133 @@ export function SQLEditorField<T extends FieldValues>({
             )}
           >
             {vimEnabled && (
-              <div className="absolute right-2 top-2 z-10 pointer-events-none">
-                <div className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded">
+              <div className="pointer-events-none absolute top-2 right-2 z-10">
+                <div className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
+                  Vim Mode
+                </div>
+              </div>
+            )}
+            <CodeMirror
+              ref={editorRef}
+              value={field.value || ""}
+              onChange={(value) => field.onChange(value)}
+              onBlur={() => field.onBlur()}
+              height={height}
+              extensions={extensions}
+              editable={!disabled}
+              placeholder={placeholder}
+              basicSetup={{
+                lineNumbers: true,
+                foldGutter: false,
+                dropCursor: false,
+                allowMultipleSelections: false,
+                indentOnInput: true,
+                bracketMatching: true,
+                closeBrackets: true,
+                autocompletion: true,
+                rectangularSelection: false,
+                highlightSelectionMatches: false,
+                searchKeymap: false,
+              }}
+              theme={theme === "dark" ? darkTheme : lightTheme}
+            />
+          </div>
+        </FieldWrapper>
+      )}
+    />
+  );
+}
+
+export function JSONEditorField<T extends FieldValues>({
+  label,
+  description,
+  name,
+  control,
+  rules,
+  className,
+  disabled,
+  placeholder,
+  height = "150px",
+  "aria-label": ariaLabel,
+  "aria-describedby": ariaDescribedBy,
+}: SQLEditorFieldProps<T>) {
+  const inputId = `json-editor-${name}`;
+  const descriptionId = `${inputId}-description`;
+  const errorId = `${inputId}-error`;
+  const { theme } = useTheme();
+
+  const editorRef = useRef<ReactCodeMirrorRef>(null);
+  const [vimEnabled, setVimEnabled] = useLocalStorage(
+    "json-editor-vim-mode",
+    false,
+  );
+
+  const toggleVimMode = useCallback(() => {
+    setVimEnabled(!vimEnabled);
+  }, [vimEnabled, setVimEnabled]);
+
+  useEffect(() => {
+    if (vimEnabled) {
+      Vim.map("jj", "<Esc>", "insert");
+      Vim.map("jk", "<Esc>", "insert");
+
+      Vim.map("H", "^", "normal"); // H goes to first non-blank character
+      Vim.map("L", "$", "normal"); // L goes to end of line
+
+      return () => {
+        Vim.unmap("jj", "insert");
+        Vim.unmap("jk", "insert");
+        Vim.unmap("H", "normal");
+        Vim.unmap("L", "normal");
+      };
+    }
+  }, [vimEnabled]);
+
+  const toggleVimKeymap = keymap.of([
+    {
+      key: "Mod-Alt-v",
+      run: () => {
+        toggleVimMode();
+        return true;
+      },
+    },
+  ]);
+
+  const extensions = vimEnabled
+    ? [vim({ status: true }), json(), EditorView.lineWrapping, toggleVimKeymap]
+    : [json(), EditorView.lineWrapping, toggleVimKeymap];
+
+  return (
+    <Controller<T>
+      name={name}
+      control={control}
+      rules={rules}
+      render={({ field, fieldState }) => (
+        <FieldWrapper
+          label={label}
+          description={description}
+          required={!!rules?.required}
+          error={fieldState.error?.message}
+        >
+          <div
+            className={cn(
+              "relative overflow-hidden rounded-md border border-muted-foreground/20",
+              fieldState.invalid &&
+                "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 [&_.cm-editor.cm-focused]:border-red-600",
+              disabled && "opacity-50 cursor-not-allowed",
+              className,
+            )}
+            id={inputId}
+            aria-label={ariaLabel || label}
+            aria-describedby={cn(
+              description && descriptionId,
+              fieldState.error && errorId,
+              ariaDescribedBy,
+            )}
+          >
+            {vimEnabled && (
+              <div className="pointer-events-none absolute top-2 right-2 z-10">
+                <div className="rounded bg-primary/10 px-2 py-0.5 text-xs text-primary">
                   Vim Mode
                 </div>
               </div>

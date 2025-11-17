@@ -41,7 +41,7 @@ export function ShipmentDocumentSidebar({
   shipmentId: ShipmentSchema["id"];
 }) {
   return (
-    <div className="w-1/4 bg-muted border-r border-border">
+    <div className="w-1/4 border-r border-border bg-muted">
       <ShipmentDocumentSidebarHeader
         shipmentStatus={shipmentStatus}
         documentCategories={documentCategories}
@@ -95,7 +95,7 @@ function ShipmentDocumentSidebarHeaderOuter({
   children: React.ReactNode;
 }) {
   return (
-    <div className="p-4 border-b border-border">
+    <div className="border-b border-border p-4">
       <h2 className="text-lg font-semibold">Document Requirements</h2>
       <p className="text-sm text-muted-foreground">
         Complete all document requirements to process the shipment

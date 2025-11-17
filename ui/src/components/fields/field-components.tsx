@@ -42,13 +42,10 @@ export const FieldDescription = memo(
       return null;
     }
 
-    // Check if description is a React component
     if (React.isValidElement(description)) {
-      // Render the component directly
       return description;
     }
 
-    // Otherwise, render as text in a paragraph
     return (
       <p className="text-left text-2xs text-foreground/70">{description}</p>
     );
@@ -66,7 +63,7 @@ type FieldWrapperProps = {
   warning?: string;
 };
 
-const FieldLabel = memo(
+export const FieldLabel = memo(
   function FieldLabel({
     label,
     required,
@@ -85,7 +82,6 @@ const FieldLabel = memo(
     prevProps.required === nextProps.required,
 );
 
-// Memoize the FieldWrapper component
 export const FieldWrapper = memo(function FieldWrapper({
   label,
   description,
@@ -127,7 +123,7 @@ export const FieldWrapper = memo(function FieldWrapper({
 });
 
 function FieldWrapperInner({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center mb-0.5">{children}</div>;
+  return <div className="mb-0.5 flex items-center">{children}</div>;
 }
 
 function FieldWrapperDescriptionInner({
@@ -142,7 +138,6 @@ type PasswordFieldWrapperProps = FieldWrapperProps & {
   onPasswordReset?: () => void;
 };
 
-// Also memoize PasswordFieldWrapper since it's derived from FieldWrapper
 export const PasswordFieldWrapper = memo(
   function PasswordFieldWrapper({
     label,
@@ -154,7 +149,6 @@ export const PasswordFieldWrapper = memo(
     warning,
     onPasswordReset,
   }: PasswordFieldWrapperProps) {
-    // Use useMemo for the description and error components to avoid unnecessary re-renders
     const descriptionElement = useMemo(() => {
       return description && !error && !warning ? (
         <FieldDescription description={description} />
@@ -204,7 +198,6 @@ export const PasswordFieldWrapper = memo(
     );
   },
   (prevProps, nextProps) => {
-    // Custom comparison function to optimize re-renders
     return (
       prevProps.label === nextProps.label &&
       prevProps.description === nextProps.description &&

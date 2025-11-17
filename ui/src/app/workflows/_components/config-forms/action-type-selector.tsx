@@ -163,7 +163,7 @@ export function ActionTypeSelector({
           </HoverCardTrigger>
           <HoverCardContent className="w-80 p-0" side="left">
             <div className="space-y-2">
-              <div className="px-4 py-2">
+              <div className="px-4 pt-2">
                 <h4 className="text-sm font-semibold">Action Types</h4>
                 <p className="text-xs text-muted-foreground">
                   Actions are the operations performed by workflow nodes. Each
@@ -179,7 +179,7 @@ export function ActionTypeSelector({
                 <p className="border-b border-border pb-1 text-center text-xs font-medium">
                   Available Categories
                 </p>
-                <div className="flex flex-col gap-1 px-4 py-1">
+                <div className="flex flex-col gap-1 px-4 pb-2">
                   {actionCategories.map((cat) => {
                     return (
                       <div key={cat.label} className="flex items-start gap-2">
