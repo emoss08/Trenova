@@ -267,6 +267,20 @@ const routes: RouteObject[] = [
                       title: "Commodities",
                     },
                   },
+                  {
+                    path: "formula-templates",
+                    loader: createPermissionLoader(Resource.FormulaTemplate),
+                    async lazy() {
+                      let { FormulaTemplates } = await import(
+                        "@/app/formula-templates/page"
+                      );
+                      return { Component: FormulaTemplates };
+                    },
+                    handle: {
+                      crumb: "Formula Templates",
+                      title: "Formula Templates",
+                    },
+                  },
                 ],
               },
             ],
