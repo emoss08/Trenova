@@ -53,6 +53,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/usstaterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/variablerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workerrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/workflowrepository"
 	"go.uber.org/fx"
 )
 
@@ -110,5 +111,9 @@ var Module = fx.Module("postgres-repositories",
 		journalentryrepository.NewRepository,
 		accountingcontrolrepository.NewRepository,
 		userpreferencerepository.NewRepository,
+		workflowrepository.NewInstanceRepository,
+		workflowrepository.NewNodeExecutionRepository,
+		workflowrepository.NewVersionRepository,
+		workflowrepository.NewTemplateRepository,
 	),
 )
