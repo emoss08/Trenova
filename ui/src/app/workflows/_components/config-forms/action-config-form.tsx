@@ -1,29 +1,25 @@
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DialogFooter } from "@/components/ui/dialog";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { shipmentStatusChoices } from "@/lib/choices";
 import {
   BillingValidateRequirementsConfig,
   billingValidateRequirementsConfigSchema,
-  DocumentValidateCompletenessConfig,
-  documentValidateCompletenessConfigSchema,
   notificationSendEmailConfigSchema,
   ShipmentUpdateStatusConfigSchema,
   shipmentUpdateStatusConfigSchema,
 } from "@/lib/schemas/node-config-schema";
 import { ActionConfigFormProps } from "@/types/workflow";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { InfoIcon, Plus, X } from "lucide-react";
-import { useCallback, useEffect, useState } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { InfoIcon } from "lucide-react";
+import { useCallback } from "react";
+import { useForm } from "react-hook-form";
 import { type z } from "zod";
 import { DataAPICallForm } from "./data-api-call-form";
+import { DocumentValidateCompletenessForm } from "./document-validate-compless-form";
 import { VariableInput } from "./inputs/variable-input";
 
 function ShipmentUpdateStatusForm({
@@ -68,7 +64,6 @@ function ShipmentUpdateStatusForm({
             type="text"
           />
         </FormControl>
-
         <FormControl>
           <SelectField
             control={control}
@@ -196,119 +191,6 @@ export function BillingValidateRequirementsForm({
         <Button type="submit">Save Configuration</Button>
       </DialogFooter>
     </Form>
-  );
-}
-
-function DocumentValidateCompletenessForm({
-  initialConfig,
-  onSave,
-  onCancel,
-}: Omit<ActionConfigFormProps, "actionType">) {
-  const {
-    control,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<DocumentValidateCompletenessConfig>({
-    resolver: zodResolver(documentValidateCompletenessConfigSchema),
-    defaultValues: initialConfig,
-  });
-
-  const shipmentId = useWatch({ control, name: "shipmentId" });
-  const [requiredDocuments, setRequiredDocuments] = useState<string[]>(
-    initialConfig.requiredDocuments || [],
-  );
-  const [newDocument, setNewDocument] = useState("");
-
-  const addDocument = () => {
-    if (newDocument) {
-      const updated = [...requiredDocuments, newDocument];
-      setRequiredDocuments(updated);
-      setValue("requiredDocuments", updated);
-      setNewDocument("");
-    }
-  };
-
-  const removeDocument = (index: number) => {
-    const updated = requiredDocuments.filter((_, i) => i !== index);
-    setRequiredDocuments(updated);
-    setValue("requiredDocuments", updated);
-  };
-
-  useEffect(() => {
-    setValue("requiredDocuments", requiredDocuments);
-  }, [requiredDocuments, setValue]);
-
-  return (
-    <form onSubmit={handleSubmit(onSave)} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="shipmentId">Shipment ID</Label>
-        <VariableInput
-          value={shipmentId || ""}
-          onChange={(value) => setValue("shipmentId", value)}
-          placeholder="{{trigger.shipmentId}}"
-        />
-        {errors.shipmentId && (
-          <p className="text-sm text-destructive">
-            {errors.shipmentId.message}
-          </p>
-        )}
-      </div>
-
-      <div className="space-y-2">
-        <Label>Required Documents</Label>
-        <div className="space-y-2">
-          {requiredDocuments.map((doc, index) => (
-            <div key={index} className="flex items-center gap-2">
-              <Badge variant="secondary" className="flex items-center gap-1">
-                <span className="text-xs">{doc}</span>
-                <button
-                  type="button"
-                  onClick={() => removeDocument(index)}
-                  className="ml-1"
-                >
-                  <X className="size-3" />
-                </button>
-              </Badge>
-            </div>
-          ))}
-          <div className="flex gap-2">
-            <Input
-              placeholder="Document type (e.g., BOL, POD, Invoice)"
-              value={newDocument}
-              onChange={(e) => setNewDocument(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  addDocument();
-                }
-              }}
-              className="flex-1"
-            />
-            <Button
-              type="button"
-              variant="outline"
-              size="icon"
-              onClick={addDocument}
-            >
-              <Plus className="size-4" />
-            </Button>
-          </div>
-        </div>
-        {errors.requiredDocuments && (
-          <p className="text-sm text-destructive">
-            {errors.requiredDocuments.message}
-          </p>
-        )}
-      </div>
-
-      <div className="flex justify-end gap-2">
-        <Button type="button" variant="outline" onClick={onCancel}>
-          Cancel
-        </Button>
-        <Button type="submit">Save Configuration</Button>
-      </div>
-    </form>
   );
 }
 

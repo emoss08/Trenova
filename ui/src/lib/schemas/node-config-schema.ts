@@ -52,7 +52,7 @@ export const dataAPICallConfigSchema = z.object({
 export const documentValidateCompletenessConfigSchema = z.object({
   shipmentId: variableStringSchema,
   requiredDocuments: z
-    .array(z.string())
+    .array(z.object({ value: z.string() }))
     .min(1, { error: "At least one required document must be specified" }),
 });
 
