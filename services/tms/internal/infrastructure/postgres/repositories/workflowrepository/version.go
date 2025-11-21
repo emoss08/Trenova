@@ -7,8 +7,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dberror"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/emoss08/trenova/pkg/utils/maputils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -17,19 +19,25 @@ import (
 type VersionParams struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	DB       *postgres.Connection
+	NodeRepo repositories.WorkflowNodeRepository
+	ConnRepo repositories.WorkflowConnectionRepository
+	Logger   *zap.Logger
 }
 
 type versionRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db       *postgres.Connection
+	nodeRepo repositories.WorkflowNodeRepository
+	connRepo repositories.WorkflowConnectionRepository
+	l        *zap.Logger
 }
 
 func NewVersionRepository(p VersionParams) repositories.VersionRepository {
 	return &versionRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.workflow-version-repository"),
+		db:       p.DB,
+		nodeRepo: p.NodeRepo,
+		connRepo: p.ConnRepo,
+		l:        p.Logger.Named("postgres.workflow-version-repository"),
 	}
 }
 
@@ -43,14 +51,18 @@ func (r *versionRepository) addOptions(
 			r.l.Error("invalid version status", zap.Error(err), zap.String("status", opts.Status))
 			return q
 		}
+
 		q = q.Where("wfv.version_status = ?", status)
 	}
+
 	if opts.IncludeNodes != nil && *opts.IncludeNodes {
 		q = q.Relation("Nodes")
 	}
+
 	if opts.IncludeConnections != nil && *opts.IncludeConnections {
 		q = q.Relation("Connections")
 	}
+
 	return q
 }
 
@@ -161,63 +173,6 @@ func (r *versionRepository) getNextVersionNumber(
 	return maxVersion + 1, nil
 }
 
-func (r *versionRepository) cloneNodes(
-	ctx context.Context,
-	db *bun.DB,
-	log *zap.Logger,
-	sourceNodes []*workflow.Node,
-	newVersionID, orgID, buID pulid.ID,
-) (map[pulid.ID]pulid.ID, error) {
-	nodeIDMap := make(map[pulid.ID]pulid.ID)
-	for _, node := range sourceNodes {
-		newNode := &workflow.Node{
-			OrganizationID:    orgID,
-			BusinessUnitID:    buID,
-			WorkflowVersionID: newVersionID,
-			Name:              node.Name,
-			NodeType:          node.NodeType,
-			Config:            node.Config,
-			PositionX:         node.PositionX,
-			PositionY:         node.PositionY,
-		}
-
-		if _, err := db.NewInsert().Model(newNode).Returning("*").Exec(ctx); err != nil {
-			log.Error("failed to insert cloned node", zap.Error(err))
-			return nil, err
-		}
-
-		nodeIDMap[node.ID] = newNode.ID
-	}
-	return nodeIDMap, nil
-}
-
-func (r *versionRepository) cloneConnections(
-	ctx context.Context,
-	db *bun.DB,
-	log *zap.Logger,
-	sourceConnections []*workflow.Connection,
-	newVersionID, orgID, buID pulid.ID,
-	nodeIDMap map[pulid.ID]pulid.ID,
-) error {
-	for _, conn := range sourceConnections {
-		newConn := &workflow.Connection{
-			OrganizationID:    orgID,
-			BusinessUnitID:    buID,
-			WorkflowVersionID: newVersionID,
-			SourceNodeID:      nodeIDMap[conn.SourceNodeID],
-			TargetNodeID:      nodeIDMap[conn.TargetNodeID],
-			Condition:         conn.Condition,
-			IsDefaultBranch:   conn.IsDefaultBranch,
-		}
-
-		if _, err := db.NewInsert().Model(newConn).Returning("*").Exec(ctx); err != nil {
-			log.Error("failed to insert cloned connection", zap.Error(err))
-			return err
-		}
-	}
-	return nil
-}
-
 func (r *versionRepository) fetchSourceVersion(
 	ctx context.Context,
 	db *bun.DB,
@@ -237,30 +192,6 @@ func (r *versionRepository) fetchSourceVersion(
 		return nil, dberror.HandleNotFoundError(err, "Source Workflow Version")
 	}
 	return sourceVersion, nil
-}
-
-func (r *versionRepository) cloneVersionNodes(
-	ctx context.Context,
-	db *bun.DB,
-	log *zap.Logger,
-	sourceVersion *workflow.Version,
-	newVersionID, orgID, buID pulid.ID,
-) error {
-	nodeIDMap, err := r.cloneNodes(ctx, db, log, sourceVersion.Nodes, newVersionID, orgID, buID)
-	if err != nil {
-		return err
-	}
-
-	return r.cloneConnections(
-		ctx,
-		db,
-		log,
-		sourceVersion.Connections,
-		newVersionID,
-		orgID,
-		buID,
-		nodeIDMap,
-	)
 }
 
 func (r *versionRepository) Create(
@@ -317,27 +248,40 @@ func (r *versionRepository) Create(
 		newVersion.TriggerConfig = sourceVersion.TriggerConfig
 	}
 
-	if _, err = db.NewInsert().Model(newVersion).Returning("*").Exec(ctx); err != nil {
-		log.Error("failed to insert workflow version", zap.Error(err))
-		return nil, err
-	}
-
-	if sourceVersion != nil && len(sourceVersion.Nodes) > 0 {
-		if err = r.cloneVersionNodes(ctx, db, log, sourceVersion, newVersion.ID, req.OrgID, req.BuID); err != nil {
-			return nil, err
+	err = db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err = tx.NewInsert().Model(newVersion).Returning("*").Exec(ctx); err != nil {
+			log.Error("failed to insert workflow version", zap.Error(err))
+			return err
 		}
+
+		if sourceVersion != nil && len(sourceVersion.Nodes) > 0 {
+			if err = r.nodeRepo.CloneVersionNodes(ctx, tx, &repositories.CloneVersionNodesRequest{
+				SourceVersion: sourceVersion,
+				NewVersionID:  newVersion.ID,
+				OrgID:         req.OrgID,
+				BuID:          req.BuID,
+			}); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Error("failed to create workflow version", zap.Error(err))
+		return nil, err
 	}
 
 	return newVersion, nil
 }
 
-func (r *versionRepository) Update(
+func (r *versionRepository) CreateEntity(
 	ctx context.Context,
-	req *repositories.UpdateVersionRequest,
+	entity *workflow.Version,
 ) (*workflow.Version, error) {
 	log := r.l.With(
-		zap.String("operation", "Update"),
-		zap.String("entityID", req.Version.ID.String()),
+		zap.String("operation", "CreateEntity"),
+		zap.String("entityID", entity.ID.String()),
 	)
 
 	db, err := r.db.DB(ctx)
@@ -346,11 +290,34 @@ func (r *versionRepository) Update(
 		return nil, err
 	}
 
-	ov := req.Version.Version
-	req.Version.Version++
+	if _, err = db.NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		log.Error("failed to insert workflow version", zap.Error(err))
+		return nil, err
+	}
+
+	return entity, nil
+}
+
+func (r *versionRepository) Update(
+	ctx context.Context,
+	entity *workflow.Version,
+) (*workflow.Version, error) {
+	log := r.l.With(
+		zap.String("operation", "Update"),
+		zap.String("entityID", entity.ID.String()),
+	)
+
+	db, err := r.db.DB(ctx)
+	if err != nil {
+		log.Error("failed to get database connection", zap.Error(err))
+		return nil, err
+	}
+
+	ov := entity.Version
+	entity.Version++
 
 	results, rErr := db.NewUpdate().
-		Model(req.Version).
+		Model(entity).
 		WherePK().
 		Where("wfv.version = ?", ov).
 		Returning("*").
@@ -360,12 +327,12 @@ func (r *versionRepository) Update(
 		return nil, rErr
 	}
 
-	roErr := dberror.CheckRowsAffected(results, "Workflow Version", req.Version.ID.String())
+	roErr := dberror.CheckRowsAffected(results, "Workflow Version", entity.ID.String())
 	if roErr != nil {
 		return nil, roErr
 	}
 
-	return req.Version, nil
+	return entity, nil
 }
 
 func (r *versionRepository) Delete(
@@ -423,10 +390,6 @@ func (r *versionRepository) Publish(
 		}).Scan(ctx)
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "Workflow Version")
-	}
-
-	if !version.VersionStatus.IsDraft() {
-		return nil, ErrOnlyDraftVersionsCanBePublished
 	}
 
 	err = db.RunInTx(ctx, nil, func(c context.Context, tx bun.Tx) error {
@@ -666,244 +629,131 @@ func (r *versionRepository) GetPublished(
 	return entity, nil
 }
 
-func (r *versionRepository) GetNodes(
+func (r *versionRepository) ImportVersion(
 	ctx context.Context,
-	versionID, orgID, buID pulid.ID,
-) ([]*workflow.Node, error) {
-	log := r.l.With(
-		zap.String("operation", "GetNodes"),
-		zap.String("versionID", versionID.String()),
-	)
-
-	db, err := r.db.DB(ctx)
-	if err != nil {
-		log.Error("failed to get database connection", zap.Error(err))
-		return nil, err
-	}
-
-	nodes := make([]*workflow.Node, 0)
-	err = db.NewSelect().Model(&nodes).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("wfn.workflow_version_id = ?", versionID).
-				Where("wfn.organization_id = ?", orgID).
-				Where("wfn.business_unit_id = ?", buID)
-		}).Scan(ctx)
-	if err != nil {
-		log.Error("failed to scan workflow nodes", zap.Error(err))
-		return nil, err
-	}
-
-	return nodes, nil
-}
-
-func (r *versionRepository) GetConnections(
-	ctx context.Context,
-	versionID, orgID, buID pulid.ID,
-) ([]*workflow.Connection, error) {
-	log := r.l.With(
-		zap.String("operation", "GetConnections"),
-		zap.String("versionID", versionID.String()),
-	)
-
-	db, err := r.db.DB(ctx)
-	if err != nil {
-		log.Error("failed to get database connection", zap.Error(err))
-		return nil, err
-	}
-
-	connections := make([]*workflow.Connection, 0)
-	err = db.NewSelect().Model(&connections).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.
-				Where("wfc.workflow_version_id = ?", versionID).
-				Where("wfc.organization_id = ?", orgID).
-				Where("wfc.business_unit_id = ?", buID)
-		}).Scan(ctx)
-	if err != nil {
-		log.Error("failed to scan workflow connections", zap.Error(err))
-		return nil, err
-	}
-
-	return connections, nil
-}
-
-func (r *versionRepository) CreateNode(
-	ctx context.Context,
-	entity *workflow.Node,
-) (*workflow.Node, error) {
-	log := r.l.With(
-		zap.String("operation", "CreateNode"),
-		zap.String("versionID", entity.WorkflowVersionID.String()),
-	)
-
-	db, err := r.db.DB(ctx)
-	if err != nil {
-		log.Error("failed to get database connection", zap.Error(err))
-		return nil, err
-	}
-
-	if _, err = db.NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
-		log.Error("failed to insert workflow node", zap.Error(err))
-		return nil, err
-	}
-
-	return entity, nil
-}
-
-func (r *versionRepository) UpdateNode(
-	ctx context.Context,
-	entity *workflow.Node,
-) (*workflow.Node, error) {
-	log := r.l.With(
-		zap.String("operation", "UpdateNode"),
-		zap.String("entityID", entity.ID.String()),
-	)
-
-	db, err := r.db.DB(ctx)
-	if err != nil {
-		log.Error("failed to get database connection", zap.Error(err))
-		return nil, err
-	}
-
-	ov := entity.Version
-	entity.Version++
-
-	results, rErr := db.NewUpdate().
-		Model(entity).
-		WherePK().
-		Where("wfn.version = ?", ov).
-		Returning("*").
-		Exec(ctx)
-	if rErr != nil {
-		log.Error("failed to update workflow node", zap.Error(rErr))
-		return nil, rErr
-	}
-
-	roErr := dberror.CheckRowsAffected(results, "Workflow Node", entity.ID.String())
-	if roErr != nil {
-		return nil, roErr
-	}
-
-	return entity, nil
-}
-
-func (r *versionRepository) DeleteNode(
-	ctx context.Context,
-	nodeID, orgID, buID pulid.ID,
+	req *repositories.ImportVersionRequest,
 ) error {
 	log := r.l.With(
-		zap.String("operation", "DeleteNode"),
-		zap.String("nodeID", nodeID.String()),
+		zap.String("operation", "importVersion"),
+		zap.Any("req", req),
 	)
 
-	db, err := r.db.DB(ctx)
+	versionData, err := r.parseVersionData(req.VersionData)
 	if err != nil {
-		log.Error("failed to get database connection", zap.Error(err))
 		return err
 	}
 
-	entity := &workflow.Node{
-		ID:             nodeID,
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
+	newVersion := &workflow.Version{
+		OrganizationID:     req.OrgID,
+		BusinessUnitID:     req.BuID,
+		WorkflowTemplateID: req.TemplateID,
+		VersionNumber:      versionData.VersionNumber,
+		VersionStatus:      workflow.VersionStatusDraft,
+		Status:             workflow.Status(versionData.Status),
+		TriggerType:        workflow.TriggerType(versionData.TriggerType),
+		ScheduleConfig:     versionData.ScheduleConfig,
+		TriggerConfig:      versionData.TriggerConfig,
+		ChangeDescription:  versionData.ChangeDescription,
+		CreatedByID:        req.UserID,
 	}
 
-	results, dErr := db.NewDelete().Model(entity).WherePK().Exec(ctx)
-	if dErr != nil {
-		log.Error("failed to delete workflow node", zap.Error(dErr))
-		return dErr
-	}
-
-	return dberror.CheckRowsAffected(results, "Workflow Node", nodeID.String())
-}
-
-func (r *versionRepository) CreateConnection(
-	ctx context.Context,
-	entity *workflow.Connection,
-) (*workflow.Connection, error) {
-	log := r.l.With(
-		zap.String("operation", "CreateConnection"),
-		zap.String("versionID", entity.WorkflowVersionID.String()),
-	)
-
-	db, err := r.db.DB(ctx)
+	_, err = r.CreateEntity(ctx, newVersion)
 	if err != nil {
-		log.Error("failed to get database connection", zap.Error(err))
-		return nil, err
-	}
-
-	if _, err = db.NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
-		log.Error("failed to insert workflow connection", zap.Error(err))
-		return nil, err
-	}
-
-	return entity, nil
-}
-
-func (r *versionRepository) UpdateConnection(
-	ctx context.Context,
-	entity *workflow.Connection,
-) (*workflow.Connection, error) {
-	log := r.l.With(
-		zap.String("operation", "UpdateConnection"),
-		zap.String("entityID", entity.ID.String()),
-	)
-
-	db, err := r.db.DB(ctx)
-	if err != nil {
-		log.Error("failed to get database connection", zap.Error(err))
-		return nil, err
-	}
-
-	ov := entity.Version
-	entity.Version++
-
-	results, rErr := db.NewUpdate().
-		Model(entity).
-		WherePK().
-		Where("wfc.version = ?", ov).
-		Returning("*").
-		Exec(ctx)
-	if rErr != nil {
-		log.Error("failed to update workflow connection", zap.Error(rErr))
-		return nil, rErr
-	}
-
-	roErr := dberror.CheckRowsAffected(results, "Workflow Connection", entity.ID.String())
-	if roErr != nil {
-		return nil, roErr
-	}
-
-	return entity, nil
-}
-
-func (r *versionRepository) DeleteConnection(
-	ctx context.Context,
-	connectionID, orgID, buID pulid.ID,
-) error {
-	log := r.l.With(
-		zap.String("operation", "DeleteConnection"),
-		zap.String("connectionID", connectionID.String()),
-	)
-
-	db, err := r.db.DB(ctx)
-	if err != nil {
-		log.Error("failed to get database connection", zap.Error(err))
+		log.Error("failed to create imported version", zap.Error(err))
 		return err
 	}
 
-	entity := &workflow.Connection{
-		ID:             connectionID,
-		OrganizationID: orgID,
-		BusinessUnitID: buID,
+	nodes, _ := maputils.GetArray(req.VersionData, "nodes")
+	if len(nodes) == 0 {
+		return nil
 	}
 
-	results, dErr := db.NewDelete().Model(entity).WherePK().Exec(ctx)
-	if dErr != nil {
-		log.Error("failed to delete workflow connection", zap.Error(dErr))
-		return dErr
+	nodeIDs, err := r.nodeRepo.ImportNodes(ctx, &repositories.ImportNodesRequest{
+		Nodes:     nodes,
+		VersionID: newVersion.ID,
+		OrgID:     req.OrgID,
+		BuID:      req.BuID,
+	})
+	if err != nil {
+		return err
 	}
 
-	return dberror.CheckRowsAffected(results, "Workflow Connection", connectionID.String())
+	connections, _ := maputils.GetArray(req.VersionData, "connections")
+	return r.connRepo.ImportConnections(ctx, &repositories.ImportConnectionsRequest{
+		Connections: connections,
+		VersionID:   newVersion.ID,
+		OrgID:       req.OrgID,
+		BuID:        req.BuID,
+		NodeIDs:     nodeIDs,
+	})
+}
+
+type VersionDataResponse struct {
+	VersionNumber     int            `json:"versionNumber"`
+	Status            string         `json:"status"`
+	TriggerType       string         `json:"triggerType"`
+	ScheduleConfig    map[string]any `json:"scheduleConfig"`
+	TriggerConfig     map[string]any `json:"triggerConfig"`
+	ChangeDescription string         `json:"changeDescription"`
+}
+
+func (r *versionRepository) parseVersionData(data map[string]any) (*VersionDataResponse, error) {
+	versionNumber, err := maputils.GetInt(data, "versionNumber")
+	if err != nil {
+		return nil, errortypes.NewValidationError(
+			"versionNumber",
+			errortypes.ErrInvalid,
+			err.Error(),
+		)
+	}
+
+	status, err := maputils.GetString(data, "status")
+	if err != nil {
+		return nil, errortypes.NewValidationError("status", errortypes.ErrInvalid, err.Error())
+	}
+
+	triggerType, err := maputils.GetString(data, "triggerType")
+	if err != nil {
+		return nil, errortypes.NewValidationError(
+			"triggerType",
+			errortypes.ErrInvalid,
+			err.Error(),
+		)
+	}
+
+	scheduleConfig, err := maputils.GetMap(data, "scheduleConfig")
+	if err != nil {
+		return nil, errortypes.NewValidationError(
+			"scheduleConfig",
+			errortypes.ErrInvalid,
+			err.Error(),
+		)
+	}
+
+	triggerConfig, err := maputils.GetMap(data, "triggerConfig")
+	if err != nil {
+		return nil, errortypes.NewValidationError(
+			"triggerConfig",
+			errortypes.ErrInvalid,
+			err.Error(),
+		)
+	}
+
+	changeDescription, err := maputils.GetString(data, "changeDescription")
+	if err != nil {
+		return nil, errortypes.NewValidationError(
+			"changeDescription",
+			errortypes.ErrInvalid,
+			err.Error(),
+		)
+	}
+
+	return &VersionDataResponse{
+		VersionNumber:     versionNumber,
+		Status:            status,
+		TriggerType:       triggerType,
+		ScheduleConfig:    scheduleConfig,
+		TriggerConfig:     triggerConfig,
+		ChangeDescription: changeDescription,
+	}, nil
 }

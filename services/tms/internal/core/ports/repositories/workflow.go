@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/workflow"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/pulid"
+	"github.com/uptrace/bun"
 )
 
 type TemplateOptions struct {
@@ -147,6 +148,22 @@ type GetPublishedVersionRequest struct {
 	IncludeConnections bool     `json:"includeConnections"`
 }
 
+type CloneConnectionRequest struct {
+	SourceConnections []*workflow.Connection `json:"sourceConnections"`
+	VersionID         pulid.ID               `json:"versionId"`
+	OrgID             pulid.ID               `json:"orgId"`
+	BuID              pulid.ID               `json:"buId"`
+	NodeIDMap         map[pulid.ID]pulid.ID  `json:"nodeIdMap"`
+}
+
+type ImportVersionRequest struct {
+	VersionData map[string]any `json:"versionData"`
+	TemplateID  pulid.ID       `json:"templateId"`
+	OrgID       pulid.ID       `json:"orgId"`
+	BuID        pulid.ID       `json:"buId"`
+	UserID      pulid.ID       `json:"userId"`
+}
+
 type VersionRepository interface {
 	List(
 		ctx context.Context,
@@ -154,29 +171,15 @@ type VersionRepository interface {
 	) (*pagination.ListResult[*workflow.Version], error)
 	GetByID(ctx context.Context, req *GetVersionByIDRequest) (*workflow.Version, error)
 	Create(ctx context.Context, req *CreateVersionRequest) (*workflow.Version, error)
-	Update(ctx context.Context, req *UpdateVersionRequest) (*workflow.Version, error)
+	CreateEntity(ctx context.Context, entity *workflow.Version) (*workflow.Version, error)
+
+	Update(ctx context.Context, entity *workflow.Version) (*workflow.Version, error)
 	Delete(ctx context.Context, req *DeleteVersionRequest) error
 	Publish(ctx context.Context, req *PublishVersionRequest) (*workflow.Version, error)
 	Archive(ctx context.Context, req *ArchiveVersionRequest) (*workflow.Version, error)
 	Rollback(ctx context.Context, req *RollbackVersionRequest) (*workflow.Version, error)
 	GetPublished(ctx context.Context, req *GetPublishedVersionRequest) (*workflow.Version, error)
-	GetNodes(ctx context.Context, versionID, orgID, buID pulid.ID) ([]*workflow.Node, error)
-	GetConnections(
-		ctx context.Context,
-		versionID, orgID, buID pulid.ID,
-	) ([]*workflow.Connection, error)
-	CreateNode(ctx context.Context, entity *workflow.Node) (*workflow.Node, error)
-	UpdateNode(ctx context.Context, entity *workflow.Node) (*workflow.Node, error)
-	DeleteNode(ctx context.Context, nodeID, orgID, buID pulid.ID) error
-	CreateConnection(
-		ctx context.Context,
-		entity *workflow.Connection,
-	) (*workflow.Connection, error)
-	UpdateConnection(
-		ctx context.Context,
-		entity *workflow.Connection,
-	) (*workflow.Connection, error)
-	DeleteConnection(ctx context.Context, connectionID, orgID, buID pulid.ID) error
+	ImportVersion(ctx context.Context, req *ImportVersionRequest) error
 }
 
 type ListWorkflowInstanceRequest struct {
@@ -244,4 +247,85 @@ type WorkflowNodeExecutionRepository interface {
 		ctx context.Context,
 		instanceID, orgID, buID pulid.ID,
 	) ([]*workflow.NodeExecution, error)
+}
+
+type DeleteNodeRequest struct {
+	NodeID pulid.ID `json:"nodeId"`
+	OrgID  pulid.ID `json:"orgId"`
+	BuID   pulid.ID `json:"buId"`
+}
+
+type GetNodesByVersionIDRequest struct {
+	VersionID pulid.ID `json:"versionId"`
+	OrgID     pulid.ID `json:"orgId"`
+	BuID      pulid.ID `json:"buId"`
+}
+
+type CloneNodesRequest struct {
+	SourceNodes []*workflow.Node `json:"sourceNodes"`
+	VersionID   pulid.ID         `json:"versionId"`
+	OrgID       pulid.ID         `json:"orgId"`
+	BuID        pulid.ID         `json:"buId"`
+}
+
+type CloneVersionNodesRequest struct {
+	SourceVersion *workflow.Version `json:"sourceVersion"`
+	NewVersionID  pulid.ID          `json:"newVersionId"`
+	OrgID         pulid.ID          `json:"orgId"`
+	BuID          pulid.ID          `json:"buId"`
+}
+
+type ImportNodesRequest struct {
+	Nodes     []any    `json:"nodes"`
+	VersionID pulid.ID `json:"versionId"`
+	OrgID     pulid.ID `json:"orgId"`
+	BuID      pulid.ID `json:"buId"`
+}
+type WorkflowNodeRepository interface {
+	ImportNodes(ctx context.Context, req *ImportNodesRequest) ([]pulid.ID, error)
+	GetByVersionID(
+		ctx context.Context,
+		req *GetNodesByVersionIDRequest,
+	) ([]*workflow.Node, error)
+	Create(ctx context.Context, entity *workflow.Node) (*workflow.Node, error)
+	Update(ctx context.Context, entity *workflow.Node) (*workflow.Node, error)
+	Delete(ctx context.Context, req *DeleteNodeRequest) error
+	Clone(
+		ctx context.Context,
+		tx bun.IDB,
+		req *CloneNodesRequest,
+	) (map[pulid.ID]pulid.ID, error)
+	CloneVersionNodes(ctx context.Context, tx bun.IDB, req *CloneVersionNodesRequest) error
+}
+
+type GetConnectionsByVersionIDRequest struct {
+	VersionID pulid.ID `json:"versionId"`
+	OrgID     pulid.ID `json:"orgId"`
+	BuID      pulid.ID `json:"buId"`
+}
+
+type DeleteConnectionRequest struct {
+	ConnectionID pulid.ID `json:"connectionId"`
+	OrgID        pulid.ID `json:"orgId"`
+	BuID         pulid.ID `json:"buId"`
+}
+
+type ImportConnectionsRequest struct {
+	Connections []any      `json:"connections"`
+	VersionID   pulid.ID   `json:"versionId"`
+	OrgID       pulid.ID   `json:"orgId"`
+	BuID        pulid.ID   `json:"buId"`
+	NodeIDs     []pulid.ID `json:"nodeIds"`
+}
+
+type WorkflowConnectionRepository interface {
+	ImportConnections(ctx context.Context, req *ImportConnectionsRequest) error
+	GetByVersionID(
+		ctx context.Context,
+		req *GetConnectionsByVersionIDRequest,
+	) ([]*workflow.Connection, error)
+	Create(ctx context.Context, entity *workflow.Connection) (*workflow.Connection, error)
+	Update(ctx context.Context, entity *workflow.Connection) (*workflow.Connection, error)
+	Delete(ctx context.Context, req *DeleteConnectionRequest) error
+	Clone(ctx context.Context, tx bun.IDB, req *CloneConnectionRequest) error
 }

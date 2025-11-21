@@ -20,19 +20,28 @@ import (
 type TemplateParams struct {
 	fx.In
 
-	DB     *postgres.Connection
-	Logger *zap.Logger
+	DB          *postgres.Connection
+	VerisonRepo repositories.VersionRepository
+	NodeRepo    repositories.WorkflowNodeRepository
+	ConnRepo    repositories.WorkflowConnectionRepository
+	Logger      *zap.Logger
 }
 
 type templateRepository struct {
-	db *postgres.Connection
-	l  *zap.Logger
+	db          *postgres.Connection
+	versionRepo repositories.VersionRepository
+	nodeRepo    repositories.WorkflowNodeRepository
+	connRepo    repositories.WorkflowConnectionRepository
+	l           *zap.Logger
 }
 
 func NewTemplateRepository(p TemplateParams) repositories.TemplateRepository {
 	return &templateRepository{
-		db: p.DB,
-		l:  p.Logger.Named("postgres.workflow-template-repository"),
+		db:          p.DB,
+		versionRepo: p.VerisonRepo,
+		nodeRepo:    p.NodeRepo,
+		connRepo:    p.ConnRepo,
+		l:           p.Logger.Named("postgres.workflow-template-repository"),
 	}
 }
 
@@ -235,6 +244,7 @@ func (r *templateRepository) fetchOriginalTemplate(
 	templateID, orgID, buID pulid.ID,
 ) (*workflow.Template, error) {
 	original := new(workflow.Template)
+
 	err := db.NewSelect().Model(original).
 		Relation("Versions", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("version_status = ?", workflow.VersionStatusPublished).
@@ -250,64 +260,8 @@ func (r *templateRepository) fetchOriginalTemplate(
 	if err != nil {
 		return nil, dberror.HandleNotFoundError(err, "Workflow Template")
 	}
+
 	return original, nil
-}
-
-func (r *templateRepository) createDuplicatedVersion(
-	ctx context.Context,
-	db *bun.DB,
-	log *zap.Logger,
-	publishedVersion *workflow.Version,
-	newTemplateID, orgID, buID, userID pulid.ID,
-	originalName string,
-) error {
-	newVersion := &workflow.Version{
-		OrganizationID:     orgID,
-		BusinessUnitID:     buID,
-		WorkflowTemplateID: newTemplateID,
-		VersionNumber:      1,
-		VersionStatus:      workflow.VersionStatusDraft,
-		Status:             publishedVersion.Status,
-		TriggerType:        publishedVersion.TriggerType,
-		ScheduleConfig:     publishedVersion.ScheduleConfig,
-		TriggerConfig:      publishedVersion.TriggerConfig,
-		ChangeDescription:  "Duplicated from " + originalName,
-		CreatedByID:        userID,
-	}
-
-	if _, err := db.NewInsert().Model(newVersion).Returning("*").Exec(ctx); err != nil {
-		log.Error("failed to insert duplicated version", zap.Error(err))
-		return err
-	}
-
-	if len(publishedVersion.Nodes) == 0 {
-		return nil
-	}
-
-	versionRepo := &versionRepository{db: r.db, l: r.l}
-	nodeIDMap, err := versionRepo.cloneNodes(
-		ctx,
-		db,
-		log,
-		publishedVersion.Nodes,
-		newVersion.ID,
-		orgID,
-		buID,
-	)
-	if err != nil {
-		return err
-	}
-
-	return versionRepo.cloneConnections(
-		ctx,
-		db,
-		log,
-		publishedVersion.Connections,
-		newVersion.ID,
-		orgID,
-		buID,
-		nodeIDMap,
-	)
 }
 
 func (r *templateRepository) Duplicate(
@@ -339,25 +293,28 @@ func (r *templateRepository) Duplicate(
 		UpdatedByID:    req.UserID,
 	}
 
-	if _, err = db.NewInsert().Model(newTemplate).Returning("*").Exec(ctx); err != nil {
-		log.Error("failed to insert duplicated template", zap.Error(err))
-		return nil, err
-	}
-
-	if len(original.Versions) > 0 {
-		if err = r.createDuplicatedVersion(
-			ctx,
-			db,
-			log,
-			original.Versions[0],
-			newTemplate.ID,
-			req.OrgID,
-			req.BuID,
-			req.UserID,
-			original.Name,
-		); err != nil {
-			return nil, err
+	err = db.RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		if _, err = tx.NewInsert().Model(newTemplate).Returning("*").Exec(ctx); err != nil {
+			log.Error("failed to insert duplicated template", zap.Error(err))
+			return err
 		}
+
+		if len(original.Versions) > 0 {
+			if err = r.nodeRepo.CloneVersionNodes(ctx, tx, &repositories.CloneVersionNodesRequest{
+				SourceVersion: original.Versions[0],
+				NewVersionID:  newTemplate.ID,
+				OrgID:         req.OrgID,
+				BuID:          req.BuID,
+			}); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+	if err != nil {
+		log.Error("failed to duplicate workflow template", zap.Error(err))
+		return nil, err
 	}
 
 	return newTemplate, nil
@@ -538,271 +495,6 @@ func (r *templateRepository) createTemplateFromImport(
 	return newTemplate, nil
 }
 
-func (r *templateRepository) importVersion(
-	ctx context.Context,
-	versionData map[string]any,
-	templateID, orgID, buID, userID pulid.ID,
-) error {
-	log := r.l.With(
-		zap.String("operation", "importVersion"),
-		zap.String("templateID", templateID.String()),
-		zap.String("orgID", orgID.String()),
-		zap.String("buID", buID.String()),
-		zap.String("userID", userID.String()),
-	)
-
-	db, err := r.db.DB(ctx)
-	if err != nil {
-		return err
-	}
-
-	versionNumber, err := maputils.GetInt(versionData, "versionNumber")
-	if err != nil {
-		return errortypes.NewValidationError(
-			"versionNumber",
-			errortypes.ErrInvalid,
-			err.Error(),
-		)
-	}
-
-	status, err := maputils.GetString(versionData, "status")
-	if err != nil {
-		return errortypes.NewValidationError("status", errortypes.ErrInvalid, err.Error())
-	}
-
-	triggerType, err := maputils.GetString(versionData, "triggerType")
-	if err != nil {
-		return errortypes.NewValidationError(
-			"triggerType",
-			errortypes.ErrInvalid,
-			err.Error(),
-		)
-	}
-
-	scheduleConfig, err := maputils.GetMap(versionData, "scheduleConfig")
-	if err != nil {
-		return errortypes.NewValidationError(
-			"scheduleConfig",
-			errortypes.ErrInvalid,
-			err.Error(),
-		)
-	}
-
-	triggerConfig, err := maputils.GetMap(versionData, "triggerConfig")
-	if err != nil {
-		return errortypes.NewValidationError(
-			"triggerConfig",
-			errortypes.ErrInvalid,
-			err.Error(),
-		)
-	}
-
-	changeDescription, err := maputils.GetString(versionData, "changeDescription")
-	if err != nil {
-		return errortypes.NewValidationError(
-			"changeDescription",
-			errortypes.ErrInvalid,
-			err.Error(),
-		)
-	}
-
-	newVersion := &workflow.Version{
-		OrganizationID:     orgID,
-		BusinessUnitID:     buID,
-		WorkflowTemplateID: templateID,
-		VersionNumber:      versionNumber,
-		VersionStatus:      workflow.VersionStatusDraft,
-		Status:             workflow.Status(status),
-		TriggerType:        workflow.TriggerType(triggerType),
-		ScheduleConfig:     scheduleConfig,
-		TriggerConfig:      triggerConfig,
-		ChangeDescription:  changeDescription,
-		CreatedByID:        userID,
-	}
-
-	if _, err = db.NewInsert().Model(newVersion).Returning("*").Exec(ctx); err != nil {
-		log.Error("failed to insert imported version", zap.Error(err))
-		return err
-	}
-
-	nodes, _ := maputils.GetArray(versionData, "nodes")
-	if len(nodes) == 0 {
-		return nil
-	}
-
-	nodeIDs, err := r.importNodes(ctx, db, log, nodes, newVersion.ID, orgID, buID)
-	if err != nil {
-		return err
-	}
-
-	connections, _ := maputils.GetArray(versionData, "connections")
-	return r.importConnections(ctx, db, log, connections, newVersion.ID, orgID, buID, nodeIDs)
-}
-
-func (r *templateRepository) importNodes(
-	ctx context.Context,
-	db *bun.DB,
-	log *zap.Logger,
-	nodes []any,
-	versionID, orgID, buID pulid.ID,
-) ([]pulid.ID, error) {
-	nodeIDs := make([]pulid.ID, len(nodes))
-
-	for i, n := range nodes {
-		nodeData, ok := n.(map[string]any)
-		if !ok {
-			return nil, errortypes.NewValidationError(
-				"node",
-				errortypes.ErrInvalid,
-				"invalid node data",
-			)
-		}
-
-		name, err := maputils.GetString(nodeData, "name")
-		if err != nil {
-			return nil, errortypes.NewValidationError(
-				"node.name",
-				errortypes.ErrInvalid,
-				err.Error(),
-			)
-		}
-
-		nodeType, err := maputils.GetString(nodeData, "nodeType")
-		if err != nil {
-			return nil, errortypes.NewValidationError(
-				"node.nodeType",
-				errortypes.ErrInvalid,
-				err.Error(),
-			)
-		}
-
-		config, err := maputils.GetMap(nodeData, "config")
-		if err != nil {
-			return nil, errortypes.NewValidationError(
-				"node.config",
-				errortypes.ErrInvalid,
-				err.Error(),
-			)
-		}
-
-		position, err := maputils.GetMap(nodeData, "position")
-		if err != nil {
-			return nil, errortypes.NewValidationError(
-				"node.position",
-				errortypes.ErrInvalid,
-				err.Error(),
-			)
-		}
-
-		posX, err := maputils.GetInt(position, "x")
-		if err != nil {
-			return nil, errortypes.NewValidationError(
-				"node.position.x",
-				errortypes.ErrInvalid,
-				err.Error(),
-			)
-		}
-
-		posY, err := maputils.GetInt(position, "y")
-		if err != nil {
-			return nil, errortypes.NewValidationError(
-				"node.position.y",
-				errortypes.ErrInvalid,
-				err.Error(),
-			)
-		}
-
-		newNode := &workflow.Node{
-			OrganizationID:    orgID,
-			BusinessUnitID:    buID,
-			WorkflowVersionID: versionID,
-			Name:              name,
-			NodeType:          workflow.NodeType(nodeType),
-			Config:            config,
-			PositionX:         posX,
-			PositionY:         posY,
-		}
-
-		if _, err = db.NewInsert().Model(newNode).Returning("*").Exec(ctx); err != nil {
-			log.Error("failed to insert imported node", zap.Error(err))
-			return nil, err
-		}
-
-		nodeIDs[i] = newNode.ID
-	}
-
-	return nodeIDs, nil
-}
-
-func (r *templateRepository) importConnections(
-	ctx context.Context,
-	db *bun.DB,
-	log *zap.Logger,
-	connections []any,
-	versionID, orgID, buID pulid.ID,
-	nodeIDs []pulid.ID,
-) error {
-	for _, c := range connections {
-		connData, ok := c.(map[string]any)
-		if !ok {
-			continue
-		}
-
-		sourceIdx, err := maputils.GetInt(connData, "sourceNodeIndex")
-		if err != nil {
-			return errortypes.NewValidationError(
-				"sourceNodeIndex",
-				errortypes.ErrInvalid,
-				err.Error(),
-			)
-		}
-
-		targetIdx, err := maputils.GetInt(connData, "targetNodeIndex")
-		if err != nil {
-			return errortypes.NewValidationError(
-				"targetNodeIndex",
-				errortypes.ErrInvalid,
-				err.Error(),
-			)
-		}
-
-		condition, err := maputils.GetMap(connData, "condition")
-		if err != nil {
-			return errortypes.NewValidationError(
-				"condition",
-				errortypes.ErrInvalid,
-				err.Error(),
-			)
-		}
-
-		isDefaultBranch, err := maputils.GetBool(connData, "isDefaultBranch")
-		if err != nil {
-			return errortypes.NewValidationError(
-				"isDefaultBranch",
-				errortypes.ErrInvalid,
-				err.Error(),
-			)
-		}
-
-		newConn := &workflow.Connection{
-			OrganizationID:    orgID,
-			BusinessUnitID:    buID,
-			WorkflowVersionID: versionID,
-			SourceNodeID:      nodeIDs[sourceIdx],
-			TargetNodeID:      nodeIDs[targetIdx],
-			Condition:         condition,
-			IsDefaultBranch:   isDefaultBranch,
-		}
-
-		if _, err = db.NewInsert().Model(newConn).Returning("*").Exec(ctx); err != nil {
-			log.Error("failed to insert imported connection", zap.Error(err))
-			return err
-		}
-	}
-
-	return nil
-}
-
 func (r *templateRepository) ImportFromJSON(
 	ctx context.Context,
 	req *repositories.ImportTemplateRequest,
@@ -834,7 +526,13 @@ func (r *templateRepository) ImportFromJSON(
 			continue
 		}
 
-		if err = r.importVersion(ctx, versionData, newTemplate.ID, req.OrgID, req.BuID, req.UserID); err != nil {
+		if err = r.versionRepo.ImportVersion(ctx, &repositories.ImportVersionRequest{
+			VersionData: versionData,
+			TemplateID:  newTemplate.ID,
+			OrgID:       req.OrgID,
+			BuID:        req.BuID,
+			UserID:      req.UserID,
+		}); err != nil {
 			return nil, err
 		}
 	}
