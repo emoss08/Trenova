@@ -28,10 +28,10 @@ make redis-flushall        # Clear Redis cache
 
 ```bash
 cd ui/
-npm run dev                # Start Vite dev server (port 5173)
-npm run build              # Build for production
-npm run lint               # Run ESLint
-npm run preview            # Preview production build
+pnpm run dev                # Start Vite dev server (port 5173)
+pnpm run build              # Build for production
+pnpm run lint               # Run ESLint
+pnpm run preview            # Preview production build
 ```
 
 ## Architecture
