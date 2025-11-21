@@ -91,7 +91,7 @@ func GetMap(data map[string]any, key string) (map[string]any, error) {
 
 func GetArray(data map[string]any, key string) ([]any, error) {
 	val, ok := data[key]
-	if !ok {
+	if !ok || val == nil {
 		return nil, nil
 	}
 	arr, ok := val.([]any)
