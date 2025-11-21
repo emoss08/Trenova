@@ -488,15 +488,25 @@ func (r *templateRepository) parseTemplateData(data map[string]any) (map[string]
 
 func (r *templateRepository) createTemplateFromImport(
 	ctx context.Context,
-	db *bun.DB,
-	log *zap.Logger,
 	templateData map[string]any,
 	orgID, buID, userID pulid.ID,
 ) (*workflow.Template, error) {
+	log := r.l.With(
+		zap.String("operation", "createTemplateFromImport"),
+		zap.String("orgID", orgID.String()),
+		zap.String("buID", buID.String()),
+		zap.String("userID", userID.String()),
+	)
+
+	db, err := r.db.DB(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	name, err := maputils.GetString(templateData, "name")
 	if err != nil {
 		return nil, errortypes.NewValidationError(
-			"template.name",
+			"name",
 			errortypes.ErrInvalid,
 			err.Error(),
 		)
@@ -505,7 +515,7 @@ func (r *templateRepository) createTemplateFromImport(
 	description, err := maputils.GetString(templateData, "description")
 	if err != nil {
 		return nil, errortypes.NewValidationError(
-			"template.description",
+			"description",
 			errortypes.ErrInvalid,
 			err.Error(),
 		)
@@ -530,15 +540,26 @@ func (r *templateRepository) createTemplateFromImport(
 
 func (r *templateRepository) importVersion(
 	ctx context.Context,
-	db *bun.DB,
-	log *zap.Logger,
 	versionData map[string]any,
 	templateID, orgID, buID, userID pulid.ID,
 ) error {
+	log := r.l.With(
+		zap.String("operation", "importVersion"),
+		zap.String("templateID", templateID.String()),
+		zap.String("orgID", orgID.String()),
+		zap.String("buID", buID.String()),
+		zap.String("userID", userID.String()),
+	)
+
+	db, err := r.db.DB(ctx)
+	if err != nil {
+		return err
+	}
+
 	versionNumber, err := maputils.GetInt(versionData, "versionNumber")
 	if err != nil {
 		return errortypes.NewValidationError(
-			"version.versionNumber",
+			"versionNumber",
 			errortypes.ErrInvalid,
 			err.Error(),
 		)
@@ -546,13 +567,13 @@ func (r *templateRepository) importVersion(
 
 	status, err := maputils.GetString(versionData, "status")
 	if err != nil {
-		return errortypes.NewValidationError("version.status", errortypes.ErrInvalid, err.Error())
+		return errortypes.NewValidationError("status", errortypes.ErrInvalid, err.Error())
 	}
 
 	triggerType, err := maputils.GetString(versionData, "triggerType")
 	if err != nil {
 		return errortypes.NewValidationError(
-			"version.triggerType",
+			"triggerType",
 			errortypes.ErrInvalid,
 			err.Error(),
 		)
@@ -561,7 +582,7 @@ func (r *templateRepository) importVersion(
 	scheduleConfig, err := maputils.GetMap(versionData, "scheduleConfig")
 	if err != nil {
 		return errortypes.NewValidationError(
-			"version.scheduleConfig",
+			"scheduleConfig",
 			errortypes.ErrInvalid,
 			err.Error(),
 		)
@@ -570,7 +591,7 @@ func (r *templateRepository) importVersion(
 	triggerConfig, err := maputils.GetMap(versionData, "triggerConfig")
 	if err != nil {
 		return errortypes.NewValidationError(
-			"version.triggerConfig",
+			"triggerConfig",
 			errortypes.ErrInvalid,
 			err.Error(),
 		)
@@ -579,7 +600,7 @@ func (r *templateRepository) importVersion(
 	changeDescription, err := maputils.GetString(versionData, "changeDescription")
 	if err != nil {
 		return errortypes.NewValidationError(
-			"version.changeDescription",
+			"changeDescription",
 			errortypes.ErrInvalid,
 			err.Error(),
 		)
@@ -730,7 +751,7 @@ func (r *templateRepository) importConnections(
 		sourceIdx, err := maputils.GetInt(connData, "sourceNodeIndex")
 		if err != nil {
 			return errortypes.NewValidationError(
-				"connection.sourceNodeIndex",
+				"sourceNodeIndex",
 				errortypes.ErrInvalid,
 				err.Error(),
 			)
@@ -739,7 +760,7 @@ func (r *templateRepository) importConnections(
 		targetIdx, err := maputils.GetInt(connData, "targetNodeIndex")
 		if err != nil {
 			return errortypes.NewValidationError(
-				"connection.targetNodeIndex",
+				"targetNodeIndex",
 				errortypes.ErrInvalid,
 				err.Error(),
 			)
@@ -748,7 +769,7 @@ func (r *templateRepository) importConnections(
 		condition, err := maputils.GetMap(connData, "condition")
 		if err != nil {
 			return errortypes.NewValidationError(
-				"connection.condition",
+				"condition",
 				errortypes.ErrInvalid,
 				err.Error(),
 			)
@@ -757,7 +778,7 @@ func (r *templateRepository) importConnections(
 		isDefaultBranch, err := maputils.GetBool(connData, "isDefaultBranch")
 		if err != nil {
 			return errortypes.NewValidationError(
-				"connection.isDefaultBranch",
+				"isDefaultBranch",
 				errortypes.ErrInvalid,
 				err.Error(),
 			)
@@ -786,16 +807,6 @@ func (r *templateRepository) ImportFromJSON(
 	ctx context.Context,
 	req *repositories.ImportTemplateRequest,
 ) (*workflow.Template, error) {
-	log := r.l.With(
-		zap.String("operation", "ImportFromJSON"),
-	)
-
-	db, err := r.db.DB(ctx)
-	if err != nil {
-		log.Error("failed to get database connection", zap.Error(err))
-		return nil, err
-	}
-
 	templateData, err := r.parseTemplateData(req.TemplateData)
 	if err != nil {
 		return nil, err
@@ -803,8 +814,6 @@ func (r *templateRepository) ImportFromJSON(
 
 	newTemplate, err := r.createTemplateFromImport(
 		ctx,
-		db,
-		log,
 		templateData,
 		req.OrgID,
 		req.BuID,
@@ -825,7 +834,7 @@ func (r *templateRepository) ImportFromJSON(
 			continue
 		}
 
-		if err = r.importVersion(ctx, db, log, versionData, newTemplate.ID, req.OrgID, req.BuID, req.UserID); err != nil {
+		if err = r.importVersion(ctx, versionData, newTemplate.ID, req.OrgID, req.BuID, req.UserID); err != nil {
 			return nil, err
 		}
 	}
