@@ -28,6 +28,81 @@ const routes: RouteObject[] = [
               return { Component: Dashboard };
             },
           },
+          // Accounting Links
+          {
+            path: "/accounting",
+            handle: {
+              crumb: "Accounting",
+              title: "Accounting",
+            },
+            children: [
+              {
+                path: "configurations",
+                handle: {
+                  crumb: "Configuration Files",
+                  title: "Configuration Files",
+                },
+                children: [
+                  {
+                    path: "gl-accounts",
+                    loader: createPermissionLoader(Resource.GLAccount),
+                    async lazy() {
+                      let { GLAccounts } = await import(
+                        "@/app/gl-accounts/page"
+                      );
+                      return { Component: GLAccounts };
+                    },
+                    handle: {
+                      crumb: "GL Accounts",
+                      title: "GL Accounts",
+                    },
+                  },
+                  {
+                    path: "fiscal-years",
+                    loader: createPermissionLoader(Resource.FiscalYear),
+                    async lazy() {
+                      let { FiscalYears } = await import(
+                        "@/app/fiscal-years/page"
+                      );
+                      return { Component: FiscalYears };
+                    },
+                    handle: {
+                      crumb: "Fiscal Years",
+                      title: "Fiscal Years",
+                    },
+                  },
+                  {
+                    path: "fiscal-periods",
+                    loader: createPermissionLoader(Resource.FiscalPeriod),
+                    async lazy() {
+                      let { FiscalPeriods } = await import(
+                        "@/app/fiscal-period/page"
+                      );
+                      return { Component: FiscalPeriods };
+                    },
+                    handle: {
+                      crumb: "Fiscal Periods",
+                      title: "Fiscal Periods",
+                    },
+                  },
+                  {
+                    path: "account-types",
+                    loader: createPermissionLoader(Resource.AccountType),
+                    async lazy() {
+                      let { AccountTypes } = await import(
+                        "@/app/account-types/page"
+                      );
+                      return { Component: AccountTypes };
+                    },
+                    handle: {
+                      crumb: "Account Types",
+                      title: "Account Types",
+                    },
+                  },
+                ],
+              },
+            ],
+          },
           // Billing Links
           {
             path: "/billing",
@@ -48,18 +123,6 @@ const routes: RouteObject[] = [
                 handle: {
                   crumb: "Billing Client",
                   title: "Billing Client",
-                },
-              },
-              {
-                path: "configurations/gl-accounts",
-                loader: createPermissionLoader(Resource.GLAccount),
-                async lazy() {
-                  let { GLAccounts } = await import("@/app/gl-accounts/page");
-                  return { Component: GLAccounts };
-                },
-                handle: {
-                  crumb: "GL Accounts",
-                  title: "GL Accounts",
                 },
               },
               {
@@ -98,46 +161,6 @@ const routes: RouteObject[] = [
                 handle: {
                   crumb: "Document Types",
                   title: "Document Types",
-                },
-              },
-              {
-                path: "configurations/fiscal-years",
-                loader: createPermissionLoader(Resource.FiscalYear),
-                async lazy() {
-                  let { FiscalYears } = await import("@/app/fiscal-years/page");
-                  return { Component: FiscalYears };
-                },
-                handle: {
-                  crumb: "Fiscal Years",
-                  title: "Fiscal Years",
-                },
-              },
-              {
-                path: "configurations/fiscal-periods",
-                loader: createPermissionLoader(Resource.FiscalPeriod),
-                async lazy() {
-                  let { FiscalPeriods } = await import(
-                    "@/app/fiscal-period/page"
-                  );
-                  return { Component: FiscalPeriods };
-                },
-                handle: {
-                  crumb: "Fiscal Periods",
-                  title: "Fiscal Periods",
-                },
-              },
-              {
-                path: "configurations/account-types",
-                loader: createPermissionLoader(Resource.AccountType),
-                async lazy() {
-                  let { AccountTypes } = await import(
-                    "@/app/account-types/page"
-                  );
-                  return { Component: AccountTypes };
-                },
-                handle: {
-                  crumb: "Account Types",
-                  title: "Account Types",
                 },
               },
               {

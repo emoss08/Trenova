@@ -139,6 +139,7 @@ function Tree({
   item: RouteInfo;
   currentPath: string;
   searchQuery?: string;
+  isNested?: boolean;
 }) {
   const isActive = isRouteActive(currentPath, item.link);
   const hasActive = hasActiveChild(currentPath, item);
@@ -214,8 +215,12 @@ function Tree({
   return (
     <SidebarMenu>
       <SidebarMenuItem className="items-center">
-        <Collapsible open={isOpen} onOpenChange={(open) => setIsOpen(open)}>
-          <SidebarMenuButton className="cursor-default" asChild>
+        <Collapsible
+          open={isOpen}
+          onOpenChange={(open) => setIsOpen(open)}
+          className="min-w-full"
+        >
+          <SidebarMenuButton className="w-full cursor-default" asChild>
             <Link
               to={item.link || "#"}
               onClick={(e) => handleNavigation(e, item.link)}
@@ -233,7 +238,7 @@ function Tree({
           <CollapsibleTrigger asChild>
             <SidebarMenuAction
               className={cn(
-                "data-[state=open]:rotate-90 mt-0.5",
+                "data-[state=open]:rotate-90 mt-0.5 cursor-pointer",
                 hasActive ? "bg-sidebar-accent" : "",
               )}
             >
@@ -318,7 +323,7 @@ export const AppSidebar = memo(function AppSidebar({
       <SidebarContent>
         <FavoritesSidebar />
         <SidebarGroup>
-          <SidebarGroupLabel className="select-none font-semibold uppercase">
+          <SidebarGroupLabel className="font-semibold uppercase select-none">
             Navigation
           </SidebarGroupLabel>
           <SidebarGroupContent>
@@ -381,7 +386,7 @@ function SiteInputWrapper({
     <div className="relative">
       <Icon
         icon={faSearch}
-        className="absolute left-2 top-1/2 -translate-y-1/2 size-4 text-muted-foreground"
+        className="absolute top-1/2 left-2 size-4 -translate-y-1/2 text-muted-foreground"
       />
       <SidebarInput
         ref={searchInputRef}

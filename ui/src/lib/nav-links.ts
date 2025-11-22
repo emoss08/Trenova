@@ -2,6 +2,7 @@ import type { SidebarLink } from "@/components/sidebar-nav";
 import { Resource } from "@/types/audit-entry";
 import { RouteInfo } from "@/types/nav-links";
 import {
+  faCalculator,
   faDashboard,
   faFiles,
   faGear,
@@ -178,6 +179,45 @@ export const routes: RouteInfo[] = [
     supportsModal: false,
   },
   {
+    key: Resource.AccountingManagement,
+    label: "Accounting Management",
+    icon: faCalculator,
+    isDefault: true,
+    tree: [
+      {
+        key: Resource.ConfigurationFiles,
+        label: "Configuration Files",
+        icon: faFiles,
+        tree: [
+          {
+            key: Resource.GLAccount,
+            label: "GL Accounts",
+            link: "/accounting/configurations/gl-accounts",
+            supportsModal: true,
+          },
+          {
+            key: Resource.FiscalYear,
+            label: "Fiscal Years",
+            link: "/accounting/configurations/fiscal-years",
+            supportsModal: true,
+          },
+          {
+            key: Resource.FiscalPeriod,
+            label: "Fiscal Periods",
+            link: "/accounting/configurations/fiscal-periods",
+            supportsModal: true,
+          },
+          {
+            key: Resource.AccountType,
+            label: "Account Types",
+            link: "/accounting/configurations/account-types",
+            supportsModal: true,
+          },
+        ],
+      },
+    ],
+  },
+  {
     key: Resource.BillingManagement,
     label: "Billing Management",
     icon: faVault,
@@ -206,30 +246,7 @@ export const routes: RouteInfo[] = [
             link: "/billing/configurations/division-codes",
             supportsModal: true,
           },
-          {
-            key: Resource.GLAccount,
-            label: "GL Accounts",
-            link: "/billing/configurations/gl-accounts",
-            supportsModal: true,
-          },
-          {
-            key: Resource.FiscalYear,
-            label: "Fiscal Years",
-            link: "/billing/configurations/fiscal-years",
-            supportsModal: true,
-          },
-          {
-            key: Resource.FiscalPeriod,
-            label: "Fiscal Periods",
-            link: "/billing/configurations/fiscal-periods",
-            supportsModal: true,
-          },
-          {
-            key: Resource.AccountType,
-            label: "Account Types",
-            link: "/billing/configurations/account-types",
-            supportsModal: true,
-          },
+
           {
             key: Resource.RevenueCode,
             label: "Revenue Codes",
