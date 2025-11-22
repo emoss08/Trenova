@@ -71,6 +71,11 @@ type BaseSwitchFieldProps = Omit<SwitchProps, "name"> & {
   size?: "xs" | "sm" | "default" | "lg";
   recommended?: boolean;
   readOnly?: boolean;
+  warning?: {
+    show: boolean;
+    message: string;
+  };
+  tooltip?: React.ReactNode;
 };
 
 export type SwitchFieldProps<T extends FieldValues> = BaseSwitchFieldProps &

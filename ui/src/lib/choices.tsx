@@ -33,6 +33,7 @@ import {
   AccountingControlSchema,
   ExpenseRecognitionSchema,
   JournalEntryCriteriaSchema,
+  JournalEntryCriteriaType,
   RevenueRecognitionSchema,
   ThresholdActionSchema,
 } from "./schemas/accounting-control-schema";
@@ -964,9 +965,9 @@ export const fiscalPeriodTypeChoices = [
 
 export const journalEntryCriteriaChoices = [
   {
-    value: JournalEntryCriteriaSchema.enum.ShipmentBilled,
-    label: "Shipment Billed",
-    description: "Create journal entry when shipment is billed",
+    value: JournalEntryCriteriaSchema.enum.InvoicePosted,
+    label: "Invoice Posted",
+    description: "Create journal entry when customer invoice is posted",
   },
   {
     value: JournalEntryCriteriaSchema.enum.PaymentReceived,
@@ -974,18 +975,26 @@ export const journalEntryCriteriaChoices = [
     description: "Create journal entry when payment is received",
   },
   {
-    value: JournalEntryCriteriaSchema.enum.ExpenseRecognized,
-    label: "Expense Recognized",
-    description: "Create journal entry when expense is recognized",
+    value: JournalEntryCriteriaSchema.enum.BillPosted,
+    label: "Bill Posted",
+    description: "Create journal entry when vendor bill is posted",
+  },
+  {
+    value: JournalEntryCriteriaSchema.enum.PaymentMade,
+    label: "Payment Made",
+    description: "Create journal entry when vendor payment is made",
   },
   {
     value: JournalEntryCriteriaSchema.enum.DeliveryComplete,
     label: "Delivery Complete",
     description: "Create journal entry when delivery is complete",
   },
-] satisfies ReadonlyArray<
-  ChoiceProps<AccountingControlSchema["journalEntryCriteria"]>
->;
+  {
+    value: JournalEntryCriteriaSchema.enum.ShipmentDispatched,
+    label: "Shipment Dispatched",
+    description: "Create journal entry when shipment is dispatched",
+  },
+] satisfies ReadonlyArray<ChoiceProps<JournalEntryCriteriaType>>;
 
 export const reconciliationThresholdActionChoices = [
   {

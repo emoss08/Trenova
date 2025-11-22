@@ -78,3 +78,7 @@ func ConvertToUint32(value int) uint32 {
 func Int64ToPointer(value int64) *int64 {
 	return &value
 }
+
+func Float64ToPointer(value float64) *float64 {
+	return &value
+}
