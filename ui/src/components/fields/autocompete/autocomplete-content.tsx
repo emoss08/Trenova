@@ -114,6 +114,8 @@ export function AutocompleteCommandContent<TOption>({
   const animationRef = useRef<number | null>(null);
   // * Target scroll position for smooth scrolling
   const targetScrollRef = useRef<number | null>(null);
+  // * Track if we're currently in a wheel event to distinguish from manual scrollbar dragging
+  const isWheelScrollingRef = useRef(false);
 
   const { isLoading, isError, data } = useQuery({
     queryKey: [
@@ -198,6 +200,16 @@ export function AutocompleteCommandContent<TOption>({
       const scrollBuffer = 50; // pixels before bottom to trigger load
       const distanceFromBottom =
         target.scrollHeight - (target.scrollTop + target.clientHeight);
+
+      // * If scroll event happens outside of wheel event, user is dragging scrollbar
+      // * Cancel smooth scroll animation to prevent conflicts
+      if (!isWheelScrollingRef.current) {
+        if (animationRef.current !== null) {
+          cancelAnimationFrame(animationRef.current);
+          animationRef.current = null;
+        }
+        targetScrollRef.current = null;
+      }
 
       // * Check if we're near the bottom and not already loading
       if (
@@ -307,6 +319,9 @@ export function AutocompleteCommandContent<TOption>({
       e.stopPropagation();
       e.preventDefault();
 
+      // * Mark that we're in a wheel event
+      isWheelScrollingRef.current = true;
+
       // * Adjust sensitivity - higher is more responsive but less smooth
       const scrollSensitivity = 0.8;
 
@@ -324,6 +339,12 @@ export function AutocompleteCommandContent<TOption>({
       if (animationRef.current === null) {
         animationRef.current = requestAnimationFrame(smoothScroll);
       }
+
+      // * Reset wheel scrolling flag after a short delay
+      // * This allows scroll events to properly detect manual scrollbar dragging
+      setTimeout(() => {
+        isWheelScrollingRef.current = false;
+      }, 50);
     },
     [smoothScroll],
   );
@@ -354,7 +375,7 @@ export function AutocompleteCommandContent<TOption>({
     <Command shouldFilter={false} className="overflow-hidden">
       <div className="w-full">
         <CommandInput
-          className="bg-transparent h-7 truncate"
+          className="h-7 truncate bg-transparent"
           placeholder={`Search ${label?.toLowerCase()}...`}
           value={searchTerm}
           onValueChange={setSearchTerm}
@@ -363,19 +384,19 @@ export function AutocompleteCommandContent<TOption>({
       <CommandList
         ref={commandListRef}
         onScroll={handleScrollEnd}
-        className="max-h-[250px] overflow-y-auto scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent"
+        className="scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-transparent max-h-[250px] overflow-y-auto"
       >
         {isError && (
-          <div className="p-4 text-destructive text-center">
+          <div className="p-4 text-center text-destructive">
             Failed to fetch options
           </div>
         )}
         {!isLoading && data && options.length === 0 && (
-          <div className="flex flex-col items-center p-4 justify-center size-full gap-2">
+          <div className="flex size-full flex-col items-center justify-center gap-2 p-4">
             <CommandEmpty>
               {noResultsMessage ?? `No ${toTitleCase(label ?? "")} found.`}
             </CommandEmpty>
-            <span className="text-2xs text-muted-foreground text-center">
+            <span className="text-center text-2xs text-muted-foreground">
               We can&apos;t find any {label?.toLowerCase()} in your
               organization.
             </span>
@@ -401,17 +422,17 @@ export function AutocompleteCommandContent<TOption>({
             />
           ))}
           {isLoading && options.length === 0 && (
-            <div className="p-8 flex justify-center">
+            <div className="flex justify-center p-8">
               <PulsatingDots size={1} color="foreground" />
             </div>
           )}
           {isLoading && options.length > 0 && (
-            <div className="p-2 flex justify-center">
+            <div className="flex justify-center p-2">
               <PulsatingDots size={1} color="foreground" />
             </div>
           )}
           {hasMore && !isLoading && (
-            <div className="p-2 text-xs text-center text-muted-foreground">
+            <div className="p-2 text-center text-xs text-muted-foreground">
               Scroll for more
             </div>
           )}
@@ -439,7 +460,7 @@ export function AutocompleteCommandOption<TOption>({
 
   return (
     <CommandItem
-      className="[&_svg]:size-3 cursor-pointer"
+      className="cursor-pointer [&_svg]:size-3"
       key={getOptionValue(option).toString()}
       value={getOptionValue(option).toString()}
       onSelect={handleSelect}
