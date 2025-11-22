@@ -27,11 +27,16 @@ type AccountingControl struct { //nolint:revive // this is fine
 	BusinessUnitID pulid.ID `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	OrganizationID pulid.ID `json:"organizationId" bun:"organization_id,type:VARCHAR(100),pk,notnull"`
 
+	// Default GL Accounts
+	DefaultRevenueAccountID *pulid.ID `json:"defaultRevenueAccountId" bun:"default_revenue_account_id,type:VARCHAR(100),nullzero"`
+	DefaultExpenseAccountID *pulid.ID `json:"defaultExpenseAccountId" bun:"default_expense_account_id,type:VARCHAR(100),nullzero"`
+	DefaultARAccountID      *pulid.ID `json:"defaultArAccountId"      bun:"default_ar_account_id,type:VARCHAR(100),nullzero"`
+	DefaultAPAccountID      *pulid.ID `json:"defaultApAccountId"      bun:"default_ap_account_id,type:VARCHAR(100),nullzero"`
+	DefaultTaxAccountID     *pulid.ID `json:"defaultTaxAccountId"     bun:"default_tax_account_id,type:VARCHAR(100),nullzero"`
+
 	// Journal Entry Automation
 	AutoCreateJournalEntries bool                     `json:"autoCreateJournalEntries" bun:"auto_create_journal_entries,type:BOOLEAN,notnull,default:false"`
-	JournalEntryCriteria     JournalEntryCriteriaType `json:"journalEntryCriteria"     bun:"journal_entry_criteria,type:journal_entry_criteria_enum,notnull,default:'ShipmentBilled'"`
-	DefaultRevenueAccountID  *pulid.ID                `json:"defaultRevenueAccountId"  bun:"default_revenue_account_id,type:VARCHAR(100),nullzero"`
-	DefaultExpenseAccountID  *pulid.ID                `json:"defaultExpenseAccountId"  bun:"default_expense_account_id,type:VARCHAR(100),nullzero"`
+	JournalEntryCriteria     JournalEntryCriteriaType `json:"journalEntryCriteria"     bun:"journal_entry_criteria,type:journal_entry_criteria_enum,notnull,default:'InvoicePosted'"`
 
 	// Journal Entry Controls
 	RestrictManualJournalEntries bool `json:"restrictManualJournalEntries" bun:"restrict_manual_journal_entries,type:BOOLEAN,notnull,default:false"`
@@ -59,8 +64,7 @@ type AccountingControl struct { //nolint:revive // this is fine
 	AccrueExpenses           bool                   `json:"accrueExpenses"           bun:"accrue_expenses,type:BOOLEAN,notnull,default:true"`
 
 	// Tax Settings
-	EnableAutomaticTaxCalculation bool      `json:"enableAutomaticTaxCalculation" bun:"enable_automatic_tax_calculation,type:BOOLEAN,notnull,default:true"`
-	DefaultTaxAccountID           *pulid.ID `json:"defaultTaxAccountId"           bun:"default_tax_account_id,type:VARCHAR(100),nullzero"`
+	EnableAutomaticTaxCalculation bool `json:"enableAutomaticTaxCalculation" bun:"enable_automatic_tax_calculation,type:BOOLEAN,notnull,default:true"`
 
 	// Audit & Compliance
 	RequireDocumentAttachment bool `json:"requireDocumentAttachment" bun:"require_document_attachment,type:BOOLEAN,notnull,default:false"`
@@ -82,6 +86,8 @@ type AccountingControl struct { //nolint:revive // this is fine
 	DefaultRevenueAccount *GLAccount           `json:"defaultRevenueAccount,omitempty" bun:"rel:belongs-to,join:default_revenue_account_id=id"`
 	DefaultExpenseAccount *GLAccount           `json:"defaultExpenseAccount,omitempty" bun:"rel:belongs-to,join:default_expense_account_id=id"`
 	DefaultTaxAccount     *GLAccount           `json:"defaultTaxAccount,omitempty"     bun:"rel:belongs-to,join:default_tax_account_id=id"`
+	DefaultARAccount      *GLAccount           `json:"defaultArAccount,omitempty"      bun:"rel:belongs-to,join:default_ar_account_id=id"`
+	DefaultAPAccount      *GLAccount           `json:"defaultApAccount,omitempty"      bun:"rel:belongs-to,join:default_ap_account_id=id"`
 	CurrencyGainAccount   *GLAccount           `json:"currencyGainAccount,omitempty"   bun:"rel:belongs-to,join:currency_gain_account_id=id"`
 	CurrencyLossAccount   *GLAccount           `json:"currencyLossAccount,omitempty"   bun:"rel:belongs-to,join:currency_loss_account_id=id"`
 }
@@ -112,9 +118,11 @@ func (ac *AccountingControl) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&ac.JournalEntryCriteria,
 			validation.Required.Error("Journal entry criteria is required"),
 			validation.In(
-				JournalEntryCriteriaShipmentBilled,
+				JournalEntryCriteriaInvoicePosted,
 				JournalEntryCriteriaPaymentReceived,
-				JournalEntryCriteriaExpenseRecognized,
+				JournalEntryCriteriaPaymentMade,
+				JournalEntryCriteriaBillPosted,
+				JournalEntryCriteriaShipmentDispatched,
 				JournalEntryCriteriaDeliveryComplete,
 			).Error("Journal entry criteria must be a valid type"),
 		),
@@ -141,6 +149,7 @@ func (ac *AccountingControl) Validate(multiErr *errortypes.MultiError) {
 				ExpenseRecognitionOnIncurrence,
 				ExpenseRecognitionOnPayment,
 				ExpenseRecognitionOnAccrual,
+				ExpenseRecognitionOnBilling,
 			).Error("Expense recognition method must be a valid type"),
 		),
 		validation.Field(&ac.DefaultCurrencyCode,

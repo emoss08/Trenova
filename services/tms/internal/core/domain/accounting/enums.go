@@ -3,15 +3,13 @@ package accounting
 import "errors"
 
 var (
-	ErrInvalidFiscalYearStatus     = errors.New("invalid fiscal year status")
-	ErrInvalidPeriodType           = errors.New("invalid period type")
-	ErrInvalidPeriodStatus         = errors.New("invalid period status")
-	ErrInvalidJournalEntryCriteria = errors.New("invalid journal entry criteria")
-	ErrInvalidThresholdAction      = errors.New("invalid threshold action")
-	ErrInvalidRevenueRecognition   = errors.New("invalid revenue recognition method")
-	ErrInvalidExpenseRecognition   = errors.New("invalid expense recognition method")
-	ErrInvalidJournalEntryStatus   = errors.New("invalid journal entry status")
-	ErrInvalidJournalEntryType     = errors.New("invalid journal entry type")
+	ErrInvalidFiscalYearStatus      = errors.New("invalid fiscal year status")
+	ErrInvalidPeriodType            = errors.New("invalid period type")
+	ErrInvalidPeriodStatus          = errors.New("invalid period status")
+	ErrInvalidJournalEntryStatus    = errors.New("invalid journal entry status")
+	ErrInvalidJournalEntryType      = errors.New("invalid journal entry type")
+	ErrInvalidInvoiceDeliveryMethod = errors.New("invalid invoice delivery method")
+	ErrInvalidInvoiceFormat         = errors.New("invalid invoice format")
 )
 
 type Category string
@@ -54,6 +52,18 @@ func (c Category) GetDescription() string {
 		return "Operating expenses"
 	default:
 		return "Unknown category"
+	}
+}
+
+// NormalBalance returns whether this category typically has a debit or credit balance
+func (c Category) NormalBalance() string {
+	switch c {
+	case CategoryAsset, CategoryExpense, CategoryCostOfRevenue:
+		return "Debit"
+	case CategoryLiability, CategoryEquity, CategoryRevenue:
+		return "Credit"
+	default:
+		return "Unknown"
 	}
 }
 
@@ -203,10 +213,12 @@ func PeriodStatusFromString(periodStatus string) (PeriodStatus, error) {
 type JournalEntryCriteriaType string
 
 const (
-	JournalEntryCriteriaShipmentBilled    = JournalEntryCriteriaType("ShipmentBilled")
-	JournalEntryCriteriaPaymentReceived   = JournalEntryCriteriaType("PaymentReceived")
-	JournalEntryCriteriaExpenseRecognized = JournalEntryCriteriaType("ExpenseRecognized")
-	JournalEntryCriteriaDeliveryComplete  = JournalEntryCriteriaType("DeliveryComplete")
+	JournalEntryCriteriaInvoicePosted      = JournalEntryCriteriaType("InvoicePosted")
+	JournalEntryCriteriaBillPosted         = JournalEntryCriteriaType("BillPosted")
+	JournalEntryCriteriaPaymentReceived    = JournalEntryCriteriaType("PaymentReceived")
+	JournalEntryCriteriaPaymentMade        = JournalEntryCriteriaType("PaymentMade")
+	JournalEntryCriteriaDeliveryComplete   = JournalEntryCriteriaType("DeliveryComplete")
+	JournalEntryCriteriaShipmentDispatched = JournalEntryCriteriaType("ShipmentDispatched")
 )
 
 func (j JournalEntryCriteriaType) String() string {
@@ -215,8 +227,9 @@ func (j JournalEntryCriteriaType) String() string {
 
 func (j JournalEntryCriteriaType) IsValid() bool {
 	switch j {
-	case JournalEntryCriteriaShipmentBilled, JournalEntryCriteriaPaymentReceived,
-		JournalEntryCriteriaExpenseRecognized, JournalEntryCriteriaDeliveryComplete:
+	case JournalEntryCriteriaInvoicePosted, JournalEntryCriteriaBillPosted,
+		JournalEntryCriteriaPaymentReceived, JournalEntryCriteriaPaymentMade,
+		JournalEntryCriteriaDeliveryComplete, JournalEntryCriteriaShipmentDispatched:
 		return true
 	}
 	return false
@@ -224,14 +237,18 @@ func (j JournalEntryCriteriaType) IsValid() bool {
 
 func (j JournalEntryCriteriaType) GetDescription() string {
 	switch j {
-	case JournalEntryCriteriaShipmentBilled:
-		return "Create journal entry when shipment is billed"
+	case JournalEntryCriteriaInvoicePosted:
+		return "Create journal entry when customer invoice is posted"
+	case JournalEntryCriteriaBillPosted:
+		return "Create journal entry when vendor bill is posted"
 	case JournalEntryCriteriaPaymentReceived:
-		return "Create journal entry when payment is received"
-	case JournalEntryCriteriaExpenseRecognized:
-		return "Create journal entry when expense is recognized"
+		return "Create journal entry when customer payment is received"
+	case JournalEntryCriteriaPaymentMade:
+		return "Create journal entry when vendor payment is made"
 	case JournalEntryCriteriaDeliveryComplete:
 		return "Create journal entry when delivery is complete"
+	case JournalEntryCriteriaShipmentDispatched:
+		return "Create journal entry when shipment is dispatched"
 	default:
 		return "Unknown criteria"
 	}
@@ -299,7 +316,7 @@ func (r RevenueRecognitionType) GetDescription() string {
 	case RevenueRecognitionOnBilling:
 		return "Recognize revenue when invoice is created"
 	case RevenueRecognitionOnPayment:
-		return "Recognize revenue when payment is received"
+		return "Recognize revenue when payment is received (cash basis)"
 	case RevenueRecognitionOnPickup:
 		return "Recognize revenue when goods are picked up"
 	default:
@@ -313,6 +330,7 @@ const (
 	ExpenseRecognitionOnIncurrence = ExpenseRecognitionType("OnIncurrence")
 	ExpenseRecognitionOnPayment    = ExpenseRecognitionType("OnPayment")
 	ExpenseRecognitionOnAccrual    = ExpenseRecognitionType("OnAccrual")
+	ExpenseRecognitionOnBilling    = ExpenseRecognitionType("OnBilling")
 )
 
 func (e ExpenseRecognitionType) String() string {
@@ -321,7 +339,8 @@ func (e ExpenseRecognitionType) String() string {
 
 func (e ExpenseRecognitionType) IsValid() bool {
 	switch e {
-	case ExpenseRecognitionOnIncurrence, ExpenseRecognitionOnPayment, ExpenseRecognitionOnAccrual:
+	case ExpenseRecognitionOnIncurrence, ExpenseRecognitionOnPayment,
+		ExpenseRecognitionOnAccrual, ExpenseRecognitionOnBilling:
 		return true
 	}
 	return false
@@ -330,11 +349,13 @@ func (e ExpenseRecognitionType) IsValid() bool {
 func (e ExpenseRecognitionType) GetDescription() string {
 	switch e {
 	case ExpenseRecognitionOnIncurrence:
-		return "Recognize expense when incurred"
+		return "Recognize expense when service is performed or goods received"
 	case ExpenseRecognitionOnPayment:
-		return "Recognize expense when payment is made"
+		return "Recognize expense when payment is made (cash basis)"
 	case ExpenseRecognitionOnAccrual:
-		return "Recognize expense on accrual basis"
+		return "Recognize expense when bill is received (accrual basis)"
+	case ExpenseRecognitionOnBilling:
+		return "Recognize expense when vendor bill is posted"
 	default:
 		return "Unknown method"
 	}
@@ -349,6 +370,7 @@ const (
 	JournalEntryStatusPosted   = JournalEntryStatus("Posted")
 	JournalEntryStatusReversed = JournalEntryStatus("Reversed")
 	JournalEntryStatusRejected = JournalEntryStatus("Rejected")
+	JournalEntryStatusVoid     = JournalEntryStatus("Void")
 )
 
 func (j JournalEntryStatus) String() string {
@@ -358,7 +380,8 @@ func (j JournalEntryStatus) String() string {
 func (j JournalEntryStatus) IsValid() bool {
 	switch j {
 	case JournalEntryStatusDraft, JournalEntryStatusPending, JournalEntryStatusApproved,
-		JournalEntryStatusPosted, JournalEntryStatusReversed, JournalEntryStatusRejected:
+		JournalEntryStatusPosted, JournalEntryStatusReversed, JournalEntryStatusRejected,
+		JournalEntryStatusVoid:
 		return true
 	}
 	return false
@@ -375,11 +398,34 @@ func (j JournalEntryStatus) GetDescription() string {
 	case JournalEntryStatusPosted:
 		return "Entry has been posted to the general ledger"
 	case JournalEntryStatusReversed:
-		return "Entry has been reversed"
+		return "Entry has been reversed by another entry"
 	case JournalEntryStatusRejected:
-		return "Entry has been rejected"
+		return "Entry has been rejected during approval"
+	case JournalEntryStatusVoid:
+		return "Entry was cancelled before posting"
 	default:
 		return "Unknown status"
+	}
+}
+
+func JournalEntryStatusFromString(status string) (JournalEntryStatus, error) {
+	switch status {
+	case "Draft":
+		return JournalEntryStatusDraft, nil
+	case "Pending":
+		return JournalEntryStatusPending, nil
+	case "Approved":
+		return JournalEntryStatusApproved, nil
+	case "Posted":
+		return JournalEntryStatusPosted, nil
+	case "Reversed":
+		return JournalEntryStatusReversed, nil
+	case "Rejected":
+		return JournalEntryStatusRejected, nil
+	case "Void":
+		return JournalEntryStatusVoid, nil
+	default:
+		return "", ErrInvalidJournalEntryStatus
 	}
 }
 
@@ -391,6 +437,8 @@ const (
 	JournalEntryTypeClosing          = JournalEntryType("Closing")
 	JournalEntryTypeReversal         = JournalEntryType("Reversal")
 	JournalEntryTypeReclassification = JournalEntryType("Reclassification")
+	JournalEntryTypeAutoGenerated    = JournalEntryType("AutoGenerated")
+	JournalEntryTypeReconciliation   = JournalEntryType("Reconciliation")
 )
 
 func (j JournalEntryType) String() string {
@@ -400,7 +448,8 @@ func (j JournalEntryType) String() string {
 func (j JournalEntryType) IsValid() bool {
 	switch j {
 	case JournalEntryTypeStandard, JournalEntryTypeAdjusting, JournalEntryTypeClosing,
-		JournalEntryTypeReversal, JournalEntryTypeReclassification:
+		JournalEntryTypeReversal, JournalEntryTypeReclassification,
+		JournalEntryTypeAutoGenerated, JournalEntryTypeReconciliation:
 		return true
 	}
 	return false
@@ -418,7 +467,146 @@ func (j JournalEntryType) GetDescription() string {
 		return "Reversal entry to reverse a previous entry"
 	case JournalEntryTypeReclassification:
 		return "Reclassification entry to move amounts between accounts"
+	case JournalEntryTypeAutoGenerated:
+		return "Auto-generated from invoice, bill, or payment"
+	case JournalEntryTypeReconciliation:
+		return "Reconciliation adjustment entry"
 	default:
 		return "Unknown type"
+	}
+}
+
+func JournalEntryTypeFromString(entryType string) (JournalEntryType, error) {
+	switch entryType {
+	case "Standard":
+		return JournalEntryTypeStandard, nil
+	case "Adjusting":
+		return JournalEntryTypeAdjusting, nil
+	case "Closing":
+		return JournalEntryTypeClosing, nil
+	case "Reversal":
+		return JournalEntryTypeReversal, nil
+	case "Reclassification":
+		return JournalEntryTypeReclassification, nil
+	case "AutoGenerated":
+		return JournalEntryTypeAutoGenerated, nil
+	case "Reconciliation":
+		return JournalEntryTypeReconciliation, nil
+	default:
+		return "", ErrInvalidJournalEntryType
+	}
+}
+
+type InvoiceDeliveryMethod string
+
+const (
+	InvoiceDeliveryEmail  = InvoiceDeliveryMethod("Email")
+	InvoiceDeliveryPortal = InvoiceDeliveryMethod("Portal")
+	InvoiceDeliveryEDI    = InvoiceDeliveryMethod("EDI")
+	InvoiceDeliveryPrint  = InvoiceDeliveryMethod("Print")
+	InvoiceDeliveryAPI    = InvoiceDeliveryMethod("API")
+)
+
+func (i InvoiceDeliveryMethod) String() string {
+	return string(i)
+}
+
+func (i InvoiceDeliveryMethod) IsValid() bool {
+	switch i {
+	case InvoiceDeliveryEmail, InvoiceDeliveryPortal, InvoiceDeliveryEDI,
+		InvoiceDeliveryPrint, InvoiceDeliveryAPI:
+		return true
+	}
+	return false
+}
+
+func (i InvoiceDeliveryMethod) GetDescription() string {
+	switch i {
+	case InvoiceDeliveryEmail:
+		return "Deliver invoice via email"
+	case InvoiceDeliveryPortal:
+		return "Customer accesses invoice through customer portal"
+	case InvoiceDeliveryEDI:
+		return "Deliver invoice via EDI (Electronic Data Interchange)"
+	case InvoiceDeliveryPrint:
+		return "Print and mail physical invoice"
+	case InvoiceDeliveryAPI:
+		return "Deliver invoice via API integration"
+	default:
+		return "Unknown delivery method"
+	}
+}
+
+func InvoiceDeliveryMethodFromString(method string) (InvoiceDeliveryMethod, error) {
+	switch method {
+	case "Email":
+		return InvoiceDeliveryEmail, nil
+	case "Portal":
+		return InvoiceDeliveryPortal, nil
+	case "EDI":
+		return InvoiceDeliveryEDI, nil
+	case "Print":
+		return InvoiceDeliveryPrint, nil
+	case "API":
+		return InvoiceDeliveryAPI, nil
+	default:
+		return "", ErrInvalidInvoiceDeliveryMethod
+	}
+}
+
+type InvoiceFormat string
+
+const (
+	InvoiceFormatPDF  = InvoiceFormat("PDF")
+	InvoiceFormatHTML = InvoiceFormat("HTML")
+	InvoiceFormatEDI  = InvoiceFormat("EDI")
+	InvoiceFormatXML  = InvoiceFormat("XML")
+	InvoiceFormatJSON = InvoiceFormat("JSON")
+)
+
+func (i InvoiceFormat) String() string {
+	return string(i)
+}
+
+func (i InvoiceFormat) IsValid() bool {
+	switch i {
+	case InvoiceFormatPDF, InvoiceFormatHTML, InvoiceFormatEDI,
+		InvoiceFormatXML, InvoiceFormatJSON:
+		return true
+	}
+	return false
+}
+
+func (i InvoiceFormat) GetDescription() string {
+	switch i {
+	case InvoiceFormatPDF:
+		return "PDF document format"
+	case InvoiceFormatHTML:
+		return "HTML web format"
+	case InvoiceFormatEDI:
+		return "EDI format (X12, EDIFACT)"
+	case InvoiceFormatXML:
+		return "XML format"
+	case InvoiceFormatJSON:
+		return "JSON format for API integrations"
+	default:
+		return "Unknown format"
+	}
+}
+
+func InvoiceFormatFromString(format string) (InvoiceFormat, error) {
+	switch format {
+	case "PDF":
+		return InvoiceFormatPDF, nil
+	case "HTML":
+		return InvoiceFormatHTML, nil
+	case "EDI":
+		return InvoiceFormatEDI, nil
+	case "XML":
+		return InvoiceFormatXML, nil
+	case "JSON":
+		return InvoiceFormatJSON, nil
+	default:
+		return "", ErrInvalidInvoiceFormat
 	}
 }

@@ -26,7 +26,7 @@ import {
 import { api } from "@/services/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { useCallback } from "react";
+import React, { useCallback } from "react";
 import {
   FormProvider,
   useForm,
@@ -44,7 +44,14 @@ export default function AccountingControlForm() {
     defaultValues: accountingControl.data,
   });
 
-  const { handleSubmit, setError, reset } = form;
+  const {
+    handleSubmit,
+    setError,
+    reset,
+    formState: { errors },
+  } = form;
+
+  console.log("errors", errors);
 
   const { mutateAsync } = useOptimisticMutation({
     queryKey: queries.organization.getAccountingControl._def,
@@ -67,14 +74,14 @@ export default function AccountingControlForm() {
   return (
     <FormProvider {...form}>
       <Form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-4 pb-14">
+        <AccountingControlFormInner>
           <JournalEntrySettingsForm />
           <PeriodManagementForm />
           <ReconciliationSettingsForm />
           <RecognitionSettingsForm />
           <TaxSettingsForm />
           <FormSaveDock />
-        </div>
+        </AccountingControlFormInner>
       </Form>
     </FormProvider>
   );
@@ -86,6 +93,21 @@ function JournalEntrySettingsForm() {
     control,
     name: "autoCreateJournalEntries",
   });
+
+  const restrictManualJournalEntries = useWatch({
+    control,
+    name: "restrictManualJournalEntries",
+  });
+
+  const requireJournalEntryApproval = useWatch({
+    control,
+    name: "requireJournalEntryApproval",
+  });
+
+  const showRestrictedWarning =
+    autoCreateJournalEntries && restrictManualJournalEntries;
+  const showApprovalRecommendation =
+    autoCreateJournalEntries && !requireJournalEntryApproval;
 
   return (
     <Card>
@@ -146,7 +168,6 @@ function JournalEntrySettingsForm() {
               </FormControl>
             </div>
           )}
-
           <FormControl className="min-h-[3em]">
             <SwitchField
               control={control}
@@ -154,6 +175,11 @@ function JournalEntrySettingsForm() {
               label="Restrict Manual Entries"
               description="Prevent users from creating journal entries manually outside of automated workflows."
               position="left"
+              warning={{
+                show: showRestrictedWarning,
+                message:
+                  "This configuration is only recommended for highly regulated environments with strict compliance requirements.",
+              }}
             />
           </FormControl>
           <FormControl className="min-h-[3em]">
@@ -163,6 +189,17 @@ function JournalEntrySettingsForm() {
               label="Require Entry Approval"
               description="Journal entries must be approved before posting to the general ledger."
               position="left"
+              recommended={showApprovalRecommendation && !showRestrictedWarning}
+              tooltip={
+                <div className="space-y-1">
+                  <p className="text-[13px] font-medium">Enable Approval</p>
+                  <p className="text-xs text-muted-foreground">
+                    Consider enabling journal entry approval for better control
+                    over auto-generated entries. This adds an additional review
+                    step before entries are posted to the general ledger.
+                  </p>
+                </div>
+              }
             />
           </FormControl>
           <FormControl className="min-h-[3em]">
@@ -425,4 +462,12 @@ function TaxSettingsForm() {
       </CardContent>
     </Card>
   );
+}
+
+function AccountingControlFormInner({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <div className="flex flex-col gap-4 pb-14">{children}</div>;
 }

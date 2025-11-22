@@ -102,3 +102,17 @@ ALTER TABLE "gl_accounts"
 ALTER TABLE "gl_accounts"
     ALTER COLUMN "account_type_id" SET STATISTICS 1000;
 
+-- bun:split
+ALTER TABLE "customer_billing_profiles"
+    ADD COLUMN IF NOT EXISTS "revenue_account_id" varchar(100);
+
+ALTER TABLE "customer_billing_profiles"
+    ADD CONSTRAINT "fk_customer_billing_profiles_revenue_account" FOREIGN KEY ("revenue_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT;
+
+-- bun:split
+ALTER TABLE "customer_billing_profiles"
+    ADD COLUMN IF NOT EXISTS "ar_account_id" varchar(100);
+
+ALTER TABLE "customer_billing_profiles"
+    ADD CONSTRAINT "fk_customer_billing_profiles_ar_account" FOREIGN KEY ("ar_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT;
+

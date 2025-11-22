@@ -37,6 +37,9 @@ type JournalEntry struct {
 	EntryType   JournalEntryType `json:"entryType"   bun:"entry_type,type:journal_entry_type_enum,notnull,default:'Standard'"`
 	EntryDate   int64            `json:"entryDate"   bun:"entry_date,type:BIGINT,notnull"`
 
+	// Accounting Date (when it hits the GL - may differ from the entry date)
+	AccountingDate int64 `json:"accountingDate" bun:"accounting_date,type:BIGINT,notnull"`
+
 	// Reference Information
 	ReferenceNumber string    `json:"referenceNumber" bun:"reference_number,type:VARCHAR(100),nullzero"`
 	ReferenceType   string    `json:"referenceType"   bun:"reference_type,type:VARCHAR(50),nullzero"` // e.g., "Shipment", "Invoice", "Payment"
@@ -69,6 +72,12 @@ type JournalEntry struct {
 	ApprovedAt       *int64    `json:"approvedAt"       bun:"approved_at,type:BIGINT,nullzero"`
 	ApprovedByID     *pulid.ID `json:"approvedById"     bun:"approved_by_id,type:VARCHAR(100),nullzero"`
 	ApprovalNotes    string    `json:"approvalNotes"    bun:"approval_notes,type:TEXT,nullzero"`
+
+	// Rejection tracking
+	IsRejected      bool      `json:"isRejected"      bun:"is_rejected,type:BOOLEAN,notnull,default:false"`
+	RejectedAt      *int64    `json:"rejectedAt"      bun:"rejected_at,type:BIGINT,nullzero"`
+	RejectedByID    *pulid.ID `json:"rejectedById"    bun:"rejected_by_id,type:VARCHAR(100),nullzero"`
+	RejectionReason string    `json:"rejectionReason" bun:"rejection_reason,type:TEXT,nullzero"`
 
 	// Audit Fields
 	CreatedByID pulid.ID  `json:"createdById" bun:"created_by_id,type:VARCHAR(100),notnull"`

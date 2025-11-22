@@ -1,8 +1,10 @@
 CREATE TYPE "journal_entry_criteria_enum" AS ENUM(
-    'ShipmentBilled',
+    'InvoicePosted',
+    'BillPosted',
     'PaymentReceived',
-    'ExpenseRecognized',
-    'DeliveryComplete'
+    'PaymentMade',
+    'DeliveryComplete',
+    'ShipmentDispatched'
 );
 
 CREATE TYPE "reconciliation_threshold_action_enum" AS ENUM(
@@ -30,9 +32,11 @@ CREATE TABLE IF NOT EXISTS "accounting_controls"(
     "business_unit_id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
     "auto_create_journal_entries" boolean NOT NULL DEFAULT FALSE,
-    "journal_entry_criteria" journal_entry_criteria_enum NOT NULL DEFAULT 'ShipmentBilled',
+    "journal_entry_criteria" journal_entry_criteria_enum NOT NULL DEFAULT 'InvoicePosted',
     "default_revenue_account_id" varchar(100),
     "default_expense_account_id" varchar(100),
+    "default_ar_account_id" varchar(100),
+    "default_ap_account_id" varchar(100),
     "restrict_manual_journal_entries" boolean NOT NULL DEFAULT FALSE,
     "require_journal_entry_approval" boolean NOT NULL DEFAULT TRUE,
     "enable_journal_entry_reversal" boolean NOT NULL DEFAULT TRUE,
@@ -65,6 +69,8 @@ CREATE TABLE IF NOT EXISTS "accounting_controls"(
     CONSTRAINT "fk_accounting_controls_default_revenue_account" FOREIGN KEY ("default_revenue_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT "fk_accounting_controls_default_expense_account" FOREIGN KEY ("default_expense_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT "fk_accounting_controls_default_tax_account" FOREIGN KEY ("default_tax_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
+    CONSTRAINT "fk_accounting_controls_default_ar_account" FOREIGN KEY ("default_ar_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
+    CONSTRAINT "fk_accounting_controls_default_ap_account" FOREIGN KEY ("default_ap_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT "fk_accounting_controls_currency_gain_account" FOREIGN KEY ("currency_gain_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT "fk_accounting_controls_currency_loss_account" FOREIGN KEY ("currency_loss_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT,
     CONSTRAINT "uq_accounting_controls_organization" UNIQUE ("organization_id")

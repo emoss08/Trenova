@@ -33,17 +33,19 @@ type JournalEntryLine struct {
 	LineNumber  int32  `json:"lineNumber"  bun:"line_number,type:INTEGER,notnull"`
 	Description string `json:"description" bun:"description,type:TEXT,notnull"`
 
-	// Amounts (in cents)
+	// Amounts (in cents) - CRITICAL: One should always be zero
 	DebitAmount  int64 `json:"debitAmount"  bun:"debit_amount,type:BIGINT,notnull,default:0"`
 	CreditAmount int64 `json:"creditAmount" bun:"credit_amount,type:BIGINT,notnull,default:0"`
+	NetAmount    int64 `json:"netAmount"    bun:"net_amount,type:BIGINT,notnull,default:0"`
 
 	// Dimensional Analysis (optional)
 	DepartmentID *pulid.ID `json:"departmentId" bun:"department_id,type:VARCHAR(100),nullzero"`
 	ProjectID    *pulid.ID `json:"projectId"    bun:"project_id,type:VARCHAR(100),nullzero"`
 	LocationID   *pulid.ID `json:"locationId"   bun:"location_id,type:VARCHAR(100),nullzero"`
 	CustomerID   *pulid.ID `json:"customerId"   bun:"customer_id,type:VARCHAR(100),nullzero"`
+	VendorID     *pulid.ID `json:"vendorId"     bun:"vendor_id,type:VARCHAR(100),nullzero"`
 
-	// Reference Information
+	// Reference Information (critical for tracing back to source)
 	ReferenceNumber string    `json:"referenceNumber" bun:"reference_number,type:VARCHAR(100),nullzero"`
 	ReferenceType   string    `json:"referenceType"   bun:"reference_type,type:VARCHAR(50),nullzero"`
 	ReferenceID     *pulid.ID `json:"referenceId"     bun:"reference_id,type:VARCHAR(100),nullzero"`
@@ -51,6 +53,7 @@ type JournalEntryLine struct {
 	// Tax Information (for future tax tracking)
 	TaxCode   string `json:"taxCode"   bun:"tax_code,type:VARCHAR(20),nullzero"`
 	TaxAmount int64  `json:"taxAmount" bun:"tax_amount,type:BIGINT,notnull,default:0"` // In cents
+	IsTaxLine bool   `json:"isTaxLine" bun:"is_tax_line,type:BOOLEAN,notnull,default:false"`
 
 	// Reconciliation
 	IsReconciled   bool      `json:"isReconciled"   bun:"is_reconciled,type:BOOLEAN,notnull,default:false"`
