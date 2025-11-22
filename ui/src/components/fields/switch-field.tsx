@@ -15,6 +15,8 @@ export function SwitchField<T extends FieldValues>({
   recommended,
   readOnly,
   position = "right",
+  warning,
+  tooltip,
   className,
   "aria-describedby": ariaDescribedBy,
   ...props
@@ -34,9 +36,13 @@ export function SwitchField<T extends FieldValues>({
       }) => (
         <div
           className={cn(
-            "relative flex w-full items-start gap-2 rounded-md p-3 group",
+            "relative flex w-full items-start gap-2 rounded-md p-3 group border border-transparent",
             outlined &&
-              "border border-muted-foreground/20 bg-primary/5 has-data-[state=checked]:border-blue-600 has-data-[state=checked]:ring-4 has-data-[state=checked]:bg-blue-600/10 has-data-[state=checked]:text-blue-500 dark:has-data-[state=checked]:text-blue-400 has-data-[state=checked]:ring-blue-600/20 transition-[border-color,box-shadow,background-color] duration-200 ease-in-out",
+              "border-muted-foreground/20 bg-primary/5 has-data-[state=checked]:border-blue-600 has-data-[state=checked]:ring-4 has-data-[state=checked]:bg-blue-600/10 has-data-[state=checked]:text-blue-500 dark:has-data-[state=checked]:text-blue-400 has-data-[state=checked]:ring-blue-600/20 transition-[border-color,box-shadow,background-color] duration-200 ease-in-out",
+            fieldState.error &&
+              "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
+            warning?.show &&
+              "border-amber-500 bg-amber-500/10 ring-0 ring-amber-500 placeholder:text-amber-600 focus:outline-hidden focus-visible:border-amber-600 focus-visible:ring-4 focus-visible:ring-amber-400/20",
             className,
           )}
         >
@@ -69,7 +75,13 @@ export function SwitchField<T extends FieldValues>({
           >
             <div className="flex items-center gap-2">
               <Label htmlFor={inputId}>{label}</Label>
-              {recommended && <RecommendedBadge size="sm" variant="warning" />}
+              {recommended && (
+                <RecommendedBadge
+                  size="sm"
+                  variant="warning"
+                  tooltip={tooltip}
+                />
+              )}
             </div>
             {description && (
               <p
@@ -78,9 +90,15 @@ export function SwitchField<T extends FieldValues>({
                   "text-2xs text-muted-foreground",
                   outlined &&
                     "group-has-data-[state=checked]:text-blue-500 dark:group-has-data-[state=checked]:text-blue-400",
+                  fieldState.error && "text-red-500",
+                  warning?.show && "text-amber-600",
                 )}
               >
-                {description}
+                {fieldState.error
+                  ? fieldState.error.message
+                  : warning?.show
+                    ? warning.message
+                    : description}
               </p>
             )}
           </div>
@@ -104,15 +122,6 @@ export function SwitchField<T extends FieldValues>({
               onClick={(e) => e.stopPropagation()}
               {...props}
             />
-          )}
-
-          {fieldState.error && (
-            <p
-              id={errorId}
-              className="absolute -bottom-5 left-0 text-2xs text-destructive"
-            >
-              {fieldState.error.message}
-            </p>
           )}
         </div>
       )}

@@ -3,7 +3,7 @@ import { cn } from "@/lib/utils";
 import React, { memo, useMemo } from "react";
 import { Button } from "../ui/button";
 
-const ErrorMessage = memo(
+export const ErrorMessage = memo(
   function ErrorMessage({ formError }: { formError?: string }) {
     return (
       <span
@@ -127,7 +127,7 @@ export const FieldWrapper = memo(function FieldWrapper({
 });
 
 function FieldWrapperInner({ children }: { children: React.ReactNode }) {
-  return <div className="flex items-center mb-0.5">{children}</div>;
+  return <div className="mb-0.5 flex items-center">{children}</div>;
 }
 
 function FieldWrapperDescriptionInner({
