@@ -104,6 +104,7 @@ export enum Resource {
   // Additional resources from existing enum (not in Go constants)
   Dashboard = "dashboard",
   BillingManagement = "billing_management",
+  AccountingManagement = "accounting_management",
   BillingClient = "billing_client",
   ConfigurationFiles = "configuration_files",
   RateManagement = "rate_management",
