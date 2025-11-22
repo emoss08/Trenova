@@ -132,7 +132,7 @@ export function AuditLogDetailsSheet({
           </SheetHeader>
         </VisuallyHidden>
         <div className="size-full pt-4">
-          <div className="flex items-center px-4 justify-between">
+          <div className="flex items-center justify-between px-4">
             <HeaderBackButton onBack={() => table.resetRowSelection()} />
             <div className="flex h-7 items-center gap-1">
               <TooltipProvider>
@@ -179,7 +179,7 @@ export function AuditLogDetailsSheet({
               <AuditActions onExport={handleExport} />
             </div>
           </div>
-          <div className="flex flex-col gap-2 mt-4">
+          <div className="mt-4 flex flex-col gap-2">
             <MemoizedAuditDetailsHeader entry={currentRecord} />
             <MemoizedAuditLogDetailsContent entry={currentRecord} />
           </div>
@@ -195,8 +195,8 @@ function AuditLogDetailsContent({ entry }: { entry?: AuditEntry }) {
   }
 
   return (
-    <ScrollArea className="flex flex-col overflow-y-auto max-h-[calc(100vh-8.5rem)] px-4 [&_[data-slot=scroll-area-viewport]>div]:block!">
-      <div className="space-y-6 pb-8 w-full max-w-full overflow-hidden">
+    <ScrollArea className="flex max-h-[calc(100vh-8.5rem)] flex-col px-4 [&_[data-slot=scroll-area-viewport]>div]:block!">
+      <div className="w-full max-w-full space-y-6 overflow-hidden pb-8">
         <div className="w-full max-w-full overflow-hidden">
           <AuditLogDetails entry={entry} />
         </div>
@@ -255,7 +255,7 @@ function AuditLogDetailsSection({
   description: string;
 }) {
   return (
-    <div className="flex flex-col gap-2 w-full max-w-full overflow-hidden">
+    <div className="flex w-full max-w-full flex-col gap-2 overflow-hidden">
       <div className="flex flex-col">
         <h3 className="text-sm font-normal">{title}</h3>
         <p className="text-2xs text-muted-foreground">{description}</p>
@@ -282,14 +282,14 @@ function AuditDetailsHeader({ entry }: { entry?: AuditEntry }) {
   const { timestamp, comment, operation } = entry;
 
   return (
-    <div className="flex flex-col px-4 pb-2 border-b border-bg-sidebar-border">
+    <div className="border-bg-sidebar-border flex flex-col border-b px-4 pb-2">
       <div className="flex items-center justify-between">
-        <h2 className="font-semibold leading-none tracking-tight flex items-center gap-x-2">
+        <h2 className="flex items-center gap-x-2 leading-none font-semibold tracking-tight">
           {comment || "-"}
         </h2>
         <ActionBadge operation={operation} />
       </div>
-      <p className="text-2xs text-muted-foreground font-normal">
+      <p className="text-2xs font-normal text-muted-foreground">
         Entry created on{" "}
         {formatToUserTimezone(timestamp, {
           timeFormat: user?.timeFormat,

@@ -24,7 +24,7 @@ export function AuditLogs() {
 
 function Header() {
   return (
-    <div className="flex justify-between items-center">
+    <div className="flex items-center justify-between">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Audit Entries</h1>
         <p className="text-muted-foreground">
@@ -37,8 +37,8 @@ function Header() {
 
 const AuditAlert = memo(() => {
   return (
-    <div className="flex bg-red-500/10 border border-red-600/50 p-4 rounded-md justify-between items-center mb-4 w-full">
-      <div className="flex items-center gap-3 w-full text-red-600">
+    <div className="mb-4 flex w-full items-center justify-between rounded-md border border-red-600/50 bg-red-500/10 p-4">
+      <div className="flex w-full items-center gap-3 text-red-600">
         <Icon icon={faExclamationTriangle} className="size-5" />
         <div className="flex flex-col">
           <p className="text-sm font-medium">Audit Logs Processing</p>
