@@ -25,7 +25,7 @@ function Input({
     <div className="relative w-full">
       {icon && (
         <div
-          className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-2 z-10"
+          className="pointer-events-none absolute inset-y-0 left-0 z-10 flex items-center pl-2"
           aria-hidden="true"
         >
           {icon}
@@ -74,4 +74,3 @@ function Input({
 }
 
 export { Input };
-
