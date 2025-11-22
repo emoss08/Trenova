@@ -1,17 +1,20 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { cn } from "@/lib/utils";
 import { Sparkles } from "lucide-react";
 import { motion } from "motion/react";
+import React from "react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./tooltip";
 
 interface RecommendedBadgeProps {
   text?: string;
   size?: "sm" | "md" | "lg";
   variant?: "default" | "premium" | "success" | "warning";
   className?: string;
+  tooltip?: React.ReactNode;
 }
 
 const variantClasses = {
@@ -34,14 +37,15 @@ export default function RecommendedBadge({
   text = "Recommended",
   variant = "default",
   className,
+  tooltip,
 }: RecommendedBadgeProps) {
-  return (
+  const badgeContent = (
     <div className="relative inline-block">
       {/* Animated sparkles */}
       {sparklePositions.map((position, index) => (
         <motion.div
           key={index}
-          className="absolute pointer-events-none"
+          className="pointer-events-none absolute"
           style={position}
           initial={{ opacity: 0, scale: 0 }}
           animate={{
@@ -63,7 +67,7 @@ export default function RecommendedBadge({
       {/* Main badge */}
       <motion.div
         className={cn(
-          "relative overflow-hidden rounded font-semibold px-2 text-xs text-white cursor-pointer select-none",
+          "relative overflow-hidden rounded font-semibold px-2 text-xs text-white select-none",
           className,
         )}
         initial={{ scale: 0.9, opacity: 0 }}
@@ -80,7 +84,7 @@ export default function RecommendedBadge({
 
         {/* Shimmer effect */}
         <motion.div
-          className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent -skew-x-12"
+          className="absolute inset-0 -skew-x-12 bg-gradient-to-r from-transparent via-white/30 to-transparent"
           initial={{ x: "-100%" }}
           animate={{ x: "200%" }}
           transition={{
@@ -118,5 +122,18 @@ export default function RecommendedBadge({
         <div className="absolute inset-0 rounded bg-gradient-to-t from-transparent to-white/20" />
       </motion.div>
     </div>
+  );
+
+  if (!tooltip) {
+    return badgeContent;
+  }
+
+  return (
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>{badgeContent}</TooltipTrigger>
+        <TooltipContent>{tooltip}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
