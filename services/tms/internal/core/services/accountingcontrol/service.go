@@ -87,7 +87,7 @@ func (s *Service) Update(
 			UserID:         userID,
 			CurrentState:   jsonutils.MustToJSON(entity),
 			PreviousState:  jsonutils.MustToJSON(original),
-			OrganizationID: entity.ID,
+			OrganizationID: entity.OrganizationID,
 			BusinessUnitID: entity.BusinessUnitID,
 		},
 		audit.WithComment("Accounting control updated"),

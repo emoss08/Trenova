@@ -3,6 +3,7 @@ package customer
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/accounting"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/pulid"
@@ -23,20 +24,28 @@ type CustomerBillingProfile struct {
 	BillingCycleType          BillingCycleType   `json:"billingCycleType"          bun:"billing_cycle_type,type:billing_cycle_type_enum,nullzero,default:'Immediate'"`
 	PaymentTerm               tenant.PaymentTerm `json:"paymentTerm"               bun:"payment_term,type:payment_term_enum,nullzero,default:'Net30'"`
 	HasOverrides              bool               `json:"hasOverrides"              bun:"has_overrides,type:BOOLEAN,notnull,default:false"`
-	EnforceCustomerBillingReq bool               `json:"enforceCustomerBillingReq" bun:"enforce_customer_billing_req,type:BOOLEAN,notnull,default:true"`
-	ValidateCustomerRates     bool               `json:"validateCustomerRates"     bun:"validate_customer_rates,type:BOOLEAN,notnull,default:true"`
-	AutoTransfer              bool               `json:"autoTransfer"              bun:"auto_transfer,type:BOOLEAN,nullzero,default:true"`
-	AutoMarkReadyToBill       bool               `json:"autoMarkReadyToBill"       bun:"auto_mark_ready_to_bill,type:BOOLEAN,nullzero,default:true"`
-	AutoBill                  bool               `json:"autoBill"                  bun:"auto_bill,type:BOOLEAN,nullzero,default:true"`
-	Version                   int64              `json:"version"                   bun:"version,type:BIGINT"`
-	CreatedAt                 int64              `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt                 int64              `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	AllowInvoiceConsolidation bool               `json:"allowInvoiceConsolidation" bun:"allow_invoice_consolidation,type:BOOLEAN,notnull,default:false"`
+	ConsolidationPeriodDays   int                `json:"consolidationPeriodDays"   bun:"consolidation_period_days,type:INTEGER,notnull,default:7"`
+
+	RevenueAccountID *pulid.ID `json:"revenueAccountId" bun:"revenue_account_id,type:VARCHAR(100),nullzero"`
+	ARAccountID      *pulid.ID `json:"arAccountId"      bun:"ar_account_id,type:VARCHAR(100),nullzero"`
+
+	EnforceCustomerBillingReq bool  `json:"enforceCustomerBillingReq" bun:"enforce_customer_billing_req,type:BOOLEAN,notnull,default:true"`
+	ValidateCustomerRates     bool  `json:"validateCustomerRates"     bun:"validate_customer_rates,type:BOOLEAN,notnull,default:true"`
+	AutoTransfer              bool  `json:"autoTransfer"              bun:"auto_transfer,type:BOOLEAN,nullzero,default:true"`
+	AutoMarkReadyToBill       bool  `json:"autoMarkReadyToBill"       bun:"auto_mark_ready_to_bill,type:BOOLEAN,nullzero,default:true"`
+	AutoBill                  bool  `json:"autoBill"                  bun:"auto_bill,type:BOOLEAN,nullzero,default:true"`
+	Version                   int64 `json:"version"                   bun:"version,type:BIGINT"`
+	CreatedAt                 int64 `json:"createdAt"                 bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt                 int64 `json:"updatedAt"                 bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	// Relationships
-	Customer      *Customer                    `json:"-"             bun:"rel:belongs-to,join:customer_id=id"`
-	BusinessUnit  *tenant.BusinessUnit         `json:"-"             bun:"rel:belongs-to,join:business_unit_id=id"`
-	Organization  *tenant.Organization         `json:"-"             bun:"rel:belongs-to,join:organization_id=id"`
-	DocumentTypes []*documenttype.DocumentType `json:"documentTypes" bun:"m2m:customer_billing_profile_document_types,join:BillingProfile=DocumentType"`
+	Customer       *Customer                    `json:"-"              bun:"rel:belongs-to,join:customer_id=id"`
+	BusinessUnit   *tenant.BusinessUnit         `json:"-"              bun:"rel:belongs-to,join:business_unit_id=id"`
+	Organization   *tenant.Organization         `json:"-"              bun:"rel:belongs-to,join:organization_id=id"`
+	DocumentTypes  []*documenttype.DocumentType `json:"documentTypes"  bun:"m2m:customer_billing_profile_document_types,join:BillingProfile=DocumentType"`
+	RevenueAccount *accounting.GLAccount        `json:"revenueAccount" bun:"rel:belongs-to,join:revenue_account_id=id"`
+	ARAccount      *accounting.GLAccount        `json:"arAccount"      bun:"rel:belongs-to,join:ar_account_id=id"`
 }
 
 func (b *CustomerBillingProfile) GetID() string {

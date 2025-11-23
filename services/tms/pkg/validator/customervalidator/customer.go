@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/validator"
 	"github.com/emoss08/trenova/pkg/validator/framework"
 	"github.com/uptrace/bun"
@@ -15,48 +16,19 @@ import (
 type ValidatorParams struct {
 	fx.In
 
-	DB *postgres.Connection
+	DB                              *postgres.Connection
+	CustomerBillingProfileValidator *CustomerBillingProfileValidator
 }
 
 type Validator struct {
-	factory *framework.TenantedValidatorFactory[*customer.Customer]
+	customerBillingProfileValidator *CustomerBillingProfileValidator
+	getDB                           func(context.Context) (*bun.DB, error)
 }
 
 func NewValidator(p ValidatorParams) *Validator {
-	factory := framework.NewTenantedValidatorFactory[*customer.Customer](
-		func(ctx context.Context) (*bun.DB, error) {
-			return p.DB.DB(ctx)
-		},
-	).
-		WithModelName("Customer").
-		WithUniqueFields(func(entity *customer.Customer) []framework.UniqueField {
-			return []framework.UniqueField{
-				{
-					Name:     "code",
-					GetValue: func() string { return entity.Code },
-					Message:  "Customer with code ':value' already exists in the organization.",
-				},
-			}
-		}).
-		WithCustomRules(func(entity *customer.Customer, vc *validator.ValidationContext) []framework.ValidationRule {
-			var rules []framework.ValidationRule
-
-			if vc.IsCreate {
-				rules = append(rules, framework.NewBusinessRule("id_validation").
-					WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
-						if entity.ID.IsNotNil() {
-							multiErr.Add("id", errortypes.ErrInvalid, "ID cannot be set on create")
-						}
-						return nil
-					}),
-				)
-			}
-
-			return rules
-		})
-
 	return &Validator{
-		factory: factory,
+		customerBillingProfileValidator: p.CustomerBillingProfileValidator,
+		getDB:                           p.DB.DB,
 	}
 }
 
@@ -65,5 +37,45 @@ func (v *Validator) Validate(
 	valCtx *validator.ValidationContext,
 	entity *customer.Customer,
 ) *errortypes.MultiError {
-	return v.factory.Validate(ctx, entity, valCtx)
+	engine := framework.NewValidationEngine(framework.DefaultEngineConfig())
+
+	engine.AddRule(
+		framework.NewConcreteRule("customer_validation").
+			WithStage(framework.ValidationStageBasic).
+			WithPriority(framework.ValidationPriorityHigh).
+			WithValidation(func(_ context.Context, me *errortypes.MultiError) error {
+				entity.Validate(me)
+				return nil
+			}),
+	)
+
+	engine.AddRule(
+		framework.NewUniquenessRule("customer_code_uniqueness", v.getDB).
+			ForTable("customers").
+			ForModel("Customer").
+			WithTenant(func() (organizationID pulid.ID, businessUnitID pulid.ID) {
+				return entity.GetOrganizationID(), entity.GetBusinessUnitID()
+			}).
+			ForOperation(valCtx.IsCreate).
+			CheckField("code", func() string {
+				return entity.Code
+			}, "Customer with code ':value' already exists in the organization."),
+	)
+
+	engine.AddRule(
+		framework.NewConcreteRule("customer_billing_profile_validation").
+			WithStage(framework.ValidationStageBusinessRules).
+			WithPriority(framework.ValidationPriorityHigh).
+			WithValidation(func(_ context.Context, me *errortypes.MultiError) error {
+				v.customerBillingProfileValidator.Validate(
+					ctx,
+					entity.BillingProfile,
+					entity.OrganizationID,
+					me,
+				)
+				return nil
+			}),
+	)
+
+	return engine.Validate(ctx)
 }

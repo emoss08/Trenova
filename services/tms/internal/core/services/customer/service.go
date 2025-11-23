@@ -94,6 +94,10 @@ func (s *Service) Create(
 	}
 
 	if err := s.v.Validate(ctx, valCtx, entity); err != nil {
+		log.With(
+			zap.Any("entity", entity),
+			zap.Error(err),
+		).Error("failed to validate customer")
 		return nil, err
 	}
 
