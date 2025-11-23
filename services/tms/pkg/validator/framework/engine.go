@@ -135,11 +135,21 @@ func (v *ValidationEngine) Validate(ctx context.Context) *errortypes.MultiError 
 		return nil
 	}
 
+	if v.ctx.Field != "" && v.ctx.Parent != nil {
+		scopedErr := v.ctx.Parent.WithPrefix(v.ctx.Field)
+		v.executeRulesOptimized(ctx, scopedErr)
+		return nil
+	}
+
 	multiErr = errortypes.NewMultiError()
 
 	if v.ctx.IsIndexed {
 		indexedErr := multiErr.WithIndex(v.ctx.Field, v.ctx.Index)
 		v.executeRulesOptimized(ctx, indexedErr)
+	} else if v.ctx.Field != "" {
+		// Create a scoped error with field prefix
+		scopedErr := multiErr.WithPrefix(v.ctx.Field)
+		v.executeRulesOptimized(ctx, scopedErr)
 	} else {
 		v.executeRulesOptimized(ctx, multiErr)
 	}
@@ -158,6 +168,10 @@ func (v *ValidationEngine) ValidateInto(ctx context.Context, multiErr *errortype
 	if v.ctx.IsIndexed {
 		indexedErr := multiErr.WithIndex(v.ctx.Field, v.ctx.Index)
 		v.executeRulesOptimized(ctx, indexedErr)
+	} else if v.ctx.Field != "" {
+		// Create a scoped error with field prefix
+		scopedErr := multiErr.WithPrefix(v.ctx.Field)
+		v.executeRulesOptimized(ctx, scopedErr)
 	} else {
 		v.executeRulesOptimized(ctx, multiErr)
 	}
