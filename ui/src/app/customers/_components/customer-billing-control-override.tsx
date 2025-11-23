@@ -1,32 +1,26 @@
 import { SelectField } from "@/components/fields/select-field";
 import { SwitchField } from "@/components/fields/switch-field";
+import { GLAccountAutocompleteField } from "@/components/ui/autocomplete-fields";
 import { Button } from "@/components/ui/button";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { paymentTermChoices } from "@/lib/choices";
 import { queries } from "@/lib/queries";
 import { type CustomerSchema } from "@/lib/schemas/customer-schema";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { useFormContext } from "react-hook-form";
+import { useFormContext, useWatch } from "react-hook-form";
 
 export function BillingControlOverrides() {
-  const [showBillingControlOverrides, setShowBillingControlOverrides] =
-    useState<boolean>(false);
-
   const { data: billingControl, isLoading: billingControlLoading } = useQuery({
     ...queries.organization.getBillingControl(),
   });
 
-  const { setValue, watch, getValues } = useFormContext<CustomerSchema>();
+  const { setValue, getValues } = useFormContext<CustomerSchema>();
 
-  const hasOverrides = watch("billingProfile.hasOverrides");
-
-  useEffect(() => {
-    setShowBillingControlOverrides(!!hasOverrides);
-  }, [hasOverrides]);
+  const hasOverrides = useWatch({
+    name: "billingProfile.hasOverrides",
+  });
 
   const toggleBillingControlOverrides = (show: boolean) => {
-    setShowBillingControlOverrides(show);
     setValue("billingProfile.hasOverrides", show, {
       shouldDirty: true,
       shouldTouch: true,
@@ -60,16 +54,17 @@ export function BillingControlOverrides() {
       );
     }
   };
+
   return (
     <div className="flex flex-col gap-4 border-t pt-4">
       <div className="flex items-center justify-between">
         <h3
           id="billing-control-overrides"
-          className="font-semibold leading-none tracking-tight text-sm"
+          className="text-sm leading-none font-semibold tracking-tight"
         >
           Customer-Specific Billing Control Overrides
         </h3>
-        {showBillingControlOverrides && (
+        {hasOverrides && (
           <Button
             onClick={() => toggleBillingControlOverrides(false)}
             variant="destructive"
@@ -80,7 +75,7 @@ export function BillingControlOverrides() {
           </Button>
         )}
       </div>
-      {showBillingControlOverrides ? (
+      {hasOverrides ? (
         <BillingControlOverridesForm />
       ) : (
         <Button
@@ -154,6 +149,24 @@ function BillingControlOverridesForm() {
           label="Validate Contractual Rate Compliance"
           description="When enabled, the system compares all applied charges against authorized customer rate agreements before allowing transfer to billing."
           position="left"
+        />
+      </FormControl>
+      <FormControl>
+        <GLAccountAutocompleteField
+          control={control}
+          name="billingProfile.revenueAccountId"
+          label="Revenue Account"
+          description="The GL account to use for revenue transactions."
+          placeholder="Select Revenue Account"
+        />
+      </FormControl>
+      <FormControl>
+        <GLAccountAutocompleteField
+          control={control}
+          name="billingProfile.arAccountId"
+          label="AR Account"
+          description="The GL account to use for AR transactions."
+          placeholder="Select AR Account"
         />
       </FormControl>
     </FormGroup>

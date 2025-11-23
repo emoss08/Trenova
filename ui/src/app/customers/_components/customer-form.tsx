@@ -68,6 +68,10 @@ function createNavigationItems<T extends FieldValues>({
           "billingProfile.autoMarkReadyToBill",
           "billingProfile.autoBill",
           "billingProfile.specialInstructions",
+          "billingProfile.revenueAccountId",
+          "billingProfile.arAccountId",
+          "billingProfile.allowInvoiceConsolidation",
+          "billingProfile.consolidationPeriodDays",
         ] as Path<T>[]),
     },
     {

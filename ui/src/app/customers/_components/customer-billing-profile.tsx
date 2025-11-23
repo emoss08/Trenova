@@ -12,7 +12,7 @@ export function CustomerBillingProfile() {
 
   return (
     <div className="size-full">
-      <div className="flex select-none flex-col px-4">
+      <div className="flex flex-col px-4 select-none">
         <h2 className="mt-2 text-2xl font-semibold">Billing Profile</h2>
         <p className="text-xs text-muted-foreground">
           Configure billing settings for the customer.

@@ -3,6 +3,7 @@ import { Status } from "@/types/common";
 import * as z from "zod";
 import { documentTypeSchema } from "./document-type-schema";
 import { geocodeBadeSchema } from "./geocode-schema";
+import { glAccountSchema } from "./gl-account-schema";
 import {
   nullableStringSchema,
   optionalStringSchema,
@@ -37,6 +38,10 @@ export const billingProfileSchema = z.object({
   customerId: nullableStringSchema,
   billingCycleType: z.enum(BillingCycleType),
   hasOverrides: z.boolean(),
+  revenueAccountId: nullableStringSchema,
+  arAccountId: nullableStringSchema,
+  allowInvoiceConsolidation: z.boolean().default(false),
+  consolidationPeriodDays: z.number().default(7),
   enforceCustomerBillingReq: z.boolean().default(false),
   validateCustomerRates: z.boolean().default(false),
   paymentTerm: z.enum(PaymentTerm).default(PaymentTerm.Net30),
@@ -45,6 +50,9 @@ export const billingProfileSchema = z.object({
   autoBill: z.boolean().default(false),
   specialInstructions: optionalStringSchema,
   documentTypes: z.array(documentTypeSchema),
+
+  revenueAccount: glAccountSchema.nullish(),
+  arAccount: glAccountSchema.nullish(),
 });
 
 export const customerSchema = z.object({
