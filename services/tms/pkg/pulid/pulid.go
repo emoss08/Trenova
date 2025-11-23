@@ -81,10 +81,13 @@ func (u ID) Value() (driver.Value, error) {
 	return string(u), nil
 }
 
+// ConvertFromPtr safely converts a pointer to a PULID to a PULID.
+// If the pointer is nil, it returns a nil PULID.
 func ConvertFromPtr(ptr *ID) ID {
 	if ptr == nil {
 		return Nil
 	}
+
 	return *ptr
 }
 
@@ -105,6 +108,7 @@ func MustParse(s string) (ID, error) {
 	return id, nil
 }
 
+// Equals checks if two PULIDs are equal.
 func Equals(a, b ID) bool {
 	return a == b
 }
