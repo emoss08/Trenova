@@ -170,7 +170,7 @@ func (v *WorkerProfileValidator) validateDriverQualification(
 ) {
 	if wp.LicenseExpiry < now {
 		multiErr.Add(
-			"profile.licenseExpiry",
+			"licenseExpiry",
 			errortypes.ErrComplianceViolation,
 			"Commercial driver's license is expired (49 CFR § 391.11(b)(5))",
 		)
