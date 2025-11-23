@@ -26,6 +26,7 @@ func RegisterAll(s *Seeder, env common.Environment) {
 		s.RegisterRunner(development.NewWorkersSeed())
 		s.RegisterRunner(development.NewLocationCategorySeed())
 		s.RegisterRunner(development.NewVariablesAndFormatsSeed())
+		s.RegisterRunner(development.NewCustomerSeed())
 	}
 
 	// Test-only seeds

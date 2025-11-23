@@ -1,8 +1,3 @@
---
--- Copyright 2023-2025 Eric Moss
--- Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
--- Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md--
-
 CREATE TYPE "billing_cycle_type_enum" AS ENUM(
     'Immediate',
     'Daily',
@@ -19,7 +14,6 @@ CREATE TABLE IF NOT EXISTS "customer_billing_profiles"(
     "business_unit_id" varchar(100) NOT NULL,
     -- Core fields
     "billing_cycle_type" billing_cycle_type_enum NOT NULL DEFAULT 'Immediate',
-    -- "document_type_ids" varchar(100)[] NOT NULL DEFAULT '{}', -- Array of document type ids
     -- Billing Control Overrides
     "enforce_customer_billing_req" boolean NOT NULL DEFAULT TRUE,
     "validate_customer_rates" boolean NOT NULL DEFAULT TRUE,
@@ -28,6 +22,8 @@ CREATE TABLE IF NOT EXISTS "customer_billing_profiles"(
     "auto_transfer" boolean NOT NULL DEFAULT TRUE,
     "auto_mark_ready_to_bill" boolean NOT NULL DEFAULT TRUE,
     "auto_bill" boolean NOT NULL DEFAULT TRUE,
+    "allow_invoice_consolidation" boolean NOT NULL DEFAULT FALSE,
+    "consolidation_period_days" integer NOT NULL DEFAULT 7 CHECK ("consolidation_period_days" >= 1),
     -- Metadata and versioning
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
@@ -37,9 +33,7 @@ CREATE TABLE IF NOT EXISTS "customer_billing_profiles"(
     CONSTRAINT "fk_customer_billing_profiles_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_customer_billing_profiles_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_customer_billing_profiles_customer" FOREIGN KEY ("customer_id", "organization_id", "business_unit_id") REFERENCES "customers"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE CASCADE,
-    -- Ensure one billing profile per customer
     CONSTRAINT "uq_customer_billing_profiles_customer" UNIQUE ("customer_id", "organization_id", "business_unit_id"),
-    -- Add unique constraint for foreign key reference
     CONSTRAINT "uq_customer_billing_profiles_id_org_bu" UNIQUE ("id", "organization_id", "business_unit_id")
 );
 
