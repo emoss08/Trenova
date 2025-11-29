@@ -34,6 +34,7 @@ func Options() fx.Option {
 		infrastructure.ObservabilityModule,
 		infrastructure.DatabaseModule,
 		infrastructure.FileStorageModule,
+		infrastructure.GotenbergModule,
 		infrastructure.SearchModule,
 		routing.Module,
 		ai.Module,

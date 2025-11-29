@@ -503,6 +503,20 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "document-templates",
+                loader: createPermissionLoader(Resource.DocumentTemplate),
+                async lazy() {
+                  let { DocumentTemplates } = await import(
+                    "@/app/document-templates/page"
+                  );
+                  return { Component: DocumentTemplates };
+                },
+                handle: {
+                  crumb: "Document Templates",
+                  title: "Document Templates",
+                },
+              },
+              {
                 path: "distance-overrides",
                 loader: createPermissionLoader(Resource.DistanceOverride),
                 async lazy() {

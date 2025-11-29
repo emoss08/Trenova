@@ -230,6 +230,26 @@ services:
       timeout: 10s
       retries: 5
 
+  gotenberg:
+    image: gotenberg/gotenberg:8
+    ports:
+      - "3000:3000"
+    environment:
+      - GOTENBERG_API_TIMEOUT=120s
+      - GOTENBERG_CHROMIUM_DISABLE_JAVASCRIPT=false
+      - GOTENBERG_CHROMIUM_ALLOW_LIST=file:///tmp/.*
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: "1"
+    healthcheck:
+      test: curl -f http://localhost:3000/health
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 volumes:
   pg_data: {}
   redis_data: {}

@@ -43,6 +43,14 @@ import {
   ServiceIncidentType,
 } from "./schemas/dispatchcontrol-schema";
 import {
+  orientationSchema,
+  OrientationSchema,
+  pageSizeSchema,
+  PageSizeSchema,
+  templateStatusSchema,
+  TemplateStatusSchema,
+} from "./schemas/document-template-schema";
+import {
   ProviderType,
   type EmailProfileSchema,
 } from "./schemas/email-profile-schema";
@@ -1101,3 +1109,47 @@ export const timeFormatChoices = [
     label: "24-hour",
   },
 ] satisfies ReadonlyArray<ChoiceProps<TimeFormat>>;
+
+export const documentTemplateStatusChoices = [
+  {
+    value: templateStatusSchema.enum.Draft,
+    label: "Draft",
+    description: "Template is being edited",
+    color: "#6b7280",
+  },
+  {
+    value: templateStatusSchema.enum.Active,
+    label: "Active",
+    description: "Available for document generation",
+    color: "#22c55e",
+  },
+  {
+    value: templateStatusSchema.enum.Archived,
+    label: "Archived",
+    description: "No longer in use",
+    color: "#ef4444",
+  },
+] satisfies ReadonlyArray<ChoiceProps<TemplateStatusSchema>>;
+
+export const documentTemplatePageSizeChoices = [
+  {
+    value: pageSizeSchema.enum.Letter,
+    label: "Letter",
+    description: "8.5 × 11 in (US Standard)",
+  },
+  {
+    value: pageSizeSchema.enum.A4,
+    label: "A4",
+    description: "210 × 297 mm (International)",
+  },
+  {
+    value: pageSizeSchema.enum.Legal,
+    label: "Legal",
+    description: "8.5 × 14 in",
+  },
+] satisfies ReadonlyArray<ChoiceProps<PageSizeSchema>>;
+
+export const documentTemplateOrientationChoices = [
+  { value: orientationSchema.enum.Portrait, label: "Portrait" },
+  { value: orientationSchema.enum.Landscape, label: "Landscape" },
+] satisfies ReadonlyArray<ChoiceProps<OrientationSchema>>;

@@ -15,17 +15,17 @@ const ConsolidationTable = lazy(() =>
 
 export function ConsolidationGroup() {
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex h-full flex-col">
       <MetaTags
         title="Consolidation Management"
         description="Manage consolidation groups for optimized shipment routing"
       />
       <ConsolidationManagementHeader />
-      <main className="flex-1 flex flex-col min-h-0 px-4 pb-4">
+      <main className="flex min-h-0 flex-1 flex-col px-4 pb-4">
         <Suspense
           fallback={
-            <div className="flex items-center justify-center h-full">
-              <Loader className="animate-spin h-8 w-8 text-muted-foreground" />
+            <div className="flex h-full items-center justify-center">
+              <Loader className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           }
         >
@@ -38,10 +38,10 @@ export function ConsolidationGroup() {
 
 const ConsolidationManagementHeader = memo(() => {
   return (
-    <header className="bg-card/50 backdrop-blur-sm border-b border-border px-6 py-4 mb-4">
-      <div className="flex justify-between items-center">
+    <header className="mb-4 border-b border-border bg-card/50 px-6 py-4 backdrop-blur-sm">
+      <div className="flex items-center justify-between">
         <div className="space-y-1">
-          <h1 className="text-2xl font-semibold tracking-tight flex items-center gap-2">
+          <h1 className="flex items-center gap-2 text-2xl font-semibold tracking-tight">
             <UserSearch className="h-6 w-6 text-muted-foreground" />
             Consolidation Management
           </h1>

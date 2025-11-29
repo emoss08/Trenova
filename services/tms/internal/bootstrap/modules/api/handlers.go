@@ -27,6 +27,7 @@ var HandlerModule = fx.Module("api-handlers", fx.Provide(
 	handlers.NewFleetCodeHandler,
 	handlers.NewEmailProfileHandler,
 	handlers.NewDocumentTypeHandler,
+	handlers.NewDocumentTemplateHandler,
 	handlers.NewEquipmentTypeHandler,
 	handlers.NewEquipmentManufacturerHandler,
 	handlers.NewWorkerHandler,

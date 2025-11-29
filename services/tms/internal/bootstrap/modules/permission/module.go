@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/core/domain/dedicatedlane"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
+	"github.com/emoss08/trenova/internal/core/domain/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/domain/email"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentmanufacturer"
@@ -203,6 +204,14 @@ var RegistryModule = fx.Module("permission-registry",
 		),
 		fx.Annotate(
 			accounting.NewAccountTypePermission,
+			fx.ResultTags(`group:"permission_entities"`),
+		),
+		fx.Annotate(
+			documenttemplate.NewDocumentTemplatePermission,
+			fx.ResultTags(`group:"permission_entities"`),
+		),
+		fx.Annotate(
+			documenttemplate.NewGeneratedDocumentPermission,
 			fx.ResultTags(`group:"permission_entities"`),
 		),
 	),

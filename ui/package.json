@@ -12,6 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@codemirror/lang-css": "^6.3.1",
+    "@codemirror/lang-html": "^6.4.11",
     "@codemirror/lang-sql": "^6.10.0",
     "@codemirror/state": "^6.5.2",
     "@codemirror/view": "^6.38.8",
@@ -94,6 +96,7 @@
     "react-lazy-load-image-component": "^1.6.3",
     "react-markdown": "^10.1.0",
     "react-pdf": "^10.2.0",
+    "react-resizable-panels": "^3.0.6",
     "react-router": "^7.9.6",
     "react-router-dom": "^7.9.6",
     "react-textarea-autosize": "^8.5.9",

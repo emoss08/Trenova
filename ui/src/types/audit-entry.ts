@@ -54,6 +54,8 @@ export enum Resource {
   GLAccount = "gl_account", // Represents resources related to general ledger accounts.
   FiscalYear = "fiscal_year", // Represents resources related to fiscal years.
   FiscalPeriod = "fiscal_period", // Represents resources related to fiscal periods.
+  DocumentTemplate = "document_template", // Represents resources related to document templates.
+  GeneratedDocument = "generated_document", // Represents resources related to generated documents.
 
   // Operations resources
   Worker = "worker", // Represents resources related to workers.

@@ -123,6 +123,7 @@ export type BaseEndpoint =
   | "/fiscal-periods/"
   | "/gl-accounts/"
   | "/variable-formats/"
+  | "/document-templates/"
   | "/account-types/"
   | "/workers/pto/create/";
 

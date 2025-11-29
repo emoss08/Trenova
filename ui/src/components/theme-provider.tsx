@@ -48,18 +48,6 @@ export function ThemeProvider({
     root.classList.add(theme);
   }, [theme]);
 
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === "o" && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        setTheme((theme) => theme === "dark" ? "light" : "dark");
-      }
-    }
-
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [setTheme]);
-
   const value = {
     theme,
     setTheme: (theme: Theme) => {
@@ -67,6 +55,20 @@ export function ThemeProvider({
       setTheme(theme);
     },
   };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "o" && (event.metaKey || event.ctrlKey)) {
+        event.preventDefault();
+        const newTheme = theme === "dark" ? "light" : "dark";
+        setTheme(newTheme);
+        localStorage.setItem(storageKey, newTheme);
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [setTheme, storageKey, theme]);
 
   return (
     <ThemeProviderContext.Provider {...props} value={value}>

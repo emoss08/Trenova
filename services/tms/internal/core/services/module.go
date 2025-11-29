@@ -17,6 +17,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/distancecalculator"
 	"github.com/emoss08/trenova/internal/core/services/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/services/dlsuggestion"
+	"github.com/emoss08/trenova/internal/core/services/documenttemplate"
 	"github.com/emoss08/trenova/internal/core/services/documenttype"
 	"github.com/emoss08/trenova/internal/core/services/emailprofile"
 	"github.com/emoss08/trenova/internal/core/services/encryption"
@@ -79,6 +80,8 @@ var Module = fx.Module(
 		fleetcode.NewService,
 		emailprofile.NewService,
 		documenttype.NewService,
+		documenttemplate.NewRenderer,
+		documenttemplate.NewService,
 		equipmenttype.NewService,
 		equipmentmanufacturer.NewService,
 		worker.NewService,

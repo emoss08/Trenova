@@ -15,8 +15,10 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dispatchcontrolrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/distanceoverriderepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/dlsuggestionrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttemplaterepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/emailprofilerepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/generateddocumentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmentmanufacturerrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/equipmenttyperepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/fiscalperiodrepository"
@@ -78,6 +80,8 @@ var Module = fx.Module("postgres-repositories",
 		fleetcoderepository.NewRepository,
 		emailprofilerepository.NewRepository,
 		documenttyperepository.NewRepository,
+		documenttemplaterepository.NewTemplateRepository,
+		generateddocumentrepository.NewRepository,
 		equipmenttyperepository.NewRepository,
 		equipmentmanufacturerrepository.NewRepository,
 		hazmatexpirationrepository.NewRepository,

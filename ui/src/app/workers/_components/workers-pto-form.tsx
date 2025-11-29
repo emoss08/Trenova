@@ -1,8 +1,3 @@
-/*
- * Copyright 2025 Eric Moss
- * Licensed under FSL-1.1-ALv2 (Functional Source License 1.1, Apache 2.0 Future)
- * Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md */
-
 import { DoubleClickEditDate } from "@/components/fields/date-field";
 import { DoubleClickSelectField } from "@/components/fields/select-field";
 import { TextareaField } from "@/components/fields/textarea-field";
@@ -87,7 +82,7 @@ function WorkerPTOContent({
         title="Remove PTO"
         type="button"
         variant="ghost"
-        className="absolute right-2 top-2 z-50"
+        className="absolute top-2 right-2 z-50"
         onClick={() => remove(index)}
       >
         <Icon icon={faTrash} className="size-4" />
@@ -198,7 +193,7 @@ export default function WorkerPTOForm() {
 
   return (
     <div className="size-full">
-      <div className="flex select-none flex-col px-4">
+      <div className="flex flex-col px-4 select-none">
         <h2 className="mt-2 text-2xl font-semibold">PTO Management</h2>
         <p className="text-xs text-muted-foreground">
           The following information is required for the worker to be able to

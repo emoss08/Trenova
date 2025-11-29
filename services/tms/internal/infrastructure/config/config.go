@@ -23,6 +23,7 @@ type Config struct {
 	Email           *EmailConfig           `mapstructure:"email,omitempty"    validate:"required"`
 	PermissionCache *PermissionCacheConfig `mapstructure:"permissionCache"    validate:"required"`
 	Search          *SearchConfig          `mapstructure:"search,omitempty"`
+	Gotenberg       *GotenbergConfig       `mapstructure:"gotenberg,omitempty"`
 	Security        SecurityConfig         `mapstructure:"security"           validate:"required"`
 	Logging         LoggingConfig          `mapstructure:"logging"            validate:"required"`
 	Monitoring      MonitoringConfig       `mapstructure:"monitoring"         validate:"required"`
@@ -346,6 +347,11 @@ type SearchConfig struct {
 	APIKey      string        `mapstructure:"apiKey"      validate:"required_if=Enabled true"`
 	IndexPrefix string        `mapstructure:"indexPrefix"`
 	Timeout     time.Duration `mapstructure:"timeout"`
+}
+
+type GotenbergConfig struct {
+	Endpoint string        `mapstructure:"endpoint" validate:"required,url"`
+	Timeout  time.Duration `mapstructure:"timeout"`
 }
 
 // Environment check methods

@@ -32,6 +32,7 @@ type RouterParams struct {
 	DedicatedLaneSuggestionHandler *handlers.DedicatedLaneSuggestionHandler
 	VariableHandler                *handlers.VariableHandler
 	DocumentTypeHandler            *handlers.DocumentTypeHandler
+	DocumentTemplateHandler        *handlers.DocumentTemplateHandler
 	EmailProfileHandler            *handlers.EmailProfileHandler
 	AccessorialChargeHandler       *handlers.AccessorialChargeHandler
 	PermissionHandler              *handlers.PermissionHandler
@@ -89,6 +90,7 @@ type Router struct {
 	ailogHandler                   *handlers.AILogHandler
 	variableHandler                *handlers.VariableHandler
 	documentTypeHandler            *handlers.DocumentTypeHandler
+	documentTemplateHandler        *handlers.DocumentTemplateHandler
 	accessorialChargeHandler       *handlers.AccessorialChargeHandler
 	equipmentTypeHandler           *handlers.EquipmentTypeHandler
 	workerHandler                  *handlers.WorkerHandler
@@ -179,6 +181,7 @@ func NewRouter(p RouterParams) *Router {
 		hazardousMaterialHandler:       p.HazardousMaterialHandler,
 		distanceOverrideHandler:        p.DistanceOverrideHandler,
 		documentTypeHandler:            p.DocumentTypeHandler,
+		documentTemplateHandler:        p.DocumentTemplateHandler,
 		trailerHandler:                 p.TrailerHandler,
 		holdReasonHandler:              p.HoldReasonHandler,
 		dataRetentionHandler:           p.DataRetentionHandler,
@@ -311,6 +314,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.fleetCodeHandler.RegisterRoutes(protected)
 	r.emailProfileHandler.RegisterRoutes(protected)
 	r.documentTypeHandler.RegisterRoutes(protected)
+	r.documentTemplateHandler.RegisterRoutes(protected)
 	r.equipmentTypeHandler.RegisterRoutes(protected)
 	r.equipmentManufacturerHandler.RegisterRoutes(protected)
 	r.workerHandler.RegisterRoutes(protected)
