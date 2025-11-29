@@ -42,11 +42,8 @@ func NewJournalEntryHandler(p JournalEntryHandlerParams) *JournalEntryHandler {
 func (h *JournalEntryHandler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/journal-entries/")
 
-	// List and create
 	api.GET("", h.pm.RequirePermission(permission.ResourceJournalEntry, "read"), h.list)
 	api.POST("", h.pm.RequirePermission(permission.ResourceJournalEntry, "create"), h.create)
-
-	// Special gets (most specific first)
 	api.GET(
 		"number/:entryNumber/",
 		h.pm.RequirePermission(permission.ResourceJournalEntry, "read"),
@@ -62,8 +59,6 @@ func (h *JournalEntryHandler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceJournalEntry, "read"),
 		h.getByPeriod,
 	)
-
-	// Standard CRUD by ID
 	api.GET(":id/", h.pm.RequirePermission(permission.ResourceJournalEntry, "read"), h.get)
 	api.PUT(":id/", h.pm.RequirePermission(permission.ResourceJournalEntry, "update"), h.update)
 	api.DELETE(
@@ -71,8 +66,6 @@ func (h *JournalEntryHandler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceJournalEntry, "delete"),
 		h.delete,
 	)
-
-	// Status operations
 	api.POST(
 		":id/post/",
 		h.pm.RequirePermission(permission.ResourceJournalEntry, "submit"),
