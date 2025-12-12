@@ -57,6 +57,8 @@ func (rr *ResourceRegistry) RegisterFromDomainRegistry() {
 	rr.RegisterManual("fiscal_year", permission.ResourceFiscalYear)
 	rr.RegisterManual("document_template", permission.ResourceDocumentTemplate)
 	rr.RegisterManual("generated_document", permission.ResourceGeneratedDocument)
+	rr.RegisterManual("variable", permission.ResourceVariable)
+	rr.RegisterManual("variable_format", permission.ResourceVariableFormat)
 }
 
 // RegisterManual manually registers a resource (for non-table resources)

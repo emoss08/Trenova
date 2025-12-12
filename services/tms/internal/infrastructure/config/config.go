@@ -10,25 +10,25 @@ import (
 
 // Config represents the main application configuration
 type Config struct {
-	App             AppConfig              `mapstructure:"app"                validate:"required"`
-	Server          ServerConfig           `mapstructure:"server"             validate:"required"`
-	Database        DatabaseConfig         `mapstructure:"database"           validate:"required"`
+	App             AppConfig              `mapstructure:"app"                 validate:"required"`
+	Server          ServerConfig           `mapstructure:"server"              validate:"required"`
+	Database        DatabaseConfig         `mapstructure:"database"            validate:"required"`
 	Cache           *CacheConfig           `mapstructure:"cache,omitempty"`
 	Queue           *QueueConfig           `mapstructure:"queue,omitempty"`
-	AI              *AIConfig              `mapstructure:"ai"                 validate:"required"`
-	Google          *GoogleConfig          `mapstructure:"google"             validate:"required"`
+	AI              *AIConfig              `mapstructure:"ai"                  validate:"required"`
+	Google          *GoogleConfig          `mapstructure:"google"              validate:"required"`
 	CDC             *CDCConfig             `mapstructure:"cdc,omitempty"`
 	Storage         *StorageConfig         `mapstructure:"storage,omitempty"`
 	Temporal        *TemporalConfig        `mapstructure:"temporal,omitempty"`
-	Email           *EmailConfig           `mapstructure:"email,omitempty"    validate:"required"`
-	PermissionCache *PermissionCacheConfig `mapstructure:"permissionCache"    validate:"required"`
+	Email           *EmailConfig           `mapstructure:"email,omitempty"     validate:"required"`
+	PermissionCache *PermissionCacheConfig `mapstructure:"permissionCache"     validate:"required"`
 	Search          *SearchConfig          `mapstructure:"search,omitempty"`
 	Gotenberg       *GotenbergConfig       `mapstructure:"gotenberg,omitempty"`
-	Security        SecurityConfig         `mapstructure:"security"           validate:"required"`
-	Logging         LoggingConfig          `mapstructure:"logging"            validate:"required"`
-	Monitoring      MonitoringConfig       `mapstructure:"monitoring"         validate:"required"`
-	Streaming       StreamingConfig        `mapstructure:"streaming"          validate:"required"`
-	WebSocket       WebSocketConfig        `mapstructure:"websocket"          validate:"required"`
+	Security        SecurityConfig         `mapstructure:"security"            validate:"required"`
+	Logging         LoggingConfig          `mapstructure:"logging"             validate:"required"`
+	Monitoring      MonitoringConfig       `mapstructure:"monitoring"          validate:"required"`
+	Streaming       StreamingConfig        `mapstructure:"streaming"           validate:"required"`
+	WebSocket       WebSocketConfig        `mapstructure:"websocket"           validate:"required"`
 }
 
 // AppConfig contains application-level settings

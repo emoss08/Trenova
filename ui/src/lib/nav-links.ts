@@ -154,16 +154,9 @@ export const adminLinks: SidebarLink[] = [
     disabled: true,
   },
   {
-    href: "#",
+    href: "/organization/document-templates/",
     title: "Document Templates",
     group: "Document Management",
-    disabled: true,
-  },
-  {
-    href: "#",
-    title: "Document Themes",
-    group: "Document Management",
-    disabled: true,
   },
 ];
 

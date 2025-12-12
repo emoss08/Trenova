@@ -180,7 +180,11 @@ func validateVersionNumberUnique(
 	}
 
 	if count > 0 {
-		me.Add("versionNumber", errortypes.ErrInvalid, "Version number already exists for this template")
+		me.Add(
+			"versionNumber",
+			errortypes.ErrInvalid,
+			"Version number already exists for this template",
+		)
 	}
 }
 

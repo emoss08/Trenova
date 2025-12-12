@@ -55,7 +55,11 @@ func NewValidator(p ValidatorParams) *Validator {
 			rules = append(rules, framework.NewBusinessRule("html_content_validation").
 				WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 					if entity.HTMLContent == "" {
-						multiErr.Add("htmlContent", errortypes.ErrRequired, "HTML content is required")
+						multiErr.Add(
+							"htmlContent",
+							errortypes.ErrRequired,
+							"HTML content is required",
+						)
 					}
 					return nil
 				}),
@@ -64,7 +68,11 @@ func NewValidator(p ValidatorParams) *Validator {
 			rules = append(rules, framework.NewBusinessRule("document_type_validation").
 				WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 					if entity.DocumentTypeID.IsNil() {
-						multiErr.Add("documentTypeId", errortypes.ErrRequired, "Document type is required")
+						multiErr.Add(
+							"documentTypeId",
+							errortypes.ErrRequired,
+							"Document type is required",
+						)
 					}
 					return nil
 				}),
@@ -74,7 +82,11 @@ func NewValidator(p ValidatorParams) *Validator {
 				rules = append(rules, framework.NewBusinessRule("default_status_validation").
 					WithValidation(func(_ context.Context, multiErr *errortypes.MultiError) error {
 						if entity.Status != documenttemplate.TemplateStatusActive {
-							multiErr.Add("status", errortypes.ErrInvalid, "Default templates must have Active status")
+							multiErr.Add(
+								"status",
+								errortypes.ErrInvalid,
+								"Default templates must have Active status",
+							)
 						}
 						return nil
 					}),

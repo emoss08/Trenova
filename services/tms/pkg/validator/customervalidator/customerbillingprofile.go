@@ -43,17 +43,21 @@ func (v *CustomerBillingProfileValidator) Validate(
 	orgID pulid.ID,
 	me *errortypes.MultiError,
 ) {
+	if entity == nil {
+		return
+	}
+
 	engine := v.engine.CreateEngine().
 		ForField("billingProfile").
 		WithParent(me)
 
-	engine.AddRule(
-		framework.NewConcreteRule("accounting_control_overrides_validation").
-			WithValidation(func(ctx context.Context, multiErr *errortypes.MultiError) error {
-				v.validateAccountingControlOverrides(ctx, entity, orgID, multiErr)
-				return nil
-			}),
-	)
+	// engine.AddRule(
+	// 	framework.NewConcreteRule("accounting_control_overrides_validation").
+	// 		WithValidation(func(ctx context.Context, multiErr *errortypes.MultiError) error {
+	// 			v.validateAccountingControlOverrides(ctx, entity, orgID, multiErr)
+	// 			return nil
+	// 		}),
+	// )
 
 	engine.ValidateInto(ctx, me)
 }
@@ -64,6 +68,10 @@ func (v *CustomerBillingProfileValidator) validateAccountingControlOverrides(
 	orgID pulid.ID,
 	me *errortypes.MultiError,
 ) {
+	if entity == nil {
+		return
+	}
+
 	ac, err := v.accountingControlRepo.GetByOrgID(ctx, orgID)
 	if err != nil {
 		me.Add("__all__", errortypes.ErrSystemError, "Database connection error")

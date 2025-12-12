@@ -122,7 +122,8 @@ func validateNodeConfig(entity *workflow.Node, me *errortypes.MultiError) {
 				"Entity type is required for entity update nodes",
 			)
 		}
-		if fieldMappings, ok := entity.Config["fieldMappings"].(map[string]any); !ok || len(fieldMappings) == 0 {
+		if fieldMappings, ok := entity.Config["fieldMappings"].(map[string]any); !ok ||
+			len(fieldMappings) == 0 {
 			me.Add(
 				"config.fieldMappings",
 				errortypes.ErrInvalid,

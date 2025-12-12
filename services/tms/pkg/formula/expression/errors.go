@@ -54,7 +54,7 @@ var (
 	ErrIndexOfFirstArgumentMustBeStringOrArray = errors.New(
 		"indexOf: first argument must be string or array",
 	)
-	ErrNumericOverflow = errors.New("numeric overflow")
+	ErrNumericOverflow                          = errors.New("numeric overflow")
 	ErrDivisionByZero                           = errors.New("division by zero")
 	ErrModuloByZero                             = errors.New("modulo by zero")
 	ErrPowerResultOutOfRange                    = errors.New("power: result out of range")

@@ -68,14 +68,14 @@ type MetricsRegistry struct {
 	streamingBroadcastsSent    *prometheus.CounterVec
 
 	// CDC metrics
-	cdcMessagesTotal       *prometheus.CounterVec
-	cdcMessageDuration     *prometheus.HistogramVec
-	cdcHandlerErrors       *prometheus.CounterVec
-	cdcSchemaCache         *prometheus.CounterVec
-	cdcConsumerLag         prometheus.Gauge
-	cdcBatchSize           *prometheus.HistogramVec
-	cdcRebalances          prometheus.Counter
-	cdcProcessingWorkers   prometheus.Gauge
+	cdcMessagesTotal     *prometheus.CounterVec
+	cdcMessageDuration   *prometheus.HistogramVec
+	cdcHandlerErrors     *prometheus.CounterVec
+	cdcSchemaCache       *prometheus.CounterVec
+	cdcConsumerLag       prometheus.Gauge
+	cdcBatchSize         *prometheus.HistogramVec
+	cdcRebalances        prometheus.Counter
+	cdcProcessingWorkers prometheus.Gauge
 }
 
 func NewMetricsRegistry(cfg *config.Config, logger *zap.Logger) (*MetricsRegistry, error) {

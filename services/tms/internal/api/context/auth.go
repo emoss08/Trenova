@@ -1,7 +1,6 @@
 package context
 
 import (
-	"context"
 	"reflect"
 
 	"github.com/emoss08/trenova/internal/core/domain/session"
@@ -158,33 +157,6 @@ func GetAuthContext(c *gin.Context) *AuthContext {
 	}
 
 	return ac
-}
-
-func WithAuth(ctx context.Context, authCtx *AuthContext) context.Context {
-	ctx = context.WithValue(ctx, UserIDKey, authCtx.UserID)
-	ctx = context.WithValue(ctx, BusinessUnitIDKey, authCtx.BusinessUnitID)
-	ctx = context.WithValue(ctx, OrganizationIDKey, authCtx.OrganizationID)
-	ctx = context.WithValue(ctx, AuthTypeKey, authCtx.AuthType)
-
-	if authCtx.Session != nil {
-		ctx = context.WithValue(ctx, SessionKey, authCtx.Session)
-	}
-
-	if authCtx.APIToken != nil {
-		ctx = context.WithValue(ctx, APITokenKey, authCtx.APIToken)
-	}
-
-	return ctx
-}
-
-func GetUserIDFromContext(ctx context.Context) (pulid.ID, bool) {
-	if val := ctx.Value(UserIDKey); val != nil {
-		if userID, ok := val.(pulid.ID); ok {
-			return userID, true
-		}
-	}
-	var empty pulid.ID
-	return empty, false
 }
 
 func AddContextToRequest(authCtx *AuthContext, req any) {

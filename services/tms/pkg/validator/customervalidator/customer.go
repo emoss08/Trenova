@@ -6,7 +6,6 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/customer"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/errortypes"
-	"github.com/emoss08/trenova/pkg/pulid"
 	"github.com/emoss08/trenova/pkg/validator"
 	"github.com/emoss08/trenova/pkg/validator/framework"
 	"github.com/uptrace/bun"
@@ -49,18 +48,18 @@ func (v *Validator) Validate(
 			}),
 	)
 
-	engine.AddRule(
-		framework.NewUniquenessRule("customer_code_uniqueness", v.getDB).
-			ForTable("customers").
-			ForModel("Customer").
-			WithTenant(func() (organizationID pulid.ID, businessUnitID pulid.ID) {
-				return entity.GetOrganizationID(), entity.GetBusinessUnitID()
-			}).
-			ForOperation(valCtx.IsCreate).
-			CheckField("code", func() string {
-				return entity.Code
-			}, "Customer with code ':value' already exists in the organization."),
-	)
+	// engine.AddRule(
+	// 	framework.NewUniquenessRule("customer_code_uniqueness", v.getDB).
+	// 		ForTable("customers").
+	// 		ForModel("Customer").
+	// 		WithTenant(func() (organizationID pulid.ID, businessUnitID pulid.ID) {
+	// 			return entity.GetOrganizationID(), entity.GetBusinessUnitID()
+	// 		}).
+	// 		ForOperation(valCtx.IsCreate).
+	// 		CheckField("code", func() string {
+	// 			return entity.Code
+	// 		}, "Customer with code ':value' already exists in the organization."),
+	// )
 
 	engine.AddRule(
 		framework.NewConcreteRule("customer_billing_profile_validation").

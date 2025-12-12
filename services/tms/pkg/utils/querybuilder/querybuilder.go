@@ -104,7 +104,8 @@ func (qb *QueryBuilder) ApplySort(sorts []pagination.SortField) *QueryBuilder {
 		}
 
 		// Handle traversal-enabled custom joins for sorting
-		if qb.traversalEnabled && strings.Contains(sort.Field, ".") && qb.entity != nil && qb.searchConfig != nil {
+		if qb.traversalEnabled && strings.Contains(sort.Field, ".") && qb.entity != nil &&
+			qb.searchConfig != nil {
 			qb.applyTraversalSort(sort)
 		} else {
 			qb.applySortField(sort)

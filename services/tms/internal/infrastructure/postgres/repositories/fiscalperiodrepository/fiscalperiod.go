@@ -509,4 +509,3 @@ func (r *repository) Unlock(
 
 	return entity, nil
 }
-

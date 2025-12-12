@@ -30,10 +30,10 @@ type GetFiscalPeriodByIDRequest struct {
 }
 
 type GetFiscalPeriodByNumberRequest struct {
-	FiscalYearID pulid.ID                  `form:"fiscalYearId"`
-	PeriodNumber int                       `form:"periodNumber"`
-	OrgID        pulid.ID                  `form:"orgId"`
-	BuID         pulid.ID                  `form:"buId"`
+	FiscalYearID  pulid.ID                  `form:"fiscalYearId"`
+	PeriodNumber  int                       `form:"periodNumber"`
+	OrgID         pulid.ID                  `form:"orgId"`
+	BuID          pulid.ID                  `form:"buId"`
 	FilterOptions FiscalPeriodFilterOptions `form:"filterOptions"`
 }
 
@@ -112,4 +112,3 @@ type FiscalPeriodRepository interface {
 	Lock(ctx context.Context, req *LockFiscalPeriodRequest) (*accounting.FiscalPeriod, error)
 	Unlock(ctx context.Context, req *UnlockFiscalPeriodRequest) (*accounting.FiscalPeriod, error)
 }
-

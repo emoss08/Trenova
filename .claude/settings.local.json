@@ -46,7 +46,9 @@
       "Bash(mkdir:*)",
       "Bash(mv:*)",
       "Bash(go doc:*)",
-      "Bash(task test:*)"
+      "Bash(task test:*)",
+      "Bash(tree:*)",
+      "WebSearch"
     ],
     "deny": [],
     "defaultMode": "acceptEdits"
