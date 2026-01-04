@@ -16,11 +16,10 @@ import { useNavigate, useSearchParams } from "react-router";
 import { toast } from "sonner";
 
 type LoginFormProps = {
-  email: string;
   onForgotPassword: () => void;
 };
 
-export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
+export function LoginForm({ onForgotPassword }: LoginFormProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { setUser } = useAuthActions();
@@ -57,7 +56,7 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
   } = useForm<LoginSchema>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      emailAddress: email,
+      emailAddress: "",
       password: "",
       rememberMe: false,
     },
@@ -97,7 +96,7 @@ export function LoginForm({ email, onForgotPassword }: LoginFormProps) {
         <FormControl className="min-h-[2.5em]">
           <div className="flex flex-col gap-1">
             <Label>Email address</Label>
-            <p className="text-sm text-muted-foreground">{email}</p>
+            <p className="text-sm text-muted-foreground">admin@trenova.app</p>
           </div>
         </FormControl>
 

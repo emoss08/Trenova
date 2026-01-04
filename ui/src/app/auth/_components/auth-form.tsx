@@ -10,7 +10,6 @@ import { AnimatePresence, motion } from "motion/react";
 import { parseAsString, useQueryState } from "nuqs";
 import { useState } from "react";
 import { Link } from "react-router";
-import { CheckEmailForm } from "./check-email-form";
 import { LoginForm } from "./login-form";
 import { ResetPasswordForm } from "./reset-password-form";
 
@@ -52,12 +51,7 @@ export function AuthForm() {
   function renderForm() {
     switch (formType) {
       case AuthFormType.LOGIN:
-        return (
-          <LoginForm
-            email={verifiedEmail ?? ""}
-            onForgotPassword={handleForgotPassword}
-          />
-        );
+        return <LoginForm onForgotPassword={handleForgotPassword} />;
       case AuthFormType.FORGOT_PASSWORD:
         return (
           <ResetPasswordForm
@@ -66,7 +60,7 @@ export function AuthForm() {
           />
         );
       default:
-        return <CheckEmailForm onEmailVerified={handleEmailVerified} />;
+        return <LoginForm onForgotPassword={() => {}} />;
     }
   }
 
