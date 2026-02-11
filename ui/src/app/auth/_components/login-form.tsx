@@ -1,8 +1,8 @@
+import { InputField } from "@/components/fields/input-field";
 import { PasswordField } from "@/components/fields/sensitive-input-field";
 import { FormSaveButton } from "@/components/ui/button";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
 import { Icon } from "@/components/ui/icons";
-import { Label } from "@/components/ui/label";
 import { loginSchema, LoginSchema } from "@/lib/schemas/auth-schema";
 import { api } from "@/services/api";
 import { useAuthActions } from "@/stores/user-store";
@@ -94,10 +94,13 @@ export function LoginForm({ onForgotPassword }: LoginFormProps) {
     <Form onSubmit={handleSubmit(onSubmit)}>
       <FormGroup cols={1}>
         <FormControl className="min-h-[2.5em]">
-          <div className="flex flex-col gap-1">
-            <Label>Email address</Label>
-            <p className="text-sm text-muted-foreground">admin@trenova.app</p>
-          </div>
+          <InputField
+            control={control}
+            name="emailAddress"
+            label="Email address"
+            placeholder="Email address"
+            rules={{ required: true }}
+          />
         </FormControl>
 
         <FormControl className="min-h-[4em]">

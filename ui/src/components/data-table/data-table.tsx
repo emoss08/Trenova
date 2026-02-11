@@ -363,7 +363,7 @@ export function DataTable<TData extends Record<string, any>>({
       columnOrder={columnOrder}
     >
       <div
-        className="flex flex-col gap-2 size-full"
+        className="flex size-full flex-col gap-2"
         style={
           {
             ...columnSizeVars,
@@ -399,7 +399,7 @@ export function DataTable<TData extends Record<string, any>>({
               />
             )}
             {!dataQuery.isLoading && dataQuery.data?.count === 0 ? (
-              <div className="flex flex-col items-center justify-center max-h-[300px] border border-border rounded-md p-0.5 overflow-hidden">
+              <div className="flex max-h-[300px] flex-col items-center justify-center overflow-hidden rounded-md border border-border p-0.5">
                 <div className="relative size-full">
                   <LetterGlitch
                     glitchColors={["#9c9c9c", "#696969", "#424242"]}
@@ -408,11 +408,11 @@ export function DataTable<TData extends Record<string, any>>({
                     outerVignette={false}
                     smooth={true}
                   />
-                  <div className="absolute inset-0 flex flex-col gap-1 items-center justify-center pointer-events-none">
-                    <p className="text-sm/none px-1 py-0.5 text-center font-medium uppercase select-none font-table dark:text-neutral-900 bg-amber-300 text-amber-950 dark:bg-amber-400">
+                  <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1">
+                    <p className="bg-amber-300 px-1 py-0.5 text-center font-table text-sm/none font-medium text-amber-950 uppercase select-none dark:bg-amber-400 dark:text-neutral-900">
                       No data available
                     </p>
-                    <p className="text-sm/none px-1 py-0.5 text-center font-medium uppercase select-none font-table dark:text-neutral-900 bg-neutral-900 text-white dark:bg-neutral-500">
+                    <p className="bg-neutral-900 px-1 py-0.5 text-center font-table text-sm/none font-medium text-white uppercase select-none dark:bg-neutral-500 dark:text-neutral-900">
                       Try adjusting your filters or search query
                     </p>
                   </div>
