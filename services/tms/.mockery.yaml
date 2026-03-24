@@ -1,0 +1,14 @@
+all: true
+dir: internal/testutil/mocks
+pkgname: mocks
+structname: "Mock{{.InterfaceName}}"
+filename: "mock_{{.InterfaceName}}.go"
+formatter: goimports
+template: testify
+packages:
+  github.com/emoss08/trenova/internal/core/ports/repositories:
+    config:
+      all: true
+  github.com/emoss08/trenova/internal/core/ports/services:
+    config:
+      all: true

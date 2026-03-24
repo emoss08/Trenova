@@ -1,0 +1,103 @@
+# Trenova Configuration Example
+# Copy this file to config.yaml and modify as needed
+
+# Application settings
+app:
+  name: trenova # Application name
+  env: development # Environment: development, staging, production
+  debug: true # Enable debug mode
+  version: 1.0.0 # Application version
+  problemTypeBaseUri: https://api.trenova.app/problems/ # RFC 9457 problem type base URI
+
+# HTTP Server configuration
+server:
+  host: 0.0.0.0 # Server host
+  port: 8080 # Server port
+  mode: debug # Gin mode: debug, release, test
+  cors:
+    enabled: true # Enable CORS
+    allowedOrigins: # Allowed origins for CORS
+      - http://localhost:5173
+      - http://localhost:3000
+    allowedMethods: # Allowed HTTP methods
+      - GET
+      - POST
+      - PUT
+      - DELETE
+      - PATCH
+      - OPTIONS
+    allowedHeaders: # Allowed headers
+      - Authorization
+      - Content-Type
+      - Accept
+    exposeHeaders: # Headers exposed to the client
+      - X-Request-Id
+    credentials: true # Allow credentials
+    maxAge: 86400 # Preflight cache duration in seconds
+
+# PostgreSQL database configuration
+database:
+  host: localhost # Database host
+  port: 5432 # Database port
+  name: trenova_go_db # Database name
+  user: postgres # Database user
+  password: postgres # Database password
+  sslMode: disable # SSL mode: disable, require, verify-ca, verify-full
+
+# Search configuration
+search:
+  enabled: false # Enable Meilisearch-backed global search
+  defaultLimit: 8 # Default number of hits returned per entity group
+  meilisearch:
+    url: http://localhost:7700 # Meilisearch base URL
+    apiKey: "" # Optional API key
+    timeout: 3s # Request timeout
+    indexes:
+      shipments: shipments
+      customers: customers
+      workers: workers
+      documents: documents
+
+# Security configuration
+security:
+  session:
+    secret: super-secret-key # Session secret (min 32 chars)
+    name: trenova_session # Cookie name for session
+    maxAge: 24h # Session max age in seconds (24 hours)
+    httpOnly: true # HttpOnly flag for cookies
+    secure: false # Secure flag (true for HTTPS only)
+    sameSite: lax # SameSite policy: strict, lax, none
+    domain: "" # Cookie domain (empty = current domain)
+    path: "/" # Cookie path
+    refreshWindow: 3600 # Refresh if expires within window (seconds)
+  rateLimit:
+    enabled: true # Enable rate limiting
+    requestsPerMinute: 60 # Requests per minute per IP
+  csrf:
+    tokenName: csrf_token # Name for CSRF token in session
+    headerName: X-CSRF-Token # Header name for CSRF token
+  encryption:
+    key: super-secret-key # Encryption key (min 32 chars)
+
+# Logging configuration
+logging:
+  level: debug # Log level: debug, info, warn, error
+  format: json # Log format: json, text
+  output: file # Log output: stdout, file
+  file:
+    path: logs/trenova.log # Log file path
+    maxSize: 100 # Maximum file size in MB
+    maxAge: 30 # Maximum file age in days
+    maxBackups: 10 # Maximum number of backups
+
+# Samsara integration configuration (optional)
+samsara:
+  token: "" # Samsara API token with required scopes
+  baseURL: https://api.samsara.com # Override for EU/CA as needed
+  timeout: 30s
+  userAgent: trenova-tms/1.0
+  retry:
+    enabled: true
+    maxAttempts: 4
+    initialBackoff: 500ms
+    maxBackoff: 10s

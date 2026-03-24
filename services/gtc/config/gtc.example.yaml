@@ -1,0 +1,23 @@
+projections:
+  - name: customer-search
+    source_table: public.customers
+    primary_keys: [id]
+    searchable_fields: [code, name]
+    filterable_fields: [organization_id, business_unit_id]
+    destination:
+      kind: meilisearch
+      index: customers
+
+  - name: customer-cache
+    source_table: public.customers
+    primary_keys: [id]
+    destination:
+      kind: redis_json
+      key_template: 'cache:customers:{{ value "organization_id" .New .Old }}:{{ value "business_unit_id" .New .Old }}:{{ value "id" .New .Old }}'
+
+  - name: customer-stream
+    source_table: public.customers
+    primary_keys: [id]
+    destination:
+      kind: redis_stream
+      stream: 'cdc:customers'

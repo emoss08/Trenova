@@ -1,0 +1,32 @@
+package dbtype
+
+type Operator string
+
+const (
+	OpEqual              = Operator("eq")
+	OpNotEqual           = Operator("ne")
+	OpGreaterThan        = Operator("gt")
+	OpGreaterThanOrEqual = Operator("gte")
+	OpLessThan           = Operator("lt")
+	OpLessThanOrEqual    = Operator("lte")
+	OpContains           = Operator("contains")
+	OpStartsWith         = Operator("startswith")
+	OpEndsWith           = Operator("endswith")
+	OpLike               = Operator("like")
+	OpILike              = Operator("ilike")
+	OpIn                 = Operator("in")
+	OpNotIn              = Operator("notin")
+	OpIsNull             = Operator("isnull")
+	OpIsNotNull          = Operator("isnotnull")
+	OpDateRange          = Operator("daterange")
+	OpLastNDays          = Operator("lastndays")
+	OpNextNDays          = Operator("nextndays")
+	OpToday              = Operator("today")
+	OpYesterday          = Operator("yesterday")
+	OpTomorrow           = Operator("tomorrow")
+	OpCountGt            = Operator("countgt")
+	OpCountLt            = Operator("countlt")
+	OpCountEq            = Operator("counteq")
+	OpCountGte           = Operator("countgte")
+	OpCountLte           = Operator("countlte")
+)

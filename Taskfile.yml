@@ -1,0 +1,37 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+includes:
+  tms:
+    taskfile: ./services/tms/Taskfile.yml
+    dir: ./services/tms
+  gtc:
+    taskfile: ./services/gtc/Taskfile.yml
+    dir: ./services/gtc
+  samsara:
+    taskfile: ./services/samsara-sim/Taskfile.yml
+    dir: ./services/samsara-sim
+
+tasks:
+  default:
+    desc: Show available top-level tasks
+    cmds:
+      - task --list
+
+  help:
+    desc: Show available top-level tasks
+    cmds:
+      - task --list
+
+  list:
+    desc: Show namespaced service tasks
+    cmds:
+      - task --list-all
+      - echo ''
+      - echo 'Examples:'
+      - echo '  task tms:run'
+      - echo '  task tms:test'
+      - echo '  task gtc:run'
+      - echo '  task gtc:validate-config'
+      - echo '  task gtc:backfill projection=shipment-search'

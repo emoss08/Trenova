@@ -1,0 +1,318 @@
+services:
+  postgres:
+    image: ghcr.io/emoss08/trenova-2/postgres:${TRENOVA_VERSION:-latest}
+    environment:
+      POSTGRES_USER: ${TRENOVA_DATABASE_USER}
+      POSTGRES_PASSWORD: ${TRENOVA_DATABASE_PASSWORD}
+      POSTGRES_DB: ${TRENOVA_DATABASE_NAME}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./config/init-temporal-db.sh:/docker-entrypoint-initdb.d/init-temporal-db.sh:ro
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${TRENOVA_DATABASE_USER} -d ${TRENOVA_DATABASE_NAME} && psql -U ${TRENOVA_DATABASE_USER} -d ${TRENOVA_DATABASE_NAME} -c 'SELECT 1'"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    networks:
+      - trenova
+
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    environment:
+      DATABASE_URL: postgres://${TRENOVA_DATABASE_USER}:${TRENOVA_DATABASE_PASSWORD}@postgres:5432/${TRENOVA_DATABASE_NAME}
+      LISTEN_PORT: 6432
+      AUTH_TYPE: scram-sha-256
+      POOL_MODE: session
+      MAX_CLIENT_CONN: 1000
+      DEFAULT_POOL_SIZE: 80
+      RESERVE_POOL_SIZE: 20
+      RESERVE_POOL_TIMEOUT: 5
+      MAX_DB_CONNECTIONS: 100
+      IGNORE_STARTUP_PARAMETERS: extra_float_digits,options,statement_timeout,idle_in_transaction_session_timeout
+      SERVER_TLS_SSLMODE: disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h 127.0.0.1 -p 6432 -U ${TRENOVA_DATABASE_USER}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - trenova
+
+  redis:
+    image: redis/redis-stack:latest
+    environment:
+      - ALLOW_EMPTY_PASSWORD=yes
+      - REDIS_ARGS=--maxmemory 1536mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+    networks:
+      - trenova
+
+  minio:
+    image: quay.io/minio/minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${TRENOVA_STORAGE_ACCESSKEY}
+      MINIO_ROOT_PASSWORD: ${TRENOVA_STORAGE_SECRETKEY}
+    volumes:
+      - minio_data:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    networks:
+      - trenova
+
+  meilisearch:
+    image: getmeili/meilisearch:v1.16
+    environment:
+      MEILI_MASTER_KEY: ${TRENOVA_MEILI_MASTER_KEY}
+      MEILI_ENV: production
+      MEILI_DB_PATH: /meili_data
+    volumes:
+      - meili_data:/meili_data
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--spider", "http://127.0.0.1:7700/health"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    networks:
+      - trenova
+
+  temporal:
+    image: temporalio/auto-setup:1.25
+    environment:
+      DB: postgres12
+      DB_PORT: 5432
+      POSTGRES_USER: ${TRENOVA_DATABASE_USER}
+      POSTGRES_PWD: ${TRENOVA_DATABASE_PASSWORD}
+      POSTGRES_SEEDS: postgres
+      DYNAMIC_CONFIG_FILE_PATH: /etc/temporal/dynamic_config.yaml
+    volumes:
+      - ./config/temporal-dynamicconfig.yaml:/etc/temporal/dynamic_config.yaml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "tctl", "--address", "temporal:7233", "cluster", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+    networks:
+      - trenova
+
+  temporal-ui:
+    image: temporalio/ui:2.31.2
+    environment:
+      TEMPORAL_ADDRESS: temporal:7233
+      TEMPORAL_UI_PORT: 8080
+    depends_on:
+      temporal:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - trenova
+
+  tms-migrate:
+    image: ghcr.io/emoss08/trenova-2/tms:${TRENOVA_VERSION:-latest}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        echo "Waiting for postgres to be ready..."
+        sleep 5
+        for i in 1 2 3 4 5; do
+          trenova db migrate && break
+          echo "Migration attempt $$i failed, retrying in 3s..."
+          sleep 3
+        done
+        trenova db seed --ignore-errors
+    environment:
+      APP_ENV: production
+      TRENOVA_DATABASE_HOST: pgbouncer
+      TRENOVA_DATABASE_PORT: 6432
+      TRENOVA_DATABASE_SSLMODE: disable
+      TRENOVA_DATABASE_PASSWORD: ${TRENOVA_DATABASE_PASSWORD}
+      TRENOVA_DATABASE_NAME: ${TRENOVA_DATABASE_NAME}
+      TRENOVA_DATABASE_USER: ${TRENOVA_DATABASE_USER}
+      TRENOVA_GOOGLE_APIKEY: ${TRENOVA_GOOGLE_APIKEY}
+      TRENOVA_SYSTEM_SYSTEMUSERPASSWORD: ${TRENOVA_SYSTEM_SYSTEMUSERPASSWORD}
+      TRENOVA_SECURITY_SESSION_SECRET: ${TRENOVA_SECURITY_SESSION_SECRET}
+      TRENOVA_SECURITY_ENCRYPTION_KEY: ${TRENOVA_SECURITY_ENCRYPTION_KEY}
+      TRENOVA_SECURITY_SESSION_DOMAIN: ${DOMAIN}
+      TRENOVA_STORAGE_ACCESSKEY: ${TRENOVA_STORAGE_ACCESSKEY}
+      TRENOVA_STORAGE_SECRETKEY: ${TRENOVA_STORAGE_SECRETKEY}
+      TRENOVA_STORAGE_PUBLICENDPOINT: https://storage.${DOMAIN}
+      TRENOVA_MEILI_MASTER_KEY: ${TRENOVA_MEILI_MASTER_KEY}
+    volumes:
+      - ./config/config.prod.yaml:/app/config/config.yaml:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_healthy
+    restart: "no"
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - trenova
+
+  tms-api:
+    image: ghcr.io/emoss08/trenova-2/tms:${TRENOVA_VERSION:-latest}
+    command: ["api", "run"]
+    environment:
+      APP_ENV: production
+      TRENOVA_DATABASE_HOST: pgbouncer
+      TRENOVA_DATABASE_PORT: 6432
+      TRENOVA_DATABASE_SSLMODE: disable
+      TRENOVA_DATABASE_PASSWORD: ${TRENOVA_DATABASE_PASSWORD}
+      TRENOVA_DATABASE_NAME: ${TRENOVA_DATABASE_NAME}
+      TRENOVA_DATABASE_USER: ${TRENOVA_DATABASE_USER}
+      TRENOVA_GOOGLE_APIKEY: ${TRENOVA_GOOGLE_APIKEY}
+      TRENOVA_SYSTEM_SYSTEMUSERPASSWORD: ${TRENOVA_SYSTEM_SYSTEMUSERPASSWORD}
+      TRENOVA_SECURITY_SESSION_SECRET: ${TRENOVA_SECURITY_SESSION_SECRET}
+      TRENOVA_SECURITY_ENCRYPTION_KEY: ${TRENOVA_SECURITY_ENCRYPTION_KEY}
+      TRENOVA_SECURITY_SESSION_DOMAIN: ${DOMAIN}
+      TRENOVA_STORAGE_ACCESSKEY: ${TRENOVA_STORAGE_ACCESSKEY}
+      TRENOVA_STORAGE_SECRETKEY: ${TRENOVA_STORAGE_SECRETKEY}
+      TRENOVA_STORAGE_PUBLICENDPOINT: https://storage.${DOMAIN}
+      TRENOVA_MEILI_MASTER_KEY: ${TRENOVA_MEILI_MASTER_KEY}
+    volumes:
+      - ./config/config.prod.yaml:/app/config/config.yaml:ro
+    depends_on:
+      tms-migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8080"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - trenova
+
+  tms-worker:
+    image: ghcr.io/emoss08/trenova-2/tms:${TRENOVA_VERSION:-latest}
+    command: ["worker", "run"]
+    environment:
+      APP_ENV: production
+      TRENOVA_DATABASE_HOST: pgbouncer
+      TRENOVA_DATABASE_PORT: 6432
+      TRENOVA_DATABASE_SSLMODE: disable
+      TRENOVA_DATABASE_PASSWORD: ${TRENOVA_DATABASE_PASSWORD}
+      TRENOVA_DATABASE_NAME: ${TRENOVA_DATABASE_NAME}
+      TRENOVA_DATABASE_USER: ${TRENOVA_DATABASE_USER}
+      TRENOVA_GOOGLE_APIKEY: ${TRENOVA_GOOGLE_APIKEY}
+      TRENOVA_SYSTEM_SYSTEMUSERPASSWORD: ${TRENOVA_SYSTEM_SYSTEMUSERPASSWORD}
+      TRENOVA_SECURITY_SESSION_SECRET: ${TRENOVA_SECURITY_SESSION_SECRET}
+      TRENOVA_SECURITY_ENCRYPTION_KEY: ${TRENOVA_SECURITY_ENCRYPTION_KEY}
+      TRENOVA_SECURITY_SESSION_DOMAIN: ${DOMAIN}
+      TRENOVA_STORAGE_ACCESSKEY: ${TRENOVA_STORAGE_ACCESSKEY}
+      TRENOVA_STORAGE_SECRETKEY: ${TRENOVA_STORAGE_SECRETKEY}
+      TRENOVA_STORAGE_PUBLICENDPOINT: https://storage.${DOMAIN}
+      TRENOVA_MEILI_MASTER_KEY: ${TRENOVA_MEILI_MASTER_KEY}
+    volumes:
+      - ./config/config.prod.yaml:/app/config/config.yaml:ro
+    depends_on:
+      tms-migrate:
+        condition: service_completed_successfully
+      redis:
+        condition: service_healthy
+      temporal:
+        condition: service_healthy
+      pgbouncer:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    networks:
+      - trenova
+
+  caddy:
+    image: ghcr.io/emoss08/trenova-2/client:${TRENOVA_VERSION:-latest}
+    environment:
+      DOMAIN: ${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      tms-api:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+    networks:
+      - trenova
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  meili_data:
+  caddy_data:
+  caddy_config:
+
+networks:
+  trenova:
+    driver: bridge

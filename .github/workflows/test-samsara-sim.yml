@@ -1,0 +1,61 @@
+name: Test Samsara Sim
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "claude/**"
+    paths:
+      - "services/samsara-sim/**"
+      - "docker-compose-local.yml"
+      - ".github/workflows/test-samsara-sim.yml"
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "services/samsara-sim/**"
+      - "docker-compose-local.yml"
+      - ".github/workflows/test-samsara-sim.yml"
+
+jobs:
+  smoke:
+    name: Run Samsara Sim Smoke Suite
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Ensure smoke dependencies
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Start simulator
+        run: docker compose -f docker-compose-local.yml --profile samsara-sim up -d samsara-sim
+
+      - name: Wait for simulator health
+        run: |
+          for i in $(seq 1 60); do
+            if curl -fsS http://localhost:8091/_sim/health | jq -e '.status == "ok"' >/dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "simulator did not become healthy in time" >&2
+          exit 1
+
+      - name: Run CI smoke checks
+        working-directory: ./services/samsara-sim
+        env:
+          SIM_BASE_URL: http://localhost:8091
+          SIM_TOKEN: dev-samsara-token
+        run: bash ./scripts/smoke_ci.sh
+
+      - name: Print simulator logs on failure
+        if: failure()
+        run: docker compose -f docker-compose-local.yml logs --no-color samsara-sim
+
+      - name: Stop simulator
+        if: always()
+        run: docker compose -f docker-compose-local.yml --profile samsara-sim down --remove-orphans

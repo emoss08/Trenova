@@ -1,0 +1,17 @@
+import { MAP_ID } from "@/lib/constants";
+import { AdvancedMarker, APIProvider, Map } from "@vis.gl/react-google-maps";
+
+interface LazyMapProps {
+  apiKey: string;
+  position: { lat: number; lng: number };
+}
+
+export default function LazyMap({ apiKey, position }: LazyMapProps) {
+  return (
+    <APIProvider apiKey={apiKey}>
+      <Map defaultCenter={position} defaultZoom={17} mapId={MAP_ID}>
+        <AdvancedMarker position={position} />
+      </Map>
+    </APIProvider>
+  );
+}

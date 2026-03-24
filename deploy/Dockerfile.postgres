@@ -1,0 +1,10 @@
+FROM postgis/postgis:16-3.4-alpine
+
+RUN apk add --no-cache openssl && \
+    openssl req -new -x509 -days 3650 -nodes -text \
+      -out /var/lib/postgresql/server.crt \
+      -keyout /var/lib/postgresql/server.key \
+      -subj '/CN=postgres' && \
+    chown postgres:postgres /var/lib/postgresql/server.crt /var/lib/postgresql/server.key && \
+    chmod 600 /var/lib/postgresql/server.key && \
+    apk del openssl

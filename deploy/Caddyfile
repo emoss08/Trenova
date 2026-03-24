@@ -1,0 +1,38 @@
+{$DOMAIN:trenova.app} {
+	tls internal
+
+	header {
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		X-XSS-Protection "1; mode=block"
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		-Server
+	}
+
+	handle /api/* {
+		reverse_proxy tms-api:8080
+	}
+
+	handle /temporal-ui/* {
+		uri strip_prefix /temporal-ui
+		reverse_proxy temporal-ui:8080
+	}
+
+	handle /minio/* {
+		uri strip_prefix /minio
+		reverse_proxy minio:9001
+	}
+
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+}
+
+storage.{$DOMAIN:trenova.app} {
+	tls internal
+	reverse_proxy minio:9000
+}

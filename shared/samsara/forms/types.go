@@ -1,0 +1,19 @@
+package forms
+
+import samsaraspec "github.com/emoss08/trenova/shared/samsara/internal/samsaraspec"
+
+type FormTemplate = samsaraspec.FormTemplateResponseObjectResponseBody
+
+type FormSubmission = samsaraspec.FormSubmissionResponseObjectResponseBody
+
+type TemplateListResponse = samsaraspec.FormTemplatesGetFormTemplatesResponseBody
+
+type SubmissionListResponse = samsaraspec.FormSubmissionsGetFormSubmissionsResponseBody
+
+type CreateSubmissionRequest = samsaraspec.FormSubmissionsPostFormSubmissionRequestBody
+
+type UpdateSubmissionRequest = samsaraspec.FormSubmissionsPatchFormSubmissionRequestBody
+
+type createSubmissionResponse = samsaraspec.FormSubmissionsPostFormSubmissionResponseBody
+
+type updateSubmissionResponse = samsaraspec.FormSubmissionsPatchFormSubmissionResponseBody

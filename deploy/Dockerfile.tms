@@ -1,0 +1,34 @@
+FROM golang:1.26-alpine AS builder
+
+RUN apk add --no-cache gcc musl-dev
+
+WORKDIR /build
+
+COPY shared/go.mod shared/go.sum ./shared/
+COPY services/tms/go.mod services/tms/go.sum ./services/tms/
+
+WORKDIR /build/services/tms
+ENV GOWORK=off
+RUN go mod download
+
+WORKDIR /build
+COPY shared/ ./shared/
+COPY services/tms/ ./services/tms/
+
+WORKDIR /build/services/tms
+ENV CGO_ENABLED=1
+RUN go build -tags musl -ldflags="-s -w" -o /build/trenova ./cmd/cli
+
+FROM alpine:3.21
+
+RUN apk add --no-cache ca-certificates tzdata && \
+    addgroup -S trenova && adduser -S trenova -G trenova
+
+COPY --from=builder /build/trenova /usr/local/bin/trenova
+COPY --from=builder /build/services/tms/internal/infrastructure/database/seeds/base/data/ /app/internal/infrastructure/database/seeds/base/data/
+COPY --from=builder /build/services/tms/internal/infrastructure/database/seeds/development/data/ /app/internal/infrastructure/database/seeds/development/data/
+
+USER trenova
+WORKDIR /app
+
+ENTRYPOINT ["trenova"]

@@ -1,0 +1,65 @@
+package intutils
+
+import (
+	"fmt"
+	"math"
+)
+
+type Numeric interface {
+	~int | ~int8 | ~int16 | ~int32 | ~int64 |
+		~uint | ~uint8 | ~uint16 | ~uint32 | ~uint64 |
+		~float32 | ~float64
+}
+
+func SafeIntToUint32(value int) uint32 {
+	if value > math.MaxUint32 || value < 0 {
+		return 0
+	}
+
+	return uint32(value)
+}
+
+func SafeUint64ToInt64(value uint64) (int64, error) {
+	if value > math.MaxInt64 {
+		return 0, fmt.Errorf("value %d is outside int64 range", value)
+	}
+
+	return int64(value), nil
+}
+
+func WithDefault(val, def int) int {
+	if val == 0 {
+		return def
+	}
+
+	return val
+}
+
+func Clamp[T ~int | ~int64](value, minVal, maxVal T) T {
+	if value < minVal {
+		return minVal
+	}
+	if value > maxVal {
+		return maxVal
+	}
+	return value
+}
+
+func SafeShiftAmount(n, maxShift int) uint {
+	if n < 0 {
+		return 0
+	}
+	if n > maxShift {
+		return uint(maxShift)
+	}
+	return uint(n)
+}
+
+func ClonePointer[T Numeric](value *T) *T {
+	if value == nil {
+		return nil
+	}
+
+	cloned := *value
+	return &cloned
+}

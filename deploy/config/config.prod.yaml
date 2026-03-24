@@ -1,0 +1,123 @@
+app:
+  name: trenova
+  env: production
+  debug: false
+  version: 0.0.1
+  problemTypeBaseUri: https://api.trenova.app/problems/
+
+server:
+  host: 0.0.0.0
+  port: 8080
+  mode: release
+  readTimeout: 30s
+  writeTimeout: 30s
+  idleTimeout: 120s
+  shutdownTimeout: 15s
+  cors:
+    enabled: false
+
+database:
+  host: postgres
+  port: 5432
+  name: trenova_db
+  user: trenova
+  password: placeholder
+  sslMode: disable
+  maxIdleConns: 25
+  maxOpenConns: 200
+
+cache:
+  host: redis
+  port: 6379
+  db: 0
+  poolSize: 50
+  minIdleConns: 10
+
+security:
+  session:
+    secret: placeholder-secret-min-32-characters-long
+    name: trenova_session
+    maxAge: 24h
+    httpOnly: true
+    secure: true
+    sameSite: lax
+    path: /
+    domain: ""
+    refreshWindow: 1h
+  rateLimit:
+    enabled: true
+    requestsPerMinute: 60
+    burstSize: 10
+  csrf:
+    tokenName: csrf_token
+    headerName: X-CSRF-Token
+  encryption:
+    key: placeholder-encryption-key-min-32-chars
+
+monitoring:
+  metrics:
+    enabled: false
+    port: 9090
+    path: /metrics
+  tracing:
+    enabled: false
+    provider: stdout
+    endpoint: localhost:4317
+    serviceName: trenova-tms
+
+logging:
+  level: info
+  format: json
+  output: stdout
+
+temporal:
+  hostPort: temporal:7233
+  namespace: default
+  identity: trenova-tms
+  security:
+    enableEncryption: false
+    encryptionKeyID: unused
+  worker:
+    maxConcurrentActivities: 20
+    maxConcurrentWorkflows: 10
+
+audit:
+  bufferFlushInterval: 10s
+  batchSize: 500
+  maxEntriesPerFlush: 5000
+  dlqRetryInterval: 5m
+  dlqMaxRetries: 5
+
+storage:
+  endpoint: minio:9000
+  publicEndpoint: ""
+  accessKey: placeholder
+  secretKey: placeholder
+  bucket: trenova
+  region: us-east-1
+  useSSL: false
+
+google:
+  apiKey: placeholder
+
+system:
+  systemUserPassword: placeholder
+
+samsara:
+  token: placeholder
+  baseURL: https://api.samsara.com
+  timeout: 30s
+  userAgent: trenova-tms/1.0
+  retry:
+    enabled: true
+    maxAttempts: 4
+    initialBackoff: 500ms
+    maxBackoff: 10s
+
+update:
+  enabled: true
+  checkInterval: 1h
+  githubOwner: emoss08
+  githubRepo: trenova
+  allowPrerelease: false
+  offlineMode: false

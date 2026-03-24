@@ -1,0 +1,349 @@
+name: Test TMS
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "claude/**"
+    paths:
+      - "services/tms/**"
+      - "shared/**"
+      - ".github/workflows/test-tms.yml"
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "services/tms/**"
+      - "shared/**"
+      - ".github/workflows/test-tms.yml"
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests:
+    name: Run Unit Tests
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/tms/go.sum
+            shared/go.sum
+
+      - name: Download dependencies
+        run: |
+          cd services/tms && go mod download
+          cd ../../shared && go mod download
+
+      - name: Install gotestfmt
+        run: |
+          go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Run shared module tests
+        working-directory: ./shared
+        run: |
+          set -euo pipefail
+          go test -json -coverprofile=coverage-shared.out -covermode=atomic ./... 2>&1 | gotestfmt
+
+      - name: Run unit tests
+        working-directory: ./services/tms
+        env:
+          APP_ENV: test
+        run: |
+          set -euo pipefail
+          go test -json -coverprofile=coverage-unit.out -covermode=atomic ./... 2>&1 | gotestfmt
+
+      - name: Upload unit coverage artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: tms-unit-coverage
+          path: |
+            shared/coverage-shared.out
+            services/tms/coverage-unit.out
+          if-no-files-found: error
+
+  integration-tests:
+    name: Run Integration Tests
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: trenova_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/tms/go.sum
+            shared/go.sum
+
+      - name: Download dependencies
+        run: |
+          cd services/tms && go mod download
+          cd ../../shared && go mod download
+
+      - name: Install gotestfmt
+        run: |
+          go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Run integration tests
+        working-directory: ./services/tms
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/trenova_test?sslmode=disable
+          REDIS_URL: redis://localhost:6379/0
+          APP_ENV: test
+          TESTCONTAINERS_RYUK_DISABLED: true
+        run: |
+          set -euo pipefail
+          go test -json -tags=integration -coverprofile=coverage-integration.out -covermode=atomic ./... 2>&1 | gotestfmt
+
+      - name: Upload integration coverage artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: tms-integration-coverage
+          path: services/tms/coverage-integration.out
+          if-no-files-found: error
+
+  coverage:
+    name: Merge Coverage Reports
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    needs:
+      - unit-tests
+      - integration-tests
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/tms/go.sum
+            shared/go.sum
+
+      - name: Download unit coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tms-unit-coverage
+          path: .
+
+      - name: Download integration coverage artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: tms-integration-coverage
+          path: .
+
+      - name: Merge coverage reports
+        run: |
+          go install github.com/wadey/gocovmerge@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+          gocovmerge shared/coverage-shared.out services/tms/coverage-unit.out services/tms/coverage-integration.out > services/tms/coverage.out
+
+      - name: Upload coverage reports
+        uses: codecov/codecov-action@v5
+        with:
+          files: ./services/tms/coverage.out
+          flags: tms
+          fail_ci_if_error: false
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+  race-detection:
+    name: Race Detection
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: trenova_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:7
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/tms/go.sum
+            shared/go.sum
+
+      - name: Download dependencies
+        run: |
+          cd services/tms && go mod download
+          cd ../../shared && go mod download
+
+      - name: Install gotestfmt
+        run: |
+          go install github.com/gotesttools/gotestfmt/v2/cmd/gotestfmt@latest
+          echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
+
+      - name: Run shared module race tests
+        working-directory: ./shared
+        run: |
+          set -euo pipefail
+          go test -json -race ./... 2>&1 | gotestfmt
+
+      - name: Run TMS race tests
+        working-directory: ./services/tms
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/trenova_test?sslmode=disable
+          REDIS_URL: redis://localhost:6379/0
+          APP_ENV: test
+          TESTCONTAINERS_RYUK_DISABLED: true
+        run: |
+          set -euo pipefail
+          go test -json -race -tags=integration ./... 2>&1 | gotestfmt
+
+  lint:
+    name: Run Lint
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/tms/go.sum
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v9
+        with:
+          version: latest
+          working-directory: ./services/tms
+          args: --timeout=5m
+
+  vet:
+    name: Run Vet
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/tms/go.sum
+
+      - name: Download dependencies
+        working-directory: ./services/tms
+        run: go mod download
+
+      - name: Run go vet
+        working-directory: ./services/tms
+        run: go vet ./...
+
+  build:
+    name: Build
+    if: github.event_name != 'schedule' && github.event_name != 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache: true
+          cache-dependency-path: |
+            go.work.sum
+            services/tms/go.sum
+
+      - name: Download dependencies
+        working-directory: ./services/tms
+        run: go mod download
+
+      - name: Build
+        working-directory: ./services/tms
+        run: go build -v ./...

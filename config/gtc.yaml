@@ -1,0 +1,72 @@
+projections:
+  - name: shipment-search
+    source_table: public.shipments
+    primary_keys: [id, organization_id, business_unit_id]
+    searchable_fields: [pro_number, bol]
+    filterable_fields: [organization_id, business_unit_id]
+    destination:
+      kind: meilisearch
+      index: shipments
+
+  - name: customer-search
+    source_table: public.customers
+    primary_keys: [id, business_unit_id, organization_id]
+    searchable_fields: [code, name]
+    filterable_fields: [organization_id, business_unit_id]
+    destination:
+      kind: meilisearch
+      index: customers
+
+  - name: worker-search
+    source_table: public.workers
+    primary_keys: [id, organization_id, business_unit_id]
+    searchable_fields: [first_name, last_name, type]
+    filterable_fields: [organization_id, business_unit_id]
+    destination:
+      kind: meilisearch
+      index: workers
+
+  - name: document-search
+    source_table: public.documents
+    primary_keys: [id, organization_id, business_unit_id]
+    searchable_fields: [file_name, original_name, description]
+    filterable_fields: [organization_id, business_unit_id]
+    destination:
+      kind: meilisearch
+      index: documents
+
+  - name: shipment-cache
+    source_table: public.shipments
+    primary_keys: [id, organization_id, business_unit_id]
+    destination:
+      kind: redis_json
+      key_template: 'cache:shipments:{{ value "organization_id" .New .Old }}:{{ value "business_unit_id" .New .Old }}:{{ value "id" .New .Old }}'
+
+  - name: customer-cache
+    source_table: public.customers
+    primary_keys: [id, business_unit_id, organization_id]
+    destination:
+      kind: redis_json
+      key_template: 'cache:customers:{{ value "organization_id" .New .Old }}:{{ value "business_unit_id" .New .Old }}:{{ value "id" .New .Old }}'
+
+  - name: worker-cache
+    source_table: public.workers
+    primary_keys: [id, organization_id, business_unit_id]
+    destination:
+      kind: redis_json
+      key_template: 'cache:workers:{{ value "organization_id" .New .Old }}:{{ value "business_unit_id" .New .Old }}:{{ value "id" .New .Old }}'
+
+  - name: document-cache
+    source_table: public.documents
+    primary_keys: [id, organization_id, business_unit_id]
+    destination:
+      kind: redis_json
+      key_template: 'cache:documents:{{ value "organization_id" .New .Old }}:{{ value "business_unit_id" .New .Old }}:{{ value "id" .New .Old }}'
+
+  - name: shipment-stream
+    source_table: public.shipments
+    primary_keys: [id, organization_id, business_unit_id]
+    ignored_updates: [updated_at, version, search_vector]
+    destination:
+      kind: redis_stream
+      stream: "cdc:shipments"

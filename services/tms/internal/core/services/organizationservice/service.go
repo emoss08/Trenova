@@ -1,0 +1,323 @@
+package organizationservice
+
+import (
+	"context"
+	"fmt"
+	"mime/multipart"
+	"path/filepath"
+	"slices"
+	"strings"
+
+	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/internal/core/ports/storage"
+	"github.com/emoss08/trenova/internal/core/services/auditservice"
+	"github.com/emoss08/trenova/internal/infrastructure/config"
+	"github.com/emoss08/trenova/pkg/dberror"
+	"github.com/emoss08/trenova/pkg/errortypes"
+	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/shared/jsonutils"
+	"github.com/emoss08/trenova/shared/pulid"
+	"github.com/google/uuid"
+	"go.uber.org/fx"
+	"go.uber.org/zap"
+)
+
+type Params struct {
+	fx.In
+
+	Logger       *zap.Logger
+	Repo         repositories.OrganizationRepository
+	AuditService services.AuditService
+	Storage      storage.Client
+	Config       *config.Config
+	Validator    *Validator
+}
+
+type service struct {
+	l            *zap.Logger
+	repo         repositories.OrganizationRepository
+	auditService services.AuditService
+	storage      storage.Client
+	storageCfg   *config.StorageConfig
+	v            *Validator
+}
+
+func New(p Params) services.OrganizationService {
+	return &service{
+		l:            p.Logger.Named("service.organization"),
+		repo:         p.Repo,
+		storage:      p.Storage,
+		auditService: p.AuditService,
+		storageCfg:   p.Config.GetStorageConfig(),
+		v:            p.Validator,
+	}
+}
+
+func (s *service) GetByID(
+	ctx context.Context,
+	req repositories.GetOrganizationByIDRequest,
+) (*tenant.Organization, error) {
+	return s.repo.GetByID(ctx, req)
+}
+
+func (s *service) Update(
+	ctx context.Context,
+	entity *tenant.Organization,
+) (*tenant.Organization, error) {
+	log := s.l.With(zap.String("operation", "Update"), zap.String("orgID", entity.ID.String()))
+
+	if err := s.v.ValidateUpdate(ctx, entity); err != nil {
+		return nil, err
+	}
+
+	updatedEntity, err := s.repo.Update(ctx, entity)
+	if err != nil {
+		log.Error("failed to update organization", zap.Error(err))
+		return nil, mapOrganizationUniqueConstraint(err)
+	}
+
+	return updatedEntity, nil
+}
+
+func mapOrganizationUniqueConstraint(err error) error {
+	if !dberror.IsUniqueConstraintViolation(err) {
+		return err
+	}
+
+	multiErr := errortypes.NewMultiError()
+
+	switch dberror.ExtractConstraintName(err) {
+	case "idx_organizations_name_business_unit":
+		multiErr.Add(
+			"name",
+			errortypes.ErrDuplicate,
+			"Organization with this name already exists in this business unit",
+		)
+	case "idx_organizations_scac_business_unit":
+		multiErr.Add(
+			"scacCode",
+			errortypes.ErrDuplicate,
+			"Organization with this SCAC code already exists in this business unit",
+		)
+	case "idx_organizations_dot_business_unit":
+		multiErr.Add(
+			"dotNumber",
+			errortypes.ErrDuplicate,
+			"Organization with this DOT number already exists in this business unit",
+		)
+	default:
+		return err
+	}
+
+	return multiErr
+}
+
+func (s *service) UploadLogo(
+	ctx context.Context,
+	req *services.UploadLogoRequest,
+	userID pulid.ID,
+) (*tenant.Organization, error) {
+	log := s.l.With(
+		zap.String("operation", "UploadLogo"),
+		zap.String("userID", req.TenantInfo.UserID.String()),
+	)
+
+	if multiErr := s.validateLogoFile(req.File); multiErr != nil {
+		return nil, multiErr
+	}
+
+	file, err := req.File.Open()
+	if err != nil {
+		return nil, errortypes.NewDatabaseError("Failed to process uploaded logo").WithInternal(err)
+	}
+	defer file.Close()
+
+	contentType := req.File.Header.Get("Content-Type")
+	ext := strings.ToLower(filepath.Ext(req.File.Filename))
+	key := fmt.Sprintf(
+		"%s/organization/logo/%s%s",
+		req.OrganizationID.String(),
+		uuid.NewString(),
+		ext,
+	)
+
+	if _, err = s.storage.Upload(ctx, &storage.UploadParams{
+		Key:         key,
+		ContentType: contentType,
+		Size:        req.File.Size,
+		Body:        file,
+		Metadata: map[string]string{
+			"original_name": req.File.Filename,
+			"resource_type": "organization-logo",
+			"resource_id":   req.OrganizationID.String(),
+		},
+	}); err != nil {
+		return nil, errortypes.NewDatabaseError("Failed to upload organization logo").
+			WithInternal(err)
+	}
+
+	entity, err := s.repo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: req.OrganizationID,
+			BuID:  req.TenantInfo.BuID,
+		},
+	})
+	if err != nil {
+		_ = s.storage.Delete(ctx, key)
+		return nil, err
+	}
+
+	previousLogo := entity.LogoURL
+	entity.LogoURL = key
+
+	updatedEntity, err := s.repo.Update(ctx, entity)
+	if err != nil {
+		_ = s.storage.Delete(ctx, key)
+		return nil, err
+	}
+
+	if previousLogo != "" && !isExternalLogoURL(previousLogo) && previousLogo != key {
+		if delErr := s.storage.Delete(ctx, previousLogo); delErr != nil {
+			s.l.Warn(
+				"failed to delete previous organization logo",
+				zap.String("orgID", req.OrganizationID.String()),
+				zap.String("logoKey", previousLogo),
+				zap.Error(delErr),
+			)
+		}
+	}
+
+	if err = s.auditService.LogAction(&services.LogActionParams{
+		Resource:       permission.ResourceOrganization,
+		ResourceID:     updatedEntity.GetResourceID(),
+		Operation:      permission.OpUpdate,
+		UserID:         userID,
+		CurrentState:   jsonutils.MustToJSON(updatedEntity),
+		PreviousState:  jsonutils.MustToJSON(entity),
+		OrganizationID: entity.ID,
+		BusinessUnitID: entity.BusinessUnitID,
+	}, auditservice.WithComment("Organization updated")); err != nil {
+		log.Error("failed to log audit action", zap.Error(err))
+	}
+
+	return updatedEntity, nil
+}
+
+func (s *service) GetLogoURL(
+	ctx context.Context,
+	req services.GetLogoURLRequest,
+) (*services.GetLogoURLResponse, error) {
+	entity, err := s.repo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: req.OrganizationID,
+			BuID:  req.TenantInfo.BuID,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if entity.LogoURL == "" {
+		return nil, errortypes.NewNotFoundError("Organization logo not found")
+	}
+
+	if isExternalLogoURL(entity.LogoURL) {
+		return &services.GetLogoURLResponse{URL: entity.LogoURL}, nil
+	}
+
+	url, err := s.storage.GetPresignedURL(ctx, &storage.PresignedURLParams{
+		Key:    entity.LogoURL,
+		Expiry: s.storageCfg.GetPresignedURLExpiry(),
+	})
+	if err != nil {
+		return nil, errortypes.NewDatabaseError("Failed to generate organization logo URL").
+			WithInternal(err)
+	}
+
+	return &services.GetLogoURLResponse{URL: url}, nil
+}
+
+func (s *service) DeleteLogo(
+	ctx context.Context,
+	req services.DeleteLogoRequest,
+) (*tenant.Organization, error) {
+	org, err := s.repo.GetByID(ctx, repositories.GetOrganizationByIDRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: req.OrganizationID,
+			BuID:  req.TenantInfo.BuID,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if org.LogoURL == "" {
+		return org, nil
+	}
+
+	previousLogo := org.LogoURL
+	updatedOrg, err := s.repo.ClearLogoURL(ctx, req.OrganizationID, org.Version)
+	if err != nil {
+		return nil, err
+	}
+
+	if !isExternalLogoURL(previousLogo) {
+		if delErr := s.storage.Delete(ctx, previousLogo); delErr != nil {
+			s.l.Warn(
+				"failed to delete organization logo object after clearing logo URL",
+				zap.String("orgID", req.OrganizationID.String()),
+				zap.String("logoKey", previousLogo),
+				zap.Error(delErr),
+			)
+		}
+	}
+
+	return updatedOrg, nil
+}
+
+func (s *service) validateLogoFile(file *multipart.FileHeader) *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+	if file == nil {
+		multiErr.Add("file", errortypes.ErrRequired, "Logo file is required")
+		return multiErr
+	}
+
+	if file.Size == 0 {
+		multiErr.Add("file", errortypes.ErrRequired, "Logo file cannot be empty")
+	}
+
+	if file.Size > s.storageCfg.GetMaxFileSize() {
+		multiErr.Add("file", errortypes.ErrInvalidLength, "Logo file exceeds maximum allowed size")
+	}
+
+	contentType := strings.ToLower(file.Header.Get("Content-Type"))
+	allowedMIMETypes := []string{"image/jpeg", "image/png", "image/webp"}
+	if contentType != "" &&
+		contentType != "application/octet-stream" &&
+		!slices.Contains(allowedMIMETypes, contentType) {
+		multiErr.Add(
+			"file",
+			errortypes.ErrInvalidFormat,
+			"Only image files are allowed for organization logos",
+		)
+	}
+
+	ext := strings.ToLower(filepath.Ext(file.Filename))
+	allowedExtensions := []string{".jpg", ".jpeg", ".png", ".webp"}
+	if ext == "" || !slices.Contains(allowedExtensions, ext) {
+		multiErr.Add("file", errortypes.ErrInvalidFormat, "Unsupported logo file extension")
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+func isExternalLogoURL(value string) bool {
+	return strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://")
+}

@@ -1,0 +1,111 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+vars:
+  ROOT_DIR: "{{.TASKFILE_DIR}}/../.."
+  APP_NAME: gtc
+  BUILD_DIR: ./build
+  BIN_PATH: "{{.BUILD_DIR}}/{{.APP_NAME}}"
+  DOCKER_COMPOSE_LOCAL: "docker compose -f {{.ROOT_DIR}}/docker-compose-local.yml"
+
+tasks:
+  default:
+    cmds:
+      - task: help
+
+  help:
+    desc: Display available tasks
+    cmds:
+      - task --list
+
+  build:
+    desc: Build the GTC binary
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - go build -o {{.BIN_PATH}} ./cmd/gateway
+
+  run:
+    desc: Run the GTC service locally
+    cmds:
+      - go run ./cmd/gateway run
+
+  validate-config:
+    desc: Validate GTC config, sinks, and table metadata
+    cmds:
+      - go run ./cmd/gateway validate-config
+
+  backfill:
+    desc: Run a snapshot backfill for selected projections or tables
+    cmds:
+      - |
+        if [ -n "{{.projection}}" ]; then
+          go run ./cmd/gateway backfill --projection "{{.projection}}"{{if .table}} --table "{{.table}}"{{end}}
+        elif [ -n "{{.table}}" ]; then
+          go run ./cmd/gateway backfill --table "{{.table}}"
+        else
+          go run ./cmd/gateway backfill
+        fi
+
+  replay-dlq:
+    desc: Replay dead-letter entries back through the normal sink path
+    cmds:
+      - |
+        if [ -n "{{.limit}}" ]; then
+          go run ./cmd/gateway replay-dlq --limit {{.limit}}{{if .delete}} --delete={{.delete}}{{end}}
+        elif [ -n "{{.delete}}" ]; then
+          go run ./cmd/gateway replay-dlq --delete={{.delete}}
+        else
+          go run ./cmd/gateway replay-dlq
+        fi
+
+  test:
+    desc: Run unit tests
+    cmds:
+      - go test ./...
+
+  test-race:
+    desc: Run tests with race detector
+    cmds:
+      - go test -race ./...
+
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - golangci-lint run ./...
+
+  fmt:
+    desc: Format Go code
+    cmds:
+      - gofmt -w .
+
+  tidy:
+    desc: Tidy module dependencies
+    cmds:
+      - go mod tidy
+      - go mod verify
+
+  docker-build:
+    desc: Build the GTC Docker image
+    cmds:
+      - "{{.DOCKER_COMPOSE_LOCAL}} build gtc"
+
+  docker-up:
+    desc: Start GTC in local docker compose
+    cmds:
+      - "{{.DOCKER_COMPOSE_LOCAL}} up -d --build gtc"
+
+  docker-down:
+    desc: Stop GTC in local docker compose
+    cmds:
+      - "{{.DOCKER_COMPOSE_LOCAL}} stop gtc"
+
+  docker-logs:
+    desc: Tail GTC logs from local docker compose
+    cmds:
+      - "{{.DOCKER_COMPOSE_LOCAL}} logs -f gtc"
+
+  docker-ps:
+    desc: Show GTC container status
+    cmds:
+      - "{{.DOCKER_COMPOSE_LOCAL}} ps gtc"

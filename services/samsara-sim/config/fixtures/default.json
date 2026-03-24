@@ -1,0 +1,1519 @@
+{
+  "addresses": [
+    {
+      "id": "addr-1",
+      "name": "Austin Main Yard",
+      "formattedAddress": "100 Fleet Ave, Austin, TX 78701",
+      "latitude": 30.2672,
+      "longitude": -97.7431,
+      "notes": "Primary dispatch yard"
+    },
+    {
+      "id": "addr-2",
+      "name": "Dallas Distribution Hub",
+      "formattedAddress": "200 Warehouse Rd, Dallas, TX 75201",
+      "latitude": 32.7767,
+      "longitude": -96.797,
+      "notes": "North Texas cross-dock"
+    },
+    {
+      "id": "addr-3",
+      "name": "San Antonio Customer Drop",
+      "formattedAddress": "455 Commerce St, San Antonio, TX 78205",
+      "latitude": 29.4241,
+      "longitude": -98.4936
+    },
+    {
+      "id": "addr-4",
+      "name": "Houston Regional Depot",
+      "formattedAddress": "860 Bay Area Blvd, Houston, TX 77058",
+      "latitude": 29.5502,
+      "longitude": -95.097,
+      "notes": "Regional depot and fueling"
+    }
+  ],
+  "assets": [
+    {
+      "id": "veh-1001",
+      "name": "Truck 1001",
+      "type": "vehicle",
+      "licensePlate": "TX-1001",
+      "make": "Freightliner",
+      "model": "Cascadia",
+      "serialNumber": "VIN1001SIM",
+      "regulationMode": "regulated",
+      "externalIds": {
+        "tmsVehicleId": "unit-1001"
+      },
+      "createdAtTime": "2026-01-01T08:00:00Z",
+      "updatedAtTime": "2026-03-01T14:24:00Z"
+    },
+    {
+      "id": "veh-1002",
+      "name": "Truck 1002",
+      "type": "vehicle",
+      "licensePlate": "TX-1002",
+      "make": "Volvo",
+      "model": "VNL",
+      "serialNumber": "VIN1002SIM",
+      "regulationMode": "regulated",
+      "externalIds": {
+        "tmsVehicleId": "unit-1002"
+      },
+      "createdAtTime": "2026-01-01T08:00:00Z",
+      "updatedAtTime": "2026-03-01T14:24:00Z"
+    },
+    {
+      "id": "veh-1003",
+      "name": "Truck 1003",
+      "type": "vehicle",
+      "licensePlate": "TX-1003",
+      "make": "Kenworth",
+      "model": "T680",
+      "serialNumber": "VIN1003SIM",
+      "regulationMode": "regulated",
+      "externalIds": {
+        "tmsVehicleId": "unit-1003"
+      },
+      "createdAtTime": "2026-01-01T08:00:00Z",
+      "updatedAtTime": "2026-03-01T14:24:00Z"
+    },
+    {
+      "id": "veh-1004",
+      "name": "Truck 1004",
+      "type": "vehicle",
+      "licensePlate": "TX-1004",
+      "make": "Peterbilt",
+      "model": "579",
+      "serialNumber": "VIN1004SIM",
+      "regulationMode": "regulated",
+      "externalIds": {
+        "tmsVehicleId": "unit-1004"
+      },
+      "createdAtTime": "2026-01-01T08:00:00Z",
+      "updatedAtTime": "2026-03-01T14:24:00Z"
+    },
+    {
+      "id": "veh-1005",
+      "name": "Truck 1005",
+      "type": "vehicle",
+      "licensePlate": "TX-1005",
+      "make": "Freightliner",
+      "model": "Cascadia",
+      "serialNumber": "VIN1005SIM",
+      "regulationMode": "regulated",
+      "externalIds": {
+        "tmsVehicleId": "unit-1005"
+      },
+      "createdAtTime": "2026-01-01T08:00:00Z",
+      "updatedAtTime": "2026-03-01T14:24:00Z"
+    },
+    {
+      "id": "veh-1006",
+      "name": "Truck 1006",
+      "type": "vehicle",
+      "licensePlate": "TX-1006",
+      "make": "Volvo",
+      "model": "VNL",
+      "serialNumber": "VIN1006SIM",
+      "regulationMode": "regulated",
+      "externalIds": {
+        "tmsVehicleId": "unit-1006"
+      },
+      "createdAtTime": "2026-01-01T08:00:00Z",
+      "updatedAtTime": "2026-03-01T14:24:00Z"
+    },
+    {
+      "id": "veh-1007",
+      "name": "Truck 1007",
+      "type": "vehicle",
+      "licensePlate": "TX-1007",
+      "make": "Kenworth",
+      "model": "T680",
+      "serialNumber": "VIN1007SIM",
+      "regulationMode": "regulated",
+      "externalIds": {
+        "tmsVehicleId": "unit-1007"
+      },
+      "createdAtTime": "2026-01-01T08:00:00Z",
+      "updatedAtTime": "2026-03-01T14:24:00Z"
+    },
+    {
+      "id": "veh-1008",
+      "name": "Truck 1008",
+      "type": "vehicle",
+      "licensePlate": "TX-1008",
+      "make": "Peterbilt",
+      "model": "579",
+      "serialNumber": "VIN1008SIM",
+      "regulationMode": "regulated",
+      "externalIds": {
+        "tmsVehicleId": "unit-1008"
+      },
+      "createdAtTime": "2026-01-01T08:00:00Z",
+      "updatedAtTime": "2026-03-01T14:24:00Z"
+    },
+    {
+      "id": "veh-1009",
+      "name": "Truck 1009",
+      "type": "vehicle",
+      "licensePlate": "TX-1009",
+      "make": "Freightliner",
+      "model": "Cascadia",
+      "serialNumber": "VIN1009SIM",
+      "regulationMode": "regulated",
+      "externalIds": {
+        "tmsVehicleId": "unit-1009"
+      },
+      "createdAtTime": "2026-01-01T08:00:00Z",
+      "updatedAtTime": "2026-03-01T14:24:00Z"
+    },
+    {
+      "id": "veh-1010",
+      "name": "Truck 1010",
+      "type": "vehicle",
+      "licensePlate": "TX-1010",
+      "make": "Volvo",
+      "model": "VNL",
+      "serialNumber": "VIN1010SIM",
+      "regulationMode": "regulated",
+      "externalIds": {
+        "tmsVehicleId": "unit-1010"
+      },
+      "createdAtTime": "2026-01-01T08:00:00Z",
+      "updatedAtTime": "2026-03-01T14:24:00Z"
+    },
+    {
+      "id": "veh-1011",
+      "name": "Truck 1011",
+      "type": "vehicle",
+      "licensePlate": "TX-1011",
+      "make": "Kenworth",
+      "model": "T680",
+      "serialNumber": "VIN1011SIM",
+      "regulationMode": "regulated",
+      "externalIds": {
+        "tmsVehicleId": "unit-1011"
+      },
+      "createdAtTime": "2026-01-01T08:00:00Z",
+      "updatedAtTime": "2026-03-01T14:24:00Z"
+    },
+    {
+      "id": "veh-1012",
+      "name": "Truck 1012",
+      "type": "vehicle",
+      "licensePlate": "TX-1012",
+      "make": "Peterbilt",
+      "model": "579",
+      "serialNumber": "VIN1012SIM",
+      "regulationMode": "regulated",
+      "externalIds": {
+        "tmsVehicleId": "unit-1012"
+      },
+      "createdAtTime": "2026-01-01T08:00:00Z",
+      "updatedAtTime": "2026-03-01T14:24:00Z"
+    },
+    {
+      "id": "trl-2042",
+      "name": "Trailer 2042",
+      "type": "trailer",
+      "licensePlate": "TX-T2042",
+      "serialNumber": "TRAIL2042SIM",
+      "externalIds": {
+        "tmsTrailerId": "trailer-2042"
+      },
+      "createdAtTime": "2026-01-05T10:00:00Z",
+      "updatedAtTime": "2026-03-01T14:20:00Z"
+    }
+  ],
+  "assetLocationStream": [
+    {
+      "asset": {
+        "id": "veh-1001",
+        "externalIds": {
+          "tmsVehicleId": "unit-1001"
+        }
+      },
+      "happenedAtTime": "2026-03-01T14:00:00Z",
+      "location": {
+        "latitude": 30.2672,
+        "longitude": -97.7431,
+        "headingDegrees": 88,
+        "address": {
+          "streetNumber": "100",
+          "street": "Fleet Ave",
+          "city": "Austin",
+          "state": "TX",
+          "postalCode": "78701",
+          "country": "USA"
+        }
+      },
+      "speed": {
+        "gpsSpeedMetersPerSecond": 18.2,
+        "ecuSpeedMetersPerSecond": 17.9
+      }
+    },
+    {
+      "asset": {
+        "id": "veh-1001",
+        "externalIds": {
+          "tmsVehicleId": "unit-1001"
+        }
+      },
+      "happenedAtTime": "2026-03-01T14:08:00Z",
+      "location": {
+        "latitude": 30.3001,
+        "longitude": -97.7004,
+        "headingDegrees": 92
+      },
+      "speed": {
+        "gpsSpeedMetersPerSecond": 22.3,
+        "ecuSpeedMetersPerSecond": 22.1
+      }
+    },
+    {
+      "asset": {
+        "id": "veh-1001",
+        "externalIds": {
+          "tmsVehicleId": "unit-1001"
+        }
+      },
+      "happenedAtTime": "2026-03-01T14:16:00Z",
+      "location": {
+        "latitude": 30.3499,
+        "longitude": -97.6102,
+        "headingDegrees": 96
+      },
+      "speed": {
+        "gpsSpeedMetersPerSecond": 20.8,
+        "ecuSpeedMetersPerSecond": 20.5
+      }
+    },
+    {
+      "asset": {
+        "id": "veh-1001",
+        "externalIds": {
+          "tmsVehicleId": "unit-1001"
+        }
+      },
+      "happenedAtTime": "2026-03-01T14:24:00Z",
+      "location": {
+        "latitude": 30.4012,
+        "longitude": -97.5005,
+        "headingDegrees": 103
+      },
+      "speed": {
+        "gpsSpeedMetersPerSecond": 16.5,
+        "ecuSpeedMetersPerSecond": 16.2
+      }
+    },
+    {
+      "asset": {
+        "id": "veh-1002",
+        "externalIds": {
+          "tmsVehicleId": "unit-1002"
+        }
+      },
+      "happenedAtTime": "2026-03-01T13:55:00Z",
+      "location": {
+        "latitude": 32.7767,
+        "longitude": -96.797,
+        "headingDegrees": 180
+      },
+      "speed": {
+        "gpsSpeedMetersPerSecond": 14.9,
+        "ecuSpeedMetersPerSecond": 14.7
+      }
+    },
+    {
+      "asset": {
+        "id": "veh-1002",
+        "externalIds": {
+          "tmsVehicleId": "unit-1002"
+        }
+      },
+      "happenedAtTime": "2026-03-01T14:03:00Z",
+      "location": {
+        "latitude": 32.7304,
+        "longitude": -96.8202,
+        "headingDegrees": 188
+      },
+      "speed": {
+        "gpsSpeedMetersPerSecond": 19.4,
+        "ecuSpeedMetersPerSecond": 19.1
+      }
+    },
+    {
+      "asset": {
+        "id": "veh-1002",
+        "externalIds": {
+          "tmsVehicleId": "unit-1002"
+        }
+      },
+      "happenedAtTime": "2026-03-01T14:11:00Z",
+      "location": {
+        "latitude": 32.6509,
+        "longitude": -96.855,
+        "headingDegrees": 193
+      },
+      "speed": {
+        "gpsSpeedMetersPerSecond": 20.1,
+        "ecuSpeedMetersPerSecond": 19.9
+      }
+    },
+    {
+      "asset": {
+        "id": "veh-1002",
+        "externalIds": {
+          "tmsVehicleId": "unit-1002"
+        }
+      },
+      "happenedAtTime": "2026-03-01T14:19:00Z",
+      "location": {
+        "latitude": 32.5502,
+        "longitude": -96.902,
+        "headingDegrees": 197
+      },
+      "speed": {
+        "gpsSpeedMetersPerSecond": 17.6,
+        "ecuSpeedMetersPerSecond": 17.4
+      }
+    },
+    {
+      "asset": {
+        "id": "veh-1003",
+        "externalIds": {
+          "tmsVehicleId": "unit-1003"
+        }
+      },
+      "happenedAtTime": "2026-03-01T13:50:00Z",
+      "location": {
+        "latitude": 29.7604,
+        "longitude": -95.3698,
+        "headingDegrees": 46
+      },
+      "speed": {
+        "gpsSpeedMetersPerSecond": 11.2,
+        "ecuSpeedMetersPerSecond": 11.0
+      }
+    },
+    {
+      "asset": {
+        "id": "veh-1003",
+        "externalIds": {
+          "tmsVehicleId": "unit-1003"
+        }
+      },
+      "happenedAtTime": "2026-03-01T13:58:00Z",
+      "location": {
+        "latitude": 29.7802,
+        "longitude": -95.2901,
+        "headingDegrees": 51
+      },
+      "speed": {
+        "gpsSpeedMetersPerSecond": 14.6,
+        "ecuSpeedMetersPerSecond": 14.4
+      }
+    },
+    {
+      "asset": {
+        "id": "veh-1003",
+        "externalIds": {
+          "tmsVehicleId": "unit-1003"
+        }
+      },
+      "happenedAtTime": "2026-03-01T14:06:00Z",
+      "location": {
+        "latitude": 29.8206,
+        "longitude": -95.2202,
+        "headingDegrees": 59
+      },
+      "speed": {
+        "gpsSpeedMetersPerSecond": 16.1,
+        "ecuSpeedMetersPerSecond": 15.9
+      }
+    },
+    {
+      "asset": {
+        "id": "veh-1003",
+        "externalIds": {
+          "tmsVehicleId": "unit-1003"
+        }
+      },
+      "happenedAtTime": "2026-03-01T14:14:00Z",
+      "location": {
+        "latitude": 29.881,
+        "longitude": -95.1813,
+        "headingDegrees": 66
+      },
+      "speed": {
+        "gpsSpeedMetersPerSecond": 15.3,
+        "ecuSpeedMetersPerSecond": 15.1
+      }
+    }
+  ],
+  "drivers": [
+    {
+      "id": "drv-1",
+      "name": "Alex Rivera",
+      "driverActivationStatus": "active",
+      "externalIds": {
+        "workerId": "worker-1001"
+      }
+    },
+    {
+      "id": "drv-2",
+      "name": "Jordan Lee",
+      "driverActivationStatus": "active",
+      "externalIds": {
+        "workerId": "worker-1002"
+      }
+    },
+    {
+      "id": "drv-3",
+      "name": "Morgan Patel",
+      "driverActivationStatus": "active",
+      "externalIds": {
+        "workerId": "worker-1003"
+      }
+    },
+    {
+      "id": "drv-4",
+      "name": "Casey Nguyen",
+      "driverActivationStatus": "active",
+      "externalIds": {
+        "workerId": "worker-1004"
+      }
+    },
+    {
+      "id": "drv-5",
+      "name": "Taylor Brooks",
+      "driverActivationStatus": "active",
+      "externalIds": {
+        "workerId": "worker-1005"
+      }
+    },
+    {
+      "id": "drv-6",
+      "name": "Riley Martinez",
+      "driverActivationStatus": "active",
+      "externalIds": {
+        "workerId": "worker-1006"
+      }
+    },
+    {
+      "id": "drv-7",
+      "name": "Avery Johnson",
+      "driverActivationStatus": "active",
+      "externalIds": {
+        "workerId": "worker-1007"
+      }
+    },
+    {
+      "id": "drv-8",
+      "name": "Quinn Davis",
+      "driverActivationStatus": "active",
+      "externalIds": {
+        "workerId": "worker-1008"
+      }
+    },
+    {
+      "id": "drv-9",
+      "name": "Drew Thompson",
+      "driverActivationStatus": "active",
+      "externalIds": {
+        "workerId": "worker-1009"
+      }
+    },
+    {
+      "id": "drv-10",
+      "name": "Sam Parker",
+      "driverActivationStatus": "active",
+      "externalIds": {
+        "workerId": "worker-1010"
+      }
+    },
+    {
+      "id": "drv-11",
+      "name": "Jamie Clark",
+      "driverActivationStatus": "active",
+      "externalIds": {
+        "workerId": "worker-1011"
+      }
+    },
+    {
+      "id": "drv-12",
+      "name": "Cameron Scott",
+      "driverActivationStatus": "active",
+      "externalIds": {
+        "workerId": "worker-1012"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "id": "route-1",
+      "name": "Texas Route 1",
+      "driver": {
+        "id": "drv-1",
+        "name": "Alex Rivera"
+      },
+      "vehicle": {
+        "id": "veh-1001",
+        "name": "Truck 1001"
+      }
+    },
+    {
+      "id": "route-2",
+      "name": "Texas Route 2",
+      "driver": {
+        "id": "drv-2",
+        "name": "Jordan Lee"
+      },
+      "vehicle": {
+        "id": "veh-1002",
+        "name": "Truck 1002"
+      }
+    },
+    {
+      "id": "route-3",
+      "name": "Texas Route 3",
+      "driver": {
+        "id": "drv-3",
+        "name": "Morgan Patel"
+      },
+      "vehicle": {
+        "id": "veh-1003",
+        "name": "Truck 1003"
+      }
+    },
+    {
+      "id": "route-4",
+      "name": "Texas Route 4",
+      "driver": {
+        "id": "drv-4",
+        "name": "Casey Nguyen"
+      },
+      "vehicle": {
+        "id": "veh-1004",
+        "name": "Truck 1004"
+      }
+    },
+    {
+      "id": "route-5",
+      "name": "Texas Route 5",
+      "driver": {
+        "id": "drv-5",
+        "name": "Taylor Brooks"
+      },
+      "vehicle": {
+        "id": "veh-1005",
+        "name": "Truck 1005"
+      }
+    },
+    {
+      "id": "route-6",
+      "name": "Texas Route 6",
+      "driver": {
+        "id": "drv-6",
+        "name": "Riley Martinez"
+      },
+      "vehicle": {
+        "id": "veh-1006",
+        "name": "Truck 1006"
+      }
+    },
+    {
+      "id": "route-7",
+      "name": "Texas Route 7",
+      "driver": {
+        "id": "drv-7",
+        "name": "Avery Johnson"
+      },
+      "vehicle": {
+        "id": "veh-1007",
+        "name": "Truck 1007"
+      }
+    },
+    {
+      "id": "route-8",
+      "name": "Texas Route 8",
+      "driver": {
+        "id": "drv-8",
+        "name": "Quinn Davis"
+      },
+      "vehicle": {
+        "id": "veh-1008",
+        "name": "Truck 1008"
+      }
+    },
+    {
+      "id": "route-9",
+      "name": "Texas Route 9",
+      "driver": {
+        "id": "drv-9",
+        "name": "Drew Thompson"
+      },
+      "vehicle": {
+        "id": "veh-1009",
+        "name": "Truck 1009"
+      }
+    },
+    {
+      "id": "route-10",
+      "name": "Texas Route 10",
+      "driver": {
+        "id": "drv-10",
+        "name": "Sam Parker"
+      },
+      "vehicle": {
+        "id": "veh-1010",
+        "name": "Truck 1010"
+      }
+    }
+  ],
+  "formTemplates": [
+    {
+      "id": "e3c5abf4-2f5d-4f03-8a07-648d2d4f4a51",
+      "revisionId": "84f6d5e3-4e10-4cd6-9d52-5df1097a8740",
+      "title": "Pre-Trip Inspection",
+      "createdAtTime": "2026-01-05T08:00:00Z",
+      "updatedAtTime": "2026-02-12T09:30:00Z",
+      "createdBy": {
+        "id": "user-1",
+        "name": "Dispatch Admin"
+      },
+      "updatedBy": {
+        "id": "user-1",
+        "name": "Dispatch Admin"
+      },
+      "fields": [],
+      "sections": []
+    }
+  ],
+  "formSubmissions": [
+    {
+      "id": "form-sub-1",
+      "title": "Truck 1001 Daily Inspection",
+      "status": "notStarted",
+      "isRequired": true,
+      "createdAtTime": "2026-03-01T12:00:00Z",
+      "updatedAtTime": "2026-03-01T12:00:00Z",
+      "formTemplate": {
+        "id": "e3c5abf4-2f5d-4f03-8a07-648d2d4f4a51"
+      },
+      "fields": []
+    }
+  ],
+  "liveShares": [
+    {
+      "id": "ls-1",
+      "name": "All Active Vehicles",
+      "type": "assetsLocation",
+      "liveSharingUrl": "https://example.invalid/liveshare/ls-1",
+      "description": "Simulator share for active fleet"
+    }
+  ],
+  "messages": [
+    {
+      "driverId": 1001,
+      "text": "Begin route and send departure confirmation.",
+      "isRead": false,
+      "sender": {
+        "name": "Dispatch",
+        "type": "dispatch"
+      },
+      "sentAtMs": 1772373000000
+    },
+    {
+      "driverId": 1002,
+      "text": "Fuel stop approved at exit 22.",
+      "isRead": true,
+      "sender": {
+        "name": "Dispatch",
+        "type": "dispatch"
+      },
+      "sentAtMs": 1772374200000
+    }
+  ],
+  "webhooks": [
+    {
+      "id": "wh-1",
+      "name": "Core Fleet Events",
+      "url": "http://localhost:8091/_sim/webhooks/inbox",
+      "version": "2021-06-09",
+      "secretKey": "demo-secret",
+      "eventTypes": [
+        "AddressCreated",
+        "AddressUpdated",
+        "DriverCreated",
+        "DriverHosStatusChanged",
+        "DriverHosViolationDetected",
+        "FormSubmitted",
+        "FormUpdated",
+        "RouteProgressDelayed",
+        "RouteStopArrival",
+        "RouteStopEtaUpdated",
+        "VehicleCreated",
+        "VehicleSpeeding",
+        "VehicleStopped",
+        "VehicleUpdated"
+      ]
+    }
+  ],
+  "vehicleStats": [
+    {
+      "id": "veh-1001",
+      "name": "Truck 1001",
+      "fuelPercent": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 85
+      },
+      "obdEngineSeconds": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 6200000
+      },
+      "batteryMilliVolts": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 12600
+      }
+    },
+    {
+      "id": "veh-1002",
+      "name": "Truck 1002",
+      "fuelPercent": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 84
+      },
+      "obdEngineSeconds": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 6340000
+      },
+      "batteryMilliVolts": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 12655
+      }
+    },
+    {
+      "id": "veh-1003",
+      "name": "Truck 1003",
+      "fuelPercent": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 83
+      },
+      "obdEngineSeconds": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 6480000
+      },
+      "batteryMilliVolts": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 12710
+      }
+    },
+    {
+      "id": "veh-1004",
+      "name": "Truck 1004",
+      "fuelPercent": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 82
+      },
+      "obdEngineSeconds": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 6620000
+      },
+      "batteryMilliVolts": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 12765
+      }
+    },
+    {
+      "id": "veh-1005",
+      "name": "Truck 1005",
+      "fuelPercent": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 81
+      },
+      "obdEngineSeconds": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 6760000
+      },
+      "batteryMilliVolts": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 12820
+      }
+    },
+    {
+      "id": "veh-1006",
+      "name": "Truck 1006",
+      "fuelPercent": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 80
+      },
+      "obdEngineSeconds": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 6900000
+      },
+      "batteryMilliVolts": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 12875
+      }
+    },
+    {
+      "id": "veh-1007",
+      "name": "Truck 1007",
+      "fuelPercent": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 79
+      },
+      "obdEngineSeconds": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 7040000
+      },
+      "batteryMilliVolts": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 12600
+      }
+    },
+    {
+      "id": "veh-1008",
+      "name": "Truck 1008",
+      "fuelPercent": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 78
+      },
+      "obdEngineSeconds": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 7180000
+      },
+      "batteryMilliVolts": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 12655
+      }
+    },
+    {
+      "id": "veh-1009",
+      "name": "Truck 1009",
+      "fuelPercent": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 77
+      },
+      "obdEngineSeconds": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 7320000
+      },
+      "batteryMilliVolts": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 12710
+      }
+    },
+    {
+      "id": "veh-1010",
+      "name": "Truck 1010",
+      "fuelPercent": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 76
+      },
+      "obdEngineSeconds": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 7460000
+      },
+      "batteryMilliVolts": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 12765
+      }
+    },
+    {
+      "id": "veh-1011",
+      "name": "Truck 1011",
+      "fuelPercent": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 85
+      },
+      "obdEngineSeconds": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 7600000
+      },
+      "batteryMilliVolts": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 12820
+      }
+    },
+    {
+      "id": "veh-1012",
+      "name": "Truck 1012",
+      "fuelPercent": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 84
+      },
+      "obdEngineSeconds": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 7740000
+      },
+      "batteryMilliVolts": {
+        "time": "2026-03-01T14:14:00Z",
+        "value": 12875
+      }
+    }
+  ],
+  "hosClocks": [
+    {
+      "driver": {
+        "id": "drv-1",
+        "name": "Alex Rivera"
+      },
+      "currentDutyStatus": {
+        "hosStatusType": "offDuty"
+      },
+      "clocks": {
+        "break": {
+          "timeUntilBreakDurationMs": 28800000
+        },
+        "drive": {
+          "driveRemainingDurationMs": 39600000
+        },
+        "shift": {
+          "shiftRemainingDurationMs": 50400000
+        },
+        "cycle": {
+          "cycleRemainingDurationMs": 144000000,
+          "cycleTomorrowDurationMs": 144000000,
+          "cycleStartedAtTime": "2026-02-26T12:00:00Z"
+        }
+      },
+      "violations": {
+        "cycleViolationDurationMs": 0,
+        "shiftDrivingViolationDurationMs": 0
+      },
+      "currentVehicle": {
+        "id": "veh-1001",
+        "name": "Truck 1001"
+      }
+    },
+    {
+      "driver": {
+        "id": "drv-2",
+        "name": "Jordan Lee"
+      },
+      "currentDutyStatus": {
+        "hosStatusType": "offDuty"
+      },
+      "clocks": {
+        "break": {
+          "timeUntilBreakDurationMs": 28800000
+        },
+        "drive": {
+          "driveRemainingDurationMs": 39600000
+        },
+        "shift": {
+          "shiftRemainingDurationMs": 50400000
+        },
+        "cycle": {
+          "cycleRemainingDurationMs": 144000000,
+          "cycleTomorrowDurationMs": 144000000,
+          "cycleStartedAtTime": "2026-02-26T12:00:00Z"
+        }
+      },
+      "violations": {
+        "cycleViolationDurationMs": 0,
+        "shiftDrivingViolationDurationMs": 0
+      },
+      "currentVehicle": {
+        "id": "veh-1002",
+        "name": "Truck 1002"
+      }
+    },
+    {
+      "driver": {
+        "id": "drv-3",
+        "name": "Morgan Patel"
+      },
+      "currentDutyStatus": {
+        "hosStatusType": "offDuty"
+      },
+      "clocks": {
+        "break": {
+          "timeUntilBreakDurationMs": 28800000
+        },
+        "drive": {
+          "driveRemainingDurationMs": 39600000
+        },
+        "shift": {
+          "shiftRemainingDurationMs": 50400000
+        },
+        "cycle": {
+          "cycleRemainingDurationMs": 144000000,
+          "cycleTomorrowDurationMs": 144000000,
+          "cycleStartedAtTime": "2026-02-26T12:00:00Z"
+        }
+      },
+      "violations": {
+        "cycleViolationDurationMs": 0,
+        "shiftDrivingViolationDurationMs": 0
+      },
+      "currentVehicle": {
+        "id": "veh-1003",
+        "name": "Truck 1003"
+      }
+    },
+    {
+      "driver": {
+        "id": "drv-4",
+        "name": "Casey Nguyen"
+      },
+      "currentDutyStatus": {
+        "hosStatusType": "offDuty"
+      },
+      "clocks": {
+        "break": {
+          "timeUntilBreakDurationMs": 28800000
+        },
+        "drive": {
+          "driveRemainingDurationMs": 39600000
+        },
+        "shift": {
+          "shiftRemainingDurationMs": 50400000
+        },
+        "cycle": {
+          "cycleRemainingDurationMs": 144000000,
+          "cycleTomorrowDurationMs": 144000000,
+          "cycleStartedAtTime": "2026-02-26T12:00:00Z"
+        }
+      },
+      "violations": {
+        "cycleViolationDurationMs": 0,
+        "shiftDrivingViolationDurationMs": 0
+      },
+      "currentVehicle": {
+        "id": "veh-1004",
+        "name": "Truck 1004"
+      }
+    },
+    {
+      "driver": {
+        "id": "drv-5",
+        "name": "Taylor Brooks"
+      },
+      "currentDutyStatus": {
+        "hosStatusType": "offDuty"
+      },
+      "clocks": {
+        "break": {
+          "timeUntilBreakDurationMs": 28800000
+        },
+        "drive": {
+          "driveRemainingDurationMs": 39600000
+        },
+        "shift": {
+          "shiftRemainingDurationMs": 50400000
+        },
+        "cycle": {
+          "cycleRemainingDurationMs": 144000000,
+          "cycleTomorrowDurationMs": 144000000,
+          "cycleStartedAtTime": "2026-02-26T12:00:00Z"
+        }
+      },
+      "violations": {
+        "cycleViolationDurationMs": 0,
+        "shiftDrivingViolationDurationMs": 0
+      },
+      "currentVehicle": {
+        "id": "veh-1005",
+        "name": "Truck 1005"
+      }
+    },
+    {
+      "driver": {
+        "id": "drv-6",
+        "name": "Riley Martinez"
+      },
+      "currentDutyStatus": {
+        "hosStatusType": "offDuty"
+      },
+      "clocks": {
+        "break": {
+          "timeUntilBreakDurationMs": 28800000
+        },
+        "drive": {
+          "driveRemainingDurationMs": 39600000
+        },
+        "shift": {
+          "shiftRemainingDurationMs": 50400000
+        },
+        "cycle": {
+          "cycleRemainingDurationMs": 144000000,
+          "cycleTomorrowDurationMs": 144000000,
+          "cycleStartedAtTime": "2026-02-26T12:00:00Z"
+        }
+      },
+      "violations": {
+        "cycleViolationDurationMs": 0,
+        "shiftDrivingViolationDurationMs": 0
+      },
+      "currentVehicle": {
+        "id": "veh-1006",
+        "name": "Truck 1006"
+      }
+    },
+    {
+      "driver": {
+        "id": "drv-7",
+        "name": "Avery Johnson"
+      },
+      "currentDutyStatus": {
+        "hosStatusType": "offDuty"
+      },
+      "clocks": {
+        "break": {
+          "timeUntilBreakDurationMs": 28800000
+        },
+        "drive": {
+          "driveRemainingDurationMs": 39600000
+        },
+        "shift": {
+          "shiftRemainingDurationMs": 50400000
+        },
+        "cycle": {
+          "cycleRemainingDurationMs": 144000000,
+          "cycleTomorrowDurationMs": 144000000,
+          "cycleStartedAtTime": "2026-02-26T12:00:00Z"
+        }
+      },
+      "violations": {
+        "cycleViolationDurationMs": 0,
+        "shiftDrivingViolationDurationMs": 0
+      },
+      "currentVehicle": {
+        "id": "veh-1007",
+        "name": "Truck 1007"
+      }
+    },
+    {
+      "driver": {
+        "id": "drv-8",
+        "name": "Quinn Davis"
+      },
+      "currentDutyStatus": {
+        "hosStatusType": "offDuty"
+      },
+      "clocks": {
+        "break": {
+          "timeUntilBreakDurationMs": 28800000
+        },
+        "drive": {
+          "driveRemainingDurationMs": 39600000
+        },
+        "shift": {
+          "shiftRemainingDurationMs": 50400000
+        },
+        "cycle": {
+          "cycleRemainingDurationMs": 144000000,
+          "cycleTomorrowDurationMs": 144000000,
+          "cycleStartedAtTime": "2026-02-26T12:00:00Z"
+        }
+      },
+      "violations": {
+        "cycleViolationDurationMs": 0,
+        "shiftDrivingViolationDurationMs": 0
+      },
+      "currentVehicle": {
+        "id": "veh-1008",
+        "name": "Truck 1008"
+      }
+    },
+    {
+      "driver": {
+        "id": "drv-9",
+        "name": "Drew Thompson"
+      },
+      "currentDutyStatus": {
+        "hosStatusType": "offDuty"
+      },
+      "clocks": {
+        "break": {
+          "timeUntilBreakDurationMs": 28800000
+        },
+        "drive": {
+          "driveRemainingDurationMs": 39600000
+        },
+        "shift": {
+          "shiftRemainingDurationMs": 50400000
+        },
+        "cycle": {
+          "cycleRemainingDurationMs": 144000000,
+          "cycleTomorrowDurationMs": 144000000,
+          "cycleStartedAtTime": "2026-02-26T12:00:00Z"
+        }
+      },
+      "violations": {
+        "cycleViolationDurationMs": 0,
+        "shiftDrivingViolationDurationMs": 0
+      },
+      "currentVehicle": {
+        "id": "veh-1009",
+        "name": "Truck 1009"
+      }
+    },
+    {
+      "driver": {
+        "id": "drv-10",
+        "name": "Sam Parker"
+      },
+      "currentDutyStatus": {
+        "hosStatusType": "offDuty"
+      },
+      "clocks": {
+        "break": {
+          "timeUntilBreakDurationMs": 28800000
+        },
+        "drive": {
+          "driveRemainingDurationMs": 39600000
+        },
+        "shift": {
+          "shiftRemainingDurationMs": 50400000
+        },
+        "cycle": {
+          "cycleRemainingDurationMs": 144000000,
+          "cycleTomorrowDurationMs": 144000000,
+          "cycleStartedAtTime": "2026-02-26T12:00:00Z"
+        }
+      },
+      "violations": {
+        "cycleViolationDurationMs": 0,
+        "shiftDrivingViolationDurationMs": 0
+      },
+      "currentVehicle": {
+        "id": "veh-1010",
+        "name": "Truck 1010"
+      }
+    },
+    {
+      "driver": {
+        "id": "drv-11",
+        "name": "Jamie Clark"
+      },
+      "currentDutyStatus": {
+        "hosStatusType": "offDuty"
+      },
+      "clocks": {
+        "break": {
+          "timeUntilBreakDurationMs": 28800000
+        },
+        "drive": {
+          "driveRemainingDurationMs": 39600000
+        },
+        "shift": {
+          "shiftRemainingDurationMs": 50400000
+        },
+        "cycle": {
+          "cycleRemainingDurationMs": 144000000,
+          "cycleTomorrowDurationMs": 144000000,
+          "cycleStartedAtTime": "2026-02-26T12:00:00Z"
+        }
+      },
+      "violations": {
+        "cycleViolationDurationMs": 0,
+        "shiftDrivingViolationDurationMs": 0
+      }
+    },
+    {
+      "driver": {
+        "id": "drv-12",
+        "name": "Cameron Scott"
+      },
+      "currentDutyStatus": {
+        "hosStatusType": "offDuty"
+      },
+      "clocks": {
+        "break": {
+          "timeUntilBreakDurationMs": 28800000
+        },
+        "drive": {
+          "driveRemainingDurationMs": 39600000
+        },
+        "shift": {
+          "shiftRemainingDurationMs": 50400000
+        },
+        "cycle": {
+          "cycleRemainingDurationMs": 144000000,
+          "cycleTomorrowDurationMs": 144000000,
+          "cycleStartedAtTime": "2026-02-26T12:00:00Z"
+        }
+      },
+      "violations": {
+        "cycleViolationDurationMs": 0,
+        "shiftDrivingViolationDurationMs": 0
+      }
+    }
+  ],
+  "hosLogs": [
+    {
+      "driver": {
+        "id": "drv-1",
+        "name": "Alex Rivera"
+      },
+      "hosLogs": []
+    },
+    {
+      "driver": {
+        "id": "drv-2",
+        "name": "Jordan Lee"
+      },
+      "hosLogs": []
+    },
+    {
+      "driver": {
+        "id": "drv-3",
+        "name": "Morgan Patel"
+      },
+      "hosLogs": []
+    },
+    {
+      "driver": {
+        "id": "drv-4",
+        "name": "Casey Nguyen"
+      },
+      "hosLogs": []
+    },
+    {
+      "driver": {
+        "id": "drv-5",
+        "name": "Taylor Brooks"
+      },
+      "hosLogs": []
+    },
+    {
+      "driver": {
+        "id": "drv-6",
+        "name": "Riley Martinez"
+      },
+      "hosLogs": []
+    },
+    {
+      "driver": {
+        "id": "drv-7",
+        "name": "Avery Johnson"
+      },
+      "hosLogs": []
+    },
+    {
+      "driver": {
+        "id": "drv-8",
+        "name": "Quinn Davis"
+      },
+      "hosLogs": []
+    },
+    {
+      "driver": {
+        "id": "drv-9",
+        "name": "Drew Thompson"
+      },
+      "hosLogs": []
+    },
+    {
+      "driver": {
+        "id": "drv-10",
+        "name": "Sam Parker"
+      },
+      "hosLogs": []
+    },
+    {
+      "driver": {
+        "id": "drv-11",
+        "name": "Jamie Clark"
+      },
+      "hosLogs": []
+    },
+    {
+      "driver": {
+        "id": "drv-12",
+        "name": "Cameron Scott"
+      },
+      "hosLogs": []
+    }
+  ],
+  "driverTachograph": [
+    {
+      "driver": {
+        "id": "drv-1",
+        "name": "Alex Rivera"
+      },
+      "files": [
+        {
+          "id": "drv-tacho-1",
+          "createdAtTime": "2026-02-28T22:00:00Z",
+          "url": "https://example.invalid/tacho/drivers/drv-tacho-1"
+        }
+      ]
+    },
+    {
+      "driver": {
+        "id": "drv-2",
+        "name": "Jordan Lee"
+      },
+      "files": [
+        {
+          "id": "drv-tacho-2",
+          "createdAtTime": "2026-02-28T22:00:00Z",
+          "url": "https://example.invalid/tacho/drivers/drv-tacho-2"
+        }
+      ]
+    },
+    {
+      "driver": {
+        "id": "drv-3",
+        "name": "Morgan Patel"
+      },
+      "files": [
+        {
+          "id": "drv-tacho-3",
+          "createdAtTime": "2026-02-28T22:00:00Z",
+          "url": "https://example.invalid/tacho/drivers/drv-tacho-3"
+        }
+      ]
+    }
+  ],
+  "vehicleTachograph": [
+    {
+      "vehicle": {
+        "id": "veh-1001",
+        "name": "Truck 1001"
+      },
+      "files": [
+        {
+          "id": "veh-tacho-1",
+          "createdAtTime": "2026-02-28T22:05:00Z",
+          "url": "https://example.invalid/tacho/vehicles/veh-tacho-1",
+          "vehicleIdentificationNumber": "VIN1001SIM"
+        }
+      ]
+    },
+    {
+      "vehicle": {
+        "id": "veh-1002",
+        "name": "Truck 1002"
+      },
+      "files": [
+        {
+          "id": "veh-tacho-2",
+          "createdAtTime": "2026-02-28T22:05:00Z",
+          "url": "https://example.invalid/tacho/vehicles/veh-tacho-2",
+          "vehicleIdentificationNumber": "VIN1002SIM"
+        }
+      ]
+    },
+    {
+      "vehicle": {
+        "id": "veh-1003",
+        "name": "Truck 1003"
+      },
+      "files": [
+        {
+          "id": "veh-tacho-3",
+          "createdAtTime": "2026-02-28T22:05:00Z",
+          "url": "https://example.invalid/tacho/vehicles/veh-tacho-3",
+          "vehicleIdentificationNumber": "VIN1003SIM"
+        }
+      ]
+    }
+  ]
+}

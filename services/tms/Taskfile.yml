@@ -1,0 +1,430 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+vars:
+  ROOT_DIR: "{{.TASKFILE_DIR}}/../.."
+  BUILD_DIR: ./build
+  CLI_BINARY: trenova-cli
+  CLI_PATH: "{{.BUILD_DIR}}/{{.CLI_BINARY}}"
+  DOCKER_COMPOSE_LOCAL: "docker compose -f {{.ROOT_DIR}}/docker-compose-local.yml"
+  CLIENT_DIR: "{{.ROOT_DIR}}/client"
+  KAFKA_SCRIPTS: "{{.ROOT_DIR}}/scripts/kafka"
+
+tasks:
+  default:
+    cmds:
+      - task: help
+
+  help:
+    desc: Display available tasks
+    cmds:
+      - task --list
+
+  build:
+    desc: Build the CLI binary
+    deps: [build-cli]
+
+  build-cli:
+    desc: Build the unified CLI tool
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - go build -o {{.CLI_PATH}} ./cmd/cli
+
+  run:
+    desc: Run the API server via CLI
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} api run"
+
+  run-watch:
+    desc: Run the API server with hot reload
+    cmds:
+      - air api run
+
+  run-worker:
+    desc: Run the worker service
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} worker run"
+
+  clean:
+    desc: Remove build artifacts
+    cmds:
+      - go clean
+      - rm -rf {{.BUILD_DIR}}
+
+  test:
+    desc: Run unit tests only
+    cmds:
+      - go test -v ./...
+
+  test-unit:
+    desc: Alias for test
+    deps: [test]
+
+  test-integration:
+    desc: Run integration tests only
+    cmds:
+      - go test -v -tags=integration ./...
+
+  test-all:
+    desc: Run all tests (unit + integration)
+    cmds:
+      - go test -v -tags=integration ./...
+
+  test-coverage:
+    desc: Run unit tests with coverage
+    cmds:
+      - go test -v -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out -o coverage.html
+
+  test-coverage-all:
+    desc: Run all tests with coverage
+    cmds:
+      - go test -v -tags=integration -coverprofile=coverage.out ./...
+      - go tool cover -html=coverage.out -o coverage.html
+
+  test-short:
+    desc: Run short tests
+    cmds:
+      - go test -short ./...
+
+  test-race:
+    desc: Run unit tests with race detector
+    cmds:
+      - GOEXPERIMENT=goroutineleakprofile go test -race ./...
+
+  benchmark:
+    desc: Run benchmarks
+    cmds:
+      - go test -bench=. -benchmem ./...
+
+  lint:
+    desc: Run linter
+    cmds:
+      - golangci-lint run ./...
+
+  fmt:
+    desc: Format code
+    cmds:
+      - gofmt -s -w .
+
+  vet:
+    desc: Run go vet
+    cmds:
+      - go vet ./...
+
+  tidy:
+    desc: Tidy and verify module dependencies
+    cmds:
+      - go mod tidy
+      - go mod verify
+
+  deps:
+    desc: Download dependencies
+    cmds:
+      - go mod download
+
+  update:
+    desc: Update dependencies
+    cmds:
+      - go get -u ./...
+      - go mod tidy
+
+  generate-mocks:
+    desc: Generate mocks with mockery
+    cmds:
+      - mockery
+
+  generate:
+    desc: Run go generate
+    cmds:
+      - go generate ./...
+
+  docs-generate:
+    desc: Generate Swagger docs for the TMS API
+    cmds:
+      - go run github.com/swaggo/swag/cmd/swag@v1.16.6 init -g ./cmd/cli/main.go -o ./docs --parseInternal --parseDependency
+      - go run ./cmd/openapi-postprocess
+
+  generate-columns:
+    desc: Generate Bun column constants from domain entities
+    cmds:
+      - go generate ./internal/infrastructure/database/colgen/...
+
+  generate-seeds:
+    desc: Regenerate seed IDs from seed files
+    cmds:
+      - go generate ./internal/infrastructure/database/seeder/...
+
+  generate-seeds-check:
+    desc: Check if seed IDs need regeneration
+    cmds:
+      - |
+        go generate ./internal/infrastructure/database/seeder/... 2>/dev/null || true
+        if git diff --quiet pkg/seedhelpers/seed_ids_gen.go 2>/dev/null; then
+          echo "Seed IDs are up to date"
+        else
+          echo "Seed IDs were regenerated - commit the changes"
+        fi
+
+  perm-generate:
+    desc: Generate permission manifest
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} codegen generate"
+
+  perm-generate-enum:
+    desc: Generate permission enum from registry
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} codegen enum"
+
+  perm-generate-types:
+    desc: Generate permission types from registry
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} codegen types"
+
+  docker-up:
+    desc: Start all services with docker compose
+    cmds:
+      - "{{.DOCKER_COMPOSE_LOCAL}} up -d"
+
+  docker-down:
+    desc: Stop all services
+    cmds:
+      - "{{.DOCKER_COMPOSE_LOCAL}} down"
+
+  docker-restart:
+    desc: Restart all services
+    deps: [docker-down, docker-up]
+
+  docker-logs:
+    desc: View docker logs
+    cmds:
+      - "{{.DOCKER_COMPOSE_LOCAL}} logs -f"
+
+  docker-ps:
+    desc: List running containers
+    cmds:
+      - "{{.DOCKER_COMPOSE_LOCAL}} ps"
+
+  docker-build:
+    desc: Build docker images
+    cmds:
+      - "{{.DOCKER_COMPOSE_LOCAL}} build"
+
+  db-migrate:
+    desc: Run database migrations
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} db migrate"
+
+  db-rollback:
+    desc: Rollback database migrations
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} db rollback"
+
+  db-seed:
+    desc: Seed the database
+    deps: [generate-seeds, build-cli]
+    cmds:
+      - |
+        if [ -n "{{.env}}" ]; then
+          {{.CLI_PATH}} db seed --env {{.env}}
+        else
+          {{.CLI_PATH}} db seed
+        fi
+
+  db-reset:
+    desc: Reset database (drop, create, migrate, seed)
+    deps: [generate-seeds, build-cli]
+    cmds:
+      - |
+        if [ -n "{{.env}}" ]; then
+          {{.CLI_PATH}} db reset --force --env {{.env}}
+        else
+          {{.CLI_PATH}} db reset --force
+        fi
+
+  db-setup:
+    desc: Setup database (migrate + seed)
+    deps: [generate-seeds, build-cli]
+    cmds:
+      - |
+        if [ -n "{{.env}}" ]; then
+          {{.CLI_PATH}} db setup --env {{.env}}
+        else
+          {{.CLI_PATH}} db setup
+        fi
+
+  db-status:
+    desc: Show migration and seed status
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} db status"
+
+  db-create-seed:
+    desc: Create a new seed file
+    deps: [build-cli]
+    cmds:
+      - |
+        if [ -z "{{.name}}" ]; then
+          echo "Error: Please provide a seed name"
+          echo "Usage: task db-create-seed name=my_seed_name [env=dev|test]"
+          exit 1
+        fi
+
+        if [ "{{.env}}" = "dev" ]; then
+          {{.CLI_PATH}} db create-seed {{.name}} --dev
+        elif [ "{{.env}}" = "test" ]; then
+          {{.CLI_PATH}} db create-seed {{.name}} --test
+        else
+          {{.CLI_PATH}} db create-seed {{.name}}
+        fi
+
+        go generate ./internal/infrastructure/database/seeder/...
+
+  db-seed-sync:
+    desc: Synchronize seed registry
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} db seed-sync"
+
+  db-seed-check:
+    desc: Check for orphaned seeds
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} db seed-check"
+
+  db-seed-clean:
+    desc: Clean orphaned seed history
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} db seed-clean --force"
+
+  db-seed-watch:
+    desc: Watch seed directories for changes
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} db seed-watch"
+
+  redis-flush:
+    desc: Flush Redis cache
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} redis flush"
+
+  security-check:
+    desc: Run security checks
+    cmds:
+      - gosec ./...
+
+  audit:
+    desc: Audit dependencies for vulnerabilities
+    cmds:
+      - go list -json -m all | nancy sleuth
+
+  watch:
+    desc: Run API with hot reload
+    cmds:
+      - air api run
+
+  watch-ui:
+    desc: Run frontend with hot reload
+    cmds:
+      - cd {{.CLIENT_DIR}} && pnpm dev
+
+  dev:
+    desc: Start development environment
+    deps: [docker-up]
+    cmds:
+      - task --parallel watch watch-ui
+
+  ui-install:
+    desc: Install UI dependencies
+    cmds:
+      - cd {{.CLIENT_DIR}} && pnpm install
+
+  ui-build:
+    desc: Build UI for production
+    cmds:
+      - cd {{.CLIENT_DIR}} && pnpm build
+
+  ui-lint:
+    desc: Lint UI code
+    cmds:
+      - cd {{.CLIENT_DIR}} && pnpm lint
+
+  ui-test:
+    desc: Run UI tests
+    cmds:
+      - cd {{.CLIENT_DIR}} && pnpm test
+
+  install-hooks:
+    desc: Install git hooks
+    cmds:
+      - cp .githooks/* .git/hooks/
+      - chmod +x .git/hooks/*
+
+  ci:
+    desc: Run CI checks locally
+    deps: [lint, vet, test, security-check]
+
+  check:
+    desc: Run lint, vet, and test
+    deps: [lint, vet, test]
+
+  config-validate:
+    desc: Validate configuration
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} config validate"
+
+  config-show:
+    desc: Show current configuration
+    deps: [build-cli]
+    cmds:
+      - "{{.CLI_PATH}} config show"
+
+  version:
+    desc: Show version information
+    cmds:
+      - 'echo "Trenova Transportation Management System"'
+      - 'echo "Version: $(git describe --tags --always --dirty)"'
+      - 'echo "Go version: $(go version)"'
+      - 'echo "Build date: $(date -u +%Y-%m-%d_%H:%M:%S)"'
+
+  tools:
+    desc: Install required tools
+    cmds:
+      - go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+      - go install github.com/securego/gosec/v2/cmd/gosec@latest
+      - go install github.com/cosmtrek/air@latest
+      - go install github.com/sonatype-nexus-community/nancy@latest
+
+  kafka-reset:
+    desc: Reset Kafka
+    cmds:
+      - bash {{.KAFKA_SCRIPTS}}/reset-kafka.sh
+
+  kafka-setup:
+    desc: Setup Kafka
+    cmds:
+      - bash {{.KAFKA_SCRIPTS}}/setup-debezium-connector.sh
+
+  reset-all:
+    desc: Reset all services
+    deps: [db-reset, db-seed, redis-flush, kafka-reset, kafka-setup]
+
+  quick-start:
+    desc: Quick start for new developers
+    deps: [deps, tools, docker-up, db-setup]
+    cmds:
+      - 'echo "Quick start complete"'
+      - 'echo "To start the development server, run: task dev"'
+      - 'echo "API will be available at: http://localhost:8080"'
+      - 'echo "UI will be available at: http://localhost:5173"'

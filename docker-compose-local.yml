@@ -1,0 +1,348 @@
+services:
+    db:
+        image: postgis/postgis:latest
+        container_name: db
+        ports:
+            - "5432:5432"
+        environment:
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+            POSTGRES_USER: ${DB_USER:-postgres}
+            POSTGRES_DB: ${DB_NAME:-trenova_go_db}
+            POSTGRES_INITDB_ARGS: "--data-checksums"
+            POSTGRES_MULTIPLE_EXTENSIONS: "pg_stat_statements,pg_trgm,btree_gin,btree_gist,postgis"
+        volumes:
+            - pg_data:/var/lib/postgresql
+            - ./config/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+        command:
+            ["postgres", "-c", "config_file=/etc/postgresql/postgresql.conf"]
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-trenova_go_db}",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+    redis:
+        image: redis:8
+        container_name: redis
+        ports:
+            - "6379:6379"
+        command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+        restart: always
+        volumes:
+            - redis_data:/data
+            - ./config/redis.conf:/usr/local/etc/redis/redis.conf:ro
+        deploy:
+            resources:
+                limits:
+                    memory: 2G
+                    cpus: "1"
+                reservations:
+                    memory: 1G
+        healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        
+    redis-insight:
+        image: redis/redisinsight:latest
+        container_name: redis-insight
+        ports:
+            - "5540:5540"
+        restart: always
+        volumes:
+            - redisinsight_data:/data
+        deploy:
+            resources:
+                limits:
+                    memory: 256M
+                reservations:
+                    memory: 128M
+        healthcheck:
+            test: ["CMD", "wget", "-q", "--spider", "http://localhost:5540/api/health/"]
+            interval: 30s
+            timeout: 10s
+            retries: 5
+        depends_on:
+            redis:
+                condition: service_healthy
+
+    tms-migrate:
+        build:
+            context: .
+            dockerfile: deploy/Dockerfile.tms
+        entrypoint: ["/bin/sh", "-c"]
+        command:
+            - |
+                echo "Waiting for postgres to be ready..."
+                sleep 5
+                for i in 1 2 3 4 5; do
+                  trenova db migrate && break
+                  echo "Migration attempt $$i failed, retrying in 3s..."
+                  sleep 3
+                done
+                trenova db seed --ignore-errors
+        environment:
+            - TRENOVA_DATABASE_HOST=${TRENOVA_DATABASE_HOST:-db}
+            - TRENOVA_DATABASE_PORT=${TRENOVA_DATABASE_PORT:-5432}
+            - TRENOVA_DATABASE_SSLMODE=${TRENOVA_DATABASE_SSLMODE:-disable}
+            - TRENOVA_DATABASE_NAME=${TRENOVA_DATABASE_NAME:-trenova_go_db}
+            - TRENOVA_DATABASE_USER=${TRENOVA_DATABASE_USER:-postgres}
+            - TRENOVA_DATABASE_PASSWORD=${TRENOVA_DATABASE_PASSWORD:-postgres}
+        volumes:
+            - ./services/tms/config/config.yaml:/app/config/config.yaml:ro
+        depends_on:
+            db:
+                condition: service_healthy
+        restart: "no"
+        deploy:
+            resources:
+                limits:
+                    memory: 256M
+
+    gtc:
+        build:
+            context: ./services/gtc
+        container_name: gtc
+        environment:
+            - LOG_LEVEL=DEBUG
+            - HTTP_PORT=8092
+            - DATABASE_URL=postgres://postgres:postgres@db:5432/trenova_go_db?replication=database
+            - REDIS_URL=redis://redis:6379/0
+            - MEILISEARCH_URL=http://meilisearch:7700
+            - MEILISEARCH_API_KEY=CErP8m5HUQUTaporAjiCsNNazOoACqS2bw3IGRsi94I
+            - GTC_CONFIG_FILE=/app/config/gtc.yaml
+            - CDC_SLOT_NAME=trenova_gtc_slot
+            - CDC_PUBLICATION_NAME=trenova_gtc_publication
+            - CDC_AUTO_CREATE_SLOT=true
+            - CDC_AUTO_CREATE_PUBLICATION=true
+            - CDC_SNAPSHOT_BATCH_SIZE=500
+            - CDC_SNAPSHOT_CONCURRENCY=2
+            - CDC_PROCESS_TIMEOUT=15s
+            - CDC_HEALTH_POLL_INTERVAL=10s
+        volumes:
+            - ./config/gtc.yaml:/app/config/gtc.yaml:ro
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    memory: 1G
+                    cpus: "1"
+                reservations:
+                    memory: 256M
+        healthcheck:
+            test:
+                [
+                    "CMD",
+                    "wget",
+                    "-q",
+                    "--spider",
+                    "http://localhost:8092/health",
+                ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        depends_on:
+            tms-migrate:
+                condition: service_completed_successfully
+            db:
+                condition: service_healthy
+            redis:
+                condition: service_healthy
+            meilisearch:
+                condition: service_healthy
+
+    minio:
+        image: quay.io/minio/minio
+        command: server /data --console-address ":9001"
+        container_name: minio
+        environment:
+            - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+            - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD:-minioadmin}
+        volumes:
+            - minio_data:/data
+        ports:
+            - 9000:9000 # API
+            - 9001:9001 # Console
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    memory: 512M
+        healthcheck:
+            test:
+                ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+            interval: 30s
+            timeout: 20s
+            retries: 3
+
+    meilisearch:
+        image: getmeili/meilisearch:v1.16
+        container_name: meilisearch
+        ports:
+            - "7700:7700"
+        environment:
+            - MEILI_MASTER_KEY=CErP8m5HUQUTaporAjiCsNNazOoACqS2bw3IGRsi94I
+        volumes:
+            - meilisearch_data:/data
+        restart: always
+        deploy:
+            resources:
+                limits:
+                    memory: 1G
+        healthcheck:
+            test: curl -f http://localhost:7700/health
+            interval: 30s
+            timeout: 10s
+            retries: 5
+
+    cassandra:
+        image: cassandra:${CASSANDRA_VERSION}
+        container_name: temporal-cassandra
+        ports:
+            - "9042:9042"
+        environment:
+            CASSANDRA_LISTEN_ADDRESS: 127.0.0.1
+        healthcheck:
+            test: ["CMD", "cqlsh", "-e", "describe keyspaces"]
+            interval: 5s
+            timeout: 5s
+            retries: 60
+            start_period: 30s
+
+    elasticsearch:
+        image: elasticsearch:${ELASTICSEARCH_VERSION}
+        container_name: temporal-elasticsearch
+        ports:
+            - "9200:9200"
+        environment:
+            - cluster.routing.allocation.disk.threshold_enabled=true
+            - cluster.routing.allocation.disk.watermark.low=512mb
+            - cluster.routing.allocation.disk.watermark.high=256mb
+            - cluster.routing.allocation.disk.watermark.flood_stage=128mb
+            - discovery.type=single-node
+            - ES_JAVA_OPTS=-Xms256m -Xmx256m
+            - xpack.security.enabled=false
+        healthcheck:
+            test:
+                [
+                    "CMD-SHELL",
+                    "curl -f http://localhost:9200/_cluster/health?wait_for_status=yellow&timeout=1s || exit 1",
+                ]
+            interval: 5s
+            timeout: 5s
+            retries: 60
+            start_period: 30s
+
+    temporal-admin-tools:
+        image: temporalio/admin-tools:${TEMPORAL_ADMINTOOLS_VERSION}
+        container_name: temporal-admin-tools
+        restart: on-failure:6
+        depends_on:
+            cassandra:
+                condition: service_healthy
+            elasticsearch:
+                condition: service_healthy
+        environment:
+            - CASSANDRA_SEEDS=cassandra
+            - ES_HOST=elasticsearch
+            - ES_PORT=9200
+            - ES_SCHEME=http
+            - ES_VERSION=v7
+            - ES_VISIBILITY_INDEX=temporal_visibility_v1_dev
+        volumes:
+            - ./scripts:/scripts
+        entrypoint: ["/bin/sh"]
+        command: /scripts/setup-cassandra-es.sh
+
+    temporal:
+        image: temporalio/server:${TEMPORAL_VERSION}
+        container_name: temporal
+        depends_on:
+            temporal-admin-tools:
+                condition: service_completed_successfully
+        environment:
+            - CASSANDRA_SEEDS=cassandra
+            - ENABLE_ES=true
+            - ES_SEEDS=elasticsearch
+            - ES_VERSION=v7
+            - BIND_ON_IP=0.0.0.0
+            - DYNAMIC_CONFIG_FILE_PATH=config/dynamicconfig/development-cass.yaml
+        ports:
+            - "7233:7233"
+        volumes:
+            - ./config/dynamicconfig:/etc/temporal/config/dynamicconfig
+        healthcheck:
+            test: ["CMD", "nc", "-z", "localhost", "7233"]
+            interval: 5s
+            timeout: 3s
+            start_period: 30s
+            retries: 60
+
+    temporal-create-namespace:
+        image: temporalio/admin-tools:${TEMPORAL_ADMINTOOLS_VERSION}
+        container_name: temporal-create-namespace
+        restart: on-failure:5
+        depends_on:
+            temporal:
+                condition: service_healthy
+        environment:
+            - TEMPORAL_ADDRESS=temporal:7233
+            - DEFAULT_NAMESPACE=default
+        volumes:
+            - ./scripts:/scripts
+        entrypoint: ["/bin/sh"]
+        command: /scripts/create-namespace.sh
+
+    temporal-ui:
+        container_name: temporal-ui
+        depends_on:
+            temporal:
+                condition: service_healthy
+        environment:
+            - TEMPORAL_ADDRESS=temporal:7233
+            - TEMPORAL_CORS_ORIGINS=http://localhost:3000
+        image: temporalio/ui:${TEMPORAL_UI_VERSION}
+        ports:
+            - 8093:8080
+
+    samsara-sim:
+        profiles:
+            - samsara-sim
+        image: golang:1.26
+        container_name: samsara-sim
+        working_dir: /workspace/services/samsara-sim
+        command:
+            [
+                "go",
+                "run",
+                "./cmd/samsara-sim",
+                "-config",
+                "./config/config.example.yaml",
+            ]
+        volumes:
+            - ./:/workspace
+        ports:
+            - "8091:8091"
+        restart: unless-stopped
+        healthcheck:
+            test: ["CMD", "curl", "-f", "http://localhost:8091/_sim/health"]
+            interval: 10s
+            timeout: 5s
+            retries: 10
+
+volumes:
+    pg_data: {}
+    redis_data: {}
+    redisinsight_data: {}
+    minio_data: {}
+    meilisearch_data: {}

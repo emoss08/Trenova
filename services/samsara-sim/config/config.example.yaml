@@ -1,0 +1,33 @@
+server:
+  host: 0.0.0.0
+  port: 8091
+
+auth:
+  tokens:
+    - dev-samsara-token
+    - dev-samsara-token-readonly
+
+seed:
+  fixturePath: ./config/fixtures/default.json
+  deterministicSeed: samsara-sim-v1
+  routeDatasetPath: ./config/datasets/texas_osm_routes.geojson
+
+scenario:
+  defaultProfile: default
+
+simulation:
+  fleetSize: 12
+  tripHoursMin: 8
+  tripHoursMax: 12
+  eventIntensity: balanced
+  violationRate: 0.08
+  speedingRate: 0.14
+  scriptPath: ./config/scenarios/default.yaml
+  scriptMode: merge
+  scriptTimezone: UTC
+
+webhooks:
+  enabled: true
+  signingSecret: sim-signing-secret
+  maxAttempts: 3
+  initialBackoff: 200ms

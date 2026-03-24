@@ -1,0 +1,108 @@
+name: Test Client
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - "claude/**"
+    paths:
+      - "client/**"
+      - ".github/workflows/test-client.yml"
+  pull_request:
+    branches:
+      - main
+      - develop
+    paths:
+      - "client/**"
+      - ".github/workflows/test-client.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Run Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+          cache-dependency-path: client/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: ./client
+        run: pnpm install --frozen-lockfile
+
+      - name: Run tests
+        working-directory: ./client
+        run: pnpm test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+          cache-dependency-path: client/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: ./client
+        run: pnpm install --frozen-lockfile
+
+      - name: Build
+        working-directory: ./client
+        run: pnpm build
+
+  lint:
+    name: Run Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "pnpm"
+          cache-dependency-path: client/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: ./client
+        run: pnpm install --frozen-lockfile
+
+      - name: Run lint
+        working-directory: ./client
+        run: pnpm lint --format=github

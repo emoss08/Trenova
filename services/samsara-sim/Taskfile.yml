@@ -1,0 +1,96 @@
+# yaml-language-server: $schema=https://taskfile.dev/schema.json
+
+version: "3"
+
+vars:
+  ROOT_DIR: "{{.TASKFILE_DIR}}/../.."
+  APP_NAME: samsara-sim
+  BUILD_DIR: ./build
+  BIN_PATH: "{{.BUILD_DIR}}/{{.APP_NAME}}"
+  DOCKER_COMPOSE_LOCAL: "docker compose -f {{.ROOT_DIR}}/docker-compose-local.yml"
+
+tasks:
+  default:
+    cmds:
+      - task: help
+
+  help:
+    desc: Display available tasks
+    cmds:
+      - task --list
+
+  build:
+    desc: Build simulator binary
+    cmds:
+      - mkdir -p {{.BUILD_DIR}}
+      - go build -o {{.BIN_PATH}} ./cmd/samsara-sim
+
+  run:
+    desc: Run simulator locally
+    cmds:
+      - go run ./cmd/samsara-sim -config ./config/config.example.yaml
+
+  test:
+    desc: Run unit tests
+    cmds:
+      - go test ./...
+
+  test-race:
+    desc: Run tests with race detector
+    cmds:
+      - go test -race ./...
+
+  lint:
+    desc: Run golangci-lint
+    cmds:
+      - golangci-lint run ./...
+
+  fmt:
+    desc: Format code
+    cmds:
+      - gofmt -w .
+
+  tidy:
+    desc: Tidy module dependencies
+    cmds:
+      - go mod tidy
+
+  docker-up:
+    desc: Start simulator via docker compose profile
+    cmds:
+      - "{{.DOCKER_COMPOSE_LOCAL}} --profile samsara-sim up -d samsara-sim"
+
+  docker-down:
+    desc: Stop simulator
+    cmds:
+      - "{{.DOCKER_COMPOSE_LOCAL}} --profile samsara-sim stop samsara-sim"
+
+  smoke-sim:
+    desc: Run HOS and asset-location smoke checks against a running simulator
+    cmds:
+      - bash ./scripts/smoke_sim.sh
+
+  smoke-events:
+    desc: Run simulated event smoke checks against a running simulator
+    cmds:
+      - bash ./scripts/smoke_events.sh
+
+  smoke-time:
+    desc: Run simulator time-control smoke checks against a running simulator
+    cmds:
+      - bash ./scripts/smoke_time.sh
+
+  smoke-faults:
+    desc: Run fault-injection smoke checks against a running simulator
+    cmds:
+      - bash ./scripts/smoke_faults.sh
+
+  smoke-ci:
+    desc: Run CI smoke checks against a running simulator
+    cmds:
+      - bash ./scripts/smoke_ci.sh
+
+  routes-fetch:
+    desc: Fetch realistic Texas route geometry from OSRM into simulator dataset
+    cmds:
+      - bash ./scripts/fetch_texas_routes.sh

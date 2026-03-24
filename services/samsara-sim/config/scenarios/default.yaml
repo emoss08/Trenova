@@ -1,0 +1,20 @@
+version: 1
+timezone: UTC
+scenarios:
+  - id: drv-1-sample-day
+    driverId: drv-1
+    vehicleId: veh-1001
+    baseDate: 2026-03-01
+    events:
+      - type: speeding.burst_major
+        start: "08:15:00"
+        durationMs: 900000
+        severity: critical
+        metadata:
+          speedMultiplier: 1.33
+      - type: duty.sleeper_berth_block
+        start: "12:00:00"
+        durationMs: 5400000
+        severity: info
+        metadata:
+          dutyStatus: sleeperBed

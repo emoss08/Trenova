@@ -1,0 +1,205 @@
+states:
+  - name: Alabama
+    abbreviation: AL
+    country_name: United States
+    country_iso3: USA
+  - name: Alaska
+    abbreviation: AK
+    country_name: United States
+    country_iso3: USA
+  - name: Arizona
+    abbreviation: AZ
+    country_name: United States
+    country_iso3: USA
+  - name: Arkansas
+    abbreviation: AR
+    country_name: United States
+    country_iso3: USA
+  - name: California
+    abbreviation: CA
+    country_name: United States
+    country_iso3: USA
+  - name: Colorado
+    abbreviation: CO
+    country_name: United States
+    country_iso3: USA
+  - name: Connecticut
+    abbreviation: CT
+    country_name: United States
+    country_iso3: USA
+  - name: Delaware
+    abbreviation: DE
+    country_name: United States
+    country_iso3: USA
+  - name: District of Columbia
+    abbreviation: DC
+    country_name: United States
+    country_iso3: USA
+  - name: Florida
+    abbreviation: FL
+    country_name: United States
+    country_iso3: USA
+  - name: Georgia
+    abbreviation: GA
+    country_name: United States
+    country_iso3: USA
+  - name: Hawaii
+    abbreviation: HI
+    country_name: United States
+    country_iso3: USA
+  - name: Idaho
+    abbreviation: ID
+    country_name: United States
+    country_iso3: USA
+  - name: Illinois
+    abbreviation: IL
+    country_name: United States
+    country_iso3: USA
+  - name: Indiana
+    abbreviation: IN
+    country_name: United States
+    country_iso3: USA
+  - name: Iowa
+    abbreviation: IA
+    country_name: United States
+    country_iso3: USA
+  - name: Kansas
+    abbreviation: KS
+    country_name: United States
+    country_iso3: USA
+  - name: Kentucky
+    abbreviation: KY
+    country_name: United States
+    country_iso3: USA
+  - name: Louisiana
+    abbreviation: LA
+    country_name: United States
+    country_iso3: USA
+  - name: Maine
+    abbreviation: ME
+    country_name: United States
+    country_iso3: USA
+  - name: Maryland
+    abbreviation: MD
+    country_name: United States
+    country_iso3: USA
+  - name: Massachusetts
+    abbreviation: MA
+    country_name: United States
+    country_iso3: USA
+  - name: Michigan
+    abbreviation: MI
+    country_name: United States
+    country_iso3: USA
+  - name: Minnesota
+    abbreviation: MN
+    country_name: United States
+    country_iso3: USA
+  - name: Mississippi
+    abbreviation: MS
+    country_name: United States
+    country_iso3: USA
+  - name: Missouri
+    abbreviation: MO
+    country_name: United States
+    country_iso3: USA
+  - name: Montana
+    abbreviation: MT
+    country_name: United States
+    country_iso3: USA
+  - name: Nebraska
+    abbreviation: NE
+    country_name: United States
+    country_iso3: USA
+  - name: Nevada
+    abbreviation: NV
+    country_name: United States
+    country_iso3: USA
+  - name: New Hampshire
+    abbreviation: NH
+    country_name: United States
+    country_iso3: USA
+  - name: New Jersey
+    abbreviation: NJ
+    country_name: United States
+    country_iso3: USA
+  - name: New Mexico
+    abbreviation: NM
+    country_name: United States
+    country_iso3: USA
+  - name: New York
+    abbreviation: NY
+    country_name: United States
+    country_iso3: USA
+  - name: North Carolina
+    abbreviation: NC
+    country_name: United States
+    country_iso3: USA
+  - name: North Dakota
+    abbreviation: ND
+    country_name: United States
+    country_iso3: USA
+  - name: Ohio
+    abbreviation: OH
+    country_name: United States
+    country_iso3: USA
+  - name: Oklahoma
+    abbreviation: OK
+    country_name: United States
+    country_iso3: USA
+  - name: Oregon
+    abbreviation: OR
+    country_name: United States
+    country_iso3: USA
+  - name: Pennsylvania
+    abbreviation: PA
+    country_name: United States
+    country_iso3: USA
+  - name: Rhode Island
+    abbreviation: RI
+    country_name: United States
+    country_iso3: USA
+  - name: South Carolina
+    abbreviation: SC
+    country_name: United States
+    country_iso3: USA
+  - name: South Dakota
+    abbreviation: SD
+    country_name: United States
+    country_iso3: USA
+  - name: Tennessee
+    abbreviation: TN
+    country_name: United States
+    country_iso3: USA
+  - name: Texas
+    abbreviation: TX
+    country_name: United States
+    country_iso3: USA
+  - name: Utah
+    abbreviation: UT
+    country_name: United States
+    country_iso3: USA
+  - name: Vermont
+    abbreviation: VT
+    country_name: United States
+    country_iso3: USA
+  - name: Virginia
+    abbreviation: VA
+    country_name: United States
+    country_iso3: USA
+  - name: Washington
+    abbreviation: WA
+    country_name: United States
+    country_iso3: USA
+  - name: West Virginia
+    abbreviation: WV
+    country_name: United States
+    country_iso3: USA
+  - name: Wisconsin
+    abbreviation: WI
+    country_name: United States
+    country_iso3: USA
+  - name: Wyoming
+    abbreviation: WY
+    country_name: United States
+    country_iso3: USA

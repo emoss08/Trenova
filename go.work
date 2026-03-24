@@ -1,0 +1,8 @@
+go 1.26
+
+use (
+	./services/samsara-sim
+	./services/tms
+	./services/gtc
+	./shared
+)

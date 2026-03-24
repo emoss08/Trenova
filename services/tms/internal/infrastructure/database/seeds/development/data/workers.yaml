@@ -1,0 +1,190 @@
+# Worker Seed Data - Development Environment
+# This file demonstrates the YAML data externalization feature of the seeding system
+#
+# To use this data in a seed:
+#   loader := seedhelpers.NewDataLoader("./internal/.../seeds/development/data")
+#   var data struct { Workers []WorkerData `yaml:"workers"` }
+#   loader.LoadYAML("workers.yaml", &data)
+
+workers:
+  # Driver - Active
+  - code: "DRV001"
+    status: Active
+    worker_type: Driver
+    first_name: "John"
+    last_name: "Smith"
+    address_line_1: "123 Main Street"
+    city: "Los Angeles"
+    state_abbreviation: "CA"
+    zip_code: "90001"
+    email: "john.smith@trenova.app"
+    phone_number: "+1-555-0101"
+    date_of_birth: "1985-03-15"
+    hire_date: "2023-01-15"
+    license_number: "CA-DL-12345678"
+    license_state: "CA"
+    license_expiration: "2026-03-15"
+    endorsements:
+      - Hazmat
+      - Tanker
+    medical_cert_date: "2024-01-01"
+    is_active: true
+    comments: "Experienced long-haul driver, excellent safety record"
+
+  # Driver - Active, Different State
+  - code: "DRV002"
+    status: Active
+    worker_type: Driver
+    first_name: "Maria"
+    last_name: "Garcia"
+    address_line_1: "456 Oak Avenue"
+    city: "Houston"
+    state_abbreviation: "TX"
+    zip_code: "77001"
+    email: "maria.garcia@trenova.app"
+    phone_number: "+1-555-0102"
+    date_of_birth: "1990-07-22"
+    hire_date: "2023-06-01"
+    license_number: "TX-DL-87654321"
+    license_state: "TX"
+    license_expiration: "2027-07-22"
+    endorsements:
+      - Doubles/Triples
+    medical_cert_date: "2024-06-01"
+    is_active: true
+    comments: "Specializes in regional routes"
+
+  # Dispatcher - Active
+  - code: "DSP001"
+    status: Active
+    worker_type: Dispatcher
+    first_name: "Robert"
+    last_name: "Johnson"
+    address_line_1: "789 Pine Street"
+    address_line_2: "Suite 200"
+    city: "Chicago"
+    state_abbreviation: "IL"
+    zip_code: "60601"
+    email: "robert.johnson@trenova.app"
+    phone_number: "+1-555-0103"
+    date_of_birth: "1988-11-05"
+    hire_date: "2022-03-20"
+    is_active: true
+    comments: "Senior dispatcher with 10+ years experience"
+
+  # Warehouse Worker - Active
+  - code: "WHS001"
+    status: Active
+    worker_type: Warehouse
+    first_name: "Jennifer"
+    last_name: "Lee"
+    address_line_1: "321 Industrial Blvd"
+    city: "Atlanta"
+    state_abbreviation: "GA"
+    zip_code: "30301"
+    email: "jennifer.lee@trenova.app"
+    phone_number: "+1-555-0104"
+    date_of_birth: "1995-02-14"
+    hire_date: "2023-09-01"
+    forklift_certified: true
+    is_active: true
+    comments: "Forklift certified, excellent inventory management skills"
+
+  # Mechanic - Active
+  - code: "MEC001"
+    status: Active
+    worker_type: Mechanic
+    first_name: "David"
+    last_name: "Williams"
+    address_line_1: "555 Service Road"
+    city: "Phoenix"
+    state_abbreviation: "AZ"
+    zip_code: "85001"
+    email: "david.williams@trenova.app"
+    phone_number: "+1-555-0105"
+    date_of_birth: "1982-09-30"
+    hire_date: "2021-05-15"
+    certifications:
+      - "ASE Master Technician"
+      - "CDL Class A"
+      - "EPA 609 Certification"
+    is_active: true
+    comments: "ASE certified, specializes in diesel engines"
+
+  # Admin Staff - Active
+  - code: "ADM001"
+    status: Active
+    worker_type: Administrative
+    first_name: "Sarah"
+    last_name: "Martinez"
+    address_line_1: "100 Corporate Drive"
+    city: "Seattle"
+    state_abbreviation: "WA"
+    zip_code: "98101"
+    email: "sarah.martinez@trenova.app"
+    phone_number: "+1-555-0106"
+    date_of_birth: "1992-04-18"
+    hire_date: "2023-02-01"
+    is_active: true
+    comments: "Office manager, handles HR and payroll"
+
+  # Driver - Inactive (for testing inactive status)
+  - code: "DRV003"
+    status: Inactive
+    worker_type: Driver
+    first_name: "Michael"
+    last_name: "Brown"
+    address_line_1: "222 Elm Street"
+    city: "Denver"
+    state_abbreviation: "CO"
+    zip_code: "80201"
+    email: "michael.brown@trenova.app"
+    phone_number: "+1-555-0107"
+    date_of_birth: "1987-06-10"
+    hire_date: "2020-08-01"
+    termination_date: "2024-01-15"
+    license_number: "CO-DL-11223344"
+    license_state: "CO"
+    license_expiration: "2025-06-10"
+    is_active: false
+    comments: "Resigned - relocated to different state"
+
+# Notes on YAML Features:
+#
+# 1. Comments start with #
+# 2. Lists use the dash (-) syntax
+# 3. Nested structures use indentation (2 spaces recommended)
+# 4. Strings with special characters should be quoted
+# 5. Booleans: true/false
+# 6. Dates: Use ISO format (YYYY-MM-DD)
+# 7. Numbers: No quotes needed
+# 8. Null values: null or ~ or omit the field
+#
+# Example mapping in Go seed:
+#
+# type WorkerData struct {
+#     Code                string   `yaml:"code"`
+#     Status              string   `yaml:"status"`
+#     WorkerType          string   `yaml:"worker_type"`
+#     FirstName           string   `yaml:"first_name"`
+#     LastName            string   `yaml:"last_name"`
+#     AddressLine1        string   `yaml:"address_line_1"`
+#     AddressLine2        string   `yaml:"address_line_2"`
+#     City                string   `yaml:"city"`
+#     StateAbbreviation   string   `yaml:"state_abbreviation"`
+#     ZipCode             string   `yaml:"zip_code"`
+#     Email               string   `yaml:"email"`
+#     PhoneNumber         string   `yaml:"phone_number"`
+#     DateOfBirth         string   `yaml:"date_of_birth"`
+#     HireDate            string   `yaml:"hire_date"`
+#     TerminationDate     string   `yaml:"termination_date"`
+#     LicenseNumber       string   `yaml:"license_number"`
+#     LicenseState        string   `yaml:"license_state"`
+#     LicenseExpiration   string   `yaml:"license_expiration"`
+#     Endorsements        []string `yaml:"endorsements"`
+#     MedicalCertDate     string   `yaml:"medical_cert_date"`
+#     ForkLiftCertified   bool     `yaml:"forklift_certified"`
+#     Certifications      []string `yaml:"certifications"`
+#     IsActive            bool     `yaml:"is_active"`
+#     Comments            string   `yaml:"comments"`
+# }

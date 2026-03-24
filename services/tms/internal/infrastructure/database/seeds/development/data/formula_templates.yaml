@@ -1,0 +1,134 @@
+templates:
+  - name: Flat Rate
+    description: Charges a flat rate regardless of shipment characteristics. Uses the freight charge amount entered on the shipment.
+    type: freight_charge
+    expression: freightChargeAmount
+    status: active
+    schema_id: shipment
+    variables: []
+
+  - name: Per Mile
+    description: Charges based on total distance traveled. Multiplies the rate per mile by total shipment distance.
+    type: freight_charge
+    expression: freightChargeAmount * totalDistance
+    status: active
+    schema_id: shipment
+    variables: []
+
+  - name: Per Stop
+    description: Charges based on the number of stops. Multiplies the rate per stop by total number of stops.
+    type: freight_charge
+    expression: freightChargeAmount * totalStops
+    status: active
+    schema_id: shipment
+    variables: []
+
+  - name: Per Pound
+    description: Charges based on total shipment weight. Multiplies the rate per pound by total weight.
+    type: freight_charge
+    expression: freightChargeAmount * totalWeight
+    status: active
+    schema_id: shipment
+    variables: []
+
+  - name: Per Pallet
+    description: Charges based on number of pallets/pieces. Multiplies the rate per pallet by total pieces.
+    type: freight_charge
+    expression: freightChargeAmount * totalPieces
+    status: active
+    schema_id: shipment
+    variables: []
+
+  - name: Per Linear Foot
+    description: Charges based on linear feet occupied. Multiplies the rate per linear foot by total linear feet calculated from commodities.
+    type: freight_charge
+    expression: freightChargeAmount * totalLinearFeet
+    status: active
+    schema_id: shipment
+    variables: []
+
+  - name: Per CWT (Hundredweight)
+    description: Charges based on hundredweight (CWT). Multiplies the rate per CWT by weight divided by 100, rounded up.
+    type: freight_charge
+    expression: freightChargeAmount * ceil(totalWeight / 100)
+    status: active
+    schema_id: shipment
+    variables: []
+
+  - name: Flat Fee (Use Existing Charges)
+    description: Uses the freight and other charges already entered on the shipment. Adds freight charge amount plus other charge amount.
+    type: freight_charge
+    expression: freightChargeAmount + otherChargeAmount
+    status: active
+    schema_id: shipment
+    variables: []
+
+  - name: Per Mile with Minimum
+    description: Per mile rate with a minimum charge floor. Ensures the charge is at least the minimum regardless of distance.
+    type: freight_charge
+    expression: max(minimumCharge, freightChargeAmount * totalDistance)
+    status: active
+    schema_id: shipment
+    variables:
+      - name: minimumCharge
+        type: number
+        description: Minimum charge amount
+        required: true
+        default_value: 250.0
+
+  - name: Per Mile with Fuel Surcharge
+    description: Per mile rate with a percentage-based fuel surcharge applied on top.
+    type: freight_charge
+    expression: round((freightChargeAmount * totalDistance) * (1 + fuelSurchargePercent / 100), 2)
+    status: active
+    schema_id: shipment
+    variables:
+      - name: fuelSurchargePercent
+        type: number
+        description: Fuel surcharge percentage
+        required: true
+        default_value: 18.0
+
+  - name: Hazmat Surcharge
+    description: Applies a hazmat fee only when the shipment contains hazardous materials.
+    type: accessorial_charge
+    expression: "hasHazmat ? hazmatFee : 0"
+    status: active
+    schema_id: shipment
+    variables:
+      - name: hazmatFee
+        type: number
+        description: Hazardous materials handling fee
+        required: true
+        default_value: 175.0
+
+  - name: Temperature Control Surcharge
+    description: Applies a reefer fee only when the shipment requires temperature control.
+    type: accessorial_charge
+    expression: "requiresTemperatureControl ? reeferFee : 0"
+    status: active
+    schema_id: shipment
+    variables:
+      - name: reeferFee
+        type: number
+        description: Temperature control/reefer fee
+        required: true
+        default_value: 225.0
+
+  - name: Additional Stop Fee
+    description: Charges for stops beyond a base number. First 2 stops are included, additional stops incur a fee.
+    type: accessorial_charge
+    expression: "totalStops > baseStops ? (totalStops - baseStops) * additionalStopFee : 0"
+    status: active
+    schema_id: shipment
+    variables:
+      - name: baseStops
+        type: number
+        description: Number of stops included in base rate
+        required: true
+        default_value: 2.0
+      - name: additionalStopFee
+        type: number
+        description: Fee per additional stop
+        required: true
+        default_value: 50.0

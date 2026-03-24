@@ -1,0 +1,23 @@
+coverage:
+  status:
+    project:
+      default:
+        target: 70%
+        threshold: 5%
+    patch:
+      default:
+        target: 60%
+
+ignore:
+  - "services/tms/cmd/**/*"
+  - "services/tms/internal/infrastructure/postgres/migrations/**/*"
+  - "services/tms/internal/infrastructure/database/seeds/**/*"
+  - "services/tms/internal/infrastructure/observability/**/*"
+  - "services/tms/internal/pkg/domainregistry/**/*"
+  - "services/tms/internal/pkg/seedhelpers/**/*"
+  - "services/tms/internal/core/domain/**/*"
+  - "shared/testutil/**/*"
+  - "**/*_gen.go"
+  - "**/*_generated.go"
+  - "**/mocks/**/*"
+  - "**/*_mock.go"

@@ -1,0 +1,64 @@
+app:
+  env: test
+  debug: true
+  version: 0.0.1
+
+server:
+  port: 8081
+  mode: test
+
+database:
+  host: localhost
+  port: 5433
+  name: trenova_test
+  user: postgres
+  password: postgres
+  maxIdleConns: 5
+  maxOpenConns: 10
+
+cache:
+  host: localhost
+  port: 6380
+  db: 1
+  poolSize: 5
+
+storage:
+  endpoint: localhost:9001
+  bucket: trenova-test
+
+temporal:
+  namespace: test
+
+security:
+  session:
+    secret: test-secret-key-for-testing-only-32chars
+    name: trenova_test_session
+    maxAge: 1h
+    httpOnly: true
+    secure: false
+    sameSite: lax
+    refreshWindow: 5m
+  csrf:
+    tokenName: test_csrf_token
+  rateLimit:
+    enabled: false
+
+logging:
+  level: debug
+  format: text
+
+monitoring:
+  metrics:
+    enabled: false
+    port: 9090
+    path: /metrics
+  health:
+    path: /health
+    readinessPath: /ready
+    livenessPath: /live
+  tracing:
+    enabled: false
+    provider: stdout
+    endpoint: localhost:4317
+    serviceName: trenova
+    samplingRate: 1.0
