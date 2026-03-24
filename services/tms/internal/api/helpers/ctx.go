@@ -65,7 +65,7 @@ func QueryInt64(c *gin.Context, key string, defaultValue ...int64) int64 {
 
 func QueryUint(c *gin.Context, key string, defaultValue ...uint) uint {
 	return queryValue(c, key, func(s string) (uint, bool) {
-		v, err := strconv.ParseUint(s, 10, 64)
+		v, err := strconv.ParseUint(s, 10, 0)
 		return uint(v), err == nil
 	}, 0, defaultValue)
 }
