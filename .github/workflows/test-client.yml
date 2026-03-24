@@ -3,6 +3,7 @@ name: Test Client
 on:
   push:
     branches:
+      - master
       - main
       - develop
       - "claude/**"
@@ -11,6 +12,7 @@ on:
       - ".github/workflows/test-client.yml"
   pull_request:
     branches:
+      - master
       - main
       - develop
     paths:
