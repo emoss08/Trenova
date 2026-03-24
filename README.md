@@ -43,3 +43,7 @@ Trenova operates under the [Fair Source](https://fair.io/) licensing model, spec
 Under this licensing framework, organizations and individuals are free to utilize Trenova and deploy it across any infrastructure, including enterprise environments. However, the license explicitly restricts the commercialization of self-hosted Trenova deployments - meaning you cannot offer it as a Software-as-a-Service platform or monetize it through other business models. Additionally, you cannot leverage Trenova's FSL-licensed codebase to build competing services or products.
 
 All source code for Trenova, along with its supporting infrastructure and deployment libraries, is publicly accessible through our GitHub repositories.
+
+## Links
+
+[![Hypercommit](https://img.shields.io/badge/Hypercommit-DB2475)](https://hypercommit.com/trenova)
