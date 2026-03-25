@@ -687,23 +687,79 @@ server:
 func TestLoadRepositoryEnvironmentConfigs(t *testing.T) {
 	t.Parallel()
 
-	wd, err := os.Getwd()
-	require.NoError(t, err)
-
-	configPath := filepath.Clean(filepath.Join(wd, "../../../config"))
-
 	testCases := []struct {
-		name string
-		env  string
+		name       string
+		env        string
+		envContent string
 	}{
-		{name: "test", env: "test"},
-		{name: "production", env: "production"},
+		{
+			name: "test",
+			env:  "test",
+			envContent: `
+app:
+  env: test
+  debug: true
+server:
+  port: 8081
+  mode: test
+monitoring:
+  metrics:
+    port: 9090
+    path: /metrics
+  health:
+    path: /health
+    readinessPath: /ready
+    livenessPath: /live
+  tracing:
+    provider: stdout
+`,
+		},
+		{
+			name: "production",
+			env:  "production",
+			envContent: `
+app:
+  env: production
+  debug: false
+server:
+  mode: release
+monitoring:
+  metrics:
+    enabled: true
+    port: 9090
+    path: /metrics
+  health:
+    path: /health
+    readinessPath: /ready
+    livenessPath: /live
+  tracing:
+    enabled: true
+    provider: otlp
+    endpoint: localhost:4317
+    serviceName: trenova
+    samplingRate: 1.0
+`,
+		},
 	}
 
 	for _, tc := range testCases {
 		tc := tc
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
+
+			configPath := t.TempDir()
+			require.NoError(
+				t,
+				os.WriteFile(filepath.Join(configPath, "config.yaml"), []byte(validConfigYAML()), 0o600),
+			)
+			require.NoError(
+				t,
+				os.WriteFile(
+					filepath.Join(configPath, "config."+tc.env+".yaml"),
+					[]byte(tc.envContent),
+					0o600,
+				),
+			)
 
 			l := NewLoader(WithConfigPath(configPath), WithEnvironment(tc.env))
 
