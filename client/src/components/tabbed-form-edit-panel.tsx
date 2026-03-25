@@ -11,9 +11,9 @@ import {
 import { api } from "@/lib/api";
 import { formatToUserTimezone } from "@/lib/date";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/stores/auth-store";
 import type { DataTablePanelProps } from "@/types/data-table";
 import type { API_ENDPOINTS } from "@/types/server";
-import { TimeFormat } from "@/types/user";
 import { Dialog } from "@base-ui/react/dialog";
 import { useQueryClient } from "@tanstack/react-query";
 import { XIcon } from "lucide-react";
@@ -88,6 +88,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   tabs = [],
   size = "md",
 }: TabbedFormEditPanelProps<T, TData>) {
+  const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
   const pendingActionRef = useRef<EditPanelSaveAction>(defaultAction);
@@ -193,8 +194,8 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
 
   const panelDescription = row?.updatedAt
     ? `Last updated on ${formatToUserTimezone(row.updatedAt as number, {
-        timeFormat: TimeFormat.enum["24-hour"],
-      })}`
+        timeFormat: user?.timeFormat || "24-hour",
+      }, user?.timezone)}`
     : undefined;
 
   return (
