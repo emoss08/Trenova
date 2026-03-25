@@ -93,7 +93,6 @@ func (r *repository) Update(
 		Model(entity).
 		WherePK().
 		Where("version = ?", ov).
-		OmitZero().
 		Returning("*").
 		Exec(ctx)
 	if err != nil {

@@ -16,6 +16,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/customerhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/customfieldhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/databasesessionhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/dataentrycontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceoverridehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/docshandler"
@@ -131,6 +132,7 @@ type RouterParams struct {
 	HoldReasonHandler            *holdreasonhandler.Handler
 	IntegrationHandler           *integrationhandler.Handler
 	BillingControlHandler        *billingcontrolhandler.Handler
+	DataEntryControlHandler      *dataentrycontrolhandler.Handler
 	DispatchControlHandler       *dispatchcontrolhandler.Handler
 	WorkerPTOHandler             *workerptohandler.Handler
 	DistanceOverrideHandler      *distanceoverridehandler.Handler
@@ -195,6 +197,7 @@ type Router struct {
 	holdReasonHandler            *holdreasonhandler.Handler
 	integrationHandler           *integrationhandler.Handler
 	billingControlHandler        *billingcontrolhandler.Handler
+	dataEntryControlHandler      *dataentrycontrolhandler.Handler
 	dispatchControlHandler       *dispatchcontrolhandler.Handler
 	workerPTOHandler             *workerptohandler.Handler
 	distanceOverrideHandler      *distanceoverridehandler.Handler
@@ -261,6 +264,7 @@ func NewRouter(p RouterParams) *Router {
 		holdReasonHandler:            p.HoldReasonHandler,
 		integrationHandler:           p.IntegrationHandler,
 		billingControlHandler:        p.BillingControlHandler,
+		dataEntryControlHandler:      p.DataEntryControlHandler,
 		dispatchControlHandler:       p.DispatchControlHandler,
 		workerPTOHandler:             p.WorkerPTOHandler,
 		distanceOverrideHandler:      p.DistanceOverrideHandler,
@@ -373,6 +377,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.holdReasonHandler.RegisterRoutes(protected)
 	r.integrationHandler.RegisterRoutes(protected)
 	r.billingControlHandler.RegisterRoutes(protected)
+	r.dataEntryControlHandler.RegisterRoutes(protected)
 	r.dispatchControlHandler.RegisterRoutes(protected)
 	r.distanceOverrideHandler.RegisterRoutes(protected)
 	r.workerPTOHandler.RegisterRoutes(protected)

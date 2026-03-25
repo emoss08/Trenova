@@ -8,6 +8,7 @@ import type {
   ThresholdAction,
 } from "@/types/accounting-control";
 import type { PaymentTerm, TransferSchedule } from "@/types/billing-control";
+import type { CaseFormat } from "@/types/data-entry-control";
 import type { FreightClass } from "@/types/commodity";
 import type { FieldType } from "@/types/custom-field";
 import type {
@@ -43,11 +44,7 @@ import type {
   StopStatus,
   StopType,
 } from "@/types/shipment";
-import type {
-  CommentPriority,
-  CommentType,
-  CommentVisibility,
-} from "@/types/shipment-comment";
+import type { CommentPriority, CommentType, CommentVisibility } from "@/types/shipment-comment";
 import type {
   CDLClass,
   ComplianceStatus,
@@ -357,9 +354,21 @@ export const accountCategoryChoices = [
 ] satisfies ReadonlyArray<GenericSelectOption<AccountCategory>>;
 
 export const accountingMethodChoices = [
-  { value: "Accrual", label: "Accrual", description: "Record revenue when earned and expenses when incurred (GAAP compliant)" },
-  { value: "Cash", label: "Cash", description: "Record revenue when payment is received and expenses when paid" },
-  { value: "Hybrid", label: "Hybrid", description: "Revenue on accrual basis, expenses on cash basis (IRS guidelines)" },
+  {
+    value: "Accrual",
+    label: "Accrual",
+    description: "Record revenue when earned and expenses when incurred (GAAP compliant)",
+  },
+  {
+    value: "Cash",
+    label: "Cash",
+    description: "Record revenue when payment is received and expenses when paid",
+  },
+  {
+    value: "Hybrid",
+    label: "Hybrid",
+    description: "Revenue on accrual basis, expenses on cash basis (IRS guidelines)",
+  },
 ] satisfies ReadonlyArray<GenericSelectOption<AccountingMethod>>;
 
 export const journalEntryCriteriaChoices = [
@@ -613,3 +622,10 @@ export const currencyChoices = [
   { value: "EUR", label: "EUR - Euro" },
   { value: "GBP", label: "GBP - British Pound" },
 ] satisfies ReadonlyArray<SelectOption>;
+
+export const caseFormatChoices = [
+  { value: "AsEntered", label: "As Entered" },
+  { value: "Upper", label: "UPPER" },
+  { value: "Lower", label: "lower" },
+  { value: "TitleCase", label: "Title Case" },
+] satisfies ReadonlyArray<GenericSelectOption<CaseFormat>>;

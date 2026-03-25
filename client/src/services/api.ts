@@ -9,6 +9,7 @@ import { BillingControlService } from "./billing-control";
 import { CommodityService } from "./commodity";
 import { CustomFieldService } from "./custom-field";
 import { CustomerService } from "./customer";
+import { DataEntryControlService } from "./data-entry-control";
 import { DatabaseSessionService } from "./database-session";
 import { DispatchControlService } from "./dispatch-control";
 import { DistanceOverrideService } from "./distance-override";
@@ -76,6 +77,7 @@ class APIService {
   public shipmentControlService: ShipmentControlService;
   public shipmentService: ShipmentService;
   public billingControlService: BillingControlService;
+  public dataEntryControlService: DataEntryControlService;
   public dispatchControlService: DispatchControlService;
   public distanceOverrideService: DistanceOverrideService;
   public realtimeService: RealtimeService;
@@ -120,6 +122,7 @@ class APIService {
     this.shipmentControlService = new ShipmentControlService();
     this.shipmentService = new ShipmentService();
     this.billingControlService = new BillingControlService();
+    this.dataEntryControlService = new DataEntryControlService();
     this.dispatchControlService = new DispatchControlService();
     this.distanceOverrideService = new DistanceOverrideService();
     this.realtimeService = new RealtimeService();

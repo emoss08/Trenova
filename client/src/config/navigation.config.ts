@@ -577,6 +577,15 @@ export const adminLinks: SidebarLink[] = [
     title: "Billing Controls",
     group: "Organization",
     adminOnly: true,
+    resource: Resource.BillingControl,
+  },
+  {
+    href: "/admin/data-entry-controls/",
+    title: "Data Entry Controls",
+    group: "Organization",
+    adminOnly: true,
+    resource: Resource.DataEntryControl,
+    requiredOperation: Operation.Read,
   },
   {
     href: "/admin/dispatch-controls/",

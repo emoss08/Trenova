@@ -4,6 +4,7 @@ import { analytics } from "./analytics";
 import { audit } from "./audit";
 import { billingControl } from "./billing-control";
 import { customer } from "./customer";
+import { dataEntryControl } from "./data-entry-control";
 import { dispatchControl } from "./dispatch-control";
 import { formulaTemplate } from "./formula-template";
 import { googleMaps } from "./google-maps";
@@ -20,6 +21,7 @@ import { worker } from "./worker";
 export const queries = mergeQueryKeys(
   accountingControl,
   billingControl,
+  dataEntryControl,
   dispatchControl,
   userOrganization,
   pageFavoite,

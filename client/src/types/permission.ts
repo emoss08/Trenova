@@ -19,12 +19,7 @@ export const Operation = {
 
 export type OperationType = (typeof Operation)[keyof typeof Operation];
 
-export const FieldSensitivity = z.enum([
-  "public",
-  "internal",
-  "restricted",
-  "confidential",
-]);
+export const FieldSensitivity = z.enum(["public", "internal", "restricted", "confidential"]);
 
 export type FieldSensitivityType = z.infer<typeof FieldSensitivity>;
 
@@ -80,6 +75,7 @@ export const Resource = {
   ShipmentType: "shipment_type",
   ShipmentMove: "shipment_move",
   ShipmentStop: "shipment_stop",
+  DataEntryControl: "data_entry_control",
   DispatchControl: "dispatch_control",
   Invoice: "invoice",
   AccessorialCharge: "accessorial_charge",
@@ -94,6 +90,7 @@ export const Resource = {
   HazardousMaterial: "hazardous_material",
   HazmatSegregationRule: "hazmat_segregation_rule",
   AccountingControl: "accounting_control",
+  BillingControl: "billing_control",
   AccountType: "account_type",
   GeneralLedgerAccount: "general_ledger_account",
   DivisionCode: "division_code",

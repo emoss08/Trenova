@@ -14,6 +14,7 @@ const (
 	ResourceSequenceConfig        Resource = "sequence_config"
 	ResourceIntegration           Resource = "integration"
 	ResourceAPIKey                Resource = "api_key"
+	ResourceDataEntryControl      Resource = "data_entry_control"
 
 	// Equipment
 	ResourceEquipmentType         Resource = "equipment_type"

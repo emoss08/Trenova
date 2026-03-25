@@ -548,6 +548,16 @@ func (rr *RouteRegistry) registerOperationsRoutes() {
 		DisplayName: "Dispatch Control",
 		Category:    "Operations",
 	})
+
+	_ = rr.Register(&RouteDefinition{
+		Path:      "/admin/data-entry-controls",
+		MatchType: RouteMatchExact,
+		Requirements: []RouteRequirement{
+			{Resource: ResourceDataEntryControl, Operation: OpRead},
+		},
+		DisplayName: "Data Entry Controls",
+		Category:    "Administration",
+	})
 }
 
 func (rr *RouteRegistry) registerBillingRoutes() {

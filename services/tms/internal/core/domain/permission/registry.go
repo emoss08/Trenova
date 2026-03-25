@@ -497,6 +497,15 @@ func (r *Registry) registerOperationsResources() {
 	})
 
 	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceDataEntryControl.String(),
+		DisplayName:        "Data Entry Control",
+		Description:        "Data entry case formatting settings",
+		Category:           "Administration",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
 		Resource:           ResourceShipmentControl.String(),
 		DisplayName:        "Shipment Control",
 		Description:        "Shipment control settings and configuration",
