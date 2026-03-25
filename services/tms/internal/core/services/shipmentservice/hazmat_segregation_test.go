@@ -87,7 +87,8 @@ func TestValidatorValidateCreate_RejectsProhibitedHazmatPair(t *testing.T) {
 	multiErr := v.ValidateCreate(t.Context(), entity)
 
 	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "commodities")
+	assertErrorField(t, multiErr, "commodities[0].commodityId")
+	assertErrorField(t, multiErr, "commodities[1].commodityId")
 }
 
 func TestValidatorValidateCreate_RejectsDistanceRuleMatch(t *testing.T) {
@@ -131,7 +132,8 @@ func TestValidatorValidateCreate_RejectsDistanceRuleMatch(t *testing.T) {
 	multiErr := v.ValidateCreate(t.Context(), entity)
 
 	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "commodities")
+	assertErrorField(t, multiErr, "commodities[0].commodityId")
+	assertErrorField(t, multiErr, "commodities[1].commodityId")
 }
 
 func TestValidatorValidateCreate_MatchesSpecificHazmatMaterialsUnordered(t *testing.T) {
@@ -200,7 +202,8 @@ func TestValidatorValidateCreate_MatchesSpecificHazmatMaterialsUnordered(t *test
 	multiErr := v.ValidateCreate(t.Context(), entity)
 
 	require.NotNil(t, multiErr)
-	assertErrorField(t, multiErr, "commodities")
+	assertErrorField(t, multiErr, "commodities[0].commodityId")
+	assertErrorField(t, multiErr, "commodities[1].commodityId")
 }
 
 func TestValidatorValidateCreate_IgnoresInactiveOrUnmatchedRules(t *testing.T) {

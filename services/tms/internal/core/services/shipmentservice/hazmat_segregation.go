@@ -115,16 +115,24 @@ func createHazmatSegregationRule(
 						continue
 					}
 
-					// v1 is shipment-level only, so any matching active segregation rule blocks the shipment.
-					multiErr.Add(
-						"commodities",
+					multiErr.WithIndex("commodities", i).Add(
+						"commodityId",
 						errortypes.ErrInvalidOperation,
 						fmt.Sprintf(
-							"Commodities %q and %q violate hazmat segregation rule %q (%s)",
-							leftCommodity.Name,
-							rightCommodity.Name,
+							"Violates hazmat segregation rule %q (%s) — conflicts with %q",
 							matchedRule.Name,
 							matchedRule.SegregationType,
+							rightCommodity.Name,
+						),
+					)
+					multiErr.WithIndex("commodities", j).Add(
+						"commodityId",
+						errortypes.ErrInvalidOperation,
+						fmt.Sprintf(
+							"Violates hazmat segregation rule %q (%s) — conflicts with %q",
+							matchedRule.Name,
+							matchedRule.SegregationType,
+							leftCommodity.Name,
 						),
 					)
 				}
