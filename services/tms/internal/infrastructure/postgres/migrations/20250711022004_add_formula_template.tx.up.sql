@@ -52,34 +52,12 @@ CREATE INDEX IF NOT EXISTS "idx_shipments_formula_template" ON "shipments"("form
 WHERE
     "formula_template_id" IS NOT NULL;
 
+--bun:split
 ALTER TABLE "formula_templates"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('english', COALESCE("name", '')), 'B') ||
+        setweight(immutable_to_tsvector('english', COALESCE("description", '')), 'B')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_formula_templates_search_vector ON "formula_templates" USING GIN(search_vector);
-
---bun:split
-CREATE OR REPLACE FUNCTION formula_templates_search_trigger()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('english', COALESCE(NEW.name, '')), 'B') || setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B');
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS formula_templates_search_update ON "formula_templates";
-
-CREATE TRIGGER formula_templates_search_update
-    BEFORE INSERT OR UPDATE ON "formula_templates"
-    FOR EACH ROW
-    EXECUTE FUNCTION formula_templates_search_trigger();
-
---bun:split
-UPDATE
-    "formula_templates"
-SET
-    search_vector = setweight(to_tsvector('english', COALESCE(name, '')), 'B') || setweight(to_tsvector('english', COALESCE(description, '')), 'B');
-

@@ -104,7 +104,6 @@ CREATE TABLE IF NOT EXISTS "email_profiles"(
     CONSTRAINT "pk_email_profiles" PRIMARY KEY ("id", "organization_id", "business_unit_id"),
     CONSTRAINT "fk_email_profiles_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON DELETE CASCADE,
     CONSTRAINT "fk_email_profiles_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON DELETE CASCADE,
-    -- Provider-specific validations
     CONSTRAINT "chk_email_profiles_smtp_config" CHECK (CASE WHEN "provider_type" = 'SMTP' THEN
         "host" IS NOT NULL AND "port" IS NOT NULL AND ("auth_type" != 'APIKey' OR "encrypted_api_key" IS NOT NULL)
     ELSE
@@ -123,11 +122,9 @@ CREATE TABLE IF NOT EXISTS "email_profiles"(
 );
 
 --bun:split
--- Add table comment for email_profiles
 COMMENT ON TABLE "email_profiles" IS 'Stores email configuration profiles for different providers, allowing organizations to manage multiple email sending configurations';
 
 --bun:split
--- Add column comments for email_profiles
 COMMENT ON COLUMN "email_profiles"."id" IS 'Unique identifier for the email profile';
 
 COMMENT ON COLUMN "email_profiles"."business_unit_id" IS 'Reference to the business unit this profile belongs to';
@@ -193,7 +190,6 @@ COMMENT ON COLUMN "email_profiles"."created_at" IS 'Unix timestamp when the reco
 COMMENT ON COLUMN "email_profiles"."updated_at" IS 'Unix timestamp when the record was last updated';
 
 --bun:split
--- Create indexes for email profiles
 CREATE INDEX "idx_email_profiles_org_id" ON "email_profiles"("organization_id");
 
 CREATE INDEX "idx_email_profiles_business_unit_id" ON "email_profiles"("business_unit_id");
@@ -214,51 +210,23 @@ CREATE UNIQUE INDEX "uniq_email_profiles_org_name" ON "email_profiles"("organiza
 
 CREATE INDEX "idx_email_profiles_created_at" ON "email_profiles"("created_at" DESC);
 
--- Composite index for common queries
 CREATE INDEX "idx_email_profiles_org_status_default" ON "email_profiles"("organization_id", "status", "is_default")
 WHERE
     "status" = 'Active';
 
 --bun:split
--- Set statistics for frequently queried columns
 ALTER TABLE "email_profiles"
-    ALTER COLUMN "organization_id" SET STATISTICS 1000;
-
-ALTER TABLE "email_profiles"
-    ALTER COLUMN "business_unit_id" SET STATISTICS 1000;
-
-ALTER TABLE "email_profiles"
-    ALTER COLUMN "status" SET STATISTICS 500;
-
--- Search Vector SQL for EmailProfile
---bun:split
-ALTER TABLE "email_profiles"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('english', COALESCE("name", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("from_address", '')), 'B') ||
+        setweight(immutable_to_tsvector('english', COALESCE("host", '')), 'C') ||
+        setweight(immutable_to_tsvector('english', COALESCE("description", '')), 'D')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_email_profiles_search_vector ON "email_profiles" USING GIN(search_vector);
 
 --bun:split
-CREATE OR REPLACE FUNCTION email_profiles_search_trigger()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('english', COALESCE(NEW.name, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.from_address, '')), 'B') || setweight(to_tsvector('english', COALESCE(NEW.host, '')), 'C') || setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'D');
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS email_profiles_search_update ON "email_profiles";
-
-CREATE TRIGGER email_profiles_search_update
-    BEFORE INSERT OR UPDATE ON "email_profiles"
-    FOR EACH ROW
-    EXECUTE FUNCTION email_profiles_search_trigger();
-
---bun:split
--- Function to ensure only one default email profile per organization
 CREATE OR REPLACE FUNCTION "ensure_single_default_email_profile"()
     RETURNS TRIGGER
     AS $$
@@ -285,4 +253,3 @@ CREATE TRIGGER "email_profiles_default_check"
     FOR EACH ROW
     WHEN(NEW.is_default = TRUE)
     EXECUTE FUNCTION ensure_single_default_email_profile();
-

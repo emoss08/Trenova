@@ -80,44 +80,17 @@ ALTER TABLE "shipments"
 
 --bun:split
 ALTER TABLE "customers"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN "search_vector" tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('simple', COALESCE("code", '')), 'A') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("name", '')), 'B')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_customers_search ON customers USING GIN(search_vector);
 
 --bun:split
-CREATE OR REPLACE FUNCTION customers_search_vector_update()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.code, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.name, '')), 'B');
-    -- Auto-update timestamps
-    NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS customers_search_vector_trigger ON customers;
-
---bun:split
-CREATE TRIGGER customers_search_vector_trigger
-    BEFORE INSERT OR UPDATE ON customers
-    FOR EACH ROW
-    EXECUTE FUNCTION customers_search_vector_update();
-
---bun:split
-ALTER TABLE customers
-    ALTER COLUMN status SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE customers
-    ALTER COLUMN organization_id SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE customers
-    ALTER COLUMN business_unit_id SET STATISTICS 1000;
+CREATE STATISTICS IF NOT EXISTS customers_org_bu_stats (dependencies)
+    ON organization_id, business_unit_id FROM customers;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_customers_trgm_code ON customers USING gin(code gin_trgm_ops);

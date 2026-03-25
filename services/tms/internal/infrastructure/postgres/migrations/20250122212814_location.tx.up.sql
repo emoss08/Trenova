@@ -1,11 +1,9 @@
 CREATE TABLE IF NOT EXISTS "locations"(
-    -- Primary identifiers
     "id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
     "location_category_id" varchar(100) NOT NULL,
     "state_id" varchar(100) NOT NULL,
-    -- Core fields
     "status" status_enum NOT NULL DEFAULT 'Active',
     "code" varchar(100) NOT NULL,
     "name" text,
@@ -16,14 +14,12 @@ CREATE TABLE IF NOT EXISTS "locations"(
     "postal_code" us_postal_code,
     "longitude" float,
     "latitude" float,
-    "geom" geography(point, 4326), -- PostGIS geography column for spatial operations
+    "geom" geography(point, 4326),
     "place_id" text,
     "is_geocoded" boolean NOT NULL DEFAULT FALSE,
-    -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
-    -- Constraints
     CONSTRAINT "pk_locations" PRIMARY KEY ("id", "business_unit_id", "organization_id"),
     CONSTRAINT "fk_locations_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_locations_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
@@ -32,7 +28,6 @@ CREATE TABLE IF NOT EXISTS "locations"(
 );
 
 --bun:split
--- Indexes for locations table
 CREATE UNIQUE INDEX "idx_locations_code" ON "locations"(lower("code"), "organization_id");
 
 CREATE INDEX "idx_locations_name" ON "locations"("name");
@@ -43,7 +38,6 @@ CREATE INDEX "idx_locations_organization" ON "locations"("organization_id");
 
 CREATE INDEX "idx_locations_created_updated" ON "locations"("created_at", "updated_at");
 
--- Spatial index for PostGIS geography column
 CREATE INDEX "idx_locations_geom" ON "locations" USING GIST("geom");
 
 COMMENT ON TABLE "locations" IS 'Stores information about locations';
@@ -59,29 +53,24 @@ ALTER TABLE "stops"
 
 --bun:split
 ALTER TABLE "locations"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('simple', COALESCE("code", '')), 'A') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("name", '')), 'A') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("description", '')), 'B') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("address_line_1", '')), 'B') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("address_line_2", '')), 'B') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("city", '')), 'B') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("postal_code"::text, '')), 'C')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_locations_search ON locations USING GIN(search_vector);
-
---bun:split
-CREATE OR REPLACE FUNCTION locations_search_vector_update()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    -- Update search vector
-    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.code, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.name, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.description, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.address_line_1, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.address_line_2, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.city, '')), 'B') || setweight(to_tsvector('simple', COALESCE(NEW.postal_code::text, '')), 'C');
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
 
 --bun:split
 CREATE OR REPLACE FUNCTION locations_geom_sync()
     RETURNS TRIGGER
     AS $$
 BEGIN
-    -- Auto-sync PostGIS geography column from longitude/latitude
     IF NEW.longitude IS NOT NULL AND NEW.latitude IS NOT NULL THEN
         NEW.geom := ST_SetSRID(ST_MakePoint(NEW.longitude, NEW.latitude), 4326)::geography;
     ELSE
@@ -97,7 +86,6 @@ CREATE OR REPLACE FUNCTION locations_update_timestamp()
     RETURNS TRIGGER
     AS $$
 BEGIN
-    -- Auto-update timestamps
     NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
     RETURN NEW;
 END;
@@ -105,19 +93,10 @@ $$
 LANGUAGE plpgsql;
 
 --bun:split
-DROP TRIGGER IF EXISTS locations_search_vector_trigger ON locations;
-
---bun:split
 DROP TRIGGER IF EXISTS locations_geom_sync_trigger ON locations;
 
 --bun:split
 DROP TRIGGER IF EXISTS locations_update_timestamp_trigger ON locations;
-
---bun:split
-CREATE TRIGGER locations_search_vector_trigger
-    BEFORE INSERT OR UPDATE ON locations
-    FOR EACH ROW
-    EXECUTE FUNCTION locations_search_vector_update();
 
 --bun:split
 CREATE TRIGGER locations_geom_sync_trigger
@@ -130,18 +109,6 @@ CREATE TRIGGER locations_update_timestamp_trigger
     BEFORE INSERT OR UPDATE ON locations
     FOR EACH ROW
     EXECUTE FUNCTION locations_update_timestamp();
-
---bun:split
-ALTER TABLE locations
-    ALTER COLUMN status SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE locations
-    ALTER COLUMN organization_id SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE locations
-    ALTER COLUMN business_unit_id SET STATISTICS 1000;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_locations_trgm_code ON locations USING gin(code gin_trgm_ops);

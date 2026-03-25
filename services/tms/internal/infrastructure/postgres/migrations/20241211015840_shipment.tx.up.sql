@@ -72,7 +72,11 @@ COMMENT ON TABLE shipments IS 'Stores information about shipments and their bill
 
 --bun:split
 ALTER TABLE "shipments"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN "search_vector" tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('simple', COALESCE("pro_number", '')), 'A') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("bol", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE(enum_to_text("status"), '')), 'B')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_shipments_search ON shipments USING GIN(search_vector);
@@ -81,41 +85,13 @@ CREATE INDEX IF NOT EXISTS idx_shipments_search ON shipments USING GIN(search_ve
 CREATE INDEX IF NOT EXISTS idx_shipments_dates_brin ON shipments USING BRIN(actual_ship_date, actual_delivery_date, created_at) WITH (pages_per_range = 128);
 
 --bun:split
-CREATE OR REPLACE FUNCTION shipments_search_vector_update()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.pro_number, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.bol, '')), 'A') || setweight(to_tsvector('english', COALESCE(CAST(NEW.status AS text), '')), 'B');
-    NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS shipments_search_vector_trigger ON shipments;
-
---bun:split
-CREATE TRIGGER shipments_search_vector_trigger
-    BEFORE INSERT OR UPDATE ON shipments
-    FOR EACH ROW
-    EXECUTE FUNCTION shipments_search_vector_update();
-
---bun:split
-CREATE INDEX IF NOT EXISTS idx_shipments_active ON shipments(created_at DESC)
+CREATE INDEX IF NOT EXISTS idx_shipments_active ON shipments(organization_id, created_at DESC)
 WHERE
     status NOT IN ('Completed', 'Invoiced', 'Canceled');
 
---bun:split
-ALTER TABLE shipments
-    ALTER COLUMN status SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE shipments
-    ALTER COLUMN organization_id SET STATISTICS 1000;
-
-ALTER TABLE shipments
-    ALTER COLUMN business_unit_id SET STATISTICS 1000;
+CREATE INDEX IF NOT EXISTS idx_shipments_in_transit ON shipments(organization_id, business_unit_id)
+WHERE
+    status = 'InTransit';
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_shipments_trgm_pro_bol ON shipments USING gin((pro_number || ' ' || bol) gin_trgm_ops);
@@ -124,6 +100,13 @@ CREATE INDEX IF NOT EXISTS idx_shipments_trgm_pro_bol ON shipments USING gin((pr
 CREATE INDEX idx_shipments_bu_org_status_created_at ON shipments(business_unit_id, organization_id, status, created_at DESC);
 
 CREATE INDEX idx_shipments_bu_org_include ON shipments(business_unit_id, organization_id) INCLUDE (status, created_at, pro_number, bol);
+
+--bun:split
+CREATE STATISTICS IF NOT EXISTS shipments_status_org_stats (dependencies)
+    ON status, organization_id FROM shipments;
+
+CREATE STATISTICS IF NOT EXISTS shipments_status_bu_stats (dependencies)
+    ON status, business_unit_id FROM shipments;
 
 --bun:split
 ALTER TABLE shipments

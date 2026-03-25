@@ -4,20 +4,16 @@
 -- Full license: https://github.com/emoss08/Trenova/blob/master/LICENSE.md--
 
 CREATE TABLE IF NOT EXISTS "shipment_types"(
-    -- Primary identifiers
     "id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
-    -- Core fields
     "status" status_enum NOT NULL DEFAULT 'Active',
     "code" varchar(10) NOT NULL,
     "description" text,
     "color" varchar(10),
-    -- Metadata
     "version" bigint NOT NULL DEFAULT 0,
     "created_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
     "updated_at" bigint NOT NULL DEFAULT EXTRACT(EPOCH FROM current_timestamp) ::bigint,
-    -- Constraints
     CONSTRAINT "pk_shipment_types" PRIMARY KEY ("id", "business_unit_id", "organization_id"),
     CONSTRAINT "fk_shipment_types_business_unit" FOREIGN KEY ("business_unit_id") REFERENCES "business_units"("id") ON UPDATE NO ACTION ON DELETE CASCADE,
     CONSTRAINT "fk_shipment_types_organization" FOREIGN KEY ("organization_id") REFERENCES "organizations"("id") ON UPDATE NO ACTION ON DELETE CASCADE
@@ -43,44 +39,13 @@ ALTER TABLE "shipments"
 
 --bun:split
 ALTER TABLE "shipment_types"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('simple', COALESCE("code", '')), 'A') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("description", '')), 'B')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_shipment_types_search ON shipment_types USING GIN(search_vector);
-
---bun:split
-CREATE OR REPLACE FUNCTION shipment_types_search_vector_update()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.code, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.description, '')), 'B');
-    -- Auto-update timestamps
-    NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS shipment_types_search_vector_trigger ON shipment_types;
-
---bun:split
-CREATE TRIGGER shipment_types_search_vector_trigger
-    BEFORE INSERT OR UPDATE ON shipment_types
-    FOR EACH ROW
-    EXECUTE FUNCTION shipment_types_search_vector_update();
-
---bun:split
-ALTER TABLE shipment_types
-    ALTER COLUMN status SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE shipment_types
-    ALTER COLUMN organization_id SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE shipment_types
-    ALTER COLUMN business_unit_id SET STATISTICS 1000;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_shipment_types_trgm_code ON shipment_types USING gin(code gin_trgm_ops);
@@ -90,4 +55,3 @@ CREATE INDEX IF NOT EXISTS idx_shipment_types_trgm_description ON shipment_types
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_shipment_types_trgm_code_description ON shipment_types USING gin((code || ' ' || description) gin_trgm_ops);
-

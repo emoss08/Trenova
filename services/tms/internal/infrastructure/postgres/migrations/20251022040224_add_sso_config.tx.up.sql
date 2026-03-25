@@ -102,53 +102,13 @@ CREATE TRIGGER sso_configs_update_trigger
     EXECUTE FUNCTION sso_configs_update_timestamps();
 
 --bun:split
--- Set statistics for query planner optimization
-ALTER TABLE sso_configs
-    ALTER COLUMN organization_id SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE sso_configs
-    ALTER COLUMN business_unit_id SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE sso_configs
-    ALTER COLUMN provider SET STATISTICS 1000;
-
---bun:split
--- Add full-text search vector column
 ALTER TABLE "sso_configs"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN "search_vector" tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('english', COALESCE("name", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE(enum_to_text("provider"), '')), 'B') ||
+        setweight(immutable_to_tsvector('english', COALESCE("oidc_issuer_url", '')), 'C')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_sso_configs_search_vector ON "sso_configs" USING GIN(search_vector);
-
---bun:split
--- Create trigger function for updating search vector
-CREATE OR REPLACE FUNCTION sso_configs_update_search_vector()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('english', COALESCE(NEW.name, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.provider::text, '')), 'B') || setweight(to_tsvector('english', COALESCE(NEW.oidc_issuer_url, '')), 'C');
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS sso_configs_search_vector_trigger ON sso_configs;
-
---bun:split
-CREATE TRIGGER sso_configs_search_vector_trigger
-    BEFORE INSERT OR UPDATE ON sso_configs
-    FOR EACH ROW
-    EXECUTE FUNCTION sso_configs_update_search_vector();
-
---bun:split
--- Update existing rows to populate search_vector (if any exist)
-UPDATE
-    sso_configs
-SET
-    search_vector = setweight(to_tsvector('english', COALESCE(name, '')), 'A') || setweight(to_tsvector('english', COALESCE(provider::text, '')), 'B') || setweight(to_tsvector('english', COALESCE(oidc_issuer_url, '')), 'C')
-WHERE
-    search_vector IS NULL;
 

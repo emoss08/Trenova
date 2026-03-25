@@ -59,37 +59,16 @@ CREATE INDEX IF NOT EXISTS idx_fiscal_years_reopened_by ON "fiscal_years"("reope
 
 COMMENT ON TABLE "fiscal_years" IS 'Stores information about fiscal years';
 
--- 1. Search Vector Column
+--bun:split
 ALTER TABLE "fiscal_years"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('english', COALESCE("name", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("year"::text, '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("description", '')), 'B')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_fiscal_years_search_vector ON "fiscal_years" USING GIN(search_vector);
-
---bun:split
-CREATE OR REPLACE FUNCTION fiscal_years_search_trigger()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('english', COALESCE(NEW.name, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.year::text, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B');
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS fiscal_years_search_update ON "fiscal_years";
-
-CREATE TRIGGER fiscal_years_search_update
-    BEFORE INSERT OR UPDATE ON "fiscal_years"
-    FOR EACH ROW
-    EXECUTE FUNCTION fiscal_years_search_trigger();
-
---bun:split
-UPDATE
-    "fiscal_years"
-SET
-    search_vector = setweight(to_tsvector('english', COALESCE(name, '')), 'A') || setweight(to_tsvector('english', COALESCE(year::text, '')), 'A') || setweight(to_tsvector('english', COALESCE(description, '')), 'B');
 
 --bun:split
 CREATE OR REPLACE FUNCTION enforce_single_current_fiscal_year()
@@ -116,16 +95,3 @@ CREATE TRIGGER trigger_enforce_single_current_fiscal_year
     BEFORE INSERT OR UPDATE ON fiscal_years
     FOR EACH ROW
     EXECUTE FUNCTION enforce_single_current_fiscal_year();
-
---bun:split
-ALTER TABLE "fiscal_years"
-    ALTER COLUMN "status" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "fiscal_years"
-    ALTER COLUMN "organization_id" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "fiscal_years"
-    ALTER COLUMN "business_unit_id" SET STATISTICS 1000;
-

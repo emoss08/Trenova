@@ -6,7 +6,6 @@ CREATE TYPE freight_class_enum AS ENUM (
 
 --bun:split
 CREATE TABLE IF NOT EXISTS "commodities"(
-    -- Primary identifiers
     "id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
@@ -43,33 +42,12 @@ CREATE INDEX "idx_commodities_created_updated" ON "commodities"("created_at", "u
 
 COMMENT ON TABLE "commodities" IS 'Stores information about commodities';
 
+--bun:split
 ALTER TABLE "commodities"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('english', COALESCE("name", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("description", '')), 'B')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_commodities_search_vector ON "commodities" USING GIN(search_vector);
-
---bun:split
-CREATE OR REPLACE FUNCTION commodities_search_trigger()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('english', COALESCE(NEW.name, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B');
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS commodities_search_update ON "commodities";
-
-CREATE TRIGGER commodities_search_update
-    BEFORE INSERT OR UPDATE ON "commodities"
-    FOR EACH ROW
-    EXECUTE FUNCTION commodities_search_trigger();
-
---bun:split
-UPDATE
-    "commodities"
-SET
-    search_vector = setweight(to_tsvector('english', COALESCE(name, '')), 'A') || setweight(to_tsvector('english', COALESCE(description, '')), 'B');

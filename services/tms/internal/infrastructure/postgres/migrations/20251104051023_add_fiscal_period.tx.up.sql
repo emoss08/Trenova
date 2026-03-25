@@ -53,7 +53,7 @@ CREATE TABLE IF NOT EXISTS "fiscal_periods"(
 
 --bun:split
 ALTER TABLE "fiscal_periods"
-    ADD COLUMN "search_vector" tsvector GENERATED ALWAYS AS (setweight(to_tsvector('english', COALESCE("name", '')), 'A') || setweight(to_tsvector('english', COALESCE("period_number"::text, '')), 'A')) STORED;
+    ADD COLUMN "search_vector" tsvector GENERATED ALWAYS AS (setweight(immutable_to_tsvector('english', COALESCE("name", '')), 'A') || setweight(immutable_to_tsvector('english', COALESCE("period_number"::text, '')), 'A')) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_fiscal_periods_fiscal_year ON "fiscal_periods"("fiscal_year_id");

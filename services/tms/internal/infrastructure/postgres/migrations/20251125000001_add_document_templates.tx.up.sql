@@ -88,30 +88,14 @@ WHERE
 
 --bun:split
 ALTER TABLE "document_templates"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('english', COALESCE("code", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("name", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("description", '')), 'B')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_document_templates_search_vector ON "document_templates" USING GIN(search_vector);
-
---bun:split
-CREATE OR REPLACE FUNCTION document_templates_search_trigger()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('english', COALESCE(NEW.code, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.name, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B');
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS document_templates_search_update ON "document_templates";
-
---bun:split
-CREATE TRIGGER document_templates_search_update
-    BEFORE INSERT OR UPDATE ON "document_templates"
-    FOR EACH ROW
-    EXECUTE FUNCTION document_templates_search_trigger();
 
 --bun:split
 CREATE TABLE IF NOT EXISTS "generated_documents"(
@@ -164,27 +148,10 @@ CREATE INDEX IF NOT EXISTS idx_generated_documents_document_type ON "generated_d
 
 --bun:split
 ALTER TABLE "generated_documents"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('english', COALESCE("file_name", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("reference_type", '')), 'B')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_generated_documents_search_vector ON "generated_documents" USING GIN(search_vector);
-
---bun:split
-CREATE OR REPLACE FUNCTION generated_documents_search_trigger()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('english', COALESCE(NEW.file_name, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.reference_type, '')), 'B');
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS generated_documents_search_update ON "generated_documents";
-
---bun:split
-CREATE TRIGGER generated_documents_search_update
-    BEFORE INSERT OR UPDATE ON "generated_documents"
-    FOR EACH ROW
-    EXECUTE FUNCTION generated_documents_search_trigger();

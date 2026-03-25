@@ -36,45 +36,11 @@ COMMENT ON TABLE "account_types" IS 'Stores information about account types';
 
 --bun:split
 ALTER TABLE "account_types"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('english', COALESCE("code", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("name", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("description", '')), 'B')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_account_types_search_vector ON "account_types" USING GIN(search_vector);
-
---bun:split
-CREATE OR REPLACE FUNCTION account_types_search_trigger()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('english', COALESCE(NEW.code, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.name, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B');
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS account_types_search_update ON "account_types";
-
-CREATE TRIGGER account_types_search_update
-    BEFORE INSERT OR UPDATE ON "account_types"
-    FOR EACH ROW
-    EXECUTE FUNCTION account_types_search_trigger();
-
---bun:split
-UPDATE
-    "account_types"
-SET
-    search_vector = setweight(to_tsvector('english', COALESCE(code, '')), 'A') || setweight(to_tsvector('english', COALESCE(name, '')), 'A') || setweight(to_tsvector('english', COALESCE(description, '')), 'B');
-
---bun:split
-ALTER TABLE "account_types"
-    ALTER COLUMN "status" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "account_types"
-    ALTER COLUMN "organization_id" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "account_types"
-    ALTER COLUMN "business_unit_id" SET STATISTICS 1000;
-

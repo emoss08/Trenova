@@ -54,53 +54,16 @@ COMMENT ON COLUMN "gl_accounts"."debit_balance" IS 'Total debits in cents (denor
 
 COMMENT ON COLUMN "gl_accounts"."credit_balance" IS 'Total credits in cents (denormalized for performance)';
 
--- 1. Search Vector Column
+--bun:split
 ALTER TABLE "gl_accounts"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('english', COALESCE("account_code", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("name", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("description", '')), 'B')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_gl_accounts_search_vector ON "gl_accounts" USING GIN(search_vector);
-
---bun:split
-CREATE OR REPLACE FUNCTION gl_accounts_search_trigger()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('english', COALESCE(NEW.account_code, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.name, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B');
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS gl_accounts_search_update ON "gl_accounts";
-
-CREATE TRIGGER gl_accounts_search_update
-    BEFORE INSERT OR UPDATE ON "gl_accounts"
-    FOR EACH ROW
-    EXECUTE FUNCTION gl_accounts_search_trigger();
-
---bun:split
-UPDATE
-    "gl_accounts"
-SET
-    search_vector = setweight(to_tsvector('english', COALESCE(account_code, '')), 'A') || setweight(to_tsvector('english', COALESCE(name, '')), 'A') || setweight(to_tsvector('english', COALESCE(description, '')), 'B');
-
---bun:split
-ALTER TABLE "gl_accounts"
-    ALTER COLUMN "status" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "gl_accounts"
-    ALTER COLUMN "organization_id" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "gl_accounts"
-    ALTER COLUMN "business_unit_id" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "gl_accounts"
-    ALTER COLUMN "account_type_id" SET STATISTICS 1000;
 
 -- bun:split
 ALTER TABLE "customer_billing_profiles"
@@ -115,4 +78,3 @@ ALTER TABLE "customer_billing_profiles"
 
 ALTER TABLE "customer_billing_profiles"
     ADD CONSTRAINT "fk_customer_billing_profiles_ar_account" FOREIGN KEY ("ar_account_id", "organization_id", "business_unit_id") REFERENCES "gl_accounts"("id", "organization_id", "business_unit_id") ON UPDATE NO ACTION ON DELETE RESTRICT;
-

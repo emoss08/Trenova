@@ -156,56 +156,14 @@ COMMENT ON COLUMN "journal_entries"."reversed_by_id" IS 'Entry that reversed thi
 
 --bun:split
 ALTER TABLE "journal_entries"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('english', COALESCE("entry_number", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("reference_number", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("description", '')), 'B')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_journal_entries_search_vector ON "journal_entries" USING GIN(search_vector);
-
---bun:split
-CREATE OR REPLACE FUNCTION journal_entries_search_trigger()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('english', COALESCE(NEW.entry_number, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.reference_number, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.description, '')), 'B');
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS journal_entries_search_update ON "journal_entries";
-
---bun:split
-CREATE TRIGGER journal_entries_search_update
-    BEFORE INSERT OR UPDATE ON "journal_entries"
-    FOR EACH ROW
-    EXECUTE FUNCTION journal_entries_search_trigger();
-
---bun:split
-UPDATE
-    "journal_entries"
-SET
-    search_vector = setweight(to_tsvector('english', COALESCE(entry_number, '')), 'A') || setweight(to_tsvector('english', COALESCE(reference_number, '')), 'A') || setweight(to_tsvector('english', COALESCE(description, '')), 'B');
-
---bun:split
-ALTER TABLE "journal_entries"
-    ALTER COLUMN "status" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "journal_entries"
-    ALTER COLUMN "organization_id" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "journal_entries"
-    ALTER COLUMN "business_unit_id" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "journal_entries"
-    ALTER COLUMN "fiscal_year_id" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "journal_entries"
-    ALTER COLUMN "fiscal_period_id" SET STATISTICS 1000;
 
 --bun:split
 CREATE TABLE IF NOT EXISTS "journal_entry_lines"(
@@ -296,22 +254,6 @@ COMMENT ON COLUMN "journal_entry_lines"."customer_id" IS 'Customer for dimension
 
 --bun:split
 ALTER TABLE "journal_entry_lines"
-    ALTER COLUMN "organization_id" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "journal_entry_lines"
-    ALTER COLUMN "business_unit_id" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "journal_entry_lines"
-    ALTER COLUMN "journal_entry_id" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "journal_entry_lines"
-    ALTER COLUMN "gl_account_id" SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "journal_entry_lines"
     ADD CONSTRAINT "chk_debit_or_credit" CHECK (("debit_amount" > 0 AND "credit_amount" = 0) OR ("debit_amount" = 0 AND "credit_amount" > 0) OR ("debit_amount" = 0 AND "credit_amount" = 0));
 
 ALTER TABLE "journal_entry_lines"
@@ -319,4 +261,3 @@ ALTER TABLE "journal_entry_lines"
 
 --bun:split
 COMMENT ON TABLE "journal_entry_lines" IS 'Stores journal entry line items (detail records)';
-

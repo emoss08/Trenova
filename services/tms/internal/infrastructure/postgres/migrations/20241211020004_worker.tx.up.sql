@@ -88,79 +88,27 @@ COMMENT ON TABLE workers IS 'Stores information about company workers (employees
 
 --bun:split
 ALTER TABLE "workers"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
-
---bun:split
-ALTER TABLE "workers"
-    ADD COLUMN IF NOT EXISTS whole_name varchar(201) GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED;
-
---bun:split
-ALTER TABLE workers
-    ALTER COLUMN status SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE workers
-    ALTER COLUMN organization_id SET STATISTICS 1000;
-
-ALTER TABLE workers
-    ALTER COLUMN business_unit_id SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE "workers"
     ADD COLUMN IF NOT EXISTS whole_name varchar(201) GENERATED ALWAYS AS (first_name || ' ' || last_name) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS idx_workers_trgm_name ON workers USING gin((first_name || ' ' || last_name) gin_trgm_ops);
 
--- Search Vector and Relationship Indexes SQL for Worker
--- Generated for optimal query performance including relationships
--- 1. Search Vector Column
+--bun:split
 ALTER TABLE "workers"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN "search_vector" tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('english', COALESCE("first_name", '')), 'A') ||
+        setweight(immutable_to_tsvector('english', COALESCE("last_name", '')), 'A')
+    ) STORED;
 
 --bun:split
--- 2. Search Vector Index (GIN for full-text search)
 CREATE INDEX IF NOT EXISTS idx_workers_search_vector ON "workers" USING GIN(search_vector);
 
 --bun:split
--- 4. Search Vector Trigger Function
-CREATE OR REPLACE FUNCTION workers_search_trigger()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('english', COALESCE(NEW.first_name, '')), 'A') || setweight(to_tsvector('english', COALESCE(NEW.last_name, '')), 'A');
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
+CREATE STATISTICS IF NOT EXISTS workers_org_bu_stats (dependencies)
+    ON organization_id, business_unit_id FROM workers;
 
---bun:split
--- 5. Search Vector Trigger
-DROP TRIGGER IF EXISTS workers_search_update ON "workers";
-
-CREATE TRIGGER workers_search_update
-    BEFORE INSERT OR UPDATE ON "workers"
-    FOR EACH ROW
-    EXECUTE FUNCTION workers_search_trigger();
-
---bun:split
--- 6. Update Existing Rows
-UPDATE
-    "workers"
-SET
-    search_vector = setweight(to_tsvector('english', COALESCE(first_name, '')), 'A') || setweight(to_tsvector('english', COALESCE(last_name, '')), 'A');
-
--- Performance Optimization Notes:
--- - Only add indexes that match your actual query patterns
--- - Run EXPLAIN ANALYZE on slow queries to identify missing indexes
--- - After adding indexes, run: ANALYZE "workers";
--- Useful Analysis Queries:
--- Check index usage:
--- SELECT schemaname, tablename, indexname, idx_scan, idx_tup_read, idx_tup_fetch
--- FROM pg_stat_user_indexes WHERE tablename = 'workers' ORDER BY idx_scan;
--- Find missing indexes (run after typical workload):
--- SELECT * FROM pg_stat_user_tables WHERE tablename = 'workers';
--- (Look for high seq_scan with high n_tup_fetched)
+CREATE STATISTICS IF NOT EXISTS workers_type_org_stats (dependencies)
+    ON type, organization_id FROM workers;
 --bun:split
 -- Endorsement type enum with descriptions
 CREATE TYPE endorsement_type_enum AS ENUM(
@@ -301,40 +249,10 @@ CREATE INDEX "idx_worker_pto_tenant_status_dates" ON "worker_pto"("organization_
 
 COMMENT ON TABLE worker_pto IS 'Stores information about a worker''s PTO requests';
 
--- Search Vector and Relationship Indexes SQL for WorkerPTO
--- Generated for optimal query performance including relationships
--- 1. Search Vector Column
 ALTER TABLE "worker_pto"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN "search_vector" tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('english', COALESCE("reason", '')), 'C')
+    ) STORED;
 
 --bun:split
--- 2. Search Vector Index (GIN for full-text search)
 CREATE INDEX IF NOT EXISTS idx_worker_pto_search_vector ON "worker_pto" USING GIN(search_vector);
-
---bun:split
--- 4. Search Vector Trigger Function
-CREATE OR REPLACE FUNCTION worker_pto_search_trigger()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('english', COALESCE(NEW.reason, '')), 'C');
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
--- 5. Search Vector Trigger
-DROP TRIGGER IF EXISTS worker_pto_search_update ON "worker_pto";
-
-CREATE TRIGGER worker_pto_search_update
-    BEFORE INSERT OR UPDATE ON "worker_pto"
-    FOR EACH ROW
-    EXECUTE FUNCTION worker_pto_search_trigger();
-
---bun:split
--- 6. Update Existing Rows
-UPDATE
-    "worker_pto"
-SET
-    search_vector = setweight(to_tsvector('english', COALESCE(reason, '')), 'C');

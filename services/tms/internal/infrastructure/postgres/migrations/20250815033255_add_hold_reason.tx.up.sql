@@ -46,38 +46,12 @@ COMMENT ON TABLE hold_reasons IS 'Reasons for holds. Each reason can be associat
 
 --bun:split
 ALTER TABLE "hold_reasons"
-    ADD COLUMN IF NOT EXISTS search_vector tsvector;
+    ADD COLUMN IF NOT EXISTS search_vector tsvector GENERATED ALWAYS AS (
+        setweight(immutable_to_tsvector('simple', COALESCE("code", '')), 'A') ||
+        setweight(immutable_to_tsvector('simple', COALESCE("label", '')), 'B') ||
+        setweight(immutable_to_tsvector('english', COALESCE(enum_to_text("type"), '')), 'C') ||
+        setweight(immutable_to_tsvector('english', COALESCE(enum_to_text("default_severity"), '')), 'D')
+    ) STORED;
 
 --bun:split
 CREATE INDEX IF NOT EXISTS "idx_hr_search" ON "hold_reasons" USING GIN(search_vector);
-
---bun:split
-CREATE OR REPLACE FUNCTION hold_reasons_search_vector_update()
-    RETURNS TRIGGER
-    AS $$
-BEGIN
-    NEW.search_vector := setweight(to_tsvector('simple', COALESCE(NEW.code, '')), 'A') || setweight(to_tsvector('simple', COALESCE(NEW.label, '')), 'B') || setweight(to_tsvector('english', COALESCE(CAST(NEW.type AS text), '')), 'C') || setweight(to_tsvector('english', COALESCE(CAST(NEW.default_severity AS text), '')), 'D');
-    -- Auto-update timestamps
-    NEW.updated_at := EXTRACT(EPOCH FROM CURRENT_TIMESTAMP)::bigint;
-    RETURN NEW;
-END;
-$$
-LANGUAGE plpgsql;
-
---bun:split
-DROP TRIGGER IF EXISTS hold_reasons_search_vector_trigger ON hold_reasons;
-
---bun:split
-CREATE TRIGGER hold_reasons_search_vector_trigger
-    BEFORE INSERT OR UPDATE ON hold_reasons
-    FOR EACH ROW
-    EXECUTE FUNCTION hold_reasons_search_vector_update();
-
---bun:split
-ALTER TABLE hold_reasons
-    ALTER COLUMN active SET STATISTICS 1000;
-
---bun:split
-ALTER TABLE hold_reasons
-    ALTER COLUMN organization_id SET STATISTICS 1000;
-
