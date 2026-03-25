@@ -325,7 +325,6 @@ function StopCard({
                 <AutoCompleteDateTimeField
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.actualArrival`}
-                  rules={{ required: true }}
                   label="Actual Arrival"
                   description="Recorded time the driver checked in at the facility"
                   placeholder="Arrival time"
@@ -335,7 +334,6 @@ function StopCard({
                 <AutoCompleteDateTimeField
                   control={control}
                   name={`moves.${moveIndex}.stops.${stopIndex}.actualDeparture`}
-                  rules={{ required: true }}
                   label="Actual Departure"
                   description="Recorded time the driver left the facility after loading or unloading"
                   placeholder="Departure time"

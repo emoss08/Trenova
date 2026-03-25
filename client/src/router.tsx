@@ -9,12 +9,7 @@ import { AppLayout } from "@/routes/app-layout";
 import { RootLayout } from "@/routes/root-layout";
 import { useAuthStore } from "@/stores/auth-store";
 import { Operation, Resource } from "@/types/permission";
-import {
-  createBrowserRouter,
-  redirect,
-  type LoaderFunction,
-  type RouteObject,
-} from "react-router";
+import { createBrowserRouter, redirect, type LoaderFunction, type RouteObject } from "react-router";
 import LoadingSkeleton from "./components/loading-skeleton";
 import { AdminLayout } from "./routes/admin-layout";
 
@@ -61,10 +56,7 @@ const routes: RouteObject[] = [
           },
           {
             path: "/shipment-management/shipments",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Shipment),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Shipment)),
             async lazy() {
               const { ShipmentsPage } = await import("@/routes/shipment/page");
               return { Component: ShipmentsPage };
@@ -72,27 +64,17 @@ const routes: RouteObject[] = [
           },
           {
             path: "/shipment-management/configuration-files/shipment-types",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.ShipmentType),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ShipmentType)),
             async lazy() {
-              const { ShipmentTypesPage } = await import(
-                "@/routes/shipment-type/page"
-              );
+              const { ShipmentTypesPage } = await import("@/routes/shipment-type/page");
               return { Component: ShipmentTypesPage };
             },
           },
           {
             path: "/shipment-management/configuration-files/service-types",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.ServiceType),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ServiceType)),
             async lazy() {
-              const { ServiceTypesPage } = await import(
-                "@/routes/service-type/page"
-              );
+              const { ServiceTypesPage } = await import("@/routes/service-type/page");
               return { Component: ServiceTypesPage };
             },
           },
@@ -103,48 +85,31 @@ const routes: RouteObject[] = [
               createPermissionLoader(Resource.HazardousMaterial),
             ),
             async lazy() {
-              const { HazardousMaterialsPage } = await import(
-                "@/routes/hazardous-material/page"
-              );
+              const { HazardousMaterialsPage } = await import("@/routes/hazardous-material/page");
               return { Component: HazardousMaterialsPage };
             },
           },
           {
             path: "/shipment-management/configuration-files/commodities",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Commodity),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Commodity)),
             async lazy() {
-              const { CommoditiesPage } = await import(
-                "@/routes/commodity/page"
-              );
+              const { CommoditiesPage } = await import("@/routes/commodity/page");
               return { Component: CommoditiesPage };
             },
           },
           {
             path: "/billing/invoices",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Invoice),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Invoice)),
             async lazy() {
-              const { PlaceholderPage } = await import(
-                "@/routes/placeholder-page"
-              );
+              const { PlaceholderPage } = await import("@/routes/placeholder-page");
               return { Component: PlaceholderPage };
             },
           },
           {
             path: "/billing/configuration-files/charge-types",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.ChargeType),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.ChargeType)),
             async lazy() {
-              const { PlaceholderPage } = await import(
-                "@/routes/placeholder-page"
-              );
+              const { PlaceholderPage } = await import("@/routes/placeholder-page");
               return { Component: PlaceholderPage };
             },
           },
@@ -155,18 +120,13 @@ const routes: RouteObject[] = [
               createPermissionLoader(Resource.AccessorialCharge),
             ),
             async lazy() {
-              const { AccessorialChargesPage } = await import(
-                "@/routes/accessorial-charge/page"
-              );
+              const { AccessorialChargesPage } = await import("@/routes/accessorial-charge/page");
               return { Component: AccessorialChargesPage };
             },
           },
           {
             path: "/billing/configuration-files/customers",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Customer),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Customer)),
             async lazy() {
               const { CustomersPage } = await import("@/routes/customer/page");
               return { Component: CustomersPage };
@@ -174,28 +134,18 @@ const routes: RouteObject[] = [
           },
           {
             path: "/billing/configuration-files/document-types",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.DocumentType),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.DocumentType)),
             async lazy() {
-              const { DocumentTypesPage } = await import(
-                "@/routes/document-type/page"
-              );
+              const { DocumentTypesPage } = await import("@/routes/document-type/page");
               return { Component: DocumentTypesPage };
             },
           },
 
           {
             path: "/accounting/configuration-files/account-types",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.AccountType),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.AccountType)),
             async lazy() {
-              const { AccountTypesPage } = await import(
-                "@/routes/account-type/page"
-              );
+              const { AccountTypesPage } = await import("@/routes/account-type/page");
               return { Component: AccountTypesPage };
             },
           },
@@ -206,18 +156,13 @@ const routes: RouteObject[] = [
               createPermissionLoader(Resource.FormulaTemplate),
             ),
             async lazy() {
-              const { FormulaTemplatesPage } = await import(
-                "@/routes/formula-template/page"
-              );
+              const { FormulaTemplatesPage } = await import("@/routes/formula-template/page");
               return { Component: FormulaTemplatesPage };
             },
           },
           {
             path: "/equipment/tractors",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Tractor),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Tractor)),
             async lazy() {
               const { TractorsPage } = await import("@/routes/tractor/page");
               return { Component: TractorsPage };
@@ -225,10 +170,7 @@ const routes: RouteObject[] = [
           },
           {
             path: "/equipment/trailers",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Trailer),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Trailer)),
             async lazy() {
               const { TrailersPage } = await import("@/routes/trailer/page");
               return { Component: TrailersPage };
@@ -236,14 +178,9 @@ const routes: RouteObject[] = [
           },
           {
             path: "/equipment/configuration-files/equipment-types",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.EquipmentType),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.EquipmentType)),
             async lazy() {
-              const { EquipmentTypesPage } = await import(
-                "@/routes/equipment-type/page"
-              );
+              const { EquipmentTypesPage } = await import("@/routes/equipment-type/page");
               return { Component: EquipmentTypesPage };
             },
           },
@@ -255,9 +192,8 @@ const routes: RouteObject[] = [
               createPermissionLoader(Resource.EquipmentManufacturer),
             ),
             async lazy() {
-              const { EquipmentManufacturersPage } = await import(
-                "@/routes/equipment-manufacturer/page"
-              );
+              const { EquipmentManufacturersPage } =
+                await import("@/routes/equipment-manufacturer/page");
               return { Component: EquipmentManufacturersPage };
             },
           },
@@ -268,9 +204,7 @@ const routes: RouteObject[] = [
               createPermissionLoader(Resource.LocationCategory),
             ),
             async lazy() {
-              const { LocationCategoriesPage } = await import(
-                "@/routes/location-category/page"
-              );
+              const { LocationCategoriesPage } = await import("@/routes/location-category/page");
               return { Component: LocationCategoriesPage };
             },
           },
@@ -281,18 +215,13 @@ const routes: RouteObject[] = [
               createPermissionLoader(Resource.FleetCode, Operation.Read),
             ),
             async lazy() {
-              const { FleetCodesPage } = await import(
-                "@/routes/fleet-code/page"
-              );
+              const { FleetCodesPage } = await import("@/routes/fleet-code/page");
               return { Component: FleetCodesPage };
             },
           },
           {
             path: "/dispatch/locations",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Location),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Location)),
             async lazy() {
               const { LocationsPage } = await import("@/routes/location/page");
               return { Component: LocationsPage };
@@ -300,10 +229,7 @@ const routes: RouteObject[] = [
           },
           {
             path: "/dispatch/workers",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.Worker),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.Worker)),
             async lazy() {
               const { WorkersPage } = await import("@/routes/worker/page");
               return { Component: WorkersPage };
@@ -311,14 +237,9 @@ const routes: RouteObject[] = [
           },
           {
             path: "/accounting/configuration-files/fiscal-years",
-            loader: combineLoaders(
-              protectedLoader,
-              createPermissionLoader(Resource.FiscalYear),
-            ),
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.FiscalYear)),
             async lazy() {
-              const { FiscalYearsPage } = await import(
-                "@/routes/fiscal-year/page"
-              );
+              const { FiscalYearsPage } = await import("@/routes/fiscal-year/page");
               return { Component: FiscalYearsPage };
             },
           },
@@ -332,22 +253,16 @@ const routes: RouteObject[] = [
               {
                 path: "billing-controls",
                 async lazy() {
-                  const { BillingControlPage } = await import(
-                    "@/routes/billing-control/page"
-                  );
+                  const { BillingControlPage } = await import("@/routes/billing-control/page");
                   return { Component: BillingControlPage };
                 },
               },
               {
                 path: "organization-settings",
-                loader: createPermissionLoader(
-                  Resource.Organization,
-                  Operation.Read,
-                ),
+                loader: createPermissionLoader(Resource.Organization, Operation.Read),
                 async lazy() {
-                  const { OrganizationSettingsPage } = await import(
-                    "@/routes/admin/organization-settings/page"
-                  );
+                  const { OrganizationSettingsPage } =
+                    await import("@/routes/admin/organization-settings/page");
                   return { Component: OrganizationSettingsPage };
                 },
               },
@@ -355,22 +270,24 @@ const routes: RouteObject[] = [
                 path: "accounting-control",
                 loader: createPermissionLoader(Resource.AccountingControl),
                 async lazy() {
-                  const { AccountingControlPage } = await import(
-                    "@/routes/accounting-control/page"
-                  );
+                  const { AccountingControlPage } =
+                    await import("@/routes/accounting-control/page");
                   return { Component: AccountingControlPage };
                 },
               },
               {
-                path: "dispatch-controls",
-                loader: createPermissionLoader(
-                  Resource.DispatchControl,
-                  Operation.Read,
-                ),
+                path: "data-entry-controls",
+                loader: createPermissionLoader(Resource.DataEntryControl, Operation.Read),
                 async lazy() {
-                  const { DispatchControlPage } = await import(
-                    "@/routes/dispatch-control/page"
-                  );
+                  const { DataEntryControlPage } = await import("@/routes/data-entry-control/page");
+                  return { Component: DataEntryControlPage };
+                },
+              },
+              {
+                path: "dispatch-controls",
+                loader: createPermissionLoader(Resource.DispatchControl, Operation.Read),
+                async lazy() {
+                  const { DispatchControlPage } = await import("@/routes/dispatch-control/page");
                   return { Component: DispatchControlPage };
                 },
               },
@@ -378,35 +295,24 @@ const routes: RouteObject[] = [
                 path: "distance-overrides",
                 loader: createPermissionLoader(Resource.DistanceOverride),
                 async lazy() {
-                  const { DistanceOverridesPage } = await import(
-                    "@/routes/distance-override/page"
-                  );
+                  const { DistanceOverridesPage } = await import("@/routes/distance-override/page");
                   return { Component: DistanceOverridesPage };
                 },
               },
               {
                 path: "shipment-controls",
-                loader: createPermissionLoader(
-                  Resource.ShipmentControl,
-                  Operation.Read,
-                ),
+                loader: createPermissionLoader(Resource.ShipmentControl, Operation.Read),
                 async lazy() {
-                  const { ShipmentControlPage } = await import(
-                    "@/routes/shipment-control/page"
-                  );
+                  const { ShipmentControlPage } = await import("@/routes/shipment-control/page");
                   return { Component: ShipmentControlPage };
                 },
               },
               {
                 path: "sequence-configs",
-                loader: createPermissionLoader(
-                  Resource.SequenceConfig,
-                  Operation.Read,
-                ),
+                loader: createPermissionLoader(Resource.SequenceConfig, Operation.Read),
                 async lazy() {
-                  const { SequenceConfigPage } = await import(
-                    "@/routes/admin/sequence-config/page"
-                  );
+                  const { SequenceConfigPage } =
+                    await import("@/routes/admin/sequence-config/page");
                   return { Component: SequenceConfigPage };
                 },
               },
@@ -417,9 +323,7 @@ const routes: RouteObject[] = [
                   createPermissionLoader(Resource.HoldReason),
                 ),
                 async lazy() {
-                  const { HoldReasonsPage } = await import(
-                    "@/routes/hold-reason/page"
-                  );
+                  const { HoldReasonsPage } = await import("@/routes/hold-reason/page");
                   return { Component: HoldReasonsPage };
                 },
               },
@@ -427,9 +331,8 @@ const routes: RouteObject[] = [
                 path: "hazmat-segregation-rules",
                 loader: createPermissionLoader(Resource.HazmatSegregationRule),
                 async lazy() {
-                  const { HazmatSegregationRulesPage } = await import(
-                    "@/routes/hazmat-segregation-rule/page"
-                  );
+                  const { HazmatSegregationRulesPage } =
+                    await import("@/routes/hazmat-segregation-rule/page");
                   return { Component: HazmatSegregationRulesPage };
                 },
               },
@@ -437,9 +340,7 @@ const routes: RouteObject[] = [
                 path: "roles",
                 loader: createPermissionLoader(Resource.Role, Operation.Read),
                 async lazy() {
-                  const { RolesPage } = await import(
-                    "@/routes/admin/roles/page"
-                  );
+                  const { RolesPage } = await import("@/routes/admin/roles/page");
                   return { Component: RolesPage };
                 },
               },
@@ -447,9 +348,7 @@ const routes: RouteObject[] = [
                 path: "roles/new",
                 loader: createPermissionLoader(Resource.Role, Operation.Create),
                 async lazy() {
-                  const { RoleCreatePage } = await import(
-                    "@/routes/admin/roles/new/page"
-                  );
+                  const { RoleCreatePage } = await import("@/routes/admin/roles/new/page");
                   return { Component: RoleCreatePage };
                 },
               },
@@ -457,9 +356,7 @@ const routes: RouteObject[] = [
                 path: "roles/:id/edit",
                 loader: createPermissionLoader(Resource.Role, Operation.Update),
                 async lazy() {
-                  const { RoleEditPage } = await import(
-                    "@/routes/admin/roles/[id]/edit/page"
-                  );
+                  const { RoleEditPage } = await import("@/routes/admin/roles/[id]/edit/page");
                   return { Component: RoleEditPage };
                 },
               },
@@ -467,22 +364,15 @@ const routes: RouteObject[] = [
                 path: "users",
                 loader: createPermissionLoader(Resource.User, Operation.Read),
                 async lazy() {
-                  const { UsersPage } = await import(
-                    "@/routes/admin/users/page"
-                  );
+                  const { UsersPage } = await import("@/routes/admin/users/page");
                   return { Component: UsersPage };
                 },
               },
               {
                 path: "audit-logs",
-                loader: createPermissionLoader(
-                  Resource.AuditLog,
-                  Operation.Read,
-                ),
+                loader: createPermissionLoader(Resource.AuditLog, Operation.Read),
                 async lazy() {
-                  const { AuditLogsPage } = await import(
-                    "@/routes/admin/audit-logs/page"
-                  );
+                  const { AuditLogsPage } = await import("@/routes/admin/audit-logs/page");
                   return { Component: AuditLogsPage };
                 },
               },
@@ -490,48 +380,33 @@ const routes: RouteObject[] = [
                 path: "database-sessions",
                 loader: createPlatformAdminLoader(),
                 async lazy() {
-                  const { DatabaseSessionsPage } = await import(
-                    "@/routes/admin/database-sessions/page"
-                  );
+                  const { DatabaseSessionsPage } =
+                    await import("@/routes/admin/database-sessions/page");
                   return { Component: DatabaseSessionsPage };
                 },
               },
               {
                 path: "integrations",
-                loader: createPermissionLoader(
-                  Resource.Integration,
-                  Operation.Read,
-                ),
+                loader: createPermissionLoader(Resource.Integration, Operation.Read),
                 async lazy() {
-                  const { IntegrationsPage } = await import(
-                    "@/routes/admin/integrations/page"
-                  );
+                  const { IntegrationsPage } = await import("@/routes/admin/integrations/page");
                   return { Component: IntegrationsPage };
                 },
               },
               {
                 path: "api-keys",
-                loader: createPermissionLoader(
-                  Resource.Integration,
-                  Operation.Read,
-                ),
+                loader: createPermissionLoader(Resource.Integration, Operation.Read),
                 async lazy() {
-                  const { APIKeysPage } = await import(
-                    "@/routes/admin/api-keys/page"
-                  );
+                  const { APIKeysPage } = await import("@/routes/admin/api-keys/page");
                   return { Component: APIKeysPage };
                 },
               },
               {
                 path: "custom-fields",
-                loader: createPermissionLoader(
-                  Resource.CustomFieldDefinition,
-                  Operation.Read,
-                ),
+                loader: createPermissionLoader(Resource.CustomFieldDefinition, Operation.Read),
                 async lazy() {
-                  const { CustomFieldDefinitionsPage } = await import(
-                    "@/routes/admin/custom-fields/page"
-                  );
+                  const { CustomFieldDefinitionsPage } =
+                    await import("@/routes/admin/custom-fields/page");
                   return { Component: CustomFieldDefinitionsPage };
                 },
               },

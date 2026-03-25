@@ -6,6 +6,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmenttype"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/dbhelper"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -109,8 +110,7 @@ func (r *repository) Update(
 		NewUpdate().
 		Model(entity).
 		WherePK().
-		Where("version = ?", ov).
-		OmitZero().
+		Where(buncolgen.ShipmentTypeColumns.Version.Eq(), ov).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -139,9 +139,8 @@ func (r *repository) GetByID(
 		NewSelect().
 		Model(entity).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("sht.id = ?", req.ID).
-				Where("sht.organization_id = ?", req.TenantInfo.OrgID).
-				Where("sht.business_unit_id = ?", req.TenantInfo.BuID)
+			return buncolgen.ShipmentTypeScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.ShipmentTypeColumns.ID.Eq(), req.ID)
 		}).
 		Scan(ctx)
 	if err != nil {
@@ -152,30 +151,59 @@ func (r *repository) GetByID(
 	return entity, nil
 }
 
+func (r *repository) GetByIDs(
+	ctx context.Context,
+	req repositories.GetShipmentTypesByIDsRequest,
+) ([]*shipmenttype.ShipmentType, error) {
+	log := r.l.With(
+		zap.String("operation", "GetByIDs"),
+		zap.Any("request", req),
+	)
+
+	entities := make([]*shipmenttype.ShipmentType, 0, len(req.ShipmentTypeIDs))
+	err := r.db.DB().
+		NewSelect().
+		Model(&entities).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.ShipmentTypeScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.ShipmentTypeColumns.ID.In(), bun.List(req.ShipmentTypeIDs))
+		}).
+		Scan(ctx)
+	if err != nil {
+		log.Error("failed to get shipment types", zap.Error(err))
+		return nil, dberror.HandleNotFoundError(err, "ShipmentType")
+	}
+
+	return entities, nil
+}
+
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *repositories.ShipmentTypeSelectOptionsRequest,
 ) (*pagination.ListResult[*shipmenttype.ShipmentType], error) {
+	cols := buncolgen.ShipmentTypeColumns
+
 	return dbhelper.SelectOptions[*shipmenttype.ShipmentType](
 		ctx,
 		r.db.DB(),
 		req.SelectQueryRequest,
 		&dbhelper.SelectOptionsConfig{
 			Columns: []string{
-				"id",
-				"code",
-				"description",
-				"color",
+				cols.ID.Bare(),
+				cols.Status.Bare(),
+				cols.Code.Bare(),
+				cols.Description.Bare(),
+				cols.Color.Bare(),
 			},
-			OrgColumn: "sht.organization_id",
-			BuColumn:  "sht.business_unit_id",
+			OrgColumn: cols.OrganizationID.Qualified(),
+			BuColumn:  cols.BusinessUnitID.Qualified(),
 			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where("sht.status = ?", domaintypes.StatusActive)
+				return q.Where(cols.Status.Eq(), domaintypes.StatusActive)
 			},
 			EntityName: "ShipmentType",
 			SearchColumns: []string{
-				"sht.code",
-				"sht.description",
+				cols.Code.Qualified(),
+				cols.Description.Qualified(),
 			},
 		},
 	)
@@ -195,11 +223,10 @@ func (r *repository) BulkUpdateStatus(
 		NewUpdate().
 		Model(&entities).
 		WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
-			return uq.Where("sht.organization_id = ?", req.TenantInfo.OrgID).
-				Where("sht.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("sht.id IN (?)", bun.In(req.ShipmentTypeIDs))
+			return buncolgen.ShipmentTypeScopeTenantUpdate(uq, req.TenantInfo).
+				Where(buncolgen.ShipmentTypeColumns.ID.In(), bun.List(req.ShipmentTypeIDs))
 		}).
-		Set("status = ?", req.Status).
+		Set(buncolgen.ShipmentTypeColumns.Status.Set(), req.Status).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
@@ -209,33 +236,6 @@ func (r *repository) BulkUpdateStatus(
 
 	if err = dberror.CheckBulkRowsAffected(results, "ShipmentType", req.ShipmentTypeIDs); err != nil {
 		return nil, err
-	}
-
-	return entities, nil
-}
-
-func (r *repository) GetByIDs(
-	ctx context.Context,
-	req repositories.GetShipmentTypesByIDsRequest,
-) ([]*shipmenttype.ShipmentType, error) {
-	log := r.l.With(
-		zap.String("operation", "GetByIDs"),
-		zap.Any("request", req),
-	)
-
-	entities := make([]*shipmenttype.ShipmentType, 0, len(req.ShipmentTypeIDs))
-	err := r.db.DB().
-		NewSelect().
-		Model(&entities).
-		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
-			return sq.Where("sht.organization_id = ?", req.TenantInfo.OrgID).
-				Where("sht.business_unit_id = ?", req.TenantInfo.BuID).
-				Where("sht.id IN (?)", bun.In(req.ShipmentTypeIDs))
-		}).
-		Scan(ctx)
-	if err != nil {
-		log.Error("failed to get shipment types", zap.Error(err))
-		return nil, dberror.HandleNotFoundError(err, "ShipmentType")
 	}
 
 	return entities, nil

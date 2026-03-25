@@ -1,4 +1,5 @@
 import { InputField } from "@/components/fields/input-field";
+import { NumberField } from "@/components/fields/number-field";
 import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
 import { ApiRequestError } from "@/lib/api";
 import { queries } from "@/lib/queries";
@@ -28,25 +29,23 @@ export default function ShipmentGeneralInformation() {
       <FormGroup cols={2}>
         <BOLField />
         <FormControl>
-          <InputField
+          <NumberField
             control={control}
             name="temperatureMin"
             description="The minimum temperature for the shipment."
             label="Temperature Min"
             placeholder="Enter Temperature Min"
             sideText="°F"
-            type="number"
           />
         </FormControl>
         <FormControl>
-          <InputField
+          <NumberField
             control={control}
             name="temperatureMax"
             label="Temperature Max"
             description="The maximum temperature for the shipment."
             placeholder="Enter Temperature Max"
             sideText="°F"
-            type="number"
           />
         </FormControl>
       </FormGroup>

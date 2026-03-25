@@ -68,6 +68,7 @@ export function CommodityForm() {
               placeholder="Select freight class"
               description="The NMFC freight classification for this commodity."
               options={freightClassChoices}
+              isClearable
             />
           </FormControl>
           <FormControl>
@@ -150,10 +151,7 @@ export function CommodityForm() {
           </FormControl>
         </FormGroup>
       </FormSection>
-      <FormSection
-        title="Handling"
-        description="Loading instructions and handling requirements."
-      >
+      <FormSection title="Handling" description="Loading instructions and handling requirements.">
         <FormGroup cols={2}>
           <FormControl cols="full">
             <TextareaField

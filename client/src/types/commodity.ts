@@ -41,7 +41,7 @@ export const commoditySchema = z.object({
   weightPerUnit: decimalStringSchema,
   linearFeetPerUnit: decimalStringSchema,
   maxQuantityPerShipment: decimalStringSchema,
-  freightClass: freightClassSchema.nullish(),
+  freightClass: nullableStringSchema,
   loadingInstructions: z.string().optional(),
   stackable: z.boolean().default(false),
   fragile: z.boolean().default(false),

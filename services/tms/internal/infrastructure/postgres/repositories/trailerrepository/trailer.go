@@ -196,15 +196,12 @@ func (r *repository) SelectOptions(
 			},
 			OrgColumn: cols.OrganizationID.Qualified(),
 			BuColumn:  cols.BusinessUnitID.Qualified(),
-			SearchColumns: []string{
-				cols.Code.Qualified(),
+			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
+				return q.Where(cols.Status.Eq(), domaintypes.EquipmentStatusAvailable)
 			},
 			EntityName: "Trailer",
-			QueryModifier: func(q *bun.SelectQuery) *bun.SelectQuery {
-				return q.Where(
-					cols.Status.Eq(),
-					domaintypes.EquipmentStatusAvailable,
-				)
+			SearchColumns: []string{
+				cols.Code.Qualified(),
 			},
 		},
 	)
