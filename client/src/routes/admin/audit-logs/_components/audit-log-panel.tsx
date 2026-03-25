@@ -2,13 +2,13 @@ import { ComponentLoader } from "@/components/component-loader";
 import { DataTablePanelContainer } from "@/components/data-table/data-table-panel";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { formatToUserTimezone } from "@/lib/date";
 import type { AuditEntry } from "@/types/audit-entry";
 import type { DataTablePanelProps } from "@/types/data-table";
 import { useState } from "react";
 import {
   changeTypeLabel,
-  changeTypeVariant,
   formatAuditValue,
   formatAuditValueWithDates,
   formatFieldLabel,
@@ -98,13 +98,11 @@ function AuditValueCell({ value, path }: { value: unknown; path?: string }) {
 
 function ChangeRow({
   path,
-  fieldType,
   type,
   from,
   to,
 }: {
   path: string;
-  fieldType?: string;
   type: "added" | "removed" | "changed";
   from: unknown;
   to: unknown;
@@ -114,11 +112,11 @@ function ChangeRow({
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm font-medium text-foreground">{formatFieldLabel(path)}</p>
-          <p className="font-mono text-[11px] text-muted-foreground">{path}</p>
         </div>
         <div className="flex items-center gap-1">
-          <Badge variant={changeTypeVariant(type)}>{changeTypeLabel(type)}</Badge>
-          {fieldType && <Badge variant="outline">{fieldType}</Badge>}
+          <p className="text-xs font-medium text-muted-foreground">
+            Action: {changeTypeLabel(type)}
+          </p>
         </div>
       </div>
 
@@ -195,22 +193,26 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
         </Section>
 
         <Section title="Changes" description="Field-level before/after values">
-          <div className="rounded-md border border-border/70 px-3">
-            {changedFields.length === 0 ? (
-              <div className="py-3 text-xs text-muted-foreground italic">No changes recorded.</div>
-            ) : (
-              changedFields.map((change) => (
-                <ChangeRow
-                  key={change.path}
-                  path={change.path}
-                  fieldType={change.fieldType}
-                  type={change.type}
-                  from={change.from}
-                  to={change.to}
-                />
-              ))
-            )}
-          </div>
+          <ScrollArea className="h-76">
+            <div className="rounded-md border border-border/70 px-3">
+              {changedFields.length === 0 ? (
+                <div className="py-3 text-xs text-muted-foreground italic">
+                  No changes recorded.
+                </div>
+              ) : (
+                changedFields.map((change) => (
+                  <ChangeRow
+                    key={change.path}
+                    path={change.path}
+                    fieldType={change.fieldType}
+                    type={change.type}
+                    from={change.from}
+                    to={change.to}
+                  />
+                ))
+              )}
+            </div>
+          </ScrollArea>
         </Section>
 
         <Section title="Metadata" description="Additional contextual information">

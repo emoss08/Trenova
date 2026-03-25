@@ -1,11 +1,8 @@
-import { Button } from "@/components/ui/button";
-import { useDataTable } from "@/contexts/data-table-context";
 import { HoverCardTimestamp } from "@/components/hover-card-timestamp";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import type { AuditEntry } from "@/types/audit-entry";
 import { Resource } from "@/types/permission";
-import type { ColumnDef, Row } from "@tanstack/react-table";
-import { EyeIcon } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
 import {
   auditOperationFilterOptions,
   operationLabel,
@@ -17,26 +14,6 @@ const auditResourceFilterOptions = Object.values(Resource).map((value) => ({
   value,
   label: resourceLabel(value),
 }));
-
-function ViewAuditEntryButton({ row }: { row: Row<AuditEntry> }) {
-  const { openPanelEdit } = useDataTable<AuditEntry, unknown>();
-
-  return (
-    <Button
-      type="button"
-      variant="ghost"
-      size="xs"
-      className="gap-1.5"
-      onClick={(event) => {
-        event.stopPropagation();
-        openPanelEdit(row);
-      }}
-    >
-      <EyeIcon className="size-3.5" />
-      View
-    </Button>
-  );
-}
 
 export function getColumns(): ColumnDef<AuditEntry>[] {
   return [
@@ -137,9 +114,7 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
                 src={user?.thumbnailUrl || user?.profilePicUrl}
                 alt={name}
               />
-              <AvatarFallback className="text-xs">
-                {userInitials(user?.name)}
-              </AvatarFallback>
+              <AvatarFallback className="text-xs">{userInitials(user?.name)}</AvatarFallback>
             </Avatar>
             <div className="flex flex-col">
               <span className="font-medium">{name}</span>
@@ -158,20 +133,6 @@ export function getColumns(): ColumnDef<AuditEntry>[] {
         sortable: false,
         filterType: "text",
         defaultFilterOperator: "contains",
-      },
-    },
-    {
-      id: "view",
-      header: "Details",
-      cell: ({ row }) => <ViewAuditEntryButton row={row} />,
-      size: 110,
-      minSize: 100,
-      maxSize: 130,
-      enableSorting: false,
-      meta: {
-        label: "Details",
-        filterable: false,
-        sortable: false,
       },
     },
   ];
