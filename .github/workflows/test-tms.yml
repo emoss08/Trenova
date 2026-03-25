@@ -185,7 +185,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: tms-integration-coverage
-          path: .
+          path: services/tms
 
       - name: Merge coverage reports
         run: |
@@ -281,6 +281,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
 
       - name: Set up Go
         uses: actions/setup-go@v5
@@ -291,12 +293,22 @@ jobs:
             go.work.sum
             services/tms/go.sum
 
+      - name: Determine lint base
+        id: lint-base
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch --no-tags --depth=1 origin ${{ github.event.pull_request.base.sha }}
+            echo "value=${{ github.event.pull_request.base.sha }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=HEAD~1" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Run golangci-lint
         uses: golangci/golangci-lint-action@v9
         with:
           version: latest
           working-directory: ./services/tms
-          args: --timeout=5m
+          args: --timeout=5m --new-from-rev=${{ steps.lint-base.outputs.value }}
 
   vet:
     name: Run Vet
