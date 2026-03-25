@@ -204,7 +204,6 @@ export function AuditLogPanel({ open, onOpenChange, row }: DataTablePanelProps<A
                   <ChangeRow
                     key={change.path}
                     path={change.path}
-                    fieldType={change.fieldType}
                     type={change.type}
                     from={change.from}
                     to={change.to}
