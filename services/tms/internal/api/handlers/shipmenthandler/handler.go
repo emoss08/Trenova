@@ -85,6 +85,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.checkForDuplicateBOLs,
 	)
 	api.POST(
+		"/check-hazmat-segregation/",
+		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
+		h.checkHazmatSegregation,
+	)
+	api.POST(
 		"/previous-rates/",
 		h.pm.RequirePermission(permission.ResourceShipment.String(), permission.OpRead),
 		h.getPreviousRates,
@@ -450,6 +455,28 @@ func (h *Handler) checkForDuplicateBOLs(c *gin.Context) {
 	}
 
 	if err := h.service.CheckForDuplicateBOLs(c.Request.Context(), req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"valid": true})
+}
+
+func (h *Handler) checkHazmatSegregation(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	req := new(repositories.CheckHazmatSegregationRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	}
+
+	if err := h.service.CheckHazmatSegregation(c.Request.Context(), req); err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}

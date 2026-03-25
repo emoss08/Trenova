@@ -11,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/customfield"
 	"github.com/emoss08/trenova/internal/core/domain/worker"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/customfieldservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -51,6 +52,10 @@ func setupWorkerHandler(
 			Repo:   defRepo,
 		},
 	)
+	cacheRepo := mocks.NewMockWorkerCacheRepository(t)
+	cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, repositories.ErrCacheMiss).
+		Maybe()
 
 	cfService := customfieldservice.NewValuesService(customfieldservice.ValuesServiceParams{
 		Logger:         logger,
@@ -62,6 +67,7 @@ func setupWorkerHandler(
 	service := workerservice.New(workerservice.Params{
 		Logger:                    logger,
 		Repo:                      repo,
+		CacheRepo:                 cacheRepo,
 		Validator:                 workerservice.NewTestValidator(),
 		AuditService:              auditSvc,
 		Realtime:                  &mocks.NoopRealtimeService{},

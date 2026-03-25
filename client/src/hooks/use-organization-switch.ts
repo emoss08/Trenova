@@ -1,6 +1,10 @@
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@/stores/auth-store";
+import type {
+  SwitchOrganizationRequest,
+  SwitchOrganizationResponse,
+} from "@/types/organization";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router";
 import { toast } from "sonner";
@@ -10,8 +14,9 @@ export function useSwitchOrganization() {
   const navigate = useNavigate();
   const { setUser } = useAuthStore();
 
-  return useApiMutation({
-    mutationFn: (data) => apiService.userService.switchOrganization(data),
+  return useApiMutation<SwitchOrganizationResponse, SwitchOrganizationRequest>({
+    mutationFn: (data: SwitchOrganizationRequest) =>
+      apiService.userService.switchOrganization(data),
     resourceName: "Organization",
     onSuccess: (response) => {
       setUser(response.user);

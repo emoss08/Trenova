@@ -127,8 +127,7 @@ export const createGlobalStore = <State extends object>(initialState: State) => 
  * Returns a wrapped `store` that can't be modified. Useful when you want to
  * control who is able to write to a store.
  */
-export function createReadonlyStore<T extends ReturnType<typeof createGlobalStore>>(store: T) {
-  type State = ReturnType<T["getAll"]>;
+export function createReadonlyStore<State extends object>(store: StoreType<State>) {
   return {
     get: <K extends keyof State>(key: K) => store.get(key),
     getAll: () => store.getAll(),

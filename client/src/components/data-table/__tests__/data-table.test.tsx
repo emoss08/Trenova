@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -114,7 +114,7 @@ describe("DataTable", () => {
     expect(screen.getAllByText("Alice").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("survives multiple parent re-renders without crashing", async () => {
+  it("survives multiple parent re-renders without crashing", () => {
     const queryClient = createQueryClient();
 
     function App() {
@@ -145,22 +145,22 @@ describe("DataTable", () => {
 
     expect(screen.getAllByText("Alice").length).toBeGreaterThanOrEqual(1);
 
-    const user = userEvent.setup();
-    for (let i = 0; i < 3; i++) {
-      await user.click(screen.getByTestId("rerender"));
-    }
-
-    await waitFor(() => {
-      expect(screen.getAllByText("Alice").length).toBeGreaterThanOrEqual(1);
-      expect(screen.getAllByText("Bob").length).toBeGreaterThanOrEqual(1);
+    const rerenderButton = screen.getByTestId("rerender");
+    act(() => {
+      for (let i = 0; i < 3; i++) {
+        fireEvent.click(rerenderButton);
+      }
     });
+
+    expect(screen.getAllByText("Alice").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Bob").length).toBeGreaterThanOrEqual(1);
   });
 });
 
 // ── DataTableProvider context memoization tests ────────────────────────
 
 describe("DataTableProvider memoization", () => {
-  it("delivers updated context when isLoading changes", async () => {
+  it("delivers updated context when isLoading changes", () => {
     function Consumer() {
       const ctx = useDataTable();
       return <span data-testid="loading-state">{ctx.isLoading ? "loading" : "ready"}</span>;
@@ -191,8 +191,9 @@ describe("DataTableProvider memoization", () => {
 
     expect(screen.getByTestId("loading-state")).toHaveTextContent("loading");
 
-    const user = userEvent.setup();
-    await user.click(screen.getByTestId("toggle-loading"));
+    act(() => {
+      fireEvent.click(screen.getByTestId("toggle-loading"));
+    });
 
     expect(screen.getByTestId("loading-state")).toHaveTextContent("ready");
   });
@@ -289,7 +290,7 @@ describe("DataTableProvider memoization", () => {
     expect(lastValue).not.toBe(firstValue);
   });
 
-  it("context value updates when useReactTable is used (table ref changes each render)", async () => {
+  it("context value updates when useReactTable is used (table ref changes each render)", () => {
     const contextValues: unknown[] = [];
 
     function ValueCapture() {
@@ -321,8 +322,9 @@ describe("DataTableProvider memoization", () => {
 
     render(<WithRealTable />);
 
-    const user = userEvent.setup();
-    await user.click(screen.getByTestId("tick-rt"));
+    act(() => {
+      fireEvent.click(screen.getByTestId("tick-rt"));
+    });
 
     // useReactTable creates a new object each render, so the context
     // value WILL change — this is expected and documented in the plan.

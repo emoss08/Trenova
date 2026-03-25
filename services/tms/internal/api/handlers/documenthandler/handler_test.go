@@ -120,11 +120,15 @@ func setupHandler(
 
 	validator := documentservice.NewValidator(documentservice.ValidatorParams{Config: cfg})
 	thumbnailGen := thumbnailservice.NewGenerator()
+	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
+	cacheRepo.On("GetByID", mock.Anything, mock.Anything).
+		Return(nil, repositories.ErrCacheMiss).
+		Maybe()
 
 	service := documentservice.NewTestService(
 		logger,
 		repo,
-		mocks.NewMockDocumentCacheRepository(t),
+		cacheRepo,
 		storageClient,
 		validator,
 		&mocks.NoopAuditService{},

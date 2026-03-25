@@ -15,6 +15,8 @@ import { FormControl, FormGroup, FormSection } from "@/components/ui/form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { queries } from "@/lib/queries";
 import { cn, findDuplicateIds, pluralize, truncateText } from "@/lib/utils";
+import { ApiRequestError } from "@/lib/api";
+import { apiService } from "@/services/api";
 import type { Commodity } from "@/types/commodity";
 import type { Shipment } from "@/types/shipment";
 import { useQuery } from "@tanstack/react-query";
@@ -39,6 +41,7 @@ function CommodityDialog({
   index,
   isEditing,
   maxShipmentWeightLimit,
+  checkHazmatSegregation,
   update,
 }: {
   open: boolean;
@@ -47,15 +50,17 @@ function CommodityDialog({
   index: number;
   isEditing: boolean;
   maxShipmentWeightLimit?: number;
+  checkHazmatSegregation?: boolean;
   update: (index: number, value: any) => void;
 }) {
   const { control, setValue, getValues, setError, clearErrors } = useFormContext<Shipment>();
+  const [saving, setSaving] = useState(false);
 
   function handleCommoditySelected(option: Commodity | null) {
     setValue(`commodities.${index}.commodity`, option ?? undefined);
   }
 
-  function handleSave() {
+  async function handleSave() {
     const values = getValues(`commodities.${index}`);
     const commodities = getValues("commodities") ?? [];
     const nextWeight = typeof values.weight === "number" ? values.weight : 0;
@@ -78,6 +83,37 @@ function CommodityDialog({
     }
 
     clearErrors(`commodities.${index}.weight`);
+
+    if (checkHazmatSegregation) {
+      const allCommodityIds = commodities
+        .map((c, i) => (i === index ? values.commodityId : c?.commodityId))
+        .filter((id): id is string => !!id);
+
+      if (allCommodityIds.length >= 2) {
+        setSaving(true);
+        try {
+          await apiService.shipmentService.checkHazmatSegregation(allCommodityIds);
+          for (let i = 0; i < commodities.length; i++) {
+            clearErrors(`commodities.${i}.commodityId`);
+          }
+        } catch (err) {
+          if (err instanceof ApiRequestError && err.isValidationError()) {
+            for (const fieldError of err.getFieldErrors()) {
+              setError(fieldError.field as any, {
+                type: "manual",
+                message: fieldError.message,
+              });
+            }
+            update(index, values);
+            setSaving(false);
+            return;
+          }
+        } finally {
+          setSaving(false);
+        }
+      }
+    }
+
     update(index, values);
     onSave();
   }
@@ -126,11 +162,11 @@ function CommodityDialog({
           </FormControl>
         </FormGroup>
         <DialogFooter>
-          <Button type="button" variant="outline" onClick={onCancel}>
+          <Button type="button" variant="outline" onClick={onCancel} disabled={saving}>
             Cancel
           </Button>
-          <Button type="button" onClick={handleSave}>
-            Save
+          <Button type="button" onClick={handleSave} disabled={saving}>
+            {saving ? "Checking..." : "Save"}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -405,6 +441,7 @@ export default function CommoditiesSection() {
           index={editingIndex}
           isEditing={isEditing}
           maxShipmentWeightLimit={shipmentUIPolicy?.maxShipmentWeightLimit}
+          checkHazmatSegregation={shipmentUIPolicy?.checkHazmatSegregation}
           update={update}
         />
       )}

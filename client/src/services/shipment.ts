@@ -93,6 +93,12 @@ export class ShipmentService {
     });
   }
 
+  public async checkHazmatSegregation(commodityIds: string[]) {
+    return api.post<{ valid: boolean }>("/shipments/check-hazmat-segregation/", {
+      commodityIds,
+    });
+  }
+
   public async getPreviousRates(request: GetPreviousRatesRequest) {
     const response = await api.post<PreviousRatesResponse>("/shipments/previous-rates/", request);
     return safeParse(previousRatesResponseSchema, response, "Previous Rates");

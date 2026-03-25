@@ -16,6 +16,7 @@ import { apiService } from "@/services/api";
 import {
   tableConfigurationFormSchema,
   type TableConfig,
+  type TableConfiguration,
   type TableConfigurationFormValues,
 } from "@/types/table-configuration";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -81,8 +82,14 @@ export function DataTableSaveConfigDialog({
     formState: { isSubmitting },
   } = form;
 
-  const { mutateAsync } = useApiMutation({
-    mutationFn: (data) => apiService.tableConfigurationService.create(data),
+  const { mutateAsync } = useApiMutation<
+    TableConfiguration,
+    TableConfigurationFormValues,
+    unknown,
+    TableConfigurationFormValues
+  >({
+    mutationFn: (data: TableConfigurationFormValues) =>
+      apiService.tableConfigurationService.create(data),
     resourceName: "Table Configuration",
     setFormError: setError,
     onSuccess: () => {

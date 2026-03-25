@@ -292,6 +292,7 @@ export type ShipmentTotalsResponse = z.infer<typeof shipmentTotalsResponseSchema
 export const shipmentUIPolicySchema = z.object({
   allowMoveRemovals: z.boolean(),
   checkForDuplicateBols: z.boolean(),
+  checkHazmatSegregation: z.boolean(),
   maxShipmentWeightLimit: z.number().int().nonnegative(),
 });
 export type ShipmentUIPolicy = z.infer<typeof shipmentUIPolicySchema>;

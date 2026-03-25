@@ -576,7 +576,8 @@ func TestCreateIntegration_RejectsHazmatSegregationConflicts(t *testing.T) {
 
 	var multiErr *errortypes.MultiError
 	require.ErrorAs(t, err, &multiErr)
-	assertErrorField(t, multiErr, "commodities")
+	assertErrorField(t, multiErr, "commodities[0].commodityId")
+	assertErrorField(t, multiErr, "commodities[1].commodityId")
 
 	count, getErr := db.NewSelect().
 		Table("shipments").

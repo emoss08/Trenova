@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/domain/shipment"
+	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
@@ -14,6 +15,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula/engine"
 	"github.com/emoss08/trenova/internal/core/services/formula/resolver"
 	"github.com/emoss08/trenova/internal/core/services/formula/schema"
+	"github.com/emoss08/trenova/internal/core/services/shipmentcommercial"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/accessorialchargerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/formulatemplaterepository"
@@ -134,11 +136,11 @@ func TestSplitMoveIntegrationPersistsTwoLegHandoff(t *testing.T) {
 		NewDeliveryLocationID: newDestination.ID,
 		SplitPickupTimes: repositories.SplitStopTimes{
 			ScheduledWindowStart: originalDelivery.EffectiveScheduledWindowEnd() + 1_800,
-			ScheduledWindowEnd:   int64Ptr(originalDelivery.EffectiveScheduledWindowEnd() + 3_600),
+			ScheduledWindowEnd:   integrationInt64Ptr(originalDelivery.EffectiveScheduledWindowEnd() + 3_600),
 		},
 		NewDeliveryTimes: repositories.SplitStopTimes{
 			ScheduledWindowStart: originalDelivery.EffectiveScheduledWindowEnd() + 7_200,
-			ScheduledWindowEnd:   int64Ptr(originalDelivery.EffectiveScheduledWindowEnd() + 9_000),
+			ScheduledWindowEnd:   integrationInt64Ptr(originalDelivery.EffectiveScheduledWindowEnd() + 9_000),
 		},
 	})
 	require.NoError(t, err)
@@ -246,15 +248,19 @@ func newIntegrationService(
 		Resolver: res,
 		Repo:     formulaRepo,
 	})
+	commercial := shipmentcommercial.New(shipmentcommercial.Params{
+		Formula:         formulaSvc,
+		AccessorialRepo: accessorialRepo,
+	})
 
 	svc := New(Params{
-		Logger:          zap.NewNop(),
-		DB:              conn,
-		Repo:            moveRepo,
-		ShipmentRepo:    shipmentRepo,
-		ControlRepo:     controlRepo,
-		AccessorialRepo: accessorialRepo,
-		Formula:         formulaSvc,
+		Logger:       zap.NewNop(),
+		DB:           conn,
+		Repo:         moveRepo,
+		ShipmentRepo: shipmentRepo,
+		ControlRepo:  controlRepo,
+		Commercial:   commercial,
+		Coordinator:  shipmentstate.NewCoordinatorWithClock(func() int64 { return 10 }),
 	})
 
 	data := seedtest.SeedFullTestData(t, ctx, db)
@@ -272,6 +278,6 @@ func int16Ptr(value int16) *int16 {
 	return &value
 }
 
-func int64Ptr(value int64) *int64 {
+func integrationInt64Ptr(value int64) *int64 {
 	return &value
 }

@@ -142,6 +142,25 @@ func (r *DuplicateBOLCheckRequest) Validate() *errortypes.MultiError {
 	return nil
 }
 
+type CheckHazmatSegregationRequest struct {
+	TenantInfo   pagination.TenantInfo `json:"-"`
+	CommodityIDs []pulid.ID            `json:"commodityIds"`
+}
+
+func (r *CheckHazmatSegregationRequest) Validate() *errortypes.MultiError {
+	multiErr := errortypes.NewMultiError()
+
+	if len(r.CommodityIDs) < 2 {
+		multiErr.Add("commodityIds", errortypes.ErrInvalid, "At least 2 commodity IDs are required")
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
 type BulkDuplicateShipmentRequest struct {
 	TenantInfo    pagination.TenantInfo `json:"-"`
 	ShipmentID    pulid.ID              `json:"shipmentId"`

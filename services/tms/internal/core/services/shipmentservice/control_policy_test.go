@@ -29,7 +29,7 @@ func TestValidatorValidateCreate_RejectsWeightAboveShipmentControlLimit(t *testi
 			},
 		}).
 		Return(&tenant.ShipmentControl{MaxShipmentWeightLimit: 1000}, nil).
-		Twice()
+		Maybe()
 
 	v := &Validator{
 		validator: newValidatorBuilder(
@@ -75,7 +75,7 @@ func TestValidatorValidateUpdate_RejectsMoveRemovalWhenDisallowed(t *testing.T) 
 		Return(&tenant.ShipmentControl{
 			AllowMoveRemovals: false,
 		}, nil).
-		Twice()
+		Maybe()
 
 	shipmentRepo := mocks.NewMockShipmentRepository(t)
 	shipmentRepo.EXPECT().

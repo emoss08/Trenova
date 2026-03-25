@@ -45,7 +45,7 @@ func TestGetByID_ExpandedDetailsPreloadsCommodityHazmat(t *testing.T) {
 	shipmentCommodityID := pulid.MustNew("sc_")
 	hazmatID := pulid.MustNew("hm_")
 
-	dbMock.ExpectQuery(`(?s)SELECT .* FROM "shipments" AS "sp".*WHERE .*sp\.id = .*sp\.organization_id = .*sp\.business_unit_id = .*`).
+	dbMock.ExpectQuery(`(?s)SELECT .* FROM "shipments" AS "sp".*WHERE .*sp\.organization_id = .*sp\.business_unit_id = .*sp\.id = .*`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "service_type_id", "customer_id", "formula_template_id", "status", "pro_number", "bol", "rating_unit",
 		}).AddRow(

@@ -78,6 +78,7 @@ func TestRecalculate_RemovesGeneratedDetentionChargeWhenNoLongerEligible(t *test
 		{
 			ID:                  pulid.MustNew("ac_"),
 			AccessorialChargeID: detentionChargeID,
+			IsSystemGenerated:   true,
 			Method:              accessorialcharge.MethodFlat,
 			Amount:              decimal.NewFromInt(10),
 			Unit:                1,
@@ -132,6 +133,7 @@ func TestRecalculate_UpdatesExistingGeneratedDetentionChargeWithoutDuplicating(t
 		{
 			ID:                  pulid.MustNew("ac_"),
 			AccessorialChargeID: detentionChargeID,
+			IsSystemGenerated:   true,
 			Method:              accessorialcharge.MethodPerUnit,
 			Amount:              decimal.NewFromInt(25),
 			Unit:                1,
@@ -235,13 +237,17 @@ func TestRecalculate_PreservesUserEditedDetentionChargeAmount(t *testing.T) {
 	err := calculator.Recalculate(t.Context(), entity, control, pulid.MustNew("usr_"))
 
 	require.NoError(t, err)
-	require.Len(t, entity.AdditionalCharges, 1)
+	require.Len(t, entity.AdditionalCharges, 2)
 	assert.True(t, decimal.NewFromInt(502).Equal(entity.AdditionalCharges[0].Amount),
 		"user-edited amount should be preserved, got %s", entity.AdditionalCharges[0].Amount)
 	assert.Equal(t, accessorialcharge.MethodFlat, entity.AdditionalCharges[0].Method,
 		"user-edited method should be preserved")
-	assert.Equal(t, int16(2), entity.AdditionalCharges[0].Unit,
-		"unit should be updated from detention calculation")
+	assert.Equal(t, int16(1), entity.AdditionalCharges[0].Unit,
+		"user-edited unit should be preserved")
+	assert.True(t, entity.AdditionalCharges[1].IsSystemGenerated)
+	assert.Equal(t, accessorialcharge.MethodPerUnit, entity.AdditionalCharges[1].Method)
+	assert.True(t, decimal.NewFromInt(50).Equal(entity.AdditionalCharges[1].Amount))
+	assert.Equal(t, int16(2), entity.AdditionalCharges[1].Unit)
 }
 
 func TestCalculateTotals_PreservesOverriddenDetentionChargeAmounts(t *testing.T) {

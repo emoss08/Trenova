@@ -264,7 +264,7 @@ func TestCreateAPIKeyNormalizesPermissionsBeforePersisting(t *testing.T) {
 			assert.Equal(t, permissiondomain.DataScopeOrganization, perms[0].DataScope)
 			assert.Equal(
 				t,
-				[]permissiondomain.Operation{permissiondomain.OpExport, permissiondomain.OpRead},
+				[]permissiondomain.Operation{permissiondomain.OpRead, permissiondomain.OpUpdate},
 				perms[0].Operations,
 			)
 		}).
@@ -276,9 +276,9 @@ func TestCreateAPIKeyNormalizesPermissionsBeforePersisting(t *testing.T) {
 			{
 				Resource: "  " + permissiondomain.ResourceCustomer.String() + "  ",
 				Operations: []permissiondomain.Operation{
+					permissiondomain.OpUpdate,
 					permissiondomain.OpRead,
-					permissiondomain.OpExport,
-					permissiondomain.OpRead,
+					permissiondomain.OpUpdate,
 				},
 				DataScope: "",
 			},
@@ -291,7 +291,7 @@ func TestCreateAPIKeyNormalizesPermissionsBeforePersisting(t *testing.T) {
 	assert.Equal(t, permissiondomain.DataScopeOrganization, result.Permissions[0].DataScope)
 	assert.Equal(
 		t,
-		[]permissiondomain.Operation{permissiondomain.OpExport, permissiondomain.OpRead},
+		[]permissiondomain.Operation{permissiondomain.OpRead, permissiondomain.OpUpdate},
 		result.Permissions[0].Operations,
 	)
 }

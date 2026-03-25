@@ -12,6 +12,7 @@ import (
 type ShipmentUIPolicy struct {
 	AllowMoveRemovals      bool  `json:"allowMoveRemovals"`
 	CheckForDuplicateBOLs  bool  `json:"checkForDuplicateBols"`
+	CheckHazmatSegregation bool  `json:"checkHazmatSegregation"`
 	MaxShipmentWeightLimit int32 `json:"maxShipmentWeightLimit"`
 }
 
@@ -60,6 +61,10 @@ type ShipmentService interface {
 	CheckForDuplicateBOLs(
 		ctx context.Context,
 		req *repositories.DuplicateBOLCheckRequest,
+	) error
+	CheckHazmatSegregation(
+		ctx context.Context,
+		req *repositories.CheckHazmatSegregationRequest,
 	) error
 	GetDelayedShipments(
 		ctx context.Context,

@@ -148,7 +148,7 @@
     ],
     "settings": {
         "better-tailwindcss": {
-            "entryPoint": "/home/wolfred/projects/trenova-2/client/src/styles/app.css"
+            "entryPoint": "./src/styles/app.css"
         }
     },
     "overrides": [

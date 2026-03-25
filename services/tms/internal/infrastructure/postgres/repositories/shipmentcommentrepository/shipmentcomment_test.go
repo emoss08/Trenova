@@ -42,7 +42,7 @@ func TestListByShipmentID_ReturnsCommentsAndCount(t *testing.T) {
 
 	mock.ExpectQuery(`SELECT count\(\*\) FROM "shipment_comments" AS "sc".*shipment_id = .*organization_id = .*business_unit_id = .*`).
 		WillReturnRows(sqlmock.NewRows([]string{"count"}).AddRow(1))
-	mock.ExpectQuery(`SELECT .* FROM "shipment_comments" AS "sc".*ORDER BY "sc"\."created_at" ASC.*LIMIT 20`).
+	mock.ExpectQuery(`SELECT .* FROM "shipment_comments" AS "sc".*ORDER BY "sc"\."created_at" DESC.*LIMIT 20`).
 		WillReturnRows(sqlmock.NewRows([]string{
 			"id", "business_unit_id", "organization_id", "shipment_id", "user_id", "comment", "version", "created_at", "updated_at",
 			"user__id", "user__business_unit_id", "user__current_organization_id", "user__status", "user__name", "user__username", "user__time_format", "user__password", "user__email_address", "user__profile_pic_url", "user__thumbnail_url", "user__timezone", "user__is_locked", "user__must_change_password", "user__is_platform_admin", "user__version", "user__created_at", "user__updated_at", "user__last_login_at",
@@ -117,7 +117,7 @@ func TestDelete_RemovesComment(t *testing.T) {
 	orgID := pulid.MustNew("org_")
 	buID := pulid.MustNew("bu_")
 
-	mock.ExpectExec(`DELETE FROM "shipment_comments" AS "sc".*id = .*shipment_id = .*organization_id = .*business_unit_id = .*`).
+	mock.ExpectExec(`DELETE FROM "shipment_comments" AS "sc".*organization_id = .*business_unit_id = .*id = .*shipment_id = .*`).
 		WillReturnResult(sqlmock.NewResult(0, 1))
 
 	err := repo.Delete(t.Context(), &repositories.DeleteShipmentCommentRequest{

@@ -6,7 +6,14 @@ import type { LocationDetails } from "@/types/google-maps";
 import { useQuery } from "@tanstack/react-query";
 import { CheckIcon, SearchIcon } from "lucide-react";
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useFormContext, type Control, type RegisterOptions } from "react-hook-form";
+import {
+  useFormContext,
+  type Control,
+  type FieldValues,
+  type Path,
+  type PathValue,
+  type RegisterOptions,
+} from "react-hook-form";
 import { Button } from "../ui/button";
 import {
   Command,
@@ -21,42 +28,42 @@ import { Spinner } from "../ui/spinner";
 import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 import { InputField } from "./input-field";
 
-type AddressFieldProps = {
-  control: Control<any>;
+type AddressFieldProps<TForm extends FieldValues> = {
+  control: Control<TForm>;
   onLocationSelect?: (location: LocationDetails) => void;
   populateFields?: boolean;
-  nameField?: string;
-  addressLine1Field?: string;
-  cityField?: string;
-  stateIdField?: string;
-  postalCodeField?: string;
-  placeIdField?: string;
-  longitudeField?: string;
-  latitudeField?: string;
+  nameField?: Path<TForm>;
+  addressLine1Field?: Path<TForm>;
+  cityField?: Path<TForm>;
+  stateIdField?: Path<TForm>;
+  postalCodeField?: Path<TForm>;
+  placeIdField?: Path<TForm>;
+  longitudeField?: Path<TForm>;
+  latitudeField?: Path<TForm>;
   label?: string;
   placeholder?: string;
   description?: string;
-  rules?: RegisterOptions<any, any>;
+  rules?: RegisterOptions<TForm, Path<TForm>>;
 };
 
-export function AddressField({
+export function AddressField<TForm extends FieldValues>({
   control,
   onLocationSelect,
   populateFields = true,
-  nameField = "name",
-  addressLine1Field = "addressLine1",
-  cityField = "city",
-  stateIdField = "stateId",
-  postalCodeField = "postalCode",
-  placeIdField = "placeId",
-  longitudeField = "longitude",
-  latitudeField = "latitude",
+  nameField = "name" as Path<TForm>,
+  addressLine1Field = "addressLine1" as Path<TForm>,
+  cityField = "city" as Path<TForm>,
+  stateIdField = "stateId" as Path<TForm>,
+  postalCodeField = "postalCode" as Path<TForm>,
+  placeIdField = "placeId" as Path<TForm>,
+  longitudeField = "longitude" as Path<TForm>,
+  latitudeField = "latitude" as Path<TForm>,
   label = "Address Line 1",
   placeholder = "Address Line 1",
   description = "The primary address line.",
   rules,
-}: AddressFieldProps) {
-  const { setValue } = useFormContext();
+}: AddressFieldProps<TForm>) {
+  const { setValue } = useFormContext<TForm>();
   const [open, setOpen] = useState(false);
   const [searchValue, setSearchValue] = useState("");
   const [selectedLocation, setSelectedLocation] = useState<string | null>(null);
@@ -98,6 +105,16 @@ export function AddressField({
     return filtered;
   }, [autocompleteResult]);
 
+  const setFieldValue = useCallback(
+    <TPath extends Path<TForm>>(field: TPath, value: PathValue<TForm, TPath>) => {
+      setValue(field, value, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    },
+    [setValue],
+  );
+
   const handleSelect = useCallback(
     (locationId: LocationDetails["placeId"]) => {
       if (!locationId) return;
@@ -107,46 +124,41 @@ export function AddressField({
       if (!location) return;
 
       if (populateFields) {
-        if (nameField)
-          setValue(nameField, location.name || "", {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
-        if (addressLine1Field)
-          setValue(addressLine1Field, location.addressLine1 || "", {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
-        if (cityField)
-          setValue(cityField, location.city || "", {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
-        if (postalCodeField)
-          setValue(postalCodeField, location.postalCode || "", {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
-        if (stateIdField)
-          setValue(stateIdField, location.stateId || "", {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
-        if (placeIdField)
-          setValue(placeIdField, locationId, {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
-        if (longitudeField)
-          setValue(longitudeField, location.longitude || 0, {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
-        if (latitudeField)
-          setValue(latitudeField, location.latitude || 0, {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
+        if (nameField) setFieldValue(nameField, (location.name || "") as PathValue<TForm, typeof nameField>);
+        if (addressLine1Field) {
+          setFieldValue(
+            addressLine1Field,
+            (location.addressLine1 || "") as PathValue<TForm, typeof addressLine1Field>,
+          );
+        }
+        if (cityField) setFieldValue(cityField, (location.city || "") as PathValue<TForm, typeof cityField>);
+        if (postalCodeField) {
+          setFieldValue(
+            postalCodeField,
+            (location.postalCode || "") as PathValue<TForm, typeof postalCodeField>,
+          );
+        }
+        if (stateIdField) {
+          setFieldValue(
+            stateIdField,
+            (location.stateId || "") as PathValue<TForm, typeof stateIdField>,
+          );
+        }
+        if (placeIdField) {
+          setFieldValue(placeIdField, locationId as PathValue<TForm, typeof placeIdField>);
+        }
+        if (longitudeField) {
+          setFieldValue(
+            longitudeField,
+            (location.longitude || 0) as PathValue<TForm, typeof longitudeField>,
+          );
+        }
+        if (latitudeField) {
+          setFieldValue(
+            latitudeField,
+            (location.latitude || 0) as PathValue<TForm, typeof latitudeField>,
+          );
+        }
       }
 
       onLocationSelect?.(location);
@@ -167,7 +179,7 @@ export function AddressField({
       placeIdField,
       longitudeField,
       latitudeField,
-      setValue,
+      setFieldValue,
       onLocationSelect,
     ],
   );

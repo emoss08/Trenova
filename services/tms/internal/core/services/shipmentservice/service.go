@@ -48,6 +48,7 @@ type Params struct {
 	ControlRepo     repositories.ShipmentControlRepository
 	ContinuityRepo  repositories.EquipmentContinuityRepository
 	CommodityRepo   repositories.CommodityRepository
+	HazmatRuleRepo  repositories.HazmatSegregationRuleRepository
 	AccessorialRepo repositories.AccessorialChargeRepository
 	Permissions     services.PermissionEngine
 	Validator       *Validator
@@ -67,6 +68,7 @@ type service struct {
 	controlRepo     repositories.ShipmentControlRepository
 	continuityRepo  repositories.EquipmentContinuityRepository
 	commodityRepo   repositories.CommodityRepository
+	hazmatRuleRepo  repositories.HazmatSegregationRuleRepository
 	accessorialRepo repositories.AccessorialChargeRepository
 	permissions     services.PermissionEngine
 	validator       *Validator
@@ -88,6 +90,7 @@ func New(p Params) services.ShipmentService {
 		controlRepo:     p.ControlRepo,
 		continuityRepo:  p.ContinuityRepo,
 		commodityRepo:   p.CommodityRepo,
+		hazmatRuleRepo:  p.HazmatRuleRepo,
 		accessorialRepo: p.AccessorialRepo,
 		permissions:     p.Permissions,
 		validator:       p.Validator,
@@ -133,6 +136,7 @@ func (s *service) GetUIPolicy(
 	return &services.ShipmentUIPolicy{
 		AllowMoveRemovals:      control.AllowMoveRemovals,
 		CheckForDuplicateBOLs:  control.CheckForDuplicateBOLs,
+		CheckHazmatSegregation: control.CheckHazmatSegregation,
 		MaxShipmentWeightLimit: control.MaxShipmentWeightLimit,
 	}, nil
 }
@@ -821,6 +825,90 @@ func (s *service) checkForDuplicateBOLs(
 
 	if me.HasErrors() {
 		return me
+	}
+
+	return nil
+}
+
+func (s *service) CheckHazmatSegregation(
+	ctx context.Context,
+	req *repositories.CheckHazmatSegregationRequest,
+) error {
+	if multiErr := req.Validate(); multiErr != nil {
+		return multiErr
+	}
+
+	control, err := s.getShipmentControl(ctx, req.TenantInfo)
+	if err != nil {
+		return err
+	}
+
+	if !control.CheckHazmatSegregation {
+		return nil
+	}
+
+	commodities, err := s.commodityRepo.GetByIDs(ctx, repositories.GetCommoditiesByIDsRequest{
+		TenantInfo:   req.TenantInfo,
+		CommodityIDs: req.CommodityIDs,
+	})
+	if err != nil {
+		return err
+	}
+
+	hazmatCommodities := mapHazmatCommodities(commodities)
+	if len(hazmatCommodities) < 2 {
+		return nil
+	}
+
+	rules, err := s.hazmatRuleRepo.ListActiveByTenant(ctx, req.TenantInfo)
+	if err != nil {
+		return err
+	}
+
+	multiErr := errortypes.NewMultiError()
+
+	for i := 0; i < len(req.CommodityIDs); i++ {
+		leftCommodity, ok := hazmatCommodities[req.CommodityIDs[i]]
+		if !ok {
+			continue
+		}
+
+		for j := i + 1; j < len(req.CommodityIDs); j++ {
+			rightCommodity, ok := hazmatCommodities[req.CommodityIDs[j]]
+			if !ok {
+				continue
+			}
+
+			matchedRule := findMatchingHazmatRule(rules, leftCommodity, rightCommodity)
+			if matchedRule == nil {
+				continue
+			}
+
+			multiErr.WithIndex("commodities", i).Add(
+				"commodityId",
+				errortypes.ErrInvalidOperation,
+				fmt.Sprintf(
+					"Violates hazmat segregation rule %q (%s) — conflicts with %q",
+					matchedRule.Name,
+					matchedRule.SegregationType,
+					rightCommodity.Name,
+				),
+			)
+			multiErr.WithIndex("commodities", j).Add(
+				"commodityId",
+				errortypes.ErrInvalidOperation,
+				fmt.Sprintf(
+					"Violates hazmat segregation rule %q (%s) — conflicts with %q",
+					matchedRule.Name,
+					matchedRule.SegregationType,
+					leftCommodity.Name,
+				),
+			)
+		}
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
 	}
 
 	return nil
