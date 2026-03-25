@@ -110,7 +110,7 @@ export function NumberField<T extends FieldValues>({
                     "pointer-events-none cursor-not-allowed opacity-60",
                   fieldState.invalid &&
                     "border-red-500 bg-red-500/20 ring-0 ring-red-500 placeholder:text-red-500 focus:outline-hidden focus-visible:border-red-600 focus-visible:ring-4 focus-visible:ring-red-400/20",
-                  sideText ? "pr-24" : "pr-12",
+                  sideText ? "pr-16" : "pr-12",
                   className,
                 )}
               />
