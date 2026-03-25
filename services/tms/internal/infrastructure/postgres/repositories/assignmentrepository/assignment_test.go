@@ -21,6 +21,7 @@ func newTestRepository(t *testing.T) (*repository, sqlmock.Sqlmock) {
 
 	db, mock, err := sqlmock.New(sqlmock.QueryMatcherOption(sqlmock.QueryMatcherRegexp))
 	require.NoError(t, err)
+	mock.MatchExpectationsInOrder(false)
 
 	bunDB := bun.NewDB(db, pgdialect.New())
 	t.Cleanup(func() {
