@@ -308,6 +308,7 @@ jobs:
         with:
           version: latest
           working-directory: ./services/tms
+          verify: false
           args: --timeout=5m --new-from-rev=${{ steps.lint-base.outputs.value }}
 
   vet:
