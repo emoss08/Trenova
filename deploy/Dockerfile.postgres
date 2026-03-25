@@ -1,4 +1,11 @@
-FROM postgis/postgis:16-3.4-alpine
+FROM postgis/postgis:18-3.6-alpine
+
+RUN apk add --no-cache --virtual .build-deps \
+        build-base git && \
+    git clone --branch v1.6.7 --depth 1 https://github.com/citusdata/pg_cron.git /tmp/pg_cron && \
+    cd /tmp/pg_cron && make with_llvm=no && make with_llvm=no install && \
+    cd / && rm -rf /tmp/pg_cron && \
+    apk del .build-deps
 
 RUN apk add --no-cache openssl && \
     openssl req -new -x509 -days 3650 -nodes -text \
