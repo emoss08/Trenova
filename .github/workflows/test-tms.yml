@@ -196,6 +196,7 @@ jobs:
       - name: Upload coverage reports
         uses: codecov/codecov-action@v5
         with:
+          disable_search: true
           files: ./services/tms/coverage.out
           flags: tms
           fail_ci_if_error: false
