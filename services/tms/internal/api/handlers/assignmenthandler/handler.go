@@ -51,6 +51,12 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.get,
 	)
 
+	assignments.POST(
+		"/check-worker-compliance/",
+		h.pm.RequirePermission(permission.ResourceShipmentMove.String(), permission.OpRead),
+		h.checkWorkerCompliance,
+	)
+
 	moveAssignments := rg.Group("/shipment-moves/:moveID/assignment")
 	moveAssignments.POST(
 		"/",
@@ -137,6 +143,28 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, entity)
+}
+
+func (h *Handler) checkWorkerCompliance(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	req := new(repositories.CheckWorkerComplianceRequest)
+	if err := c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req.TenantInfo = pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	}
+
+	if err := h.service.CheckWorkerCompliance(c.Request.Context(), req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"valid": true})
 }
 
 type upsertAssignmentRequest struct {

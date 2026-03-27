@@ -25,7 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { TriangleAlertIcon } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
 type AssignmentDialogProps = {
@@ -51,6 +51,7 @@ export function AssignmentDialog({
     trailerId: string;
     pickupLocationId: string;
   } | null>(null);
+  const [complianceViolations, setComplianceViolations] = useState<string[]>([]);
   const [locateDialogOpen, setLocateDialogOpen] = useState(false);
 
   const form = useForm({
@@ -70,7 +71,6 @@ export function AssignmentDialog({
     setError,
     setValue,
     getValues,
-    watch,
     formState: { isSubmitting },
   } = form;
 
@@ -92,10 +92,16 @@ export function AssignmentDialog({
     }
   }, [open, existingAssignment, reset]);
 
-  const watchedTrailerId = watch("trailerId");
+  const watchedTrailerId = useWatch({ control, name: "trailerId" });
   useEffect(() => {
     setContinuityError(null);
   }, [watchedTrailerId]);
+
+  const watchedPrimaryWorker = useWatch({ control, name: "primaryWorkerId" });
+  const watchedSecondaryWorker = useWatch({ control, name: "secondaryWorkerId" });
+  useEffect(() => {
+    setComplianceViolations([]);
+  }, [watchedPrimaryWorker, watchedSecondaryWorker]);
 
   const { mutateAsync } = useMutation({
     mutationFn: (payload: AssignmentPayload) =>
@@ -127,14 +133,28 @@ export function AssignmentDialog({
     onOpenChange(false);
     reset();
     setContinuityError(null);
+    setComplianceViolations([]);
   }, [onOpenChange, reset]);
 
   const onSubmit = useCallback(
     async (values: AssignmentPayload) => {
+      setComplianceViolations([]);
+      try {
+        await apiService.assignmentService.checkWorkerCompliance(moveId, {
+          primaryWorkerId: values.primaryWorkerId,
+          secondaryWorkerId: values.secondaryWorkerId,
+        });
+      } catch (err) {
+        if (err instanceof ApiRequestError && err.isValidationError()) {
+          const errors = err.getFieldErrors();
+          setComplianceViolations(errors.map((e) => e.message));
+          return;
+        }
+      }
       await mutateAsync(values);
       handleClose();
     },
-    [mutateAsync, handleClose],
+    [mutateAsync, handleClose, moveId],
   );
 
   const handleTractorChange = useCallback(
@@ -165,6 +185,19 @@ export function AssignmentDialog({
               : "Assign a tractor, trailer, and workers to this move."}
           </DialogDescription>
         </DialogHeader>
+        {complianceViolations.length > 0 && (
+          <Alert variant="destructive">
+            <TriangleAlertIcon />
+            <AlertTitle>Compliance Violations</AlertTitle>
+            <AlertDescription>
+              <ul className="list-disc pl-4">
+                {complianceViolations.map((msg, idx) => (
+                  <li key={idx}>{msg}</li>
+                ))}
+              </ul>
+            </AlertDescription>
+          </Alert>
+        )}
         {continuityError && (
           <Alert variant="default">
             <TriangleAlertIcon />

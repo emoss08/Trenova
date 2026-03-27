@@ -110,6 +110,30 @@ func (r *UnassignShipmentMoveRequest) Validate() *errortypes.MultiError {
 	return nil
 }
 
+type CheckWorkerComplianceRequest struct {
+	TenantInfo        pagination.TenantInfo `json:"-"`
+	ShipmentMoveID    pulid.ID              `json:"shipmentMoveId"`
+	PrimaryWorkerID   pulid.ID              `json:"primaryWorkerId"`
+	SecondaryWorkerID *pulid.ID             `json:"secondaryWorkerId,omitempty"`
+}
+
+func (r *CheckWorkerComplianceRequest) Validate() *errortypes.MultiError {
+	me := errortypes.NewMultiError()
+
+	if r.ShipmentMoveID.IsNil() {
+		me.Add("shipmentMoveId", errortypes.ErrRequired, "Shipment move ID is required")
+	}
+	if r.PrimaryWorkerID.IsNil() {
+		me.Add("primaryWorkerId", errortypes.ErrRequired, "Primary worker ID is required")
+	}
+
+	if me.HasErrors() {
+		return me
+	}
+
+	return nil
+}
+
 type ActualTimelineEventType string
 
 const (

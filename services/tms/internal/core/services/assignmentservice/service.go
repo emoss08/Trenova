@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/shipmentstate"
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/domain/trailer"
+	"github.com/emoss08/trenova/internal/core/domain/worker"
 	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	portservices "github.com/emoss08/trenova/internal/core/ports/services"
@@ -34,6 +35,8 @@ type Params struct {
 	HoldRepo            repositories.ShipmentHoldRepository
 	ControlRepo         repositories.ShipmentControlRepository
 	DispatchControlRepo repositories.DispatchControlRepository
+	WorkerRepo          repositories.WorkerRepository
+	CommodityRepo       repositories.CommodityRepository
 	ContinuityRepo      repositories.EquipmentContinuityRepository
 	TrailerRepo         repositories.TrailerRepository
 	LocationRepo        repositories.LocationRepository
@@ -50,6 +53,8 @@ type service struct {
 	holdRepo            repositories.ShipmentHoldRepository
 	controlRepo         repositories.ShipmentControlRepository
 	dispatchControlRepo repositories.DispatchControlRepository
+	workerRepo          repositories.WorkerRepository
+	commodityRepo       repositories.CommodityRepository
 	continuityRepo      repositories.EquipmentContinuityRepository
 	trailerRepo         repositories.TrailerRepository
 	locationRepo        repositories.LocationRepository
@@ -67,6 +72,8 @@ func New(p Params) portservices.AssignmentService {
 		holdRepo:            p.HoldRepo,
 		controlRepo:         p.ControlRepo,
 		dispatchControlRepo: p.DispatchControlRepo,
+		workerRepo:          p.WorkerRepo,
+		commodityRepo:       p.CommodityRepo,
 		continuityRepo:      p.ContinuityRepo,
 		trailerRepo:         p.TrailerRepo,
 		locationRepo:        p.LocationRepo,
@@ -250,6 +257,124 @@ func (s *service) Unassign(
 	}
 
 	return nil
+}
+
+func (s *service) CheckWorkerCompliance(
+	ctx context.Context,
+	req *repositories.CheckWorkerComplianceRequest,
+) error {
+	if multiErr := req.Validate(); multiErr != nil {
+		return multiErr
+	}
+
+	dc, err := s.dispatchControlRepo.GetOrCreate(ctx, req.TenantInfo.OrgID, req.TenantInfo.BuID)
+	if err != nil {
+		return err
+	}
+
+	if !dc.EnforceDriverQualificationCompliance &&
+		!dc.EnforceMedicalCertCompliance &&
+		!dc.EnforceDrugAndAlcoholCompliance &&
+		!dc.EnforceHazmatCompliance &&
+		!dc.EnforceHOSCompliance {
+		return nil
+	}
+
+	primaryWorker, err := s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+		ID:             req.PrimaryWorkerID,
+		TenantInfo:     req.TenantInfo,
+		IncludeProfile: true,
+	})
+	if err != nil {
+		return err
+	}
+
+	var secondaryWorker *worker.Worker
+	if req.SecondaryWorkerID != nil && !req.SecondaryWorkerID.IsNil() {
+		secondaryWorker, err = s.workerRepo.GetByID(ctx, repositories.GetWorkerByIDRequest{
+			ID:             *req.SecondaryWorkerID,
+			TenantInfo:     req.TenantInfo,
+			IncludeProfile: true,
+		})
+		if err != nil {
+			return err
+		}
+	}
+
+	hasHazmatCommodities := false
+	if dc.EnforceHazmatCompliance {
+		hasHazmatCommodities, err = s.shipmentMoveHasHazmat(ctx, req.TenantInfo, req.ShipmentMoveID)
+		if err != nil {
+			return err
+		}
+	}
+
+	multiErr := errortypes.NewMultiError()
+
+	runWorkerComplianceChecks(primaryWorker, dc, hasHazmatCommodities, "primaryWorker", multiErr)
+
+	if secondaryWorker != nil {
+		runWorkerComplianceChecks(secondaryWorker, dc, hasHazmatCommodities, "secondaryWorker", multiErr)
+	}
+
+	if multiErr.HasErrors() {
+		return multiErr
+	}
+
+	return nil
+}
+
+func (s *service) shipmentMoveHasHazmat(
+	ctx context.Context,
+	tenantInfo pagination.TenantInfo,
+	moveID pulid.ID,
+) (bool, error) {
+	move, err := s.repo.GetMoveByID(ctx, tenantInfo, moveID)
+	if err != nil {
+		return false, err
+	}
+
+	shp, err := s.shipmentRepo.GetByID(ctx, &repositories.GetShipmentByIDRequest{
+		ID:         move.ShipmentID,
+		TenantInfo: tenantInfo,
+		ShipmentOptions: repositories.ShipmentOptions{
+			ExpandShipmentDetails: true,
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+
+	if len(shp.Commodities) == 0 {
+		return false, nil
+	}
+
+	commodityIDs := make([]pulid.ID, 0, len(shp.Commodities))
+	for _, sc := range shp.Commodities {
+		if sc != nil && !sc.CommodityID.IsNil() {
+			commodityIDs = append(commodityIDs, sc.CommodityID)
+		}
+	}
+
+	if len(commodityIDs) == 0 {
+		return false, nil
+	}
+
+	commodities, err := s.commodityRepo.GetByIDs(ctx, repositories.GetCommoditiesByIDsRequest{
+		TenantInfo:   tenantInfo,
+		CommodityIDs: commodityIDs,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	for _, c := range commodities {
+		if c != nil && c.HazardousMaterial != nil && !c.HazardousMaterial.ID.IsNil() {
+			return true, nil
+		}
+	}
+
+	return false, nil
 }
 
 func (s *service) upsertAssignment(

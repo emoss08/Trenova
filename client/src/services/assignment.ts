@@ -38,6 +38,17 @@ export class AssignmentService {
     await api.delete(`/shipment-moves/${moveId}/assignment/`);
   }
 
+  public async checkWorkerCompliance(
+    moveId: string,
+    payload: { primaryWorkerId: string; secondaryWorkerId?: string | null },
+  ) {
+    return api.post<{ valid: boolean }>("/assignments/check-worker-compliance/", {
+      shipmentMoveId: moveId,
+      primaryWorkerId: payload.primaryWorkerId,
+      secondaryWorkerId: payload.secondaryWorkerId,
+    });
+  }
+
   public async splitMove(moveId: string, payload: SplitMovePayload) {
     return api.post<SplitMoveResponse>(`/shipment-moves/${moveId}/split/`, payload);
   }
