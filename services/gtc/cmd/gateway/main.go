@@ -274,6 +274,13 @@ func buildApplication(logger *zap.Logger) (*application, context.Context, contex
 
 	meiliSink := gtcmeili.NewSink(cfg.MeilisearchURL, cfg.MeilisearchAPIKey, logger)
 
+	tcaStreamSink, err := gtcredis.NewTCAStreamSink(cfg.RedisURL, logger)
+	if err != nil {
+		stop()
+		pool.Close()
+		return nil, nil, nil, err
+	}
+
 	runtime, err := services.NewRuntime(services.RuntimeParams{
 		TailReader:    tailer,
 		Snapshotter:   snapshotter,
@@ -285,6 +292,7 @@ func buildApplication(logger *zap.Logger) (*application, context.Context, contex
 			redisJSONSink,
 			redisStreamSink,
 			meiliSink,
+			tcaStreamSink,
 		},
 		ProcessTimeout:  cfg.ProcessTimeout,
 		WorkerCount:     cfg.WorkerCount,

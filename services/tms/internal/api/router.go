@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/dispatchcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/distanceoverridehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/docshandler"
+	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
@@ -37,6 +38,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/integrationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationcategoryhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/locationhandler"
+	"github.com/emoss08/trenova/internal/api/handlers/notificationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/organizationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/pagefavoritehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/permissionhandler"
@@ -50,6 +52,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmentmovehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/shipmenttypehandler"
+	"github.com/emoss08/trenova/internal/api/handlers/tablechangealerthandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tableconfigurationhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/tractorhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/trailerhandler"
@@ -134,10 +137,13 @@ type RouterParams struct {
 	BillingControlHandler        *billingcontrolhandler.Handler
 	DataEntryControlHandler      *dataentrycontrolhandler.Handler
 	DispatchControlHandler       *dispatchcontrolhandler.Handler
+	DocumentControlHandler       *documentcontrolhandler.Handler
 	WorkerPTOHandler             *workerptohandler.Handler
 	DistanceOverrideHandler      *distanceoverridehandler.Handler
 	AnalyticsHandler             *analyticshandler.Handler
 	ApiKeyHandler                *apikeyhandler.Handler
+	TableChangeAlertHandler      *tablechangealerthandler.Handler
+	NotificationHandler          *notificationhandler.Handler
 }
 
 type Router struct {
@@ -199,10 +205,13 @@ type Router struct {
 	billingControlHandler        *billingcontrolhandler.Handler
 	dataEntryControlHandler      *dataentrycontrolhandler.Handler
 	dispatchControlHandler       *dispatchcontrolhandler.Handler
+	documentControlHandler       *documentcontrolhandler.Handler
 	workerPTOHandler             *workerptohandler.Handler
 	distanceOverrideHandler      *distanceoverridehandler.Handler
 	analyticsHandler             *analyticshandler.Handler
 	apiKeyHandler                *apikeyhandler.Handler
+	tableChangeAlertHandler      *tablechangealerthandler.Handler
+	notificationHandler          *notificationhandler.Handler
 }
 
 //nolint:gocritic // This is a constructor
@@ -266,10 +275,13 @@ func NewRouter(p RouterParams) *Router {
 		billingControlHandler:        p.BillingControlHandler,
 		dataEntryControlHandler:      p.DataEntryControlHandler,
 		dispatchControlHandler:       p.DispatchControlHandler,
+		documentControlHandler:       p.DocumentControlHandler,
 		workerPTOHandler:             p.WorkerPTOHandler,
 		distanceOverrideHandler:      p.DistanceOverrideHandler,
 		analyticsHandler:             p.AnalyticsHandler,
 		apiKeyHandler:                p.ApiKeyHandler,
+		tableChangeAlertHandler:      p.TableChangeAlertHandler,
+		notificationHandler:          p.NotificationHandler,
 	}
 }
 
@@ -379,8 +391,11 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.billingControlHandler.RegisterRoutes(protected)
 	r.dataEntryControlHandler.RegisterRoutes(protected)
 	r.dispatchControlHandler.RegisterRoutes(protected)
+	r.documentControlHandler.RegisterRoutes(protected)
 	r.distanceOverrideHandler.RegisterRoutes(protected)
 	r.workerPTOHandler.RegisterRoutes(protected)
 	r.analyticsHandler.RegisterRoutes(protected)
 	r.apiKeyHandler.RegisterRoutes(protected)
+	r.tableChangeAlertHandler.RegisterRoutes(protected)
+	r.notificationHandler.RegisterRoutes(protected)
 }

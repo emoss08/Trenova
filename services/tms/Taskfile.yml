@@ -169,24 +169,6 @@ tasks:
           echo "Seed IDs were regenerated - commit the changes"
         fi
 
-  perm-generate:
-    desc: Generate permission manifest
-    deps: [build-cli]
-    cmds:
-      - "{{.CLI_PATH}} codegen generate"
-
-  perm-generate-enum:
-    desc: Generate permission enum from registry
-    deps: [build-cli]
-    cmds:
-      - "{{.CLI_PATH}} codegen enum"
-
-  perm-generate-types:
-    desc: Generate permission types from registry
-    deps: [build-cli]
-    cmds:
-      - "{{.CLI_PATH}} codegen types"
-
   docker-up:
     desc: Start all services with docker compose
     cmds:

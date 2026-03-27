@@ -51,7 +51,8 @@ export type BaseEndpoint =
   | "/hold-reasons/"
   | "/hazmat-segregation-rules/"
   | "/distance-overrides/"
-  | "/audit-entries/";
+  | "/audit-entries/"
+  | "/tca/subscriptions/";
 
 export type API_ENDPOINTS = `${BaseEndpoint}${"" | `?${string}`}`;
 

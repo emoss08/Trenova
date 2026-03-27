@@ -230,6 +230,7 @@ func (d DestinationConfig) Validate() error {
 				domain.DestinationMeilisearch,
 				domain.DestinationRedisJSON,
 				domain.DestinationRedisStream,
+				domain.DestinationTCAStream,
 			),
 		),
 	); err != nil {
@@ -245,9 +246,9 @@ func (d DestinationConfig) Validate() error {
 		if strings.TrimSpace(d.KeyTemplate) == "" {
 			return fmt.Errorf("redis_json destination requires key_template")
 		}
-	case domain.DestinationRedisStream:
+	case domain.DestinationRedisStream, domain.DestinationTCAStream:
 		if strings.TrimSpace(d.Stream) == "" {
-			return fmt.Errorf("redis_stream destination requires stream")
+			return fmt.Errorf("%s destination requires stream", d.Kind)
 		}
 	}
 

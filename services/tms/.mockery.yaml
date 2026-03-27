@@ -12,3 +12,6 @@ packages:
   github.com/emoss08/trenova/internal/core/ports/services:
     config:
       all: true
+  github.com/emoss08/trenova/internal/core/ports/storage:
+    config:
+      all: true

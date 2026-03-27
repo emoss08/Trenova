@@ -1,8 +1,10 @@
 import { APP_ENV } from "@/lib/constants";
+import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@/stores/auth-store";
 import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef } from "react";
+import { toast } from "sonner";
 
 const RESOURCE_EVENT_NAME = "resource.invalidation";
 const COALESCE_DELAY_MS = 300;
@@ -33,9 +35,7 @@ const PATCHABLE_FIELDS_BY_RESOURCE: Record<string, Set<string>> = {
   workers: new Set(["status", "firstName", "lastName", "updatedAt"]),
 };
 
-const CORE_QUERY_KEYS = Array.from(
-  new Set(Object.values(RESOURCE_QUERY_KEY_MAP).flat()),
-);
+const CORE_QUERY_KEYS = Array.from(new Set(Object.values(RESOURCE_QUERY_KEY_MAP).flat()));
 
 interface ResourceInvalidationEvent {
   type?: string;
@@ -49,9 +49,7 @@ interface ResourceInvalidationEvent {
   entity?: Record<string, unknown>;
 }
 
-const parseInvalidationEvent = (
-  payload: unknown,
-): ResourceInvalidationEvent | null => {
+const parseInvalidationEvent = (payload: unknown): ResourceInvalidationEvent | null => {
   if (!payload) return null;
 
   let data: unknown = payload;
@@ -76,9 +74,7 @@ const parseInvalidationEvent = (
   return data as ResourceInvalidationEvent;
 };
 
-const hasRowsShape = (
-  value: unknown,
-): value is { results: Record<string, unknown>[] } =>
+const hasRowsShape = (value: unknown): value is { results: Record<string, unknown>[] } =>
   !!value &&
   typeof value === "object" &&
   "results" in value &&
@@ -161,38 +157,32 @@ export function useRealtimeConnection() {
       enqueueInvalidation(CORE_QUERY_KEYS);
     };
 
-    const applyEntityPatch = (
-      queryKey: string,
-      event: ResourceInvalidationEvent,
-    ) => {
+    const applyEntityPatch = (queryKey: string, event: ResourceInvalidationEvent) => {
       const entityID = resolveEntityID(event);
       const entity = event.entity;
       if (!entityID || !entity) return false;
 
       let patched = false;
-      queryClient.setQueriesData(
-        { queryKey: [queryKey] },
-        (current: unknown): unknown => {
-          if (!hasRowsShape(current)) return current;
+      queryClient.setQueriesData({ queryKey: [queryKey] }, (current: unknown): unknown => {
+        if (!hasRowsShape(current)) return current;
 
-          const index = current.results.findIndex((row) => row.id === entityID);
-          if (index < 0) {
-            return current;
-          }
+        const index = current.results.findIndex((row) => row.id === entityID);
+        if (index < 0) {
+          return current;
+        }
 
-          patched = true;
-          const nextResults = [...current.results];
-          nextResults[index] = {
-            ...nextResults[index],
-            ...entity,
-          };
+        patched = true;
+        const nextResults = [...current.results];
+        nextResults[index] = {
+          ...nextResults[index],
+          ...entity,
+        };
 
-          return {
-            ...current,
-            results: nextResults,
-          };
-        },
-      );
+        return {
+          ...current,
+          results: nextResults,
+        };
+      });
 
       return patched;
     };
@@ -234,6 +224,42 @@ export function useRealtimeConnection() {
     };
 
     const onResourceEvent = (message: { name?: string; data?: unknown }) => {
+      if (message.name === RESOURCE_EVENT_NAME) {
+        const notifEvt = parseInvalidationEvent(message.data);
+        if (
+          notifEvt &&
+          notifEvt.resource === "notifications" &&
+          notifEvt.action === "created" &&
+          notifEvt.entity
+        ) {
+          if (
+            notifEvt.organizationId !== user.currentOrganizationId ||
+            notifEvt.businessUnitId !== user.businessUnitId
+          ) {
+            // Ignore notifications from other tenants
+          } else {
+            const notif = notifEvt.entity as {
+              targetUserId?: string | null;
+              title?: string;
+              message?: string;
+            };
+
+            const isForCurrentUser =
+              !notif.targetUserId || notif.targetUserId === user.id;
+
+            if (isForCurrentUser && notif.title) {
+              toast.info(notif.title, {
+                description: notif.message,
+              });
+            }
+          }
+
+          void queryClient.invalidateQueries({
+            queryKey: queries.notification._def,
+          });
+        }
+      }
+
       if (message.name !== RESOURCE_EVENT_NAME) return;
 
       const evt = parseInvalidationEvent(message.data);

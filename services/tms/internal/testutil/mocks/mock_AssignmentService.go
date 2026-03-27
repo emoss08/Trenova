@@ -108,6 +108,63 @@ func (_c *MockAssignmentService_AssignToMove_Call) RunAndReturn(run func(ctx con
 	return _c
 }
 
+// CheckWorkerCompliance provides a mock function for the type MockAssignmentService
+func (_mock *MockAssignmentService) CheckWorkerCompliance(ctx context.Context, req *repositories.CheckWorkerComplianceRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CheckWorkerCompliance")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.CheckWorkerComplianceRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockAssignmentService_CheckWorkerCompliance_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckWorkerCompliance'
+type MockAssignmentService_CheckWorkerCompliance_Call struct {
+	*mock.Call
+}
+
+// CheckWorkerCompliance is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.CheckWorkerComplianceRequest
+func (_e *MockAssignmentService_Expecter) CheckWorkerCompliance(ctx interface{}, req interface{}) *MockAssignmentService_CheckWorkerCompliance_Call {
+	return &MockAssignmentService_CheckWorkerCompliance_Call{Call: _e.mock.On("CheckWorkerCompliance", ctx, req)}
+}
+
+func (_c *MockAssignmentService_CheckWorkerCompliance_Call) Run(run func(ctx context.Context, req *repositories.CheckWorkerComplianceRequest)) *MockAssignmentService_CheckWorkerCompliance_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.CheckWorkerComplianceRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.CheckWorkerComplianceRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockAssignmentService_CheckWorkerCompliance_Call) Return(err error) *MockAssignmentService_CheckWorkerCompliance_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockAssignmentService_CheckWorkerCompliance_Call) RunAndReturn(run func(ctx context.Context, req *repositories.CheckWorkerComplianceRequest) error) *MockAssignmentService_CheckWorkerCompliance_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Get provides a mock function for the type MockAssignmentService
 func (_mock *MockAssignmentService) Get(ctx context.Context, req *repositories.GetAssignmentByIDRequest) (*shipment.Assignment, error) {
 	ret := _mock.Called(ctx, req)

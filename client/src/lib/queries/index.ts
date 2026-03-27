@@ -14,6 +14,8 @@ import { pageFavoite } from "./page-favorite";
 import { sequenceConfig } from "./sequence-config";
 import { shipment } from "./shipment";
 import { shipmentControl } from "./shipment-control";
+import { notification } from "./notification";
+import { tableChangeAlert } from "./table-change-alert";
 import { tableConfiguration } from "./table-configuration";
 import { user, userOrganization } from "./user";
 import { worker } from "./worker";
@@ -38,4 +40,6 @@ export const queries = mergeQueryKeys(
   sequenceConfig,
   analytics,
   audit,
+  notification,
+  tableChangeAlert,
 );

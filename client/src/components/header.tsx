@@ -7,6 +7,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
+import { NotificationPopover } from "@/components/notification-center/notification-popover";
 import { useBreadcrumbs } from "@/hooks/use-breadcrumb";
 import { useHistoryNavigation } from "@/hooks/use-history-navigation";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
@@ -21,12 +22,7 @@ import React from "react";
 import { Link, useLocation, useNavigation } from "react-router";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "./ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./ui/tooltip";
 
 export function Header() {
   const navigation = useNavigation();
@@ -43,10 +39,7 @@ export function Header() {
             <BreadcrumbItem>
               <BreadcrumbLink
                 render={<Link to="/" />}
-                className={cn(
-                  "transition-opacity",
-                  isLoading ? "opacity-50" : "",
-                )}
+                className={cn("transition-opacity", isLoading ? "opacity-50" : "")}
               >
                 Home
               </BreadcrumbLink>
@@ -58,17 +51,12 @@ export function Header() {
                   {index < breadcrumbs.length - 1 ? (
                     <BreadcrumbLink
                       render={<Link to={crumb.pathname} />}
-                      className={cn(
-                        "transition-opacity",
-                        isLoading ? "opacity-50" : "",
-                      )}
+                      className={cn("transition-opacity", isLoading ? "opacity-50" : "")}
                     >
                       {crumb.crumb}
                     </BreadcrumbLink>
                   ) : (
-                    <BreadcrumbPage className="line-clamp-1">
-                      {crumb.crumb}
-                    </BreadcrumbPage>
+                    <BreadcrumbPage className="line-clamp-1">{crumb.crumb}</BreadcrumbPage>
                   )}
                 </BreadcrumbItem>
                 {index < breadcrumbs.length - 1 && <BreadcrumbSeparator />}
@@ -144,15 +132,10 @@ function NavActions() {
     mutationFn: async (values: ToggleFavoriteRequest) =>
       apiService.pageFavoriteService.togglePageFavorite(values),
     resourceName: "Page Favorite",
-    invalidateQueries: [
-      queries.pageFavorite.all._def,
-      queries.pageFavorite.check._def,
-    ],
+    invalidateQueries: [queries.pageFavorite.all._def, queries.pageFavorite.check._def],
     optimisticUpdate: (_variables, currentData) => !currentData,
     onSuccess: (result) => {
-      toast.success(
-        result.favorited ? "Added to favorites" : "Removed from favorites",
-      );
+      toast.success(result.favorited ? "Added to favorites" : "Removed from favorites");
     },
   });
 
@@ -161,11 +144,12 @@ function NavActions() {
   };
 
   return (
-    <TooltipProvider>
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <div className="ml-auto px-3">
+    <div className="ml-auto flex items-center gap-1 px-3">
+      <NotificationPopover />
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger
+            render={
               <Button
                 type="button"
                 variant="ghost"
@@ -173,9 +157,7 @@ function NavActions() {
                 size="icon-xs"
                 onClick={handleToggle}
                 disabled={isLoading || isPending}
-                aria-label={
-                  isFavorited ? "Remove from favorites" : "Add to favorites"
-                }
+                aria-label={isFavorited ? "Remove from favorites" : "Add to favorites"}
               >
                 <Star
                   className={cn(
@@ -184,13 +166,13 @@ function NavActions() {
                   )}
                 />
               </Button>
-            </div>
-          }
-        />
-        <TooltipContent>
-          {isFavorited ? "Remove from favorites" : "Add to favorites"}
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+            }
+          />
+          <TooltipContent>
+            {isFavorited ? "Remove from favorites" : "Add to favorites"}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    </div>
   );
 }

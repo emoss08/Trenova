@@ -107,6 +107,7 @@ export const Resource = {
   Report: "report",
   Dashboard: "dashboard",
   CustomFieldDefinition: "custom_field_definition",
+  TableChangeAlert: "table_change_alert",
   FiscalYear: "fiscal_year",
   FiscalPeriod: "fiscal_period",
 } as const;

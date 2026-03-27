@@ -255,7 +255,7 @@ func (r *Reader) ensurePublication(ctx context.Context) error {
 	}
 
 	r.logger.Info("creating publication", zap.String("publication", r.config.PublicationName))
-	tableList, err := r.publicationTableList()
+	tableList, err := r.publicationTableListWithColumns(ctx)
 	if err != nil {
 		return err
 	}
@@ -275,7 +275,7 @@ func (r *Reader) syncPublicationTables(ctx context.Context) error {
 		return fmt.Errorf("publication %q has no configured tables", r.config.PublicationName)
 	}
 
-	tableList, err := r.publicationTableList()
+	tableList, err := r.publicationTableListWithColumns(ctx)
 	if err != nil {
 		return err
 	}
@@ -307,6 +307,76 @@ func (r *Reader) publicationTableList() (string, error) {
 	}
 
 	return strings.Join(tables, ", "), nil
+}
+
+func (r *Reader) publicationTableListWithColumns(ctx context.Context) (string, error) {
+	entries := make([]string, 0, len(r.config.PublicationTables))
+	for _, fullName := range r.config.PublicationTables {
+		schema, table, err := splitFullTableName(fullName)
+		if err != nil {
+			return "", err
+		}
+
+		qualified := quoteQualifiedIdentifier(schema, table)
+
+		result := r.conn.Exec(ctx, fmt.Sprintf(
+			"SELECT a.attname FROM pg_attribute a "+
+				"JOIN pg_class c ON c.oid = a.attrelid "+
+				"JOIN pg_namespace n ON n.oid = c.relnamespace "+
+				"WHERE n.nspname = '%s' AND c.relname = '%s' "+
+				"AND a.attnum > 0 AND NOT a.attisdropped AND a.attgenerated != '' "+
+				"LIMIT 1",
+			schema, table,
+		))
+		rows, readErr := result.ReadAll()
+		if readErr != nil {
+			return "", fmt.Errorf("check generated columns for %s: %w", fullName, readErr)
+		}
+
+		hasGenerated := len(rows) > 0 && len(rows[0].Rows) > 0
+
+		if !hasGenerated {
+			entries = append(entries, qualified)
+			continue
+		}
+
+		colResult := r.conn.Exec(ctx, fmt.Sprintf(
+			"SELECT a.attname FROM pg_attribute a "+
+				"JOIN pg_class c ON c.oid = a.attrelid "+
+				"JOIN pg_namespace n ON n.oid = c.relnamespace "+
+				"WHERE n.nspname = '%s' AND c.relname = '%s' "+
+				"AND a.attnum > 0 AND NOT a.attisdropped AND a.attgenerated = '' "+
+				"ORDER BY a.attnum",
+			schema, table,
+		))
+		colRows, colErr := colResult.ReadAll()
+		if colErr != nil {
+			return "", fmt.Errorf("list columns for %s: %w", fullName, colErr)
+		}
+
+		if len(colRows) == 0 || len(colRows[0].Rows) == 0 {
+			entries = append(entries, qualified)
+			continue
+		}
+
+		cols := make([]string, 0, len(colRows[0].Rows))
+		for _, row := range colRows[0].Rows {
+			cols = append(cols, quoteIdentifier(string(row[0])))
+		}
+
+		entries = append(entries, fmt.Sprintf("%s (%s)", qualified, strings.Join(cols, ", ")))
+
+		r.logger.Debug("excluding generated columns from publication",
+			zap.String("table", fullName),
+			zap.Int("publishedColumns", len(cols)),
+		)
+	}
+
+	if len(entries) == 0 {
+		return "", fmt.Errorf("no publication tables configured")
+	}
+
+	return strings.Join(entries, ", "), nil
 }
 
 func (r *Reader) ensureReplicationSlot(ctx context.Context) (pglogrepl.LSN, error) {

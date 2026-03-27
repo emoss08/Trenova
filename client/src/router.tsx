@@ -2,8 +2,8 @@ import { RouteErrorBoundary } from "@/components/error-boundary";
 import {
   combineLoaders,
   createAdminOnlyLoader,
-  createPlatformAdminLoader,
   createPermissionLoader,
+  createPlatformAdminLoader,
 } from "@/lib/route-permission";
 import { AppLayout } from "@/routes/app-layout";
 import { RootLayout } from "@/routes/root-layout";
@@ -273,6 +273,14 @@ const routes: RouteObject[] = [
                   const { AccountingControlPage } =
                     await import("@/routes/accounting-control/page");
                   return { Component: AccountingControlPage };
+                },
+              },
+              {
+                path: "table-change-alerts",
+                loader: createPlatformAdminLoader(),
+                async lazy() {
+                  const { TableChangeAlertPage } = await import("@/routes/table-change-alert/page");
+                  return { Component: TableChangeAlertPage };
                 },
               },
               {

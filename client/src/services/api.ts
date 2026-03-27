@@ -36,6 +36,8 @@ import { ShipmentService } from "./shipment";
 import { ShipmentCommentService } from "./shipment-comment";
 import { ShipmentControlService } from "./shipment-control";
 import { ShipmentTypeService } from "./shipment-type";
+import { NotificationService } from "./notification";
+import { TableChangeAlertService } from "./table-change-alert";
 import { TableConfigurationService } from "./table-configuration";
 import { TractorService } from "./tractor";
 import { TrailerService } from "./trailer";
@@ -86,6 +88,8 @@ class APIService {
   public auditService: AuditService;
   public apiKeyService: APIKeyService;
   public assignmentService: AssignmentService;
+  public notificationService: NotificationService;
+  public tableChangeAlertService: TableChangeAlertService;
 
   constructor() {
     this.fleetCodeService = new FleetCodeService();
@@ -131,6 +135,8 @@ class APIService {
     this.analyticService = new AnalyticsService();
     this.auditService = new AuditService();
     this.assignmentService = new AssignmentService();
+    this.notificationService = new NotificationService();
+    this.tableChangeAlertService = new TableChangeAlertService();
   }
 }
 

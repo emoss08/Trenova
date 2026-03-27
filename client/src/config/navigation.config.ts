@@ -768,10 +768,12 @@ export const adminLinks: SidebarLink[] = [
     disabled: true,
   },
   {
-    href: "/organization/table-change-alerts/",
+    href: "/admin/table-change-alerts/",
     title: "Table Change Alerts",
     group: "Data & Integrations",
-    disabled: true,
+    adminOnly: true,
+    resource: Resource.TableChangeAlert,
+    requiredOperation: Operation.Read,
   },
   {
     href: "/organization/document-templates/",

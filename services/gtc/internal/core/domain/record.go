@@ -29,6 +29,7 @@ const (
 	DestinationMeilisearch DestinationKind = "meilisearch"
 	DestinationRedisJSON   DestinationKind = "redis_json"
 	DestinationRedisStream DestinationKind = "redis_stream"
+	DestinationTCAStream   DestinationKind = "tca_stream"
 )
 
 type RecordMetadata struct {

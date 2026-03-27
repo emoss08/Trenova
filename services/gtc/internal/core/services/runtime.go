@@ -320,13 +320,33 @@ func (r *Runtime) handleRecordWithProjections(
 	record domain.SourceRecord,
 ) error {
 	if len(projections) == 0 {
+		r.logger.Debug("no matching projections",
+			zap.String("table", record.FullTableName()),
+			zap.String("operation", string(record.Operation)),
+		)
 		return nil
 	}
 
 	for _, projection := range projections {
 		if shouldSuppressRecord(projection, record) {
+			changedFields := domain.ChangedFields(record.OldData, record.NewData)
+			r.logger.Debug("suppressed record",
+				zap.String("projection", projection.Name),
+				zap.String("table", record.FullTableName()),
+				zap.String("sink", string(projection.Destination.Kind)),
+				zap.Strings("changedFields", changedFields),
+				zap.Strings("ignoredUpdates", projection.IgnoredUpdates),
+				zap.Bool("hasOldData", record.OldData != nil),
+				zap.Bool("hasNewData", record.NewData != nil),
+			)
 			continue
 		}
+
+		r.logger.Debug("writing projection",
+			zap.String("projection", projection.Name),
+			zap.String("table", record.FullTableName()),
+			zap.String("sink", string(projection.Destination.Kind)),
+		)
 
 		if err := r.writeProjection(ctx, projection, record); err != nil {
 			return err

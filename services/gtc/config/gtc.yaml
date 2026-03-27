@@ -27,10 +27,10 @@ projections:
       index: workers
 
   - name: document-search
-    source_table: public.documents
+    source_table: public.document_search_projections
     primary_keys: [id, organization_id, business_unit_id]
-    searchable_fields: [file_name, original_name, description]
-    filterable_fields: [organization_id, business_unit_id]
+    searchable_fields: [file_name, original_name, description, detected_kind, content_text]
+    filterable_fields: [organization_id, business_unit_id, resource_type, resource_id, status, content_status, detected_kind, shipment_draft_status]
     destination:
       kind: meilisearch
       index: documents
@@ -77,3 +77,39 @@ projections:
     destination:
       kind: redis_stream
       stream: "cdc:shipments"
+
+  # Table Change Alert (TCA) projections
+  - name: shipment-tca
+    source_table: public.shipments
+    primary_keys: [id, organization_id, business_unit_id]
+    destination:
+      kind: tca_stream
+      stream: "tca:events"
+
+  - name: customer-tca
+    source_table: public.customers
+    primary_keys: [id, business_unit_id, organization_id]
+    destination:
+      kind: tca_stream
+      stream: "tca:events"
+
+  - name: worker-tca
+    source_table: public.workers
+    primary_keys: [id, organization_id, business_unit_id]
+    destination:
+      kind: tca_stream
+      stream: "tca:events"
+
+  - name: tractor-tca
+    source_table: public.tractors
+    primary_keys: [id, business_unit_id, organization_id]
+    destination:
+      kind: tca_stream
+      stream: "tca:events"
+
+  - name: trailer-tca
+    source_table: public.trailers
+    primary_keys: [id, business_unit_id, organization_id]
+    destination:
+      kind: tca_stream
+      stream: "tca:events"
