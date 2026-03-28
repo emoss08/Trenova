@@ -635,3 +635,117 @@ func (_c *MockDocumentRepository_Update_Call) RunAndReturn(run func(ctx context.
 	_c.Call.Return(run)
 	return _c
 }
+
+// UpdateIntelligence provides a mock function for the type MockDocumentRepository
+func (_mock *MockDocumentRepository) UpdateIntelligence(ctx context.Context, req *repositories.UpdateDocumentIntelligenceRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateIntelligence")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateDocumentIntelligenceRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockDocumentRepository_UpdateIntelligence_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateIntelligence'
+type MockDocumentRepository_UpdateIntelligence_Call struct {
+	*mock.Call
+}
+
+// UpdateIntelligence is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.UpdateDocumentIntelligenceRequest
+func (_e *MockDocumentRepository_Expecter) UpdateIntelligence(ctx interface{}, req interface{}) *MockDocumentRepository_UpdateIntelligence_Call {
+	return &MockDocumentRepository_UpdateIntelligence_Call{Call: _e.mock.On("UpdateIntelligence", ctx, req)}
+}
+
+func (_c *MockDocumentRepository_UpdateIntelligence_Call) Run(run func(ctx context.Context, req *repositories.UpdateDocumentIntelligenceRequest)) *MockDocumentRepository_UpdateIntelligence_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.UpdateDocumentIntelligenceRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.UpdateDocumentIntelligenceRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDocumentRepository_UpdateIntelligence_Call) Return(err error) *MockDocumentRepository_UpdateIntelligence_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockDocumentRepository_UpdateIntelligence_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UpdateDocumentIntelligenceRequest) error) *MockDocumentRepository_UpdateIntelligence_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdatePreview provides a mock function for the type MockDocumentRepository
+func (_mock *MockDocumentRepository) UpdatePreview(ctx context.Context, req *repositories.UpdateDocumentPreviewRequest) error {
+	ret := _mock.Called(ctx, req)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdatePreview")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.UpdateDocumentPreviewRequest) error); ok {
+		r0 = returnFunc(ctx, req)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockDocumentRepository_UpdatePreview_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdatePreview'
+type MockDocumentRepository_UpdatePreview_Call struct {
+	*mock.Call
+}
+
+// UpdatePreview is a helper method to define mock.On call
+//   - ctx context.Context
+//   - req *repositories.UpdateDocumentPreviewRequest
+func (_e *MockDocumentRepository_Expecter) UpdatePreview(ctx interface{}, req interface{}) *MockDocumentRepository_UpdatePreview_Call {
+	return &MockDocumentRepository_UpdatePreview_Call{Call: _e.mock.On("UpdatePreview", ctx, req)}
+}
+
+func (_c *MockDocumentRepository_UpdatePreview_Call) Run(run func(ctx context.Context, req *repositories.UpdateDocumentPreviewRequest)) *MockDocumentRepository_UpdatePreview_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *repositories.UpdateDocumentPreviewRequest
+		if args[1] != nil {
+			arg1 = args[1].(*repositories.UpdateDocumentPreviewRequest)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockDocumentRepository_UpdatePreview_Call) Return(err error) *MockDocumentRepository_UpdatePreview_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockDocumentRepository_UpdatePreview_Call) RunAndReturn(run func(ctx context.Context, req *repositories.UpdateDocumentPreviewRequest) error) *MockDocumentRepository_UpdatePreview_Call {
+	_c.Call.Return(run)
+	return _c
+}

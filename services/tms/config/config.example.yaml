@@ -58,6 +58,25 @@ search:
       workers: workers
       documents: documents
 
+documentIntelligence:
+  enabled: true # Enable async extraction/classification
+  ocrCommand: tesseract # OCR binary path
+  ocrLanguage: eng # OCR language pack
+  ocrTimeout: 45s # Hard timeout per OCR process
+  enableAI: false # Enable OpenAI-assisted document intelligence
+  aiTimeout: 20s # Hard timeout per AI request
+  aiMaxInputChars: 24000 # Max extracted text sent to AI
+  aiClassificationModel: gpt-5-nano-2025-08-07 # Pinned AI routing model
+  aiExtractionModel: gpt-5-mini-2025-08-07 # Pinned AI extraction model
+  aiMaxRetries: 2 # Retry count for transient AI failures
+  enableOCRPreprocessing: true # Preprocess scanned images before OCR
+  ocrPreprocessingMode: standard # standard preprocessing pipeline
+  ocrMaxImageDimension: 2400 # Max width/height for preprocessed OCR images
+  maxOCRPages: 25 # Max scanned pages OCR will attempt per document
+  maxExtractedChars: 200000 # Max stored extracted text
+  reconcileBatchSize: 100 # Batch size for stale-job reconciliation
+  maxConcurrentActivities: 2 # Dedicated document-intelligence worker concurrency
+
 # Security configuration
 security:
   session:

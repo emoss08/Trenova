@@ -6,9 +6,12 @@ import (
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/api/middleware"
 	"github.com/emoss08/trenova/internal/core/domain/document"
+	"github.com/emoss08/trenova/internal/core/domain/documentupload"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
+	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
 	"github.com/emoss08/trenova/pkg/authctx"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
@@ -19,22 +22,28 @@ import (
 type Params struct {
 	fx.In
 
-	Service              *documentservice.Service
-	ErrorHandler         *helpers.ErrorHandler
-	PermissionMiddleware *middleware.PermissionMiddleware
+	Service                *documentservice.Service
+	UploadService          *documentuploadservice.Service
+	DocumentContentService serviceports.DocumentContentService
+	ErrorHandler           *helpers.ErrorHandler
+	PermissionMiddleware   *middleware.PermissionMiddleware
 }
 
 type Handler struct {
-	service *documentservice.Service
-	eh      *helpers.ErrorHandler
-	pm      *middleware.PermissionMiddleware
+	service        *documentservice.Service
+	uploadService  *documentuploadservice.Service
+	contentService serviceports.DocumentContentService
+	eh             *helpers.ErrorHandler
+	pm             *middleware.PermissionMiddleware
 }
 
 func New(p Params) *Handler {
 	return &Handler{
-		service: p.Service,
-		eh:      p.ErrorHandler,
-		pm:      p.PermissionMiddleware,
+		service:        p.Service,
+		uploadService:  p.UploadService,
+		contentService: p.DocumentContentService,
+		eh:             p.ErrorHandler,
+		pm:             p.PermissionMiddleware,
 	}
 }
 
@@ -52,6 +61,36 @@ func NewTestHandler(
 
 func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api := rg.Group("/documents")
+	api.POST(
+		"/uploads/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
+		h.createUploadSession,
+	)
+	api.GET(
+		"/uploads/active/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.listActiveUploadSessions,
+	)
+	api.GET(
+		"/uploads/:uploadSessionID/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.getUploadSession,
+	)
+	api.POST(
+		"/uploads/:uploadSessionID/parts/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
+		h.getUploadPartURLs,
+	)
+	api.POST(
+		"/uploads/:uploadSessionID/complete/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
+		h.completeUploadSession,
+	)
+	api.POST(
+		"/uploads/:uploadSessionID/cancel/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpCreate),
+		h.cancelUploadSession,
+	)
 	api.GET(
 		"/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
@@ -61,6 +100,21 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:documentID/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
 		h.get,
+	)
+	api.GET(
+		"/:documentID/content/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.getContent,
+	)
+	api.GET(
+		"/:documentID/shipment-draft/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.getShipmentDraft,
+	)
+	api.POST(
+		"/:documentID/shipment-draft/reextract/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
+		h.reextractDocumentContent,
 	)
 	api.GET(
 		"/:documentID/download/",
@@ -309,6 +363,21 @@ type uploadRequest struct {
 	DocumentTypeID string   `form:"documentTypeId"`
 }
 
+type createUploadSessionRequest struct {
+	ResourceID     string   `json:"resourceId"     binding:"required"`
+	ResourceType   string   `json:"resourceType"   binding:"required"`
+	FileName       string   `json:"fileName"       binding:"required"`
+	FileSize       int64    `json:"fileSize"       binding:"required,min=1"`
+	ContentType    string   `json:"contentType"    binding:"required"`
+	Description    string   `json:"description"`
+	Tags           []string `json:"tags"`
+	DocumentTypeID string   `json:"documentTypeId"`
+}
+
+type uploadPartURLsRequest struct {
+	PartNumbers []int `json:"partNumbers"`
+}
+
 // @Summary Upload a document
 // @ID uploadDocument
 // @Tags Documents
@@ -364,6 +433,158 @@ func (h *Handler) upload(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusCreated, result.Document)
+}
+
+func (h *Handler) createUploadSession(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	var req createUploadSessionRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	session, err := h.uploadService.CreateSession(c.Request.Context(), &documentuploadservice.CreateSessionRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		ResourceID:     req.ResourceID,
+		ResourceType:   req.ResourceType,
+		FileName:       req.FileName,
+		FileSize:       req.FileSize,
+		ContentType:    req.ContentType,
+		Description:    req.Description,
+		Tags:           req.Tags,
+		DocumentTypeID: req.DocumentTypeID,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusCreated, session)
+}
+
+func (h *Handler) listActiveUploadSessions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	sessions, err := h.uploadService.ListActive(c.Request.Context(), &repositories.ListActiveDocumentUploadSessionsRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+		ResourceID:   helpers.QueryString(c, "resourceId", ""),
+		ResourceType: helpers.QueryString(c, "resourceType", ""),
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, sessions)
+}
+
+func (h *Handler) getUploadSession(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("uploadSessionID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	state, err := h.uploadService.GetSessionState(c.Request.Context(), repositories.GetDocumentUploadSessionByIDRequest{
+		ID: id,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, state)
+}
+
+func (h *Handler) getUploadPartURLs(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("uploadSessionID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	var req uploadPartURLsRequest
+	if err = c.ShouldBindJSON(&req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	targets, err := h.uploadService.GetPartUploadTargets(c.Request.Context(), &documentuploadservice.PartRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		SessionID:   id,
+		PartNumbers: req.PartNumbers,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"parts": targets})
+}
+
+func (h *Handler) completeUploadSession(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("uploadSessionID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	session, err := h.uploadService.Complete(c.Request.Context(), &documentuploadservice.CompletionRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		SessionID: id,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusAccepted, session)
+}
+
+func (h *Handler) cancelUploadSession(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("uploadSessionID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if err = h.uploadService.Cancel(c.Request.Context(), &documentuploadservice.CancelRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		SessionID: id,
+	}); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"status": documentupload.StatusCanceled})
 }
 
 type bulkUploadRequest struct {
@@ -547,6 +768,27 @@ func (h *Handler) getByResource(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	resourceType := c.Param("resourceType")
 	resourceID := c.Param("resourceID")
+	searchQuery := helpers.QueryString(c, "query", "")
+
+	if searchQuery != "" && h.contentService != nil {
+		documents, err := h.contentService.SearchDocuments(
+			c.Request.Context(),
+			pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+			resourceType,
+			resourceID,
+			searchQuery,
+		)
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+
+		c.JSON(http.StatusOK, documents)
+		return
+	}
 
 	documents, err := h.service.GetByResource(
 		c.Request.Context(),
@@ -565,4 +807,92 @@ func (h *Handler) getByResource(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, documents)
+}
+
+func (h *Handler) getContent(c *gin.Context) {
+	if h.contentService == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"message": "Document content service unavailable"})
+		return
+	}
+
+	authCtx := authctx.GetAuthContext(c)
+	documentID, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	content, err := h.contentService.GetContent(
+		c.Request.Context(),
+		documentID,
+		pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, content)
+}
+
+func (h *Handler) getShipmentDraft(c *gin.Context) {
+	if h.contentService == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"message": "Document content service unavailable"})
+		return
+	}
+
+	authCtx := authctx.GetAuthContext(c)
+	documentID, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	draft, err := h.contentService.GetShipmentDraft(
+		c.Request.Context(),
+		documentID,
+		pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, draft)
+}
+
+func (h *Handler) reextractDocumentContent(c *gin.Context) {
+	if h.contentService == nil {
+		c.JSON(http.StatusNotImplemented, gin.H{"message": "Document content service unavailable"})
+		return
+	}
+
+	authCtx := authctx.GetAuthContext(c)
+	documentID, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	err = h.contentService.Reextract(
+		c.Request.Context(),
+		documentID,
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Status(http.StatusAccepted)
 }

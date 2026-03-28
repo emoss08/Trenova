@@ -72,6 +72,7 @@ const (
 	ResourceDocumentClassification Resource = "document_classification"
 	ResourceDocument               Resource = "document"
 	ResourceDocumentType           Resource = "document_type"
+	ResourceDocumentControl        Resource = "document_control"
 
 	// Reference Data
 	ResourceShipmentType Resource = "shipment_type"

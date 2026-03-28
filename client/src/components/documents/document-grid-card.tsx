@@ -1,9 +1,11 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import type { Document } from "@/types/document";
 import {
+  BrainCircuitIcon,
   DownloadIcon,
   EyeIcon,
   LoaderCircleIcon,
@@ -18,6 +20,7 @@ interface DocumentGridCardProps {
   onPreview?: (document: Document) => void;
   onDownload?: (document: Document) => void;
   onDelete?: (document: Document) => void;
+  onInspect?: (document: Document) => void;
   isDeleting?: boolean;
   className?: string;
   isSelected?: boolean;
@@ -51,6 +54,7 @@ export function DocumentGridCard({
   onPreview,
   onDownload,
   onDelete,
+  onInspect,
   isDeleting = false,
   className,
   isSelected = false,
@@ -66,17 +70,18 @@ export function DocumentGridCard({
     canHaveThumbnail &&
     previewUrl &&
     !imageError &&
+    document.previewStatus === "Ready" &&
     document.previewStoragePath;
-  const isGeneratingThumbnail =
-    canHaveThumbnail && !document.previewStoragePath;
+  const isGeneratingThumbnail = document.previewStatus === "Pending";
+  const isPreviewUnavailable = document.previewStatus === "Failed";
 
   useEffect(() => {
-    if (!document.previewStoragePath) {
+    if (document.previewStatus !== "Ready" || !document.previewStoragePath) {
       return;
     }
 
     void apiService.documentService.getPreviewUrl(document.id).then(setPreviewUrl);
-  }, [document.id, document.previewStoragePath]);
+  }, [document.id, document.previewStatus, document.previewStoragePath]);
 
   const handleCheckboxChange = () => {
     if (onSelect) {
@@ -111,6 +116,20 @@ export function DocumentGridCard({
               Generating preview...
             </span>
           </div>
+        ) : isPreviewUnavailable ? (
+          <div
+            className="flex flex-col items-center justify-center gap-2"
+            title="Preview unavailable"
+          >
+            <DocumentFileTypeIcon
+              fileType={document.fileType}
+              fileName={document.originalName}
+              size="xl"
+            />
+            <span className="text-xs text-muted-foreground">
+              Preview unavailable
+            </span>
+          </div>
         ) : (
           <DocumentFileTypeIcon
             fileType={document.fileType}
@@ -135,6 +154,28 @@ export function DocumentGridCard({
             {documentTypeName}
           </p>
         )}
+        <div className="mt-1 flex flex-wrap gap-1">
+          {document.detectedKind && document.detectedKind !== "Other" && (
+            <Badge variant="info" className="h-5 px-1.5 py-0 text-[10px]">
+              {document.detectedKind}
+            </Badge>
+          )}
+          {document.contentStatus === "Extracting" && (
+            <Badge variant="warning" className="h-5 px-1.5 py-0 text-[10px]">
+              Extracting
+            </Badge>
+          )}
+          {document.contentStatus === "Failed" && (
+            <Badge variant="outline" className="h-5 px-1.5 py-0 text-[10px]">
+              Text unavailable
+            </Badge>
+          )}
+          {document.shipmentDraftStatus === "Ready" && (
+            <Badge variant="teal" className="h-5 px-1.5 py-0 text-[10px]">
+              Draft ready
+            </Badge>
+          )}
+        </div>
       </div>
 
       {onSelect && (
@@ -172,6 +213,16 @@ export function DocumentGridCard({
             aria-label="Download document"
           >
             <DownloadIcon className="size-3.5" />
+          </Button>
+        )}
+        {onInspect && (
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => onInspect(document)}
+            aria-label="Inspect document intelligence"
+          >
+            <BrainCircuitIcon className="size-3.5" />
           </Button>
         )}
         {onDelete && (

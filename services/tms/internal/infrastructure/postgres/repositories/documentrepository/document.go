@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/querybuilder"
+	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -144,6 +145,33 @@ func (r *repository) GetByResourceID(
 	return entities, nil
 }
 
+func (r *repository) ListPendingPreviewReconciliation(
+	ctx context.Context,
+	olderThan int64,
+	limit int,
+) ([]*document.Document, error) {
+	if limit <= 0 {
+		limit = 100
+	}
+
+	entities := make([]*document.Document, 0, limit)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Where("doc.preview_status = ?", document.PreviewStatusPending).
+		Where("(doc.preview_storage_path IS NULL OR doc.preview_storage_path = '')").
+		Where("doc.updated_at <= ?", olderThan).
+		Order("doc.updated_at ASC").
+		Limit(limit).
+		Scan(ctx)
+	if err != nil {
+		r.l.Error("failed to list documents pending preview reconciliation", zap.Error(err))
+		return nil, err
+	}
+
+	return entities, nil
+}
+
 func (r *repository) Create(
 	ctx context.Context,
 	entity *document.Document,
@@ -191,6 +219,64 @@ func (r *repository) Update(
 	return entity, nil
 }
 
+func (r *repository) UpdatePreview(
+	ctx context.Context,
+	req *repositories.UpdateDocumentPreviewRequest,
+) error {
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*document.Document)(nil)).
+		Set("preview_status = ?", req.PreviewStatus).
+		Set("preview_storage_path = ?", req.PreviewStoragePath).
+		Set("updated_at = ?", timeutils.NowUnix()).
+		Set("version = version + 1").
+		Where("id = ?", req.ID).
+		Where("organization_id = ?", req.TenantInfo.OrgID).
+		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to update document preview", zap.Error(err), zap.String("id", req.ID.String()))
+		return err
+	}
+
+	if err = dberror.CheckRowsAffected(results, "Document", req.ID.String()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (r *repository) UpdateIntelligence(
+	ctx context.Context,
+	req *repositories.UpdateDocumentIntelligenceRequest,
+) error {
+	results, err := r.db.DBForContext(ctx).
+		NewUpdate().
+		Model((*document.Document)(nil)).
+		Set("content_status = ?", req.ContentStatus).
+		Set("content_error = ?", req.ContentError).
+		Set("detected_kind = ?", req.DetectedKind).
+		Set("has_extracted_text = ?", req.HasExtractedText).
+		Set("shipment_draft_status = ?", req.ShipmentDraftStatus).
+		Set("document_type_id = ?", req.DocumentTypeID).
+		Set("updated_at = ?", timeutils.NowUnix()).
+		Set("version = version + 1").
+		Where("id = ?", req.ID).
+		Where("organization_id = ?", req.TenantInfo.OrgID).
+		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Exec(ctx)
+	if err != nil {
+		r.l.Error("failed to update document intelligence", zap.Error(err), zap.String("id", req.ID.String()))
+		return err
+	}
+
+	if err = dberror.CheckRowsAffected(results, "Document", req.ID.String()); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (r *repository) Delete(
 	ctx context.Context,
 	req repositories.DeleteDocumentRequest,
@@ -200,9 +286,9 @@ func (r *repository) Delete(
 		zap.String("id", req.ID.String()),
 	)
 
-	results, err := r.db.DB().
+	results, err := r.db.DBForContext(ctx).
 		NewDelete().
-		Model((*document.Document)(nil)).
+		Table("documents").
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
 			return dq.Where("id = ?", req.ID).
 				Where("organization_id = ?", req.TenantInfo.OrgID).
@@ -232,7 +318,7 @@ func (r *repository) GetByIDs(
 	)
 
 	entities := make([]*document.Document, 0, len(req.IDs))
-	err := r.db.DB().
+	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
@@ -258,9 +344,9 @@ func (r *repository) BulkDelete(
 		zap.Int("count", len(req.IDs)),
 	)
 
-	results, err := r.db.DB().
+	results, err := r.db.DBForContext(ctx).
 		NewDelete().
-		Model((*document.Document)(nil)).
+		Table("documents").
 		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
 			return dq.Where("id IN (?)", bun.In(req.IDs)).
 				Where("organization_id = ?", req.TenantInfo.OrgID).

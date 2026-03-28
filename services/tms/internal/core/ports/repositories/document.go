@@ -31,6 +31,24 @@ type DeleteDocumentRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type UpdateDocumentPreviewRequest struct {
+	ID                 pulid.ID               `json:"id"`
+	TenantInfo         pagination.TenantInfo  `json:"tenantInfo"`
+	PreviewStatus      document.PreviewStatus `json:"previewStatus"`
+	PreviewStoragePath string                 `json:"previewStoragePath"`
+}
+
+type UpdateDocumentIntelligenceRequest struct {
+	ID                  pulid.ID                     `json:"id"`
+	TenantInfo          pagination.TenantInfo        `json:"tenantInfo"`
+	ContentStatus       document.ContentStatus       `json:"contentStatus"`
+	ContentError        string                       `json:"contentError"`
+	DetectedKind        string                       `json:"detectedKind"`
+	HasExtractedText    bool                         `json:"hasExtractedText"`
+	ShipmentDraftStatus document.ShipmentDraftStatus `json:"shipmentDraftStatus"`
+	DocumentTypeID      *pulid.ID                    `json:"documentTypeId"`
+}
+
 type BulkDeleteDocumentRequest struct {
 	IDs        []pulid.ID            `json:"ids"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -47,8 +65,15 @@ type DocumentRepository interface {
 		ctx context.Context,
 		req *GetDocumentsByResourceRequest,
 	) ([]*document.Document, error)
+	ListPendingPreviewReconciliation(
+		ctx context.Context,
+		olderThan int64,
+		limit int,
+	) ([]*document.Document, error)
 	Create(ctx context.Context, entity *document.Document) (*document.Document, error)
 	Update(ctx context.Context, entity *document.Document) (*document.Document, error)
+	UpdatePreview(ctx context.Context, req *UpdateDocumentPreviewRequest) error
+	UpdateIntelligence(ctx context.Context, req *UpdateDocumentIntelligenceRequest) error
 	Delete(ctx context.Context, req DeleteDocumentRequest) error
 	BulkDelete(ctx context.Context, req BulkDeleteDocumentRequest) error
 }

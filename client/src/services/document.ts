@@ -1,13 +1,24 @@
 import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import {
+  type CreateDocumentUploadSessionParams,
   type BulkUploadDocumentParams,
   type BulkUploadDocumentResponse,
   type Document,
+  type DocumentContent,
+  type DocumentShipmentDraft,
+  type DocumentUploadPartTarget,
+  type DocumentUploadSession,
+  type DocumentUploadSessionState,
   type DownloadUrlResponse,
   type UploadDocumentParams,
   bulkUploadDocumentResponseSchema,
+  documentContentSchema,
   documentSchema,
+  documentShipmentDraftSchema,
+  documentUploadPartTargetSchema,
+  documentUploadSessionSchema,
+  documentUploadSessionStateSchema,
   downloadUrlResponseSchema,
 } from "@/types/document";
 import { z } from "zod";
@@ -51,14 +62,92 @@ export class DocumentService {
     return safeParse(bulkUploadDocumentResponseSchema, response, "Bulk Upload Document");
   }
 
+  public async createUploadSession(
+    params: CreateDocumentUploadSessionParams,
+  ): Promise<DocumentUploadSession> {
+    const response = await api.post<DocumentUploadSession>("/documents/uploads/", params);
+    return safeParse(documentUploadSessionSchema, response, "Document Upload Session");
+  }
+
+  public async listActiveUploadSessions(
+    resourceType: string,
+    resourceId: string,
+  ): Promise<DocumentUploadSession[]> {
+    const response = await api.get<DocumentUploadSession[]>(
+      `/documents/uploads/active/?resourceType=${encodeURIComponent(resourceType)}&resourceId=${encodeURIComponent(resourceId)}`,
+    );
+    return safeParse(z.array(documentUploadSessionSchema), response, "Document Upload Sessions");
+  }
+
+  public async getUploadSession(
+    sessionId: string,
+  ): Promise<DocumentUploadSessionState> {
+    const response = await api.get<DocumentUploadSessionState>(
+      `/documents/uploads/${sessionId}/`,
+    );
+    return safeParse(
+      documentUploadSessionStateSchema,
+      response,
+      "Document Upload Session State",
+    );
+  }
+
+  public async getUploadPartTargets(
+    sessionId: string,
+    partNumbers: number[],
+  ): Promise<DocumentUploadPartTarget[]> {
+    const response = await api.post<{ parts: DocumentUploadPartTarget[] }>(
+      `/documents/uploads/${sessionId}/parts/`,
+      { partNumbers },
+    );
+    return (
+      await safeParse(
+      z.object({ parts: z.array(documentUploadPartTargetSchema) }),
+      response,
+      "Document Upload Part Targets",
+      )
+    ).parts;
+  }
+
+  public async completeUploadSession(sessionId: string): Promise<DocumentUploadSession> {
+    const response = await api.post<DocumentUploadSession>(
+      `/documents/uploads/${sessionId}/complete/`,
+    );
+    return safeParse(documentUploadSessionSchema, response, "Document Upload Session");
+  }
+
+  public async cancelUploadSession(sessionId: string): Promise<void> {
+    await api.post(`/documents/uploads/${sessionId}/cancel/`);
+  }
+
   public async getByResource(
     resourceType: string,
     resourceId: string,
+    query?: string,
   ): Promise<Document[]> {
+    const search = query?.trim()
+      ? `?query=${encodeURIComponent(query.trim())}`
+      : "";
     const response = await api.get<Document[]>(
-      `/documents/resource/${resourceType}/${resourceId}/`,
+      `/documents/resource/${resourceType}/${resourceId}/${search}`,
     );
     return safeParse(z.array(documentSchema), response, "Document");
+  }
+
+  public async getContent(documentId: string): Promise<DocumentContent> {
+    const response = await api.get<DocumentContent>(`/documents/${documentId}/content/`);
+    return safeParse(documentContentSchema, response, "Document Content");
+  }
+
+  public async getShipmentDraft(documentId: string): Promise<DocumentShipmentDraft> {
+    const response = await api.get<DocumentShipmentDraft>(
+      `/documents/${documentId}/shipment-draft/`,
+    );
+    return safeParse(documentShipmentDraftSchema, response, "Document Shipment Draft");
+  }
+
+  public async reextract(documentId: string): Promise<void> {
+    await api.post(`/documents/${documentId}/shipment-draft/reextract/`);
   }
 
   public async getById(documentId: string): Promise<Document> {

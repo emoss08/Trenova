@@ -356,11 +356,15 @@ func setupTestService(t *testing.T, db *bun.DB, cfg *config.Config) *documentser
 	thumbnailGen := thumbnailservice.NewGenerator()
 	cacheRepo := mocks.NewMockDocumentCacheRepository(t)
 	cacheRepo.On("GetByID", mock.Anything, mock.Anything).Maybe().Return(nil, repositories.ErrCacheMiss)
+	sessionRepo := mocks.NewMockDocumentUploadSessionRepository(t)
+	sessionRepo.On("ClearDocumentReference", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
+	sessionRepo.On("ClearDocumentReferences", mock.Anything, mock.Anything, mock.Anything).Maybe().Return(nil)
 
 	service := documentservice.NewTestService(
 		logger,
 		repo,
 		cacheRepo,
+		sessionRepo,
 		storageClient,
 		validator,
 		&mocks.NoopAuditService{},

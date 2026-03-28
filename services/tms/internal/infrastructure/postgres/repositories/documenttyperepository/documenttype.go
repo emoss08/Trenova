@@ -152,6 +152,33 @@ func (r *repository) GetByID(
 	return entity, nil
 }
 
+func (r *repository) GetByCode(
+	ctx context.Context,
+	req repositories.GetDocumentTypeByCodeRequest,
+) (*documenttype.DocumentType, error) {
+	log := r.l.With(
+		zap.String("operation", "GetByCode"),
+		zap.String("code", req.Code),
+	)
+
+	entity := new(documenttype.DocumentType)
+	err := r.db.DB().
+		NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("dt.code = ?", req.Code).
+				Where("dt.organization_id = ?", req.TenantInfo.OrgID).
+				Where("dt.business_unit_id = ?", req.TenantInfo.BuID)
+		}).
+		Scan(ctx)
+	if err != nil {
+		log.Error("failed to get document type by code", zap.Error(err))
+		return nil, dberror.HandleNotFoundError(err, "DocumentType")
+	}
+
+	return entity, nil
+}
+
 func (r *repository) SelectOptions(
 	ctx context.Context,
 	req *pagination.SelectQueryRequest,

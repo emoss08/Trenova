@@ -1,6 +1,8 @@
 package bootstrap
 
 import (
+	"context"
+
 	"github.com/emoss08/trenova/internal/bootstrap/infrastructure"
 	"github.com/emoss08/trenova/internal/bootstrap/modules"
 	"github.com/emoss08/trenova/internal/bootstrap/modules/api"
@@ -10,8 +12,11 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/formula"
 	"github.com/emoss08/trenova/internal/core/services/formulatemplateservice"
 	"github.com/emoss08/trenova/internal/core/services/integrationservice"
+	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/auditjobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/fiscaljobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/samsarajobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/schedule"
@@ -44,6 +49,8 @@ func Options() fx.Option {
 		temporaljobs.Module,
 		schedule.Module,
 		auditjobs.Module,
+		documentintelligencejobs.Module,
+		documentuploadjobs.Module,
 		thumbnailjobs.Module,
 		smsjobs.Module,
 		samsarajobs.Module,
@@ -73,17 +80,31 @@ func APIOptions() fx.Option {
 		api.ServiceModule,
 		modulesinfra.StorageModule,
 		modulesinfra.SMSModule,
-		
+
 		modulesinfra.AblyClientModule,
 		modulesinfra.MeilisearchClientModule,
+		fx.Invoke(startTCAConsumer),
 	)
+}
+
+func startTCAConsumer(lc fx.Lifecycle, consumer *tablechangealertservice.Consumer) {
+	lc.Append(fx.Hook{
+		OnStart: func(_ context.Context) error {
+			consumer.Start(context.Background())
+			return nil
+		},
+		OnStop: func(context.Context) error {
+			consumer.Stop()
+			return nil
+		},
+	})
 }
 
 func WorkerOptions() fx.Option {
 	return fx.Options(
 		modulesinfra.StorageModule,
 		modulesinfra.AblyClientModule,
-		
+
 		modulesinfra.MeilisearchClientModule,
 		modulesinfra.SMSModule,
 		api.ServiceModule,

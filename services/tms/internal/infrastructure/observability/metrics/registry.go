@@ -23,6 +23,7 @@ type Registry struct {
 	Database *Database
 	Temporal *Temporal
 	Audit    *Audit
+	Document *Document
 }
 
 func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
@@ -40,6 +41,7 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 			Database: NewDatabase(nil, logger, false),
 			Temporal: NewTemporal(nil, logger, false),
 			Audit:    NewAudit(nil, logger, false),
+			Document: NewDocument(nil, logger, false),
 		}, nil
 	}
 
@@ -57,6 +59,7 @@ func NewRegistry(cfg *config.Config, logger *zap.Logger) (*Registry, error) {
 		Database: NewDatabase(registry, logger, true),
 		Temporal: NewTemporal(registry, logger, true),
 		Audit:    NewAudit(registry, logger, true),
+		Document: NewDocument(registry, logger, true),
 	}
 
 	dberror.SetConcurrencyObserver(m.Database.RecordConcurrencyEvent)

@@ -38,9 +38,25 @@ func NewValidator(p ValidatorParams) *Validator {
 }
 
 func (v *Validator) ValidateFile(file *multipart.FileHeader) *errortypes.MultiError {
+	return v.validateFileMetadata(file.Filename, file.Size, file.Header.Get("Content-Type"))
+}
+
+func (v *Validator) ValidateUploadMetadata(
+	filename string,
+	size int64,
+	contentType string,
+) *errortypes.MultiError {
+	return v.validateFileMetadata(filename, size, contentType)
+}
+
+func (v *Validator) validateFileMetadata(
+	filename string,
+	size int64,
+	contentType string,
+) *errortypes.MultiError {
 	multiErr := errortypes.NewMultiError()
 
-	if file.Size > v.maxFileSize {
+	if size > v.maxFileSize {
 		multiErr.Add(
 			"file",
 			errortypes.ErrInvalidLength,
@@ -48,7 +64,7 @@ func (v *Validator) ValidateFile(file *multipart.FileHeader) *errortypes.MultiEr
 		)
 	}
 
-	if file.Size == 0 {
+	if size == 0 {
 		multiErr.Add(
 			"file",
 			errortypes.ErrRequired,
@@ -56,7 +72,7 @@ func (v *Validator) ValidateFile(file *multipart.FileHeader) *errortypes.MultiEr
 		)
 	}
 
-	ext := strings.ToLower(filepath.Ext(file.Filename))
+	ext := strings.ToLower(filepath.Ext(filename))
 	if slices.Contains(dangerousExtensions, ext) {
 		multiErr.Add(
 			"file",
@@ -65,7 +81,6 @@ func (v *Validator) ValidateFile(file *multipart.FileHeader) *errortypes.MultiEr
 		)
 	}
 
-	contentType := file.Header.Get("Content-Type")
 	if contentType != "" && !slices.Contains(v.allowedMIMETypes, contentType) {
 		multiErr.Add(
 			"file",

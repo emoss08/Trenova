@@ -3,9 +3,11 @@ package thumbnailjobs
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 
+	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
@@ -53,9 +55,9 @@ func (a *Activities) GenerateThumbnailActivity(
 		return result, err
 	}
 
-	thumbData, result := a.generateThumbnail(ctx, payload, fileData)
-	if result != nil {
-		return result, nil
+	thumbData, result, err := a.generateThumbnail(ctx, payload, fileData)
+	if err != nil {
+		return result, err
 	}
 
 	previewPath, result, err := a.uploadThumbnail(ctx, payload, thumbData)
@@ -136,17 +138,28 @@ func (a *Activities) generateThumbnail(
 	ctx context.Context,
 	payload *GenerateThumbnailPayload,
 	fileData []byte,
-) ([]byte, *GenerateThumbnailResult) {
+) ([]byte, *GenerateThumbnailResult, error) {
 	logger := activity.GetLogger(ctx)
 	activity.RecordHeartbeat(ctx, "generating thumbnail")
 
 	thumbData, err := a.thumbnailGenerator.Generate(bytes.NewReader(fileData), payload.ContentType)
 	if err != nil {
-		logger.Warn("Thumbnail generation failed - file may not support thumbnails", "error", err)
-		return nil, a.failure(payload, "thumbnail generation failed: %v", err)
+		logger.Warn("Thumbnail generation failed", "error", err)
+
+		if errors.Is(err, thumbnailservice.ErrPDFHasNoPages) {
+			return nil, a.failure(payload, "thumbnail generation failed: %v", err), temporaltype.NewDataIntegrityError(
+				"PDF has no pages for thumbnail generation",
+				map[string]any{"documentId": payload.DocumentID.String()},
+			).ToTemporalError()
+		}
+
+		return nil, a.failure(payload, "thumbnail generation failed: %v", err), a.retryable(
+			"Failed to generate thumbnail",
+			err,
+		)
 	}
 
-	return thumbData, nil
+	return thumbData, nil, nil
 }
 
 func (a *Activities) uploadThumbnail(
@@ -220,8 +233,17 @@ func (a *Activities) updateDocumentPreview(
 	}
 
 	doc.PreviewStoragePath = previewPath
+	doc.PreviewStatus = document.PreviewStatusReady
 
-	_, err = a.docRepo.Update(ctx, doc)
+	err = a.docRepo.UpdatePreview(ctx, &repositories.UpdateDocumentPreviewRequest{
+		ID: doc.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: payload.OrganizationID,
+			BuID:  payload.BusinessUnitID,
+		},
+		PreviewStatus:      document.PreviewStatusReady,
+		PreviewStoragePath: previewPath,
+	})
 	if err != nil {
 		logger.Error("Failed to update document", "error", err)
 		a.cleanupThumbnail(ctx, previewPath)
@@ -236,4 +258,36 @@ func (a *Activities) updateDocumentPreview(
 	}
 
 	return nil, nil //nolint:nilnil // nil is valid for no error
+}
+
+func (a *Activities) MarkThumbnailFailedActivity(
+	ctx context.Context,
+	payload *GenerateThumbnailPayload,
+) error {
+	doc, err := a.docRepo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+		ID: payload.DocumentID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: payload.OrganizationID,
+			BuID:  payload.BusinessUnitID,
+		},
+	})
+	if err != nil {
+		return err
+	}
+
+	if !document.SupportsPreview(doc.FileType) {
+		doc.PreviewStatus = document.PreviewStatusUnsupported
+	} else {
+		doc.PreviewStatus = document.PreviewStatusFailed
+	}
+
+	return a.docRepo.UpdatePreview(ctx, &repositories.UpdateDocumentPreviewRequest{
+		ID: doc.ID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: payload.OrganizationID,
+			BuID:  payload.BusinessUnitID,
+		},
+		PreviewStatus:      doc.PreviewStatus,
+		PreviewStoragePath: "",
+	})
 }

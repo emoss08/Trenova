@@ -6,15 +6,19 @@ import (
 	"fmt"
 	"mime/multipart"
 	"path/filepath"
+	"slices"
 	"strings"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/internal/core/domain/permission"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
+	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -23,6 +27,7 @@ import (
 	"github.com/emoss08/trenova/shared/jsonutils"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/google/uuid"
+	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -31,41 +36,53 @@ import (
 type Params struct {
 	fx.In
 
-	Logger             *zap.Logger
-	Repo               repositories.DocumentRepository
-	CacheRepo          repositories.DocumentCacheRepository
-	Storage            storage.Client
-	Validator          *Validator
-	AuditService       services.AuditService
-	Config             *config.Config
-	ThumbnailGenerator *thumbnailservice.Generator
-	TemporalClient     client.Client
+	Logger               *zap.Logger
+	DB                   ports.DBConnection
+	Repo                 repositories.DocumentRepository
+	CacheRepo            repositories.DocumentCacheRepository
+	SessionRepo          repositories.DocumentUploadSessionRepository
+	Storage              storage.Client
+	Validator            *Validator
+	AuditService         services.AuditService
+	DocumentIntelligence services.DocumentContentService
+	SearchProjection     services.DocumentSearchProjectionService
+	Config               *config.Config
+	ThumbnailGenerator   *thumbnailservice.Generator
+	TemporalClient       client.Client
 }
 
 type Service struct {
-	l                  *zap.Logger
-	repo               repositories.DocumentRepository
-	cacheRepo          repositories.DocumentCacheRepository
-	storage            storage.Client
-	validator          *Validator
-	auditService       services.AuditService
-	config             *config.StorageConfig
-	thumbnailGenerator *thumbnailservice.Generator
-	temporalClient     client.Client
+	l                    *zap.Logger
+	db                   ports.DBConnection
+	repo                 repositories.DocumentRepository
+	cacheRepo            repositories.DocumentCacheRepository
+	sessionRepo          repositories.DocumentUploadSessionRepository
+	storage              storage.Client
+	validator            *Validator
+	auditService         services.AuditService
+	documentIntelligence services.DocumentContentService
+	searchProjection     services.DocumentSearchProjectionService
+	config               *config.StorageConfig
+	thumbnailGenerator   *thumbnailservice.Generator
+	temporalClient       client.Client
 }
 
 //nolint:gocritic // dependency injection param
 func New(p Params) *Service {
 	return &Service{
-		l:                  p.Logger.Named("service.document"),
-		repo:               p.Repo,
-		cacheRepo:          p.CacheRepo,
-		storage:            p.Storage,
-		validator:          p.Validator,
-		auditService:       p.AuditService,
-		config:             p.Config.GetStorageConfig(),
-		thumbnailGenerator: p.ThumbnailGenerator,
-		temporalClient:     p.TemporalClient,
+		l:                    p.Logger.Named("service.document"),
+		db:                   p.DB,
+		repo:                 p.Repo,
+		cacheRepo:            p.CacheRepo,
+		sessionRepo:          p.SessionRepo,
+		storage:              p.Storage,
+		validator:            p.Validator,
+		auditService:         p.AuditService,
+		documentIntelligence: p.DocumentIntelligence,
+		searchProjection:     p.SearchProjection,
+		config:               p.Config.GetStorageConfig(),
+		thumbnailGenerator:   p.ThumbnailGenerator,
+		temporalClient:       p.TemporalClient,
 	}
 }
 
@@ -189,6 +206,7 @@ func (s *Service) Upload(
 		ResourceType:       req.ResourceType,
 		Tags:               req.Tags,
 		UploadedByID:       req.TenantInfo.UserID,
+		PreviewStatus:      previewStatusForFileType(contentType),
 	}
 
 	if req.DocumentTypeID != "" {
@@ -221,9 +239,13 @@ func (s *Service) Upload(
 	}, auditservice.WithComment("Document uploaded")); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
 	}
+	s.syncSearchProjection(ctx, log, createdDoc, "")
 
 	if s.thumbnailGenerator.SupportsThumbnail(contentType) {
 		s.startThumbnailWorkflow(ctx, log, createdDoc)
+	}
+	if s.documentIntelligence != nil {
+		_ = s.documentIntelligence.EnqueueExtraction(ctx, createdDoc, req.TenantInfo.UserID)
 	}
 
 	return &UploadResult{Document: createdDoc}, nil
@@ -380,19 +402,18 @@ func (s *Service) Delete(
 		return err
 	}
 
-	if err = s.storage.Delete(ctx, doc.StoragePath); err != nil {
-		log.Error("failed to delete file from storage", zap.Error(err))
-	}
-
-	if doc.PreviewStoragePath != "" {
-		if err = s.storage.Delete(ctx, doc.PreviewStoragePath); err != nil {
-			log.Error("failed to delete thumbnail from storage", zap.Error(err))
+	if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if txErr := s.detachUploadSessionsForDocuments(txCtx, []pulid.ID{doc.ID}, req.TenantInfo); txErr != nil {
+			log.Error("failed to clear upload session document reference", zap.Error(txErr))
+			return errortypes.NewDatabaseError("Failed to detach upload sessions from document").WithInternal(txErr)
 		}
-	}
 
-	if err = s.repo.Delete(ctx, req); err != nil {
+		return s.repo.Delete(txCtx, req)
+	}); err != nil {
 		return err
 	}
+
+	s.cleanupDocumentStorage(ctx, log, doc)
 
 	if err = s.auditService.LogAction(&services.LogActionParams{
 		Resource:       permission.ResourceDocument,
@@ -446,37 +467,31 @@ func (s *Service) BulkDelete(
 		Errors: make([]error, 0),
 	}
 
+	docIDs := make([]pulid.ID, 0, len(docs))
 	for _, doc := range docs {
-		if err = s.storage.Delete(ctx, doc.StoragePath); err != nil {
-			log.Warn("failed to delete file from storage during bulk delete",
-				zap.String("documentId", doc.ID.String()),
-				zap.Error(err),
-			)
-			result.Errors = append(
-				result.Errors,
-				fmt.Errorf("failed to delete file %s: %w", doc.OriginalName, err),
-			)
-		}
-
-		if doc.PreviewStoragePath != "" {
-			if err = s.storage.Delete(ctx, doc.PreviewStoragePath); err != nil {
-				log.Warn("failed to delete thumbnail from storage during bulk delete",
-					zap.String("documentId", doc.ID.String()),
-					zap.Error(err),
-				)
-			}
-		}
+		docIDs = append(docIDs, doc.ID)
 	}
 
-	if err = s.repo.BulkDelete(ctx, repositories.BulkDeleteDocumentRequest{
-		IDs:        req.IDs,
-		TenantInfo: req.TenantInfo,
+	if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+		if txErr := s.detachUploadSessionsForDocuments(txCtx, docIDs, req.TenantInfo); txErr != nil {
+			log.Error("failed to clear upload session document references during bulk delete", zap.Error(txErr))
+			return errortypes.NewDatabaseError("Failed to detach upload sessions from documents").WithInternal(txErr)
+		}
+
+		return s.repo.BulkDelete(txCtx, repositories.BulkDeleteDocumentRequest{
+			IDs:        docIDs,
+			TenantInfo: req.TenantInfo,
+		})
 	}); err != nil {
 		log.Error("failed to bulk delete documents from database", zap.Error(err))
 		return nil, err
 	}
 
 	result.DeletedCount = len(docs)
+
+	for _, doc := range docs {
+		s.cleanupDocumentStorage(ctx, log, doc)
+	}
 
 	for _, doc := range docs {
 		if err = s.auditService.LogAction(&services.LogActionParams{
@@ -498,6 +513,57 @@ func (s *Service) BulkDelete(
 	return result, nil
 }
 
+func (s *Service) detachUploadSessionsForDocuments(
+	ctx context.Context,
+	documentIDs []pulid.ID,
+	tenantInfo pagination.TenantInfo,
+) error {
+	if len(documentIDs) == 0 {
+		return nil
+	}
+
+	db := s.db.DBForContext(ctx)
+	if db == nil {
+		if len(documentIDs) == 1 {
+			return s.sessionRepo.ClearDocumentReference(ctx, documentIDs[0], tenantInfo)
+		}
+		return s.sessionRepo.ClearDocumentReferences(ctx, documentIDs, tenantInfo)
+	}
+
+	documentIDStrings := make([]string, 0, len(documentIDs))
+	for _, id := range documentIDs {
+		documentIDStrings = append(documentIDStrings, id.String())
+	}
+
+	if _, err := db.
+		NewUpdate().
+		Table("document_upload_sessions").
+		Set("document_id = NULL").
+		Where("document_id IN (?)", bun.In(documentIDStrings)).
+		Where("organization_id = ?", tenantInfo.OrgID).
+		Where("business_unit_id = ?", tenantInfo.BuID).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	remaining, err := db.
+		NewSelect().
+		Table("document_upload_sessions").
+		Where("document_id IN (?)", bun.In(documentIDStrings)).
+		Where("organization_id = ?", tenantInfo.OrgID).
+		Where("business_unit_id = ?", tenantInfo.BuID).
+		Count(ctx)
+	if err != nil {
+		return err
+	}
+
+	if remaining > 0 {
+		return fmt.Errorf("document upload session references remain after detach: %d", remaining)
+	}
+
+	return nil
+}
+
 func (s *Service) GetPreviewURL(
 	ctx context.Context,
 	req repositories.GetDocumentByIDRequest,
@@ -512,7 +578,7 @@ func (s *Service) GetPreviewURL(
 		return "", err
 	}
 
-	if doc.PreviewStoragePath == "" {
+	if doc.PreviewStatus != document.PreviewStatusReady || doc.PreviewStoragePath == "" {
 		return "", errortypes.NewNotFoundError("Preview not available for this document")
 	}
 
@@ -532,4 +598,96 @@ func (s *Service) generateStoragePath(orgID, resourceType, filename string) stri
 	ext := filepath.Ext(filename)
 	uniqueID := uuid.New().String()
 	return fmt.Sprintf("%s/%s/%s%s", orgID, resourceType, uniqueID, strings.ToLower(ext))
+}
+
+func (s *Service) cleanupDocumentStorage(ctx context.Context, log *zap.Logger, doc *document.Document) {
+	failedPaths := make([]string, 0, 2)
+
+	if err := s.storage.Delete(ctx, doc.StoragePath); err != nil {
+		log.Warn("failed to delete file from storage after document delete",
+			zap.String("documentId", doc.ID.String()),
+			zap.String("storagePath", doc.StoragePath),
+			zap.Error(err),
+		)
+		failedPaths = append(failedPaths, doc.StoragePath)
+	}
+
+	if doc.PreviewStoragePath == "" {
+		s.enqueueStorageCleanup(ctx, log, doc.ID, failedPaths)
+		return
+	}
+
+	if err := s.storage.Delete(ctx, doc.PreviewStoragePath); err != nil {
+		log.Warn("failed to delete preview from storage after document delete",
+			zap.String("documentId", doc.ID.String()),
+			zap.String("previewStoragePath", doc.PreviewStoragePath),
+			zap.Error(err),
+		)
+		failedPaths = append(failedPaths, doc.PreviewStoragePath)
+	}
+
+	s.enqueueStorageCleanup(ctx, log, doc.ID, failedPaths)
+}
+
+func (s *Service) syncSearchProjection(
+	ctx context.Context,
+	log *zap.Logger,
+	doc *document.Document,
+	contentText string,
+) {
+	if s.searchProjection == nil {
+		return
+	}
+
+	if err := s.searchProjection.Upsert(ctx, doc, contentText); err != nil {
+		log.Warn("failed to sync document search projection",
+			zap.String("documentId", doc.ID.String()),
+			zap.Error(err),
+		)
+	}
+}
+
+func previewStatusForFileType(contentType string) document.PreviewStatus {
+	if document.SupportsPreview(contentType) {
+		return document.PreviewStatusPending
+	}
+
+	return document.PreviewStatusUnsupported
+}
+
+func (s *Service) enqueueStorageCleanup(
+	ctx context.Context,
+	log *zap.Logger,
+	documentID pulid.ID,
+	paths []string,
+) {
+	if len(paths) == 0 || s.temporalClient == nil {
+		return
+	}
+
+	paths = slices.Compact(paths)
+	_, err := s.temporalClient.ExecuteWorkflow(
+		ctx,
+		client.StartWorkflowOptions{
+			ID:            fmt.Sprintf("document-storage-cleanup-%s-%d", documentID.String(), time.Now().Unix()),
+			TaskQueue:     temporaltype.UploadTaskQueue,
+			RetryPolicy:   temporaltype.DefaultRetryPolicy,
+			StaticSummary: fmt.Sprintf("Cleaning up document storage for %s", documentID.String()),
+		},
+		"CleanupDocumentStorageWorkflow",
+		&documentuploadjobs.CleanupDocumentStoragePayload{
+			BasePayload: temporaltype.BasePayload{
+				Timestamp: time.Now().Unix(),
+			},
+			DocumentID: documentID,
+			Paths:      paths,
+		},
+	)
+	if err != nil {
+		log.Warn("failed to enqueue document storage cleanup",
+			zap.String("documentId", documentID.String()),
+			zap.Strings("paths", paths),
+			zap.Error(err),
+		)
+	}
 }

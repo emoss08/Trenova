@@ -98,6 +98,48 @@ func (n *noopStorageClient) Exists(_ context.Context, _ string) (bool, error) {
 	return true, nil
 }
 
+func (n *noopStorageClient) GetPresignedUploadURL(
+	_ context.Context,
+	_ *storage.PresignedUploadURLParams,
+) (string, error) {
+	return "https://example.test/upload", nil
+}
+
+func (n *noopStorageClient) InitiateMultipartUpload(
+	_ context.Context,
+	_ *storage.MultipartUploadParams,
+) (string, error) {
+	return "upload-id", nil
+}
+
+func (n *noopStorageClient) GetMultipartUploadPartURL(
+	_ context.Context,
+	_ *storage.MultipartUploadPartURLParams,
+) (string, error) {
+	return "https://example.test/part", nil
+}
+
+func (n *noopStorageClient) CompleteMultipartUpload(
+	_ context.Context,
+	_ *storage.CompleteMultipartUploadParams,
+) error {
+	return nil
+}
+
+func (n *noopStorageClient) AbortMultipartUpload(
+	_ context.Context,
+	_ *storage.AbortMultipartUploadParams,
+) error {
+	return nil
+}
+
+func (n *noopStorageClient) ListMultipartUploadParts(
+	_ context.Context,
+	_ *storage.ListMultipartUploadPartsParams,
+) ([]storage.UploadedPart, error) {
+	return nil, nil
+}
+
 func (n *noopStorageClient) GetFileInfo(_ context.Context, key string) (*storage.FileInfo, error) {
 	return &storage.FileInfo{Key: key}, nil
 }

@@ -1,4 +1,4 @@
-import * as z from "zod";
+import { z } from "zod";
 
 export const decimalStringSchema = z
   .union([
@@ -29,12 +29,7 @@ export const statusSchema = z.enum(["Active", "Inactive"]);
 
 export type Status = z.infer<typeof statusSchema>;
 
-export const equipmentStatusSchema = z.enum([
-  "Available",
-  "OutOfService",
-  "AtMaintenance",
-  "Sold",
-]);
+export const equipmentStatusSchema = z.enum(["Available", "OutOfService", "AtMaintenance", "Sold"]);
 export type EquipmentStatus = z.infer<typeof equipmentStatusSchema>;
 
 export const nullableIntegerSchema = z

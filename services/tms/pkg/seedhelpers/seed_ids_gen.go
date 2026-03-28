@@ -20,6 +20,7 @@ const (
 	SeedNormalAccount SeedID = "NormalAccount" // from 02_normalaccount.go
 	SeedOrganizationRoles SeedID = "OrganizationRoles" // from 02_organization_roles.go
 	SeedSystemAccount SeedID = "SystemAccount" // from 05_system_account.go
+	SeedTCAAllowlistedTables SeedID = "TCAAllowlistedTables" // from 07_tca_allowlisted_tables.go
 	SeedTestOrganizations SeedID = "TestOrganizations" // from 00_test_organizations.go
 	SeedUSStates SeedID = "USStates" // from 00_us_states.go
 	SeedWorker SeedID = "Worker" // from 03_worker.go
@@ -36,6 +37,7 @@ var AllSeedIDs = []SeedID{
 	SeedNormalAccount,
 	SeedOrganizationRoles,
 	SeedSystemAccount,
+	SeedTCAAllowlistedTables,
 	SeedTestOrganizations,
 	SeedUSStates,
 	SeedWorker,
@@ -48,6 +50,7 @@ var BaseSeedIDs = []SeedID{
 	SeedGLAccount,
 	SeedOrganizationRoles,
 	SeedSystemAccount,
+	SeedTCAAllowlistedTables,
 	SeedUSStates,
 }
 

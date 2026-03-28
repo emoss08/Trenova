@@ -2,7 +2,13 @@ import { LazyImage } from "@/components/image";
 import { ExternalLink } from "@/components/link";
 import { useTheme } from "@/components/theme-provider";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -13,7 +19,11 @@ import {
 } from "@/components/ui/select";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { queries } from "@/lib/queries";
 import { useQuery } from "@tanstack/react-query";
 import { useQueryStates } from "nuqs";
@@ -21,6 +31,7 @@ import { useMemo, useState } from "react";
 import { searchParamsParser } from "../integration-marketplace-state";
 import { GoogleIntegrationModal } from "./google/google-integration-modal";
 import { IntegrationMarketplaceHeader } from "./integration-marketplace-header";
+import { OpenAIIntegrationModal } from "./openai/openai-integration-modal";
 import { SamsaraIntegrationModal } from "./samsara/samsara-integration-modal";
 
 function getProviderMonogram(name: string): string {
@@ -53,12 +64,16 @@ export function IntegrationCatalogCard() {
   const [searchParams, setSearchParams] = useQueryStates(searchParamsParser);
   const [isSamsaraModalOpen, setIsSamsaraModalOpen] = useState(false);
   const [isGoogleModalOpen, setIsGoogleModalOpen] = useState(false);
+  const [isOpenAIModalOpen, setIsOpenAIModalOpen] = useState(false);
 
   const catalogQuery = useQuery({
     ...queries.integration.catalog(),
   });
 
-  const items = useMemo(() => catalogQuery.data?.items ?? [], [catalogQuery.data?.items]);
+  const items = useMemo(
+    () => catalogQuery.data?.items ?? [],
+    [catalogQuery.data?.items],
+  );
 
   const categoryOptions = useMemo(() => {
     const uniqueCategories = new Map<string, string>();
@@ -67,7 +82,10 @@ export function IntegrationCatalogCard() {
         continue;
       }
       if (!uniqueCategories.has(item.category)) {
-        uniqueCategories.set(item.category, item.categoryLabel || item.category);
+        uniqueCategories.set(
+          item.category,
+          item.categoryLabel || item.category,
+        );
       }
     }
 
@@ -89,7 +107,10 @@ export function IntegrationCatalogCard() {
       if (searchParams.status === "disconnected" && item.enabled) {
         return false;
       }
-      if (searchParams.category !== "all" && item.category !== searchParams.category) {
+      if (
+        searchParams.category !== "all" &&
+        item.category !== searchParams.category
+      ) {
         return false;
       }
 
@@ -115,14 +136,23 @@ export function IntegrationCatalogCard() {
   }, [filteredItems, searchParams.sortBy]);
 
   const openModal = (type: string) => {
-    if (type === "Samsara") {
-      setIsSamsaraModalOpen(true);
-    } else if (type === "GoogleMaps") {
-      setIsGoogleModalOpen(true);
+    switch (type) {
+      case "Samsara":
+        setIsSamsaraModalOpen(true);
+        break;
+      case "GoogleMaps":
+        setIsGoogleModalOpen(true);
+        break;
+      case "OpenAI":
+        setIsOpenAIModalOpen(true);
+        break;
+      default:
+        break;
     }
   };
 
-  const hasModal = (type: string) => type === "Samsara" || type === "GoogleMaps";
+  const hasModal = (type: string) =>
+    type === "Samsara" || type === "GoogleMaps" || type === "OpenAI";
 
   return (
     <>
@@ -224,7 +254,9 @@ export function IntegrationCatalogCard() {
                     <CardHeader className="space-y-2 pb-3">
                       <div className="relative flex items-start justify-between gap-3">
                         <div className="space-y-1 pr-14">
-                          <CardTitle className="text-base">{item.name}</CardTitle>
+                          <CardTitle className="text-base">
+                            {item.name}
+                          </CardTitle>
                           <CardDescription className="text-xs">
                             <div className="flex items-center gap-3 text-xs text-muted-foreground">
                               {item.links.map((link) => (
@@ -282,13 +314,27 @@ export function IntegrationCatalogCard() {
           )}
         </div>
       </section>
-      <SamsaraIntegrationModal open={isSamsaraModalOpen} onOpenChange={setIsSamsaraModalOpen} />
-      <GoogleIntegrationModal open={isGoogleModalOpen} onOpenChange={setIsGoogleModalOpen} />
+      <SamsaraIntegrationModal
+        open={isSamsaraModalOpen}
+        onOpenChange={setIsSamsaraModalOpen}
+      />
+      <GoogleIntegrationModal
+        open={isGoogleModalOpen}
+        onOpenChange={setIsGoogleModalOpen}
+      />
+      <OpenAIIntegrationModal
+        open={isOpenAIModalOpen}
+        onOpenChange={setIsOpenAIModalOpen}
+      />
     </>
   );
 }
 
-export function CatalogItemDescription({ description }: { description: string }) {
+export function CatalogItemDescription({
+  description,
+}: {
+  description: string;
+}) {
   return (
     <Tooltip>
       <TooltipTrigger

@@ -1,16 +1,17 @@
 import { Autocomplete } from "@/components/fields/autocomplete/autocomplete";
 import { fetchOptions } from "@/components/fields/autocomplete/autocomplete-content";
 import { ColorOptionValue } from "@/components/fields/select-components";
+import { useDocumentUpload } from "@/hooks/use-document-upload";
 import { useLocalStorage } from "@/hooks/use-local-storage";
-import { useUploadWithProgress } from "@/hooks/use-upload-with-progress";
 import { apiService } from "@/services/api";
 import type { Document } from "@/types/document";
 import type { DocumentType } from "@/types/document-type";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseAsBoolean, useQueryState } from "nuqs";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { DocumentBulkActionDock } from "./document-bulk-action-dock";
+import { DocumentIntelligenceDialog } from "./document-intelligence-dialog";
 import { DocumentList } from "./document-list";
 import {
   DocumentToolbar,
@@ -48,11 +49,6 @@ function matchesFileTypeFilter(doc: Document, filter: FileTypeFilter): boolean {
   }
 }
 
-function supportsThumbnail(fileType: string): boolean {
-  const type = fileType.toLowerCase();
-  return type.startsWith("image/") || type === "application/pdf";
-}
-
 function sortDocuments(
   docs: Document[],
   field: SortField,
@@ -87,6 +83,7 @@ export function DocumentsTab({
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [inspectedDocument, setInspectedDocument] = useState<Document | null>(null);
 
   const [isUploadOpen, setIsUploadOpen] = useQueryState(
     "upload",
@@ -98,6 +95,7 @@ export function DocumentsTab({
     "grid",
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const deferredSearchQuery = useDeferredValue(searchQuery);
   const [fileTypeFilter, setFileTypeFilter] = useState<FileTypeFilter>("all");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
@@ -137,41 +135,41 @@ export function DocumentsTab({
     return {};
   }, [isShipment, selectedDocumentTypeId]);
 
-  const queryKey = ["documents", resourceType, resourceId];
+  const queryKey = ["documents", resourceType, resourceId, deferredSearchQuery];
 
   const { data: documents = [], isLoading } = useQuery({
     queryKey,
     queryFn: () =>
-      apiService.documentService.getByResource(resourceType, resourceId),
+      apiService.documentService.getByResource(
+        resourceType,
+        resourceId,
+        deferredSearchQuery,
+      ),
     enabled: !!resourceId,
     refetchInterval: (query) => {
       const docs = query.state.data;
       if (!docs) return false;
 
-      const hasGeneratingThumbnails = docs.some(
-        (doc) => supportsThumbnail(doc.fileType) && !doc.previewStoragePath,
+      const hasPendingWork = docs.some(
+        (doc) =>
+          doc.previewStatus === "Pending" ||
+          doc.contentStatus === "Pending" ||
+          doc.contentStatus === "Extracting",
       );
 
-      return hasGeneratingThumbnails ? 3000 : false;
+      return hasPendingWork ? 3000 : false;
     },
   });
 
   const filteredDocuments = useMemo(() => {
     let result = documents;
 
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter((doc) =>
-        doc.originalName.toLowerCase().includes(query),
-      );
-    }
-
     result = result.filter((doc) => matchesFileTypeFilter(doc, fileTypeFilter));
 
     result = sortDocuments(result, sortField, sortDirection);
 
     return result;
-  }, [documents, searchQuery, fileTypeFilter, sortField, sortDirection]);
+  }, [documents, fileTypeFilter, sortField, sortDirection]);
 
   const {
     uploads,
@@ -180,7 +178,7 @@ export function DocumentsTab({
     retryUpload,
     removeUpload,
     clearCompleted,
-  } = useUploadWithProgress({
+  } = useDocumentUpload({
     resourceId,
     resourceType,
     uploadMetadata,
@@ -196,7 +194,7 @@ export function DocumentsTab({
     mutationFn: (documentId: string) =>
       apiService.documentService.delete(documentId),
     onSuccess: () => {
-      void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey: ["documents", resourceType, resourceId] });
       toast.success("Document deleted");
       setDeletingId(null);
     },
@@ -210,7 +208,7 @@ export function DocumentsTab({
     mutationFn: (documentIds: string[]) =>
       apiService.documentService.bulkDelete(documentIds),
     onSuccess: (result) => {
-      void queryClient.invalidateQueries({ queryKey });
+      void queryClient.invalidateQueries({ queryKey: ["documents", resourceType, resourceId] });
       toast.success(`${result.deletedCount} document(s) deleted`);
       setSelectedIds(new Set());
     },
@@ -285,6 +283,10 @@ export function DocumentsTab({
   }, []);
 
   const { mutate: deleteDocument } = deleteMutation;
+
+  const handleInspect = useCallback((document: Document) => {
+    setInspectedDocument(document);
+  }, []);
 
   const handleDelete = useCallback(
     (document: Document) => {
@@ -379,6 +381,7 @@ export function DocumentsTab({
         onPreview={handlePreview}
         onDownload={handleDownload}
         onDelete={handleDelete}
+        onInspect={handleInspect}
         deletingId={deletingId}
         isLoading={isLoading}
         selectedIds={selectedIds}
@@ -406,6 +409,18 @@ export function DocumentsTab({
         onRemove={removeUpload}
         onClearCompleted={clearCompleted}
         disabled={disabled}
+      />
+
+      <DocumentIntelligenceDialog
+        open={!!inspectedDocument}
+        onOpenChange={(nextOpen) => {
+          if (!nextOpen) {
+            setInspectedDocument(null);
+          }
+        }}
+        document={inspectedDocument}
+        resourceType={resourceType}
+        resourceId={resourceId}
       />
     </div>
   );

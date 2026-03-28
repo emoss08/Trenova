@@ -209,6 +209,132 @@ func (c *SearchConfig) GetDefaultLimit() int {
 	return c.DefaultLimit
 }
 
+type DocumentIntelligenceConfig struct {
+	Enabled                 bool          `mapstructure:"enabled"`
+	OCRCommand              string        `mapstructure:"ocrCommand"`
+	OCRLanguage             string        `mapstructure:"ocrLanguage"`
+	OCRTimeout              time.Duration `mapstructure:"ocrTimeout"`
+	EnableAI                bool          `mapstructure:"enableAI"`
+	AITimeout               time.Duration `mapstructure:"aiTimeout"`
+	AIMaxInputChars         int           `mapstructure:"aiMaxInputChars" validate:"omitempty,min=1000,max=500000"`
+	AIClassificationModel   string        `mapstructure:"aiClassificationModel"`
+	AIExtractionModel       string        `mapstructure:"aiExtractionModel"`
+	AIMaxRetries            int           `mapstructure:"aiMaxRetries" validate:"omitempty,min=0,max=10"`
+	EnableOCRPreprocessing  bool          `mapstructure:"enableOCRPreprocessing"`
+	OCRPreprocessingMode    string        `mapstructure:"ocrPreprocessingMode"`
+	OCRMaxImageDimension    int           `mapstructure:"ocrMaxImageDimension" validate:"omitempty,min=512,max=12000"`
+	MaxOCRPages             int           `mapstructure:"maxOCRPages"        validate:"omitempty,min=1,max=500"`
+	MaxExtractedChars       int           `mapstructure:"maxExtractedChars"  validate:"omitempty,min=1000,max=1000000"`
+	ReconcileBatchSize      int           `mapstructure:"reconcileBatchSize" validate:"omitempty,min=1,max=1000"`
+	MaxConcurrentActivities int           `mapstructure:"maxConcurrentActivities" validate:"omitempty,min=1,max=64"`
+}
+
+func (c *DocumentIntelligenceConfig) GetOCRCommand() string {
+	if c.OCRCommand == "" {
+		return "tesseract"
+	}
+	return c.OCRCommand
+}
+
+func (c *DocumentIntelligenceConfig) GetOCRLanguage() string {
+	if c.OCRLanguage == "" {
+		return "eng"
+	}
+	return c.OCRLanguage
+}
+
+func (c *DocumentIntelligenceConfig) GetOCRTimeout() time.Duration {
+	if c.OCRTimeout <= 0 {
+		return 45 * time.Second
+	}
+	return c.OCRTimeout
+}
+
+func (c *DocumentIntelligenceConfig) AIEnabled() bool {
+	return c.EnableAI
+}
+
+func (c *DocumentIntelligenceConfig) GetAITimeout() time.Duration {
+	if c.AITimeout <= 0 {
+		return 20 * time.Second
+	}
+	return c.AITimeout
+}
+
+func (c *DocumentIntelligenceConfig) GetAIMaxInputChars() int {
+	if c.AIMaxInputChars <= 0 {
+		return 24000
+	}
+	return c.AIMaxInputChars
+}
+
+func (c *DocumentIntelligenceConfig) GetAIClassificationModel() string {
+	if c.AIClassificationModel == "" {
+		return "gpt-5-nano-2025-08-07"
+	}
+	return c.AIClassificationModel
+}
+
+func (c *DocumentIntelligenceConfig) GetAIExtractionModel() string {
+	if c.AIExtractionModel == "" {
+		return "gpt-5-mini-2025-08-07"
+	}
+	return c.AIExtractionModel
+}
+
+func (c *DocumentIntelligenceConfig) GetAIMaxRetries() int {
+	if c.AIMaxRetries <= 0 {
+		return 2
+	}
+	return c.AIMaxRetries
+}
+
+func (c *DocumentIntelligenceConfig) OCRPreprocessingEnabled() bool {
+	return c.EnableOCRPreprocessing
+}
+
+func (c *DocumentIntelligenceConfig) GetOCRPreprocessingMode() string {
+	if c.OCRPreprocessingMode == "" {
+		return "standard"
+	}
+	return c.OCRPreprocessingMode
+}
+
+func (c *DocumentIntelligenceConfig) GetOCRMaxImageDimension() int {
+	if c.OCRMaxImageDimension <= 0 {
+		return 2400
+	}
+	return c.OCRMaxImageDimension
+}
+
+func (c *DocumentIntelligenceConfig) GetMaxOCRPages() int {
+	if c.MaxOCRPages <= 0 {
+		return 25
+	}
+	return c.MaxOCRPages
+}
+
+func (c *DocumentIntelligenceConfig) GetMaxConcurrentActivities() int {
+	if c.MaxConcurrentActivities <= 0 {
+		return 2
+	}
+	return c.MaxConcurrentActivities
+}
+
+func (c *DocumentIntelligenceConfig) GetMaxExtractedChars() int {
+	if c.MaxExtractedChars <= 0 {
+		return 200000
+	}
+	return c.MaxExtractedChars
+}
+
+func (c *DocumentIntelligenceConfig) GetReconcileBatchSize() int {
+	if c.ReconcileBatchSize <= 0 {
+		return 100
+	}
+	return c.ReconcileBatchSize
+}
+
 type MeilisearchConfig struct {
 	URL     string                 `mapstructure:"url" validate:"omitempty,url,no_trailing_slash"`
 	APIKey  string                 `mapstructure:"apiKey"`
@@ -481,21 +607,22 @@ type SystemConfig struct {
 }
 
 type Config struct {
-	App        AppConfig        `mapstructure:"app"        validate:"required"`
-	Database   DatabaseConfig   `mapstructure:"database"   validate:"required"`
-	Monitoring MonitoringConfig `mapstructure:"monitoring" validate:"required"`
-	Cache      CacheConfig      `mapstructure:"cache"      validate:"required"`
-	Search     SearchConfig     `mapstructure:"search"`
-	Server     ServerConfig     `mapstructure:"server"     validate:"required"`
-	Security   SecurityConfig   `mapstructure:"security"   validate:"required"`
-	Logging    LoggingConfig    `mapstructure:"logging"    validate:"required"`
-	Temporal   TemporalConfig   `mapstructure:"temporal"   validate:"required"`
-	Storage    StorageConfig    `mapstructure:"storage"    validate:"required"`
-	System     SystemConfig     `mapstructure:"system"     validate:"required"`
-	Audit      AuditConfig      `mapstructure:"audit"`
-	Update     UpdateConfig     `mapstructure:"update"`
-	Twilio     TwilioConfig     `mapstructure:"twilio"`
-	Ably       AblyConfig       `mapstructure:"ably"       validate:"required"`
+	App                  AppConfig                  `mapstructure:"app"        validate:"required"`
+	Database             DatabaseConfig             `mapstructure:"database"   validate:"required"`
+	Monitoring           MonitoringConfig           `mapstructure:"monitoring" validate:"required"`
+	Cache                CacheConfig                `mapstructure:"cache"      validate:"required"`
+	Server               ServerConfig               `mapstructure:"server"     validate:"required"`
+	Security             SecurityConfig             `mapstructure:"security"   validate:"required"`
+	Logging              LoggingConfig              `mapstructure:"logging"    validate:"required"`
+	Temporal             TemporalConfig             `mapstructure:"temporal"   validate:"required"`
+	Storage              StorageConfig              `mapstructure:"storage"    validate:"required"`
+	System               SystemConfig               `mapstructure:"system"     validate:"required"`
+	Ably                 AblyConfig                 `mapstructure:"ably"       validate:"required"`
+	Search               SearchConfig               `mapstructure:"search"`
+	DocumentIntelligence DocumentIntelligenceConfig `mapstructure:"documentIntelligence"`
+	Audit                AuditConfig                `mapstructure:"audit"`
+	Update               UpdateConfig               `mapstructure:"update"`
+	Twilio               TwilioConfig               `mapstructure:"twilio"`
 }
 
 func (c *Config) GetCacheConfig() *CacheConfig {
@@ -504,6 +631,10 @@ func (c *Config) GetCacheConfig() *CacheConfig {
 
 func (c *Config) GetSearchConfig() *SearchConfig {
 	return &c.Search
+}
+
+func (c *Config) GetDocumentIntelligenceConfig() *DocumentIntelligenceConfig {
+	return &c.DocumentIntelligence
 }
 
 func (c *Config) GetTemporalConfig() *TemporalConfig {

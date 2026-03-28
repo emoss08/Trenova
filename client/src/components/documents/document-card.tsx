@@ -1,9 +1,10 @@
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import type { Document } from "@/types/document";
-import { DownloadIcon, EyeIcon, Trash2Icon } from "lucide-react";
+import { BrainCircuitIcon, DownloadIcon, EyeIcon, Trash2Icon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { DocumentThumbnail } from "./document-thumbnail";
 
@@ -12,6 +13,7 @@ interface DocumentCardProps {
   onPreview?: (document: Document) => void;
   onDownload?: (document: Document) => void;
   onDelete?: (document: Document) => void;
+  onInspect?: (document: Document) => void;
   isDeleting?: boolean;
   className?: string;
   isSelected?: boolean;
@@ -40,6 +42,7 @@ export function DocumentCard({
   onPreview,
   onDownload,
   onDelete,
+  onInspect,
   isDeleting = false,
   className,
   isSelected = false,
@@ -51,12 +54,12 @@ export function DocumentCard({
   const canPreview = isImage || document.fileType === "application/pdf";
 
   useEffect(() => {
-    if (!document.previewStoragePath) {
+    if (document.previewStatus !== "Ready" || !document.previewStoragePath) {
       return;
     }
 
     void apiService.documentService.getPreviewUrl(document.id).then(setPreviewUrl);
-  }, [document.id, document.previewStoragePath]);
+  }, [document.id, document.previewStatus, document.previewStoragePath]);
 
   const handleCheckboxChange = () => {
     if (onSelect) {
@@ -92,6 +95,7 @@ export function DocumentCard({
       <DocumentThumbnail
         fileType={document.fileType}
         fileName={document.originalName}
+        previewStatus={document.previewStatus}
         previewUrl={previewUrl ?? undefined}
         size="md"
       />
@@ -107,6 +111,28 @@ export function DocumentCard({
           {formatFileSize(document.fileSize)} • {formatDate(document.createdAt)}
           {documentTypeName && <> • {documentTypeName}</>}
         </p>
+        <div className="mt-1 flex flex-wrap gap-1">
+          {document.detectedKind && document.detectedKind !== "Other" && (
+            <Badge variant="info" className="h-5 px-1.5 py-0 text-[10px]">
+              {document.detectedKind}
+            </Badge>
+          )}
+          {document.contentStatus === "Extracting" && (
+            <Badge variant="warning" className="h-5 px-1.5 py-0 text-[10px]">
+              Extracting text
+            </Badge>
+          )}
+          {document.contentStatus === "Failed" && (
+            <Badge variant="outline" className="h-5 px-1.5 py-0 text-[10px]">
+              Extraction failed
+            </Badge>
+          )}
+          {document.shipmentDraftStatus === "Ready" && (
+            <Badge variant="teal" className="h-5 px-1.5 py-0 text-[10px]">
+              Shipment draft ready
+            </Badge>
+          )}
+        </div>
       </div>
 
       <div className="flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
@@ -128,6 +154,16 @@ export function DocumentCard({
             aria-label="Download document"
           >
             <DownloadIcon className="size-4" />
+          </Button>
+        )}
+        {onInspect && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={() => onInspect(document)}
+            aria-label="Inspect document intelligence"
+          >
+            <BrainCircuitIcon className="size-4" />
           </Button>
         )}
         {onDelete && (

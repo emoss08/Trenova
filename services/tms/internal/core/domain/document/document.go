@@ -2,6 +2,7 @@ package document
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/pkg/domaintypes"
@@ -16,6 +17,9 @@ var (
 )
 
 type Status string
+type PreviewStatus string
+type ContentStatus string
+type ShipmentDraftStatus string
 
 const (
 	StatusDraft           Status = "Draft"
@@ -25,6 +29,28 @@ const (
 	StatusPending         Status = "Pending"
 	StatusRejected        Status = "Rejected"
 	StatusPendingApproval Status = "PendingApproval"
+)
+
+const (
+	PreviewStatusPending     PreviewStatus = "Pending"
+	PreviewStatusReady       PreviewStatus = "Ready"
+	PreviewStatusFailed      PreviewStatus = "Failed"
+	PreviewStatusUnsupported PreviewStatus = "Unsupported"
+)
+
+const (
+	ContentStatusPending    ContentStatus = "Pending"
+	ContentStatusExtracting ContentStatus = "Extracting"
+	ContentStatusExtracted  ContentStatus = "Extracted"
+	ContentStatusIndexed    ContentStatus = "Indexed"
+	ContentStatusFailed     ContentStatus = "Failed"
+)
+
+const (
+	ShipmentDraftStatusUnavailable ShipmentDraftStatus = "Unavailable"
+	ShipmentDraftStatusPending     ShipmentDraftStatus = "Pending"
+	ShipmentDraftStatusReady       ShipmentDraftStatus = "Ready"
+	ShipmentDraftStatusFailed      ShipmentDraftStatus = "Failed"
 )
 
 func (s Status) String() string {
@@ -45,34 +71,79 @@ func (s Status) IsValid() bool {
 	return false
 }
 
+func (s PreviewStatus) IsValid() bool {
+	switch s {
+	case PreviewStatusPending,
+		PreviewStatusReady,
+		PreviewStatusFailed,
+		PreviewStatusUnsupported:
+		return true
+	}
+	return false
+}
+
+func (s ContentStatus) IsValid() bool {
+	switch s {
+	case ContentStatusPending,
+		ContentStatusExtracting,
+		ContentStatusExtracted,
+		ContentStatusIndexed,
+		ContentStatusFailed:
+		return true
+	}
+	return false
+}
+
+func (s ShipmentDraftStatus) IsValid() bool {
+	switch s {
+	case ShipmentDraftStatusUnavailable,
+		ShipmentDraftStatusPending,
+		ShipmentDraftStatusReady,
+		ShipmentDraftStatusFailed:
+		return true
+	}
+	return false
+}
+
+func SupportsPreview(fileType string) bool {
+	fileType = strings.ToLower(fileType)
+	return strings.HasPrefix(fileType, "image/") || fileType == "application/pdf"
+}
+
 type Document struct {
 	bun.BaseModel `bun:"table:documents,alias:doc" json:"-"`
 
-	ID                 pulid.ID  `json:"id"                 bun:"id,type:VARCHAR(100),pk,notnull"`
-	OrganizationID     pulid.ID  `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),notnull,pk"`
-	BusinessUnitID     pulid.ID  `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
-	FileName           string    `json:"fileName"           bun:"file_name,type:VARCHAR(255),notnull"`
-	OriginalName       string    `json:"originalName"       bun:"original_name,type:VARCHAR(255),notnull"`
-	FileSize           int64     `json:"fileSize"           bun:"file_size,type:BIGINT,notnull"`
-	FileType           string    `json:"fileType"           bun:"file_type,type:VARCHAR(100),notnull"`
-	StoragePath        string    `json:"storagePath"        bun:"storage_path,type:VARCHAR(500),notnull"`
-	Status             Status    `json:"status"             bun:"status,type:document_status_enum,notnull,default:'Active'"`
-	Description        string    `json:"description"        bun:"description,type:TEXT,nullzero"`
-	ResourceID         string    `json:"resourceId"         bun:"resource_id,type:VARCHAR(100),notnull"`
-	ResourceType       string    `json:"resourceType"       bun:"resource_type,type:VARCHAR(100),notnull"`
-	ExpirationDate     *int64    `json:"expirationDate"     bun:"expiration_date,type:BIGINT,nullzero"`
-	Tags               []string  `json:"tags"               bun:"tags,type:VARCHAR(100)[],default:'{}'"`
-	IsPublic           bool      `json:"isPublic"           bun:"is_public,type:BOOLEAN,notnull,default:false"`
-	UploadedByID       pulid.ID  `json:"uploadedById"       bun:"uploaded_by_id,type:VARCHAR(100),notnull"`
-	ApprovedByID       pulid.ID  `json:"approvedById"       bun:"approved_by_id,type:VARCHAR(100),nullzero"`
-	ApprovedAt         *int64    `json:"approvedAt"         bun:"approved_at,type:BIGINT,nullzero"`
-	PreviewStoragePath string    `json:"previewStoragePath" bun:"preview_storage_path,type:VARCHAR(500),nullzero"`
-	DocumentTypeID     *pulid.ID `json:"documentTypeId"     bun:"document_type_id,type:VARCHAR(100),nullzero"`
-	SearchVector       string    `json:"-"                  bun:"search_vector,type:TSVECTOR,scanonly"`
-	Rank               string    `json:"-"                  bun:"rank,type:VARCHAR(100),scanonly"`
-	Version            int64     `json:"version"            bun:"version,type:BIGINT"`
-	CreatedAt          int64     `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
-	UpdatedAt          int64     `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	ID                  pulid.ID            `json:"id"                 bun:"id,type:VARCHAR(100),pk,notnull"`
+	OrganizationID      pulid.ID            `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),notnull,pk"`
+	BusinessUnitID      pulid.ID            `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
+	FileName            string              `json:"fileName"           bun:"file_name,type:VARCHAR(255),notnull"`
+	OriginalName        string              `json:"originalName"       bun:"original_name,type:VARCHAR(255),notnull"`
+	FileSize            int64               `json:"fileSize"           bun:"file_size,type:BIGINT,notnull"`
+	FileType            string              `json:"fileType"           bun:"file_type,type:VARCHAR(100),notnull"`
+	StoragePath         string              `json:"storagePath"        bun:"storage_path,type:VARCHAR(500),notnull"`
+	Status              Status              `json:"status"             bun:"status,type:document_status_enum,notnull,default:'Active'"`
+	Description         string              `json:"description"        bun:"description,type:TEXT,nullzero"`
+	ResourceID          string              `json:"resourceId"         bun:"resource_id,type:VARCHAR(100),notnull"`
+	ResourceType        string              `json:"resourceType"       bun:"resource_type,type:VARCHAR(100),notnull"`
+	ExpirationDate      *int64              `json:"expirationDate"     bun:"expiration_date,type:BIGINT,nullzero"`
+	Tags                []string            `json:"tags"               bun:"tags,type:VARCHAR(100)[],default:'{}'"`
+	IsPublic            bool                `json:"isPublic"           bun:"is_public,type:BOOLEAN,notnull,default:false"`
+	UploadedByID        pulid.ID            `json:"uploadedById"       bun:"uploaded_by_id,type:VARCHAR(100),notnull"`
+	ApprovedByID        pulid.ID            `json:"approvedById"       bun:"approved_by_id,type:VARCHAR(100),nullzero"`
+	ApprovedAt          *int64              `json:"approvedAt"         bun:"approved_at,type:BIGINT,nullzero"`
+	PreviewStoragePath  string              `json:"previewStoragePath" bun:"preview_storage_path,type:VARCHAR(500),nullzero"`
+	PreviewStatus       PreviewStatus       `json:"previewStatus"      bun:"preview_status,type:document_preview_status_enum,notnull,nullzero,default:'Unsupported'"`
+	ContentStatus       ContentStatus       `json:"contentStatus"      bun:"content_status,type:document_content_status_enum,notnull,nullzero,default:'Pending'"`
+	ContentError        string              `json:"contentError"       bun:"content_error,type:TEXT,nullzero"`
+	DetectedKind        string              `json:"detectedKind"       bun:"detected_kind,type:VARCHAR(100),nullzero"`
+	HasExtractedText    bool                `json:"hasExtractedText"   bun:"has_extracted_text,type:BOOLEAN,notnull,default:false"`
+	ShipmentDraftStatus ShipmentDraftStatus `json:"shipmentDraftStatus" bun:"shipment_draft_status,type:document_shipment_draft_status_enum,notnull,nullzero,default:'Unavailable'"`
+	DocumentTypeID      *pulid.ID           `json:"documentTypeId"     bun:"document_type_id,type:VARCHAR(100),nullzero"`
+	SearchVector        string              `json:"-"                  bun:"search_vector,type:TSVECTOR,scanonly"`
+	Rank                string              `json:"-"                  bun:"rank,type:VARCHAR(100),scanonly"`
+	Version             int64               `json:"version"            bun:"version,type:BIGINT"`
+	CreatedAt           int64               `json:"createdAt"          bun:"created_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
+	UpdatedAt           int64               `json:"updatedAt"          bun:"updated_at,type:BIGINT,notnull,default:extract(epoch from current_timestamp)::bigint"`
 
 	BusinessUnit *tenant.BusinessUnit `json:"businessUnit,omitempty" bun:"rel:belongs-to,join:business_unit_id=id"`
 	Organization *tenant.Organization `json:"organization,omitempty" bun:"rel:belongs-to,join:organization_id=id"`
@@ -85,6 +156,22 @@ func (d *Document) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	case *bun.InsertQuery:
 		if d.ID.IsNil() {
 			d.ID = pulid.MustNew("doc_")
+		}
+		if d.PreviewStatus == "" {
+			switch {
+			case d.PreviewStoragePath != "":
+				d.PreviewStatus = PreviewStatusReady
+			case SupportsPreview(d.FileType):
+				d.PreviewStatus = PreviewStatusPending
+			default:
+				d.PreviewStatus = PreviewStatusUnsupported
+			}
+		}
+		if d.ContentStatus == "" {
+			d.ContentStatus = ContentStatusPending
+		}
+		if d.ShipmentDraftStatus == "" {
+			d.ShipmentDraftStatus = ShipmentDraftStatusUnavailable
 		}
 		d.CreatedAt = now
 		d.UpdatedAt = now

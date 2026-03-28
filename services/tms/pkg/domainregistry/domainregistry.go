@@ -2,8 +2,10 @@ package domainregistry
 
 import (
 	"github.com/emoss08/trenova/internal/core/domain/accessorialcharge"
+	"github.com/emoss08/trenova/internal/core/domain/ailog"
 	"github.com/emoss08/trenova/internal/core/domain/audit"
 	"github.com/emoss08/trenova/internal/core/domain/customer"
+	"github.com/emoss08/trenova/internal/core/domain/dispatchcontrol"
 	"github.com/emoss08/trenova/internal/core/domain/distanceoverride"
 	"github.com/emoss08/trenova/internal/core/domain/equipmentcontinuity"
 	"github.com/emoss08/trenova/internal/core/domain/fleetcode"
@@ -20,6 +22,11 @@ func RegisterEntities() []any {
 		&usstate.UsState{},
 		&tenant.BusinessUnit{},
 		&formulatemplate.FormulaTemplate{},
+		&tenant.DocumentControl{},
+		&ailog.Log{},
+		&dispatchcontrol.DispatchControl{},
+		&tenant.BillingControl{},
+		&tenant.ShipmentControl{},
 		&fleetcode.FleetCode{},
 		&trailer.Trailer{},
 		&equipmentcontinuity.EquipmentContinuity{},

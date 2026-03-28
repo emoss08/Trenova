@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"slices"
 	"strings"
 	"time"
 
@@ -25,7 +26,9 @@ type Params struct {
 
 type Client struct {
 	client       *minio.Client
+	core         *minio.Core
 	publicClient *minio.Client
+	publicCore   *minio.Core
 	bucket       string
 	l            *zap.Logger
 }
@@ -47,7 +50,13 @@ func New(p Params) (storage.Client, error) {
 		return nil, fmt.Errorf("failed to create minio client: %w", err)
 	}
 
+	minioCore, err := minio.NewCore(cfg.Endpoint, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create minio core client: %w", err)
+	}
+
 	var publicClient *minio.Client
+	var publicCore *minio.Core
 	if cfg.PublicEndpoint != "" {
 		publicEndpoint, publicUseSSL := parsePublicEndpoint(cfg.PublicEndpoint)
 		publicOpts := &minio.Options{
@@ -61,11 +70,18 @@ func New(p Params) (storage.Client, error) {
 		if err != nil {
 			return nil, fmt.Errorf("failed to create public minio client: %w", err)
 		}
+
+		publicCore, err = minio.NewCore(publicEndpoint, publicOpts)
+		if err != nil {
+			return nil, fmt.Errorf("failed to create public minio core client: %w", err)
+		}
 	}
 
 	client := &Client{
 		client:       minioClient,
+		core:         minioCore,
 		publicClient: publicClient,
+		publicCore:   publicCore,
 		bucket:       cfg.Bucket,
 		l:            p.Logger.Named("infrastructure.minio"),
 	}
@@ -194,6 +210,125 @@ func (c *Client) GetPresignedURL(
 	}
 
 	return presignedURL.String(), nil
+}
+
+func (c *Client) GetPresignedUploadURL(
+	ctx context.Context,
+	params *storage.PresignedUploadURLParams,
+) (string, error) {
+	client := c.client
+	if c.publicClient != nil {
+		client = c.publicClient
+	}
+
+	u, err := client.PresignedPutObject(ctx, c.bucket, params.Key, params.Expiry)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate upload URL: %w", err)
+	}
+
+	return u.String(), nil
+}
+
+func (c *Client) InitiateMultipartUpload(
+	ctx context.Context,
+	params *storage.MultipartUploadParams,
+) (string, error) {
+	opts := minio.PutObjectOptions{
+		ContentType: params.ContentType,
+	}
+	if len(params.Metadata) > 0 {
+		opts.UserMetadata = params.Metadata
+	}
+
+	uploadID, err := c.core.NewMultipartUpload(ctx, c.bucket, params.Key, opts)
+	if err != nil {
+		return "", fmt.Errorf("failed to initiate multipart upload: %w", err)
+	}
+
+	return uploadID, nil
+}
+
+func (c *Client) GetMultipartUploadPartURL(
+	ctx context.Context,
+	params *storage.MultipartUploadPartURLParams,
+) (string, error) {
+	reqParams := make(url.Values)
+	reqParams.Set("partNumber", fmt.Sprintf("%d", params.PartNumber))
+	reqParams.Set("uploadId", params.UploadID)
+
+	client := c.client
+	if c.publicClient != nil {
+		client = c.publicClient
+	}
+
+	u, err := client.Presign(ctx, http.MethodPut, c.bucket, params.Key, params.Expiry, reqParams)
+	if err != nil {
+		return "", fmt.Errorf("failed to generate multipart part upload URL: %w", err)
+	}
+
+	return u.String(), nil
+}
+
+func (c *Client) CompleteMultipartUpload(
+	ctx context.Context,
+	params *storage.CompleteMultipartUploadParams,
+) error {
+	parts := make([]minio.CompletePart, 0, len(params.Parts))
+	for _, part := range params.Parts {
+		parts = append(parts, minio.CompletePart{
+			PartNumber: part.PartNumber,
+			ETag:       strings.Trim(part.ETag, "\""),
+		})
+	}
+
+	slices.SortFunc(parts, func(a, b minio.CompletePart) int {
+		return a.PartNumber - b.PartNumber
+	})
+
+	if _, err := c.core.CompleteMultipartUpload(
+		ctx,
+		c.bucket,
+		params.Key,
+		params.UploadID,
+		parts,
+		minio.PutObjectOptions{},
+	); err != nil {
+		return fmt.Errorf("failed to complete multipart upload: %w", err)
+	}
+
+	return nil
+}
+
+func (c *Client) AbortMultipartUpload(
+	ctx context.Context,
+	params *storage.AbortMultipartUploadParams,
+) error {
+	if err := c.core.AbortMultipartUpload(ctx, c.bucket, params.Key, params.UploadID); err != nil {
+		return fmt.Errorf("failed to abort multipart upload: %w", err)
+	}
+
+	return nil
+}
+
+func (c *Client) ListMultipartUploadParts(
+	ctx context.Context,
+	params *storage.ListMultipartUploadPartsParams,
+) ([]storage.UploadedPart, error) {
+	result, err := c.core.ListObjectParts(ctx, c.bucket, params.Key, params.UploadID, 0, 10000)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list multipart upload parts: %w", err)
+	}
+
+	parts := make([]storage.UploadedPart, 0, len(result.ObjectParts))
+	for _, part := range result.ObjectParts {
+		parts = append(parts, storage.UploadedPart{
+			PartNumber: part.PartNumber,
+			ETag:       part.ETag,
+			Size:       part.Size,
+		})
+	}
+
+	return parts, nil
 }
 
 func (c *Client) Exists(ctx context.Context, key string) (bool, error) {

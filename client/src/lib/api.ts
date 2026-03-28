@@ -224,6 +224,65 @@ function uploadWithProgress<T>(
   });
 }
 
+function putFileWithProgress(
+  url: string,
+  file: Blob,
+  onProgress?: (percent: number) => void,
+  signal?: AbortSignal,
+  contentType?: string,
+): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+
+    if (signal) {
+      signal.addEventListener("abort", () => {
+        xhr.abort();
+        reject(new DOMException("Upload aborted", "AbortError"));
+      });
+    }
+
+    xhr.upload.addEventListener("progress", (event) => {
+      if (event.lengthComputable && onProgress) {
+        const percent = Math.round((event.loaded / event.total) * 100);
+        onProgress(percent);
+      }
+    });
+
+    xhr.addEventListener("load", () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        resolve();
+        return;
+      }
+
+      reject(
+        new ApiRequestError(xhr.status, {
+          type: "internal-error",
+          title: "Upload failed",
+          detail: `HTTP ${xhr.status}`,
+          status: xhr.status,
+        }),
+      );
+    });
+
+    xhr.addEventListener("error", () => {
+      reject(
+        new ApiRequestError(0, {
+          type: "internal-error",
+          title: "Network error",
+          detail: "Failed to connect to upload target",
+          status: 0,
+        }),
+      );
+    });
+
+    xhr.open("PUT", url);
+    if (contentType) {
+      xhr.setRequestHeader("Content-Type", contentType);
+    }
+    xhr.send(file);
+  });
+}
+
 export const api = {
   get: async <T>(endpoint: string, options?: RequestInit) =>
     request<T>(endpoint, { ...options, method: "GET" }),
@@ -261,4 +320,12 @@ export const api = {
     onProgress?: (percent: number) => void,
     signal?: AbortSignal,
   ) => uploadWithProgress<T>(endpoint, formData, onProgress, signal),
+
+  putFileWithProgress: (
+    url: string,
+    file: Blob,
+    onProgress?: (percent: number) => void,
+    signal?: AbortSignal,
+    contentType?: string,
+  ) => putFileWithProgress(url, file, onProgress, signal, contentType),
 };

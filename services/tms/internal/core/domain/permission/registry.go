@@ -746,6 +746,34 @@ func (r *Registry) registerComplianceResources() {
 		Operations:         standardOps,
 		DefaultSensitivity: SensitivityInternal,
 	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceDocument.String(),
+		DisplayName:        "Document",
+		Description:        "Uploaded document records and intelligence output",
+		Category:           "Compliance",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceDocumentType.String(),
+		DisplayName:        "Document Type",
+		Description:        "Document type configuration and classification targets",
+		Category:           "Compliance",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityInternal,
+	})
+
+	_ = r.Register(&ResourceDefinition{
+		Resource:           ResourceDocumentControl.String(),
+		DisplayName:        "Document Control",
+		Description:        "Document intelligence and OCR settings",
+		Category:           "Compliance",
+		Operations:         standardOps,
+		DefaultSensitivity: SensitivityInternal,
+	})
+
 }
 
 func (r *Registry) registerReferenceDataResources() {

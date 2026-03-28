@@ -20,8 +20,12 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/datatransformer"
 	"github.com/emoss08/trenova/internal/core/services/dispatchcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/distanceoverrideservice"
+	"github.com/emoss08/trenova/internal/core/services/documentcontrolservice"
+	"github.com/emoss08/trenova/internal/core/services/documentintelligenceservice"
+	"github.com/emoss08/trenova/internal/core/services/documentsearchprojectionservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
 	"github.com/emoss08/trenova/internal/core/services/dothazmatreferenceservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmentmanufacturerservice"
 	"github.com/emoss08/trenova/internal/core/services/equipmenttypeservice"
@@ -36,6 +40,8 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/holdreasonservice"
 	"github.com/emoss08/trenova/internal/core/services/locationcategoryservice"
 	"github.com/emoss08/trenova/internal/core/services/locationservice"
+	"github.com/emoss08/trenova/internal/core/services/notificationservice"
+	"github.com/emoss08/trenova/internal/core/services/openaidocumentservice"
 	"github.com/emoss08/trenova/internal/core/services/organizationservice"
 	"github.com/emoss08/trenova/internal/core/services/pagefavoriteservice"
 	"github.com/emoss08/trenova/internal/core/services/permission"
@@ -51,6 +57,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/shipmentmoveservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmentservice"
 	"github.com/emoss08/trenova/internal/core/services/shipmenttypeservice"
+	"github.com/emoss08/trenova/internal/core/services/tablechangealertservice"
 	"github.com/emoss08/trenova/internal/core/services/tableconfigurationservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/services/tractorservice"
@@ -92,7 +99,10 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	realtimeservice.New,
 	globalsearchservice.New,
 	thumbnailservice.NewGenerator,
+	documentintelligenceservice.New,
+	documentsearchprojectionservice.New,
 	documentservice.New,
+	documentuploadservice.New,
 	accessorialchargeservice.New,
 	assignmentservice.New,
 	versionservice.New,
@@ -122,9 +132,14 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	billingcontrolservice.New,
 	dataentrycontrolservice.New,
 	dispatchcontrolservice.New,
+	documentcontrolservice.New,
 	workerptoservice.New,
 	distanceoverrideservice.New,
 	apikeyservice.New,
+	notificationservice.New,
+	openaidocumentservice.New,
+	tablechangealertservice.New,
+	tablechangealertservice.NewConsumer,
 	fx.Annotate(
 		apikeyservice.NewUsageBufferWithLifecycle,
 		fx.As(new(services.UsageRecorder)),
