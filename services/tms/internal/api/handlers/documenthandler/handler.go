@@ -107,6 +107,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.getContent,
 	)
 	api.GET(
+		"/:documentID/versions/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.listVersions,
+	)
+	api.POST(
+		"/:documentID/restore/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
+		h.restoreVersion,
+	)
+	api.GET(
 		"/:documentID/shipment-draft/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
 		h.getShipmentDraft,
@@ -155,6 +165,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/resource/:resourceType/:resourceID/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
 		h.getByResource,
+	)
+	api.GET(
+		"/resource/:resourceType/:resourceID/packet-summary/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpRead),
+		h.getPacketSummary,
 	)
 }
 
@@ -236,6 +251,46 @@ func (h *Handler) get(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, entity)
+}
+
+func (h *Handler) listVersions(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	versions, err := h.service.ListVersions(c.Request.Context(), id, pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, versions)
+}
+
+func (h *Handler) restoreVersion(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	id, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	doc, err := h.service.RestoreVersion(c.Request.Context(), id, pagination.TenantInfo{
+		OrgID: authCtx.OrganizationID,
+		BuID:  authCtx.BusinessUnitID,
+	}, authCtx.UserID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, doc)
 }
 
 // @Summary Get a document download URL
@@ -361,6 +416,7 @@ type uploadRequest struct {
 	Description    string   `form:"description"`
 	Tags           []string `form:"tags"`
 	DocumentTypeID string   `form:"documentTypeId"`
+	LineageID      string   `form:"lineageId"`
 }
 
 type createUploadSessionRequest struct {
@@ -372,6 +428,7 @@ type createUploadSessionRequest struct {
 	Description    string   `json:"description"`
 	Tags           []string `json:"tags"`
 	DocumentTypeID string   `json:"documentTypeId"`
+	LineageID      string   `json:"lineageId"`
 }
 
 type uploadPartURLsRequest struct {
@@ -425,6 +482,7 @@ func (h *Handler) upload(c *gin.Context) {
 			Description:    req.Description,
 			Tags:           req.Tags,
 			DocumentTypeID: req.DocumentTypeID,
+			LineageID:      req.LineageID,
 		},
 	)
 	if err != nil {
@@ -458,6 +516,7 @@ func (h *Handler) createUploadSession(c *gin.Context) {
 		Description:    req.Description,
 		Tags:           req.Tags,
 		DocumentTypeID: req.DocumentTypeID,
+		LineageID:      req.LineageID,
 	})
 	if err != nil {
 		h.eh.HandleError(c, err)
@@ -590,6 +649,7 @@ func (h *Handler) cancelUploadSession(c *gin.Context) {
 type bulkUploadRequest struct {
 	ResourceID   string `form:"resourceId"   binding:"required"`
 	ResourceType string `form:"resourceType" binding:"required"`
+	LineageID    string `form:"lineageId"`
 }
 
 // @Summary Bulk upload documents
@@ -639,6 +699,7 @@ func (h *Handler) uploadBulk(c *gin.Context) {
 			Files:        files,
 			ResourceID:   req.ResourceID,
 			ResourceType: req.ResourceType,
+			LineageID:    req.LineageID,
 		},
 	)
 	if err != nil {
@@ -807,6 +868,26 @@ func (h *Handler) getByResource(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, documents)
+}
+
+func (h *Handler) getPacketSummary(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	summary, err := h.service.GetPacketSummary(
+		c.Request.Context(),
+		c.Param("resourceType"),
+		c.Param("resourceID"),
+		pagination.TenantInfo{
+			OrgID: authCtx.OrganizationID,
+			BuID:  authCtx.BusinessUnitID,
+		},
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, summary)
 }
 
 func (h *Handler) getContent(c *gin.Context) {

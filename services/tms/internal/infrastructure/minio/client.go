@@ -133,6 +133,7 @@ func (c *Client) Upload(
 		ContentType:  params.ContentType,
 		LastModified: time.Now(),
 		Metadata:     params.Metadata,
+		VersionID:    info.VersionID,
 	}, nil
 }
 
@@ -362,6 +363,7 @@ func (c *Client) GetFileInfo(ctx context.Context, key string) (*storage.FileInfo
 		ContentType:  stat.ContentType,
 		LastModified: stat.LastModified,
 		Metadata:     stat.UserMetadata,
+		VersionID:    stat.VersionID,
 	}, nil
 }
 

@@ -45,11 +45,19 @@ export const documentSchema = z.object({
   id: z.string(),
   organizationId: z.string(),
   businessUnitId: z.string(),
+  lineageId: z.string(),
+  versionNumber: z.number(),
+  isCurrentVersion: z.boolean(),
   fileName: z.string(),
   originalName: z.string(),
   fileSize: z.number(),
   fileType: z.string(),
   storagePath: z.string(),
+  checksumSha256: z.string().nullable().optional(),
+  storageVersionId: z.string().nullable().optional(),
+  storageRetentionMode: z.string().nullable().optional(),
+  storageRetentionUntil: z.number().nullable().optional(),
+  storageLegalHold: z.boolean().optional(),
   status: documentStatusSchema,
   description: z.string().nullable().optional(),
   resourceId: z.string(),
@@ -248,6 +256,7 @@ export const documentUploadSessionSchema = z.object({
   organizationId: z.string(),
   businessUnitId: z.string(),
   documentId: z.string().nullable().optional(),
+  lineageId: z.string().nullable().optional(),
   resourceId: z.string(),
   resourceType: z.string(),
   documentTypeId: z.string().nullable().optional(),
@@ -320,6 +329,52 @@ export type DocumentStructuredData = z.infer<
 >;
 export type DocumentShipmentDraft = z.infer<typeof documentShipmentDraftSchema>;
 
+export const documentPacketItemStatusSchema = z.enum([
+  "Missing",
+  "Complete",
+  "ExpiringSoon",
+  "Expired",
+  "NeedsReview",
+]);
+
+export const documentPacketStatusSchema = z.enum([
+  "Complete",
+  "Incomplete",
+  "ExpiringSoon",
+  "Expired",
+  "NeedsReview",
+]);
+
+export const documentPacketItemSchema = z.object({
+  documentTypeId: z.string(),
+  documentTypeCode: z.string(),
+  documentTypeName: z.string(),
+  required: z.boolean(),
+  allowMultiple: z.boolean(),
+  displayOrder: z.number(),
+  expirationRequired: z.boolean(),
+  expirationWarningDays: z.number(),
+  status: documentPacketItemStatusSchema,
+  documentCount: z.number(),
+  currentDocumentIds: z.array(z.string()),
+});
+
+export const documentPacketSummarySchema = z.object({
+  resourceId: z.string(),
+  resourceType: z.string(),
+  status: documentPacketStatusSchema,
+  totalRules: z.number(),
+  satisfiedRules: z.number(),
+  missingRequired: z.number(),
+  expiringSoon: z.number(),
+  expired: z.number(),
+  needsReview: z.number(),
+  items: z.array(documentPacketItemSchema),
+});
+
+export type DocumentPacketSummary = z.infer<typeof documentPacketSummarySchema>;
+export type DocumentPacketItem = z.infer<typeof documentPacketItemSchema>;
+
 export interface UploadDocumentParams {
   file: File;
   resourceId: string;
@@ -327,12 +382,14 @@ export interface UploadDocumentParams {
   description?: string;
   tags?: string[];
   documentTypeId?: string;
+  lineageId?: string;
 }
 
 export interface BulkUploadDocumentParams {
   files: File[];
   resourceId: string;
   resourceType: string;
+  lineageId?: string;
 }
 
 export interface CreateDocumentUploadSessionParams {
@@ -344,4 +401,5 @@ export interface CreateDocumentUploadSessionParams {
   description?: string;
   tags?: string[];
   documentTypeId?: string;
+  lineageId?: string;
 }

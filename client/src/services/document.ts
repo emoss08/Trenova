@@ -6,6 +6,7 @@ import {
   type BulkUploadDocumentResponse,
   type Document,
   type DocumentContent,
+  type DocumentPacketSummary,
   type DocumentShipmentDraft,
   type DocumentUploadPartTarget,
   type DocumentUploadSession,
@@ -14,6 +15,7 @@ import {
   type UploadDocumentParams,
   bulkUploadDocumentResponseSchema,
   documentContentSchema,
+  documentPacketSummarySchema,
   documentSchema,
   documentShipmentDraftSchema,
   documentUploadPartTargetSchema,
@@ -42,6 +44,10 @@ export class DocumentService {
       formData.append("documentTypeId", params.documentTypeId);
     }
 
+    if (params.lineageId) {
+      formData.append("lineageId", params.lineageId);
+    }
+
     const response = await api.upload<Document>("/documents/upload/", formData);
     return safeParse(documentSchema, response, "Document");
   }
@@ -52,6 +58,9 @@ export class DocumentService {
     const formData = new FormData();
     formData.append("resourceId", params.resourceId);
     formData.append("resourceType", params.resourceType);
+    if (params.lineageId) {
+      formData.append("lineageId", params.lineageId);
+    }
 
     params.files.forEach((file) => formData.append("files", file));
 
@@ -148,6 +157,26 @@ export class DocumentService {
 
   public async reextract(documentId: string): Promise<void> {
     await api.post(`/documents/${documentId}/shipment-draft/reextract/`);
+  }
+
+  public async getVersions(documentId: string): Promise<Document[]> {
+    const response = await api.get<Document[]>(`/documents/${documentId}/versions/`);
+    return safeParse(z.array(documentSchema), response, "Document Versions");
+  }
+
+  public async restoreVersion(documentId: string): Promise<Document> {
+    const response = await api.post<Document>(`/documents/${documentId}/restore/`);
+    return safeParse(documentSchema, response, "Document");
+  }
+
+  public async getPacketSummary(
+    resourceType: string,
+    resourceId: string,
+  ): Promise<DocumentPacketSummary> {
+    const response = await api.get<DocumentPacketSummary>(
+      `/documents/resource/${resourceType}/${resourceId}/packet-summary/`,
+    );
+    return safeParse(documentPacketSummarySchema, response, "Document Packet Summary");
   }
 
   public async getById(documentId: string): Promise<Document> {

@@ -22,6 +22,11 @@ type GetDocumentTypeByCodeRequest struct {
 	TenantInfo pagination.TenantInfo `json:"-"`
 }
 
+type GetDocumentTypeByNameRequest struct {
+	Name       string                `json:"name" form:"name"`
+	TenantInfo pagination.TenantInfo `json:"-"`
+}
+
 type DocumentTypeRepository interface {
 	List(
 		ctx context.Context,
@@ -34,6 +39,10 @@ type DocumentTypeRepository interface {
 	GetByCode(
 		ctx context.Context,
 		req GetDocumentTypeByCodeRequest,
+	) (*documenttype.DocumentType, error)
+	GetByName(
+		ctx context.Context,
+		req GetDocumentTypeByNameRequest,
 	) (*documenttype.DocumentType, error)
 	Create(
 		ctx context.Context,

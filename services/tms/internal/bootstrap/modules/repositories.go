@@ -21,6 +21,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/distanceoverriderepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentcontentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentcontrolrepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentpacketrulerepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentsearchprojectionrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/documentshipmentdraftrepository"
@@ -93,6 +94,7 @@ var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	datarententionrepository.New,
 	dispatchcontrolrepository.New,
 	documentcontrolrepository.New,
+	documentpacketrulerepository.New,
 	rolerepository.New,
 	roleassignmentrepository.New,
 	usstaterepository.New,

@@ -116,11 +116,19 @@ type Document struct {
 	ID                  pulid.ID            `json:"id"                 bun:"id,type:VARCHAR(100),pk,notnull"`
 	OrganizationID      pulid.ID            `json:"organizationId"     bun:"organization_id,type:VARCHAR(100),notnull,pk"`
 	BusinessUnitID      pulid.ID            `json:"businessUnitId"     bun:"business_unit_id,type:VARCHAR(100),notnull,pk"`
+	LineageID           pulid.ID            `json:"lineageId"          bun:"lineage_id,type:VARCHAR(100),notnull"`
+	VersionNumber       int64               `json:"versionNumber"      bun:"version_number,type:BIGINT,notnull,default:1"`
+	IsCurrentVersion    bool                `json:"isCurrentVersion"   bun:"is_current_version,type:BOOLEAN,notnull,default:true"`
 	FileName            string              `json:"fileName"           bun:"file_name,type:VARCHAR(255),notnull"`
 	OriginalName        string              `json:"originalName"       bun:"original_name,type:VARCHAR(255),notnull"`
 	FileSize            int64               `json:"fileSize"           bun:"file_size,type:BIGINT,notnull"`
 	FileType            string              `json:"fileType"           bun:"file_type,type:VARCHAR(100),notnull"`
 	StoragePath         string              `json:"storagePath"        bun:"storage_path,type:VARCHAR(500),notnull"`
+	ChecksumSHA256      string              `json:"checksumSha256"     bun:"checksum_sha256,type:VARCHAR(64),nullzero"`
+	StorageVersionID    string              `json:"storageVersionId"   bun:"storage_version_id,type:VARCHAR(255),nullzero"`
+	StorageRetentionMode string             `json:"storageRetentionMode" bun:"storage_retention_mode,type:VARCHAR(50),nullzero"`
+	StorageRetentionUntil *int64            `json:"storageRetentionUntil" bun:"storage_retention_until,type:BIGINT,nullzero"`
+	StorageLegalHold    bool                `json:"storageLegalHold"   bun:"storage_legal_hold,type:BOOLEAN,notnull,default:false"`
 	Status              Status              `json:"status"             bun:"status,type:document_status_enum,notnull,default:'Active'"`
 	Description         string              `json:"description"        bun:"description,type:TEXT,nullzero"`
 	ResourceID          string              `json:"resourceId"         bun:"resource_id,type:VARCHAR(100),notnull"`
@@ -156,6 +164,12 @@ func (d *Document) BeforeAppendModel(_ context.Context, query bun.Query) error {
 	case *bun.InsertQuery:
 		if d.ID.IsNil() {
 			d.ID = pulid.MustNew("doc_")
+		}
+		if d.LineageID.IsNil() {
+			d.LineageID = d.ID
+		}
+		if d.VersionNumber == 0 {
+			d.VersionNumber = 1
 		}
 		if d.PreviewStatus == "" {
 			switch {

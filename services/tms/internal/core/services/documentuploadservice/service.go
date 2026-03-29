@@ -79,6 +79,7 @@ type CreateSessionRequest struct {
 	Description    string
 	Tags           []string
 	DocumentTypeID string
+	LineageID      string
 }
 
 type PartRequest struct {
@@ -148,6 +149,14 @@ func (s *Service) CreateSession(
 		LastActivityAt: time.Now().Unix(),
 	}
 	session.Tags = append(session.Tags, req.Tags...)
+
+	if strings.TrimSpace(req.LineageID) != "" {
+		lineageID, err := pulid.MustParse(req.LineageID)
+		if err != nil {
+			return nil, errortypes.NewValidationError("lineageId", errortypes.ErrInvalid, "Invalid lineage ID")
+		}
+		session.LineageID = &lineageID
+	}
 
 	if req.DocumentTypeID != "" {
 		docTypeID, err := pulid.MustParse(req.DocumentTypeID)

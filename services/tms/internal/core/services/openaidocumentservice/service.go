@@ -354,7 +354,7 @@ func (s *Service) recordAIUsage(operation string, success bool, outcome string) 
 
 func buildRoutePrompt(req *serviceports.AIRouteRequest) string {
 	var b strings.Builder
-	b.WriteString("Classify this transportation document into one of: RateConfirmation, BillOfLading, ProofOfDelivery, Invoice, Other.\n")
+	b.WriteString("Classify this transportation document into one of: RateConfirmation, BillOfLading, ProofOfDelivery, Other.\n")
 	b.WriteString("Use the extracted text, feature summary, and any provider fingerprint hint. Return strict JSON only.\n")
 	b.WriteString("Set shouldExtract=true only when the documentKind is RateConfirmation and the evidence is strong enough for structured extraction.\n")
 	b.WriteString("Filename: " + strings.TrimSpace(req.FileName) + "\n")

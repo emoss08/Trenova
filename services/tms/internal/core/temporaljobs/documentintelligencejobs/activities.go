@@ -804,7 +804,6 @@ func classifyDocumentWithFeatures(
 		scoreRateConfirmation(corpus, features, fingerprint),
 		scoreBillOfLading(corpus, features, fingerprint),
 		scoreProofOfDelivery(corpus, features, fingerprint),
-		scoreInvoice(corpus, features, fingerprint),
 	}
 
 	best := classificationResult{
@@ -1481,8 +1480,6 @@ func normalizeRoutedKind(kind string) string {
 		return "BillOfLading"
 	case "proofofdelivery", "proof_of_delivery":
 		return "ProofOfDelivery"
-	case "invoice":
-		return "Invoice"
 	default:
 		return "Other"
 	}
@@ -1629,7 +1626,21 @@ func (a *Activities) associateDocumentType(
 	})
 	if err == nil {
 		doc.DocumentTypeID = &existing.ID
-		a.metrics.Document.RecordTypeAssociation("associated_existing", kind)
+		a.metrics.Document.RecordTypeAssociation("associated_existing_code", kind)
+		return nil
+	}
+	if !errortypes.IsNotFoundError(err) {
+		a.metrics.Document.RecordTypeAssociation("lookup_failed", kind)
+		return err
+	}
+
+	existing, err = a.documentTypeRepo.GetByName(ctx, repositories.GetDocumentTypeByNameRequest{
+		Name:       inferred.Name,
+		TenantInfo: tenantInfo,
+	})
+	if err == nil {
+		doc.DocumentTypeID = &existing.ID
+		a.metrics.Document.RecordTypeAssociation("associated_existing_name", kind)
 		return nil
 	}
 	if !errortypes.IsNotFoundError(err) {
@@ -1656,6 +1667,20 @@ func (a *Activities) associateDocumentType(
 	if createErr != nil {
 		existing, err = a.documentTypeRepo.GetByCode(ctx, repositories.GetDocumentTypeByCodeRequest{
 			Code:       inferred.Code,
+			TenantInfo: tenantInfo,
+		})
+		if err == nil {
+			doc.DocumentTypeID = &existing.ID
+			a.metrics.Document.RecordTypeAssociation("associated_after_conflict", kind)
+			return nil
+		}
+		if !errortypes.IsNotFoundError(err) {
+			a.metrics.Document.RecordTypeAssociation("create_failed", kind)
+			return createErr
+		}
+
+		existing, err = a.documentTypeRepo.GetByName(ctx, repositories.GetDocumentTypeByNameRequest{
+			Name:       inferred.Name,
 			TenantInfo: tenantInfo,
 		})
 		if err != nil {
@@ -1685,6 +1710,8 @@ func (a *Activities) getDocumentControl(
 var (
 	rateRegex         = regexp.MustCompile(`(?im)^(?:rate|freight charge|line haul|amount due|total)\s*[:#-]\s*([$]?[0-9,]+(?:\.[0-9]{2})?)$`)
 	referenceRegex    = regexp.MustCompile(`(?im)^(?:load|reference|order|confirmation|pro|bol|invoice)(?:\s+(?:number|#))?\s*[:#-]\s*([A-Za-z0-9-]+)$`)
+	bolReferenceRegex = regexp.MustCompile(`(?im)^(?:bill of lading|bol|b\/l|pro|reference|order|load)(?:\s+(?:number|#|no\.?))\s*[:#-]?\s*([A-Za-z0-9-]+)$`)
+	podReferenceRegex = regexp.MustCompile(`(?im)^(?:pod|pro|reference|order|load)(?:\s+(?:number|#|no\.?))\s*[:#-]?\s*([A-Za-z0-9-]+)$`)
 	pickupRegex       = regexp.MustCompile(`(?im)^(pickup|ship)(?:\s+(?:date|window|location|address))?\s*[:\-]\s*(.+)$`)
 	deliveryRegex     = regexp.MustCompile(`(?im)^(delivery|drop)(?:\s+(?:date|window|location|address))?\s*[:\-]\s*(.+)$`)
 	shipperRegex      = regexp.MustCompile(`(?im)^shipper(?:\s+name)?\s*[:\-]\s*(.+)$`)
@@ -1692,6 +1719,7 @@ var (
 	commodityRegex    = regexp.MustCompile(`(?im)^(commodity|product|description)\s*[:\-]\s*(.+)$`)
 	equipmentRegex    = regexp.MustCompile(`(?i)\b(van|reefer|flatbed|step deck|power only|hotshot|conestoga|dry van)\b`)
 	weightRegex       = regexp.MustCompile(`(?i)([0-9,]+)\s*(lbs|pounds)`)
+	pieceCountRegex   = regexp.MustCompile(`(?im)^(?:pieces?|piece count|total pieces|packages?|package count|units?|cartons?)\s*[:#-]?\s*([0-9,]+)\b`)
 	instructionsRegex = regexp.MustCompile(`(?im)^(instructions|notes|special instructions)\s*[:\-]\s*(.+)$`)
 	invoiceDateRegex  = regexp.MustCompile(`(?im)^invoice date\s*[:\-]\s*(.+)$`)
 	dueDateRegex      = regexp.MustCompile(`(?im)^due date\s*[:\-]\s*(.+)$`)
@@ -1745,16 +1773,23 @@ func analyzeDocument(
 		analysis.Conflicts = append(analysis.Conflicts, collectFieldConflicts(analysis.Fields)...)
 		analysis.Conflicts = append(analysis.Conflicts, collectStopConflicts(analysis.Stops)...)
 	case "BillOfLading":
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "shipper", "Shipper", shipperRegex, extracted.Pages, 0.92)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "consignee", "Consignee", consigneeRegex, extracted.Pages, 0.92)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "commodity", "Commodity", commodityRegex, extracted.Pages, 0.85)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "referenceNumber", "BOL / Reference Number", referenceRegex, extracted.Pages, 0.82)
+		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "shipper", "Shipper", extracted.Pages, []string{"ship from", "shipper", "shipper name", "shipper information"}, 0.93, "shipper", false, extractEntityNameFromSection)
+		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "consignee", "Consignee", extracted.Pages, []string{"ship to", "consignee", "receiver", "delivery to"}, 0.93, "consignee", false, extractEntityNameFromSection)
+		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "commodity", "Commodity", extracted.Pages, []string{"commodity", "description", "product", "articles"}, 0.86, "commodity", false, extractCommodityFromSection)
+		addRegexValueFieldFromPages(analysis.Fields, &analysis.Signals, "referenceNumber", "BOL / Reference Number", bolReferenceRegex, extracted.Pages, 0.85, "reference number", false)
+		addRegexValueFieldFromPages(analysis.Fields, &analysis.Signals, "pieceCount", "Pieces / Packages", pieceCountRegex, extracted.Pages, 0.76, "piece count", true)
 		addWeightFieldFromPages(analysis.Fields, &analysis.Signals, extracted.Pages, "weight")
+		analysis.Conflicts = append(analysis.Conflicts, collectFieldConflicts(analysis.Fields)...)
 	case "ProofOfDelivery":
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "consignee", "Consignee", consigneeRegex, extracted.Pages, 0.9)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "deliveryWindow", "Delivery", deliveryRegex, extracted.Pages, 0.88)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "signature", "Signature", signatureRegex, extracted.Pages, 0.76)
-		addFieldFromPages(analysis.Fields, &analysis.Signals, "referenceNumber", "Reference Number", referenceRegex, extracted.Pages, 0.8)
+		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "consignee", "Consignee", extracted.Pages, []string{"consignee", "receiver name", "delivery to", "delivered to", "received by"}, 0.91, "consignee", false, extractEntityNameFromSection)
+		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "deliveryWindow", "Delivery", extracted.Pages, []string{"delivery date", "delivered on", "received on", "date delivered"}, 0.89, "delivery", false, extractDeliveryFieldFromSection)
+		if _, ok := analysis.Fields["deliveryWindow"]; !ok {
+			addFieldFromPages(analysis.Fields, &analysis.Signals, "deliveryWindow", "Delivery", deliveryRegex, extracted.Pages, 0.86)
+		}
+		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "signature", "Signature", extracted.Pages, []string{"receiver signature", "consignee signature", "signature", "received by", "signed by"}, 0.82, "signature", false, extractSignatureFromSection)
+		addRegexValueFieldFromPages(analysis.Fields, &analysis.Signals, "referenceNumber", "Reference Number", podReferenceRegex, extracted.Pages, 0.82, "reference number", false)
+		addFieldFromSectionLabels(analysis.Fields, &analysis.Signals, "receiptNotes", "Receipt Notes", extracted.Pages, []string{"remarks", "exceptions", "received in good order", "delivery status"}, 0.72, "receipt notes", true, extractFreeformSectionValue)
+		analysis.Conflicts = append(analysis.Conflicts, collectFieldConflicts(analysis.Fields)...)
 	case "Invoice":
 		addFieldFromPages(analysis.Fields, &analysis.Signals, "referenceNumber", "Invoice Number", referenceRegex, extracted.Pages, 0.84)
 		addFieldFromPages(analysis.Fields, &analysis.Signals, "invoiceDate", "Invoice Date", invoiceDateRegex, extracted.Pages, 0.88)
@@ -1797,6 +1832,24 @@ func analyzeDocument(
 			hasStopRole(analysis.Stops, "pickup") &&
 			hasStopRole(analysis.Stops, "delivery") &&
 			!hasReviewRequiredStop(analysis.Stops) {
+			analysis.ReviewStatus = "Ready"
+		}
+		return analysis
+	}
+
+	if classification.Kind == "BillOfLading" {
+		if analysis.OverallConfidence >= 0.82 && len(analysis.MissingFields) == 0 && len(analysis.Conflicts) == 0 {
+			analysis.ReviewStatus = "Ready"
+		}
+		return analysis
+	}
+
+	if classification.Kind == "ProofOfDelivery" {
+		if analysis.OverallConfidence >= 0.82 &&
+			len(analysis.MissingFields) == 0 &&
+			len(analysis.Conflicts) == 0 &&
+			!analysis.Fields["deliveryWindow"].ReviewRequired &&
+			!analysis.Fields["signature"].ReviewRequired {
 			analysis.ReviewStatus = "Ready"
 		}
 		return analysis
@@ -2139,6 +2192,251 @@ func addStopTimingField(
 	if signals != nil {
 		*signals = append(*signals, strings.ToLower(label))
 	}
+}
+
+type pageSectionMatch struct {
+	PageNumber int
+	Value      string
+	Excerpt    string
+}
+
+func addFieldFromSectionLabels(
+	fields map[string]reviewField,
+	signals *[]string,
+	key, label string,
+	pages []pageExtractionResult,
+	labels []string,
+	confidence float64,
+	signal string,
+	reviewRequired bool,
+	extractor func(string, []string) string,
+) {
+	matches := findSectionMatches(pages, labels, extractor)
+	if len(matches) == 0 {
+		return
+	}
+
+	selected := matches[0]
+	conflict := false
+	normalizedSelected := normalizeSectionValue(selected.Value)
+	for _, match := range matches[1:] {
+		if normalizeSectionValue(match.Value) != normalizedSelected {
+			conflict = true
+			break
+		}
+	}
+
+	fields[key] = reviewField{
+		Label:           label,
+		Value:           selected.Value,
+		Confidence:      pageAdjustedConfidence(confidence, selected.PageNumber, pages),
+		Excerpt:         selected.Excerpt,
+		EvidenceExcerpt: selected.Excerpt,
+		PageNumber:      selected.PageNumber,
+		ReviewRequired:  reviewRequired || conflict || normalizeSectionValue(selected.Value) == "",
+		Conflict:        conflict,
+		Source:          "deterministic",
+	}
+	if signals != nil && signal != "" {
+		*signals = append(*signals, signal)
+	}
+}
+
+func findSectionMatches(
+	pages []pageExtractionResult,
+	labels []string,
+	extractor func(string, []string) string,
+) []pageSectionMatch {
+	matches := make([]pageSectionMatch, 0)
+	for _, page := range pages {
+		lines := splitNormalizedLines(page.Text)
+		for idx, line := range lines {
+			if !matchesSectionLabel(line, labels) {
+				continue
+			}
+			block := collectSectionBlock(lines, idx)
+			value := strings.TrimSpace(extractor(line, block))
+			if value == "" {
+				continue
+			}
+			matches = append(matches, pageSectionMatch{
+				PageNumber: page.PageNumber,
+				Value:      value,
+				Excerpt:    strings.Join(block, "\n"),
+			})
+		}
+	}
+	return dedupeSectionMatches(matches)
+}
+
+func matchesSectionLabel(line string, labels []string) bool {
+	normalized := normalizeSectionLabel(line)
+	for _, label := range labels {
+		want := normalizeSectionLabel(label)
+		if normalized == want || strings.HasPrefix(normalized, want+" ") {
+			return true
+		}
+	}
+	return false
+}
+
+func normalizeSectionLabel(value string) string {
+	lower := strings.ToLower(strings.TrimSpace(value))
+	lower = strings.TrimSuffix(lower, ":")
+	lower = strings.ReplaceAll(lower, "-", " ")
+	lower = strings.ReplaceAll(lower, "_", " ")
+	lower = strings.Join(strings.Fields(lower), " ")
+	return lower
+}
+
+func normalizeSectionValue(value string) string {
+	return strings.ToLower(strings.Join(strings.Fields(strings.TrimSpace(value)), " "))
+}
+
+func collectSectionBlock(lines []string, idx int) []string {
+	end := idx + 6
+	if end > len(lines) {
+		end = len(lines)
+	}
+
+	block := make([]string, 0, end-idx)
+	for pos := idx; pos < end; pos++ {
+		line := strings.TrimSpace(lines[pos])
+		if pos > idx && line == "" {
+			break
+		}
+		if pos > idx && isLikelyBoundaryLine(line) {
+			break
+		}
+		block = append(block, line)
+	}
+	return block
+}
+
+func isLikelyBoundaryLine(line string) bool {
+	if line == "" {
+		return false
+	}
+	normalized := normalizeSectionLabel(line)
+	boundaries := []string{
+		"ship from", "ship to", "shipper", "consignee", "receiver", "delivery to", "delivered to",
+		"pickup", "delivery", "received by", "signed by", "receiver signature", "consignee signature",
+		"bill of lading", "bol", "reference", "load", "pro", "commodity", "description", "weight",
+		"pieces", "packages", "remarks", "exceptions", "carrier", "invoice", "bill to",
+	}
+	for _, boundary := range boundaries {
+		if normalized == boundary || strings.HasPrefix(normalized, boundary+" ") {
+			return true
+		}
+	}
+	return false
+}
+
+func extractEntityNameFromSection(header string, block []string) string {
+	if value := extractSectionHeaderValue(header); value != "" && !looksLikeAddress(value) && !cityStateZipRegex.MatchString(value) {
+		return value
+	}
+	for _, line := range block[1:] {
+		switch {
+		case line == "":
+			continue
+		case looksLikeAddress(line):
+			continue
+		case cityStateZipRegex.MatchString(line):
+			continue
+		case dateValueRegex.MatchString(line):
+			continue
+		case strings.Contains(strings.ToLower(line), "signature"):
+			continue
+		default:
+			return line
+		}
+	}
+	if len(block) > 1 {
+		return strings.TrimSpace(block[1])
+	}
+	return ""
+}
+
+func extractCommodityFromSection(header string, block []string) string {
+	if value := extractSectionHeaderValue(header); value != "" {
+		return value
+	}
+	for _, line := range block[1:] {
+		if line == "" || looksLikeAddress(line) || cityStateZipRegex.MatchString(line) {
+			continue
+		}
+		return line
+	}
+	return ""
+}
+
+func extractDeliveryFieldFromSection(header string, block []string) string {
+	candidates := append([]string{header}, block[1:]...)
+	for _, candidate := range candidates {
+		date := firstRegexValue(dateValueRegex, candidate)
+		window := firstRegexValue(timeWindowRegex, candidate)
+		value := strings.TrimSpace(strings.Join(filterNonEmpty(date, window), " "))
+		if value != "" {
+			return value
+		}
+	}
+	if value := extractSectionHeaderValue(header); value != "" {
+		return value
+	}
+	for _, line := range block[1:] {
+		if line != "" {
+			return line
+		}
+	}
+	return ""
+}
+
+func extractSignatureFromSection(header string, block []string) string {
+	if value := extractSectionHeaderValue(header); value != "" && !dateValueRegex.MatchString(value) {
+		return value
+	}
+	for _, line := range block[1:] {
+		if line == "" || dateValueRegex.MatchString(line) || strings.Contains(strings.ToLower(line), "date") {
+			continue
+		}
+		return line
+	}
+	return ""
+}
+
+func extractFreeformSectionValue(header string, block []string) string {
+	if value := extractSectionHeaderValue(header); value != "" {
+		return value
+	}
+	for _, line := range block[1:] {
+		if line != "" {
+			return line
+		}
+	}
+	return ""
+}
+
+func extractSectionHeaderValue(header string) string {
+	parts := strings.SplitN(header, ":", 2)
+	if len(parts) != 2 {
+		return ""
+	}
+	return strings.TrimSpace(parts[1])
+}
+
+func dedupeSectionMatches(matches []pageSectionMatch) []pageSectionMatch {
+	deduped := make([]pageSectionMatch, 0, len(matches))
+	seen := make(map[string]struct{}, len(matches))
+	for _, match := range matches {
+		key := normalizeSectionValue(match.Value) + "|" + strconv.Itoa(match.PageNumber)
+		if _, ok := seen[key]; ok {
+			continue
+		}
+		seen[key] = struct{}{}
+		deduped = append(deduped, match)
+	}
+	return deduped
 }
 
 func extractRateConfirmationStops(pages []pageExtractionResult) []intelligenceStop {

@@ -2,6 +2,7 @@ package documenttyperepository
 
 import (
 	"context"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/core/domain/documenttype"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
@@ -173,6 +174,34 @@ func (r *repository) GetByCode(
 		Scan(ctx)
 	if err != nil {
 		log.Error("failed to get document type by code", zap.Error(err))
+		return nil, dberror.HandleNotFoundError(err, "DocumentType")
+	}
+
+	return entity, nil
+}
+
+func (r *repository) GetByName(
+	ctx context.Context,
+	req repositories.GetDocumentTypeByNameRequest,
+) (*documenttype.DocumentType, error) {
+	log := r.l.With(
+		zap.String("operation", "GetByName"),
+		zap.String("name", req.Name),
+	)
+
+	entity := new(documenttype.DocumentType)
+	normalizedName := strings.TrimSpace(req.Name)
+	err := r.db.DB().
+		NewSelect().
+		Model(entity).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return sq.Where("lower(btrim(dt.name)) = lower(btrim(?))", normalizedName).
+				Where("dt.organization_id = ?", req.TenantInfo.OrgID).
+				Where("dt.business_unit_id = ?", req.TenantInfo.BuID)
+		}).
+		Scan(ctx)
+	if err != nil {
+		log.Error("failed to get document type by name", zap.Error(err))
 		return nil, dberror.HandleNotFoundError(err, "DocumentType")
 	}
 

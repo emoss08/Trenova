@@ -39,6 +39,7 @@ func (r *repository) filterQuery(
 	q *bun.SelectQuery,
 	req *repositories.ListDocumentsRequest,
 ) *bun.SelectQuery {
+	q = q.Where("doc.is_current_version = ?", true)
 	q = querybuilder.ApplyFilters(
 		q,
 		"doc",
@@ -132,6 +133,7 @@ func (r *repository) GetByResourceID(
 		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
 			return sq.Where("doc.resource_id = ?", req.ResourceID).
 				Where("doc.resource_type = ?", req.ResourceType).
+				Where("doc.is_current_version = ?", true).
 				Where("doc.organization_id = ?", req.TenantInfo.OrgID).
 				Where("doc.business_unit_id = ?", req.TenantInfo.BuID)
 		}).
@@ -158,6 +160,7 @@ func (r *repository) ListPendingPreviewReconciliation(
 	err := r.db.DBForContext(ctx).
 		NewSelect().
 		Model(&entities).
+		Where("doc.is_current_version = ?", true).
 		Where("doc.preview_status = ?", document.PreviewStatusPending).
 		Where("(doc.preview_storage_path IS NULL OR doc.preview_storage_path = '')").
 		Where("doc.updated_at <= ?", olderThan).
@@ -335,6 +338,25 @@ func (r *repository) GetByIDs(
 	return entities, nil
 }
 
+func (r *repository) ListVersions(
+	ctx context.Context,
+	req repositories.ListDocumentVersionsRequest,
+) ([]*document.Document, error) {
+	entities := make([]*document.Document, 0)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&entities).
+		Where("doc.lineage_id = ?", req.LineageID).
+		Where("doc.organization_id = ?", req.TenantInfo.OrgID).
+		Where("doc.business_unit_id = ?", req.TenantInfo.BuID).
+		Order("doc.version_number DESC, doc.created_at DESC").
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return entities, nil
+}
+
 func (r *repository) BulkDelete(
 	ctx context.Context,
 	req repositories.BulkDeleteDocumentRequest,
@@ -362,4 +384,58 @@ func (r *repository) BulkDelete(
 	log.Info("bulk deleted documents", zap.Int64("rowsAffected", rowsAffected))
 
 	return nil
+}
+
+func (r *repository) PromoteVersion(
+	ctx context.Context,
+	req *repositories.PromoteDocumentVersionRequest,
+) error {
+	db := r.db.DBForContext(ctx)
+
+	if _, err := db.NewUpdate().
+		Table("documents").
+		Set("is_current_version = false").
+		Set("updated_at = ?", timeutils.NowUnix()).
+		Set("version = version + 1").
+		Where("lineage_id = ?", req.LineageID).
+		Where("organization_id = ?", req.TenantInfo.OrgID).
+		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Where("is_current_version = ?", true).
+		Exec(ctx); err != nil {
+		return err
+	}
+
+	result, err := db.NewUpdate().
+		Table("documents").
+		Set("is_current_version = true").
+		Set("updated_at = ?", timeutils.NowUnix()).
+		Set("version = version + 1").
+		Where("id = ?", req.CurrentDocumentID).
+		Where("lineage_id = ?", req.LineageID).
+		Where("organization_id = ?", req.TenantInfo.OrgID).
+		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return dberror.CheckRowsAffected(result, "Document", req.CurrentDocumentID.String())
+}
+
+func (r *repository) DeleteByLineageIDs(
+	ctx context.Context,
+	req repositories.DeleteDocumentLineageRequest,
+) error {
+	if len(req.LineageIDs) == 0 {
+		return nil
+	}
+
+	_, err := r.db.DBForContext(ctx).
+		NewDelete().
+		Table("documents").
+		Where("lineage_id IN (?)", bun.In(req.LineageIDs)).
+		Where("organization_id = ?", req.TenantInfo.OrgID).
+		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Exec(ctx)
+	return err
 }

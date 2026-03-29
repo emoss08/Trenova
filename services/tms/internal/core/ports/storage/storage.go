@@ -74,6 +74,10 @@ type FileInfo struct {
 	ContentType  string
 	LastModified time.Time
 	Metadata     map[string]string
+	VersionID    string
+	RetentionMode string
+	RetentionUntil *time.Time
+	LegalHold    bool
 }
 
 type Client interface {

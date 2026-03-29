@@ -49,6 +49,22 @@ type UpdateDocumentIntelligenceRequest struct {
 	DocumentTypeID      *pulid.ID                    `json:"documentTypeId"`
 }
 
+type ListDocumentVersionsRequest struct {
+	LineageID   pulid.ID              `json:"lineageId"`
+	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type PromoteDocumentVersionRequest struct {
+	LineageID        pulid.ID              `json:"lineageId"`
+	CurrentDocumentID pulid.ID             `json:"currentDocumentId"`
+	TenantInfo       pagination.TenantInfo `json:"tenantInfo"`
+}
+
+type DeleteDocumentLineageRequest struct {
+	LineageIDs  []pulid.ID            `json:"lineageIds"`
+	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type BulkDeleteDocumentRequest struct {
 	IDs        []pulid.ID            `json:"ids"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -61,6 +77,7 @@ type DocumentRepository interface {
 	) (*pagination.ListResult[*document.Document], error)
 	GetByID(ctx context.Context, req GetDocumentByIDRequest) (*document.Document, error)
 	GetByIDs(ctx context.Context, req BulkDeleteDocumentRequest) ([]*document.Document, error)
+	ListVersions(ctx context.Context, req ListDocumentVersionsRequest) ([]*document.Document, error)
 	GetByResourceID(
 		ctx context.Context,
 		req *GetDocumentsByResourceRequest,
@@ -74,6 +91,8 @@ type DocumentRepository interface {
 	Update(ctx context.Context, entity *document.Document) (*document.Document, error)
 	UpdatePreview(ctx context.Context, req *UpdateDocumentPreviewRequest) error
 	UpdateIntelligence(ctx context.Context, req *UpdateDocumentIntelligenceRequest) error
+	PromoteVersion(ctx context.Context, req *PromoteDocumentVersionRequest) error
 	Delete(ctx context.Context, req DeleteDocumentRequest) error
 	BulkDelete(ctx context.Context, req BulkDeleteDocumentRequest) error
+	DeleteByLineageIDs(ctx context.Context, req DeleteDocumentLineageRequest) error
 }

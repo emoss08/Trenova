@@ -26,14 +26,17 @@ type mockDocRepo struct {
 	ListFn                             func(ctx context.Context, req *repositories.ListDocumentsRequest) (*pagination.ListResult[*document.Document], error)
 	GetByIDFn                          func(ctx context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error)
 	GetByIDsFn                         func(ctx context.Context, req repositories.BulkDeleteDocumentRequest) ([]*document.Document, error)
+	ListVersionsFn                     func(ctx context.Context, req repositories.ListDocumentVersionsRequest) ([]*document.Document, error)
 	GetByResFn                         func(ctx context.Context, req *repositories.GetDocumentsByResourceRequest) ([]*document.Document, error)
 	ListPendingPreviewReconciliationFn func(ctx context.Context, olderThan int64, limit int) ([]*document.Document, error)
 	CreateFn                           func(ctx context.Context, entity *document.Document) (*document.Document, error)
 	UpdateFn                           func(ctx context.Context, entity *document.Document) (*document.Document, error)
 	UpdatePreviewFn                    func(ctx context.Context, req *repositories.UpdateDocumentPreviewRequest) error
 	UpdateIntelligenceFn               func(ctx context.Context, req *repositories.UpdateDocumentIntelligenceRequest) error
+	PromoteVersionFn                   func(ctx context.Context, req *repositories.PromoteDocumentVersionRequest) error
 	DeleteFn                           func(ctx context.Context, req repositories.DeleteDocumentRequest) error
 	BulkDeleteFn                       func(ctx context.Context, req repositories.BulkDeleteDocumentRequest) error
+	DeleteByLineageIDsFn               func(ctx context.Context, req repositories.DeleteDocumentLineageRequest) error
 }
 
 func (m *mockDocRepo) List(
@@ -55,6 +58,16 @@ func (m *mockDocRepo) GetByIDs(
 	req repositories.BulkDeleteDocumentRequest,
 ) ([]*document.Document, error) {
 	return m.GetByIDsFn(ctx, req)
+}
+
+func (m *mockDocRepo) ListVersions(
+	ctx context.Context,
+	req repositories.ListDocumentVersionsRequest,
+) ([]*document.Document, error) {
+	if m.ListVersionsFn == nil {
+		return nil, nil
+	}
+	return m.ListVersionsFn(ctx, req)
 }
 
 func (m *mockDocRepo) GetByResourceID(
@@ -109,6 +122,16 @@ func (m *mockDocRepo) UpdateIntelligence(
 	return m.UpdateIntelligenceFn(ctx, req)
 }
 
+func (m *mockDocRepo) PromoteVersion(
+	ctx context.Context,
+	req *repositories.PromoteDocumentVersionRequest,
+) error {
+	if m.PromoteVersionFn == nil {
+		return nil
+	}
+	return m.PromoteVersionFn(ctx, req)
+}
+
 func (m *mockDocRepo) Delete(ctx context.Context, req repositories.DeleteDocumentRequest) error {
 	return m.DeleteFn(ctx, req)
 }
@@ -118,6 +141,16 @@ func (m *mockDocRepo) BulkDelete(
 	req repositories.BulkDeleteDocumentRequest,
 ) error {
 	return m.BulkDeleteFn(ctx, req)
+}
+
+func (m *mockDocRepo) DeleteByLineageIDs(
+	ctx context.Context,
+	req repositories.DeleteDocumentLineageRequest,
+) error {
+	if m.DeleteByLineageIDsFn == nil {
+		return nil
+	}
+	return m.DeleteByLineageIDsFn(ctx, req)
 }
 
 type mockStorageClient struct {

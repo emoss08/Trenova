@@ -305,7 +305,43 @@ func (a *Activities) ensureDocument(
 		})
 	}
 
+	var (
+		lineageID     pulid.ID
+		versionNumber int64 = 1
+		previousDoc   *document.Document
+	)
+
+	if session.LineageID != nil && !session.LineageID.IsNil() {
+		lineageID = *session.LineageID
+		versions, err := a.documentRepo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+			LineageID: lineageID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: session.OrganizationID,
+				BuID:  session.BusinessUnitID,
+			},
+		})
+		if err != nil {
+			return nil, err
+		}
+		for _, version := range versions {
+			if version.VersionNumber >= versionNumber {
+				versionNumber = version.VersionNumber + 1
+			}
+			if version.IsCurrentVersion {
+				previousDoc = version
+			}
+		}
+	}
+
+	fileInfo, err := a.storage.GetFileInfo(ctx, session.StoragePath)
+	if err != nil {
+		return nil, err
+	}
+
 	doc := &document.Document{
+		LineageID:          lineageID,
+		VersionNumber:      versionNumber,
+		IsCurrentVersion:   previousDoc == nil,
 		OrganizationID:     session.OrganizationID,
 		BusinessUnitID:     session.BusinessUnitID,
 		FileName:           filepath.Base(session.StoragePath),
@@ -313,6 +349,7 @@ func (a *Activities) ensureDocument(
 		FileSize:           session.FileSize,
 		FileType:           session.ContentType,
 		StoragePath:        session.StoragePath,
+		StorageVersionID:   fileInfo.VersionID,
 		Status:             document.StatusActive,
 		Description:        session.Description,
 		ResourceID:         session.ResourceID,
@@ -328,6 +365,26 @@ func (a *Activities) ensureDocument(
 	if err != nil {
 		return nil, err
 	}
+
+	if previousDoc != nil {
+		if err = a.documentRepo.PromoteVersion(ctx, &repositories.PromoteDocumentVersionRequest{
+			LineageID:        lineageID,
+			CurrentDocumentID: createdDoc.ID,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: session.OrganizationID,
+				BuID:  session.BusinessUnitID,
+			},
+		}); err != nil {
+			return nil, err
+		}
+		if a.searchProjection != nil {
+			_ = a.searchProjection.Delete(ctx, previousDoc.ID, pagination.TenantInfo{
+				OrgID: session.OrganizationID,
+				BuID:  session.BusinessUnitID,
+			})
+		}
+	}
+	createdDoc.IsCurrentVersion = true
 
 	_ = a.auditService.LogAction(&services.LogActionParams{
 		Resource:       permission.ResourceDocument,

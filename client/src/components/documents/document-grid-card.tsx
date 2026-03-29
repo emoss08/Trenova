@@ -8,6 +8,7 @@ import {
   BrainCircuitIcon,
   DownloadIcon,
   EyeIcon,
+  HistoryIcon,
   LoaderCircleIcon,
   Trash2Icon,
 } from "lucide-react";
@@ -21,6 +22,7 @@ interface DocumentGridCardProps {
   onDownload?: (document: Document) => void;
   onDelete?: (document: Document) => void;
   onInspect?: (document: Document) => void;
+  onVersions?: (document: Document) => void;
   isDeleting?: boolean;
   className?: string;
   isSelected?: boolean;
@@ -55,6 +57,7 @@ export function DocumentGridCard({
   onDownload,
   onDelete,
   onInspect,
+  onVersions,
   isDeleting = false,
   className,
   isSelected = false,
@@ -160,6 +163,11 @@ export function DocumentGridCard({
               {document.detectedKind}
             </Badge>
           )}
+          {document.versionNumber > 1 && (
+            <Badge variant="secondary" className="h-5 px-1.5 py-0 text-[10px]">
+              v{document.versionNumber}
+            </Badge>
+          )}
           {document.contentStatus === "Extracting" && (
             <Badge variant="warning" className="h-5 px-1.5 py-0 text-[10px]">
               Extracting
@@ -223,6 +231,16 @@ export function DocumentGridCard({
             aria-label="Inspect document intelligence"
           >
             <BrainCircuitIcon className="size-3.5" />
+          </Button>
+        )}
+        {onVersions && (
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            onClick={() => onVersions(document)}
+            aria-label="View document versions"
+          >
+            <HistoryIcon className="size-3.5" />
           </Button>
         )}
         {onDelete && (

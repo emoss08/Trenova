@@ -299,6 +299,7 @@ export function useDocumentUpload({
         fileSize: uploadState.file.size,
         contentType: uploadState.file.type || "application/octet-stream",
         documentTypeId: uploadState.metadata?.documentTypeId,
+        lineageId: uploadState.metadata?.lineageId,
       });
       sessionByUploadIdRef.current.set(uploadState.id, session);
       await syncSessionToStore(uploadState.id, uploadState.file);

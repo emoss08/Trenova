@@ -46,6 +46,7 @@ type Session struct {
 	OrganizationID          pulid.ID       `json:"organizationId"          bun:"organization_id,type:VARCHAR(100),pk,notnull"`
 	BusinessUnitID          pulid.ID       `json:"businessUnitId"          bun:"business_unit_id,type:VARCHAR(100),pk,notnull"`
 	DocumentID              *pulid.ID      `json:"documentId"              bun:"document_id,type:VARCHAR(100),nullzero"`
+	LineageID               *pulid.ID      `json:"lineageId"               bun:"lineage_id,type:VARCHAR(100),nullzero"`
 	ResourceID              string         `json:"resourceId"              bun:"resource_id,type:VARCHAR(100),notnull"`
 	ResourceType            string         `json:"resourceType"            bun:"resource_type,type:VARCHAR(100),notnull"`
 	DocumentTypeID          *pulid.ID      `json:"documentTypeId"          bun:"document_type_id,type:VARCHAR(100),nullzero"`

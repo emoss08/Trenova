@@ -43,6 +43,22 @@ THIS LOAD CONFIRMATION IS SUBJECT TO THE TERMS OF THE AGREEMENT`,
 	assert.Contains(t, result.Signals, "rate confirmation phrase")
 }
 
+func TestClassifyDocument_InvoiceLikeUploadFallsBackToOther(t *testing.T) {
+	t.Parallel()
+
+	result := classifyDocument(
+		"customer_invoice.pdf",
+		`INVOICE
+Invoice Number: INV-10239
+Invoice Date: 03/28/2026
+Due Date: 04/15/2026
+Amount Due: $1,240.00`,
+	)
+
+	assert.Equal(t, "Other", result.Kind)
+	assert.True(t, result.ReviewRequired)
+}
+
 func TestAnalyzeDocument_ReturnsCanonicalFieldsAndReviewState(t *testing.T) {
 	t.Parallel()
 
@@ -130,4 +146,138 @@ func TestAnalyzeDocument_FlagsConflictingRateConfirmationData(t *testing.T) {
 	assert.Equal(t, "NeedsReview", analysis.ReviewStatus)
 	assert.NotEmpty(t, analysis.Conflicts)
 	assert.True(t, analysis.Fields["rate"].Conflict)
+}
+
+func TestAnalyzeDocument_ExtractsBillOfLadingFieldsFromSectionBlocks(t *testing.T) {
+	t.Parallel()
+
+	text := `BILL OF LADING
+BOL #: BOL123456
+SHIP FROM
+ACME Foods
+123 Main St
+Dallas, TX 75001
+
+SHIP TO
+Blue Market
+500 Peachtree Rd
+Atlanta, GA 30301
+
+COMMODITY
+Frozen Produce
+Pieces: 18
+Weight: 42,000 lbs`
+
+	analysis := analyzeDocument(
+		classificationResult{
+			Kind:             "BillOfLading",
+			Confidence:       0.9,
+			Signals:          []string{"bill of lading"},
+			Source:           "deterministic",
+			Reason:           "header matched BOL",
+			ReviewRequired:   false,
+		},
+		&extractionResult{
+			Text: text,
+			Pages: []pageExtractionResult{{
+				PageNumber: 1,
+				SourceKind: "native_text",
+				Text:       text,
+			}},
+		},
+	)
+
+	assert.Equal(t, "BillOfLading", analysis.Kind)
+	assert.Equal(t, "Ready", analysis.ReviewStatus)
+	assert.Equal(t, "ACME Foods", analysis.Fields["shipper"].Value)
+	assert.Equal(t, "Blue Market", analysis.Fields["consignee"].Value)
+	assert.Equal(t, "BOL123456", analysis.Fields["referenceNumber"].Value)
+	assert.Equal(t, "Frozen Produce", analysis.Fields["commodity"].Value)
+	assert.Equal(t, "18", analysis.Fields["pieceCount"].Value)
+	assert.Equal(t, "42,000 lbs", analysis.Fields["weight"].Value)
+	assert.Empty(t, analysis.Conflicts)
+}
+
+func TestAnalyzeDocument_ExtractsProofOfDeliveryFieldsFromSectionBlocks(t *testing.T) {
+	t.Parallel()
+
+	text := `PROOF OF DELIVERY
+Reference #: POD99881
+DELIVERED TO
+Blue Market Receiving
+500 Peachtree Rd
+Atlanta, GA 30301
+
+DELIVERY DATE
+03/28/2026 01:15 PM
+
+RECEIVER SIGNATURE
+Jane Smith
+
+REMARKS
+Received in good order`
+
+	analysis := analyzeDocument(
+		classificationResult{
+			Kind:           "ProofOfDelivery",
+			Confidence:     0.9,
+			Signals:        []string{"proof of delivery"},
+			Source:         "deterministic",
+			Reason:         "header matched POD",
+			ReviewRequired: false,
+		},
+		&extractionResult{
+			Text: text,
+			Pages: []pageExtractionResult{{
+				PageNumber: 1,
+				SourceKind: "native_text",
+				Text:       text,
+			}},
+		},
+	)
+
+	assert.Equal(t, "ProofOfDelivery", analysis.Kind)
+	assert.Equal(t, "Ready", analysis.ReviewStatus)
+	assert.Equal(t, "Blue Market Receiving", analysis.Fields["consignee"].Value)
+	assert.Equal(t, "03/28/2026", analysis.Fields["deliveryWindow"].Value)
+	assert.Equal(t, "Jane Smith", analysis.Fields["signature"].Value)
+	assert.Equal(t, "POD99881", analysis.Fields["referenceNumber"].Value)
+	assert.Equal(t, "Received in good order", analysis.Fields["receiptNotes"].Value)
+	assert.Empty(t, analysis.MissingFields)
+}
+
+func TestAnalyzeDocument_ProofOfDeliveryMissingSignatureStaysNeedsReview(t *testing.T) {
+	t.Parallel()
+
+	text := `PROOF OF DELIVERY
+Reference #: POD99881
+DELIVERED TO
+Blue Market Receiving
+500 Peachtree Rd
+Atlanta, GA 30301
+
+DELIVERY DATE
+03/28/2026 01:15 PM`
+
+	analysis := analyzeDocument(
+		classificationResult{
+			Kind:           "ProofOfDelivery",
+			Confidence:     0.88,
+			Signals:        []string{"proof of delivery"},
+			Source:         "deterministic",
+			Reason:         "header matched POD",
+			ReviewRequired: false,
+		},
+		&extractionResult{
+			Text: text,
+			Pages: []pageExtractionResult{{
+				PageNumber: 1,
+				SourceKind: "native_text",
+				Text:       text,
+			}},
+		},
+	)
+
+	assert.Equal(t, "NeedsReview", analysis.ReviewStatus)
+	assert.Contains(t, analysis.MissingFields, "Signature")
 }

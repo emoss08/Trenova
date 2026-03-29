@@ -190,6 +190,7 @@ func (r *repository) SearchByResource(
 			AND dc.business_unit_id = doc.business_unit_id`).
 		Where("doc.organization_id = ?", req.TenantInfo.OrgID).
 		Where("doc.business_unit_id = ?", req.TenantInfo.BuID).
+		Where("doc.is_current_version = ?", true).
 		Where("doc.resource_id = ?", req.ResourceID).
 		Where("doc.resource_type = ?", req.ResourceType)
 

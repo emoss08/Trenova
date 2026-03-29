@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/distanceoverrideservice"
 	"github.com/emoss08/trenova/internal/core/services/documentcontrolservice"
 	"github.com/emoss08/trenova/internal/core/services/documentintelligenceservice"
+	"github.com/emoss08/trenova/internal/core/services/documentpacketruleservice"
 	"github.com/emoss08/trenova/internal/core/services/documentsearchprojectionservice"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/documenttypeservice"
@@ -133,6 +134,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	dataentrycontrolservice.New,
 	dispatchcontrolservice.New,
 	documentcontrolservice.New,
+	documentpacketruleservice.New,
 	workerptoservice.New,
 	distanceoverrideservice.New,
 	apikeyservice.New,

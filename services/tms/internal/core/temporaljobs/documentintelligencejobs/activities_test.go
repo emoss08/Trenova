@@ -257,6 +257,9 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 		GetByCode(mock.Anything, mock.Anything).
 		Return(nil, errortypes.NewNotFoundError("DocumentType not found"))
 	typeRepo.EXPECT().
+		GetByName(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("DocumentType not found"))
+	typeRepo.EXPECT().
 		Create(mock.Anything, mock.AnythingOfType("*documenttype.DocumentType")).
 		Return(&documenttype.DocumentType{ID: typeID}, nil)
 	draftRepo.EXPECT().
@@ -297,4 +300,109 @@ func TestProcessDocumentIntelligenceActivity_AutoCreatesAndAssociatesDocumentTyp
 	assert.Equal(t, document.ShipmentDraftStatusReady, docUpdates[1].ShipmentDraftStatus)
 	assert.Equal(t, documentshipmentdraft.StatusReady, draftWrites[0].Status)
 	require.NotNil(t, draftWrites[0].DraftData["stops"])
+}
+
+func TestProcessDocumentIntelligenceActivity_AssociatesExistingDocumentTypeByName(t *testing.T) {
+	t.Parallel()
+
+	docRepo := mocks.NewMockDocumentRepository(t)
+	controlRepo := mocks.NewMockDocumentControlRepository(t)
+	typeRepo := mocks.NewMockDocumentTypeRepository(t)
+	contentRepo := mocks.NewMockDocumentContentRepository(t)
+	draftRepo := mocks.NewMockDocumentShipmentDraftRepository(t)
+	searchProjection := mocks.NewMockDocumentSearchProjectionService(t)
+	storageClient := mocks.NewMockClient(t)
+
+	orgID := pulid.MustNew("org_")
+	buID := pulid.MustNew("bu_")
+	userID := pulid.MustNew("usr_")
+	docID := pulid.MustNew("doc_")
+	typeID := pulid.MustNew("dt_")
+
+	doc := &document.Document{
+		ID:             docID,
+		OrganizationID: orgID,
+		BusinessUnitID: buID,
+		OriginalName:   "bill-of-lading.txt",
+		FileType:       "text/plain",
+		StoragePath:    "documents/bill-of-lading.txt",
+		ResourceType:   "shipment",
+		ResourceID:     "shp_123",
+		ContentStatus:  document.ContentStatusPending,
+		UploadedByID:   userID,
+	}
+
+	control := tenant.NewDefaultDocumentControl(orgID, buID)
+	docUpdates := make([]repositories.UpdateDocumentIntelligenceRequest, 0, 2)
+	metricsRegistry := &metrics.Registry{Document: metrics.NewDocument(prometheus.NewRegistry(), zap.NewNop(), false)}
+
+	docRepo.EXPECT().
+		GetByID(mock.Anything, mock.Anything).
+		Return(doc, nil)
+	controlRepo.EXPECT().
+		GetOrCreate(mock.Anything, orgID, buID).
+		Return(control, nil)
+	contentRepo.EXPECT().
+		Upsert(mock.Anything, mock.AnythingOfType("*documentcontent.Content")).
+		RunAndReturn(func(_ context.Context, entity *documentcontent.Content) (*documentcontent.Content, error) {
+			if entity.ID.IsNil() {
+				entity.ID = pulid.MustNew("dc_")
+			}
+			return entity, nil
+		}).Twice()
+	contentRepo.EXPECT().
+		ReplacePages(mock.Anything, mock.AnythingOfType("*documentcontent.Content"), mock.AnythingOfType("[]*documentcontent.Page")).
+		Return(nil)
+	docRepo.EXPECT().
+		UpdateIntelligence(mock.Anything, mock.AnythingOfType("*repositories.UpdateDocumentIntelligenceRequest")).
+		RunAndReturn(func(_ context.Context, req *repositories.UpdateDocumentIntelligenceRequest) error {
+			docUpdates = append(docUpdates, *req)
+			return nil
+		}).Twice()
+	searchProjection.EXPECT().
+		Upsert(mock.Anything, mock.AnythingOfType("*document.Document"), mock.Anything).
+		Return(nil).Twice()
+	storageClient.EXPECT().
+		Download(mock.Anything, doc.StoragePath).
+		Return(&storage.DownloadResult{
+			Body: io.NopCloser(strings.NewReader("Bill of Lading\nShipper: ACME Foods\nConsignee: Blue Market\nCommodity: Produce\nBOL #: B12345")),
+		}, nil)
+	typeRepo.EXPECT().
+		GetByCode(mock.Anything, mock.Anything).
+		Return(nil, errortypes.NewNotFoundError("DocumentType not found"))
+	typeRepo.EXPECT().
+		GetByName(mock.Anything, mock.Anything).
+		Return(&documenttype.DocumentType{ID: typeID, Name: "Bill of Lading"}, nil)
+	draftRepo.EXPECT().
+		Upsert(mock.Anything, mock.AnythingOfType("*documentshipmentdraft.Draft")).
+		Return(&documentshipmentdraft.Draft{}, nil)
+
+	activities := &Activities{
+		logger:              zap.NewNop(),
+		cfg:                 &config.DocumentIntelligenceConfig{},
+		metrics:             metricsRegistry,
+		documentRepo:        docRepo,
+		documentControlRepo: controlRepo,
+		documentTypeRepo:    typeRepo,
+		contentRepo:         contentRepo,
+		draftRepo:           draftRepo,
+		searchProjection:    searchProjection,
+		storage:             storageClient,
+	}
+
+	result, err := activities.ProcessDocumentIntelligenceActivity(context.Background(), &ProcessDocumentIntelligencePayload{
+		DocumentID: docID,
+		BasePayload: temporaltype.BasePayload{
+			OrganizationID: orgID,
+			BusinessUnitID: buID,
+			UserID:         userID,
+		},
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, result)
+	require.Len(t, docUpdates, 2)
+	require.NotNil(t, docUpdates[1].DocumentTypeID)
+	assert.Equal(t, typeID, *docUpdates[1].DocumentTypeID)
+	assert.Equal(t, "BillOfLading", result.Kind)
 }

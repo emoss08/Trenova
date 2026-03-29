@@ -2,8 +2,10 @@ package documentservice
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io"
 	"mime/multipart"
 	"path/filepath"
 	"slices"
@@ -39,6 +41,8 @@ type Params struct {
 	Logger               *zap.Logger
 	DB                   ports.DBConnection
 	Repo                 repositories.DocumentRepository
+	PacketRuleRepo       repositories.DocumentPacketRuleRepository
+	DocumentTypeRepo     repositories.DocumentTypeRepository
 	CacheRepo            repositories.DocumentCacheRepository
 	SessionRepo          repositories.DocumentUploadSessionRepository
 	Storage              storage.Client
@@ -55,6 +59,8 @@ type Service struct {
 	l                    *zap.Logger
 	db                   ports.DBConnection
 	repo                 repositories.DocumentRepository
+	packetRuleRepo       repositories.DocumentPacketRuleRepository
+	documentTypeRepo     repositories.DocumentTypeRepository
 	cacheRepo            repositories.DocumentCacheRepository
 	sessionRepo          repositories.DocumentUploadSessionRepository
 	storage              storage.Client
@@ -73,6 +79,8 @@ func New(p Params) *Service {
 		l:                    p.Logger.Named("service.document"),
 		db:                   p.DB,
 		repo:                 p.Repo,
+		packetRuleRepo:       p.PacketRuleRepo,
+		documentTypeRepo:     p.DocumentTypeRepo,
 		cacheRepo:            p.CacheRepo,
 		sessionRepo:          p.SessionRepo,
 		storage:              p.Storage,
@@ -94,6 +102,7 @@ type UploadRequest struct {
 	Description    string
 	Tags           []string
 	DocumentTypeID string
+	LineageID      string
 }
 
 type UploadResult struct {
@@ -105,6 +114,7 @@ type BulkUploadRequest struct {
 	Files        []*multipart.FileHeader
 	ResourceID   string
 	ResourceType string
+	LineageID    string
 }
 
 type BulkUploadResult struct {
@@ -174,12 +184,31 @@ func (s *Service) Upload(
 		req.ResourceType,
 		req.File.Filename,
 	)
+	docID := pulid.MustNew("doc_")
+	lineageID := docID
+	var lineageInfo *document.Document
+	if strings.TrimSpace(req.LineageID) != "" {
+		parsedLineageID, parseErr := pulid.MustParse(req.LineageID)
+		if parseErr != nil {
+			return nil, errortypes.NewValidationError("lineageId", errortypes.ErrInvalid, "Invalid lineage ID")
+		}
+		lineageInfo, err = s.resolveLineageForUpload(ctx, parsedLineageID, req.TenantInfo)
+		if err != nil {
+			return nil, err
+		}
+		if lineageInfo.ResourceID != req.ResourceID || lineageInfo.ResourceType != req.ResourceType {
+			return nil, errortypes.NewConflictError("Document lineage does not belong to the selected resource")
+		}
+		lineageID = lineageInfo.LineageID
+	}
 
-	_, err = s.storage.Upload(ctx, &storage.UploadParams{
+	hasher := sha256.New()
+	tee := io.TeeReader(file, hasher)
+	fileInfo, err := s.storage.Upload(ctx, &storage.UploadParams{
 		Key:         storagePath,
 		ContentType: contentType,
 		Size:        req.File.Size,
-		Body:        file,
+		Body:        tee,
 		Metadata: map[string]string{
 			"original_name": req.File.Filename,
 			"resource_id":   req.ResourceID,
@@ -192,13 +221,19 @@ func (s *Service) Upload(
 	}
 
 	doc := &document.Document{
+		ID:                 docID,
 		OrganizationID:     req.TenantInfo.OrgID,
 		BusinessUnitID:     req.TenantInfo.BuID,
+		LineageID:          lineageID,
+		VersionNumber:      s.nextVersionNumber(lineageInfo),
+		IsCurrentVersion:   true,
 		FileName:           filepath.Base(storagePath),
 		OriginalName:       req.File.Filename,
 		FileSize:           req.File.Size,
 		FileType:           contentType,
 		StoragePath:        storagePath,
+		ChecksumSHA256:     fmt.Sprintf("%x", hasher.Sum(nil)),
+		StorageVersionID:   fileInfo.VersionID,
 		PreviewStoragePath: "",
 		Status:             document.StatusActive,
 		Description:        req.Description,
@@ -219,14 +254,16 @@ func (s *Service) Upload(
 		doc.DocumentTypeID = &docTypeID
 	}
 
-	createdDoc, err := s.repo.Create(ctx, doc)
-	if err != nil {
+	if err = s.makeCurrentDocumentVersion(ctx, doc, lineageInfo); err != nil {
 		log.Error("failed to create document record", zap.Error(err))
 		if delErr := s.storage.Delete(ctx, storagePath); delErr != nil {
 			log.Error("failed to cleanup storage after db failure", zap.Error(delErr))
 		}
 		return nil, err
 	}
+	doc.IsCurrentVersion = true
+
+	createdDoc := doc
 
 	if err = s.auditService.LogAction(&services.LogActionParams{
 		Resource:       permission.ResourceDocument,
@@ -238,6 +275,9 @@ func (s *Service) Upload(
 		BusinessUnitID: createdDoc.BusinessUnitID,
 	}, auditservice.WithComment("Document uploaded")); err != nil {
 		log.Error("failed to log audit action", zap.Error(err))
+	}
+	if lineageInfo != nil {
+		s.deleteSearchProjection(ctx, lineageInfo)
 	}
 	s.syncSearchProjection(ctx, log, createdDoc, "")
 
@@ -317,6 +357,7 @@ func (s *Service) BulkUpload(
 			File:         file,
 			ResourceID:   req.ResourceID,
 			ResourceType: req.ResourceType,
+			LineageID:    req.LineageID,
 		})
 		if err != nil {
 			log.Warn(
@@ -402,18 +443,59 @@ func (s *Service) Delete(
 		return err
 	}
 
+	if doc.LineageID.IsNil() {
+		if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+			if txErr := s.detachUploadSessionsForDocuments(txCtx, []pulid.ID{doc.ID}, req.TenantInfo); txErr != nil {
+				log.Error("failed to clear upload session document reference", zap.Error(txErr))
+				return errortypes.NewDatabaseError("Failed to detach upload sessions from document").WithInternal(txErr)
+			}
+			return s.repo.Delete(txCtx, req)
+		}); err != nil {
+			return err
+		}
+
+		s.cleanupDocumentStorage(ctx, log, doc)
+		if err = s.auditService.LogAction(&services.LogActionParams{
+			Resource:       permission.ResourceDocument,
+			ResourceID:     doc.GetID().String(),
+			Operation:      permission.OpDelete,
+			UserID:         userID,
+			PreviousState:  jsonutils.MustToJSON(doc),
+			OrganizationID: doc.OrganizationID,
+			BusinessUnitID: doc.BusinessUnitID,
+		}, auditservice.WithComment("Document deleted")); err != nil {
+			log.Error("failed to log audit action", zap.Error(err))
+		}
+		return nil
+	}
+
+	versions, err := s.repo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+		LineageID:  doc.LineageID,
+		TenantInfo: req.TenantInfo,
+	})
+	if err != nil {
+		return err
+	}
+
 	if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
-		if txErr := s.detachUploadSessionsForDocuments(txCtx, []pulid.ID{doc.ID}, req.TenantInfo); txErr != nil {
+		versionIDs := documentIDs(versions)
+		lineageIDs := []pulid.ID{doc.LineageID}
+		if txErr := s.detachUploadSessionsForDocuments(txCtx, versionIDs, req.TenantInfo); txErr != nil {
 			log.Error("failed to clear upload session document reference", zap.Error(txErr))
 			return errortypes.NewDatabaseError("Failed to detach upload sessions from document").WithInternal(txErr)
 		}
 
-		return s.repo.Delete(txCtx, req)
+		return s.repo.DeleteByLineageIDs(txCtx, repositories.DeleteDocumentLineageRequest{
+			LineageIDs: lineageIDs,
+			TenantInfo: req.TenantInfo,
+		})
 	}); err != nil {
 		return err
 	}
 
-	s.cleanupDocumentStorage(ctx, log, doc)
+	for _, version := range versions {
+		s.cleanupDocumentStorage(ctx, log, version)
+	}
 
 	if err = s.auditService.LogAction(&services.LogActionParams{
 		Resource:       permission.ResourceDocument,
@@ -467,9 +549,66 @@ func (s *Service) BulkDelete(
 		Errors: make([]error, 0),
 	}
 
+	if slices.ContainsFunc(docs, func(doc *document.Document) bool { return doc.LineageID.IsNil() }) {
+		if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
+			if txErr := s.detachUploadSessionsForDocuments(txCtx, documentIDs(docs), req.TenantInfo); txErr != nil {
+				log.Error("failed to clear upload session document references during bulk delete", zap.Error(txErr))
+				return errortypes.NewDatabaseError("Failed to detach upload sessions from documents").WithInternal(txErr)
+			}
+			return s.repo.BulkDelete(txCtx, repositories.BulkDeleteDocumentRequest{
+				IDs:        req.IDs,
+				TenantInfo: req.TenantInfo,
+			})
+		}); err != nil {
+			log.Error("failed to bulk delete documents from database", zap.Error(err))
+			return nil, err
+		}
+
+		result.DeletedCount = len(docs)
+		for _, doc := range docs {
+			s.cleanupDocumentStorage(ctx, log, doc)
+		}
+		for _, doc := range docs {
+			if err = s.auditService.LogAction(&services.LogActionParams{
+				Resource:       permission.ResourceDocument,
+				ResourceID:     doc.GetID().String(),
+				Operation:      permission.OpDelete,
+				UserID:         req.UserID,
+				PreviousState:  jsonutils.MustToJSON(doc),
+				OrganizationID: doc.OrganizationID,
+				BusinessUnitID: doc.BusinessUnitID,
+			}, auditservice.WithComment("Document deleted (bulk)")); err != nil {
+				log.Warn("failed to log audit action for bulk delete",
+					zap.String("documentId", doc.ID.String()),
+					zap.Error(err),
+				)
+			}
+		}
+		return result, nil
+	}
+
 	docIDs := make([]pulid.ID, 0, len(docs))
+	lineageIDs := make([]pulid.ID, 0, len(docs))
+	lineageSet := make(map[string]struct{}, len(docs))
+	versionsByLineage := make(map[string][]*document.Document, len(docs))
 	for _, doc := range docs {
-		docIDs = append(docIDs, doc.ID)
+		versions, versionErr := s.repo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+			LineageID:  doc.LineageID,
+			TenantInfo: req.TenantInfo,
+		})
+		if versionErr != nil {
+			log.Error("failed to get document versions for bulk delete", zap.Error(versionErr))
+			return nil, versionErr
+		}
+		versionsByLineage[doc.LineageID.String()] = versions
+		for _, version := range versions {
+			docIDs = append(docIDs, version.ID)
+		}
+		if _, ok := lineageSet[doc.LineageID.String()]; ok {
+			continue
+		}
+		lineageSet[doc.LineageID.String()] = struct{}{}
+		lineageIDs = append(lineageIDs, doc.LineageID)
 	}
 
 	if err = s.db.WithTx(ctx, ports.TxOptions{}, func(txCtx context.Context, _ bun.Tx) error {
@@ -478,8 +617,8 @@ func (s *Service) BulkDelete(
 			return errortypes.NewDatabaseError("Failed to detach upload sessions from documents").WithInternal(txErr)
 		}
 
-		return s.repo.BulkDelete(txCtx, repositories.BulkDeleteDocumentRequest{
-			IDs:        docIDs,
+		return s.repo.DeleteByLineageIDs(txCtx, repositories.DeleteDocumentLineageRequest{
+			LineageIDs: lineageIDs,
 			TenantInfo: req.TenantInfo,
 		})
 	}); err != nil {
@@ -487,10 +626,12 @@ func (s *Service) BulkDelete(
 		return nil, err
 	}
 
-	result.DeletedCount = len(docs)
+	result.DeletedCount = len(docIDs)
 
-	for _, doc := range docs {
-		s.cleanupDocumentStorage(ctx, log, doc)
+	for _, versions := range versionsByLineage {
+		for _, doc := range versions {
+			s.cleanupDocumentStorage(ctx, log, doc)
+		}
 	}
 
 	for _, doc := range docs {
