@@ -10,6 +10,7 @@ var RedisRepositoriesModule = fx.Module("redis-repositories",
 	fx.Provide(
 		repositories.NewOrganizationRepository,
 		repositories.NewSessionRepository,
+		repositories.NewSSOLoginStateRepository,
 		repositories.NewAuditBufferRepository,
 		repositories.NewPermissionCacheRepository,
 		repositories.NewCustomerCacheRepository,

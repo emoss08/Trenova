@@ -1,9 +1,13 @@
 import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import {
+  microsoftSSOConfigSchema,
   organizationLogoUrlResponseSchema,
   organizationSettingsSchema,
+  tenantLoginMetadataSchema,
+  type MicrosoftSSOConfig,
   type OrganizationSettings,
+  type TenantLoginMetadata,
 } from "@/types/organization";
 
 export class OrganizationService {
@@ -59,5 +63,27 @@ export class OrganizationService {
     );
 
     return safeParse(organizationSettingsSchema, response, "OrganizationSettings");
+  }
+
+  public async getMicrosoftSSOConfig(organizationId: string) {
+    const response = await api.get<MicrosoftSSOConfig>(
+      `${this.base_url}/${organizationId}/microsoft-sso`,
+    );
+
+    return safeParse(microsoftSSOConfigSchema, response, "MicrosoftSSOConfig");
+  }
+
+  public async upsertMicrosoftSSOConfig(organizationId: string, data: MicrosoftSSOConfig) {
+    const response = await api.put<MicrosoftSSOConfig>(
+      `${this.base_url}/${organizationId}/microsoft-sso`,
+      data,
+    );
+
+    return safeParse(microsoftSSOConfigSchema, response, "MicrosoftSSOConfig");
+  }
+
+  public async getTenantLoginMetadata(organizationSlug: string) {
+    const response = await api.get<TenantLoginMetadata>(`/auth/tenant/${organizationSlug}`);
+    return safeParse(tenantLoginMetadataSchema, response, "TenantLoginMetadata");
   }
 }

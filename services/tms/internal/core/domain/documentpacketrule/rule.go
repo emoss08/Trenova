@@ -132,8 +132,8 @@ func (r *DocumentPacketRule) GetPostgresSearchConfig() domaintypes.PostgresSearc
 		SearchableFields: []domaintypes.SearchableField{
 			{
 				Name:   "resource_type",
-				Type:   domaintypes.FieldTypeText,
-				Weight: domaintypes.SearchWeightA,
+				Type:   domaintypes.FieldTypeEnum,
+				Weight: domaintypes.SearchWeightB,
 			},
 		},
 		Relationships: []*domaintypes.RelationshipDefintion{

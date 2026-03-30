@@ -21,6 +21,7 @@ type ListDocumentPacketRulesByResourceRequest struct {
 	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
 	ResourceType string                `json:"resourceType"`
 }
+
 type DocumentPacketRuleRepository interface {
 	List(
 		ctx context.Context,

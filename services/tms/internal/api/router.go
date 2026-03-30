@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/docshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/documentoperationshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentpacketrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
@@ -110,6 +111,7 @@ type RouterParams struct {
 	CustomFieldHandler           *customfieldhandler.Handler
 	DatabaseSessionHandler       *databasesessionhandler.Handler
 	DocumentHandler              *documenthandler.Handler
+	DocumentOperationsHandler    *documentoperationshandler.Handler
 	AccessorialChargeHandler     *accessorialchargehandler.Handler
 	VersionHandler               *versionhandler.Handler
 	ServiceTypeHandler           *servicetypehandler.Handler
@@ -184,6 +186,7 @@ type Router struct {
 	customFieldHandler           *customfieldhandler.Handler
 	databaseSessionHandler       *databasesessionhandler.Handler
 	documentHandler              *documenthandler.Handler
+	documentOperationsHandler    *documentoperationshandler.Handler
 	accessorialChargeHandler     *accessorialchargehandler.Handler
 	versionHandler               *versionhandler.Handler
 	shipmentTypeHandler          *shipmenttypehandler.Handler
@@ -255,6 +258,7 @@ func NewRouter(p RouterParams) *Router {
 		customFieldHandler:           p.CustomFieldHandler,
 		databaseSessionHandler:       p.DatabaseSessionHandler,
 		documentHandler:              p.DocumentHandler,
+		documentOperationsHandler:    p.DocumentOperationsHandler,
 		accessorialChargeHandler:     p.AccessorialChargeHandler,
 		versionHandler:               p.VersionHandler,
 		shipmentTypeHandler:          p.ShipmentTypeHandler,
@@ -368,6 +372,7 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.customFieldHandler.RegisterRoutes(protected)
 	r.databaseSessionHandler.RegisterRoutes(protected)
 	r.documentHandler.RegisterRoutes(protected)
+	r.documentOperationsHandler.RegisterRoutes(protected)
 	r.accessorialChargeHandler.RegisterRoutes(protected)
 	r.serviceTypeHandler.RegisterRoutes(protected)
 	r.sequenceConfigHandler.RegisterRoutes(protected)

@@ -38,6 +38,28 @@ func (m *mockOrganizationRepo) GetByID(
 	return args.Get(0).(*tenant.Organization), args.Error(1)
 }
 
+func (m *mockOrganizationRepo) GetByLoginSlug(
+	ctx context.Context,
+	loginSlug string,
+) (*tenant.Organization, error) {
+	args := m.Called(ctx, loginSlug)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*tenant.Organization), args.Error(1)
+}
+
+func (m *mockOrganizationRepo) ListLoginSlugsByPrefix(
+	ctx context.Context,
+	prefix string,
+) ([]string, error) {
+	args := m.Called(ctx, prefix)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]string), args.Error(1)
+}
+
 func (m *mockOrganizationRepo) Update(
 	ctx context.Context,
 	entity *tenant.Organization,

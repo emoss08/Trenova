@@ -1,21 +1,13 @@
 import { UsStateAutocompleteField } from "@/components/autocomplete-fields";
-import {
-  formatFileSize,
-  type RejectedFile,
-} from "@/components/documents/document-upload-zone";
+import { formatFileSize, type RejectedFile } from "@/components/documents/document-upload-zone";
 import { UploadPanel } from "@/components/documents/upload-panel";
 import { InputField } from "@/components/fields/input-field";
 import { SelectField } from "@/components/fields/select-field";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
+import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";
 import { useUploadWithProgress } from "@/hooks/use-upload-with-progress";
 import { timezoneChoices } from "@/lib/choices";
@@ -23,22 +15,17 @@ import { convertOrganizationLogoToWebP } from "@/lib/images/organization-logo";
 import { queries } from "@/lib/queries";
 import { apiService } from "@/services/api";
 import { useAuthStore } from "@/stores/auth-store";
-import {
-  organizationSettingsSchema,
-  type OrganizationSettings,
-} from "@/types/organization";
+import { organizationSettingsSchema, type OrganizationSettings } from "@/types/organization";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { CircleXIcon, UploadIcon } from "lucide-react";
+import { Building2Icon, CircleXIcon, ShieldIcon, UploadIcon } from "lucide-react";
+import { parseAsStringLiteral, useQueryState } from "nuqs";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import {
-  FormProvider,
-  useForm,
-  useFormContext,
-  useWatch,
-} from "react-hook-form";
+import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
+import { MicrosoftSSOCard } from "./microsoft-sso-card";
 
+const tabValues = ["general", "security"] as const;
 const LOGO_ACCEPT = ".jpg,.jpeg,.png,.webp";
 const LOGO_MAX_SIZE = 5 * 1024 * 1024;
 
@@ -49,6 +36,7 @@ const emptyOrganizationDefaults: OrganizationSettings = {
   updatedAt: 0,
   bucketName: "",
   businessUnitId: "",
+  loginSlug: "",
   name: "",
   scacCode: "",
   dotNumber: "",
@@ -65,8 +53,7 @@ const emptyOrganizationDefaults: OrganizationSettings = {
 
 export default function OrganizationSettingsForm() {
   const queryClient = useQueryClient();
-  const organizationId =
-    useAuthStore((state) => state.user?.currentOrganizationId) ?? "";
+  const organizationId = useAuthStore((state) => state.user?.currentOrganizationId) ?? "";
 
   const organizationQuery = useQuery({
     ...queries.organization.detail(organizationId),
@@ -77,6 +64,13 @@ export default function OrganizationSettingsForm() {
     resolver: zodResolver(organizationSettingsSchema),
     defaultValues: emptyOrganizationDefaults,
   });
+
+  const [tab, setTab] = useQueryState(
+    "tab",
+    parseAsStringLiteral(tabValues)
+      .withOptions({ history: "push", shallow: true })
+      .withDefault("general"),
+  );
 
   const { handleSubmit, setError, reset } = form;
 
@@ -148,27 +142,37 @@ export default function OrganizationSettingsForm() {
 
   if (organizationQuery.isLoading) {
     return (
-      <div className="py-8 text-sm text-muted-foreground">
-        Loading organization settings...
-      </div>
+      <div className="py-8 text-sm text-muted-foreground">Loading organization settings...</div>
     );
   }
 
   return (
-    <FormProvider {...form}>
-      <Form onSubmit={handleSubmit(onSubmit)}>
-        <div className="flex flex-col gap-4 pb-10">
-          <LogoForm
-            organizationId={organizationId}
-            onLogoUpdated={handleLogoUpdated}
-          />
-          <GeneralForm />
-          <ComplianceForm />
-          <AddressForm />
-          <FormSaveDock saveButtonContent="Save Changes" />
-        </div>
-      </Form>
-    </FormProvider>
+    <Tabs value={tab} onValueChange={(value) => setTab(value)} className="gap-1">
+      <TabsList variant="underline">
+        <TabsTab value="general">
+          <Building2Icon size={16} />
+          General
+        </TabsTab>
+        <TabsTab value="security">
+          <ShieldIcon size={16} />
+          Security
+        </TabsTab>
+      </TabsList>
+      <TabsContent value="general" className="pb-10">
+        <FormProvider {...form}>
+          <Form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
+            <LogoForm organizationId={organizationId} onLogoUpdated={handleLogoUpdated} />
+            <GeneralForm />
+            <ComplianceForm />
+            <AddressForm />
+            <FormSaveDock saveButtonContent="Save Changes" />
+          </Form>
+        </FormProvider>
+      </TabsContent>
+      <TabsContent value="security">
+        <MicrosoftSSOCard organizationId={organizationId} />
+      </TabsContent>
+    </Tabs>
   );
 }
 
@@ -197,8 +201,7 @@ function LogoForm({
 
     if (
       rawLogoValue &&
-      (rawLogoValue.startsWith("http://") ||
-        rawLogoValue.startsWith("https://"))
+      (rawLogoValue.startsWith("http://") || rawLogoValue.startsWith("https://"))
     ) {
       return rawLogoValue;
     }
@@ -219,8 +222,7 @@ function LogoForm({
     resourceType: "organization-logo",
     maxConcurrent: 1,
     uploadEndpoint: `/organizations/${organizationId}/logo`,
-    parseResponse: (response) =>
-      organizationSettingsSchema.parse(response as OrganizationSettings),
+    parseResponse: (response) => organizationSettingsSchema.parse(response as OrganizationSettings),
     invalidateQueryKey: queries.organization.detail(organizationId).queryKey,
     transformFile: (file) => convertOrganizationLogoToWebP(file),
     onSuccess: async (result) => {
@@ -258,13 +260,11 @@ function LogoForm({
 
     try {
       setIsRemovingLogo(true);
-      const updated =
-        await apiService.organizationService.deleteLogo(organizationId);
+      const updated = await apiService.organizationService.deleteLogo(organizationId);
       await onLogoUpdated(updated);
       toast.success("Organization logo removed");
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to remove logo";
+      const message = error instanceof Error ? error.message : "Failed to remove logo";
       toast.error("Failed to remove logo", { description: message });
     } finally {
       setIsRemovingLogo(false);
@@ -347,8 +347,8 @@ function GeneralForm() {
       <CardHeader>
         <CardTitle>Organization Details</CardTitle>
         <CardDescription>
-          Core business identifiers and operational settings that define your
-          organization profile in the system.
+          Core business identifiers and operational settings that define your organization profile
+          in the system.
         </CardDescription>
       </CardHeader>
       <CardContent className="max-w-prose">
@@ -370,6 +370,15 @@ function GeneralForm() {
               label="Operating Timezone"
               placeholder="Select timezone"
               options={timezoneChoices}
+            />
+          </FormControl>
+          <FormControl>
+            <InputField
+              control={control}
+              name="loginSlug"
+              label="Tenant Login Slug"
+              placeholder="acme-logistics"
+              description="Used for tenant sign-in URLs such as /login/acme-logistics."
             />
           </FormControl>
         </FormGroup>
@@ -410,12 +419,7 @@ function ComplianceForm() {
             />
           </FormControl>
           <FormControl>
-            <InputField
-              control={control}
-              name="taxId"
-              label="Tax ID"
-              placeholder="Enter Tax ID"
-            />
+            <InputField control={control} name="taxId" label="Tax ID" placeholder="Enter Tax ID" />
           </FormControl>
         </FormGroup>
       </CardContent>

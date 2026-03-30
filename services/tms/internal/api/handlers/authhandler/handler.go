@@ -1,7 +1,10 @@
 package authhandler
 
 import (
+	"fmt"
 	"net/http"
+	"net/url"
+	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
 	"github.com/emoss08/trenova/internal/core/ports/services"
@@ -45,6 +48,9 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("login", h.login)
 	api.POST("logout", h.logout)
 	api.POST("validate-session", h.validateSession)
+	api.GET("tenant/:slug", h.getTenantLoginMetadata)
+	api.GET("microsoft/start/:slug", h.startMicrosoftLogin)
+	api.GET("microsoft/callback", h.microsoftCallback)
 }
 
 // @Summary Login
@@ -141,6 +147,60 @@ func (h *Handler) validateSession(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"valid": true})
+}
+
+func (h *Handler) getTenantLoginMetadata(c *gin.Context) {
+	resp, err := h.service.GetTenantLoginMetadata(c.Request.Context(), c.Param("slug"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) startMicrosoftLogin(c *gin.Context) {
+	redirectURL, err := h.service.StartMicrosoftLogin(c.Request.Context(), services.StartMicrosoftLoginRequest{
+		OrganizationSlug: c.Param("slug"),
+		ReturnTo:         c.Query("returnTo"),
+	})
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.Redirect(http.StatusFound, redirectURL)
+}
+
+func (h *Handler) microsoftCallback(c *gin.Context) {
+	state := strings.TrimSpace(c.Query("state"))
+
+	resp, err := h.service.HandleMicrosoftCallback(c.Request.Context(), services.MicrosoftCallbackRequest{
+		State: state,
+		Code:  strings.TrimSpace(c.Query("code")),
+	})
+	if err != nil {
+		h.redirectMicrosoftError(c, state, err)
+		return
+	}
+
+	h.setSessionCookie(c, resp.LoginResponse.SessionID, resp.LoginResponse.ExpiresAt)
+	c.Redirect(http.StatusFound, resp.RedirectTo)
+}
+
+func (h *Handler) redirectMicrosoftError(c *gin.Context, state string, callbackErr error) {
+	h.l.Warn("microsoft sso callback failed", zap.Error(callbackErr))
+
+	loginPath := "/login"
+	if state != "" {
+		if loginState, stateErr := h.service.GetSSOLoginState(c.Request.Context(), state); stateErr == nil && loginState.OrganizationSlug != "" {
+			loginPath = "/login/" + loginState.OrganizationSlug
+		}
+	}
+
+	origin := h.cfg.Server.CORS.AllowedOrigins[0]
+	redirectURL := fmt.Sprintf("%s%s?sso_error=%s", origin, loginPath, url.QueryEscape(callbackErr.Error()))
+	c.Redirect(http.StatusFound, redirectURL)
 }
 
 func (h *Handler) clearSessionCookie(c *gin.Context) {

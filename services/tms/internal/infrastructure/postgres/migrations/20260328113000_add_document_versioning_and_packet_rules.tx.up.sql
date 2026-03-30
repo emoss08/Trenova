@@ -42,7 +42,7 @@ CREATE TABLE IF NOT EXISTS "document_packet_rules"(
     "id" varchar(100) NOT NULL,
     "organization_id" varchar(100) NOT NULL,
     "business_unit_id" varchar(100) NOT NULL,
-    "resource_type" "document_packet_rule_resource_type" NOT NULL,
+    "resource_type" "document_packet_rule_resource_type" NOT NULL DEFAULT 'Shipment',
     "document_type_id" varchar(100) NOT NULL,
     "required" boolean NOT NULL DEFAULT FALSE,
     "allow_multiple" boolean NOT NULL DEFAULT FALSE,

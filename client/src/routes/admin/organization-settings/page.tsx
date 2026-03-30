@@ -9,7 +9,7 @@ export function OrganizationSettingsPage() {
     <AdminPageLayout>
       <PageHeader
         title="Organization Settings"
-        description="Configure your organization profile and logo"
+        description="Manage your organization profile, compliance, and security settings"
         className="p-0 py-4"
       />
       <Suspense

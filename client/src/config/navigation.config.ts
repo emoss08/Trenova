@@ -782,6 +782,13 @@ export const adminLinks: SidebarLink[] = [
     requiredOperation: Operation.Read,
   },
   {
+    href: "/admin/document-operations",
+    title: "Document Operations",
+    group: "Document Management",
+    adminOnly: true,
+    platformAdminOnly: true,
+  },
+  {
     href: "/organization/document-templates/",
     title: "Document Templates",
     group: "Document Management",

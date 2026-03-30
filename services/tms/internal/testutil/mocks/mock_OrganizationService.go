@@ -10,6 +10,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/tenant"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
+	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -245,6 +246,74 @@ func (_c *MockOrganizationService_GetLogoURL_Call) RunAndReturn(run func(ctx con
 	return _c
 }
 
+// GetMicrosoftSSOConfig provides a mock function for the type MockOrganizationService
+func (_mock *MockOrganizationService) GetMicrosoftSSOConfig(ctx context.Context, organizationID pulid.ID) (*services.MicrosoftSSOConfig, error) {
+	ret := _mock.Called(ctx, organizationID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetMicrosoftSSOConfig")
+	}
+
+	var r0 *services.MicrosoftSSOConfig
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (*services.MicrosoftSSOConfig, error)); ok {
+		return returnFunc(ctx, organizationID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *services.MicrosoftSSOConfig); ok {
+		r0 = returnFunc(ctx, organizationID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.MicrosoftSSOConfig)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, organizationID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrganizationService_GetMicrosoftSSOConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetMicrosoftSSOConfig'
+type MockOrganizationService_GetMicrosoftSSOConfig_Call struct {
+	*mock.Call
+}
+
+// GetMicrosoftSSOConfig is a helper method to define mock.On call
+//   - ctx context.Context
+//   - organizationID pulid.ID
+func (_e *MockOrganizationService_Expecter) GetMicrosoftSSOConfig(ctx interface{}, organizationID interface{}) *MockOrganizationService_GetMicrosoftSSOConfig_Call {
+	return &MockOrganizationService_GetMicrosoftSSOConfig_Call{Call: _e.mock.On("GetMicrosoftSSOConfig", ctx, organizationID)}
+}
+
+func (_c *MockOrganizationService_GetMicrosoftSSOConfig_Call) Run(run func(ctx context.Context, organizationID pulid.ID)) *MockOrganizationService_GetMicrosoftSSOConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrganizationService_GetMicrosoftSSOConfig_Call) Return(microsoftSSOConfig *services.MicrosoftSSOConfig, err error) *MockOrganizationService_GetMicrosoftSSOConfig_Call {
+	_c.Call.Return(microsoftSSOConfig, err)
+	return _c
+}
+
+func (_c *MockOrganizationService_GetMicrosoftSSOConfig_Call) RunAndReturn(run func(ctx context.Context, organizationID pulid.ID) (*services.MicrosoftSSOConfig, error)) *MockOrganizationService_GetMicrosoftSSOConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function for the type MockOrganizationService
 func (_mock *MockOrganizationService) Update(ctx context.Context, entity *tenant.Organization) (*tenant.Organization, error) {
 	ret := _mock.Called(ctx, entity)
@@ -383,6 +452,80 @@ func (_c *MockOrganizationService_UploadLogo_Call) Return(organization *tenant.O
 }
 
 func (_c *MockOrganizationService_UploadLogo_Call) RunAndReturn(run func(ctx context.Context, req *services.UploadLogoRequest, userID pulid.ID) (*tenant.Organization, error)) *MockOrganizationService_UploadLogo_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpsertMicrosoftSSOConfig provides a mock function for the type MockOrganizationService
+func (_mock *MockOrganizationService) UpsertMicrosoftSSOConfig(ctx context.Context, tenantInfo pagination.TenantInfo, config *services.MicrosoftSSOConfig) (*services.MicrosoftSSOConfig, error) {
+	ret := _mock.Called(ctx, tenantInfo, config)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpsertMicrosoftSSOConfig")
+	}
+
+	var r0 *services.MicrosoftSSOConfig
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, *services.MicrosoftSSOConfig) (*services.MicrosoftSSOConfig, error)); ok {
+		return returnFunc(ctx, tenantInfo, config)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, *services.MicrosoftSSOConfig) *services.MicrosoftSSOConfig); ok {
+		r0 = returnFunc(ctx, tenantInfo, config)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.MicrosoftSSOConfig)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, *services.MicrosoftSSOConfig) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, config)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrganizationService_UpsertMicrosoftSSOConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpsertMicrosoftSSOConfig'
+type MockOrganizationService_UpsertMicrosoftSSOConfig_Call struct {
+	*mock.Call
+}
+
+// UpsertMicrosoftSSOConfig is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - config *services.MicrosoftSSOConfig
+func (_e *MockOrganizationService_Expecter) UpsertMicrosoftSSOConfig(ctx interface{}, tenantInfo interface{}, config interface{}) *MockOrganizationService_UpsertMicrosoftSSOConfig_Call {
+	return &MockOrganizationService_UpsertMicrosoftSSOConfig_Call{Call: _e.mock.On("UpsertMicrosoftSSOConfig", ctx, tenantInfo, config)}
+}
+
+func (_c *MockOrganizationService_UpsertMicrosoftSSOConfig_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, config *services.MicrosoftSSOConfig)) *MockOrganizationService_UpsertMicrosoftSSOConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 *services.MicrosoftSSOConfig
+		if args[2] != nil {
+			arg2 = args[2].(*services.MicrosoftSSOConfig)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrganizationService_UpsertMicrosoftSSOConfig_Call) Return(microsoftSSOConfig *services.MicrosoftSSOConfig, err error) *MockOrganizationService_UpsertMicrosoftSSOConfig_Call {
+	_c.Call.Return(microsoftSSOConfig, err)
+	return _c
+}
+
+func (_c *MockOrganizationService_UpsertMicrosoftSSOConfig_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, config *services.MicrosoftSSOConfig) (*services.MicrosoftSSOConfig, error)) *MockOrganizationService_UpsertMicrosoftSSOConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }

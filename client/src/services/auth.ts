@@ -5,6 +5,7 @@ import {
   type LoginRequest,
   type LoginResponse,
 } from "@/types/user";
+import { API_BASE_URL } from "@/lib/constants";
 
 export const authService = {
   login: async (credentials: LoginRequest) => {
@@ -14,5 +15,11 @@ export const authService = {
 
   logout: async () => {
     await api.post("/auth/logout");
+  },
+
+  getMicrosoftStartUrl: (organizationSlug: string, returnTo: string) => {
+    const url = new URL(`${API_BASE_URL}/auth/microsoft/start/${organizationSlug}`, window.location.origin);
+    url.searchParams.set("returnTo", returnTo);
+    return url.toString();
   },
 };

@@ -237,3 +237,32 @@ func (r *repository) ListActive(
 
 	return sessions, nil
 }
+
+func (r *repository) ListRelated(
+	ctx context.Context,
+	req *repositories.ListRelatedDocumentUploadSessionsRequest,
+) ([]*documentupload.Session, error) {
+	sessions := make([]*documentupload.Session, 0)
+	q := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(&sessions).
+		Where("dus.organization_id = ?", req.TenantInfo.OrgID).
+		Where("dus.business_unit_id = ?", req.TenantInfo.BuID)
+
+	switch {
+	case !req.DocumentID.IsNil() && !req.LineageID.IsNil():
+		q = q.Where("(dus.document_id = ? OR dus.lineage_id = ?)", req.DocumentID, req.LineageID)
+	case !req.DocumentID.IsNil():
+		q = q.Where("dus.document_id = ?", req.DocumentID)
+	case !req.LineageID.IsNil():
+		q = q.Where("dus.lineage_id = ?", req.LineageID)
+	default:
+		return sessions, nil
+	}
+
+	if err := q.Order("dus.created_at DESC").Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	return sessions, nil
+}

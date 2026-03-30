@@ -16,6 +16,8 @@ type GetOrganizationByIDRequest struct {
 
 type OrganizationRepository interface {
 	GetByID(ctx context.Context, req GetOrganizationByIDRequest) (*tenant.Organization, error)
+	GetByLoginSlug(ctx context.Context, loginSlug string) (*tenant.Organization, error)
+	ListLoginSlugsByPrefix(ctx context.Context, prefix string) ([]string, error)
 	Update(ctx context.Context, entity *tenant.Organization) (*tenant.Organization, error)
 	ClearLogoURL(ctx context.Context, orgID pulid.ID, version int64) (*tenant.Organization, error)
 }

@@ -46,6 +46,12 @@ func NewValidator(p ValidatorParams) *Validator {
 			"dot_number",
 			"Organization with this DOT number already exists in this business unit",
 			func(o *tenant.Organization) any { return o.DOTNumber },
+		).
+		WithCaseSensitiveUniqueField(
+			"loginSlug",
+			"login_slug",
+			"Organization with this login slug already exists",
+			func(o *tenant.Organization) any { return o.LoginSlug },
 		)
 
 	if p.DB != nil {

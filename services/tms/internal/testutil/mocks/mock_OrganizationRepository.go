@@ -182,6 +182,142 @@ func (_c *MockOrganizationRepository_GetByID_Call) RunAndReturn(run func(ctx con
 	return _c
 }
 
+// GetByLoginSlug provides a mock function for the type MockOrganizationRepository
+func (_mock *MockOrganizationRepository) GetByLoginSlug(ctx context.Context, loginSlug string) (*tenant.Organization, error) {
+	ret := _mock.Called(ctx, loginSlug)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetByLoginSlug")
+	}
+
+	var r0 *tenant.Organization
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (*tenant.Organization, error)); ok {
+		return returnFunc(ctx, loginSlug)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) *tenant.Organization); ok {
+		r0 = returnFunc(ctx, loginSlug)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*tenant.Organization)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, loginSlug)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrganizationRepository_GetByLoginSlug_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetByLoginSlug'
+type MockOrganizationRepository_GetByLoginSlug_Call struct {
+	*mock.Call
+}
+
+// GetByLoginSlug is a helper method to define mock.On call
+//   - ctx context.Context
+//   - loginSlug string
+func (_e *MockOrganizationRepository_Expecter) GetByLoginSlug(ctx interface{}, loginSlug interface{}) *MockOrganizationRepository_GetByLoginSlug_Call {
+	return &MockOrganizationRepository_GetByLoginSlug_Call{Call: _e.mock.On("GetByLoginSlug", ctx, loginSlug)}
+}
+
+func (_c *MockOrganizationRepository_GetByLoginSlug_Call) Run(run func(ctx context.Context, loginSlug string)) *MockOrganizationRepository_GetByLoginSlug_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrganizationRepository_GetByLoginSlug_Call) Return(organization *tenant.Organization, err error) *MockOrganizationRepository_GetByLoginSlug_Call {
+	_c.Call.Return(organization, err)
+	return _c
+}
+
+func (_c *MockOrganizationRepository_GetByLoginSlug_Call) RunAndReturn(run func(ctx context.Context, loginSlug string) (*tenant.Organization, error)) *MockOrganizationRepository_GetByLoginSlug_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// ListLoginSlugsByPrefix provides a mock function for the type MockOrganizationRepository
+func (_mock *MockOrganizationRepository) ListLoginSlugsByPrefix(ctx context.Context, prefix string) ([]string, error) {
+	ret := _mock.Called(ctx, prefix)
+
+	if len(ret) == 0 {
+		panic("no return value specified for ListLoginSlugsByPrefix")
+	}
+
+	var r0 []string
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) ([]string, error)); ok {
+		return returnFunc(ctx, prefix)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) []string); ok {
+		r0 = returnFunc(ctx, prefix)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]string)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, prefix)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrganizationRepository_ListLoginSlugsByPrefix_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'ListLoginSlugsByPrefix'
+type MockOrganizationRepository_ListLoginSlugsByPrefix_Call struct {
+	*mock.Call
+}
+
+// ListLoginSlugsByPrefix is a helper method to define mock.On call
+//   - ctx context.Context
+//   - prefix string
+func (_e *MockOrganizationRepository_Expecter) ListLoginSlugsByPrefix(ctx interface{}, prefix interface{}) *MockOrganizationRepository_ListLoginSlugsByPrefix_Call {
+	return &MockOrganizationRepository_ListLoginSlugsByPrefix_Call{Call: _e.mock.On("ListLoginSlugsByPrefix", ctx, prefix)}
+}
+
+func (_c *MockOrganizationRepository_ListLoginSlugsByPrefix_Call) Run(run func(ctx context.Context, prefix string)) *MockOrganizationRepository_ListLoginSlugsByPrefix_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrganizationRepository_ListLoginSlugsByPrefix_Call) Return(strings []string, err error) *MockOrganizationRepository_ListLoginSlugsByPrefix_Call {
+	_c.Call.Return(strings, err)
+	return _c
+}
+
+func (_c *MockOrganizationRepository_ListLoginSlugsByPrefix_Call) RunAndReturn(run func(ctx context.Context, prefix string) ([]string, error)) *MockOrganizationRepository_ListLoginSlugsByPrefix_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function for the type MockOrganizationRepository
 func (_mock *MockOrganizationRepository) Update(ctx context.Context, entity *tenant.Organization) (*tenant.Organization, error) {
 	ret := _mock.Called(ctx, entity)

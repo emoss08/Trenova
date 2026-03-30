@@ -59,6 +59,7 @@ import (
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentmoverepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmentrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/shipmenttyperepository"
+	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/ssoconfigrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tableconfigurationrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcaallowlistrepository"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres/repositories/tcasubscriptionrepository"
@@ -75,6 +76,7 @@ import (
 var PostgresRepositoryModule = fx.Module("postgres-repositories", fx.Provide(
 	m2msync.NewSyncer,
 	organizationrepository.New,
+	ssoconfigrepository.New,
 	userrepository.New,
 	formulatemplaterepository.New,
 	formulatemplateversionrepository.New,

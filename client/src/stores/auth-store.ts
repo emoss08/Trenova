@@ -20,7 +20,7 @@ interface AuthState {
 
 export const useAuthStore = create<AuthState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       user: null,
       isLoading: false,
       isAuthenticated: false,
@@ -52,11 +52,6 @@ export const useAuthStore = create<AuthState>()(
       },
 
       checkAuth: async () => {
-        const { user } = get();
-        if (!user) {
-          return false;
-        }
-
         try {
           const freshUser = await apiService.userService.currentUser();
           set({ user: freshUser, isAuthenticated: true });

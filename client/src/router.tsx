@@ -419,6 +419,15 @@ const routes: RouteObject[] = [
                 },
               },
               {
+                path: "document-operations",
+                loader: createPlatformAdminLoader(),
+                async lazy() {
+                  const { DocumentOperationsPage } =
+                    await import("@/routes/admin/document-operations/page");
+                  return { Component: DocumentOperationsPage };
+                },
+              },
+              {
                 path: "custom-fields",
                 loader: createPermissionLoader(Resource.CustomFieldDefinition, Operation.Read),
                 async lazy() {
@@ -436,6 +445,13 @@ const routes: RouteObject[] = [
         children: [
           {
             path: "/login",
+            async lazy() {
+              const { AuthPage } = await import("@/routes/auth/page");
+              return { Component: AuthPage };
+            },
+          },
+          {
+            path: "/login/:orgSlug",
             async lazy() {
               const { AuthPage } = await import("@/routes/auth/page");
               return { Component: AuthPage };

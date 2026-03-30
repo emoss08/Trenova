@@ -3,6 +3,7 @@ package tenant
 import (
 	"context"
 	"errors"
+	"regexp"
 
 	"github.com/emoss08/trenova/internal/core/domain/usstate"
 	"github.com/emoss08/trenova/pkg/domainvalidation"
@@ -27,6 +28,7 @@ type Organization struct {
 	StateID        pulid.ID  `json:"stateId"        bun:"state_id,type:VARCHAR(100),notnull"`
 	BusinessUnitID pulid.ID  `json:"businessUnitId" bun:"business_unit_id,type:VARCHAR(100),notnull"`
 	Name           string    `json:"name"           bun:"name,type:VARCHAR(100),notnull"`
+	LoginSlug      string    `json:"loginSlug"      bun:"login_slug,type:VARCHAR(100)"`
 	ScacCode       string    `json:"scacCode"       bun:"scac_code,type:VARCHAR(4),notnull"`
 	DOTNumber      string    `json:"dotNumber"      bun:"dot_number,type:VARCHAR(8),notnull"`
 	LogoURL        string    `json:"logoUrl"        bun:"logo_url,type:VARCHAR(255)"`
@@ -52,6 +54,10 @@ func (o *Organization) Validate(multiErr *errortypes.MultiError) {
 		validation.Field(&o.Name,
 			validation.Required.Error("Name is required. Please try again"),
 			validation.Length(1, 100).Error("Name must be between 1 and 100 characters")),
+		validation.Field(&o.LoginSlug,
+			validation.Length(0, 100).Error("Login slug must be between 1 and 100 characters"),
+			validation.Match(regexp.MustCompile(`^[a-z0-9]+(?:-[a-z0-9]+)*$`)).
+				Error("Login slug may only contain lowercase letters, numbers, and hyphens")),
 		validation.Field(&o.ScacCode,
 			validation.Required.Error("SCAC code is required. Please try again"),
 			validation.Length(4, 4).Error("SCAC code must be 4 characters")),
