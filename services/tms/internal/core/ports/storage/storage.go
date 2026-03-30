@@ -63,27 +63,33 @@ type AbortMultipartUploadParams struct {
 	UploadID string
 }
 
+type DeleteObjectParams struct {
+	Key       string
+	VersionID string
+}
+
 type ListMultipartUploadPartsParams struct {
 	Key      string
 	UploadID string
 }
 
 type FileInfo struct {
-	Key          string
-	Size         int64
-	ContentType  string
-	LastModified time.Time
-	Metadata     map[string]string
-	VersionID    string
-	RetentionMode string
+	Key            string
+	Size           int64
+	ContentType    string
+	LastModified   time.Time
+	Metadata       map[string]string
+	VersionID      string
+	RetentionMode  string
 	RetentionUntil *time.Time
-	LegalHold    bool
+	LegalHold      bool
 }
 
 type Client interface {
 	Upload(ctx context.Context, params *UploadParams) (*FileInfo, error)
 	Download(ctx context.Context, key string) (*DownloadResult, error)
 	Delete(ctx context.Context, key string) error
+	DeleteObject(ctx context.Context, params *DeleteObjectParams) error
 	GetPresignedURL(ctx context.Context, params *PresignedURLParams) (string, error)
 	GetPresignedUploadURL(ctx context.Context, params *PresignedUploadURLParams) (string, error)
 	InitiateMultipartUpload(ctx context.Context, params *MultipartUploadParams) (string, error)

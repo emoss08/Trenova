@@ -15,6 +15,7 @@ import (
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/services/samsarasyncservice"
+	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
@@ -101,7 +102,10 @@ func setupManager(
 	})
 	return NewManager(ManagerParams{
 		TemporalClient: temporalClient,
-		SyncService:    svc,
+		WorkflowStarter: workflowstarter.New(workflowstarter.Params{
+			TemporalClient: temporalClient,
+		}),
+		SyncService: svc,
 	}), repo
 }
 

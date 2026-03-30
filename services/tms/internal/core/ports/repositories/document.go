@@ -20,6 +20,11 @@ type GetDocumentByIDRequest struct {
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type GetDocumentByStoragePathRequest struct {
+	StoragePath string                `json:"storagePath"`
+	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type GetDocumentsByResourceRequest struct {
 	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
 	ResourceID   string                `json:"resourceId"`
@@ -65,6 +70,13 @@ type DeleteDocumentLineageRequest struct {
 	TenantInfo  pagination.TenantInfo `json:"tenantInfo"`
 }
 
+type MoveDocumentLineageRequest struct {
+	DocumentID   pulid.ID              `json:"documentId"`
+	ResourceID   string                `json:"resourceId"`
+	ResourceType string                `json:"resourceType"`
+	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
+}
+
 type BulkDeleteDocumentRequest struct {
 	IDs        []pulid.ID            `json:"ids"`
 	TenantInfo pagination.TenantInfo `json:"tenantInfo"`
@@ -76,6 +88,7 @@ type DocumentRepository interface {
 		req *ListDocumentsRequest,
 	) (*pagination.ListResult[*document.Document], error)
 	GetByID(ctx context.Context, req GetDocumentByIDRequest) (*document.Document, error)
+	GetByStoragePath(ctx context.Context, req GetDocumentByStoragePathRequest) (*document.Document, error)
 	GetByIDs(ctx context.Context, req BulkDeleteDocumentRequest) ([]*document.Document, error)
 	ListVersions(ctx context.Context, req ListDocumentVersionsRequest) ([]*document.Document, error)
 	GetByResourceID(
@@ -92,6 +105,7 @@ type DocumentRepository interface {
 	UpdatePreview(ctx context.Context, req *UpdateDocumentPreviewRequest) error
 	UpdateIntelligence(ctx context.Context, req *UpdateDocumentIntelligenceRequest) error
 	PromoteVersion(ctx context.Context, req *PromoteDocumentVersionRequest) error
+	MoveLineageToResource(ctx context.Context, req *MoveDocumentLineageRequest) error
 	Delete(ctx context.Context, req DeleteDocumentRequest) error
 	BulkDelete(ctx context.Context, req BulkDeleteDocumentRequest) error
 	DeleteByLineageIDs(ctx context.Context, req DeleteDocumentLineageRequest) error

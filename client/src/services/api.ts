@@ -14,6 +14,7 @@ import { DatabaseSessionService } from "./database-session";
 import { DispatchControlService } from "./dispatch-control";
 import { DistanceOverrideService } from "./distance-override";
 import { DocumentService } from "./document";
+import { DocumentPacketRuleService } from "./document-packet-rule";
 import { EquipmentManufacturerService } from "./equipment-manufacturer";
 import { EquipmentTypeService } from "./equipment-type";
 import { FiscalPeriodService } from "./fiscal-period";
@@ -90,6 +91,7 @@ class APIService {
   public assignmentService: AssignmentService;
   public notificationService: NotificationService;
   public tableChangeAlertService: TableChangeAlertService;
+  public documentPacketRuleService: DocumentPacketRuleService;
 
   constructor() {
     this.fleetCodeService = new FleetCodeService();
@@ -137,6 +139,7 @@ class APIService {
     this.assignmentService = new AssignmentService();
     this.notificationService = new NotificationService();
     this.tableChangeAlertService = new TableChangeAlertService();
+    this.documentPacketRuleService = new DocumentPacketRuleService();
   }
 }
 

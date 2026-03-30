@@ -33,6 +33,7 @@ type mockStorageClient struct {
 	uploadFunc             func(ctx context.Context, params *storage.UploadParams) (*storage.FileInfo, error)
 	downloadFunc           func(ctx context.Context, key string) (*storage.DownloadResult, error)
 	deleteFunc             func(ctx context.Context, key string) error
+	deleteObjectFunc       func(ctx context.Context, params *storage.DeleteObjectParams) error
 	getPresignedFunc       func(ctx context.Context, params *storage.PresignedURLParams) (string, error)
 	getPresignedUploadFunc func(
 		ctx context.Context,
@@ -91,6 +92,16 @@ func (m *mockStorageClient) Delete(ctx context.Context, key string) error {
 		return m.deleteFunc(ctx, key)
 	}
 	return nil
+}
+
+func (m *mockStorageClient) DeleteObject(
+	ctx context.Context,
+	params *storage.DeleteObjectParams,
+) error {
+	if m.deleteObjectFunc != nil {
+		return m.deleteObjectFunc(ctx, params)
+	}
+	return m.Delete(ctx, params.Key)
 }
 
 func (m *mockStorageClient) GetPresignedURL(

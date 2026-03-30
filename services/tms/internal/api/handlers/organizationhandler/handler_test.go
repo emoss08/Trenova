@@ -26,10 +26,11 @@ import (
 var errNotFound = errors.New("organization not found")
 
 type mockStorageClient struct {
-	uploadFn       func(ctx context.Context, params *storage.UploadParams) (*storage.FileInfo, error)
-	downloadFn     func(ctx context.Context, key string) (*storage.DownloadResult, error)
-	deleteFn       func(ctx context.Context, key string) error
-	getPresignedFn func(ctx context.Context, params *storage.PresignedURLParams) (string, error)
+	uploadFn             func(ctx context.Context, params *storage.UploadParams) (*storage.FileInfo, error)
+	downloadFn           func(ctx context.Context, key string) (*storage.DownloadResult, error)
+	deleteFn             func(ctx context.Context, key string) error
+	deleteObjectFn       func(ctx context.Context, params *storage.DeleteObjectParams) error
+	getPresignedFn       func(ctx context.Context, params *storage.PresignedURLParams) (string, error)
 	getPresignedUploadFn func(
 		ctx context.Context,
 		params *storage.PresignedUploadURLParams,
@@ -54,8 +55,8 @@ type mockStorageClient struct {
 		ctx context.Context,
 		params *storage.ListMultipartUploadPartsParams,
 	) ([]storage.UploadedPart, error)
-	existsFn       func(ctx context.Context, key string) (bool, error)
-	getFileInfoFn  func(ctx context.Context, key string) (*storage.FileInfo, error)
+	existsFn      func(ctx context.Context, key string) (bool, error)
+	getFileInfoFn func(ctx context.Context, key string) (*storage.FileInfo, error)
 }
 
 func (m *mockStorageClient) Upload(
@@ -90,6 +91,17 @@ func (m *mockStorageClient) Delete(ctx context.Context, key string) error {
 	}
 
 	return nil
+}
+
+func (m *mockStorageClient) DeleteObject(
+	ctx context.Context,
+	params *storage.DeleteObjectParams,
+) error {
+	if m.deleteObjectFn != nil {
+		return m.deleteObjectFn(ctx, params)
+	}
+
+	return m.Delete(ctx, params.Key)
 }
 
 func (m *mockStorageClient) GetPresignedURL(

@@ -163,10 +163,22 @@ export function DocumentGridCard({
               {document.detectedKind}
             </Badge>
           )}
-          {document.versionNumber > 1 && (
-            <Badge variant="secondary" className="h-5 px-1.5 py-0 text-[10px]">
-              v{document.versionNumber}
-            </Badge>
+          {document.versionNumber > 1 && onVersions && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                onVersions(document);
+              }}
+            >
+              <Badge
+                variant="secondary"
+                className="h-5 cursor-pointer px-1.5 py-0 text-[10px] hover:bg-secondary/80"
+              >
+                <HistoryIcon className="mr-0.5 size-3" />
+                v{document.versionNumber}
+              </Badge>
+            </button>
           )}
           {document.contentStatus === "Extracting" && (
             <Badge variant="warning" className="h-5 px-1.5 py-0 text-[10px]">

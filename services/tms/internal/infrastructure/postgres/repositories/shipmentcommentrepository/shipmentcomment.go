@@ -197,6 +197,7 @@ func (r *repository) Delete(
 	req *repositories.DeleteShipmentCommentRequest,
 ) error {
 	sc := buncolgen.ShipmentCommentColumns
+
 	db := r.db.DBForContext(ctx)
 	result, err := db.NewDelete().
 		Model((*shipment.ShipmentComment)(nil)).
@@ -210,7 +211,7 @@ func (r *repository) Delete(
 		return fmt.Errorf("delete shipment comment: %w", err)
 	}
 
-	return dberror.CheckRowsAffected(result, "Shipment comment", req.CommentID.String())
+	return dberror.CheckRowsAffected(result, "ShipmentComment", req.CommentID.String())
 }
 
 func (r *repository) replaceMentions(

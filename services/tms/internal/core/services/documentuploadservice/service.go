@@ -52,7 +52,7 @@ type Params struct {
 	AuditService       services.AuditService
 	Config             *config.Config
 	ThumbnailGenerator *thumbnailservice.Generator
-	TemporalClient     client.Client
+	WorkflowStarter    services.WorkflowStarter
 	Redis              *goredis.Client `optional:"true"`
 }
 
@@ -65,7 +65,7 @@ type Service struct {
 	auditService       services.AuditService
 	config             *config.StorageConfig
 	thumbnailGenerator *thumbnailservice.Generator
-	temporalClient     client.Client
+	workflowStarter    services.WorkflowStarter
 	redis              *goredis.Client
 }
 
@@ -120,7 +120,7 @@ func New(p Params) *Service {
 		auditService:       p.AuditService,
 		config:             p.Config.GetStorageConfig(),
 		thumbnailGenerator: p.ThumbnailGenerator,
-		temporalClient:     p.TemporalClient,
+		workflowStarter:    p.WorkflowStarter,
 		redis:              p.Redis,
 	}
 }
@@ -314,6 +314,12 @@ func (s *Service) Complete(
 		return session, nil
 	}
 
+	if superseded, err := s.cancelSupersededSession(ctx, session); err != nil {
+		return nil, err
+	} else if superseded {
+		return nil, errortypes.NewConflictError("Upload session was superseded by a newer version upload")
+	}
+
 	uploadedParts, err := s.getUploadedParts(ctx, session)
 	if err != nil {
 		return nil, err
@@ -338,7 +344,7 @@ func (s *Service) Complete(
 		return nil, err
 	}
 
-	if s.temporalClient == nil {
+	if !s.workflowStarter.Enabled() {
 		if _, err = s.runSynchronousFinalization(ctx, req, session); err != nil {
 			return nil, err
 		}
@@ -543,13 +549,13 @@ func (s *Service) startFinalizeWorkflow(
 	req *CompletionRequest,
 	session *documentupload.Session,
 ) error {
-	_, err := s.temporalClient.ExecuteWorkflow(
+	_, err := s.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
-			ID:            fmt.Sprintf("document-upload-finalize-%s", session.ID.String()),
-			TaskQueue:     temporaltype.UploadTaskQueue,
-			RetryPolicy:   temporaltype.DefaultRetryPolicy,
-			StaticSummary: fmt.Sprintf("Finalizing upload %s", session.ID.String()),
+			ID:                                       fmt.Sprintf("document-upload-finalize-%s", session.ID.String()),
+			TaskQueue:                                temporaltype.UploadTaskQueue,
+			WorkflowExecutionErrorWhenAlreadyStarted: true,
+			StaticSummary:                            fmt.Sprintf("Finalizing upload %s", session.ID.String()),
 		},
 		"FinalizeDocumentUploadWorkflow",
 		&documentuploadjobs.FinalizeUploadPayload{
@@ -660,6 +666,61 @@ func completionLeaseKey(sessionID string) string {
 	return "document-upload:completion:" + sessionID
 }
 
+func (s *Service) cancelSupersededSession(
+	ctx context.Context,
+	session *documentupload.Session,
+) (bool, error) {
+	if session == nil || session.LineageID == nil || session.LineageID.IsNil() || session.Status.IsTerminal() {
+		return false, nil
+	}
+
+	superseded, err := s.isSupersededByNewerVersion(ctx, session)
+	if err != nil || !superseded {
+		return false, err
+	}
+
+	session.MarkSuperseded(time.Now().Unix())
+	if _, err = s.sessionRepo.Update(ctx, session); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (s *Service) isSupersededByNewerVersion(
+	ctx context.Context,
+	session *documentupload.Session,
+) (bool, error) {
+	if session == nil || session.LineageID == nil || session.LineageID.IsNil() {
+		return false, nil
+	}
+
+	activeSessions, err := s.sessionRepo.ListActive(ctx, &repositories.ListActiveDocumentUploadSessionsRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: session.OrganizationID,
+			BuID:  session.BusinessUnitID,
+		},
+		ResourceID:   session.ResourceID,
+		ResourceType: session.ResourceType,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	versions, err := s.documentRepo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+		LineageID: *session.LineageID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: session.OrganizationID,
+			BuID:  session.BusinessUnitID,
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return session.IsSupersededByNewerArtifacts(activeSessions, versions), nil
+}
+
 func toDomainParts(parts []storage.UploadedPart) []documentupload.UploadedPart {
 	result := make([]documentupload.UploadedPart, 0, len(parts))
 	for _, part := range parts {
@@ -676,7 +737,7 @@ func toDomainParts(parts []storage.UploadedPart) []documentupload.UploadedPart {
 }
 
 func (s *Service) startThumbnailWorkflow(ctx context.Context, doc *document.Document) {
-	if s.temporalClient == nil {
+	if !s.workflowStarter.Enabled() {
 		return
 	}
 
@@ -706,12 +767,11 @@ func (s *Service) startThumbnailWorkflow(ctx context.Context, doc *document.Docu
 		ResourceType:   doc.ResourceType,
 	}
 
-	_, err := s.temporalClient.ExecuteWorkflow(
+	_, err := s.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
 			ID:                                       workflowID,
 			TaskQueue:                                temporaltype.ThumbnailTaskQueue,
-			RetryPolicy:                              temporaltype.DefaultRetryPolicy,
 			WorkflowIDReusePolicy:                    enumspb.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
 			WorkflowExecutionErrorWhenAlreadyStarted: true,
 			StaticSummary:                            fmt.Sprintf("Generating thumbnail for document %s", doc.ID),

@@ -18,6 +18,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
+	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/pkg/temporaltype"
@@ -41,7 +42,7 @@ type ActivitiesParams struct {
 	AuditService         services.AuditService
 	SearchProjection     services.DocumentSearchProjectionService
 	ThumbnailGenerator   *thumbnailservice.Generator
-	TemporalClient       client.Client   `optional:"true"`
+	WorkflowStarter      services.WorkflowStarter
 	Redis                *goredis.Client `optional:"true"`
 	DocumentIntelligence services.DocumentContentService
 }
@@ -53,22 +54,37 @@ type Activities struct {
 	auditService         services.AuditService
 	searchProjection     services.DocumentSearchProjectionService
 	thumbnailGenerator   *thumbnailservice.Generator
-	temporalClient       client.Client
+	workflowStarter      services.WorkflowStarter
 	redis                *goredis.Client
 	documentIntelligence services.DocumentContentService
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
+	documentIntelligence := p.DocumentIntelligence
+	if documentIntelligence == nil {
+		documentIntelligence = noopDocumentContentService{}
+	}
+
+	searchProjection := p.SearchProjection
+	if searchProjection == nil {
+		searchProjection = noopDocumentSearchProjectionService{}
+	}
+
+	workflowStarter := p.WorkflowStarter
+	if workflowStarter == nil {
+		workflowStarter = noopWorkflowStarter{}
+	}
+
 	return &Activities{
 		sessionRepo:          p.SessionRepository,
 		documentRepo:         p.DocumentRepository,
 		storage:              p.Storage,
 		auditService:         p.AuditService,
-		searchProjection:     p.SearchProjection,
+		searchProjection:     searchProjection,
 		thumbnailGenerator:   p.ThumbnailGenerator,
-		temporalClient:       p.TemporalClient,
+		workflowStarter:      workflowStarter,
 		redis:                p.Redis,
-		documentIntelligence: p.DocumentIntelligence,
+		documentIntelligence: documentIntelligence,
 	}
 }
 
@@ -98,6 +114,15 @@ func (a *Activities) FinalizeUploadActivity(
 	}
 
 	defer a.releaseCompletionLease(ctx, session.ID.String())
+
+	if superseded, err := a.cancelSupersededSession(ctx, session); err != nil {
+		return nil, err
+	} else if superseded {
+		return &FinalizeUploadResult{
+			SessionID: session.ID,
+			Status:    string(session.Status),
+		}, nil
+	}
 
 	if session.DocumentID != nil && (session.Status == documentupload.StatusAvailable || session.Status == documentupload.StatusCompleted) {
 		previewPath := a.ensureThumbnailForSession(ctx, session)
@@ -186,9 +211,7 @@ func (a *Activities) FinalizeUploadActivity(
 	if a.thumbnailGenerator != nil && a.thumbnailGenerator.SupportsThumbnail(doc.FileType) {
 		previewPath = a.startThumbnailWorkflow(ctx, doc)
 	}
-	if a.documentIntelligence != nil {
-		_ = a.documentIntelligence.EnqueueExtraction(ctx, doc, payload.UserID)
-	}
+	_ = a.documentIntelligence.EnqueueExtraction(ctx, doc, payload.UserID)
 
 	return &FinalizeUploadResult{
 		SessionID:   session.ID,
@@ -254,12 +277,32 @@ func (a *Activities) CleanupDocumentStorageActivity(
 		if path == "" {
 			continue
 		}
-		if err := a.storage.Delete(ctx, path); err != nil {
+		if err := a.deleteStoredObject(ctx, path); err != nil {
 			return temporaltype.NewRetryableError("Failed to cleanup document storage", err).ToTemporalError()
 		}
 	}
 
 	return nil
+}
+
+func (a *Activities) deleteStoredObject(ctx context.Context, key string) error {
+	exists, err := a.storage.Exists(ctx, key)
+	if err != nil {
+		return err
+	}
+	if !exists {
+		return nil
+	}
+
+	fileInfo, err := a.storage.GetFileInfo(ctx, key)
+	if err != nil {
+		return err
+	}
+
+	return a.storage.DeleteObject(ctx, &storage.DeleteObjectParams{
+		Key:       key,
+		VersionID: fileInfo.VersionID,
+	})
 }
 
 func (a *Activities) updateStatus(
@@ -305,6 +348,118 @@ func (a *Activities) ensureDocument(
 		})
 	}
 
+	existing, err := a.documentRepo.GetByStoragePath(ctx, repositories.GetDocumentByStoragePathRequest{
+		StoragePath: session.StoragePath,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: session.OrganizationID,
+			BuID:  session.BusinessUnitID,
+		},
+	})
+	if err == nil {
+		return existing, nil
+	}
+	if !errortypes.IsNotFoundError(err) {
+		return nil, err
+	}
+
+	fileInfo, err := a.storage.GetFileInfo(ctx, session.StoragePath)
+	if err != nil {
+		return nil, err
+	}
+
+	const maxCreateAttempts = 3
+	for attempt := 0; attempt < maxCreateAttempts; attempt++ {
+		lineageID, versionNumber, previousDoc, resolveErr := a.resolveLineageState(ctx, session)
+		if resolveErr != nil {
+			return nil, resolveErr
+		}
+
+		doc := &document.Document{
+			LineageID:          lineageID,
+			VersionNumber:      versionNumber,
+			IsCurrentVersion:   previousDoc == nil,
+			OrganizationID:     session.OrganizationID,
+			BusinessUnitID:     session.BusinessUnitID,
+			FileName:           filepath.Base(session.StoragePath),
+			OriginalName:       session.OriginalName,
+			FileSize:           session.FileSize,
+			FileType:           session.ContentType,
+			StoragePath:        session.StoragePath,
+			StorageVersionID:   fileInfo.VersionID,
+			Status:             document.StatusActive,
+			Description:        session.Description,
+			ResourceID:         session.ResourceID,
+			ResourceType:       session.ResourceType,
+			Tags:               session.Tags,
+			UploadedByID:       userID,
+			PreviewStoragePath: "",
+			PreviewStatus:      previewStatusForFileType(session.ContentType),
+			DocumentTypeID:     session.DocumentTypeID,
+		}
+
+		createdDoc, createErr := a.documentRepo.Create(ctx, doc)
+		if createErr != nil {
+			if dberror.IsUniqueConstraintViolation(createErr) {
+				if existingDoc, existingErr := a.documentRepo.GetByStoragePath(ctx, repositories.GetDocumentByStoragePathRequest{
+					StoragePath: session.StoragePath,
+					TenantInfo: pagination.TenantInfo{
+						OrgID: session.OrganizationID,
+						BuID:  session.BusinessUnitID,
+					},
+				}); existingErr == nil {
+					return existingDoc, nil
+				}
+
+				if attempt < maxCreateAttempts-1 {
+					continue
+				}
+			}
+			return nil, createErr
+		}
+
+		if previousDoc != nil {
+			if err = a.documentRepo.PromoteVersion(ctx, &repositories.PromoteDocumentVersionRequest{
+				LineageID:         lineageID,
+				CurrentDocumentID: createdDoc.ID,
+				TenantInfo: pagination.TenantInfo{
+					OrgID: session.OrganizationID,
+					BuID:  session.BusinessUnitID,
+				},
+			}); err != nil {
+				return nil, err
+			}
+			_ = a.searchProjection.Delete(ctx, previousDoc.ID, pagination.TenantInfo{
+				OrgID: session.OrganizationID,
+				BuID:  session.BusinessUnitID,
+			})
+		}
+		createdDoc.IsCurrentVersion = true
+
+		_ = a.auditService.LogAction(&services.LogActionParams{
+			Resource:       permission.ResourceDocument,
+			ResourceID:     createdDoc.GetID().String(),
+			Operation:      permission.OpCreate,
+			UserID:         userID,
+			CurrentState:   jsonutils.MustToJSON(createdDoc),
+			OrganizationID: createdDoc.OrganizationID,
+			BusinessUnitID: createdDoc.BusinessUnitID,
+		}, auditservice.WithComment("Document uploaded"))
+		a.syncSearchProjection(ctx, createdDoc, "")
+
+		return createdDoc, nil
+	}
+
+	return nil, temporal.NewNonRetryableApplicationError(
+		"Failed to create document record after concurrent upload retries",
+		"document-upload-finalization",
+		nil,
+	)
+}
+
+func (a *Activities) resolveLineageState(
+	ctx context.Context,
+	session *documentupload.Session,
+) (pulid.ID, int64, *document.Document, error) {
 	var (
 		lineageID     pulid.ID
 		versionNumber int64 = 1
@@ -321,7 +476,7 @@ func (a *Activities) ensureDocument(
 			},
 		})
 		if err != nil {
-			return nil, err
+			return "", 0, nil, err
 		}
 		for _, version := range versions {
 			if version.VersionNumber >= versionNumber {
@@ -333,71 +488,7 @@ func (a *Activities) ensureDocument(
 		}
 	}
 
-	fileInfo, err := a.storage.GetFileInfo(ctx, session.StoragePath)
-	if err != nil {
-		return nil, err
-	}
-
-	doc := &document.Document{
-		LineageID:          lineageID,
-		VersionNumber:      versionNumber,
-		IsCurrentVersion:   previousDoc == nil,
-		OrganizationID:     session.OrganizationID,
-		BusinessUnitID:     session.BusinessUnitID,
-		FileName:           filepath.Base(session.StoragePath),
-		OriginalName:       session.OriginalName,
-		FileSize:           session.FileSize,
-		FileType:           session.ContentType,
-		StoragePath:        session.StoragePath,
-		StorageVersionID:   fileInfo.VersionID,
-		Status:             document.StatusActive,
-		Description:        session.Description,
-		ResourceID:         session.ResourceID,
-		ResourceType:       session.ResourceType,
-		Tags:               session.Tags,
-		UploadedByID:       userID,
-		PreviewStoragePath: "",
-		PreviewStatus:      previewStatusForFileType(session.ContentType),
-		DocumentTypeID:     session.DocumentTypeID,
-	}
-
-	createdDoc, err := a.documentRepo.Create(ctx, doc)
-	if err != nil {
-		return nil, err
-	}
-
-	if previousDoc != nil {
-		if err = a.documentRepo.PromoteVersion(ctx, &repositories.PromoteDocumentVersionRequest{
-			LineageID:        lineageID,
-			CurrentDocumentID: createdDoc.ID,
-			TenantInfo: pagination.TenantInfo{
-				OrgID: session.OrganizationID,
-				BuID:  session.BusinessUnitID,
-			},
-		}); err != nil {
-			return nil, err
-		}
-		if a.searchProjection != nil {
-			_ = a.searchProjection.Delete(ctx, previousDoc.ID, pagination.TenantInfo{
-				OrgID: session.OrganizationID,
-				BuID:  session.BusinessUnitID,
-			})
-		}
-	}
-	createdDoc.IsCurrentVersion = true
-
-	_ = a.auditService.LogAction(&services.LogActionParams{
-		Resource:       permission.ResourceDocument,
-		ResourceID:     createdDoc.GetID().String(),
-		Operation:      permission.OpCreate,
-		UserID:         userID,
-		CurrentState:   jsonutils.MustToJSON(createdDoc),
-		OrganizationID: createdDoc.OrganizationID,
-		BusinessUnitID: createdDoc.BusinessUnitID,
-	}, auditservice.WithComment("Document uploaded"))
-	a.syncSearchProjection(ctx, createdDoc, "")
-
-	return createdDoc, nil
+	return lineageID, versionNumber, previousDoc, nil
 }
 
 func (a *Activities) syncSearchProjection(
@@ -405,10 +496,6 @@ func (a *Activities) syncSearchProjection(
 	doc *document.Document,
 	contentText string,
 ) {
-	if a.searchProjection == nil {
-		return
-	}
-
 	_ = a.searchProjection.Upsert(ctx, doc, contentText)
 }
 
@@ -417,6 +504,12 @@ func (a *Activities) reconcileSession(
 	session *documentupload.Session,
 	expiresBefore int64,
 ) (expired bool, finalize bool, err error) {
+	if superseded, err := a.cancelSupersededSession(ctx, session); err != nil {
+		return false, false, err
+	} else if superseded {
+		return false, false, nil
+	}
+
 	switch session.Status {
 	case documentupload.StatusUploaded, documentupload.StatusVerifying, documentupload.StatusFinalizing:
 		return false, a.startFinalizeWorkflowForSession(ctx, session), nil
@@ -526,17 +619,17 @@ func (a *Activities) startFinalizeWorkflowForSession(
 	ctx context.Context,
 	session *documentupload.Session,
 ) bool {
-	if a.temporalClient == nil {
+	if !a.workflowStarter.Enabled() {
 		return false
 	}
 
-	_, err := a.temporalClient.ExecuteWorkflow(
+	_, err := a.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
-			ID:            fmt.Sprintf("document-upload-finalize-%s", session.ID.String()),
-			TaskQueue:     temporaltype.UploadTaskQueue,
-			RetryPolicy:   temporaltype.DefaultRetryPolicy,
-			StaticSummary: fmt.Sprintf("Finalizing upload %s", session.ID.String()),
+			ID:                                       fmt.Sprintf("document-upload-finalize-%s", session.ID.String()),
+			TaskQueue:                                temporaltype.UploadTaskQueue,
+			WorkflowExecutionErrorWhenAlreadyStarted: true,
+			StaticSummary:                            fmt.Sprintf("Finalizing upload %s", session.ID.String()),
 		},
 		"FinalizeDocumentUploadWorkflow",
 		&FinalizeUploadPayload{
@@ -557,7 +650,7 @@ func (a *Activities) startFinalizeWorkflowForSession(
 }
 
 func (a *Activities) startThumbnailWorkflow(ctx context.Context, doc *document.Document) string {
-	if a.temporalClient == nil {
+	if !a.workflowStarter.Enabled() {
 		return ""
 	}
 
@@ -587,12 +680,11 @@ func (a *Activities) startThumbnailWorkflow(ctx context.Context, doc *document.D
 		ResourceType:   doc.ResourceType,
 	}
 
-	_, err := a.temporalClient.ExecuteWorkflow(
+	_, err := a.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
 			ID:                                       workflowID,
 			TaskQueue:                                temporaltype.ThumbnailTaskQueue,
-			RetryPolicy:                              temporaltype.DefaultRetryPolicy,
 			WorkflowIDReusePolicy:                    enumspb.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE,
 			WorkflowExecutionErrorWhenAlreadyStarted: true,
 			StaticSummary:                            fmt.Sprintf("Generating thumbnail for document %s", doc.ID),
@@ -618,6 +710,57 @@ func (a *Activities) startThumbnailWorkflow(ctx context.Context, doc *document.D
 	}
 
 	return doc.PreviewStoragePath
+}
+
+func (a *Activities) cancelSupersededSession(
+	ctx context.Context,
+	session *documentupload.Session,
+) (bool, error) {
+	if session == nil || session.LineageID == nil || session.LineageID.IsNil() || session.Status.IsTerminal() {
+		return false, nil
+	}
+
+	superseded, err := a.isSupersededByNewerVersion(ctx, session)
+	if err != nil || !superseded {
+		return false, err
+	}
+
+	session.MarkSuperseded(time.Now().Unix())
+	if _, err = a.sessionRepo.Update(ctx, session); err != nil {
+		return false, err
+	}
+
+	return true, nil
+}
+
+func (a *Activities) isSupersededByNewerVersion(
+	ctx context.Context,
+	session *documentupload.Session,
+) (bool, error) {
+	activeSessions, err := a.sessionRepo.ListActive(ctx, &repositories.ListActiveDocumentUploadSessionsRequest{
+		TenantInfo: pagination.TenantInfo{
+			OrgID: session.OrganizationID,
+			BuID:  session.BusinessUnitID,
+		},
+		ResourceID:   session.ResourceID,
+		ResourceType: session.ResourceType,
+	})
+	if err != nil {
+		return false, err
+	}
+
+	versions, err := a.documentRepo.ListVersions(ctx, repositories.ListDocumentVersionsRequest{
+		LineageID: *session.LineageID,
+		TenantInfo: pagination.TenantInfo{
+			OrgID: session.OrganizationID,
+			BuID:  session.BusinessUnitID,
+		},
+	})
+	if err != nil {
+		return false, err
+	}
+
+	return session.IsSupersededByNewerArtifacts(activeSessions, versions), nil
 }
 
 func (a *Activities) getDocumentForSession(

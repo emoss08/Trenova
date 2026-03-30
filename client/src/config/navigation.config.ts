@@ -214,6 +214,12 @@ const billingModule: NavModule = {
           path: "/billing/configuration-files/document-types",
           resource: Resource.DocumentType,
         },
+        {
+          id: "document-packet-rules",
+          label: "Packet Rules",
+          path: "/billing/configuration-files/document-packet-rules",
+          resource: Resource.DocumentType,
+        },
       ],
     },
   ],

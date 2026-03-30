@@ -54,7 +54,9 @@ func (s *Service) resolveLineageForUpload(
 		return nil, err
 	}
 	if len(versions) == 0 {
-		return nil, errortypes.NewNotFoundError("Document lineage not found within your organization")
+		return nil, errortypes.NewNotFoundError(
+			"Document lineage not found within your organization",
+		)
 	}
 
 	current := currentDocumentVersion(versions)
@@ -87,7 +89,7 @@ func (s *Service) makeCurrentDocumentVersion(
 
 		if lineageInfo != nil {
 			if err := s.repo.PromoteVersion(txCtx, &repositories.PromoteDocumentVersionRequest{
-				LineageID:        doc.LineageID,
+				LineageID:         doc.LineageID,
 				CurrentDocumentID: doc.ID,
 				TenantInfo: pagination.TenantInfo{
 					OrgID: doc.OrganizationID,
@@ -106,7 +108,7 @@ func (s *Service) deleteSearchProjection(
 	ctx context.Context,
 	doc *document.Document,
 ) {
-	if s.searchProjection == nil || doc == nil {
+	if doc == nil {
 		return
 	}
 
@@ -163,9 +165,9 @@ func (s *Service) RestoreVersion(
 	}
 
 	if err := s.repo.PromoteVersion(ctx, &repositories.PromoteDocumentVersionRequest{
-		LineageID:        target.LineageID,
+		LineageID:         target.LineageID,
 		CurrentDocumentID: target.ID,
-		TenantInfo:       tenantInfo,
+		TenantInfo:        tenantInfo,
 	}); err != nil {
 		return nil, err
 	}
@@ -174,10 +176,9 @@ func (s *Service) RestoreVersion(
 		s.deleteSearchProjection(ctx, current)
 	}
 	contentText := ""
-	if s.documentIntelligence != nil {
-		if content, contentErr := s.documentIntelligence.GetContent(ctx, target.ID, tenantInfo); contentErr == nil && content != nil {
-			contentText = content.ContentText
-		}
+	if content, contentErr := s.documentIntelligence.GetContent(ctx, target.ID, tenantInfo); contentErr == nil &&
+		content != nil {
+		contentText = content.ContentText
 	}
 	s.syncSearchProjection(ctx, s.l, target, contentText)
 
@@ -205,10 +206,13 @@ func (s *Service) GetPacketSummary(
 	resourceType, resourceID string,
 	tenantInfo pagination.TenantInfo,
 ) (*documentpacketrule.PacketSummary, error) {
-	rules, err := s.packetRuleRepo.ListByResourceType(ctx, &repositories.ListDocumentPacketRulesByResourceRequest{
-		TenantInfo:   tenantInfo,
-		ResourceType: resourceType,
-	})
+	rules, err := s.packetRuleRepo.ListByResourceType(
+		ctx,
+		&repositories.ListDocumentPacketRulesByResourceRequest{
+			TenantInfo:   tenantInfo,
+			ResourceType: resourceType,
+		},
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -340,6 +344,66 @@ func (s *Service) GetPacketSummary(
 	}
 
 	return summary, nil
+}
+
+func (s *Service) AttachLineageToResource(
+	ctx context.Context,
+	documentID pulid.ID,
+	resourceType string,
+	resourceID string,
+	tenantInfo pagination.TenantInfo,
+	userID pulid.ID,
+) (*document.Document, error) {
+	current, err := s.repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+		ID:         documentID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if current.ResourceType == resourceType && current.ResourceID == resourceID {
+		return current, nil
+	}
+
+	previous := *current
+	if err = s.repo.MoveLineageToResource(ctx, &repositories.MoveDocumentLineageRequest{
+		DocumentID:   documentID,
+		ResourceID:   resourceID,
+		ResourceType: resourceType,
+		TenantInfo:   tenantInfo,
+	}); err != nil {
+		return nil, err
+	}
+
+	updated, err := s.repo.GetByID(ctx, repositories.GetDocumentByIDRequest{
+		ID:         documentID,
+		TenantInfo: tenantInfo,
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	contentText := ""
+	if content, contentErr := s.documentIntelligence.GetContent(ctx, updated.ID, tenantInfo); contentErr == nil && content != nil {
+		contentText = content.ContentText
+	}
+	s.syncSearchProjection(ctx, s.l, updated, contentText)
+
+	if err = s.auditService.LogAction(&services.LogActionParams{
+		Resource:       permission.ResourceDocument,
+		ResourceID:     updated.ID.String(),
+		Operation:      permission.OpUpdate,
+		UserID:         userID,
+		PreviousState:  jsonutils.MustToJSON(previous),
+		CurrentState:   jsonutils.MustToJSON(updated),
+		OrganizationID: updated.OrganizationID,
+		BusinessUnitID: updated.BusinessUnitID,
+	}, auditservice.WithComment("Document lineage attached to shipment")); err != nil {
+		s.l.Warn("failed to log document lineage reassignment", zap.Error(err))
+	}
+
+	return updated, nil
 }
 
 func cmpStrings(a, b string) int {

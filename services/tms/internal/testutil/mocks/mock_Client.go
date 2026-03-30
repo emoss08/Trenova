@@ -209,6 +209,63 @@ func (_c *MockClient_Delete_Call) RunAndReturn(run func(ctx context.Context, key
 	return _c
 }
 
+// DeleteObject provides a mock function for the type MockClient
+func (_mock *MockClient) DeleteObject(ctx context.Context, params *storage.DeleteObjectParams) error {
+	ret := _mock.Called(ctx, params)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteObject")
+	}
+
+	var r0 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *storage.DeleteObjectParams) error); ok {
+		r0 = returnFunc(ctx, params)
+	} else {
+		r0 = ret.Error(0)
+	}
+	return r0
+}
+
+// MockClient_DeleteObject_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteObject'
+type MockClient_DeleteObject_Call struct {
+	*mock.Call
+}
+
+// DeleteObject is a helper method to define mock.On call
+//   - ctx context.Context
+//   - params *storage.DeleteObjectParams
+func (_e *MockClient_Expecter) DeleteObject(ctx interface{}, params interface{}) *MockClient_DeleteObject_Call {
+	return &MockClient_DeleteObject_Call{Call: _e.mock.On("DeleteObject", ctx, params)}
+}
+
+func (_c *MockClient_DeleteObject_Call) Run(run func(ctx context.Context, params *storage.DeleteObjectParams)) *MockClient_DeleteObject_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 *storage.DeleteObjectParams
+		if args[1] != nil {
+			arg1 = args[1].(*storage.DeleteObjectParams)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockClient_DeleteObject_Call) Return(err error) *MockClient_DeleteObject_Call {
+	_c.Call.Return(err)
+	return _c
+}
+
+func (_c *MockClient_DeleteObject_Call) RunAndReturn(run func(ctx context.Context, params *storage.DeleteObjectParams) error) *MockClient_DeleteObject_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Download provides a mock function for the type MockClient
 func (_mock *MockClient) Download(ctx context.Context, key string) (*storage.DownloadResult, error) {
 	ret := _mock.Called(ctx, key)

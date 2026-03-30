@@ -11,8 +11,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
+	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	storageutil "github.com/emoss08/trenova/shared/testutil/storage"
@@ -25,6 +27,7 @@ import (
 type mockDocRepo struct {
 	ListFn                             func(ctx context.Context, req *repositories.ListDocumentsRequest) (*pagination.ListResult[*document.Document], error)
 	GetByIDFn                          func(ctx context.Context, req repositories.GetDocumentByIDRequest) (*document.Document, error)
+	GetByStoragePathFn                 func(ctx context.Context, req repositories.GetDocumentByStoragePathRequest) (*document.Document, error)
 	GetByIDsFn                         func(ctx context.Context, req repositories.BulkDeleteDocumentRequest) ([]*document.Document, error)
 	ListVersionsFn                     func(ctx context.Context, req repositories.ListDocumentVersionsRequest) ([]*document.Document, error)
 	GetByResFn                         func(ctx context.Context, req *repositories.GetDocumentsByResourceRequest) ([]*document.Document, error)
@@ -34,6 +37,7 @@ type mockDocRepo struct {
 	UpdatePreviewFn                    func(ctx context.Context, req *repositories.UpdateDocumentPreviewRequest) error
 	UpdateIntelligenceFn               func(ctx context.Context, req *repositories.UpdateDocumentIntelligenceRequest) error
 	PromoteVersionFn                   func(ctx context.Context, req *repositories.PromoteDocumentVersionRequest) error
+	MoveLineageToResourceFn            func(ctx context.Context, req *repositories.MoveDocumentLineageRequest) error
 	DeleteFn                           func(ctx context.Context, req repositories.DeleteDocumentRequest) error
 	BulkDeleteFn                       func(ctx context.Context, req repositories.BulkDeleteDocumentRequest) error
 	DeleteByLineageIDsFn               func(ctx context.Context, req repositories.DeleteDocumentLineageRequest) error
@@ -51,6 +55,16 @@ func (m *mockDocRepo) GetByID(
 	req repositories.GetDocumentByIDRequest,
 ) (*document.Document, error) {
 	return m.GetByIDFn(ctx, req)
+}
+
+func (m *mockDocRepo) GetByStoragePath(
+	ctx context.Context,
+	req repositories.GetDocumentByStoragePathRequest,
+) (*document.Document, error) {
+	if m.GetByStoragePathFn == nil {
+		return nil, errortypes.NewNotFoundError("Document not found within your organization")
+	}
+	return m.GetByStoragePathFn(ctx, req)
 }
 
 func (m *mockDocRepo) GetByIDs(
@@ -132,6 +146,16 @@ func (m *mockDocRepo) PromoteVersion(
 	return m.PromoteVersionFn(ctx, req)
 }
 
+func (m *mockDocRepo) MoveLineageToResource(
+	ctx context.Context,
+	req *repositories.MoveDocumentLineageRequest,
+) error {
+	if m.MoveLineageToResourceFn == nil {
+		return nil
+	}
+	return m.MoveLineageToResourceFn(ctx, req)
+}
+
 func (m *mockDocRepo) Delete(ctx context.Context, req repositories.DeleteDocumentRequest) error {
 	return m.DeleteFn(ctx, req)
 }
@@ -157,6 +181,7 @@ type mockStorageClient struct {
 	UploadFn                func(ctx context.Context, params *storage.UploadParams) (*storage.FileInfo, error)
 	DownloadFn              func(ctx context.Context, key string) (*storage.DownloadResult, error)
 	DeleteFn                func(ctx context.Context, key string) error
+	DeleteObjectFn          func(ctx context.Context, params *storage.DeleteObjectParams) error
 	GetPresignedURLFn       func(ctx context.Context, params *storage.PresignedURLParams) (string, error)
 	GetPresignedUploadURLFn func(
 		ctx context.Context,
@@ -211,6 +236,16 @@ func (m *mockStorageClient) Delete(ctx context.Context, key string) error {
 		return nil
 	}
 	return m.DeleteFn(ctx, key)
+}
+
+func (m *mockStorageClient) DeleteObject(
+	ctx context.Context,
+	params *storage.DeleteObjectParams,
+) error {
+	if m.DeleteObjectFn != nil {
+		return m.DeleteObjectFn(ctx, params)
+	}
+	return m.Delete(ctx, params.Key)
 }
 
 func (m *mockStorageClient) GetPresignedURL(
@@ -1307,7 +1342,7 @@ func TestNewConstructor(t *testing.T) {
 		AuditService:       &mocks.NoopAuditService{},
 		Config:             &config.Config{Storage: *storageCfg},
 		ThumbnailGenerator: thumbnailservice.NewGenerator(),
-		TemporalClient:     nil,
+		WorkflowStarter:    workflowstarter.New(workflowstarter.Params{}),
 	})
 
 	require.NotNil(t, svc)

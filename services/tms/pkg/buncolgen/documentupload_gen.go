@@ -53,6 +53,7 @@ var SessionColumns = struct {
 	OrganizationID          Column // "organization_id" → qualified: "dus.organization_id"
 	BusinessUnitID          Column // "business_unit_id" → qualified: "dus.business_unit_id"
 	DocumentID              Column // "document_id" → qualified: "dus.document_id"
+	LineageID               Column // "lineage_id" → qualified: "dus.lineage_id"
 	ResourceID              Column // "resource_id" → qualified: "dus.resource_id"
 	ResourceType            Column // "resource_type" → qualified: "dus.resource_type"
 	DocumentTypeID          Column // "document_type_id" → qualified: "dus.document_type_id"
@@ -79,6 +80,7 @@ var SessionColumns = struct {
 	OrganizationID:          NewColumn("organization_id", "dus"),
 	BusinessUnitID:          NewColumn("business_unit_id", "dus"),
 	DocumentID:              NewColumn("document_id", "dus"),
+	LineageID:               NewColumn("lineage_id", "dus"),
 	ResourceID:              NewColumn("resource_id", "dus"),
 	ResourceType:            NewColumn("resource_type", "dus"),
 	DocumentTypeID:          NewColumn("document_type_id", "dus"),
@@ -111,6 +113,7 @@ var SessionFieldMap = map[string]string{
 	"organizationId":          "organization_id",
 	"businessUnitId":          "business_unit_id",
 	"documentId":              "document_id",
+	"lineageId":               "lineage_id",
 	"resourceId":              "resource_id",
 	"resourceType":            "resource_type",
 	"documentTypeId":          "document_type_id",
@@ -141,6 +144,7 @@ var SessionInsertableColumns = []string{
 	"organization_id",
 	"business_unit_id",
 	"document_id",
+	"lineage_id",
 	"resource_id",
 	"resource_type",
 	"document_type_id",
@@ -218,6 +222,7 @@ var SessionFilter = struct {
 	OrganizationID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
 	BusinessUnitID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
 	DocumentID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentId" → DB: "document_id"
+	LineageID               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineageId" → DB: "lineage_id"
 	ResourceID              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resourceId" → DB: "resource_id"
 	ResourceType            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resourceType" → DB: "resource_type"
 	DocumentTypeID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentTypeId" → DB: "document_type_id"
@@ -251,6 +256,9 @@ var SessionFilter = struct {
 	},
 	DocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("documentId", op, value)
+	},
+	LineageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lineageId", op, value)
 	},
 	ResourceID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("resourceId", op, value)

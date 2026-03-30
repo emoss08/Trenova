@@ -80,6 +80,19 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
+function buildUploadMetadata(session: DocumentUploadSession): Record<string, string> {
+  const metadata: Record<string, string> = {};
+
+  if (session.documentTypeId) {
+    metadata.documentTypeId = session.documentTypeId;
+  }
+  if (session.lineageId) {
+    metadata.lineageId = session.lineageId;
+  }
+
+  return metadata;
+}
+
 function isTerminalUploadStatus(status: DocumentUploadSession["status"]): boolean {
   return (
     status === "Completed" ||
@@ -132,6 +145,8 @@ export function useDocumentUpload({
   const activeUploadsRef = useRef(0);
   const abortControllersRef = useRef<Map<string, AbortController>>(new Map());
   const sessionByUploadIdRef = useRef<Map<string, DocumentUploadSession>>(new Map());
+  const restoredSessionIdsRef = useRef<Set<string>>(new Set());
+  const processQueueRef = useRef<() => void>(() => undefined);
 
   const setUploadState = useCallback((id: string, updater: (state: UploadState) => UploadState) => {
     setUploads((prev) => prev.map((upload) => (upload.id === id ? updater(upload) : upload)));
@@ -311,6 +326,7 @@ export function useDocumentUpload({
   const discardSession = useCallback(async (uploadId: string) => {
     const session = sessionByUploadIdRef.current.get(uploadId);
     if (session?.id) {
+      restoredSessionIdsRef.current.delete(session.id);
       await removeDocumentUploadSession(session.id);
     }
     sessionByUploadIdRef.current.delete(uploadId);
@@ -416,6 +432,7 @@ export function useDocumentUpload({
             state.session.id,
             abortController.signal,
           );
+          restoredSessionIdsRef.current.delete(state.session.id);
           await removeDocumentUploadSession(state.session.id);
           sessionByUploadIdRef.current.delete(uploadState.id);
 
@@ -472,6 +489,7 @@ export function useDocumentUpload({
           completionSession.id,
           abortController.signal,
         );
+        restoredSessionIdsRef.current.delete(completionSession.id);
         await removeDocumentUploadSession(state.session.id);
         sessionByUploadIdRef.current.delete(uploadState.id);
 
@@ -548,6 +566,8 @@ export function useDocumentUpload({
     }
   }, [startUpload]);
 
+  processQueueRef.current = processQueue;
+
   const uploadFiles = useCallback(
     (files: File[]) => {
       const nextUploads = files.map((file) => ({
@@ -575,6 +595,7 @@ export function useDocumentUpload({
       }
 
       if (session?.id) {
+        restoredSessionIdsRef.current.delete(session.id);
         void apiService.documentService.cancelUploadSession(session.id).catch(() => undefined);
         void removeDocumentUploadSession(session.id);
       }
@@ -614,6 +635,7 @@ export function useDocumentUpload({
     (id: string) => {
       const session = sessionByUploadIdRef.current.get(id);
       if (session?.id) {
+        restoredSessionIdsRef.current.delete(session.id);
         void removeDocumentUploadSession(session.id);
       }
       sessionByUploadIdRef.current.delete(id);
@@ -626,7 +648,13 @@ export function useDocumentUpload({
     setUploads((prev) => {
       prev
         .filter((upload) => upload.status === "success")
-        .forEach((upload) => sessionByUploadIdRef.current.delete(upload.id));
+        .forEach((upload) => {
+          const session = sessionByUploadIdRef.current.get(upload.id);
+          if (session?.id) {
+            restoredSessionIdsRef.current.delete(session.id);
+          }
+          sessionByUploadIdRef.current.delete(upload.id);
+        });
       return prev.filter((upload) => upload.status !== "success");
     });
   }, []);
@@ -634,6 +662,7 @@ export function useDocumentUpload({
   const clearAll = useCallback(() => {
     abortControllersRef.current.forEach((controller) => controller.abort());
     abortControllersRef.current.clear();
+    restoredSessionIdsRef.current.clear();
     sessionByUploadIdRef.current.clear();
     pendingQueueRef.current = [];
     activeUploadsRef.current = 0;
@@ -661,11 +690,16 @@ export function useDocumentUpload({
           const activeSession = activeSessionMap.get(record.sessionId);
           if (!activeSession) {
             await removeDocumentUploadSession(record.sessionId);
+            restoredSessionIdsRef.current.delete(record.sessionId);
+            continue;
+          }
+          if (restoredSessionIdsRef.current.has(activeSession.id)) {
             continue;
           }
 
           const id = nanoid();
           sessionByUploadIdRef.current.set(id, activeSession);
+          restoredSessionIdsRef.current.add(activeSession.id);
           restoredUploads.push({
             id,
             file: record.file,
@@ -678,7 +712,7 @@ export function useDocumentUpload({
               activeSession.status === "Paused"
                 ? "paused"
                 : mapSessionStatusToUploadStatus(activeSession.status),
-            metadata: { ...uploadMetadata },
+            metadata: buildUploadMetadata(activeSession),
             sessionId: activeSession.id,
           });
         }
@@ -691,12 +725,17 @@ export function useDocumentUpload({
               ...restoredUploads.filter((upload) => !existingKeys.has(upload.sessionId)),
             ];
           });
+          const queuedSessionIDs = new Set(
+            pendingQueueRef.current.map((upload) => upload.sessionId).filter(Boolean),
+          );
           pendingQueueRef.current.push(
-            ...restoredUploads.filter((upload) =>
-              ["uploading", "uploaded", "verifying", "completing"].includes(upload.status),
+            ...restoredUploads.filter(
+              (upload) =>
+                ["uploading", "uploaded", "verifying", "completing"].includes(upload.status) &&
+                !queuedSessionIDs.has(upload.sessionId),
             ),
           );
-          processQueue();
+          processQueueRef.current();
         }
       } catch {
         return;
@@ -708,7 +747,7 @@ export function useDocumentUpload({
     return () => {
       cancelled = true;
     };
-  }, [processQueue, resourceId, resourceType, uploadMetadata]);
+  }, [resourceId, resourceType]);
 
   const isUploading = uploads.some((upload) =>
     ["pending", "uploading", "processing", "uploaded", "verifying", "retrying", "completing"].includes(

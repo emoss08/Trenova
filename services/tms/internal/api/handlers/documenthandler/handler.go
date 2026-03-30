@@ -13,6 +13,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/documentservice"
 	"github.com/emoss08/trenova/internal/core/services/documentuploadservice"
 	"github.com/emoss08/trenova/pkg/authctx"
+	"github.com/emoss08/trenova/pkg/errortypes"
 	"github.com/emoss08/trenova/pkg/pagination"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/gin-gonic/gin"
@@ -125,6 +126,11 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		"/:documentID/shipment-draft/reextract/",
 		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
 		h.reextractDocumentContent,
+	)
+	api.POST(
+		"/:documentID/attach-to-shipment/",
+		h.pm.RequirePermission(permission.ResourceDocument.String(), permission.OpUpdate),
+		h.attachToShipment,
 	)
 	api.GET(
 		"/:documentID/download/",
@@ -502,22 +508,25 @@ func (h *Handler) createUploadSession(c *gin.Context) {
 		return
 	}
 
-	session, err := h.uploadService.CreateSession(c.Request.Context(), &documentuploadservice.CreateSessionRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
+	session, err := h.uploadService.CreateSession(
+		c.Request.Context(),
+		&documentuploadservice.CreateSessionRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			ResourceID:     req.ResourceID,
+			ResourceType:   req.ResourceType,
+			FileName:       req.FileName,
+			FileSize:       req.FileSize,
+			ContentType:    req.ContentType,
+			Description:    req.Description,
+			Tags:           req.Tags,
+			DocumentTypeID: req.DocumentTypeID,
+			LineageID:      req.LineageID,
 		},
-		ResourceID:     req.ResourceID,
-		ResourceType:   req.ResourceType,
-		FileName:       req.FileName,
-		FileSize:       req.FileSize,
-		ContentType:    req.ContentType,
-		Description:    req.Description,
-		Tags:           req.Tags,
-		DocumentTypeID: req.DocumentTypeID,
-		LineageID:      req.LineageID,
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -529,14 +538,17 @@ func (h *Handler) createUploadSession(c *gin.Context) {
 func (h *Handler) listActiveUploadSessions(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 
-	sessions, err := h.uploadService.ListActive(c.Request.Context(), &repositories.ListActiveDocumentUploadSessionsRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
+	sessions, err := h.uploadService.ListActive(
+		c.Request.Context(),
+		&repositories.ListActiveDocumentUploadSessionsRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
+			ResourceID:   helpers.QueryString(c, "resourceId", ""),
+			ResourceType: helpers.QueryString(c, "resourceType", ""),
 		},
-		ResourceID:   helpers.QueryString(c, "resourceId", ""),
-		ResourceType: helpers.QueryString(c, "resourceType", ""),
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -553,13 +565,16 @@ func (h *Handler) getUploadSession(c *gin.Context) {
 		return
 	}
 
-	state, err := h.uploadService.GetSessionState(c.Request.Context(), repositories.GetDocumentUploadSessionByIDRequest{
-		ID: id,
-		TenantInfo: pagination.TenantInfo{
-			OrgID: authCtx.OrganizationID,
-			BuID:  authCtx.BusinessUnitID,
+	state, err := h.uploadService.GetSessionState(
+		c.Request.Context(),
+		repositories.GetDocumentUploadSessionByIDRequest{
+			ID: id,
+			TenantInfo: pagination.TenantInfo{
+				OrgID: authCtx.OrganizationID,
+				BuID:  authCtx.BusinessUnitID,
+			},
 		},
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -582,15 +597,18 @@ func (h *Handler) getUploadPartURLs(c *gin.Context) {
 		return
 	}
 
-	targets, err := h.uploadService.GetPartUploadTargets(c.Request.Context(), &documentuploadservice.PartRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
+	targets, err := h.uploadService.GetPartUploadTargets(
+		c.Request.Context(),
+		&documentuploadservice.PartRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			SessionID:   id,
+			PartNumbers: req.PartNumbers,
 		},
-		SessionID:   id,
-		PartNumbers: req.PartNumbers,
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -607,14 +625,17 @@ func (h *Handler) completeUploadSession(c *gin.Context) {
 		return
 	}
 
-	session, err := h.uploadService.Complete(c.Request.Context(), &documentuploadservice.CompletionRequest{
-		TenantInfo: pagination.TenantInfo{
-			OrgID:  authCtx.OrganizationID,
-			BuID:   authCtx.BusinessUnitID,
-			UserID: authCtx.UserID,
+	session, err := h.uploadService.Complete(
+		c.Request.Context(),
+		&documentuploadservice.CompletionRequest{
+			TenantInfo: pagination.TenantInfo{
+				OrgID:  authCtx.OrganizationID,
+				BuID:   authCtx.BusinessUnitID,
+				UserID: authCtx.UserID,
+			},
+			SessionID: id,
 		},
-		SessionID: id,
-	})
+	)
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
@@ -976,4 +997,54 @@ func (h *Handler) reextractDocumentContent(c *gin.Context) {
 	}
 
 	c.Status(http.StatusAccepted)
+}
+
+type attachToShipmentRequest struct {
+	ShipmentID string `json:"shipmentId"`
+}
+
+func (h *Handler) attachToShipment(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+	documentID, err := pulid.MustParse(c.Param("documentID"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req := new(attachToShipmentRequest)
+	if err = c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	if req.ShipmentID == "" {
+		h.eh.HandleError(
+			c,
+			errortypes.NewValidationError(
+				"shipmentId",
+				errortypes.ErrInvalid,
+				"Shipment ID is required",
+			),
+		)
+		return
+	}
+
+	updated, err := h.service.AttachLineageToResource(
+		c.Request.Context(),
+		documentID,
+		"shipment",
+		req.ShipmentID,
+		pagination.TenantInfo{
+			OrgID:  authCtx.OrganizationID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		authCtx.UserID,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, updated)
 }

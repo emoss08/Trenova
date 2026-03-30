@@ -2,8 +2,10 @@ package documentuploadrepository
 
 import (
 	"context"
+	"time"
 
 	"github.com/emoss08/trenova/internal/core/domain/documentupload"
+	"github.com/emoss08/trenova/internal/core/ports"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
 	"github.com/emoss08/trenova/pkg/dberror"
@@ -37,7 +39,38 @@ func (r *repository) Create(
 	ctx context.Context,
 	entity *documentupload.Session,
 ) (*documentupload.Session, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	err := r.db.WithTx(ctx, ports.TxOptions{Isolation: 0}, func(ctx context.Context, tx bun.Tx) error {
+		if _, err := tx.NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+			return err
+		}
+
+		if entity.LineageID == nil || entity.LineageID.IsNil() {
+			return nil
+		}
+
+		_, err := tx.NewUpdate().
+			Table("document_upload_sessions").
+			Set("status = ?", documentupload.StatusCanceled).
+			Set("failure_code = ?", "SUPERSEDED_BY_NEWER_SESSION").
+			Set("failure_message = ?", "Superseded by a newer upload session").
+			Set("last_activity_at = ?", time.Now().Unix()).
+			Where("organization_id = ?", entity.OrganizationID).
+			Where("business_unit_id = ?", entity.BusinessUnitID).
+			Where("lineage_id = ?", *entity.LineageID).
+			Where("id <> ?", entity.ID).
+			Where("status IN (?)", bun.In([]documentupload.Status{
+				documentupload.StatusInitiated,
+				documentupload.StatusUploading,
+				documentupload.StatusUploaded,
+				documentupload.StatusVerifying,
+				documentupload.StatusFinalizing,
+				documentupload.StatusCompleting,
+				documentupload.StatusPaused,
+			})).
+			Exec(ctx)
+		return err
+	})
+	if err != nil {
 		return nil, err
 	}
 

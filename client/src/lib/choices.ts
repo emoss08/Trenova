@@ -8,7 +8,6 @@ import type {
   ThresholdAction,
 } from "@/types/accounting-control";
 import type { PaymentTerm, TransferSchedule } from "@/types/billing-control";
-import type { CaseFormat } from "@/types/data-entry-control";
 import type { FreightClass } from "@/types/commodity";
 import type { FieldType } from "@/types/custom-field";
 import type {
@@ -19,11 +18,13 @@ import type {
   InvoiceMethod,
   InvoiceNumberFormat,
 } from "@/types/customer";
+import type { CaseFormat } from "@/types/data-entry-control";
 import type {
   AutoAssignmentStrategy,
   ComplianceEnforcementLevel,
   ServiceIncidentType,
 } from "@/types/dispatch-control";
+import type { ResourceType } from "@/types/document-packet-rule";
 import type { DocumentCategory, DocumentClassification } from "@/types/document-type";
 import type { EquipmentClass } from "@/types/equipment-type";
 import type { GenericSelectOption, SelectOption } from "@/types/fields";
@@ -33,7 +34,6 @@ import type { FormulaTemplateStatus, FormulaTemplateType } from "@/types/formula
 import type { HazardousClass, PackingGroup } from "@/types/hazardous-material";
 import type { SegregationDistanceUnit, SegregationType } from "@/types/hazmat-segregation-rule";
 import type { EquipmentStatus, Status } from "@/types/helpers";
-import type { TimeFormatType } from "@/types/user";
 import type { HoldSeverity, HoldType } from "@/types/hold-reason";
 import type { FacilityType, LocationCategoryType } from "@/types/location-category";
 import type { DataScope, FieldSensitivity, Operation } from "@/types/role";
@@ -45,6 +45,7 @@ import type {
   StopType,
 } from "@/types/shipment";
 import type { CommentPriority, CommentType, CommentVisibility } from "@/types/shipment-comment";
+import type { TimeFormatType } from "@/types/user";
 import type {
   CDLClass,
   ComplianceStatus,
@@ -629,3 +630,9 @@ export const caseFormatChoices = [
   { value: "Lower", label: "lower" },
   { value: "TitleCase", label: "Title Case" },
 ] satisfies ReadonlyArray<GenericSelectOption<CaseFormat>>;
+export const resourceTypeChoices = [
+  { value: "Shipment", label: "Shipment" },
+  { value: "Trailer", label: "Trailer" },
+  { value: "Tractor", label: "Tractor" },
+  { value: "Worker", label: "Worker" },
+] satisfies ReadonlyArray<GenericSelectOption<ResourceType>>;

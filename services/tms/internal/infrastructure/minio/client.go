@@ -86,7 +86,10 @@ func New(p Params) (storage.Client, error) {
 		l:            p.Logger.Named("infrastructure.minio"),
 	}
 
-	if err = client.EnsureBucket(context.Background()); err != nil {
+	ensureCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+
+	if err = client.EnsureBucket(ensureCtx); err != nil {
 		return nil, fmt.Errorf("failed to ensure bucket exists: %w", err)
 	}
 
@@ -165,12 +168,22 @@ func (c *Client) Download(ctx context.Context, key string) (*storage.DownloadRes
 }
 
 func (c *Client) Delete(ctx context.Context, key string) error {
+	return c.DeleteObject(ctx, &storage.DeleteObjectParams{Key: key})
+}
+
+func (c *Client) DeleteObject(
+	ctx context.Context,
+	params *storage.DeleteObjectParams,
+) error {
 	log := c.l.With(
 		zap.String("operation", "Delete"),
-		zap.String("key", key),
+		zap.String("key", params.Key),
+		zap.String("versionId", params.VersionID),
 	)
 
-	err := c.client.RemoveObject(ctx, c.bucket, key, minio.RemoveObjectOptions{})
+	err := c.client.RemoveObject(ctx, c.bucket, params.Key, minio.RemoveObjectOptions{
+		VersionID: params.VersionID,
+	})
 	if err != nil {
 		log.Error("failed to delete object", zap.Error(err))
 		return fmt.Errorf("failed to delete file: %w", err)
@@ -357,14 +370,40 @@ func (c *Client) GetFileInfo(ctx context.Context, key string) (*storage.FileInfo
 		return nil, fmt.Errorf("failed to get file info: %w", err)
 	}
 
-	return &storage.FileInfo{
+	info := &storage.FileInfo{
 		Key:          stat.Key,
 		Size:         stat.Size,
 		ContentType:  stat.ContentType,
 		LastModified: stat.LastModified,
 		Metadata:     stat.UserMetadata,
 		VersionID:    stat.VersionID,
-	}, nil
+	}
+
+	retentionMode, retentionUntil, retentionErr := c.client.GetObjectRetention(
+		ctx,
+		c.bucket,
+		key,
+		stat.VersionID,
+	)
+	if retentionErr == nil {
+		if retentionMode != nil {
+			info.RetentionMode = string(*retentionMode)
+		}
+		info.RetentionUntil = retentionUntil
+	} else {
+		log.Debug("failed to fetch object retention metadata", zap.Error(retentionErr))
+	}
+
+	legalHold, legalHoldErr := c.client.GetObjectLegalHold(ctx, c.bucket, key, minio.GetObjectLegalHoldOptions{
+		VersionID: stat.VersionID,
+	})
+	if legalHoldErr == nil && legalHold != nil {
+		info.LegalHold = string(*legalHold) == "ON"
+	} else if legalHoldErr != nil {
+		log.Debug("failed to fetch object legal hold metadata", zap.Error(legalHoldErr))
+	}
+
+	return info, nil
 }
 
 func (c *Client) EnsureBucket(ctx context.Context) error {

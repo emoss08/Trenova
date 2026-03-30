@@ -54,7 +54,7 @@ type Params struct {
 	Validator       *Validator
 	AuditService    services.AuditService
 	Realtime        services.RealtimeService
-	TemporalClient  client.Client
+	WorkflowStarter services.WorkflowStarter
 	Coordinator     *shipmentstate.Coordinator
 	Commercial      *shipmentcommercial.Calculator
 }
@@ -74,7 +74,7 @@ type service struct {
 	validator       *Validator
 	auditService    services.AuditService
 	realtime        services.RealtimeService
-	temporalClient  client.Client
+	workflowStarter services.WorkflowStarter
 	coordinator     *shipmentstate.Coordinator
 	commercial      *shipmentcommercial.Calculator
 }
@@ -96,7 +96,7 @@ func New(p Params) services.ShipmentService {
 		validator:       p.Validator,
 		auditService:    p.AuditService,
 		realtime:        p.Realtime,
-		temporalClient:  p.TemporalClient,
+		workflowStarter: p.WorkflowStarter,
 		coordinator:     p.Coordinator,
 		commercial:      p.Commercial,
 	}
@@ -1092,16 +1092,15 @@ func (s *service) Duplicate(
 		time.Now().UnixNano(),
 	)
 
-	if s.temporalClient == nil {
+	if !s.workflowStarter.Enabled() {
 		return nil, errortypes.NewBusinessError("shipment duplication is not configured")
 	}
 
-	run, err := s.temporalClient.ExecuteWorkflow(
+	run, err := s.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
-			ID:          workflowID,
-			TaskQueue:   temporaltype.TaskQueueSystem.String(),
-			RetryPolicy: temporaltype.DefaultRetryPolicy,
+			ID:        workflowID,
+			TaskQueue: temporaltype.TaskQueueSystem.String(),
 			StaticSummary: fmt.Sprintf(
 				"Duplicate shipment %s (%d copies)",
 				req.ShipmentID.String(),

@@ -38,6 +38,7 @@ interface UploadPanelProps {
   multiple?: boolean;
   supportedFormatsLabel?: string;
   maxFileSizeLabel?: string;
+  description?: string;
 }
 
 const MAX_RETRIES = 3;
@@ -416,6 +417,7 @@ export function UploadPanel({
   multiple = true,
   supportedFormatsLabel = "PDF, images, and documents",
   maxFileSizeLabel = "50 MB",
+  description,
 }: UploadPanelProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -583,6 +585,12 @@ export function UploadPanel({
               </Button>
             </div>
           </div>
+
+          {description && (
+            <p className="border-b border-border px-3 py-2 text-xs text-muted-foreground">
+              {description}
+            </p>
+          )}
 
           <AnimatePresence initial={false}>
             {!isEffectivelyCollapsed && (

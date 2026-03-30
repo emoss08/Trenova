@@ -20,6 +20,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/auditservice"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
+	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentuploadjobs"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/thumbnailjobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
@@ -30,6 +31,7 @@ import (
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/google/uuid"
 	"github.com/uptrace/bun"
+	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -50,9 +52,9 @@ type Params struct {
 	AuditService         services.AuditService
 	DocumentIntelligence services.DocumentContentService
 	SearchProjection     services.DocumentSearchProjectionService
+	WorkflowStarter      services.WorkflowStarter
 	Config               *config.Config
 	ThumbnailGenerator   *thumbnailservice.Generator
-	TemporalClient       client.Client
 }
 
 type Service struct {
@@ -68,13 +70,28 @@ type Service struct {
 	auditService         services.AuditService
 	documentIntelligence services.DocumentContentService
 	searchProjection     services.DocumentSearchProjectionService
+	workflowStarter      services.WorkflowStarter
 	config               *config.StorageConfig
 	thumbnailGenerator   *thumbnailservice.Generator
-	temporalClient       client.Client
 }
 
 //nolint:gocritic // dependency injection param
 func New(p Params) *Service {
+	workflowStarter := p.WorkflowStarter
+	if workflowStarter == nil {
+		workflowStarter = workflowstarterservice.New(workflowstarterservice.Params{})
+	}
+
+	documentIntelligence := p.DocumentIntelligence
+	if documentIntelligence == nil {
+		documentIntelligence = noopDocumentContentService{}
+	}
+
+	searchProjection := p.SearchProjection
+	if searchProjection == nil {
+		searchProjection = noopDocumentSearchProjectionService{}
+	}
+
 	return &Service{
 		l:                    p.Logger.Named("service.document"),
 		db:                   p.DB,
@@ -86,11 +103,11 @@ func New(p Params) *Service {
 		storage:              p.Storage,
 		validator:            p.Validator,
 		auditService:         p.AuditService,
-		documentIntelligence: p.DocumentIntelligence,
-		searchProjection:     p.SearchProjection,
+		documentIntelligence: documentIntelligence,
+		searchProjection:     searchProjection,
+		workflowStarter:      workflowStarter,
 		config:               p.Config.GetStorageConfig(),
 		thumbnailGenerator:   p.ThumbnailGenerator,
-		temporalClient:       p.TemporalClient,
 	}
 }
 
@@ -256,7 +273,7 @@ func (s *Service) Upload(
 
 	if err = s.makeCurrentDocumentVersion(ctx, doc, lineageInfo); err != nil {
 		log.Error("failed to create document record", zap.Error(err))
-		if delErr := s.storage.Delete(ctx, storagePath); delErr != nil {
+		if delErr := s.deleteStoredObject(ctx, storagePath, fileInfo.VersionID); delErr != nil {
 			log.Error("failed to cleanup storage after db failure", zap.Error(delErr))
 		}
 		return nil, err
@@ -284,9 +301,7 @@ func (s *Service) Upload(
 	if s.thumbnailGenerator.SupportsThumbnail(contentType) {
 		s.startThumbnailWorkflow(ctx, log, createdDoc)
 	}
-	if s.documentIntelligence != nil {
-		_ = s.documentIntelligence.EnqueueExtraction(ctx, createdDoc, req.TenantInfo.UserID)
-	}
+	_ = s.documentIntelligence.EnqueueExtraction(ctx, createdDoc, req.TenantInfo.UserID)
 
 	return &UploadResult{Document: createdDoc}, nil
 }
@@ -296,7 +311,7 @@ func (s *Service) startThumbnailWorkflow(
 	log *zap.Logger,
 	doc *document.Document,
 ) {
-	if s.temporalClient == nil {
+	if !s.workflowStarter.Enabled() {
 		log.Debug("temporal client not configured, skipping thumbnail generation")
 		return
 	}
@@ -312,18 +327,22 @@ func (s *Service) startThumbnailWorkflow(
 		ResourceType:   doc.ResourceType,
 	}
 
-	_, err := s.temporalClient.ExecuteWorkflow(
+	_, err := s.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
-			ID:            workflowID,
-			TaskQueue:     temporaltype.ThumbnailTaskQueue,
-			RetryPolicy:   temporaltype.DefaultRetryPolicy,
-			StaticSummary: fmt.Sprintf("Generating thumbnail for document %s", doc.ID),
+			ID:                                       workflowID,
+			TaskQueue:                                temporaltype.ThumbnailTaskQueue,
+			WorkflowExecutionErrorWhenAlreadyStarted: true,
+			StaticSummary:                            fmt.Sprintf("Generating thumbnail for document %s", doc.ID),
 		},
 		"GenerateThumbnailWorkflow",
 		payload,
 	)
 	if err != nil {
+		var alreadyStarted *serviceerror.WorkflowExecutionAlreadyStarted
+		if errors.As(err, &alreadyStarted) {
+			return
+		}
 		log.Warn("failed to start thumbnail workflow",
 			zap.String("documentId", doc.ID.String()),
 			zap.Error(err),
@@ -744,7 +763,7 @@ func (s *Service) generateStoragePath(orgID, resourceType, filename string) stri
 func (s *Service) cleanupDocumentStorage(ctx context.Context, log *zap.Logger, doc *document.Document) {
 	failedPaths := make([]string, 0, 2)
 
-	if err := s.storage.Delete(ctx, doc.StoragePath); err != nil {
+	if err := s.deleteStoredObject(ctx, doc.StoragePath, doc.StorageVersionID); err != nil {
 		log.Warn("failed to delete file from storage after document delete",
 			zap.String("documentId", doc.ID.String()),
 			zap.String("storagePath", doc.StoragePath),
@@ -758,7 +777,7 @@ func (s *Service) cleanupDocumentStorage(ctx context.Context, log *zap.Logger, d
 		return
 	}
 
-	if err := s.storage.Delete(ctx, doc.PreviewStoragePath); err != nil {
+	if err := s.deleteStoredObject(ctx, doc.PreviewStoragePath, ""); err != nil {
 		log.Warn("failed to delete preview from storage after document delete",
 			zap.String("documentId", doc.ID.String()),
 			zap.String("previewStoragePath", doc.PreviewStoragePath),
@@ -770,16 +789,39 @@ func (s *Service) cleanupDocumentStorage(ctx context.Context, log *zap.Logger, d
 	s.enqueueStorageCleanup(ctx, log, doc.ID, failedPaths)
 }
 
+func (s *Service) deleteStoredObject(ctx context.Context, key, versionID string) error {
+	if strings.TrimSpace(key) == "" {
+		return nil
+	}
+
+	if strings.TrimSpace(versionID) == "" {
+		exists, err := s.storage.Exists(ctx, key)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return nil
+		}
+
+		fileInfo, err := s.storage.GetFileInfo(ctx, key)
+		if err != nil {
+			return err
+		}
+		versionID = fileInfo.VersionID
+	}
+
+	return s.storage.DeleteObject(ctx, &storage.DeleteObjectParams{
+		Key:       key,
+		VersionID: versionID,
+	})
+}
+
 func (s *Service) syncSearchProjection(
 	ctx context.Context,
 	log *zap.Logger,
 	doc *document.Document,
 	contentText string,
 ) {
-	if s.searchProjection == nil {
-		return
-	}
-
 	if err := s.searchProjection.Upsert(ctx, doc, contentText); err != nil {
 		log.Warn("failed to sync document search projection",
 			zap.String("documentId", doc.ID.String()),
@@ -802,17 +844,16 @@ func (s *Service) enqueueStorageCleanup(
 	documentID pulid.ID,
 	paths []string,
 ) {
-	if len(paths) == 0 || s.temporalClient == nil {
+	if len(paths) == 0 || !s.workflowStarter.Enabled() {
 		return
 	}
 
 	paths = slices.Compact(paths)
-	_, err := s.temporalClient.ExecuteWorkflow(
+	_, err := s.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
 			ID:            fmt.Sprintf("document-storage-cleanup-%s-%d", documentID.String(), time.Now().Unix()),
 			TaskQueue:     temporaltype.UploadTaskQueue,
-			RetryPolicy:   temporaltype.DefaultRetryPolicy,
 			StaticSummary: fmt.Sprintf("Cleaning up document storage for %s", documentID.String()),
 		},
 		"CleanupDocumentStorageWorkflow",

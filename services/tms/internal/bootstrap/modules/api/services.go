@@ -68,6 +68,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/services/versionservice"
 	"github.com/emoss08/trenova/internal/core/services/workerptoservice"
 	"github.com/emoss08/trenova/internal/core/services/workerservice"
+	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 
 	"go.uber.org/fx"
 )
@@ -86,6 +87,7 @@ var ServiceModule = fx.Module("api-services", fx.Provide(
 	workerservice.New,
 	auditservice.New,
 	datatransformer.New,
+	workflowstarter.New,
 	permission.NewEngine,
 	roleservice.New,
 	permissiondomain.NewRegistry,

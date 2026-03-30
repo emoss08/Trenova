@@ -49,10 +49,10 @@ type ActivitiesParams struct {
 	DocumentTypeRepo    repositories.DocumentTypeRepository
 	ContentRepo         repositories.DocumentContentRepository
 	DraftRepo           repositories.DocumentShipmentDraftRepository
-	AIDocumentService   services.AIDocumentService `optional:"true"`
+	AIDocumentService   services.AIDocumentService
 	SearchProjection    services.DocumentSearchProjectionService
 	Storage             storage.Client
-	TemporalClient      client.Client `optional:"true"`
+	WorkflowStarter     services.WorkflowStarter
 }
 
 type Activities struct {
@@ -67,10 +67,25 @@ type Activities struct {
 	aiDocumentService   services.AIDocumentService
 	searchProjection    services.DocumentSearchProjectionService
 	storage             storage.Client
-	temporalClient      client.Client
+	workflowStarter     services.WorkflowStarter
 }
 
 func NewActivities(p ActivitiesParams) *Activities {
+	aiDocumentService := p.AIDocumentService
+	if aiDocumentService == nil {
+		aiDocumentService = noopAIDocumentService{}
+	}
+
+	searchProjection := p.SearchProjection
+	if searchProjection == nil {
+		searchProjection = noopDocumentSearchProjectionService{}
+	}
+
+	workflowStarter := p.WorkflowStarter
+	if workflowStarter == nil {
+		workflowStarter = noopWorkflowStarter{}
+	}
+
 	return &Activities{
 		logger:              p.Logger.Named("temporal.document-intelligence"),
 		cfg:                 p.Config.GetDocumentIntelligenceConfig(),
@@ -80,10 +95,10 @@ func NewActivities(p ActivitiesParams) *Activities {
 		documentTypeRepo:    p.DocumentTypeRepo,
 		contentRepo:         p.ContentRepo,
 		draftRepo:           p.DraftRepo,
-		aiDocumentService:   p.AIDocumentService,
-		searchProjection:    p.SearchProjection,
+		aiDocumentService:   aiDocumentService,
+		searchProjection:    searchProjection,
 		storage:             p.Storage,
-		temporalClient:      p.TemporalClient,
+		workflowStarter:     workflowStarter,
 	}
 }
 
@@ -271,7 +286,7 @@ func (a *Activities) ReconcileDocumentIntelligenceActivity(
 	ctx context.Context,
 	payload *ReconcileDocumentIntelligencePayload,
 ) (*ReconcileDocumentIntelligenceResult, error) {
-	if a.temporalClient == nil {
+	if !a.workflowStarter.Enabled() {
 		return &ReconcileDocumentIntelligenceResult{}, nil
 	}
 
@@ -283,13 +298,13 @@ func (a *Activities) ReconcileDocumentIntelligenceActivity(
 
 	result := &ReconcileDocumentIntelligenceResult{}
 	for _, doc := range docs {
-		_, startErr := a.temporalClient.ExecuteWorkflow(
+		_, startErr := a.workflowStarter.StartWorkflow(
 			ctx,
 			client.StartWorkflowOptions{
-				ID:                    fmt.Sprintf("document-intelligence-%s", doc.ID.String()),
-				TaskQueue:             temporaltype.DocumentIntelligenceTaskQueue,
-				RetryPolicy:           temporaltype.DefaultRetryPolicy,
-				WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
+				ID:                                       fmt.Sprintf("document-intelligence-%s", doc.ID.String()),
+				TaskQueue:                                temporaltype.DocumentIntelligenceTaskQueue,
+				WorkflowExecutionErrorWhenAlreadyStarted: true,
+				WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
 			},
 			"ProcessDocumentIntelligenceWorkflow",
 			&ProcessDocumentIntelligencePayload{
@@ -570,10 +585,6 @@ func (a *Activities) syncSearchProjection(
 	doc *document.Document,
 	contentText string,
 ) {
-	if a.searchProjection == nil {
-		return
-	}
-
 	if err := a.searchProjection.Upsert(ctx, doc, contentText); err != nil {
 		a.metrics.Document.RecordSearchProjectionSync(false)
 		a.logger.Warn("failed to sync document search projection",
@@ -1247,7 +1258,7 @@ func (a *Activities) enrichWithAI(
 	classification classificationResult,
 	intelligence documentIntelligenceAnalysis,
 ) (classificationResult, documentIntelligenceAnalysis) {
-	if a.aiDocumentService == nil || control == nil || extracted == nil {
+	if extracted == nil {
 		return classification, intelligence
 	}
 	if !a.cfg.AIEnabled() || !control.EnableAIAssistedClassification {
@@ -1599,12 +1610,11 @@ func (a *Activities) associateDocumentType(
 	kind string,
 	control *tenant.DocumentControl,
 ) error {
-	if control == nil ||
-		!control.EnableAutoDocumentTypeAssociate ||
+	if !control.EnableAutoDocumentTypeAssociate ||
 		doc.DocumentTypeID != nil ||
 		!canApplyKindToResource(doc.ResourceType, kind) {
 		switch {
-		case control == nil || !control.EnableAutoDocumentTypeAssociate:
+		case !control.EnableAutoDocumentTypeAssociate:
 			a.metrics.Document.RecordTypeAssociation("disabled", kind)
 		case doc.DocumentTypeID != nil:
 			a.metrics.Document.RecordTypeAssociation("already_set", kind)
@@ -1701,9 +1711,6 @@ func (a *Activities) getDocumentControl(
 	ctx context.Context,
 	orgID, buID pulid.ID,
 ) (*tenant.DocumentControl, error) {
-	if a.documentControlRepo == nil {
-		return tenant.NewDefaultDocumentControl(orgID, buID), nil
-	}
 	return a.documentControlRepo.GetOrCreate(ctx, orgID, buID)
 }
 

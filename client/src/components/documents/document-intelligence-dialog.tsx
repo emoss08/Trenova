@@ -1,3 +1,4 @@
+import { DocumentShipmentDraftReviewDialog } from "@/components/documents/document-shipment-draft-review-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +27,7 @@ import {
   RefreshCcwIcon,
   SparklesIcon,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 
 interface DocumentIntelligenceDialogProps {
@@ -572,6 +574,7 @@ export function DocumentIntelligenceDialog({
   resourceId,
 }: DocumentIntelligenceDialogProps) {
   const queryClient = useQueryClient();
+  const [reviewShipmentOpen, setReviewShipmentOpen] = useState(false);
 
   const { data: content, isLoading: isContentLoading } = useQuery({
     queryKey: ["document-content", document?.id],
@@ -624,14 +627,29 @@ export function DocumentIntelligenceDialog({
     },
   });
 
+  const canReviewShipmentDraft =
+    !!document &&
+    !!shipmentDraft &&
+    shipmentDraft.status !== "Unavailable" &&
+    shipmentDraft.status !== "Failed";
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className="sm:max-w-4xl p-0 gap-0 overflow-hidden"
-        showCloseButton
+    <>
+      <Dialog
+        open={open}
+        onOpenChange={(nextOpen) => {
+          onOpenChange(nextOpen);
+          if (!nextOpen) {
+            setReviewShipmentOpen(false);
+          }
+        }}
       >
-        {document ? (
-          <>
+        <DialogContent
+          className="sm:max-w-4xl p-0 gap-0 overflow-hidden"
+          showCloseButton
+        >
+          {document ? (
+            <>
             <DialogHeader className="border-b px-6 pt-6 pb-4">
               <div className="flex flex-wrap items-center gap-2">
                 <DialogTitle>{document.originalName}</DialogTitle>
@@ -734,6 +752,14 @@ export function DocumentIntelligenceDialog({
             </ScrollArea>
 
             <DialogFooter className="m-0" showCloseButton>
+              {canReviewShipmentDraft ? (
+                <Button
+                  variant="secondary"
+                  onClick={() => setReviewShipmentOpen(true)}
+                >
+                  Create Shipment
+                </Button>
+              ) : null}
               <Button
                 variant="outline"
                 onClick={() => reextract()}
@@ -747,9 +773,18 @@ export function DocumentIntelligenceDialog({
                 Re-extract
               </Button>
             </DialogFooter>
-          </>
-        ) : null}
-      </DialogContent>
-    </Dialog>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+      <DocumentShipmentDraftReviewDialog
+        open={reviewShipmentOpen}
+        onOpenChange={setReviewShipmentOpen}
+        document={document}
+        draft={shipmentDraft ?? null}
+        sourceResourceType={resourceType}
+        sourceResourceId={resourceId}
+      />
+    </>
   );
 }

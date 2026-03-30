@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
+	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/shipmentjobs"
 	"github.com/emoss08/trenova/internal/testutil/mocks"
 	"github.com/emoss08/trenova/pkg/errortypes"
@@ -27,8 +28,7 @@ func (f *fakeShipmentWorkflowRun) GetID() string    { return f.workflowID }
 func (f *fakeShipmentWorkflowRun) GetRunID() string { return f.runID }
 
 type fakeShipmentTemporalClient struct {
-	client.Client
-	executeWorkflowFunc func(
+	startWorkflowFunc func(
 		ctx context.Context,
 		options client.StartWorkflowOptions,
 		workflow any,
@@ -36,14 +36,16 @@ type fakeShipmentTemporalClient struct {
 	) (client.WorkflowRun, error)
 }
 
-func (f *fakeShipmentTemporalClient) ExecuteWorkflow(
+func (f *fakeShipmentTemporalClient) StartWorkflow(
 	ctx context.Context,
 	options client.StartWorkflowOptions,
 	workflow any,
 	args ...any,
 ) (client.WorkflowRun, error) {
-	return f.executeWorkflowFunc(ctx, options, workflow, args...)
+	return f.startWorkflowFunc(ctx, options, workflow, args...)
 }
+
+func (*fakeShipmentTemporalClient) Enabled() bool { return true }
 
 func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 	t.Parallel()
@@ -66,8 +68,8 @@ func TestServiceDuplicate_StartsShipmentDuplicateWorkflow(t *testing.T) {
 		repo:         repo,
 		validator:    NewTestValidator(t),
 		auditService: audit,
-		temporalClient: &fakeShipmentTemporalClient{
-			executeWorkflowFunc: func(
+		workflowStarter: &fakeShipmentTemporalClient{
+			startWorkflowFunc: func(
 				_ context.Context,
 				options client.StartWorkflowOptions,
 				workflow any,
@@ -125,11 +127,12 @@ func TestServiceDuplicate_RejectsMissingTemporalClient(t *testing.T) {
 	t.Parallel()
 
 	svc := &service{
-		l:            zap.NewNop(),
-		repo:         mocks.NewMockShipmentRepository(t),
-		validator:    NewTestValidator(t),
-		auditService: mocks.NewMockAuditService(t),
-		coordinator:  newStateCoordinator(),
+		l:               zap.NewNop(),
+		repo:            mocks.NewMockShipmentRepository(t),
+		validator:       NewTestValidator(t),
+		auditService:    mocks.NewMockAuditService(t),
+		coordinator:     newStateCoordinator(),
+		workflowStarter: disabledWorkflowStarter{},
 	}
 
 	resp, err := svc.Duplicate(t.Context(), &repositories.BulkDuplicateShipmentRequest{
@@ -146,3 +149,16 @@ func TestServiceDuplicate_RejectsMissingTemporalClient(t *testing.T) {
 	require.Error(t, err)
 	assert.True(t, errortypes.IsBusinessError(err))
 }
+
+type disabledWorkflowStarter struct{}
+
+func (disabledWorkflowStarter) StartWorkflow(
+	context.Context,
+	client.StartWorkflowOptions,
+	any,
+	...any,
+) (client.WorkflowRun, error) {
+	return nil, services.ErrWorkflowStarterDisabled
+}
+
+func (disabledWorkflowStarter) Enabled() bool { return false }

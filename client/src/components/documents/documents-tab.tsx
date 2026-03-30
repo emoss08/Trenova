@@ -10,7 +10,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { useCallback, useDeferredValue, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Badge } from "../ui/badge";
 import { DocumentBulkActionDock } from "./document-bulk-action-dock";
 import { DocumentIntelligenceDialog } from "./document-intelligence-dialog";
 import { DocumentList } from "./document-list";
@@ -24,6 +23,7 @@ import {
 } from "./document-toolbar";
 import { formatFileSize, type RejectedFile } from "./document-upload-zone";
 import { getFileCategory } from "./document-utils";
+import { PacketCompletenessPanel } from "./packet-completeness-panel";
 import { UploadPanel } from "./upload-panel";
 
 interface DocumentsTabProps {
@@ -51,11 +51,7 @@ function matchesFileTypeFilter(doc: Document, filter: FileTypeFilter): boolean {
   }
 }
 
-function sortDocuments(
-  docs: Document[],
-  field: SortField,
-  direction: SortDirection,
-): Document[] {
+function sortDocuments(docs: Document[], field: SortField, direction: SortDirection): Document[] {
   const sorted = [...docs].sort((a, b) => {
     let comparison = 0;
 
@@ -77,11 +73,7 @@ function sortDocuments(
   return sorted;
 }
 
-export function DocumentsTab({
-  resourceId,
-  resourceType,
-  disabled = false,
-}: DocumentsTabProps) {
+export function DocumentsTab({ resourceId, resourceType, disabled = false }: DocumentsTabProps) {
   const queryClient = useQueryClient();
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -94,30 +86,21 @@ export function DocumentsTab({
     parseAsBoolean.withDefault(false),
   );
 
-  const [viewMode, setViewMode] = useLocalStorage<ViewMode>(
-    "documents-view-mode",
-    "grid",
-  );
+  const [viewMode, setViewMode] = useLocalStorage<ViewMode>("documents-view-mode", "grid");
   const [searchQuery, setSearchQuery] = useState("");
   const deferredSearchQuery = useDeferredValue(searchQuery);
   const [fileTypeFilter, setFileTypeFilter] = useState<FileTypeFilter>("all");
   const [sortField, setSortField] = useState<SortField>("date");
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
-  const [selectedDocumentTypeId, setSelectedDocumentTypeId] = useState<
-    string | undefined
-  >(undefined);
+  const [selectedDocumentTypeId, setSelectedDocumentTypeId] = useState<string | undefined>(
+    undefined,
+  );
 
   const isShipment = resourceType === "shipment";
 
   const { data: documentTypesData } = useQuery({
     queryKey: ["document-types-select-options"],
-    queryFn: () =>
-      fetchOptions<DocumentType>(
-        "/document-types/select-options/",
-        "",
-        1,
-        100,
-      ),
+    queryFn: () => fetchOptions<DocumentType>("/document-types/select-options/", "", 1, 100),
     enabled: isShipment,
     staleTime: 5 * 60 * 1000,
   });
@@ -148,11 +131,7 @@ export function DocumentsTab({
   const { data: documents = [], isLoading } = useQuery({
     queryKey,
     queryFn: () =>
-      apiService.documentService.getByResource(
-        resourceType,
-        resourceId,
-        deferredSearchQuery,
-      ),
+      apiService.documentService.getByResource(resourceType, resourceId, deferredSearchQuery),
     enabled: !!resourceId,
     refetchInterval: (query) => {
       const docs = query.state.data;
@@ -194,29 +173,22 @@ export function DocumentsTab({
     return result;
   }, [documents, fileTypeFilter, sortField, sortDirection]);
 
-  const {
-    uploads,
-    uploadFiles,
-    cancelUpload,
-    retryUpload,
-    removeUpload,
-    clearCompleted,
-  } = useDocumentUpload({
-    resourceId,
-    resourceType,
-    uploadMetadata,
-    onSuccess: () => {
-      setReplacementLineageId(undefined);
-      toast.success("Document uploaded successfully");
-    },
-    onError: (error) => {
-      toast.error(`Upload failed: ${error.message}`);
-    },
-  });
+  const { uploads, uploadFiles, cancelUpload, retryUpload, removeUpload, clearCompleted } =
+    useDocumentUpload({
+      resourceId,
+      resourceType,
+      uploadMetadata,
+      onSuccess: () => {
+        setReplacementLineageId(undefined);
+        toast.success("Document uploaded successfully");
+      },
+      onError: (error) => {
+        toast.error(`Upload failed: ${error.message}`);
+      },
+    });
 
   const deleteMutation = useMutation({
-    mutationFn: (documentId: string) =>
-      apiService.documentService.delete(documentId),
+    mutationFn: (documentId: string) => apiService.documentService.delete(documentId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["documents", resourceType, resourceId] });
       toast.success("Document deleted");
@@ -229,8 +201,7 @@ export function DocumentsTab({
   });
 
   const { mutateAsync: bulkDelete, isPending: isBulkDeleting } = useMutation({
-    mutationFn: (documentIds: string[]) =>
-      apiService.documentService.bulkDelete(documentIds),
+    mutationFn: (documentIds: string[]) => apiService.documentService.bulkDelete(documentIds),
     onSuccess: (result) => {
       void queryClient.invalidateQueries({ queryKey: ["documents", resourceType, resourceId] });
       toast.success(`${result.deletedCount} document(s) deleted`);
@@ -246,7 +217,9 @@ export function DocumentsTab({
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ["documents", resourceType, resourceId] });
       void queryClient.invalidateQueries({ queryKey: ["document-versions", versionDocument?.id] });
-      void queryClient.invalidateQueries({ queryKey: ["document-packet-summary", resourceType, resourceId] });
+      void queryClient.invalidateQueries({
+        queryKey: ["document-packet-summary", resourceType, resourceId],
+      });
       toast.success("Document version restored");
     },
     onError: (error) => {
@@ -366,52 +339,15 @@ export function DocumentsTab({
   if (!resourceId) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-sm text-muted-foreground">
-          Save the record first to manage documents.
-        </p>
+        <p className="text-sm text-muted-foreground">Save the record first to manage documents.</p>
       </div>
     );
   }
 
   return (
-    <div
-      className="space-y-4"
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={handleDrop}
-    >
+    <div className="space-y-4" onDragOver={(e) => e.preventDefault()} onDrop={handleDrop}>
       {packetSummary && packetSummary.totalRules > 0 && (
-        <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-card px-4 py-3">
-          <span className="text-sm font-medium">Packet Status</span>
-          <Badge
-            variant={
-              packetSummary.status === "Complete"
-                ? "teal"
-                : packetSummary.status === "Incomplete"
-                  ? "warning"
-                  : "outline"
-            }
-          >
-            {packetSummary.status}
-          </Badge>
-          <span className="text-sm text-muted-foreground">
-            {packetSummary.satisfiedRules}/{packetSummary.totalRules} rules satisfied
-          </span>
-          {packetSummary.missingRequired > 0 && (
-            <span className="text-sm text-muted-foreground">
-              {packetSummary.missingRequired} required missing
-            </span>
-          )}
-          {packetSummary.expiringSoon > 0 && (
-            <span className="text-sm text-muted-foreground">
-              {packetSummary.expiringSoon} expiring soon
-            </span>
-          )}
-          {packetSummary.needsReview > 0 && (
-            <span className="text-sm text-muted-foreground">
-              {packetSummary.needsReview} need review
-            </span>
-          )}
-        </div>
+        <PacketCompletenessPanel summary={packetSummary} />
       )}
 
       <DocumentToolbar
@@ -434,22 +370,14 @@ export function DocumentsTab({
           link="/document-types/select-options/"
           extraSearchParams={{ documentCategory: "Shipment" }}
           value={selectedDocumentTypeId ?? null}
-          onChange={(value: string | null) =>
-            setSelectedDocumentTypeId(value ?? undefined)
-          }
+          onChange={(value: string | null) => setSelectedDocumentTypeId(value ?? undefined)}
           getOptionValue={(option) => option.id || ""}
           getDisplayValue={(option) => (
-            <ColorOptionValue
-              color={option.color ?? undefined}
-              value={option.code}
-            />
+            <ColorOptionValue color={option.color ?? undefined} value={option.code} />
           )}
           renderOption={(option) => (
             <div className="flex size-full flex-col items-start">
-              <ColorOptionValue
-                color={option.color ?? undefined}
-                value={option.code}
-              />
+              <ColorOptionValue color={option.color ?? undefined} value={option.code} />
               {option?.name && (
                 <span className="w-full truncate text-2xs text-muted-foreground">
                   {option.name}
@@ -501,6 +429,13 @@ export function DocumentsTab({
         onRemove={removeUpload}
         onClearCompleted={clearCompleted}
         disabled={disabled}
+        title={replacementLineageId ? "Upload New Version" : undefined}
+        description={
+          replacementLineageId
+            ? "This file will be added as a new version in the same document lineage."
+            : undefined
+        }
+        multiple={!replacementLineageId}
       />
 
       <DocumentIntelligenceDialog

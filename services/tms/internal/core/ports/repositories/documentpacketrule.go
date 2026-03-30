@@ -9,8 +9,7 @@ import (
 )
 
 type ListDocumentPacketRulesRequest struct {
-	Filter       *pagination.QueryOptions `json:"filter"`
-	ResourceType string                   `json:"resourceType"`
+	Filter *pagination.QueryOptions `json:"filter"`
 }
 
 type GetDocumentPacketRuleByIDRequest struct {
@@ -22,12 +21,26 @@ type ListDocumentPacketRulesByResourceRequest struct {
 	TenantInfo   pagination.TenantInfo `json:"tenantInfo"`
 	ResourceType string                `json:"resourceType"`
 }
-
 type DocumentPacketRuleRepository interface {
-	List(ctx context.Context, req *ListDocumentPacketRulesRequest) (*pagination.ListResult[*documentpacketrule.Rule], error)
-	GetByID(ctx context.Context, req GetDocumentPacketRuleByIDRequest) (*documentpacketrule.Rule, error)
-	ListByResourceType(ctx context.Context, req *ListDocumentPacketRulesByResourceRequest) ([]*documentpacketrule.Rule, error)
-	Create(ctx context.Context, entity *documentpacketrule.Rule) (*documentpacketrule.Rule, error)
-	Update(ctx context.Context, entity *documentpacketrule.Rule) (*documentpacketrule.Rule, error)
+	List(
+		ctx context.Context,
+		req *ListDocumentPacketRulesRequest,
+	) (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error)
+	GetByID(
+		ctx context.Context,
+		req GetDocumentPacketRuleByIDRequest,
+	) (*documentpacketrule.DocumentPacketRule, error)
+	ListByResourceType(
+		ctx context.Context,
+		req *ListDocumentPacketRulesByResourceRequest,
+	) ([]*documentpacketrule.DocumentPacketRule, error)
+	Create(
+		ctx context.Context,
+		entity *documentpacketrule.DocumentPacketRule,
+	) (*documentpacketrule.DocumentPacketRule, error)
+	Update(
+		ctx context.Context,
+		entity *documentpacketrule.DocumentPacketRule,
+	) (*documentpacketrule.DocumentPacketRule, error)
 	Delete(ctx context.Context, req GetDocumentPacketRuleByIDRequest) error
 }

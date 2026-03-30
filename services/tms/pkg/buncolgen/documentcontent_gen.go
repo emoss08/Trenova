@@ -262,3 +262,225 @@ var ContentFilter = struct {
 		return NewFieldFilter("lastExtractedAt", op, value)
 	},
 }
+
+// ---------------------------------------------------------------------------
+// Page — table "document_content_pages", alias "dcp"
+// ---------------------------------------------------------------------------
+
+// PageTable holds the table name, alias, and primary key columns
+// for the "document_content_pages" table. The alias "dcp" is used in all generated
+// SQL fragments (e.g. "dcp.id = ?").
+var PageTable = TableInfo{
+	Name:       "document_content_pages",
+	Alias:      "dcp",
+	PrimaryKey: []string{"id", "organization_id", "business_unit_id"},
+}
+
+// PageColumns provides type-safe column references for the "document_content_pages" table.
+// Each field is a [Column] whose methods return pre-computed SQL fragments.
+//
+// Use String() when Bun manages the alias (model-aware queries):
+//
+//	q.Column(PageColumns.ID.String())
+//	// SELECT dcp.id FROM document_content_pages AS dcp
+//
+// Use expression helpers for raw WHERE/ORDER BY clauses:
+//
+//	q.Where(PageColumns.ID.Eq(), id)           // WHERE dcp.id = ?
+//	q.Order(PageColumns.CreatedAt.OrderDesc())  // ORDER BY dcp.created_at DESC
+var PageColumns = struct {
+	ID                   Column // "id" → qualified: "dcp.id"
+	DocumentContentID    Column // "document_content_id" → qualified: "dcp.document_content_id"
+	DocumentID           Column // "document_id" → qualified: "dcp.document_id"
+	OrganizationID       Column // "organization_id" → qualified: "dcp.organization_id"
+	BusinessUnitID       Column // "business_unit_id" → qualified: "dcp.business_unit_id"
+	PageNumber           Column // "page_number" → qualified: "dcp.page_number"
+	SourceKind           Column // "source_kind" → qualified: "dcp.source_kind"
+	ExtractedText        Column // "extracted_text" → qualified: "dcp.extracted_text"
+	OCRConfidence        Column // "ocr_confidence" → qualified: "dcp.ocr_confidence"
+	PreprocessingApplied Column // "preprocessing_applied" → qualified: "dcp.preprocessing_applied"
+	Width                Column // "width" → qualified: "dcp.width"
+	Height               Column // "height" → qualified: "dcp.height"
+	Metadata             Column // "metadata" → qualified: "dcp.metadata"
+	Version              Column // "version" → qualified: "dcp.version"
+	CreatedAt            Column // "created_at" → qualified: "dcp.created_at"
+	UpdatedAt            Column // "updated_at" → qualified: "dcp.updated_at"
+}{
+	ID:                   NewColumn("id", "dcp"),
+	DocumentContentID:    NewColumn("document_content_id", "dcp"),
+	DocumentID:           NewColumn("document_id", "dcp"),
+	OrganizationID:       NewColumn("organization_id", "dcp"),
+	BusinessUnitID:       NewColumn("business_unit_id", "dcp"),
+	PageNumber:           NewColumn("page_number", "dcp"),
+	SourceKind:           NewColumn("source_kind", "dcp"),
+	ExtractedText:        NewColumn("extracted_text", "dcp"),
+	OCRConfidence:        NewColumn("ocr_confidence", "dcp"),
+	PreprocessingApplied: NewColumn("preprocessing_applied", "dcp"),
+	Width:                NewColumn("width", "dcp"),
+	Height:               NewColumn("height", "dcp"),
+	Metadata:             NewColumn("metadata", "dcp"),
+	Version:              NewColumn("version", "dcp"),
+	CreatedAt:            NewColumn("created_at", "dcp"),
+	UpdatedAt:            NewColumn("updated_at", "dcp"),
+}
+
+// PageFieldMap maps JSON API field names to database column names.
+// The QueryBuilder uses this to translate filter/sort requests from the frontend
+// (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
+// This is returned by Page.GetStaticFieldMap().
+var PageFieldMap = map[string]string{
+	"id":                   "id",
+	"documentContentId":    "document_content_id",
+	"documentId":           "document_id",
+	"organizationId":       "organization_id",
+	"businessUnitId":       "business_unit_id",
+	"pageNumber":           "page_number",
+	"sourceKind":           "source_kind",
+	"extractedText":        "extracted_text",
+	"ocrConfidence":        "ocr_confidence",
+	"preprocessingApplied": "preprocessing_applied",
+	"width":                "width",
+	"height":               "height",
+	"metadata":             "metadata",
+	"version":              "version",
+	"createdAt":            "created_at",
+	"updatedAt":            "updated_at",
+}
+
+// PageInsertableColumns lists column names suitable for INSERT statements on the "document_content_pages" table.
+// Excludes scanonly columns (e.g. search_vector, rank) that are computed by PostgreSQL.
+var PageInsertableColumns = []string{
+	"id",
+	"document_content_id",
+	"document_id",
+	"organization_id",
+	"business_unit_id",
+	"page_number",
+	"source_kind",
+	"extracted_text",
+	"ocr_confidence",
+	"preprocessing_applied",
+	"width",
+	"height",
+	"metadata",
+	"version",
+	"created_at",
+	"updated_at",
+}
+
+// PageScopeTenant restricts a query to a single tenant by adding:
+//
+//	WHERE dcp.organization_id = ? AND dcp.business_unit_id = ?
+//
+// Returns the same *bun.SelectQuery so it can be chained fluently:
+//
+//	buncolgen.PageScopeTenant(sq, ti).
+//		Where(buncolgen.PageColumns.ID.Eq(), id)
+func PageScopeTenant(q *bun.SelectQuery, ti pagination.TenantInfo) *bun.SelectQuery {
+	return ScopeTenant(q, PageColumns.OrganizationID, PageColumns.BusinessUnitID, ti)
+}
+
+// PageScopeTenantUpdate restricts an update query to a single tenant.
+// Use this inside UpdateQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(uq *bun.UpdateQuery) *bun.UpdateQuery {
+//		return buncolgen.PageScopeTenantUpdate(uq, req.TenantInfo).
+//			Where(buncolgen.PageColumns.ID.In(), bun.List(ids))
+//	})
+func PageScopeTenantUpdate(q *bun.UpdateQuery, ti pagination.TenantInfo) *bun.UpdateQuery {
+	return ScopeTenantUpdate(q, PageColumns.OrganizationID, PageColumns.BusinessUnitID, ti)
+}
+
+// PageScopeTenantDelete restricts a delete query to a single tenant.
+// Use this inside DeleteQuery.WhereGroup callbacks:
+//
+//	WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+//		return buncolgen.PageScopeTenantDelete(dq, req.TenantInfo).
+//			Where(buncolgen.PageColumns.ID.Eq(), id)
+//	})
+func PageScopeTenantDelete(q *bun.DeleteQuery, ti pagination.TenantInfo) *bun.DeleteQuery {
+	return ScopeTenantDelete(q, PageColumns.OrganizationID, PageColumns.BusinessUnitID, ti)
+}
+
+// PageApplyTenant returns a closure for SelectQuery.Apply() that scopes to a single tenant.
+// Use this instead of wrapping ScopeTenant in an anonymous function:
+//
+//	q.Apply(buncolgen.PageApplyTenant(tenantInfo))
+func PageApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.SelectQuery {
+	return ApplyTenant(PageColumns.OrganizationID, PageColumns.BusinessUnitID, ti)
+}
+
+// PageFilter builds [domaintypes.FieldFilter] values using the correct JSON
+// field names for the "document_content_pages" table. Pass these to the QueryBuilder's ApplyFilters.
+//
+// The JSON field name is baked in — you only provide the operator and value:
+//
+//	PageFilter.ID(dbtype.OpEq, value)
+//	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
+var PageFilter = struct {
+	ID                   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	DocumentContentID    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentContentId" → DB: "document_content_id"
+	DocumentID           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentId" → DB: "document_id"
+	OrganizationID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	PageNumber           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "pageNumber" → DB: "page_number"
+	SourceKind           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "sourceKind" → DB: "source_kind"
+	ExtractedText        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "extractedText" → DB: "extracted_text"
+	OCRConfidence        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "ocrConfidence" → DB: "ocr_confidence"
+	PreprocessingApplied func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "preprocessingApplied" → DB: "preprocessing_applied"
+	Width                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "width" → DB: "width"
+	Height               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "height" → DB: "height"
+	Metadata             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "metadata" → DB: "metadata"
+	Version              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+}{
+	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("id", op, value)
+	},
+	DocumentContentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("documentContentId", op, value)
+	},
+	DocumentID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("documentId", op, value)
+	},
+	OrganizationID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("organizationId", op, value)
+	},
+	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("businessUnitId", op, value)
+	},
+	PageNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("pageNumber", op, value)
+	},
+	SourceKind: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("sourceKind", op, value)
+	},
+	ExtractedText: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("extractedText", op, value)
+	},
+	OCRConfidence: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("ocrConfidence", op, value)
+	},
+	PreprocessingApplied: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("preprocessingApplied", op, value)
+	},
+	Width: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("width", op, value)
+	},
+	Height: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("height", op, value)
+	},
+	Metadata: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("metadata", op, value)
+	},
+	Version: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("version", op, value)
+	},
+	CreatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("createdAt", op, value)
+	},
+	UpdatedAt: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("updatedAt", op, value)
+	},
+}

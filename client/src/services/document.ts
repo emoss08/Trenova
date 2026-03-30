@@ -169,6 +169,14 @@ export class DocumentService {
     return safeParse(documentSchema, response, "Document");
   }
 
+  public async attachToShipment(documentId: string, shipmentId: string): Promise<Document> {
+    const response = await api.post<Document>(
+      `/documents/${documentId}/attach-to-shipment/`,
+      { shipmentId },
+    );
+    return safeParse(documentSchema, response, "Document");
+  }
+
   public async getPacketSummary(
     resourceType: string,
     resourceId: string,

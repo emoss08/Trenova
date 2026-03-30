@@ -49,69 +49,85 @@ var DocumentTable = TableInfo{
 //	q.Where(DocumentColumns.ID.Eq(), id)           // WHERE doc.id = ?
 //	q.Order(DocumentColumns.CreatedAt.OrderDesc())  // ORDER BY doc.created_at DESC
 var DocumentColumns = struct {
-	ID                  Column // "id" → qualified: "doc.id"
-	OrganizationID      Column // "organization_id" → qualified: "doc.organization_id"
-	BusinessUnitID      Column // "business_unit_id" → qualified: "doc.business_unit_id"
-	FileName            Column // "file_name" → qualified: "doc.file_name"
-	OriginalName        Column // "original_name" → qualified: "doc.original_name"
-	FileSize            Column // "file_size" → qualified: "doc.file_size"
-	FileType            Column // "file_type" → qualified: "doc.file_type"
-	StoragePath         Column // "storage_path" → qualified: "doc.storage_path"
-	Status              Column // "status" → qualified: "doc.status"
-	Description         Column // "description" → qualified: "doc.description"
-	ResourceID          Column // "resource_id" → qualified: "doc.resource_id"
-	ResourceType        Column // "resource_type" → qualified: "doc.resource_type"
-	ExpirationDate      Column // "expiration_date" → qualified: "doc.expiration_date"
-	Tags                Column // "tags" → qualified: "doc.tags"
-	IsPublic            Column // "is_public" → qualified: "doc.is_public"
-	UploadedByID        Column // "uploaded_by_id" → qualified: "doc.uploaded_by_id"
-	ApprovedByID        Column // "approved_by_id" → qualified: "doc.approved_by_id"
-	ApprovedAt          Column // "approved_at" → qualified: "doc.approved_at"
-	PreviewStoragePath  Column // "preview_storage_path" → qualified: "doc.preview_storage_path"
-	PreviewStatus       Column // "preview_status" → qualified: "doc.preview_status"
-	ContentStatus       Column // "content_status" → qualified: "doc.content_status"
-	ContentError        Column // "content_error" → qualified: "doc.content_error"
-	DetectedKind        Column // "detected_kind" → qualified: "doc.detected_kind"
-	HasExtractedText    Column // "has_extracted_text" → qualified: "doc.has_extracted_text"
-	ShipmentDraftStatus Column // "shipment_draft_status" → qualified: "doc.shipment_draft_status"
-	DocumentTypeID      Column // "document_type_id" → qualified: "doc.document_type_id"
-	SearchVector        Column // "search_vector" → qualified: "doc.search_vector"
-	Rank                Column // "rank" → qualified: "doc.rank"
-	Version             Column // "version" → qualified: "doc.version"
-	CreatedAt           Column // "created_at" → qualified: "doc.created_at"
-	UpdatedAt           Column // "updated_at" → qualified: "doc.updated_at"
+	ID                    Column // "id" → qualified: "doc.id"
+	OrganizationID        Column // "organization_id" → qualified: "doc.organization_id"
+	BusinessUnitID        Column // "business_unit_id" → qualified: "doc.business_unit_id"
+	LineageID             Column // "lineage_id" → qualified: "doc.lineage_id"
+	VersionNumber         Column // "version_number" → qualified: "doc.version_number"
+	IsCurrentVersion      Column // "is_current_version" → qualified: "doc.is_current_version"
+	FileName              Column // "file_name" → qualified: "doc.file_name"
+	OriginalName          Column // "original_name" → qualified: "doc.original_name"
+	FileSize              Column // "file_size" → qualified: "doc.file_size"
+	FileType              Column // "file_type" → qualified: "doc.file_type"
+	StoragePath           Column // "storage_path" → qualified: "doc.storage_path"
+	ChecksumSHA256        Column // "checksum_sha256" → qualified: "doc.checksum_sha256"
+	StorageVersionID      Column // "storage_version_id" → qualified: "doc.storage_version_id"
+	StorageRetentionMode  Column // "storage_retention_mode" → qualified: "doc.storage_retention_mode"
+	StorageRetentionUntil Column // "storage_retention_until" → qualified: "doc.storage_retention_until"
+	StorageLegalHold      Column // "storage_legal_hold" → qualified: "doc.storage_legal_hold"
+	Status                Column // "status" → qualified: "doc.status"
+	Description           Column // "description" → qualified: "doc.description"
+	ResourceID            Column // "resource_id" → qualified: "doc.resource_id"
+	ResourceType          Column // "resource_type" → qualified: "doc.resource_type"
+	ExpirationDate        Column // "expiration_date" → qualified: "doc.expiration_date"
+	Tags                  Column // "tags" → qualified: "doc.tags"
+	IsPublic              Column // "is_public" → qualified: "doc.is_public"
+	UploadedByID          Column // "uploaded_by_id" → qualified: "doc.uploaded_by_id"
+	ApprovedByID          Column // "approved_by_id" → qualified: "doc.approved_by_id"
+	ApprovedAt            Column // "approved_at" → qualified: "doc.approved_at"
+	PreviewStoragePath    Column // "preview_storage_path" → qualified: "doc.preview_storage_path"
+	PreviewStatus         Column // "preview_status" → qualified: "doc.preview_status"
+	ContentStatus         Column // "content_status" → qualified: "doc.content_status"
+	ContentError          Column // "content_error" → qualified: "doc.content_error"
+	DetectedKind          Column // "detected_kind" → qualified: "doc.detected_kind"
+	HasExtractedText      Column // "has_extracted_text" → qualified: "doc.has_extracted_text"
+	ShipmentDraftStatus   Column // "shipment_draft_status" → qualified: "doc.shipment_draft_status"
+	DocumentTypeID        Column // "document_type_id" → qualified: "doc.document_type_id"
+	SearchVector          Column // "search_vector" → qualified: "doc.search_vector"
+	Rank                  Column // "rank" → qualified: "doc.rank"
+	Version               Column // "version" → qualified: "doc.version"
+	CreatedAt             Column // "created_at" → qualified: "doc.created_at"
+	UpdatedAt             Column // "updated_at" → qualified: "doc.updated_at"
 }{
-	ID:                  NewColumn("id", "doc"),
-	OrganizationID:      NewColumn("organization_id", "doc"),
-	BusinessUnitID:      NewColumn("business_unit_id", "doc"),
-	FileName:            NewColumn("file_name", "doc"),
-	OriginalName:        NewColumn("original_name", "doc"),
-	FileSize:            NewColumn("file_size", "doc"),
-	FileType:            NewColumn("file_type", "doc"),
-	StoragePath:         NewColumn("storage_path", "doc"),
-	Status:              NewColumn("status", "doc"),
-	Description:         NewColumn("description", "doc"),
-	ResourceID:          NewColumn("resource_id", "doc"),
-	ResourceType:        NewColumn("resource_type", "doc"),
-	ExpirationDate:      NewColumn("expiration_date", "doc"),
-	Tags:                NewColumn("tags", "doc"),
-	IsPublic:            NewColumn("is_public", "doc"),
-	UploadedByID:        NewColumn("uploaded_by_id", "doc"),
-	ApprovedByID:        NewColumn("approved_by_id", "doc"),
-	ApprovedAt:          NewColumn("approved_at", "doc"),
-	PreviewStoragePath:  NewColumn("preview_storage_path", "doc"),
-	PreviewStatus:       NewColumn("preview_status", "doc"),
-	ContentStatus:       NewColumn("content_status", "doc"),
-	ContentError:        NewColumn("content_error", "doc"),
-	DetectedKind:        NewColumn("detected_kind", "doc"),
-	HasExtractedText:    NewColumn("has_extracted_text", "doc"),
-	ShipmentDraftStatus: NewColumn("shipment_draft_status", "doc"),
-	DocumentTypeID:      NewColumn("document_type_id", "doc"),
-	SearchVector:        NewColumn("search_vector", "doc"),
-	Rank:                NewColumn("rank", "doc"),
-	Version:             NewColumn("version", "doc"),
-	CreatedAt:           NewColumn("created_at", "doc"),
-	UpdatedAt:           NewColumn("updated_at", "doc"),
+	ID:                    NewColumn("id", "doc"),
+	OrganizationID:        NewColumn("organization_id", "doc"),
+	BusinessUnitID:        NewColumn("business_unit_id", "doc"),
+	LineageID:             NewColumn("lineage_id", "doc"),
+	VersionNumber:         NewColumn("version_number", "doc"),
+	IsCurrentVersion:      NewColumn("is_current_version", "doc"),
+	FileName:              NewColumn("file_name", "doc"),
+	OriginalName:          NewColumn("original_name", "doc"),
+	FileSize:              NewColumn("file_size", "doc"),
+	FileType:              NewColumn("file_type", "doc"),
+	StoragePath:           NewColumn("storage_path", "doc"),
+	ChecksumSHA256:        NewColumn("checksum_sha256", "doc"),
+	StorageVersionID:      NewColumn("storage_version_id", "doc"),
+	StorageRetentionMode:  NewColumn("storage_retention_mode", "doc"),
+	StorageRetentionUntil: NewColumn("storage_retention_until", "doc"),
+	StorageLegalHold:      NewColumn("storage_legal_hold", "doc"),
+	Status:                NewColumn("status", "doc"),
+	Description:           NewColumn("description", "doc"),
+	ResourceID:            NewColumn("resource_id", "doc"),
+	ResourceType:          NewColumn("resource_type", "doc"),
+	ExpirationDate:        NewColumn("expiration_date", "doc"),
+	Tags:                  NewColumn("tags", "doc"),
+	IsPublic:              NewColumn("is_public", "doc"),
+	UploadedByID:          NewColumn("uploaded_by_id", "doc"),
+	ApprovedByID:          NewColumn("approved_by_id", "doc"),
+	ApprovedAt:            NewColumn("approved_at", "doc"),
+	PreviewStoragePath:    NewColumn("preview_storage_path", "doc"),
+	PreviewStatus:         NewColumn("preview_status", "doc"),
+	ContentStatus:         NewColumn("content_status", "doc"),
+	ContentError:          NewColumn("content_error", "doc"),
+	DetectedKind:          NewColumn("detected_kind", "doc"),
+	HasExtractedText:      NewColumn("has_extracted_text", "doc"),
+	ShipmentDraftStatus:   NewColumn("shipment_draft_status", "doc"),
+	DocumentTypeID:        NewColumn("document_type_id", "doc"),
+	SearchVector:          NewColumn("search_vector", "doc"),
+	Rank:                  NewColumn("rank", "doc"),
+	Version:               NewColumn("version", "doc"),
+	CreatedAt:             NewColumn("created_at", "doc"),
+	UpdatedAt:             NewColumn("updated_at", "doc"),
 }
 
 // DocumentFieldMap maps JSON API field names to database column names.
@@ -119,35 +135,43 @@ var DocumentColumns = struct {
 // (e.g. "firstName") into SQL column references (e.g. "first_name") without reflection.
 // This is returned by Document.GetStaticFieldMap().
 var DocumentFieldMap = map[string]string{
-	"id":                  "id",
-	"organizationId":      "organization_id",
-	"businessUnitId":      "business_unit_id",
-	"fileName":            "file_name",
-	"originalName":        "original_name",
-	"fileSize":            "file_size",
-	"fileType":            "file_type",
-	"storagePath":         "storage_path",
-	"status":              "status",
-	"description":         "description",
-	"resourceId":          "resource_id",
-	"resourceType":        "resource_type",
-	"expirationDate":      "expiration_date",
-	"tags":                "tags",
-	"isPublic":            "is_public",
-	"uploadedById":        "uploaded_by_id",
-	"approvedById":        "approved_by_id",
-	"approvedAt":          "approved_at",
-	"previewStoragePath":  "preview_storage_path",
-	"previewStatus":       "preview_status",
-	"contentStatus":       "content_status",
-	"contentError":        "content_error",
-	"detectedKind":        "detected_kind",
-	"hasExtractedText":    "has_extracted_text",
-	"shipmentDraftStatus": "shipment_draft_status",
-	"documentTypeId":      "document_type_id",
-	"version":             "version",
-	"createdAt":           "created_at",
-	"updatedAt":           "updated_at",
+	"id":                    "id",
+	"organizationId":        "organization_id",
+	"businessUnitId":        "business_unit_id",
+	"lineageId":             "lineage_id",
+	"versionNumber":         "version_number",
+	"isCurrentVersion":      "is_current_version",
+	"fileName":              "file_name",
+	"originalName":          "original_name",
+	"fileSize":              "file_size",
+	"fileType":              "file_type",
+	"storagePath":           "storage_path",
+	"checksumSha256":        "checksum_sha256",
+	"storageVersionId":      "storage_version_id",
+	"storageRetentionMode":  "storage_retention_mode",
+	"storageRetentionUntil": "storage_retention_until",
+	"storageLegalHold":      "storage_legal_hold",
+	"status":                "status",
+	"description":           "description",
+	"resourceId":            "resource_id",
+	"resourceType":          "resource_type",
+	"expirationDate":        "expiration_date",
+	"tags":                  "tags",
+	"isPublic":              "is_public",
+	"uploadedById":          "uploaded_by_id",
+	"approvedById":          "approved_by_id",
+	"approvedAt":            "approved_at",
+	"previewStoragePath":    "preview_storage_path",
+	"previewStatus":         "preview_status",
+	"contentStatus":         "content_status",
+	"contentError":          "content_error",
+	"detectedKind":          "detected_kind",
+	"hasExtractedText":      "has_extracted_text",
+	"shipmentDraftStatus":   "shipment_draft_status",
+	"documentTypeId":        "document_type_id",
+	"version":               "version",
+	"createdAt":             "created_at",
+	"updatedAt":             "updated_at",
 }
 
 // DocumentInsertableColumns lists column names suitable for INSERT statements on the "documents" table.
@@ -156,11 +180,19 @@ var DocumentInsertableColumns = []string{
 	"id",
 	"organization_id",
 	"business_unit_id",
+	"lineage_id",
+	"version_number",
+	"is_current_version",
 	"file_name",
 	"original_name",
 	"file_size",
 	"file_type",
 	"storage_path",
+	"checksum_sha256",
+	"storage_version_id",
+	"storage_retention_mode",
+	"storage_retention_until",
+	"storage_legal_hold",
 	"status",
 	"description",
 	"resource_id",
@@ -247,35 +279,43 @@ func DocumentApplyTenant(ti pagination.TenantInfo) func(*bun.SelectQuery) *bun.S
 //	DocumentFilter.ID(dbtype.OpEq, value)
 //	// produces FieldFilter{Field: "id", Operator: "eq", Value: value}
 var DocumentFilter = struct {
-	ID                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
-	OrganizationID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
-	BusinessUnitID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
-	FileName            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fileName" → DB: "file_name"
-	OriginalName        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "originalName" → DB: "original_name"
-	FileSize            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fileSize" → DB: "file_size"
-	FileType            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fileType" → DB: "file_type"
-	StoragePath         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "storagePath" → DB: "storage_path"
-	Status              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
-	Description         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
-	ResourceID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resourceId" → DB: "resource_id"
-	ResourceType        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resourceType" → DB: "resource_type"
-	ExpirationDate      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expirationDate" → DB: "expiration_date"
-	Tags                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tags" → DB: "tags"
-	IsPublic            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isPublic" → DB: "is_public"
-	UploadedByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "uploadedById" → DB: "uploaded_by_id"
-	ApprovedByID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedById" → DB: "approved_by_id"
-	ApprovedAt          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedAt" → DB: "approved_at"
-	PreviewStoragePath  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "previewStoragePath" → DB: "preview_storage_path"
-	PreviewStatus       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "previewStatus" → DB: "preview_status"
-	ContentStatus       func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contentStatus" → DB: "content_status"
-	ContentError        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contentError" → DB: "content_error"
-	DetectedKind        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detectedKind" → DB: "detected_kind"
-	HasExtractedText    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hasExtractedText" → DB: "has_extracted_text"
-	ShipmentDraftStatus func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentDraftStatus" → DB: "shipment_draft_status"
-	DocumentTypeID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentTypeId" → DB: "document_type_id"
-	Version             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
-	CreatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
-	UpdatedAt           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
+	ID                    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "id" → DB: "id"
+	OrganizationID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "organizationId" → DB: "organization_id"
+	BusinessUnitID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "businessUnitId" → DB: "business_unit_id"
+	LineageID             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "lineageId" → DB: "lineage_id"
+	VersionNumber         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "versionNumber" → DB: "version_number"
+	IsCurrentVersion      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isCurrentVersion" → DB: "is_current_version"
+	FileName              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fileName" → DB: "file_name"
+	OriginalName          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "originalName" → DB: "original_name"
+	FileSize              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fileSize" → DB: "file_size"
+	FileType              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "fileType" → DB: "file_type"
+	StoragePath           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "storagePath" → DB: "storage_path"
+	ChecksumSHA256        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "checksumSha256" → DB: "checksum_sha256"
+	StorageVersionID      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "storageVersionId" → DB: "storage_version_id"
+	StorageRetentionMode  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "storageRetentionMode" → DB: "storage_retention_mode"
+	StorageRetentionUntil func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "storageRetentionUntil" → DB: "storage_retention_until"
+	StorageLegalHold      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "storageLegalHold" → DB: "storage_legal_hold"
+	Status                func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "status" → DB: "status"
+	Description           func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "description" → DB: "description"
+	ResourceID            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resourceId" → DB: "resource_id"
+	ResourceType          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "resourceType" → DB: "resource_type"
+	ExpirationDate        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "expirationDate" → DB: "expiration_date"
+	Tags                  func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "tags" → DB: "tags"
+	IsPublic              func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "isPublic" → DB: "is_public"
+	UploadedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "uploadedById" → DB: "uploaded_by_id"
+	ApprovedByID          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedById" → DB: "approved_by_id"
+	ApprovedAt            func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "approvedAt" → DB: "approved_at"
+	PreviewStoragePath    func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "previewStoragePath" → DB: "preview_storage_path"
+	PreviewStatus         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "previewStatus" → DB: "preview_status"
+	ContentStatus         func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contentStatus" → DB: "content_status"
+	ContentError          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "contentError" → DB: "content_error"
+	DetectedKind          func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "detectedKind" → DB: "detected_kind"
+	HasExtractedText      func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "hasExtractedText" → DB: "has_extracted_text"
+	ShipmentDraftStatus   func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "shipmentDraftStatus" → DB: "shipment_draft_status"
+	DocumentTypeID        func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "documentTypeId" → DB: "document_type_id"
+	Version               func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "version" → DB: "version"
+	CreatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "createdAt" → DB: "created_at"
+	UpdatedAt             func(op dbtype.Operator, value any) domaintypes.FieldFilter // JSON: "updatedAt" → DB: "updated_at"
 }{
 	ID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("id", op, value)
@@ -285,6 +325,15 @@ var DocumentFilter = struct {
 	},
 	BusinessUnitID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("businessUnitId", op, value)
+	},
+	LineageID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("lineageId", op, value)
+	},
+	VersionNumber: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("versionNumber", op, value)
+	},
+	IsCurrentVersion: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("isCurrentVersion", op, value)
 	},
 	FileName: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("fileName", op, value)
@@ -300,6 +349,21 @@ var DocumentFilter = struct {
 	},
 	StoragePath: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("storagePath", op, value)
+	},
+	ChecksumSHA256: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("checksumSha256", op, value)
+	},
+	StorageVersionID: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("storageVersionId", op, value)
+	},
+	StorageRetentionMode: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("storageRetentionMode", op, value)
+	},
+	StorageRetentionUntil: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("storageRetentionUntil", op, value)
+	},
+	StorageLegalHold: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
+		return NewFieldFilter("storageLegalHold", op, value)
 	},
 	Status: func(op dbtype.Operator, value any) domaintypes.FieldFilter {
 		return NewFieldFilter("status", op, value)

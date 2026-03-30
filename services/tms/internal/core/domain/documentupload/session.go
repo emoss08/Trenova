@@ -3,6 +3,7 @@ package documentupload
 import (
 	"context"
 
+	"github.com/emoss08/trenova/internal/core/domain/document"
 	"github.com/emoss08/trenova/shared/pulid"
 	"github.com/emoss08/trenova/shared/timeutils"
 	"github.com/uptrace/bun"
@@ -104,4 +105,52 @@ func (s Status) IsTerminal() bool {
 	default:
 		return false
 	}
+}
+
+func (s *Session) MarkSuperseded(now int64) {
+	s.Status = StatusCanceled
+	s.FailureCode = "SUPERSEDED_BY_NEWER_SESSION"
+	s.FailureMessage = "Superseded by a newer upload session"
+	s.LastActivityAt = now
+}
+
+func (s *Session) IsSupersededByNewerArtifacts(
+	activeSessions []*Session,
+	versions []*document.Document,
+) bool {
+	if s == nil || s.LineageID == nil || s.LineageID.IsNil() {
+		return false
+	}
+
+	for _, candidate := range activeSessions {
+		if candidate == nil || candidate.ID == s.ID || candidate.LineageID == nil || *candidate.LineageID != *s.LineageID {
+			continue
+		}
+		if candidate.IsNewerThan(s) {
+			return true
+		}
+	}
+
+	for _, version := range versions {
+		if version == nil || version.StoragePath == s.StoragePath {
+			continue
+		}
+		if version.CreatedAt > s.CreatedAt {
+			return true
+		}
+	}
+
+	return false
+}
+
+func (s *Session) IsNewerThan(other *Session) bool {
+	if s == nil || other == nil {
+		return false
+	}
+
+	if s.CreatedAt != other.CreatedAt {
+		return s.CreatedAt > other.CreatedAt
+	}
+
+	return s.ID.String() > other.ID.String()
 }

@@ -22,6 +22,7 @@ import (
 	"github.com/emoss08/trenova/internal/api/handlers/docshandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documentcontrolhandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenthandler"
+	"github.com/emoss08/trenova/internal/api/handlers/documentpacketrulehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/documenttypehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/dothazmatreferencehandler"
 	"github.com/emoss08/trenova/internal/api/handlers/equipmentmanufacturerhandler"
@@ -144,6 +145,7 @@ type RouterParams struct {
 	ApiKeyHandler                *apikeyhandler.Handler
 	TableChangeAlertHandler      *tablechangealerthandler.Handler
 	NotificationHandler          *notificationhandler.Handler
+	DocumentPacketRuleHandler    *documentpacketrulehandler.Handler
 }
 
 type Router struct {
@@ -212,6 +214,7 @@ type Router struct {
 	apiKeyHandler                *apikeyhandler.Handler
 	tableChangeAlertHandler      *tablechangealerthandler.Handler
 	notificationHandler          *notificationhandler.Handler
+	documentPacketRuleHandler    *documentpacketrulehandler.Handler
 }
 
 //nolint:gocritic // This is a constructor
@@ -282,6 +285,7 @@ func NewRouter(p RouterParams) *Router {
 		apiKeyHandler:                p.ApiKeyHandler,
 		tableChangeAlertHandler:      p.TableChangeAlertHandler,
 		notificationHandler:          p.NotificationHandler,
+		documentPacketRuleHandler:    p.DocumentPacketRuleHandler,
 	}
 }
 
@@ -398,4 +402,5 @@ func (r *Router) setupProtectedRoutes(rg *gin.RouterGroup) {
 	r.apiKeyHandler.RegisterRoutes(protected)
 	r.tableChangeAlertHandler.RegisterRoutes(protected)
 	r.notificationHandler.RegisterRoutes(protected)
+	r.documentPacketRuleHandler.RegisterRoutes(protected)
 }

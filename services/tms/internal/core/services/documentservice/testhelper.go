@@ -8,6 +8,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/core/ports/storage"
 	"github.com/emoss08/trenova/internal/core/services/thumbnailservice"
+	"github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/uptrace/bun"
 	"go.temporal.io/sdk/client"
@@ -42,16 +43,20 @@ func NewTestService(
 	temporalClient client.Client,
 ) *Service {
 	return &Service{
-		l:                  logger.Named("service.document"),
-		db:                 noopDBConnection{},
-		repo:               repo,
-		cacheRepo:          cacheRepo,
-		sessionRepo:        sessionRepo,
-		storage:            storageClient,
-		validator:          validator,
-		auditService:       auditService,
-		config:             cfg,
-		thumbnailGenerator: thumbnailGenerator,
-		temporalClient:     temporalClient,
+		l:                    logger.Named("service.document"),
+		db:                   noopDBConnection{},
+		repo:                 repo,
+		cacheRepo:            cacheRepo,
+		sessionRepo:          sessionRepo,
+		storage:              storageClient,
+		validator:            validator,
+		auditService:         auditService,
+		documentIntelligence: noopDocumentContentService{},
+		searchProjection:     noopDocumentSearchProjectionService{},
+		config:               cfg,
+		thumbnailGenerator:   thumbnailGenerator,
+		workflowStarter: workflowstarter.New(workflowstarter.Params{
+			TemporalClient: temporalClient,
+		}),
 	}
 }

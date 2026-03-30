@@ -140,6 +140,15 @@ const routes: RouteObject[] = [
               return { Component: DocumentTypesPage };
             },
           },
+          {
+            path: "/billing/configuration-files/document-packet-rules",
+            loader: combineLoaders(protectedLoader, createPermissionLoader(Resource.DocumentType)),
+            async lazy() {
+              const { DocumentPacketRulesPage } =
+                await import("@/routes/document-packet-rule/page");
+              return { Component: DocumentPacketRulesPage };
+            },
+          },
 
           {
             path: "/accounting/configuration-files/account-types",

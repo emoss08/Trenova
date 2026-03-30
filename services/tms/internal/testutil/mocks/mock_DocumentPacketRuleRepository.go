@@ -41,26 +41,26 @@ func (_m *MockDocumentPacketRuleRepository) EXPECT() *MockDocumentPacketRuleRepo
 }
 
 // Create provides a mock function for the type MockDocumentPacketRuleRepository
-func (_mock *MockDocumentPacketRuleRepository) Create(ctx context.Context, entity *documentpacketrule.Rule) (*documentpacketrule.Rule, error) {
+func (_mock *MockDocumentPacketRuleRepository) Create(ctx context.Context, entity *documentpacketrule.DocumentPacketRule) (*documentpacketrule.DocumentPacketRule, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Create")
 	}
 
-	var r0 *documentpacketrule.Rule
+	var r0 *documentpacketrule.DocumentPacketRule
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentpacketrule.Rule) (*documentpacketrule.Rule, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentpacketrule.DocumentPacketRule) (*documentpacketrule.DocumentPacketRule, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentpacketrule.Rule) *documentpacketrule.Rule); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentpacketrule.DocumentPacketRule) *documentpacketrule.DocumentPacketRule); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*documentpacketrule.Rule)
+			r0 = ret.Get(0).(*documentpacketrule.DocumentPacketRule)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *documentpacketrule.Rule) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *documentpacketrule.DocumentPacketRule) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -75,20 +75,20 @@ type MockDocumentPacketRuleRepository_Create_Call struct {
 
 // Create is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *documentpacketrule.Rule
+//   - entity *documentpacketrule.DocumentPacketRule
 func (_e *MockDocumentPacketRuleRepository_Expecter) Create(ctx interface{}, entity interface{}) *MockDocumentPacketRuleRepository_Create_Call {
 	return &MockDocumentPacketRuleRepository_Create_Call{Call: _e.mock.On("Create", ctx, entity)}
 }
 
-func (_c *MockDocumentPacketRuleRepository_Create_Call) Run(run func(ctx context.Context, entity *documentpacketrule.Rule)) *MockDocumentPacketRuleRepository_Create_Call {
+func (_c *MockDocumentPacketRuleRepository_Create_Call) Run(run func(ctx context.Context, entity *documentpacketrule.DocumentPacketRule)) *MockDocumentPacketRuleRepository_Create_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *documentpacketrule.Rule
+		var arg1 *documentpacketrule.DocumentPacketRule
 		if args[1] != nil {
-			arg1 = args[1].(*documentpacketrule.Rule)
+			arg1 = args[1].(*documentpacketrule.DocumentPacketRule)
 		}
 		run(
 			arg0,
@@ -98,12 +98,12 @@ func (_c *MockDocumentPacketRuleRepository_Create_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockDocumentPacketRuleRepository_Create_Call) Return(rule *documentpacketrule.Rule, err error) *MockDocumentPacketRuleRepository_Create_Call {
-	_c.Call.Return(rule, err)
+func (_c *MockDocumentPacketRuleRepository_Create_Call) Return(documentPacketRule *documentpacketrule.DocumentPacketRule, err error) *MockDocumentPacketRuleRepository_Create_Call {
+	_c.Call.Return(documentPacketRule, err)
 	return _c
 }
 
-func (_c *MockDocumentPacketRuleRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *documentpacketrule.Rule) (*documentpacketrule.Rule, error)) *MockDocumentPacketRuleRepository_Create_Call {
+func (_c *MockDocumentPacketRuleRepository_Create_Call) RunAndReturn(run func(ctx context.Context, entity *documentpacketrule.DocumentPacketRule) (*documentpacketrule.DocumentPacketRule, error)) *MockDocumentPacketRuleRepository_Create_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -166,23 +166,23 @@ func (_c *MockDocumentPacketRuleRepository_Delete_Call) RunAndReturn(run func(ct
 }
 
 // GetByID provides a mock function for the type MockDocumentPacketRuleRepository
-func (_mock *MockDocumentPacketRuleRepository) GetByID(ctx context.Context, req repositories.GetDocumentPacketRuleByIDRequest) (*documentpacketrule.Rule, error) {
+func (_mock *MockDocumentPacketRuleRepository) GetByID(ctx context.Context, req repositories.GetDocumentPacketRuleByIDRequest) (*documentpacketrule.DocumentPacketRule, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetByID")
 	}
 
-	var r0 *documentpacketrule.Rule
+	var r0 *documentpacketrule.DocumentPacketRule
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetDocumentPacketRuleByIDRequest) (*documentpacketrule.Rule, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetDocumentPacketRuleByIDRequest) (*documentpacketrule.DocumentPacketRule, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetDocumentPacketRuleByIDRequest) *documentpacketrule.Rule); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repositories.GetDocumentPacketRuleByIDRequest) *documentpacketrule.DocumentPacketRule); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*documentpacketrule.Rule)
+			r0 = ret.Get(0).(*documentpacketrule.DocumentPacketRule)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, repositories.GetDocumentPacketRuleByIDRequest) error); ok {
@@ -223,34 +223,34 @@ func (_c *MockDocumentPacketRuleRepository_GetByID_Call) Run(run func(ctx contex
 	return _c
 }
 
-func (_c *MockDocumentPacketRuleRepository_GetByID_Call) Return(rule *documentpacketrule.Rule, err error) *MockDocumentPacketRuleRepository_GetByID_Call {
-	_c.Call.Return(rule, err)
+func (_c *MockDocumentPacketRuleRepository_GetByID_Call) Return(documentPacketRule *documentpacketrule.DocumentPacketRule, err error) *MockDocumentPacketRuleRepository_GetByID_Call {
+	_c.Call.Return(documentPacketRule, err)
 	return _c
 }
 
-func (_c *MockDocumentPacketRuleRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetDocumentPacketRuleByIDRequest) (*documentpacketrule.Rule, error)) *MockDocumentPacketRuleRepository_GetByID_Call {
+func (_c *MockDocumentPacketRuleRepository_GetByID_Call) RunAndReturn(run func(ctx context.Context, req repositories.GetDocumentPacketRuleByIDRequest) (*documentpacketrule.DocumentPacketRule, error)) *MockDocumentPacketRuleRepository_GetByID_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // List provides a mock function for the type MockDocumentPacketRuleRepository
-func (_mock *MockDocumentPacketRuleRepository) List(ctx context.Context, req *repositories.ListDocumentPacketRulesRequest) (*pagination.ListResult[*documentpacketrule.Rule], error) {
+func (_mock *MockDocumentPacketRuleRepository) List(ctx context.Context, req *repositories.ListDocumentPacketRulesRequest) (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for List")
 	}
 
-	var r0 *pagination.ListResult[*documentpacketrule.Rule]
+	var r0 *pagination.ListResult[*documentpacketrule.DocumentPacketRule]
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentPacketRulesRequest) (*pagination.ListResult[*documentpacketrule.Rule], error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentPacketRulesRequest) (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentPacketRulesRequest) *pagination.ListResult[*documentpacketrule.Rule]); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentPacketRulesRequest) *pagination.ListResult[*documentpacketrule.DocumentPacketRule]); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*pagination.ListResult[*documentpacketrule.Rule])
+			r0 = ret.Get(0).(*pagination.ListResult[*documentpacketrule.DocumentPacketRule])
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListDocumentPacketRulesRequest) error); ok {
@@ -291,34 +291,34 @@ func (_c *MockDocumentPacketRuleRepository_List_Call) Run(run func(ctx context.C
 	return _c
 }
 
-func (_c *MockDocumentPacketRuleRepository_List_Call) Return(listResult *pagination.ListResult[*documentpacketrule.Rule], err error) *MockDocumentPacketRuleRepository_List_Call {
+func (_c *MockDocumentPacketRuleRepository_List_Call) Return(listResult *pagination.ListResult[*documentpacketrule.DocumentPacketRule], err error) *MockDocumentPacketRuleRepository_List_Call {
 	_c.Call.Return(listResult, err)
 	return _c
 }
 
-func (_c *MockDocumentPacketRuleRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDocumentPacketRulesRequest) (*pagination.ListResult[*documentpacketrule.Rule], error)) *MockDocumentPacketRuleRepository_List_Call {
+func (_c *MockDocumentPacketRuleRepository_List_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDocumentPacketRulesRequest) (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error)) *MockDocumentPacketRuleRepository_List_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // ListByResourceType provides a mock function for the type MockDocumentPacketRuleRepository
-func (_mock *MockDocumentPacketRuleRepository) ListByResourceType(ctx context.Context, req *repositories.ListDocumentPacketRulesByResourceRequest) ([]*documentpacketrule.Rule, error) {
+func (_mock *MockDocumentPacketRuleRepository) ListByResourceType(ctx context.Context, req *repositories.ListDocumentPacketRulesByResourceRequest) ([]*documentpacketrule.DocumentPacketRule, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
 		panic("no return value specified for ListByResourceType")
 	}
 
-	var r0 []*documentpacketrule.Rule
+	var r0 []*documentpacketrule.DocumentPacketRule
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentPacketRulesByResourceRequest) ([]*documentpacketrule.Rule, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentPacketRulesByResourceRequest) ([]*documentpacketrule.DocumentPacketRule, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentPacketRulesByResourceRequest) []*documentpacketrule.Rule); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *repositories.ListDocumentPacketRulesByResourceRequest) []*documentpacketrule.DocumentPacketRule); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*documentpacketrule.Rule)
+			r0 = ret.Get(0).([]*documentpacketrule.DocumentPacketRule)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, *repositories.ListDocumentPacketRulesByResourceRequest) error); ok {
@@ -359,37 +359,37 @@ func (_c *MockDocumentPacketRuleRepository_ListByResourceType_Call) Run(run func
 	return _c
 }
 
-func (_c *MockDocumentPacketRuleRepository_ListByResourceType_Call) Return(rules []*documentpacketrule.Rule, err error) *MockDocumentPacketRuleRepository_ListByResourceType_Call {
-	_c.Call.Return(rules, err)
+func (_c *MockDocumentPacketRuleRepository_ListByResourceType_Call) Return(documentPacketRules []*documentpacketrule.DocumentPacketRule, err error) *MockDocumentPacketRuleRepository_ListByResourceType_Call {
+	_c.Call.Return(documentPacketRules, err)
 	return _c
 }
 
-func (_c *MockDocumentPacketRuleRepository_ListByResourceType_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDocumentPacketRulesByResourceRequest) ([]*documentpacketrule.Rule, error)) *MockDocumentPacketRuleRepository_ListByResourceType_Call {
+func (_c *MockDocumentPacketRuleRepository_ListByResourceType_Call) RunAndReturn(run func(ctx context.Context, req *repositories.ListDocumentPacketRulesByResourceRequest) ([]*documentpacketrule.DocumentPacketRule, error)) *MockDocumentPacketRuleRepository_ListByResourceType_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // Update provides a mock function for the type MockDocumentPacketRuleRepository
-func (_mock *MockDocumentPacketRuleRepository) Update(ctx context.Context, entity *documentpacketrule.Rule) (*documentpacketrule.Rule, error) {
+func (_mock *MockDocumentPacketRuleRepository) Update(ctx context.Context, entity *documentpacketrule.DocumentPacketRule) (*documentpacketrule.DocumentPacketRule, error) {
 	ret := _mock.Called(ctx, entity)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Update")
 	}
 
-	var r0 *documentpacketrule.Rule
+	var r0 *documentpacketrule.DocumentPacketRule
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentpacketrule.Rule) (*documentpacketrule.Rule, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentpacketrule.DocumentPacketRule) (*documentpacketrule.DocumentPacketRule, error)); ok {
 		return returnFunc(ctx, entity)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentpacketrule.Rule) *documentpacketrule.Rule); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, *documentpacketrule.DocumentPacketRule) *documentpacketrule.DocumentPacketRule); ok {
 		r0 = returnFunc(ctx, entity)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*documentpacketrule.Rule)
+			r0 = ret.Get(0).(*documentpacketrule.DocumentPacketRule)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, *documentpacketrule.Rule) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, *documentpacketrule.DocumentPacketRule) error); ok {
 		r1 = returnFunc(ctx, entity)
 	} else {
 		r1 = ret.Error(1)
@@ -404,20 +404,20 @@ type MockDocumentPacketRuleRepository_Update_Call struct {
 
 // Update is a helper method to define mock.On call
 //   - ctx context.Context
-//   - entity *documentpacketrule.Rule
+//   - entity *documentpacketrule.DocumentPacketRule
 func (_e *MockDocumentPacketRuleRepository_Expecter) Update(ctx interface{}, entity interface{}) *MockDocumentPacketRuleRepository_Update_Call {
 	return &MockDocumentPacketRuleRepository_Update_Call{Call: _e.mock.On("Update", ctx, entity)}
 }
 
-func (_c *MockDocumentPacketRuleRepository_Update_Call) Run(run func(ctx context.Context, entity *documentpacketrule.Rule)) *MockDocumentPacketRuleRepository_Update_Call {
+func (_c *MockDocumentPacketRuleRepository_Update_Call) Run(run func(ctx context.Context, entity *documentpacketrule.DocumentPacketRule)) *MockDocumentPacketRuleRepository_Update_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 *documentpacketrule.Rule
+		var arg1 *documentpacketrule.DocumentPacketRule
 		if args[1] != nil {
-			arg1 = args[1].(*documentpacketrule.Rule)
+			arg1 = args[1].(*documentpacketrule.DocumentPacketRule)
 		}
 		run(
 			arg0,
@@ -427,12 +427,12 @@ func (_c *MockDocumentPacketRuleRepository_Update_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockDocumentPacketRuleRepository_Update_Call) Return(rule *documentpacketrule.Rule, err error) *MockDocumentPacketRuleRepository_Update_Call {
-	_c.Call.Return(rule, err)
+func (_c *MockDocumentPacketRuleRepository_Update_Call) Return(documentPacketRule *documentpacketrule.DocumentPacketRule, err error) *MockDocumentPacketRuleRepository_Update_Call {
+	_c.Call.Return(documentPacketRule, err)
 	return _c
 }
 
-func (_c *MockDocumentPacketRuleRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *documentpacketrule.Rule) (*documentpacketrule.Rule, error)) *MockDocumentPacketRuleRepository_Update_Call {
+func (_c *MockDocumentPacketRuleRepository_Update_Call) RunAndReturn(run func(ctx context.Context, entity *documentpacketrule.DocumentPacketRule) (*documentpacketrule.DocumentPacketRule, error)) *MockDocumentPacketRuleRepository_Update_Call {
 	_c.Call.Return(run)
 	return _c
 }

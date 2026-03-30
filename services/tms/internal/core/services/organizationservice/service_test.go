@@ -87,6 +87,13 @@ func (n *noopStorageClient) Delete(_ context.Context, _ string) error {
 	return nil
 }
 
+func (n *noopStorageClient) DeleteObject(
+	_ context.Context,
+	_ *storage.DeleteObjectParams,
+) error {
+	return nil
+}
+
 func (n *noopStorageClient) GetPresignedURL(
 	_ context.Context,
 	_ *storage.PresignedURLParams,

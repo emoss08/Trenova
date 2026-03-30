@@ -116,6 +116,26 @@ func (r *repository) GetByID(
 	return entity, nil
 }
 
+func (r *repository) GetByStoragePath(
+	ctx context.Context,
+	req repositories.GetDocumentByStoragePathRequest,
+) (*document.Document, error) {
+	entity := new(document.Document)
+	err := r.db.DBForContext(ctx).
+		NewSelect().
+		Model(entity).
+		Where("doc.storage_path = ?", req.StoragePath).
+		Where("doc.organization_id = ?", req.TenantInfo.OrgID).
+		Where("doc.business_unit_id = ?", req.TenantInfo.BuID).
+		Limit(1).
+		Scan(ctx)
+	if err != nil {
+		return nil, dberror.HandleNotFoundError(err, "Document")
+	}
+
+	return entity, nil
+}
+
 func (r *repository) GetByResourceID(
 	ctx context.Context,
 	req *repositories.GetDocumentsByResourceRequest,
@@ -184,7 +204,12 @@ func (r *repository) Create(
 		zap.String("fileName", entity.FileName),
 	)
 
-	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+	if _, err := r.db.DBForContext(ctx).
+		NewInsert().
+		Model(entity).
+		Value("is_current_version", "?", entity.IsCurrentVersion).
+		Returning("*").
+		Exec(ctx); err != nil {
 		log.Error("failed to create document", zap.Error(err))
 		return nil, err
 	}
@@ -420,6 +445,39 @@ func (r *repository) PromoteVersion(
 	}
 
 	return dberror.CheckRowsAffected(result, "Document", req.CurrentDocumentID.String())
+}
+
+func (r *repository) MoveLineageToResource(
+	ctx context.Context,
+	req *repositories.MoveDocumentLineageRequest,
+) error {
+	db := r.db.DBForContext(ctx)
+
+	current := new(document.Document)
+	if err := db.NewSelect().
+		Model(current).
+		Where("doc.id = ?", req.DocumentID).
+		Where("doc.organization_id = ?", req.TenantInfo.OrgID).
+		Where("doc.business_unit_id = ?", req.TenantInfo.BuID).
+		Scan(ctx); err != nil {
+		return dberror.HandleNotFoundError(err, "Document")
+	}
+
+	result, err := db.NewUpdate().
+		Table("documents").
+		Set("resource_id = ?", req.ResourceID).
+		Set("resource_type = ?", req.ResourceType).
+		Set("updated_at = ?", timeutils.NowUnix()).
+		Set("version = version + 1").
+		Where("lineage_id = ?", current.LineageID).
+		Where("organization_id = ?", req.TenantInfo.OrgID).
+		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return dberror.CheckRowsAffected(result, "Document", req.DocumentID.String())
 }
 
 func (r *repository) DeleteByLineageIDs(

@@ -2,6 +2,7 @@ package documentintelligenceservice
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentshipmentdraft"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	serviceports "github.com/emoss08/trenova/internal/core/ports/services"
+	workflowstarterservice "github.com/emoss08/trenova/internal/core/services/workflowstarter"
 	"github.com/emoss08/trenova/internal/core/temporaljobs/documentintelligencejobs"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/internal/infrastructure/observability/metrics"
@@ -17,6 +19,7 @@ import (
 	"github.com/emoss08/trenova/pkg/temporaltype"
 	"github.com/emoss08/trenova/shared/pulid"
 	"go.temporal.io/api/enums/v1"
+	"go.temporal.io/api/serviceerror"
 	"go.temporal.io/sdk/client"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -34,7 +37,7 @@ type Params struct {
 	DraftRepo           repositories.DocumentShipmentDraftRepository
 	SearchRepo          repositories.SearchRepository
 	SearchProjection    serviceports.DocumentSearchProjectionService
-	TemporalClient      client.Client `optional:"true"`
+	WorkflowStarter     serviceports.WorkflowStarter
 }
 
 type Service struct {
@@ -47,12 +50,22 @@ type Service struct {
 	draftRepo           repositories.DocumentShipmentDraftRepository
 	searchRepo          repositories.SearchRepository
 	searchProjection    serviceports.DocumentSearchProjectionService
-	temporalClient      client.Client
+	workflowStarter     serviceports.WorkflowStarter
 }
 
 var _ serviceports.DocumentContentService = (*Service)(nil)
 
 func New(p Params) serviceports.DocumentContentService {
+	searchProjection := p.SearchProjection
+	if searchProjection == nil {
+		searchProjection = noopDocumentSearchProjectionService{}
+	}
+
+	workflowStarter := p.WorkflowStarter
+	if workflowStarter == nil {
+		workflowStarter = workflowstarterservice.New(workflowstarterservice.Params{})
+	}
+
 	return &Service{
 		logger:              p.Logger.Named("service.document-intelligence"),
 		documentIndex:       p.Config.GetSearchConfig().Meilisearch.Indexes.Documents,
@@ -62,8 +75,8 @@ func New(p Params) serviceports.DocumentContentService {
 		contentRepo:         p.ContentRepo,
 		draftRepo:           p.DraftRepo,
 		searchRepo:          p.SearchRepo,
-		searchProjection:    p.SearchProjection,
-		temporalClient:      p.TemporalClient,
+		searchProjection:    searchProjection,
+		workflowStarter:     workflowStarter,
 	}
 }
 
@@ -144,13 +157,11 @@ func (s *Service) Reextract(
 	}); err != nil {
 		return err
 	}
-	if s.searchProjection != nil {
-		if err = s.searchProjection.Upsert(ctx, doc, ""); err != nil {
-			s.logger.Warn("failed to sync search projection during reextract",
-				zap.String("documentId", doc.ID.String()),
-				zap.Error(err),
-			)
-		}
+	if err = s.searchProjection.Upsert(ctx, doc, ""); err != nil {
+		s.logger.Warn("failed to sync search projection during reextract",
+			zap.String("documentId", doc.ID.String()),
+			zap.Error(err),
+		)
 	}
 
 	content := &documentcontent.Content{
@@ -174,28 +185,26 @@ func (s *Service) EnqueueExtraction(
 	doc *document.Document,
 	userID pulid.ID,
 ) error {
-	if s.temporalClient == nil {
+	if !s.workflowStarter.Enabled() {
 		return nil
 	}
-	if s.documentControlRepo != nil {
-		control, err := s.documentControlRepo.GetOrCreate(ctx, doc.OrganizationID, doc.BusinessUnitID)
-		if err != nil {
-			return err
-		}
-		if !control.EnableDocumentIntelligence {
-			s.metrics.Document.RecordExtraction("skipped", "", "control_disabled")
-			return nil
-		}
+	control, err := s.documentControlRepo.GetOrCreate(ctx, doc.OrganizationID, doc.BusinessUnitID)
+	if err != nil {
+		return err
+	}
+	if !control.EnableDocumentIntelligence {
+		s.metrics.Document.RecordExtraction("skipped", "", "control_disabled")
+		return nil
 	}
 
-	_, err := s.temporalClient.ExecuteWorkflow(
+	_, err = s.workflowStarter.StartWorkflow(
 		ctx,
 		client.StartWorkflowOptions{
-			ID:                    fmt.Sprintf("document-intelligence-%s", doc.ID.String()),
-			TaskQueue:             temporaltype.DocumentIntelligenceTaskQueue,
-			RetryPolicy:           temporaltype.DefaultRetryPolicy,
-			WorkflowIDReusePolicy: enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
-			StaticSummary:         fmt.Sprintf("Extracting content for document %s", doc.ID),
+			ID:                                       fmt.Sprintf("document-intelligence-%s", doc.ID.String()),
+			TaskQueue:                                temporaltype.DocumentIntelligenceTaskQueue,
+			WorkflowExecutionErrorWhenAlreadyStarted: true,
+			WorkflowIDReusePolicy:                    enums.WORKFLOW_ID_REUSE_POLICY_ALLOW_DUPLICATE_FAILED_ONLY,
+			StaticSummary:                            fmt.Sprintf("Extracting content for document %s", doc.ID),
 		},
 		"ProcessDocumentIntelligenceWorkflow",
 		&documentintelligencejobs.ProcessDocumentIntelligencePayload{
@@ -208,6 +217,10 @@ func (s *Service) EnqueueExtraction(
 		},
 	)
 	if err != nil {
+		var alreadyStarted *serviceerror.WorkflowExecutionAlreadyStarted
+		if errors.As(err, &alreadyStarted) {
+			return nil
+		}
 		s.logger.Warn("failed to start document intelligence workflow",
 			zap.String("documentId", doc.ID.String()),
 			zap.Error(err),

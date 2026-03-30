@@ -25,33 +25,33 @@ import (
 type Params struct {
 	fx.In
 
-	Logger         *zap.Logger
-	Repo           repositories.WorkerPTORepository
-	UserRepo       repositories.UserRepository
-	WorkerRepo     repositories.WorkerRepository
-	TemporalClient client.Client
-	AuditService   services.AuditService
+	Logger          *zap.Logger
+	Repo            repositories.WorkerPTORepository
+	UserRepo        repositories.UserRepository
+	WorkerRepo      repositories.WorkerRepository
+	WorkflowStarter services.WorkflowStarter
+	AuditService    services.AuditService
 }
 
 type Service struct {
-	l              *zap.Logger
-	repo           repositories.WorkerPTORepository
-	userRepo       repositories.UserRepository
-	workerRepo     repositories.WorkerRepository
-	temporalClient client.Client
-	auditService   services.AuditService
+	l               *zap.Logger
+	repo            repositories.WorkerPTORepository
+	userRepo        repositories.UserRepository
+	workerRepo      repositories.WorkerRepository
+	workflowStarter services.WorkflowStarter
+	auditService    services.AuditService
 }
 
 const maxPTOChartRangeSeconds int64 = 366 * 24 * 60 * 60
 
 func New(p Params) *Service {
 	return &Service{
-		l:              p.Logger.Named("service.workerpto"),
-		repo:           p.Repo,
-		userRepo:       p.UserRepo,
-		workerRepo:     p.WorkerRepo,
-		temporalClient: p.TemporalClient,
-		auditService:   p.AuditService,
+		l:               p.Logger.Named("service.workerpto"),
+		repo:            p.Repo,
+		userRepo:        p.UserRepo,
+		workerRepo:      p.WorkerRepo,
+		workflowStarter: p.WorkflowStarter,
+		auditService:    p.AuditService,
 	}
 }
 
@@ -152,14 +152,17 @@ func (s *Service) Approve(
 		BusinessUnitID: req.TenantInfo.BuID,
 	}
 
-	_, err = s.temporalClient.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+	if !s.workflowStarter.Enabled() {
+		return nil, fmt.Errorf("failed to send SMS: %w", services.ErrWorkflowStarterDisabled)
+	}
+
+	_, err = s.workflowStarter.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID: fmt.Sprintf(
 			"pto-approved-%s-%d",
 			updatedEntity.ID.String(),
 			timeutils.NowUnix(),
 		),
-		TaskQueue:   temporaltype.SMSTaskQueue,
-		RetryPolicy: temporaltype.DefaultRetryPolicy,
+		TaskQueue: temporaltype.SMSTaskQueue,
 		StaticSummary: fmt.Sprintf(
 			"Sending SMS to worker %s for approved PTO",
 			updatedEntity.WorkerID.String(),
@@ -222,14 +225,17 @@ func (s *Service) Reject(
 		BusinessUnitID: req.TenantInfo.BuID,
 	}
 
-	_, err = s.temporalClient.ExecuteWorkflow(ctx, client.StartWorkflowOptions{
+	if !s.workflowStarter.Enabled() {
+		return nil, fmt.Errorf("failed to send SMS: %w", services.ErrWorkflowStarterDisabled)
+	}
+
+	_, err = s.workflowStarter.StartWorkflow(ctx, client.StartWorkflowOptions{
 		ID: fmt.Sprintf(
 			"pto-rejected-%s-%d",
 			updatedEntity.ID.String(),
 			timeutils.NowUnix(),
 		),
-		TaskQueue:   temporaltype.SMSTaskQueue,
-		RetryPolicy: temporaltype.DefaultRetryPolicy,
+		TaskQueue: temporaltype.SMSTaskQueue,
 		StaticSummary: fmt.Sprintf(
 			"Sending SMS to worker %s for rejected PTO",
 			updatedEntity.WorkerID.String(),

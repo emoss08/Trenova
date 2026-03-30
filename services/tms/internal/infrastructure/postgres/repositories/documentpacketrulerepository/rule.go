@@ -6,8 +6,10 @@ import (
 	"github.com/emoss08/trenova/internal/core/domain/documentpacketrule"
 	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/infrastructure/postgres"
+	"github.com/emoss08/trenova/pkg/buncolgen"
 	"github.com/emoss08/trenova/pkg/dberror"
 	"github.com/emoss08/trenova/pkg/pagination"
+	"github.com/emoss08/trenova/pkg/querybuilder"
 	"github.com/uptrace/bun"
 	"go.uber.org/fx"
 	"go.uber.org/zap"
@@ -32,24 +34,26 @@ func New(p Params) repositories.DocumentPacketRuleRepository {
 	}
 }
 
-func (r *repository) filterQuery(q *bun.SelectQuery, req *repositories.ListDocumentPacketRulesRequest) *bun.SelectQuery {
-	if req.ResourceType != "" {
-		q = q.Where("dpr.resource_type = ?", req.ResourceType)
-	}
-	if req.Filter != nil && req.Filter.Query != "" {
-		q = q.Where("CAST(dpr.document_type_id AS TEXT) ILIKE ?", "%"+req.Filter.Query+"%")
-	}
-	return q.Order("dpr.resource_type ASC, dpr.display_order ASC, dpr.created_at DESC").
-		Limit(req.Filter.Pagination.Limit).
-		Offset(req.Filter.Pagination.Offset)
+func (r *repository) filterQuery(
+	q *bun.SelectQuery,
+	req *repositories.ListDocumentPacketRulesRequest,
+) *bun.SelectQuery {
+	q = querybuilder.ApplyFilters(
+		q,
+		buncolgen.DocumentPacketRuleTable.Alias,
+		req.Filter,
+		(*documentpacketrule.DocumentPacketRule)(nil),
+	)
+
+	return q.Limit(req.Filter.Pagination.Limit).Offset(req.Filter.Pagination.Offset)
 }
 
 func (r *repository) List(
 	ctx context.Context,
 	req *repositories.ListDocumentPacketRulesRequest,
-) (*pagination.ListResult[*documentpacketrule.Rule], error) {
-	items := make([]*documentpacketrule.Rule, 0, req.Filter.Pagination.Limit)
-	total, err := r.db.DBForContext(ctx).
+) (*pagination.ListResult[*documentpacketrule.DocumentPacketRule], error) {
+	items := make([]*documentpacketrule.DocumentPacketRule, 0, req.Filter.Pagination.Limit)
+	total, err := r.db.DB().
 		NewSelect().
 		Model(&items).
 		Apply(func(sq *bun.SelectQuery) *bun.SelectQuery { return r.filterQuery(sq, req) }).
@@ -58,7 +62,7 @@ func (r *repository) List(
 		return nil, err
 	}
 
-	return &pagination.ListResult[*documentpacketrule.Rule]{
+	return &pagination.ListResult[*documentpacketrule.DocumentPacketRule]{
 		Items: items,
 		Total: total,
 	}, nil
@@ -67,17 +71,24 @@ func (r *repository) List(
 func (r *repository) GetByID(
 	ctx context.Context,
 	req repositories.GetDocumentPacketRuleByIDRequest,
-) (*documentpacketrule.Rule, error) {
-	entity := new(documentpacketrule.Rule)
-	err := r.db.DBForContext(ctx).
+) (*documentpacketrule.DocumentPacketRule, error) {
+	log := r.l.With(
+		zap.String("operation", "GetByID"),
+		zap.String("id", req.ID.String()),
+	)
+
+	entity := new(documentpacketrule.DocumentPacketRule)
+	err := r.db.DB().
 		NewSelect().
 		Model(entity).
-		Where("dpr.id = ?", req.ID).
-		Where("dpr.organization_id = ?", req.TenantInfo.OrgID).
-		Where("dpr.business_unit_id = ?", req.TenantInfo.BuID).
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.DocumentPacketRuleScopeTenant(sq, req.TenantInfo).
+				Where(buncolgen.DocumentPacketRuleColumns.ID.Eq(), req.ID)
+		}).
 		Scan(ctx)
 	if err != nil {
-		return nil, dberror.HandleNotFoundError(err, "Document packet rule")
+		log.Error("failed to get document packet rule", zap.Error(err))
+		return nil, dberror.HandleNotFoundError(err, "DocumentPacketRule")
 	}
 	return entity, nil
 }
@@ -85,15 +96,19 @@ func (r *repository) GetByID(
 func (r *repository) ListByResourceType(
 	ctx context.Context,
 	req *repositories.ListDocumentPacketRulesByResourceRequest,
-) ([]*documentpacketrule.Rule, error) {
-	items := make([]*documentpacketrule.Rule, 0)
-	err := r.db.DBForContext(ctx).
+) ([]*documentpacketrule.DocumentPacketRule, error) {
+	items := make([]*documentpacketrule.DocumentPacketRule, 0)
+
+	cols := buncolgen.DocumentPacketRuleColumns
+
+	err := r.db.DB().
 		NewSelect().
 		Model(&items).
-		Where("dpr.organization_id = ?", req.TenantInfo.OrgID).
-		Where("dpr.business_unit_id = ?", req.TenantInfo.BuID).
-		Where("dpr.resource_type = ?", req.ResourceType).
-		Order("dpr.display_order ASC, dpr.created_at ASC").
+		WhereGroup(" AND ", func(sq *bun.SelectQuery) *bun.SelectQuery {
+			return buncolgen.DocumentPacketRuleScopeTenant(sq, req.TenantInfo).
+				Where(cols.ResourceType.Eq(), req.ResourceType)
+		}).
+		OrderExpr(cols.DisplayOrder.OrderAsc(), cols.CreatedAt.OrderAsc()).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -101,30 +116,50 @@ func (r *repository) ListByResourceType(
 	return items, nil
 }
 
-func (r *repository) Create(ctx context.Context, entity *documentpacketrule.Rule) (*documentpacketrule.Rule, error) {
-	if _, err := r.db.DBForContext(ctx).NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+func (r *repository) Create(
+	ctx context.Context,
+	entity *documentpacketrule.DocumentPacketRule,
+) (*documentpacketrule.DocumentPacketRule, error) {
+	log := r.l.With(
+		zap.String("operation", "Create"),
+		zap.String("id", entity.ID.String()),
+	)
+
+	if _, err := r.db.DB().NewInsert().Model(entity).Returning("*").Exec(ctx); err != nil {
+		log.Error("failed to create document packet rule", zap.Error(err))
 		return nil, err
 	}
 	return entity, nil
 }
 
-func (r *repository) Update(ctx context.Context, entity *documentpacketrule.Rule) (*documentpacketrule.Rule, error) {
+func (r *repository) Update(
+	ctx context.Context,
+	entity *documentpacketrule.DocumentPacketRule,
+) (*documentpacketrule.DocumentPacketRule, error) {
+	log := r.l.With(
+		zap.String("operation", "Update"),
+		zap.String("id", entity.ID.String()),
+	)
+
 	ov := entity.Version
 	entity.Version++
-	result, err := r.db.DBForContext(ctx).
+
+	result, err := r.db.DB().
 		NewUpdate().
 		Model(entity).
 		WherePK().
-		Where("version = ?", ov).
-		OmitZero().
+		Where(buncolgen.DocumentPacketRuleColumns.Version.Eq(), ov).
 		Returning("*").
 		Exec(ctx)
 	if err != nil {
+		log.Error("failed to update document packet rule", zap.Error(err))
 		return nil, err
 	}
+
 	if err = dberror.CheckRowsAffected(result, "DocumentPacketRule", entity.ID.String()); err != nil {
 		return nil, err
 	}
+
 	return entity, nil
 }
 
@@ -132,19 +167,23 @@ func (r *repository) Delete(
 	ctx context.Context,
 	req repositories.GetDocumentPacketRuleByIDRequest,
 ) error {
-	result, err := r.db.DBForContext(ctx).
+	log := r.l.With(
+		zap.String("operation", "Delete"),
+		zap.String("id", req.ID.String()),
+	)
+
+	result, err := r.db.DB().
 		NewDelete().
-		Table("document_packet_rules").
-		Where("id = ?", req.ID).
-		Where("organization_id = ?", req.TenantInfo.OrgID).
-		Where("business_unit_id = ?", req.TenantInfo.BuID).
+		Model((*documentpacketrule.DocumentPacketRule)(nil)).
+		WhereGroup(" AND ", func(dq *bun.DeleteQuery) *bun.DeleteQuery {
+			return buncolgen.DocumentPacketRuleScopeTenantDelete(dq, req.TenantInfo).
+				Where(buncolgen.DocumentPacketRuleColumns.ID.Eq(), req.ID)
+		}).
 		Exec(ctx)
 	if err != nil {
+		log.Error("failed to delete document packet rule", zap.Error(err))
 		return err
 	}
 
-	if err = dberror.CheckRowsAffected(result, "DocumentPacketRule", req.ID.String()); err != nil {
-		return err
-	}
-	return nil
+	return dberror.CheckRowsAffected(result, "DocumentPacketRule", req.ID.String())
 }
