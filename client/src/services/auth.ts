@@ -17,8 +17,11 @@ export const authService = {
     await api.post("/auth/logout");
   },
 
-  getMicrosoftStartUrl: (organizationSlug: string, returnTo: string) => {
-    const url = new URL(`${API_BASE_URL}/auth/microsoft/start/${organizationSlug}`, window.location.origin);
+  getSSOStartUrl: (provider: string, slug: string, returnTo: string) => {
+    const url = new URL(
+      `${API_BASE_URL}/auth/sso/start/${provider}/${slug}`,
+      window.location.origin,
+    );
     url.searchParams.set("returnTo", returnTo);
     return url.toString();
   },

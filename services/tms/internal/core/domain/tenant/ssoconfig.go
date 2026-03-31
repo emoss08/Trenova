@@ -18,6 +18,7 @@ type SSOProvider string
 
 const (
 	SSOProviderAzureAD SSOProvider = "AzureAD"
+	SSOProviderOkta    SSOProvider = "Okta"
 )
 
 var _ bun.BeforeAppendModelHook = (*SSOConfig)(nil)

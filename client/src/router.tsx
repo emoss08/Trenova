@@ -25,13 +25,11 @@ const protectedLoader: LoaderFunction = async () => {
 };
 
 const guestLoader: LoaderFunction = async () => {
-  const { user, checkAuth } = useAuthStore.getState();
+  const { checkAuth } = useAuthStore.getState();
 
-  if (user) {
-    const isAuthenticated = await checkAuth();
-    if (isAuthenticated) {
-      return redirect("/");
-    }
+  const isAuthenticated = await checkAuth();
+  if (isAuthenticated) {
+    return redirect("/");
   }
 
   return null;

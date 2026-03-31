@@ -1,7 +1,7 @@
 import { InputField } from "@/components/fields/input-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { SwitchField } from "@/components/fields/switch-field";
-import { EntraLogo } from "@/components/logos/entra";
+import { OktaLogo } from "@/components/logos/okta";
 import { FormSaveDock } from "@/components/form-save-dock";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -15,7 +15,7 @@ import { API_BASE_URL } from "@/lib/constants";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
-import { type MicrosoftSSOConfig } from "@/types/organization";
+import { type OktaSSOConfig } from "@/types/organization";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   AlertTriangleIcon,
@@ -29,8 +29,9 @@ import { useEffect, useState } from "react";
 import { FormProvider, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 
-type MicrosoftSSOFormValues = MicrosoftSSOConfig & {
+type OktaSSOFormValues = OktaSSOConfig & {
   allowedDomainsText: string;
+  scopesText: string;
 };
 
 function buildAPIOrigin() {
@@ -75,30 +76,32 @@ function SectionHeader({ title, description }: { title: string; description: str
   );
 }
 
-export function MicrosoftSSOCard({ organizationId }: { organizationId: string }) {
+export function OktaSSOCard({ organizationId }: { organizationId: string }) {
   const queryClient = useQueryClient();
   const [open, setOpen] = useState(false);
   const redirectUrl =
-    typeof window !== "undefined" ? `${buildAPIOrigin()}/api/v1/auth/microsoft/callback` : "";
+    typeof window !== "undefined" ? `${buildAPIOrigin()}/api/v1/auth/sso/callback/Okta` : "";
   const tenantLoginUrl =
     typeof window !== "undefined" ? `${window.location.origin}/login/{loginSlug}` : "";
 
   const configQuery = useQuery({
-    ...queries.organization.microsoftSSO(organizationId),
+    ...queries.organization.oktaSSO(organizationId),
     enabled: Boolean(organizationId),
   });
 
-  const form = useForm<MicrosoftSSOFormValues>({
+  const form = useForm<OktaSSOFormValues>({
     defaultValues: {
       organizationId,
       enabled: false,
       enforceSso: false,
-      tenantId: "",
+      issuerUrl: "",
       clientId: "",
       clientSecret: "",
       redirectUrl,
+      scopes: ["openid", "profile", "email"],
       allowedDomains: [],
       allowedDomainsText: "",
+      scopesText: "openid, profile, email",
       secretConfigured: false,
     },
   });
@@ -107,11 +110,9 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
   const enabled = useWatch({ control, name: "enabled" });
   const enforceSso = useWatch({ control, name: "enforceSso" });
 
-  useEffect(() => {
-    if (!enabled && enforceSso) {
-      setValue("enforceSso", false);
-    }
-  }, [enabled, enforceSso, setValue]);
+  if (!enabled && enforceSso) {
+    setValue("enforceSso", false);
+  }
 
   useEffect(() => {
     if (configQuery.data) {
@@ -119,6 +120,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
         ...configQuery.data,
         clientSecret: "",
         allowedDomainsText: configQuery.data.allowedDomains.join(", "),
+        scopesText: configQuery.data.scopes.join(", "),
         redirectUrl: configQuery.data.redirectUrl || redirectUrl,
       });
       return;
@@ -132,32 +134,33 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
   }, [configQuery.data, organizationId, redirectUrl, reset]);
 
   const mutation = useApiMutation({
-    mutationFn: (values: MicrosoftSSOFormValues) =>
-      apiService.organizationService.upsertMicrosoftSSOConfig(organizationId, {
+    mutationFn: (values: OktaSSOFormValues) =>
+      apiService.organizationService.upsertOktaSSOConfig(organizationId, {
         ...values,
-        allowedDomains: parseAllowedDomains(values.allowedDomainsText),
+        allowedDomains: parseCommaSeparated(values.allowedDomainsText),
+        scopes: parseCommaSeparated(values.scopesText),
         redirectUrl,
       }),
     setFormError: setError,
-    resourceName: "Microsoft SSO",
+    resourceName: "Okta SSO",
     onSuccess: async (data) => {
       reset({
         ...data,
         clientSecret: "",
         allowedDomainsText: data.allowedDomains.join(", "),
+        scopesText: data.scopes.join(", "),
         redirectUrl: data.redirectUrl || redirectUrl,
       });
       await queryClient.invalidateQueries({
-        queryKey: queries.organization.microsoftSSO(organizationId).queryKey,
+        queryKey: queries.organization.oktaSSO(organizationId).queryKey,
       });
-      toast.success("Microsoft SSO settings updated");
+      toast.success("Okta SSO settings updated");
     },
   });
 
   return (
     <Collapsible open={open} onOpenChange={setOpen}>
       <div className="rounded-xl border border-border bg-background transition-shadow has-[[data-state=open]]:shadow-sm">
-        {/* Provider Header / Trigger */}
         <CollapsibleTrigger
           render={
             <button
@@ -167,10 +170,10 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
           }
         >
           <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-border bg-background shadow-xs">
-            <EntraLogo className="size-6" />
+            <OktaLogo className="h-5 w-auto" />
           </div>
           <div className="min-w-0 flex-1">
-            <span className="text-sm font-semibold tracking-tight">Microsoft Entra ID</span>
+            <span className="text-sm font-semibold tracking-tight">Okta</span>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {enabled ? "Active" : "Not configured"} &middot; OpenID Connect
             </p>
@@ -183,36 +186,33 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
           />
         </CollapsibleTrigger>
 
-        {/* Collapsible Configuration Panel */}
         <CollapsibleContent>
           <Separator />
           <div className="px-5 py-5">
             <FormProvider {...form}>
             <Form onSubmit={handleSubmit((values) => mutation.mutate(values))}>
               <div className="space-y-6">
-                {/* Setup Guide */}
                 <Alert variant="info">
                   <InfoIcon />
                   <AlertDescription>
                     <p>
-                      To configure SSO, register an app in{" "}
+                      To configure SSO, create an OIDC application in the{" "}
                       <a
-                        href="https://entra.microsoft.com/#view/Microsoft_AAD_RegisteredApps/ApplicationsListBlade"
+                        href="https://login.okta.com/"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-medium underline underline-offset-2"
                       >
-                        Microsoft Entra ID
+                        Okta Admin Console
                       </a>
-                      , copy the redirect URL below into the app&apos;s authentication settings,
-                      then paste the credentials here.
+                      , copy the redirect URL below into the app&apos;s sign-in redirect URIs, then
+                      paste the credentials here.
                     </p>
                   </AlertDescription>
                 </Alert>
 
                 <Separator />
 
-                {/* Authentication Policy */}
                 <div className="space-y-3">
                   <SectionHeader
                     title="Authentication Policy"
@@ -223,8 +223,8 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                       <SwitchField
                         control={control}
                         name="enabled"
-                        label="Enable Microsoft sign-in"
-                        description='Allow users to sign in with a "Continue with Microsoft" button.'
+                        label="Enable Okta sign-in"
+                        description='Allow users to sign in with a "Continue with Okta" button.'
                         outlined
                       />
                     </FormControl>
@@ -233,12 +233,12 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                         <SwitchField
                           control={control}
                           name="enforceSso"
-                          label="Require Microsoft SSO"
-                          description="Disable password login and require all users to sign in with Microsoft."
+                          label="Require Okta SSO"
+                          description="Disable password login and require all users to sign in with Okta."
                           outlined
                           warning={{
                             show: Boolean(enforceSso),
-                            message: "All users will be required to sign in with Microsoft.",
+                            message: "All users will be required to sign in with Okta.",
                           }}
                         />
                       </FormControl>
@@ -249,8 +249,8 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                       <AlertTriangleIcon />
                       <AlertTitle>Password login will be disabled</AlertTitle>
                       <AlertDescription>
-                        Users without a Microsoft account linked to an allowed domain will be locked
-                        out. Ensure all users have Microsoft accounts before enabling this.
+                        Users without an Okta account linked to an allowed domain will be locked out.
+                        Ensure all users have Okta accounts before enabling this.
                       </AlertDescription>
                     </Alert>
                   )}
@@ -260,17 +260,15 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                   <>
                     <Separator />
 
-                    {/* Service Provider */}
                     <div className="space-y-3">
                       <SectionHeader
                         title="Service Provider"
-                        description="Copy this value into your Microsoft app registration."
+                        description="Copy this value into your Okta application configuration."
                       />
                       <Alert variant="info">
                         <LinkIcon />
                         <AlertDescription>
-                          Add this redirect URL to your Microsoft app under Authentication &gt;
-                          Redirect URIs.
+                          Add this redirect URL to your Okta app under Sign-in redirect URIs.
                         </AlertDescription>
                       </Alert>
                       <CopyableInput value={redirectUrl} label="Redirect URL (OAuth Callback)" />
@@ -278,19 +276,18 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
 
                     <Separator />
 
-                    {/* Identity Provider */}
                     <div className="space-y-3">
                       <SectionHeader
                         title="Identity Provider"
-                        description="Paste these values from your Microsoft Entra ID app registration."
+                        description="Paste these values from your Okta application settings."
                       />
                       <FormGroup cols={1}>
                         <FormControl cols="full">
                           <InputField
                             control={control}
-                            name="tenantId"
-                            label="Directory (Tenant) ID"
-                            placeholder="00000000-0000-0000-0000-000000000000"
+                            name="issuerUrl"
+                            label="Okta Domain"
+                            placeholder="https://your-domain.okta.com"
                             rules={{ required: enabled }}
                           />
                         </FormControl>
@@ -298,8 +295,8 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                           <InputField
                             control={control}
                             name="clientId"
-                            label="Application (Client) ID"
-                            placeholder="00000000-0000-0000-0000-000000000000"
+                            label="Client ID"
+                            placeholder="0oa..."
                             rules={{ required: enabled }}
                           />
                         </FormControl>
@@ -307,7 +304,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                           <SensitiveField
                             control={control}
                             name="clientSecret"
-                            label="Client Secret Value"
+                            label="Client Secret"
                             placeholder="Paste a new client secret"
                             description={
                               configQuery.data?.secretConfigured
@@ -316,16 +313,24 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                             }
                           />
                         </FormControl>
+                        <FormControl cols="full">
+                          <InputField
+                            control={control}
+                            name="scopesText"
+                            label="Scopes"
+                            placeholder="openid, profile, email"
+                            description="Comma-separated list of OIDC scopes."
+                          />
+                        </FormControl>
                       </FormGroup>
                     </div>
 
                     <Separator />
 
-                    {/* Domain Restrictions */}
                     <div className="space-y-3">
                       <SectionHeader
                         title="Domain Restrictions"
-                        description="Limit which email domains can sign in with Microsoft."
+                        description="Limit which email domains can sign in with Okta."
                       />
                       <FormGroup cols={1}>
                         <FormControl cols="full">
@@ -334,7 +339,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
                             name="allowedDomainsText"
                             label="Allowed Email Domains"
                             placeholder="company.com, contractor.com"
-                            description="Comma-separated list. Leave blank to allow all Microsoft account domains."
+                            description="Comma-separated list. Leave blank to allow all Okta account domains."
                           />
                         </FormControl>
                       </FormGroup>
@@ -342,11 +347,10 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
 
                     <Separator />
 
-                    {/* Tenant Login URL */}
                     <div className="space-y-3">
                       <SectionHeader
                         title="Tenant Login URL"
-                        description="Share this URL with your users for Microsoft SSO sign-in."
+                        description="Share this URL with your users for Okta SSO sign-in."
                       />
                       <CopyableInput value={tenantLoginUrl} label="Login URL" />
                       <p className="text-xs text-muted-foreground">
@@ -371,7 +375,7 @@ export function MicrosoftSSOCard({ organizationId }: { organizationId: string })
   );
 }
 
-function parseAllowedDomains(values: string) {
+function parseCommaSeparated(values: string) {
   return values
     .split(",")
     .map((value) => value.trim())

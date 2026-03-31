@@ -72,7 +72,7 @@ func New(p Params) services.AuthService {
 
 var errInvalidCredentials = errortypes.NewAuthenticationError("Invalid email or password")
 var errSSORequired = errortypes.NewAuthenticationError(
-	"Password login is disabled for this organization. Use Microsoft sign in.",
+	"Password login is disabled for this organization. Use SSO to sign in.",
 )
 
 const ssoLoginStateTTL = 10 * time.Minute
@@ -138,27 +138,35 @@ func (s *Service) GetTenantLoginMetadata(
 		PasswordEnabled:  true,
 	}
 
-	ssoConfig, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, org.ID)
-	if err == nil {
-		resp.MicrosoftEnabled = true
-		resp.EnforceSSO = ssoConfig.EnforceSSO
-		resp.PasswordEnabled = !ssoConfig.EnforceSSO
-		return resp, nil
+	providers := []tenant.SSOProvider{tenant.SSOProviderAzureAD, tenant.SSOProviderOkta}
+	var enabledProviders []string
+	var anyEnforced bool
+	for _, p := range providers {
+		cfg, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, org.ID, p)
+		if err != nil {
+			if errortypes.IsNotFoundError(err) {
+				continue
+			}
+			return nil, err
+		}
+		enabledProviders = append(enabledProviders, string(p))
+		if cfg.EnforceSSO {
+			anyEnforced = true
+		}
 	}
+	resp.EnabledProviders = enabledProviders
+	resp.EnforceSSO = anyEnforced
+	resp.PasswordEnabled = !anyEnforced
 
-	if errortypes.IsNotFoundError(err) {
-		return resp, nil
-	}
-
-	return nil, err
+	return resp, nil
 }
 
-func (s *Service) StartMicrosoftLogin(
+func (s *Service) StartSSOLogin(
 	ctx context.Context,
-	req services.StartMicrosoftLoginRequest,
+	req services.StartSSOLoginRequest,
 ) (string, error) {
 	if s.or == nil || s.ssoRepo == nil || s.stateRepo == nil {
-		return "", errortypes.NewBusinessError("Microsoft SSO is not configured")
+		return "", errortypes.NewBusinessError(providerDisplayName(req.Provider) + " SSO is not configured")
 	}
 
 	org, err := s.or.GetByLoginSlug(ctx, req.OrganizationSlug)
@@ -166,7 +174,7 @@ func (s *Service) StartMicrosoftLogin(
 		return "", err
 	}
 
-	ssoConfig, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, org.ID)
+	ssoConfig, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, org.ID, req.Provider)
 	if err != nil {
 		return "", err
 	}
@@ -177,7 +185,7 @@ func (s *Service) StartMicrosoftLogin(
 
 	provider, err := oidc.NewProvider(ctx, ssoConfig.OIDCIssuerURL)
 	if err != nil {
-		return "", errortypes.NewBusinessError("Failed to initialize Microsoft identity provider").
+		return "", errortypes.NewBusinessError("Failed to initialize " + providerDisplayName(req.Provider) + " identity provider").
 			WithInternal(err)
 	}
 
@@ -195,6 +203,7 @@ func (s *Service) StartMicrosoftLogin(
 
 	if err = s.stateRepo.Save(ctx, &repositories.SSOLoginState{
 		State:            state,
+		Provider:         req.Provider,
 		OrganizationID:   org.ID,
 		OrganizationSlug: org.LoginSlug,
 		CodeVerifier:     verifier,
@@ -211,17 +220,17 @@ func (s *Service) StartMicrosoftLogin(
 	), nil
 }
 
-func (s *Service) HandleMicrosoftCallback(
+func (s *Service) HandleSSOCallback(
 	ctx context.Context,
-	req services.MicrosoftCallbackRequest,
-) (*services.MicrosoftCallbackResponse, error) {
+	req services.SSOCallbackRequest,
+) (*services.SSOCallbackResponse, error) {
 	if s.or == nil || s.ssoRepo == nil || s.stateRepo == nil {
-		return nil, errortypes.NewBusinessError("Microsoft SSO is not configured")
+		return nil, errortypes.NewBusinessError("SSO is not configured")
 	}
 
 	loginState, err := s.stateRepo.Get(ctx, req.State)
 	if err != nil {
-		return nil, errortypes.NewAuthenticationError("Microsoft login session is invalid or expired")
+		return nil, errortypes.NewAuthenticationError("SSO login session is invalid or expired")
 	}
 	defer func() {
 		if delErr := s.stateRepo.Delete(ctx, req.State); delErr != nil {
@@ -229,19 +238,16 @@ func (s *Service) HandleMicrosoftCallback(
 		}
 	}()
 
-	org, err := s.or.GetByLoginSlug(ctx, loginState.OrganizationSlug)
-	if err != nil {
-		return nil, err
-	}
+	displayName := providerDisplayName(loginState.Provider)
 
-	ssoConfig, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, org.ID)
+	ssoConfig, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, loginState.OrganizationID, loginState.Provider)
 	if err != nil {
 		return nil, err
 	}
 
 	provider, err := oidc.NewProvider(ctx, ssoConfig.OIDCIssuerURL)
 	if err != nil {
-		return nil, errortypes.NewBusinessError("Failed to initialize Microsoft identity provider").
+		return nil, errortypes.NewBusinessError("Failed to initialize " + displayName + " identity provider").
 			WithInternal(err)
 	}
 
@@ -259,12 +265,12 @@ func (s *Service) HandleMicrosoftCallback(
 		oauth2.VerifierOption(loginState.CodeVerifier),
 	)
 	if err != nil {
-		return nil, errortypes.NewAuthenticationError("Microsoft login failed")
+		return nil, errortypes.NewAuthenticationError(displayName + " login failed")
 	}
 
 	rawIDToken, ok := oauthToken.Extra("id_token").(string)
 	if !ok || rawIDToken == "" {
-		return nil, errortypes.NewAuthenticationError("Microsoft login did not return an ID token")
+		return nil, errortypes.NewAuthenticationError(displayName + " login did not return an ID token")
 	}
 
 	verifier := provider.Verifier(&oidc.Config{
@@ -272,29 +278,31 @@ func (s *Service) HandleMicrosoftCallback(
 	})
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		return nil, errortypes.NewAuthenticationError("Microsoft identity token is invalid")
+		return nil, errortypes.NewAuthenticationError(displayName + " identity token is invalid")
 	}
 
-	var claims microsoftClaims
+	var claims oidcClaims
 	if err = idToken.Claims(&claims); err != nil {
-		return nil, errortypes.NewAuthenticationError("Microsoft identity token is invalid")
+		return nil, errortypes.NewAuthenticationError(displayName + " identity token is invalid")
 	}
 
 	if claims.Nonce != loginState.Nonce {
-		return nil, errortypes.NewAuthenticationError("Microsoft login nonce mismatch")
+		return nil, errortypes.NewAuthenticationError(displayName + " login nonce mismatch")
 	}
 
-	expectedTenantID := strings.TrimSpace(microsoftTenantIDFromIssuer(ssoConfig.OIDCIssuerURL))
-	if expectedTenantID != "" && !strings.EqualFold(expectedTenantID, claims.TenantID) {
-		return nil, errortypes.NewAuthenticationError(
-			"Microsoft tenant does not match this organization's configuration",
-		)
+	if ssoConfig.Provider == tenant.SSOProviderAzureAD {
+		expectedTenantID := strings.TrimSpace(microsoftTenantIDFromIssuer(ssoConfig.OIDCIssuerURL))
+		if expectedTenantID != "" && !strings.EqualFold(expectedTenantID, claims.TenantID) {
+			return nil, errortypes.NewAuthenticationError(
+				"Microsoft tenant does not match this organization's configuration",
+			)
+		}
 	}
 
 	emailAddress := claims.EmailAddress()
 	if emailAddress == "" {
 		return nil, errortypes.NewAuthenticationError(
-			"Microsoft account did not provide a usable email address",
+			displayName + " account did not provide a usable email address",
 		)
 	}
 
@@ -304,23 +312,28 @@ func (s *Service) HandleMicrosoftCallback(
 
 	usr, err := s.ur.FindByEmail(ctx, emailAddress)
 	if err != nil {
-		return nil, errortypes.NewAuthenticationError("No Trenova user exists for this Microsoft account")
+		return nil, errortypes.NewAuthenticationError("No Trenova user exists for this " + displayName + " account")
 	}
 
 	if err = usr.ValidateStatus(); err != nil {
 		return nil, err
 	}
 
-	if err = s.ensureUserHasOrganizationAccess(ctx, usr.ID, org.ID); err != nil {
+	if err = s.ensureUserHasOrganizationAccess(ctx, usr.ID, loginState.OrganizationID); err != nil {
 		return nil, err
 	}
 
-	if org.ID != usr.CurrentOrganizationID {
-		if err = s.ur.UpdateCurrentOrganization(ctx, usr.ID, org.ID, org.BusinessUnitID); err != nil {
+	if loginState.OrganizationID != usr.CurrentOrganizationID {
+		if err = s.ur.UpdateCurrentOrganization(
+			ctx,
+			usr.ID,
+			loginState.OrganizationID,
+			ssoConfig.BusinessUnitID,
+		); err != nil {
 			return nil, err
 		}
-		usr.CurrentOrganizationID = org.ID
-		usr.BusinessUnitID = org.BusinessUnitID
+		usr.CurrentOrganizationID = loginState.OrganizationID
+		usr.BusinessUnitID = ssoConfig.BusinessUnitID
 	}
 
 	loginResp, err := s.createLoginResponse(ctx, usr)
@@ -328,7 +341,7 @@ func (s *Service) HandleMicrosoftCallback(
 		return nil, err
 	}
 
-	return &services.MicrosoftCallbackResponse{
+	return &services.SSOCallbackResponse{
 		LoginResponse: loginResp,
 		RedirectTo:    loginState.ReturnTo,
 	}, nil
@@ -336,7 +349,7 @@ func (s *Service) HandleMicrosoftCallback(
 
 func (s *Service) GetSSOLoginState(ctx context.Context, state string) (*repositories.SSOLoginState, error) {
 	if s.stateRepo == nil {
-		return nil, errortypes.NewBusinessError("Microsoft SSO is not configured")
+		return nil, errortypes.NewBusinessError("SSO is not configured")
 	}
 	return s.stateRepo.Get(ctx, state)
 }
@@ -511,22 +524,23 @@ func (s *Service) enforcePasswordLoginPolicy(
 		return nil
 	}
 
-	cfg, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, targetOrg.ID)
-	if err != nil {
-		if errortypes.IsNotFoundError(err) {
-			return nil
+	for _, p := range []tenant.SSOProvider{tenant.SSOProviderAzureAD, tenant.SSOProviderOkta} {
+		cfg, err := s.ssoRepo.GetEnabledByOrganizationID(ctx, targetOrg.ID, p)
+		if err != nil {
+			if errortypes.IsNotFoundError(err) {
+				continue
+			}
+			return err
 		}
-		return err
-	}
-
-	if cfg.EnforceSSO {
-		return errSSORequired
+		if cfg.EnforceSSO {
+			return errSSORequired
+		}
 	}
 
 	return nil
 }
 
-type microsoftClaims struct {
+type oidcClaims struct {
 	Email             string `json:"email"`
 	PreferredUsername string `json:"preferred_username"`
 	UPN               string `json:"upn"`
@@ -534,7 +548,7 @@ type microsoftClaims struct {
 	TenantID          string `json:"tid"`
 }
 
-func (c microsoftClaims) EmailAddress() string {
+func (c oidcClaims) EmailAddress() string {
 	switch {
 	case strings.TrimSpace(c.Email) != "":
 		return strings.ToLower(strings.TrimSpace(c.Email))
@@ -584,7 +598,7 @@ func validateAllowedDomain(emailAddress string, allowedDomains []string) error {
 
 	parts := strings.Split(emailAddress, "@")
 	if len(parts) != 2 {
-		return errortypes.NewAuthenticationError("Microsoft account email address is invalid")
+		return errortypes.NewAuthenticationError("SSO account email address is invalid")
 	}
 
 	for _, domain := range allowedDomains {
@@ -594,8 +608,19 @@ func validateAllowedDomain(emailAddress string, allowedDomains []string) error {
 	}
 
 	return errortypes.NewAuthenticationError(
-		"Microsoft account email domain is not allowed for this organization",
+		"SSO account email domain is not allowed for this organization",
 	)
+}
+
+func providerDisplayName(p tenant.SSOProvider) string {
+	switch p {
+	case tenant.SSOProviderAzureAD:
+		return "Microsoft"
+	case tenant.SSOProviderOkta:
+		return "Okta"
+	default:
+		return string(p)
+	}
 }
 
 func microsoftTenantIDFromIssuer(issuerURL string) string {

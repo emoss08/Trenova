@@ -339,7 +339,7 @@ func (s *service) GetMicrosoftSSOConfig(
 	ctx context.Context,
 	organizationID pulid.ID,
 ) (*services.MicrosoftSSOConfig, error) {
-	entity, err := s.ssoRepo.GetByOrganizationID(ctx, organizationID)
+	entity, err := s.ssoRepo.GetByOrganizationID(ctx, organizationID, tenant.SSOProviderAzureAD)
 	if err != nil {
 		if errortypes.IsNotFoundError(err) {
 			return &services.MicrosoftSSOConfig{
@@ -370,7 +370,7 @@ func (s *service) UpsertMicrosoftSSOConfig(
 	clientID := strings.TrimSpace(cfg.ClientID)
 	redirectURL := strings.TrimSpace(cfg.RedirectURL)
 
-	existing, err := s.ssoRepo.GetByOrganizationID(ctx, tenantInfo.OrgID)
+	existing, err := s.ssoRepo.GetByOrganizationID(ctx, tenantInfo.OrgID, tenant.SSOProviderAzureAD)
 	if err != nil && !errortypes.IsNotFoundError(err) {
 		return nil, err
 	}

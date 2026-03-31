@@ -9,18 +9,19 @@ import (
 )
 
 type SSOConfigRepository interface {
-	GetByOrganizationID(ctx context.Context, organizationID pulid.ID) (*tenant.SSOConfig, error)
-	GetEnabledByOrganizationID(ctx context.Context, organizationID pulid.ID) (*tenant.SSOConfig, error)
+	GetByOrganizationID(ctx context.Context, organizationID pulid.ID, provider tenant.SSOProvider) (*tenant.SSOConfig, error)
+	GetEnabledByOrganizationID(ctx context.Context, organizationID pulid.ID, provider tenant.SSOProvider) (*tenant.SSOConfig, error)
 	Save(ctx context.Context, config *tenant.SSOConfig) (*tenant.SSOConfig, error)
 }
 
 type SSOLoginState struct {
-	State            string   `json:"state"`
-	OrganizationID   pulid.ID `json:"organizationId"`
-	OrganizationSlug string   `json:"organizationSlug"`
-	CodeVerifier     string   `json:"codeVerifier"`
-	Nonce            string   `json:"nonce"`
-	ReturnTo         string   `json:"returnTo"`
+	State            string             `json:"state"`
+	Provider         tenant.SSOProvider `json:"provider"`
+	OrganizationID   pulid.ID           `json:"organizationId"`
+	OrganizationSlug string             `json:"organizationSlug"`
+	CodeVerifier     string             `json:"codeVerifier"`
+	Nonce            string             `json:"nonce"`
+	ReturnTo         string             `json:"returnTo"`
 }
 
 type SSOLoginStateRepository interface {

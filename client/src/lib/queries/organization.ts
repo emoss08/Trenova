@@ -16,6 +16,11 @@ export const organization = createQueryKeys("organization", {
     queryFn: async () =>
       apiService.organizationService.getMicrosoftSSOConfig(organizationId),
   }),
+  oktaSSO: (organizationId: string) => ({
+    queryKey: ["okta-sso", organizationId],
+    queryFn: async () =>
+      apiService.organizationService.getOktaSSOConfig(organizationId),
+  }),
   tenantLogin: (organizationSlug: string) => ({
     queryKey: ["tenant-login", organizationSlug],
     queryFn: async () =>

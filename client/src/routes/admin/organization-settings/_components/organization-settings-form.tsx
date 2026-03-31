@@ -24,6 +24,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { FormProvider, useForm, useFormContext, useWatch } from "react-hook-form";
 import { toast } from "sonner";
 import { MicrosoftSSOCard } from "./microsoft-sso-card";
+import { OktaSSOCard } from "./okta-sso-card";
 
 const tabValues = ["general", "security"] as const;
 const LOGO_ACCEPT = ".jpg,.jpeg,.png,.webp";
@@ -169,8 +170,9 @@ export default function OrganizationSettingsForm() {
           </Form>
         </FormProvider>
       </TabsContent>
-      <TabsContent value="security">
+      <TabsContent value="security" className="space-y-4">
         <MicrosoftSSOCard organizationId={organizationId} />
+        <OktaSSOCard organizationId={organizationId} />
       </TabsContent>
     </Tabs>
   );

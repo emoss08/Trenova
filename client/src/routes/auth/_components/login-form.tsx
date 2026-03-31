@@ -1,6 +1,7 @@
 import { InputField } from "@/components/fields/input-field";
 import { SensitiveField } from "@/components/fields/sensitive-field";
 import { MicrosoftLogo } from "@/components/logos/microsoft";
+import { OktaLogo } from "@/components/logos/okta";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormGroup } from "@/components/ui/form";
@@ -24,10 +25,12 @@ export function LoginForm({
   const [searchParams, setSearchParams] = useSearchParams();
   const ssoError = searchParams.get("sso_error");
   const setUser = useAuthStore((state) => state.setUser);
-  const microsoftStartUrl =
-    organizationSlug && typeof window !== "undefined"
-      ? authService.getMicrosoftStartUrl(organizationSlug, `${window.location.origin}/`)
-      : null;
+
+  const providers = tenantMetadata?.enabledProviders ?? [];
+  const hasMicrosoft = providers.includes("AzureAD");
+  const hasOkta = providers.includes("Okta");
+  const hasAnySso = hasMicrosoft || hasOkta;
+  const returnTo = typeof window !== "undefined" ? `${window.location.origin}/` : "/";
 
   const { control, handleSubmit, setError } = useForm<LoginRequest>({
     resolver: zodResolver(loginRequestSchema),
@@ -60,21 +63,41 @@ export function LoginForm({
             variant="destructive"
             role="alert"
             className="cursor-pointer"
-            onClick={() => setSearchParams((p) => {
-              p.delete("sso_error");
-              return p;
-            })}
+            onClick={() =>
+              setSearchParams((p) => {
+                p.delete("sso_error");
+                return p;
+              })
+            }
           >
             <AlertDescription>{ssoError}</AlertDescription>
           </Alert>
         )}
-        {tenantMetadata?.microsoftEnabled && microsoftStartUrl && (
-          <Button className="w-full" variant="outline" render={<a href={microsoftStartUrl} />}>
+        {hasMicrosoft && organizationSlug && (
+          <Button
+            className="w-full"
+            variant="outline"
+            render={
+              <a href={authService.getSSOStartUrl("AzureAD", organizationSlug, returnTo)} />
+            }
+          >
             <MicrosoftLogo className="size-4" />
             Continue with Microsoft
           </Button>
         )}
-        {tenantMetadata?.microsoftEnabled && tenantMetadata.passwordEnabled && (
+        {hasOkta && organizationSlug && (
+          <Button
+            className="w-full"
+            variant="outline"
+            render={
+              <a href={authService.getSSOStartUrl("Okta", organizationSlug, returnTo)} />
+            }
+          >
+            <OktaLogo className="h-4 w-auto" />
+            Continue with Okta
+          </Button>
+        )}
+        {hasAnySso && tenantMetadata?.passwordEnabled && (
           <div className="text-center text-xs tracking-[0.2em] text-muted-foreground uppercase">
             Or use password
           </div>

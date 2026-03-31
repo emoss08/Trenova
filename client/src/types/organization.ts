@@ -86,11 +86,32 @@ export const microsoftSSOConfigSchema = z.object({
 
 export type MicrosoftSSOConfig = z.infer<typeof microsoftSSOConfigSchema>;
 
+export const oktaSSOConfigSchema = z.object({
+  organizationId: z.string().optional().default(""),
+  enabled: z.boolean().default(false),
+  enforceSso: z.boolean().default(false),
+  issuerUrl: z.string().optional().default(""),
+  clientId: z.string().optional().default(""),
+  clientSecret: z.string().optional().default(""),
+  redirectUrl: z.string().optional().default(""),
+  scopes: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? ["openid", "profile", "email"]),
+  allowedDomains: z
+    .array(z.string())
+    .nullish()
+    .transform((value) => value ?? []),
+  secretConfigured: z.boolean().default(false),
+});
+
+export type OktaSSOConfig = z.infer<typeof oktaSSOConfigSchema>;
+
 export const tenantLoginMetadataSchema = z.object({
   organizationId: z.string(),
   organizationName: z.string(),
   organizationSlug: z.string(),
-  microsoftEnabled: z.boolean(),
+  enabledProviders: z.array(z.string()).default([]),
   passwordEnabled: z.boolean(),
   enforceSso: z.boolean(),
 });

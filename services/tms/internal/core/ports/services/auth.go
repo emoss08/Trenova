@@ -26,25 +26,26 @@ type LoginResponse struct {
 }
 
 type TenantLoginMetadataResponse struct {
-	OrganizationID   string `json:"organizationId"`
-	OrganizationName string `json:"organizationName"`
-	OrganizationSlug string `json:"organizationSlug"`
-	MicrosoftEnabled bool   `json:"microsoftEnabled"`
-	PasswordEnabled  bool   `json:"passwordEnabled"`
-	EnforceSSO       bool   `json:"enforceSso"`
+	OrganizationID   string   `json:"organizationId"`
+	OrganizationName string   `json:"organizationName"`
+	OrganizationSlug string   `json:"organizationSlug"`
+	EnabledProviders []string `json:"enabledProviders"`
+	PasswordEnabled  bool     `json:"passwordEnabled"`
+	EnforceSSO       bool     `json:"enforceSso"`
 }
 
-type StartMicrosoftLoginRequest struct {
+type StartSSOLoginRequest struct {
+	Provider         tenant.SSOProvider
 	OrganizationSlug string
 	ReturnTo         string
 }
 
-type MicrosoftCallbackRequest struct {
+type SSOCallbackRequest struct {
 	State string
 	Code  string
 }
 
-type MicrosoftCallbackResponse struct {
+type SSOCallbackResponse struct {
 	LoginResponse *LoginResponse
 	RedirectTo    string
 }
@@ -123,11 +124,11 @@ type AuthService interface {
 		ctx context.Context,
 		organizationSlug string,
 	) (*TenantLoginMetadataResponse, error)
-	StartMicrosoftLogin(ctx context.Context, req StartMicrosoftLoginRequest) (string, error)
-	HandleMicrosoftCallback(
+	StartSSOLogin(ctx context.Context, req StartSSOLoginRequest) (string, error)
+	HandleSSOCallback(
 		ctx context.Context,
-		req MicrosoftCallbackRequest,
-	) (*MicrosoftCallbackResponse, error)
+		req SSOCallbackRequest,
+	) (*SSOCallbackResponse, error)
 	GetSSOLoginState(ctx context.Context, state string) (*repositories.SSOLoginState, error)
 	ValidateSession(ctx context.Context, sessionID pulid.ID) (*session.Session, error)
 	AuthenticateAPIKey(

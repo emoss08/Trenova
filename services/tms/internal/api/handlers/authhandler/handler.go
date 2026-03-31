@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/emoss08/trenova/internal/api/helpers"
+	"github.com/emoss08/trenova/internal/core/domain/tenant"
+	"github.com/emoss08/trenova/internal/core/ports/repositories"
 	"github.com/emoss08/trenova/internal/core/ports/services"
 	"github.com/emoss08/trenova/internal/infrastructure/config"
 	"github.com/emoss08/trenova/pkg/authctx"
@@ -49,8 +51,10 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 	api.POST("logout", h.logout)
 	api.POST("validate-session", h.validateSession)
 	api.GET("tenant/:slug", h.getTenantLoginMetadata)
-	api.GET("microsoft/start/:slug", h.startMicrosoftLogin)
-	api.GET("microsoft/callback", h.microsoftCallback)
+	api.GET("microsoft/start/:slug", h.startSSOLogin(tenant.SSOProviderAzureAD))
+	api.GET("microsoft/callback", h.ssoCallback(tenant.SSOProviderAzureAD))
+	api.GET("sso/start/:provider/:slug", h.startSSOLoginGeneric)
+	api.GET("sso/callback/:provider", h.ssoCallbackGeneric)
 }
 
 // @Summary Login
@@ -159,47 +163,105 @@ func (h *Handler) getTenantLoginMetadata(c *gin.Context) {
 	c.JSON(http.StatusOK, resp)
 }
 
-func (h *Handler) startMicrosoftLogin(c *gin.Context) {
-	redirectURL, err := h.service.StartMicrosoftLogin(c.Request.Context(), services.StartMicrosoftLoginRequest{
-		OrganizationSlug: c.Param("slug"),
-		ReturnTo:         c.Query("returnTo"),
-	})
+func (h *Handler) startSSOLogin(provider tenant.SSOProvider) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		redirectURL, err := h.service.StartSSOLogin(c.Request.Context(), services.StartSSOLoginRequest{
+			Provider:         provider,
+			OrganizationSlug: c.Param("slug"),
+			ReturnTo:         c.Query("returnTo"),
+		})
+		if err != nil {
+			h.eh.HandleError(c, err)
+			return
+		}
+
+		c.Redirect(http.StatusFound, redirectURL)
+	}
+}
+
+func (h *Handler) startSSOLoginGeneric(c *gin.Context) {
+	provider, err := parseSSOProvider(c.Param("provider"))
 	if err != nil {
 		h.eh.HandleError(c, err)
 		return
 	}
 
-	c.Redirect(http.StatusFound, redirectURL)
+	h.startSSOLogin(provider)(c)
 }
 
-func (h *Handler) microsoftCallback(c *gin.Context) {
-	state := strings.TrimSpace(c.Query("state"))
+func (h *Handler) ssoCallback(provider tenant.SSOProvider) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		state := strings.TrimSpace(c.Query("state"))
 
-	resp, err := h.service.HandleMicrosoftCallback(c.Request.Context(), services.MicrosoftCallbackRequest{
-		State: state,
-		Code:  strings.TrimSpace(c.Query("code")),
-	})
+		var loginState *repositories.SSOLoginState
+		if state != "" {
+			ls, stateErr := h.service.GetSSOLoginState(c.Request.Context(), state)
+			if stateErr == nil {
+				loginState = ls
+			}
+		}
+
+		if loginState != nil && loginState.Provider != "" && loginState.Provider != provider {
+			h.redirectSSOError(
+				c,
+				loginState,
+				errortypes.NewAuthenticationError("SSO login session does not match this provider"),
+			)
+			return
+		}
+
+		resp, err := h.service.HandleSSOCallback(c.Request.Context(), services.SSOCallbackRequest{
+			State: state,
+			Code:  strings.TrimSpace(c.Query("code")),
+		})
+		if err != nil {
+			h.redirectSSOError(c, loginState, err)
+			return
+		}
+
+		h.setSessionCookie(c, resp.LoginResponse.SessionID, resp.LoginResponse.ExpiresAt)
+		c.Redirect(http.StatusFound, resp.RedirectTo)
+	}
+}
+
+func (h *Handler) ssoCallbackGeneric(c *gin.Context) {
+	provider, err := parseSSOProvider(c.Param("provider"))
 	if err != nil {
-		h.redirectMicrosoftError(c, state, err)
+		h.eh.HandleError(c, err)
 		return
 	}
 
-	h.setSessionCookie(c, resp.LoginResponse.SessionID, resp.LoginResponse.ExpiresAt)
-	c.Redirect(http.StatusFound, resp.RedirectTo)
+	h.ssoCallback(provider)(c)
 }
 
-func (h *Handler) redirectMicrosoftError(c *gin.Context, state string, callbackErr error) {
-	h.l.Warn("microsoft sso callback failed", zap.Error(callbackErr))
+func parseSSOProvider(raw string) (tenant.SSOProvider, error) {
+	switch strings.ToLower(raw) {
+	case "microsoft", "azuread":
+		return tenant.SSOProviderAzureAD, nil
+	case "okta":
+		return tenant.SSOProviderOkta, nil
+	default:
+		return "", errortypes.NewValidationError("provider", errortypes.ErrInvalid, "Unsupported SSO provider")
+	}
+}
+
+func (h *Handler) redirectSSOError(c *gin.Context, loginState *repositories.SSOLoginState, callbackErr error) {
+	h.l.Warn("sso callback failed", zap.Error(callbackErr))
 
 	loginPath := "/login"
-	if state != "" {
-		if loginState, stateErr := h.service.GetSSOLoginState(c.Request.Context(), state); stateErr == nil && loginState.OrganizationSlug != "" {
-			loginPath = "/login/" + loginState.OrganizationSlug
-		}
+	if loginState != nil && loginState.OrganizationSlug != "" {
+		loginPath = "/login/" + loginState.OrganizationSlug
 	}
 
+	userMsg := "Sign-in failed. Please try again or contact your administrator."
+
 	origin := h.cfg.Server.CORS.AllowedOrigins[0]
-	redirectURL := fmt.Sprintf("%s%s?sso_error=%s", origin, loginPath, url.QueryEscape(callbackErr.Error()))
+	if loginState != nil {
+		if returnURL, err := url.Parse(loginState.ReturnTo); err == nil && returnURL.Scheme != "" && returnURL.Host != "" {
+			origin = returnURL.Scheme + "://" + returnURL.Host
+		}
+	}
+	redirectURL := fmt.Sprintf("%s%s?sso_error=%s", origin, loginPath, url.QueryEscape(userMsg))
 	c.Redirect(http.StatusFound, redirectURL)
 }
 

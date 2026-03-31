@@ -35,13 +35,14 @@ func New(p Params) repositories.SSOConfigRepository {
 func (r *repository) GetByOrganizationID(
 	ctx context.Context,
 	organizationID pulid.ID,
+	provider tenant.SSOProvider,
 ) (*tenant.SSOConfig, error) {
 	entity := new(tenant.SSOConfig)
 	if err := r.db.DB().
 		NewSelect().
 		Model(entity).
 		Where("ssoc.organization_id = ?", organizationID).
-		Where("ssoc.provider = ?", tenant.SSOProviderAzureAD).
+		Where("ssoc.provider = ?", provider).
 		Scan(ctx); err != nil {
 		return nil, dberror.HandleNotFoundError(err, "SSOConfig")
 	}
@@ -52,13 +53,14 @@ func (r *repository) GetByOrganizationID(
 func (r *repository) GetEnabledByOrganizationID(
 	ctx context.Context,
 	organizationID pulid.ID,
+	provider tenant.SSOProvider,
 ) (*tenant.SSOConfig, error) {
 	entity := new(tenant.SSOConfig)
 	if err := r.db.DB().
 		NewSelect().
 		Model(entity).
 		Where("ssoc.organization_id = ?", organizationID).
-		Where("ssoc.provider = ?", tenant.SSOProviderAzureAD).
+		Where("ssoc.provider = ?", provider).
 		Where("ssoc.enabled = TRUE").
 		Scan(ctx); err != nil {
 		return nil, dberror.HandleNotFoundError(err, "SSOConfig")
@@ -76,7 +78,7 @@ func (r *repository) Save(
 		NewSelect().
 		Model(existing).
 		Where("ssoc.organization_id = ?", entity.OrganizationID).
-		Where("ssoc.provider = ?", tenant.SSOProviderAzureAD).
+		Where("ssoc.provider = ?", entity.Provider).
 		Scan(ctx)
 	if err != nil && !dberror.IsNotFoundError(err) {
 		return nil, err

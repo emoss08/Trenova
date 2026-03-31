@@ -257,27 +257,27 @@ func (_c *MockAuthService_GetTenantLoginMetadata_Call) RunAndReturn(run func(ctx
 	return _c
 }
 
-// HandleMicrosoftCallback provides a mock function for the type MockAuthService
-func (_mock *MockAuthService) HandleMicrosoftCallback(ctx context.Context, req services.MicrosoftCallbackRequest) (*services.MicrosoftCallbackResponse, error) {
+// HandleSSOCallback provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) HandleSSOCallback(ctx context.Context, req services.SSOCallbackRequest) (*services.SSOCallbackResponse, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for HandleMicrosoftCallback")
+		panic("no return value specified for HandleSSOCallback")
 	}
 
-	var r0 *services.MicrosoftCallbackResponse
+	var r0 *services.SSOCallbackResponse
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.MicrosoftCallbackRequest) (*services.MicrosoftCallbackResponse, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.SSOCallbackRequest) (*services.SSOCallbackResponse, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.MicrosoftCallbackRequest) *services.MicrosoftCallbackResponse); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.SSOCallbackRequest) *services.SSOCallbackResponse); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*services.MicrosoftCallbackResponse)
+			r0 = ret.Get(0).(*services.SSOCallbackResponse)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.MicrosoftCallbackRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, services.SSOCallbackRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -285,27 +285,27 @@ func (_mock *MockAuthService) HandleMicrosoftCallback(ctx context.Context, req s
 	return r0, r1
 }
 
-// MockAuthService_HandleMicrosoftCallback_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HandleMicrosoftCallback'
-type MockAuthService_HandleMicrosoftCallback_Call struct {
+// MockAuthService_HandleSSOCallback_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'HandleSSOCallback'
+type MockAuthService_HandleSSOCallback_Call struct {
 	*mock.Call
 }
 
-// HandleMicrosoftCallback is a helper method to define mock.On call
+// HandleSSOCallback is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req services.MicrosoftCallbackRequest
-func (_e *MockAuthService_Expecter) HandleMicrosoftCallback(ctx interface{}, req interface{}) *MockAuthService_HandleMicrosoftCallback_Call {
-	return &MockAuthService_HandleMicrosoftCallback_Call{Call: _e.mock.On("HandleMicrosoftCallback", ctx, req)}
+//   - req services.SSOCallbackRequest
+func (_e *MockAuthService_Expecter) HandleSSOCallback(ctx interface{}, req interface{}) *MockAuthService_HandleSSOCallback_Call {
+	return &MockAuthService_HandleSSOCallback_Call{Call: _e.mock.On("HandleSSOCallback", ctx, req)}
 }
 
-func (_c *MockAuthService_HandleMicrosoftCallback_Call) Run(run func(ctx context.Context, req services.MicrosoftCallbackRequest)) *MockAuthService_HandleMicrosoftCallback_Call {
+func (_c *MockAuthService_HandleSSOCallback_Call) Run(run func(ctx context.Context, req services.SSOCallbackRequest)) *MockAuthService_HandleSSOCallback_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 services.MicrosoftCallbackRequest
+		var arg1 services.SSOCallbackRequest
 		if args[1] != nil {
-			arg1 = args[1].(services.MicrosoftCallbackRequest)
+			arg1 = args[1].(services.SSOCallbackRequest)
 		}
 		run(
 			arg0,
@@ -315,12 +315,12 @@ func (_c *MockAuthService_HandleMicrosoftCallback_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockAuthService_HandleMicrosoftCallback_Call) Return(microsoftCallbackResponse *services.MicrosoftCallbackResponse, err error) *MockAuthService_HandleMicrosoftCallback_Call {
-	_c.Call.Return(microsoftCallbackResponse, err)
+func (_c *MockAuthService_HandleSSOCallback_Call) Return(sSOCallbackResponse *services.SSOCallbackResponse, err error) *MockAuthService_HandleSSOCallback_Call {
+	_c.Call.Return(sSOCallbackResponse, err)
 	return _c
 }
 
-func (_c *MockAuthService_HandleMicrosoftCallback_Call) RunAndReturn(run func(ctx context.Context, req services.MicrosoftCallbackRequest) (*services.MicrosoftCallbackResponse, error)) *MockAuthService_HandleMicrosoftCallback_Call {
+func (_c *MockAuthService_HandleSSOCallback_Call) RunAndReturn(run func(ctx context.Context, req services.SSOCallbackRequest) (*services.SSOCallbackResponse, error)) *MockAuthService_HandleSSOCallback_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -450,25 +450,25 @@ func (_c *MockAuthService_Logout_Call) RunAndReturn(run func(ctx context.Context
 	return _c
 }
 
-// StartMicrosoftLogin provides a mock function for the type MockAuthService
-func (_mock *MockAuthService) StartMicrosoftLogin(ctx context.Context, req services.StartMicrosoftLoginRequest) (string, error) {
+// StartSSOLogin provides a mock function for the type MockAuthService
+func (_mock *MockAuthService) StartSSOLogin(ctx context.Context, req services.StartSSOLoginRequest) (string, error) {
 	ret := _mock.Called(ctx, req)
 
 	if len(ret) == 0 {
-		panic("no return value specified for StartMicrosoftLogin")
+		panic("no return value specified for StartSSOLogin")
 	}
 
 	var r0 string
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.StartMicrosoftLoginRequest) (string, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.StartSSOLoginRequest) (string, error)); ok {
 		return returnFunc(ctx, req)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, services.StartMicrosoftLoginRequest) string); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, services.StartSSOLoginRequest) string); ok {
 		r0 = returnFunc(ctx, req)
 	} else {
 		r0 = ret.Get(0).(string)
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, services.StartMicrosoftLoginRequest) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, services.StartSSOLoginRequest) error); ok {
 		r1 = returnFunc(ctx, req)
 	} else {
 		r1 = ret.Error(1)
@@ -476,27 +476,27 @@ func (_mock *MockAuthService) StartMicrosoftLogin(ctx context.Context, req servi
 	return r0, r1
 }
 
-// MockAuthService_StartMicrosoftLogin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StartMicrosoftLogin'
-type MockAuthService_StartMicrosoftLogin_Call struct {
+// MockAuthService_StartSSOLogin_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'StartSSOLogin'
+type MockAuthService_StartSSOLogin_Call struct {
 	*mock.Call
 }
 
-// StartMicrosoftLogin is a helper method to define mock.On call
+// StartSSOLogin is a helper method to define mock.On call
 //   - ctx context.Context
-//   - req services.StartMicrosoftLoginRequest
-func (_e *MockAuthService_Expecter) StartMicrosoftLogin(ctx interface{}, req interface{}) *MockAuthService_StartMicrosoftLogin_Call {
-	return &MockAuthService_StartMicrosoftLogin_Call{Call: _e.mock.On("StartMicrosoftLogin", ctx, req)}
+//   - req services.StartSSOLoginRequest
+func (_e *MockAuthService_Expecter) StartSSOLogin(ctx interface{}, req interface{}) *MockAuthService_StartSSOLogin_Call {
+	return &MockAuthService_StartSSOLogin_Call{Call: _e.mock.On("StartSSOLogin", ctx, req)}
 }
 
-func (_c *MockAuthService_StartMicrosoftLogin_Call) Run(run func(ctx context.Context, req services.StartMicrosoftLoginRequest)) *MockAuthService_StartMicrosoftLogin_Call {
+func (_c *MockAuthService_StartSSOLogin_Call) Run(run func(ctx context.Context, req services.StartSSOLoginRequest)) *MockAuthService_StartSSOLogin_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 services.StartMicrosoftLoginRequest
+		var arg1 services.StartSSOLoginRequest
 		if args[1] != nil {
-			arg1 = args[1].(services.StartMicrosoftLoginRequest)
+			arg1 = args[1].(services.StartSSOLoginRequest)
 		}
 		run(
 			arg0,
@@ -506,12 +506,12 @@ func (_c *MockAuthService_StartMicrosoftLogin_Call) Run(run func(ctx context.Con
 	return _c
 }
 
-func (_c *MockAuthService_StartMicrosoftLogin_Call) Return(s string, err error) *MockAuthService_StartMicrosoftLogin_Call {
+func (_c *MockAuthService_StartSSOLogin_Call) Return(s string, err error) *MockAuthService_StartSSOLogin_Call {
 	_c.Call.Return(s, err)
 	return _c
 }
 
-func (_c *MockAuthService_StartMicrosoftLogin_Call) RunAndReturn(run func(ctx context.Context, req services.StartMicrosoftLoginRequest) (string, error)) *MockAuthService_StartMicrosoftLogin_Call {
+func (_c *MockAuthService_StartSSOLogin_Call) RunAndReturn(run func(ctx context.Context, req services.StartSSOLoginRequest) (string, error)) *MockAuthService_StartSSOLogin_Call {
 	_c.Call.Return(run)
 	return _c
 }

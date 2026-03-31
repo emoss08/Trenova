@@ -2,10 +2,12 @@ import { api } from "@/lib/api";
 import { safeParse } from "@/lib/parse";
 import {
   microsoftSSOConfigSchema,
+  oktaSSOConfigSchema,
   organizationLogoUrlResponseSchema,
   organizationSettingsSchema,
   tenantLoginMetadataSchema,
   type MicrosoftSSOConfig,
+  type OktaSSOConfig,
   type OrganizationSettings,
   type TenantLoginMetadata,
 } from "@/types/organization";
@@ -80,6 +82,23 @@ export class OrganizationService {
     );
 
     return safeParse(microsoftSSOConfigSchema, response, "MicrosoftSSOConfig");
+  }
+
+  public async getOktaSSOConfig(organizationId: string) {
+    const response = await api.get<OktaSSOConfig>(
+      `${this.base_url}/${organizationId}/okta-sso`,
+    );
+
+    return safeParse(oktaSSOConfigSchema, response, "OktaSSOConfig");
+  }
+
+  public async upsertOktaSSOConfig(organizationId: string, data: OktaSSOConfig) {
+    const response = await api.put<OktaSSOConfig>(
+      `${this.base_url}/${organizationId}/okta-sso`,
+      data,
+    );
+
+    return safeParse(oktaSSOConfigSchema, response, "OktaSSOConfig");
   }
 
   public async getTenantLoginMetadata(organizationSlug: string) {
