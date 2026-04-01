@@ -21,24 +21,6 @@ var (
 	_ domaintypes.PostgresSearchable     = (*AccessorialCharge)(nil)
 )
 
-type Method string
-
-const (
-	MethodFlat       Method = "Flat"       // Fixed amount (TONU, layover, tarp, hazmat)
-	MethodPerUnit    Method = "PerUnit"    // Rate × units (detention/hr, storage/day, team/mile)
-	MethodPercentage Method = "Percentage" // Percentage of linehaul (fuel surcharge)
-)
-
-// RateUnit defines what PerUnit method multiplies against
-type RateUnit string
-
-const (
-	RateUnitMile RateUnit = "Mile" // Team drivers, per-mile fuel surcharge
-	RateUnitHour RateUnit = "Hour" // Detention, driver assist
-	RateUnitDay  RateUnit = "Day"  // Layover, storage
-	RateUnitStop RateUnit = "Stop" // Stop-off charges
-)
-
 type AccessorialCharge struct {
 	bun.BaseModel `bun:"table:accessorial_charges,alias:acc" json:"-"`
 
@@ -50,7 +32,7 @@ type AccessorialCharge struct {
 	Status         domaintypes.Status `json:"status"         bun:"status,type:status_enum,notnull,default:'Active'"`
 	Method         Method             `json:"method"         bun:"method,type:accessorial_method_enum,notnull"`
 	RateUnit       RateUnit           `json:"rateUnit"       bun:"rate_unit,type:rate_unit_enum,nullzero"`
-	Amount         decimal.Decimal    `json:"amount"         bun:"amount,type:NUMERIC(10,2),notnull,default:0"`
+	Amount         decimal.Decimal    `json:"amount"         bun:"amount,type:NUMERIC(19,4),notnull,default:0"`
 	SearchVector   string             `json:"-"              bun:"search_vector,type:TSVECTOR,scanonly"`
 	Rank           string             `json:"-"              bun:"rank,type:VARCHAR(100),scanonly"`
 	Version        int64              `json:"version"        bun:"version,type:BIGINT"`
