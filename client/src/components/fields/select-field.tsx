@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import type { FormControlProps, SelectOption } from "@/types/fields";
-import { ChevronDownIcon, XIcon } from "lucide-react";
-import { useMemo, useState } from "react";
+import type { FormControlProps, SelectOption, SelectOptionGroup } from "@/types/fields";
+import { CheckIcon, ChevronDownIcon, XIcon } from "lucide-react";
+import React, { useMemo, useState } from "react";
 import { Controller, type FieldValues } from "react-hook-form";
 import { Button } from "../ui/button";
 import {
@@ -9,14 +9,17 @@ import {
   CommandEmpty,
   CommandGroup,
   CommandInput,
+  CommandItem,
   CommandList,
+  CommandSeparator,
   SelectCommandItem,
 } from "../ui/command";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { FieldWrapper } from "./field-components";
 
 export type BaseSelectFieldProps = {
-  options: SelectOption[];
+  options?: SelectOption[];
+  groups?: SelectOptionGroup[];
   label?: string;
   description?: string;
   isReadOnly?: boolean;
@@ -25,6 +28,7 @@ export type BaseSelectFieldProps = {
   className?: string;
   placeholder?: string;
   isClearable?: boolean;
+  renderOption?: (option: SelectOption, searchValue: string) => React.ReactNode;
 };
 
 type SelectFieldProps<T extends FieldValues> = BaseSelectFieldProps & FormControlProps<T>;
@@ -37,16 +41,23 @@ export function SelectField<T extends FieldValues>({
   rules,
   className,
   options,
+  groups,
   placeholder,
   isReadOnly,
   isClearable = false,
+  renderOption,
 }: SelectFieldProps<T>) {
   const [isOpen, setIsOpen] = useState<boolean>(false);
   const [searchValue, setSearchValue] = useState("");
 
+  const allOptions = useMemo(
+    () => (groups ? groups.flatMap((g) => g.options) : (options ?? [])),
+    [options, groups],
+  );
+
   const optionMap = useMemo(
-    () => new Map(options.map((opt) => [opt.value.toLowerCase(), opt])),
-    [options],
+    () => new Map(allOptions.map((opt) => [String(opt.value).toLowerCase(), opt])),
+    [allOptions],
   );
 
   return (
@@ -55,13 +66,49 @@ export function SelectField<T extends FieldValues>({
       control={control}
       rules={rules}
       render={({ field, fieldState }) => {
-        const selectedOption = options.find((option) => option.value === field.value) || null;
+        const selectedOption = allOptions.find((option) => option.value === field.value) || null;
         const color = selectedOption?.color;
 
         const handleClear = () => {
           field.onChange("");
           setSearchValue("");
         };
+
+        const handleSelect = (currentValue: string) => {
+          if (!isClearable && currentValue === field.value) {
+            return;
+          }
+          field.onChange(currentValue === field.value ? "" : currentValue);
+          setIsOpen(false);
+        };
+
+        const renderOptions = (items: SelectOption[]) =>
+          items.map((option) =>
+            renderOption ? (
+              <CommandItem
+                key={String(option.value)}
+                value={String(option.value)}
+                onSelect={handleSelect}
+                disabled={option.disabled}
+              >
+                {field.value === option.value && <CheckIcon className="size-3.5 shrink-0" />}
+                {renderOption(option, searchValue)}
+              </CommandItem>
+            ) : (
+              <SelectCommandItem
+                key={String(option.value)}
+                value={String(option.value)}
+                onSelect={handleSelect}
+                color={option.color}
+                disabled={option.disabled}
+                checked={field.value === option.value}
+                icon={option.icon}
+                label={option.label}
+                description={option.description}
+                searchValue={searchValue}
+              />
+            ),
+          );
 
         return (
           <FieldWrapper
@@ -115,7 +162,7 @@ export function SelectField<T extends FieldValues>({
               <PopoverContent
                 className="border-input p-0"
                 align="start"
-                positionerClassName="min-w-(--anchor-width) rounded-lg"
+                positionerClassName="min-w-(--anchor-width) rounded-lg dark"
               >
                 <Command
                   filter={(value, search) => {
@@ -131,28 +178,18 @@ export function SelectField<T extends FieldValues>({
                   />
                   <CommandList>
                     <CommandEmpty>No options found.</CommandEmpty>
-                    <CommandGroup>
-                      {options.map((option) => (
-                        <SelectCommandItem
-                          key={option.value}
-                          value={option.value}
-                          onSelect={(currentValue) => {
-                            if (!isClearable && currentValue === field.value) {
-                              return;
-                            }
-                            field.onChange(currentValue === field.value ? "" : currentValue);
-                            setIsOpen(false);
-                          }}
-                          color={option.color}
-                          disabled={option.disabled}
-                          checked={field.value === option.value}
-                          icon={option.icon}
-                          label={option.label}
-                          description={option.description}
-                          searchValue={searchValue}
-                        />
-                      ))}
-                    </CommandGroup>
+                    {groups ? (
+                      groups.map((group, idx) => (
+                        <React.Fragment key={group.label}>
+                          {idx > 0 && <CommandSeparator />}
+                          <CommandGroup heading={group.label}>
+                            {renderOptions(group.options)}
+                          </CommandGroup>
+                        </React.Fragment>
+                      ))
+                    ) : (
+                      <CommandGroup>{renderOptions(allOptions)}</CommandGroup>
+                    )}
                   </CommandList>
                 </Command>
               </PopoverContent>

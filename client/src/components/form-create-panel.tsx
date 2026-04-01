@@ -15,6 +15,7 @@ import { useEffect } from "react";
 import { FormProvider, type FieldValues, type UseFormReturn } from "react-hook-form";
 import { toast } from "sonner";
 import { DataTablePanelContainer, type PanelSize } from "./data-table/data-table-panel";
+import { FormSaveDock } from "./form-save-dock";
 
 type FormCreatePanelProps<T extends FieldValues, TData> = Pick<
   DataTablePanelProps<TData>,
@@ -28,6 +29,7 @@ type FormCreatePanelProps<T extends FieldValues, TData> = Pick<
   form: UseFormReturn<T>;
   size?: PanelSize;
   notice?: React.ReactNode;
+  useDock?: boolean;
 };
 
 const SAVE_OPTIONS: SplitButtonOption<CreatePanelSaveAction>[] = [
@@ -47,6 +49,7 @@ export function FormCreatePanel<T extends FieldValues, TData>({
   size,
   queryKey,
   notice,
+  useDock = false,
 }: FormCreatePanelProps<T, TData>) {
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useCreatePanelActionPreference();
@@ -135,6 +138,13 @@ export function FormCreatePanel<T extends FieldValues, TData>({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, isSubmitting, handleSubmit, defaultAction]);
 
+  const splitButtonConfig = {
+    options: SAVE_OPTIONS,
+    selectedOption: defaultAction,
+    onOptionSelect: handleOptionSelect,
+    loadingText: "Saving...",
+  };
+
   return (
     <DataTablePanelContainer
       open={open}
@@ -143,25 +153,35 @@ export function FormCreatePanel<T extends FieldValues, TData>({
       description={description ?? `Fill out the form below to create a new ${title}.`}
       size={size}
       footer={
-        <>
-          <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
-          </Button>
-          <SplitButton
-            options={SAVE_OPTIONS}
-            selectedOption={defaultAction}
-            onOptionSelect={handleOptionSelect}
-            isLoading={isSubmitting}
-            loadingText="Saving..."
-            formId="panel-create-form"
-          />
-        </>
+        useDock ? undefined : (
+          <>
+            <Button type="button" variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+            <SplitButton
+              options={SAVE_OPTIONS}
+              selectedOption={defaultAction}
+              onOptionSelect={handleOptionSelect}
+              isLoading={isSubmitting}
+              loadingText="Saving..."
+              formId="panel-create-form"
+            />
+          </>
+        )
       }
     >
       {notice}
       <FormProvider {...form}>
         <Form id="panel-create-form" onSubmit={handleSubmit(handleFormSubmit)}>
           {formComponent}
+          {useDock && (
+            <FormSaveDock
+              splitButton={splitButtonConfig}
+              formId="panel-create-form"
+              position="right"
+              showReset={false}
+            />
+          )}
         </Form>
       </FormProvider>
     </DataTablePanelContainer>

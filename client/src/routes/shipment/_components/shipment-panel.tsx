@@ -172,6 +172,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
         formComponent={<ShipmentForm />}
         tabs={extraTabs}
         descriptionExtra={<OwnerDisplay ownerId={row?.ownerId} />}
+        useDock
       />
     );
   }
@@ -185,6 +186,7 @@ export function ShipmentPanel({ open, onOpenChange, mode, row }: DataTablePanelP
       queryKey="shipment-list"
       title="Shipment"
       formComponent={<ShipmentForm />}
+      useDock
     />
   );
 }

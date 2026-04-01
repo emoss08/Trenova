@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { SplitButton, type SplitButtonOption } from "@/components/ui/split-button";
+import { FormSaveDock } from "./form-save-dock";
 import { usePopoutWindow } from "@/hooks/popout-window/use-popout-window";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
@@ -32,6 +33,7 @@ type FormEditPanelProps<T extends FieldValues, TData extends Record<string, unkn
   size?: PanelSize;
   titleComponent?: (currentRecord: TData) => React.ReactNode;
   headerActions?: React.ReactNode;
+  useDock?: boolean;
 };
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
@@ -52,6 +54,7 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
   fieldKey,
   titleComponent,
   headerActions,
+  useDock = false,
 }: FormEditPanelProps<T, TData>) {
   const queryClient = useQueryClient();
   const [defaultAction, setDefaultAction] = useEditPanelActionPreference();
@@ -77,7 +80,7 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
 
   useEffect(() => {
     if (open && row) {
-      reset(row as unknown as T, { keepDefaultValues: true });
+      reset(row as unknown as T);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, row?.id, reset]);
@@ -148,6 +151,13 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
       }, user?.timezone)}`
     : undefined;
 
+  const splitButtonConfig = {
+    options: SAVE_OPTIONS,
+    selectedOption: defaultAction,
+    onOptionSelect: handleOptionSelect,
+    loadingText: "Saving...",
+  };
+
   return (
     <DataTablePanelContainer
       open={open}
@@ -158,19 +168,21 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
       headerActions={headerActions}
       size={size}
       footer={
-        <>
-          <Button type="button" variant="outline" onClick={handleClose}>
-            Cancel
-          </Button>
-          <SplitButton
-            options={SAVE_OPTIONS}
-            selectedOption={defaultAction}
-            onOptionSelect={handleOptionSelect}
-            isLoading={isSubmitting}
-            loadingText="Saving..."
-            formId="panel-edit-form"
-          />
-        </>
+        useDock ? undefined : (
+          <>
+            <Button type="button" variant="outline" onClick={handleClose}>
+              Cancel
+            </Button>
+            <SplitButton
+              options={SAVE_OPTIONS}
+              selectedOption={defaultAction}
+              onOptionSelect={handleOptionSelect}
+              isLoading={isSubmitting}
+              loadingText="Saving..."
+              formId="panel-edit-form"
+            />
+          </>
+        )
       }
     >
       {!row ? (
@@ -179,6 +191,14 @@ export function FormEditPanel<T extends FieldValues, TData extends Record<string
         <FormProvider {...form}>
           <Form id="panel-edit-form" onSubmit={handleSubmit(handleFormSubmit)}>
             {formComponent}
+            {useDock && (
+              <FormSaveDock
+                splitButton={splitButtonConfig}
+                formId="panel-edit-form"
+                position="right"
+                showReset={false}
+              />
+            )}
           </Form>
         </FormProvider>
       )}

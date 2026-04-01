@@ -27,7 +27,7 @@ import type {
 import type { ResourceType } from "@/types/document-packet-rule";
 import type { DocumentCategory, DocumentClassification } from "@/types/document-type";
 import type { EquipmentClass } from "@/types/equipment-type";
-import type { GenericSelectOption, SelectOption } from "@/types/fields";
+import type { GenericSelectOption, SelectOption, SelectOptionGroup } from "@/types/fields";
 import type { FiscalPeriodStatus, PeriodType } from "@/types/fiscal-period";
 import type { FiscalYearStatus } from "@/types/fiscal-year";
 import type { FormulaTemplateStatus, FormulaTemplateType } from "@/types/formula-template";
@@ -192,6 +192,43 @@ export const timezoneChoices = [
   { value: "Australia/Sydney", label: "Sydney (AEST)" },
   { value: "UTC", label: "UTC" },
 ] satisfies ReadonlyArray<SelectOption>;
+
+export const timezoneGroupedChoices: SelectOptionGroup[] = [
+  {
+    label: "Americas",
+    options: [
+      { value: "America/New_York", label: "Eastern Time (US)", description: "UTC-5" },
+      { value: "America/Chicago", label: "Central Time (US)", description: "UTC-6" },
+      { value: "America/Denver", label: "Mountain Time (US)", description: "UTC-7" },
+      { value: "America/Los_Angeles", label: "Pacific Time (US)", description: "UTC-8" },
+      { value: "America/Phoenix", label: "Arizona Time (US)", description: "UTC-7" },
+      { value: "America/Anchorage", label: "Alaska Time", description: "UTC-9" },
+      { value: "Pacific/Honolulu", label: "Hawaii Time", description: "UTC-10" },
+      { value: "America/Toronto", label: "Eastern Time (Canada)", description: "UTC-5" },
+      { value: "America/Vancouver", label: "Pacific Time (Canada)", description: "UTC-8" },
+    ],
+  },
+  {
+    label: "Europe",
+    options: [
+      { value: "Europe/London", label: "London (GMT)", description: "UTC+0" },
+      { value: "Europe/Paris", label: "Paris (CET)", description: "UTC+1" },
+      { value: "Europe/Berlin", label: "Berlin (CET)", description: "UTC+1" },
+    ],
+  },
+  {
+    label: "Asia & Pacific",
+    options: [
+      { value: "Asia/Tokyo", label: "Tokyo (JST)", description: "UTC+9" },
+      { value: "Asia/Shanghai", label: "Shanghai (CST)", description: "UTC+8" },
+      { value: "Australia/Sydney", label: "Sydney (AEST)", description: "UTC+10" },
+    ],
+  },
+  {
+    label: "Other",
+    options: [{ value: "UTC", label: "UTC", description: "UTC+0" }],
+  },
+];
 
 export const equipmentStatusChoices = [
   { value: "Available", label: "Available", color: "#15803d" },

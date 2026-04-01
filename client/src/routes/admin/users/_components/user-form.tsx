@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormControl, FormGroup } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { statusChoices, timezoneChoices } from "@/lib/choices";
+import { statusChoices, timezoneGroupedChoices } from "@/lib/choices";
 import { apiService } from "@/services/api";
 import type { UserOrganization } from "@/types/organization";
 import type { User, UserOrganizationMembership } from "@/types/user";
@@ -77,8 +77,16 @@ export function UserForm({
           name="timezone"
           label="Timezone"
           placeholder="Select timezone"
-          options={timezoneChoices}
+          groups={timezoneGroupedChoices}
           isReadOnly={isDisabled}
+          renderOption={(option) => (
+            <span className="flex w-full items-center justify-between gap-3">
+              <span>{option.label}</span>
+              {option.description && (
+                <span className="text-xs text-muted-foreground">{option.description}</span>
+              )}
+            </span>
+          )}
         />
       </FormControl>
       <FormControl>
@@ -102,10 +110,7 @@ export function UserForm({
         />
       </FormControl>
       {isEdit && editUserId && (
-        <OrganizationMembershipSection
-          userId={editUserId}
-          isDisabled={Boolean(isDisabled)}
-        />
+        <OrganizationMembershipSection userId={editUserId} isDisabled={Boolean(isDisabled)} />
       )}
     </FormGroup>
   );
@@ -118,13 +123,9 @@ function OrganizationMembershipSection({
   userId: string;
   isDisabled: boolean;
 }) {
-  const [availableOrganizations, setAvailableOrganizations] = useState<
-    UserOrganization[]
-  >([]);
+  const [availableOrganizations, setAvailableOrganizations] = useState<UserOrganization[]>([]);
   const [selectedOrgIDs, setSelectedOrgIDs] = useState<string[]>([]);
-  const [defaultOrganizationID, setDefaultOrganizationID] = useState<
-    string | null
-  >(null);
+  const [defaultOrganizationID, setDefaultOrganizationID] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -148,9 +149,7 @@ function OrganizationMembershipSection({
     }
 
     setAvailableOrganizations(organizations);
-    setSelectedOrgIDs(
-      memberships.map((membership) => membership.organizationId),
-    );
+    setSelectedOrgIDs(memberships.map((membership) => membership.organizationId));
     setDefaultOrganizationID(getDefaultOrganizationID(memberships));
     setIsLoading(false);
   }, [userId]);
@@ -194,9 +193,7 @@ function OrganizationMembershipSection({
       return;
     }
 
-    setSelectedOrgIDs(
-      updatedMemberships.map((membership) => membership.organizationId),
-    );
+    setSelectedOrgIDs(updatedMemberships.map((membership) => membership.organizationId));
     setDefaultOrganizationID(getDefaultOrganizationID(updatedMemberships));
 
     toast.success("Organization access updated");
@@ -209,8 +206,7 @@ function OrganizationMembershipSection({
         <div className="space-y-1">
           <h4 className="text-sm font-medium">Organization Access</h4>
           <p className="text-xs text-muted-foreground">
-            Choose which organizations this user can access in the current
-            business unit.
+            Choose which organizations this user can access in the current business unit.
           </p>
         </div>
 
@@ -281,11 +277,7 @@ function OrganizationMembershipSection({
   );
 }
 
-function getDefaultOrganizationID(
-  memberships: UserOrganizationMembership[],
-): string | null {
-  const defaultMembership = memberships.find(
-    (membership) => membership.isDefault,
-  );
+function getDefaultOrganizationID(memberships: UserOrganizationMembership[]): string | null {
+  const defaultMembership = memberships.find((membership) => membership.isDefault);
   return defaultMembership?.organizationId ?? null;
 }

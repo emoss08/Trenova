@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { SplitButton, type SplitButtonOption } from "@/components/ui/split-button";
+import { FormSaveDock } from "./form-save-dock";
 import { Tabs, TabsContent, TabsList, TabsTab } from "@/components/ui/tabs";
 import { useApiMutation } from "@/hooks/use-api-mutation";
 import {
@@ -57,6 +58,7 @@ type TabbedFormEditPanelProps<T extends FieldValues, TData extends Record<string
   descriptionExtra?: React.ReactNode;
   tabs?: TabConfig[];
   size?: PanelSize;
+  useDock?: boolean;
 };
 
 const SAVE_OPTIONS: SplitButtonOption<EditPanelSaveAction>[] = [
@@ -87,6 +89,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   descriptionExtra,
   tabs = [],
   size = "md",
+  useDock = false,
 }: TabbedFormEditPanelProps<T, TData>) {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
@@ -110,7 +113,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
 
   useEffect(() => {
     if (open && row) {
-      reset(row as unknown as T, { keepDefaultValues: true });
+      reset(row as unknown as T);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, row?.id, row?.version, reset]);
@@ -164,6 +167,13 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
   const handleFormSubmit = (values: T) => {
     pendingActionRef.current = defaultAction;
     return onSubmit(values);
+  };
+
+  const splitButtonConfig = {
+    options: SAVE_OPTIONS,
+    selectedOption: defaultAction,
+    onOptionSelect: handleOptionSelect,
+    loadingText: "Saving...",
   };
 
   const hasTabs = tabs.length > 0;
@@ -270,6 +280,14 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
                   <FormProvider {...form}>
                     <Form id="panel-edit-form" onSubmit={() => handleSubmit(handleFormSubmit)()}>
                       {formComponent}
+                      {useDock && (
+                        <FormSaveDock
+                          splitButton={splitButtonConfig}
+                          formId="panel-edit-form"
+                          position="right"
+                          showReset={false}
+                          />
+                      )}
                     </Form>
                   </FormProvider>
                 </TabsContent>
@@ -305,6 +323,14 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
                 <FormProvider {...form}>
                   <Form id="panel-edit-form" onSubmit={() => handleSubmit(handleFormSubmit)()}>
                     {formComponent}
+                    {useDock && (
+                      <FormSaveDock
+                        splitButton={splitButtonConfig}
+                        formId="panel-edit-form"
+                        position="right"
+                        showReset={false}
+                      />
+                    )}
                   </Form>
                 </FormProvider>
               </div>
@@ -314,7 +340,7 @@ export function TabbedFormEditPanel<T extends FieldValues, TData extends Record<
           <div
             className={cn(
               "flex items-center justify-between gap-2 border-t border-border bg-muted/30 px-4 py-3",
-              activeTabHidesFooter && "hidden",
+              (activeTabHidesFooter || useDock) && "hidden",
             )}
           >
             <Button type="button" variant="outline" onClick={handleClose}>

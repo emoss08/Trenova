@@ -14,9 +14,23 @@ const amountDescriptions: Record<AccessorialCharge["method"], string> = {
   Percentage: "The percentage applied to the linehaul rate",
 };
 
+function getAmountSideText(method: AccessorialCharge["method"], rateUnit?: string): string {
+  switch (method) {
+    case "Flat":
+      return "$";
+    case "Percentage":
+      return "%";
+    case "PerUnit":
+      return rateUnit ? `$/${rateUnit}` : "$/Unit";
+    default:
+      return "$";
+  }
+}
+
 export function AccessorialChargeForm() {
   const { control, setValue } = useFormContext<AccessorialCharge>();
   const method = useWatch({ name: "method" });
+  const rateUnit = useWatch({ name: "rateUnit" });
 
   const methodIsPerUnit = method === "PerUnit";
 
@@ -90,8 +104,8 @@ export function AccessorialChargeForm() {
           name="amount"
           label="Amount"
           placeholder="Amount"
-          decimalScale={2}
-          sideText="USD"
+          sideText={getAmountSideText(method as AccessorialCharge["method"], rateUnit)}
+          decimalScale={4}
           thousandSeparator
           description={
             amountDescriptions[method as AccessorialCharge["method"]] ?? amountDescriptions.Flat

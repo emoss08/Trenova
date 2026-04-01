@@ -74,6 +74,7 @@ export function TrailerPanel({
         fieldKey="code"
         formComponent={<TrailerForm />}
         tabs={documentsTabs}
+        useDock
       />
     );
   }
@@ -87,6 +88,7 @@ export function TrailerPanel({
       queryKey="trailer-list"
       title="Trailer"
       formComponent={<TrailerForm />}
+      useDock
     />
   );
 }

@@ -10,12 +10,7 @@ import { TractorForm } from "./tractor-form";
 
 const DocumentsTab = lazy(() => import("@/components/documents/documents-tab"));
 
-export function TractorPanel({
-  open,
-  onOpenChange,
-  mode,
-  row,
-}: DataTablePanelProps<Tractor>) {
+export function TractorPanel({ open, onOpenChange, mode, row }: DataTablePanelProps<Tractor>) {
   const form = useForm({
     resolver: zodResolver(tractorSchema),
     defaultValues: {
@@ -76,6 +71,7 @@ export function TractorPanel({
         fieldKey="code"
         formComponent={<TractorForm />}
         tabs={documentsTabs}
+        useDock
       />
     );
   }
@@ -89,6 +85,7 @@ export function TractorPanel({
       queryKey="tractor-list"
       title="Tractor"
       formComponent={<TractorForm />}
+      useDock
     />
   );
 }
