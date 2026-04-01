@@ -314,6 +314,74 @@ func (_c *MockOrganizationService_GetMicrosoftSSOConfig_Call) RunAndReturn(run f
 	return _c
 }
 
+// GetOktaSSOConfig provides a mock function for the type MockOrganizationService
+func (_mock *MockOrganizationService) GetOktaSSOConfig(ctx context.Context, organizationID pulid.ID) (*services.OktaSSOConfig, error) {
+	ret := _mock.Called(ctx, organizationID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetOktaSSOConfig")
+	}
+
+	var r0 *services.OktaSSOConfig
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) (*services.OktaSSOConfig, error)); ok {
+		return returnFunc(ctx, organizationID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pulid.ID) *services.OktaSSOConfig); ok {
+		r0 = returnFunc(ctx, organizationID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.OktaSSOConfig)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pulid.ID) error); ok {
+		r1 = returnFunc(ctx, organizationID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrganizationService_GetOktaSSOConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetOktaSSOConfig'
+type MockOrganizationService_GetOktaSSOConfig_Call struct {
+	*mock.Call
+}
+
+// GetOktaSSOConfig is a helper method to define mock.On call
+//   - ctx context.Context
+//   - organizationID pulid.ID
+func (_e *MockOrganizationService_Expecter) GetOktaSSOConfig(ctx interface{}, organizationID interface{}) *MockOrganizationService_GetOktaSSOConfig_Call {
+	return &MockOrganizationService_GetOktaSSOConfig_Call{Call: _e.mock.On("GetOktaSSOConfig", ctx, organizationID)}
+}
+
+func (_c *MockOrganizationService_GetOktaSSOConfig_Call) Run(run func(ctx context.Context, organizationID pulid.ID)) *MockOrganizationService_GetOktaSSOConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pulid.ID
+		if args[1] != nil {
+			arg1 = args[1].(pulid.ID)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrganizationService_GetOktaSSOConfig_Call) Return(oktaSSOConfig *services.OktaSSOConfig, err error) *MockOrganizationService_GetOktaSSOConfig_Call {
+	_c.Call.Return(oktaSSOConfig, err)
+	return _c
+}
+
+func (_c *MockOrganizationService_GetOktaSSOConfig_Call) RunAndReturn(run func(ctx context.Context, organizationID pulid.ID) (*services.OktaSSOConfig, error)) *MockOrganizationService_GetOktaSSOConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function for the type MockOrganizationService
 func (_mock *MockOrganizationService) Update(ctx context.Context, entity *tenant.Organization) (*tenant.Organization, error) {
 	ret := _mock.Called(ctx, entity)
@@ -526,6 +594,80 @@ func (_c *MockOrganizationService_UpsertMicrosoftSSOConfig_Call) Return(microsof
 }
 
 func (_c *MockOrganizationService_UpsertMicrosoftSSOConfig_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, config *services.MicrosoftSSOConfig) (*services.MicrosoftSSOConfig, error)) *MockOrganizationService_UpsertMicrosoftSSOConfig_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpsertOktaSSOConfig provides a mock function for the type MockOrganizationService
+func (_mock *MockOrganizationService) UpsertOktaSSOConfig(ctx context.Context, tenantInfo pagination.TenantInfo, config *services.OktaSSOConfig) (*services.OktaSSOConfig, error) {
+	ret := _mock.Called(ctx, tenantInfo, config)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpsertOktaSSOConfig")
+	}
+
+	var r0 *services.OktaSSOConfig
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, *services.OktaSSOConfig) (*services.OktaSSOConfig, error)); ok {
+		return returnFunc(ctx, tenantInfo, config)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, pagination.TenantInfo, *services.OktaSSOConfig) *services.OktaSSOConfig); ok {
+		r0 = returnFunc(ctx, tenantInfo, config)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*services.OktaSSOConfig)
+		}
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, pagination.TenantInfo, *services.OktaSSOConfig) error); ok {
+		r1 = returnFunc(ctx, tenantInfo, config)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// MockOrganizationService_UpsertOktaSSOConfig_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpsertOktaSSOConfig'
+type MockOrganizationService_UpsertOktaSSOConfig_Call struct {
+	*mock.Call
+}
+
+// UpsertOktaSSOConfig is a helper method to define mock.On call
+//   - ctx context.Context
+//   - tenantInfo pagination.TenantInfo
+//   - config *services.OktaSSOConfig
+func (_e *MockOrganizationService_Expecter) UpsertOktaSSOConfig(ctx interface{}, tenantInfo interface{}, config interface{}) *MockOrganizationService_UpsertOktaSSOConfig_Call {
+	return &MockOrganizationService_UpsertOktaSSOConfig_Call{Call: _e.mock.On("UpsertOktaSSOConfig", ctx, tenantInfo, config)}
+}
+
+func (_c *MockOrganizationService_UpsertOktaSSOConfig_Call) Run(run func(ctx context.Context, tenantInfo pagination.TenantInfo, config *services.OktaSSOConfig)) *MockOrganizationService_UpsertOktaSSOConfig_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 pagination.TenantInfo
+		if args[1] != nil {
+			arg1 = args[1].(pagination.TenantInfo)
+		}
+		var arg2 *services.OktaSSOConfig
+		if args[2] != nil {
+			arg2 = args[2].(*services.OktaSSOConfig)
+		}
+		run(
+			arg0,
+			arg1,
+			arg2,
+		)
+	})
+	return _c
+}
+
+func (_c *MockOrganizationService_UpsertOktaSSOConfig_Call) Return(oktaSSOConfig *services.OktaSSOConfig, err error) *MockOrganizationService_UpsertOktaSSOConfig_Call {
+	_c.Call.Return(oktaSSOConfig, err)
+	return _c
+}
+
+func (_c *MockOrganizationService_UpsertOktaSSOConfig_Call) RunAndReturn(run func(ctx context.Context, tenantInfo pagination.TenantInfo, config *services.OktaSSOConfig) (*services.OktaSSOConfig, error)) *MockOrganizationService_UpsertOktaSSOConfig_Call {
 	_c.Call.Return(run)
 	return _c
 }
