@@ -75,6 +75,16 @@ func (h *Handler) RegisterRoutes(rg *gin.RouterGroup) {
 		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
 		h.upsertMicrosoftSSOConfig,
 	)
+	api.GET(
+		"/:id/okta-sso",
+		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpRead),
+		h.getOktaSSOConfig,
+	)
+	api.PUT(
+		"/:id/okta-sso",
+		h.pm.RequirePermission(permission.ResourceOrganization.String(), permission.OpUpdate),
+		h.upsertOktaSSOConfig,
+	)
 }
 
 // @Summary Get an organization
@@ -317,6 +327,56 @@ func (h *Handler) upsertMicrosoftSSOConfig(c *gin.Context) {
 	req.OrganizationID = orgID.String()
 
 	resp, err := h.service.UpsertMicrosoftSSOConfig(
+		c.Request.Context(),
+		pagination.TenantInfo{
+			OrgID:  orgID,
+			BuID:   authCtx.BusinessUnitID,
+			UserID: authCtx.UserID,
+		},
+		req,
+	)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) getOktaSSOConfig(c *gin.Context) {
+	orgID, err := pulid.MustParse(c.Param("id"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	resp, err := h.service.GetOktaSSOConfig(c.Request.Context(), orgID)
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	c.JSON(http.StatusOK, resp)
+}
+
+func (h *Handler) upsertOktaSSOConfig(c *gin.Context) {
+	authCtx := authctx.GetAuthContext(c)
+
+	orgID, err := pulid.MustParse(c.Param("id"))
+	if err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req := new(services.OktaSSOConfig)
+	if err = c.ShouldBindJSON(req); err != nil {
+		h.eh.HandleError(c, err)
+		return
+	}
+
+	req.OrganizationID = orgID.String()
+
+	resp, err := h.service.UpsertOktaSSOConfig(
 		c.Request.Context(),
 		pagination.TenantInfo{
 			OrgID:  orgID,
