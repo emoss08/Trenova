@@ -24,4 +24,6 @@ func Register(r *seeder.Registry) {
 	r.MustRegister(development.NewWorkerSeed())
 	r.MustRegister(development.NewLocationCategorySeed())
 	r.MustRegister(development.NewLocationSeed())
+	r.MustRegister(development.NewTestDataSeed())
+	r.MustRegister(development.NewShipmentSeed())
 }
