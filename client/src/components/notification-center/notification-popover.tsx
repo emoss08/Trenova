@@ -1,27 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
-import {
-  formatTimestamp,
-  getPriorityConfig,
-  SOURCE_LABELS,
-} from "@/lib/notification-helpers";
+import { formatTimestamp, getPriorityConfig, SOURCE_LABELS } from "@/lib/notification-helpers";
 import { queries } from "@/lib/queries";
 import { cn } from "@/lib/utils";
 import { apiService } from "@/services/api";
 import type { Notification } from "@/types/notification";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  BellIcon,
-  CheckCheckIcon,
-  CircleAlertIcon,
-  InboxIcon,
-} from "lucide-react";
+import { BellIcon, CheckCheckIcon, CircleAlertIcon, InboxIcon } from "lucide-react";
 import { useCallback, useState } from "react";
 import { toast } from "sonner";
 
@@ -40,9 +27,7 @@ function NotificationItem({
     <button
       type="button"
       aria-label={
-        isUnread
-          ? `Unread: ${notification.title}. Click to mark as read`
-          : notification.title
+        isUnread ? `Unread: ${notification.title}. Click to mark as read` : notification.title
       }
       className={cn(
         "group flex w-full gap-3 px-4 py-3 text-left transition-colors duration-150",
@@ -65,12 +50,11 @@ function NotificationItem({
           {notification.title}
         </p>
 
-        {notification.message &&
-          notification.message !== notification.title && (
-            <p className="line-clamp-2 text-2xs leading-relaxed text-muted-foreground">
-              {notification.message}
-            </p>
-          )}
+        {notification.message && notification.message !== notification.title && (
+          <p className="line-clamp-2 text-2xs leading-relaxed text-muted-foreground">
+            {notification.message}
+          </p>
+        )}
 
         <div className="flex items-center gap-1.5">
           <Badge variant={config.badge} className="h-5 text-2xs">
@@ -84,10 +68,7 @@ function NotificationItem({
 
       {isUnread && (
         <span
-          className={cn(
-            "mt-2 size-2 shrink-0 rounded-full transition-opacity",
-            config.dot,
-          )}
+          className={cn("mt-2 size-2 shrink-0 rounded-full transition-opacity", config.dot)}
           aria-hidden
         />
       )}
@@ -152,12 +133,7 @@ export function NotificationPopover() {
             aria-label={`Notifications${unreadCount > 0 ? ` (${unreadCount} unread)` : ""}`}
           >
             <span className="relative">
-              <BellIcon
-                className={cn(
-                  "size-4 transition-colors",
-                  open && "text-foreground",
-                )}
-              />
+              <BellIcon className={cn("size-4 transition-colors", open && "text-foreground")} />
               {unreadCount > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 flex size-4 items-center justify-center rounded-full bg-destructive text-[10px] leading-none font-semibold text-destructive-foreground ring-2 ring-background">
                   {unreadCount > 9 ? "9+" : unreadCount}
@@ -198,9 +174,7 @@ export function NotificationPopover() {
             <div className="flex items-center justify-center py-12">
               <div className="flex flex-col items-center gap-2">
                 <BellIcon className="size-5 animate-pulse text-muted-foreground/40" />
-                <p className="text-2xs text-muted-foreground">
-                  Loading notifications...
-                </p>
+                <p className="text-2xs text-muted-foreground">Loading notifications...</p>
               </div>
             </div>
           )}
@@ -208,9 +182,7 @@ export function NotificationPopover() {
           {isError && (
             <div className="flex flex-col items-center justify-center gap-2 py-12">
               <CircleAlertIcon className="size-5 text-destructive/60" />
-              <p className="text-2xs text-muted-foreground">
-                Failed to load notifications
-              </p>
+              <p className="text-2xs text-muted-foreground">Failed to load notifications</p>
             </div>
           )}
 
@@ -220,12 +192,9 @@ export function NotificationPopover() {
                 <InboxIcon className="size-6 text-muted-foreground/60" />
               </div>
               <div className="text-center">
-                <p className="text-sm font-medium text-muted-foreground">
-                  All caught up
-                </p>
+                <p className="text-sm font-medium text-muted-foreground">All caught up</p>
                 <p className="mt-0.5 text-2xs text-muted-foreground/70">
-                  Notifications will appear here when your subscriptions match
-                  changes.
+                  Notifications will appear here when your subscriptions match changes.
                 </p>
               </div>
             </div>
@@ -233,11 +202,7 @@ export function NotificationPopover() {
 
           <div className="divide-y divide-border">
             {notifications.map((n) => (
-              <NotificationItem
-                key={n.id}
-                notification={n}
-                onMarkRead={handleMarkRead}
-              />
+              <NotificationItem key={n.id} notification={n} onMarkRead={handleMarkRead} />
             ))}
           </div>
         </div>

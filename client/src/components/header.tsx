@@ -1,3 +1,4 @@
+import { NotificationPopover } from "@/components/notification-center/notification-popover";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -7,7 +8,6 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { NotificationPopover } from "@/components/notification-center/notification-popover";
 import { useBreadcrumbs } from "@/hooks/use-breadcrumb";
 import { useHistoryNavigation } from "@/hooks/use-history-navigation";
 import { useOptimisticMutation } from "@/hooks/use-optimistic-mutation";

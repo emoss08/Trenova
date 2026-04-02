@@ -53,7 +53,7 @@ export function SidebarNav({ links, className, ...props }: SidebarNavProps) {
 
   return (
     <SidebarNavOuter>
-      <ScrollArea className="h-full rounded-lg border bg-sidebar p-3 text-card-foreground">
+      <ScrollArea className="h-full rounded-lg border bg-background p-3 text-card-foreground">
         <SidebarNavInner className={cn("lg:flex-col", className)} {...props}>
           {Object.entries(groupedLinks).map(([group, groupLinks], index, array) => (
             <div key={group} className="space-y-2">

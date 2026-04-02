@@ -20,6 +20,8 @@ export function ApprovedPTOOverview() {
     workerId: filters.workerId ?? undefined,
   });
 
+  throw new Error("Test error");
+
   return (
     <OverviewOuter>
       <ApprovedPTOHeader />

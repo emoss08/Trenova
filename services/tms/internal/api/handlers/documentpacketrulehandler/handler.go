@@ -65,7 +65,7 @@ func (h *Handler) list(c *gin.Context) {
 	authCtx := authctx.GetAuthContext(c)
 	items, err := h.service.ListByResourceType(
 		c.Request.Context(),
-		helpers.QueryString(c, "resourceType", ""),
+		helpers.QueryEnumIgnoreCase(c, "resourceType", []string{}),
 		pagination.TenantInfo{
 			OrgID: authCtx.OrganizationID,
 			BuID:  authCtx.BusinessUnitID,

@@ -39,10 +39,7 @@ async function fetchPTOChartData(
   type?: string,
   workerId?: string,
 ): Promise<PTOChartDataPoint[]> {
-  const url = new URL(
-    `${API_BASE_URL}/workers/pto/chart/`,
-    window.location.origin,
-  );
+  const url = new URL(`${API_BASE_URL}/workers/pto/chart/`, window.location.origin);
   url.searchParams.set("startDateFrom", startDate.toString());
   url.searchParams.set("startDateTo", endDate.toString());
   url.searchParams.set("status", "Approved");
@@ -57,15 +54,7 @@ async function fetchPTOChartData(
 }
 
 const CustomTooltip = memo(
-  ({
-    workers,
-    id,
-    value,
-  }: {
-    workers: PTOChartWorker[];
-    id: string;
-    value: number;
-  }) => {
+  ({ workers, id, value }: { workers: PTOChartWorker[]; id: string; value: number }) => {
     return (
       <div className="min-w-[150px] rounded-lg border border-border bg-popover p-3 text-popover-foreground shadow-xl">
         <div className="mb-2 flex items-center gap-2">
@@ -76,17 +65,13 @@ const CustomTooltip = memo(
           <div className="border-t border-border pt-2">
             <div className="mb-1 text-xs font-medium opacity-60">Workers:</div>
             <div className="space-y-0.5 text-xs">
-              {workers
-                .slice(0, 5)
-                .map((worker: PTOChartWorker, idx: number) => (
-                  <div key={`${worker.id}-${idx}`}>
-                    • {worker.firstName} {worker.lastName}
-                  </div>
-                ))}
-              {workers.length > 5 && (
-                <div className="text-muted-foreground">
-                  +{workers.length - 5} more
+              {workers.slice(0, 5).map((worker: PTOChartWorker, idx: number) => (
+                <div key={`${worker.id}-${idx}`}>
+                  • {worker.firstName} {worker.lastName}
                 </div>
+              ))}
+              {workers.length > 5 && (
+                <div className="text-muted-foreground">+{workers.length - 5} more</div>
               )}
             </div>
           </div>
@@ -100,12 +85,7 @@ CustomTooltip.displayName = "CustomTooltip";
 
 function ChartLoadingState({ className }: { className?: string }) {
   return (
-    <div
-      className={cn(
-        "flex h-full w-full flex-col items-center justify-center",
-        className,
-      )}
-    >
+    <div className={cn("flex h-full w-full flex-col items-center justify-center", className)}>
       <Skeleton className="size-full" />
     </div>
   );
@@ -114,9 +94,7 @@ function ChartLoadingState({ className }: { className?: string }) {
 function ChartEmptyState() {
   return (
     <div className="flex h-full w-full items-center justify-center">
-      <p className="text-sm text-muted-foreground">
-        No PTO data available for the selected period
-      </p>
+      <p className="text-sm text-muted-foreground">No PTO data available for the selected period</p>
     </div>
   );
 }
@@ -126,21 +104,13 @@ function ChartErrorState({ message }: { message?: string }) {
     <div className="flex h-full w-full items-center justify-center">
       <div className="text-center">
         <p className="text-sm text-destructive">Failed to load chart data</p>
-        <p className="text-xs text-muted-foreground">
-          {message || "An error occurred"}
-        </p>
+        <p className="text-xs text-muted-foreground">{message || "An error occurred"}</p>
       </div>
     </div>
   );
 }
 
-export function PTOChart({
-  startDate,
-  endDate,
-  type,
-  workerId,
-  className,
-}: PTOChartProps) {
+export function PTOChart({ startDate, endDate, type, workerId, className }: PTOChartProps) {
   const { data, isLoading, isError, error } = useQuery({
     queryKey: ["pto-chart", startDate, endDate, type, workerId],
     queryFn: () => fetchPTOChartData(startDate, endDate, type, workerId),
@@ -200,15 +170,7 @@ export function PTOChart({
     <div className={cn("relative size-full", className)}>
       <ResponsiveBar
         data={barData}
-        keys={[
-          "Vacation",
-          "Sick",
-          "Holiday",
-          "Bereavement",
-          "Maternity",
-          "Paternity",
-          "Personal",
-        ]}
+        keys={["Vacation", "Sick", "Holiday", "Bereavement", "Maternity", "Paternity", "Personal"]}
         indexBy="date"
         margin={{ top: 20, right: 130, bottom: 50, left: 50 }}
         padding={0.3}
@@ -299,9 +261,7 @@ export function PTOChart({
         tooltip={({ id, value, indexValue }) => {
           const dateWorkers = workersMap.get(indexValue as string);
           const workers = dateWorkers?.[id as string] || [];
-          return (
-            <CustomTooltip workers={workers} id={id as string} value={value} />
-          );
+          return <CustomTooltip workers={workers} id={id as string} value={value} />;
         }}
       />
     </div>
